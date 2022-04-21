@@ -1,22 +1,10 @@
-export const HEADERS = {
-    json: { 'Content-Type': 'application/json' },
-    text: { 'Content-Type': 'text/plain' },
-}
-
-export const CORS_HEADERS = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,OPTIONS',
-    'Access-Control-Max-Age': '86400'
-}
-
-export const DEFAULT_CONFIG = `
 version: 3.0
 
 constants:
   baseUrl: http://localhost:3332
   port: 3332
   # please use your own X25519 key, this is only an example
-  # you can generate a new key by running \`veramo config gen-key\` in a terminal
+  # you can generate a new key by running `veramo config gen-key` in a terminal
   dbEncryptionKey: 29739248cad1bd1a0fc4d9b75cd4d2990de535baf5caadfdf8d8f86664aa830c
   databaseFile: ./database.sqlite
   methods:
@@ -307,16 +295,3 @@ agent:
         - $require: '@veramo/data-store#DataStoreORM'
           $args:
             - $ref: /dbConnection
-`
-
-export const INFURA_PROJECT_ID = '3586660d179141e3801c3895de1c2eba'
-
-export const KMS_SECRET_KEY = '62b35a9a4c77e6c6af74aff7f06b870331fd37d59473f174e14a200bff01505e'
-
-export const ISSUER_ID = 'rinkeby:0x97fd27892cdcD035dAe1fe71235c636044B59348'
-
-export const VC_CONTEXT = ['https://www.w3.org/2018/credentials/v1', 'https://veramo.io/contexts/profile/v1']
-
-export const VC_TYPE = 'VerifiableCredential'
-
-export const VC_SUBJECT = 'did:ethr:ropsten:0x0320ece5f7c4f59ee1f2ece0b24760f17b959a10387b7346aebd571a17395bd302'
