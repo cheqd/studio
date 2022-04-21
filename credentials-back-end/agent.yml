@@ -177,7 +177,7 @@ didResolver:
 ethr-did-resolver:
   $require: ethr-did-resolver?t=function&p=/ethr#getResolver
   $args:
-    - infuraProjectId: 3586660d179141e3801c3895de1c2eba
+    - infuraProjectId: ***REMOVED***
 
 web-did-resolver:
   $require: web-did-resolver?t=function&p=/web#getResolver
@@ -224,7 +224,7 @@ didManager:
           $args:
             - defaultKms: local
               network: mainnet
-              rpcUrl: https://mainnet.infura.io/v3/3586660d179141e3801c3895de1c2eba
+              rpcUrl: https://mainnet.infura.io/v3/***REMOVED***
               gas: 1000001
               ttl: 31104001
         did:ethr:rinkeby:
@@ -232,7 +232,7 @@ didManager:
           $args:
             - defaultKms: local
               network: rinkeby
-              rpcUrl: https://rinkeby.infura.io/v3/3586660d179141e3801c3895de1c2eba
+              rpcUrl: https://rinkeby.infura.io/v3/***REMOVED***
               gas: 1000001
               ttl: 31104001
         did:ethr:ropsten:
@@ -240,7 +240,7 @@ didManager:
           $args:
             - defaultKms: local
               network: ropsten
-              rpcUrl: https://ropsten.infura.io/v3/3586660d179141e3801c3895de1c2eba
+              rpcUrl: https://ropsten.infura.io/v3/***REMOVED***
               gas: 1000001
               ttl: 31104001
         did:ethr:kovan:
@@ -248,7 +248,7 @@ didManager:
           $args:
             - defaultKms: local
               network: kovan
-              rpcUrl: https://kovan.infura.io/v3/3586660d179141e3801c3895de1c2eba
+              rpcUrl: https://kovan.infura.io/v3/***REMOVED***
               gas: 1000001
               ttl: 31104001
         did:ethr:goerli:
@@ -256,7 +256,7 @@ didManager:
           $args:
             - defaultKms: local
               network: goerli
-              rpcUrl: https://goerli.infura.io/v3/3586660d179141e3801c3895de1c2eba
+              rpcUrl: https://goerli.infura.io/v3/***REMOVED***
               gas: 1000001
               ttl: 31104001
         did:web:
