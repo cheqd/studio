@@ -1,161 +1,27 @@
-/* // import {getAssetFromKV, mapRequestToAsset} from '@cloudflare/kv-asset-handler'
+import { decodePubkey, decodeTxRaw } from '@cosmjs/proto-signing'
+import { fromBase64 } from '@cosmjs/encoding'
+import { LumAminoRegistry, LumRegistry, LumUtils } from '@lum-network/sdk-javascript';
+import { SignMode } from '@lum-network/sdk-javascript/build/codec/cosmos/tx/signing/v1beta1/signing';
+import { serializeSignDoc } from '@cosmjs/amino';
+import Long from 'long';
 
-import { defaultRegistryTypes } from "@cosmjs/stargate";
-import { decodeTxRaw, Registry } from "@cosmjs/proto-signing"
+// constants
+const TITLE = 'AuthRequest';
+const REPLY_PROTECTION_INTERVAL = 30;
 
-import {
-  isSecp256k1Pubkey,
-  makeSignDoc as makeSignDocAmino,
-  rawSecp256k1PubkeyToRawAddress,
-  serializeSignDoc,
-} from "@cosmjs/amino";
-import { Secp256k1, Secp256k1Signature, sha256 } from "@cosmjs/crypto";
-import { fromBech32, fromBase64 } from "@cosmjs/encoding";
 
-const static_cred = {
-  "@context": [
-    "https://www.w3.org/2018/credentials/v1"
-  ],
-  "id": "https://issuer.cheqd.io/credentials/1872",
-  "type": ["VerifiableCredential"],
-  "issuer": "did:cheqd:2222222222222222",
-  "issuanceDate": new Date(),
-  "credentialSubject": {
-    "id": "did:key:1234567890",
-    "twitter_handle": "test_twitter_handle"
-  },
-  "proof": {
-    "type": "RsaSignature2018",
-    "created": "2017-06-18T21:19:10Z",
-    "proofPurpose": "assertionMethod",
-    "verificationMethod": "https://example.edu/issuers/565049#key-1",
-    "jws": "eyJhbGciOiJSUzI1NiIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..TCYt5XsITJX1CxPCT8yAV-TVkIEq_PbChOMqsLfRoPsnsgw5WEuts01mq-pQy7UJiN5mgRxD-WUcX16dUEMGlv50aqzpqh4Qktb3rk-BuQy72IFLOqV0G_zS245-kronKb78cPN25DGlcTwLtPAYuNzVBAh4vGHSrQyHUdBBPM"
+const handleAuthRequest = async (request: Request): Promise<Response> => {
+  console.log('Request', JSON.stringify(request));
+  const body = await readAuthRequestBody(request);
+  if (body === '') {
+    return makeResponse("Body is empty!")
   }
-};
-
-let static_json = JSON.stringify(static_cred, null, 2);
-
-// Reference: https://developers.cloudflare.com/workers/examples/cors-header-proxy
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
-  "Access-Control-Max-Age": "86400",
+  const data = fromBase64(body);
+  const ok = await handleAuthToken(data);
+  return makeResponse(ok.toString())
 }
 
-function handleOptions (request) {
-  // Make sure the necessary headers are present
-  // for this to be a valid pre-flight request
-  let headers = request.headers
-  if (
-    headers.get("Origin") !== null &&
-    headers.get("Access-Control-Request-Method") !== null &&
-    headers.get("Access-Control-Request-Headers") !== null
-  ) {
-    // Handle CORS pre-flight request.
-    // If you want to check or reject the requested method + headers
-    // you can do that here.
-    let respHeaders = {
-      ...corsHeaders,
-      // Allow all future content Request headers to go back to browser
-      // such as Authorization (Bearer) or X-Client-Name-Version
-      "Access-Control-Allow-Headers": request.headers.get("Access-Control-Request-Headers"),
-    }
-    return new Response(null, {
-      headers: respHeaders,
-    })
-  }
-  else {
-    // Handle standard OPTIONS request.
-    // If you want to allow other HTTP Methods, you can do that here.
-    return new Response(null, {
-      headers: {
-        Allow: "GET, HEAD, POST, OPTIONS",
-      },
-    })
-  }
-}
-
-addEventListener('fetch', event => {
-
-  const {request} = event;
-  let { pathname } = new URL(event.request.url);
-
-  let response
-  switch (request.method) {
-    case "OPTIONS":
-      response = handleOptions(request);
-      break;
-    case "GET":
-      if (pathname === "/credential") {
-        response = new Response(static_json, {
-          headers: {
-            'content-type': 'application/json;charset=UTF-8',
-          },
-        })
-      }
-      if (pathname === "/getBox" && request.method === 'GET') {
-        response = GetFromKV(request)
-      }
-      break;
-    case "POST":
-      if (pathname === "/putBox") {
-        response = PutToKVStore(request)
-      }
-      if (pathname === "/auth") {
-        response = CheckAuthInfo(request)
-      }
-      break;
-    default:
-      response = new Response('Unexpected path/input data.')
-  }
-
-  response.headers.set("Access-Control-Allow-Origin", "*")
-  response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-  event.respondWith(response)
-})
-
-async function readRequestBody(request) {
-  const { headers } = request;
-  const contentType = headers.get('content-type') || ''
-  if (contentType.includes('application/json')) {
-    return await request.json();
-  } else {
-    return undefined
-  }
-}
-
-async function PutToKVStore(request) {
-  const body = await readRequestBody(request)
-  if (body === undefined) {
-    return new Response("Post was rejected because wrong ContentType. JSON is expected")
-  }
-  await CREDENTIALS.put(JSON.stringify(body["accountID"]), JSON.stringify(body["cryptoBox"]))
-  return new Response("Value has been stored")
-}
-
-// async function CheckAuthInfo(request) {
-//     const body = await readRequestBody(request)
-//     if (body === undefined) {
-//         return new Response("Post was rejected because wrong ContentType. JSON is expected")
-//     }
-
-//     return new Response("Value has been stored")
-// }
-
-async function GetFromKV(request) {
-  const body = await readRequestBody(request)
-  if (body === undefined) {
-    return new Response("Request was rejected because wrong ContentType. JSON is expected")
-  }
-  const value = await CREDENTIALS.get(JSON.stringify(body["accountID"]))
-  if (value === null) {
-    return new Response("Value not found", {status: 404})
-  }
-
-  return new Response(value)
-}
-
-async function readAuthRequestBody(request) {
+async function readAuthRequestBody(request: Request): Promise<string> {
   const { headers } = request;
   const contentType = headers.get('content-type') || ''
   if (contentType.includes('text/plain')) {
@@ -165,73 +31,139 @@ async function readAuthRequestBody(request) {
   }
 }
 
-async function CheckAuthInfo(request) {
-  const body = await readAuthRequestBody(request);
-  // console.log("Body after parsing HTML: ", body);
-  const body_str = "ClEKTwolL2Nvc21vcy5nb3YudjFiZXRhMS5Nc2dTdWJtaXRQcm9wb3NhbBImCiQKIC9jb3Ntb3MuZ292LnYxYmV0YTEuVGV4dFByb3Bvc2FsEgASYApOCkYKHy9jb3Ntb3MuY3J5cHRvLnNlY3AyNTZrMS5QdWJLZXkSIwohA5Z0cap3GEvq60O3jASn07tRQauuA45G736O6mFbTUt7EgQKAgh/Eg4KCgoFbmNoZXESATAQARpAjxsypQaDrWcdEJE3XJuz7t493t+DohzECHESM0KVPX0A4PGGRn6Xw6KC/RM4RNPrJ23wYtR/M5n9dlQz5Mg12w=="
-  const data = fromBase64(body);
-  const decoded = decodeTxRaw(data);
-
-  const registry = new Registry(defaultRegistryTypes);
-  for (const message of decoded.body.messages) {
-    console.log("Message: ", registry.decode(message));
+const handleAuthToken = async (token: Uint8Array): Promise<boolean> => {
+  const chainId = 'cheqd-testnet-4';
+  const decoded = decodeTxRaw(token);
+  // Check that TextProposal has expected title and was created not more then 30 seconds ago.
+  const isMsgValid = checkMsg(decoded);
+  if (!isMsgValid) {
+    return false;
   }
 
-  console.log("AsJSON: ", JSON.stringify(decoded))
+  // Get the signature from decoded message
+  const signature = decoded.signatures[0];
+  // Get public key
+  const raw_pubkey = getPubkey(decoded);
+  if (raw_pubkey == null) {
+    console.log('Pubkey is null');
+    return false;
+  }
 
-  console.log("Body: ", decoded.body)
-  console.log("AuthInfo: ", decoded.authInfo)
-  console.log("Signatures: ", decoded.signatures)
+  // Get sign mode
+  const signMode = getSignMode(decoded);
+  if (signMode === undefined) {
+    console.log('Sign mode is undefined')
+    return false;
+  }
+  // Get the doc
+  const doc = compileDoc(decoded, chainId, raw_pubkey);
+  if (doc == null) {
+    return false;
+  }
+  // Check the signature
+  let ok = false;
+  if (signMode === SignMode.SIGN_MODE_DIRECT) {
+    const signDoc = LumUtils.generateSignDoc(doc, 0, signMode);
+    const sortedJSON = {
+      accountNumber: signDoc.accountNumber,
+      authInfoBytes: signDoc.authInfoBytes,
+      bodyBytes: signDoc.bodyBytes,
+      chainId: signDoc.chainId,
+    };
+    const signed_bytes = LumUtils.generateSignDocBytes(sortedJSON);
+    ok = await LumUtils.verifySignature(signature, signed_bytes, raw_pubkey);
+  } else if (signMode === SignMode.SIGN_MODE_LEGACY_AMINO_JSON) {
+    const amino_doc_bytes = serializeSignDoc({
+      account_number: doc.signers[0].accountNumber.toString(),
+      chain_id: doc.chainId,
+      fee: doc.fee,
+      memo: doc.memo || '',
+      msgs: doc.messages.map((msg: any) => LumAminoRegistry.toAmino(msg)),
+      sequence: doc.signers[0].sequence.toString(),
+    });
+    ok = await LumUtils.verifySignature(signature, amino_doc_bytes, raw_pubkey);
+  }
 
-  console.log("Result of signature verification: ", await experimentalAdr36Verify(decoded))
+  return ok;
+};
 
-  return new Response( JSON.stringify( { ping: 'pong' } ) )
+// Utils
+
+function checkMsg(decoded: any): boolean {
+  const message = LumRegistry.decode(decoded.body.messages[0]);
+  const proposalMsg = LumRegistry.decode(message.content);
+  const description = JSON.parse(proposalMsg.description);
+  if (proposalMsg.title !== TITLE) {
+    return false;
+  }
+
+  return Date.now() - Date.parse(description.time) <= REPLY_PROTECTION_INTERVAL;
+
 }
 
-async function experimentalAdr36Verify(signed) {
-  // Restrictions from ADR-036
-  // if (signed.memo !== "") throw new Error("Memo must be empty.");
-  // if (signed.fee.gas !== "0") throw new Error("Fee gas must 0.");
-  // if (signed.fee.amount.length !== 0) throw new Error("Fee amount must be an empty array.");
-
-  const accountNumber = 0;
-  const sequence = 0;
-  const chainId = "";
-
-  // Check `msg` array
-  const signedMessages = signed.msg;
-  if (!signedMessages.every(isMsgSignData)) {
-    throw new Error(`Found message that is not the expected type.`);
-  }
-  if (signedMessages.length === 0) {
-    throw new Error("No message found. Without messages we cannot determine the signer address.");
-  }
-  // TODO: restrict number of messages?
-
-  const signatures = signed.signatures;
-  if (signatures.length !== 1) throw new Error("Must have exactly one signature to be supported.");
-  const signature = signatures[0];
-  if (!isSecp256k1Pubkey(signature.pub_key)) {
-    throw new Error("Only secp256k1 signatures are supported.");
+function getPubkey(decoded: any): Uint8Array | null {
+  const pubkey = decodePubkey(decoded.authInfo.signerInfos[0].publicKey);
+  if (pubkey == null) {
+    return null;
   }
 
-  const signBytes = serializeSignDoc(
-    makeSignDocAmino(signed.msg, signed.fee, chainId, signed.memo, accountNumber, sequence),
+  return fromBase64(pubkey.value);
+}
+
+function compileDoc(decoded: any, chainId: string, raw_pubkey: Uint8Array): any | null {
+  const message = LumRegistry.decode(decoded.body.messages[0]);
+  // Compile fee object
+  const fee = compileFee(decoded);
+  if (fee == null) {
+    return null;
+  }
+  // Compile docSigner
+  const docSigner = {
+    accountNumber: 0,
+    sequence: 0,
+    publicKey: raw_pubkey,
+  };
+  return {
+    chainId: chainId,
+    fee: fee,
+    memo: decoded.body.memo,
+    messages: [
+      {
+        typeUrl: decoded.body.messages[0].typeUrl,
+        value: message,
+      },
+    ],
+    signers: [docSigner],
+  };
+}
+
+function compileFee(decoded: any): any | null {
+  if (decoded.authInfo.fee === undefined) {
+    return false;
+  }
+  // Get the gas value
+  const _gas = new Long(
+    decoded.authInfo.fee.gasLimit.low,
+    decoded.authInfo.fee.gasLimit.high,
+    decoded.authInfo.fee.gasLimit.unsigned,
   );
-  const prehashed = sha256(signBytes);
+  return {
+    amount: decoded.authInfo.fee.amount,
+    gas: _gas.toString(),
+  };
+}
 
-  const secpSignature = Secp256k1Signature.fromFixedLength(fromBase64(signature.signature));
-  const rawSecp256k1Pubkey = fromBase64(signature.pub_key.value);
-  const rawSignerAddress = rawSecp256k1PubkeyToRawAddress(rawSecp256k1Pubkey);
+function getSignMode(decoded: any): number | undefined {
+  return decoded.authInfo.signerInfos[0].modeInfo?.single?.mode;
+}
 
-  if (
-    signedMessages.some(
-      (msg) => !arrayContentEquals(fromBech32(msg.value.signer).data, rawSignerAddress),
-    )
-  ) {
-    throw new Error("Found mismatch between signer in message and public key");
-  }
+function makeResponse(result: string): Response {
+  return new Response(
+    JSON.stringify({result: result}), {
+      headers: {
+        'content-type': 'application/json;charset=UTF-8',
+      },
+    })
+}
 
-  const ok = await Secp256k1.verifySignature(secpSignature, prehashed, rawSecp256k1Pubkey);
-  return ok;
-}  */
+export default handleAuthRequest
