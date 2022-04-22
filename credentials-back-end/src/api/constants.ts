@@ -313,10 +313,12 @@ export const INFURA_PROJECT_ID = '***REMOVED***'
 
 export const KMS_SECRET_KEY = '***REMOVED***'
 
-export const ISSUER_ID = 'rinkeby:0x97fd27892cdcD035dAe1fe71235c636044B59348'
+export const ISSUER_ID = 'did:ethr:rinkeby:0x97fd27892cdcD035dAe1fe71235c636044B59348'
 
 export const VC_CONTEXT = ['https://www.w3.org/2018/credentials/v1', 'https://veramo.io/contexts/profile/v1']
 
 export const VC_TYPE = 'VerifiableCredential'
 
 export const VC_SUBJECT = 'did:ethr:ropsten:0x0320ece5f7c4f59ee1f2ece0b24760f17b959a10387b7346aebd571a17395bd302'
+
+export const VC_PROOF_FORMAT = 'jwt'
