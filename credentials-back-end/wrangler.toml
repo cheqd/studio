@@ -1,5 +1,5 @@
 name = "credentials-back-end"
-type = "webpack"
+type = "javascript"
 zone_id = "afe3b66243382f27140e6feeaae848b5"
 account_id = "99b9572de9d3c33774965949416b82c9"
 route = ""
@@ -7,6 +7,6 @@ workers_dev = true
 compatibility_date = "2022-04-14"
 
 [build]
-command = "npm install && npm run build"
+command = "true"
 [build.upload]
 format = "service-worker"
