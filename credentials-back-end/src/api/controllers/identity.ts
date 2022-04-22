@@ -14,12 +14,11 @@ import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-m
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
 import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { Resolver } from 'did-resolver'
-import { CredentialIssuer, ICredentialIssuer } from '@veramo/credential-w3c'
+import { CredentialIssuer } from '@veramo/credential-w3c'
 import { getResolver as EthrDIDResolver } from 'ethr-did-resolver'
 import { getResolver as WebDIDResolver } from 'web-did-resolver'
 
-import { KMS_SECRET_KEY, INFURA_PROJECT_ID, VC_SUBJECT, ISSUER_ID, VC_CONTEXT, VC_TYPE, HEADERS, VC_PROOF_FORMAT } from '../constants'
-import { CredentialPayload, CredentialSubject } from '../types'
+import { INFURA_PROJECT_ID} from '../constants'
 
 export class Identity {
 
