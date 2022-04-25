@@ -75,13 +75,13 @@ export class CryptoBox {
 
         }
 
-        const isAllowed = await this.authenticated(cryptoJson["Authorization"]);
+        const isAllowed = await this.authenticated(request.headers.get("Authorization") || '');
         if (!isAllowed) {
             return new Response("Auth token is not valid.", {status: 500})
         }
 
         await this.storage.put(cryptoJson["accountID"], JSON.stringify(cryptoJson["cryptoBox"]))
-        return new Response("Value has been stored", {status: 500})
+        return new Response("Value has been stored");
     }
     
     async readJSONBody(request: Request): Promise<any>{
