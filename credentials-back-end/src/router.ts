@@ -3,11 +3,13 @@ import auth_router from './api/routes/authentication'
 import credentials_router from './api/routes/credentials'
 import error_handler from './error_handler'
 
-const router = Router({ base: '/api' })
+
+const router = Router()
 
 router
-    .all( '/authentication/*', auth_router.handle)
-    .all( '/credentials/*', credentials_router.handle)
-    .all( '*', error_handler )
+    .all( '/api/authentication/*', auth_router.handle)
+    .all( '/api/credentials/*', credentials_router.handle)
+
+router.all('*', error_handler)
 
 export default router
