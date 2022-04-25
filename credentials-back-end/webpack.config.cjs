@@ -1,5 +1,6 @@
 const path = require('path')
 const webpack = require('webpack')
+const TerserPlugin = require('terser-webpack-plugin')
 
 module.exports = {
   entry: './src/index.ts',
@@ -38,4 +39,14 @@ module.exports = {
           path: require.resolve('path-browserify'),
       },
   },
+  optimization: {
+    minimizer: [
+      new TerserPlugin({
+        parallel: true,
+        terserOptions: {
+          compress: true
+        }
+      })
+    ]
+  }
 }
