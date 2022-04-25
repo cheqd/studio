@@ -1,16 +1,13 @@
-import { decodePubkey, decodeTxRaw } from '@cosmjs/proto-signing'
+import { decodePubkey, decodeTxRaw, DecodedTxRaw, EncodeObject } from '@cosmjs/proto-signing'
 import { fromBase64 } from '@cosmjs/encoding'
-import { LumAminoRegistry, LumRegistry, LumUtils } from '@lum-network/sdk-javascript';
-import { SignMode } from '@lum-network/sdk-javascript/build/codec/cosmos/tx/signing/v1beta1/signing';
-import { serializeSignDoc } from '@cosmjs/amino';
-import Long from 'long';
+import { LumAminoRegistry, LumRegistry, LumUtils } from '@lum-network/sdk-javascript'
+import { SignMode } from '@lum-network/sdk-javascript/build/codec/cosmos/tx/signing/v1beta1/signing'
+import { Doc, Fee } from '@lum-network/sdk-javascript/build/types'
+import { serializeSignDoc } from '@cosmjs/amino'
+import Long from 'long'
+import { PROPOSAL_MESSAGE_TITLE as TITLE, REPLY_PROTECTION_INTERVAL } from '../constants'
 
-// constants
-const TITLE = 'AuthRequest';
-const REPLY_PROTECTION_INTERVAL = 30;
-
-
-const handleAuthRequest = async (request: Request): Promise<Response> => {
+export const handleAuthRequest = async (request: Request): Promise<Response> => {
   console.log('Request', JSON.stringify(request));
   const body = await readAuthRequestBody(request);
   if (body === '') {
@@ -78,7 +75,7 @@ const handleAuthToken = async (token: Uint8Array): Promise<boolean> => {
       chain_id: doc.chainId,
       fee: doc.fee,
       memo: doc.memo || '',
-      msgs: doc.messages.map((msg: any) => LumAminoRegistry.toAmino(msg)),
+      msgs: doc.messages.map((msg: EncodeObject) => LumAminoRegistry.toAmino(msg)),
       sequence: doc.signers[0].sequence.toString(),
     });
     ok = await LumUtils.verifySignature(signature, amino_doc_bytes, raw_pubkey);
@@ -89,7 +86,7 @@ const handleAuthToken = async (token: Uint8Array): Promise<boolean> => {
 
 // Utils
 
-function checkMsg(decoded: any): boolean {
+function checkMsg(decoded: DecodedTxRaw): boolean {
   const message = LumRegistry.decode(decoded.body.messages[0]);
   const proposalMsg = LumRegistry.decode(message.content);
   const description = JSON.parse(proposalMsg.description);
@@ -101,7 +98,7 @@ function checkMsg(decoded: any): boolean {
 
 }
 
-function getPubkey(decoded: any): Uint8Array | null {
+function getPubkey(decoded: DecodedTxRaw): Uint8Array | null {
   const pubkey = decodePubkey(decoded.authInfo.signerInfos[0].publicKey);
   if (pubkey == null) {
     return null;
@@ -110,7 +107,7 @@ function getPubkey(decoded: any): Uint8Array | null {
   return fromBase64(pubkey.value);
 }
 
-function compileDoc(decoded: any, chainId: string, raw_pubkey: Uint8Array): any | null {
+function compileDoc(decoded: DecodedTxRaw, chainId: string, raw_pubkey: Uint8Array): Doc | null {
   const message = LumRegistry.decode(decoded.body.messages[0]);
   // Compile fee object
   const fee = compileFee(decoded);
@@ -137,9 +134,9 @@ function compileDoc(decoded: any, chainId: string, raw_pubkey: Uint8Array): any 
   };
 }
 
-function compileFee(decoded: any): any | null {
+function compileFee(decoded: DecodedTxRaw): Fee | null {
   if (decoded.authInfo.fee === undefined) {
-    return false;
+    throw new Error('Fee is not set.');
   }
   // Get the gas value
   const _gas = new Long(
@@ -149,21 +146,25 @@ function compileFee(decoded: any): any | null {
   );
   return {
     amount: decoded.authInfo.fee.amount,
-    gas: _gas.toString(),
+    gas: _gas.toString()
   };
 }
 
-function getSignMode(decoded: any): number | undefined {
+function getSignMode(decoded: DecodedTxRaw): number | undefined {
   return decoded.authInfo.signerInfos[0].modeInfo?.single?.mode;
 }
 
 function makeResponse(result: string): Response {
   return new Response(
-    JSON.stringify({result: result}), {
+    JSON.stringify(
+      {
+        result: result
+      }
+    ), 
+    {
       headers: {
         'content-type': 'application/json;charset=UTF-8',
       },
-    })
+    }
+  )
 }
-
-export default handleAuthRequest
