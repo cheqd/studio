@@ -17,7 +17,7 @@ import { CredentialIssuer } from '@veramo/credential-w3c'
 import { getResolver as EthrDIDResolver } from 'ethr-did-resolver'
 import { getResolver as WebDIDResolver } from 'web-did-resolver'
 
-import { KMS_SECRET_KEY, INFURA_PROJECT_ID, VC_SUBJECT, ISSUER_ID, VC_CONTEXT, VC_TYPE, HEADERS, VC_PROOF_FORMAT } from '../constants'
+import { KMS_SECRET_KEY, INFURA_PROJECT_ID, VC_SUBJECT, ISSUER_ID, VC_CONTEXT, VC_TYPE, HEADERS, VC_PROOF_FORMAT, CORS_HEADERS } from '../constants'
 import { CredentialPayload, CredentialRequest, CredentialSubject } from '../types'
 
 import { Identity } from './identity'
@@ -109,7 +109,10 @@ export class Credentials {
                 2
             ),
             {
-                headers: HEADERS.json
+                headers: {
+                    ...CORS_HEADERS,
+                    ...HEADERS.json
+                }
             }
         )
     }
@@ -135,7 +138,10 @@ export class Credentials {
                 }
             ),
             {
-                headers: HEADERS.json
+                headers: {
+                    ...CORS_HEADERS,
+                    ...HEADERS.json
+                }
             }
         )
     }
