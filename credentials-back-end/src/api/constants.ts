@@ -4,9 +4,11 @@ export const HEADERS = {
 }
 
 export const CORS_HEADERS = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,OPTIONS',
-    'Access-Control-Max-Age': '86400'
+    [Symbol.iterator]: function*(): Record<any, any>{
+      yield { 'Access-Control-Allow-Origin': '*' }
+      yield { 'Access-Control-Allow-Methods': 'GET,OPTIONS' }
+      yield { 'Access-Control-Max-Age': '86400' }
+    }
 }
 
 export const DEFAULT_CONFIG = `
