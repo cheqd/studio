@@ -88,3 +88,5 @@ export interface PresentationPayload {
 
     [x: string]: any
 }
+
+export type CredentialRequest = Request & { credential?: W3CVerifiableCredential }
