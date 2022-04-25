@@ -21,6 +21,8 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^3.0.0",
+    "@miniflare/storage-redis": "^2.4.0",
+    "ioredis": "5.0.4",
     "@types/jest": "^26.0.23",
     "@types/service-worker-mock": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "^4.16.1",
@@ -44,6 +46,7 @@
     "@cosmjs/encoding": "^0.28.4",
     "@cosmjs/proto-signing": "^0.28.4",
     "@cosmjs/stargate": "^0.28.4",
+    "@lum-network/sdk-javascript": "^0.7.3",
     "@veramo/core": "^3.1.0",
     "@veramo/credential-w3c": "^3.1.0",
     "@veramo/data-store": "^3.1.0",
@@ -61,7 +64,6 @@
     "itty-router": "^2.6.1",
     "path-browserify": "1.0.1",
     "stream-browserify": "3.0.0",
-    "web-did-resolver": "^2.0.15",
-    "@lum-network/sdk-javascript": "^0.7.3"
+    "web-did-resolver": "^2.0.15"
   }
 }
