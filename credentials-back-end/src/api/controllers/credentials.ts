@@ -17,8 +17,8 @@ import { CredentialIssuer } from '@veramo/credential-w3c'
 import { getResolver as EthrDIDResolver } from 'ethr-did-resolver'
 import { getResolver as WebDIDResolver } from 'web-did-resolver'
 
-import { INFURA_PROJECT_ID, VC_SUBJECT, VC_CONTEXT, VC_TYPE, HEADERS, VC_PROOF_FORMAT } from '../constants'
-import { CredentialPayload, CredentialSubject } from '../types'
+import { KMS_SECRET_KEY, INFURA_PROJECT_ID, VC_SUBJECT, ISSUER_ID, VC_CONTEXT, VC_TYPE, HEADERS, VC_PROOF_FORMAT } from '../constants'
+import { CredentialPayload, CredentialRequest, CredentialSubject } from '../types'
 
 import { Identity } from './identity'
 
@@ -107,6 +107,32 @@ export class Credentials {
                 verifiable_credential,
                 null,
                 2
+            ),
+            {
+                headers: HEADERS.json
+            }
+        )
+    }
+
+    async verify_credentials(request: CredentialRequest): Promise<Response> {
+        if( !request.headers.get('Content-Type') || request.headers.get('Content-Type') != 'application/json' ) return new Response( JSON.stringify( { error: 'Unsupported media type.' } ), { status: 405, headers: HEADERS.json } )
+
+        const credential = request?.credential
+
+        if( !credential ) return new Response( JSON.stringify( { error: 'W3C Verifiable credential is not provided.' } ), { status: 400, headers: HEADERS.json } )
+
+        const verified = this.agent?.execute(
+            'verifyCredential',
+            {
+                credential: credential
+            }
+        )
+
+        return new Response(
+            JSON.stringify(
+                {
+                    verified: verified
+                }
             ),
             {
                 headers: HEADERS.json
