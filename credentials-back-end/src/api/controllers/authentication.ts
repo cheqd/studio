@@ -9,15 +9,15 @@ import { PROPOSAL_MESSAGE_TITLE as TITLE, REPLY_PROTECTION_INTERVAL } from '../c
 
 export const handleAuthRequest = async (request: Request): Promise<Response> => {
   console.log('Request', JSON.stringify(request));
-  const body = await readAuthRequestBody(request);
-  if (body === '') {
+  const token = await getAuthToken(request);
+  if (token === '') {
     return makeResponse("Body is empty!")
   }
-  const data = fromBase64(body);
-  return await handleAuthToken(data);
+  const res = await handleAuthToken(token);
+  return makeResponse(res.toString())
 }
 
-async function readAuthRequestBody(request: Request): Promise<string> {
+async function getAuthToken(request: Request): Promise<string> {
   const { headers } = request;
   const contentType = headers.get('content-type') || ''
   if (contentType.includes('text/plain')) {
@@ -27,9 +27,10 @@ async function readAuthRequestBody(request: Request): Promise<string> {
   }
 }
 
-const handleAuthToken = async (token: Uint8Array): Promise<Response> => {
+export const handleAuthToken = async (token: string): Promise<boolean> => {
+  const byte_array = fromBase64(token)
   const chainId = 'cheqd-testnet-4';
-  const decoded = decodeTxRaw(token);
+  const decoded = decodeTxRaw(byte_array);
   // Check that TextProposal has expected title and was created not more then 30 seconds ago.
   // const isMsgValid = checkMsg(decoded);
   // if (!isMsgValid) {
@@ -41,19 +42,19 @@ const handleAuthToken = async (token: Uint8Array): Promise<Response> => {
   // Get public key
   const raw_pubkey = getPubkey(decoded);
   if (raw_pubkey == null) {
-    return makeResponse("PublicKey is null");
+    return false;
   }
 
   // Get sign mode
   const signMode = getSignMode(decoded);
   if (signMode === undefined) {
     console.log('Sign mode is undefined')
-    return makeResponse("Sign mode is undefined");
+    return false
   }
   // Get the doc
   const doc = compileDoc(decoded, chainId, raw_pubkey);
   if (doc == null) {
-    return makeResponse("Internal error. Cannot compile the doc object");
+    return false
   }
   // Check the signature
   let ok = false;
@@ -79,7 +80,7 @@ const handleAuthToken = async (token: Uint8Array): Promise<Response> => {
     ok = await LumUtils.verifySignature(signature, amino_doc_bytes, raw_pubkey);
   }
 
-  return makeResponse(ok.toString());
+  return ok
 };
 
 // Utils
