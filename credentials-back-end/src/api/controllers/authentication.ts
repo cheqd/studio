@@ -162,7 +162,6 @@ function makeResponse(result: string): Response {
     ), 
     {
       headers: {
-        ...CORS_HEADERS,
         'content-type': 'application/json;charset=UTF-8',
       },
     }
