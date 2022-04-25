@@ -1,4 +1,6 @@
+import { handleAuthToken } from "./authentication";
 import { CORS_HEADERS, HEADERS } from "../constants";
+
 
 export class CryptoBox {
     storage: KVNamespace
@@ -10,6 +12,18 @@ export class CryptoBox {
     async handleGetCryptoBox(request: Request): Promise<Response> {
         const url = new URL(request.url);
         const accountId = url.pathname.split('/').pop() || "";
+
+        // const token = url.searchParams.get('authToken'
+        const token = request.headers.get("Authorization")
+        if (token === null) {
+            return new Response("Token is not placed in headers", {status: 500})
+        }
+
+        const isAllowed = await handleAuthToken(token)
+        if (!isAllowed) {
+            return new Response("Auth token is not valid.", {status: 500})
+        }
+
         return await this.GetFromKVStore(accountId)
     }
     
@@ -41,22 +55,33 @@ export class CryptoBox {
         })
     }
 
+    async authenticated(token: string): Promise<boolean> {
+        return await handleAuthToken(token)
+    }
+
     async putToKVStore(request: Request) {
-        const body = await this.readJSONBody(request)
-        if (body === undefined) {
+        const cryptoJson = await this.readJSONBody(request)
+        if (cryptoJson === undefined) {
             return new Response(
                 "Post was rejected because wrong ContentType. JSON is expected",
                 {
+                    status: 500,
                     headers: {
                         ...CORS_HEADERS,
                         ...HEADERS.text
                     }
                 }
-                )
+            )
+
         }
-        console.log("Put: sccountId: ", body["accountID"])
-        await this.storage.put(body["accountID"], JSON.stringify(body["cryptoBox"]))
-        return new Response("Value has been stored")
+
+        const isAllowed = await this.authenticated(cryptoJson["Authorization"]);
+        if (!isAllowed) {
+            return new Response("Auth token is not valid.", {status: 500})
+        }
+
+        await this.storage.put(cryptoJson["accountID"], JSON.stringify(cryptoJson["cryptoBox"]))
+        return new Response("Value has been stored", {status: 500})
     }
     
     async readJSONBody(request: Request): Promise<any>{
