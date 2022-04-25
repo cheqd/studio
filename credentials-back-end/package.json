@@ -61,6 +61,7 @@
     "itty-router": "^2.6.1",
     "path-browserify": "1.0.1",
     "stream-browserify": "3.0.0",
-    "web-did-resolver": "^2.0.15"
+    "web-did-resolver": "^2.0.15",
+    "@lum-network/sdk-javascript": "^0.7.3"
   }
 }
