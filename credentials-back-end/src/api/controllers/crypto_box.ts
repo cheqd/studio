@@ -1,4 +1,6 @@
 import { handleAuthToken } from "./authentication";
+import { CORS_HEADERS, HEADERS } from "../constants";
+
 
 export class CryptoBox {
     storage: KVNamespace
@@ -29,7 +31,16 @@ export class CryptoBox {
     
         const value = await this.storage.get(accountId)
         if (value === null) {
-            return new Response("Value not found", {status: 404})
+            return new Response(
+                "Value not found",
+                {
+                    status: 404,
+                    headers: {
+                        ...CORS_HEADERS,
+                        ...HEADERS.text
+                    }
+                }
+                )
         }
         const parsed_value = JSON.parse(value)
         const resp_value = {
@@ -38,6 +49,7 @@ export class CryptoBox {
         return new Response(
             JSON.stringify(resp_value),{
                 headers: {
+                    ...CORS_HEADERS,
                     'content-type': 'application/json;charset=UTF-8',
             },
         })
@@ -50,7 +62,17 @@ export class CryptoBox {
     async putToKVStore(request: Request) {
         const cryptoJson = await this.readJSONBody(request)
         if (cryptoJson === undefined) {
-            return new Response("Post was rejected because wrong ContentType. JSON is expected", {status: 500})
+            return new Response(
+                "Post was rejected because wrong ContentType. JSON is expected",
+                {
+                    status: 500,
+                    headers: {
+                        ...CORS_HEADERS,
+                        ...HEADERS.text
+                    }
+                }
+            )
+
         }
 
         const isAllowed = await this.authenticated(cryptoJson["Authorization"]);

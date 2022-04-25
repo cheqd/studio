@@ -5,7 +5,7 @@ import { SignMode } from '@lum-network/sdk-javascript/build/codec/cosmos/tx/sign
 import { Doc, Fee } from '@lum-network/sdk-javascript/build/types'
 import { serializeSignDoc } from '@cosmjs/amino'
 import Long from 'long'
-import { PROPOSAL_MESSAGE_TITLE as TITLE, REPLY_PROTECTION_INTERVAL } from '../constants'
+import { CORS_HEADERS, PROPOSAL_MESSAGE_TITLE as TITLE, REPLY_PROTECTION_INTERVAL } from '../constants'
 
 export const handleAuthRequest = async (request: Request): Promise<Response> => {
   console.log('Request', JSON.stringify(request));
@@ -162,6 +162,7 @@ function makeResponse(result: string): Response {
     ), 
     {
       headers: {
+        ...CORS_HEADERS,
         'content-type': 'application/json;charset=UTF-8',
       },
     }
