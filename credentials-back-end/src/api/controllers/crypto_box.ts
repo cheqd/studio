@@ -13,7 +13,6 @@ export class CryptoBox {
     
     async GetFromKVStore(accountId: string): Promise<Response> {
     
-        console.log("AccountId: ", accountId)
         const value = await this.storage.get(accountId)
         if (value === null) {
             return new Response("Value not found", {status: 404})
