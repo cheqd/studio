@@ -9,7 +9,7 @@ router
     () => new Response( JSON.stringify( { ping: 'pong' } ) )
   )
   .post(
-    '/auth',
+    '/exchangeWalletToken',
     handleAuthRequest
   )
 

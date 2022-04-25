@@ -14,8 +14,7 @@ export const handleAuthRequest = async (request: Request): Promise<Response> => 
     return makeResponse("Body is empty!")
   }
   const data = fromBase64(body);
-  const ok = await handleAuthToken(data);
-  return makeResponse(ok.toString())
+  return await handleAuthToken(data);
 }
 
 async function readAuthRequestBody(request: Request): Promise<string> {
@@ -28,34 +27,33 @@ async function readAuthRequestBody(request: Request): Promise<string> {
   }
 }
 
-const handleAuthToken = async (token: Uint8Array): Promise<boolean> => {
+const handleAuthToken = async (token: Uint8Array): Promise<Response> => {
   const chainId = 'cheqd-testnet-4';
   const decoded = decodeTxRaw(token);
   // Check that TextProposal has expected title and was created not more then 30 seconds ago.
-  const isMsgValid = checkMsg(decoded);
-  if (!isMsgValid) {
-    return false;
-  }
+  // const isMsgValid = checkMsg(decoded);
+  // if (!isMsgValid) {
+  //   return makeResponse("Message inside thte token is invalid");
+  // }
 
   // Get the signature from decoded message
   const signature = decoded.signatures[0];
   // Get public key
   const raw_pubkey = getPubkey(decoded);
   if (raw_pubkey == null) {
-    console.log('Pubkey is null');
-    return false;
+    return makeResponse("PublicKey is null");
   }
 
   // Get sign mode
   const signMode = getSignMode(decoded);
   if (signMode === undefined) {
     console.log('Sign mode is undefined')
-    return false;
+    return makeResponse("Sign mode is undefined");
   }
   // Get the doc
   const doc = compileDoc(decoded, chainId, raw_pubkey);
   if (doc == null) {
-    return false;
+    return makeResponse("Internal error. Cannot compile the doc object");
   }
   // Check the signature
   let ok = false;
@@ -81,7 +79,7 @@ const handleAuthToken = async (token: Uint8Array): Promise<boolean> => {
     ok = await LumUtils.verifySignature(signature, amino_doc_bytes, raw_pubkey);
   }
 
-  return ok;
+  return makeResponse(ok.toString());
 };
 
 // Utils
