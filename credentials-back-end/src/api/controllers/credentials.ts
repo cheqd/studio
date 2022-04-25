@@ -138,7 +138,6 @@ export class Credentials {
             ),
             {
                 headers: {
-                    ...CORS_HEADERS,
                     ...HEADERS.json
                 }
             }

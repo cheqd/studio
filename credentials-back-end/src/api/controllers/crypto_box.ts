@@ -36,7 +36,6 @@ export class CryptoBox {
                 {
                     status: 404,
                     headers: {
-                        ...CORS_HEADERS,
                         ...HEADERS.text
                     }
                 }
@@ -49,7 +48,6 @@ export class CryptoBox {
         return new Response(
             JSON.stringify(resp_value),{
                 headers: {
-                    ...CORS_HEADERS,
                     'content-type': 'application/json;charset=UTF-8',
             },
         })
@@ -67,7 +65,6 @@ export class CryptoBox {
                 {
                     status: 500,
                     headers: {
-                        ...CORS_HEADERS,
                         ...HEADERS.text
                     }
                 }
