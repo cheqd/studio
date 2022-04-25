@@ -322,3 +322,8 @@ export const VC_TYPE = 'VerifiableCredential'
 export const VC_SUBJECT = 'did:ethr:ropsten:0x0320ece5f7c4f59ee1f2ece0b24760f17b959a10387b7346aebd571a17395bd302'
 
 export const VC_PROOF_FORMAT = 'jwt'
+
+// Auth
+export const PROPOSAL_MESSAGE_TITLE = 'AuthRequest'
+
+export const REPLY_PROTECTION_INTERVAL = 30
