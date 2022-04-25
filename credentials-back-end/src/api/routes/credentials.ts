@@ -16,6 +16,15 @@ router.all(
     }
 )
 
+router.post(
+    '/verify',
+    async (request: Request) => {
+        //@ts-ignore
+        const credential_request: CredentialRequest = { ...request, credential: request.json()['credential'] }
+        return await ( new Credentials() ).verify_credentials(credential_request)
+    }
+)
+
 router.get(
     '/cryptoBox/*',
     async (request: Request) => {
