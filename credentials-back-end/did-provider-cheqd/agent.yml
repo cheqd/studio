@@ -1,27 +1,21 @@
-export const HEADERS = {
-    json: { 'Content-Type': 'application/json' },
-    text: { 'Content-Type': 'text/plain' },
-}
+##
+## This is an example configuration that uses the plugin and customizations from this template
+## alongside other default plugins to create an agent using `@veramo/cli`.
+##
+## Look for the `template: ` prefix in comments to see where things fit
+##
 
-export const CORS_HEADERS = {
-    [Symbol.iterator]: function*(): Record<any, any>{
-      yield { 'Access-Control-Allow-Origin': '*' }
-      yield { 'Access-Control-Allow-Methods': 'GET,OPTIONS' }
-      yield { 'Access-Control-Max-Age': '86400' }
-    }
-}
-
-export const DEFAULT_CONFIG = `
 version: 3.0
 
 constants:
-  baseUrl: http://localhost:3332
-  port: 3332
-  # please use your own X25519 key, this is only an example
-  # you can generate a new key by running \`veramo config gen-key\` in a terminal
-  dbEncryptionKey: 29739248cad1bd1a0fc4d9b75cd4d2990de535baf5caadfdf8d8f86664aa830c
+  baseUrl: http://localhost:3335
+  port: 3335
+# please use your own X25519 key, this is only an example
+  secretKey: 29739248cad1bd1a0fc4d9b75cd4d2990de535baf5caadfdf8d8f86664aa830c
   databaseFile: ./database.sqlite
   methods:
+    # This is the list of methods that may be executed on this agent.
+    # Methods that are NOT listed here cannot be executed, even if the plugins that implement them are installed.
     - keyManagerGetKeyManagementSystems
     - keyManagerCreate
     - keyManagerGet
@@ -46,7 +40,6 @@ constants:
     - didManagerRemoveService
     - resolveDid
     - getDIDComponentById
-    - discoverDid
     - dataStoreGetMessage
     - dataStoreSaveMessage
     - dataStoreGetVerifiableCredential
@@ -73,8 +66,10 @@ constants:
     - createSelectiveDisclosureRequest
     - getVerifiableCredentialsForSdr
     - validatePresentationAgainstSdr
+    # template: add your plugin methods here too. This assumes that your plugin is added to the agent. See below, toward the end of this config file.
+    - myPluginFoo
 
-# Data base
+# Database
 dbConnection:
   $require: typeorm?t=function#createConnection
   $args:
@@ -120,6 +115,7 @@ server:
     - - /agent
       - $require: '@veramo/remote-server?t=function#apiKeyAuth'
         $args:
+          # Please configure your own API key. This is used when executing agent methods through ${baseUrl}/agent or ${baseUrl}/api-docs
           - apiKey: test123
       - $require: '@veramo/remote-server?t=function#AgentRouter'
         $args:
@@ -130,7 +126,7 @@ server:
     - - /open-api.json
       - $require: '@veramo/remote-server?t=function#ApiSchemaRouter'
         $args:
-          - basePath: :3332/agent
+          - basePath: :3335/agent
             securityScheme: bearer
             apiName: Agent
             apiVersion: '1.0.0'
@@ -161,6 +157,7 @@ messageHandler:
   $require: '@veramo/message-handler#MessageHandler'
   $args:
     - messageHandlers:
+        # order matters
         - $require: '@veramo/did-comm#DIDCommMessageHandler'
         - $require: '@veramo/did-jwt#JwtMessageHandler'
         - $require: '@veramo/credential-w3c#W3cMessageHandler'
@@ -191,7 +188,7 @@ didResolver:
 ethr-did-resolver:
   $require: ethr-did-resolver?t=function&p=/ethr#getResolver
   $args:
-    - infuraProjectId: 3586660d179141e3801c3895de1c2eba
+    - infuraProjectId: 5ffc47f65c4042ce847ef66a3fa70d4c
 
 web-did-resolver:
   $require: web-did-resolver?t=function&p=/web#getResolver
@@ -209,36 +206,44 @@ keyManager:
   $require: '@veramo/key-manager#KeyManager'
   $args:
     - store:
-        $require: '@veramo/data-store#KeyStore'
+        $require: '@veramo/data-store#KeyStore' # template: or you can use './build#MyKeyStore' instead
         $args:
           - $ref: /dbConnection
       kms:
         local:
           $require: '@veramo/kms-local#KeyManagementSystem'
           $args:
-            - $require: '@veramo/data-store#PrivateKeyStore'
+            - $require: '@veramo/data-store#PrivateKeyStore' # template: or you can use './build#MyPrivateKeyStore' instead
               $args:
                 - $ref: /dbConnection
                 - $require: '@veramo/kms-local#SecretBox'
                   $args:
-                    - $ref: /constants/dbEncryptionKey
+                    - $ref: /constants/secretKey
+        # template: you can install your own Key Management System implementation too
+        my:
+          $require: ./build#MyKeyManagementSystem
 
 # DID Manager
 didManager:
   $require: '@veramo/did-manager#DIDManager'
   $args:
     - store:
-        $require: '@veramo/data-store#DIDStore'
+        $require: '@veramo/data-store#DIDStore' # template: or you can use './build#MyDIDStore'
         $args:
           - $ref: /dbConnection
       defaultProvider: did:ethr:rinkeby
       providers:
+        # template: you can install your customized DID provider like so
+        did:my:
+          $require: ./build#MyIdentifierProvider
+          $args:
+            - defaultKms: local
         did:ethr:
           $require: '@veramo/did-provider-ethr#EthrDIDProvider'
           $args:
             - defaultKms: local
               network: mainnet
-              rpcUrl: https://mainnet.infura.io/v3/3586660d179141e3801c3895de1c2eba
+              rpcUrl: https://mainnet.infura.io/v3/5ffc47f65c4042ce847ef66a3fa70d4c
               gas: 1000001
               ttl: 31104001
         did:ethr:rinkeby:
@@ -246,48 +251,13 @@ didManager:
           $args:
             - defaultKms: local
               network: rinkeby
-              rpcUrl: https://rinkeby.infura.io/v3/3586660d179141e3801c3895de1c2eba
-              gas: 1000001
-              ttl: 31104001
-        did:ethr:ropsten:
-          $require: '@veramo/did-provider-ethr#EthrDIDProvider'
-          $args:
-            - defaultKms: local
-              network: ropsten
-              rpcUrl: https://ropsten.infura.io/v3/3586660d179141e3801c3895de1c2eba
-              gas: 1000001
-              ttl: 31104001
-        did:ethr:kovan:
-          $require: '@veramo/did-provider-ethr#EthrDIDProvider'
-          $args:
-            - defaultKms: local
-              network: kovan
-              rpcUrl: https://kovan.infura.io/v3/3586660d179141e3801c3895de1c2eba
-              gas: 1000001
-              ttl: 31104001
-        did:ethr:goerli:
-          $require: '@veramo/did-provider-ethr#EthrDIDProvider'
-          $args:
-            - defaultKms: local
-              network: goerli
-              rpcUrl: https://goerli.infura.io/v3/3586660d179141e3801c3895de1c2eba
+              rpcUrl: https://rinkeby.infura.io/v3/5ffc47f65c4042ce847ef66a3fa70d4c
               gas: 1000001
               ttl: 31104001
         did:web:
           $require: '@veramo/did-provider-web#WebDIDProvider'
           $args:
             - defaultKms: local
-        did:key:
-          $require: '@veramo/did-provider-key#KeyDIDProvider'
-          $args:
-            - defaultKms: local
-
-didDiscovery:
-  $require: '@veramo/did-discovery#DIDDiscovery'
-  $args:
-    - providers:
-        - $require: '@veramo/did-manager#AliasDiscoveryProvider'
-        - $require: '@veramo/data-store#ProfileDiscoveryProvider'
 
 # Agent
 agent:
@@ -298,7 +268,6 @@ agent:
         - $ref: /keyManager
         - $ref: /didManager
         - $ref: /didResolver
-        - $ref: /didDiscovery
         - $ref: /messageHandler
         - $require: '@veramo/did-comm#DIDComm'
         - $require: '@veramo/credential-w3c#CredentialIssuer'
@@ -309,23 +278,5 @@ agent:
         - $require: '@veramo/data-store#DataStoreORM'
           $args:
             - $ref: /dbConnection
-`
-
-export const INFURA_PROJECT_ID = '3586660d179141e3801c3895de1c2eba'
-
-export const KMS_SECRET_KEY = '62b35a9a4c77e6c6af74aff7f06b870331fd37d59473f174e14a200bff01505e'
-
-export const ISSUER_ID = 'did:ethr:rinkeby:0x97fd27892cdcD035dAe1fe71235c636044B59348'
-
-export const VC_CONTEXT = ['https://www.w3.org/2018/credentials/v1', 'https://veramo.io/contexts/profile/v1']
-
-export const VC_TYPE = 'VerifiableCredential'
-
-export const VC_SUBJECT = 'did:cheqd:testnet:DBC2ED07-7CFD-4A'
-
-export const VC_PROOF_FORMAT = 'jwt'
-
-// Auth
-export const PROPOSAL_MESSAGE_TITLE = 'AuthRequest'
-
-export const REPLY_PROTECTION_INTERVAL = 30
+          # template: install your plugin on the `@veramo/cli` agent
+        - $require: ./build#MyAgentPlugin

@@ -2,7 +2,7 @@ import { CORS_HEADERS, HEADERS } from './api/constants'
 import router from './router'
 
 export const handleRequest = async ( request: Request ): Promise<Response> => {
-    router
+    return await router
         .handle( request )
         .then( (response: Response) => {
             for( const header of CORS_HEADERS ){
@@ -14,6 +14,7 @@ export const handleRequest = async ( request: Request ): Promise<Response> => {
 
             return response
         })
-
-    return new Response( JSON.stringify( { error: 'Unhandled exception occured.' } ), { status: 500, headers: { ...HEADERS.json } } )
+        .catch((error: Error) => {
+            return new Response( JSON.stringify( { error: 'Unhandled exception occured.' } ), { status: 500, headers: { ...HEADERS.json } } )
+        })
 }
