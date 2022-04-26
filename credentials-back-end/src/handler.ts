@@ -23,7 +23,7 @@ export const handleRequest = async ( request: Request ): Promise<Response> => {
             headers: corsHeaders
         })
     }
-    
+
     return await router
         .handle( request )
         .then( (response: Response) => {
