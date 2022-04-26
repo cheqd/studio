@@ -31,7 +31,7 @@ export class CheqdResolver {
  * @returns `DIDResolver`
  */
 export function getUniversalResolver(
-  url = 'https://did-resolver.cheqd.dev/1.0/identifiers/',
+  url: string = 'https://did-resolver.cheqd.dev/1.0/identifiers/',
 ): DIDResolver {
   if (!url) {
     throw Error('[did-resolver] Universal: url required')
@@ -68,7 +68,7 @@ export function getUniversalResolver(
  */
 export function getUniversalResolverFor(
         methods: string[],
-        url = 'https://did-resolver.cheqd.dev/1.0/identifiers/',
+        url: string = 'https://did-resolver.cheqd.dev/1.0/identifiers/',
     ): Record<string, DIDResolver> {
         const uniResolver = getUniversalResolver(url)
         const mapping: Record<string, DIDResolver> = {}
