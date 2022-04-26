@@ -17,6 +17,8 @@ import { CredentialIssuer } from '@veramo/credential-w3c'
 import { getResolver as EthrDIDResolver } from 'ethr-did-resolver'
 import { getResolver as WebDIDResolver } from 'web-did-resolver'
 
+import { CheqdDIDProvider } from '../../../did-provider-cheqd/src'
+
 import { KMS_SECRET_KEY, INFURA_PROJECT_ID, VC_SUBJECT, ISSUER_ID, VC_CONTEXT, VC_TYPE, HEADERS, VC_PROOF_FORMAT, CORS_HEADERS } from '../constants'
 import { CredentialPayload, CredentialRequest, CredentialSubject } from '../types'
 
@@ -46,16 +48,13 @@ export class Credentials {
                 //@ts-ignore
                 new DIDManager({
                     store: new MemoryDIDStore(),
-                    defaultProvider: 'did:ethr:rinkeby',
+                    defaultProvider: 'did:cheqd:testnet',
                     providers: {
-                        'did:ethr:rinkeby': new EthrDIDProvider({
-                            defaultKms: 'local',
-                            network: 'rinkeby',
-                            rpcUrl: `https://rinkeby.infura.io/v3/${INFURA_PROJECT_ID}`
-                        }),
-                        'did:web': new WebDIDProvider({
-                            defaultKms: 'local'
-                        })
+                        'did:cheqd:testnet': new CheqdDIDProvider(
+                            {
+                                defaultKms: 'local'
+                            }
+                        )
                     }
                 }),
                 new DIDResolverPlugin({

@@ -1,0 +1,54 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "debug OpenAPI server",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/node_modules/@veramo/cli/bin/veramo.js",
+      "args": ["--config", "${workspaceFolder}/agent.yml", "server"],
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "resolveSourceMapLocations": ["${workspaceFolder}/**", "**/node_modules/**"],
+      "autoAttachChildProcesses": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "debug myPluginFoo using @veramo/cli",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/node_modules/@veramo/cli/bin/veramo.js",
+      "args": [
+        "--config",
+        "${workspaceFolder}/agent.yml",
+        "execute",
+        "-m",
+        "myPluginFoo",
+        "-a",
+        "{\"did\": \"did:web:example.com\", \"foo\": \"hello\", \"bar\": \"world\"}"
+      ],
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "resolveSourceMapLocations": ["${workspaceFolder}/**", "**/node_modules/**"],
+      "autoAttachChildProcesses": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "debug integration tests",
+      "program": "${workspaceFolder}/node_modules/.bin/jest",
+      "args": ["--runInBand", "--coverage=false", "--config=jest.json"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "disableOptimisticBPs": true,
+      "windows": {
+        "program": "${workspaceFolder}/node_modules/jest/bin/jest"
+      },
+      "sourceMaps": true,
+      "resolveSourceMapLocations": ["${workspaceFolder}/**", "**/node_modules/**"]
+    }
+  ]
+}
