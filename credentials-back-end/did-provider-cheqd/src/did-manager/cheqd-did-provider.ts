@@ -37,7 +37,7 @@ export class CheqdDIDProvider extends AbstractIdentifierProvider {
         'base58btc',
         Multicodec.addPrefix('ed25519-pub', Buffer.from(key.publicKeyHex, 'hex'))
       )
-    ).toString()
+    ).toString().substr(0,32)
 
     const identifier: Omit<IIdentifier, 'provider'> = {
       did: 'did:cheqd:testnet:' + methodSpecificId,
