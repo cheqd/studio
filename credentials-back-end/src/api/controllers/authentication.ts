@@ -33,7 +33,7 @@ async function getAuthToken(request: Request): Promise<string> {
 
 export const handleAuthToken = async (token: string): Promise<boolean> => {
   const byte_array = fromBase64(token)
-  const chainId = 'cheqd-testnet-4';
+  const chainId = 'cheqd-mainnet-1';
   const decoded = decodeTxRaw(byte_array);
   // Check that TextProposal has expected title and was created not more then 30 seconds ago.
   // const isMsgValid = checkMsg(decoded);
