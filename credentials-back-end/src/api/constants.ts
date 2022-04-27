@@ -4,9 +4,11 @@ export const HEADERS = {
 }
 
 export const CORS_HEADERS = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,OPTIONS',
-    'Access-Control-Max-Age': '86400'
+    [Symbol.iterator]: function*(): Record<any, any>{
+      yield { 'Access-Control-Allow-Origin': '*' }
+      yield { 'Access-Control-Allow-Methods': 'GET,OPTIONS' }
+      yield { 'Access-Control-Max-Age': '86400' }
+    }
 }
 
 export const DEFAULT_CONFIG = `
@@ -319,6 +321,17 @@ export const VC_CONTEXT = ['https://www.w3.org/2018/credentials/v1', 'https://ve
 
 export const VC_TYPE = 'VerifiableCredential'
 
-export const VC_SUBJECT = 'did:ethr:ropsten:0x0320ece5f7c4f59ee1f2ece0b24760f17b959a10387b7346aebd571a17395bd302'
+export const VC_SUBJECT = 'did:cheqd:testnet:DBC2ED07-7CFD-4A'
 
 export const VC_PROOF_FORMAT = 'jwt'
+
+// Auth
+export const PROPOSAL_MESSAGE_TITLE = 'AuthRequest'
+
+export const REPLY_PROTECTION_INTERVAL = 30
+
+// Twitter Auth
+
+export const TWITTER_CONSUMER_KEY = '***REMOVED***'
+
+export const TWITTER_CONSUMER_SECRET = '***REMOVED***'

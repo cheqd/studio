@@ -6,9 +6,11 @@
   "type": "module",
   "scripts": {
     "build": "webpack",
+    "miniflare": "webpack && miniflare dist/worker.js",
     "format": "prettier --write  '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
     "lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
-    "test": "jest --config jestconfig.json --verbose"
+    "test": "jest --config jestconfig.json --verbose",
+    "analyze": "webpack --json > stats.json && webpack-bundle-analyzer stats.json"
   },
   "author": "author",
   "license": "MIT OR Apache-2.0",
@@ -21,6 +23,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^3.0.0",
+    "@miniflare/storage-redis": "^2.4.0",
     "@types/jest": "^26.0.23",
     "@types/service-worker-mock": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "^4.16.1",
@@ -28,7 +31,9 @@
     "eslint": "^7.21.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-config-typescript": "^3.0.0",
+    "ioredis": "^5.0.4",
     "jest": "^27.0.1",
+    "miniflare": "^2.4.0",
     "prettier": "^2.3.0",
     "service-worker-mock": "^2.0.5",
     "terser-webpack-plugin": "^5.3.1",
@@ -44,6 +49,9 @@
     "@cosmjs/encoding": "^0.28.4",
     "@cosmjs/proto-signing": "^0.28.4",
     "@cosmjs/stargate": "^0.28.4",
+    "@lum-network/sdk-javascript": "^0.7.3",
+    "@types/passport": "^1.0.7",
+    "@types/passport-twitter": "^1.0.37",
     "@veramo/core": "^3.1.0",
     "@veramo/credential-w3c": "^3.1.0",
     "@veramo/data-store": "^3.1.0",
@@ -54,9 +62,17 @@
     "@veramo/did-resolver": "^3.1.0",
     "@veramo/key-manager": "^3.1.0",
     "@veramo/kms-local": "^3.1.0",
+    "buffer": "6.0.3",
+    "crypto-browserify": "3.12.0",
     "did-resolver": "^3.2.0",
     "ethr-did-resolver": "^5.0.4",
     "itty-router": "^2.6.1",
+    "multibase": "4.0.6",
+    "multicodec": "3.2.1",
+    "passport": "^0.5.2",
+    "passport-twitter": "^1.0.4",
+    "path-browserify": "1.0.1",
+    "stream-browserify": "3.0.0",
     "web-did-resolver": "^2.0.15"
   }
 }
