@@ -1,4 +1,4 @@
-import { IIdentifier, IKey, IService, IAgentContext, IKeyManager } from '@veramo/core'
+import { IIdentifier, IKey, IService, IAgentContext, IKeyManager, ManagedKeyInfo } from '@veramo/core'
 import { AbstractIdentifierProvider } from '@veramo/did-manager'
 import Multibase from 'multibase'
 import Multicodec from 'multicodec'
@@ -30,14 +30,16 @@ export class CheqdDIDProvider extends AbstractIdentifierProvider {
     { kms, alias }: { kms?: string; alias?: string },
     context: IContext
   ): Promise<Omit<IIdentifier, 'provider'>> {
-    const key = await context.agent.keyManagerCreate({ kms: kms || this.defaultKms, type: 'Ed25519' })
+    const key: ManagedKeyInfo = await context.agent.keyManagerImport({ kms: kms || this.defaultKms, type: 'Ed25519', privateKeyHex: '9e6fc361404de7c5b48ba40ebf0e9b4b33d0788fb1c979a5a02c9becba2ae1c054266e5e068d2f00c4336fca2dde002ec7d2d1ea1753dd6a0679feb069ffca22', publicKeyHex: '54266e5e068d2f00c4336fca2dde002ec7d2d1ea1753dd6a0679feb069ffca22' })
 
-    const methodSpecificId = Buffer.from(
+    /* const methodSpecificId = Buffer.from(
       Multibase.encode(
         'base58btc',
         Multicodec.addPrefix('ed25519-pub', Buffer.from(key.publicKeyHex, 'hex'))
       )
-    ).toString().substr(0,32)
+    ).toString().substr(0,32) */
+
+    const methodSpecificId = 'z6fVEeX9YpnABifLvPTsgYmS4o5QGM77'
 
     const identifier: Omit<IIdentifier, 'provider'> = {
       did: 'did:cheqd:mainnet:' + methodSpecificId,

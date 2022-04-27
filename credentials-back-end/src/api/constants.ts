@@ -315,7 +315,9 @@ export const INFURA_PROJECT_ID = '3586660d179141e3801c3895de1c2eba'
 
 export const KMS_SECRET_KEY = '62b35a9a4c77e6c6af74aff7f06b870331fd37d59473f174e14a200bff01505e'
 
-export const ISSUER_ID = 'did:ethr:rinkeby:0x97fd27892cdcD035dAe1fe71235c636044B59348'
+export const ISSUER_ID = 'did:cheqd:mainnet:z6fVEeX9YpnABifLvPTsgYmS4o5QGM77'
+
+export const ISSUER_ID_PRIVATE_KEY_HEX = '9e6fc361404de7c5b48ba40ebf0e9b4b33d0788fb1c979a5a02c9becba2ae1c054266e5e068d2f00c4336fca2dde002ec7d2d1ea1753dd6a0679feb069ffca22'
 
 export const VC_CONTEXT = ['https://www.w3.org/2018/credentials/v1', 'https://veramo.io/contexts/profile/v1']
 
