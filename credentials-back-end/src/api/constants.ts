@@ -329,3 +329,9 @@ export const VC_PROOF_FORMAT = 'jwt'
 export const PROPOSAL_MESSAGE_TITLE = 'AuthRequest'
 
 export const REPLY_PROTECTION_INTERVAL = 30
+
+// Twitter Auth
+
+export const TWITTER_CONSUMER_KEY = '***REMOVED***'
+
+export const TWITTER_CONSUMER_SECRET = '***REMOVED***'

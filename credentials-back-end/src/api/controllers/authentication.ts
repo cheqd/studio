@@ -5,7 +5,11 @@ import { SignMode } from '@lum-network/sdk-javascript/build/codec/cosmos/tx/sign
 import { Doc, Fee } from '@lum-network/sdk-javascript/build/types'
 import { serializeSignDoc } from '@cosmjs/amino'
 import Long from 'long'
-import { CORS_HEADERS, PROPOSAL_MESSAGE_TITLE as TITLE, REPLY_PROTECTION_INTERVAL } from '../constants'
+
+import passport from 'passport'
+import { Profile, Strategy as TwitterStrategy } from 'passport-twitter'
+
+import { CORS_HEADERS, HEADERS, PROPOSAL_MESSAGE_TITLE as TITLE, REPLY_PROTECTION_INTERVAL, TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET } from '../constants'
 
 export const handleAuthRequest = async (request: Request): Promise<Response> => {
   console.log('Request', JSON.stringify(request));
@@ -166,4 +170,38 @@ function makeResponse(result: string): Response {
       },
     }
   )
+}
+
+const initialise_twitter_oauth = async (request: Request): Promise<any> => {
+
+  passport.use(
+    new TwitterStrategy({
+      consumerKey: TWITTER_CONSUMER_KEY,
+      consumerSecret: TWITTER_CONSUMER_SECRET,
+      callbackURL: '/api/authentication/twitter/callback'
+    },
+    function (access_token: string, refresh_token: string, user_profile: Profile, callback) {
+      return callback(undefined, user_profile)
+    }
+    )
+  )
+}
+
+export const callback_twitter_auth = async (request: Request): Promise<Response> => {
+  passport.authenticate('twitter', function (request) {
+    return new Response(
+      JSON.stringify(
+        { status: 'success' }
+      ),
+      {
+        headers: { ...HEADERS.json }
+      }
+    )
+  })
+}
+
+export const twitter_auth = async (request: Request): Promise<Response> => {
+  const init = await initialise_twitter_oauth(request)
+
+  return passport.authenticate('twitter')
 }
