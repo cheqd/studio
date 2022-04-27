@@ -10,7 +10,7 @@ router.all(
 )
 
 router.all(
-    '/issue',
+    '/issue/*',
     async (request: Request) => {
         return await ( new Credentials() ).issue_credentials(request)
     }
