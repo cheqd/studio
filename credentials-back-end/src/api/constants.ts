@@ -335,3 +335,5 @@ export const REPLY_PROTECTION_INTERVAL = 30
 export const TWITTER_CONSUMER_KEY = '***REMOVED***'
 
 export const TWITTER_CONSUMER_SECRET = '***REMOVED***'
+
+export const TWITTER_STATE_CSRF = '***REMOVED***'
