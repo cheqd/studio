@@ -48,9 +48,9 @@ export class Credentials {
                 //@ts-ignore
                 new DIDManager({
                     store: new MemoryDIDStore(),
-                    defaultProvider: 'did:cheqd:testnet',
+                    defaultProvider: 'did:cheqd:mainnet',
                     providers: {
-                        'did:cheqd:testnet': new CheqdDIDProvider(
+                        'did:cheqd:mainnet': new CheqdDIDProvider(
                             {
                                 defaultKms: 'local'
                             }

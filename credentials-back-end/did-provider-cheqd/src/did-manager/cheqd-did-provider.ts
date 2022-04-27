@@ -40,7 +40,7 @@ export class CheqdDIDProvider extends AbstractIdentifierProvider {
     ).toString().substr(0,32)
 
     const identifier: Omit<IIdentifier, 'provider'> = {
-      did: 'did:cheqd:testnet:' + methodSpecificId,
+      did: 'did:cheqd:mainnet:' + methodSpecificId,
       controllerKeyId: key.kid,
       keys: [key],
       services: [],
