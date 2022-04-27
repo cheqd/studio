@@ -212,6 +212,7 @@ export const callback_twitter_auth = async (request: Request): Promise<Response>
 
   } catch ( error ) {
     console.error( error )
+    return new Response( JSON.stringify( { error: error } ), { status: 500, headers: { ...HEADERS.json } } )
   }
 }
 
