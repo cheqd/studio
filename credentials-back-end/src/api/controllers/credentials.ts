@@ -90,7 +90,7 @@ export class Credentials {
             type: [ VC_TYPE ],
             issuanceDate: new Date().toISOString(),
             credentialSubject: credential_subject,
-            name: "Ankur Banerjee",
+            name: "IIW 2022",
         }
 
         const verifiable_credential = await this.agent.execute(
