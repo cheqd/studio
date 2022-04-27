@@ -315,7 +315,9 @@ export const INFURA_PROJECT_ID = '***REMOVED***'
 
 export const KMS_SECRET_KEY = '***REMOVED***'
 
-export const ISSUER_ID = 'did:ethr:rinkeby:0x97fd27892cdcD035dAe1fe71235c636044B59348'
+export const ISSUER_ID = '***REMOVED***'
+
+export const ISSUER_ID_PRIVATE_KEY_HEX = '***REMOVED***'
 
 export const VC_CONTEXT = ['https://www.w3.org/2018/credentials/v1', 'https://veramo.io/contexts/profile/v1']
 
