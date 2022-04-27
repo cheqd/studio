@@ -10,15 +10,17 @@ import { DIDManager, MemoryDIDStore } from '@veramo/did-manager'
 import { EthrDIDProvider } from '@veramo/did-provider-ethr'
 import { WebDIDProvider } from '@veramo/did-provider-web'
 import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager'
-import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
+import { KeyManagementSystem } from '@veramo/kms-local'
 import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { Resolver } from 'did-resolver'
-import { CredentialIssuer, ICredentialIssuer } from '@veramo/credential-w3c'
+import { CredentialIssuer } from '@veramo/credential-w3c'
 import { getResolver as EthrDIDResolver } from 'ethr-did-resolver'
 import { getResolver as WebDIDResolver } from 'web-did-resolver'
 
-import { KMS_SECRET_KEY, INFURA_PROJECT_ID, VC_SUBJECT, ISSUER_ID, VC_CONTEXT, VC_TYPE, HEADERS, VC_PROOF_FORMAT } from '../constants'
-import { CredentialPayload, CredentialSubject } from '../types'
+import { CheqdDIDProvider } from '../../../did-provider-cheqd/src'
+
+import { KMS_SECRET_KEY, INFURA_PROJECT_ID, VC_SUBJECT, ISSUER_ID, VC_CONTEXT, VC_TYPE, HEADERS, VC_PROOF_FORMAT, CORS_HEADERS } from '../constants'
+import { CredentialPayload, CredentialRequest, CredentialSubject } from '../types'
 
 import { Identity } from './identity'
 
@@ -46,16 +48,13 @@ export class Credentials {
                 //@ts-ignore
                 new DIDManager({
                     store: new MemoryDIDStore(),
-                    defaultProvider: 'did:ethr:rinkeby',
+                    defaultProvider: 'did:cheqd:mainnet',
                     providers: {
-                        'did:ethr:rinkeby': new EthrDIDProvider({
-                            defaultKms: 'local',
-                            network: 'rinkeby',
-                            rpcUrl: `https://rinkeby.infura.io/v3/${INFURA_PROJECT_ID}`
-                        }),
-                        'did:web': new WebDIDProvider({
-                            defaultKms: 'local'
-                        })
+                        'did:cheqd:mainnet': new CheqdDIDProvider(
+                            {
+                                defaultKms: 'local'
+                            }
+                        )
                     }
                 }),
                 new DIDResolverPlugin({
@@ -90,7 +89,8 @@ export class Credentials {
             '@context': VC_CONTEXT,
             type: [ VC_TYPE ],
             issuanceDate: new Date().toISOString(),
-            credentialSubject: credential_subject
+            credentialSubject: credential_subject,
+            name: "Ankur Banerjee",
         }
 
         const verifiable_credential = await this.agent.execute(
@@ -109,7 +109,37 @@ export class Credentials {
                 2
             ),
             {
-                headers: HEADERS.json
+                headers: {
+                    ...HEADERS.json
+                }
+            }
+        )
+    }
+
+    async verify_credentials(request: CredentialRequest): Promise<Response> {
+        if( !request.headers.get('Content-Type') || request.headers.get('Content-Type') != 'application/json' ) return new Response( JSON.stringify( { error: 'Unsupported media type.' } ), { status: 405, headers: HEADERS.json } )
+
+        const credential = request?.credential
+
+        if( !credential ) return new Response( JSON.stringify( { error: 'W3C Verifiable credential is not provided.' } ), { status: 400, headers: HEADERS.json } )
+
+        const verified = this.agent?.execute(
+            'verifyCredential',
+            {
+                credential: credential
+            }
+        )
+
+        return new Response(
+            JSON.stringify(
+                {
+                    verified: verified
+                }
+            ),
+            {
+                headers: {
+                    ...HEADERS.json
+                }
             }
         )
     }
