@@ -95,7 +95,7 @@ export class Credentials {
             type: [ VC_TYPE ],
             issuanceDate: new Date().toISOString(),
             credentialSubject: credential_subject,
-            name: "IIW 2022",
+            name: "I got this credential at #IIW 34 in April 2022",
         }
 
         const verifiable_credential = await this.agent.execute(
