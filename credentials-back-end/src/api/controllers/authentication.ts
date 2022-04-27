@@ -6,10 +6,10 @@ import { Doc, Fee } from '@lum-network/sdk-javascript/build/types'
 import { serializeSignDoc } from '@cosmjs/amino'
 import Long from 'long'
 
-import passport from 'passport'
-import { Profile, Strategy as TwitterStrategy } from 'passport-twitter'
+import { Client, auth } from 'twitter-api-sdk'
 
-import { CORS_HEADERS, HEADERS, PROPOSAL_MESSAGE_TITLE as TITLE, REPLY_PROTECTION_INTERVAL, TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET } from '../constants'
+import { CORS_HEADERS, HEADERS, PROPOSAL_MESSAGE_TITLE as TITLE, REPLY_PROTECTION_INTERVAL, TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET, TWITTER_STATE_CSRF } from '../constants'
+import { GenerateAuthUrlOptions, OAuth2User, OAuth2UserOptions } from 'twitter-api-sdk/dist/OAuth2User'
 
 export const handleAuthRequest = async (request: Request): Promise<Response> => {
   console.log('Request', JSON.stringify(request));
@@ -172,36 +172,65 @@ function makeResponse(result: string): Response {
   )
 }
 
-const initialise_twitter_oauth = async (request: Request): Promise<any> => {
+export type TwitterClient = { client: Client, auth_client: OAuth2User }
 
-  passport.use(
-    new TwitterStrategy({
-      consumerKey: TWITTER_CONSUMER_KEY,
-      consumerSecret: TWITTER_CONSUMER_SECRET,
-      callbackURL: '/api/authentication/twitter/callback'
-    },
-    function (access_token: string, refresh_token: string, user_profile: Profile, callback) {
-      return callback(undefined, user_profile)
-    }
-    )
-  )
+const initialise_twitter_client = (): TwitterClient  => {
+  const auth_client = new auth.OAuth2User({
+    client_id: TWITTER_CONSUMER_KEY as string,
+    client_secret: TWITTER_CONSUMER_SECRET as string,
+    callback: 'https://identity-apis.cheqd.network/api/authentication/twitter/callback',
+    scopes: [ 'users.read' ]
+  } as OAuth2UserOptions)
+
+  return { client: new Client(auth_client), auth_client: auth_client}
 }
 
 export const callback_twitter_auth = async (request: Request): Promise<Response> => {
-  passport.authenticate('twitter', function (request) {
+  const { client, auth_client } = initialise_twitter_client()
+  try{
+    const url_query_params = new URLSearchParams( request.url )
+
+    const code = url_query_params.get('code')
+    const state = url_query_params.get('state')
+
+    if( state != TWITTER_STATE_CSRF ) return new Response( JSON.stringify( { error: 'Non matching states.' } ), { status: 400, headers: { ...HEADERS.json } } )
+
+    if( !code ) return new Response( JSON.stringify( { error: 'Code is not provided.' } ), { status: 400, headers: { ...HEADERS.json } } )
+
+    await auth_client.requestAccessToken( code as string )
+
+    const user = client.users.findMyUser()
+
     return new Response(
       JSON.stringify(
-        { status: 'success' }
+        { twitter_user: user }
       ),
       {
         headers: { ...HEADERS.json }
       }
     )
-  })
+
+  } catch ( error ) {
+    console.error( error )
+  }
 }
 
 export const twitter_auth = async (request: Request): Promise<Response> => {
-  const init = await initialise_twitter_oauth(request)
+  const { client, auth_client } = initialise_twitter_client()
 
-  return passport.authenticate('twitter')
+  const auth_url = auth_client.generateAuthURL({
+    state: TWITTER_STATE_CSRF as string,
+    code_challenge_method: 's256'
+  } as GenerateAuthUrlOptions)
+
+  return new Response(
+    JSON.stringify(
+      {
+        auth_url: auth_url
+      }
+    ),
+    {
+      headers: { ...HEADERS.json }
+    }
+  )
 }
