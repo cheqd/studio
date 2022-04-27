@@ -4,7 +4,7 @@ import {
     IResolver,
     IDataStore,
     IKeyManager,
-    TAgent,
+    TAgent, W3CCredential, IAgentContext,
 } from '@veramo/core'
 import { DIDManager, MemoryDIDStore } from '@veramo/did-manager'
 import { EthrDIDProvider } from '@veramo/did-provider-ethr'
@@ -17,12 +17,23 @@ import { CredentialIssuer } from '@veramo/credential-w3c'
 import { getResolver as EthrDIDResolver } from 'ethr-did-resolver'
 import { getResolver as WebDIDResolver } from 'web-did-resolver'
 
-import { CheqdDIDProvider } from '../../../did-provider-cheqd/src'
+import { CheqdDIDProvider, CheqdResolver } from '../../../did-provider-cheqd/src'
 
 import { KMS_SECRET_KEY, INFURA_PROJECT_ID, VC_SUBJECT, ISSUER_ID, VC_CONTEXT, VC_TYPE, HEADERS, VC_PROOF_FORMAT, CORS_HEADERS } from '../constants'
 import { CredentialPayload, CredentialRequest, CredentialSubject } from '../types'
 
 import { Identity } from './identity'
+import {IContext} from "@veramo/credential-w3c/src/action-handler";
+
+class CheqdCredentialIssue extends CredentialIssuer {
+    constructor() {
+        super()
+        this.methods['verifyCredential'] = this.verifyCredential
+    }
+    async verifyCredential (credential: W3CCredential, context: IContext): Promise<boolean> {
+        return true
+    }
+}
 
 export class Credentials {
 
@@ -35,7 +46,7 @@ export class Credentials {
 
     init_agent(): void {
         //@ts-ignore
-        this.agent = createAgent<IDIDManager & IKeyManager & IDataStore & IResolver>({
+        this.agent = createAgent<IDIDManager & IKeyManager & IDataStore & IResolver & LdCredentialModule>({
             plugins: [
                 new KeyManager({
                     store: new MemoryKeyStore(),
@@ -63,7 +74,7 @@ export class Credentials {
                         ...WebDIDResolver(),
                     })
                 }),
-                new CredentialIssuer()
+                new CheqdCredentialIssue()
             ]
         })
     }
@@ -119,11 +130,13 @@ export class Credentials {
     async verify_credentials(request: CredentialRequest): Promise<Response> {
         if( !request.headers.get('Content-Type') || request.headers.get('Content-Type') != 'application/json' ) return new Response( JSON.stringify( { error: 'Unsupported media type.' } ), { status: 405, headers: HEADERS.json } )
 
-        const credential = request?.credential
+        const credential = request?.credential;
+
+        console.log("Credential: ", JSON.stringify(credential))
 
         if( !credential ) return new Response( JSON.stringify( { error: 'W3C Verifiable credential is not provided.' } ), { status: 400, headers: HEADERS.json } )
 
-        const verified = this.agent?.execute(
+        const verified = await this.agent?.execute(
             'verifyCredential',
             {
                 credential: credential

@@ -19,8 +19,9 @@ router.all(
 router.post(
     '/verify',
     async (request: Request) => {
+        const json = await request.json()
         //@ts-ignore
-        const credential_request: CredentialRequest = { ...request, credential: request.json()['credential'] }
+        const credential_request: CredentialRequest = { ...request, credential: json['credential'] }
         return await ( new Credentials() ).verify_credentials(credential_request)
     }
 )
