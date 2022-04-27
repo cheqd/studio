@@ -69,6 +69,9 @@ export class Credentials {
     }
 
     async issue_credentials(request: Request): Promise<Response> {
+        const url = new URL(request.url);
+        const public_key = url.pathname.split('/').pop() || "";
+
         if( !this.agent ) throw new Error('No initialised agent found.')
 
         const issuer_id = await (new Identity(
@@ -80,9 +83,11 @@ export class Credentials {
         )
 
         const credential_subject: CredentialSubject = {
-            id: VC_SUBJECT,
+            id: public_key,
             type: undefined
         }
+
+        console.log("Credential subject", JSON.stringify(credential_subject))
 
         const credential: CredentialPayload = {
             issuer: { id: issuer_id.did },
