@@ -7,15 +7,12 @@ import {
     TAgent,
 } from '@veramo/core'
 import { DIDManager, MemoryDIDStore } from '@veramo/did-manager'
-import { EthrDIDProvider } from '@veramo/did-provider-ethr'
-import { WebDIDProvider } from '@veramo/did-provider-web'
 import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager'
 import { KeyManagementSystem } from '@veramo/kms-local'
 import { DIDResolverPlugin } from '@veramo/did-resolver'
-import { Resolver } from 'did-resolver'
-import { CredentialIssuer } from '@veramo/credential-w3c'
-import { getResolver as EthrDIDResolver } from 'ethr-did-resolver'
-import { getResolver as WebDIDResolver } from 'web-did-resolver'
+import { DIDResolver, Resolver, ResolverRegistry } from 'did-resolver'
+import { CredentialIssuer } from '../../../cheqd-credential-issuer/src'
+//import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 
 import { CheqdDIDProvider } from '../../../did-provider-cheqd/src'
 
@@ -23,6 +20,7 @@ import { KMS_SECRET_KEY, INFURA_PROJECT_ID, VC_SUBJECT, ISSUER_ID, VC_CONTEXT, V
 import { CredentialPayload, CredentialRequest, CredentialSubject } from '../types'
 
 import { Identity } from './identity'
+import { getResolver as CheqdDidResolver } from '../../../did-provider-cheqd/src/did-manager/cheqd-did-resolver'
 
 export class Credentials {
 
@@ -59,11 +57,16 @@ export class Credentials {
                 }),
                 new DIDResolverPlugin({
                     resolver: new Resolver({
-                        ...EthrDIDResolver({ infuraProjectId: INFURA_PROJECT_ID }),
-                        ...WebDIDResolver(),
+                        /* ...EthrDIDResolver({ infuraProjectId: INFURA_PROJECT_ID }),
+                        ...WebDIDResolver(), */
+                        ...CheqdDidResolver() as ResolverRegistry
                     })
                 }),
-                new CredentialIssuer()
+                new CredentialIssuer(),
+                /* new CredentialIssuerLD({
+                    contextMaps: [ LdDefaultContexts ],
+                    suites: [ new VeramoEd25519Signature2018() ]
+                }), */
             ]
         })
     }
@@ -83,11 +86,9 @@ export class Credentials {
         )
 
         const credential_subject: CredentialSubject = {
-            id: public_key,
+            id: `did:key:${public_key}`,
             type: undefined
         }
-
-        console.log("Credential subject", JSON.stringify(credential_subject))
 
         const credential: CredentialPayload = {
             issuer: { id: issuer_id.did },
@@ -128,7 +129,7 @@ export class Credentials {
 
         if( !credential ) return new Response( JSON.stringify( { error: 'W3C Verifiable credential is not provided.' } ), { status: 400, headers: HEADERS.json } )
 
-        const verified = this.agent?.execute(
+        const verified = await this.agent?.execute(
             'verifyCredential',
             {
                 credential: credential

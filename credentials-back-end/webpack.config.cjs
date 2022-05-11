@@ -28,6 +28,8 @@ module.exports = {
         crypto: 'crypto-browserify',
         stream: 'stream-browserify',
         path: 'path-browserify',
+        fs: 'browserify-fs',
+        process: 'process/browser.js'
     }),
   ],
   resolve: {
@@ -37,6 +39,8 @@ module.exports = {
           crypto: require.resolve('crypto-browserify'),
           stream: require.resolve('stream-browserify'),
           path: require.resolve('path-browserify'),
+          fs: require.resolve('browserify-fs'),
+          process: require.resolve('process/browser.js')
       },
   },
   optimization: {
