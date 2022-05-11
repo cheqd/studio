@@ -1,6 +1,7 @@
 import { Router } from 'itty-router'
 import { Credentials } from '../controllers/credentials'
 import { CryptoBox } from '../controllers/crypto_box'
+import { CredentialRequest, W3CVerifiableCredential } from '../types'
 
 const router = Router({ base: '/api/credentials' })
 
@@ -19,8 +20,11 @@ router.all(
 router.post(
     '/verify',
     async (request: Request) => {
+        const _body: Record<any, any> = await request.json()
+        const _credential = _body[ 'credential' ]
         //@ts-ignore
-        const credential_request: CredentialRequest = { ...request, credential: request.json()['credential'] }
+        const credential_request: CredentialRequest = { ...request as Request, credential: _credential as W3CVerifiableCredential }
+        console.warn(credential_request)
         return await ( new Credentials() ).verify_credentials(credential_request)
     }
 )
