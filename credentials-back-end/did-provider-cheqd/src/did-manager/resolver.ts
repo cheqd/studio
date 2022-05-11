@@ -1,5 +1,4 @@
 import { DIDResolutionResult, DIDResolver } from 'did-resolver'
-import fetch from 'cross-fetch'
 
 interface Options {
   url: string
@@ -31,7 +30,7 @@ export class CheqdResolver {
  * @returns `DIDResolver`
  */
 export function getUniversalResolver(
-  url: string = 'https://did-resolver.cheqd.dev/1.0/identifiers/',
+  url: string = 'https://resolver.cheqd.net/1.0/identifiers/',
 ): DIDResolver {
   if (!url) {
     throw Error('[did-resolver] Universal: url required')
@@ -68,7 +67,7 @@ export function getUniversalResolver(
  */
 export function getUniversalResolverFor(
         methods: string[],
-        url: string = 'https://did-resolver.cheqd.dev/1.0/identifiers/',
+        url: string = 'https://resolver.cheqd.net/1.0/identifiers/',
     ): Record<string, DIDResolver> {
         const uniResolver = getUniversalResolver(url)
         const mapping: Record<string, DIDResolver> = {}
