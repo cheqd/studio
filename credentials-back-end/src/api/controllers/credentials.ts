@@ -110,7 +110,6 @@ export class Credentials {
         if( verifiable_credential?.sub ) delete verifiable_credential.sub
         if( verifiable_credential?.iss ) delete verifiable_credential.iss
         if( verifiable_credential?.nbf ) delete verifiable_credential.nbf
-        if( verifiable_credential?.iat ) delete verifiable_credential.iat
         if( verifiable_credential?.exp ) delete verifiable_credential.exp
 
         return new Response(
