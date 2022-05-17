@@ -306,18 +306,18 @@
     "@transmute/did-context" "^0.6.1-unstable.25"
     "jsonld-checker" "^0.1.6"
 
-"@eengineer1/did-jwt-vc@^2.1.9-cheqd-fixes":
-  "integrity" "sha512-15ClK4SibBfrU4zgSOB1SI9J0jdFx/OHpAvlvnaGRYjsAL3i/44+pz6aGV7PA3GrECQ8Ztv0CG7l5qI774W5FQ=="
-  "resolved" "https://registry.npmjs.org/@eengineer1/did-jwt-vc/-/did-jwt-vc-2.1.9-cheqd-fixes.tgz"
-  "version" "2.1.9-cheqd-fixes"
+"@eengineer1/did-jwt-vc@^2.1.9-cheqd-dep":
+  "integrity" "sha512-zKl5NWUzwonJn+M94qSZamF1EBByC9znt1hCo9GlINT41LxOpsug79Hlsu4Llw69J0U5f9Mo+ITeh+1iYnD27g=="
+  "resolved" "https://registry.npmjs.org/@eengineer1/did-jwt-vc/-/did-jwt-vc-2.1.9-cheqd-dep.tgz"
+  "version" "2.1.9-cheqd-dep"
   dependencies:
-    "@eengineer1/did-jwt" "^6.0.0-cheqd"
+    "@eengineer1/did-jwt" "^6.0.1-cheqd"
     "did-resolver" "^3.1.5"
 
-"@eengineer1/did-jwt@^6.0.0-cheqd":
-  "integrity" "sha512-Ev5nhLjVSDbQAkeL7oyB/t8IBtDvnpD4dPtfklDEaWhVpByyUOh5cwD7tBg6fgzPZCUYsHL0lxa479TQ3CtLbg=="
-  "resolved" "https://registry.npmjs.org/@eengineer1/did-jwt/-/did-jwt-6.0.0-cheqd.tgz"
-  "version" "6.0.0-cheqd"
+"@eengineer1/did-jwt@^6.0.1-cheqd":
+  "integrity" "sha512-UnHjt5AB9iRwqsfwvypKt8p9/MIMbiJCnt+lrDOVduAH/APvbRNDWf1iZNvDJwy84BRyDRGyG9reKN90z2WPLA=="
+  "resolved" "https://registry.npmjs.org/@eengineer1/did-jwt/-/did-jwt-6.0.1-cheqd.tgz"
+  "version" "6.0.1-cheqd"
   dependencies:
     "@stablelib/ed25519" "^1.0.2"
     "@stablelib/random" "^1.0.1"

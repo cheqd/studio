@@ -30,22 +30,21 @@ export class CheqdDIDProvider extends AbstractIdentifierProvider {
     { kms, alias }: { kms?: string; alias?: string },
     context: IContext
   ): Promise<Omit<IIdentifier, 'provider'>> {
-    const key: ManagedKeyInfo = await context.agent.keyManagerImport({ kms: kms || this.defaultKms, type: 'Ed25519', privateKeyHex: '***REMOVED***', publicKeyHex: '***REMOVED***' })
+    const key: ManagedKeyInfo = await context.agent.keyManagerCreate({ kms: kms || this.defaultKms, type: 'Ed25519' })
 
-    /* const methodSpecificId = Buffer.from(
+    const methodSpecificId = Buffer.from(
       Multibase.encode(
         'base58btc',
         Multicodec.addPrefix('ed25519-pub', Buffer.from(key.publicKeyHex, 'hex'))
       )
-    ).toString().substr(0,32) */
+    ).toString().substr(0,32)
 
-    const methodSpecificId = '***REMOVED***'
-
-    const identifier: Omit<IIdentifier, 'provider'> = {
+    const identifier: IIdentifier = {
       did: '***REMOVED***' + methodSpecificId,
       controllerKeyId: key.kid,
       keys: [key],
       services: [],
+      provider: 'cheqd'
     }
 
     // TODO: Implement custom debugger on creation.
