@@ -325,7 +325,9 @@ export const VC_TYPE = 'VerifiableCredential'
 
 export const VC_SUBJECT = 'did:cheqd:testnet:DBC2ED07-7CFD-4A'
 
-export const VC_PROOF_FORMAT = 'lds'
+export const VC_PROOF_FORMAT = 'jwt'
+
+export const VC_REMOVE_ORIGINAL_FIELDS = false
 
 // Auth
 export const PROPOSAL_MESSAGE_TITLE = 'AuthRequest'
