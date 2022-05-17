@@ -24,7 +24,6 @@ router.post(
         const _credential = _body[ 'credential' ]
         //@ts-ignore
         const credential_request: CredentialRequest = { ...request as Request, credential: _credential as W3CVerifiableCredential }
-        console.warn(credential_request)
         return await ( new Credentials() ).verify_credentials(credential_request)
     }
 )
