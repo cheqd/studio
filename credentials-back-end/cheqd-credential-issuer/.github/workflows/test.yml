@@ -1,7 +1,7 @@
 name: Build and Test NODE
 on:
   push:
-    -branches:
+    branches:
       - main
   pull_request:
   workflow_dispatch:
