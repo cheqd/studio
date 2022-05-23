@@ -24,6 +24,16 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: 'npm'
 
+      - name: Local Build - did-provider-cheqd
+        working-directory: ${{ matrix.dir }}/did-provider-cheqd
+        run: |
+          npm install
+
+      - name: Local Build - cheqd-credential-issuer
+        working-directory: ${{ matrix.dir }}/cheqd-credential-issuer
+        run: |
+          npm install
+
       - name: NPM build
         working-directory: ${{ matrix.dir }}
         run: |
