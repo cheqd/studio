@@ -19,11 +19,6 @@ your own implementations for key management and storage, or for DID storage.
 An agent plugin for Veramo is a class that provides some methods to be called on the agent object, and also emit and
 listen to agent events triggered by other plugins.
 
-This repository has an example of such a class in [`./src/agent/my-plugin.ts`](./src/agent/my-plugin.ts) that provides
-the `myPluginFoo()` method and listens to `validatedMessage` events and emits `my-event` and `my-other-event`.
-
-The types associated with this plugin are declared in [`./src/types/IMyAgentPlugin.ts`](./src/types/IMyAgentPlugin.ts)
-
 Adding a declaration for this in `package.json` makes it easier to programmatically generate a schema for your plugin:
 
 ```json
@@ -40,14 +35,14 @@ Adding a declaration for this in `package.json` makes it easier to programmatica
 ### 2. Custom key management templates
 
 This template contains some skeleton code for some customizations to the ways keys are managed by Veramo. You can
-change [how and where keys are stored](./src/key-manager/my-key-store.ts) and
-[how they are encrypted](./src/key-manager/my-secret-box.ts) by the default Veramo plugins, and/or create your own
-[`AbstractKeyManagementSystem` implementation](./src/key-manager/my-key-management-system.ts) from scratch.
+change how and where keys are stored and
+how they are encrypted by the default Veramo plugins, and/or create your own
+`AbstractKeyManagementSystem` implementation from scratch.
 
 ### 3. Custom DID management templates
 
-You can change [how DIDs are stored](./src/did-manager/my-did-store.ts) by Veramo. You can implement support for other
-DID methods by overriding [MyIdentifierProvider](./src/did-manager/my-identifier-provider.ts)
+You can change how DIDs are stored by Veramo. You can implement support for other
+DID methods by overriding MyIdentifierProvider
 
 ### 4. Use your plugin with @veramo/cli
 
