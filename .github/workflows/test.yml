@@ -31,7 +31,7 @@ jobs:
 
       - name: Yarn test
         run: |
-          npm run install
+          npm install
           npm run build
           npm run generate-plugin-schema
           npm run test
