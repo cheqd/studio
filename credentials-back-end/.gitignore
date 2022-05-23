@@ -1,4 +1,5 @@
 dist
+worker
 node_modules
 transpiled
 /.idea/
