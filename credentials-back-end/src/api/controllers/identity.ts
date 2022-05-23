@@ -5,6 +5,7 @@ import {
     MinimalImportableKey,
     TAgent,
 } from '@veramo/core'
+import { ISSUER_ID_KID, ISSUER_ID_METHOD, ISSUER_ID_METHOD_SPECIFIC_ID, ISSUER_ID_PRIVATE_KEY_HEX, ISSUER_ID_PUBLIC_KEY_HEX } from '../constants'
 
 export class Identity {
 
@@ -22,11 +23,13 @@ export class Identity {
 
         const [ kms ] = await this.agent!.keyManagerGetKeyManagementSystems()
 
-        const key: MinimalImportableKey = { kms: kms, type: 'Ed25519', kid: 'jaa70K9yy4Tw-YEsA2T4F10jsQuFdpVJN9LLhjmOUGw', privateKeyHex: '0019f40cdd2b9ee6807d9d6fb66cb775e95d6e1dac039bb2a93a9a08263a9fe28da6bbd0af72cb84f0f9812c0364f8175d23b10b8576954937d2cb86398e506c', publicKeyHex: '8da6bbd0af72cb84f0f9812c0364f8175d23b10b8576954937d2cb86398e506c' }
+        const key: MinimalImportableKey = { kms: kms, type: 'Ed25519', kid: ISSUER_ID_KID, privateKeyHex: ISSUER_ID_PRIVATE_KEY_HEX, publicKeyHex: ISSUER_ID_PUBLIC_KEY_HEX }
 
-        const methodSpecificId = 'zAXwwqZzhCZA1L77ZBa8fhVNjL9MQCHX'
+        const methodSpecificId = ISSUER_ID_METHOD_SPECIFIC_ID
 
-        const identifier: IIdentifier = await this.agent!.didManagerImport({ keys: [ key ], did: 'did:cheqd:mainnet:' + methodSpecificId, controllerKeyId: key.kid } as MinimalImportableIdentifier)
+        const issuerDidMethod = ISSUER_ID_METHOD
+
+        const identifier: IIdentifier = await this.agent!.didManagerImport({ keys: [ key ], did: issuerDidMethod + methodSpecificId, controllerKeyId: key.kid } as MinimalImportableIdentifier)
 
         return identifier
     }

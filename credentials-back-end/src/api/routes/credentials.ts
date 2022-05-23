@@ -22,8 +22,7 @@ router.post(
     async (request: Request) => {
         const _body: Record<any, any> = await request.json()
         const _credential = _body[ 'credential' ]
-        //@ts-ignore
-        const credential_request: CredentialRequest = { ...request as Request, credential: _credential as W3CVerifiableCredential }
+        const credential_request = { ...request as Request, credential: _credential as W3CVerifiableCredential } as CredentialRequest
         return await ( new Credentials() ).verify_credentials(credential_request)
     }
 )
