@@ -10,6 +10,10 @@ jobs:
 
   unit-tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: [ 'credentials-back-end' ]
+        node: [ 12, 14, 16 ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -19,17 +23,18 @@ jobs:
         with:
           node-version: '14.x'
 
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
+      - name: Get npm cache directory path
+        id: npm-cache-dir-path
+        run: echo "::set-output name=dir::$(npm cache dir)"
       
       - uses: actions/cache@v3
-        id: yarn-cache
+        id: npm-cache
         with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/package.json') }}
+          path: ${{ steps.npm-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package.json') }}
 
-      - name: Yarn test
+      - name: NPM test
+        working-directory: ${{ matrix.node }}
         run: |
           npm install
           npm run build
