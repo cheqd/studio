@@ -14,3 +14,6 @@ kv_namespaces = [
 command = "true"
 [build.upload]
 format = "service-worker"
+
+[miniflare]
+env_path=".env"

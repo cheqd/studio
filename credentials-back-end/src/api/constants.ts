@@ -311,19 +311,25 @@ agent:
             - $ref: /dbConnection
 `
 
-export const INFURA_PROJECT_ID = '***REMOVED***'
+export const INFURA_PROJECT_ID = _INFURA_PROJECT_ID
 
-export const KMS_SECRET_KEY = '***REMOVED***'
+export const KMS_SECRET_KEY = _KMS_SECRET_KEY
 
-export const ISSUER_ID = '***REMOVED***'
+export const ISSUER_ID = _ISSUER_ID
 
-export const ISSUER_ID_PRIVATE_KEY_HEX = '9e6fc361404de7c5b48ba40ebf0e9b4b33d0788fb1c979a5a02c9becba2ae1c054266e5e068d2f00c4336fca2dde002ec7d2d1ea1753dd6a0679feb069ffca22'
+export const ISSUER_ID_PRIVATE_KEY_HEX = _ISSUER_ID_PRIVATE_KEY_HEX
+
+export const ISSUER_ID_PUBLIC_KEY_HEX = _ISSUER_ID_PUBLIC_KEY_HEX
+
+export const ISSUER_ID_KID = _ISSUER_ID_KID
+
+export const ISSUER_ID_METHOD_SPECIFIC_ID = _ISSUER_ID_METHOD_SPECIFIC_ID
+
+export const ISSUER_ID_METHOD = _ISSUER_ID_METHOD
 
 export const VC_CONTEXT = ['https://www.w3.org/2018/credentials/v1', 'https://veramo.io/contexts/profile/v1']
 
 export const VC_TYPE = 'VerifiableCredential'
-
-export const VC_SUBJECT = 'did:cheqd:testnet:DBC2ED07-7CFD-4A'
 
 export const VC_PROOF_FORMAT = 'jwt'
 
@@ -336,8 +342,8 @@ export const REPLY_PROTECTION_INTERVAL = 30
 
 // Twitter Auth
 
-export const TWITTER_CONSUMER_KEY = '***REMOVED***'
+export const TWITTER_CONSUMER_KEY = _TWITTER_CONSUMER_KEY
 
-export const TWITTER_CONSUMER_SECRET = '***REMOVED***'
+export const TWITTER_CONSUMER_SECRET = _TWITTER_CONSUMER_SECRET
 
-export const TWITTER_STATE_CSRF = '***REMOVED***'
+export const TWITTER_STATE_CSRF = _TWITTER_STATE_CSRF
