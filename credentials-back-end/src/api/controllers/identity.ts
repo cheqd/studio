@@ -5,6 +5,7 @@ import {
     MinimalImportableKey,
     TAgent,
 } from '@veramo/core'
+import { ISSUER_ID_KID, ISSUER_ID_METHOD, ISSUER_ID_METHOD_SPECIFIC_ID, ISSUER_ID_PRIVATE_KEY_HEX, ISSUER_ID_PUBLIC_KEY_HEX } from '../constants'
 
 export class Identity {
 
@@ -22,11 +23,13 @@ export class Identity {
 
         const [ kms ] = await this.agent!.keyManagerGetKeyManagementSystems()
 
-        const key: MinimalImportableKey = { kms: kms, type: 'Ed25519', kid: '***REMOVED***', privateKeyHex: '***REMOVED***', publicKeyHex: '***REMOVED***' }
+        const key: MinimalImportableKey = { kms: kms, type: 'Ed25519', kid: ISSUER_ID_KID, privateKeyHex: ISSUER_ID_PRIVATE_KEY_HEX, publicKeyHex: ISSUER_ID_PUBLIC_KEY_HEX }
 
-        const methodSpecificId = '***REMOVED***'
+        const methodSpecificId = ISSUER_ID_METHOD_SPECIFIC_ID
 
-        const identifier: IIdentifier = await this.agent!.didManagerImport({ keys: [ key ], did: '***REMOVED***' + methodSpecificId, controllerKeyId: key.kid } as MinimalImportableIdentifier)
+        const issuerDidMethod = ISSUER_ID_METHOD
+
+        const identifier: IIdentifier = await this.agent!.didManagerImport({ keys: [ key ], did: issuerDidMethod + methodSpecificId, controllerKeyId: key.kid } as MinimalImportableIdentifier)
 
         return identifier
     }
