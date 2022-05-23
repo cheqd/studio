@@ -20,5 +20,5 @@ jobs:
 
       - name: Yarn build
         run: |
-          yarn install
-          yarn build
+          npm run install
+          npm run build
