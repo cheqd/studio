@@ -57,9 +57,9 @@ There are a number of ways to test your plugin.
 
 This repository contains 2 sample test setups that run the same tests in different contexts.
 
-* [localAgent.test.ts](./__tests__/localAgent.test.ts) creates an agent using [agent.yml](./agent.yml)
+* `localAgent.test.ts` creates an agent using [agent.yml](./agent.yml)
   and runs the shared tests using that agent.
-* [restAgent.test.ts](./__tests__/restAgent.test.ts) creates an agent using [agent.yml](./agent.yml)
+* `restAgent.test.ts` creates an agent using [agent.yml](./agent.yml)
   and runs it as a remote agent. Then, it creates another agent that uses `@veramo/remote-client` to expose the methods
   of the remote agent locally, and runs the tests using the local agent.
 
