@@ -32,7 +32,7 @@ jobs:
         id: npm-cache
         with:
           path: ${{ steps.npm-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package.json') }}
+          key: ${{ matrix.os }}-npm-${{ hashFiles('**/package.json') }}
 
       - name: NPM test
         working-directory: ${{ matrix.dir }}
