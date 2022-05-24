@@ -24,7 +24,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^3.0.0",
     "@miniflare/storage-redis": "^2.4.0",
-    "@types/jest": "^26.0.23",
+    "@types/jest": "^26.0.24",
     "@types/service-worker-mock": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "^4.16.1",
     "@typescript-eslint/parser": "^4.16.1",
