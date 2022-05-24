@@ -1,7 +1,7 @@
-/* import { handleRequest } from '../src/handler'
+import { handleRequest } from '../src/handler'
 import makeServiceWorkerEnv from 'service-worker-mock'
 
-declare const global: any
+declare const global: ServiceWorkerGlobalScope
 
 describe('handle', () => {
   beforeEach(() => {
@@ -15,6 +15,6 @@ describe('handle', () => {
     const text = await result.text()
     expect(text).toEqual('request method: GET')
   })
-}) */
+})
 
 // Removed to be split & tested separately
