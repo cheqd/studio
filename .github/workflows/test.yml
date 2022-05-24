@@ -24,10 +24,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
-          cache-dependency-path: |
-            credentials-back-end/package-lock.json
-            credentials-back-end/did-provider-cheqd/package-lock.json
-            credentials-back-end/cheqd-credential-issuer/package-lock.json
+          cache-dependency-path: '**/package-lock.json'
 
       - name: NPM test
         working-directory: ${{ matrix.dir }}
