@@ -35,3 +35,6 @@ jobs:
           _ISSUER_ID_KID: jaa70K9yy4Tw-YEsA2T4F10jsQuFdpVJN9LLhjmOUGw
           _ISSUER_ID_METHOD_SPECIFIC_ID: zAXwwqZzhCZA1L77ZBa8fhVNjL9MQCHX
           _ISSUER_ID_METHOD: "did:cheqd:mainnet:"
+          _TWITTER_CONSUMER_KEY: "ZVE0QzhiMWY1R0E2WmVTUm5JQko6MTpjaQ"
+          _TWITTER_CONSUMER_SECRET: "WLQoQYifP8nUsgv9zjML0Affkf12NRLr24FqRg8sjpALVxpm31"
+          _TWITTER_STATE_CSRF: "z6MkoyogvBv1G8acpsxWpbg75a2hMALabPMPxXhniMQyJBq3"
