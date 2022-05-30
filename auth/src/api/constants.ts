@@ -311,10 +311,6 @@ agent:
             - $ref: /dbConnection
 `
 
-export const INFURA_PROJECT_ID = _INFURA_PROJECT_ID
-
-export const KMS_SECRET_KEY = _KMS_SECRET_KEY
-
 export const ISSUER_ID = _ISSUER_ID
 
 export const ISSUER_ID_PRIVATE_KEY_HEX = _ISSUER_ID_PRIVATE_KEY_HEX

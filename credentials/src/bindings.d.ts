@@ -8,10 +8,6 @@ declare global {
 
     const CREDENTIALS: KVNamespace
 
-    const _INFURA_PROJECT_ID: string
-
-    const _KMS_SECRET_KEY: string
-
     const _ISSUER_ID: string
 
     const _ISSUER_ID_PRIVATE_KEY_HEX: string

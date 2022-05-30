@@ -1,0 +1,37 @@
+name: "Deploy"
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  cloudflare-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+
+      - name: Publish to Cloudflare
+        uses: cloudflare/wrangler-action@2.0.0
+        with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # workingDirectory: 'src'
+          wranglerVersion: '2.0.6'
+          preCommands: npm install
+          command: publish
+        env:
+        #   CF_ZONE_NAME: ${{ secrets.CF_ZONE_NAME }}
+        #   CF_ROUTE_PATTERN: ${{ secrets.CF_ROUTE_PATTERN }}
+          _INFURA_PROJECT_ID: 3586660d179141e3801c3895de1c2eba
+          _KMS_SECRET_KEY: 62b35a9a4c77e6c6af74aff7f06b870331fd37d59473f174e14a200bff01505e
+          _ISSUER_ID: did:cheqd:mainnet:z6fVEeX9YpnABifLvPTsgYmS4o5QGM77
+          _ISSUER_ID_PRIVATE_KEY_HEX: 0019f40cdd2b9ee6807d9d6fb66cb775e95d6e1dac039bb2a93a9a08263a9fe28da6bbd0af72cb84f0f9812c0364f8175d23b10b8576954937d2cb86398e506c
+          _ISSUER_ID_PUBLIC_KEY_HEX: 8da6bbd0af72cb84f0f9812c0364f8175d23b10b8576954937d2cb86398e506c
+          _ISSUER_ID_KID: jaa70K9yy4Tw-YEsA2T4F10jsQuFdpVJN9LLhjmOUGw
+          _ISSUER_ID_METHOD_SPECIFIC_ID: zAXwwqZzhCZA1L77ZBa8fhVNjL9MQCHX
+          _ISSUER_ID_METHOD: "did:cheqd:mainnet:"

@@ -6,8 +6,7 @@ module.exports = {
   entry: './src/index.ts',
   output: {
     filename: 'worker.js',
-    path: path.join(__dirname, 'dist'),
-    clean: true
+    path: path.join(__dirname, 'dist')
   },
   devtool: 'cheap-module-source-map',
   mode: 'production',
