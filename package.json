@@ -45,6 +45,7 @@
 		"webpack-cli": "^4.7.0"
 	},
 	"dependencies": {
+		"@cheqd/did-provider-cheqd": "^1.0.0",
 		"@cosmjs/amino": "^0.28.4",
 		"@cosmjs/encoding": "^0.28.4",
 		"@cosmjs/proto-signing": "^0.28.4",
