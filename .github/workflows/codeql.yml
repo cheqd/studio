@@ -1,0 +1,39 @@
+name: "CodeQL"
+on:
+  push:
+    branches:
+      - main
+      - develop
+  schedule:
+     - cron: '0 17 * * *'
+defaults:
+  run:
+    shell: bash
+
+
+jobs:
+
+  codeql-analysis:
+    name: "CodeQL Analysis"
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: 'javascript'
+          queries: security-and-quality
+
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
