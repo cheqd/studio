@@ -1,4 +1,4 @@
-name: 'Lint'
+name: "Lint"
 on: workflow_call
 defaults:
   run:
@@ -40,11 +40,11 @@ jobs:
           VALIDATE_ALL_CODEBASE: true
           MULTI_STATUS: true
 
-          VALIDATE_DOCKERFILE_HADOLINT: true
           VALIDATE_GITHUB_ACTIONS: true
           VALIDATE_JAVASCRIPT_ES: true
-          VALIDATE_JSON: true
+          VALIDATE_JSONC: true
           VALIDATE_JSX: true
+          VALIDATE_MARKDOWN: true
           VALIDATE_OPENAPI: true
           VALIDATE_TSX: true
           VALIDATE_TYPESCRIPT_ES: true
