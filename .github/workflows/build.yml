@@ -9,8 +9,6 @@ jobs:
   build:
     name: "Build Node.js"
     runs-on: ubuntu-latest
-    secrets:
-      repo-token: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
@@ -20,7 +18,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          
+
 
       - uses: actions/setup-node@v3
         with:
