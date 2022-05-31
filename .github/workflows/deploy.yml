@@ -1,12 +1,44 @@
 name: "Deploy"
 on:
-  push:
-    branches:
-      - main
+  workflow_call:
+defaults:
+  run:
+    shell: bash
 
 jobs:
-  cloudflare-deploy:
+  
+  staging-deploy:
+    name: "Cloudflare - Staging"
     runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://identity-api-staging.cheqd.net
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+          cache: 'npm'
+
+      - name: Publish to Cloudflare
+        uses: cloudflare/wrangler-action@2.0.0
+        with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          wranglerVersion: '2.0.6'
+          preCommands: npm install
+          command: publish --env staging
+
+  production-deploy:
+    if: ${{ success() }} && ( github.ref_name == 'main' )
+    needs: staging-deploy
+    name: "Cloudflare - Production"
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://identity-api.cheqd.net
 
     steps:
       - uses: actions/checkout@v3

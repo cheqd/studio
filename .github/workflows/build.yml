@@ -13,7 +13,7 @@ jobs:
       matrix:
         dir: [ 'auth', credentials ]
         node: [ 14, 16 ]
-    name: Build Node v${{ matrix.node }}
+    name: Build Node v${{ matrix.node }} - ${{ matrix.dir }}:service
     steps:
       - uses: actions/checkout@v3
         with:

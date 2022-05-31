@@ -13,8 +13,13 @@ jobs:
     name: 'Build'
     needs: call-lint
     uses: ./.github/workflows/build.yml
-  
+
   call-test:
     name: 'Test'
     needs: call-lint
     uses: ./.github/workflows/test.yml
+
+  call-deploy:
+    name: 'Deploy'
+    uses: './.github/workflows/deploy.yml'
+    secrets: inherit
