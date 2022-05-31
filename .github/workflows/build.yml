@@ -7,12 +7,13 @@ defaults:
 
 jobs:
   build:
+    name: "Build Node.js"
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        version: [ 14, 16 ]
-    name: "Build for Node v${{ matrix.version }}"
-
+        version: [ '14.x', '16.x' ]
+    
     steps:
       - uses: actions/checkout@v3
         with:
@@ -24,7 +25,9 @@ jobs:
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
 
-      - name: NPM build
+      - name: "Execute build for Node v${{ matrix.version }}"
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm ci
           npm run build
