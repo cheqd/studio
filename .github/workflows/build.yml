@@ -29,5 +29,3 @@ jobs:
         run: |
           npm ci
           npm run build
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
