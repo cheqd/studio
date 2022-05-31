@@ -26,8 +26,8 @@ jobs:
           cache-dependency-path: '**/package-lock.json'
 
       - name: "Execute build for Node v${{ matrix.version }}"
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm ci
           npm run build
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
