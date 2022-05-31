@@ -1,7 +1,6 @@
-name: 'Build'
+name: "Build"
 on:
   workflow_call:
-
 defaults:
   run:
     shell: bash
@@ -13,7 +12,8 @@ jobs:
       matrix:
         dir: [ 'credentials-back-end' ]
         node: [ 12, 14, 16 ]
-    name: Build Node v${{ matrix.node }}
+    name: "Build for Node v${{ matrix.node }}"
+
     steps:
       - uses: actions/checkout@v3
         with:
@@ -23,6 +23,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Local Build - did-provider-cheqd
         working-directory: ${{ matrix.dir }}/did-provider-cheqd
