@@ -1,13 +1,10 @@
 {
 	"name": "@cheqd/credential-service",
 	"version": "1.0.0",
-	"description": "cheqd Credentials Service Backend",
+	"description": "cheqd Credential Service Backend",
 	"main": "dist/worker.js",
 	"type": "module",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/cheqd/credentials-backend.git"
-	},
+	"repository": "git://github.com/cheqd/credential-service.git",
 	"scripts": {
 		"build": "webpack",
 		"miniflare": "webpack && miniflare dist/worker.js",
