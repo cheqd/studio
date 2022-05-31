@@ -1,5 +1,5 @@
 {
-	"name": "cheqd/credential-service",
+	"name": "@cheqd/credential-service",
 	"version": "1.0.0",
 	"description": "cheqd Credentials Service Backend",
 	"main": "dist/worker.js",
