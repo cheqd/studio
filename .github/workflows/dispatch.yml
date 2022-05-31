@@ -5,13 +5,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  call-lint:
-    name: "Lint"
-    uses: ./.github/workflows/lint.yml
+  # call-lint:
+  #   name: "Lint"
+  #   uses: ./.github/workflows/lint.yml
 
   call-build:
     name: "Build & Test"
-    needs: call-lint
+    # needs: call-lint
     uses: ./.github/workflows/build.yml
     secrets: inherit
 
