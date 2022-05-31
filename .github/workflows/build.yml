@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [ 14, 16 ]
-    name: "Build for Node v${{ matrix.node }}"
+        version: [ 14, 16 ]
+    name: "Build for Node v${{ matrix.version }}"
 
     steps:
       - uses: actions/checkout@v3
@@ -20,7 +20,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node }}
+          node-version: ${{ matrix.version }}
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
 
