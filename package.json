@@ -4,6 +4,10 @@
 	"description": "cheqd Credentials Service Backend",
 	"main": "dist/worker.js",
 	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/cheqd/credentials-backend.git"
+	  },
 	"scripts": {
 		"build": "webpack",
 		"miniflare": "webpack && miniflare dist/worker.js",
@@ -44,7 +48,7 @@
 		"webpack-cli": "^4.7.0"
 	},
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "github:cheqd/did-provider-cheqd#v1.0.0",
+		"@cheqd/did-provider-cheqd": "1.0.0",
 		"@cosmjs/amino": "^0.28.4",
 		"@cosmjs/encoding": "^0.28.4",
 		"@cosmjs/proto-signing": "^0.28.4",
