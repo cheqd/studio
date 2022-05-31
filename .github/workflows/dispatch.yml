@@ -1,4 +1,4 @@
-name: 'Workflow Dispatch'
+name: "Workflow Dispatch"
 on: push
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -6,15 +6,16 @@ concurrency:
 
 jobs:
   call-lint:
-    name: 'Lint'
+    name: "Lint"
     uses: ./.github/workflows/lint.yml
 
   call-build:
-    name: 'Build'
+    name: "Build & Test"
     needs: call-lint
     uses: ./.github/workflows/build.yml
-  
-  call-test:
-    name: 'Test'
-    needs: call-lint
-    uses: ./.github/workflows/test.yml
+
+  call-release:
+    name: "Release"
+    needs: call-build
+    if: ${{ github.ref_protected == 'true' }} 
+    uses: ./.github/workflows/release.yml
