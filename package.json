@@ -54,7 +54,7 @@
 	},
 	"dependencies": {
 		"@cheqd/credential-issuer": "^1.0.1",
-		"@cheqd/did-provider-cheqd": "^1.0.0",
+		"@cheqd/did-provider-cheqd": "^1.0.2",
 		"@cosmjs/amino": "^0.28.4",
 		"@cosmjs/encoding": "^0.28.4",
 		"@cosmjs/proto-signing": "^0.28.4",
