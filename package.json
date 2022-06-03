@@ -25,10 +25,17 @@
 	"devDependencies": {
 		"@cloudflare/workers-types": "^3.0.0",
 		"@miniflare/storage-redis": "^2.4.0",
+		"@semantic-release/changelog": "^6.0.1",
+		"@semantic-release/commit-analyzer": "^9.0.2",
+		"@semantic-release/git": "^10.0.1",
+		"@semantic-release/github": "^8.0.4",
+		"@semantic-release/npm": "^9.0.1",
+		"@semantic-release/release-notes-generator": "^10.0.3",
 		"@types/jest": "^27.0.0",
 		"@types/service-worker-mock": "^2.0.1",
 		"@typescript-eslint/eslint-plugin": "^4.16.1",
 		"@typescript-eslint/parser": "^4.16.1",
+		"conventional-changelog-conventionalcommits": "^5.0.0",
 		"eslint": "^7.21.0",
 		"eslint-config-prettier": "^8.1.0",
 		"eslint-config-typescript": "^3.0.0",
@@ -36,6 +43,7 @@
 		"jest": "^27.0.0",
 		"miniflare": "^2.4.0",
 		"prettier": "^2.3.0",
+		"semantic-release": "^19.0.2",
 		"service-worker-mock": "^2.0.5",
 		"terser-webpack-plugin": "^5.3.1",
 		"ts-jest": "^27.0.0",
@@ -45,6 +53,7 @@
 		"webpack-cli": "^4.7.0"
 	},
 	"dependencies": {
+		"@cheqd/credential-issuer": "^1.0.2",
 		"@cheqd/did-provider-cheqd": "^1.0.0",
 		"@cosmjs/amino": "^0.28.4",
 		"@cosmjs/encoding": "^0.28.4",
@@ -68,7 +77,6 @@
 		"process": "^0.11.10",
 		"stream-browserify": "3.0.0",
 		"twitter-api-sdk": "^1.0.4",
-		"util": "^0.12.4",
-		"veramo-plugin": "github:cheqd/cheqd-credential-issuer"
+		"util": "^0.12.4"
 	}
 }
