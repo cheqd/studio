@@ -7,6 +7,7 @@ defaults:
 
 jobs:
   release:
+    name: "Semantic Release"
     runs-on: ubuntu-latest
     
     steps:
@@ -19,12 +20,23 @@ jobs:
         with:
           node-version: '16.x'
           cache: 'npm'
-          cache-dependency-path: '**/package-lock.json' 
+          cache-dependency-path: '**/package-lock.json'
+      
+      - name: "Obtain Github App token"
+        id: app-token
+        uses: getsentry/action-github-app-token@v1.0.6
+        with:
+          app_id: ${{ secrets.BOT_APP_ID }}
+          private_key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
 
-      - name: "Run semantic release"
-        run: | 
-          npm ci
-          npx semantic-release
+      - name: "Clean install dependencies"
+        run: npm ci
+
+      - name: "Build"
+        run: npm run build
+
+      - name: "Execute Semantic Release"
+        run: npx semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
