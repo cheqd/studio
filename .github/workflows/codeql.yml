@@ -4,8 +4,9 @@ on:
     branches:
       - main
       - develop
-  schedule:
-     - cron: '0 17 * * *'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 defaults:
   run:
     shell: bash
