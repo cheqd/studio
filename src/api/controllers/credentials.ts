@@ -12,17 +12,18 @@ import { WebDIDProvider } from '@veramo/did-provider-web'
 import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager'
 import { KeyManagementSystem } from '@veramo/kms-local'
 import { DIDResolverPlugin } from '@veramo/did-resolver'
-import { Resolver } from 'did-resolver'
+import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CredentialIssuer } from '@veramo/credential-w3c'
-import { getResolver as EthrDIDResolver } from 'ethr-did-resolver'
-import { getResolver as WebDIDResolver } from 'web-did-resolver'
+import { ICreateVerifiableCredentialArgs } from '@veramo/credential-w3c'
+//import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 
-import { CheqdDIDProvider } from '../../../did-provider-cheqd/src'
+import { CheqdDIDProvider } from '@cheqd/did-provider-cheqd'
 
 import { KMS_SECRET_KEY, INFURA_PROJECT_ID, VC_SUBJECT, ISSUER_ID, VC_CONTEXT, VC_TYPE, HEADERS, VC_PROOF_FORMAT, CORS_HEADERS } from '../constants'
 import { CredentialPayload, CredentialRequest, CredentialSubject } from '../types'
 
 import { Identity } from './identity'
+import { getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 
 export class Credentials {
 
