@@ -6,7 +6,7 @@
 	"type": "module",
 	"license": "Apache-2.0",
 	"author": "Cheqd Foundation Limited (https://github.com/cheqd)",
-	"repository": "git://github.com/cheqd/credential-service.git",
+	"repository": "https://github.com/cheqd/credential-service.git",
 	"scripts": {
 		"build": "webpack",
 		"miniflare": "webpack && miniflare dist/worker.js",
