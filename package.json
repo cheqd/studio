@@ -53,7 +53,7 @@
 		"webpack-cli": "^4.7.0"
 	},
 	"dependencies": {
-		"@cheqd/credential-issuer": "^1.0.2",
+		"@cheqd/credential-issuer": "^1.0.1",
 		"@cheqd/did-provider-cheqd": "^1.0.0",
 		"@cosmjs/amino": "^0.28.4",
 		"@cosmjs/encoding": "^0.28.4",
