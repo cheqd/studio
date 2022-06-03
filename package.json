@@ -4,6 +4,8 @@
 	"description": "cheqd Credential Service Backend",
 	"main": "dist/worker.js",
 	"type": "module",
+	"license": "Apache-2.0",
+	"author": "Cheqd Foundation Limited (https://github.com/cheqd)",
 	"repository": "git://github.com/cheqd/credential-service.git",
 	"scripts": {
 		"build": "webpack",
@@ -13,8 +15,6 @@
 		"test": "jest --config jestconfig.json --verbose",
 		"analyze": "webpack --json > stats.json && webpack-bundle-analyzer stats.json"
 	},
-	"author": "Cheqd Foundation Limited",
-	"license": "Apache-2.0",
 	"eslintConfig": {
 		"root": true,
 		"extends": [
