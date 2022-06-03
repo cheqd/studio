@@ -11,9 +11,6 @@
     "ci": true,
     "preset": "conventionalcommits",
     "plugins": [
-        "@semantic-release/npm",
-        "@semantic-release/changelog",
-        "@semantic-release/github",
         [ "@semantic-release/commit-analyzer",
             {
                 "parserOpts": "./.github/linters/.commitlint.rules.js",
@@ -23,8 +20,15 @@
                     { "type": "fix", "release": "patch" },
                     { "type": "perf", "release": "patch" },
                     { "type": "build", "release": "patch" },
-                    { "scope": "no-release", "release": false },
-                    { "scope": "security", "release": "patch" }
+                    { "scope": "security", "release": "patch" },
+                    { "type": "chore", "release": false },
+                    { "type": "ci", "release": false },
+                    { "type": "docs", "release": false },
+                    { "type": "refactor", "release": false },
+                    { "type": "revert", "release": false },
+                    { "type": "style", "release": false },
+                    { "type": "test", "release": false },
+                    { "scope": "no-release", "release": false }
                 ],
                 "presetConfig": true
             }
@@ -34,11 +38,18 @@
                 "presetConfig": true
             }
         ],
+        [ "@semantic-release/changelog",
+            {
+                "changelogTitle": "# Changelog"
+            }
+        ],
         [ "@semantic-release/git",
             {
                 "assets": [ "package.json", "CHANGELOG.md" ],
                 "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
             }
-        ]
+        ],
+        "@semantic-release/npm",
+        "@semantic-release/github"
     ]
 }
