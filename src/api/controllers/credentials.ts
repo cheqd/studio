@@ -11,17 +11,17 @@ import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-m
 import { KeyManagementSystem } from '@veramo/kms-local'
 import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { Resolver, ResolverRegistry } from 'did-resolver'
-import { CredentialIssuer } from '../../../cheqd-credential-issuer/src'
-import { ICreateVerifiableCredentialArgs } from '../../../cheqd-credential-issuer/src/credential-w3c'
+import { CredentialIssuer } from '@veramo/credential-w3c'
+import { ICreateVerifiableCredentialArgs } from '@veramo/credential-w3c'
 //import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 
-import { CheqdDIDProvider } from '../../../did-provider-cheqd/src'
+import { CheqdDIDProvider } from '@cheqd/did-provider-cheqd'
 
 import { VC_CONTEXT, VC_TYPE, HEADERS, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../constants'
 import { CredentialPayload, CredentialRequest, CredentialSubject, VerifiableCredential } from '../types'
 
 import { Identity } from './identity'
-import { getResolver as CheqdDidResolver } from '../../../did-provider-cheqd/src/did-manager/cheqd-did-resolver'
+import { getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 
 export class Credentials {
 
