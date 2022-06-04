@@ -1,1 +1,3 @@
-# credentials-back-end
+# cheqd Credential Service
+
+STATUS: In development
