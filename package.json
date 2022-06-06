@@ -3,7 +3,6 @@
 	"version": "1.0.0",
 	"description": "cheqd Credential Service Backend",
 	"main": "dist/worker.js",
-	"type": "module",
 	"license": "Apache-2.0",
 	"author": "Cheqd Foundation Limited (https://github.com/cheqd)",
 	"repository": "https://github.com/cheqd/credential-service.git",
