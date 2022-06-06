@@ -79,5 +79,8 @@
 		"stream-browserify": "3.0.0",
 		"twitter-api-sdk": "^1.0.4",
 		"util": "^0.12.4"
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
 	}
 }
