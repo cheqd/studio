@@ -1,15 +1,18 @@
-name: "Build"
+name: 'Build'
 on:
   workflow_call:
+
 defaults:
   run:
     shell: bash
 
 jobs:
   build:
-    name: "Build Node.js"
     runs-on: ubuntu-latest
-    
+    strategy:
+      matrix:
+        node: [ 14, 16 ]
+    name: Build Node v${{ matrix.node }} - credential:service
     steps:
       - uses: actions/checkout@v3
         with:
@@ -17,12 +20,10 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version: ${{ matrix.node }}
           cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
 
-      - name: "Clean install dependencies"
-        run: npm ci
-
-      - name: "Run npm build"
-        run: npm run build
+      - name: NPM build
+        run: |
+          npm install
+          npm run build

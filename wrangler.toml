@@ -1,19 +1,120 @@
-name = "credentials-back-end"
-type = "javascript"
-zone_id = "afe3b66243382f27140e6feeaae848b5"
-account_id = "99b9572de9d3c33774965949416b82c9"
-route = ""
-workers_dev = true
-compatibility_date = "2022-04-14"
 
+###############################################################
+###           SECTION 1: General Configuration              ###
+###############################################################
+
+# Worker name
+name = "credential-service"
+
+# Entrypoint/path to the file that will be executed
+main = "src/index.ts"
+
+# Cloudflare Account ID
+account_id = ""
+
+# Date in yyyy-mm-dd to determine which version of Workers runtime to use
+# Details: https://developers.cloudflare.com/workers/platform/compatibility-dates/ 
+compatibility_date = "2022-05-24"
+
+# Usage model for the Worker
+# Details: https://developers.cloudflare.com/workers/platform/limits
+usage_model = "bundled"
+
+
+###############################################################
+###            SECTION 2: Production Environment            ###
+###############################################################
+
+# Deploy to NAME.SUBDOMAIN.workers.dev?
+# @default `true`
+workers_dev = true
+
+# Route to publish the Worker
+route = { pattern = "credential-service.cheqd.io/*", zone_id = "afe3b66243382f27140e6feeaae848b5" }
+
+# KV Namespaces accessible from the Worker
+# Details: https://developers.cloudflare.com/workers/learning/how-kv-works
+# @default `[]`
 kv_namespaces = [
-	 { binding = "CREDENTIALS", preview_id = "08f012b41df44fd3b6849100d02b7cba" }
+	{ binding = "CREDENTIALS", preview_id = "08f012b41df44fd3b6849100d02b7cba", id = "08f012b41df44fd3b6849100d02b7cba" }
 ]
 
-[build]
-command = "true"
-[build.upload]
-format = "service-worker"
+# Map of environment variables to set when deploying the Worker
+# Not inherited. @default `{}`
+# [vars]
 
-[miniflare]
-env_path=".env"
+
+###############################################################
+###             SECTION 3: Local Development                ###
+###############################################################
+
+# Configuration options for local development via Wrangler
+[dev]
+	# IP address for the local dev server to listen on
+	# @default `localhost`
+	ip = "localhost"
+	# Port for the local dev server to listen on
+	# @default `8787`
+	port = 8787
+	# Protocol that local wrangler dev server listens to requests on
+	# @default `http`
+	local_protocol = "http"
+
+
+###############################################################
+###             SECTION 4: Staging Environment              ###
+###############################################################
+
+[env.staging]
+# Worker name - Staging Environment
+name = "credential-service-staging"
+
+# Deploy to NAME.SUBDOMAIN.workers.dev?
+# @default `true`
+workers_dev = true
+
+# Route to publish the Worker
+route = { pattern = "credential-service-staging.cheqd.io/*", zone_id = "afe3b66243382f27140e6feeaae848b5" }
+
+# Map of environment variables to set when deploying the Worker
+# Not inherited. @default `{}`
+# vars = { ENVIRONMENT = "staging", ... }
+
+# KV Namespaces accessible from the Worker
+# Details: https://developers.cloudflare.com/workers/learning/how-kv-works
+# @default `[]`
+kv_namespaces = [
+	{ binding = "CREDENTIALS", preview_id = "08f012b41df44fd3b6849100d02b7cba", id = "08f012b41df44fd3b6849100d02b7cba" }
+]
+
+
+###############################################################
+###               OPTIONAL: Build Configuration             ###
+###############################################################
+
+# NOTE: THIS IS A TOP-LEVEL CONFIGURATION AND NEEDS TO BE MOVED IF USED
+# Optional custom build step when using Wrangler CLI for build
+# Details: https://developers.cloudflare.com/workers/wrangler/custom-builds/
+# @default {}
+# [build]
+#   # Custom build command. On Linux and macOS, the command is executed in 
+#   # the `sh` shell and the `cmd` shell for Windows.
+#   # The `&&` and `||` shell operators may be used.
+#   command = ""
+#   # The directory in which the command is executed.
+#   cwd = "./src"
+#   # The directory to watch for changes while using `wrangler dev`, 
+#   # defaults to the current working directory
+#   watch_dir = ""
+
+# List of data files that the Worker should be bound to. This is
+# the legacy way of binding to a data file. ES module Workers should
+# do proper module imports.
+#[data_blobs]
+# DATA = ""
+
+# Minify before uploading?
+# minify = "false"
+
+# Add polyfills for node builtin modules and globals?
+node_compat = true
