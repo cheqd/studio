@@ -6,10 +6,7 @@ import { SignMode, Doc, Fee } from '../types'
 import { serializeSignDoc } from '@cosmjs/amino'
 import Long from 'long'
 
-import { Client, auth } from 'twitter-api-sdk'
-
 import { HEADERS, PROPOSAL_MESSAGE_TITLE as TITLE, REPLY_PROTECTION_INTERVAL, TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET, TWITTER_STATE_CSRF } from '../constants'
-import { GenerateAuthUrlOptions, OAuth2User, OAuth2UserOptions } from 'twitter-api-sdk/dist/OAuth2User'
 
 export const handleAuthRequest = async (request: Request): Promise<Response> => {
   console.log('Request', JSON.stringify(request));
@@ -111,7 +108,7 @@ function getPubkey(decoded: DecodedTxRaw): Uint8Array | null {
 }
 
 function compileDoc(decoded: DecodedTxRaw, chainId: string, raw_pubkey: Uint8Array): Doc | null {
-  const message = LumRegistry.decode(decoded.body.messages[0]);
+  const message = LumRegistry.decodeTx(decoded.body.messages[0].value);
   // Compile fee object
   const fee = compileFee(decoded);
   if (fee == null) {
@@ -168,70 +165,6 @@ function makeResponse(result: string): Response {
       headers: {
         'content-type': 'application/json;charset=UTF-8',
       },
-    }
-  )
-}
-
-export type TwitterClient = { client: Client, auth_client: OAuth2User }
-
-const initialise_twitter_client = (): TwitterClient  => {
-  const auth_client = new auth.OAuth2User({
-    client_id: TWITTER_CONSUMER_KEY as string,
-    client_secret: TWITTER_CONSUMER_SECRET as string,
-    callback: 'https://identity-apis.cheqd.network/api/authentication/twitter/callback',
-    scopes: [ 'users.read' ]
-  } as OAuth2UserOptions)
-
-  return { client: new Client(auth_client), auth_client: auth_client}
-}
-
-export const callback_twitter_auth = async (request: Request): Promise<Response> => {
-  const { client, auth_client } = initialise_twitter_client()
-  try{
-    const url_query_params = new URLSearchParams( request.url )
-
-    const code = url_query_params.get('code')
-    const state = url_query_params.get('state')
-
-    if( state != TWITTER_STATE_CSRF ) return new Response( JSON.stringify( { error: 'Non matching states.' } ), { status: 400, headers: { ...HEADERS.json } } )
-
-    if( !code ) return new Response( JSON.stringify( { error: 'Code is not provided.' } ), { status: 400, headers: { ...HEADERS.json } } )
-
-    await auth_client.requestAccessToken( code as string )
-
-    const user = client.users.findMyUser()
-
-    return new Response(
-      JSON.stringify(
-        { twitter_user: user }
-      ),
-      {
-        headers: { ...HEADERS.json }
-      }
-    )
-
-  } catch ( error ) {
-    console.error( error )
-    return new Response( JSON.stringify( { error: error } ), { status: 500, headers: { ...HEADERS.json } } )
-  }
-}
-
-export const twitter_auth = async (request: Request): Promise<Response> => {
-  const { client, auth_client } = initialise_twitter_client()
-
-  const auth_url = auth_client.generateAuthURL({
-    state: TWITTER_STATE_CSRF as string,
-    code_challenge_method: 's256'
-  } as GenerateAuthUrlOptions)
-
-  return new Response(
-    JSON.stringify(
-      {
-        auth_url: auth_url
-      }
-    ),
-    {
-      headers: { ...HEADERS.json }
     }
   )
 }

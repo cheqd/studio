@@ -79,4 +79,4 @@ class ExtendedRegistry extends Registry {
 }
 
 export const LumAminoRegistry = new AminoTypes(aminoConverters);
-export const LumRegistry = new ExtendedRegistry(registryTypes);
+export const LumRegistry = new ExtendedRegistry();

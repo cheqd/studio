@@ -22,7 +22,7 @@
     ]
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^3.0.0",
+    "@cloudflare/workers-types": "^3.11.0",
     "@miniflare/storage-redis": "^2.4.0",
     "@types/jest": "^26.0.24",
     "@types/service-worker-mock": "^2.0.1",
