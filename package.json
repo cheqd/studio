@@ -4,7 +4,6 @@
 	"description": "cheqd Credential Service Backend",
 	"source": "src/index.ts",
 	"main": "src/index.ts",
-	"type": "module",
 	"license": "Apache-2.0",
 	"author": "Cheqd Foundation Limited (https://github.com/cheqd)",
 	"repository": "https://github.com/cheqd/credential-service.git",
