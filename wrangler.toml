@@ -78,7 +78,7 @@ route = { pattern = "credential-service-staging.cheqd.io/*", zone_id = "afe3b662
 
 # Map of environment variables to set when deploying the Worker
 # Not inherited. @default `{}`
-vars = { _ISSUER_ID = "", _ISSUER_ID_PRIVATE_KEY_HEX = "", _ISSUER_ID_PUBLIC_KEY_HEX = "", _ISSUER_ID_KID = "", _ISSUER_ID_METHOD_SPECIFIC_ID = "", _ISSUER_ID_METHOD = "" }
+# vars = { ENVIRONMENT = "staging", ... }
 
 # KV Namespaces accessible from the Worker
 # Details: https://developers.cloudflare.com/workers/learning/how-kv-works
