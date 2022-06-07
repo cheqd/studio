@@ -55,6 +55,12 @@ jobs:
 
       - name: Publish to Cloudflare
         uses: cloudflare/wrangler-action@2.0.0
+        with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          wranglerVersion: '2.0.6'
+          preCommands: npm install
+          command: publish
         env:
           NPM_GITHUB_PAT: ${{ secrets.NPM_GITHUB_PAT }}
           _ISSUER_ID: ${{ secrets._ISSUER_ID }}
@@ -63,9 +69,3 @@ jobs:
           _ISSUER_ID_KID: ${{ secrets._ISSUER_ID_KID }}
           _ISSUER_ID_METHOD_SPECIFIC_ID: ${{ secrets._ISSUER_ID_METHOD_SPECIFIC_ID }}
           _ISSUER_ID_METHOD: ${{ secrets._ISSUER_ID_METHOD }}
-        with:
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          wranglerVersion: '2.0.6'
-          preCommands: npm install
-          command: publish
