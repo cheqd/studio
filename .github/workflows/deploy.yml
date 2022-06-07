@@ -23,14 +23,27 @@ jobs:
 
       - name: Publish to Cloudflare
         uses: cloudflare/wrangler-action@2.0.0
-        env:
-          NPM_GITHUB_PAT: ${{ secrets.NPM_GITHUB_PAT }}
         with:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          secrets: |
+            _ISSUER_ID
+            _ISSUER_ID_PRIVATE_KEY_HEX
+            _ISSUER_ID_PUBLIC_KEY_HEX
+            _ISSUER_ID_KID
+            _ISSUER_ID_METHOD_SPECIFIC_ID
+            _ISSUER_ID_METHOD
           wranglerVersion: '2.0.7'
           preCommands: npm install
           command: publish --env staging
+        env:
+          NPM_GITHUB_PAT: ${{ secrets.NPM_GITHUB_PAT }}
+          _ISSUER_ID: ${{ secrets._ISSUER_ID }}
+          _ISSUER_ID_PRIVATE_KEY_HEX: ${{ secrets._ISSUER_ID_PRIVATE_KEY_HEX }}
+          _ISSUER_ID_PUBLIC_KEY_HEX: ${{ secrets._ISSUER_ID_PUBLIC_KEY_HEX }}
+          _ISSUER_ID_KID: ${{ secrets._ISSUER_ID_KID }}
+          _ISSUER_ID_METHOD_SPECIFIC_ID: ${{ secrets._ISSUER_ID_METHOD_SPECIFIC_ID }}
+          _ISSUER_ID_METHOD: ${{ secrets._ISSUER_ID_METHOD }}
 
   production-deploy:
     name: "Cloudflare - Production"
