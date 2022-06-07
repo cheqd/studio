@@ -27,6 +27,13 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           environment: staging
+          secrets: |
+            _ISSUER_ID
+            _ISSUER_ID_PRIVATE_KEY_HEX
+            _ISSUER_ID_PUBLIC_KEY_HEX
+            _ISSUER_ID_KID
+            _ISSUER_ID_METHOD_SPECIFIC_ID
+            _ISSUER_ID_METHOD
           wranglerVersion: '2.0.7'
           preCommands: npm install
           command: publish --env staging
