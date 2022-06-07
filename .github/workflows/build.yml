@@ -23,6 +23,8 @@ jobs:
 
       - name: "Clean install dependencies"
         run: npm install
+        env:
+          NPM_GITHUB_PAT: ${{ secrets.NPM_GITHUB_PAT }}
 
       - name: "Run npm build"
         run: npm run build
