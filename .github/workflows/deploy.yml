@@ -1,0 +1,65 @@
+name: "Deploy"
+on:
+  workflow_call:
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  staging-deploy:
+    name: "Cloudflare - Staging"
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://credential-service-staging.cheqd.io/
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+          cache: 'npm'
+
+      - name: Publish to Cloudflare
+        uses: cloudflare/wrangler-action@2.0.0
+        env:
+          NPM_GITHUB_PAT: ${{ secrets.NPM_GITHUB_PAT }}
+        with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          wranglerVersion: '2.0.7'
+          preCommands: npm install
+          command: publish --env staging
+
+  production-deploy:
+    name: "Cloudflare - Production"
+    needs: staging-deploy
+    if: ${{ success() && ( github.ref_name == 'main' ) }}
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    environment:
+      name: production
+      url: https://credential-service.cheqd.io/
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+          cache: 'npm'
+
+      - name: Publish to Cloudflare
+        uses: cloudflare/wrangler-action@2.0.0
+        env:
+          NPM_GITHUB_PAT: ${{ secrets.NPM_GITHUB_PAT }}
+        with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          wranglerVersion: '2.0.6'
+          preCommands: npm install
+          command: publish
