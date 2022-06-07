@@ -8,10 +8,6 @@ declare global {
 
     const CREDENTIALS: KVNamespace
 
-    const _INFURA_PROJECT_ID: string
-
-    const _KMS_SECRET_KEY: string
-
     const _ISSUER_ID: string
 
     const _ISSUER_ID_PRIVATE_KEY_HEX: string
@@ -23,10 +19,4 @@ declare global {
     const _ISSUER_ID_METHOD_SPECIFIC_ID: string
 
     const _ISSUER_ID_METHOD: string
-
-    const _TWITTER_CONSUMER_KEY: string
-
-    const _TWITTER_CONSUMER_SECRET: string
-
-    const _TWITTER_STATE_CSRF: string
 }
