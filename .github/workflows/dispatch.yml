@@ -16,7 +16,7 @@ jobs:
     secrets: inherit
 
   call-deploy:
-    name: "Cloudflare Deploy"
+    name: "Deploy"
     needs: call-build
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
