@@ -12,16 +12,14 @@ import { KeyManagementSystem } from '@veramo/kms-local'
 import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CredentialIssuer } from '@veramo/credential-w3c'
-import { ICreateVerifiableCredentialArgs } from '@veramo/credential-w3c'
 //import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 
-import { CheqdDIDProvider } from '@cheqd/did-provider-cheqd'
+import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 
 import { VC_CONTEXT, VC_TYPE, HEADERS, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../constants'
 import { CredentialPayload, CredentialRequest, CredentialSubject, VerifiableCredential } from '../types'
 
 import { Identity } from './identity'
-import { getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 
 export class Credentials {
 
@@ -103,7 +101,7 @@ export class Credentials {
                 credential,
                 proofFormat: VC_PROOF_FORMAT,
                 removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS
-            } as ICreateVerifiableCredentialArgs
+            }
         )
 
         if( verifiable_credential?.vc ) delete verifiable_credential.vc
