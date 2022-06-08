@@ -53,9 +53,9 @@
 		"webpack-cli": "^4.7.0"
 	},
 	"dependencies": {
+		"@cheqd/credential-issuer": "^1.1.0",
 		"@cheqd/did-provider-cheqd": "^1.0.2",
 		"@veramo/core": "^3.1.0",
-		"@veramo/credential-w3c": "^3.1.0",
 		"@veramo/did-manager": "^3.1.0",
 		"@veramo/did-resolver": "^3.1.0",
 		"@veramo/key-manager": "^3.1.0",

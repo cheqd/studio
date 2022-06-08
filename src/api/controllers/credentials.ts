@@ -11,7 +11,7 @@ import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-m
 import { KeyManagementSystem } from '@veramo/kms-local'
 import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { Resolver, ResolverRegistry } from 'did-resolver'
-import { CredentialIssuer } from '@veramo/credential-w3c'
+import { CredentialIssuer } from '@cheqd/credential-issuer'
 //import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
@@ -125,7 +125,7 @@ export class Credentials {
     }
 
     async verify_credentials(request: CredentialRequest): Promise<Response> {
-        if( !request.headers.get('Content-Type') || request.headers.get('Content-Type') != 'application/json' ) return new Response( JSON.stringify( { error: 'Unsupported media type.' } ), { status: 405, headers: HEADERS.json } )
+        if( !request?.headers?.get('Content-Type') || request?.headers?.get('Content-Type') != 'application/json' ) return new Response( JSON.stringify( { error: 'Unsupported media type.' } ), { status: 405, headers: HEADERS.json } )
 
         const credential = request?.credential
 
