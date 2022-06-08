@@ -125,7 +125,7 @@ export class Credentials {
     }
 
     async verify_credentials(request: CredentialRequest): Promise<Response> {
-        if( !request?.headers?.get('Content-Type') || request?.headers?.get('Content-Type') != 'application/json' ) return new Response( JSON.stringify( { error: 'Unsupported media type.' } ), { status: 405, headers: HEADERS.json } )
+        if( request?.headers && ( !request?.headers?.get('Content-Type') || request?.headers?.get('Content-Type') != 'application/json' ) ) return new Response( JSON.stringify( { error: 'Unsupported media type.' } ), { status: 405, headers: HEADERS.json } )
 
         const credential = request?.credential
 
