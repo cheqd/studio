@@ -72,7 +72,6 @@ jobs:
         with:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          environment: production
           secrets: |
             _ISSUER_ID
             _ISSUER_ID_PRIVATE_KEY_HEX
