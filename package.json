@@ -4,7 +4,6 @@
 	"description": "cheqd Credential Service Backend",
 	"source": "src/index.ts",
 	"main": "src/index.ts",
-	"type": "module",
 	"license": "Apache-2.0",
 	"author": "Cheqd Foundation Limited (https://github.com/cheqd)",
 	"repository": "https://github.com/cheqd/credential-service.git",
@@ -54,14 +53,9 @@
 		"webpack-cli": "^4.7.0"
 	},
 	"dependencies": {
-		"@cheqd/credential-issuer": "^1.0.1",
+		"@cheqd/credential-issuer": "^1.1.0",
 		"@cheqd/did-provider-cheqd": "^1.0.2",
-		"@cosmjs/amino": "^0.28.4",
-		"@cosmjs/encoding": "^0.28.4",
-		"@cosmjs/proto-signing": "^0.28.4",
-		"@lum-network/sdk-javascript": "^0.7.3",
 		"@veramo/core": "^3.1.0",
-		"@veramo/credential-w3c": "^3.1.0",
 		"@veramo/did-manager": "^3.1.0",
 		"@veramo/did-resolver": "^3.1.0",
 		"@veramo/key-manager": "^3.1.0",
@@ -77,7 +71,6 @@
 		"path-browserify": "1.0.1",
 		"process": "^0.11.10",
 		"stream-browserify": "3.0.0",
-		"twitter-api-sdk": "^1.0.4",
 		"util": "^0.12.4"
 	},
 	"publishConfig": {

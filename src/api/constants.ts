@@ -311,10 +311,6 @@ agent:
             - $ref: /dbConnection
 `
 
-export const INFURA_PROJECT_ID = _INFURA_PROJECT_ID
-
-export const KMS_SECRET_KEY = _KMS_SECRET_KEY
-
 export const ISSUER_ID = _ISSUER_ID
 
 export const ISSUER_ID_PRIVATE_KEY_HEX = _ISSUER_ID_PRIVATE_KEY_HEX
@@ -334,16 +330,3 @@ export const VC_TYPE = 'VerifiableCredential'
 export const VC_PROOF_FORMAT = 'jwt'
 
 export const VC_REMOVE_ORIGINAL_FIELDS = false
-
-// Auth
-export const PROPOSAL_MESSAGE_TITLE = 'AuthRequest'
-
-export const REPLY_PROTECTION_INTERVAL = 30
-
-// Twitter Auth
-
-export const TWITTER_CONSUMER_KEY = _TWITTER_CONSUMER_KEY
-
-export const TWITTER_CONSUMER_SECRET = _TWITTER_CONSUMER_SECRET
-
-export const TWITTER_STATE_CSRF = _TWITTER_STATE_CSRF

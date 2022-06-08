@@ -1,0 +1,93 @@
+name: "Deploy"
+on:
+  workflow_call:
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  staging-deploy:
+    name: "Cloudflare - Staging"
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://credential-service-staging.cheqd.io/
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+          cache: 'npm'
+
+      - name: Publish to Cloudflare
+        uses: cloudflare/wrangler-action@2.0.0
+        with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          environment: staging
+          secrets: |
+            _ISSUER_ID
+            _ISSUER_ID_PRIVATE_KEY_HEX
+            _ISSUER_ID_PUBLIC_KEY_HEX
+            _ISSUER_ID_KID
+            _ISSUER_ID_METHOD_SPECIFIC_ID
+            _ISSUER_ID_METHOD
+          wranglerVersion: '2.0.7'
+          preCommands: npm install
+          command: publish --env staging
+        env:
+          NPM_GITHUB_PAT: ${{ secrets.NPM_GITHUB_PAT }}
+          _ISSUER_ID: ${{ secrets._ISSUER_ID }}
+          _ISSUER_ID_PRIVATE_KEY_HEX: ${{ secrets._ISSUER_ID_PRIVATE_KEY_HEX }}
+          _ISSUER_ID_PUBLIC_KEY_HEX: ${{ secrets._ISSUER_ID_PUBLIC_KEY_HEX }}
+          _ISSUER_ID_KID: ${{ secrets._ISSUER_ID_KID }}
+          _ISSUER_ID_METHOD_SPECIFIC_ID: ${{ secrets._ISSUER_ID_METHOD_SPECIFIC_ID }}
+          _ISSUER_ID_METHOD: ${{ secrets._ISSUER_ID_METHOD }}
+
+  production-deploy:
+    name: "Cloudflare - Production"
+    needs: staging-deploy
+    if: ${{ success() && ( github.ref_name == 'main' ) }}
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    environment:
+      name: production
+      url: https://credential-service.cheqd.io/
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+          cache: 'npm'
+
+      - name: Publish to Cloudflare
+        uses: cloudflare/wrangler-action@2.0.0
+        with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          environment: production
+          secrets: |
+            _ISSUER_ID
+            _ISSUER_ID_PRIVATE_KEY_HEX
+            _ISSUER_ID_PUBLIC_KEY_HEX
+            _ISSUER_ID_KID
+            _ISSUER_ID_METHOD_SPECIFIC_ID
+            _ISSUER_ID_METHOD
+          wranglerVersion: '2.0.7'
+          preCommands: npm install
+          command: publish
+        env:
+          NPM_GITHUB_PAT: ${{ secrets.NPM_GITHUB_PAT }}
+          _ISSUER_ID: ${{ secrets._ISSUER_ID }}
+          _ISSUER_ID_PRIVATE_KEY_HEX: ${{ secrets._ISSUER_ID_PRIVATE_KEY_HEX }}
+          _ISSUER_ID_PUBLIC_KEY_HEX: ${{ secrets._ISSUER_ID_PUBLIC_KEY_HEX }}
+          _ISSUER_ID_KID: ${{ secrets._ISSUER_ID_KID }}
+          _ISSUER_ID_METHOD_SPECIFIC_ID: ${{ secrets._ISSUER_ID_METHOD_SPECIFIC_ID }}
+          _ISSUER_ID_METHOD: ${{ secrets._ISSUER_ID_METHOD }}
