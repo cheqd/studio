@@ -330,3 +330,5 @@ export const VC_TYPE = 'VerifiableCredential'
 export const VC_PROOF_FORMAT = 'jwt'
 
 export const VC_REMOVE_ORIGINAL_FIELDS = false
+
+export const VC_AUTH0_GUARD_URI = 'https://auth0-proxy-staging.cheqd.workers.dev/api/auth0/twitter/validate'
