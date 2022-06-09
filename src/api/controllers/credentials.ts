@@ -62,7 +62,7 @@ export class Credentials {
         })
     }
 
-    async issue_credentials(request: Request): Promise<Response> {
+    async issue_credentials(request: Request, user: Record<string, any>): Promise<Response> {
         const url = new URL(request.url);
         const public_key = url.pathname.split('/').pop() || "";
 
@@ -91,7 +91,7 @@ export class Credentials {
             type: [ VC_TYPE ],
             issuanceDate: new Date().toISOString(),
             credentialSubject: credential_subject,
-            name: "I got this credential at #IIW 34 in April 2022"
+            name: user.nickname ?? user.name
         }
 
         const verifiable_credential: Omit<VerifiableCredential, 'vc'> = await this.agent.execute(

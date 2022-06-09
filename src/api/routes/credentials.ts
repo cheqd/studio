@@ -19,7 +19,9 @@ router.all(
 
         const credentials = new GuardedCredentials()
 
-        if( !( await credentials.guard(request) ) ) 
+        const auth = await credentials.guard(request)
+
+        if( !( auth.authenticated ) ) 
             return new Response(
                 JSON.stringify({error: 'Unauthenticated.'}),
                 {
@@ -28,7 +30,7 @@ router.all(
                 }
             )
 
-        return await credentials.issue_credentials(request)
+        return await credentials.issue_credentials(request, user)
     }
 )
 
