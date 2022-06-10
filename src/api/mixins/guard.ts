@@ -7,7 +7,7 @@ export class GuardedCredentials {
         return (await fetch(
             VC_AUTH0_GUARD_URI,
             {
-                headers: { 'Authorization': request.headers.get('Authorization') }
+                headers: { 'Authorization': request.headers.get('Authorization') ?? '' }
             }
         )).json()
     }

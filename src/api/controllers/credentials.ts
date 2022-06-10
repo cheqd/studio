@@ -17,7 +17,7 @@ import { CredentialIssuer } from '@cheqd/credential-issuer'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 
 import { VC_CONTEXT, VC_TYPE, HEADERS, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../constants'
-import { CredentialPayload, CredentialRequest, CredentialSubject, VerifiableCredential } from '../types'
+import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential } from '../types'
 
 import { Identity } from './identity'
 
@@ -62,7 +62,7 @@ export class Credentials {
         })
     }
 
-    async issue_credentials(request: Request, user: Record<string, any>): Promise<Response> {
+    async issue_credentials(request: Request, user: GenericAuthUser): Promise<Response> {
         const url = new URL(request.url);
         const public_key = url.pathname.split('/').pop() || "";
 
@@ -91,7 +91,7 @@ export class Credentials {
             type: [ VC_TYPE ],
             issuanceDate: new Date().toISOString(),
             credentialSubject: credential_subject,
-            name: user.nickname ?? user.name
+            name: user?.nickname ?? user?.name
         }
 
         const verifiable_credential: Omit<VerifiableCredential, 'vc'> = await this.agent.execute(
