@@ -86,10 +86,18 @@ export class Credentials {
         const credential: CredentialPayload = {
             issuer: { id: issuer_id.did },
             '@context': VC_CONTEXT,
-            type: [ VC_TYPE ],
+            type: [ 'Person', VC_TYPE ],
             issuanceDate: new Date().toISOString(),
             credentialSubject: credential_subject,
-            name: user?.nickname ?? user?.name
+            'WebPage': [
+                {
+                    '@type': 'ProfilePage',
+                    description: 'Twitter',
+                    name: `@${user?.nickname}` ?? '<unknown>',
+                    identifier: `https://twitter.com/${user?.nickname}`,
+                    lastReviewed: user?.updated_at
+                }
+            ],
         }
 
         const verifiable_credential: Omit<VerifiableCredential, 'vc'> = await this.agent.execute(

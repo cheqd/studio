@@ -323,7 +323,7 @@ export const ISSUER_ID_METHOD_SPECIFIC_ID = _ISSUER_ID_METHOD_SPECIFIC_ID
 
 export const ISSUER_ID_METHOD = _ISSUER_ID_METHOD
 
-export const VC_CONTEXT = ['https://www.w3.org/2018/credentials/v1', 'https://veramo.io/contexts/profile/v1']
+export const VC_CONTEXT = ['https://www.w3.org/2018/credentials/v1', 'https://veramo.io/contexts/profile/v1', 'https://schema.org/Person']
 
 export const VC_TYPE = 'VerifiableCredential'
 
