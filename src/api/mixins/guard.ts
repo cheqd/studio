@@ -22,7 +22,7 @@ export class GuardedCredentials {
             res => res.json()
         ).catch(error => ({ authenticated: false, user: null }))
 
-        return {...validation, subjectId}
+        return {...validation as GenericAuthResponse, subjectId}
     }
 }
 
