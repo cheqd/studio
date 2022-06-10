@@ -62,11 +62,9 @@ export class Credentials {
         })
     }
 
-    async issue_credentials(request: Request, user: GenericAuthUser): Promise<Response> {
-        const url = new URL(request.url);
-        const public_key = url.pathname.split('/').pop() || "";
+    async issue_credentials(request: Request, user: GenericAuthUser, subjectId: string): Promise<Response> {
 
-        if( !this.agent ) throw new Error('No initialised agent found.')
+        if( !this.agent ) this.init_agent()
 
         const identity_handler = new Identity(
             this.agent,
@@ -81,7 +79,7 @@ export class Credentials {
         this.agent = identity_handler.agent!
 
         const credential_subject: CredentialSubject = {
-            id: `did:key:${public_key}`,
+            id: subjectId,
             type: undefined
         }
 

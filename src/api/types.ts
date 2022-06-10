@@ -93,7 +93,8 @@ export type CredentialRequest = Request & { credential?: W3CVerifiableCredential
 
 export type GenericAuthResponse = {
     authenticated: boolean
-    user: GenericAuthUser
+    user: GenericAuthUser,
+    subjectId?: string
 }
 
 export type GenericAuthUser = Record<string, any> | null | undefined

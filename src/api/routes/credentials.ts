@@ -13,15 +13,15 @@ router.all(
 )
 
 router.all(
-    '/issue/*',
+    '/issue',
     async (request: Request) => {
         applyMixins(GuardedCredentials, [Credentials])
 
         const credentials = new GuardedCredentials()
 
-        const auth = await credentials.guard(request)
+        const { authenticated, user, subjectId } = await credentials.guard(request)
 
-        if( !( auth.authenticated ) ) 
+        if( !( authenticated ) ) 
             return new Response(
                 JSON.stringify({error: 'Unauthenticated.'}),
                 {
@@ -30,7 +30,7 @@ router.all(
                 }
             )
 
-        return await credentials.issue_credentials(request, auth.user)
+        return await credentials.issue_credentials(request, user, subjectId)
     }
 )
 
