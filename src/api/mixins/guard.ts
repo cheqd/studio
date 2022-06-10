@@ -6,6 +6,7 @@ export class GuardedCredentials {
     guard = async (request: Request): Promise<GenericAuthResponse> => {
         const { claim, provider, subjectId } = await request.json()
 
+        // @ts-ignore
         return await fetch(
             VC_AUTH0_URI,
             {

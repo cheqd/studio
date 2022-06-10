@@ -23,9 +23,9 @@ import { Identity } from './identity'
 
 export class Credentials {
 
-    agent: TAgent<any> | undefined
+    agent: TAgent<any>
 
-    constructor(agent?: TAgent<any>) {
+    constructor(agent?: any) {
         this.agent = agent
         if( !agent ) this.init_agent()
     }
@@ -62,7 +62,7 @@ export class Credentials {
         })
     }
 
-    async issue_credentials(request: Request, user: GenericAuthUser, subjectId: string): Promise<Response> {
+    async issue_credentials(request: Request, user: GenericAuthUser, subjectId?: string): Promise<Response> {
 
         if( !this.agent ) this.init_agent()
 
@@ -73,7 +73,7 @@ export class Credentials {
 
         const issuer_id = await identity_handler.load_issuer_did(
             request,
-            this.agent
+            this.agent as TAgent<any>
         )
 
         this.agent = identity_handler.agent!
