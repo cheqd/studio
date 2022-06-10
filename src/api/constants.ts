@@ -331,4 +331,4 @@ export const VC_PROOF_FORMAT = 'jwt'
 
 export const VC_REMOVE_ORIGINAL_FIELDS = false
 
-export const VC_AUTH0_URI = 'https://auth0-proxy-staging.cheqd.net/api/auth0/twitter/validate'
+export const VC_AUTH0_URI = 'https://auth0-proxy-staging.cheqd.net/api/auth0/validate'
