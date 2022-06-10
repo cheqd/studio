@@ -6,30 +6,23 @@ export class GuardedCredentials {
     guard = async (request: Request): Promise<GenericAuthResponse> => {
         const { claim, provider, subjectId } = await request.json()
 
-        // @ts-ignore
-        return await fetch(
+        const validation = await fetch(
             VC_AUTH0_URI,
             {
                 method: 'POST',
                 body: JSON.stringify(
                     {
-                        claim: claim,
-                        provider: provider
+                        claim,
+                        provider
                     }
                 ),
                 headers: HEADERS.json
             }
         ).then(
-            res => ({...res.json(), subjectId: subjectId})
-        ).catch(error => new Response(
-            JSON.stringify(
-                {error: 'Unauthenticated.'}
-            ),
-            {
-                headers: HEADERS.json,
-                status: 401
-            }
-        ))
+            res => res.json()
+        ).catch(error => ({ authenticated: false, user: null }))
+
+        return {...validation, subjectId}
     }
 }
 
