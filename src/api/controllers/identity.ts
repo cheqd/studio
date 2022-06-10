@@ -9,9 +9,9 @@ import { ISSUER_ID_KID, ISSUER_ID_METHOD, ISSUER_ID_METHOD_SPECIFIC_ID, ISSUER_I
 
 export class Identity {
 
-    agent: TAgent<any> | undefined
+    agent: TAgent<any>
 
-    constructor(agent?: TAgent<any>, mode?: string) {
+    constructor(agent: TAgent<any>, mode?: string) {
         this.agent = agent
         if( mode === 'demo' ) return
     }
@@ -21,7 +21,7 @@ export class Identity {
 
         if( agent ) this.agent = agent
 
-        const [ kms ] = await this.agent!.keyManagerGetKeyManagementSystems()
+        const [ kms ] = await this.agent.keyManagerGetKeyManagementSystems()
 
         const key: MinimalImportableKey = { kms: kms, type: 'Ed25519', kid: ISSUER_ID_KID, privateKeyHex: ISSUER_ID_PRIVATE_KEY_HEX, publicKeyHex: ISSUER_ID_PUBLIC_KEY_HEX }
 
@@ -29,7 +29,7 @@ export class Identity {
 
         const issuerDidMethod = ISSUER_ID_METHOD
 
-        const identifier: IIdentifier = await this.agent!.didManagerImport({ keys: [ key ], did: issuerDidMethod + methodSpecificId, controllerKeyId: key.kid } as MinimalImportableIdentifier)
+        const identifier: IIdentifier = await this.agent.didManagerImport({ keys: [ key ], did: issuerDidMethod + methodSpecificId, controllerKeyId: key.kid } as MinimalImportableIdentifier)
 
         return identifier
     }

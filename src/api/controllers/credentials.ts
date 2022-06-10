@@ -17,15 +17,15 @@ import { CredentialIssuer } from '@cheqd/credential-issuer'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 
 import { VC_CONTEXT, VC_TYPE, HEADERS, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../constants'
-import { CredentialPayload, CredentialRequest, CredentialSubject, VerifiableCredential } from '../types'
+import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential } from '../types'
 
 import { Identity } from './identity'
 
 export class Credentials {
 
-    agent: TAgent<any> | null | undefined
+    agent: TAgent<any>
 
-    constructor(agent?: TAgent<any>) {
+    constructor(agent?: any) {
         this.agent = agent
         if( !agent ) this.init_agent()
     }
@@ -62,11 +62,9 @@ export class Credentials {
         })
     }
 
-    async issue_credentials(request: Request): Promise<Response> {
-        const url = new URL(request.url);
-        const public_key = url.pathname.split('/').pop() || "";
+    async issue_credentials(request: Request, user: GenericAuthUser, subjectId?: string): Promise<Response> {
 
-        if( !this.agent ) throw new Error('No initialised agent found.')
+        if( !this.agent ) this.init_agent()
 
         const identity_handler = new Identity(
             this.agent,
@@ -75,23 +73,31 @@ export class Credentials {
 
         const issuer_id = await identity_handler.load_issuer_did(
             request,
-            this.agent
+            this.agent as TAgent<any>
         )
 
         this.agent = identity_handler.agent!
 
         const credential_subject: CredentialSubject = {
-            id: `did:key:${public_key}`,
+            id: subjectId,
             type: undefined
         }
 
         const credential: CredentialPayload = {
             issuer: { id: issuer_id.did },
             '@context': VC_CONTEXT,
-            type: [ VC_TYPE ],
+            type: [ 'Person', VC_TYPE ],
             issuanceDate: new Date().toISOString(),
             credentialSubject: credential_subject,
-            name: "I got this credential at #IIW 34 in April 2022"
+            'WebPage': [
+                {
+                    '@type': 'ProfilePage',
+                    description: 'Twitter',
+                    name: `@${user?.nickname}` ?? '<unknown>',
+                    identifier: `https://twitter.com/${user?.nickname}`,
+                    lastReviewed: user?.updated_at
+                }
+            ],
         }
 
         const verifiable_credential: Omit<VerifiableCredential, 'vc'> = await this.agent.execute(

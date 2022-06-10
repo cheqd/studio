@@ -90,3 +90,12 @@ export interface PresentationPayload {
 }
 
 export type CredentialRequest = Request & { credential?: W3CVerifiableCredential }
+
+export type GenericAuthResponse = {
+    authenticated: boolean
+    user: GenericAuthUser,
+    provider: string,
+    subjectId?: string
+}
+
+export type GenericAuthUser = Record<string, any> | null | undefined

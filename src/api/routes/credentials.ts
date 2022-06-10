@@ -1,6 +1,9 @@
 import { Router } from 'itty-router'
 import { Credentials } from '../controllers/credentials'
 import { CredentialRequest, W3CVerifiableCredential } from '../types'
+import { GuardedCredentials } from '../mixins/guard'
+import { applyMixins } from '../mixins/_'
+import { HEADERS } from '../constants'
 
 const router = Router({ base: '/api/credentials' })
 
@@ -10,9 +13,24 @@ router.all(
 )
 
 router.all(
-    '/issue/*',
+    '/issue',
     async (request: Request) => {
-        return await ( new Credentials() ).issue_credentials(request)
+        applyMixins(GuardedCredentials, [Credentials])
+
+        const credentials = new GuardedCredentials()
+
+        const { authenticated, user, subjectId } = await credentials.guard(request)
+
+        if( !( authenticated ) ) 
+            return new Response(
+                JSON.stringify({error: 'Unauthenticated.'}),
+                {
+                    status: 401,
+                    headers: HEADERS.json
+                }
+            )
+
+        return await credentials.issue_credentials(request, user, subjectId)
     }
 )
 

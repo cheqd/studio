@@ -323,10 +323,12 @@ export const ISSUER_ID_METHOD_SPECIFIC_ID = _ISSUER_ID_METHOD_SPECIFIC_ID
 
 export const ISSUER_ID_METHOD = _ISSUER_ID_METHOD
 
-export const VC_CONTEXT = ['https://www.w3.org/2018/credentials/v1', 'https://veramo.io/contexts/profile/v1']
+export const VC_CONTEXT = ['https://www.w3.org/2018/credentials/v1', 'https://veramo.io/contexts/profile/v1', 'https://schema.org/Person']
 
 export const VC_TYPE = 'VerifiableCredential'
 
 export const VC_PROOF_FORMAT = 'jwt'
 
 export const VC_REMOVE_ORIGINAL_FIELDS = false
+
+export const VC_AUTH0_URI = 'https://auth0-proxy-staging.cheqd.net/api/auth0/validate'
