@@ -23,7 +23,7 @@ import { Identity } from './identity'
 
 export class Credentials {
 
-    agent: TAgent<any> | null | undefined
+    agent: TAgent<any> | undefined
 
     constructor(agent?: TAgent<any>) {
         this.agent = agent
