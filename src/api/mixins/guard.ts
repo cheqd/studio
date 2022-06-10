@@ -1,4 +1,4 @@
-import { HEADERS, VC_AUTH0_GUARD_URI } from '../constants'
+import { HEADERS, VC_AUTH0_URI } from '../constants'
 import { Credentials } from '../controllers/credentials'
 import { GenericAuthResponse } from '../types'
 
@@ -7,7 +7,7 @@ export class GuardedCredentials {
         const { claim, subjectId } = await request.json()
 
         return await fetch(
-            'https://auth0-proxy-staging.cheqd.net/api/auth0/twitter/validate',
+            VC_AUTH0_URI,
             {
                 method: 'POST',
                 body: JSON.stringify(
