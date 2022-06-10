@@ -30,7 +30,7 @@ router.all(
                 }
             )
 
-        return await credentials.issue_credentials(request, user)
+        return await credentials.issue_credentials(request, auth.user)
     }
 )
 
