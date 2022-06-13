@@ -18,8 +18,8 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.x'
-          cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
+          # cache: 'npm' <--- Commenting out, see: https://github.com/bahmutov/npm-install/issues/80, as of 13th of June 2022.
+          # cache-dependency-path: '**/package-lock.json' <--- Commenting out, see: https://github.com/bahmutov/npm-install/issues/80, as of 13th of June 2022.
 
       - name: "Clean install dependencies"
         run: npm install
