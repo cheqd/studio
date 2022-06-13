@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.x'
-          cache: 'npm'
+          # cache: 'npm' <--- Commenting out, see: https://github.com/bahmutov/npm-install/issues/80, as of 13th of June 2022.
 
       - name: Publish to Cloudflare
         uses: cloudflare/wrangler-action@2.0.0
@@ -65,7 +65,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.x'
-          cache: 'npm'
+          # cache: 'npm' <--- Commenting out, see: https://github.com/bahmutov/npm-install/issues/80, as of 13th of June 2022.
 
       - name: Publish to Cloudflare
         uses: cloudflare/wrangler-action@2.0.0
