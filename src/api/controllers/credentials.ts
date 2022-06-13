@@ -94,7 +94,7 @@ export class Credentials {
                     '@type': 'ProfilePage',
                     description: 'Twitter',
                     name: `${user?.nickname}` ?? '<unknown>',
-                    identifier: user?.handle ?? '<unknown>',
+                    identifier: `@${user?.handle}` ?? '<unknown>',
                     URL: `https://twitter.com/${user?.handle}`,
                     lastReviewed: user?.updated_at
                 }
