@@ -41,7 +41,7 @@
 		"eslint-config-typescript": "^3.0.0",
 		"ioredis": "^4.27.9",
 		"jest": "^27.0.0",
-		"miniflare": "^2.4.0",
+		"miniflare": "^2.5.1",
 		"prettier": "^2.3.0",
 		"semantic-release": "^19.0.2",
 		"service-worker-mock": "^2.0.5",
