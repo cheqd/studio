@@ -39,6 +39,8 @@ kv_namespaces = [
 	{ binding = "CREDENTIALS", preview_id = "08f012b41df44fd3b6849100d02b7cba", id = "08f012b41df44fd3b6849100d02b7cba" }
 ]
 
+node_compat = true
+
 # Map of environment variables to set when deploying the Worker
 # Not inherited. @default `{}`
 # [vars]
