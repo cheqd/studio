@@ -11,7 +11,7 @@ import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-m
 import { KeyManagementSystem } from '@veramo/kms-local'
 import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { Resolver, ResolverRegistry } from 'did-resolver'
-import { CredentialIssuer } from '@cheqd/credential-issuer'
+import { CredentialIssuer } from '@veramo/credential-w3c'
 //import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
