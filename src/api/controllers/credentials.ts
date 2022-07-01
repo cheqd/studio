@@ -6,7 +6,7 @@ import {
     IKeyManager,
     TAgent,
 } from '@veramo/core'
-import { DIDManager, MemoryDIDStore } from '@veramo/did-manager'
+import { AbstractIdentifierProvider, DIDManager, MemoryDIDStore } from '@veramo/did-manager'
 import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager'
 import { KeyManagementSystem } from '@veramo/kms-local'
 import { DIDResolverPlugin } from '@veramo/did-resolver'
@@ -49,7 +49,7 @@ export class Credentials {
                             {
                                 defaultKms: 'local'
                             }
-                        )
+                        ) as AbstractIdentifierProvider
                     }
                 }),
                 new DIDResolverPlugin({
