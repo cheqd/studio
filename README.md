@@ -1,49 +1,70 @@
-# cheqd: Credentials Back-end
+# cheqd: Credentials Service
 
 ## ℹ️ Overview
 
-This repo is provides the backend components required for creating and managing Verifiable Credentials anchored to DIDs on cheqd mainnet using the  [`did:cheqd` method DIDs](architecture/adr-list/adr-002-cheqd-did-method.md)
+The purpose of this package is to connect the Veramo SDK for cheqd to cheqd's demo web-app wallet - [wallet.cheqd.io](https://wallet.cheqd.io/welcome).
 
-To implement credential issuance, verification and management we built on top of [veramo.io](https://veramo.io/)'s SDK, since we found it was *highly* modular. 
+Using this package, users are able to provide a way in which a wallet holder can request a JSON credential (JWT proofed) and hold this in a web-app.
 
-[veramo.io](https://veramo.io/) is a JavaScript Framework for Verifiable Data that was designed to be flexible and modular which makes it an easy fit for a lot of complex workflows.
+We have offered this as a reference implementation of how someone may utilise the cheqd and veramo packages on a web application.
 
-Create an agent, add plugins, run on a server or a frontend or mobile, or all of them combined. Veramo runs on Node, Browsers, and React Native straight out of the box. Save time by using the same API across all platforms.
+For our implementation we used:
 
-Veramo is a core + some plugins. The core provides an entry point into the API, glues the plugins together and allows them to interoperate. Depending on which plugins you use, your instance of Veramo (your agent) can perform a variety of roles:
+* Cloudflare
+* Auth0
+* IPFS storage
 
-* Create and manage keys for signing and encryption
-* Create and manage Decentralized Identifiers (DID)
-* Issue Verifiable Credentials (VCs) and Presentations (VPs)
-* Verify such VCs and VPs
-* Present credentials using Selective Diclosure
-* Communicate with other agents using DIDComm (or other protocols)
-* Receive, filter, store and serve data
-* Control other agents remotely, or act as a proxy for them
+See below for a diagram of our reference implementation:
 
-This works with the [cheqd-credential-issuer]([architecture/adr-list/adr-002-cheqd-did-method.md](https://github.com/cheqd/cheqd-credential-issuer)) and [did-provider-cheqd](https://github.com/cheqd/did-provider-cheqd) packages.
+INSERT DIAGRAM
 
+## 🧑‍💻🛠 Developer Guide
 
-## 🧑‍💻 Using this repo
+### Architecture
 
+This package works alongside a blend of cheqd packages and Veramo packages.
 
-## 🛠 Steps to follow 
+These cheqd packages include:
 
-### 1. 
+* cheqd's [`SDK`](https://github.com/cheqd/sdk) package
+* [`did-provider-cheqd`](https://github.com/cheqd/did-provider-cheqd) which provides the functiomaltiy for writing to the ledger, using the Veramo SDK.
 
+The key Veramo packages utilised include:
 
-### 2. 
+* [`@veramo/core`](https://github.com/uport-project/veramo/tree/next/packages/core)
+* [`@veramo/cli`](https://github.com/uport-project/veramo/tree/next/packages/cli)
+* [`@veramo/credential-w3c`](https://github.com/uport-project/veramo/tree/next/packages/credential-w3c)
 
+Find out about other Veramo plug-ins at [`veramo_agent/plugins/`](https://veramo.io/docs/veramo_agent/plugins/)
 
-### 3. 
+* [DID Module](https://github.com/cheqd/sdk/blob/main/src/modules/did.ts)
+* [@cosmjs](https://github.com/cheqd/sdk/blob/main/src/modules/_.ts)
 
+### Setup
 
-### 4. 
+Dependencies can be installed using Yarn or any other package manager.
 
+```bash
+yarn install
+```
 
-## Usage
+### Config
 
+A default agent configuration is provided with the [`agent.yml`](https://github.com/cheqd/did-provider-cheqd/blob/main/agent.yml) file.
+
+To specify further configurations, see the Veramo docs, however when making changes, ensure the cheqd specific suggested configurations are retained.
+
+### Deploy
+
+`credentials-service`
+
+`cheqd/sdk` supports the same out of the box use cases as Veramo provides.
+
+As such, this can be utilised in a backend (server-side) envrionment or frontend (browser/web) application, or in a CLI specific applications by leverage [`@veramo/cli`](https://github.com/uport-project/veramo/tree/next/packages/cli).
+
+## 📄 Documentation
 
 ## 🙋 Find us elsewhere
 
 [![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/cheqd) [![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](http://cheqd.link/discord-github) [![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com/intent/follow?screen_name=cheqd_io) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](http://cheqd.link/linkedin) [![Slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white)](http://cheqd.link/join-cheqd-slack) [![Medium](https://img.shields.io/badge/Medium-12100E?style=for-the-badge&logo=medium&logoColor=white)](https://blog.cheqd.io) [![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/channel/UCBUGvvH6t3BAYo5u41hJPzw/)
+=======
