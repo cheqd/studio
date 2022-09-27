@@ -1,14 +1,14 @@
 export const HEADERS = {
-    json: { 'Content-Type': 'application/json' },
-    text: { 'Content-Type': 'text/plain' },
+	json: { 'Content-Type': 'application/json' },
+	text: { 'Content-Type': 'text/plain' },
 }
 
 export const CORS_HEADERS = {
-    [Symbol.iterator]: function*(): Record<any, any>{
-      yield { 'Access-Control-Allow-Origin': '*' }
-      yield { 'Access-Control-Allow-Methods': 'GET,OPTIONS' }
-      yield { 'Access-Control-Max-Age': '86400' }
-    }
+	[Symbol.iterator]: function*(): Record<any, any> {
+		yield { 'Access-Control-Allow-Origin': '*' }
+		yield { 'Access-Control-Allow-Methods': 'GET,OPTIONS' }
+		yield { 'Access-Control-Max-Age': '86400' }
+	}
 }
 
 export const DEFAULT_CONFIG = `
@@ -332,3 +332,7 @@ export const VC_PROOF_FORMAT = 'jwt'
 export const VC_REMOVE_ORIGINAL_FIELDS = false
 
 export const VC_AUTH0_URI = 'https://auth0-proxy-staging.cheqd.net/api/auth0/validate'
+
+export const COSMOS_PAYER_MENMONIC = _COSMOS_PAYER_MNEMONIC
+
+export const NETWORK_RPC_URL = _NETWORK_RPC_URL

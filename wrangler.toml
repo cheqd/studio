@@ -19,7 +19,8 @@ compatibility_date = "2022-05-24"
 # Usage model for the Worker
 # Details: https://developers.cloudflare.com/workers/platform/limits
 usage_model = "bundled"
-
+node_compat = true
+minify = true
 
 ###############################################################
 ###            SECTION 2: Production Environment            ###
@@ -38,8 +39,6 @@ route = { pattern = "credential-service.cheqd.io/*", zone_id = "afe3b66243382f27
 kv_namespaces = [
 	{ binding = "CREDENTIALS", preview_id = "08f012b41df44fd3b6849100d02b7cba", id = "08f012b41df44fd3b6849100d02b7cba" }
 ]
-
-node_compat = true
 
 # Map of environment variables to set when deploying the Worker
 # Not inherited. @default `{}`
@@ -70,6 +69,8 @@ node_compat = true
 [env.staging]
 # Worker name - Staging Environment
 name = "credential-service-staging"
+node_compat = true
+minify = true
 
 # Deploy to NAME.SUBDOMAIN.workers.dev?
 # @default `true`
@@ -114,9 +115,3 @@ kv_namespaces = [
 # do proper module imports.
 #[data_blobs]
 # DATA = ""
-
-# Minify before uploading?
-# minify = "false"
-
-# Add polyfills for node builtin modules and globals?
-node_compat = true

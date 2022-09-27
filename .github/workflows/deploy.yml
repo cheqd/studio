@@ -34,18 +34,20 @@ jobs:
             _ISSUER_ID_KID
             _ISSUER_ID_METHOD_SPECIFIC_ID
             _ISSUER_ID_METHOD
+            _COSMOS_PAYER_MNEMONIC
+            _NETWORK_RPC_URL
           wranglerVersion: '2.0.7'
           preCommands: npm install
           command: publish --env staging
         env:
-          NPM_GITHUB_PAT: ${{ secrets.NPM_GITHUB_PAT }}
           _ISSUER_ID: ${{ secrets._ISSUER_ID }}
           _ISSUER_ID_PRIVATE_KEY_HEX: ${{ secrets._ISSUER_ID_PRIVATE_KEY_HEX }}
           _ISSUER_ID_PUBLIC_KEY_HEX: ${{ secrets._ISSUER_ID_PUBLIC_KEY_HEX }}
           _ISSUER_ID_KID: ${{ secrets._ISSUER_ID_KID }}
           _ISSUER_ID_METHOD_SPECIFIC_ID: ${{ secrets._ISSUER_ID_METHOD_SPECIFIC_ID }}
           _ISSUER_ID_METHOD: ${{ secrets._ISSUER_ID_METHOD }}
-
+          _COSMOS_PAYER_MNEMONIC: ${{ secrets._COSMOS_PAYER_MNEMONIC }}
+          _NETWORK_RPC_URL: ${{ secrets._NETWORK_RPC_URL }}
   production-deploy:
     name: "Cloudflare - Production"
     needs: staging-deploy
@@ -77,14 +79,17 @@ jobs:
             _ISSUER_ID_KID
             _ISSUER_ID_METHOD_SPECIFIC_ID
             _ISSUER_ID_METHOD
+            _COSMOS_PAYER_MNEMONIC
+            _NETWORK_RPC_URL
           wranglerVersion: '2.0.7'
           preCommands: npm install
           command: publish
         env:
-          NPM_GITHUB_PAT: ${{ secrets.NPM_GITHUB_PAT }}
           _ISSUER_ID: ${{ secrets._ISSUER_ID }}
           _ISSUER_ID_PRIVATE_KEY_HEX: ${{ secrets._ISSUER_ID_PRIVATE_KEY_HEX }}
           _ISSUER_ID_PUBLIC_KEY_HEX: ${{ secrets._ISSUER_ID_PUBLIC_KEY_HEX }}
           _ISSUER_ID_KID: ${{ secrets._ISSUER_ID_KID }}
           _ISSUER_ID_METHOD_SPECIFIC_ID: ${{ secrets._ISSUER_ID_METHOD_SPECIFIC_ID }}
           _ISSUER_ID_METHOD: ${{ secrets._ISSUER_ID_METHOD }}
+          _COSMOS_PAYER_MNEMONIC: ${{ secrets._COSMOS_PAYER_MNEMONIC }}
+          _NETWORK_RPC_URL: ${{ secrets._NETWORK_RPC_URL }}

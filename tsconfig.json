@@ -11,6 +11,7 @@
     "sourceMap": true,
     "esModuleInterop": true,
     "types": [
+      "node",
       "@cloudflare/workers-types",
       "@types/jest",
       "@types/service-worker-mock"
