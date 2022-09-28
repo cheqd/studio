@@ -4,7 +4,7 @@ import { GenericAuthResponse } from '../types'
 
 export class GuardedCredentials {
     guard = async (request: Request): Promise<GenericAuthResponse> => {
-        const { claim, provider, subjectId } = await request.json()
+        const { claim, provider, subjectId } = await request.json() as {claim: string, provider: string, subjectId: string} 
 
         const validation = await fetch(
             VC_AUTH0_URI,

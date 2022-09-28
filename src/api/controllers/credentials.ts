@@ -1,26 +1,17 @@
 import {
-	createAgent,
-	IDIDManager,
-	IResolver,
-	IDataStore,
-	IKeyManager,
-	TAgent,
+	createAgent, IDataStore, IDIDManager, IKeyManager, IResolver, TAgent
 } from '@veramo/core'
+import { CredentialIssuer } from '@veramo/credential-w3c'
 import { AbstractIdentifierProvider, DIDManager, MemoryDIDStore } from '@veramo/did-manager'
+import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager'
 import { KeyManagementSystem } from '@veramo/kms-local'
-import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { Resolver, ResolverRegistry } from 'did-resolver'
-import { CredentialIssuer } from '@veramo/credential-w3c'
-//import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
-
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
-
-import { VC_CONTEXT, VC_TYPE, HEADERS, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, COSMOS_PAYER_MENMONIC, NETWORK_RPC_URL, ISSUER_ID } from '../constants'
+import { COSMOS_PAYER_MENMONIC, HEADERS, ISSUER_ID, NETWORK_RPC_URL, VC_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TYPE } from '../constants'
 import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential } from '../types'
-
+import { NetworkType } from '@cheqd/did-provider-cheqd/build/did-manager/cheqd-did-provider'
 import { Identity } from './identity'
-import { DefaultRPCUrl, NetworkType } from '@cheqd/did-provider-cheqd/build/did-manager/cheqd-did-provider'
 
 export class Credentials {
 
