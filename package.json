@@ -24,7 +24,7 @@
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^3.0.0",
-		"@miniflare/storage-redis": "^2.4.0",
+		"@miniflare/storage-redis": "^2.8.2",
 		"@semantic-release/changelog": "^6.0.1",
 		"@semantic-release/commit-analyzer": "^9.0.2",
 		"@semantic-release/git": "^10.0.1",
