@@ -4,11 +4,18 @@ on:
 defaults:
   run:
     shell: bash
+permissions:
+  contents: write
+  packages: write
+
 
 jobs:
   release:
     name: "Semantic Release"
     runs-on: ubuntu-latest
+    outputs:
+      VERSION: ${{ steps.set-version.outputs.VERSION }}
+
     
     steps:
       - uses: actions/checkout@v3
@@ -40,9 +47,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set version number
+        id: set-version
+        run: |
+          VERSION=$( git describe --tags ${{ github.sha }})
+          echo ::set-output name=VERSION::"$VERSION"
+ 
   release-docker:
     name: "Release Docker image"
-    needs: release-binary
+    needs: release
     runs-on: ubuntu-latest
     env:
       IMAGE_NAME: ${{ github.repository }}
@@ -74,12 +87,11 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ghcr.io/${{ env.IMAGE_NAME }}
             registry.digitalocean.com/${{ env.IMAGE_NAME }}
           flavor: |
             latest=auto
           tags: |
-            type=semver,pattern={{version}},value=${{ needs.release-binary.outputs.VERSION }}
+            type=semver,pattern={{version}},value=${{ needs.release.outputs.VERSION }}
             type=sha,format=long
           labels: |
             org.opencontainers.image.description="Cheqd Credential Service"

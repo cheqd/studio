@@ -9,11 +9,10 @@ jobs:
   push-staging-image:
     name: "Push staging docker image to DOCR"
     runs-on: ubuntu-latest
-    env: 
+    env:
       IMAGE_NAME: registry.digitalocean.com/${{ github.repository }}
     environment: 
       name: staging
-      url: resolver-staging.cheqd.net
 
     steps:
       - name: Install DigitalOcean CLI

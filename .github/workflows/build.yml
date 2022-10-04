@@ -9,7 +9,9 @@ jobs:
   build:
     name: "Build Node.js"
     runs-on: ubuntu-latest
-    
+    env:
+      IMAGE_NAME: registry.digitalocean.com/${{ github.repository }}
+
     steps:
       - uses: actions/checkout@v3
         with:
@@ -44,7 +46,6 @@ jobs:
         with:
           images: |
             ${{ env.IMAGE_NAME }}
-            registry.digitalocean.com/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=staging-latest
             type=ref,event=branch
