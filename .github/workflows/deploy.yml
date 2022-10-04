@@ -1,4 +1,4 @@
-name: "Deploy"
+name: "Push staging container image to DOCR"
 on:
   workflow_call:
 defaults:
@@ -6,90 +6,32 @@ defaults:
     shell: bash
 
 jobs:
-  staging-deploy:
-    name: "Cloudflare - Staging"
+  push-staging-image:
+    name: "Push staging docker image to DOCR"
     runs-on: ubuntu-latest
-    environment:
+    env: 
+      IMAGE_NAME: registry.digitalocean.com/${{ github.repository }}
+    environment: 
       name: staging
-      url: https://credential-service-staging.cheqd.io/
+      url: resolver-staging.cheqd.net
 
     steps:
-      - uses: actions/checkout@v3
-      
-      - uses: actions/setup-node@v3
+      - name: Install DigitalOcean CLI
+        uses: digitalocean/action-doctl@v2
         with:
-          node-version: '16.x'
-          # cache: 'npm' <--- Commenting out, see: https://github.com/bahmutov/npm-install/issues/80, as of 13th of June 2022.
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-      - name: Publish to Cloudflare
-        uses: cloudflare/wrangler-action@2.0.0
+      - name: Login to DOCR
+        run: doctl registry login --expiry-seconds 600
+
+      - name: Download docker image
+        uses: actions/download-artifact@v3
         with:
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          environment: staging
-          secrets: |
-            _ISSUER_ID
-            _ISSUER_ID_PRIVATE_KEY_HEX
-            _ISSUER_ID_PUBLIC_KEY_HEX
-            _ISSUER_ID_KID
-            _ISSUER_ID_METHOD_SPECIFIC_ID
-            _ISSUER_ID_METHOD
-            _COSMOS_PAYER_MNEMONIC
-            _NETWORK_RPC_URL
-          wranglerVersion: '2.0.7'
-          preCommands: npm install
-          command: publish --env staging
-        env:
-          _ISSUER_ID: ${{ secrets._ISSUER_ID }}
-          _ISSUER_ID_PRIVATE_KEY_HEX: ${{ secrets._ISSUER_ID_PRIVATE_KEY_HEX }}
-          _ISSUER_ID_PUBLIC_KEY_HEX: ${{ secrets._ISSUER_ID_PUBLIC_KEY_HEX }}
-          _ISSUER_ID_KID: ${{ secrets._ISSUER_ID_KID }}
-          _ISSUER_ID_METHOD_SPECIFIC_ID: ${{ secrets._ISSUER_ID_METHOD_SPECIFIC_ID }}
-          _ISSUER_ID_METHOD: ${{ secrets._ISSUER_ID_METHOD }}
-          _COSMOS_PAYER_MNEMONIC: ${{ secrets._COSMOS_PAYER_MNEMONIC }}
-          _NETWORK_RPC_URL: ${{ secrets._NETWORK_RPC_URL }}
-  production-deploy:
-    name: "Cloudflare - Production"
-    needs: staging-deploy
-    if: ${{ success() && ( github.ref_name == 'main' ) }}
-    runs-on: ubuntu-latest
-    # permissions:
-    #   security-events: write
-    environment:
-      name: production
-      url: https://credential-service.cheqd.io/
+          name: credential-service-image
+          path: /tmp
 
-    steps:
-      - uses: actions/checkout@v3
+      - name: Load docker images
+        run: docker image load --input /tmp/credential-service-image.tar
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16.x'
-          # cache: 'npm' <--- Commenting out, see: https://github.com/bahmutov/npm-install/issues/80, as of 13th of June 2022.
-
-      - name: Publish to Cloudflare
-        uses: cloudflare/wrangler-action@2.0.0
-        with:
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          secrets: |
-            _ISSUER_ID
-            _ISSUER_ID_PRIVATE_KEY_HEX
-            _ISSUER_ID_PUBLIC_KEY_HEX
-            _ISSUER_ID_KID
-            _ISSUER_ID_METHOD_SPECIFIC_ID
-            _ISSUER_ID_METHOD
-            _COSMOS_PAYER_MNEMONIC
-            _NETWORK_RPC_URL
-          wranglerVersion: '2.0.7'
-          preCommands: npm install
-          command: publish
-        env:
-          _ISSUER_ID: ${{ secrets._ISSUER_ID }}
-          _ISSUER_ID_PRIVATE_KEY_HEX: ${{ secrets._ISSUER_ID_PRIVATE_KEY_HEX }}
-          _ISSUER_ID_PUBLIC_KEY_HEX: ${{ secrets._ISSUER_ID_PUBLIC_KEY_HEX }}
-          _ISSUER_ID_KID: ${{ secrets._ISSUER_ID_KID }}
-          _ISSUER_ID_METHOD_SPECIFIC_ID: ${{ secrets._ISSUER_ID_METHOD_SPECIFIC_ID }}
-          _ISSUER_ID_METHOD: ${{ secrets._ISSUER_ID_METHOD }}
-          _COSMOS_PAYER_MNEMONIC: ${{ secrets._COSMOS_PAYER_MNEMONIC }}
-          _NETWORK_RPC_URL: ${{ secrets._NETWORK_RPC_URL }}
+      - name: Push images to DOCR
+        run: docker image push --all-tags ${{ env.IMAGE_NAME }}

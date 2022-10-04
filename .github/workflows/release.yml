@@ -40,3 +40,62 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  release-docker:
+    name: "Release Docker image"
+    needs: release-binary
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: ${{ github.repository }}
+    environment: 
+      name: production
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        id: buildx
+        with:
+          install: true
+          version: latest
+
+      - name: Install DigitalOcean CLI
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Login to DOCR
+        run: doctl registry login --expiry-seconds 600
+      
+      - name: Configure Docker image metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ghcr.io/${{ env.IMAGE_NAME }}
+            registry.digitalocean.com/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=auto
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.release-binary.outputs.VERSION }}
+            type=sha,format=long
+          labels: |
+            org.opencontainers.image.description="Cheqd Credential Service"
+            org.opencontainers.image.source="https://github.com/cheqd/credential-service"
+            org.opencontainers.image.vendor="Cheqd Foundation Limited"
+            org.opencontainers.image.created={{date 'dddd, MMMM Do YYYY, h:mm:ss a'}}
+            org.opencontainers.image.documentation="https://docs.cheqd.io/node"
+      - name: Build image with labels
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: linux/amd64
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Push image to DigitalOcean Container Registry
+        run: docker image push --all-tags registry.digitalocean.com/${{ github.repository }}

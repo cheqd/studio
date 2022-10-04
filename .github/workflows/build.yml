@@ -15,16 +15,55 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        id: buildx
         with:
-          node-version: '16.x'
-          # cache: 'npm' <--- Commenting out, see: https://github.com/bahmutov/npm-install/issues/80, as of 13th of June 2022.
-          # cache-dependency-path: '**/package-lock.json' <--- Commenting out, see: https://github.com/bahmutov/npm-install/issues/80, as of 13th of June 2022.
+          install: true
+          version: latest
+      
+      - name: Configure Docker image metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ github.ref_name }}
+            type=raw,value=staging-latest
+            type=sha,format=long
+          labels: |
+            org.opencontainers.image.description="Cheqd Credential Service"
+            org.opencontainers.image.source="https://github.com/cheqd/credential-service"
+            org.opencontainers.image.vendor="Cheqd Foundation Limited"
+            org.opencontainers.image.created={{date 'dddd, MMMM Do YYYY, h:mm:ss a'}}
+            org.opencontainers.image.documentation="https://docs.cheqd.io/node"
 
-      - name: "Clean install dependencies"
-        run: npm install
-        env:
-          NPM_GITHUB_PAT: ${{ secrets.NPM_GITHUB_PAT }}
+      - name: Configure Docker image metadata
+        id: build-meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ env.IMAGE_NAME }}
+            registry.digitalocean.com/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=staging-latest
+            type=ref,event=branch
+            type=sha,format=long
 
-      - name: "Run npm build"
-        run: npm run build
+      - name: Build image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64
+          load: true
+          tags: ${{ steps.build-meta.outputs.tags }}
+      
+      - name: Save docker image
+        run:  docker save ${{ env.IMAGE_NAME }} > /tmp/credential-service-image.tar
+
+      - name: Upload build image as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: credential-service-image
+          path: /tmp/credential-service-image.tar
