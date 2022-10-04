@@ -1,0 +1,8 @@
+ # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.25.0
+ignore: {}
+# patches apply the minimum changes required to fix a vulnerability
+patch:
+  'npm:semver:20150403':
+    - browserify-fs > levelup > semver:
+        patched: '2022-06-04T00:39:55.282Z'
