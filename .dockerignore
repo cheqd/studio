@@ -1,1 +1,9 @@
 node_modules/
+.git/
+docker-compose.yml
+README.md
+Dockerfile
+SECURITY.md
+stats.json
+CODE_OF_CONDUCT.md
+esbuild.config.mjs

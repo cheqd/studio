@@ -1,19 +1,30 @@
-FROM node:17-buster
+FROM node:18.10.0-alpine3.16 as builder
 
 WORKDIR /app
 
-COPY src ./src
-COPY agent.yml ./agent.yml
-COPY package.json ./package.json
-COPY tsconfig.json ./tsconfig.json
-COPY webpack.config.cjs ./webpack.config.cjs
-COPY wrangler.toml ./wrangler.toml
-COPY package-lock.json ./package-lock.json
-COPY did-provider-cheqd/ ./did-provider-cheqd/
-
 ENV NODE_OPTIONS=--openssl-legacy-provider
-ENV KV_PERSIST=true
+
+COPY . .
 
 RUN npm install && npm run build
 
-ENTRYPOINT [ "npx", "miniflare", "/app/dist/worker.js", "--kv-persist", "${KV_PERSIST}" ]
+FROM node:18.10.0-alpine3.16
+
+WORKDIR /app
+
+ARG USER="cheqd"
+RUN addgroup --system ${USER} && \
+	adduser ${USER} --system --shell /bin/bash && \
+	npm install --location=global miniflare && \
+    apk add bash --no-cache && \
+    chown -R cheqd:cheqd /app
+
+COPY --from=builder --chown=cheqd:cheqd /app/dist/worker.js worker.js
+COPY --chown=cheqd:cheqd scripts/entrypoint.sh scripts/write-envs-to-file.sh .
+
+USER ${USER}
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
+EXPOSE 8787
+
+ENTRYPOINT ["sh", "entrypoint.sh"]

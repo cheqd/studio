@@ -122,8 +122,10 @@ export class Credentials {
 				2
 			),
 			{
+				status: 200,
 				headers: {
-					...HEADERS.json
+					...HEADERS.json,
+					"access-control-allow-origin": "*"
 				}
 			}
 		)
@@ -151,7 +153,8 @@ export class Credentials {
 			),
 			{
 				headers: {
-					...HEADERS.json
+					...HEADERS.json,
+					"access-control-allow-origin": "*"
 				}
 			}
 		)
