@@ -92,6 +92,7 @@ jobs:
             latest=auto
           tags: |
             type=semver,pattern={{version}},value=${{ needs.release.outputs.VERSION }}
+            type=raw,value=production-latest
             type=sha,format=long
           labels: |
             org.opencontainers.image.description="Cheqd Credential Service"
