@@ -329,7 +329,7 @@ export const VC_PROOF_FORMAT = 'jwt'
 
 export const VC_REMOVE_ORIGINAL_FIELDS = false
 
-export const VC_AUTH0_URI = 'https://auth0-proxy-staging.cheqd.net/api/auth0/validate'
+export const VC_AUTH0_URI = _AUTH0_SERVICE_ENDPOINT
 
 export const COSMOS_PAYER_MENMONIC = _COSMOS_PAYER_MNEMONIC
 

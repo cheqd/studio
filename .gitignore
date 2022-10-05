@@ -5,6 +5,7 @@ tsconfig.tsbuildinfo
 worker/
 transpiled
 .env
+.env*
 
 ### GENERAL EXCLUSIONS ###
 

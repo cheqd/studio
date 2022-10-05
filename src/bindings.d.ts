@@ -23,4 +23,6 @@ declare global {
 	const _COSMOS_PAYER_MNEMONIC: string
 
 	const _NETWORK_RPC_URL: string
+
+	const _AUTH0_SERVICE_ENDPOINT: string
 }
