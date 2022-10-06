@@ -1,30 +1,25 @@
-FROM node:18.10.0-alpine3.16 as builder
+FROM node:16-alpine as builder
 
 WORKDIR /app
-
-ENV NODE_OPTIONS=--openssl-legacy-provider
 
 COPY . .
 
-RUN npm install && npm run build
+RUN npm ci && npm run build
 
-FROM node:18.10.0-alpine3.16
+FROM node:16-alpine
 
 WORKDIR /app
 
-ARG USER="cheqd"
-RUN addgroup --system ${USER} && \
-	adduser ${USER} --system --shell /bin/bash && \
-	npm install --location=global miniflare && \
+COPY --from=builder --chown=node:node /app/dist/worker.js worker.js
+COPY --chown=node:node scripts/entrypoint.sh scripts/write-envs-to-file.sh .
+
+RUN npm install --location=global miniflare && \
     apk add bash --no-cache && \
-    chown -R cheqd:cheqd /app
+    chown -R node:node /app
 
-COPY --from=builder --chown=cheqd:cheqd /app/dist/worker.js worker.js
-COPY --chown=cheqd:cheqd scripts/entrypoint.sh scripts/write-envs-to-file.sh .
-
-USER ${USER}
+USER node
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
-EXPOSE 8787
 
+EXPOSE 8787
 ENTRYPOINT ["sh", "entrypoint.sh"]

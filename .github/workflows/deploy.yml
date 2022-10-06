@@ -31,7 +31,7 @@ jobs:
           name: credential-service-staging
 
       - name: Load Docker image
-        run: docker image load --input credential-service-image.tar
+        run: docker image load --input credential-service-staging.tar
 
       - name: Push images to DOCR
         run: docker image push --all-tags ${{ env.IMAGE_NAME }}
