@@ -19,7 +19,7 @@ RUN npm ci
 # Build-time arguments
 
 ARG NPM_CONFIG_LOGLEVEL
-ARG PORT=8080
+ARG PORT=8787
 
 # Run-time environment variables
 
