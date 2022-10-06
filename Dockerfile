@@ -1,25 +1,40 @@
-FROM node:16-alpine as builder
+###############################################################
+###        STAGE 1: Runtime BigDipper container        		###
+###############################################################
 
-WORKDIR /app
+FROM node:16-alpine AS runner
 
+# Install pre-requisite packages
+RUN apk update && apk add --no-cache git bash
+
+# Set working directory & bash defaults
+WORKDIR /home/node/app
+
+# Copy source files
 COPY . .
 
-RUN npm ci && npm run build
+# Installing dependencies
+RUN npm ci
 
-FROM node:16-alpine
+# Build-time arguments
 
-WORKDIR /app
+ARG NPM_CONFIG_LOGLEVEL
+ARG PORT=8080
 
-COPY --from=builder --chown=node:node /app/dist/worker.js worker.js
-COPY --chown=node:node scripts/entrypoint.sh scripts/write-envs-to-file.sh .
+# Run-time environment variables
 
-RUN npm install --location=global miniflare && \
-    apk add bash --no-cache && \
-    chown -R node:node /app
+ENV NPM_CONFIG_LOGLEVEL ${NPM_CONFIG_LOGLEVEL}
+ENV PORT ${PORT}
 
+# Build the app
+RUN npm run build
+
+# Specify default port
+EXPOSE ${PORT}
+
+# Set user and shell
 USER node
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
-
-EXPOSE 8787
-ENTRYPOINT ["sh", "entrypoint.sh"]
+# Run the application
+CMD [ "npm start" ]
