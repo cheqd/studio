@@ -10,7 +10,7 @@ jobs:
     name: "Build Node.js"
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: registry.digitalocean.com/${{ github.repository }}
+      IMAGE_NAME: ${{ github.repository }}
 
     steps:
       - uses: actions/checkout@v3
@@ -23,20 +23,14 @@ jobs:
           version: latest
       
       - name: Configure Docker image metadata
-        id: build-meta
+        id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.IMAGE_NAME }}
+          images: registry.digitalocean.com/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ github.ref_name }}
+            type=ref,event=branch
             type=raw,value=staging-latest
             type=sha,format=long
-          labels: |
-            org.opencontainers.image.description="Cheqd Credential Service"
-            org.opencontainers.image.source="https://github.com/cheqd/credential-service"
-            org.opencontainers.image.vendor="Cheqd Foundation Limited"
-            org.opencontainers.image.created={{date 'dddd, MMMM Do YYYY, h:mm:ss a'}}
-            org.opencontainers.image.documentation="https://docs.cheqd.io/node"
 
       - name: Build image
         uses: docker/build-push-action@v3
@@ -45,13 +39,13 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64
           load: true
-          tags: ${{ steps.build-meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }}
       
-      - name: Save docker image
-        run:  docker save ${{ env.IMAGE_NAME }} > /tmp/credential-service-image.tar
+      - name: Save Docker image
+        run:  docker save registry.digitalocean.com/${{ env.IMAGE_NAME }} > /tmp/credential-service-staging.tar
 
       - name: Upload build image as artifact
         uses: actions/upload-artifact@v3
         with:
-          name: credential-service-image
-          path: /tmp/credential-service-image.tar
+          name: credential-service-staging
+          path: /tmp/credential-service-staging.tar
