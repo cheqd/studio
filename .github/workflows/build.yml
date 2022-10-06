@@ -42,10 +42,10 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
       
       - name: Save Docker image
-        run:  docker save registry.digitalocean.com/${{ env.IMAGE_NAME }} > /tmp/credential-service-staging.tar
+        run:  docker save registry.digitalocean.com/${{ env.IMAGE_NAME }} > credential-service-staging.tar
 
       - name: Upload build image as artifact
         uses: actions/upload-artifact@v3
         with:
           name: credential-service-staging
-          path: /tmp/credential-service-staging.tar
+          path: credential-service-staging.tar

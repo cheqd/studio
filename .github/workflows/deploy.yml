@@ -1,4 +1,4 @@
-name: "Push staging container image to DOCR"
+name: "Deploy"
 on:
   workflow_call:
 defaults:
@@ -6,13 +6,15 @@ defaults:
     shell: bash
 
 jobs:
-  push-staging-image:
-    name: "Push staging docker image to DOCR"
+  deploy-staging:
+    name: "Staging Deploy"
     runs-on: ubuntu-latest
-    env:
+    continue-on-error: true
+    env: 
       IMAGE_NAME: registry.digitalocean.com/${{ github.repository }}
     environment: 
       name: staging
+      url: https://credential-service-staging.cheqd.net
 
     steps:
       - name: Install DigitalOcean CLI
@@ -26,11 +28,10 @@ jobs:
       - name: Download docker image
         uses: actions/download-artifact@v3
         with:
-          name: credential-service-image
-          path: /tmp
+          name: credential-service-staging
 
-      - name: Load docker images
-        run: docker image load --input /tmp/credential-service-image.tar
+      - name: Load Docker image
+        run: docker image load --input credential-service-image.tar
 
       - name: Push images to DOCR
         run: docker image push --all-tags ${{ env.IMAGE_NAME }}
