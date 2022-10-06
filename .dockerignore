@@ -1,9 +1,10 @@
-node_modules/
-.git/
+# Skip unncecessary folders
+.bdjuno/**
+build/**
+.docs/**
+.github/**
+
+# Skip unnecessary files
+**/*.md
+Dockerfile**
 docker-compose.yml
-README.md
-Dockerfile
-SECURITY.md
-stats.json
-CODE_OF_CONDUCT.md
-esbuild.config.mjs
