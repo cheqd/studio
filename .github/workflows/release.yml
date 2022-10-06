@@ -10,7 +10,7 @@ permissions:
 
 
 jobs:
-  release:
+  release-npm:
     name: "Semantic Release"
     runs-on: ubuntu-latest
     outputs:
@@ -25,7 +25,7 @@ jobs:
       
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version: 16
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
       
@@ -47,6 +47,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Set version number
         id: set-version
         run: |
@@ -55,10 +56,10 @@ jobs:
  
   release-docker:
     name: "Release Docker image"
-    needs: release
+    needs: release-npm
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: ${{ github.repository }}
+      IMAGE_NAME: registry.digitalocean.com/${{ github.repository }}
     environment: 
       name: production
 
@@ -87,11 +88,11 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            registry.digitalocean.com/${{ env.IMAGE_NAME }}
+            ${{ env.IMAGE_NAME }}
           flavor: |
             latest=auto
           tags: |
-            type=semver,pattern={{version}},value=${{ needs.release.outputs.VERSION }}
+            type=semver,pattern={{version}},value=${{ needs.release-npm.outputs.VERSION }}
             type=raw,value=production-latest
             type=sha,format=long
           labels: |
@@ -100,6 +101,7 @@ jobs:
             org.opencontainers.image.vendor="Cheqd Foundation Limited"
             org.opencontainers.image.created={{date 'dddd, MMMM Do YYYY, h:mm:ss a'}}
             org.opencontainers.image.documentation="https://docs.cheqd.io/node"
+      
       - name: Build image with labels
         uses: docker/build-push-action@v3
         with:
@@ -111,4 +113,4 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Push image to DigitalOcean Container Registry
-        run: docker image push --all-tags registry.digitalocean.com/${{ github.repository }}
+        run: docker image push --all-tags ${{ env.IMAGE_NAME }}
