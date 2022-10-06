@@ -1,13 +1,13 @@
-import { HEADERS, VC_AUTH0_URI } from '../constants'
+import { HEADERS } from '../constants'
 import { Credentials } from '../controllers/credentials'
 import { GenericAuthResponse } from '../types'
 
 export class GuardedCredentials {
     guard = async (request: Request): Promise<GenericAuthResponse> => {
-        const { claim, provider, subjectId } = await request.json() as {claim: string, provider: string, subjectId: string} 
+        const { claim, provider, subjectId } = await request.json() as { claim: string, provider: string, subjectId: string }
 
         const validation = await fetch(
-            VC_AUTH0_URI,
+            AUTH0_SERVICE_ENDPOINT,
             {
                 method: 'POST',
                 body: JSON.stringify(
@@ -22,7 +22,7 @@ export class GuardedCredentials {
             res => res.json()
         ).catch(error => ({ authenticated: false, user: null }))
 
-        return {...validation as GenericAuthResponse, subjectId}
+        return { ...validation as GenericAuthResponse, subjectId }
     }
 }
 

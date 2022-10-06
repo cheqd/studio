@@ -8,7 +8,7 @@ import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-m
 import { KeyManagementSystem } from '@veramo/kms-local'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
-import { COSMOS_PAYER_MENMONIC, HEADERS, ISSUER_ID, NETWORK_RPC_URL, VC_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TYPE } from '../constants'
+import { HEADERS, VC_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TYPE, } from '../constants'
 import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential } from '../types'
 import { NetworkType } from '@cheqd/did-provider-cheqd/build/did-manager/cheqd-did-provider'
 import { Identity } from './identity'
@@ -43,7 +43,7 @@ export class Credentials {
 						providerPrefix: new CheqdDIDProvider(
 							{
 								defaultKms: 'local',
-								cosmosPayerMnemonic: COSMOS_PAYER_MENMONIC,
+								cosmosPayerMnemonic: COSMOS_PAYER_MNEMONIC,
 								networkType: network!,
 								rpcUrl: NETWORK_RPC_URL,
 							}

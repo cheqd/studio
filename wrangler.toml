@@ -1,54 +1,11 @@
-
-###############################################################
-###           SECTION 1: General Configuration              ###
-###############################################################
-
 # Worker name
 name = "credential-service"
 
 # Entrypoint/path to the file that will be executed
 main = "./src/index.ts"
 
-# Cloudflare Account ID
-account_id = ""
-
-compatibility_date = "2022-08-29"
-
-# Usage model for the Worker
-# Details: https://developers.cloudflare.com/workers/platform/limits
-usage_model = "bundled"
-## node polyfills are included by the bundler
-node_compat = true
-## No need to set this since we're using custom bundler
-minify = true
-
-###############################################################
-###            SECTION 2: Production Environment            ###
-###############################################################
-
-# Deploy to NAME.SUBDOMAIN.workers.dev?
-# @default `true`
-workers_dev = true
-
-# Route to publish the Worker
-route = { pattern = "credential-service.cheqd.io/*", zone_id = "afe3b66243382f27140e6feeaae848b5" }
-
-# KV Namespaces accessible from the Worker
-# Details: https://developers.cloudflare.com/workers/learning/how-kv-works
-# @default `[]`
-kv_namespaces = [
-	{ binding = "CREDENTIALS", preview_id = "08f012b41df44fd3b6849100d02b7cba", id = "08f012b41df44fd3b6849100d02b7cba" }
-]
-
-# Date in yyyy-mm-dd to determine which version of Workers runtime to use
-# Details: https://developers.cloudflare.com/workers/platform/compatibility-dates/ 
-# Map of environment variables to set when deploying the Worker
-# Not inherited. @default `{}`
-# [vars]
-
-###############################################################
-###             SECTION 3: Local Development                ###
-###############################################################
+[vars]
+NETWORK_RPC_URL = "https://rpc.cheqd.net"
 
 # Configuration options for local development via Wrangler
 [dev]
@@ -62,55 +19,6 @@ kv_namespaces = [
 	# @default `http`
 	local_protocol = "http"
 
-
-###############################################################
-###             SECTION 4: Staging Environment              ###
-###############################################################
-
 [env.staging]
 # Worker name - Staging Environment
 name = "credential-service-staging"
-
-# Deploy to NAME.SUBDOMAIN.workers.dev?
-# @default `true`
-workers_dev = true
-
-# Route to publish the Worker
-route = { pattern = "credential-service-staging.cheqd.io/*", zone_id = "afe3b66243382f27140e6feeaae848b5" }
-
-# Map of environment variables to set when deploying the Worker
-# Not inherited. @default `{}`
-# vars = { ENVIRONMENT = "staging", ... }
-
-# KV Namespaces accessible from the Worker
-# Details: https://developers.cloudflare.com/workers/learning/how-kv-works
-# @default `[]`
-kv_namespaces = [
-	{ binding = "CREDENTIALS", preview_id = "08f012b41df44fd3b6849100d02b7cba", id = "08f012b41df44fd3b6849100d02b7cba" }
-]
-
-
-###############################################################
-###               OPTIONAL: Build Configuration             ###
-###############################################################
-
-# NOTE: THIS IS A TOP-LEVEL CONFIGURATION AND NEEDS TO BE MOVED IF USED
-# Optional custom build step when using Wrangler CLI for build
-# Details: https://developers.cloudflare.com/workers/wrangler/custom-builds/
-# @default {}
-# [build]
-#   # Custom build command. On Linux and macOS, the command is executed in 
-#   # the `sh` shell and the `cmd` shell for Windows.
-#   # The `&&` and `||` shell operators may be used.
-#   command = ""
-#   # The directory in which the command is executed.
-#   cwd = "./src"
-#   # The directory to watch for changes while using `wrangler dev`, 
-#   # defaults to the current working directory
-#   watch_dir = ""
-
-# List of data files that the Worker should be bound to. This is
-# the legacy way of binding to a data file. ES module Workers should
-# do proper module imports.
-#[data_blobs]
-# DATA = ""
