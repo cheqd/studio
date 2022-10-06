@@ -1,7 +1,6 @@
 # Skip unncecessary folders
-.bdjuno/**
-build/**
-.docs/**
+dist/**
+node_modules/**
 .github/**
 
 # Skip unnecessary files
