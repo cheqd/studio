@@ -14,8 +14,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -25,7 +23,7 @@ jobs:
           version: latest
       
       - name: Configure Docker image metadata
-        id: meta
+        id: build-meta
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.IMAGE_NAME }}
@@ -39,17 +37,6 @@ jobs:
             org.opencontainers.image.vendor="Cheqd Foundation Limited"
             org.opencontainers.image.created={{date 'dddd, MMMM Do YYYY, h:mm:ss a'}}
             org.opencontainers.image.documentation="https://docs.cheqd.io/node"
-
-      - name: Configure Docker image metadata
-        id: build-meta
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=staging-latest
-            type=ref,event=branch
-            type=sha,format=long
 
       - name: Build image
         uses: docker/build-push-action@v3
