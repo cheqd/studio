@@ -16,7 +16,6 @@ jobs:
     outputs:
       VERSION: ${{ steps.set-version.outputs.VERSION }}
 
-    
     steps:
       - uses: actions/checkout@v3
         with:
@@ -53,7 +52,8 @@ jobs:
         run: |
           VERSION=$( git describe --tags ${{ github.sha }})
           echo ::set-output name=VERSION::"$VERSION"
- 
+
+
   release-docker:
     name: "Release Docker image"
     needs: release-npm

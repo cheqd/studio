@@ -18,7 +18,6 @@ jobs:
         with:
           config-file: '.github/linters/mlc_config.json'
           use-quiet-mode: 'yes'
-          use-verbose-mode: 'yes'
 
   super-lint:
     name: "Super Linter"
