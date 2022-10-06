@@ -62,6 +62,7 @@ jobs:
       IMAGE_NAME: registry.digitalocean.com/${{ github.repository }}
     environment: 
       name: production
+      url: https://credential-service.cheqd.net
 
     steps:
       - uses: actions/checkout@v3
