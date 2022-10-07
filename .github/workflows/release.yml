@@ -45,7 +45,7 @@ jobs:
         run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Set version number
         id: set-version
