@@ -6,9 +6,6 @@ main = "./src/index.ts"
 compatibility_date = "2022-08-29"
 node_compat=true
 
-[vars]
-NETWORK_RPC_URL = "https://rpc.cheqd.net"
-
 # Configuration options for local development via Wrangler
 [dev]
 	# IP address for the local dev server to listen on
@@ -20,7 +17,3 @@ NETWORK_RPC_URL = "https://rpc.cheqd.net"
 	# Protocol that local wrangler dev server listens to requests on
 	# @default `http`
 	local_protocol = "http"
-
-[env.staging]
-# Worker name - Staging Environment
-name = "credential-service-staging"
