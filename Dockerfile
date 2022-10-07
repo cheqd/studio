@@ -10,6 +10,11 @@ WORKDIR /home/node/app
 # Copy source files
 COPY . .
 
+# Build-time arguments
+ARG NODE_ENV=production
+ARG NPM_CONFIG_LOGLEVEL=warn
+ARG PORT=8787
+
 # Installing dependencies
 RUN npm ci
 
@@ -32,8 +37,6 @@ WORKDIR /home/node/app
 COPY --from=builder /home/node/app/dist .
 
 # Build-time arguments
-ARG NPM_CONFIG_LOGLEVEL
-ARG PORT=8787
 ARG ISSUER_ID
 ARG ISSUER_ID_KID
 ARG ISSUER_ID_METHOD="did:cheqd:mainnet:"
@@ -45,6 +48,7 @@ ARG NETWORK_RPC_URL="https://rpc.cheqd.net"
 ARG AUTH0_SERVICE_ENDPOINT
 
 # Run-time environment variables
+ENV NODE_ENV {NODE_ENV}
 ENV NPM_CONFIG_LOGLEVEL ${NPM_CONFIG_LOGLEVEL}
 ENV PORT ${PORT}
 ENV ISSUER_ID ISSUER_ID ${ISSUER_ID}
