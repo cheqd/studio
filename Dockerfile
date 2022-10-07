@@ -1,11 +1,8 @@
 ###############################################################
-###        STAGE 1: Runtime BigDipper container        		###
+###         STAGE 1: Build credential-service app           ###
 ###############################################################
 
-FROM node:16-alpine AS runner
-
-# Install pre-requisite packages
-RUN apk update && apk add --no-cache git bash
+FROM node:16-alpine AS builder
 
 # Set working directory & bash defaults
 WORKDIR /home/node/app
@@ -16,8 +13,25 @@ COPY . .
 # Installing dependencies
 RUN npm ci
 
-# Build-time arguments
+# Build the app
+RUN npm run build
 
+###############################################################
+###             STAGE 2: Build Miniflare runner             ###
+###############################################################
+
+FROM node:16-alpine AS runner
+
+# Install pre-requisite packages
+RUN apk update && apk add --no-cache bash
+
+# Set working directory & bash defaults
+WORKDIR /home/node/app
+
+# Copy built application
+COPY --chown=node:node --from=builder /home/node/app/dist/ dist
+
+# Build-time arguments
 ARG NPM_CONFIG_LOGLEVEL
 ARG PORT=8787
 ARG ISSUER_ID
@@ -29,15 +43,7 @@ ARG ISSUER_ID_METHOD_SPECIFIC_ID
 ARG COSMOS_PAYER_MNEMONIC
 ARG AUTH0_SERVICE_ENDPOINT
 
-# Build the app
-RUN npm run build
-
-FROM node:16-alpine
 # Run-time environment variables
-
-# Set working directory & bash defaults
-WORKDIR /home/node/app
-
 ENV NPM_CONFIG_LOGLEVEL ${NPM_CONFIG_LOGLEVEL}
 ENV PORT ${PORT}
 ENV ISSUER_ID ISSUER_ID ${ISSUER_ID}
@@ -49,15 +55,9 @@ ENV ISSUER_ID_METHOD_SPECIFIC_ID ${ISSUER_ID_METHOD_SPECIFIC_ID}
 ENV COSMOS_PAYER_MNEMONIC ${COSMOS_PAYER_MNEMONIC}
 ENV AUTH0_SERVICE_ENDPOINT ${AUTH0_SERVICE_ENDPOINT}
 
-# We install miniflare because we don't have the node_modules directory
+# We install Miniflare because we don't have the node_modules directory
 # this image only has the output worker.js file.
-RUN apk update && \
-    apk add --no-cache git bash && \
-    npm install --location=global miniflare && \
-    mkdir node_modules && \
-    chown -R node:node node_modules
-
-COPY --chown=node:node --from=runner /home/node/app/dist/ dist
+RUN npm install -g miniflare@2.9.0
 
 # Specify default port
 EXPOSE ${PORT}
