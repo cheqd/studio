@@ -39,6 +39,7 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64
           load: true
+          target: runner
           tags: ${{ steps.meta.outputs.tags }}
       
       - name: Save Docker image

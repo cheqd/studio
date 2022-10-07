@@ -110,6 +110,7 @@ jobs:
           file: docker/Dockerfile
           platforms: linux/amd64
           load: true
+          target: runner
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
