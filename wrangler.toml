@@ -3,6 +3,8 @@ name = "credential-service"
 
 # Entrypoint/path to the file that will be executed
 main = "./src/index.ts"
+compatibility_date = "2022-08-29"
+node_compat=true
 
 [vars]
 NETWORK_RPC_URL = "https://rpc.cheqd.net"
