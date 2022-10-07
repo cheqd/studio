@@ -22,6 +22,17 @@
 			"prettier"
 		]
 	},
+	"dependencies": {
+		"@cheqd/did-provider-cheqd": "^1.7.5",
+		"@veramo/core": "^4.0.0",
+		"@veramo/credential-w3c": "^4.0.0",
+		"@veramo/did-manager": "^4.0.0",
+		"@veramo/did-provider-key": "^4.0.0",
+		"@veramo/key-manager": "^4.0.2",
+		"@veramo/kms-local": "^4.0.0",
+		"did-resolver": "^3.2.0",
+		"itty-router": "^2.6.1"
+	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^3.16.0",
 		"@semantic-release/changelog": "^6.0.1",
@@ -60,20 +71,8 @@
 		"webpack": "^5.38.1",
 		"webpack-cli": "^4.10.0"
 	},
-	"dependencies": {
-		"@cheqd/did-provider-cheqd": "^1.7.0",
-		"@veramo/core": "^3.1.6-next.167",
-		"@veramo/credential-w3c": "^3.1.6-next.167",
-		"@veramo/did-manager": "^3.1.6-next.167",
-		"@veramo/did-resolver": "^3.1.6-next.167",
-		"@veramo/key-manager": "^3.1.6-next.167",
-		"@veramo/kms-local": "^3.1.6-next.167",
-		"did-resolver": "^3.2.0",
-		"itty-router": "^2.6.1"
-	},
 	"publishConfig": {
 		"registry": "https://registry.npmjs.org/",
 		"access": "public"
-    },
-    "snyk": true
+    }
 }
