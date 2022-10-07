@@ -29,7 +29,7 @@ RUN apk update && apk add --no-cache bash ca-certificates
 WORKDIR /home/node/app
 
 # Copy built application
-COPY --chown=node:node --from=builder /home/node/app/dist/ dist
+COPY --from=builder /home/node/app/dist .
 
 # Build-time arguments
 ARG NPM_CONFIG_LOGLEVEL
@@ -59,7 +59,8 @@ ENV AUTH0_SERVICE_ENDPOINT ${AUTH0_SERVICE_ENDPOINT}
 
 # We install Miniflare because we don't have the node_modules directory
 # this image only has the output worker.js file.
-RUN npm install -g miniflare@2.9.0
+RUN npm install -g miniflare@2.9.0 && \
+    chown -R node:node /home/node/app
 
 # Specify default port
 EXPOSE ${PORT}
@@ -69,4 +70,4 @@ USER node
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 # Run the application
-CMD [ "miniflare", "dist/worker.js" ]
+CMD [ "miniflare", "worker.js" ]
