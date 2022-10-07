@@ -41,6 +41,8 @@ jobs:
           load: true
           target: runner
           tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
       
       - name: Save Docker image
         run:  docker save ${{ env.IMAGE_NAME }} > credential-service-staging.tar
