@@ -14,6 +14,7 @@ jobs:
       IMAGE_NAME: registry.digitalocean.com/${{ github.repository }}
     environment: 
       name: staging
+      url: https://credential-service-staging.cheqd.net
 
     steps:
       - name: Install DigitalOcean CLI
