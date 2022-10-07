@@ -10,11 +10,6 @@ WORKDIR /home/node/app
 # Copy source files
 COPY . .
 
-# Build-time arguments
-ARG NODE_ENV=production
-ARG NPM_CONFIG_LOGLEVEL=warn
-ARG PORT=8787
-
 # Installing dependencies
 RUN npm ci
 
@@ -37,6 +32,9 @@ WORKDIR /home/node/app
 COPY --from=builder /home/node/app/dist .
 
 # Build-time arguments
+ARG NODE_ENV=production
+ARG NPM_CONFIG_LOGLEVEL=warn
+ARG PORT=8787
 ARG ISSUER_ID
 ARG ISSUER_ID_KID
 ARG ISSUER_ID_METHOD="did:cheqd:mainnet:"
