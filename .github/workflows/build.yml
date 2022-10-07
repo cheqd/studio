@@ -7,7 +7,7 @@ defaults:
 
 jobs:
   build-docker:
-    name: "Build Node.js"
+    name: "Build Docker image"
     runs-on: ubuntu-latest
     env:
       IMAGE_NAME: registry.digitalocean.com/${{ github.repository }}
