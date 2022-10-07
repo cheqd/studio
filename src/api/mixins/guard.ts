@@ -6,23 +6,26 @@ export class GuardedCredentials {
     guard = async (request: Request): Promise<GenericAuthResponse> => {
         const { claim, provider, subjectId } = await request.json() as { claim: string, provider: string, subjectId: string }
 
-        const validation = await fetch(
-            AUTH0_SERVICE_ENDPOINT,
-            {
-                method: 'POST',
-                body: JSON.stringify(
-                    {
-                        claim,
-                        provider
-                    }
-                ),
-                headers: HEADERS.json
-            }
-        ).then(
-            res => res.json()
-        ).catch(error => ({ authenticated: false, user: null }))
-
-        return { ...validation as GenericAuthResponse, subjectId }
+        try {
+            const resp = await fetch(
+                AUTH0_SERVICE_ENDPOINT,
+                {
+                    method: 'POST',
+                    body: JSON.stringify(
+                        {
+                            claim,
+                            provider
+                        }
+                    ),
+                    headers: HEADERS.json
+                }
+            )
+            const validation = await resp.json()
+            return { ...validation as GenericAuthResponse, subjectId }
+        } catch (err) {
+            return { authenticated: false, user: null, error: err } as GenericAuthResponse
+        }
+        
     }
 }
 

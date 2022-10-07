@@ -19,13 +19,13 @@ router.all(
 
         const credentials = new GuardedCredentials()
 
-        const { authenticated, user, subjectId } = await credentials.guard(request)
+        const { authenticated, user, subjectId, error } = await credentials.guard(request)
 
         if( !( authenticated ) ) 
             return new Response(
-                JSON.stringify({error: 'Unauthenticated.'}),
+                JSON.stringify({ error }),
                 {
-                    status: 401,
+                    status: 400,
                     headers: HEADERS.json
                 }
             )

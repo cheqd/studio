@@ -23,7 +23,7 @@ RUN npm run build
 FROM node:16-alpine AS runner
 
 # Install pre-requisite packages
-RUN apk update && apk add --no-cache bash ca-certificates
+RUN apk update && apk add --no-cache bash ca-certificates curl
 
 # Set working directory & bash defaults
 WORKDIR /home/node/app
