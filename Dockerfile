@@ -23,7 +23,7 @@ RUN npm run build
 FROM node:16-alpine AS runner
 
 # Install pre-requisite packages
-RUN apk update && apk add --no-cache bash
+RUN apk update && apk add --no-cache bash ca-certificates
 
 # Set working directory & bash defaults
 WORKDIR /home/node/app
@@ -36,12 +36,12 @@ ARG NPM_CONFIG_LOGLEVEL
 ARG PORT=8787
 ARG ISSUER_ID
 ARG ISSUER_ID_KID
-ARG ISSUER_ID_METHOD = "did:cheqd:mainnet:"
+ARG ISSUER_ID_METHOD="did:cheqd:mainnet:"
 ARG ISSUER_ID_PUBLIC_KEY_HEX
 ARG ISSUER_ID_PRIVATE_KEY_HEX
 ARG ISSUER_ID_METHOD_SPECIFIC_ID
 ARG COSMOS_PAYER_MNEMONIC
-ARG NETWORK_RPC_URL = "https://rpc.cheqd.net"
+ARG NETWORK_RPC_URL="https://rpc.cheqd.net"
 ARG AUTH0_SERVICE_ENDPOINT
 
 # Run-time environment variables
@@ -54,6 +54,7 @@ ENV ISSUER_ID_PUBLIC_KEY_HEX ${ISSUER_ID_PUBLIC_KEY_HEX}
 ENV ISSUER_ID_PRIVATE_KEY_HEX ${ISSUER_ID_PRIVATE_KEY_HEX}
 ENV ISSUER_ID_METHOD_SPECIFIC_ID ${ISSUER_ID_METHOD_SPECIFIC_ID}
 ENV COSMOS_PAYER_MNEMONIC ${COSMOS_PAYER_MNEMONIC}
+ENV NETWORK_RPC_URL ${NETWORK_RPC_URL}
 ENV AUTH0_SERVICE_ENDPOINT ${AUTH0_SERVICE_ENDPOINT}
 
 # We install Miniflare because we don't have the node_modules directory
