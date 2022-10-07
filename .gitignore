@@ -5,6 +5,8 @@ tsconfig.tsbuildinfo
 worker/
 transpiled
 .env
+.env*
+.snyk
 
 ### GENERAL EXCLUSIONS ###
 
@@ -16,7 +18,7 @@ transpiled
 ## Dependency directory
 ## Commenting this out is preferred by some people, see
 ## https://docs.npmjs.com/misc/faq#should-i-check-my-node_modules-folder-into-git
-node_modules/
+node_modules/**
 
 # Book build output
 _book

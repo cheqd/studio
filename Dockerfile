@@ -1,19 +1,75 @@
-FROM node:17-buster
+###############################################################
+###         STAGE 1: Build credential-service app           ###
+###############################################################
 
-WORKDIR /app
+FROM node:16-alpine AS builder
 
-COPY src ./src
-COPY agent.yml ./agent.yml
-COPY package.json ./package.json
-COPY tsconfig.json ./tsconfig.json
-COPY webpack.config.cjs ./webpack.config.cjs
-COPY wrangler.toml ./wrangler.toml
-COPY package-lock.json ./package-lock.json
-COPY did-provider-cheqd/ ./did-provider-cheqd/
+# Set working directory & bash defaults
+WORKDIR /home/node/app
 
-ENV NODE_OPTIONS=--openssl-legacy-provider
-ENV KV_PERSIST=true
+# Copy source files
+COPY . .
 
-RUN npm install && npm run build
+# Installing dependencies
+RUN npm ci
 
-ENTRYPOINT [ "npx", "miniflare", "/app/dist/worker.js", "--kv-persist", "${KV_PERSIST}" ]
+# Build the app
+RUN npm run build
+
+###############################################################
+###             STAGE 2: Build Miniflare runner             ###
+###############################################################
+
+FROM node:16-alpine AS runner
+
+# Install pre-requisite packages
+RUN apk update && apk add --no-cache bash ca-certificates curl
+
+# Set working directory & bash defaults
+WORKDIR /home/node/app
+
+# Copy built application
+COPY --from=builder /home/node/app/dist .
+
+# Build-time arguments
+ARG NODE_ENV=production
+ARG NPM_CONFIG_LOGLEVEL=warn
+ARG PORT=8787
+ARG ISSUER_ID
+ARG ISSUER_ID_KID
+ARG ISSUER_ID_METHOD="did:cheqd:mainnet:"
+ARG ISSUER_ID_PUBLIC_KEY_HEX
+ARG ISSUER_ID_PRIVATE_KEY_HEX
+ARG ISSUER_ID_METHOD_SPECIFIC_ID
+ARG COSMOS_PAYER_MNEMONIC
+ARG NETWORK_RPC_URL="https://rpc.cheqd.net"
+ARG AUTH0_SERVICE_ENDPOINT
+
+# Run-time environment variables
+ENV NODE_ENV {NODE_ENV}
+ENV NPM_CONFIG_LOGLEVEL ${NPM_CONFIG_LOGLEVEL}
+ENV PORT ${PORT}
+ENV ISSUER_ID ISSUER_ID ${ISSUER_ID}
+ENV ISSUER_ID_KID ${ISSUER_ID_KID}
+ENV ISSUER_ID_METHOD ${ISSUER_ID_METHOD}
+ENV ISSUER_ID_PUBLIC_KEY_HEX ${ISSUER_ID_PUBLIC_KEY_HEX}
+ENV ISSUER_ID_PRIVATE_KEY_HEX ${ISSUER_ID_PRIVATE_KEY_HEX}
+ENV ISSUER_ID_METHOD_SPECIFIC_ID ${ISSUER_ID_METHOD_SPECIFIC_ID}
+ENV COSMOS_PAYER_MNEMONIC ${COSMOS_PAYER_MNEMONIC}
+ENV NETWORK_RPC_URL ${NETWORK_RPC_URL}
+ENV AUTH0_SERVICE_ENDPOINT ${AUTH0_SERVICE_ENDPOINT}
+
+# We install Miniflare because we don't have the node_modules directory
+# this image only has the output worker.js file.
+RUN npm install -g miniflare@2.9.0 && \
+    chown -R node:node /home/node/app
+
+# Specify default port
+EXPOSE ${PORT}
+
+# Set user and shell
+USER node
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
+# Run the application
+CMD [ "miniflare", "worker.js" ]

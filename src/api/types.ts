@@ -95,7 +95,8 @@ export type GenericAuthResponse = {
     authenticated: boolean
     user: GenericAuthUser,
     provider: string,
-    subjectId?: string
+    subjectId?: string,
+    error?: any
 }
 
 export type GenericAuthUser = Record<string, any> | null | undefined
