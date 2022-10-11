@@ -22,14 +22,12 @@ RUN npm run build
 
 FROM node:16-alpine AS runner
 
-# Install pre-requisite packages
-RUN apk update && apk add --no-cache bash ca-certificates curl
-
 # Set working directory & bash defaults
 WORKDIR /home/node/app
 
 # Copy built application
 COPY --from=builder /home/node/app/dist .
+COPY --chown=node:node run.sh .
 
 # Build-time arguments
 ARG NODE_ENV=production
@@ -62,7 +60,10 @@ ENV AUTH0_SERVICE_ENDPOINT ${AUTH0_SERVICE_ENDPOINT}
 # We install Miniflare because we don't have the node_modules directory
 # this image only has the output worker.js file.
 RUN npm install -g miniflare@2.9.0 && \
-    chown -R node:node /home/node/app
+    chown -R node:node /home/node/app && \
+    apk update && \
+    apk add --no-cache bash ca-certificates && \
+    chmod +x run.sh
 
 # Specify default port
 EXPOSE ${PORT}
@@ -72,4 +73,4 @@ USER node
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 # Run the application
-CMD [ "miniflare", "worker.js" ]
+CMD ["./run.sh"]
