@@ -8,7 +8,7 @@ import { HEADERS } from '../constants'
 const router = Router({ base: '/api/credentials' })
 
 router.all(
-	'/health',
+	'/',
 	() => new Response(JSON.stringify({ ping: 'pong' }))
 )
 
@@ -46,3 +46,4 @@ router.post(
 )
 
 export default router
+
