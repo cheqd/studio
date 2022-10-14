@@ -2,7 +2,7 @@
 ###         STAGE 1: Build credential-service app           ###
 ###############################################################
 
-FROM node:17-alpine AS builder
+FROM node:16-alpine AS builder
 
 # Set working directory & bash defaults
 WORKDIR /home/node/app
@@ -20,14 +20,13 @@ RUN npm run build
 ###             STAGE 2: Build Miniflare runner             ###
 ###############################################################
 
-FROM node:17-alpine AS runner
+FROM node:16-alpine AS runner
 
 # Set working directory & bash defaults
 WORKDIR /home/node/app
 
 # Copy built application
 COPY --from=builder /home/node/app/dist .
-COPY --chown=node:node run.sh .
 
 # Build-time arguments
 ARG NODE_ENV=production
@@ -62,8 +61,7 @@ ENV AUTH0_SERVICE_ENDPOINT ${AUTH0_SERVICE_ENDPOINT}
 RUN npm install -g miniflare@2.9.0 && \
     chown -R node:node /home/node/app && \
     apk update && \
-    apk add --no-cache bash ca-certificates && \
-    chmod +x run.sh
+    apk add --no-cache bash ca-certificates
 
 # Specify default port
 EXPOSE ${PORT}
@@ -73,4 +71,4 @@ USER node
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 # Run the application
-CMD ["./run.sh"]
+CMD [ "miniflare", "worker.js" ]
