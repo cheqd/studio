@@ -18,12 +18,6 @@ The other parameter that needs to be set is a **market arbitrage threshold** (e.
 
 The app is invoked hitting the `/` endpoint (with a `GET` request), which returns a JSON response with the following details.
 
-### Response Details
-
-#### `arbitrageOpportunities`
-
-
-
 ## 🧑‍💻🛠 Developer Guide
 
 ### Setup
