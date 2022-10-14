@@ -8,32 +8,72 @@
 
 ## ℹ️ Overview
 
-The purpose of this service is to issue and verify credentials. This service by itself does not take care of storing the credentials. If you'd like to store credentials, you would have to pair this service with [secret-box-service](https://github.com/cheqd/secret-box-service.git)
+The purpose of this service is to issue and verify credentials. This service by itself does not take care of storing the credentials. If you'd like to store credentials, you would have to pair this service with [secret-box-service](https://github.com/cheqd/secret-box-service.git). This service is also dependent on [auth0-service](https://github.com/cheqd/auth0-service)
 
-## 📖 Usage
+## 📖 Endpoints
 
-The app is pre-configured to assess arbitrage opportunities for a given token's CoinGecko Token ID, e.g., [`cheqd-network`](https://www.coingecko.com/en/coins/cheqd-network) across all the markets and token pairs it trades on.
+### Issue a credential
 
-The other parameter that needs to be set is a **market arbitrage threshold** (e.g., 10%), which is the allowed percentage difference allowed before a market pair is counted as susceptible to arbitrage.
+**Endpoint** POST `/api/credentials/issue`
 
-The app is invoked hitting the `/` endpoint (with a `GET` request), which returns a JSON response with the following details.
+Accepts: `application/json`
+
+Request Body: JSON object with following fields
+
+- `claim` - Claim received from the Auth0 Service
+- `provider` - Auth0 login provider (eg: Twitter, Discord, Github, etc)
+- `subjectId` - ID of the holder of the credential
+
+Success Response Code - 200
+
+Error Response Code - 400
+
+### Verify a Credential
+
+**Endpoint** POST `/api/credentials/verify`
+
+Accepts: `application/json`
+
+Request Body: JSON object with following fields:
+
+- `credential` - A verifiable credential
+
+Success Response Code - 200
+
+Error Response Codes:
+- 400 - Bad request body
+- 405 - Wrong content type
+
+### Health Check
+
+Endpoint - `/api/credentials`
+
+This endpoint only returns a "PONG" as response with status code 200
 
 ## 🧑‍💻🛠 Developer Guide
 
 ### Setup
 
-Dependencies can be installed using NPM or any other package manager.
+Dependencies can be installed using NPM or any other node package manager.
 
 ```bash
 npm install
+npm run build
 ```
 
 ### Configuration
 
-The application expects two environment variables to be defined for the app to function:
+The application expects nine (9) environment variables to be defined for the app to function:
 
-1. `MARKET_ARBITRAGE_THRESHOLD`: Percentage difference to consider for arbitrage threshold. (Default: `10.0` or 10%)
-2. `COINGECKO_TOKEN_ID`: [CoinGecko token ID](https://www.coingecko.com/en/api/documentation) ("name"), which is usually the name of the token's profile page on CoinGecko. (Default: `cheqd-network` for the CHEQ token)
+1. `ISSUER_ID_PRIVATE_KEY_HEX`: Identity private key hex for the issuer
+2. `ISSUER_ID_PUBLIC_KEY_HEX`: Hex encoded public key of the issuer
+3. `ISSUER_ID_KID`: Key ID to match a specific key inside a JWK
+4. `ISSUER_ID_METHOD_SPECIFIC_ID`: DID Method specific ID [learn more](https://www.w3.org/TR/did-core/#did-syntax)
+5. `ISSUER_ID_METHOD`: DID method, for example ("did:cheqd:mainnet" or "did:cheqd:testnet")
+6. `ISSUER_ID`: DID to use for issuing credentials
+7. `COSMOS_PAYER_MNEMONIC`: Mnemonic for the issuer
+8. `NETWORK_RPC_URL`: Cheqd network RPC url
+9. `AUTH0_SERVICE_ENDPOINT`: Auth0 service endpoint, which is the url that points to [auth0 service](https://github.com/cheqd/auth0-service)
 
 ### Run
 
@@ -44,6 +84,10 @@ npm start
 ```
 
 Or, to build and run in Docker, use the [Dockerfile](Dockerfile) provided.
+
+```bash
+docker build -t credential-service .
+```
 
 ## 🐞 Bug reports & 🤔 feature requests
 
@@ -58,3 +102,4 @@ Please reach out to us there for discussions, help, and feedback on the project.
 ## 🙋 Find us elsewhere
 
 [![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge\&logo=telegram\&logoColor=white)](https://t.me/cheqd) [![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge\&logo=discord\&logoColor=white)](http://cheqd.link/discord-github) [![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge\&logo=twitter\&logoColor=white)](https://twitter.com/intent/follow?screen\_name=cheqd\_io) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge\&logo=linkedin\&logoColor=white)](http://cheqd.link/linkedin) [![Slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge\&logo=slack\&logoColor=white)](http://cheqd.link/join-cheqd-slack) [![Medium](https://img.shields.io/badge/Medium-12100E?style=for-the-badge\&logo=medium\&logoColor=white)](https://blog.cheqd.io) [![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge\&logo=youtube\&logoColor=white)](https://www.youtube.com/channel/UCBUGvvH6t3BAYo5u41hJPzw/)
+
