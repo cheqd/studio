@@ -114,6 +114,8 @@ jobs:
           target: runner
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Push image to DigitalOcean Container Registry
         run: docker image push --all-tags ${{ env.IMAGE_NAME }}
