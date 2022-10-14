@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/cheqd/credential-service/compare/1.1.2...1.1.3) (2022-10-14)
+
+
+### Bug Fixes
+
+* Environment variables issue [DEV-1806] ([#61](https://github.com/cheqd/credential-service/issues/61)) ([9ea70f4](https://github.com/cheqd/credential-service/commit/9ea70f414f3f135e61207a24bab4f042d516575c))
+
 ## [1.1.2](https://github.com/cheqd/credential-service/compare/1.1.1...1.1.2) (2022-10-12)
 
 
