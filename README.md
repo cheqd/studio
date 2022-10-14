@@ -10,6 +10,51 @@
 
 The purpose of this service is to issue and verify credentials. This service by itself does not take care of storing the credentials. If you'd like to store credentials, you would have to pair this service with [secret-box-service](https://github.com/cheqd/secret-box-service.git)
 
+## 📖 Usage
+
+The app is pre-configured to assess arbitrage opportunities for a given token's CoinGecko Token ID, e.g., [`cheqd-network`](https://www.coingecko.com/en/coins/cheqd-network) across all the markets and token pairs it trades on.
+
+The other parameter that needs to be set is a **market arbitrage threshold** (e.g., 10%), which is the allowed percentage difference allowed before a market pair is counted as susceptible to arbitrage.
+
+The app is invoked hitting the `/` endpoint (with a `GET` request), which returns a JSON response with the following details.
+
+### Response Details
+
+#### `arbitrageOpportunities`
+
+
+
+## 🧑‍💻🛠 Developer Guide
+
+### Setup
+
+Dependencies can be installed using NPM or any other package manager.
+
+```bash
+npm install
+```
+
+### Configuration
+
+The application expects two environment variables to be defined for the app to function:
+
+1. `MARKET_ARBITRAGE_THRESHOLD`: Percentage difference to consider for arbitrage threshold. (Default: `10.0` or 10%)
+2. `COINGECKO_TOKEN_ID`: [CoinGecko token ID](https://www.coingecko.com/en/api/documentation) ("name"), which is usually the name of the token's profile page on CoinGecko. (Default: `cheqd-network` for the CHEQ token)
+
+### Run
+
+Once configured, the app can be run using NPM:
+
+```bash
+npm start
+```
+
+Or, to build and run in Docker, use the [Dockerfile](Dockerfile) provided.
+
+## 🐞 Bug reports & 🤔 feature requests
+
+If you notice anything not behaving how you expected, or would like to make a suggestion / request for a new feature, please create a [**new issue**](https://github.com/cheqd/credential-service/issues/new/choose) and let us know.
+
 ## 💬 Community
 
 The [**cheqd Community Slack**](http://cheqd.link/join-cheqd-slack) is our primary chat channel for the open-source community, software developers, and node operators.
