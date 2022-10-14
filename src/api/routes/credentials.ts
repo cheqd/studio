@@ -19,11 +19,9 @@ router.all(
 
 		const credentials = new GuardedCredentials()
 
-		console.log('/issue - trying authentication')
 		const { authenticated, user, subjectId, error } = await credentials.guard(request)
 
 		if (!(authenticated)) {
-			console.log('/issue - authentication failure: ', JSON.stringify(error))
 			return new Response(
 				JSON.stringify({ error }),
 				{
@@ -33,7 +31,6 @@ router.all(
 			)
 		}
 
-		console.log('/issue - authentication done')
 		return await credentials.issue_credentials(request, user, subjectId)
 	}
 )
