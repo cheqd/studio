@@ -31,7 +31,8 @@
 		"@veramo/key-manager": "^4.0.2",
 		"@veramo/kms-local": "^4.0.2",
 		"did-resolver": "^4.0.1",
-		"itty-router": "^2.6.6"
+		"itty-router": "^2.6.6",
+		"uint8arrays": "^3.1.1"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^3.18.0",
