@@ -23,7 +23,7 @@
 		]
 	},
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "^1.7.12",
+		"@cheqd/did-provider-cheqd": "^1.7.13",
 		"@veramo/core": "^4.0.0",
 		"@veramo/credential-w3c": "^4.0.2",
 		"@veramo/did-manager": "^4.0.0",
@@ -44,7 +44,7 @@
 		"@semantic-release/release-notes-generator": "^10.0.3",
 		"@types/debug": "^4.1.7",
 		"@types/jest": "^29.2.0",
-		"@types/node": "^18.11.5",
+		"@types/node": "^18.11.6",
 		"@types/service-worker-mock": "^2.0.1",
 		"@types/uuid": "^8.3.4",
 		"@typescript-eslint/eslint-plugin": "^5.41.0",
