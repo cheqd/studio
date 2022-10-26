@@ -6,25 +6,49 @@ defaults:
     shell: bash
 
 jobs:
-  build:
-    name: "Build Node.js"
+  build-docker:
+    name: "Build Docker image"
     runs-on: ubuntu-latest
-    
+    env:
+      IMAGE_NAME: registry.digitalocean.com/${{ github.repository }}
+
     steps:
       - uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        id: buildx
         with:
-          fetch-depth: 0
-
-      - uses: actions/setup-node@v3
+          install: true
+          version: latest
+      
+      - name: Configure Docker image metadata
+        id: meta
+        uses: docker/metadata-action@v4
         with:
-          node-version: '16.x'
-          # cache: 'npm' <--- Commenting out, see: https://github.com/bahmutov/npm-install/issues/80, as of 13th of June 2022.
-          # cache-dependency-path: '**/package-lock.json' <--- Commenting out, see: https://github.com/bahmutov/npm-install/issues/80, as of 13th of June 2022.
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=raw,value=staging-latest
+            type=sha,format=long
 
-      - name: "Clean install dependencies"
-        run: npm install
-        env:
-          NPM_GITHUB_PAT: ${{ secrets.NPM_GITHUB_PAT }}
+      - name: Build image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64
+          load: true
+          target: runner
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Save Docker image
+        run:  docker save ${{ env.IMAGE_NAME }} > credential-service-staging.tar
 
-      - name: "Run npm build"
-        run: npm run build
+      - name: Upload build image as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: credential-service-staging
+          path: credential-service-staging.tar

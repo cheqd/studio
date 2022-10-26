@@ -4,12 +4,18 @@ on:
 defaults:
   run:
     shell: bash
+permissions:
+  contents: write
+  packages: write
+
 
 jobs:
-  release:
+  release-npm:
     name: "Semantic Release"
     runs-on: ubuntu-latest
-    
+    outputs:
+      VERSION: ${{ steps.set-version.outputs.VERSION }}
+
     steps:
       - uses: actions/checkout@v3
         with:
@@ -18,7 +24,7 @@ jobs:
       
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version: 16
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
       
@@ -39,4 +45,77 @@ jobs:
         run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Set version number
+        id: set-version
+        run: |
+          VERSION=$( git describe --tags ${{ github.sha }})
+          echo ::set-output name=VERSION::"$VERSION"
+
+
+  release-docker:
+    name: "Release Docker image"
+    needs: release-npm
+    runs-on: ubuntu-latest
+    if: ${{ ( github.ref_name == 'main' ) }}
+    env:
+      IMAGE_NAME: registry.digitalocean.com/${{ github.repository }}
+    environment: 
+      name: production
+      url: https://credential-service.cheqd.net
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        id: buildx
+        with:
+          install: true
+          version: latest
+
+      - name: Install DigitalOcean CLI
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Login to DOCR
+        run: doctl registry login --expiry-seconds 600
+      
+      - name: Configure Docker image metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=auto
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.release-npm.outputs.VERSION }}
+            type=raw,value=production-latest
+            type=sha,format=long
+          labels: |
+            org.opencontainers.image.description="Cheqd Credential Service"
+            org.opencontainers.image.source="https://github.com/cheqd/credential-service"
+            org.opencontainers.image.vendor="Cheqd Foundation Limited"
+            org.opencontainers.image.created={{date 'dddd, MMMM Do YYYY, h:mm:ss a'}}
+            org.opencontainers.image.documentation="https://docs.cheqd.io/node"
+      
+      - name: Build image with labels
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64
+          load: true
+          target: runner
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Push image to DigitalOcean Container Registry
+        run: docker image push --all-tags ${{ env.IMAGE_NAME }}

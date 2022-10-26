@@ -2,7 +2,6 @@ import { Router } from 'itty-router'
 import credentials_router from './api/routes/credentials'
 import error_handler from './error_handler'
 
-
 const router = Router()
 
 router
