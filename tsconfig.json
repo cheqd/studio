@@ -3,7 +3,7 @@
     "outDir": "./dist",
     "module": "ESNext",
     "target": "esnext",
-    "lib": ["esnext"],
+    "lib": ["esnext", "DOM"],
     "alwaysStrict": true,
     "strict": true,
     "preserveConstEnums": true,

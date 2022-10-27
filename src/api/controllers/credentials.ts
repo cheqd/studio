@@ -8,15 +8,16 @@ import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-m
 import { KeyManagementSystem } from '@veramo/kms-local'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
+import { NetworkType } from '@cheqd/did-provider-cheqd/src/did-manager/cheqd-did-provider'
 import { HEADERS, VC_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TYPE, } from '../constants'
 import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential } from '../types'
-import { NetworkType } from '@cheqd/did-provider-cheqd/build/did-manager/cheqd-did-provider'
 import { Identity } from './identity'
 
 export class Credentials {
-
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	agent: TAgent<any>
 
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	constructor(agent?: any) {
 		this.agent = agent
 		if (!agent) this.init_agent()
@@ -44,7 +45,7 @@ export class Credentials {
 							{
 								defaultKms: 'local',
 								cosmosPayerMnemonic: COSMOS_PAYER_MNEMONIC,
-								networkType: network!,
+								networkType: network,
 								rpcUrl: NETWORK_RPC_URL,
 							}
 						) as AbstractIdentifierProvider
@@ -71,10 +72,11 @@ export class Credentials {
 
 		const issuer_id = await identity_handler.load_issuer_did(
 			request,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			this.agent as TAgent<any>
 		)
 
-		this.agent = identity_handler.agent!
+		this.agent = identity_handler.agent
 
 		const credential_subject: CredentialSubject = {
 			id: subjectId,
@@ -163,13 +165,9 @@ export class Credentials {
 	private get_network_ns_config(issuer_id: string): NetworkType {
 		// did:cheqd:<network>:<uuid>
 		const parts = issuer_id.split(':')
-		let ns = parts[2]
+		const ns = parts[2]
 
-		try {
-			return this.validateNetworkNS(ns as NetworkType)
-		} catch (err) {
-			throw err
-		}
+		return this.validateNetworkNS(ns as NetworkType)
 	}
 
 	validateNetworkNS(ns: NetworkType): NetworkType {
