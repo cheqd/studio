@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.4](https://github.com/cheqd/credential-service/compare/1.1.3...1.1.4) (2022-10-27)
+
+
+### Bug Fixes
+
+* **deploy:** Added node module resolution ([74234bb](https://github.com/cheqd/credential-service/commit/74234bbccba5a97864ae624a8b0758a9453b26e0))
+* **deps:** Refactor deriving from bumps ([1fbcbfc](https://github.com/cheqd/credential-service/commit/1fbcbfc053842f8f451f6ebe0fab10b2053f18ca))
+
 ## [1.1.3](https://github.com/cheqd/credential-service/compare/1.1.2...1.1.3) (2022-10-14)
 
 
