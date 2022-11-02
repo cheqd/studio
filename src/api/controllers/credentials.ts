@@ -9,7 +9,7 @@ import { KeyManagementSystem } from '@veramo/kms-local'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 import { NetworkType } from '@cheqd/did-provider-cheqd/src/did-manager/cheqd-did-provider'
-import { HEADERS, VC_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TYPE, } from '../constants'
+import { HEADERS, VC_CONTEXT, VC_EVENTRESERVATION_CONTEXT, VC_PERSON_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TICKET_CONTEXT, VC_TYPE, } from '../constants'
 import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential } from '../types'
 import { Identity } from './identity'
 
@@ -82,24 +82,52 @@ export class Credentials {
 			id: subjectId,
 			type: undefined
 		}
-
-		const credential: CredentialPayload = {
-			issuer: { id: issuer_id.did },
-			'@context': VC_CONTEXT,
-			type: ['Person', VC_TYPE],
-			issuanceDate: new Date().toISOString(),
-			credentialSubject: credential_subject,
-			'WebPage': [
-				{
-					'@type': 'ProfilePage',
-					description: 'Twitter',
-					name: `${user?.nickname}` ?? '<unknown>',
-					identifier: `@${user?.handle}` ?? '<unknown>',
-					URL: `https://twitter.com/${user?.handle}`,
-					lastReviewed: user?.updated_at
+		console.log('entered')
+		let credential: CredentialPayload
+		switch('Ticket') {
+			case 'Ticket':
+				credential = {
+					issuer: { id: issuer_id.did },
+					'@context': VC_CONTEXT.concat(VC_EVENTRESERVATION_CONTEXT),
+					type: ['EventReservation', VC_TYPE],
+					reservationId: 'https://schema.org/ReservationConfirmed',
+					reservationStatus: 'https://schema.org/ReservationConfirmed',
+					underName: {
+						'@type': 'Person',
+						name: `${user?.nickname}` ?? '<unknown>',
+					},
+					reservationFor: {
+						'@type': 'Event',
+						name: 'IIW Event',
+						startDate: "2022-11-06T19:30:00-08:00",
+						logo: ''
+					},
+					reservedTicket: {
+						'@type': 'Ticket',
+						ticketNumber: 'abc123'
+					}
 				}
-			],
+				break
+			default:
+				credential = {
+					issuer: { id: issuer_id.did },
+					'@context': VC_CONTEXT.concat(VC_PERSON_CONTEXT),
+					type: ['Person', VC_TYPE],
+					issuanceDate: new Date().toISOString(),
+					credentialSubject: credential_subject,
+					'WebPage': [
+						{
+							'@type': 'ProfilePage',
+							description: 'Twitter',
+							name: `${user?.nickname}` ?? '<unknown>',
+							identifier: `@${user?.handle}` ?? '<unknown>',
+							URL: `https://twitter.com/${user?.handle}`,
+							lastReviewed: user?.updated_at
+						}
+					],
+				}
 		}
+		
 
 		const verifiable_credential: Omit<VerifiableCredential, 'vc'> = await this.agent.execute(
 			'createVerifiableCredential',
