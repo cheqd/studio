@@ -24,7 +24,7 @@ jobs:
       
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
       
@@ -115,7 +115,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min
 
       - name: Push image to DigitalOcean Container Registry
         run: docker image push --all-tags ${{ env.IMAGE_NAME }}
