@@ -4,7 +4,7 @@ import { GenericAuthResponse } from '../types'
 
 export class GuardedCredentials {
 	guard = async (request: Request): Promise<GenericAuthResponse> => {
-		const { claim, provider, subjectId } = await request.json() as { claim: string, provider: string, subjectId: string }
+		const { claim, subjectId } = await request.json() as { claim: string, subjectId: string }
 
 		try {
 			const resp = await fetch(
@@ -14,7 +14,7 @@ export class GuardedCredentials {
 					body: JSON.stringify(
 						{
 							claim,
-							provider
+							provider: 'twitter'
 						}
 					),
 					headers: HEADERS.json

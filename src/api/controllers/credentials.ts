@@ -82,29 +82,23 @@ export class Credentials {
 			id: subjectId,
 			type: undefined
 		}
-		console.log('entered')
+
 		let credential: CredentialPayload
-		switch('Ticket') {
+		switch(new URL(request.url).searchParams.get('type')) {
 			case 'Ticket':
 				credential = {
 					issuer: { id: issuer_id.did },
 					'@context': VC_CONTEXT.concat(VC_EVENTRESERVATION_CONTEXT),
 					type: ['EventReservation', VC_TYPE],
-					reservationId: 'https://schema.org/ReservationConfirmed',
+					issuanceDate: new Date().toISOString(),
+					credentialSubject: credential_subject,
+					reservationId: new URL(request.url).searchParams.get('data'),
 					reservationStatus: 'https://schema.org/ReservationConfirmed',
-					underName: {
-						'@type': 'Person',
-						name: `${user?.nickname}` ?? '<unknown>',
-					},
 					reservationFor: {
 						'@type': 'Event',
 						name: 'IIW Event',
 						startDate: "2022-11-06T19:30:00-08:00",
 						logo: ''
-					},
-					reservedTicket: {
-						'@type': 'Ticket',
-						ticketNumber: 'abc123'
 					}
 				}
 				break
