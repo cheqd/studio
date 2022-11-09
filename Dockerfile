@@ -2,7 +2,7 @@
 ###         STAGE 1: Build credential-service app           ###
 ###############################################################
 
-FROM node:16-alpine AS builder
+FROM node:18-alpine AS builder
 
 # Set working directory & bash defaults
 WORKDIR /home/node/app
@@ -20,7 +20,7 @@ RUN npm run build
 ###             STAGE 2: Build Miniflare runner             ###
 ###############################################################
 
-FROM node:16-alpine AS runner
+FROM node:18-alpine AS runner
 
 # Set working directory & bash defaults
 WORKDIR /home/node/app
