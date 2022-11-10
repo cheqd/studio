@@ -61,7 +61,7 @@ export class Credentials {
 		})
 	}
 
-	async issue_credentials(request: Request, user: GenericAuthUser, subjectId?: string): Promise<Response> {
+	async issue_credentials(request: Request, user: GenericAuthUser, provider: string, subjectId?: string): Promise<Response> {
 
 		if (!this.agent) this.init_agent()
 
@@ -84,7 +84,7 @@ export class Credentials {
 		}
 
 		let credential: CredentialPayload
-		switch(new URL(request.url).searchParams.get('type')) {
+		switch (new URL(request.url).searchParams.get('type')) {
 			case 'Ticket':
 				credential = {
 					issuer: { id: issuer_id.did },
@@ -114,16 +114,16 @@ export class Credentials {
 					'WebPage': [
 						{
 							'@type': 'ProfilePage',
-							description: 'Twitter',
+							description: provider,
 							name: `${user?.nickname}` ?? '<unknown>',
-							identifier: `@${user?.handle}` ?? '<unknown>',
-							URL: `https://twitter.com/${user?.handle}`,
+							identifier: `@${user?.nickname}` ?? '<unknown>',
+							URL: `https://twitter.com/${user?.nickname}`,
 							lastReviewed: user?.updated_at
 						}
 					],
 				}
 		}
-		
+
 
 		const verifiable_credential: Omit<VerifiableCredential, 'vc'> = await this.agent.execute(
 			'createVerifiableCredential',
