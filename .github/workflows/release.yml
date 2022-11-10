@@ -24,13 +24,13 @@ jobs:
       
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
       
       - name: "Obtain Github App token"
         id: app-token
-        uses: getsentry/action-github-app-token@v1.0.6
+        uses: getsentry/action-github-app-token@v2.0.0
         with:
           app_id: ${{ secrets.BOT_APP_ID }}
           private_key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
@@ -115,7 +115,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min
 
       - name: Push image to DigitalOcean Container Registry
         run: docker image push --all-tags ${{ env.IMAGE_NAME }}
+
