@@ -1,7 +1,7 @@
 import {
 	createAgent, IDataStore, IDIDManager, IKeyManager, IResolver, TAgent
 } from '@veramo/core'
-import { CredentialIssuer } from '@veramo/credential-w3c'
+import { CredentialPlugin } from '@veramo/credential-w3c'
 import { AbstractIdentifierProvider, DIDManager, MemoryDIDStore } from '@veramo/did-manager'
 import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager'
@@ -56,7 +56,7 @@ export class Credentials {
 						...CheqdDidResolver() as ResolverRegistry
 					})
 				}),
-				new CredentialIssuer(),
+				new CredentialPlugin(),
 			]
 		})
 	}
