@@ -97,9 +97,9 @@ export class Credentials {
 					reservationFor: {
 						'@type': 'Event',
 						name: 'Internet Identity Workshop IIWXXXV',
-						startDate: "2022-11-16T16:00:00",
-						endDate: "2022-11-18T00:00:00",
-						location: "Computer History Museum, 1401 N Shoreline Blvd, Mountain View, CA 94043",
+						startDate: "2022-11-15T08:00:00-08:00",
+						endDate: "2022-11-17T16:00:00-08:00",
+						location: "Computer History Museum, 1401 N Shoreline Blvd, Mountain View, CA 94043, United States",
 						logo: ''
 					}
 				}
