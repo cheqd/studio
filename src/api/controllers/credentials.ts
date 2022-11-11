@@ -10,7 +10,7 @@ import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 import { NetworkType } from '@cheqd/did-provider-cheqd/src/did-manager/cheqd-did-provider'
 import { HEADERS, VC_CONTEXT, VC_EVENTRESERVATION_CONTEXT, VC_PERSON_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TICKET_CONTEXT, VC_TYPE, } from '../constants'
-import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential } from '../types'
+import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential, WebPage } from '../types'
 import { Identity } from './identity'
 
 export class Credentials {
@@ -62,6 +62,7 @@ export class Credentials {
 	}
 
 	async issue_credentials(request: Request, user: GenericAuthUser, provider: string, subjectId?: string): Promise<Response> {
+		provider = provider.toLowerCase()
 
 		if (!this.agent) this.init_agent()
 
@@ -105,25 +106,42 @@ export class Credentials {
 				}
 				break
 			default:
+				let webPages: WebPage[] = [];
+				if (provider === 'twitter') {
+					webPages.push({
+						'@type': 'ProfilePage',
+						description: provider,
+						name: `${user?.name}` ?? '<unknown>',
+						identifier: `@${user?.nickname}` ?? '<unknown>',
+						URL: 'https://twitter.com/' + user?.nickname,
+						lastReviewed: user?.updated_at
+					})
+				} else if ('discord') {
+					webPages.push({
+						'@type': 'ProfilePage',
+						description: provider,
+						name: user?.name,
+						identifier: `@${user?.nickname}` ?? '<unknown>',
+						lastReviewed: user?.updated_at
+					})
+				} else {
+					webPages.push({
+						'@type': 'ProfilePage',
+						description: provider,
+						identifier: `@${user?.nickname}` ?? '<unknown>',
+						lastReviewed: user?.updated_at
+					})
+				}
+
 				credential = {
 					issuer: { id: issuer_id.did },
 					'@context': VC_CONTEXT.concat(VC_PERSON_CONTEXT),
 					type: ['Person', VC_TYPE],
 					issuanceDate: new Date().toISOString(),
 					credentialSubject: credential_subject,
-					'WebPage': [
-						{
-							'@type': 'ProfilePage',
-							description: provider,
-							name: `${user?.nickname}` ?? '<unknown>',
-							identifier: `@${user?.nickname}` ?? '<unknown>',
-							URL: `https://twitter.com/${user?.nickname}`,
-							lastReviewed: user?.updated_at
-						}
-					],
+					'WebPage': webPages,
 				}
 		}
-
 
 		const verifiable_credential: Omit<VerifiableCredential, 'vc'> = await this.agent.execute(
 			'createVerifiableCredential',
