@@ -19,7 +19,7 @@ router.all(
 
 		const credentials = new GuardedCredentials()
 
-		const { authenticated, user, subjectId, error } = await credentials.guard(request)
+		const { authenticated, user, subjectId, provider, error } = await credentials.guard(request)
 
 		if (!(authenticated)) {
 			return new Response(
@@ -31,7 +31,7 @@ router.all(
 			)
 		}
 
-		return await credentials.issue_credentials(request, user, subjectId)
+		return await credentials.issue_credentials(request, user, provider, subjectId)
 	}
 )
 

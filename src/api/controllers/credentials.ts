@@ -1,7 +1,7 @@
 import {
 	createAgent, IDataStore, IDIDManager, IKeyManager, IResolver, TAgent
 } from '@veramo/core'
-import { CredentialIssuer } from '@veramo/credential-w3c'
+import { CredentialPlugin } from '@veramo/credential-w3c'
 import { AbstractIdentifierProvider, DIDManager, MemoryDIDStore } from '@veramo/did-manager'
 import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager'
@@ -9,8 +9,8 @@ import { KeyManagementSystem } from '@veramo/kms-local'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 import { NetworkType } from '@cheqd/did-provider-cheqd/src/did-manager/cheqd-did-provider'
-import { HEADERS, VC_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TYPE, } from '../constants'
-import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential } from '../types'
+import { HEADERS, VC_CONTEXT, VC_EVENTRESERVATION_CONTEXT, VC_PERSON_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS,  VC_TYPE, } from '../constants'
+import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential, WebPage } from '../types'
 import { Identity } from './identity'
 
 export class Credentials {
@@ -56,12 +56,13 @@ export class Credentials {
 						...CheqdDidResolver() as ResolverRegistry
 					})
 				}),
-				new CredentialIssuer(),
+				new CredentialPlugin(),
 			]
 		})
 	}
 
-	async issue_credentials(request: Request, user: GenericAuthUser, subjectId?: string): Promise<Response> {
+	async issue_credentials(request: Request, user: GenericAuthUser, provider: string, subjectId?: string): Promise<Response> {
+		provider = provider.toLowerCase()
 
 		if (!this.agent) this.init_agent()
 
@@ -83,22 +84,73 @@ export class Credentials {
 			type: undefined
 		}
 
-		const credential: CredentialPayload = {
-			issuer: { id: issuer_id.did },
-			'@context': VC_CONTEXT,
-			type: ['Person', VC_TYPE],
-			issuanceDate: new Date().toISOString(),
-			credentialSubject: credential_subject,
-			'WebPage': [
-				{
-					'@type': 'ProfilePage',
-					description: 'Twitter',
-					name: `${user?.nickname}` ?? '<unknown>',
-					identifier: `@${user?.handle}` ?? '<unknown>',
-					URL: `https://twitter.com/${user?.handle}`,
-					lastReviewed: user?.updated_at
+		let credential: CredentialPayload
+		switch (new URL(request.url).searchParams.get('type')) {
+			case 'Ticket':
+				credential = {
+					issuer: { id: issuer_id.did },
+					'@context': VC_CONTEXT.concat(VC_EVENTRESERVATION_CONTEXT),
+					type: ['EventReservation', VC_TYPE],
+					issuanceDate: new Date().toISOString(),
+					credentialSubject: credential_subject,
+					reservationId: new URL(request.url).searchParams.get('data'),
+					reservationStatus: 'https://schema.org/ReservationConfirmed',
+					reservationFor: {
+						'@type': 'Event',
+						name: 'Internet Identity Workshop IIWXXXV',
+						startDate: "2022-11-15T08:00:00-08:00",
+						endDate: "2022-11-17T16:00:00-08:00",
+						location: "Computer History Museum, 1401 N Shoreline Blvd, Mountain View, CA 94043, United States",
+						logo: ''
+					}
 				}
-			],
+				break
+			default:
+				let webPages: WebPage[] = [];
+				if (provider === 'twitter') {
+					webPages.push({
+						'@type': 'ProfilePage',
+						description: provider,
+						name: `${user?.name}` ?? '<unknown>',
+						identifier: `@${user?.nickname}` ?? '<unknown>',
+						URL: 'https://twitter.com/' + user?.nickname,
+						lastReviewed: user?.updated_at
+					})
+				} else if (provider === 'discord') {
+					webPages.push({
+						'@type': 'ProfilePage',
+						description: provider,
+						name: user?.name,
+						identifier: `@${user?.nickname}` ?? '<unknown>',
+						lastReviewed: user?.updated_at
+					})
+				} else if (provider === 'github') {
+					webPages.push({
+						'@type': 'ProfilePage',
+						description: provider,
+						name: user?.name,
+						identifier: `@${user?.nickname}` ?? '<unknown>',
+						URL: 'https://github.com/' + user?.nickname,
+						lastReviewed: user?.updated_at
+					})
+				} else {
+					webPages.push({
+						'@type': 'ProfilePage',
+						description: provider,
+						name: user?.name,
+						identifier: `@${user?.nickname}` ?? '<unknown>',
+						lastReviewed: user?.updated_at
+					})
+				}
+
+				credential = {
+					issuer: { id: issuer_id.did },
+					'@context': VC_CONTEXT.concat(VC_PERSON_CONTEXT),
+					type: ['Person', VC_TYPE],
+					issuanceDate: new Date().toISOString(),
+					credentialSubject: credential_subject,
+					'WebPage': webPages,
+				}
 		}
 
 		const verifiable_credential: Omit<VerifiableCredential, 'vc'> = await this.agent.execute(
