@@ -124,6 +124,15 @@ export class Credentials {
 						identifier: `@${user?.nickname}` ?? '<unknown>',
 						lastReviewed: user?.updated_at
 					})
+				} else if ('github') {
+					webPages.push({
+						'@type': 'ProfilePage',
+						description: provider,
+						name: user?.name,
+						identifier: `@${user?.nickname}` ?? '<unknown>',
+						URL: 'https://github.com/' + user?.nickname,
+						lastReviewed: user?.updated_at
+					})
 				} else {
 					webPages.push({
 						'@type': 'ProfilePage',
