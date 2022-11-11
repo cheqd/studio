@@ -9,7 +9,7 @@ import { KeyManagementSystem } from '@veramo/kms-local'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 import { NetworkType } from '@cheqd/did-provider-cheqd/src/did-manager/cheqd-did-provider'
-import { HEADERS, VC_CONTEXT, VC_EVENTRESERVATION_CONTEXT, VC_PERSON_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TICKET_CONTEXT, VC_TYPE, } from '../constants'
+import { HEADERS, VC_CONTEXT, VC_EVENTRESERVATION_CONTEXT, VC_PERSON_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS,  VC_TYPE, } from '../constants'
 import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential, WebPage } from '../types'
 import { Identity } from './identity'
 
@@ -128,6 +128,7 @@ export class Credentials {
 					webPages.push({
 						'@type': 'ProfilePage',
 						description: provider,
+						name: user?.name,
 						identifier: `@${user?.nickname}` ?? '<unknown>',
 						lastReviewed: user?.updated_at
 					})
