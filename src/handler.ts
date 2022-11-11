@@ -37,6 +37,6 @@ export const handleRequest = async ( request: Request ): Promise<Response> => {
             return response
         })
         .catch((error: Error) => {
-            return new Response( JSON.stringify( { error: 'Unhandled exception occured.' } ), { status: 500, headers: { ...HEADERS.json } } )
+            return new Response( JSON.stringify( { error: 'Unhandled exception occurred.' } ), { status: 500, headers: { ...HEADERS.json } } )
         })
 }
