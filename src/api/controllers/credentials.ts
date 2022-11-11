@@ -116,7 +116,7 @@ export class Credentials {
 						URL: 'https://twitter.com/' + user?.nickname,
 						lastReviewed: user?.updated_at
 					})
-				} else if ('discord') {
+				} else if (provider === 'discord') {
 					webPages.push({
 						'@type': 'ProfilePage',
 						description: provider,
@@ -124,7 +124,7 @@ export class Credentials {
 						identifier: `@${user?.nickname}` ?? '<unknown>',
 						lastReviewed: user?.updated_at
 					})
-				} else if ('github') {
+				} else if (provider === 'github') {
 					webPages.push({
 						'@type': 'ProfilePage',
 						description: provider,
