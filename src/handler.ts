@@ -8,7 +8,7 @@ export const handleRequest = async ( request: Request ): Promise<Response> => {
         request.headers.get('Access-Control-Request-Method') !== null
     ) {
         const origin = '*';
-        const methods = 'GET, POST, PATCH, DELETE';
+        const methods = 'GET, POST, HEAD, OPTIONS';
         const headers = 'referer, origin, content-type, authorization';
 
         const corsHeaders = {
