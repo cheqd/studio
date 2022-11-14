@@ -5,7 +5,7 @@ export const HEADERS = {
 
 export const CORS_HEADERS: Iterable<[string, string]> = [
 	['Access-Control-Allow-Origin', '*'],
-	['Access-Control-Allow-Methods', 'POST,GET,OPTIONS'],
+	['Access-Control-Allow-Methods', 'POST,GET,HEAD,OPTIONS'],
 	['Access-Control-Max-Age', '86400']
 ]
 

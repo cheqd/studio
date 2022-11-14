@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.0](https://github.com/cheqd/credential-service/compare/1.1.5...1.2.0) (2022-11-11)
+
+
+### Features
+
+* Add support for Person + Event credentials [DEV-1918] ([#86](https://github.com/cheqd/credential-service/issues/86)) ([55c52c8](https://github.com/cheqd/credential-service/commit/55c52c89f59f12c3a30302acc0a149f8b21d1221))
+
+## [1.1.5](https://github.com/cheqd/credential-service/compare/1.1.4...1.1.5) (2022-11-09)
+
 ## [1.1.4](https://github.com/cheqd/credential-service/compare/1.1.3...1.1.4) (2022-10-27)
 
 
