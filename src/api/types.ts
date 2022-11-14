@@ -64,7 +64,7 @@ export type W3CVerifiablePresentation = VerifiablePresentation | CompactJWT
 export type DateType = string | Date
 
 export interface CredentialPayload {
-    issuer: IssuerType
+    issuer?: IssuerType
     credentialSubject?: CredentialSubject
     type?: string[]
     '@context'?: string[]

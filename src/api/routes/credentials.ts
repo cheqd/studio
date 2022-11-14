@@ -15,23 +15,28 @@ router.all(
 router.all(
 	'/issue',
 	async (request: Request) => {
-		applyMixins(GuardedCredentials, [Credentials])
+		switch (new URL(request.url).searchParams.get('type')) {
+			case 'Ticket':
+				const body = await request.json() as any
+				return await new Credentials().issue_ticket_credential(body.data, body.subjectId)
+			default:
+				applyMixins(GuardedCredentials, [Credentials])
 
-		const credentials = new GuardedCredentials()
+				const credentials = new GuardedCredentials()
 
-		const { authenticated, user, subjectId, provider, error } = await credentials.guard(request)
+				const { authenticated, user, subjectId, provider, error } = await credentials.guard(request)
 
-		if (!(authenticated)) {
-			return new Response(
-				JSON.stringify({ error }),
-				{
-					status: 400,
-					headers: HEADERS.json
+				if (!(authenticated)) {
+					return new Response(
+						JSON.stringify({ error }),
+						{
+							status: 400,
+							headers: HEADERS.json
+						}
+					)
 				}
-			)
+				return await credentials.issue_person_credential(user, provider, subjectId)
 		}
-
-		return await credentials.issue_credentials(request, user, provider, subjectId)
 	}
 )
 

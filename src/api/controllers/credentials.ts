@@ -61,7 +61,59 @@ export class Credentials {
 		})
 	}
 
-	async issue_credentials(request: Request, user: GenericAuthUser, provider: string, subjectId?: string): Promise<Response> {
+	async issue_person_credential(user: GenericAuthUser, provider: string, subjectId?: string) {
+		const credential_subject: CredentialSubject = {
+			id: subjectId,
+			type: undefined
+		}
+
+		const credential = {
+			'@context': VC_CONTEXT.concat(VC_PERSON_CONTEXT),
+			type: ['Person', VC_TYPE],
+			issuanceDate: new Date().toISOString(),
+			credentialSubject: credential_subject,
+			'WebPage': [
+				{
+					'@type': 'ProfilePage',
+					description: provider,
+					name: `${user?.nickname}` ?? '<unknown>',
+					identifier: `@${user?.nickname}` ?? '<unknown>',
+					URL: `https://twitter.com/${user?.nickname}`,
+					lastReviewed: user?.updated_at
+				}
+			],
+		}
+
+		return await this.issue_credentials(credential)
+	}
+
+	async issue_ticket_credential(reservationId: string, subjectId?: string) {
+		const credential_subject: CredentialSubject = {
+			id: subjectId,
+			type: undefined
+		}
+
+		const credential = {
+			'@context': VC_CONTEXT.concat(VC_EVENTRESERVATION_CONTEXT),
+			type: ['EventReservation', VC_TYPE],
+			issuanceDate: new Date().toISOString(),
+			credentialSubject: credential_subject,
+			reservationId,
+			reservationStatus: 'https://schema.org/ReservationConfirmed',
+			reservationFor: {
+				'@type': 'Event',
+				name: 'Internet Identity Workshop IIWXXXV',
+				startDate: "2022-11-16T16:00:00",
+				endDate: "2022-11-18T00:00:00",
+				location: "Computer History Museum, 1401 N Shoreline Blvd, Mountain View, CA 94043",
+				logo: ''
+			}
+		}
+
+		return await this.issue_credentials(credential)
+	}
+
+	async issue_credentials(credential: CredentialPayload): Promise<Response> {
 
 		if (!this.agent) this.init_agent()
 
@@ -71,59 +123,11 @@ export class Credentials {
 		)
 
 		const issuer_id = await identity_handler.load_issuer_did(
-			request,
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			this.agent as TAgent<any>
 		)
+		credential.issuer = { id: issuer_id.did }
 
 		this.agent = identity_handler.agent
-
-		const credential_subject: CredentialSubject = {
-			id: subjectId,
-			type: undefined
-		}
-
-		let credential: CredentialPayload
-		switch (new URL(request.url).searchParams.get('type')) {
-			case 'Ticket':
-				credential = {
-					issuer: { id: issuer_id.did },
-					'@context': VC_CONTEXT.concat(VC_EVENTRESERVATION_CONTEXT),
-					type: ['EventReservation', VC_TYPE],
-					issuanceDate: new Date().toISOString(),
-					credentialSubject: credential_subject,
-					reservationId: new URL(request.url).searchParams.get('data'),
-					reservationStatus: 'https://schema.org/ReservationConfirmed',
-					reservationFor: {
-						'@type': 'Event',
-						name: 'Internet Identity Workshop IIWXXXV',
-						startDate: "2022-11-16T16:00:00",
-						endDate: "2022-11-18T00:00:00",
-						location: "Computer History Museum, 1401 N Shoreline Blvd, Mountain View, CA 94043",
-						logo: ''
-					}
-				}
-				break
-			default:
-				credential = {
-					issuer: { id: issuer_id.did },
-					'@context': VC_CONTEXT.concat(VC_PERSON_CONTEXT),
-					type: ['Person', VC_TYPE],
-					issuanceDate: new Date().toISOString(),
-					credentialSubject: credential_subject,
-					'WebPage': [
-						{
-							'@type': 'ProfilePage',
-							description: provider,
-							name: `${user?.nickname}` ?? '<unknown>',
-							identifier: `@${user?.nickname}` ?? '<unknown>',
-							URL: `https://twitter.com/${user?.nickname}`,
-							lastReviewed: user?.updated_at
-						}
-					],
-				}
-		}
-
 
 		const verifiable_credential: Omit<VerifiableCredential, 'vc'> = await this.agent.execute(
 			'createVerifiableCredential',
