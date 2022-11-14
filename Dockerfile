@@ -58,7 +58,7 @@ ENV AUTH0_SERVICE_ENDPOINT ${AUTH0_SERVICE_ENDPOINT}
 
 # We install Miniflare because we don't have the node_modules directory
 # this image only has the output worker.js file.
-RUN npm install -g miniflare@2.10.0 && \
+RUN npm install -g miniflare@2.11.0 && \
     chown -R node:node /home/node/app && \
     apk update && \
     apk add --no-cache bash ca-certificates
