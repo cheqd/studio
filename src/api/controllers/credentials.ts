@@ -78,7 +78,7 @@ export class Credentials {
 					description: provider,
 					name: `${user?.nickname}` ?? '<unknown>',
 					identifier: `@${user?.nickname}` ?? '<unknown>',
-					URL: `https://twitter.com/${user?.nickname}`,
+					URL: `https://${provider.toLowerCase()}.com/${user?.nickname}`,
 					lastReviewed: user?.updated_at
 				}
 			]
