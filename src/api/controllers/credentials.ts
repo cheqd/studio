@@ -109,7 +109,7 @@ export class Credentials {
 				startDate: "2022-11-16T16:00:00",
 				endDate: "2022-11-18T00:00:00",
 				location: "Computer History Museum, 1401 N Shoreline Blvd, Mountain View, CA 94043",
-				logo: ''
+				logo: 'https://internetidentityworkshop.com/wp-content/uploads/2018/10/iiw-dog-logo.png'
 			}
 		}
 
