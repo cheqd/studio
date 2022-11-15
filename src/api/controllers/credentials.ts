@@ -61,7 +61,7 @@ export class Credentials {
 		})
 	}
 
-	async issue_person_credential(user: GenericAuthUser, provider: string, subjectId?: string) {
+	async issue_person_credential(user: GenericAuthUser, provider: string, subjectId?: string): Promise<Response> {
 		const credential_subject: CredentialSubject = {
 			id: subjectId,
 			type: undefined
@@ -87,7 +87,7 @@ export class Credentials {
 		return await this.issue_credentials(credential)
 	}
 
-	async issue_ticket_credential(reservationId: string, subjectId?: string) {
+	async issue_ticket_credential(reservationId: string, subjectId?: string): Promise<Response> {
 		const credential_subject: CredentialSubject = {
 			id: subjectId,
 			type: undefined
