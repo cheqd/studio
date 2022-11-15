@@ -9,7 +9,7 @@
 	"repository": "https://github.com/cheqd/credential-service.git",
 	"scripts": {
 		"build": "webpack",
-		"start": "miniflare dist/worker.js",
+		"start": "miniflare dist/worker.js --global-async-io --global-timers --global-random",
 		"format": "prettier --write  '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
 		"lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
 		"test": "jest --config jestconfig.json --verbose",
@@ -31,7 +31,8 @@
 		"@veramo/key-manager": "^4.0.2",
 		"@veramo/kms-local": "^4.0.2",
 		"did-resolver": "^4.0.1",
-		"itty-router": "^2.6.6"
+		"itty-router": "^2.6.6",
+		"node-cache": "^5.1.2"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^3.17.0",
