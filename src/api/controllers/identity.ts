@@ -13,7 +13,7 @@ export class Identity {
 		if (mode === 'demo') return
 	}
 
-	async load_issuer_did(request: Request, agent: TAgent<any>): Promise<IIdentifier> {
+	async load_issuer_did(agent: TAgent<any>): Promise<IIdentifier> {
 		if (!this.agent && !agent) throw new Error('No initialised agent found.')
 
 		if (agent) this.agent = agent

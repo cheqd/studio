@@ -9,8 +9,8 @@ import { KeyManagementSystem } from '@veramo/kms-local'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 import { NetworkType } from '@cheqd/did-provider-cheqd/src/did-manager/cheqd-did-provider'
-import { HEADERS, VC_CONTEXT, VC_EVENTRESERVATION_CONTEXT, VC_PERSON_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS,  VC_TYPE, } from '../constants'
-import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential, WebPage } from '../types'
+import { HEADERS, VC_CONTEXT, VC_EVENTRESERVATION_CONTEXT, VC_PERSON_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TICKET_CONTEXT, VC_TYPE, } from '../constants'
+import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential } from '../types'
 import { Identity } from './identity'
 
 export class Credentials {
@@ -61,8 +61,62 @@ export class Credentials {
 		})
 	}
 
-	async issue_credentials(request: Request, user: GenericAuthUser, provider: string, subjectId?: string): Promise<Response> {
-		provider = provider.toLowerCase()
+	async issue_person_credential(user: GenericAuthUser, provider: string, subjectId?: string): Promise<Response> {
+		const credential_subject: CredentialSubject = {
+			id: subjectId,
+			type: undefined
+		}
+		
+		const webpage:any = {
+			'@type': 'ProfilePage',
+			description: provider,
+			name: `${user?.nickname}` ?? '<unknown>',
+			identifier: `@${user?.nickname}` ?? '<unknown>',
+			lastReviewed: user?.updated_at
+		}
+
+		if(provider=='github' || provider == 'twitter') {
+			webpage.URL=`https://${provider.toLowerCase()}.com/${user?.nickname}`
+		}
+
+		const credential = {
+			'@context': VC_CONTEXT.concat(VC_PERSON_CONTEXT),
+			type: ['Person', VC_TYPE],
+			issuanceDate: new Date().toISOString(),
+			credentialSubject: credential_subject,
+			'WebPage': [webpage]
+		}
+
+		return await this.issue_credentials(credential)
+	}
+
+	async issue_ticket_credential(reservationId: string, subjectId?: string): Promise<Response> {
+		const credential_subject: CredentialSubject = {
+			id: subjectId,
+			type: undefined
+		}
+
+		const credential = {
+			'@context': VC_CONTEXT.concat(VC_EVENTRESERVATION_CONTEXT),
+			type: ['EventReservation', VC_TYPE],
+			issuanceDate: new Date().toISOString(),
+			credentialSubject: credential_subject,
+			reservationId,
+			reservationStatus: 'https://schema.org/ReservationConfirmed',
+			reservationFor: {
+				'@type': 'Event',
+				name: 'Internet Identity Workshop IIWXXXV',
+				startDate: "2022-11-16T16:00:00",
+				endDate: "2022-11-18T00:00:00",
+				location: "Computer History Museum, 1401 N Shoreline Blvd, Mountain View, CA 94043",
+				logo: 'https://internetidentityworkshop.com/wp-content/uploads/2018/10/iiw-dog-logo.png'
+			}
+		}
+
+		return await this.issue_credentials(credential)
+	}
+
+	async issue_credentials(credential: CredentialPayload): Promise<Response> {
 
 		if (!this.agent) this.init_agent()
 
@@ -72,86 +126,11 @@ export class Credentials {
 		)
 
 		const issuer_id = await identity_handler.load_issuer_did(
-			request,
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			this.agent as TAgent<any>
 		)
+		credential.issuer = { id: issuer_id.did }
 
 		this.agent = identity_handler.agent
-
-		const credential_subject: CredentialSubject = {
-			id: subjectId,
-			type: undefined
-		}
-
-		let credential: CredentialPayload
-		switch (new URL(request.url).searchParams.get('type')) {
-			case 'Ticket':
-				credential = {
-					issuer: { id: issuer_id.did },
-					'@context': VC_CONTEXT.concat(VC_EVENTRESERVATION_CONTEXT),
-					type: ['EventReservation', VC_TYPE],
-					issuanceDate: new Date().toISOString(),
-					credentialSubject: credential_subject,
-					reservationId: new URL(request.url).searchParams.get('data'),
-					reservationStatus: 'https://schema.org/ReservationConfirmed',
-					reservationFor: {
-						'@type': 'Event',
-						name: 'Internet Identity Workshop IIWXXXV',
-						startDate: "2022-11-15T08:00:00-08:00",
-						endDate: "2022-11-17T16:00:00-08:00",
-						location: "Computer History Museum, 1401 N Shoreline Blvd, Mountain View, CA 94043, United States",
-						logo: ''
-					}
-				}
-				break
-			default:
-				let webPages: WebPage[] = [];
-				if (provider === 'twitter') {
-					webPages.push({
-						'@type': 'ProfilePage',
-						description: provider,
-						name: `${user?.name}` ?? '<unknown>',
-						identifier: `@${user?.nickname}` ?? '<unknown>',
-						URL: 'https://twitter.com/' + user?.nickname,
-						lastReviewed: user?.updated_at
-					})
-				} else if (provider === 'discord') {
-					webPages.push({
-						'@type': 'ProfilePage',
-						description: provider,
-						name: user?.name,
-						identifier: `@${user?.nickname}` ?? '<unknown>',
-						lastReviewed: user?.updated_at
-					})
-				} else if (provider === 'github') {
-					webPages.push({
-						'@type': 'ProfilePage',
-						description: provider,
-						name: user?.name,
-						identifier: `@${user?.nickname}` ?? '<unknown>',
-						URL: 'https://github.com/' + user?.nickname,
-						lastReviewed: user?.updated_at
-					})
-				} else {
-					webPages.push({
-						'@type': 'ProfilePage',
-						description: provider,
-						name: user?.name,
-						identifier: `@${user?.nickname}` ?? '<unknown>',
-						lastReviewed: user?.updated_at
-					})
-				}
-
-				credential = {
-					issuer: { id: issuer_id.did },
-					'@context': VC_CONTEXT.concat(VC_PERSON_CONTEXT),
-					type: ['Person', VC_TYPE],
-					issuanceDate: new Date().toISOString(),
-					credentialSubject: credential_subject,
-					'WebPage': webPages,
-				}
-		}
 
 		const verifiable_credential: Omit<VerifiableCredential, 'vc'> = await this.agent.execute(
 			'createVerifiableCredential',
