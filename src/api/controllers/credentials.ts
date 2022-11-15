@@ -66,22 +66,25 @@ export class Credentials {
 			id: subjectId,
 			type: undefined
 		}
+		
+		const webpage:any = {
+			'@type': 'ProfilePage',
+			description: provider,
+			name: `${user?.nickname}` ?? '<unknown>',
+			identifier: `@${user?.nickname}` ?? '<unknown>',
+			lastReviewed: user?.updated_at
+		}
+
+		if(provider=='github' || provider == 'twitter') {
+			webpage.URL=`https://${provider.toLowerCase()}.com/${user?.nickname}`
+		}
 
 		const credential = {
 			'@context': VC_CONTEXT.concat(VC_PERSON_CONTEXT),
 			type: ['Person', VC_TYPE],
 			issuanceDate: new Date().toISOString(),
 			credentialSubject: credential_subject,
-			'WebPage': [
-				{
-					'@type': 'ProfilePage',
-					description: provider,
-					name: `${user?.nickname}` ?? '<unknown>',
-					identifier: `@${user?.nickname}` ?? '<unknown>',
-					URL: `https://${provider.toLowerCase()}.com/${user?.nickname}`,
-					lastReviewed: user?.updated_at
-				}
-			]
+			'WebPage': [webpage]
 		}
 
 		return await this.issue_credentials(credential)
