@@ -109,7 +109,7 @@ export class Credentials {
 				startDate: "2022-11-16T16:00:00",
 				endDate: "2022-11-18T00:00:00",
 				location: "Computer History Museum, 1401 N Shoreline Blvd, Mountain View, CA 94043",
-				logo: 'https://resolver.cheqd.net/did:cheqd:testnet:z6jKUJA5YcZsNxZgsrQPKPipL2FRTf4s/resources/8140ec3a-d8bb-4f59-9784-a1cbf91a4a35'
+				logo: 'https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:z6jKUJA5YcZsNxZgsrQPKPipL2FRTf4s/resources/8140ec3a-d8bb-4f59-9784-a1cbf91a4a35'
 			}
 		}
 
