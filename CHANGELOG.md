@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.1](https://github.com/cheqd/credential-service/compare/1.4.0...1.4.1) (2022-11-16)
+
+
+### Bug Fixes
+
+* Logo url ([0aad2fb](https://github.com/cheqd/credential-service/commit/0aad2fb9f2dad91f146352ceb2d4554c15f617d6))
+* Logo url ([#103](https://github.com/cheqd/credential-service/issues/103)) ([2fa9496](https://github.com/cheqd/credential-service/commit/2fa949610268fcab1177ac5a2e18d35d6b407d7d))
+
 ## [1.4.0](https://github.com/cheqd/credential-service/compare/1.3.0...1.4.0) (2022-11-16)
 
 
