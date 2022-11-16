@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.4.1](https://github.com/cheqd/credential-service/compare/1.4.0...1.4.1) (2022-11-16)
+
+
+### Bug Fixes
+
+* Logo url ([0aad2fb](https://github.com/cheqd/credential-service/commit/0aad2fb9f2dad91f146352ceb2d4554c15f617d6))
+* Logo url ([#103](https://github.com/cheqd/credential-service/issues/103)) ([2fa9496](https://github.com/cheqd/credential-service/commit/2fa949610268fcab1177ac5a2e18d35d6b407d7d))
+
+## [1.4.0](https://github.com/cheqd/credential-service/compare/1.3.0...1.4.0) (2022-11-16)
+
+
+### Features
+
+* Add  onLedger Resources ([a2030d5](https://github.com/cheqd/credential-service/commit/a2030d500b7274f2e96f8467325f1c8b69be6b63))
+* Add  onLedger Resources ([#102](https://github.com/cheqd/credential-service/issues/102)) ([0800f90](https://github.com/cheqd/credential-service/commit/0800f90a5050e766459ad10a4b587266c676d11e))
+
 ## [1.3.0](https://github.com/cheqd/credential-service/compare/1.2.0...1.3.0) (2022-11-15)
 
 

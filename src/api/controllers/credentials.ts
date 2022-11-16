@@ -80,7 +80,7 @@ export class Credentials {
 		}
 
 		const credential = {
-			'@context': VC_CONTEXT.concat(VC_PERSON_CONTEXT),
+			'@context': VC_CONTEXT.concat(PERSON_CONTEXT ? [PERSON_CONTEXT] : VC_PERSON_CONTEXT),
 			type: ['Person', VC_TYPE],
 			issuanceDate: new Date().toISOString(),
 			credentialSubject: credential_subject,
@@ -97,7 +97,7 @@ export class Credentials {
 		}
 
 		const credential = {
-			'@context': VC_CONTEXT.concat(VC_EVENTRESERVATION_CONTEXT),
+			'@context': VC_CONTEXT.concat(EVENT_CONTEXT ? [EVENT_CONTEXT] : VC_EVENTRESERVATION_CONTEXT),
 			type: ['EventReservation', VC_TYPE],
 			issuanceDate: new Date().toISOString(),
 			credentialSubject: credential_subject,
@@ -109,7 +109,7 @@ export class Credentials {
 				startDate: "2022-11-16T16:00:00",
 				endDate: "2022-11-18T00:00:00",
 				location: "Computer History Museum, 1401 N Shoreline Blvd, Mountain View, CA 94043",
-				logo: 'https://internetidentityworkshop.com/wp-content/uploads/2018/10/iiw-dog-logo.png'
+				logo: 'https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:z6jKUJA5YcZsNxZgsrQPKPipL2FRTf4s/resources/8140ec3a-d8bb-4f59-9784-a1cbf91a4a35'
 			}
 		}
 
