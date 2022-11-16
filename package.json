@@ -23,13 +23,13 @@
 		]
 	},
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "^1.7.19",
-		"@veramo/core": "^4.0.0",
-		"@veramo/credential-w3c": "^4.0.2",
-		"@veramo/did-manager": "^4.0.0",
-		"@veramo/did-provider-key": "^4.0.0",
-		"@veramo/key-manager": "^4.0.2",
-		"@veramo/kms-local": "^4.0.2",
+		"@cheqd/did-provider-cheqd": "^1.7.20",
+		"@veramo/core": "^4.1.1",
+		"@veramo/credential-w3c": "^4.1.1",
+		"@veramo/did-manager": "^4.1.1",
+		"@veramo/did-provider-key": "^4.1.1",
+		"@veramo/key-manager": "^4.1.1",
+		"@veramo/kms-local": "^4.1.1",
 		"did-resolver": "^4.0.1",
 		"itty-router": "^2.6.6",
 		"node-cache": "^5.1.2"
