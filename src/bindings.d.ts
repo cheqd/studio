@@ -8,6 +8,8 @@ declare global {
 	const COSMOS_PAYER_MNEMONIC: string
 	const NETWORK_RPC_URL: string
 	const AUTH0_SERVICE_ENDPOINT: string
+	const EVENT_CONTEXT: string
+	const PERSON_CONTEXT: string
 }
 
 export { }
