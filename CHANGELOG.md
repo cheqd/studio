@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/cheqd/credential-service/compare/1.2.0...1.3.0) (2022-11-15)
+
+
+### Features
+
+* Remove social account for ticketCredential [DEV-1921] ([#100](https://github.com/cheqd/credential-service/issues/100)) ([6d9cc66](https://github.com/cheqd/credential-service/commit/6d9cc66490c2bf49186d0c62c3b02fbd3917f83f))
+
 ## [1.2.0](https://github.com/cheqd/credential-service/compare/1.1.5...1.2.0) (2022-11-11)
 
 
