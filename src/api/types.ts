@@ -64,16 +64,16 @@ export type W3CVerifiablePresentation = VerifiablePresentation | CompactJWT
 export type DateType = string | Date
 
 export interface CredentialPayload {
-    issuer?: IssuerType
-    credentialSubject?: CredentialSubject
-    type?: string[]
-    '@context'?: string[]
-    issuanceDate?: DateType
-    expirationDate?: DateType
-    credentialStatus?: CredentialStatus
-    id?: string
+	issuer?: IssuerType
+	credentialSubject?: CredentialSubject
+	type?: string[]
+	'@context'?: string[]
+	issuanceDate?: DateType
+	expirationDate?: DateType
+	credentialStatus?: CredentialStatus
+	id?: string
 
-    [x: string]: any
+	[x: string]: any
 }
 
 export interface PresentationPayload {
@@ -103,9 +103,10 @@ export type WebPage = {
 	'@type': string,
 	description?: string,
 	name?: string
-	identifier: string
+	identifier?: string
 	URL?: string
-	lastReviewed: Date
+	lastReviewed?: Date
+	thumbnailUrl?: string
 }
 
 export type GenericAuthUser = Record<string, any> | null | undefined

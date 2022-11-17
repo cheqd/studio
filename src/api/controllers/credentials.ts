@@ -10,7 +10,7 @@ import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 import { NetworkType } from '@cheqd/did-provider-cheqd/src/did-manager/cheqd-did-provider'
 import { HEADERS, VC_CONTEXT, VC_EVENTRESERVATION_CONTEXT, VC_PERSON_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TICKET_CONTEXT, VC_TYPE, } from '../constants'
-import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential } from '../types'
+import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential, WebPage } from '../types'
 import { Identity } from './identity'
 
 export class Credentials {
@@ -61,22 +61,37 @@ export class Credentials {
 		})
 	}
 
+	getThumbnailURL(provider: string): string | undefined {
+		switch (provider) {
+			case 'twitter':
+				return `${RESOLVER_URL}/${ISSUER_ID}/resources/${TWITTER_RESOURCE_ID}`
+			case 'discord':
+				return `${RESOLVER_URL}/${ISSUER_ID}/resources/${DISCORD_RESOURCE_ID}`
+			case 'github':
+				return `${RESOLVER_URL}/${ISSUER_ID}/resources/${GITHUB_RESOURCE_ID}`
+			case 'eventbrite':
+				return `${RESOLVER_URL}/${ISSUER_ID}/resources/${EVENTBRITE_RESOURCE_ID}`
+		}
+	}
+
 	async issue_person_credential(user: GenericAuthUser, provider: string, subjectId?: string): Promise<Response> {
+		provider = provider.toLowerCase()
 		const credential_subject: CredentialSubject = {
 			id: subjectId,
 			type: undefined
 		}
-		
-		const webpage:any = {
+
+		const webpage: WebPage = {
 			'@type': 'ProfilePage',
 			description: provider,
 			name: `${user?.nickname}` ?? '<unknown>',
 			identifier: `@${user?.nickname}` ?? '<unknown>',
-			lastReviewed: user?.updated_at
+			lastReviewed: user?.updated_at,
+			thumbnailUrl: this.getThumbnailURL(provider),
 		}
 
-		if(provider=='github' || provider == 'twitter') {
-			webpage.URL=`https://${provider.toLowerCase()}.com/${user?.nickname}`
+		if (provider == 'github' || provider == 'twitter') {
+			webpage.URL = `https://${provider.toLowerCase()}.com/${user?.nickname}`
 		}
 
 		const credential = {
@@ -103,13 +118,17 @@ export class Credentials {
 			credentialSubject: credential_subject,
 			reservationId,
 			reservationStatus: 'https://schema.org/ReservationConfirmed',
+			provider: {
+				brand: 'EventBrite',
+				image: this.getThumbnailURL('eventbrite')
+			},
 			reservationFor: {
 				'@type': 'Event',
 				name: 'Internet Identity Workshop IIWXXXV',
 				startDate: "2022-11-16T16:00:00",
 				endDate: "2022-11-18T00:00:00",
 				location: "Computer History Museum, 1401 N Shoreline Blvd, Mountain View, CA 94043",
-				logo: 'https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:z6jKUJA5YcZsNxZgsrQPKPipL2FRTf4s/resources/8140ec3a-d8bb-4f59-9784-a1cbf91a4a35'
+				logo: `${RESOLVER_URL}/${ISSUER_ID}/resources/${IIW_LOGO_RESOURCE_ID}`
 			}
 		}
 
