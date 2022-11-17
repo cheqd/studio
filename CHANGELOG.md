@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.3](https://github.com/cheqd/credential-service/compare/1.4.2...1.4.3) (2022-11-17)
+
+
+### Bug Fixes
+
+* Add Logos as resources in Webpage and Ticket ([#105](https://github.com/cheqd/credential-service/issues/105)) ([f140684](https://github.com/cheqd/credential-service/commit/f140684faadf328a915d53b1127335ce00e81ad8))
+
 ## [1.4.2](https://github.com/cheqd/credential-service/compare/1.4.1...1.4.2) (2022-11-16)
 
 ## [1.4.1](https://github.com/cheqd/credential-service/compare/1.4.0...1.4.1) (2022-11-16)
