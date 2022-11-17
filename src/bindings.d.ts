@@ -10,6 +10,12 @@ declare global {
 	const AUTH0_SERVICE_ENDPOINT: string
 	const EVENT_CONTEXT: string
 	const PERSON_CONTEXT: string
+	const RESOLVER_URL: string
+	const DISCORD_RESOURCE_ID: string
+	const GITHUB_RESOURCE_ID: string
+	const TWITTER_RESOURCE_ID: string
+	const EVENTBRITE_RESOURCE_ID: string
+	const IIW_LOGO_RESOURCE_ID: string
 }
 
 export { }
