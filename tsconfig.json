@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "outDir": "./dist",
-    "module": "ESNext",
-    "target": "esnext",
-    "lib": ["esnext", "DOM"],
+    "target": "es6",
+    "module": "commonjs",
+    "lib": ["es6", "DOM"],
     "alwaysStrict": true,
     "strict": true,
     "preserveConstEnums": true,
@@ -12,9 +12,7 @@
     "esModuleInterop": true,
     "types": [
       "node",
-      "@cloudflare/workers-types",
-      "@types/jest",
-      "@types/service-worker-mock"
+      "@types/jest"
     ]
   },
   "include": ["src", "test"],

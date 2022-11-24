@@ -1,7 +1,8 @@
+import { ServerResponse } from 'http';
 import { CORS_HEADERS, HEADERS } from './api/constants'
 import router from './router'
 
-export const handleRequest = async ( request: Request ): Promise<Response> => {
+export const handleRequest = async ( request: Request, response: ServerResponse ): Promise<void> => {
     // Handle CORS preflight request
     if (
         request.headers.get('Origin') !== null &&
@@ -11,32 +12,41 @@ export const handleRequest = async ( request: Request ): Promise<Response> => {
         const methods = 'GET, POST, HEAD, OPTIONS';
         const headers = 'referer, origin, content-type, authorization';
 
-        const corsHeaders = {
+        const corsHeaders: Record<string, string> = {
             'Access-Control-Allow-Origin': origin,
             'Access-Control-Allow-Methods': methods,
             'Access-Control-Allow-Headers': headers,
         }
 
         // Handle CORS pre-flight request.
-        return new Response(null, {
-            status: 204,
-            headers: corsHeaders
-        })
+        response.statusCode=204
+        for (var name in corsHeaders) {
+            response.setHeader(name, corsHeaders[name])
+        }
+        return
     }
 
     return await router
         .handle( request )
-        .then( (response: Response) => {
+        .then( async (resp: Response) => {
             for( const header of CORS_HEADERS ){
-                response.headers.set(
+                response.setHeader(
                     Object.keys( header )[0],
                     String( Object.values( header )[0] ),
                 )
             }
+            response.statusCode=resp.status
 
-            return response
+            resp.headers.forEach((value, key)=>{
+               response.setHeader(key, value)
+            })
+            response.write(await resp.text())
+            return
         })
         .catch((error: Error) => {
-            return new Response( JSON.stringify( { error: 'Unhandled exception occurred.' } ), { status: 500, headers: { ...HEADERS.json } } )
+            response.setHeader('Content-Type', HEADERS.json['Content-Type'])
+            response.statusCode=500
+            response.write(JSON.stringify( { error: 'Unhandled exception occurred.' }))
+            return
         })
 }

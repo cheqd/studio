@@ -4,6 +4,16 @@ import {
 	MinimalImportableKey,
 	TAgent,
 } from '@veramo/core'
+import * as dotenv from 'dotenv'
+dotenv.config()
+
+const {
+	ISSUER_ID_KID, 
+	ISSUER_ID_PRIVATE_KEY_HEX, 
+	ISSUER_ID_METHOD_SPECIFIC_ID, 
+	ISSUER_ID_METHOD, 
+	ISSUER_ID_PUBLIC_KEY_HEX
+} = process.env
 
 export class Identity {
 	agent: TAgent<any>

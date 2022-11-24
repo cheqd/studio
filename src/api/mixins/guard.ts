@@ -1,6 +1,8 @@
 import { HEADERS } from '../constants'
 import { Credentials } from '../controllers/credentials'
 import { GenericAuthResponse } from '../types'
+import * as dotenv from 'dotenv'
+dotenv.config()
 
 export class GuardedCredentials {
 	guard = async (request: Request): Promise<GenericAuthResponse> => {
@@ -8,7 +10,7 @@ export class GuardedCredentials {
 
 		try {
 			const resp = await fetch(
-				AUTH0_SERVICE_ENDPOINT,
+				process.env.AUTH0_SERVICE_ENDPOINT,
 				{
 					method: 'POST',
 					body: JSON.stringify({ claim, provider: provider.toLowerCase() }),

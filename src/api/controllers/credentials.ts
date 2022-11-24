@@ -1,7 +1,7 @@
 import {
-	createAgent, IDataStore, IDIDManager, IKeyManager, IResolver, TAgent
+	createAgent, ICredentialIssuer, IDataStore, IDIDManager, IKeyManager, IResolver, TAgent
 } from '@veramo/core'
-import { CredentialPlugin } from '@veramo/credential-w3c'
+import { CredentialIssuer, CredentialPlugin } from '@veramo/credential-w3c'
 import { AbstractIdentifierProvider, DIDManager, MemoryDIDStore } from '@veramo/did-manager'
 import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager'
@@ -12,6 +12,23 @@ import { NetworkType } from '@cheqd/did-provider-cheqd/src/did-manager/cheqd-did
 import { HEADERS, VC_CONTEXT, VC_EVENTRESERVATION_CONTEXT, VC_PERSON_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TICKET_CONTEXT, VC_TYPE, } from '../constants'
 import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential, WebPage } from '../types'
 import { Identity } from './identity'
+import { CredentialIssuerLD, ICredentialIssuerLD, LdDefaultContexts, VeramoEcdsaSecp256k1RecoverySignature2020, VeramoEd25519Signature2018, VeramoEd25519Signature2020, VeramoJsonWebSignature2020 } from '@veramo/credential-ld'
+import * as dotenv from 'dotenv'
+dotenv.config()
+
+const {
+	ISSUER_ID, 
+	COSMOS_PAYER_MNEMONIC, 
+	NETWORK_RPC_URL, 
+	RESOLVER_URL, 
+	TWITTER_RESOURCE_ID, 
+	DISCORD_RESOURCE_ID, 
+	GITHUB_RESOURCE_ID, 
+	EVENTBRITE_RESOURCE_ID, 
+	PERSON_CONTEXT, 
+	EVENT_CONTEXT, 
+	IIW_LOGO_RESOURCE_ID
+} = process.env
 
 export class Credentials {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -57,6 +74,11 @@ export class Credentials {
 					})
 				}),
 				new CredentialPlugin(),
+				new CredentialIssuer(),
+				new CredentialIssuerLD({
+					contextMaps: [LdDefaultContexts],
+					suites: [new VeramoEd25519Signature2020()]
+				})
 			]
 		})
 	}
