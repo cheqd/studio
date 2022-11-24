@@ -9,7 +9,7 @@
 	"repository": "https://github.com/cheqd/credential-service.git",
 	"scripts": {
 		"build": "tsc",
-		"start": "node dist/src/index.js",
+		"start": "node dist/index.js",
 		"format": "prettier --write  '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
 		"lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
 		"test": "jest --config jestconfig.json --verbose",
