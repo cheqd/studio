@@ -2,7 +2,7 @@
 ###                  Build credential-service app           ###
 ###############################################################
 
-FROM node:18-alpine AS builder
+FROM node:18-alpine AS runner
 
 # Set working directory & bash defaults
 WORKDIR /home/node/app
