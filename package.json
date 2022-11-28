@@ -35,7 +35,7 @@
 		"node-cache": "^5.1.2"
 	},
 	"devDependencies": {
-		"@cloudflare/workers-types": "^3.17.0",
+		"@cloudflare/workers-types": "^4.20221111.1",
 		"@semantic-release/changelog": "^6.0.1",
 		"@semantic-release/commit-analyzer": "^9.0.2",
 		"@semantic-release/git": "^10.0.1",
