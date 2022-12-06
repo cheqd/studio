@@ -38,7 +38,7 @@
 		"node-cache": "^5.1.2"
 	},
 	"devDependencies": {
-		"@semantic-release/changelog": "^6.0.1",
+		"@semantic-release/changelog": "^6.0.2",
 		"@semantic-release/commit-analyzer": "^9.0.2",
 		"@semantic-release/git": "^10.0.1",
 		"@semantic-release/github": "^8.0.6",
@@ -47,10 +47,10 @@
 		"@types/debug": "^4.1.7",
 		"@types/long": "^5.0.0",
 		"@types/jest": "^29.2.3",
-		"@types/node": "^18.11.9",
-		"@types/uuid": "^8.3.4",
-		"@typescript-eslint/eslint-plugin": "^5.44.0",
-		"@typescript-eslint/parser": "^5.44.0",
+		"@types/node": "^18.11.11",
+		"@types/uuid": "^9.0.0",
+		"@typescript-eslint/eslint-plugin": "^5.45.1",
+		"@typescript-eslint/parser": "^5.45.1",
 		"browserify-fs": "^1.0.0",
 		"buffer": "6.0.3",
 		"conventional-changelog-conventionalcommits": "^5.0.0",
