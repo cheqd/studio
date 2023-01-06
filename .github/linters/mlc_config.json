@@ -1,5 +1,5 @@
 {
-    "aliveStatusCodes": [0, 200, 206, 429, 403, 501, 999],
+    "aliveStatusCodes": [0, 200, 206, 403, 501, 999],
     "replacementPatterns": [
         {
             "pattern": "\" %}",
@@ -9,5 +9,11 @@
             "pattern": "&quot; %}",
             "replacement": ""
         }
-    ]
+    ],
+    "ignorePatterns": [
+        {
+          "pattern": "^https://resolver.cheqd.net/"
+        }
+    ],
+    "retryOn429": true
 }
