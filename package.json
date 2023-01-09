@@ -31,7 +31,7 @@
 		"@veramo/key-manager": "^4.2.0",
 		"@veramo/kms-local": "^4.2.0",
 		"did-resolver": "^4.0.1",
-		"itty-router": "^2.6.6",
+		"itty-router": "^3.0.11",
 		"node-cache": "^5.1.2"
 	},
 	"devDependencies": {
