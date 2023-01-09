@@ -61,7 +61,7 @@
 		"path-browserify": "1.0.1",
 		"prettier": "^2.8.1",
 		"process": "^0.11.10",
-		"semantic-release": "^19.0.5",
+		"semantic-release": "^20.0.2",
 		"service-worker-mock": "^2.0.5",
 		"stream-browserify": "3.0.0",
 		"terser-webpack-plugin": "^5.3.6",
