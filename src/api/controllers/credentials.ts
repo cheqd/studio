@@ -44,7 +44,7 @@ export class Credentials {
 						providerPrefix: new CheqdDIDProvider(
 							{
 								defaultKms: 'local',
-								cosmosPayerMnemonic: COSMOS_PAYER_MNEMONIC,
+								cosmosPayerSeed: COSMOS_PAYER_MNEMONIC,
 								networkType: network,
 								rpcUrl: NETWORK_RPC_URL,
 							}
