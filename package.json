@@ -23,7 +23,7 @@
 		]
 	},
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "^2.0.1",
+		"@cheqd/did-provider-cheqd": "^2.1.0",
 		"@veramo/core": "^4.2.0",
 		"@veramo/credential-w3c": "^4.2.0",
 		"@veramo/did-manager": "^4.2.0",
