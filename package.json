@@ -1,6 +1,6 @@
 {
 	"name": "@cheqd/credential-service",
-	"version": "1.4.4",
+	"version": "1.4.5-develop.2",
 	"description": "cheqd Credential Service Backend",
 	"source": "src/index.ts",
 	"main": "dist/worker.js",
@@ -23,7 +23,7 @@
 		]
 	},
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "^1.7.20",
+		"@cheqd/did-provider-cheqd": "^2.1.0",
 		"@veramo/core": "^4.2.0",
 		"@veramo/credential-w3c": "^4.2.0",
 		"@veramo/did-manager": "^4.2.0",

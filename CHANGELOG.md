@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.5-develop.2](https://github.com/cheqd/credential-service/compare/1.4.5-develop.1...1.4.5-develop.2) (2023-02-10)
+
+## [1.4.5-develop.1](https://github.com/cheqd/credential-service/compare/1.4.4...1.4.5-develop.1) (2023-02-08)
+
 ## [1.4.4](https://github.com/cheqd/credential-service/compare/1.4.3...1.4.4) (2022-12-14)
 
 ## [1.4.3](https://github.com/cheqd/credential-service/compare/1.4.2...1.4.3) (2022-11-17)
