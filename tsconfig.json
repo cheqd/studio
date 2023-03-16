@@ -1,22 +1,22 @@
 {
   "compilerOptions": {
-    "outDir": "./dist",
-    "module": "ESNext",
-    "target": "esnext",
-    "lib": ["esnext", "DOM"],
-    "alwaysStrict": true,
     "strict": true,
     "preserveConstEnums": true,
-    "moduleResolution": "node",
     "sourceMap": true,
+    "target": "es6",
+    "module": "commonjs",
+    "moduleResolution": "node",
     "esModuleInterop": true,
-    "types": [
-      "node",
-      "@cloudflare/workers-types",
-      "@types/jest",
-      "@types/service-worker-mock"
-    ]
+    "downlevelIteration": true,
+    "declarationMap": true,
+    "declaration": true,
+    "composite": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "rootDir": ".",
+    "outDir": "dist"
   },
-  "include": ["src", "test"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules"],
+  "include": ["src/**/*", "swagger.json"],
 }

@@ -32,15 +32,16 @@ COPY --from=builder /home/node/app/dist .
 ARG NODE_ENV=production
 ARG NPM_CONFIG_LOGLEVEL=warn
 ARG PORT=8787
-ARG ISSUER_ID
-ARG ISSUER_ID_KID
-ARG ISSUER_ID_METHOD="did:cheqd:mainnet:"
-ARG ISSUER_ID_PUBLIC_KEY_HEX
-ARG ISSUER_ID_PRIVATE_KEY_HEX
-ARG ISSUER_ID_METHOD_SPECIFIC_ID
-ARG COSMOS_PAYER_MNEMONIC
-ARG NETWORK_RPC_URL="https://rpc.cheqd.net"
-ARG AUTH0_SERVICE_ENDPOINT
+ARG ISSUER_ID="did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47"
+ARG ISSUER_ID_KID="59bfd030450c257f0e267dfc484158b0fc4e3d4b2b2f235a3790a09b6bec126a"
+ARG ISSUER_ID_METHOD="did:cheqd:testnet:"
+ARG ISSUER_ID_PUBLIC_KEY_HEX="59bfd030450c257f0e267dfc484158b0fc4e3d4b2b2f235a3790a09b6bec126a"
+ARG ISSUER_ID_PRIVATE_KEY_HEX="8e09e82f72739956b48bdd934b09c96bcdd2d894d58f1801462dd15cb10b5cf459bfd030450c257f0e267dfc484158b0fc4e3d4b2b2f235a3790a09b6bec126a"
+ARG ISSUER_ID_METHOD_SPECIFIC_ID="55dbc8bf-fba3-4117-855c-1e0dc1d3bb47"
+ARG COSMOS_PAYER_MNEMONIC="sketch mountain erode window enact net enrich smoke claim kangaroo another visual write meat latin bacon pulp similar forum guilt father state erase bright"
+ARG NETWORK_RPC_URL="https://rpc.cheqd.network"
+ARG AUTH0_SERVICE_ENDPOINT="https://auth0-service-staging.cheqd.net/api/auth0/validate"
+ARG RESOLVER_URL="https://resolver.cheqd.net/1.0/identifiers"
 
 # Run-time environment variables
 ENV NODE_ENV ${NODE_ENV}
@@ -55,11 +56,11 @@ ENV ISSUER_ID_METHOD_SPECIFIC_ID ${ISSUER_ID_METHOD_SPECIFIC_ID}
 ENV COSMOS_PAYER_MNEMONIC ${COSMOS_PAYER_MNEMONIC}
 ENV NETWORK_RPC_URL ${NETWORK_RPC_URL}
 ENV AUTH0_SERVICE_ENDPOINT ${AUTH0_SERVICE_ENDPOINT}
+ENV RESOLVER_URL ${RESOLVER_URL}
 
-# We install Miniflare because we don't have the node_modules directory
+# We don't have the node_modules directory
 # this image only has the output worker.js file.
-RUN npm install -g miniflare@2.11.0 && \
-    chown -R node:node /home/node/app && \
+RUN chown -R node:node /home/node/app && \
     apk update && \
     apk add --no-cache bash ca-certificates
 
@@ -71,4 +72,4 @@ USER node
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 # Run the application
-CMD [ "miniflare", "worker.js" ]
+CMD [ "node", "index.js" ]

@@ -89,7 +89,7 @@ export interface PresentationPayload {
 	[x: string]: any
 }
 
-export type CredentialRequest = Request & { credential?: W3CVerifiableCredential }
+export type CredentialRequest = { credential?: W3CVerifiableCredential }
 
 export type GenericAuthResponse = {
 	authenticated: boolean
@@ -110,3 +110,5 @@ export type WebPage = {
 }
 
 export type GenericAuthUser = Record<string, any> | null | undefined
+
+export type Credential = Omit<VerifiableCredential, "vc">
