@@ -1,3 +1,5 @@
+import { ContextType } from "@veramo/core-types"
+
 export type ErrorResponse = {
 	name: string
 	message: string
@@ -89,7 +91,7 @@ export interface PresentationPayload {
 	[x: string]: any
 }
 
-export type CredentialRequest = { credential?: W3CVerifiableCredential }
+export type ProofRequest = { credential?: W3CVerifiableCredential }
 
 export type GenericAuthResponse = {
 	authenticated: boolean
@@ -107,6 +109,13 @@ export type WebPage = {
 	URL?: string
 	lastReviewed?: Date
 	thumbnailUrl?: string
+}
+
+export interface CredentialRequest {
+    context: ContextType
+    type: string[]
+    attributes: Record<string, any>
+    holderDid: string
 }
 
 export type GenericAuthUser = Record<string, any> | null | undefined
