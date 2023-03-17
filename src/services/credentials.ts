@@ -1,5 +1,12 @@
 import {
-	createAgent, IDataStore, IDIDManager, IKeyManager, IResolver, IVerifyResult, TAgent, W3CVerifiableCredential
+  createAgent,
+  IDataStore,
+  IDIDManager,
+  IKeyManager,
+  IResolver,
+  IVerifyResult,
+  TAgent,
+  W3CVerifiableCredential
 } from '@veramo/core'
 import { CredentialPlugin } from '@veramo/credential-w3c'
 import { AbstractIdentifierProvider, DIDManager, MemoryDIDStore } from '@veramo/did-manager'
@@ -8,26 +15,32 @@ import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-m
 import { KeyManagementSystem } from '@veramo/kms-local'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
-import { NetworkType } from '@cheqd/did-provider-cheqd/src/did-manager/cheqd-did-provider'
-import { VC_CONTEXT, VC_EVENTRESERVATION_CONTEXT, VC_PERSON_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TYPE, } from '../types/constants'
-import { CredentialPayload, CredentialSubject, GenericAuthUser, VerifiableCredential, WebPage, Credential } from '../types/types'
+
+import { VC_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TYPE } from '../types/constants'
+import { CredentialPayload, CredentialRequest, VerifiableCredential, Credential } from '../types/types'
 import { Identity } from './identity'
 
 require('dotenv').config()
 
 const { 
-  ISSUER_ID, 
-  COSMOS_PAYER_MNEMONIC, 
-  NETWORK_RPC_URL, 
-  EVENT_CONTEXT, 
-  PERSON_CONTEXT, 
-  RESOLVER_URL, 
-  DISCORD_RESOURCE_ID, 
-  GITHUB_RESOURCE_ID,
-  EVENTBRITE_RESOURCE_ID,
-  TWITTER_RESOURCE_ID,
-  IIW_LOGO_RESOURCE_ID
+  ISSUER_ID,
+  COSMOS_PAYER_MNEMONIC,
+  NETWORK_RPC_URL,
 } = process.env
+
+export enum DefaultRPCUrl {
+  Mainnet = 'https://rpc.cheqd.net',
+  Testnet = 'https://rpc.cheqd.network'
+}
+
+export enum NetworkType {
+  Mainnet = "mainnet",
+  Testnet = "testnet"
+}
+
+export enum DefaultResolverUrl {
+  Cheqd = "https://resolver.cheqd.net"
+}
 
 export class Credentials {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,7 +77,7 @@ export class Credentials {
 								defaultKms: 'local',
 								cosmosPayerSeed: COSMOS_PAYER_MNEMONIC,
 								networkType: network,
-								rpcUrl: NETWORK_RPC_URL,
+								rpcUrl: NETWORK_RPC_URL || (network === NetworkType.Testnet ? DefaultRPCUrl.Testnet : DefaultRPCUrl.Mainnet),
 							}
 						) as AbstractIdentifierProvider
 					}
@@ -79,81 +92,7 @@ export class Credentials {
 		})
 	}
 
-	getThumbnailURL(provider: string): string | undefined {
-		switch (provider) {
-			case 'twitter':
-				return `${RESOLVER_URL}/${ISSUER_ID}/resources/${TWITTER_RESOURCE_ID}`
-			case 'discord':
-				return `${RESOLVER_URL}/${ISSUER_ID}/resources/${DISCORD_RESOURCE_ID}`
-			case 'github':
-				return `${RESOLVER_URL}/${ISSUER_ID}/resources/${GITHUB_RESOURCE_ID}`
-			case 'eventbrite':
-				return `${RESOLVER_URL}/${ISSUER_ID}/resources/${EVENTBRITE_RESOURCE_ID}`
-		}
-	}
-
-	async issue_person_credential(user: GenericAuthUser, provider: string, subjectId?: string): Promise<Credential> {
-		provider = provider.toLowerCase()
-		const credential_subject: CredentialSubject = {
-			id: subjectId,
-			type: undefined
-		}
-
-		const webpage: WebPage = {
-			'@type': 'ProfilePage',
-			description: provider,
-			name: `${user?.nickname}` ?? '<unknown>',
-			identifier: `@${user?.nickname}` ?? '<unknown>',
-			lastReviewed: user?.updated_at,
-			thumbnailUrl: this.getThumbnailURL(provider),
-		}
-
-		if (provider == 'github' || provider == 'twitter') {
-			webpage.URL = `https://${provider.toLowerCase()}.com/${user?.nickname}`
-		}
-
-		const credential = {
-			'@context': VC_CONTEXT.concat(PERSON_CONTEXT ? [PERSON_CONTEXT] : VC_PERSON_CONTEXT),
-			type: ['Person', VC_TYPE],
-			issuanceDate: new Date().toISOString(),
-			credentialSubject: credential_subject,
-			'WebPage': [webpage]
-		}
-
-		return await this.issue_credentials(credential)
-	}
-
-	async issue_ticket_credential(reservationId: string, subjectId?: string): Promise<Credential> {
-		const credential_subject: CredentialSubject = {
-			id: subjectId,
-			type: undefined
-		}
-
-		const credential = {
-			'@context': VC_CONTEXT.concat(EVENT_CONTEXT ? [EVENT_CONTEXT] : VC_EVENTRESERVATION_CONTEXT),
-			type: ['EventReservation', VC_TYPE],
-			issuanceDate: new Date().toISOString(),
-			credentialSubject: credential_subject,
-			reservationId,
-			reservationStatus: 'https://schema.org/ReservationConfirmed',
-			provider: {
-				brand: 'EventBrite',
-				image: this.getThumbnailURL('eventbrite')
-			},
-			reservationFor: {
-				'@type': 'Event',
-				name: 'Internet Identity Workshop IIWXXXV',
-				startDate: "2022-11-16T16:00:00",
-				endDate: "2022-11-18T00:00:00",
-				location: "Computer History Museum, 1401 N Shoreline Blvd, Mountain View, CA 94043",
-				logo: `${RESOLVER_URL}/${ISSUER_ID}/resources/${IIW_LOGO_RESOURCE_ID}`
-			}
-		}
-
-		return await this.issue_credentials(credential)
-	}
-
-	async issue_credentials(credential: CredentialPayload): Promise<Credential> {
+    async issue_credential(request: CredentialRequest): Promise<Credential> {
 
 		if (!this.agent) this.init_agent()
 
@@ -161,11 +100,25 @@ export class Credentials {
 			this.agent,
 			'demo'
 		)
-
 		const issuer_id = await identity_handler.load_issuer_did(
 			this.agent as TAgent<any>
 		)
-		credential.issuer = { id: issuer_id.did }
+
+        const credential: CredentialPayload = {
+            '@context': [ ...request['@context'] || [], ...VC_CONTEXT ],
+            type: [ ...request.type || [], VC_TYPE ],
+            issuer: { id: issuer_id.did },
+            credentialSubject: {
+                id: request.subjectDid,
+                type: undefined
+            },
+            issuanceDate: new Date().toISOString(),
+            ...request.attributes
+        }
+
+        if(request.expirationDate) {
+            credential.expirationDate = request.expirationDate
+        }
 
 		this.agent = identity_handler.agent
 
@@ -188,7 +141,7 @@ export class Credentials {
         return verifiable_credential
 	}
 
-	async verify_credentials(credential: W3CVerifiableCredential): Promise<IVerifyResult> {
+	async verify_credentials(credential: W3CVerifiableCredential | string): Promise<IVerifyResult> {
 		const result = await this.agent?.execute(
 			'verifyCredential',
 			{

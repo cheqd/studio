@@ -1,14 +1,21 @@
 import type { Request, Response } from 'express'
-import { GuardedCredentials } from '../middleware/guard'
-import { applyMixins } from '../middleware/_'
+
 import { Credentials } from '../services/credentials'
-import { check, param, validationResult } from 'express-validator'
+import { check, validationResult } from 'express-validator'
 
 export class CredentialController {
 
     public static issueValidator = [
-        check('subjectId').exists().withMessage('subjectId is required').isString().withMessage('subjectId should be a string'),
-        param('type').optional().isString().withMessage('type should be a string')
+        check('subjectDid')
+        .exists().withMessage('subjectDid is required')
+        .isString().withMessage('subjectDid should be a string')
+        .contains('did:').withMessage('subjectDid should be a DID'),
+        check('attributes')
+        .exists().withMessage('attributes are required')
+        .isObject().withMessage('attributes should be an object'),
+        check('type').optional().isArray().withMessage('type should be a string array'),
+        check('@context').optional().isArray().withMessage('@context should be a string array'),
+        check('expirationDate').optional().isDate().withMessage('Invalid expiration date')
     ]
 
     public static verifyValidator = [
@@ -18,28 +25,10 @@ export class CredentialController {
     public async issue(request: Request, response: Response) {
         const result = validationResult(request);
         if (!result.isEmpty()) {
-          return response.status(400).json(result.array()[0].msg)
+          return response.status(400).json({ error: result.array()[0].msg })
         }
-
-		switch (request.params.type) {
-			case 'Ticket':
-				const body = request.body
-				return await Credentials.instance.issue_ticket_credential(body.data, body.subjectId)
-			default:
-				applyMixins(GuardedCredentials, [Credentials])
-
-				const credentials = new GuardedCredentials()
-
-				const { authenticated, user, subjectId, provider, error } = await credentials.guard(request)
-
-				if (!(authenticated)) {
-					return response.status(400).json({
-                        message: JSON.stringify(error)
-                    })
-				}
-				const verifiable_credential = await credentials.issue_person_credential(user, provider, subjectId)
-                return response.status(200).json(verifiable_credential)
-		}
+        
+        response.json(await Credentials.instance.issue_credential(request.body))
 	}
 
     public async verify(request: Request, response: Response) {
@@ -49,11 +38,10 @@ export class CredentialController {
 
         const result = validationResult(request);
         if (!result.isEmpty()) {
-          return response.status(400).json(result.array()[0].msg)
+          return response.status(400).json({ error: result.array()[0].msg })
         }
         
-		const verificationResult = await Credentials.instance.verify_credentials(request.body.credential)
-        return response.json(verificationResult)
+		return response.json(await Credentials.instance.verify_credentials(request.body.credential))
 	}
 
 }
