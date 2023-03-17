@@ -1,13 +1,26 @@
 import type { Request, Response } from 'express'
-
-import { CredentialRequest, W3CVerifiableCredential } from '../types/types'
 import { GuardedCredentials } from '../middleware/guard'
 import { applyMixins } from '../middleware/_'
 import { Credentials } from '../services/credentials'
+import { check, param, validationResult } from 'express-validator'
 
 export class CredentialController {
 
+    public static issueValidator = [
+        check('subjectId').exists().withMessage('subjectId is required').isString().withMessage('subjectId should be a string'),
+        param('type').optional().isString().withMessage('type should be a string')
+    ]
+
+    public static verifyValidator = [
+        check('credential').exists().withMessage('W3c verifiable credential was not provided')
+    ]
+
     public async issue(request: Request, response: Response) {
+        const result = validationResult(request);
+        if (!result.isEmpty()) {
+          return response.status(400).json(result.array()[0].msg)
+        }
+
 		switch (request.params.type) {
 			case 'Ticket':
 				const body = request.body
@@ -33,11 +46,14 @@ export class CredentialController {
         if (request?.headers && (!request.headers['content-type'] || request.headers['content-type'] != 'application/json')) {
             return response.status(405).json({ error: 'Unsupported media type.' })
         }
-		const _body: Record<any, any> = request.body
-		const _credential = _body['credential']
-		const credential_request = { ...request as Request, credential: _credential as W3CVerifiableCredential } as CredentialRequest
-		const verified = await Credentials.instance.verify_credentials(credential_request)
-        return response.json(verified)
+
+        const result = validationResult(request);
+        if (!result.isEmpty()) {
+          return response.status(400).json(result.array()[0].msg)
+        }
+        
+		const verificationResult = await Credentials.instance.verify_credentials(request.body.credential)
+        return response.json(verificationResult)
 	}
 
 }

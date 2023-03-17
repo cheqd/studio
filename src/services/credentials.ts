@@ -1,5 +1,5 @@
 import {
-	createAgent, IDataStore, IDIDManager, IKeyManager, IResolver, TAgent
+	createAgent, IDataStore, IDIDManager, IKeyManager, IResolver, IVerifyResult, TAgent, W3CVerifiableCredential
 } from '@veramo/core'
 import { CredentialPlugin } from '@veramo/credential-w3c'
 import { AbstractIdentifierProvider, DIDManager, MemoryDIDStore } from '@veramo/did-manager'
@@ -9,8 +9,8 @@ import { KeyManagementSystem } from '@veramo/kms-local'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 import { NetworkType } from '@cheqd/did-provider-cheqd/src/did-manager/cheqd-did-provider'
-import { HEADERS, VC_CONTEXT, VC_EVENTRESERVATION_CONTEXT, VC_PERSON_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TYPE, } from '../types/constants'
-import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential, WebPage, Credential } from '../types/types'
+import { VC_CONTEXT, VC_EVENTRESERVATION_CONTEXT, VC_PERSON_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TYPE, } from '../types/constants'
+import { CredentialPayload, CredentialSubject, GenericAuthUser, VerifiableCredential, WebPage, Credential } from '../types/types'
 import { Identity } from './identity'
 
 require('dotenv').config()
@@ -188,18 +188,14 @@ export class Credentials {
         return verifiable_credential
 	}
 
-	async verify_credentials(request: CredentialRequest): Promise<Response> {
-
-		const credential = request?.credential
-
-		if (!credential) return new Response(JSON.stringify({ error: 'W3C Verifiable credential is not provided.' }), { status: 400, headers: HEADERS.json })
-
-		return await this.agent?.execute(
+	async verify_credentials(credential: W3CVerifiableCredential): Promise<IVerifyResult> {
+		const result = await this.agent?.execute(
 			'verifyCredential',
 			{
-				credential: credential
+				credential
 			}
 		)
+        return result
 	}
 
 	private get_network_ns_config(issuer_id: string): NetworkType {
