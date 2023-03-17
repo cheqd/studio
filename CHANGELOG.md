@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0-develop.3](https://github.com/cheqd/credential-service/compare/1.5.0-develop.2...1.5.0-develop.3) (2023-03-17)
+
+
+### Features
+
+* Update refactor code ([#177](https://github.com/cheqd/credential-service/issues/177)) ([fed4b28](https://github.com/cheqd/credential-service/commit/fed4b283daa065f3bc11b70d9070819238de09db))
+
 ## [1.5.0-develop.2](https://github.com/cheqd/credential-service/compare/1.5.0-develop.1...1.5.0-develop.2) (2023-03-16)
 
 ## [1.5.0-develop.1](https://github.com/cheqd/credential-service/compare/1.4.5-develop.2...1.5.0-develop.1) (2023-03-16)
