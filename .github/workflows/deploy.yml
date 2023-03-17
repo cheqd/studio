@@ -9,7 +9,6 @@ jobs:
   deploy-staging:
     name: "Staging Deploy"
     runs-on: ubuntu-latest
-    continue-on-error: true
     env: 
       IMAGE_NAME: registry.digitalocean.com/${{ github.repository }}
     environment: 
