@@ -1,5 +1,12 @@
 import {
-	createAgent, IDataStore, IDIDManager, IKeyManager, IResolver, IVerifyResult, TAgent, W3CVerifiableCredential
+  createAgent,
+  IDataStore,
+  IDIDManager,
+  IKeyManager,
+  IResolver,
+  IVerifyResult,
+  TAgent,
+  W3CVerifiableCredential
 } from '@veramo/core'
 import { CredentialPlugin } from '@veramo/credential-w3c'
 import { AbstractIdentifierProvider, DIDManager, MemoryDIDStore } from '@veramo/did-manager'
@@ -8,8 +15,8 @@ import { KeyManager, MemoryKeyStore, MemoryPrivateKeyStore } from '@veramo/key-m
 import { KeyManagementSystem } from '@veramo/kms-local'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
-import { NetworkType } from '@cheqd/did-provider-cheqd/src/did-manager/cheqd-did-provider'
-import { VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../types/constants'
+
+import { VC_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TYPE } from '../types/constants'
 import { CredentialPayload, CredentialRequest, VerifiableCredential, Credential } from '../types/types'
 import { Identity } from './identity'
 
@@ -20,6 +27,20 @@ const {
   COSMOS_PAYER_MNEMONIC,
   NETWORK_RPC_URL,
 } = process.env
+
+export enum DefaultRPCUrl {
+  Mainnet = 'https://rpc.cheqd.net',
+  Testnet = 'https://rpc.cheqd.network'
+}
+
+export enum NetworkType {
+  Mainnet = "mainnet",
+  Testnet = "testnet"
+}
+
+export enum DefaultResolverUrl {
+  Cheqd = "https://resolver.cheqd.net"
+}
 
 export class Credentials {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,7 +77,7 @@ export class Credentials {
 								defaultKms: 'local',
 								cosmosPayerSeed: COSMOS_PAYER_MNEMONIC,
 								networkType: network,
-								rpcUrl: NETWORK_RPC_URL,
+								rpcUrl: NETWORK_RPC_URL || (network === NetworkType.Testnet ? DefaultRPCUrl.Testnet : DefaultRPCUrl.Mainnet),
 							}
 						) as AbstractIdentifierProvider
 					}
@@ -79,17 +100,25 @@ export class Credentials {
 			this.agent,
 			'demo'
 		)
-
-        let credential: CredentialPayload = {...request.attributes}
-
 		const issuer_id = await identity_handler.load_issuer_did(
 			this.agent as TAgent<any>
 		)
-		credential.issuer = { id: issuer_id.did }
-        credential.credentialSubject = {
-			id: request.holderDid,
-			type: undefined
-		}
+
+        const credential: CredentialPayload = {
+            '@context': [ ...request['@context'] || [], ...VC_CONTEXT ],
+            type: [ ...request.type || [], VC_TYPE ],
+            issuer: { id: issuer_id.did },
+            credentialSubject: {
+                id: request.subjectDid,
+                type: undefined
+            },
+            issuanceDate: new Date().toISOString(),
+            ...request.attributes
+        }
+
+        if(request.expirationDate) {
+            credential.expirationDate = request.expirationDate
+        }
 
 		this.agent = identity_handler.agent
 
@@ -112,7 +141,7 @@ export class Credentials {
         return verifiable_credential
 	}
 
-	async verify_credentials(credential: W3CVerifiableCredential): Promise<IVerifyResult> {
+	async verify_credentials(credential: W3CVerifiableCredential | string): Promise<IVerifyResult> {
 		const result = await this.agent?.execute(
 			'verifyCredential',
 			{
