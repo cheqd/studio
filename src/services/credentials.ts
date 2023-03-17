@@ -1,5 +1,5 @@
 import {
-	createAgent, IDataStore, IDIDManager, IKeyManager, IResolver, TAgent
+	createAgent, IDataStore, IDIDManager, IKeyManager, IResolver, IVerifyResult, TAgent, W3CVerifiableCredential
 } from '@veramo/core'
 import { CredentialPlugin } from '@veramo/credential-w3c'
 import { AbstractIdentifierProvider, DIDManager, MemoryDIDStore } from '@veramo/did-manager'
@@ -9,9 +9,25 @@ import { KeyManagementSystem } from '@veramo/kms-local'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 import { NetworkType } from '@cheqd/did-provider-cheqd/src/did-manager/cheqd-did-provider'
-import { HEADERS, VC_CONTEXT, VC_EVENTRESERVATION_CONTEXT, VC_PERSON_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TICKET_CONTEXT, VC_TYPE, } from '../constants'
-import { CredentialPayload, CredentialRequest, CredentialSubject, GenericAuthUser, VerifiableCredential, WebPage } from '../types'
+import { VC_CONTEXT, VC_EVENTRESERVATION_CONTEXT, VC_PERSON_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TYPE, } from '../types/constants'
+import { CredentialPayload, CredentialSubject, GenericAuthUser, VerifiableCredential, WebPage, Credential } from '../types/types'
 import { Identity } from './identity'
+
+require('dotenv').config()
+
+const { 
+  ISSUER_ID, 
+  COSMOS_PAYER_MNEMONIC, 
+  NETWORK_RPC_URL, 
+  EVENT_CONTEXT, 
+  PERSON_CONTEXT, 
+  RESOLVER_URL, 
+  DISCORD_RESOURCE_ID, 
+  GITHUB_RESOURCE_ID,
+  EVENTBRITE_RESOURCE_ID,
+  TWITTER_RESOURCE_ID,
+  IIW_LOGO_RESOURCE_ID
+} = process.env
 
 export class Credentials {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -22,6 +38,8 @@ export class Credentials {
 		this.agent = agent
 		if (!agent) this.init_agent()
 	}
+
+    public static instance = new Credentials()
 
 	init_agent(): void {
 		const network = this.get_network_ns_config(ISSUER_ID)
@@ -74,7 +92,7 @@ export class Credentials {
 		}
 	}
 
-	async issue_person_credential(user: GenericAuthUser, provider: string, subjectId?: string): Promise<Response> {
+	async issue_person_credential(user: GenericAuthUser, provider: string, subjectId?: string): Promise<Credential> {
 		provider = provider.toLowerCase()
 		const credential_subject: CredentialSubject = {
 			id: subjectId,
@@ -105,7 +123,7 @@ export class Credentials {
 		return await this.issue_credentials(credential)
 	}
 
-	async issue_ticket_credential(reservationId: string, subjectId?: string): Promise<Response> {
+	async issue_ticket_credential(reservationId: string, subjectId?: string): Promise<Credential> {
 		const credential_subject: CredentialSubject = {
 			id: subjectId,
 			type: undefined
@@ -135,7 +153,7 @@ export class Credentials {
 		return await this.issue_credentials(credential)
 	}
 
-	async issue_credentials(credential: CredentialPayload): Promise<Response> {
+	async issue_credentials(credential: CredentialPayload): Promise<Credential> {
 
 		if (!this.agent) this.init_agent()
 
@@ -167,49 +185,17 @@ export class Credentials {
 		if (verifiable_credential?.nbf) delete verifiable_credential.nbf
 		if (verifiable_credential?.exp) delete verifiable_credential.exp
 
-		return new Response(
-			JSON.stringify(
-				verifiable_credential,
-				null,
-				2
-			),
-			{
-				status: 200,
-				headers: {
-					...HEADERS.json,
-					"access-control-allow-origin": "*"
-				}
-			}
-		)
+        return verifiable_credential
 	}
 
-	async verify_credentials(request: CredentialRequest): Promise<Response> {
-		if (request?.headers && (!request?.headers?.get('Content-Type') || request?.headers?.get('Content-Type') != 'application/json')) return new Response(JSON.stringify({ error: 'Unsupported media type.' }), { status: 405, headers: HEADERS.json })
-
-		const credential = request?.credential
-
-		if (!credential) return new Response(JSON.stringify({ error: 'W3C Verifiable credential is not provided.' }), { status: 400, headers: HEADERS.json })
-
-		const verified = await this.agent?.execute(
+	async verify_credentials(credential: W3CVerifiableCredential): Promise<IVerifyResult> {
+		const result = await this.agent?.execute(
 			'verifyCredential',
 			{
-				credential: credential
+				credential
 			}
 		)
-
-		return new Response(
-			JSON.stringify(
-				{
-					verified: verified
-				}
-			),
-			{
-				headers: {
-					...HEADERS.json,
-					"access-control-allow-origin": "*"
-				}
-			}
-		)
+        return result
 	}
 
 	private get_network_ns_config(issuer_id: string): NetworkType {

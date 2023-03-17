@@ -34,13 +34,14 @@ ARG NPM_CONFIG_LOGLEVEL=warn
 ARG PORT=8787
 ARG ISSUER_ID
 ARG ISSUER_ID_KID
-ARG ISSUER_ID_METHOD="did:cheqd:mainnet:"
+ARG ISSUER_ID_METHOD
 ARG ISSUER_ID_PUBLIC_KEY_HEX
 ARG ISSUER_ID_PRIVATE_KEY_HEX
 ARG ISSUER_ID_METHOD_SPECIFIC_ID
 ARG COSMOS_PAYER_MNEMONIC
-ARG NETWORK_RPC_URL="https://rpc.cheqd.net"
+ARG NETWORK_RPC_URL
 ARG AUTH0_SERVICE_ENDPOINT
+ARG RESOLVER_URL="https://resolver.cheqd.net/1.0/identifiers"
 
 # Run-time environment variables
 ENV NODE_ENV ${NODE_ENV}
@@ -55,11 +56,11 @@ ENV ISSUER_ID_METHOD_SPECIFIC_ID ${ISSUER_ID_METHOD_SPECIFIC_ID}
 ENV COSMOS_PAYER_MNEMONIC ${COSMOS_PAYER_MNEMONIC}
 ENV NETWORK_RPC_URL ${NETWORK_RPC_URL}
 ENV AUTH0_SERVICE_ENDPOINT ${AUTH0_SERVICE_ENDPOINT}
+ENV RESOLVER_URL ${RESOLVER_URL}
 
-# We install Miniflare because we don't have the node_modules directory
+# We don't have the node_modules directory
 # this image only has the output worker.js file.
-RUN npm install -g miniflare@2.11.0 && \
-    chown -R node:node /home/node/app && \
+RUN chown -R node:node /home/node/app && \
     apk update && \
     apk add --no-cache bash ca-certificates
 
@@ -71,4 +72,4 @@ USER node
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 # Run the application
-CMD [ "miniflare", "worker.js" ]
+CMD [ "node", "index.js" ]
