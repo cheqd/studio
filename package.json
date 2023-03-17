@@ -1,14 +1,14 @@
 {
 	"name": "@cheqd/credential-service",
-	"version": "1.5.0",
+	"version": "1.5.1-develop.1",
 	"description": "cheqd Credential Service Backend",
 	"source": "src/index.ts",
-	"main": "dist/worker.js",
+	"main": "dist/index.js",
 	"license": "Apache-2.0",
 	"author": "Cheqd Foundation Limited (https://github.com/cheqd)",
 	"repository": "https://github.com/cheqd/credential-service.git",
 	"scripts": {
-		"build": "esbuild src/index.ts --platform=node --bundle --minify --outdir=dist ",
+		"build": "esbuild src/index.ts --platform=node --bundle --minify --outdir=dist",
 		"start": "node dist/index.js",
 		"format": "prettier --write  '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
 		"lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
@@ -22,6 +22,12 @@
 			"prettier"
 		]
 	},
+	"files": [
+		"dist/**/*",
+		"LICENSE",
+		"package.json",
+		"README.md"
+	],
 	"dependencies": {
 		"@cheqd/did-provider-cheqd": "^3.0.4",
 		"@veramo/core": "^5.1.2",
