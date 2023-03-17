@@ -17,9 +17,11 @@ The purpose of this service is to issue and verify credentials. This service by 
 - **Endpoint** POST `/api/credentials/issue`
 - **Accepts**: `application/json`
 - **Request Body**: JSON object with following fields
-  - `claim` - Claim received from the Auth0 Service
-  - `provider` - Auth0 login provider (eg: Twitter, Discord, Github, etc)
-  - `subjectId` - ID of the holder of the credential
+  - `attributes` - A json object with all the credential attributes
+  - `subjectDid` - DID of the holder of the credential
+  - `type` - A string representation of the credential type e.g. "PERSON" (optional)
+  - `@context` - context of the issued credential (optional)
+  - `expirationDate` - Date of expiration of the JWT (optional)
 - **Success Response Code**: 200
 - **Error Response Code** - 400
 
@@ -28,7 +30,7 @@ The purpose of this service is to issue and verify credentials. This service by 
 - **Endpoint** POST `/api/credentials/verify`
 - **Accepts**: `application/json`
 - **Request Body**: JSON object with following fields:
-  - `credential` - A verifiable credential
+  - `credential` - A verifiable credential or the JWT string
 - **Success Response Code** - 200
 - **Error Response Codes**:
   - 400: Bad request body
@@ -55,13 +57,9 @@ The application expects the following environment variables to be defined for th
 
 1. `ISSUER_ID_PRIVATE_KEY_HEX`: Hex-encoded private key to be used by the identity credential issuer
 2. `ISSUER_ID_PUBLIC_KEY_HEX`: Hex-encoded public key to be used by the identity credential issuer
-3. `ISSUER_ID_KID`: Key ID to match a specific key inside a JWK
-4. `ISSUER_ID_METHOD`: `did:cheqd` method along with network namespace (e.g., `did:cheqd:mainnet:` or `did:cheqd:testnet:`)
-5. `ISSUER_ID_METHOD_SPECIFIC_ID`: Unique identifier portion of a `did:cheqd` DID, e.g., `zAXwwqZzhCZA1L77ZBa8fhVNjL9MQCHX`
-6. `ISSUER_ID`: Fully-qualified DID for the issuer, e.g., `did:cheqd:mainnet:zAXwwqZzhCZA1L77ZBa8fhVNjL9MQCHX`
-7. `COSMOS_PAYER_MNEMONIC`: Mnemonic for the issuer's Cosmos account. This currently doesn't require any balances at the moment, but it required for the library to function.
-8. `NETWORK_RPC_URL`: RPC URL for a node on cheqd network, e.g., `rpc.cheqd.net`
-9. `AUTH0_SERVICE_ENDPOINT`: Auth0 service endpoint, is an instance of [Auth0 Service](https://github.com/cheqd/auth0-service)
+3. `ISSUER_ID`: Fully-qualified DID for the issuer, e.g., `did:cheqd:mainnet:zAXwwqZzhCZA1L77ZBa8fhVNjL9MQCHX`
+4. `COSMOS_PAYER_MNEMONIC`: Mnemonic for the issuer's Cosmos account. This currently doesn't require any balances at the moment, but it required for the library to function.
+5. `NETWORK_RPC_URL`: Optional RPC URL for a node on cheqd network, e.g., `rpc.cheqd.net`
 
 ### Run
 
