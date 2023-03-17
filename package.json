@@ -1,6 +1,6 @@
 {
 	"name": "@cheqd/credential-service",
-	"version": "1.4.5-develop.2",
+	"version": "1.5.0-develop.3",
 	"description": "cheqd Credential Service Backend",
 	"source": "src/index.ts",
 	"main": "dist/worker.js",
@@ -30,7 +30,7 @@
 		"@veramo/did-provider-key": "^5.1.2",
 		"@veramo/key-manager": "^5.1.2",
 		"@veramo/kms-local": "^5.1.2",
-        "@veramo/did-resolver": "^5.1.2",
+		"@veramo/did-resolver": "^5.1.2",
 		"cors": "^2.8.5",
 		"did-resolver": "^4.0.1",
 		"dotenv": "^16.0.3",

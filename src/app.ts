@@ -40,8 +40,8 @@ class App {
     app.get('/', (req, res) => res.json({ ping: 'pong' }))
 
     // credentials
-    app.post(`${URL_CREDENTIAL_PREFIX}/issue`, new CredentialController().issue)
-    app.post(`${URL_CREDENTIAL_PREFIX}/verify`,new CredentialController().verify)
+    app.post(`${URL_CREDENTIAL_PREFIX}/issue`, CredentialController.issueValidator, new CredentialController().issue)
+    app.post(`${URL_CREDENTIAL_PREFIX}/verify`, CredentialController.verifyValidator, new CredentialController().verify)
 
     // store
     app.post(`${URL_STORE_PREFIX}/`, new StoreController().set)

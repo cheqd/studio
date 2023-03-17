@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.5.0-develop.3](https://github.com/cheqd/credential-service/compare/1.5.0-develop.2...1.5.0-develop.3) (2023-03-17)
+
+
+### Features
+
+* Update refactor code ([#177](https://github.com/cheqd/credential-service/issues/177)) ([fed4b28](https://github.com/cheqd/credential-service/commit/fed4b283daa065f3bc11b70d9070819238de09db))
+
+## [1.5.0-develop.2](https://github.com/cheqd/credential-service/compare/1.5.0-develop.1...1.5.0-develop.2) (2023-03-16)
+
+## [1.5.0-develop.1](https://github.com/cheqd/credential-service/compare/1.4.5-develop.2...1.5.0-develop.1) (2023-03-16)
+
+
+### Features
+
+* Add Express router ([#175](https://github.com/cheqd/credential-service/issues/175)) ([4b4f01e](https://github.com/cheqd/credential-service/commit/4b4f01e9395dd6d15e073dc6496de08c6797098e))
+
 ## [1.4.5-develop.2](https://github.com/cheqd/credential-service/compare/1.4.5-develop.1...1.4.5-develop.2) (2023-02-10)
 
 ## [1.4.5-develop.1](https://github.com/cheqd/credential-service/compare/1.4.4...1.4.5-develop.1) (2023-02-08)

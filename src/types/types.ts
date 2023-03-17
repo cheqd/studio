@@ -1,4 +1,5 @@
 import { ContextType } from "@veramo/core-types"
+import { W3CVerifiableCredential } from "@veramo/core"
 
 export type ErrorResponse = {
 	name: string
@@ -44,8 +45,6 @@ export interface UnsignedCredential {
 
 export type VerifiableCredential = UnsignedCredential & { proof: ProofType }
 
-export type W3CVerifiableCredential = VerifiableCredential | CompactJWT
-
 export interface UnsignedPresentation {
 	holder: string
 	verifiableCredential?: W3CVerifiableCredential[]
@@ -90,8 +89,6 @@ export interface PresentationPayload {
 
 	[x: string]: any
 }
-
-export type ProofRequest = { credential?: W3CVerifiableCredential }
 
 export type GenericAuthResponse = {
 	authenticated: boolean
