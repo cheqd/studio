@@ -14,7 +14,7 @@ The purpose of this service is to issue and verify credentials. This service by 
 
 ### Issue a credential
 
-- **Endpoint** POST `/api/credentials/issue`
+- **Endpoint** POST `/1.0/api/credentials/issue`
 - **Accepts**: `application/json`
 - **Request Body**: JSON object with following fields
   - `attributes` - A json object with all the credential attributes
@@ -23,22 +23,24 @@ The purpose of this service is to issue and verify credentials. This service by 
   - `@context` - context of the issued credential (optional)
   - `expirationDate` - Date of expiration of the JWT (optional)
 - **Success Response Code**: 200
-- **Error Response Code** - 400
+- **Invalid Request Response Code** - 400
+- **Internal Error Response Code** - 500
 
 ### Verify a Credential
 
-- **Endpoint** POST `/api/credentials/verify`
+- **Endpoint** POST `/1.0/api/credentials/verify`
 - **Accepts**: `application/json`
 - **Request Body**: JSON object with following fields:
   - `credential` - A verifiable credential or the JWT string
 - **Success Response Code** - 200
-- **Error Response Codes**:
+- **Invalid Request Response Code**:
   - 400: Bad request body
   - 405: Wrong content type
+- **Internal Error Response Code** - 500
 
 ### Health Check
 
-- **Endpoint**: `/api/credentials` (This endpoint only returns a "PONG" as response with status code 200)
+- **Endpoint**: `/` (This endpoint redirects to the swagger api docs)
 
 ## 🧑‍💻🛠 Developer Guide
 
