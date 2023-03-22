@@ -148,6 +148,7 @@ export class Credentials {
 				credential
 			}
 		)
+        delete(result.payload)
         return result
 	}
 

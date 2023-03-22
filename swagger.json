@@ -1,0 +1,385 @@
+{
+    "openapi": "3.0.0",
+    "servers": [
+        {
+            "url": "/1.0/api/"
+        }
+    ],
+    "info": {
+        "description": "Api's to issue and verify jwt credentials using cheqd and veramo sdk",
+        "version": "1.0.0",
+        "title": "Cheqd Credential Service"
+    },
+    "tags": [
+        {
+            "name": "Credentials",
+            "externalDocs": {
+                "url": "https://github.com/cheqd/credential-service#readme"
+            }
+        }
+    ],
+    "paths": {
+        "/credentials/issue": {
+            "post": {
+                "tags": [
+                    "Credentials"
+                ],
+                "summary": "Issue a JWT credential",
+                "description": "<p>This endpoint creates a DID. As input it takes the list of attributes, subjectDid, context and expiration date of the credential to be issued.</p>",
+                "operationId": "issue",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Credential"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/credentials/verify": {
+            "post": {
+                "tags": [
+                    "Credentials"
+                ],
+                "summary": "Verify a JWT credential",
+                "description": "<p>This endpoint verifies the JWT credential. As input it takes the entire credential itself or just the JWT string</p>",
+                "operationId": "verify",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "credential": {
+                                        "type": "string",
+                                        "example": "<Place the JWT here>"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/IVerifyResult"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "CredentialRequest": {
+                "description": "Input fields for the create operation.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "subjectDid": {
+                        "description": "This input field is the holder's DID",
+                        "type": "string"
+                    },
+                    "attributes": {
+                        "type": "object"
+                    },
+                    "@context": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "type": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "expirationDate": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "subjectId",
+                    "attributes"
+                ],
+                "example": {
+                    "subjectDid": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+                    "attributes": {
+                        "gender": "male",
+                        "name": "Bob",
+                        "@context": [
+                            "https://schema.org/Person"
+                        ],
+                        "type": [
+                            "Person"
+                        ]
+                    }
+                }
+            },
+            "Credential": {
+                "description": "Input fields for the update operation.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "@context": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "type": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "expirationDate": {
+                        "type": "string"
+                    },
+                    "issuer": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "credentialSubject": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "issuanceDate": {
+                        "type": "string"
+                    },
+                    "proof": {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "type": "string"
+                            },
+                            "jwt": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "example": {
+                    "@context": [
+                        "https://www.w3.org/2018/credentials/v1",
+                        "https://schema.org/Person"
+                    ],
+                    "type": [
+                        "VerifiableCredential",
+                        "Person"
+                    ],
+                    "issuer": {
+                        "id": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228"
+                    },
+                    "credentialSubject": {
+                        "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+                    },
+                    "issuanceDate": "2023-03-22T07:00:47.749Z",
+                    "gender": "male",
+                    "name": "Bob",
+                    "proof": {
+                        "type": "JwtProof2020",
+                        "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vc2NoZW1hLm9yZy9QZXJzb24iXSwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIlBlcnNvbiJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIn19LCJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vc2NoZW1hLm9yZy9QZXJzb24iXSwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIlBlcnNvbiJdLCJpc3N1ZXIiOnsiaWQiOiJkaWQ6Y2hlcWQ6bWFpbm5ldDo4NzkwODY5ZS02MjRjLTQzMjUtOThkZi1jMzBlMGU0NzMyMjgifSwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiJkaWQ6a2V5Ono2TWtoYVhnQlpEdm90RGtMNTI1N2ZhaXp0aUdpQzJRdEtMR3Bibm5FR3RhMmRvSyJ9LCJpc3N1YW5jZURhdGUiOiIyMDIzLTAzLTIyVDA3OjAwOjQ3Ljc0OVoiLCJnZW5kZXIiOiJtYWxlIiwibmFtZSI6IkJvYiIsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwibmJmIjoxNjc5NDY4NDQ3LCJpc3MiOiJkaWQ6Y2hlcWQ6bWFpbm5ldDo4NzkwODY5ZS02MjRjLTQzMjUtOThkZi1jMzBlMGU0NzMyMjgifQ.P_DulspWdCOzCrlQz8i0JYHQx5l5OHeMYWZ_GgozY1PACpy9MMFS_t04dUYcfWbK6RK89NbgyDza1H8M0Ji3Aw"
+                    }
+                }
+            },
+            "InvalidRequest": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    }
+                }
+            },
+            "IVerifyResult": {
+                "type": "object",
+                "properties": {
+                    "verified": {
+                        "type": "boolean"
+                    },
+                    "didResolutionResult": {
+                        "type": "object"
+                    },
+                    "issuer": {
+                        "type": "string"
+                    },
+                    "signer": {
+                        "type": "object"
+                    },
+                    "jwt": {
+                        "type": "string"
+                    },
+                    "verifiableCredential": {
+                        "type": "object"
+                    }
+                },
+                "example": {
+                    "verified": true,
+                    "didResolutionResult": {
+                        "didDocumentMetadata": {
+                            "created": "2023-03-17T10:36:09.353270749Z",
+                            "updated": "1970-01-01T00:00:00Z",
+                            "versionId": "5181e19a-7f2c-4c02-b033-dd739811e893"
+                        },
+                        "didResolutionMetadata": {
+                            "contentType": "application/did+ld+json",
+                            "retrieved": "2023-03-22T07:10:59Z",
+                            "did": {
+                                "didString": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228",
+                                "methodSpecificId": "8790869e-624c-4325-98df-c30e0e473228",
+                                "method": "cheqd"
+                            }
+                        },
+                        "didDocument": {
+                            "@context": [
+                                "https://www.w3.org/ns/did/v1",
+                                "https://w3id.org/security/suites/ed25519-2018/v1"
+                            ],
+                            "id": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228",
+                            "verificationMethod": [
+                                {
+                                    "id": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228#key-1",
+                                    "type": "Ed25519VerificationKey2018",
+                                    "controller": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228",
+                                    "publicKeyBase58": "334yXce19pCbMskUtTmgouKmY9SKMoo8XmZMS1tG6aZx"
+                                }
+                            ],
+                            "authentication": [
+                                "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228#key-1"
+                            ],
+                            "assertionMethod": [
+                                "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228#key-1"
+                            ]
+                        },
+                        "@context": "https://w3id.org/did-resolution/v1"
+                    },
+                    "issuer": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228",
+                    "signer": {
+                        "id": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228#key-1",
+                        "type": "Ed25519VerificationKey2018",
+                        "controller": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228",
+                        "publicKeyBase58": "334yXce19pCbMskUtTmgouKmY9SKMoo8XmZMS1tG6aZx"
+                    },
+                    "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vdmVyYW1vLmlvL2NvbnRleHRzL3Byb2ZpbGUvdjEiXSwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRpZDprZXk6ejZNa3JNc3B3eUUxejJYa2ZjRGFmWEFoZ0tZSjhuYlNOQ2ZaekI4V2laY3ZyTGtGIn19LCJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vdmVyYW1vLmlvL2NvbnRleHRzL3Byb2ZpbGUvdjEiXSwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCJdLCJpc3N1ZXIiOnsiaWQiOiJkaWQ6Y2hlcWQ6bWFpbm5ldDo4NzkwODY5ZS02MjRjLTQzMjUtOThkZi1jMzBlMGU0NzMyMjgifSwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiJkaWQ6a2V5Ono2TWtyTXNwd3lFMXoyWGtmY0RhZlhBaGdLWUo4bmJTTkNmWnpCOFdpWmN2ckxrRiJ9LCJpc3N1YW5jZURhdGUiOiIyMDIzLTAzLTIxVDEzOjI0OjA0LjMwNVoiLCJyZXNlcnZhdGlvbklkIjoiMTIzIiwicmVzZXJ2YXRpb25TdGF0dXMiOiJodHRwczovL3NjaGVtYS5vcmcvUmVzZXJ2YXRpb25Db25maXJtZWQiLCJwcm92aWRlciI6eyJicmFuZCI6IkV2ZW50QnJpdGUiLCJpbWFnZSI6Ii9kaWQ6Y2hlcWQ6dGVzdG5ldDpmNDFlNDhjYy0wYWI0LTQ3NTAtOWJhOS02ZmY5ZTVjODAwNmMvcmVzb3VyY2VzLyJ9LCJyZXNlcnZhdGlvbkZvciI6eyJAdHlwZSI6IkV2ZW50IiwibmFtZSI6IkludGVybmV0IElkZW50aXR5IFdvcmtzaG9wIElJV1hYWFYiLCJzdGFydERhdGUiOiIyMDIyLTExLTE2VDE2OjAwOjAwIiwiZW5kRGF0ZSI6IjIwMjItMTEtMThUMDA6MDA6MDAiLCJsb2NhdGlvbiI6IkNvbXB1dGVyIEhpc3RvcnkgTXVzZXVtLCAxNDAxIE4gU2hvcmVsaW5lIEJsdmQsIE1vdW50YWluIFZpZXcsIENBIDk0MDQzIiwibG9nbyI6Ii9kaWQ6Y2hlcWQ6dGVzdG5ldDpmNDFlNDhjYy0wYWI0LTQ3NTAtOWJhOS02ZmY5ZTVjODAwNmMvcmVzb3VyY2VzLyJ9LCJzdWIiOiJkaWQ6a2V5Ono2TWtyTXNwd3lFMXoyWGtmY0RhZlhBaGdLWUo4bmJTTkNmWnpCOFdpWmN2ckxrRiIsIm5iZiI6MTY3OTQwNTA0NCwiaXNzIjoiZGlkOmNoZXFkOm1haW5uZXQ6ODc5MDg2OWUtNjI0Yy00MzI1LTk4ZGYtYzMwZTBlNDczMjI4In0.3qOT0wdQ5IHDVlL2TgQ7svxn-z-pXkMWqmHpCIMZK5E_WBgQiCZnwIymWiiPaPBVLsh-vkxKewP6WQTbx0QGBQ",
+                    "policies": {},
+                    "verifiableCredential": {
+                        "@context": [
+                            "https://www.w3.org/2018/credentials/v1",
+                            "https://veramo.io/contexts/profile/v1"
+                        ],
+                        "type": [
+                            "VerifiableCredential"
+                        ],
+                        "issuer": {
+                            "id": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228"
+                        },
+                        "credentialSubject": {
+                            "id": "did:key:z6MkrMspwyE1z2XkfcDafXAhgKYJ8nbSNCfZzB8WiZcvrLkF"
+                        },
+                        "issuanceDate": "2023-03-21T13:24:04.305Z",
+                        "reservationId": "123",
+                        "reservationStatus": "https://schema.org/ReservationConfirmed",
+                        "provider": {
+                            "brand": "EventBrite",
+                            "image": "/did:cheqd:testnet:f41e48cc-0ab4-4750-9ba9-6ff9e5c8006c/resources/"
+                        },
+                        "reservationFor": {
+                            "@type": "Event",
+                            "name": "Internet Identity Workshop IIWXXXV",
+                            "startDate": "2022-11-16T16:00:00",
+                            "endDate": "2022-11-18T00:00:00",
+                            "location": "Computer History Museum, 1401 N Shoreline Blvd, Mountain View, CA 94043",
+                            "logo": "/did:cheqd:testnet:f41e48cc-0ab4-4750-9ba9-6ff9e5c8006c/resources/"
+                        },
+                        "sub": "did:key:z6MkrMspwyE1z2XkfcDafXAhgKYJ8nbSNCfZzB8WiZcvrLkF",
+                        "nbf": 1679405044,
+                        "iss": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228",
+                        "proof": {
+                            "type": "JwtProof2020",
+                            "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vdmVyYW1vLmlvL2NvbnRleHRzL3Byb2ZpbGUvdjEiXSwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRpZDprZXk6ejZNa3JNc3B3eUUxejJYa2ZjRGFmWEFoZ0tZSjhuYlNOQ2ZaekI4V2laY3ZyTGtGIn19LCJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vdmVyYW1vLmlvL2NvbnRleHRzL3Byb2ZpbGUvdjEiXSwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCJdLCJpc3N1ZXIiOnsiaWQiOiJkaWQ6Y2hlcWQ6bWFpbm5ldDo4NzkwODY5ZS02MjRjLTQzMjUtOThkZi1jMzBlMGU0NzMyMjgifSwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiJkaWQ6a2V5Ono2TWtyTXNwd3lFMXoyWGtmY0RhZlhBaGdLWUo4bmJTTkNmWnpCOFdpWmN2ckxrRiJ9LCJpc3N1YW5jZURhdGUiOiIyMDIzLTAzLTIxVDEzOjI0OjA0LjMwNVoiLCJyZXNlcnZhdGlvbklkIjoiMTIzIiwicmVzZXJ2YXRpb25TdGF0dXMiOiJodHRwczovL3NjaGVtYS5vcmcvUmVzZXJ2YXRpb25Db25maXJtZWQiLCJwcm92aWRlciI6eyJicmFuZCI6IkV2ZW50QnJpdGUiLCJpbWFnZSI6Ii9kaWQ6Y2hlcWQ6dGVzdG5ldDpmNDFlNDhjYy0wYWI0LTQ3NTAtOWJhOS02ZmY5ZTVjODAwNmMvcmVzb3VyY2VzLyJ9LCJyZXNlcnZhdGlvbkZvciI6eyJAdHlwZSI6IkV2ZW50IiwibmFtZSI6IkludGVybmV0IElkZW50aXR5IFdvcmtzaG9wIElJV1hYWFYiLCJzdGFydERhdGUiOiIyMDIyLTExLTE2VDE2OjAwOjAwIiwiZW5kRGF0ZSI6IjIwMjItMTEtMThUMDA6MDA6MDAiLCJsb2NhdGlvbiI6IkNvbXB1dGVyIEhpc3RvcnkgTXVzZXVtLCAxNDAxIE4gU2hvcmVsaW5lIEJsdmQsIE1vdW50YWluIFZpZXcsIENBIDk0MDQzIiwibG9nbyI6Ii9kaWQ6Y2hlcWQ6dGVzdG5ldDpmNDFlNDhjYy0wYWI0LTQ3NTAtOWJhOS02ZmY5ZTVjODAwNmMvcmVzb3VyY2VzLyJ9LCJzdWIiOiJkaWQ6a2V5Ono2TWtyTXNwd3lFMXoyWGtmY0RhZlhBaGdLWUo4bmJTTkNmWnpCOFdpWmN2ckxrRiIsIm5iZiI6MTY3OTQwNTA0NCwiaXNzIjoiZGlkOmNoZXFkOm1haW5uZXQ6ODc5MDg2OWUtNjI0Yy00MzI1LTk4ZGYtYzMwZTBlNDczMjI4In0.3qOT0wdQ5IHDVlL2TgQ7svxn-z-pXkMWqmHpCIMZK5E_WBgQiCZnwIymWiiPaPBVLsh-vkxKewP6WQTbx0QGBQ"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
