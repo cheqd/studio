@@ -51,7 +51,9 @@ ENV RESOLVER_URL ${RESOLVER_URL}
 
 # We don't have the node_modules directory
 # this image only has the output worker.js file.
-RUN chown -R node:node /home/node/app && \
+# Install pre-requisites
+RUN npm install swagger-ui-express@4.5.0 && \
+    chown -R node:node /home/node/app && \
     apk update && \
     apk add --no-cache bash ca-certificates
 
