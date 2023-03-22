@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.0-develop.2](https://github.com/cheqd/credential-service/compare/2.0.0-develop.1...2.0.0-develop.2) (2023-03-22)
+
+
+### Features
+
+* Add swagger ([#189](https://github.com/cheqd/credential-service/issues/189)) ([3c3ef1b](https://github.com/cheqd/credential-service/commit/3c3ef1b06b111169730e61beddf7174b5eabc4ae))
+
 ## [2.0.0-develop.1](https://github.com/cheqd/credential-service/compare/1.5.1-develop.1...2.0.0-develop.1) (2023-03-17)
 
 
