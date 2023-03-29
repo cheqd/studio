@@ -19,6 +19,177 @@
         }
     ],
     "paths": {
+        "/dids/create": {
+            "post": {
+                "tags": [
+                    "DID"
+                ],
+                "summary": "Create a DID",
+                "description": "<p>This endpoint creates a DID by taking DID document as an input.</p>",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "didDocument": {
+                                        "$ref": "#/components/schemas/DidDocument"
+                                    },
+                                    "alias": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DidResult"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/dids": {
+            "get": {
+                "tags": [
+                    "DID"
+                ],
+                "summary": "Fetch DIDs from wallet",
+                "description": "<p>This endpoint creates a DID by taking DID document as an input.</p>",
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/DidResult"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/dids/{did}": {
+            "get": {
+                "tags": [
+                    "DID"
+                ],
+                "summary": "Fetch DIDs from wallet",
+                "description": "<p>This endpoint creates a DID by taking DID document as an input.</p>",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "did",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DidDocument"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/credentials/issue": {
             "post": {
                 "tags": [
@@ -26,7 +197,6 @@
                 ],
                 "summary": "Issue a JWT credential",
                 "description": "<p>This endpoint creates a DID. As input it takes the list of attributes, subjectDid, context and expiration date of the credential to be issued.</p>",
-                "operationId": "issue",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -141,6 +311,165 @@
     },
     "components": {
         "schemas": {
+            "DidResult": {
+                "type": "object",
+                "properties": {
+                    "did": {
+                        "type": "string"
+                    },
+                    "controllerKeyId": {
+                        "type": "string"
+                    },
+                    "keys": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "services": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Service"
+                        }
+                    }
+                }
+            },
+            "DidDocument": {
+                "description": "This input field contains either a complete DID document, or an incremental change (diff) to a DID document. See <a href=\"https://identity.foundation/did-registration/#diddocument\">https://identity.foundation/did-registration/#diddocument</a>.",
+                "type": "object",
+                "properties": {
+                    "context": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "id": {
+                        "type": "string",
+                        "example": "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09"
+                    },
+                    "controller": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09"
+                        ]
+                    },
+                    "authentication": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09#key-0"
+                        ]
+                    },
+                    "assertionMethod": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "capabilityInvocation": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "capabilityDelegation": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "keyAgreement": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "verificationMethod": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/VerificationMethod"
+                        }
+                    },
+                    "service": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Service"
+                        }
+                    }
+                },
+                "example": {
+                    "id": "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09",
+                    "controller": [
+                        "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09"
+                    ],
+                    "verificationMethod": [
+                        {
+                            "id": "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09#key-1",
+                            "type": "Ed25519VerificationKey2020",
+                            "controller": "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09",
+                            "publicKeyMultibase": "z6Mkt9Vg1a1Jbg5a1NkToUeWH23Z33TwGUua5MrqAYUz2AL3"
+                        }
+                    ],
+                    "authentication": [
+                        "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09#key-1"
+                    ]
+                }
+            },
+            "VerificationMethod": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09#key-0"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "Ed25519VerificationKey2020"
+                    },
+                    "controller": {
+                        "type": "string",
+                        "example": "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09"
+                    },
+                    "publicKeyMultibase": {
+                        "type": "string",
+                        "example": "z6Mkt9Vg1a1Jbg5a1NkToUeWH23Z33TwGUua5MrqAYUz2AL3"
+                    },
+                    "publicKeyJwk": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "Service": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09#rand,"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "rand,"
+                    },
+                    "serviceEndpoint": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "https://rand.in"
+                        ]
+                    }
+                }
+            },
             "CredentialRequest": {
                 "description": "Input fields for the create operation.",
                 "type": "object",

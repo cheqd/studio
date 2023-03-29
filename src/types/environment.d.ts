@@ -4,9 +4,6 @@ declare global {
 	  ISSUER_ID: string
 	  ISSUER_ID_PRIVATE_KEY_HEX: string
 	  ISSUER_ID_PUBLIC_KEY_HEX: string
-	  ISSUER_ID_KID: string
-	  ISSUER_ID_METHOD_SPECIFIC_ID: string
-	  ISSUER_ID_METHOD: string
 	  COSMOS_PAYER_MNEMONIC: string
 	  NETWORK_RPC_URL: string
 	  AUTH0_SERVICE_ENDPOINT: string
@@ -19,6 +16,10 @@ declare global {
 	  EVENTBRITE_RESOURCE_ID: string
 	  IIW_LOGO_RESOURCE_ID: string
       ALLOWED_ORIGINS: string[] | undefined
+      ISSUER_DATABASE_URL: string
+      ISSUER_SECRET_KEY: string,
+      FEE_PAYER_MNEMONIC_MAINNET: string
+      FEE_PAYER_MNENONIC_TESTNET: string
     }
   }
 }

@@ -6,6 +6,7 @@ import cors from 'cors'
 import { CORS_ERROR_MSG } from './types/constants'
 import * as swagger from 'swagger-ui-express'
 import * as swaggerJson from '../swagger.json'
+import { IssuerController } from './controllers/issuer'
 
 require('dotenv').config()
 
@@ -48,6 +49,13 @@ class App {
     // store
     app.post(`${URL_PREFIX}/store`, new StoreController().set)
     app.get(`${URL_PREFIX}/store/:id`, new StoreController().get)
+
+    // issuer
+    app.post(`${URL_PREFIX}/key/create`, new IssuerController().createKey)
+    app.get(`${URL_PREFIX}/key/:kid`, new IssuerController().getKey)
+    app.post(`${URL_PREFIX}/did`, new IssuerController().createDid)
+    app.get(`${URL_PREFIX}/did`, new IssuerController().getDids)
+    app.get(`${URL_PREFIX}/did/:did`, new IssuerController().getDids)
 
     // 404 for all other requests
     app.all('*', (req, res) => res.status(400).send('Bad request'))
