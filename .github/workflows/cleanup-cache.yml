@@ -1,7 +1,8 @@
 name: "Cleanup - Cache"
 on:
   schedule:
-    - cron: "0 0 * * 0"
+    # Cron schedule is every 2 days because this repo's cache is quite large
+    - cron: "0 0 * * */2"
   workflow_dispatch:
 
 jobs:
