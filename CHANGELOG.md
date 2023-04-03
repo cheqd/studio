@@ -20,6 +20,8 @@
 
 ## [1.5.1-develop.1](https://github.com/cheqd/credential-service/compare/1.5.0...1.5.1-develop.1) (2023-03-17)
 
+## [1.5.1](https://github.com/cheqd/credential-service/compare/1.5.0...1.5.1) (2023-03-17)
+
 ## [1.5.0](https://github.com/cheqd/credential-service/compare/1.4.4...1.5.0) (2023-03-17)
 
 
