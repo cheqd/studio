@@ -1,4 +1,4 @@
-name: "Build & Test"
+name: "Build"
 on:
   workflow_call:
 defaults:
@@ -8,21 +8,49 @@ defaults:
 
 jobs:
 
-  run-tests:
-    name: "Yarn Build & Test"
+-  build-docker:
+    name: "Build Docker image"
     runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v3
-      
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
-      
-      - name: "Install dependencies"
-        run: npm ci
+    env:
+      IMAGE_NAME: registry.digitalocean.com/${{ github.repository }}
 
-      - name: "Execute build"
-        run: npm run build
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+      id: buildx
+      with:
+        install: true
+        version: latest
+    
+    - name: Configure Docker image metadata
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=raw,value=staging-latest
+          type=sha,format=long
+
+    - name: Build image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: Dockerfile
+        platforms: linux/amd64
+        load: true
+        target: runner
+        tags: ${{ steps.meta.outputs.tags }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=min
+
+    - name: Save Docker image
+      run:  docker save ${{ env.IMAGE_NAME }} > credential-service-staging.tar
+
+    - name: Upload build image as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: credential-service-staging
+        path: credential-service-staging.tar
