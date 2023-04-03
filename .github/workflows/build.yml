@@ -5,7 +5,9 @@ defaults:
   run:
     shell: bash
 
+
 jobs:
+
   build-docker:
     name: "Build Docker image"
     runs-on: ubuntu-latest
@@ -21,7 +23,7 @@ jobs:
         with:
           install: true
           version: latest
-      
+    
       - name: Configure Docker image metadata
         id: meta
         uses: docker/metadata-action@v4
@@ -33,7 +35,7 @@ jobs:
             type=sha,format=long
 
       - name: Build image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           context: .
           file: Dockerfile
@@ -43,7 +45,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=min
-      
+
       - name: Save Docker image
         run:  docker save ${{ env.IMAGE_NAME }} > credential-service-staging.tar
 
