@@ -12,8 +12,7 @@
 		"start": "node dist/index.js",
 		"format": "prettier --write  '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
 		"lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
-		"test": "jest --config jestconfig.json --verbose",
-		"analyze": "webpack --json > stats.json && webpack-bundle-analyzer stats.json"
+		"test": "jest --config jestconfig.json --verbose"
 	},
 	"eslintConfig": {
 		"root": true,
