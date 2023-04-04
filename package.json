@@ -8,7 +8,7 @@
 	"author": "Cheqd Foundation Limited (https://github.com/cheqd)",
 	"repository": "https://github.com/cheqd/credential-service.git",
 	"scripts": {
-		"build": "esbuild src/index.ts --platform=node --bundle --minify --outdir=dist --external:swagger-ui-express --external:pg-native",
+		"build": "esbuild src/index.ts --platform=node --bundle --minify --outdir=dist --external:swagger-ui-express --external:pg-native --external:@veramo/credential-ld",
 		"start": "node dist/index.js",
 		"format": "prettier --write  '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
 		"lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
@@ -31,6 +31,7 @@
 	"dependencies": {
 		"@cheqd/did-provider-cheqd": "file:./cheqd-did-provider-cheqd-3.0.4-develop.6.tgz",
 		"@veramo/core": "^5.1.2",
+		"@veramo/credential-ld": "4.3.0",
 		"@veramo/credential-w3c": "^5.1.2",
 		"@veramo/data-store": "^5.1.2",
 		"@veramo/did-manager": "^5.1.2",
@@ -46,6 +47,7 @@
 		"helmet": "^6.0.1",
 		"node-cache": "^5.1.2",
 		"pg": "^8.10.0",
+		"pg-connection-string": "^2.5.0",
 		"swagger-ui-express": "^4.6.1"
 	},
 	"devDependencies": {
@@ -76,7 +78,7 @@
 		"semantic-release": "^19.0.5",
 		"ts-jest": "^29.0.3",
 		"ts-loader": "^9.4.2",
-		"typescript": "^4.9.4",
+		"typescript": "^4.9.5",
 		"util": "^0.12.5"
 	},
 	"publishConfig": {

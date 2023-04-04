@@ -24,13 +24,14 @@ import { DataSource } from 'typeorm'
 
 import { cheqdDidRegex, DefaultRPCUrl } from '../types/types'
 import { CheqdNetwork } from '@cheqd/sdk'
+import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
+import { parse } from 'pg-connection-string'
 
 require('dotenv').config()
 
 const { 
-  ISSUER_ID_PRIVATE_KEY_HEX,
-  ISSUER_ID_PUBLIC_KEY_HEX,
   ISSUER_ID,
+  ISSUER_DATABASE_URL,
   ISSUER_SECRET_KEY,
   MAINNET_RPC_URL,
   TESTNET_RPC_URL,
@@ -48,16 +49,20 @@ export class Identity {
   }
 
   init_agent(): TAgent<any> {
+    const config = parse(ISSUER_DATABASE_URL)
+    if(!(config.host && config.port && config.database)) {
+        throw new Error(`Error: Invalid Database url`)
+    }
     const dbConnection = new DataSource({
       type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'mypassword',
-      database: 'postgres',
+      host: config.host,
+      port: Number(config.port),
+      username: config.user,
+      password: config.password,
+      database: config.database,
+      ssl: config.ssl ? true : false,
       migrations,
       entities: Entities,
-      ssl: false,
       logging: ['error', 'info', 'warn']
     })
     return createAgent<IDIDManager & IKeyManager & IDataStore & IResolver>({
@@ -98,6 +103,10 @@ export class Identity {
           })
         }),
         new CredentialPlugin(),
+        new CredentialIssuerLD({
+            contextMaps: [LdDefaultContexts],
+            suites: [new VeramoEd25519Signature2018()]
+        })
       ]
     })
   }
@@ -140,16 +149,20 @@ export class Identity {
     return await this.agent.resolveDid(did)
   }
 
-  async importDid(): Promise<IIdentifier> {
+  async getDid(did: string) {
+    return await this.agent.didManagerGet({did})
+  }
+
+  async importDid(did: string, privateKeyHex: string, publicKeyHex: string): Promise<IIdentifier> {
     if (!this.agent) throw new Error('No initialised agent found.')
 
     const [kms] = await this.agent.keyManagerGetKeyManagementSystems()
 
-    if(!ISSUER_ID.match(cheqdDidRegex)){
-        throw new Error('Invalid ISSUER_ID')
+    if(!did.match(cheqdDidRegex)){
+        throw new Error('Invalid DID')
     }
 
-    const key: MinimalImportableKey = { kms: kms, type: 'Ed25519', kid: v4(), privateKeyHex: ISSUER_ID_PRIVATE_KEY_HEX, publicKeyHex: ISSUER_ID_PUBLIC_KEY_HEX }
+    const key: MinimalImportableKey = { kms: kms, type: 'Ed25519', kid: v4(), privateKeyHex, publicKeyHex }
 
     const identifier: IIdentifier = await this.agent.didManagerImport({ keys: [key], did: ISSUER_ID, controllerKeyId: key.kid } as MinimalImportableIdentifier)
 

@@ -114,6 +114,8 @@ export interface CredentialRequest {
   '@context'?: string[]
   type?: string[]
   expirationDate?: DateType
+  issuerDid: string
+  format: 'jsonld' | 'jwt'
 }
 
 export type GenericAuthUser = Record<string, any> | null | undefined

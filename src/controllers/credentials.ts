@@ -2,20 +2,22 @@ import type { Request, Response } from 'express'
 
 import { Credentials } from '../services/credentials'
 import { check, validationResult } from 'express-validator'
+import { Identity } from '../services/identity'
 
 export class CredentialController {
 
   public static issueValidator = [
-    check('subjectDid')
-    .exists().withMessage('subjectDid is required')
-    .isString().withMessage('subjectDid should be a string')
-    .contains('did:').withMessage('subjectDid should be a DID'),
+    check(['subjectDid', 'issuerDid'])
+    .exists().withMessage('DID is required')
+    .isString().withMessage('DID should be a string')
+    .contains('did:').withMessage('Invalid DID'),
     check('attributes')
     .exists().withMessage('attributes are required')
     .isObject().withMessage('attributes should be an object'),
     check('type').optional().isArray().withMessage('type should be a string array'),
     check('@context').optional().isArray().withMessage('@context should be a string array'),
-    check('expirationDate').optional().isDate().withMessage('Invalid expiration date')
+    check('expirationDate').optional().isDate().withMessage('Invalid expiration date'),
+    check('format').optional().isString().withMessage('Invalid credential format')
   ]
 
   public static verifyValidator = [
@@ -28,6 +30,7 @@ export class CredentialController {
       return response.status(400).json({ error: result.array()[0].msg })
     }
     try {
+      await Identity.instance.getDid(request.body.issuerDid)
       response.json(await Credentials.instance.issue_credential(request.body))
     } catch (error) {
       response.status(500).json({

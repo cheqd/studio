@@ -20,12 +20,10 @@ export class Credentials {
     public static instance = new Credentials()
 
     async issue_credential(request: CredentialRequest): Promise<Credential> {
-		const issuer_id = await this.agent.load_issuer_did()
-
         const credential: CredentialPayload = {
             '@context': [ ...request['@context'] || [], ...VC_CONTEXT ],
             type: [ ...request.type || [], VC_TYPE ],
-            issuer: { id: issuer_id.did },
+            issuer: { id: request.issuerDid },
             credentialSubject: {
                 id: request.subjectDid,
                 type: undefined
@@ -43,7 +41,7 @@ export class Credentials {
 			{
 				save: false,
 				credential,
-				proofFormat: VC_PROOF_FORMAT,
+				proofFormat: request.format || VC_PROOF_FORMAT,
 				removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS
 			}
 		)
@@ -67,16 +65,4 @@ export class Credentials {
         delete(result.payload)
         return result
 	}
-
-	// private get_network_ns_config(issuer_id: string): NetworkType {
-	// 	// did:cheqd:<network>:<uuid>
-	// 	const parts = issuer_id.split(':')
-	// 	const ns = parts[2]
-
-	// 	return this.validateNetworkNS(ns as NetworkType)
-	// }
-
-	// validateNetworkNS(ns: NetworkType): NetworkType {
-	// 	return ns
-	// }
 }

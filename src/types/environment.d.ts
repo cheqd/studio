@@ -15,9 +15,9 @@ declare global {
 	  TWITTER_RESOURCE_ID: string
 	  EVENTBRITE_RESOURCE_ID: string
 	  IIW_LOGO_RESOURCE_ID: string
-      ALLOWED_ORIGINS: string[] | undefined
+      ALLOWED_ORIGINS: string | undefined
       ISSUER_DATABASE_URL: string
-      ISSUER_SECRET_KEY: string,
+      ISSUER_SECRET_KEY: string
       FEE_PAYER_MNEMONIC_MAINNET: string
       FEE_PAYER_MNENONIC_TESTNET: string
     }

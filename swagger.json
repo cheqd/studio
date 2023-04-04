@@ -19,7 +19,7 @@
         }
     ],
     "paths": {
-        "/dids/create": {
+        "/did": {
             "post": {
                 "tags": [
                     "DID"
@@ -81,9 +81,7 @@
                         }
                     }
                 }
-            }
-        },
-        "/dids": {
+            },
             "get": {
                 "tags": [
                     "DID"
@@ -133,7 +131,7 @@
                 }
             }
         },
-        "/dids/{did}": {
+        "/did/{did}": {
             "get": {
                 "tags": [
                     "DID"
@@ -475,6 +473,10 @@
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
+                    "issuerDid": {
+                        "description": "This input field is the Issuer's DID",
+                        "type": "string"
+                    },
                     "subjectDid": {
                         "description": "This input field is the holder's DID",
                         "type": "string"
@@ -496,24 +498,33 @@
                     },
                     "expirationDate": {
                         "type": "string"
+                    },
+                    "format": {
+                        "type": "string",
+                        "enum": [
+                            "jwt",
+                            "lds"
+                        ]
                     }
                 },
                 "required": [
-                    "subjectId",
+                    "issuerDid",
+                    "subjectDid",
                     "attributes"
                 ],
                 "example": {
+                    "issuerDid": "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09",
                     "subjectDid": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
                     "attributes": {
                         "gender": "male",
-                        "name": "Bob",
-                        "@context": [
-                            "https://schema.org/Person"
-                        ],
-                        "type": [
-                            "Person"
-                        ]
-                    }
+                        "name": "Bob"
+                    },
+                    "@context": [
+                        "https://schema.org/Person"
+                    ],
+                    "type": [
+                        "Person"
+                    ]
                 }
             },
             "Credential": {
