@@ -61,8 +61,8 @@ The application expects the following environment variables to be defined for th
 2. `ISSUER_SECRET_KEY`: A secret key for the veramo wallet
 3. `PORT`: Port number for the credential service (optional)
 4. `FEE_PAYER_MNENONIC_TESTNET`: Mnemonic for the issuer's Cosmos account to be used for testnet.
-4. `FEE_PAYER_MNENONIC_MAINNET`: Mnemonic for the issuer's Cosmos account to be used for mainnet.
-5. `NETWORK_RPC_URL`: Optional RPC URL for a node on cheqd network, e.g., `rpc.cheqd.net`
+5. `FEE_PAYER_MNENONIC_MAINNET`: Mnemonic for the issuer's Cosmos account to be used for mainnet.
+6. `NETWORK_RPC_URL`: Optional RPC URL for a node on cheqd network, e.g., `rpc.cheqd.net`
 
 ### Run
 
@@ -72,6 +72,7 @@ Run a postgres instance
 docker pull postgres
 docker run --name some-postgres -e POSTGRES_PASSWORD=mysecretpassword -d postgres
 ```
+
 Construct the postgres url and configure the env variables mentioned above
 
 Once configured, the app can be run using NPM:

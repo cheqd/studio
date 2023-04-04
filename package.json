@@ -29,7 +29,7 @@
 		"README.md"
 	],
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "file:./cheqd-did-provider-cheqd-3.0.4-develop.6.tgz",
+		"@cheqd/did-provider-cheqd": "^3.1.0-develop.1",
 		"@veramo/core": "^5.1.2",
 		"@veramo/credential-ld": "4.3.0",
 		"@veramo/credential-w3c": "^5.1.2",
