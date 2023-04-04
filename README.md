@@ -57,13 +57,22 @@ npm run build
 
 The application expects the following environment variables to be defined for the app to function:
 
-1. `ISSUER_ID_PRIVATE_KEY_HEX`: Hex-encoded private key to be used by the identity credential issuer
-2. `ISSUER_ID_PUBLIC_KEY_HEX`: Hex-encoded public key to be used by the identity credential issuer
-3. `ISSUER_ID`: Fully-qualified DID for the issuer, e.g., `did:cheqd:mainnet:zAXwwqZzhCZA1L77ZBa8fhVNjL9MQCHX`
-4. `COSMOS_PAYER_MNEMONIC`: Mnemonic for the issuer's Cosmos account. This currently doesn't require any balances at the moment, but it required for the library to function.
+1. `ISSUER_DATABASE_URL`: The postgres database url e.g. `postgres://<user>:<password>@<host>:<port>/<database>?<query>`
+2. `ISSUER_SECRET_KEY`: A secret key for the veramo wallet
+3. `PORT`: Port number for the credential service (optional)
+4. `FEE_PAYER_MNENONIC_TESTNET`: Mnemonic for the issuer's Cosmos account to be used for testnet.
+4. `FEE_PAYER_MNENONIC_MAINNET`: Mnemonic for the issuer's Cosmos account to be used for mainnet.
 5. `NETWORK_RPC_URL`: Optional RPC URL for a node on cheqd network, e.g., `rpc.cheqd.net`
 
 ### Run
+
+Run a postgres instance
+
+```bash
+docker pull postgres
+docker run --name some-postgres -e POSTGRES_PASSWORD=mysecretpassword -d postgres
+```
+Construct the postgres url and configure the env variables mentioned above
 
 Once configured, the app can be run using NPM:
 
