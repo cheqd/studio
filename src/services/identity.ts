@@ -20,12 +20,12 @@ import { KeyStore, DIDStore, PrivateKeyStore, migrations, Entities } from '@vera
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 import { v4 } from 'uuid'
-import { DataSource } from 'typeorm'
 
 import { cheqdDidRegex, DefaultRPCUrl } from '../types/types'
 import { CheqdNetwork } from '@cheqd/sdk'
 import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 import { parse } from 'pg-connection-string'
+import { Connection } from '../database/connection/connection'
 
 require('dotenv').config()
 
@@ -53,18 +53,7 @@ export class Identity {
     if(!(config.host && config.port && config.database)) {
         throw new Error(`Error: Invalid Database url`)
     }
-    const dbConnection = new DataSource({
-      type: 'postgres',
-      host: config.host,
-      port: Number(config.port),
-      username: config.user,
-      password: config.password,
-      database: config.database,
-      ssl: config.ssl ? true : false,
-      migrations,
-      entities: Entities,
-      logging: ['error', 'info', 'warn']
-    })
+    const dbConnection = Connection.instance.dbConnection
     return createAgent<IDIDManager & IKeyManager & IDataStore & IResolver>({
       plugins: [
         new KeyManager({

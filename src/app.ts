@@ -7,6 +7,7 @@ import { CORS_ERROR_MSG } from './types/constants'
 import * as swagger from 'swagger-ui-express'
 import * as swaggerJson from '../swagger.json'
 import { IssuerController } from './controllers/issuer'
+import { Connection } from './database/connection/connection'
 
 require('dotenv').config()
 
@@ -17,6 +18,7 @@ class App {
     this.express = express()
     this.middleware()
     this.routes()
+    // Connection.instance.connect()
   }
 
   private middleware() {
