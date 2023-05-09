@@ -2,26 +2,35 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 
 @Entity('customers')
 export class CustomerEntity {
-    @Column('string')
-    customerId
+    @PrimaryGeneratedColumn('uuid')
+    customerId!: string
 
-    @Column('string', {array: true})
-    kids
+    @Column('text')
+    account!: string
 
-    @Column('string', {array: true})
-    dids: string[]
+    @Column('text')
+    address!: string
+    
+    @Column('text', {array: true, default: []})
+    kids!: string[]
 
-    @Column('string', {array: true})
-    claimIds: string[]
+    @Column('text', {array: true, default: []})
+    dids!: string[]
 
-    @Column('string', {array: true})
-    presentationIds: string[]
+    @Column('text', {array: true, default: []})
+    claimIds!: string[]
 
-    constructor({ customerId, kids=[], dids=[], claimIds=[], presentationIds=[] }: { customerId: string, kids?: string[], dids?: string[], claimIds?: string[], presentationIds?: string[]}) {
-        this.customerId = customerId
-        this.kids = kids
-        this.dids = dids
-        this.claimIds = claimIds
-        this.presentationIds = presentationIds
+    @Column('text', {array: true, default: []})
+    presentationIds!: string[]
+
+
+    constructor(customerId: string, account: string, address: string) {
+        this.customerId= customerId
+        this.account = account
+        this.address = address
+        this.kids= []
+        this.dids= []
+        this.claimIds= []
+        this.presentationIds= []
     }
 }

@@ -2,7 +2,7 @@ import type { Request, Response } from 'express'
 
 import { Credentials } from '../services/credentials'
 import { check, validationResult } from 'express-validator'
-import { Identity } from '../services/identity'
+import { CustomerService } from '../services/customer'
 
 export class CredentialController {
 
@@ -30,8 +30,12 @@ export class CredentialController {
       return response.status(400).json({ error: result.array()[0].msg })
     }
     try {
-      await Identity.instance.getDid(request.body.issuerDid)
-      response.json(await Credentials.instance.issue_credential(request.body))
+      if (!await CustomerService.instance.find(response.locals.customerId, {did: request.body.issuerDid})) {
+        response.status(400).json({
+            error: `Issuer DID ${request.body.issuerDid} not found`
+        })
+      }
+      response.status(200).json(await Credentials.instance.issue_credential(request.body))
     } catch (error) {
       response.status(500).json({
         error: `Internal error: ${error}`
@@ -49,12 +53,11 @@ export class CredentialController {
       return response.status(400).json({ error: result.array()[0].msg })
     }
     try {
-		  return response.json(await Credentials.instance.verify_credentials(request.body.credential))
+		  return response.status(200).json(await Credentials.instance.verify_credentials(request.body.credential))
     } catch (error) {
       response.status(500).json({
         error: `Internal error: ${error}`
       })
     }
   }
-
 }

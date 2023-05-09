@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { NextFunction, Request, Response } from 'express'
 import Helmet from 'helmet'
 import { CredentialController } from './controllers/credentials'
 import { StoreController } from './controllers/store'
@@ -8,6 +8,8 @@ import * as swagger from 'swagger-ui-express'
 import * as swaggerJson from '../swagger.json'
 import { IssuerController } from './controllers/issuer'
 import { Connection } from './database/connection/connection'
+import { CustomerController } from './controllers/customer'
+import { Authentication } from './middleware/authentication'
 
 require('dotenv').config()
 
@@ -18,7 +20,7 @@ class App {
     this.express = express()
     this.middleware()
     this.routes()
-    // Connection.instance.connect()
+    Connection.instance.connect()
   }
 
   private middleware() {
@@ -36,6 +38,9 @@ class App {
         }
     }))
     this.express.use('/api-docs', swagger.serve, swagger.setup(swaggerJson))
+    this.express.use(Authentication.expressJWT)
+    this.express.use(Authentication.authenticate)
+    this.express.use(Authentication.handleError)
   }
 
   private routes() {
@@ -59,8 +64,13 @@ class App {
     app.get(`${URL_PREFIX}/did`, new IssuerController().getDids)
     app.get(`${URL_PREFIX}/did/:did`, new IssuerController().getDids)
 
+    // customer
+    app.post(`${URL_PREFIX}/customer`, new CustomerController().create)
+    app.put(`${URL_PREFIX}/customer`, new CustomerController().update)
+    app.get(`${URL_PREFIX}/customer`, new CustomerController().get)
+
     // 404 for all other requests
-    app.all('*', (req, res) => res.status(400).send('Bad request'))
+    app.all('*', (req, res) => res.status(400).send('Bad requestssss'))
   }
   
 }

@@ -3,6 +3,8 @@ import { DataSource } from 'typeorm'
 import { migrations, Entities } from '@veramo/data-store'
 import { CustomerEntity } from '../entities/customer.entity'
 
+require('dotenv').config()
+
 const { ISSUER_DATABASE_URL} = process.env
 
 export class Connection {
@@ -25,7 +27,6 @@ export class Connection {
             ssl: config.ssl ? true : false,
             migrations,
             entities: [...Entities, CustomerEntity],
-            synchronize: true,
             logging: ['error', 'info', 'warn']
           })
     }

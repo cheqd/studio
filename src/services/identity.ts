@@ -16,7 +16,7 @@ import { DIDManager } from '@veramo/did-manager'
 import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { KeyManager } from '@veramo/key-manager'
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
-import { KeyStore, DIDStore, PrivateKeyStore, migrations, Entities } from '@veramo/data-store'
+import { KeyStore, DIDStore, PrivateKeyStore } from '@veramo/data-store'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 import { v4 } from 'uuid'
@@ -24,24 +24,20 @@ import { v4 } from 'uuid'
 import { cheqdDidRegex, DefaultRPCUrl } from '../types/types'
 import { CheqdNetwork } from '@cheqd/sdk'
 import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
-import { parse } from 'pg-connection-string'
 import { Connection } from '../database/connection/connection'
 
 require('dotenv').config()
 
 const { 
   ISSUER_ID,
-  ISSUER_DATABASE_URL,
   ISSUER_SECRET_KEY,
   MAINNET_RPC_URL,
   TESTNET_RPC_URL,
-  FEE_PAYER_MNEMONIC_MAINNET,
-  FEE_PAYER_MNENONIC_TESTNET,
 } = process.env
 
 export class Identity {
   agent: TAgent<any>
-
+  privateStore?: PrivateKeyStore
   public static instance = new Identity()
 
   constructor() {
@@ -49,18 +45,35 @@ export class Identity {
   }
 
   init_agent(): TAgent<any> {
-    const config = parse(ISSUER_DATABASE_URL)
-    if(!(config.host && config.port && config.database)) {
-        throw new Error(`Error: Invalid Database url`)
-    }
     const dbConnection = Connection.instance.dbConnection
+    this.privateStore = new PrivateKeyStore(dbConnection, new SecretBox(ISSUER_SECRET_KEY))
+    return createAgent<IKeyManager>({
+      plugins: [
+        new KeyManager({
+          store: new KeyStore(dbConnection),
+          kms: {
+            local: new KeyManagementSystem(
+              this.privateStore
+            )
+          }
+        })
+      ]
+    })
+  }
+
+  async create_agent(kid: string): Promise<TAgent<any>> {
+    const dbConnection = Connection.instance.dbConnection
+    const privateKey = (await this.getPrivateKey(kid)).privateKeyHex
+    if (!privateKey || !this.privateStore) {
+        throw new Error(`No keys is initialized`)
+    }
     return createAgent<IDIDManager & IKeyManager & IDataStore & IResolver>({
       plugins: [
         new KeyManager({
           store: new KeyStore(dbConnection),
           kms: {
             local: new KeyManagementSystem(
-              new PrivateKeyStore(dbConnection, new SecretBox(ISSUER_SECRET_KEY))
+              this.privateStore
             )
           }
         }),
@@ -71,7 +84,7 @@ export class Identity {
             'did:cheqd:mainnet': new CheqdDIDProvider(
               {
                 defaultKms: 'local',
-                cosmosPayerSeed: FEE_PAYER_MNEMONIC_MAINNET,
+                cosmosPayerSeed: privateKey,
                 networkType: CheqdNetwork.Mainnet as any,
                 rpcUrl: MAINNET_RPC_URL || DefaultRPCUrl.Mainnet,
               }
@@ -79,7 +92,7 @@ export class Identity {
             'did:cheqd:testnet': new CheqdDIDProvider(
               {
                 defaultKms: 'local',
-                cosmosPayerSeed: FEE_PAYER_MNENONIC_TESTNET,
+                cosmosPayerSeed: privateKey,
                 networkType: CheqdNetwork.Testnet as any,
                 rpcUrl: TESTNET_RPC_URL || DefaultRPCUrl.Testnet,
               }
@@ -100,11 +113,11 @@ export class Identity {
     })
   }
 
-  async createKey() : Promise<ManagedKeyInfo> {
+  async createKey(type?: 'Ed25519' | 'Secp256k1') : Promise<ManagedKeyInfo> {
     if (!this.agent) throw new Error('No initialised agent found.')
     const [kms] = await this.agent.keyManagerGetKeyManagementSystems()
     const key =  await this.agent.keyManagerCreate({
-      type: 'Ed25519',
+      type: type || 'Ed25519',
       kms,
     })
     return key
@@ -114,12 +127,18 @@ export class Identity {
     return await this.agent.keyManagerGet({ kid })
   }
 
-  async createDid(network: string, didDocument: DIDDocument, alias: string = v4()): Promise<IIdentifier> {
-    if (!this.agent) throw new Error('No initialised agent found.')
+  private async getPrivateKey(kid: string) {
+    return await this.privateStore!.getKey({ alias: kid })
+  }
 
-    const [kms] = await this.agent.keyManagerGetKeyManagementSystems()
+  async createDid(network: string, didDocument: DIDDocument, alias: string = v4(), agentId?: string): Promise<IIdentifier> {
+    try {
+    const agentService = agentId ? await this.create_agent(agentId) : this.agent
+    if (!agentService) throw new Error('No initialised agent found.')
 
-    const identifier: IIdentifier = await this.agent.didManagerCreate({
+    const [kms] = await agentService.keyManagerGetKeyManagementSystems()
+
+    const identifier: IIdentifier = await agentService.didManagerCreate({
       alias,
       provider: `did:cheqd:${network}`,
       kms,
@@ -128,6 +147,9 @@ export class Identity {
       }
     })
     return identifier
+    } catch (error) {
+        throw new Error(`${error}`)
+    }
   }
 
   async listDids() {

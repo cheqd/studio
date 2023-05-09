@@ -141,3 +141,8 @@ export enum NetworkType {
 export enum DefaultResolverUrl {
   Cheqd = "https://resolver.cheqd.net"
 }
+
+export type SpecValidationResult = {
+  valid: boolean
+  error?: string
+}
