@@ -2,12 +2,12 @@ import type { DIDDocument } from 'did-resolver'
 import type { MethodSpecificIdAlgo, CheqdNetwork } from '@cheqd/sdk'
 
 import { VerificationMethods, createVerificationKeys, createDidVerificationMethod, createDidPayload } from '@cheqd/sdk'
-import { SpecValidationResult } from '../types/types'
-
-import { fromString } from 'uint8arrays'
 import { rawSecp256k1PubkeyToRawAddress } from '@cosmjs/amino'
 import { toBech32 } from '@cosmjs/encoding'
 import { publicKeyConvert } from 'secp256k1'
+import { fromString } from 'uint8arrays'
+
+import { SpecValidationResult } from '../types/types'
 
 export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecValidationResult {
   // id is required, validated on both compile and runtime

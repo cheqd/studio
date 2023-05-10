@@ -26,6 +26,11 @@
                 ],
                 "summary": "Create a DID",
                 "description": "<p>This endpoint creates a DID by taking DID document as an input.</p>",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -88,6 +93,11 @@
                 ],
                 "summary": "Fetch DIDs from wallet",
                 "description": "<p>This endpoint creates a DID by taking DID document as an input.</p>",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "The request was successful",
@@ -138,6 +148,11 @@
                 ],
                 "summary": "Fetch DIDs from wallet",
                 "description": "<p>This endpoint creates a DID by taking DID document as an input.</p>",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "in": "path",
@@ -195,6 +210,11 @@
                 ],
                 "summary": "Issue a JWT credential",
                 "description": "<p>This endpoint creates a DID. As input it takes the list of attributes, subjectDid, context and expiration date of the credential to be issued.</p>",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -252,6 +272,11 @@
                 "summary": "Verify a JWT credential",
                 "description": "<p>This endpoint verifies the JWT credential. As input it takes the entire credential itself or just the JWT string</p>",
                 "operationId": "verify",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -305,9 +330,124 @@
                     }
                 }
             }
+        },
+        "/customer": {
+            "post": {
+                "tags": [
+                    "Customer"
+                ],
+                "summary": "Create a client",
+                "description": "<p>This endpoint verifies the JWT token and creates a customer if they don't exist</p>",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Customer"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Customer"
+                ],
+                "summary": "Create a client",
+                "description": "<p>This endpoint verifies the JWT token and creates a customer if they don't exist</p>",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Customer"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        },
         "schemas": {
             "DidResult": {
                 "type": "object",
@@ -602,12 +742,59 @@
                     }
                 }
             },
+            "Customer": {
+                "type": "object",
+                "properties": {
+                    "customerId": {
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": "string"
+                    },
+                    "kids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "dids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "claimIds": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "presentationIds": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
             "InvalidRequest": {
                 "type": "object",
                 "properties": {
                     "error": {
                         "type": "string"
                     }
+                }
+            },
+            "UnauthorizedError": {
+                "description": "Access token is missing or invalid",
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "error": "Unauthorized Error"
                 }
             },
             "IVerifyResult": {

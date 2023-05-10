@@ -1,5 +1,5 @@
-import { ContextType } from "@veramo/core-types"
-import { W3CVerifiableCredential } from "@veramo/core"
+import { ContextType } from '@veramo/core-types'
+import { W3CVerifiableCredential } from '@veramo/core'
 
 export type ErrorResponse = {
   name: string
@@ -120,7 +120,7 @@ export interface CredentialRequest {
 
 export type GenericAuthUser = Record<string, any> | null | undefined
 
-export type Credential = Omit<VerifiableCredential, "vc">
+export type Credential = Omit<VerifiableCredential, 'vc'>
 
 const UUID = '([a-z,0-9,-]{36,36})'
 const ID_CHAR = `(?:[a-zA-Z0-9]{21,22}|${UUID})`
@@ -134,12 +134,12 @@ export enum DefaultRPCUrl {
 }
 
 export enum NetworkType {
-  Mainnet = "mainnet",
-  Testnet = "testnet"
+  Mainnet = 'mainnet',
+  Testnet = 'testnet'
 }
 
 export enum DefaultResolverUrl {
-  Cheqd = "https://resolver.cheqd.net"
+  Cheqd = 'https://resolver.cheqd.net'
 }
 
 export type SpecValidationResult = {

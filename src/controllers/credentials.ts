@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express'
 
-import { Credentials } from '../services/credentials'
 import { check, validationResult } from 'express-validator'
+
+import { Credentials } from '../services/credentials'
 import { CustomerService } from '../services/customer'
 
 export class CredentialController {

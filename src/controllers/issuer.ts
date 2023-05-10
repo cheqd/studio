@@ -1,10 +1,12 @@
-import { Request, Response } from 'express'
-import { Identity } from '../services/identity'
-import { CustomerService } from '../services/customer'
-import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers'
+import type { Request, Response } from 'express'
+
 import { DIDDocument } from 'did-resolver'
 import { v4 } from 'uuid'
 import { MethodSpecificIdAlgo } from '@cheqd/sdk'
+
+import { Identity } from '../services/identity'
+import { CustomerService } from '../services/customer'
+import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers'
 import { CustomerEntity } from '../database/entities/customer.entity'
 
 export class IssuerController {

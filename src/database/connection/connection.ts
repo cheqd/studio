@@ -1,11 +1,12 @@
 import { parse } from 'pg-connection-string'
 import { DataSource } from 'typeorm'
 import { migrations, Entities } from '@veramo/data-store'
+
 import { CustomerEntity } from '../entities/customer.entity'
 
 require('dotenv').config()
 
-const { ISSUER_DATABASE_URL} = process.env
+const { ISSUER_DATABASE_URL, ISSUER_DATABASE_SYNCHRONIZE } = process.env
 
 export class Connection {
     public dbConnection : DataSource
@@ -26,6 +27,7 @@ export class Connection {
             database: config.database,
             ssl: config.ssl ? true : false,
             migrations,
+            synchronize: ISSUER_DATABASE_SYNCHRONIZE || true,
             entities: [...Entities, CustomerEntity],
             logging: ['error', 'info', 'warn']
           })

@@ -29,10 +29,10 @@ import { Connection } from '../database/connection/connection'
 require('dotenv').config()
 
 const { 
-  ISSUER_ID,
   ISSUER_SECRET_KEY,
   MAINNET_RPC_URL,
   TESTNET_RPC_URL,
+  RESOLVER_URL,
 } = process.env
 
 export class Identity {
@@ -101,7 +101,7 @@ export class Identity {
         }),
         new DIDResolverPlugin({
           resolver: new Resolver({
-            ...CheqdDidResolver() as ResolverRegistry
+            ...CheqdDidResolver({ url: RESOLVER_URL }) as ResolverRegistry
           })
         }),
         new CredentialPlugin(),
@@ -175,7 +175,7 @@ export class Identity {
 
     const key: MinimalImportableKey = { kms: kms, type: 'Ed25519', kid: v4(), privateKeyHex, publicKeyHex }
 
-    const identifier: IIdentifier = await this.agent.didManagerImport({ keys: [key], did: ISSUER_ID, controllerKeyId: key.kid } as MinimalImportableIdentifier)
+    const identifier: IIdentifier = await this.agent.didManagerImport({ keys: [key], did, controllerKeyId: key.kid } as MinimalImportableIdentifier)
 
     return identifier
   }

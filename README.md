@@ -62,7 +62,9 @@ The application expects the following environment variables to be defined for th
 3. `PORT`: Port number for the credential service (optional)
 4. `FEE_PAYER_MNENONIC_TESTNET`: Mnemonic for the issuer's Cosmos account to be used for testnet.
 5. `FEE_PAYER_MNENONIC_MAINNET`: Mnemonic for the issuer's Cosmos account to be used for mainnet.
-6. `NETWORK_RPC_URL`: Optional RPC URL for a node on cheqd network, e.g., `rpc.cheqd.net`
+6. `MAINNET_RPC_URL`: Optional RPC URL for a node on cheqd mainnet, e.g., `https://rpc.cheqd.net`
+7. `TESTNET_RPC_URL`: Optional RPC URL for a node on cheqd testnet, e.g., `https://rpc.cheqd.network`
+8. `ISSUER_DATABASE_SYNCHRONIZE`: Should be set to false the when the database is already created, its true by default
 
 ### Run
 

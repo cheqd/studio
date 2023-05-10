@@ -1,15 +1,16 @@
-import express, { NextFunction, Request, Response } from 'express'
+import express from 'express'
 import Helmet from 'helmet'
+import cors from 'cors'
+import * as swagger from 'swagger-ui-express'
+
 import { CredentialController } from './controllers/credentials'
 import { StoreController } from './controllers/store'
-import cors from 'cors'
-import { CORS_ERROR_MSG } from './types/constants'
-import * as swagger from 'swagger-ui-express'
-import * as swaggerJson from '../swagger.json'
 import { IssuerController } from './controllers/issuer'
-import { Connection } from './database/connection/connection'
 import { CustomerController } from './controllers/customer'
 import { Authentication } from './middleware/authentication'
+import { Connection } from './database/connection/connection'
+import { CORS_ERROR_MSG } from './types/constants'
+import * as swaggerJson from '../swagger.json'
 
 require('dotenv').config()
 
@@ -66,7 +67,6 @@ class App {
 
     // customer
     app.post(`${URL_PREFIX}/customer`, new CustomerController().create)
-    app.put(`${URL_PREFIX}/customer`, new CustomerController().update)
     app.get(`${URL_PREFIX}/customer`, new CustomerController().get)
 
     // 404 for all other requests

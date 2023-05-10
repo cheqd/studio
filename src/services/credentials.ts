@@ -1,9 +1,11 @@
+import { IVerifyResult, TAgent, W3CVerifiableCredential } from '@veramo/core'
+
 import {
-  IVerifyResult,
-  TAgent,
-  W3CVerifiableCredential
-} from '@veramo/core'
-import { VC_CONTEXT, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS, VC_TYPE } from '../types/constants'
+  VC_CONTEXT,
+  VC_PROOF_FORMAT,
+  VC_REMOVE_ORIGINAL_FIELDS,
+  VC_TYPE
+} from '../types/constants'
 import { CredentialPayload, CredentialRequest, VerifiableCredential, Credential } from '../types/types'
 import { Identity } from './identity'
 

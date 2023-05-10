@@ -1,5 +1,5 @@
-import { Request, Response } from "express";
-import { LocalStore } from "../services/store";
+import { Request, Response } from 'express';
+import { LocalStore } from '../services/store';
 
 export class StoreController {
     
@@ -19,7 +19,7 @@ export class StoreController {
             })
         } else {
             return response.status(400).json({
-                error: "Not Found"
+                error: 'Not Found'
             })
         }
     }
