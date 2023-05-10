@@ -15,7 +15,7 @@ export class CustomerService {
 
     public async create(customerId: string, kid: string) {
         const customer = new CustomerEntity(customerId, kid, getCosmosAccount(kid))
-        return await this.customerRepository.save(customer)
+        return await this.customerRepository.insert(customer)
     }
 
     public async update(customerId: string, { kids=[], dids=[], claimIds=[], presentationIds=[]} : { kids?: string[], dids?: string[], claimIds?: string[], presentationIds?: string[] }) {

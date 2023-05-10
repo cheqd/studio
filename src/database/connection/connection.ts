@@ -27,7 +27,7 @@ export class Connection {
             database: config.database,
             ssl: config.ssl ? true : false,
             migrations,
-            synchronize: ISSUER_DATABASE_SYNCHRONIZE || true,
+            synchronize: (ISSUER_DATABASE_SYNCHRONIZE === 'true'),
             entities: [...Entities, CustomerEntity],
             logging: ['error', 'info', 'warn']
           })
