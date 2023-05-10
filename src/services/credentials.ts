@@ -43,7 +43,7 @@ export class Credentials {
 			{
 				save: false,
 				credential,
-				proofFormat: request.format || VC_PROOF_FORMAT,
+				proofFormat: VC_PROOF_FORMAT, // TODO: jsonLD request.format || VC_PROOF_FORMAT
 				removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS
 			}
 		)

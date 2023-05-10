@@ -8,7 +8,7 @@
 	"author": "Cheqd Foundation Limited (https://github.com/cheqd)",
 	"repository": "https://github.com/cheqd/credential-service.git",
 	"scripts": {
-		"build": "esbuild src/index.ts --platform=node --bundle --minify --outdir=dist --external:swagger-ui-express --external:pg-native --external:@veramo/credential-ld",
+		"build": "esbuild src/index.ts --platform=node --bundle --minify --outdir=dist --external:swagger-ui-express --external:pg-native",
 		"start": "node dist/index.js",
 		"format": "prettier --write  '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
 		"lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
@@ -33,7 +33,6 @@
 		"@cosmjs/amino": "^0.30.1",
 		"@cosmjs/encoding": "^0.30.1",
 		"@veramo/core": "^5.1.2",
-		"@veramo/credential-ld": "4.3.0",
 		"@veramo/credential-w3c": "^5.1.2",
 		"@veramo/data-store": "^5.1.2",
 		"@veramo/did-manager": "^5.1.2",

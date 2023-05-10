@@ -17,7 +17,7 @@ RUN npm ci
 RUN npm run build
 
 ###############################################################
-###             STAGE 2: Build Miniflare runner             ###
+###             STAGE 2: Build runner             ###
 ###############################################################
 
 FROM node:18-alpine AS runner
@@ -55,10 +55,12 @@ ENV ALLOWED_ORIGINS ${ALLOWED_ORIGINS}
 # We don't have the node_modules directory
 # this image only has the output worker.js file.
 # Install pre-requisites
-RUN npm install swagger-ui-express@4.5.0 @veramo/credential-ld@4.3.0 && \
+RUN npm install swagger-ui-express@4.5.0 && \
     chown -R node:node /home/node/app && \
     apk update && \
-    apk add --no-cache bash ca-certificates
+    apk add --no-cache bash ca-certificates python3 build-base gcc g++ postgresql-dev
+
+RUN npm i pg-native 
 
 # Specify default port
 EXPOSE ${PORT}

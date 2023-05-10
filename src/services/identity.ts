@@ -23,8 +23,10 @@ import { v4 } from 'uuid'
 
 import { cheqdDidRegex, DefaultRPCUrl } from '../types/types'
 import { CheqdNetwork } from '@cheqd/sdk'
-import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 import { Connection } from '../database/connection/connection'
+
+// TODO: for jsonLD
+// import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 
 require('dotenv').config()
 
@@ -105,10 +107,11 @@ export class Identity {
           })
         }),
         new CredentialPlugin(),
-        new CredentialIssuerLD({
-            contextMaps: [LdDefaultContexts],
-            suites: [new VeramoEd25519Signature2018()]
-        })
+        // TODO: JsonLD
+        // new CredentialIssuerLD({
+        //     contextMaps: [LdDefaultContexts],
+        //     suites: [new VeramoEd25519Signature2018()]
+        // })
       ]
     })
   }
