@@ -6,10 +6,7 @@ declare global {
 	  RESOLVER_URL: string
       ALLOWED_ORIGINS: string | undefined
       ISSUER_DATABASE_URL: string
-      ISSUER_DATABASE_SYNCHRONIZE: string
       ISSUER_SECRET_KEY: string
-      FEE_PAYER_MNEMONIC_MAINNET: string
-      FEE_PAYER_MNENONIC_TESTNET: string
     }
   }
 }
