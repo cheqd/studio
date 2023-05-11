@@ -6,8 +6,18 @@ import cors from 'cors'
 import { CORS_ERROR_MSG } from './types/constants'
 import * as swagger from 'swagger-ui-express'
 import * as swaggerJson from '../swagger.json'
+import { LogtoExpressConfig, handleAuthRoutes, withLogto } from '@logto/express'
+import cookieParser from 'cookie-parser';
+import session from 'express-session';
 
 require('dotenv').config()
+
+const logToConfig: LogtoExpressConfig = {
+    appId: process.env.PUBLIC_LOGTO_APP_ID,
+    appSecret: process.env.PUBLIC_LOGTO_APP_SECRET,
+    endpoint: process.env.PUBLIC_LOGTO_ENDPOINT, // E.g. http://localhost:3001
+    baseUrl: "localhost:8787", // E.g. http://localhost:3000
+};
 
 class App {
   public express: express.Application
@@ -39,7 +49,38 @@ class App {
     const app = this.express
     const URL_PREFIX = '/1.0/api'
 
-    app.get('/', (req, res) => res.redirect('api-docs'))
+    app.use(cookieParser());
+    app.use(session({ secret: 'qnolk8ttum9legx0n8oq6mfy68givbo8', cookie: { maxAge: 14 * 24 * 60 * 60 } }));
+
+    app.use(handleAuthRoutes(logToConfig));
+
+    app.get('/', (req, res) => {
+      res.setHeader('content-type', 'text/html');
+      res.end(`<div><a href="/logto/sign-in">Sign In</a></div>`);
+    });
+
+    app.post('/logto/sign-in-callback', (req, res) => {
+      res.setHeader('content-type', 'text/html');
+      res.end(`<label>res</label>`)
+      console.log(res);
+    });
+
+    app.get(
+      '/fetch-access-token',
+      withLogto({
+        ...logToConfig,
+        // Fetch access token from remote, this may slow down the response time,
+        // you can also add "resource" if needed.
+        getAccessToken: true,
+      }),
+      (request, response) => {
+        // Get access token here
+        console.log(request.user.accessToken);
+        response.json(request.user);
+      }
+    );
+
+    // app.get('/', (req, res) => res.redirect('api-docs'))
 
     // credentials
     app.post(`${URL_PREFIX}/credentials/issue`, CredentialController.issueValidator, new CredentialController().issue)
@@ -50,7 +91,7 @@ class App {
     app.get(`${URL_PREFIX}/store/:id`, new StoreController().get)
 
     // 404 for all other requests
-    app.all('*', (req, res) => res.status(400).send('Bad request'))
+    // app.all('*', (req, res) => res.status(400).send('Bad request'))
   }
   
 }
