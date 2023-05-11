@@ -8,20 +8,15 @@ import {
 } from '../types/constants'
 import { CredentialPayload, CredentialRequest, VerifiableCredential, Credential } from '../types/types'
 import { Identity } from './identity'
+import { CustomerService } from './customer'
+import { CustomerEntity } from '../database/entities/customer.entity'
 
 require('dotenv').config()
 
 export class Credentials {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	agent: TAgent<any>
-
-	constructor() {
-	  this.agent = Identity.instance.agent
-	}
-
     public static instance = new Credentials()
 
-    async issue_credential(request: CredentialRequest): Promise<Credential> {
+    async issue_credential(request: CredentialRequest, agentId: string): Promise<Credential> {
         const credential: CredentialPayload = {
             '@context': [ ...request['@context'] || [], ...VC_CONTEXT ],
             type: [ ...request.type || [], VC_TYPE ],
@@ -38,7 +33,8 @@ export class Credentials {
             credential.expirationDate = request.expirationDate
         }
 
-		const verifiable_credential: Omit<VerifiableCredential, 'vc'> = await this.agent.execute(
+        const agent = await Identity.instance.create_agent(agentId)
+		const verifiable_credential: Omit<VerifiableCredential, 'vc'> = await agent.execute(
 			'createVerifiableCredential',
 			{
 				save: false,
@@ -57,8 +53,9 @@ export class Credentials {
         return verifiable_credential
 	}
 
-	async verify_credentials(credential: W3CVerifiableCredential | string): Promise<IVerifyResult> {
-		const result = await this.agent?.execute(
+	async verify_credentials(credential: W3CVerifiableCredential | string, agentId: string): Promise<IVerifyResult> {
+        const agent = await Identity.instance.create_agent(agentId)
+		const result = await agent.execute(
 			'verifyCredential',
 			{
 				credential

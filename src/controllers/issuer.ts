@@ -62,8 +62,8 @@ export class IssuerController {
             error: 'Provide a DID Document or atleast one verification method'
         })
       }
-      const customer = await CustomerService.instance.get(response.locals.customerId) as CustomerEntity
-      const did = await Identity.instance.createDid(network, didDocument, alias, customer.account)
+
+      const did = await Identity.instance.createDid(network, didDocument, alias, response.locals.customerId)
       await CustomerService.instance.update(response.locals.customerId, { kids, dids: [did.did] })
       return response.status(200).json(did)
     } catch (error) {
@@ -79,7 +79,8 @@ export class IssuerController {
       if(request.params.did) {
         did = await Identity.instance.resolveDid(request.params.did)
       } else {
-        did = await CustomerService.instance.get(response.locals.customerId)
+        const customer = await CustomerService.instance.get(response.locals.customerId) as CustomerEntity
+        did = customer.dids
       }
 
       return response.status(200).json(did)

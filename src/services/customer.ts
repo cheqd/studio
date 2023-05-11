@@ -1,4 +1,4 @@
-import { Like, Repository } from 'typeorm'
+import { ArrayContains, Like, Repository } from 'typeorm'
 
 import { Connection } from '../database/connection/connection'
 import { CustomerEntity } from '../database/entities/customer.entity'
@@ -41,25 +41,25 @@ export class CustomerService {
         }
 
         if (kid) {
-            where.kids = Like(`%${kid}%`)
+            where.kids = ArrayContains([kid])
         }
 
         if (did) {
-            where.dids = Like(`%${did}%`)
+            where.dids = ArrayContains([did])
         }
 
         if (claimId) {
-            where.claimIds = Like(`%${claimId}%`)
+            where.claimIds = ArrayContains([claimId])
         }
 
         if (presentationId) {
-            where.presentationIds = Like(`%${presentationId}%`)
+            where.presentationIds = ArrayContains([presentationId])
         }
 
         try {
             return await this.customerRepository.findOne({ where }) ? true : false
-        } catch (error) {
-            throw new Error('Invalid request')
+        } catch {
+            return false
         }
     }
 }

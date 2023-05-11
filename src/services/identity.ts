@@ -10,6 +10,7 @@ import {
   IDIDManager,
   IKeyManager,
   IResolver,
+  ICredentialIssuer,
 } from '@veramo/core'
 import { CredentialPlugin } from '@veramo/credential-w3c'
 import { DIDManager } from '@veramo/did-manager'
@@ -21,9 +22,11 @@ import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 import { v4 } from 'uuid'
 
-import { cheqdDidRegex, DefaultRPCUrl } from '../types/types'
+import { cheqdDidRegex, DefaultResolverUrl, DefaultRPCUrl } from '../types/types'
 import { CheqdNetwork } from '@cheqd/sdk'
 import { Connection } from '../database/connection/connection'
+import { CustomerEntity } from '../database/entities/customer.entity'
+import { CustomerService } from './customer'
 
 // TODO: for jsonLD
 // import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
@@ -58,18 +61,30 @@ export class Identity {
               this.privateStore
             )
           }
-        })
+        }),
+        new DIDManager({
+            store: new DIDStore(dbConnection),
+            defaultProvider: 'did:cheqd:testnet',
+            providers: {
+            }
+          }),
+          new DIDResolverPlugin({
+            resolver: new Resolver({
+              ...CheqdDidResolver() as ResolverRegistry
+            })
+          }),
       ]
     })
   }
 
-  async create_agent(kid: string): Promise<TAgent<any>> {
+  async create_agent(agentId: string): Promise<TAgent<any>> {
+    const customer = await CustomerService.instance.get(agentId) as CustomerEntity
     const dbConnection = Connection.instance.dbConnection
-    const privateKey = (await this.getPrivateKey(kid)).privateKeyHex
+    const privateKey = (await this.getPrivateKey(customer.account)).privateKeyHex
     if (!privateKey || !this.privateStore) {
         throw new Error(`No keys is initialized`)
     }
-    return createAgent<IDIDManager & IKeyManager & IDataStore & IResolver>({
+    return createAgent<IDIDManager & IKeyManager & IDataStore & IResolver &ICredentialIssuer>({
       plugins: [
         new KeyManager({
           store: new KeyStore(dbConnection),
@@ -103,7 +118,7 @@ export class Identity {
         }),
         new DIDResolverPlugin({
           resolver: new Resolver({
-            ...CheqdDidResolver({ url: RESOLVER_URL }) as ResolverRegistry
+            ...CheqdDidResolver() as ResolverRegistry
           })
         }),
         new CredentialPlugin(),
@@ -160,7 +175,7 @@ export class Identity {
   }
 
   async resolveDid(did: string) {
-    return await this.agent.resolveDid(did)
+    return await this.agent.resolveDid({didUrl: did})
   }
 
   async getDid(did: string) {

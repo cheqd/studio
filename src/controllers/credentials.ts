@@ -4,6 +4,7 @@ import { check, validationResult } from 'express-validator'
 
 import { Credentials } from '../services/credentials'
 import { CustomerService } from '../services/customer'
+import { CustomerEntity } from '../database/entities/customer.entity'
 
 export class CredentialController {
 
@@ -32,11 +33,11 @@ export class CredentialController {
     }
     try {
       if (!await CustomerService.instance.find(response.locals.customerId, {did: request.body.issuerDid})) {
-        response.status(400).json({
+        return response.status(400).json({
             error: `Issuer DID ${request.body.issuerDid} not found`
         })
       }
-      response.status(200).json(await Credentials.instance.issue_credential(request.body))
+      response.status(200).json(await Credentials.instance.issue_credential(request.body, response.locals.customerId))
     } catch (error) {
         return response.status(500).json({
             error: `${error}`
@@ -54,7 +55,7 @@ export class CredentialController {
       return response.status(400).json({ error: result.array()[0].msg })
     }
     try {
-		  return response.status(200).json(await Credentials.instance.verify_credentials(request.body.credential))
+		  return response.status(200).json(await Credentials.instance.verify_credentials(request.body.credential, response.locals.customerId))
     } catch (error) {
         return response.status(500).json({
             error: `${error}`

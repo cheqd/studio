@@ -139,7 +139,7 @@ export enum NetworkType {
 }
 
 export enum DefaultResolverUrl {
-  Cheqd = 'https://resolver.cheqd.net'
+  Cheqd = 'https://resolver.cheqd.net/'
 }
 
 export type SpecValidationResult = {
