@@ -38,9 +38,9 @@ export class CredentialController {
       }
       response.status(200).json(await Credentials.instance.issue_credential(request.body))
     } catch (error) {
-      response.status(500).json({
-        error: `Internal error: ${error}`
-      })
+        return response.status(500).json({
+            error: `${error}`
+        })
     }
   }
 
@@ -56,9 +56,9 @@ export class CredentialController {
     try {
 		  return response.status(200).json(await Credentials.instance.verify_credentials(request.body.credential))
     } catch (error) {
-      response.status(500).json({
-        error: `Internal error: ${error}`
-      })
+        return response.status(500).json({
+            error: `${error}`
+        })
     }
   }
 }

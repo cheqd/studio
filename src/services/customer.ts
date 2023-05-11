@@ -15,25 +15,24 @@ export class CustomerService {
 
     public async create(customerId: string, kid: string) {
         const customer = new CustomerEntity(customerId, kid, getCosmosAccount(kid))
-        return await this.customerRepository.insert(customer)
+        return (await this.customerRepository.insert(customer)).generatedMaps[0]
     }
 
     public async update(customerId: string, { kids=[], dids=[], claimIds=[], presentationIds=[]} : { kids?: string[], dids?: string[], claimIds?: string[], presentationIds?: string[] }) {
-        const existingCustomer = await this.customerRepository.findOneBy({ customerId })
+        let existingCustomer = await this.customerRepository.findOneBy({ customerId })
         if (!existingCustomer) {
             throw new Error(`CustomerId not found`)
         }
 
-        existingCustomer.kids.concat(kids)
-        existingCustomer.dids.concat(dids)
-        existingCustomer.claimIds.concat(claimIds)
-        existingCustomer.presentationIds.concat(presentationIds)
-
+        existingCustomer.kids= existingCustomer.kids.concat(kids)
+        existingCustomer.dids= existingCustomer.dids.concat(dids)
+        existingCustomer.claimIds= existingCustomer.claimIds.concat(claimIds)
+        existingCustomer.presentationIds= existingCustomer.presentationIds.concat(presentationIds)
         return await this.customerRepository.save(existingCustomer)
     }
 
     public async get(customerId?: string) {
-        return customerId ? this.customerRepository.findOneBy({ customerId }) : this.customerRepository.find()
+        return customerId ? await this.customerRepository.findOneBy({ customerId }) : await this.customerRepository.find()
     }
 
     public async find(customerId: string, { kid, did, claimId, presentationId }: {kid?: string, did?: string, claimId?: string, presentationId?: string}) {
@@ -50,13 +49,17 @@ export class CustomerService {
         }
 
         if (claimId) {
-            where.dids = Like(`%${claimId}%`)
+            where.claimIds = Like(`%${claimId}%`)
         }
 
         if (presentationId) {
-            where.dids = Like(`%${presentationId}%`)
+            where.presentationIds = Like(`%${presentationId}%`)
         }
 
-        return await this.customerRepository.findOne({ where }) ? true : false
+        try {
+            return await this.customerRepository.findOne({ where }) ? true : false
+        } catch (error) {
+            throw new Error('Invalid request')
+        }
     }
 }

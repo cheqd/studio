@@ -9,10 +9,16 @@ export class CustomerController {
         try {
             const kid = (await Identity.instance.createKey('Secp256k1')).kid
             const customer = await CustomerService.instance.create(response.locals.customerId, kid)
-            return response.status(200).json(customer)
+            if(!customer) {
+                return response.status(500).json({
+                    error: `Error creating customer. Please try again`
+                })
+            }
+            const { account, ...res } = customer
+            return response.status(200).json(res)
         } catch (error) {
             return response.status(500).json({
-                Error: `Error creating customer ${error}`
+                error: `Error creating customer ${error}`
             })
         }
     }
@@ -23,7 +29,7 @@ export class CustomerController {
             return response.status(200).json(result)
         } catch (error) {
             return response.status(500).json({
-                Error: error
+                error: `${error}`
             })
         }
     }
@@ -41,7 +47,7 @@ export class CustomerController {
             })
         } catch (error) {
             return response.status(500).json({
-                Error: error
+                error: `${error}`
             })
         }
     }

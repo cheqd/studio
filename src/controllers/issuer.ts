@@ -18,7 +18,7 @@ export class IssuerController {
       return response.status(200).json(key)
     } catch (error) {
         return response.status(500).json({
-            error: `Internal error: ${error}`
+            error: `${error}`
         })
     }
   }
@@ -33,7 +33,7 @@ export class IssuerController {
       return response.status(200).json(key)
     } catch (error) {
         return response.status(500).json({
-            error: `Internal error: ${error}`
+            error: `${error}`
         })
     }
   }
@@ -68,7 +68,7 @@ export class IssuerController {
       return response.status(200).json(did)
     } catch (error) {
         return response.status(500).json({
-            error: `Error: ${error}`
+            error: `${error}`
         })
     }
   }
@@ -85,7 +85,7 @@ export class IssuerController {
       return response.status(200).json(did)
     } catch (error) {
         return response.status(500).json({
-            error: `Error: ${error}`
+            error: `${error}`
         })
     }
   }
