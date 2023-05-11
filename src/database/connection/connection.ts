@@ -7,7 +7,7 @@ import { CreateCustomersTable1683723285946 } from '../migrations/CreateCustomers
 
 require('dotenv').config()
 
-const { ISSUER_DATABASE_URL } = process.env
+const { ISSUER_DATABASE_URL, ISSUER_DATABASE_CERT } = process.env
 
 export class Connection {
     public dbConnection : DataSource
@@ -26,7 +26,9 @@ export class Connection {
             username: config.user,
             password: config.password,
             database: config.database,
-            ssl: config.ssl ? true : false,
+            ssl: config.ssl ? {
+                ca: ISSUER_DATABASE_CERT
+            } : false,
             migrations: [...migrations, CreateCustomersTable1683723285946],
             entities: [...Entities, CustomerEntity],
             logging: ['error', 'info', 'warn']

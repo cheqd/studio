@@ -7,6 +7,7 @@ declare global {
       ALLOWED_ORIGINS: string | undefined
       ISSUER_DATABASE_URL: string
       ISSUER_SECRET_KEY: string
+      ISSUER_DATABASE_CERT: string | undefined
     }
   }
 }
