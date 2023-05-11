@@ -3,17 +3,18 @@ import { DataSource } from 'typeorm'
 import { migrations, Entities } from '@veramo/data-store'
 
 import { CustomerEntity } from '../entities/customer.entity'
+import { CreateCustomersTable1683723285946 } from '../migrations/CreateCustomersTable'
 
 require('dotenv').config()
 
-const { ISSUER_DATABASE_URL, ISSUER_DATABASE_SYNCHRONIZE } = process.env
+const { ISSUER_DATABASE_URL } = process.env
 
 export class Connection {
     public dbConnection : DataSource
     public static instance = new Connection()
 
     constructor () {
-        const config = parse(ISSUER_DATABASE_URL)
+        const config = parse(ISSUER_DATABASE_URL!)
         if(!(config.host && config.port && config.database)) {
             throw new Error(`Error: Invalid Database url`)
         }
@@ -26,8 +27,7 @@ export class Connection {
             password: config.password,
             database: config.database,
             ssl: config.ssl ? true : false,
-            migrations,
-            synchronize: (ISSUER_DATABASE_SYNCHRONIZE === 'true'),
+            migrations: [...migrations, CreateCustomersTable1683723285946],
             entities: [...Entities, CustomerEntity],
             logging: ['error', 'info', 'warn']
           })
@@ -40,6 +40,6 @@ export class Connection {
             throw new Error(`Error initializing db: ${error}`)
         }
     }
-
 }
+
 

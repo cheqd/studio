@@ -131,7 +131,7 @@ export class Identity {
   }
 
   private async getPrivateKey(kid: string) {
-    return await this.privateStore!.getKey({ alias: kid })
+    return await this.privateStore!.get({ alias: kid })
   }
 
   async createDid(network: string, didDocument: DIDDocument, alias: string = v4(), agentId?: string): Promise<IIdentifier> {

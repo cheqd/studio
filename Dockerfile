@@ -13,6 +13,12 @@ COPY . .
 # Installing dependencies
 RUN npm ci
 
+ARG ISSUER_DATABASE_URL
+ENV ISSUER_DATABASE_URL ${ISSUER_DATABASE_URL}
+
+# create migrations
+RUN npm run migration
+
 # Build the app
 RUN npm run build
 
@@ -45,7 +51,6 @@ ENV NODE_ENV ${NODE_ENV}
 ENV NPM_CONFIG_LOGLEVEL ${NPM_CONFIG_LOGLEVEL}
 ENV PORT ${PORT}
 ENV ISSUER_SECRET_KEY ${ISSUER_SECRET_KEY}
-ENV ISSUER_DATABASE_SYNCHRONIZE ${ISSUER_DATABASE_SYNCHRONIZE}
 ENV ISSUER_DATABASE_URL ${ISSUER_DATABASE_URL}
 ENV MAINNET_RPC_URL ${MAINNET_RPC_URL}
 ENV TESTNET_RPC_URL ${TESTNET_RPC_URL}
@@ -60,7 +65,7 @@ RUN npm install swagger-ui-express@4.5.0 && \
     apk update && \
     apk add --no-cache bash ca-certificates python3 build-base gcc g++ postgresql-dev
 
-RUN npm i pg-native 
+RUN npm i pg-native
 
 # Specify default port
 EXPOSE ${PORT}
