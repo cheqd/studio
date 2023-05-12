@@ -22,6 +22,8 @@ export class Authentication {
     }
 
     static authenticate(jwtRequest: JWTRequest, response: Response, next: NextFunction) {
+        if(jwtRequest.path == '/') return next()
+
         if (!jwtRequest.auth?.sub) return response.status(401).json({
             error: 'Invalid auth token'
         })

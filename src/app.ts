@@ -38,8 +38,10 @@ class App {
             return callback(null, true)
         }
     }))
-    this.express.use('/api-docs', swagger.serve, swagger.setup(swaggerJson))
-    this.express.use(Authentication.expressJWT)
+    this.express.use('/swagger', swagger.serve, swagger.setup(swaggerJson))
+    this.express.use(Authentication.expressJWT.unless({
+        path: '/'
+    }))
     this.express.use(Authentication.authenticate)
     this.express.use(Authentication.handleError)
   }
@@ -48,7 +50,7 @@ class App {
     const app = this.express
     const URL_PREFIX = '/1.0/api'
 
-    app.get('/', (req, res) => res.redirect('api-docs'))
+    app.get('/', (req, res) => res.redirect('swagger'))
 
     // credentials
     app.post(`${URL_PREFIX}/credentials/issue`, CredentialController.issueValidator, new CredentialController().issue)
@@ -59,18 +61,18 @@ class App {
     app.get(`${URL_PREFIX}/store/:id`, new StoreController().get)
 
     // issuer
-    app.post(`${URL_PREFIX}/key/create`, new IssuerController().createKey)
-    app.get(`${URL_PREFIX}/key/:kid`, new IssuerController().getKey)
-    app.post(`${URL_PREFIX}/did`, new IssuerController().createDid)
-    app.get(`${URL_PREFIX}/did`, new IssuerController().getDids)
-    app.get(`${URL_PREFIX}/did/:did`, new IssuerController().getDids)
+    app.post(`${URL_PREFIX}/keys/create`, new IssuerController().createKey)
+    app.get(`${URL_PREFIX}/keys/:kid`, new IssuerController().getKey)
+    app.post(`${URL_PREFIX}/dids/create`, new IssuerController().createDid)
+    app.get(`${URL_PREFIX}/dids`, new IssuerController().getDids)
+    app.get(`${URL_PREFIX}/dids/:did`, new IssuerController().getDids)
 
     // customer
-    app.post(`${URL_PREFIX}/customer`, new CustomerController().create)
-    app.get(`${URL_PREFIX}/customer`, new CustomerController().get)
+    app.post(`${URL_PREFIX}/account`, new CustomerController().create)
+    app.get(`${URL_PREFIX}/account`, new CustomerController().get)
 
     // 404 for all other requests
-    app.all('*', (req, res) => res.status(400).send('Bad requestssss'))
+    app.all('*', (req, res) => res.status(400).send('Bad request'))
   }
   
 }

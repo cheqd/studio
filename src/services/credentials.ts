@@ -1,4 +1,4 @@
-import { IVerifyResult, TAgent, W3CVerifiableCredential } from '@veramo/core'
+import { IVerifyResult, W3CVerifiableCredential } from '@veramo/core'
 
 import {
   VC_CONTEXT,
@@ -8,8 +8,6 @@ import {
 } from '../types/constants'
 import { CredentialPayload, CredentialRequest, VerifiableCredential, Credential } from '../types/types'
 import { Identity } from './identity'
-import { CustomerService } from './customer'
-import { CustomerEntity } from '../database/entities/customer.entity'
 
 require('dotenv').config()
 
@@ -23,10 +21,9 @@ export class Credentials {
             issuer: { id: request.issuerDid },
             credentialSubject: {
                 id: request.subjectDid,
-                type: undefined
+                ...request.attributes
             },
-            issuanceDate: new Date().toISOString(),
-            ...request.attributes
+            issuanceDate: new Date().toISOString()
         }
 
         if(request.expirationDate) {
