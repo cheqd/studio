@@ -10,12 +10,14 @@ export class CustomerController {
             const kid = (await Identity.instance.createKey('Secp256k1')).kid
             const customer = await CustomerService.instance.create(response.locals.customerId, kid)
             if(!customer) {
-                return response.status(500).json({
+                return response.status(400).json({
                     error: `Error creating customer. Please try again`
                 })
             }
-            const { account, ...res } = customer
-            return response.status(200).json(res)
+            return response.status(200).json({
+                customerId: customer.customerId,
+                address: customer.address
+            })
         } catch (error) {
             return response.status(500).json({
                 error: `Error creating customer ${error}`
@@ -38,8 +40,10 @@ export class CustomerController {
         try {
             const result = await CustomerService.instance.get(response.locals.customerId)
             if(result && !Array.isArray(result)) {
-                const { account, ...res } = result
-                return response.status(200).json(res)
+                return response.status(200).json({
+                    customerId: result.customerId,
+                    address: result.address
+                })
             }
 
             return response.status(400).json({

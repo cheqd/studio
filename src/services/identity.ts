@@ -22,7 +22,7 @@ import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 import { v4 } from 'uuid'
 
-import { cheqdDidRegex, DefaultResolverUrl, DefaultRPCUrl } from '../types/types'
+import { cheqdDidRegex, DefaultRPCUrl } from '../types/types'
 import { CheqdNetwork } from '@cheqd/sdk'
 import { Connection } from '../database/connection/connection'
 import { CustomerEntity } from '../database/entities/customer.entity'
@@ -149,7 +149,7 @@ export class Identity {
     return await this.privateStore!.get({ alias: kid })
   }
 
-  async createDid(network: string, didDocument: DIDDocument, alias: string = v4(), agentId?: string): Promise<IIdentifier> {
+  async createDid(network: string, didDocument: DIDDocument, agentId?: string): Promise<IIdentifier> {
     try {
     const agentService = agentId ? await this.create_agent(agentId) : this.agent
     if (!agentService) throw new Error('No initialised agent found.')
@@ -157,7 +157,6 @@ export class Identity {
     const [kms] = await agentService.keyManagerGetKeyManagementSystems()
 
     const identifier: IIdentifier = await agentService.didManagerCreate({
-      alias,
       provider: `did:cheqd:${network}`,
       kms,
       options: {

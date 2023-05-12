@@ -39,7 +39,7 @@ export class IssuerController {
   }
 
   public async createDid(request: Request, response: Response) {
-    const { options, secret, alias } = request.body
+    const { options, secret } = request.body
     const { methodSpecificIdAlgo, network, versionId = v4()} = options
     const verificationMethod = secret?.verificationMethod
     let didDocument: DIDDocument
@@ -63,7 +63,7 @@ export class IssuerController {
         })
       }
 
-      const did = await Identity.instance.createDid(network, didDocument, alias, response.locals.customerId)
+      const did = await Identity.instance.createDid(network, didDocument, response.locals.customerId)
       await CustomerService.instance.update(response.locals.customerId, { kids, dids: [did.did] })
       return response.status(200).json(did)
     } catch (error) {

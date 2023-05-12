@@ -19,13 +19,160 @@
         }
     ],
     "paths": {
+        "/key": {
+            "post": {
+                "tags": [
+                    "Key"
+                ],
+                "summary": "Create a Keypair",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/KeyResult"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Key"
+                ],
+                "summary": "List keypairs",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/key/{kid}": {
+            "get": {
+                "tags": [
+                    "Key"
+                ],
+                "summary": "Fetch keypair",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "kid",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/KeyResult"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/did": {
             "post": {
                 "tags": [
                     "DID"
                 ],
                 "summary": "Create a DID",
-                "description": "<p>This endpoint creates a DID by taking DID document as an input.</p>",
+                "description": "<p>This endpoint creates a DID by taking DID document or a verification method as an input.</p>",
                 "security": [
                     {
                         "bearerAuth": []
@@ -36,12 +183,53 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
+                                "required": [
+                                    "options"
+                                ],
                                 "properties": {
+                                    "options": {
+                                        "type": "object",
+                                        "properties": {
+                                            "network": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "testnet",
+                                                    "mainnet"
+                                                ]
+                                            },
+                                            "methodSpecificIdAlgo": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "base58btc",
+                                                    "uuid"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "secret": {
+                                        "type": "object",
+                                        "properties": {
+                                            "verificationMethod": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "Ed25519VerificationKey2020",
+                                                            "JsonWebKey2020",
+                                                            "Ed25519VerificationKey2018"
+                                                        ]
+                                                    },
+                                                    "id": {
+                                                        "type": "string",
+                                                        "example": "key-1"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
                                     "didDocument": {
                                         "$ref": "#/components/schemas/DidDocument"
-                                    },
-                                    "alias": {
-                                        "type": "string"
                                     }
                                 }
                             }
@@ -71,6 +259,9 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
                     },
                     "500": {
                         "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
@@ -124,6 +315,9 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
                     },
                     "500": {
                         "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
@@ -187,6 +381,9 @@
                             }
                         }
                     },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
                     "500": {
                         "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
                         "content": {
@@ -247,6 +444,9 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
                     },
                     "500": {
                         "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
@@ -314,6 +514,9 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
                     },
                     "500": {
                         "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
@@ -469,6 +672,24 @@
                         "items": {
                             "$ref": "#/components/schemas/Service"
                         }
+                    }
+                }
+            },
+            "KeyResult": {
+                "type": "object",
+                "properties": {
+                    "kid": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "Ed25519",
+                            "Secp256k1"
+                        ]
+                    },
+                    "publicKeyHex": {
+                        "type": "string"
                     }
                 }
             },
@@ -750,30 +971,6 @@
                     },
                     "address": {
                         "type": "string"
-                    },
-                    "kids": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "dids": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "claimIds": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "presentationIds": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
                     }
                 }
             },
