@@ -28,7 +28,7 @@
 		"README.md"
 	],
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "^3.0.4",
+		"@cheqd/did-provider-cheqd": "^3.1.2",
 		"@veramo/core": "^5.1.2",
 		"@veramo/credential-w3c": "^5.1.2",
 		"@veramo/did-manager": "^5.1.2",
