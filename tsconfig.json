@@ -14,9 +14,6 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "resolveJsonModule": true,
-    "rootDir": ".",
-    "outDir": "dist"
   },
-  "exclude": ["node_modules"],
-  "include": ["src/**/*", "swagger.json"],
+  "exclude": ["node_modules"]
 }
