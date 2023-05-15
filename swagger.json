@@ -202,8 +202,8 @@
                                             "methodSpecificIdAlgo": {
                                                 "type": "string",
                                                 "enum": [
-                                                    "base58btc",
-                                                    "uuid"
+                                                    "uuid",
+                                                    "base58btc"
                                                 ]
                                             }
                                         }
@@ -301,7 +301,7 @@
                                 "schema": {
                                     "type": "array",
                                     "items": {
-                                        "$ref": "#/components/schemas/DidResult"
+                                        "type": "string"
                                     }
                                 }
                             }
