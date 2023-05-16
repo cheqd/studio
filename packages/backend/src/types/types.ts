@@ -1,5 +1,5 @@
-import { ContextType } from "@veramo/core-types"
-import { W3CVerifiableCredential } from "@veramo/core"
+import { ContextType } from '@veramo/core-types'
+import { W3CVerifiableCredential } from '@veramo/core'
 
 export type ErrorResponse = {
   name: string
@@ -94,7 +94,6 @@ export type GenericAuthResponse = {
   authenticated: boolean
   user: GenericAuthUser,
   provider: string,
-  subjectId?: string,
   error?: any
 }
 
@@ -114,14 +113,35 @@ export interface CredentialRequest {
   '@context'?: string[]
   type?: string[]
   expirationDate?: DateType
+  issuerDid: string
+  format: 'jsonld' | 'jwt'
 }
 
 export type GenericAuthUser = Record<string, any> | null | undefined
 
-export type Credential = Omit<VerifiableCredential, "vc">
+export type Credential = Omit<VerifiableCredential, 'vc'>
 
 const UUID = '([a-z,0-9,-]{36,36})'
 const ID_CHAR = `(?:[a-zA-Z0-9]{21,22}|${UUID})`
 const NETWORK = '(testnet|mainnet)'
 const METHOD_ID = `((?:${ID_CHAR}*:)*(${ID_CHAR}+))`
 export const cheqdDidRegex = new RegExp(`^did:cheqd:${NETWORK}:${METHOD_ID}$`)
+
+export enum DefaultRPCUrl {
+  Mainnet = 'https://rpc.cheqd.net',
+  Testnet = 'https://rpc.cheqd.network'
+}
+
+export enum NetworkType {
+  Mainnet = 'mainnet',
+  Testnet = 'testnet'
+}
+
+export enum DefaultResolverUrl {
+  Cheqd = 'https://resolver.cheqd.net/'
+}
+
+export type SpecValidationResult = {
+  valid: boolean
+  error?: string
+}

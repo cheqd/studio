@@ -1,21 +1,25 @@
 import type { Request, Response } from 'express'
 
-import { Credentials } from '../services/credentials'
 import { check, validationResult } from 'express-validator'
+
+import { Credentials } from '../services/credentials'
+import { CustomerService } from '../services/customer'
+import { CustomerEntity } from '../database/entities/customer.entity'
 
 export class CredentialController {
 
   public static issueValidator = [
-    check('subjectDid')
-    .exists().withMessage('subjectDid is required')
-    .isString().withMessage('subjectDid should be a string')
-    .contains('did:').withMessage('subjectDid should be a DID'),
+    check(['subjectDid', 'issuerDid'])
+    .exists().withMessage('DID is required')
+    .isString().withMessage('DID should be a string')
+    .contains('did:').withMessage('Invalid DID'),
     check('attributes')
     .exists().withMessage('attributes are required')
     .isObject().withMessage('attributes should be an object'),
     check('type').optional().isArray().withMessage('type should be a string array'),
     check('@context').optional().isArray().withMessage('@context should be a string array'),
-    check('expirationDate').optional().isDate().withMessage('Invalid expiration date')
+    check('expirationDate').optional().isDate().withMessage('Invalid expiration date'),
+    check('format').optional().isString().withMessage('Invalid credential format')
   ]
 
   public static verifyValidator = [
@@ -28,11 +32,16 @@ export class CredentialController {
       return response.status(400).json({ error: result.array()[0].msg })
     }
     try {
-      response.json(await Credentials.instance.issue_credential(request.body))
+      if (!await CustomerService.instance.find(response.locals.customerId, {did: request.body.issuerDid})) {
+        return response.status(400).json({
+            error: `Issuer DID ${request.body.issuerDid} not found`
+        })
+      }
+      response.status(200).json(await Credentials.instance.issue_credential(request.body, response.locals.customerId))
     } catch (error) {
-      response.status(500).json({
-        error: `Internal error: ${error}`
-      })
+        return response.status(500).json({
+            error: `${error}`
+        })
     }
   }
 
@@ -46,12 +55,11 @@ export class CredentialController {
       return response.status(400).json({ error: result.array()[0].msg })
     }
     try {
-		  return response.json(await Credentials.instance.verify_credentials(request.body.credential))
+		  return response.status(200).json(await Credentials.instance.verify_credentials(request.body.credential, response.locals.customerId))
     } catch (error) {
-      response.status(500).json({
-        error: `Internal error: ${error}`
-      })
+        return response.status(500).json({
+            error: `${error}`
+        })
     }
   }
-
 }
