@@ -1,0 +1,76 @@
+{
+    "$schema": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/resourceId",
+    "title": "Learn Schema",
+    "description": "Additional properties on credentialSubject to describe a Learn credential",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/VerifiableCredentialSchemaID"
+        },
+        {
+            "$ref": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/SocialProfileSchemaID"
+        },
+        {
+            "properties": {
+                "credentialSubject": {
+                    "description": "Additional properties on credentialSubject to describe a Learn credential",
+                    "type": "object",
+                    "properties": {
+                        "learn": {
+                            "description": "Defines the contents of the Learn Credential",
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "description": "Defines the type of Learn credential",
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "description": "Describe the Learn credential",
+                                    "type": "string"
+                                },
+                                "level": {
+                                    "description": "Defines the level or rarity of the credential",
+                                    "type": "string"
+                                },
+                                "issueNumber": {
+                                    "description": "Defines the issue number in a series of credentials",
+                                    "type": "number"
+                                },
+                                "memberNumber": {
+                                    "description": "Defines the number the member joined a group",
+                                    "type": "number"
+                                },
+                                "educationalCredentialAwarded": {
+                                    "description": "Description of the qualification, award, certificate, diploma or other educational credential awarded as a consequence of successful completion of this course",
+                                    "type": "number"
+                                },
+                                "educationalLevel": {
+                                    "description": "The level in terms of progression through an educational or training contextp",
+                                    "type": "number"
+                                },
+                                "provider": {
+                                    "description": "The service provider, service operator, or service performer; the goods producer.",
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "description": "Defines the type of provider",
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "description": "Defines the name of provider",
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "description": "Describe the provider",
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

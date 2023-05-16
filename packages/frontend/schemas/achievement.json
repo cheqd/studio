@@ -1,0 +1,50 @@
+{
+    "$schema": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/resourceId",
+    "title": "Achievement Schema",
+    "description": "Additional properties on credentialSubject to describe an Achievement credential",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/VerifiableCredentialSchemaID"
+        },
+        {
+            "$ref": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/SocialProfileSchemaID"
+        },
+        {
+            "properties": {
+                "credentialSubject": {
+                    "description": "Additional properties on credentialSubject to describe an Achievement",
+                    "type": "object",
+                    "properties": {
+                        "achievement": {
+                            "description": "Defines the contents of the Achievement Credential",
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "description": "Defines the type of Achievement",
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "description": "Describes the Achievement",
+                                    "type": "string"
+                                },
+                                "level": {
+                                    "description": "Defines the level or rarity of the credential",
+                                    "type": "string"
+                                },
+                                "issueNumber": {
+                                    "description": "Defines the issue number in a series of credentials",
+                                    "type": "number"
+                                },
+                                "memberNumber": {
+                                    "description": "Defines the number the member joined a group",
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

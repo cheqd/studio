@@ -1,0 +1,90 @@
+{
+    "$schema": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/resourceId",
+    "title": "Ticket Schema",
+    "description": "Additional properties on credentialSubject to describe a ticket credential",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/VerifiableCredentialSchemaID"
+        },
+        {
+            "$ref": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/SocialProfileSchemaID"
+        },
+        {
+            "properties": {
+                "credentialSubject": {
+                    "description": "Additional properties on credentialSubject to describe a ticket credential",
+                    "type": "object",
+                    "properties": {
+                        "ticket": {
+                            "description": "Defines the contents of the Ticket Credential",
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "description": "Defines the type of Ticket",
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "description": "Describe the Ticket",
+                                    "type": "string"
+                                },
+                                "level": {
+                                    "description": "Defines the level or rarity of the credential",
+                                    "type": "string"
+                                },
+                                "issueNumber": {
+                                    "description": "Defines the issue number in a series of credentials",
+                                    "type": "number"
+                                },
+                                "memberNumber": {
+                                    "description": "Defines the number the member joined a group",
+                                    "type": "number"
+                                },
+                                "reservationFor": {
+                                    "description": "Defines the contents of the reservation",
+                                     "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "description": "Defines the type of ticket"
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "description": "Defines the name of the location"
+                                        },
+                                        "startDate": {
+                                            "type": "string",
+                                            "description": "Defines the start date for event"
+                                        },
+                                        "location": {
+                                            "description": "Defines the location for using the ticket",
+                                            "type": "object",
+                                            "properties": {
+                                                "type": {
+                                                    "type": "string",
+                                                    "description": "The type of location"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "description": "Name of event location title"
+                                                },
+                                                "addressLocality": {
+                                                    "type": "string",
+                                                    "description": "City / town of event"
+                                                },
+                                                "addressCountry": {
+                                                    "type": "string",
+                                                    "description": "country of event"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }    
+                            }   
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

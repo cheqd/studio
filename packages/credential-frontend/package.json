@@ -1,19 +1,22 @@
 {
-  "name": "@cheqd/credential-service-frontend",
-  "version": "1.0.0",
-  "description": "",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cheqd/credential-service.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/cheqd/credential-service/issues"
-  },
-  "homepage": "https://github.com/cheqd/credential-service#readme",
-  "scripts": {
+	"name": "#cheqd/credential-frontend",
+	"version": "0.0.1",
+	"private": true,
+	"description": "Credential Service",
+	"author": "Cheqd Foundation Limited (https://github.com/cheqd)",
+	"repository": "https://github.com/cheqd/credential-service.git",
+	"keywords": [
+		"cheqd",
+		"ssi",
+		"did",
+		"vc",
+		"credential service"
+	],
+	"bugs": {
+		"url": "https://github.com/cheqd/credential-service/issues"
+	},
+	"homepage": "https://github.com/cheqd/credential-service#readme",
+	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",

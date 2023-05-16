@@ -1,0 +1,58 @@
+{
+    "$schema": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/resourceId",
+    "title": "Event Schema",
+    "description": "Additional properties on credentialSubject to describe an Event credential",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/VerifiableCredentialSchemaID"
+        },
+        {
+            "$ref": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/SocialProfileSchemaID"
+        },
+        {
+            "properties": {
+                "credentialSubject": {
+                    "description": "Additional properties on credentialSubject to describe an Event credential",
+                    "type": "object",
+                    "properties": {
+                        "event": {
+                            "description": "Defines the contents of the Event Credential",
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "description": "Defines the type of Event",
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "description": "Describes the Event",
+                                    "type": "string"
+                                },
+                                "level": {
+                                    "description": "Defines the level or rarity of the credential",
+                                    "type": "string"
+                                },
+                                "issueNumber": {
+                                    "description": "Defines the issue number in a series of credentials",
+                                    "type": "number"
+                                },
+                                "memberNumber": {
+                                    "description": "Defines the number the members who joined a group",
+                                    "type": "number"
+                                },
+                                "eventAttendanceMode": {
+                                    "description": "Defines the type of the Event",
+                                    "type": "string"
+                                },
+                                "organizer": {
+                                    "description": "An organizer of an Event.",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

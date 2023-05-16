@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap');
+
+@tailwind base;
+
+.override-scrollbar-config::-webkit-scrollbar {
+	width: 5px !important;
+}
+
+.override-scrollbar-config::-webkit-scrollbar-track {
+	background: gray;
+	border-radius: 5px;
+}
+
+.override-scrollbar-config::-webkit-scrollbar-thumb {
+	background-color: darkgray;
+	border-radius: 14px;
+	border: 3px solid darkgray;
+}
+
+.scrollable-without-scrollbar::-webkit-scrollbar {
+	width: 0px !important;
+	border: 0px solid transparent;
+	background-color: transparent;
+	height: 0px;
+}
+
+.scrollable-without-scrollbar::-webkit-scrollbar-track {
+	background: transparent;
+	border-radius: 0px;
+}
+
+.scrollable-without-scrollbar::-webkit-scrollbar-thumb {
+	background-color: transparent;
+	border-radius: 0px;
+	border: 0px solid darkgray;
+}
+
+* {
+	scrollbar-width: thin;
+	scrollbar-color: gray;
+}
+
+/* Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+	width: 0px !important;
+}
+
+*::-webkit-scrollbar-track {
+	background: darkgray;
+	border-radius: 5px;
+}
+
+*::-webkit-scrollbar-thumb {
+	background-color: darkgray;
+	border-radius: 14px;
+	border: 3px solid darkgray;
+}
+
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	html {
+		font-family: Manrope, system-ui, sans-serif;
+	}
+}

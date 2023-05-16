@@ -1,0 +1,50 @@
+{
+    "$schema": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/resourceId",
+    "title": "Community Role Schema",
+    "description": "Schema for additional properties on credentialSubject to describe a Community Role credential",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/VerifiableCredentialSchemaID"
+        },
+        {
+            "$ref": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/SocialProfileSchemaID"
+        },
+        {
+            "properties": {
+                "credentialSubject": {
+                    "description": "Additional properties on credentialSubject to describe a Community Role",
+                    "type": "object",
+                    "properties": {
+                        "communityRole": {
+                            "description": "Defines the contents of the Community Role Credential",
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "description": "Defines the type of Community Role",
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "description": "Describe the Community Role",
+                                    "type": "string"
+                                },
+                                "level": {
+                                    "description": "Defines the level or rarity of the credential",
+                                    "type": "string"
+                                },
+                                "issueNumber": {
+                                    "description": "Defines the issue number in a series of credentials",
+                                    "type": "number"
+                                },
+                                "memberNumber": {
+                                    "description": "Defines the number the member joined a group",
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

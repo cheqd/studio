@@ -1,0 +1,79 @@
+{
+    "$schema": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/resourceId",
+    "title": "Social Profile Schema",
+    "description": "Schema for additional properties on credentialSubject to describe a Social Profile",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "https://resolver.cheqd.net/did:cheqd:namespace:identifier/resources/VerifiableCredentialSchemaID"
+        },
+        {
+            "properties": {
+                "credentialSubject": {
+                    "description": "Additional properties on credentialSubject to describe a Social Profile",
+                    "type": "object",
+                    "properties": {
+                        "socialProfile": {
+                            "description": "Defines the contents of the Social Profile Credential",
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "description": "Defines the type of social media platform the subject has authenticated with",
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "description": "Brief description of the Social Profile Credential",
+                                    "type": "string"
+                                },
+                                "webPage": {
+                                    "description": "Defines the user profile for the credential",
+                                    "type": "object",
+                                    "properties": {
+                                        "@type": {
+                                            "description": "Defines the type of WebPage",
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "description": "Description of the item.",
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "description": "The name of the item",
+                                            "type": "string"
+                                        },
+                                        "identifier": {
+                                            "description": "Any kind of identifier for any kind of Thing",
+                                            "type": "string"
+                                        },
+                                        "lastReviewed": {
+                                            "description": "Date on which the content on this web page was last reviewed for accuracy and/or completeness.",
+                                            "type": "string",
+                                            "format": "uri"
+                                        },
+                                        "thumbnailUrl": {
+                                            "description": "A thumbnail image relevant to the Thing",
+                                            "type": "string",
+                                            "format": "uri"
+                                        },
+                                        "url": {
+                                            "description": "URL of the item",
+                                            "type": "string",
+                                            "format": "uri"
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "identifier",
+                                    "lastReviewed"
+                                ]
+                            },
+                            "required": [
+                                "webPage"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
