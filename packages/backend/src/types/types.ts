@@ -94,7 +94,6 @@ export type GenericAuthResponse = {
   authenticated: boolean
   user: GenericAuthUser,
   provider: string,
-  subjectId?: string,
   error?: any
 }
 

@@ -8,6 +8,7 @@ declare global {
       ISSUER_DATABASE_URL: string
       ISSUER_SECRET_KEY: string
       ISSUER_DATABASE_CERT: string | undefined
+      AUTH0_SERVICE_ENDPOINT: string
     }
   }
 }
