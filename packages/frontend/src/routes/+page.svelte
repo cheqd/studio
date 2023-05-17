@@ -39,10 +39,4 @@
 	>
 		<Button loading={isLoading} styles="w-1/3 h-10">Sign in</Button>
 	</form>
-	<form
-		method="POST"
-		class="flex h-96 w-1/2 items-center justify-center rounded-3xl bg-primary-800"
-	>
-		<Button loading={isLoading} styles="w-1/3 h-10" formaction="?/signout">Sign out</Button>
-	</form>
 </div>

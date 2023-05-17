@@ -76,7 +76,7 @@
 				<div class="flex items-center justify-between sm:w-full lg:w-fit">
 					<div class="half:ml-5 flex cursor-pointer items-center justify-center whitespace-nowrap">
 						<a href="/">
-							<img src="/creds_logo_temp.svg" alt="creds logo" class="h-7 w-28" />
+							<img src="/cheqd-logo.svg" alt="creds logo" class="h-7 w-28" />
 						</a>
 					</div>
 					{#if authorised}
@@ -102,80 +102,7 @@
 							? 'mt-6 flex w-full flex-col space-y-4 lg:mt-0 lg:flex-row lg:justify-end lg:space-y-0'
 							: 'mt-2 hidden w-full justify-end md:mx-1 md:mt-0 lg:flex lg:space-x-8'}
 					>
-						<div class="flex flex-col">
-							<a
-								data-sveltekit-preload-data="off"
-								href="/portal"
-								class={route === '/portal'
-									? 'flex items-center text-blue-400  lg:py-1'
-									: 'flex items-center text-white  lg:py-1'}
-							>
-								<Dashboard strokeColor="#0D59D1" styles="mr-2 lg:hidden font-normal" />
-								Portal
-							</a>
-							{#if !isMobile}
-								<HorizontalRule styles={route === '/portal' ? 'visible bg-blue-400' : 'invisible'} />
-							{/if}
-						</div>
-						<div class="flex flex-col">
-							<a
-								data-sveltekit-preload-data="off"
-								href="#"
-								class={route === '/profile'
-									? 'flex items-center text-blue-400  lg:py-1'
-									: 'flex items-center text-white  lg:py-1'}
-							>
-								<Profile styles="mr-2 lg:hidden font-normal" />
-								Profile
-							</a>
-							{#if !isMobile}
-								<HorizontalRule styles={route === '/profile' ? 'visible bg-blue-400' : 'invisible'} />
-							{/if}
-						</div>
-
-						<div class="flex flex-col">
-							<a
-								data-sveltekit-preload-data="off"
-								href="#"
-								class={route === '/settings'
-									? 'flex items-center text-blue-400  lg:py-1'
-									: 'flex items-center text-white  lg:py-1'}
-							>
-								<Settings styles="mr-2 lg:hidden font-normal" />
-								Settings
-							</a>
-							{#if !isMobile}
-								<HorizontalRule styles={route === '/settings' ? 'visible bg-blue-400' : 'invisible'} />
-							{/if}
-						</div>
-						
-						<div class="flex flex-col">
-							<a
-								data-sveltekit-preload-data="off"
-								href="#"
-								class={route === '/credentials/shared'
-									? 'lg:py flex cursor-not-allowed items-center text-blue-400 lg:py-1'
-									: 'lg:py flex cursor-not-allowed items-center text-white lg:py-1'}
-							>
-								<Share styles="mr-2 lg:hidden text-white font-normal" />
-								Shared
-							</a>
-							{#if !isMobile}
-								<HorizontalRule
-									styles={route === '/credentials/shared' ? 'visible bg-blue-400' : 'invisible'}
-								/>
-							{/if}
-						</div>
 						{#if isMobile}
-							<OutlineButton
-								loading={isResetLoading}
-								on:click={resetUserState}
-								styles="from-red-500 via-red-500 to-red-500"
-								innerStyles="w-full bg-primary-800 text-red-500"
-							>
-								<Delete />
-								Reset Credentials
-							</OutlineButton>
 							<OutlineButton
 								loading={isLoading}
 								on:click={signout}
@@ -186,15 +113,6 @@
 								Log out
 							</OutlineButton>
 						{:else}
-							<OutlineButton
-								loading={isResetLoading}
-								on:click={resetUserState}
-								styles="from-red-500 via-red-500 to-red-500"
-								innerStyles="w-full bg-primary-800 text-red-500"
-							>
-								<Delete />
-								Reset Credentials
-							</OutlineButton>
 							<OutlineButton
 								loading={isLoading}
 								on:click={signout}

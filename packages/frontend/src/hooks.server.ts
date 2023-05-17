@@ -10,6 +10,11 @@ const authenticationHandler: Handle = async ({ event, resolve }) => {
 	if (event.url.pathname === '/user' && !authenticated) {
 		throw redirect(303, '/');
 	}
+
+	if (event.url.pathname === '/' && authenticated) {
+		throw redirect(303, '/user');
+	}
+
 	return await resolve(event);
 };
 

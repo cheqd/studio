@@ -34,23 +34,10 @@
 	<div class="flex w-full items-center justify-center">
 		<div class="flex h-full w-full max-w-[2000px] flex-col">
 			<div class="lg:flex lg:justify-center">
-				{#if data.authenticated}
-					<div
-						class="{showSidebar
-							? 'visible fixed left-0 top-0 z-50 w-2/3 lg:relative'
-							: 'invisible h-0 w-0'} lg:visible lg:sticky lg:top-32 lg:m-4 lg:mt-8 lg:h-full lg:w-1/3 lg:self-start"
-					>
-						<Sidebar {showSidebar} {handleSideBarToggle} />
-					</div>
-				{/if}
 				<slot />
 			</div>
 		</div>
 	</div>
-	{#if !!data.authenticated}
-		<FloatingActionButton on:click={handleSideBarToggle} />
-	{/if}
-	<HorizontalRule styles="mt-10" />
 	{#if !data.authenticated}
 		<Footer />
 	{/if}
