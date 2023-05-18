@@ -12,7 +12,8 @@
         "packages/*"
     ],
 	"scripts": {
-        "build": "lerna run build"
+        "build": "lerna run build",
+        "backend": "cd packages/backend && npm start"
 	},
 	"eslintConfig": {
 		"root": true,

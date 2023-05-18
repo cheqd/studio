@@ -18,20 +18,19 @@ import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { KeyManager } from '@veramo/key-manager'
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
 import { KeyStore, DIDStore, PrivateKeyStore } from '@veramo/data-store'
-import { Resolver, ResolverRegistry } from 'did-resolver'
+import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
+import { CheqdNetwork } from '@cheqd/sdk'
+import { Resolver, ResolverRegistry } from 'did-resolver'
 import { v4 } from 'uuid'
 
-import { cheqdDidRegex, DefaultRPCUrl } from '../types/types'
-import { CheqdNetwork } from '@cheqd/sdk'
-import { Connection } from '../database/connection/connection'
-import { CustomerEntity } from '../database/entities/customer.entity'
-import { CustomerService } from './customer'
+import { cheqdDidRegex, DefaultRPCUrl } from '../types/types.js'
+import { Connection } from '../database/connection/connection.js'
+import { CustomerEntity } from '../database/entities/customer.entity.js'
+import { CustomerService } from './customer.js'
 
-// TODO: for jsonLD
-// import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
-
-require('dotenv').config()
+import * as dotenv from 'dotenv'
+dotenv.config()
 
 const { 
   ISSUER_SECRET_KEY,
@@ -122,11 +121,10 @@ export class Identity {
           })
         }),
         new CredentialPlugin(),
-        // TODO: JsonLD
-        // new CredentialIssuerLD({
-        //     contextMaps: [LdDefaultContexts],
-        //     suites: [new VeramoEd25519Signature2018()]
-        // })
+        new CredentialIssuerLD({
+            contextMaps: [LdDefaultContexts],
+            suites: [new VeramoEd25519Signature2018()]
+        })
       ]
     })
   }
@@ -146,7 +144,7 @@ export class Identity {
   }
 
   private async getPrivateKey(kid: string) {
-    return await this.privateStore!.get({ alias: kid })
+    return await this.privateStore!.getKey({ alias: kid })
   }
 
   async createDid(network: string, didDocument: DIDDocument, agentId?: string): Promise<IIdentifier> {

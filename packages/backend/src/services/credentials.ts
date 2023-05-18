@@ -5,11 +5,12 @@ import {
   VC_PROOF_FORMAT,
   VC_REMOVE_ORIGINAL_FIELDS,
   VC_TYPE
-} from '../types/constants'
-import { CredentialPayload, CredentialRequest, VerifiableCredential, Credential } from '../types/types'
-import { Identity } from './identity'
+} from '../types/constants.js'
+import { CredentialPayload, CredentialRequest, VerifiableCredential, Credential } from '../types/types.js'
+import { Identity } from './identity.js'
 
-require('dotenv').config()
+import * as dotenv from 'dotenv'
+dotenv.config()
 
 export class Credentials {
     public static instance = new Credentials()
@@ -36,7 +37,7 @@ export class Credentials {
 			{
 				save: false,
 				credential,
-				proofFormat: VC_PROOF_FORMAT, // TODO: jsonLD request.format || VC_PROOF_FORMAT
+				proofFormat: request.format || VC_PROOF_FORMAT,
 				removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS
 			}
 		)

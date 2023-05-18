@@ -4,10 +4,10 @@ import type { MethodSpecificIdAlgo, CheqdNetwork } from '@cheqd/sdk'
 import { VerificationMethods, createVerificationKeys, createDidVerificationMethod, createDidPayload } from '@cheqd/sdk'
 import { rawSecp256k1PubkeyToRawAddress } from '@cosmjs/amino'
 import { toBech32 } from '@cosmjs/encoding'
-import { publicKeyConvert } from 'secp256k1'
+import pkg from 'secp256k1'
 import { fromString } from 'uint8arrays'
 
-import { SpecValidationResult } from '../types/types'
+import { SpecValidationResult } from '../types/types.js'
 
 export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecValidationResult {
   // id is required, validated on both compile and runtime
@@ -61,6 +61,7 @@ export function generateDidDoc(options: IDidDocOptions) {
 }
 
 export function getCosmosAccount(kid: string) {
+  const { publicKeyConvert } = pkg
   return toBech32('cheqd', rawSecp256k1PubkeyToRawAddress(publicKeyConvert(fromString(kid, 'hex'), true)))
 }
 

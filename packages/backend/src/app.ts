@@ -3,26 +3,17 @@ import Helmet from 'helmet'
 import cors from 'cors'
 import * as swagger from 'swagger-ui-express'
 
-import { CredentialController } from './controllers/credentials'
-import { StoreController } from './controllers/store'
-import { IssuerController } from './controllers/issuer'
-import { CustomerController } from './controllers/customer'
-import { Authentication } from './middleware/authentication'
-import { Connection } from './database/connection/connection'
-import { CORS_ERROR_MSG } from './types/constants'
-import * as swaggerJson from '../swagger.json'
-import { LogtoExpressConfig, handleAuthRoutes, withLogto } from '@logto/express'
-import cookieParser from 'cookie-parser';
-import session from 'express-session';
+import { CredentialController } from './controllers/credentials.js'
+import { StoreController } from './controllers/store.js'
+import { IssuerController } from './controllers/issuer.js'
+import { CustomerController } from './controllers/customer.js'
+import { Authentication } from './middleware/authentication.js'
+import { Connection } from './database/connection/connection.js'
+import { CORS_ERROR_MSG } from './types/constants.js'
+import * as swaggerJson from '../swagger.json' assert { type: 'json' }
 
-require('dotenv').config()
-
-const logToConfig: LogtoExpressConfig = {
-    appId: process.env.PUBLIC_LOGTO_APP_ID,
-    appSecret: process.env.PUBLIC_LOGTO_APP_SECRET,
-    endpoint: process.env.PUBLIC_LOGTO_ENDPOINT, // E.g. http://localhost:3001
-    baseUrl: "localhost:8787", // E.g. http://localhost:3000
-};
+import * as dotenv from 'dotenv'
+dotenv.config()
 
 class App {
   public express: express.Application
