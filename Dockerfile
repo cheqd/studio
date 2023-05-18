@@ -1,6 +1,6 @@
-######################################################
-###         Build credential-service app           ###
-######################################################
+###############################################################
+###         STAGE 1: Build credential-service app           ###
+###############################################################
 
 FROM node:18-alpine AS runner
 
@@ -12,6 +12,9 @@ COPY . .
 
 # Installing dependencies
 RUN npm ci
+
+# Build the app
+RUN npm run build
 
 # Build-time arguments
 ARG NODE_ENV=production
@@ -37,6 +40,8 @@ ENV TESTNET_RPC_URL ${TESTNET_RPC_URL}
 ENV RESOLVER_URL ${RESOLVER_URL}
 ENV ALLOWED_ORIGINS ${ALLOWED_ORIGINS}
 
+RUN chown -R node:node /home/node/app/packages
+
 # Specify default port
 EXPOSE ${PORT}
 
@@ -45,4 +50,4 @@ USER node
 SHELL ["/bin/sh", "-euo", "pipefail", "-c"]
 
 # Run the application
-CMD cd packages/backend; npm run migration; npm start
+CMD npm run backend
