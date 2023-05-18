@@ -1,7 +1,8 @@
 import * as http from 'http'
-import App from './app'
+import App from './app.js'
 
-require('dotenv').config()
+import * as dotenv from 'dotenv'
+dotenv.config()
 
 const port = process.env.PORT || 8787
 App.set('port', port)

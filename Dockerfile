@@ -37,9 +37,6 @@ ENV TESTNET_RPC_URL ${TESTNET_RPC_URL}
 ENV RESOLVER_URL ${RESOLVER_URL}
 ENV ALLOWED_ORIGINS ${ALLOWED_ORIGINS}
 
-# Build the app
-RUN npm run build
-
 # Specify default port
 EXPOSE ${PORT}
 
@@ -48,4 +45,4 @@ USER node
 SHELL ["/bin/sh", "-euo", "pipefail", "-c"]
 
 # Run the application
-CMD npm run migration; node dist/index.js
+CMD cd packages/backend; npm run migration; npm start

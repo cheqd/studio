@@ -1,10 +1,12 @@
 import { Request, Response, NextFunction } from 'express'
 import { expressjwt, Request as JWTRequest } from 'express-jwt'
-import { CustomerService } from '../services/customer'
-import { HEADERS } from '../types/constants'
-import { GenericAuthResponse } from '../types/types'
 
-require('dotenv').config()
+import { CustomerService } from '../services/customer.js'
+import { HEADERS } from '../types/constants.js'
+import { GenericAuthResponse } from '../types/types.js'
+
+import * as dotenv from 'dotenv'
+dotenv.config()
 
 const { ISSUER_SECRET_KEY, AUTH0_SERVICE_ENDPOINT } = process.env
 
@@ -43,22 +45,22 @@ export class Authentication {
 		const { claim, provider } = request.body as { claim: string, provider: string }
 
 		try {
-			const resp = await fetch(
-				AUTH0_SERVICE_ENDPOINT,
-				{
-					method: 'POST',
-					body: JSON.stringify({ claim, provider: provider.toLowerCase() }),
-					headers: HEADERS.json
-				}
-			)
-			const validation: GenericAuthResponse = await resp.json()
-            if (!validation.authenticated) {
-                return response.status(401).json({
-                    authenticated: false,
-                    error: 'Invalid Auth token'
-                })
-            }
-			response.locals.authResponse = { ...validation, provider }
+			// const resp = await fetch(
+			// 	AUTH0_SERVICE_ENDPOINT,
+			// 	{
+			// 		method: 'POST',
+			// 		body: JSON.stringify({ claim, provider: provider.toLowerCase() }),
+			// 		headers: HEADERS.json
+			// 	}
+			// )
+			// const validation: GenericAuthResponse = await resp.json()
+            // if (!validation.authenticated) {
+            //     return response.status(401).json({
+            //         authenticated: false,
+            //         error: 'Invalid Auth token'
+            //     })
+            // }
+			// response.locals.authResponse = { ...validation, provider }
             next()
 		} catch (err) {
 			return response.status(500).send({

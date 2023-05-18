@@ -1,5 +1,6 @@
-import { Request, Response } from 'express';
-import { LocalStore } from '../services/store';
+import type { Request, Response } from 'express'
+
+import { LocalStore } from '../services/store.js'
 
 export class StoreController {
     

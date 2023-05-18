@@ -3,16 +3,17 @@ import Helmet from 'helmet'
 import cors from 'cors'
 import * as swagger from 'swagger-ui-express'
 
-import { CredentialController } from './controllers/credentials'
-import { StoreController } from './controllers/store'
-import { IssuerController } from './controllers/issuer'
-import { CustomerController } from './controllers/customer'
-import { Authentication } from './middleware/authentication'
-import { Connection } from './database/connection/connection'
-import { CORS_ERROR_MSG } from './types/constants'
-import * as swaggerJson from '../swagger.json'
+import { CredentialController } from './controllers/credentials.js'
+import { StoreController } from './controllers/store.js'
+import { IssuerController } from './controllers/issuer.js'
+import { CustomerController } from './controllers/customer.js'
+import { Authentication } from './middleware/authentication.js'
+import { Connection } from './database/connection/connection.js'
+import { CORS_ERROR_MSG } from './types/constants.js'
+import * as swaggerJson from '../swagger.json' assert { type: 'json' }
 
-require('dotenv').config()
+import * as dotenv from 'dotenv'
+dotenv.config()
 
 class App {
   public express: express.Application

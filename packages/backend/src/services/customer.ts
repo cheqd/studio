@@ -1,8 +1,8 @@
 import { ArrayContains, Like, Repository } from 'typeorm'
 
-import { Connection } from '../database/connection/connection'
-import { CustomerEntity } from '../database/entities/customer.entity'
-import { getCosmosAccount } from '../helpers/helpers'
+import { Connection } from '../database/connection/connection.js'
+import { CustomerEntity } from '../database/entities/customer.entity.js'
+import { getCosmosAccount } from '../helpers/helpers.js'
 
 export class CustomerService {
     public customerRepository : Repository<CustomerEntity>

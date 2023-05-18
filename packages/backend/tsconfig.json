@@ -2,7 +2,8 @@
     "extends": "../../tsconfig.json",
     "compilerOptions": {
         "rootDir": ".",
-        "outDir": "dist"
+        "outDir": "./build",
+        "allowSyntheticDefaultImports": true
     },
     "include": ["src/**/*", "swagger.json"]
 }
