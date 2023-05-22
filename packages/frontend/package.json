@@ -2,11 +2,6 @@
   "name": "@cheqd/credential-service-frontend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
-  "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cheqd/credential-service.git"
@@ -17,5 +12,79 @@
   "bugs": {
     "url": "https://github.com/cheqd/credential-service/issues"
   },
-  "homepage": "https://github.com/cheqd/credential-service#readme"
+  "homepage": "https://github.com/cheqd/credential-service#readme",
+  "scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"lint": "prettier --plugin-search-dir . --check . && eslint .",
+		"format": "prettier --plugin-search-dir . --write ."
+	},
+	"files": [
+		".svelte-kit/**/*",
+		"LICENSE",
+		"package.json",
+		"README.md"
+	],
+	"devDependencies": {
+		"@aws-sdk/types": "^3.310.0",
+		"@cloudflare/workers-types": "^4.20230404.0",
+		"@cntr/sveltekit": "^0.0.1",
+		"@playwright/experimental-ct-svelte": "^1.32.3",
+		"@playwright/test": "^1.32.1",
+		"@rgossiaux/svelte-headlessui": "^1.0.2",
+		"@semantic-release/changelog": "^6.0.3",
+		"@semantic-release/commit-analyzer": "^9.0.2",
+		"@semantic-release/git": "^10.0.1",
+		"@semantic-release/github": "^8.0.7",
+		"@semantic-release/npm": "^10.0.3",
+		"@semantic-release/release-notes-generator": "^11.0.1",
+		"@sveltejs/adapter-auto": "^2.0.0",
+		"@sveltejs/kit": "^1.15.9",
+		"@tailwindcss/typography": "^0.5.9",
+		"@types/node": "^18.16.3",
+		"@types/uuid": "^9.0.1",
+		"@typescript-eslint/eslint-plugin": "^5.59.0",
+		"@typescript-eslint/parser": "^5.59.0",
+		"autoprefixer": "^10.4.14",
+		"conventional-changelog-conventionalcommits": "^5.0.0",
+		"cssnano": "^6.0.1",
+		"eslint": "^8.39.0",
+		"eslint-config-prettier": "^8.8.0",
+		"eslint-plugin-svelte3": "^4.0.0",
+		"postcss": "^8.4.23",
+		"prettier": "^2.8.8",
+		"prettier-plugin-svelte": "^2.10.0",
+		"prettier-plugin-tailwindcss": "^0.2.7",
+		"semantic-release": "^21.0.1",
+		"svelte": "^3.58.0",
+		"svelte-check": "^3.2.0",
+		"tailwind-merge": "^1.12.0",
+		"tailwindcss": "^3.3.1",
+		"tslib": "^2.5.0",
+		"typescript": "^5.0.4",
+		"uuid": "^9.0.0",
+		"vite": "^4.3.5",
+		"vitest": "^0.30.1",
+		"zod": "^3.21.4"
+	},
+	"type": "module",
+	"browserslist": {
+		"production": [
+			">0.2%",
+			"not dead",
+			"not op_mini all"
+		],
+		"development": [
+			"last 1 chrome version",
+			"last 1 firefox version",
+			"last 1 safari version"
+		]
+	},
+	"engines": {
+		"npm": ">=8.0.0 <=9",
+		"node": ">=16 <=19"
+	}
 }

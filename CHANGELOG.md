@@ -1,5 +1,7 @@
 # Changelog
 
+## [2.0.0-develop.3](https://github.com/cheqd/credential-service/compare/2.0.0-develop.2...2.0.0-develop.3) (2023-04-03)
+
 ## [2.0.0-develop.2](https://github.com/cheqd/credential-service/compare/2.0.0-develop.1...2.0.0-develop.2) (2023-03-22)
 
 
@@ -19,6 +21,8 @@
 * Add Microservice ([#181](https://github.com/cheqd/credential-service/issues/181)) ([b08d460](https://github.com/cheqd/credential-service/commit/b08d46050ea7d4b8ab0ea928bd1b06864a5db7ee))
 
 ## [1.5.1-develop.1](https://github.com/cheqd/credential-service/compare/1.5.0...1.5.1-develop.1) (2023-03-17)
+
+## [1.5.1](https://github.com/cheqd/credential-service/compare/1.5.0...1.5.1) (2023-03-17)
 
 ## [1.5.0](https://github.com/cheqd/credential-service/compare/1.4.4...1.5.0) (2023-03-17)
 

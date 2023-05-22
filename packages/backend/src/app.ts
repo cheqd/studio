@@ -73,7 +73,7 @@ class App {
     app.get(`${URL_PREFIX}/account`, new CustomerController().get)
 
     // 404 for all other requests
-    app.all('*', (req, res) => res.status(400).send('Bad request'))
+    // app.all('*', (req, res) => res.status(400).send('Bad request'))
   }
   
 }

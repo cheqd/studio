@@ -13,7 +13,8 @@
     ],
 	"scripts": {
         "build": "lerna run build",
-        "backend": "cd packages/backend && npm start"
+        "backend": "cd packages/backend && npm start",
+        "frontend": "cd packages/frontend && npm run dev"
 	},
 	"eslintConfig": {
 		"root": true,
@@ -42,9 +43,9 @@
 		"@typescript-eslint/eslint-plugin": "^5.48.0",
 		"@typescript-eslint/parser": "^5.48.0",
 		"conventional-changelog-conventionalcommits": "^5.0.0",
-		"esbuild": "^0.17.10",
+		"esbuild": "^0.16.3",
 		"eslint": "^8.31.0",
-		"eslint-config-prettier": "^8.5.0",
+		"eslint-config-prettier": "^8.8.0",
 		"eslint-config-typescript": "^3.0.0",
 		"jest": "^29.3.1",
         "lerna": "^6.5.1",
