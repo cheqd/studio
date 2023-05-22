@@ -1,8 +1,8 @@
 // dynamic import of encrypt-storage
 /* const EncryptStorage = (await import('encrypt-storage/dist')).EncryptStorage */
 // static import of encrypt-storage
-import { EncryptStorage } from 'encrypt-storage/dist'
-import type { EncryptStorageOptions, GetFromPatternOptions, RemoveFromPatternOptions } from 'encrypt-storage/dist/types'
+// import { EncryptStorage } from 'encrypt-storage/dist'
+// import type { EncryptStorageOptions, GetFromPatternOptions, RemoveFromPatternOptions } from 'encrypt-storage/dist/types'
 import { z, type SafeParseReturnType } from 'zod'
 
 export const ClientStorageTypes = {

@@ -1,20 +1,13 @@
 <script lang="ts">
 	import '../app.css';
-	import FloatingActionButton from '$lib/components/FloatingActionButton.svelte';
 	import Footer from '$lib/components/Footer.svelte';
-	import HorizontalRule from '$lib/components/HorizontalRule.svelte';
 	import Navbar from '$lib/components/Navbar.svelte';
-	import Sidebar from '$lib/components/Sidebar.svelte';
-	import type { CheckBoxButtonOption } from '$lib/client/types';
 	import { browser } from '$app/environment';
 	import type { LayoutData } from './$types';
-	import { afterNavigate, goto } from '$app/navigation';
+	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { CredentialTypeSchema } from '$shared/schema';
 
 	export let data: LayoutData;
-	let showSidebar = false;
-	const handleSideBarToggle = () => (showSidebar = !showSidebar);
 
 	let height = '';
 	if (browser) {
