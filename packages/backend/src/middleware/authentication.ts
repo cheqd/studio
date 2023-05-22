@@ -61,23 +61,15 @@ export class Authentication {
 			const token = extractBearerTokenFromHeaders(jwtRequest.headers);
   
             const { payload } = await jwtVerify(
-            token, // The raw Bearer Token extracted from the request header
-            createRemoteJWKSet(new URL(OIDC_JWKS_ENDPOINT)), // generate a jwks using jwks_uri inquired from Logto server
-            {
-                // expected issuer of the token, should be issued by the Logto server
-                issuer: OIDC_ISSUER,
-                // expected audience token, should be the resource indicator of the current API
-                audience: AUDIENCE_ENDPOINT,
-            }
+                token, // The raw Bearer Token extracted from the request header
+                createRemoteJWKSet(new URL(OIDC_JWKS_ENDPOINT)), // generate a jwks using jwks_uri inquired from Logto server
+                {
+                    // expected issuer of the token, should be issued by the Logto server
+                    issuer: OIDC_ISSUER,
+                    // expected audience token, should be the resource indicator of the current API
+                    audience: AUDIENCE_ENDPOINT,
+                }
             );
-
-            console.log(payload);
-            if (payload.exp && payload.exp < Math.trunc(Date.now() / 1000)) {
-                return response.status(401).send({
-                    authenticated: false,
-                    error: 'Token expired',
-                })
-            }
         
             // custom payload logic
             response.locals.customerId = payload.sub;
