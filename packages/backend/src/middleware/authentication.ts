@@ -1,20 +1,32 @@
 import { Request, Response, NextFunction } from 'express'
 import { expressjwt, Request as JWTRequest } from 'express-jwt'
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 import { CustomerService } from '../services/customer.js'
-import { HEADERS } from '../types/constants.js'
-import { GenericAuthResponse } from '../types/types.js'
+import { IncomingHttpHeaders } from 'http';
 
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { ISSUER_SECRET_KEY, AUTH0_SERVICE_ENDPOINT } = process.env
+const { OIDC_JWKS_ENDPOINT, AUDIENCE_ENDPOINT, OIDC_ISSUER } = process.env
+const bearerTokenIdentifier = 'Bearer';
+
+export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHeaders) => {
+    if (!authorization) {
+        throw new Error('Authorization header is missing.')
+    }
+    if (!authorization.startsWith(bearerTokenIdentifier)) {
+        throw new Error(`Authorization token type is not supported. Valid type: "${bearerTokenIdentifier}".`)
+    }
+  
+    return authorization.slice(bearerTokenIdentifier.length + 1);
+};
 
 export class Authentication {
     static expressJWT = expressjwt({
-        secret: ISSUER_SECRET_KEY,
-        algorithms: ["HS256"],
-        credentialsRequired: true
+        secret: "random-secret",
+        algorithms: ["ES384"],
+        credentialsRequired: false
     })
 
     static handleError(error: Error, jwtRequest: JWTRequest, response: Response, next: NextFunction) {
@@ -41,26 +53,35 @@ export class Authentication {
         next()
     }
 
-    static async guard(request: Request, response: Response, next: NextFunction) {
-		const { claim, provider } = request.body as { claim: string, provider: string }
+    static async guard(jwtRequest: Request, response: Response, next: NextFunction) {
+		const { claim, provider } = jwtRequest.body as { claim: string, provider: string }
+        if (jwtRequest.path == '/' || jwtRequest.path == '/swagger') return next()
 
 		try {
-			// const resp = await fetch(
-			// 	AUTH0_SERVICE_ENDPOINT,
-			// 	{
-			// 		method: 'POST',
-			// 		body: JSON.stringify({ claim, provider: provider.toLowerCase() }),
-			// 		headers: HEADERS.json
-			// 	}
-			// )
-			// const validation: GenericAuthResponse = await resp.json()
-            // if (!validation.authenticated) {
-            //     return response.status(401).json({
-            //         authenticated: false,
-            //         error: 'Invalid Auth token'
-            //     })
-            // }
-			// response.locals.authResponse = { ...validation, provider }
+			const token = extractBearerTokenFromHeaders(jwtRequest.headers);
+  
+            const { payload } = await jwtVerify(
+            token, // The raw Bearer Token extracted from the request header
+            createRemoteJWKSet(new URL(OIDC_JWKS_ENDPOINT)), // generate a jwks using jwks_uri inquired from Logto server
+            {
+                // expected issuer of the token, should be issued by the Logto server
+                issuer: OIDC_ISSUER,
+                // expected audience token, should be the resource indicator of the current API
+                audience: AUDIENCE_ENDPOINT,
+            }
+            );
+
+            console.log(payload);
+            if (payload.exp && payload.exp < Math.trunc(Date.now() / 1000)) {
+                return response.status(401).send({
+                    authenticated: false,
+                    error: 'Token expired',
+                })
+            }
+        
+            // custom payload logic
+            response.locals.customerId = payload.sub;
+        
             next()
 		} catch (err) {
 			return response.status(500).send({

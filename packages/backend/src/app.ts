@@ -40,10 +40,11 @@ class App {
         }
     }))
     this.express.use('/swagger', swagger.serve, swagger.setup(swaggerJson))
-    this.express.use(Authentication.expressJWT.unless({
-        path: '/'
-    }))
-    this.express.use(Authentication.authenticate)
+    // this.express.use(Authentication.expressJWT.unless({
+    //     path: '/'
+    // }))
+    // this.express.use(Authentication.authenticate)
+    this.express.use(Authentication.guard)
     this.express.use(Authentication.handleError)
   }
 
