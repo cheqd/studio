@@ -57,6 +57,7 @@ export class IssuerController {
           network,
           publicKey: key.publicKeyHex
         })
+        didDocument.assertionMethod = didDocument.authentication
       } else {
         return response.status(400).json({
             error: 'Provide a DID Document or atleast one verification method'
