@@ -1,7 +1,7 @@
 import express from 'express'
 import Helmet from 'helmet'
 import cors from 'cors'
-import swaggerUi from "swagger-ui-express";
+import swaggerUi from 'swagger-ui-express'
 
 import { CredentialController } from './controllers/credentials.js'
 import { StoreController } from './controllers/store.js'

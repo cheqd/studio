@@ -1,16 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import Cross from '../icons/Cross.svelte';
-	import Dashboard from '../icons/Dashboard.svelte';
 	import Logout from '../icons/Logout.svelte';
 	import Menu from '../icons/Menu.svelte';
-	import Share from '../icons/Share.svelte';
 	import OutlineButton from './OutlineButton.svelte';
 	import { onMount } from 'svelte';
-	import HorizontalRule from './HorizontalRule.svelte';
-	import Delete from '$lib/icons/Delete.svelte';
-	import Profile from '$lib/icons/Profile.svelte';
-	import Settings from '$lib/icons/Settings.svelte';
 	let visible = false;
 
 	export let authorised = false;
