@@ -18,7 +18,7 @@ import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { KeyManager } from '@veramo/key-manager'
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
 import { KeyStore, DIDStore, PrivateKeyStore } from '@veramo/data-store'
-import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
+import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018, VeramoEd25519Signature2020 } from '@veramo/credential-ld'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
 import { Resolver, ResolverRegistry } from 'did-resolver'
@@ -33,7 +33,7 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 const { 
-  ISSUER_SECRET_KEY,
+  DB_ENCRYPTION_KEY,
   MAINNET_RPC_URL,
   TESTNET_RPC_URL,
   RESOLVER_URL,
@@ -50,7 +50,7 @@ export class Identity {
 
   init_agent(): TAgent<any> {
     const dbConnection = Connection.instance.dbConnection
-    this.privateStore = new PrivateKeyStore(dbConnection, new SecretBox(ISSUER_SECRET_KEY))
+    this.privateStore = new PrivateKeyStore(dbConnection, new SecretBox(DB_ENCRYPTION_KEY))
     return createAgent<IKeyManager>({
       plugins: [
         new KeyManager({
@@ -69,7 +69,7 @@ export class Identity {
           }),
           new DIDResolverPlugin({
             resolver: new Resolver({
-              ...CheqdDidResolver() as ResolverRegistry
+              ...CheqdDidResolver({url: RESOLVER_URL}) as ResolverRegistry
             })
           }),
       ]
@@ -117,7 +117,7 @@ export class Identity {
         }),
         new DIDResolverPlugin({
           resolver: new Resolver({
-            ...CheqdDidResolver() as ResolverRegistry
+            ...CheqdDidResolver({url: RESOLVER_URL}) as ResolverRegistry
           })
         }),
         new CredentialPlugin(),
