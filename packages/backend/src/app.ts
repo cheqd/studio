@@ -1,7 +1,7 @@
 import express from 'express'
 import Helmet from 'helmet'
 import cors from 'cors'
-import * as swagger from 'swagger-ui-express'
+import swaggerUi from 'swagger-ui-express'
 
 import { CredentialController } from './controllers/credentials.js'
 import { StoreController } from './controllers/store.js'
@@ -10,7 +10,8 @@ import { CustomerController } from './controllers/customer.js'
 import { Authentication } from './middleware/authentication.js'
 import { Connection } from './database/connection/connection.js'
 import { CORS_ERROR_MSG } from './types/constants.js'
-import * as swaggerJson from '../swagger.json' assert { type: 'json' }
+
+import swaggerJSONDoc from '../swagger.json' assert { type: "json" }
 
 import * as dotenv from 'dotenv'
 dotenv.config()
@@ -27,7 +28,7 @@ class App {
 
   private middleware() {
     this.express.use(express.json({ limit: '50mb' }))
-	this.express.use(express.urlencoded({ extended: false }))
+	  this.express.use(express.urlencoded({ extended: false }))
     this.express.use(Helmet())
     this.express.use(cors({
         origin: function(origin, callback){
@@ -39,11 +40,13 @@ class App {
             return callback(null, true)
         }
     }))
-    this.express.use('/swagger', swagger.serve, swagger.setup(swaggerJson))
-    this.express.use(Authentication.expressJWT.unless({
-        path: '/'
-    }))
-    this.express.use(Authentication.authenticate)
+    this.express.use(
+      '/swagger', 
+      swaggerUi.serve, 
+      async (_req: express.Request, res: express.Response) => {
+        return res.send(swaggerUi.generateHTML(swaggerJSONDoc))
+      });
+    this.express.use(Authentication.guard)
     this.express.use(Authentication.handleError)
   }
 
