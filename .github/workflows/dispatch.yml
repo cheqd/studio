@@ -19,6 +19,7 @@ jobs:
   call-deploy:
     name: "Deploy"
     needs: call-build
+    if: ${{ github.ref_name == 'develop' }}
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
 

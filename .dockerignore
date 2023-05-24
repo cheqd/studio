@@ -1,9 +1,14 @@
 # Skip unncecessary folders
-dist/**
-node_modules/**
-.github/**
+**/.git
+**/.github
+**/node_modules
+**/dist
 
 # Skip unnecessary files
 **/*.md
-Dockerfile**
+Dockerfile
 docker-compose.yml
+
+# Exceptions
+!LICENSE
+!README.md
