@@ -56,7 +56,7 @@ ENV LOGTO_MANAGEMENT_APP_ID ${LOGTO_MANAGEMENT_APP_ID}
 ENV LOGTO_MANAGEMENT_APP_SECRET ${LOGTO_MANAGEMENT_APP_SECRET}
 ENV LOGTO_RESOURCE_URL ${LOGTO_RESOURCE_URL}
 
-RUN chown -R node:node /home/node/app/packages
+RUN chown -R node:node /home/node/app
 
 # Specify default port
 EXPOSE ${PORT}
