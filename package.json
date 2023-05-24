@@ -22,11 +22,11 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"start": "node build/src/index.js",
+		"start": "node dist/src/index.js",
 		"format": "prettier --write  '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
 		"lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
 		"test": "jest --config jestconfig.json --verbose",
-		"typeorm": "typeorm-ts-node-esm  -d ./build/src/database/ormconfig.js",
+		"typeorm": "typeorm-ts-node-esm  -d ./dist/src/database/ormconfig.js",
 		"migration": "npm run typeorm migration:generate . && npm run typeorm migration:run"
 	},
 	"eslintConfig": {
@@ -40,8 +40,7 @@
 		"dist/**/*",
 		"LICENSE",
 		"package.json",
-		"README.md",
-		"swagger.json"
+		"README.md"
 	],
 	"dependencies": {
 		"@cheqd/did-provider-cheqd": "latest",
