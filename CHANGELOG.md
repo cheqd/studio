@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.2](https://github.com/cheqd/credential-service/compare/2.1.0-develop.1...2.1.0-develop.2) (2023-05-24)
+
+
+### Features
+
+* Switch back to backend only, split front-end to own repo [DEV-2665] ([#221](https://github.com/cheqd/credential-service/issues/221)) ([168608a](https://github.com/cheqd/credential-service/commit/168608a67dc53bbb598e805db4d67bb65b12f06a))
+
 ## [2.1.0-develop.1](https://github.com/cheqd/credential-service/compare/2.0.0...2.1.0-develop.1) (2023-05-24)
 
 
