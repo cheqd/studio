@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.1](https://github.com/cheqd/credential-service/compare/2.0.0...2.1.0-develop.1) (2023-05-24)
+
+
+### Features
+
+* [DEV-2619] Create workspace with frontend and backend packages ([#212](https://github.com/cheqd/credential-service/issues/212)) ([08e6a45](https://github.com/cheqd/credential-service/commit/08e6a45e79243691879304fc061917a0458daacb)), closes [#211](https://github.com/cheqd/credential-service/issues/211) [#194](https://github.com/cheqd/credential-service/issues/194) [#193](https://github.com/cheqd/credential-service/issues/193)
+
 ## [2.0.0](https://github.com/cheqd/credential-service/compare/1.5.1...2.0.0) (2023-04-03)
 
 

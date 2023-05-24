@@ -1,20 +1,20 @@
 {
 	"name": "cheqd",
-	"version": "2.0.0-develop.2",
+	"version": "2.1.0-develop.1",
 	"description": "cheqd Credential Service Backend",
 	"source": "src/index.ts",
 	"main": "dist/index.js",
 	"license": "Apache-2.0",
 	"author": "Cheqd Foundation Limited (https://github.com/cheqd)",
 	"repository": "https://github.com/cheqd/credential-service.git",
-    "private": "true",
-    "workspaces": [
-        "packages/*"
-    ],
+	"private": "true",
+	"workspaces": [
+		"packages/*"
+	],
 	"scripts": {
-        "build": "lerna run build",
-        "backend": "cd packages/backend && npm start",
-        "frontend": "cd packages/frontend && npm run dev"
+		"build": "lerna run build",
+		"backend": "cd packages/backend && npm start",
+		"frontend": "cd packages/frontend && npm run dev"
 	},
 	"eslintConfig": {
 		"root": true,
