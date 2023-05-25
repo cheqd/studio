@@ -2,11 +2,11 @@
     "openapi": "3.0.0",
     "servers": [
       {
-        "url": "/1.0/api/"
+        "url": "/"
       }
     ],
     "info": {
-      "description": "Api's to issue and verify jwt credentials using cheqd and veramo sdk",
+      "description": "API service to create and manage DIDs and credentials on cheqd network.",
       "version": "1.0.0",
       "title": "Cheqd Credential Service"
     },
