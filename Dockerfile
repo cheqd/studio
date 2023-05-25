@@ -40,7 +40,7 @@ COPY --from=builder --chown=node:node /home/node/app/dist ./dist
 # Install production dependencies
 RUN npm ci
 
-# Build-time arguments backend
+# Build-time arguments
 ARG NPM_CONFIG_LOGLEVEL=warn
 ARG PORT=3000
 ARG DB_ENCRYPTION_KEY
@@ -55,7 +55,7 @@ ARG OIDC_JWKS_ENDPOINT
 ARG AUDIENCE_ENDPOINT
 ARG OIDC_ISSUER
 
-# Run-time environment variables: backend
+# Run-time environment variables
 ENV NPM_CONFIG_LOGLEVEL ${NPM_CONFIG_LOGLEVEL}
 ENV PORT ${PORT}
 ENV DB_ENCRYPTION_KEY ${DB_ENCRYPTION_KEY}
