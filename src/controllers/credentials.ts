@@ -4,6 +4,13 @@ import { check, validationResult } from 'express-validator'
 
 import { Credentials } from '../services/credentials.js'
 import { CustomerService } from '../services/customer.js'
+import { Credential } from '../types/types.js'
+
+import * as dotenv from 'dotenv'
+import { VeridaService } from '../services/connectors/verida.js'
+dotenv.config()
+
+const { USE_VERIDA_CONNECTOR } = process.env
 
 export class CredentialController {
 
@@ -36,7 +43,16 @@ export class CredentialController {
             error: `Issuer DID ${request.body.issuerDid} not found`
         })
       }
-      response.status(200).json(await Credentials.instance.issue_credential(request.body, response.locals.customerId))
+      const credential: Credential = await Credentials.instance.issue_credential(request.body, response.locals.customerId)
+      if (USE_VERIDA_CONNECTOR && credential.credentialSubject.id && credential.credentialSubject.id.startsWith('did:vda')) {
+        await VeridaService.instance.sendCredential(
+            credential.credentialSubject.id,
+            "New Verifiable Credential",
+            credential,
+            request.body.credentialName
+        )
+      }
+      response.status(200).json(credential)
     } catch (error) {
         return response.status(500).json({
             error: `${error}`

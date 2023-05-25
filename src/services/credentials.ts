@@ -32,7 +32,7 @@ export class Credentials {
         }
 
         const agent = await Identity.instance.create_agent(agentId)
-		const verifiable_credential: Omit<VerifiableCredential, 'vc'> = await agent.execute(
+		const verifiable_credential: VerifiableCredential = await agent.execute(
 			'createVerifiableCredential',
 			{
 				save: false,

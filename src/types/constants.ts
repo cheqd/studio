@@ -8,3 +8,11 @@ export const VC_TYPE: string = 'VerifiableCredential'
 export const VC_PROOF_FORMAT = 'jwt'
 export const VC_REMOVE_ORIGINAL_FIELDS = false
 export const CORS_ERROR_MSG = 'The CORS policy for this site does not allow access from the specified Origin.'
+
+
+// verida
+export const POLYGON_RPC_URL = 'https://rpc-mumbai.maticvigil.com'
+
+// Schema to store a Verifiable Credential on the Verida Network.
+export const VERIDA_CREDENTIAL_RECORD_SCHEMA =
+  'https://common.schemas.verida.io/credential/base/v0.2.0/schema.json'
