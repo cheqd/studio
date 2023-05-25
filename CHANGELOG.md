@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.6](https://github.com/cheqd/credential-service/compare/2.1.0-develop.5...2.1.0-develop.6) (2023-05-25)
+
+
+### Bug Fixes
+
+* Update Dockerfile variables and Swagger generation ([#228](https://github.com/cheqd/credential-service/issues/228)) ([f659754](https://github.com/cheqd/credential-service/commit/f659754bc0930d5118fac0e9d26d0f34f9fbae14))
+
 ## [2.1.0-develop.5](https://github.com/cheqd/credential-service/compare/2.1.0-develop.4...2.1.0-develop.5) (2023-05-25)
 
 
