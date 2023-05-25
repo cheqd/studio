@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.4](https://github.com/cheqd/credential-service/compare/2.1.0-develop.3...2.1.0-develop.4) (2023-05-25)
+
+
+### Bug Fixes
+
+* Dockerfile command ([5d4defb](https://github.com/cheqd/credential-service/commit/5d4defb19b21c11b21b38453a49a1b282fd20bfc))
+
 ## [2.1.0-develop.3](https://github.com/cheqd/credential-service/compare/2.1.0-develop.2...2.1.0-develop.3) (2023-05-25)
 
 ## [2.1.0-develop.2](https://github.com/cheqd/credential-service/compare/2.1.0-develop.1...2.1.0-develop.2) (2023-05-24)
