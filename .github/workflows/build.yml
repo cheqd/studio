@@ -63,11 +63,9 @@ jobs:
           load: true
           target: runner
           tags: ${{ steps.meta.outputs.tags }}
+          outputs: type=docker,dest=credential-service-staging.tar
           cache-from: type=gha
           cache-to: type=gha,mode=min
-
-      - name: Save Docker image
-        run:  docker save ${{ env.IMAGE_NAME }} > credential-service-staging.tar
 
       - name: Upload build image as artifact
         uses: actions/upload-artifact@v3
