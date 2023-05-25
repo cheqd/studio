@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.5](https://github.com/cheqd/credential-service/compare/2.1.0-develop.4...2.1.0-develop.5) (2023-05-25)
+
+
+### Features
+
+* Add verida connector ([#227](https://github.com/cheqd/credential-service/issues/227)) ([c1ac128](https://github.com/cheqd/credential-service/commit/c1ac128220f45d98530913a8fbd89c30f88083d1))
+
 ## [2.1.0-develop.4](https://github.com/cheqd/credential-service/compare/2.1.0-develop.3...2.1.0-develop.4) (2023-05-25)
 
 
