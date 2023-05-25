@@ -23,6 +23,13 @@ jobs:
 
       - name: Login to DOCR
         run: doctl registry login --expiry-seconds 600
+      
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download docker image
         uses: actions/download-artifact@v3
@@ -31,6 +38,9 @@ jobs:
 
       - name: Load Docker image
         run: docker image load --input credential-service-staging.tar
+
+      - name: Push image to GitHub Container Registry
+        run: docker image push --all-tags ghcr.io/${{ env.IMAGE_NAME }}
 
       - name: Push images to DOCR
         run: docker image push --all-tags ${{ env.IMAGE_NAME }}

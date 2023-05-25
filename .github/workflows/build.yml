@@ -30,7 +30,7 @@ jobs:
     name: "Build Docker image"
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: registry.digitalocean.com/${{ github.repository }}
+      IMAGE_NAME: ${{ github.repository }}
 
     steps:
       - uses: actions/checkout@v3
@@ -46,7 +46,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.IMAGE_NAME }}
+          images: |
+            ghcr.io/${{ env.IMAGE_NAME }}
+            registry.digitalocean.com/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
             type=raw,value=staging-latest
