@@ -58,7 +58,7 @@ export class Authentication {
         if (jwtRequest.path == '/' || jwtRequest.path == '/swagger') return next()
 
 		try {
-			const token = extractBearerTokenFromHeaders(jwtRequest.headers);
+			const token = extractBearerTokenFromHeaders(jwtRequest.headers)
   
             const { payload } = await jwtVerify(
                 token, // The raw Bearer Token extracted from the request header
@@ -72,8 +72,7 @@ export class Authentication {
             );
         
             // custom payload logic
-            response.locals.customerId = payload.sub;
-        
+            response.locals.customerId = payload.sub
             next()
 		} catch (err) {
 			return response.status(500).send({

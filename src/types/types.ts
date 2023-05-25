@@ -119,7 +119,7 @@ export interface CredentialRequest {
 
 export type GenericAuthUser = Record<string, any> | null | undefined
 
-export type Credential = Omit<VerifiableCredential, 'vc'>
+export type Credential = VerifiableCredential // Omit<VerifiableCredential, 'vc'>
 
 const UUID = '([a-z,0-9,-]{36,36})'
 const ID_CHAR = `(?:[a-zA-Z0-9]{21,22}|${UUID})`
