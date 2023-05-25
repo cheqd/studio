@@ -70,4 +70,4 @@ USER node
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
 # Run the application
-CMD [ "npm run start" ]
+CMD npm start
