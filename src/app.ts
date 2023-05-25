@@ -58,19 +58,19 @@ class App {
     app.get('/', (req, res) => res.redirect('swagger'))
 
     // credentials
-    app.post(`${URL_PREFIX}/credentials/issue`, CredentialController.issueValidator, new CredentialController().issue)
-    app.post(`${URL_PREFIX}/credentials/verify`, CredentialController.verifyValidator, new CredentialController().verify)
+    app.post(`${URL_PREFIX}/credential/issue`, CredentialController.issueValidator, new CredentialController().issue)
+    app.post(`${URL_PREFIX}/credential/verify`, CredentialController.verifyValidator, new CredentialController().verify)
 
     // store
     app.post(`${URL_PREFIX}/store`, new StoreController().set)
     app.get(`${URL_PREFIX}/store/:id`, new StoreController().get)
 
     // issuer
-    app.post(`${URL_PREFIX}/keys/create`, new IssuerController().createKey)
-    app.get(`${URL_PREFIX}/keys/:kid`, new IssuerController().getKey)
-    app.post(`${URL_PREFIX}/dids/create`, new IssuerController().createDid)
-    app.get(`${URL_PREFIX}/dids`, new IssuerController().getDids)
-    app.get(`${URL_PREFIX}/dids/:did`, new IssuerController().getDids)
+    app.post(`${URL_PREFIX}/key/create`, new IssuerController().createKey)
+    app.get(`${URL_PREFIX}/key/:kid`, new IssuerController().getKey)
+    app.post(`${URL_PREFIX}/did/create`, new IssuerController().createDid)
+    app.get(`${URL_PREFIX}/did/list`, new IssuerController().getDids)
+    app.get(`${URL_PREFIX}/did/:did`, new IssuerController().getDids)
 
     // customer
     app.post(`${URL_PREFIX}/account`, new CustomerController().create)

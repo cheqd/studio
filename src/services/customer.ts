@@ -19,7 +19,7 @@ export class CustomerService {
     }
 
     public async update(customerId: string, { kids=[], dids=[], claimIds=[], presentationIds=[]} : { kids?: string[], dids?: string[], claimIds?: string[], presentationIds?: string[] }) {
-        let existingCustomer = await this.customerRepository.findOneBy({ customerId })
+        const existingCustomer = await this.customerRepository.findOneBy({ customerId })
         if (!existingCustomer) {
             throw new Error(`CustomerId not found`)
         }

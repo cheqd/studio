@@ -12,14 +12,14 @@
     },
     "tags": [
       {
-        "name": "Credentials",
+        "name": "Credential",
         "externalDocs": {
           "url": "https://github.com/cheqd/credential-service#readme"
         }
       }
     ],
     "paths": {
-      "/keys/create": {
+      "/key/create": {
         "post": {
           "tags": [
             "Key"
@@ -73,51 +73,7 @@
           }
         }
       },
-      "/keys": {
-        "get": {
-          "tags": [
-            "Key"
-          ],
-          "summary": "List keypairs",
-          "security": [
-            {
-              "bearerAuth": []
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "The request was successful",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            },
-            "401": {
-              "$ref": "#/components/schemas/UnauthorizedError"
-            },
-            "500": {
-              "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/InvalidRequest"
-                  },
-                  "example": {
-                    "error": "Internal Error"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "/keys/{kid}": {
+      "/key/{kid}": {
         "get": {
           "tags": [
             "Key"
@@ -168,7 +124,7 @@
           }
         }
       },
-      "/dids/create": {
+      "/did/create": {
         "post": {
           "tags": [
             "DID"
@@ -281,7 +237,7 @@
           }
         }
       },
-      "/dids": {
+      "/did": {
         "get": {
           "tags": [
             "DID"
@@ -339,7 +295,7 @@
           }
         }
       },
-      "/dids/{did}": {
+      "/did/{did}": {
         "get": {
           "tags": [
             "DID"
@@ -404,10 +360,10 @@
           }
         }
       },
-      "/credentials/issue": {
+      "/credential/issue": {
         "post": {
           "tags": [
-            "Credentials"
+            "Credential"
           ],
           "summary": "Issue a JWT credential",
           "description": "<p>This endpoint creates a DID. As input it takes the list of attributes, subjectDid, context and expiration date of the credential to be issued.</p>",
@@ -468,10 +424,10 @@
           }
         }
       },
-      "/credentials/verify": {
+      "/credential/verify": {
         "post": {
           "tags": [
-            "Credentials"
+            "Credential"
           ],
           "summary": "Verify a JWT credential",
           "description": "<p>This endpoint verifies the JWT credential. As input it takes the entire credential itself or just the JWT string</p>",
