@@ -8,7 +8,7 @@ import { CreateCustomersTable1683723285946 } from '../migrations/CreateCustomers
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { ISSUER_DATABASE_URL, ISSUER_DATABASE_CERT } = process.env
+const { DB_CONNECTION_URL, ISSUER_DATABASE_CERT } = process.env
 
 export class Connection {
     public dbConnection : DataSource
@@ -16,7 +16,7 @@ export class Connection {
 
     constructor () {
         const { parse } = pkg
-        const config = parse(ISSUER_DATABASE_URL!)
+        const config = parse(DB_CONNECTION_URL!)
         if(!(config.host && config.port && config.database)) {
             throw new Error(`Error: Invalid Database url`)
         }

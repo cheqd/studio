@@ -45,7 +45,7 @@ export class Authentication {
             error: 'Invalid auth token'
         })
 
-        if(jwtRequest.path != '/1.0/api/account' && !await CustomerService.instance.find(jwtRequest.auth.sub, {})) return response.status(401).json({
+        if(jwtRequest.path != '/account' && !await CustomerService.instance.find(jwtRequest.auth.sub, {})) return response.status(401).json({
             error: 'Customer not found'
         })
 
