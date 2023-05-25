@@ -129,5 +129,5 @@ jobs:
         run: docker image push --all-tags ghcr.io/${{ env.IMAGE_NAME }}
 
       - name: Push image to DigitalOcean Container Registry
-        run: docker image push --all-tags ${{ env.IMAGE_NAME }}
+        run: docker image push --all-tags registry.digitalocean.com/${{ env.IMAGE_NAME }}
  
