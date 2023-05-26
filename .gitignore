@@ -5,7 +5,6 @@ tsconfig.tsbuildinfo
 worker/
 transpiled
 .env
-.env*
 .snyk
 
 ### GENERAL EXCLUSIONS ###

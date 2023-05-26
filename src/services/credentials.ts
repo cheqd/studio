@@ -8,9 +8,12 @@ import {
 } from '../types/constants.js'
 import { CredentialPayload, CredentialRequest, VerifiableCredential, Credential } from '../types/types.js'
 import { Identity } from './identity.js'
-
+import { VeridaService } from '../services/connectors/verida.js'
+import { v4 } from 'uuid'
 import * as dotenv from 'dotenv'
 dotenv.config()
+
+const { USE_VERIDA_CONNECTOR } = process.env
 
 export class Credentials {
     public static instance = new Credentials()
@@ -32,7 +35,7 @@ export class Credentials {
         }
 
         const agent = await Identity.instance.create_agent(agentId)
-		const verifiable_credential: Omit<VerifiableCredential, 'vc'> = await agent.execute(
+		const verifiable_credential: VerifiableCredential = await agent.execute(
 			'createVerifiableCredential',
 			{
 				save: false,
@@ -47,7 +50,16 @@ export class Credentials {
 		if (verifiable_credential?.iss) delete verifiable_credential.iss
 		if (verifiable_credential?.nbf) delete verifiable_credential.nbf
 		if (verifiable_credential?.exp) delete verifiable_credential.exp
-
+        
+        if (USE_VERIDA_CONNECTOR && request.subjectDid.startsWith('did:vda')) {
+          await VeridaService.instance.sendCredential(
+            request.subjectDid,
+            "New Verifiable Credential",
+            verifiable_credential,
+            request.credentialName || v4(),
+            request.credentialSummary
+          )
+        }
         return verifiable_credential
 	}
 
