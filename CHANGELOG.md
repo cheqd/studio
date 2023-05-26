@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.7](https://github.com/cheqd/credential-service/compare/2.1.0-develop.6...2.1.0-develop.7) (2023-05-26)
+
+
+### Features
+
+* Update refactor verida ([6194a28](https://github.com/cheqd/credential-service/commit/6194a28a6e131f123598b70019ccff968115454d))
+
 ## [2.1.0-develop.6](https://github.com/cheqd/credential-service/compare/2.1.0-develop.5...2.1.0-develop.6) (2023-05-25)
 
 
