@@ -64,7 +64,7 @@
 		"express": "^4.18.2",
 		"express-jwt": "^8.4.1",
 		"express-validator": "^7.0.1",
-		"helmet": "^6.2.0",
+		"helmet": "^7.0.0",
 		"node-cache": "^5.1.2",
 		"pg": "^8.11.0",
 		"pg-connection-string": "^2.6.0",
