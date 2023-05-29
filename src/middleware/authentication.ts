@@ -8,8 +8,8 @@ import { IncomingHttpHeaders } from 'http';
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { OIDC_JWKS_ENDPOINT, AUDIENCE_ENDPOINT, OIDC_ISSUER } = process.env
-const bearerTokenIdentifier = 'Bearer';
+const { OIDC_JWKS_ENDPOINT, AUDIENCE_ENDPOINT, OIDC_ISSUER, ENABLE_AUTH, CUSTOMER_ID } = process.env
+const bearerTokenIdentifier = 'Bearer'
 
 export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHeaders) => {
     if (!authorization) {
@@ -58,21 +58,29 @@ export class Authentication {
         if (jwtRequest.path == '/' || jwtRequest.path == '/swagger') return next()
 
 		try {
-			const token = extractBearerTokenFromHeaders(jwtRequest.headers)
-  
-            const { payload } = await jwtVerify(
-                token, // The raw Bearer Token extracted from the request header
-                createRemoteJWKSet(new URL(OIDC_JWKS_ENDPOINT)), // generate a jwks using jwks_uri inquired from Logto server
-                {
-                    // expected issuer of the token, should be issued by the Logto server
-                    issuer: OIDC_ISSUER,
-                    // expected audience token, should be the resource indicator of the current API
-                    audience: AUDIENCE_ENDPOINT,
-                }
-            );
-        
-            // custom payload logic
-            response.locals.customerId = payload.sub
+            if (ENABLE_AUTH) {
+                const token = extractBearerTokenFromHeaders(jwtRequest.headers)
+    
+                const { payload } = await jwtVerify(
+                    token, // The raw Bearer Token extracted from the request header
+                    createRemoteJWKSet(new URL(OIDC_JWKS_ENDPOINT)), // generate a jwks using jwks_uri inquired from Logto server
+                    {
+                        // expected issuer of the token, should be issued by the Logto server
+                        issuer: OIDC_ISSUER,
+                        // expected audience token, should be the resource indicator of the current API
+                        audience: AUDIENCE_ENDPOINT,
+                    }
+                );
+            
+                // custom payload logic
+                response.locals.customerId = payload.sub
+            } else if (CUSTOMER_ID) {
+                response.locals.customerId = CUSTOMER_ID
+            } else {
+                return response.status(400).json({
+                    error: `Unauthorized error`
+                })
+            }
             next()
 		} catch (err) {
 			return response.status(500).send({

@@ -3,7 +3,7 @@ declare global {
     interface ProcessEnv {
       MAINNET_RPC_URL: string
       TESTNET_RPC_URL: string
-	    RESOLVER_URL: string
+	  RESOLVER_URL: string
       ALLOWED_ORIGINS: string | undefined
       DB_CONNECTION_URL: string
       DB_ENCRYPTION_KEY: string
@@ -20,6 +20,10 @@ declare global {
       ISSUER_VERIDA_PRIVATE_KEY: string
       POLYGON_PRIVATE_KEY: string
       VERIDA_NETWORK: EnvironmentType
+
+      // auth
+      ENABLE_AUTH: boolean | undefined
+      CUSTOMER_ID: string | undefined
     }
   }
 }
