@@ -67,9 +67,10 @@ class App {
     // issuer
     app.post(`/key/create`, new IssuerController().createKey)
     app.get(`/key/:kid`, new IssuerController().getKey)
-    app.post(`/did/create`, new IssuerController().createDid)
+    app.post(`/did/create`, IssuerController.didValidator, new IssuerController().createDid)
     app.get(`/did/list`, new IssuerController().getDids)
     app.get(`/did/:did`, new IssuerController().getDids)
+    app.post(`/:did/create-resource`, IssuerController.resourceValidator, new IssuerController().createResource)
 
     // customer
     app.post(`/account`, new CustomerController().create)

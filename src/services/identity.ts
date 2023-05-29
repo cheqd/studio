@@ -18,8 +18,8 @@ import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { KeyManager } from '@veramo/key-manager'
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
 import { KeyStore, DIDStore, PrivateKeyStore } from '@veramo/data-store'
-import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018, VeramoEd25519Signature2020 } from '@veramo/credential-ld'
-import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
+import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
+import { CheqdDIDProvider, getResolver as CheqdDidResolver, ResourcePayload } from '@cheqd/did-provider-cheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { v4 } from 'uuid'
@@ -193,5 +193,27 @@ export class Identity {
     const identifier: IIdentifier = await this.agent.didManagerImport({ keys: [key], did, controllerKeyId: key.kid } as MinimalImportableIdentifier)
 
     return identifier
+  }
+
+  async createResource(resource: ResourcePayload, agentId?: string) {
+    try {
+    const agentService = agentId ? await this.create_agent(agentId) : this.agent
+    if (!agentService) throw new Error('No initialised agent found.')
+
+    const [kms] = await agentService.keyManagerGetKeyManagementSystems()
+
+    const result: boolean = await agentService.execute(
+      'cheqdCreateLinkedResource',
+      {
+        kms,
+        payload: {
+            data: resource
+        }
+      }
+    )
+    return result
+    } catch (error) {
+        throw new Error(`${error}`)
+    }    
   }
 }
