@@ -57,7 +57,7 @@ npm run build
 
 The application expects the following environment variables to be defined for the app to function:
 
-1. `ISSUER_DATABASE_URL`: The postgres database url e.g. `postgres://<user>:<password>@<host>:<port>/<database>?<query>`
+1. `DB_CONNECTION_URL`: The postgres database url e.g. `postgres://<user>:<password>@<host>:<port>/<database>?<query>`
 2. `DB_ENCRYPTION_KEY`: A secret key for the veramo wallet
 3. `PORT`: Port number for the credential service (optional)
 4. `FEE_PAYER_MNENONIC_TESTNET`: Mnemonic for the issuer's Cosmos account to be used for testnet.
