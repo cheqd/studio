@@ -15,10 +15,10 @@ import {
 import { CredentialPlugin } from '@veramo/credential-w3c'
 import { DIDManager } from '@veramo/did-manager'
 import { DIDResolverPlugin } from '@veramo/did-resolver'
-import { KeyManager } from '@veramo/key-manager'
+import { AbstractPrivateKeyStore, KeyManager, MemoryPrivateKeyStore } from '@veramo/key-manager'
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
 import { KeyStore, DIDStore, PrivateKeyStore } from '@veramo/data-store'
-import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018, VeramoEd25519Signature2020 } from '@veramo/credential-ld'
+import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
 import { Resolver, ResolverRegistry } from 'did-resolver'
@@ -32,16 +32,17 @@ import { CustomerService } from './customer.js'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { 
-  DB_ENCRYPTION_KEY,
+const {
   MAINNET_RPC_URL,
   TESTNET_RPC_URL,
   RESOLVER_URL,
+  USE_EXTERNAL_DB,
+  EXTERNAL_DB_ENCRYPTION_KEY,
 } = process.env
 
 export class Identity {
   agent: TAgent<any>
-  privateStore?: PrivateKeyStore
+  privateStore?: AbstractPrivateKeyStore
   public static instance = new Identity()
 
   constructor() {
@@ -50,7 +51,13 @@ export class Identity {
 
   init_agent(): TAgent<any> {
     const dbConnection = Connection.instance.dbConnection
-    this.privateStore = new PrivateKeyStore(dbConnection, new SecretBox(DB_ENCRYPTION_KEY))
+
+    if (USE_EXTERNAL_DB == "true") {
+      this.privateStore = new PrivateKeyStore(dbConnection, new SecretBox(EXTERNAL_DB_ENCRYPTION_KEY))
+    } else {
+      this.privateStore = new MemoryPrivateKeyStore()
+    }
+
     return createAgent<IKeyManager>({
       plugins: [
         new KeyManager({
@@ -62,16 +69,16 @@ export class Identity {
           }
         }),
         new DIDManager({
-            store: new DIDStore(dbConnection),
-            defaultProvider: 'did:cheqd:testnet',
-            providers: {
-            }
-          }),
-          new DIDResolverPlugin({
-            resolver: new Resolver({
-              ...CheqdDidResolver({url: RESOLVER_URL}) as ResolverRegistry
-            })
-          }),
+          store: new DIDStore(dbConnection),
+          defaultProvider: 'did:cheqd:testnet',
+          providers: {
+          }
+        }),
+        new DIDResolverPlugin({
+          resolver: new Resolver({
+            ...CheqdDidResolver({ url: RESOLVER_URL }) as ResolverRegistry
+          })
+        }),
       ]
     })
   }
@@ -81,9 +88,9 @@ export class Identity {
     const dbConnection = Connection.instance.dbConnection
     const privateKey = (await this.getPrivateKey(customer.account)).privateKeyHex
     if (!privateKey || !this.privateStore) {
-        throw new Error(`No keys is initialized`)
+      throw new Error(`No keys is initialized`)
     }
-    return createAgent<IDIDManager & IKeyManager & IDataStore & IResolver &ICredentialIssuer>({
+    return createAgent<IDIDManager & IKeyManager & IDataStore & IResolver & ICredentialIssuer>({
       plugins: [
         new KeyManager({
           store: new KeyStore(dbConnection),
@@ -117,22 +124,22 @@ export class Identity {
         }),
         new DIDResolverPlugin({
           resolver: new Resolver({
-            ...CheqdDidResolver({url: RESOLVER_URL}) as ResolverRegistry
+            ...CheqdDidResolver({ url: RESOLVER_URL }) as ResolverRegistry
           })
         }),
         new CredentialPlugin(),
         new CredentialIssuerLD({
-            contextMaps: [LdDefaultContexts],
-            suites: [new VeramoEd25519Signature2018()]
+          contextMaps: [LdDefaultContexts],
+          suites: [new VeramoEd25519Signature2018()]
         })
       ]
     })
   }
 
-  async createKey(type?: 'Ed25519' | 'Secp256k1') : Promise<ManagedKeyInfo> {
+  async createKey(type?: 'Ed25519' | 'Secp256k1'): Promise<ManagedKeyInfo> {
     if (!this.agent) throw new Error('No initialised agent found.')
     const [kms] = await this.agent.keyManagerGetKeyManagementSystems()
-    const key =  await this.agent.keyManagerCreate({
+    const key = await this.agent.keyManagerCreate({
       type: type || 'Ed25519',
       kms,
     })
@@ -149,21 +156,21 @@ export class Identity {
 
   async createDid(network: string, didDocument: DIDDocument, agentId?: string): Promise<IIdentifier> {
     try {
-    const agentService = agentId ? await this.create_agent(agentId) : this.agent
-    if (!agentService) throw new Error('No initialised agent found.')
+      const agentService = agentId ? await this.create_agent(agentId) : this.agent
+      if (!agentService) throw new Error('No initialised agent found.')
 
-    const [kms] = await agentService.keyManagerGetKeyManagementSystems()
+      const [kms] = await agentService.keyManagerGetKeyManagementSystems()
 
-    const identifier: IIdentifier = await agentService.didManagerCreate({
-      provider: `did:cheqd:${network}`,
-      kms,
-      options: {
-        document: didDocument
-      }
-    })
-    return identifier
+      const identifier: IIdentifier = await agentService.didManagerCreate({
+        provider: `did:cheqd:${network}`,
+        kms,
+        options: {
+          document: didDocument
+        }
+      })
+      return identifier
     } catch (error) {
-        throw new Error(`${error}`)
+      throw new Error(`${error}`)
     }
   }
 
@@ -172,11 +179,11 @@ export class Identity {
   }
 
   async resolveDid(did: string) {
-    return await this.agent.resolveDid({didUrl: did})
+    return await this.agent.resolveDid({ didUrl: did })
   }
 
   async getDid(did: string) {
-    return await this.agent.didManagerGet({did})
+    return await this.agent.didManagerGet({ did })
   }
 
   async importDid(did: string, privateKeyHex: string, publicKeyHex: string): Promise<IIdentifier> {
@@ -184,8 +191,8 @@ export class Identity {
 
     const [kms] = await this.agent.keyManagerGetKeyManagementSystems()
 
-    if(!did.match(cheqdDidRegex)){
-        throw new Error('Invalid DID')
+    if (!did.match(cheqdDidRegex)) {
+      throw new Error('Invalid DID')
     }
 
     const key: MinimalImportableKey = { kms: kms, type: 'Ed25519', kid: v4(), privateKeyHex, publicKeyHex }

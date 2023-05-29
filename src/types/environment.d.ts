@@ -5,8 +5,10 @@ declare global {
       TESTNET_RPC_URL: string
 	    RESOLVER_URL: string
       ALLOWED_ORIGINS: string | undefined
-      DB_CONNECTION_URL: string
-      DB_ENCRYPTION_KEY: string
+      USE_EXTERNAL_DB: string
+      EXTERNAL_DB_CONNECTION_URL: string
+      EXTERNAL_DB_ENCRYPTION_KEY: string
+      EXTERNAL_DB_CERT: string | undefined
       ISSUER_DATABASE_CERT: string | undefined
       OIDC_JWKS_ENDPOINT: string
       AUDIENCE_ENDPOINT: string
