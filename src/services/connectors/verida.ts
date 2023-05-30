@@ -60,7 +60,6 @@ export class VeridaService {
             account: this.account,
         })
     } catch (error) {
-        console.log(error)
         throw new Error(`Error: ${error}`)
     }
   }

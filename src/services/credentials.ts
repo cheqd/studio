@@ -1,4 +1,4 @@
-import { IVerifyResult, W3CVerifiableCredential } from '@veramo/core'
+import { IVerifyResult, W3CVerifiableCredential, W3CVerifiablePresentation } from '@veramo/core'
 
 import {
   VC_CONTEXT,
@@ -74,4 +74,15 @@ export class Credentials {
         delete(result.payload)
         return result
 	}
+
+    async verify_presentation(presentation: W3CVerifiablePresentation, agentId: string): Promise<IVerifyResult> {
+        const agent = await Identity.instance.create_agent(agentId)
+		const result = await agent.execute(
+			'verifyPresentation',
+			{
+				presentation
+			}
+		)
+        return result
+    }
 }

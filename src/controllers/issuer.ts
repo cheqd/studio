@@ -125,7 +125,7 @@ export class IssuerController {
     }
 
     const { did } = request.params
-    let { data, name, type, alsoKnownAs, version } = request.body
+    let { data, name, type, alsoKnownAs, version, network } = request.body
     
     let resourcePayload: Partial<MsgCreateResourcePayload> = {}
     try {
@@ -148,7 +148,8 @@ export class IssuerController {
         version,
         alsoKnownAs
       }
-      const result = await Identity.instance.createResource(resourcePayload, response.locals.customerId)    
+      network = network || (did.split(':'))[2]
+      const result = await Identity.instance.createResource( network, resourcePayload, response.locals.customerId)    
       if ( result ) {
         return response.status(201).json({
             resource: resourcePayload
