@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.9](https://github.com/cheqd/credential-service/compare/2.1.0-develop.8...2.1.0-develop.9) (2023-05-30)
+
+
+### Bug Fixes
+
+* Minor issues && swagger ([#235](https://github.com/cheqd/credential-service/issues/235)) ([51d2790](https://github.com/cheqd/credential-service/commit/51d2790712b7470e46dceb97743da5e2ed5c2420))
+
 ## [2.1.0-develop.8](https://github.com/cheqd/credential-service/compare/2.1.0-develop.7...2.1.0-develop.8) (2023-05-30)
 
 
