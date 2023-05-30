@@ -18,7 +18,7 @@ import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { KeyManager } from '@veramo/key-manager'
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
 import { KeyStore, DIDStore, PrivateKeyStore } from '@veramo/data-store'
-import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
+import { CredentialIssuerLD, ICredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver, ResourcePayload, Cheqd } from '@cheqd/did-provider-cheqd'
 import { ICheqd } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
 import { CheqdNetwork } from '@cheqd/sdk'
@@ -77,7 +77,7 @@ export class Identity {
     })
   }
 
-  async create_agent(agentId: string): Promise<TAgent<IDIDManager & IKeyManager & IDataStore & IResolver & ICredentialIssuer & ICheqd>> {
+  async create_agent(agentId: string) {
     const customer = await CustomerService.instance.get(agentId) as CustomerEntity
     const dbConnection = Connection.instance.dbConnection
     const privateKey = (await this.getPrivateKey(customer.account)).privateKeyHex
@@ -101,7 +101,7 @@ export class Identity {
       }
     )
 
-    return createAgent<IDIDManager & IKeyManager & IDataStore & IResolver & ICredentialIssuer & ICheqd>({
+    return createAgent<IDIDManager & IKeyManager & IDataStore & IResolver & ICredentialIssuer & ICheqd & ICredentialIssuerLD>({
       plugins: [
         new KeyManager({
           store: new KeyStore(dbConnection),
@@ -210,7 +210,7 @@ export class Identity {
     const [kms] = await agentService.keyManagerGetKeyManagementSystems()
 
     const result: boolean = await agentService.execute(
-        'cheqdCreateLinkedResource',
+      'cheqdCreateLinkedResource',
       {
         kms,
         payload,
