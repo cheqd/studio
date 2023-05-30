@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.8](https://github.com/cheqd/credential-service/compare/2.1.0-develop.7...2.1.0-develop.8) (2023-05-30)
+
+
+### Features
+
+* Add auth toggle && missing api's ([#234](https://github.com/cheqd/credential-service/issues/234)) ([5c44288](https://github.com/cheqd/credential-service/commit/5c44288dd3726d5f38828126641d1476f9d0a897))
+
 ## [2.1.0-develop.7](https://github.com/cheqd/credential-service/compare/2.1.0-develop.6...2.1.0-develop.7) (2023-05-26)
 
 
