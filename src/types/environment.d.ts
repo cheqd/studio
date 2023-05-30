@@ -22,7 +22,7 @@ declare global {
       VERIDA_NETWORK: EnvironmentType
 
       // auth
-      ENABLE_AUTH: boolean | undefined
+      ENABLE_AUTH: string | undefined
       CUSTOMER_ID: string | undefined
     }
   }
