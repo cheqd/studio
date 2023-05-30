@@ -20,6 +20,7 @@ import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
 import { KeyStore, DIDStore, PrivateKeyStore } from '@veramo/data-store'
 import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 import { CheqdDIDProvider, getResolver as CheqdDidResolver, ResourcePayload, Cheqd } from '@cheqd/did-provider-cheqd'
+import { ICheqd } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
 import { CheqdNetwork } from '@cheqd/sdk'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { v4 } from 'uuid'
@@ -30,7 +31,6 @@ import { CustomerEntity } from '../database/entities/customer.entity.js'
 import { CustomerService } from './customer.js'
 
 import * as dotenv from 'dotenv'
-import { ICheqd } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
 dotenv.config()
 
 const { 
