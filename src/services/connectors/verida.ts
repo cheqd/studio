@@ -9,7 +9,7 @@ import * as dotenv from 'dotenv'
 import { VerifiableCredential } from '@veramo/core'
 dotenv.config()
 
-const { VERIDA_NETWORK, VERIDA_APP_NAME, ISSUER_VERIDA_PRIVATE_KEY, POLYGON_PRIVATE_KEY } = process.env
+const { VERIDA_NETWORK, VERIDA_PRIVATE_KEY, POLYGON_PRIVATE_KEY } = process.env
 
 /**
  * Helper class for the Verida protocol.
@@ -76,8 +76,8 @@ export class VeridaService {
         if(!this.context) {
             await VeridaService.instance.init(
               VERIDA_NETWORK,
-              VERIDA_APP_NAME,
-              ISSUER_VERIDA_PRIVATE_KEY,
+              'Cheqd Verida',
+              VERIDA_PRIVATE_KEY,
               POLYGON_PRIVATE_KEY
             )
         }
