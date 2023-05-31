@@ -12,6 +12,7 @@ export const CORS_ERROR_MSG = 'The CORS policy for this site does not allow acce
 
 // verida
 export const POLYGON_RPC_URL = 'https://rpc-mumbai.maticvigil.com'
+export const VERIDA_APP_NAME = 'Cheqd Verida'
 
 // Schema to store a Verifiable Credential on the Verida Network.
 export const VERIDA_CREDENTIAL_RECORD_SCHEMA =
