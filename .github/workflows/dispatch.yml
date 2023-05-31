@@ -17,7 +17,7 @@ jobs:
     secrets: inherit
 
   call-staging:
-    name: "Deploy"
+    name: "Staging"
     needs: call-build
     if: ${{ github.ref_name == 'develop' }}
     uses: ./.github/workflows/staging.yml
