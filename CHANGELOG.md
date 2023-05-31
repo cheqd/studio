@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.11](https://github.com/cheqd/credential-service/compare/2.1.0-develop.10...2.1.0-develop.11) (2023-05-31)
+
+
+### Features
+
+* Update .envs ([#238](https://github.com/cheqd/credential-service/issues/238)) ([ce0e57b](https://github.com/cheqd/credential-service/commit/ce0e57baad5712c879f88a548d2f08c4d6c010d7))
+
 ## [2.1.0-develop.10](https://github.com/cheqd/credential-service/compare/2.1.0-develop.9...2.1.0-develop.10) (2023-05-31)
 
 
