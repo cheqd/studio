@@ -7,8 +7,8 @@
     ],
     "info": {
         "description": "API service to create and manage DIDs and credentials on cheqd network.",
-        "version": "1.0.0",
-        "title": "Cheqd Credential Service"
+        "version": "2.0.0",
+        "title": "Credential Service for cheqd network"
     },
     "tags": [
         {
