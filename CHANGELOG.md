@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.10](https://github.com/cheqd/credential-service/compare/2.1.0-develop.9...2.1.0-develop.10) (2023-05-31)
+
+
+### Bug Fixes
+
+* Jsonld credentials ([#236](https://github.com/cheqd/credential-service/issues/236)) ([c56a0a0](https://github.com/cheqd/credential-service/commit/c56a0a07cfcb4999cf0e40094dfe58b0a1b16712))
+
 ## [2.1.0-develop.9](https://github.com/cheqd/credential-service/compare/2.1.0-develop.8...2.1.0-develop.9) (2023-05-30)
 
 
