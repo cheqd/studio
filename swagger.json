@@ -365,7 +365,7 @@
                 "tags": [
                     "Credential"
                 ],
-                "summary": "Issue a JWT credential",
+                "summary": "Issue a credential",
                 "description": "<p>This endpoint creates a DID. As input it takes the list of attributes, subjectDid, context and expiration date of the credential to be issued.</p>",
                 "security": [
                     {
@@ -429,8 +429,8 @@
                 "tags": [
                     "Credential"
                 ],
-                "summary": "Verify a JWT credential",
-                "description": "<p>This endpoint verifies the JWT credential. As input it takes the entire credential itself or just the JWT string</p>",
+                "summary": "Verify a credential",
+                "description": "<p>This endpoint verifies the credential. As input it takes the entire credential itself or just the JWT string</p>",
                 "operationId": "verify",
                 "security": [
                     {
@@ -877,7 +877,8 @@
                     ],
                     "type": [
                         "Person"
-                    ]
+                    ],
+                    "format": "jwt"
                 }
             },
             "Credential": {

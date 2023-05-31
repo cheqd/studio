@@ -1,4 +1,4 @@
-import { IVerifyResult, W3CVerifiableCredential, W3CVerifiablePresentation } from '@veramo/core'
+import { CredentialPayload, IVerifyResult, VerifiableCredential, W3CVerifiableCredential, W3CVerifiablePresentation } from '@veramo/core'
 
 import {
   VC_CONTEXT,
@@ -6,7 +6,7 @@ import {
   VC_REMOVE_ORIGINAL_FIELDS,
   VC_TYPE
 } from '../types/constants.js'
-import { CredentialPayload, CredentialRequest, VerifiableCredential, Credential } from '../types/types.js'
+import { CredentialRequest } from '../types/types.js'
 import { Identity } from './identity.js'
 import { VeridaService } from '../services/connectors/verida.js'
 import { v4 } from 'uuid'
@@ -18,7 +18,7 @@ const { USE_VERIDA_CONNECTOR } = process.env
 export class Credentials {
     public static instance = new Credentials()
 
-    async issue_credential(request: CredentialRequest, agentId: string): Promise<Credential> {
+    async issue_credential(request: CredentialRequest, agentId: string): Promise<VerifiableCredential> {
         const credential: CredentialPayload = {
             '@context': [ ...request['@context'] || [], ...VC_CONTEXT ],
             type: [ ...request.type || [], VC_TYPE ],
@@ -35,15 +35,23 @@ export class Credentials {
         }
 
         const agent = await Identity.instance.create_agent(agentId)
-		const verifiable_credential: VerifiableCredential = await agent.execute(
-			'createVerifiableCredential',
-			{
-				save: false,
-				credential,
-				proofFormat: request.format || VC_PROOF_FORMAT,
-				removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS
-			}
-		)
+        let verifiable_credential: VerifiableCredential
+        if (request.format == 'jsonld') {
+            verifiable_credential = await agent.createVerifiableCredentialLD({
+                credential,
+                fetchRemoteContexts: true
+            })
+        } else {
+            verifiable_credential = await agent.execute(
+                'createVerifiableCredential',
+                {
+                    save: false,
+                    credential,
+                    proofFormat: VC_PROOF_FORMAT,
+                    removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS
+                }
+            )
+        }
 
 		if (verifiable_credential?.vc) delete verifiable_credential.vc
 		if (verifiable_credential?.sub) delete verifiable_credential.sub
@@ -72,6 +80,16 @@ export class Credentials {
 			}
 		)
         delete(result.payload)
+        return result
+	}
+
+    async verifyCredentialLd(credential: VerifiableCredential, agentId: string): Promise<boolean> {
+        const agent = await Identity.instance.create_agent(agentId)
+		const result = await agent.verifyCredentialLD({
+				credential,
+                fetchRemoteContexts: true
+			}
+		)
         return result
 	}
 

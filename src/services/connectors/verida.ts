@@ -2,11 +2,11 @@ import { EnvironmentType } from '@verida/types'
 import { Context, Network } from '@verida/client-ts'
 import { AutoAccount } from '@verida/account-node'
 
-import { Credential } from '../../types/types.js'
 import { CredentialDataRecord, DataRecord } from '../../types/verida.js'
-import { POLYGON_RPC_URL, VERIDA_CREDENTIAL_RECORD_SCHEMA } from '../../types/constants.js'
+import { POLYGON_RPC_URL, VC_CONTEXT, VERIDA_CREDENTIAL_RECORD_SCHEMA } from '../../types/constants.js'
 
 import * as dotenv from 'dotenv'
+import { VerifiableCredential } from '@veramo/core'
 dotenv.config()
 
 const { VERIDA_NETWORK, VERIDA_APP_NAME, ISSUER_VERIDA_PRIVATE_KEY, POLYGON_PRIVATE_KEY } = process.env
@@ -117,7 +117,7 @@ export class VeridaService {
   async sendCredential(
     recipientDid: string,
     messageSubject: string,
-    credential: Credential,
+    credential: VerifiableCredential,
     credentialName: string,
     credentialSummary?: string
   ) {
@@ -127,7 +127,7 @@ export class VeridaService {
       summary: credentialSummary,
       schema: VERIDA_CREDENTIAL_RECORD_SCHEMA,
       didJwtVc: credential.proof.jwt,
-      credentialSchema: credential['@context'][0],
+      credentialSchema: (credential['@context'] as string[]).find(e => !VC_CONTEXT.includes(e)) || VC_CONTEXT[0],
       credentialData: credential,
     }
     await this.sendData(recipientDid, messageSubject, credentialRecord)

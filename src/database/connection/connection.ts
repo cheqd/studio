@@ -16,7 +16,10 @@ export class Connection {
 
     constructor () {
         const { parse } = pkg
-        const config = parse(DB_CONNECTION_URL!)
+        if(!DB_CONNECTION_URL) {
+          throw new Error(`Error: Invalid Database url`)
+        }
+        const config = parse(DB_CONNECTION_URL)
         if(!(config.host && config.port && config.database)) {
             throw new Error(`Error: Invalid Database url`)
         }
