@@ -3,13 +3,13 @@ import { Context, Network } from '@verida/client-ts'
 import { AutoAccount } from '@verida/account-node'
 
 import { CredentialDataRecord, DataRecord } from '../../types/verida.js'
-import { POLYGON_RPC_URL, VC_CONTEXT, VERIDA_CREDENTIAL_RECORD_SCHEMA } from '../../types/constants.js'
+import { POLYGON_RPC_URL, VC_CONTEXT, VERIDA_APP_NAME, VERIDA_CREDENTIAL_RECORD_SCHEMA } from '../../types/constants.js'
 
 import * as dotenv from 'dotenv'
 import { VerifiableCredential } from '@veramo/core'
 dotenv.config()
 
-const { VERIDA_NETWORK, VERIDA_APP_NAME, ISSUER_VERIDA_PRIVATE_KEY, POLYGON_PRIVATE_KEY } = process.env
+const { VERIDA_NETWORK, VERIDA_PRIVATE_KEY, POLYGON_PRIVATE_KEY } = process.env
 
 /**
  * Helper class for the Verida protocol.
@@ -77,7 +77,7 @@ export class VeridaService {
             await VeridaService.instance.init(
               VERIDA_NETWORK,
               VERIDA_APP_NAME,
-              ISSUER_VERIDA_PRIVATE_KEY,
+              VERIDA_PRIVATE_KEY,
               POLYGON_PRIVATE_KEY
             )
         }

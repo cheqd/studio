@@ -16,8 +16,7 @@ declare global {
 
       // verida
       USE_VERIDA_CONNECTOR: boolean
-      VERIDA_APP_NAME: string
-      ISSUER_VERIDA_PRIVATE_KEY: string
+      VERIDA_PRIVATE_KEY: string
       POLYGON_PRIVATE_KEY: string
       VERIDA_NETWORK: EnvironmentType
 
