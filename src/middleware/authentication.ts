@@ -8,7 +8,7 @@ import { IncomingHttpHeaders } from 'http';
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { OIDC_JWKS_ENDPOINT, AUDIENCE_ENDPOINT, OIDC_ISSUER, ENABLE_AUTHENTICATION, DEFAULT_CUSTOMER_ID } = process.env
+const { OIDC_JWKS_ENDPOINT, LOGTO_RESOURCE_URL, OIDC_ISSUER, ENABLE_AUTHENTICATION, DEFAULT_CUSTOMER_ID } = process.env
 const bearerTokenIdentifier = 'Bearer'
 
 export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHeaders) => {
@@ -68,7 +68,7 @@ export class Authentication {
                         // expected issuer of the token, should be issued by the Logto server
                         issuer: OIDC_ISSUER,
                         // expected audience token, should be the resource indicator of the current API
-                        audience: AUDIENCE_ENDPOINT,
+                        audience: LOGTO_RESOURCE_URL,
                     }
                 );
             

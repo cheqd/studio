@@ -11,7 +11,7 @@ declare global {
 
       // LogTo
       OIDC_JWKS_ENDPOINT: string
-      AUDIENCE_ENDPOINT: string
+      LOGTO_RESOURCE_URL: string
       OIDC_ISSUER: string
 
       // verida
