@@ -1,4 +1,4 @@
-import { ArrayContains, Like, Repository } from 'typeorm'
+import { ArrayContains, Like, Raw, Repository } from 'typeorm'
 
 import { Connection } from '../database/connection/connection.js'
 import { CustomerEntity } from '../database/entities/customer.entity.js'
@@ -24,10 +24,30 @@ export class CustomerService {
             throw new Error(`CustomerId not found`)
         }
 
-        existingCustomer.kids= existingCustomer.kids.concat(kids)
-        existingCustomer.dids= existingCustomer.dids.concat(dids)
-        existingCustomer.claimIds= existingCustomer.claimIds.concat(claimIds)
-        existingCustomer.presentationIds= existingCustomer.presentationIds.concat(presentationIds)
+        if (existingCustomer.kids == null) {
+            existingCustomer.kids = kids
+        } else {
+            existingCustomer.kids = existingCustomer.kids.concat(kids)
+        }
+
+        if (existingCustomer.dids == null) {
+            existingCustomer.dids = dids
+        } else {
+            existingCustomer.dids = existingCustomer.dids.concat(dids)
+        }
+
+        if (existingCustomer.claimIds == null) {
+            existingCustomer.claimIds = claimIds
+        } else {
+            existingCustomer.claimIds = existingCustomer.claimIds.concat(claimIds)
+        }
+
+        if (existingCustomer.presentationIds == null) {
+            existingCustomer.presentationIds = presentationIds
+        } else {
+            existingCustomer.presentationIds = existingCustomer.presentationIds.concat(presentationIds)
+        }
+        
         return await this.customerRepository.save(existingCustomer)
     }
 
@@ -36,28 +56,28 @@ export class CustomerService {
     }
 
     public async find(customerId: string, { kid, did, claimId, presentationId }: {kid?: string, did?: string, claimId?: string, presentationId?: string}) {
-        const where: any = {
-            customerId
-        }
+        // if (kid) {
+        //     where.kids = ArrayContains([kid])
+        // }
 
-        if (kid) {
-            where.kids = ArrayContains([kid])
-        }
+        // if (did) {
+        //     where.dids = ArrayContains([did])
+        // }
 
-        if (did) {
-            where.dids = ArrayContains([did])
-        }
+        // if (claimId) {
+        //     where.claimIds = ArrayContains([claimId])
+        // }
 
-        if (claimId) {
-            where.claimIds = ArrayContains([claimId])
-        }
-
-        if (presentationId) {
-            where.presentationIds = ArrayContains([presentationId])
-        }
+        // if (presentationId) {
+        //     where.presentationIds = ArrayContains([presentationId])
+        // }
 
         try {
-            return await this.customerRepository.findOne({ where }) ? true : false
+            return await this.customerRepository.find({ 
+                where : {
+                customerId: customerId,
+                dids: '["' + did + '"]'
+            } }) ? true : false
         } catch {
             return false
         }

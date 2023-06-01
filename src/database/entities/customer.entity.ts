@@ -1,9 +1,29 @@
 import { AfterLoad, BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
+import { ValueTransformer } from 'typeorm';
 
 import * as dotenv from 'dotenv'
 dotenv.config()
 
 const { USE_EXTERNAL_DB } = process.env;
+
+const arrayToJsonTransformer = (shouldTransform: string): ValueTransformer => {
+  return {
+    to: (array: any[]) => {
+      if (shouldTransform == "false") {
+        // Convert the array to a JSON string
+        return JSON.stringify(array);
+      }
+      return array;
+    },
+    from: (jsonString: string) => {
+      if (shouldTransform == "false") {
+        // Parse the JSON string and return the array
+        return JSON.parse(jsonString);
+      }
+      return jsonString;
+    },
+  };
+};
 
 @Entity('customers')
 export class CustomerEntity {
@@ -19,7 +39,11 @@ export class CustomerEntity {
     @Column('text', { array: true, default: [] })
     kids!: string[]
 
-    @Column('text', { array: true, default: [] })
+    @Column({
+        type: 'text',
+        transformer: arrayToJsonTransformer(USE_EXTERNAL_DB),
+        nullable: true,
+    })
     dids!: string[]
 
     @Column('text', { array: true, default: [] })
@@ -33,54 +57,8 @@ export class CustomerEntity {
         this.customerId = customerId
         this.account = account
         this.address = address
-        this.kids = []
-        this.dids = []
         this.claimIds = []
         this.presentationIds = []
-    }
-
-    arrayToJSON(array: string[]): any {
-        if (array.length > 0) {
-            array[0] = JSON.stringify(array)
-        }
-
-        return array
-    }
-
-    @BeforeInsert()
-    beforeInsert(): void {
-        if (USE_EXTERNAL_DB == "false") {
-            this.dids = this.arrayToJSON(this.dids)
-            this.kids = this.arrayToJSON(this.kids)
-            this.claimIds = this.arrayToJSON(this.claimIds)
-            this.presentationIds = this.arrayToJSON(this.presentationIds)
-        }
-    }
-
-    @BeforeUpdate()
-    beforeUpdate(): void {
-        this.beforeInsert()
-    }
-
-    jsonToArray(array: string[]): any {
-        let str = JSON.stringify(array)
-        str = str.replace("\"[object Object]\"", "")
-        if (str.length > 0) {
-            array = JSON.parse(str)
-        } else {
-            array = []
-        }
-
-        return array
-    }
-
-    @AfterLoad()
-    afterLoad(): void {
-        if (USE_EXTERNAL_DB == "false") {
-            this.dids = this.jsonToArray(this.dids)
-            this.kids = this.jsonToArray(this.kids)
-            this.claimIds = this.jsonToArray(this.claimIds)
-            this.presentationIds = this.jsonToArray(this.presentationIds)
-        }
+        this.kids = []
     }
 }
