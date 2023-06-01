@@ -28,7 +28,7 @@ declare global {
       ALLOWED_ORIGINS: string | undefined
 
       // Verida
-      USE_VERIDA_CONNECTOR: boolean
+      ENABLE_VERIDA_CONNECTOR: boolean
       VERIDA_NETWORK: NetworkType
       POLYGON_RPC_URL: string
       VERIDA_PRIVATE_KEY: string
