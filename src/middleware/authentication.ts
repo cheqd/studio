@@ -8,7 +8,10 @@ import { IncomingHttpHeaders } from 'http';
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { OIDC_JWKS_ENDPOINT, LOGTO_RESOURCE_URL, OIDC_ISSUER, ENABLE_AUTHENTICATION, DEFAULT_CUSTOMER_ID } = process.env
+const { LOGTO_ENDPOINT, LOGTO_RESOURCE_URL, ENABLE_AUTHENTICATION, DEFAULT_CUSTOMER_ID } = process.env
+
+const OIDC_ISSUER = LOGTO_ENDPOINT + '/oidc'
+const OIDC_JWKS_ENDPOINT = LOGTO_ENDPOINT + '/oidc/jwks'
 const bearerTokenIdentifier = 'Bearer'
 
 export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHeaders) => {
