@@ -11,6 +11,7 @@ import {
   IKeyManager,
   IResolver,
   ICredentialIssuer,
+  ICredentialVerifier,
 } from '@veramo/core'
 import { CredentialPlugin } from '@veramo/credential-w3c'
 import { DIDManager } from '@veramo/did-manager'
@@ -101,7 +102,16 @@ export class Identity {
       }
     )
 
-    return createAgent<IDIDManager & IKeyManager & IDataStore & IResolver & ICredentialIssuer & ICheqd & ICredentialIssuerLD>({
+    return createAgent<
+      IDIDManager & 
+      IKeyManager & 
+      IDataStore & 
+      IResolver & 
+      ICredentialIssuer & 
+      ICredentialVerifier & 
+      ICheqd & 
+      ICredentialIssuerLD
+    >({
       plugins: [
         new KeyManager({
           store: new KeyStore(dbConnection),

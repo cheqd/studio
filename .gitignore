@@ -451,3 +451,6 @@ cython_debug/
 #.idea/
 cred.json
 _wrangler.toml
+
+# verida
+v[0-9,a-z]*
