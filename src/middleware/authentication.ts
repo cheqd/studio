@@ -8,7 +8,7 @@ import { IncomingHttpHeaders } from 'http';
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { OIDC_JWKS_ENDPOINT, AUDIENCE_ENDPOINT, OIDC_ISSUER, ENABLE_AUTH, CUSTOMER_ID } = process.env
+const { OIDC_JWKS_ENDPOINT, AUDIENCE_ENDPOINT, OIDC_ISSUER, ENABLE_AUTH, DEFAULT_CUSTOMER_ID } = process.env
 const bearerTokenIdentifier = 'Bearer'
 
 export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHeaders) => {
@@ -74,8 +74,8 @@ export class Authentication {
             
                 // custom payload logic
                 response.locals.customerId = payload.sub
-            } else if (CUSTOMER_ID) {
-                response.locals.customerId = CUSTOMER_ID
+            } else if (DEFAULT_CUSTOMER_ID) {
+                response.locals.customerId = DEFAULT_CUSTOMER_ID
             } else {
                 return response.status(400).json({
                     error: `Unauthorized error`

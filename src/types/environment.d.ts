@@ -22,7 +22,7 @@ declare global {
 
       // auth
       ENABLE_AUTH: string | undefined
-      CUSTOMER_ID: string | undefined
+      DEFAULT_CUSTOMER_ID: string | undefined
     }
   }
 }
