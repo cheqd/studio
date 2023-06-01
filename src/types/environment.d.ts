@@ -7,7 +7,7 @@ declare global {
       ALLOWED_ORIGINS: string | undefined
       DB_CONNECTION_URL: string
       DB_ENCRYPTION_KEY: string
-      ISSUER_DATABASE_CERT: string | undefined
+      DB_CERTIFICATE: string | undefined
 
       // LogTo
       OIDC_JWKS_ENDPOINT: string

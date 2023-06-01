@@ -52,7 +52,7 @@ ARG RESOLVER_URL=https://resolver.cheqd.net/1.0/identifiers/
 # Veramo Database configuration: build-time
 ARG DB_CONNECTION_URL
 ARG DB_ENCRYPTION_KEY
-ARG ISSUER_DATABASE_CERT
+ARG DB_CERTIFICATE
 
 #  LogTo: build-time
 ARG ENABLE_AUTH=false
@@ -80,7 +80,7 @@ ENV RESOLVER_URL ${RESOLVER_URL}
 # Environment variables: Veramo Database configuration
 ENV DB_CONNECTION_URL ${DB_CONNECTION_URL}
 ENV DB_ENCRYPTION_KEY ${DB_ENCRYPTION_KEY}
-ENV ISSUER_DATABASE_CERT ${ISSUER_DATABASE_CERT}
+ENV DB_CERTIFICATE ${DB_CERTIFICATE}
 
 # Environment variables: LogTo
 ENV ENABLE_AUTH ${ENABLE_AUTH}
