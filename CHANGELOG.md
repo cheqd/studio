@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.13](https://github.com/cheqd/credential-service/compare/2.1.0-develop.12...2.1.0-develop.13) (2023-06-01)
+
+
+### Bug Fixes
+
+* Dockerfile permission && credential verification [CU-85zt6ng2p] ([#239](https://github.com/cheqd/credential-service/issues/239)) ([45bb6d7](https://github.com/cheqd/credential-service/commit/45bb6d785a6552bfdee51124d0ca8d71f2e51c9a))
+
 ## [2.1.0-develop.12](https://github.com/cheqd/credential-service/compare/2.1.0-develop.11...2.1.0-develop.12) (2023-05-31)
 
 ## [2.1.0-develop.11](https://github.com/cheqd/credential-service/compare/2.1.0-develop.10...2.1.0-develop.11) (2023-05-31)
