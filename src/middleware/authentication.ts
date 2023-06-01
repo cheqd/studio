@@ -8,7 +8,7 @@ import { IncomingHttpHeaders } from 'http';
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { OIDC_JWKS_ENDPOINT, AUDIENCE_ENDPOINT, OIDC_ISSUER, ENABLE_AUTH, DEFAULT_CUSTOMER_ID } = process.env
+const { OIDC_JWKS_ENDPOINT, AUDIENCE_ENDPOINT, OIDC_ISSUER, ENABLE_AUTHENTICATION, DEFAULT_CUSTOMER_ID } = process.env
 const bearerTokenIdentifier = 'Bearer'
 
 export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHeaders) => {
@@ -58,7 +58,7 @@ export class Authentication {
         if (jwtRequest.path == '/' || jwtRequest.path == '/swagger') return next()
 
 		try {
-            if (ENABLE_AUTH === 'true') {
+            if (ENABLE_AUTHENTICATION === 'true') {
                 const token = extractBearerTokenFromHeaders(jwtRequest.headers)
     
                 const { payload } = await jwtVerify(
