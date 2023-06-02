@@ -65,6 +65,9 @@ The application expects the following environment variables to be defined for th
 6. `MAINNET_RPC_URL`: Optional RPC URL for a node on cheqd mainnet, e.g., `https://rpc.cheqd.net`
 7. `TESTNET_RPC_URL`: Optional RPC URL for a node on cheqd testnet, e.g., `https://rpc.cheqd.network`
 8. `ISSUER_DATABASE_CERT`: Optional ca certificate parameter of the database
+9. `OIDC_JWKS_ENDPOINT`: Endpoint to logTo `jwks` checker. Usual `<logto_endpoint>/oidc/jwks`
+10. `AUDIENCE_ENDPOINT`: Endpoint for ResourceAPI in LogTo. For now it seems to be a root path for CredentialServce, like `<credential-service>/1.0/api` . Also, it should be exactly the same as `LOGTO_RESOURCE_URL` on frontend, cause for this particular endpoint jwt token will be issued.
+11. `OIDC_ISSUER`: endopoint of jwt token issuer. In our case it will be LogTo `oidc` endpoint, like `<logto_endpoint>/oidc`
 
 ### Run
 

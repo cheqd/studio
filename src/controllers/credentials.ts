@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express'
+import type { VerifiableCredential } from '@veramo/core'
 
 import { check, validationResult } from 'express-validator'
 
@@ -36,7 +37,8 @@ export class CredentialController {
             error: `Issuer DID ${request.body.issuerDid} not found`
         })
       }
-      response.status(200).json(await Credentials.instance.issue_credential(request.body, response.locals.customerId))
+      const credential: VerifiableCredential = await Credentials.instance.issue_credential(request.body, response.locals.customerId)
+      response.status(200).json(credential)
     } catch (error) {
         return response.status(500).json({
             error: `${error}`
@@ -54,7 +56,7 @@ export class CredentialController {
       return response.status(400).json({ error: result.array()[0].msg })
     }
     try {
-		  return response.status(200).json(await Credentials.instance.verify_credentials(request.body.credential, response.locals.customerId))
+		return response.status(200).json(await Credentials.instance.verify_credentials(request.body.credential, response.locals.customerId))
     } catch (error) {
         return response.status(500).json({
             error: `${error}`

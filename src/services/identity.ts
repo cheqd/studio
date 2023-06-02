@@ -11,6 +11,7 @@ import {
   IKeyManager,
   IResolver,
   ICredentialIssuer,
+  ICredentialVerifier,
 } from '@veramo/core'
 import { CredentialPlugin } from '@veramo/credential-w3c'
 import { DIDManager } from '@veramo/did-manager'
@@ -18,8 +19,9 @@ import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { AbstractPrivateKeyStore, KeyManager, MemoryPrivateKeyStore } from '@veramo/key-manager'
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
 import { KeyStore, DIDStore, PrivateKeyStore } from '@veramo/data-store'
-import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
-import { CheqdDIDProvider, getResolver as CheqdDidResolver } from '@cheqd/did-provider-cheqd'
+import { CredentialIssuerLD, ICredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
+import { CheqdDIDProvider, getResolver as CheqdDidResolver, ResourcePayload, Cheqd } from '@cheqd/did-provider-cheqd'
+import { ICheqd } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
 import { CheqdNetwork } from '@cheqd/sdk'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { v4 } from 'uuid'
@@ -33,8 +35,6 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 const {
-  MAINNET_RPC_URL,
-  TESTNET_RPC_URL,
   RESOLVER_URL,
   ENABLE_EXTERNAL_DB,
   EXTERNAL_DB_ENCRYPTION_KEY,
@@ -83,14 +83,40 @@ export class Identity {
     })
   }
 
-  async create_agent(agentId: string): Promise<TAgent<any>> {
+  async create_agent(agentId: string) {
     const customer = await CustomerService.instance.get(agentId) as CustomerEntity
     const dbConnection = Connection.instance.dbConnection
     const privateKey = (await this.getPrivateKey(customer.account)).privateKeyHex
     if (!privateKey || !this.privateStore) {
       throw new Error(`No keys is initialized`)
     }
-    return createAgent<IDIDManager & IKeyManager & IDataStore & IResolver & ICredentialIssuer>({
+    const mainnetProvider = new CheqdDIDProvider(
+      {
+        defaultKms: 'local',
+        cosmosPayerSeed: privateKey,
+        networkType: CheqdNetwork.Mainnet as any,
+        rpcUrl: MAINNET_RPC_URL || DefaultRPCUrl.Mainnet,
+      }
+    )
+    const testnetProvider = new CheqdDIDProvider(
+      {
+        defaultKms: 'local',
+        cosmosPayerSeed: privateKey,
+        networkType: CheqdNetwork.Testnet as any,
+        rpcUrl: TESTNET_RPC_URL || DefaultRPCUrl.Testnet,
+      }
+    )
+
+    return createAgent<
+      IDIDManager & 
+      IKeyManager & 
+      IDataStore & 
+      IResolver & 
+      ICredentialIssuer & 
+      ICredentialVerifier & 
+      ICheqd & 
+      ICredentialIssuerLD
+    >({
       plugins: [
         new KeyManager({
           store: new KeyStore(dbConnection),
@@ -104,22 +130,8 @@ export class Identity {
           store: new DIDStore(dbConnection),
           defaultProvider: 'did:cheqd:testnet',
           providers: {
-            'did:cheqd:mainnet': new CheqdDIDProvider(
-              {
-                defaultKms: 'local',
-                cosmosPayerSeed: privateKey,
-                networkType: CheqdNetwork.Mainnet as any,
-                rpcUrl: MAINNET_RPC_URL || DefaultRPCUrl.Mainnet,
-              }
-            ),
-            'did:cheqd:testnet': new CheqdDIDProvider(
-              {
-                defaultKms: 'local',
-                cosmosPayerSeed: privateKey,
-                networkType: CheqdNetwork.Testnet as any,
-                rpcUrl: TESTNET_RPC_URL || DefaultRPCUrl.Testnet,
-              }
-            )
+            'did:cheqd:mainnet': mainnetProvider,
+            'did:cheqd:testnet': testnetProvider
           }
         }),
         new DIDResolverPlugin({
@@ -200,5 +212,26 @@ export class Identity {
     const identifier: IIdentifier = await this.agent.didManagerImport({ keys: [key], did, controllerKeyId: key.kid } as MinimalImportableIdentifier)
 
     return identifier
+  }
+
+  async createResource(network: string, payload: ResourcePayload, agentId?: string) {
+    try {
+    const agentService = agentId ? await this.create_agent(agentId) : this.agent
+    if (!agentService) throw new Error('No initialised agent found.')
+
+    const [kms] = await agentService.keyManagerGetKeyManagementSystems()
+
+    const result: boolean = await agentService.execute(
+      'cheqdCreateLinkedResource',
+      {
+        kms,
+        payload,
+        network
+      }
+    )
+    return result
+    } catch (error) {
+        throw new Error(`${error}`)
+    }    
   }
 }

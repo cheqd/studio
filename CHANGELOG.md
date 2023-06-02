@@ -1,5 +1,63 @@
 # Changelog
 
+## [2.1.0-develop.13](https://github.com/cheqd/credential-service/compare/2.1.0-develop.12...2.1.0-develop.13) (2023-06-01)
+
+
+### Bug Fixes
+
+* Dockerfile permission && credential verification [CU-85zt6ng2p] ([#239](https://github.com/cheqd/credential-service/issues/239)) ([45bb6d7](https://github.com/cheqd/credential-service/commit/45bb6d785a6552bfdee51124d0ca8d71f2e51c9a))
+
+## [2.1.0-develop.12](https://github.com/cheqd/credential-service/compare/2.1.0-develop.11...2.1.0-develop.12) (2023-05-31)
+
+## [2.1.0-develop.11](https://github.com/cheqd/credential-service/compare/2.1.0-develop.10...2.1.0-develop.11) (2023-05-31)
+
+
+### Features
+
+* Update .envs ([#238](https://github.com/cheqd/credential-service/issues/238)) ([ce0e57b](https://github.com/cheqd/credential-service/commit/ce0e57baad5712c879f88a548d2f08c4d6c010d7))
+
+## [2.1.0-develop.10](https://github.com/cheqd/credential-service/compare/2.1.0-develop.9...2.1.0-develop.10) (2023-05-31)
+
+
+### Bug Fixes
+
+* Jsonld credentials ([#236](https://github.com/cheqd/credential-service/issues/236)) ([c56a0a0](https://github.com/cheqd/credential-service/commit/c56a0a07cfcb4999cf0e40094dfe58b0a1b16712))
+
+## [2.1.0-develop.9](https://github.com/cheqd/credential-service/compare/2.1.0-develop.8...2.1.0-develop.9) (2023-05-30)
+
+
+### Bug Fixes
+
+* Minor issues && swagger ([#235](https://github.com/cheqd/credential-service/issues/235)) ([51d2790](https://github.com/cheqd/credential-service/commit/51d2790712b7470e46dceb97743da5e2ed5c2420))
+
+## [2.1.0-develop.8](https://github.com/cheqd/credential-service/compare/2.1.0-develop.7...2.1.0-develop.8) (2023-05-30)
+
+
+### Features
+
+* Add auth toggle && missing api's ([#234](https://github.com/cheqd/credential-service/issues/234)) ([5c44288](https://github.com/cheqd/credential-service/commit/5c44288dd3726d5f38828126641d1476f9d0a897))
+
+## [2.1.0-develop.7](https://github.com/cheqd/credential-service/compare/2.1.0-develop.6...2.1.0-develop.7) (2023-05-26)
+
+
+### Features
+
+* Update refactor verida ([6194a28](https://github.com/cheqd/credential-service/commit/6194a28a6e131f123598b70019ccff968115454d))
+
+## [2.1.0-develop.6](https://github.com/cheqd/credential-service/compare/2.1.0-develop.5...2.1.0-develop.6) (2023-05-25)
+
+
+### Bug Fixes
+
+* Update Dockerfile variables and Swagger generation ([#228](https://github.com/cheqd/credential-service/issues/228)) ([f659754](https://github.com/cheqd/credential-service/commit/f659754bc0930d5118fac0e9d26d0f34f9fbae14))
+
+## [2.1.0-develop.5](https://github.com/cheqd/credential-service/compare/2.1.0-develop.4...2.1.0-develop.5) (2023-05-25)
+
+
+### Features
+
+* Add verida connector ([#227](https://github.com/cheqd/credential-service/issues/227)) ([c1ac128](https://github.com/cheqd/credential-service/commit/c1ac128220f45d98530913a8fbd89c30f88083d1))
+
 ## [2.1.0-develop.4](https://github.com/cheqd/credential-service/compare/2.1.0-develop.3...2.1.0-develop.4) (2023-05-25)
 
 

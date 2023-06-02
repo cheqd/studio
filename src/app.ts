@@ -53,28 +53,28 @@ class App {
 
   private routes() {
     const app = this.express
-    const URL_PREFIX = '/1.0/api'
 
     app.get('/', (req, res) => res.redirect('swagger'))
 
     // credentials
-    app.post(`${URL_PREFIX}/credentials/issue`, CredentialController.issueValidator, new CredentialController().issue)
-    app.post(`${URL_PREFIX}/credentials/verify`, CredentialController.verifyValidator, new CredentialController().verify)
+    app.post(`/credential/issue`, CredentialController.issueValidator, new CredentialController().issue)
+    app.post(`/credential/verify`, CredentialController.verifyValidator, new CredentialController().verify)
 
     // store
-    app.post(`${URL_PREFIX}/store`, new StoreController().set)
-    app.get(`${URL_PREFIX}/store/:id`, new StoreController().get)
+    app.post(`/store`, new StoreController().set)
+    app.get(`/store/:id`, new StoreController().get)
 
     // issuer
-    app.post(`${URL_PREFIX}/keys/create`, new IssuerController().createKey)
-    app.get(`${URL_PREFIX}/keys/:kid`, new IssuerController().getKey)
-    app.post(`${URL_PREFIX}/dids/create`, new IssuerController().createDid)
-    app.get(`${URL_PREFIX}/dids`, new IssuerController().getDids)
-    app.get(`${URL_PREFIX}/dids/:did`, new IssuerController().getDids)
+    app.post(`/key/create`, new IssuerController().createKey)
+    app.get(`/key/:kid`, new IssuerController().getKey)
+    app.post(`/did/create`, IssuerController.didValidator, new IssuerController().createDid)
+    app.get(`/did/list`, new IssuerController().getDids)
+    app.get(`/did/:did`, new IssuerController().getDids)
+    app.post(`/:did/create-resource`, IssuerController.resourceValidator, new IssuerController().createResource)
 
     // customer
-    app.post(`${URL_PREFIX}/account`, new CustomerController().create)
-    app.get(`${URL_PREFIX}/account`, new CustomerController().get)
+    app.post(`/account`, new CustomerController().create)
+    app.get(`/account`, new CustomerController().get)
 
     // 404 for all other requests
     app.all('*', (req, res) => res.status(400).send('Bad request'))
