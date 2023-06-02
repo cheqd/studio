@@ -36,7 +36,7 @@ const {
   MAINNET_RPC_URL,
   TESTNET_RPC_URL,
   RESOLVER_URL,
-  USE_EXTERNAL_DB,
+  ENABLE_EXTERNAL_DB,
   EXTERNAL_DB_ENCRYPTION_KEY,
 } = process.env
 
@@ -52,7 +52,7 @@ export class Identity {
   init_agent(): TAgent<any> {
     const dbConnection = Connection.instance.dbConnection
 
-    if (USE_EXTERNAL_DB == "true") {
+    if (ENABLE_EXTERNAL_DB == "true") {
       this.privateStore = new PrivateKeyStore(dbConnection, new SecretBox(EXTERNAL_DB_ENCRYPTION_KEY))
     } else {
       this.privateStore = new MemoryPrivateKeyStore()

@@ -3,7 +3,7 @@ import { Column, Entity, PrimaryGeneratedColumn, ValueTransformer } from 'typeor
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { USE_EXTERNAL_DB } = process.env;
+const { ENABLE_EXTERNAL_DB } = process.env;
 
 const arrayToJsonTransformer = (shouldTransform: string): ValueTransformer => {
   return {
@@ -37,7 +37,7 @@ export class CustomerEntity {
 
   @Column({
     type: 'text',
-    transformer: arrayToJsonTransformer(USE_EXTERNAL_DB),
+    transformer: arrayToJsonTransformer(ENABLE_EXTERNAL_DB),
     array: true,
     nullable: true,
   })
@@ -45,7 +45,7 @@ export class CustomerEntity {
 
   @Column({
     type: 'text',
-    transformer: arrayToJsonTransformer(USE_EXTERNAL_DB),
+    transformer: arrayToJsonTransformer(ENABLE_EXTERNAL_DB),
     array: true,
     nullable: true,
   })
@@ -53,7 +53,7 @@ export class CustomerEntity {
 
   @Column({
     type: 'text',
-    transformer: arrayToJsonTransformer(USE_EXTERNAL_DB),
+    transformer: arrayToJsonTransformer(ENABLE_EXTERNAL_DB),
     array: true,
     nullable: true,
   })
@@ -61,7 +61,7 @@ export class CustomerEntity {
 
   @Column({
     type: 'text',
-    transformer: arrayToJsonTransformer(USE_EXTERNAL_DB),
+    transformer: arrayToJsonTransformer(ENABLE_EXTERNAL_DB),
     array: true,
     nullable: true,
   })

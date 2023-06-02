@@ -7,7 +7,7 @@ import { getCosmosAccount } from '../helpers/helpers.js'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { USE_EXTERNAL_DB } = process.env;
+const { ENABLE_EXTERNAL_DB } = process.env;
 
 export class CustomerService {
     public customerRepository: Repository<CustomerEntity>
@@ -42,7 +42,7 @@ export class CustomerService {
     }
 
     public async find(customerId: string, { kid, did, claimId, presentationId }: { kid?: string, did?: string, claimId?: string, presentationId?: string }) {
-        if (USE_EXTERNAL_DB == "true") {
+        if (ENABLE_EXTERNAL_DB == "true") {
             return this.findFromExternalDB(customerId, { kid: kid, did: did, claimId: claimId, presentationId: presentationId })
         } else {
             return this.findFromMemoryDB(customerId, { kid: kid, did: did, claimId: claimId, presentationId: presentationId })

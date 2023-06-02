@@ -4,7 +4,7 @@ import { AbstractDatabase, Memory, Postgres } from '../types/types.js'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { USE_EXTERNAL_DB } = process.env
+const { ENABLE_EXTERNAL_DB } = process.env
 
 export class Connection {
     private db: AbstractDatabase;
@@ -12,7 +12,7 @@ export class Connection {
     public static instance = new Connection();
 
     constructor() {
-        if (USE_EXTERNAL_DB == "true") {
+        if (ENABLE_EXTERNAL_DB == "true") {
             this.db = new Postgres();
         } else {
             this.db = new Memory();
