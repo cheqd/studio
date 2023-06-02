@@ -1,5 +1,4 @@
-import { AfterLoad, BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
-import { ValueTransformer } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, ValueTransformer } from 'typeorm'
 
 import * as dotenv from 'dotenv'
 dotenv.config()
@@ -27,38 +26,51 @@ const arrayToJsonTransformer = (shouldTransform: string): ValueTransformer => {
 
 @Entity('customers')
 export class CustomerEntity {
-    @PrimaryGeneratedColumn('uuid')
-    customerId!: string
+  @PrimaryGeneratedColumn('uuid')
+  customerId!: string
 
-    @Column('text')
-    account!: string
+  @Column('text')
+  account!: string
 
-    @Column('text')
-    address!: string
+  @Column('text')
+  address!: string
 
-    @Column('text', { array: true, default: [] })
-    kids!: string[]
+  @Column({
+    type: 'text',
+    transformer: arrayToJsonTransformer(USE_EXTERNAL_DB),
+    array: true,
+    nullable: true,
+  })
+  kids!: string[]
 
-    @Column({
-        type: 'text',
-        transformer: arrayToJsonTransformer(USE_EXTERNAL_DB),
-        nullable: true,
-    })
-    dids!: string[]
+  @Column({
+    type: 'text',
+    transformer: arrayToJsonTransformer(USE_EXTERNAL_DB),
+    array: true,
+    nullable: true,
+  })
+  dids!: string[]
 
-    @Column('text', { array: true, default: [] })
-    claimIds!: string[]
+  @Column({
+    type: 'text',
+    transformer: arrayToJsonTransformer(USE_EXTERNAL_DB),
+    array: true,
+    nullable: true,
+  })
+  claimIds!: string[]
 
-    @Column('text', { array: true, default: [] })
-    presentationIds!: string[]
+  @Column({
+    type: 'text',
+    transformer: arrayToJsonTransformer(USE_EXTERNAL_DB),
+    array: true,
+    nullable: true,
+  })
+  presentationIds!: string[]
 
 
-    constructor(customerId: string, account: string, address: string) {
-        this.customerId = customerId
-        this.account = account
-        this.address = address
-        this.claimIds = []
-        this.presentationIds = []
-        this.kids = []
-    }
+  constructor(customerId: string, account: string, address: string) {
+    this.customerId = customerId
+    this.account = account
+    this.address = address
+  }
 }

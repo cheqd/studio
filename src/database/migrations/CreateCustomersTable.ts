@@ -8,10 +8,10 @@ export class CreateCustomersTable1683723285946 implements MigrationInterface {
                 { name: 'customerId', type: 'varchar', isPrimary: true, generationStrategy: 'uuid' },
                 { name: 'account', type: 'text' },
                 { name: 'address', type: 'text' },
-                { name: 'kids', type: 'text', isArray: true },
+                { name: 'kids', type: 'text', isArray: true, isNullable: true  },
                 { name: 'dids', type: 'text', isArray: true, isNullable: true },
-                { name: 'claimIds', type: 'text', isArray: true },
-                { name: 'presentationIds', type: 'text', isArray: true },
+                { name: 'claimIds', type: 'text', isArray: true, isNullable: true  },
+                { name: 'presentationIds', type: 'text', isArray: true, isNullable: true  },
             ]
         }), true)
     }

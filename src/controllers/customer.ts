@@ -16,7 +16,6 @@ export class CustomerController {
             }
             return response.status(200).json({
                 customerId: customer.customerId,
-                address: customer.address
             })
         } catch (error) {
             return response.status(500).json({
