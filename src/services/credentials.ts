@@ -51,7 +51,7 @@ export class Credentials {
 		// if (verifiable_credential?.nbf) delete verifiable_credential.nbf
 		// if (verifiable_credential?.exp) delete verifiable_credential.exp
         
-        if (ENABLE_VERIDA_CONNECTOR && request.subjectDid.startsWith('did:vda')) {
+        if (ENABLE_VERIDA_CONNECTOR === 'true' && request.subjectDid.startsWith('did:vda')) {
           await VeridaService.instance.sendCredential(
             request.subjectDid,
             "New Verifiable Credential",
