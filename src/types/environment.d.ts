@@ -3,7 +3,7 @@ declare global {
     interface ProcessEnv {
       MAINNET_RPC_URL: string
       TESTNET_RPC_URL: string
-	    RESOLVER_URL: string
+      RESOLVER_URL: string
       ALLOWED_ORIGINS: string | undefined
       ENABLE_EXTERNAL_DB: string
       EXTERNAL_DB_CONNECTION_URL: string
