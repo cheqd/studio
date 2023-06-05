@@ -35,6 +35,8 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 const {
+  MAINNET_RPC_URL,
+  TESTNET_RPC_URL,
   RESOLVER_URL,
   ENABLE_EXTERNAL_DB,
   EXTERNAL_DB_ENCRYPTION_KEY,
