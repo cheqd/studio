@@ -17,7 +17,8 @@ declare global {
       EXTERNAL_DB_CONNECTION_URL: string
       EXTERNAL_DB_ENCRYPTION_KEY: string
       EXTERNAL_DB_CERT: string | undefined
-
+      ISSUER_DATABASE_CERT: string | undefined
+      FEE_PAYER_MNEMONIC: string | undefined
       // LogTo
       ENABLE_AUTHENTICATION: boolean
       DEFAULT_CUSTOMER_ID: string | undefined

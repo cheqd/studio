@@ -40,6 +40,7 @@ const {
   RESOLVER_URL,
   ENABLE_EXTERNAL_DB,
   EXTERNAL_DB_ENCRYPTION_KEY,
+  FEE_PAYER_MNEMONIC
 } = process.env
 
 export class Identity {
@@ -88,10 +89,14 @@ export class Identity {
   async create_agent(agentId: string) {
     const customer = await CustomerService.instance.get(agentId) as CustomerEntity
     const dbConnection = Connection.instance.dbConnection
-    const privateKey = (await this.getPrivateKey(customer.account)).privateKeyHex
+
+    const privateKey = ENABLE_EXTERNAL_DB ? (await this.getPrivateKey(customer.account)).privateKeyHex : FEE_PAYER_MNEMONIC
     if (!privateKey || !this.privateStore) {
       throw new Error(`No keys is initialized`)
+    } else if(ENABLE_EXTERNAL_DB === 'false' && !FEE_PAYER_MNEMONIC) {
+      throw new Error(`No keys is initialized`)
     }
+
     const mainnetProvider = new CheqdDIDProvider(
       {
         defaultKms: 'local',

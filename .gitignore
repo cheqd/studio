@@ -454,3 +454,6 @@ _wrangler.toml
 
 # verida
 v[0-9,a-z]*
+
+# sqlite
+*.sqlite
