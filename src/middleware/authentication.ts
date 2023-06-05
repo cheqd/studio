@@ -61,7 +61,7 @@ export class Authentication {
         if (jwtRequest.path == '/' || jwtRequest.path == '/swagger') return next()
 
 		try {
-            if (ENABLE_AUTHENTICATION) {
+            if (ENABLE_AUTHENTICATION === 'true') {
                 const token = extractBearerTokenFromHeaders(jwtRequest.headers)
     
                 const { payload } = await jwtVerify(
