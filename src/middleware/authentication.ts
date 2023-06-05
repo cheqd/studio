@@ -8,7 +8,10 @@ import { IncomingHttpHeaders } from 'http';
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { OIDC_JWKS_ENDPOINT, AUDIENCE_ENDPOINT, OIDC_ISSUER, ENABLE_AUTH, CUSTOMER_ID } = process.env
+const { LOGTO_ENDPOINT, LOGTO_RESOURCE_URL, ENABLE_AUTHENTICATION, DEFAULT_CUSTOMER_ID } = process.env
+
+const OIDC_ISSUER = LOGTO_ENDPOINT + '/oidc'
+const OIDC_JWKS_ENDPOINT = LOGTO_ENDPOINT + '/oidc/jwks'
 const bearerTokenIdentifier = 'Bearer'
 
 export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHeaders) => {
@@ -58,7 +61,7 @@ export class Authentication {
         if (jwtRequest.path == '/' || jwtRequest.path == '/swagger') return next()
 
 		try {
-            if (ENABLE_AUTH === 'true') {
+            if (ENABLE_AUTHENTICATION === 'true') {
                 const token = extractBearerTokenFromHeaders(jwtRequest.headers)
     
                 const { payload } = await jwtVerify(
@@ -68,14 +71,14 @@ export class Authentication {
                         // expected issuer of the token, should be issued by the Logto server
                         issuer: OIDC_ISSUER,
                         // expected audience token, should be the resource indicator of the current API
-                        audience: AUDIENCE_ENDPOINT,
+                        audience: LOGTO_RESOURCE_URL,
                     }
                 );
             
                 // custom payload logic
                 response.locals.customerId = payload.sub
-            } else if (CUSTOMER_ID) {
-                response.locals.customerId = CUSTOMER_ID
+            } else if (DEFAULT_CUSTOMER_ID) {
+                response.locals.customerId = DEFAULT_CUSTOMER_ID
             } else {
                 return response.status(400).json({
                     error: `Unauthorized error`

@@ -14,7 +14,7 @@ The purpose of this service is to issue and verify credentials. This service by 
 
 ### Issue a credential
 
-- **Endpoint** POST `/1.0/api/credentials/issue`
+- **Endpoint** POST `/credentials/issue`
 - **Accepts**: `application/json`
 - **Request Body**: JSON object with following fields
   - `attributes` - A json object with all the credential attributes
@@ -28,7 +28,7 @@ The purpose of this service is to issue and verify credentials. This service by 
 
 ### Verify a Credential
 
-- **Endpoint** POST `/1.0/api/credentials/verify`
+- **Endpoint** POST `/credentials/verify`
 - **Accepts**: `application/json`
 - **Request Body**: JSON object with following fields:
   - `credential` - A verifiable credential or the JWT string
@@ -42,36 +42,54 @@ The purpose of this service is to issue and verify credentials. This service by 
 
 - **Endpoint**: `/` (This endpoint redirects to the swagger api docs)
 
-## 🧑‍💻🛠 Developer Guide
+## 🔧 Configuration
 
-### Setup
+The application allows configuring the following parameters using environment variables.
 
-Dependencies can be installed using NPM or any other node package manager.
+### Core configuration
 
-```bash
-npm install
-npm run build
-```
+#### Network API endpoints
 
-### Configuration
+1. `MAINNET_RPC_URL`: RPC endpoint for cheqd mainnet. (Default: `https://rpc.cheqd.net:443`)
+2. `TESTNET_RPC_URL`: RPC endpoint for cheqd testnet. (`https://rpc.cheqd.network:443`)
+3. `RESOLVER_URL`: API endpoint for a [DID Resolver](https://github.com/cheqd/did-resolver) endpoint that supports `did:cheqd`.
 
-The application expects the following environment variables to be defined for the app to function:
+#### Veramo KMS Database
 
-1. `DB_CONNECTION_URL`: The postgres database url e.g. `postgres://<user>:<password>@<host>:<port>/<database>?<query>`
-2. `DB_ENCRYPTION_KEY`: A secret key for the veramo wallet
-3. `PORT`: Port number for the credential service (optional)
-4. `FEE_PAYER_MNENONIC_TESTNET`: Mnemonic for the issuer's Cosmos account to be used for testnet.
-5. `FEE_PAYER_MNENONIC_MAINNET`: Mnemonic for the issuer's Cosmos account to be used for mainnet.
-6. `MAINNET_RPC_URL`: Optional RPC URL for a node on cheqd mainnet, e.g., `https://rpc.cheqd.net`
-7. `TESTNET_RPC_URL`: Optional RPC URL for a node on cheqd testnet, e.g., `https://rpc.cheqd.network`
-8. `ISSUER_DATABASE_CERT`: Optional ca certificate parameter of the database
-9. `OIDC_JWKS_ENDPOINT`: Endpoint to logTo `jwks` checker. Usual `<logto_endpoint>/oidc/jwks`
-10. `AUDIENCE_ENDPOINT`: Endpoint for ResourceAPI in LogTo. For now it seems to be a root path for CredentialServce, like `<credential-service>/1.0/api` . Also, it should be exactly the same as `LOGTO_RESOURCE_URL` on frontend, cause for this particular endpoint jwt token will be issued.
-11. `OIDC_ISSUER`: endopoint of jwt token issuer. In our case it will be LogTo `oidc` endpoint, like `<logto_endpoint>/oidc`
+The application supports two modes in which keys are managed: either just storing them in-memory while a container is running, or persisting them in a PostgresSQL database with Veramo SDK. Using an external Postgres database allows for "custodian" mode where identity and cheqd/Cosmos keys can be offloaded by client applications to be stored in the database.
 
-### Run
+1. `DB_CONNECTION_URL`: Postgres database connection URL, e.g. `postgres://<user>:<password>@<host>:<port>/<database>`
+2. `DB_ENCRYPTION_KEY`: Secret key used to encrypt the Veramo key-specific database tables. This adds a layer of protection by not storing the database in plaintext.
+3. `DB_CERTIFICATE`: Custom CA certificate required to connect to the database (optional).
 
-Run a postgres instance
+#### API Authentication using LogTo
+
+By default, the application has API authentication disabled (which can be changed in configuration). If, however, you'd like to run the app with API authentication features, the following variables need to be configured.
+
+We use a self-hosted version of [LogTo](https://logto.io/), which supports OpenID Connect. Theoretically, these values could also be replaced with [LogTo Cloud](http://cloud.logto.io/) or any other OpenID Connect identity provider.
+
+1. `ENABLE_AUTHENTICATION`: Turns API authentication guards on/off. (Default: `false`)
+2. `LOGTO_ENDPOINT`: API endpoint for LogTo server
+3. `ALLOWED_ORIGINS`: CORS allowed origins used in the app
+4. `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users.
+
+### 3rd Party Connectors
+
+The app supports 3rd party connectors for credential storage and delivery.
+
+#### Verida
+
+The app's [Verida Network](https://www.verida.network/) connector can be enabled to deliver generated credentials to Verida Wallet.
+
+1. `ENABLE_VERIDA_CONNECTOR`: Turns Verida connector on/off. (Default: `false`)
+2. `VERIDA_NETWORK`: Verida Network type to connect to. (Default: `testnet`)
+3. `VERIDA_PRIVATE_KEY`: Secret key for Verida Network API.
+4. `POLYGON_RPC_URL`: Polygon Network RPC URL for connections.
+5. `POLYGON_PRIVATE_KEY`: Secret key for Polygon Network.
+
+### Run the application
+
+Initiate a Postgres database, in case you're using an external database.
 
 ```bash
 docker pull postgres
@@ -86,7 +104,20 @@ Once configured, the app can be run using NPM:
 npm start
 ```
 
-Or, to build and run in Docker, use the [Dockerfile](Dockerfile) provided.
+## 🧑‍💻🛠 Developer Guide
+
+### Build using NPM
+
+Dependencies can be installed using NPM or any other node package manager.
+
+```bash
+npm install
+npm run build
+```
+
+### Build using Docker
+
+To build and run in Docker, use the [Dockerfile](Dockerfile) provided.
 
 ```bash
 docker build -t credential-service .

@@ -20,6 +20,14 @@
 * Jsonld credentials ([#236](https://github.com/cheqd/credential-service/issues/236)) ([c56a0a0](https://github.com/cheqd/credential-service/commit/c56a0a07cfcb4999cf0e40094dfe58b0a1b16712))
 * Minor issues && swagger ([#235](https://github.com/cheqd/credential-service/issues/235)) ([51d2790](https://github.com/cheqd/credential-service/commit/51d2790712b7470e46dceb97743da5e2ed5c2420))
 * Update Dockerfile variables and Swagger generation ([#228](https://github.com/cheqd/credential-service/issues/228)) ([f659754](https://github.com/cheqd/credential-service/commit/f659754bc0930d5118fac0e9d26d0f34f9fbae14))
+* Get string env variables back ([#246](https://github.com/cheqd/credential-service/issues/246)) ([1f6439b](https://github.com/cheqd/credential-service/commit/1f6439b5a3777725c2866d6653dc5842a74926bf))
+
+## [2.1.0-develop.14](https://github.com/cheqd/credential-service/compare/2.1.0-develop.13...2.1.0-develop.14) (2023-06-05)
+
+
+### Bug Fixes
+
+* Restructure environment variables / configuration parameters [DEV-2758] ([#240](https://github.com/cheqd/credential-service/issues/240)) ([b206958](https://github.com/cheqd/credential-service/commit/b20695851e2c3b4d16cfd22c59dfdfe4123e333b))
 
 ## [2.1.0-develop.13](https://github.com/cheqd/credential-service/compare/2.1.0-develop.12...2.1.0-develop.13) (2023-06-01)
 
