@@ -1,6 +1,14 @@
+import { Network } from "@verida/client-ts"
+
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
+      // Base
+      NODE_ENV: EnvironmentType
+      PORT: string
+      NPM_CONFIG_LOGLEVEL: string
+
+      // Network API endpoints
       MAINNET_RPC_URL: string
       TESTNET_RPC_URL: string
       RESOLVER_URL: string
@@ -11,19 +19,20 @@ declare global {
       EXTERNAL_DB_CERT: string | undefined
 
       // LogTo
-      OIDC_JWKS_ENDPOINT: string
-      AUDIENCE_ENDPOINT: string
-      OIDC_ISSUER: string
+      ENABLE_AUTHENTICATION: boolean
+      DEFAULT_CUSTOMER_ID: string | undefined
+      LOGTO_ENDPOINT: string
+      LOGTO_RESOURCE_URL: string
+      LOGTO_APP_ID: string
+      LOGTO_APP_SECRET: string
+      ALLOWED_ORIGINS: string | undefined
 
-      // verida
-      USE_VERIDA_CONNECTOR: boolean
+      // Verida
+      ENABLE_VERIDA_CONNECTOR: boolean
+      VERIDA_NETWORK: NetworkType
+      POLYGON_RPC_URL: string
       VERIDA_PRIVATE_KEY: string
       POLYGON_PRIVATE_KEY: string
-      VERIDA_NETWORK: EnvironmentType
-
-      // auth
-      ENABLE_AUTH: string | undefined
-      CUSTOMER_ID: string | undefined
     }
   }
 }
