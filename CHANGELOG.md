@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.14](https://github.com/cheqd/credential-service/compare/2.1.0-develop.13...2.1.0-develop.14) (2023-06-05)
+
+
+### Bug Fixes
+
+* Restructure environment variables / configuration parameters [DEV-2758] ([#240](https://github.com/cheqd/credential-service/issues/240)) ([b206958](https://github.com/cheqd/credential-service/commit/b20695851e2c3b4d16cfd22c59dfdfe4123e333b))
+
 ## [2.1.0-develop.13](https://github.com/cheqd/credential-service/compare/2.1.0-develop.12...2.1.0-develop.13) (2023-06-01)
 
 
