@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.1](https://github.com/cheqd/credential-service/compare/2.1.0...2.1.1) (2023-06-05)
+
+
+### Bug Fixes
+
+* Get string env variables back ([#246](https://github.com/cheqd/credential-service/issues/246)) ([1f6439b](https://github.com/cheqd/credential-service/commit/1f6439b5a3777725c2866d6653dc5842a74926bf))
+* Restructure environment variables / configuration parameters [DEV-2758] ([#240](https://github.com/cheqd/credential-service/issues/240)) ([b206958](https://github.com/cheqd/credential-service/commit/b20695851e2c3b4d16cfd22c59dfdfe4123e333b))
+
 ## [2.1.0](https://github.com/cheqd/credential-service/compare/2.0.0...2.1.0) (2023-06-01)
 
 
