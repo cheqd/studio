@@ -16,6 +16,9 @@ RUN npm ci
 # Build the app
 RUN npm run build
 
+# Migration for the app
+RUN npm run migration
+
 
 ###############################################################
 ###         STAGE 2: Build credential-service runner        ###
