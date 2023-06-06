@@ -2,12 +2,10 @@ import { CredentialPayload, IVerifyResult, VerifiableCredential, W3CVerifiableCr
 
 import {
   VC_CONTEXT,
-  VC_PROOF_FORMAT,
-  VC_REMOVE_ORIGINAL_FIELDS,
   VC_TYPE
 } from '../types/constants.js'
 import { CredentialRequest } from '../types/types.js'
-import { Identity } from './identity.js'
+import { Identity } from './identity/index.js'
 import { VeridaService } from '../services/connectors/verida.js'
 import { v4 } from 'uuid'
 import * as dotenv from 'dotenv'
@@ -34,22 +32,7 @@ export class Credentials {
             credential.expirationDate = request.expirationDate
         }
 
-        const agent = await Identity.instance.create_agent(agentId)
-        let verifiable_credential: VerifiableCredential
-        verifiable_credential = await agent.createVerifiableCredential(
-            {
-                save: false,
-                credential,
-                proofFormat: request.format == 'jsonld' ? 'lds' : VC_PROOF_FORMAT,
-                removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS
-            }
-        )
-
-		// if (verifiable_credential?.vc) delete verifiable_credential.vc
-		// if (verifiable_credential?.sub) delete verifiable_credential.sub
-		// if (verifiable_credential?.iss) delete verifiable_credential.iss
-		// if (verifiable_credential?.nbf) delete verifiable_credential.nbf
-		// if (verifiable_credential?.exp) delete verifiable_credential.exp
+        let verifiable_credential = await Identity.createCredential(credential, request.format, agentId)
         
         if (ENABLE_VERIDA_CONNECTOR === 'true' && request.subjectDid.startsWith('did:vda')) {
           await VeridaService.instance.sendCredential(
@@ -64,20 +47,13 @@ export class Credentials {
 	}
 
 	async verify_credentials(credential: W3CVerifiableCredential | string, agentId: string): Promise<IVerifyResult> {
-        const agent = await Identity.instance.create_agent(agentId)
-		const result = await agent.verifyCredential({ credential, fetchRemoteContexts: true })
+		const result = await Identity.verifyCredential(credential, agentId)
         delete(result.payload)
         return result
 	}
 
     async verify_presentation(presentation: W3CVerifiablePresentation, agentId: string): Promise<IVerifyResult> {
-        const agent = await Identity.instance.create_agent(agentId)
-		const result = await agent.execute(
-			'verifyPresentation',
-			{
-				presentation
-			}
-		)
+        const result = await Identity.verifyPresentation(presentation, agentId)
         return result
     }
 }
