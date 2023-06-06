@@ -1,13 +1,13 @@
 import type { Request, Response } from 'express'
 
 import { CustomerService } from '../services/customer.js'
-import { Identity } from '../services/identity.js'
+import { Identity } from '../services/identity/index.js'
 
 export class CustomerController {
 
     public async create(request: Request, response: Response) {
         try {
-            const kid = (await Identity.instance.createKey('Secp256k1')).kid
+            const kid = (await Identity.createKey('Secp256k1', response.locals.customerId)).kid
             const customer = await CustomerService.instance.create(response.locals.customerId, kid)
             if(!customer) {
                 return response.status(400).json({

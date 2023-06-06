@@ -19,9 +19,9 @@ export class Memory implements AbstractDatabase {
         return new DataSource({
             type: 'sqlite',
             database: ':memory:',
-            entities: [...Entities, CustomerEntity],
+            entities: [...Entities],
             synchronize: false,
-            migrations: [...migrations, CreateCustomersTable1683723285946],
+            migrations: [...migrations],
             migrationsRun: true,
             logging: ['error', 'info', 'warn']
         });
