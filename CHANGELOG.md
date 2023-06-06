@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.16](https://github.com/cheqd/credential-service/compare/2.1.0-develop.15...2.1.0-develop.16) (2023-06-06)
+
+
+### Features
+
+* Implement USE_EXTERNAL_DB toggle [DEV 2630]  ([#233](https://github.com/cheqd/credential-service/issues/233)) ([a023242](https://github.com/cheqd/credential-service/commit/a02324284de8882447a1eb7c2c246d1f6e3a40b9))
+
 ## [2.1.0-develop.15](https://github.com/cheqd/credential-service/compare/2.1.0-develop.14...2.1.0-develop.15) (2023-06-05)
 
 
