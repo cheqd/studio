@@ -164,7 +164,7 @@ export class IssuerController {
       if(request.params.did) {
         did = await Identity.resolveDid(request.params.did)
       } else {
-        return await Identity.listDids(response.locals.customerId)
+        did = await Identity.listDids(response.locals.customerId)
       }
 
       return response.status(200).json(did)

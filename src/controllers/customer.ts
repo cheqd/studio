@@ -7,8 +7,7 @@ export class CustomerController {
 
     public async create(request: Request, response: Response) {
         try {
-            const kid = (await Identity.createKey('Secp256k1', response.locals.customerId)).kid
-            const customer = await CustomerService.instance.create(response.locals.customerId, kid)
+            const customer = await CustomerService.instance.create(response.locals.customerId)
             if(!customer) {
                 return response.status(400).json({
                     error: `Error creating customer. Please try again`

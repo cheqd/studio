@@ -7,25 +7,25 @@ dotenv.config()
 const { ENABLE_EXTERNAL_DB } = process.env
 
 export class Connection {
-    private db: AbstractDatabase;
-    public dbConnection: DataSource;
-    public static instance = new Connection();
+    private db: AbstractDatabase
+    public dbConnection: DataSource
+    public static instance = new Connection()
 
     constructor() {
         if (ENABLE_EXTERNAL_DB == "true") {
-            this.db = new Postgres();
+            this.db = new Postgres()
         } else {
-            this.db = new Memory();
+            this.db = new Memory()
         }
 
-        this.dbConnection = this.db.setup();
+        this.dbConnection = this.db.setup()
     }
 
     public async connect() {
         try {
-            await this.dbConnection.initialize();
+            await this.dbConnection.initialize()
         } catch (error) {
-            throw new Error(`Error initializing db: ${error}`);
+            throw new Error(`Error initializing db: ${error}`)
         }
     }
 }

@@ -3,6 +3,7 @@ import { ArrayContains, Repository } from 'typeorm'
 import { Connection } from '../database/connection/connection.js'
 import { CustomerEntity } from '../database/entities/customer.entity.js'
 import { getCosmosAccount } from '../helpers/helpers.js'
+import { Identity } from './identity/index.js'
 
 import * as dotenv from 'dotenv'
 dotenv.config()
@@ -18,7 +19,8 @@ export class CustomerService {
         this.customerRepository = Connection.instance.dbConnection.getRepository(CustomerEntity)
     }
 
-    public async create(customerId: string, kid: string) {
+    public async create(customerId: string) {
+        const kid = (await Identity.createKey('Secp256k1', customerId)).kid
         const customer = new CustomerEntity(customerId, kid, getCosmosAccount(kid))
         return (await this.customerRepository.insert(customer)).identifiers[0]
     }

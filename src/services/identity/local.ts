@@ -106,7 +106,7 @@ export class LocalIdentity implements IIdentity {
     })
   }
 
-  async createKey(type?: 'Ed25519' | 'Secp256k1'): Promise<ManagedKeyInfo> {
+  async createKey(): Promise<ManagedKeyInfo> {
     throw new Error('Not supported')
   }
 
@@ -114,14 +114,12 @@ export class LocalIdentity implements IIdentity {
     return await this.agent.keyManagerGet({ kid })
   }
 
-  async createDid(network: string, didDocument: DIDDocument): Promise<IIdentifier> {
+  async createDid(): Promise<IIdentifier> {
     throw new Error('Not supported')
   }
 
   async listDids() {
-    return await this.agent.didManagerFind().then((result)=>{
-        return result.map((value)=>value.did)
-    })
+    return [(await this.importDid()).did]
   }
 
   async resolveDid(did: string) {
@@ -140,10 +138,6 @@ export class LocalIdentity implements IIdentity {
 
     if (!ISSUER_DID.match(cheqdDidRegex)) {
       throw new Error('Invalid DID')
-    }
-
-    if((await this.listDids()).includes(ISSUER_DID)) {
-        return await this.getDid(ISSUER_DID)
     }
 
     const key: MinimalImportableKey = { kms: kms, type: 'Ed25519', kid: ISSUER_ID_PUBLIC_KEY_HEX, privateKeyHex: ISSUER_ID_PRIVATE_KEY_HEX, publicKeyHex: ISSUER_ID_PUBLIC_KEY_HEX }
