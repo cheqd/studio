@@ -44,61 +44,6 @@ export class CustomerService {
     }
 
     public async find(customerId: string, { kid, did, claimId, presentationId }: { kid?: string, did?: string, claimId?: string, presentationId?: string }) {
-        if (ENABLE_EXTERNAL_DB == "true") {
-            return this.findFromExternalDB(customerId, { kid: kid, did: did, claimId: claimId, presentationId: presentationId })
-        } else {
-            return this.findFromMemoryDB(customerId, { kid: kid, did: did, claimId: claimId, presentationId: presentationId })
-        }
-    }
-
-    private concatenate(array: any[], items: any[]): any {
-        return array ? array.concat(items) : items
-    }
-
-    private has(array: any[], item: any): any {
-        for (let i = 0; i < array.length; i++) {
-            if (array[i] == item) {
-                return true
-            }
-        }
-
-        return false
-    }
-
-    private async findFromMemoryDB(customerId: string, { kid, did, claimId, presentationId }: { kid?: string, did?: string, claimId?: string, presentationId?: string }) {
-        const result = (await this.customerRepository.findOneBy({ customerId }))
-        if (!result) {
-            return false
-        }
-
-        if (kid) {
-            if (!this.has(result.kids, kid)) {
-                return false
-            }
-        }
-
-        if (did) {
-            if (!this.has(result.dids, did)) {
-                return false
-            }
-        }
-
-        if (claimId) {
-            if (!this.has(result.claimIds, claimId)) {
-                return false
-            }
-        }
-
-        if (presentationId) {
-            if (!this.has(result.presentationIds, presentationId)) {
-                return false
-            }
-        }
-
-        return true
-    }
-
-    private async findFromExternalDB(customerId: string, { kid, did, claimId, presentationId }: { kid?: string, did?: string, claimId?: string, presentationId?: string }) {
         const where: any = {
             customerId
         }
@@ -124,5 +69,9 @@ export class CustomerService {
         } catch {
             return false
         }
+    }
+
+    private concatenate(array: any[], items: any[]): any {
+        return array ? array.concat(items) : items
     }
 }

@@ -8,7 +8,13 @@ import { IncomingHttpHeaders } from 'http';
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { LOGTO_ENDPOINT, LOGTO_RESOURCE_URL, ENABLE_AUTHENTICATION, DEFAULT_CUSTOMER_ID } = process.env
+const {
+  LOGTO_ENDPOINT,
+  LOGTO_RESOURCE_URL,
+  ENABLE_AUTHENTICATION,
+  DEFAULT_CUSTOMER_ID,
+  ENABLE_EXTERNAL_DB
+} = process.env
 
 const OIDC_ISSUER = LOGTO_ENDPOINT + '/oidc'
 const OIDC_JWKS_ENDPOINT = LOGTO_ENDPOINT + '/oidc/jwks'
@@ -26,11 +32,6 @@ export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHea
 };
 
 export class Authentication {
-    static expressJWT = expressjwt({
-        secret: "random-secret",
-        algorithms: ["ES384"],
-        credentialsRequired: false
-    })
 
     static handleError(error: Error, jwtRequest: JWTRequest, response: Response, next: NextFunction) {
         if (error) {
@@ -41,18 +42,15 @@ export class Authentication {
         next()
     }
 
-    static async authenticate(jwtRequest: JWTRequest, response: Response, next: NextFunction) {
-        if(jwtRequest.path == '/') return next()
-
-        if (!jwtRequest.auth?.sub) return response.status(401).json({
-            error: 'Invalid auth token'
+    static async accessControl(request: Request, response: Response, next: NextFunction) {
+        if(request.path == '/account' && ENABLE_EXTERNAL_DB === 'false') return response.status(400).json({
+            error: 'Api not supported'
         })
 
-        if(jwtRequest.path != '/account' && !await CustomerService.instance.find(jwtRequest.auth.sub, {})) return response.status(401).json({
+        if(ENABLE_EXTERNAL_DB === 'true' && request.path != '/account' && !await CustomerService.instance.find(response.locals.customerId, {})) return response.status(401).json({
             error: 'Customer not found'
         })
 
-        response.locals.customerId = jwtRequest.auth.sub
         next()
     }
 

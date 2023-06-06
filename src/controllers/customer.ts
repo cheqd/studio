@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express'
 
 import { CustomerService } from '../services/customer.js'
-import { Identity } from '../services/identity/index.js'
 
 export class CustomerController {
 
