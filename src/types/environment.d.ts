@@ -18,7 +18,7 @@ declare global {
       EXTERNAL_DB_ENCRYPTION_KEY: string
       EXTERNAL_DB_CERT: string | undefined
       ISSUER_DATABASE_CERT: string | undefined
-      FEE_PAYER_MNEMONIC: string
+
       // LogTo
       ENABLE_AUTHENTICATION: string
       DEFAULT_CUSTOMER_ID: string | undefined
@@ -34,6 +34,12 @@ declare global {
       POLYGON_RPC_URL: string
       VERIDA_PRIVATE_KEY: string
       POLYGON_PRIVATE_KEY: string
+
+      // Without external db
+      ISSUER_ID_PRIVATE_KEY_HEX: string
+      ISSUER_ID_PUBLIC_KEY_HEX: string
+      FEE_PAYER_MNEMONIC: string
+      ISSUER_DID: string
     }
   }
 }
