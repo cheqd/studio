@@ -43,14 +43,25 @@ export class Authentication {
     }
 
     static async accessControl(request: Request, response: Response, next: NextFunction) {
-        if(request.path == '/account' && ENABLE_EXTERNAL_DB === 'false') return response.status(400).json({
-            error: 'Api not supported'
-        })
+        let message = undefined
+        switch(ENABLE_EXTERNAL_DB) {
+            case 'false':
+                if (['/account', '/did/create', '/key/create'].includes(request.path)) {
+                  message = 'Api not supported'
+                }
+                break
+            default:
+                if (request.path != '/account' && !await CustomerService.instance.find(response.locals.customerId, {})) {
+                    message = 'Customer not found'
+                }
+                break
+        }
 
-        if(ENABLE_EXTERNAL_DB === 'true' && request.path != '/account' && !await CustomerService.instance.find(response.locals.customerId, {})) return response.status(401).json({
-            error: 'Customer not found'
-        })
-
+        if(message) {
+            return response.status(400).json({
+                error: message
+            })
+        }
         next()
     }
 
