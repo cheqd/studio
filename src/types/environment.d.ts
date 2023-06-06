@@ -20,7 +20,7 @@ declare global {
       ISSUER_DATABASE_CERT: string | undefined
       FEE_PAYER_MNEMONIC: string
       // LogTo
-      ENABLE_AUTHENTICATION: boolean
+      ENABLE_AUTHENTICATION: string
       DEFAULT_CUSTOMER_ID: string | undefined
       LOGTO_ENDPOINT: string
       LOGTO_RESOURCE_URL: string
@@ -29,7 +29,7 @@ declare global {
       ALLOWED_ORIGINS: string | undefined
 
       // Verida
-      ENABLE_VERIDA_CONNECTOR: boolean
+      ENABLE_VERIDA_CONNECTOR: string
       VERIDA_NETWORK: NetworkType
       POLYGON_RPC_URL: string
       VERIDA_PRIVATE_KEY: string

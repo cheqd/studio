@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.15](https://github.com/cheqd/credential-service/compare/2.1.0-develop.14...2.1.0-develop.15) (2023-06-05)
+
+
+### Bug Fixes
+
+* Get string env variables back ([#246](https://github.com/cheqd/credential-service/issues/246)) ([1f6439b](https://github.com/cheqd/credential-service/commit/1f6439b5a3777725c2866d6653dc5842a74926bf))
+
 ## [2.1.0-develop.14](https://github.com/cheqd/credential-service/compare/2.1.0-develop.13...2.1.0-develop.14) (2023-06-05)
 
 

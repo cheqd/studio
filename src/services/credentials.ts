@@ -34,7 +34,7 @@ export class Credentials {
 
         let verifiable_credential = await Identity.createCredential(credential, request.format, agentId)
         
-        if (ENABLE_VERIDA_CONNECTOR && request.subjectDid.startsWith('did:vda')) {
+        if (ENABLE_VERIDA_CONNECTOR === 'true' && request.subjectDid.startsWith('did:vda')) {
           await VeridaService.instance.sendCredential(
             request.subjectDid,
             "New Verifiable Credential",
