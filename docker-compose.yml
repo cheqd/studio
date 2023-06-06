@@ -1,0 +1,27 @@
+version: '3.8'
+
+# SYNTAX: docker compose up --detach
+
+services:
+  credential-service:
+    build: .
+    image: credential-service:latest
+    ports: 
+      - 3000:3000
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  database:
+    image: postgres
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=logto
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=logto
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      
+    
