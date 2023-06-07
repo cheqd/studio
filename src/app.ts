@@ -2,6 +2,9 @@ import express from 'express'
 import Helmet from 'helmet'
 import cors from 'cors'
 import swaggerUi from 'swagger-ui-express'
+import session from 'express-session';
+import cookieParser from 'cookie-parser';
+import {withLogto, handleAuthRoutes } from '@logto/express';
 
 import { CredentialController } from './controllers/credentials.js'
 import { StoreController } from './controllers/store.js'
@@ -9,11 +12,17 @@ import { IssuerController } from './controllers/issuer.js'
 import { CustomerController } from './controllers/customer.js'
 import { Authentication } from './middleware/authentication.js'
 import { Connection } from './database/connection/connection.js'
-import { CORS_ERROR_MSG } from './types/constants.js'
+import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js'
 
 import swaggerJSONDoc from '../swagger.json' assert { type: "json" }
 
 import * as dotenv from 'dotenv'
+import { UserInfo } from './controllers/user_info.js';
+
+const swagger_options = {
+  customJs: '/custom_button.js',
+};
+
 dotenv.config()
 
 class App {
@@ -40,21 +49,30 @@ class App {
             return callback(null, true)
         }
     }))
+
+    this.express.use(cookieParser());
+    this.express.use(session({ secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 } }));
+    this.express.use(handleAuthRoutes(configLogToExpress));
+    this.express.use(withLogto(configLogToExpress));
+    this.express.use(express.text());
+    this.express.use(express.static(process.cwd() + '/src/static'));
+
     this.express.use(
-      '/swagger', 
+      '/swagger',
       swaggerUi.serve, 
       async (_req: express.Request, res: express.Response) => {
-        return res.send(swaggerUi.generateHTML(swaggerJSONDoc))
+        return res.send(swaggerUi.generateHTML(swaggerJSONDoc, swagger_options))
       }
     )
-    this.express.use(Authentication.guard)
+    this.express.use(Authentication.guard);
     this.express.use(Authentication.handleError)
   }
 
   private routes() {
     const app = this.express
-
     app.get('/', (req, res) => res.redirect('swagger'))
+
+    app.get('/user', new UserInfo().getUserInfo);
 
     // credentials
     app.post(`/credential/issue`, CredentialController.issueValidator, new CredentialController().issue)
