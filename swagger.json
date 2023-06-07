@@ -873,7 +873,7 @@
                         "name": "Bob"
                     },
                     "@context": [
-                        "https://schema.org/Person"
+                        "https://schema.org"
                     ],
                     "type": [
                         "Person"

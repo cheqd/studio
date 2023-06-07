@@ -3,7 +3,7 @@ import { Request as JWTRequest } from 'express-jwt'
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 import { CustomerService } from '../services/customer.js'
-import { IncomingHttpHeaders } from 'http';
+import { IncomingHttpHeaders } from 'http'
 
 import * as dotenv from 'dotenv'
 import {apiGuarding} from "../types/types.js";
@@ -29,8 +29,8 @@ export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHea
         throw new Error(`Authorization token type is not supported. Valid type: "${bearerTokenIdentifier}".`)
     }
   
-    return authorization.slice(bearerTokenIdentifier.length + 1);
-};
+    return authorization.slice(bearerTokenIdentifier.length + 1)
+}
 
 export class Authentication {
 
@@ -52,7 +52,7 @@ export class Authentication {
                 }
                 break
             default:
-                if (request.path != '/account' && !await CustomerService.instance.find(response.locals.customerId, {})) {
+                if (!['/account', '/', '/store'].includes(request.path) && !await CustomerService.instance.find(response.locals.customerId, {})) {
                     message = 'Customer not found'
                 }
                 break

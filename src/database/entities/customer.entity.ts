@@ -3,26 +3,26 @@ import { Column, Entity, PrimaryGeneratedColumn, ValueTransformer } from 'typeor
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { ENABLE_EXTERNAL_DB } = process.env;
+const { ENABLE_EXTERNAL_DB } = process.env
 
 const arrayToJsonTransformer = (shouldTransform: string): ValueTransformer => {
   return {
     to: (array: any[]) => {
       if (shouldTransform == "false") {
         // Convert the array to a JSON string
-        return JSON.stringify(array);
+        return JSON.stringify(array)
       }
-      return array;
+      return array
     },
     from: (jsonString: string) => {
       if (shouldTransform == "false") {
         // Parse the JSON string and return the array
-        return JSON.parse(jsonString);
+        return JSON.parse(jsonString)
       }
-      return jsonString;
+      return jsonString
     },
-  };
-};
+  }
+}
 
 @Entity('customers')
 export class CustomerEntity {

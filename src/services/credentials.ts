@@ -32,7 +32,7 @@ export class Credentials {
             credential.expirationDate = request.expirationDate
         }
 
-        let verifiable_credential = await Identity.createCredential(credential, request.format, agentId)
+        let verifiable_credential = await Identity.instance.createCredential(credential, request.format, agentId)
         
         if (ENABLE_VERIDA_CONNECTOR === 'true' && request.subjectDid.startsWith('did:vda')) {
           await VeridaService.instance.sendCredential(
@@ -47,13 +47,13 @@ export class Credentials {
 	}
 
 	async verify_credentials(credential: W3CVerifiableCredential | string, agentId: string): Promise<IVerifyResult> {
-		const result = await Identity.verifyCredential(credential, agentId)
+		const result = await Identity.instance.verifyCredential(credential, agentId)
         delete(result.payload)
         return result
 	}
 
     async verify_presentation(presentation: W3CVerifiablePresentation, agentId: string): Promise<IVerifyResult> {
-        const result = await Identity.verifyPresentation(presentation, agentId)
+        const result = await Identity.instance.verifyPresentation(presentation, agentId)
         return result
     }
 }

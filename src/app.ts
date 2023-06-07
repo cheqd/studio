@@ -37,7 +37,7 @@ class App {
 
   private middleware() {
     this.express.use(express.json({ limit: '50mb' }))
-	  this.express.use(express.urlencoded({ extended: false }))
+	this.express.use(express.urlencoded({ extended: false }))
     this.express.use(Helmet())
     this.express.use(cors({
         origin: function(origin, callback){
