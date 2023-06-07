@@ -8,8 +8,6 @@ import { Identity } from './identity/index.js'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { ENABLE_EXTERNAL_DB } = process.env;
-
 export class CustomerService {
     public customerRepository: Repository<CustomerEntity>
 

@@ -1,8 +1,6 @@
 import {
   IIdentifier,
   ManagedKeyInfo,
-  MinimalImportableIdentifier,
-  MinimalImportableKey,
   TAgent,
   createAgent,
   CredentialPayload,
@@ -21,12 +19,13 @@ import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CredentialPlugin } from '@veramo/credential-w3c'
 import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 
-import { cheqdDidRegex, CredentialRequest, DefaultRPCUrl, VeramoAgent } from '../../types/types.js'
-import { VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js'
+import { CredentialRequest, DefaultRPCUrl, VeramoAgent } from '../../types/types.js'
 import { Connection } from '../../database/connection/connection.js'
 import { IIdentity } from './IIdentity.js'
+import { Veramo } from './agent.js'
 
 import * as dotenv from 'dotenv'
+
 dotenv.config()
 
 const {
@@ -58,7 +57,7 @@ export class LocalIdentity implements IIdentity {
       {
         defaultKms: 'local',
         cosmosPayerSeed: FEE_PAYER_MNEMONIC,
-        networkType: CheqdNetwork.Mainnet as any,
+        networkType: CheqdNetwork.Mainnet,
         rpcUrl: MAINNET_RPC_URL || DefaultRPCUrl.Mainnet,
       }
     )
@@ -66,52 +65,34 @@ export class LocalIdentity implements IIdentity {
       {
         defaultKms: 'local',
         cosmosPayerSeed: FEE_PAYER_MNEMONIC,
-        networkType: CheqdNetwork.Testnet as any,
+        networkType: CheqdNetwork.Testnet,
         rpcUrl: TESTNET_RPC_URL || DefaultRPCUrl.Testnet,
       }
     )
-    this.agent = createAgent<TAgent<VeramoAgent>>({
-      plugins: [
-        new KeyManager({
-          store: new KeyStore(dbConnection),
-          kms: {
-            local: new KeyManagementSystem(
-              this.privateStore
-            )
-          }
-        }),
-        new DIDManager({
-          store: new DIDStore(dbConnection),
-          defaultProvider: 'did:cheqd:testnet',
-          providers: {
-            'did:cheqd:mainnet': mainnetProvider,
-            'did:cheqd:testnet': testnetProvider
-          }
-        }),
-        new DIDResolverPlugin({
-          resolver: new Resolver({
-            ...CheqdDidResolver({ url: RESOLVER_URL }) as ResolverRegistry
-          })
-        }),
-        new CredentialPlugin(),
-        new CredentialIssuerLD({
-          contextMaps: [LdDefaultContexts],
-          suites: [new VeramoEd25519Signature2018()]
-        }),
-        new Cheqd({
-            providers: [mainnetProvider, testnetProvider]
-        })
-      ]
+    this.agent = Veramo.instance.createVeramoAgent({
+        dbConnection,
+        kms: {
+          local: new KeyManagementSystem(
+            this.privateStore
+          )
+        },
+        providers: {
+          'did:cheqd:mainnet': mainnetProvider,
+          'did:cheqd:testnet': testnetProvider
+        },
+        cheqdProviders: [mainnetProvider, testnetProvider],
+        enableCredential: true,
+        enableResolver: true
     })
     return this.agent
   }
 
   async createKey(): Promise<ManagedKeyInfo> {
-    throw new Error('Not supported')
+    throw new Error(`Not supported`)
   }
 
   async getKey(kid: string) {
-    return await this.initAgent().keyManagerGet({ kid })
+    return Veramo.instance.getKey(this.initAgent(), kid)
   }
 
   async createDid(): Promise<IIdentifier> {
@@ -123,43 +104,27 @@ export class LocalIdentity implements IIdentity {
   }
 
   async resolveDid(did: string) {
-    return await this.initAgent().resolveDid({ didUrl: did })
+    return Veramo.instance.resolveDid(this.initAgent(), did)
   }
 
   async getDid(did: string) {
-    return await this.initAgent().didManagerGet({ did })
+    return Veramo.instance.getDid(this.initAgent(), did)
   }
 
   async importDid(): Promise<IIdentifier> {
     if (!(ISSUER_DID && ISSUER_ID_PUBLIC_KEY_HEX && ISSUER_ID_PRIVATE_KEY_HEX)) throw new Error('No DIDs and Keys found')
-
-    const [kms] = await this.initAgent().keyManagerGetKeyManagementSystems()
-
-    if (!ISSUER_DID.match(cheqdDidRegex)) {
-      throw new Error('Invalid DID')
-    }
     try {
         return await this.getDid(ISSUER_DID)
     } catch {
-        const key: MinimalImportableKey = { kms, type: 'Ed25519', privateKeyHex: ISSUER_ID_PRIVATE_KEY_HEX, publicKeyHex: ISSUER_ID_PUBLIC_KEY_HEX }
-        const identifier: IIdentifier = await this.initAgent().didManagerImport({ keys: [key], did: ISSUER_DID, controllerKeyId: key.kid } as MinimalImportableIdentifier)
+        const identifier: IIdentifier = await Veramo.instance.importDid(this.initAgent(), ISSUER_DID, ISSUER_ID_PRIVATE_KEY_HEX, ISSUER_ID_PUBLIC_KEY_HEX)
         return identifier
     }
   }
 
   async createResource(network: string, payload: ResourcePayload) {
     try {
-        // import DID
         await this.importDid()
-        const [kms] = await this.initAgent().keyManagerGetKeyManagementSystems()
-
-        const result: boolean = await this.initAgent().cheqdCreateLinkedResource({
-            kms,
-            payload,
-            network: network as CheqdNetwork
-        }
-        )
-        return result
+        return await Veramo.instance.createResource(this.initAgent(), network, payload)
     } catch (error) {
         throw new Error(`${error}`)
     }    
@@ -167,27 +132,18 @@ export class LocalIdentity implements IIdentity {
 
   async createCredential(credential: CredentialPayload, format: CredentialRequest['format']): Promise<VerifiableCredential> {
     try {
-        // import DID
         await this.importDid()
-        const verifiable_credential = await this.initAgent().createVerifiableCredential(
-            {
-                save: false,
-                credential,
-                proofFormat: format == 'jsonld' ? 'lds' : VC_PROOF_FORMAT,
-                removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS,
-            }
-        )
-        return verifiable_credential
+        return await Veramo.instance.createCredential(this.initAgent(), credential, format)
     } catch (error) {
         throw new Error(`${error}`)
     }          
   }
 
   async verifyCredential(credential: VerifiableCredential | string): Promise<IVerifyResult> {
-    return await this.initAgent().verifyCredential({ credential, fetchRemoteContexts: true })
+    return await Veramo.instance.verifyCredential(this.initAgent(), credential)
   }
 
   async verifyPresentation(presentation: VerifiablePresentation | string): Promise<IVerifyResult> {
-    return await this.initAgent().verifyPresentation({ presentation, fetchRemoteContexts: true })
+    return await Veramo.instance.verifyPresentation(this.initAgent(), presentation)
   }
 }

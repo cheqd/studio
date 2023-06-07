@@ -122,7 +122,7 @@ export class IssuerController {
     let resourcePayload: Partial<MsgCreateResourcePayload> = {}
     try {
       // check if did is registered on the ledger
-      let resolvedDocument = await Identity.instance.resolveDid(did)
+      let resolvedDocument: any = await Identity.instance.resolveDid(did)
       if(!resolvedDocument?.didDocument || resolvedDocument.didDocumentMetadata.deactivated) {
         return response.status(400).send({
             error: `${did} is a Deactivated DID`
