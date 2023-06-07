@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from 'express'
 import { Request as JWTRequest } from 'express-jwt'
-import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { createRemoteJWKSet, jwtVerify } from 'jose'
 
 import { CustomerService } from '../services/customer.js'
-import { IncomingHttpHeaders } from 'http';
+import { IncomingHttpHeaders } from 'http'
 
 import * as dotenv from 'dotenv'
-import {apiGuarding} from "../types/types.js";
+import {apiGuarding} from "../types/types.js"
 dotenv.config()
 
 const {
@@ -29,8 +29,8 @@ export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHea
         throw new Error(`Authorization token type is not supported. Valid type: "${bearerTokenIdentifier}".`)
     }
   
-    return authorization.slice(bearerTokenIdentifier.length + 1);
-};
+    return authorization.slice(bearerTokenIdentifier.length + 1)
+}
 
 export class Authentication {
 
@@ -84,11 +84,11 @@ export class Authentication {
                         // expected audience token, should be the resource indicator of the current API
                         audience: LOGTO_RESOURCE_URL,
                     }
-                );
+                )
 
-                let scopes: string[] = [];
+                let scopes: string[] = []
                 if (payload.scope) {
-                    scopes = (payload.scope as string).split(' ');
+                    scopes = (payload.scope as string).split(' ')
                 } else {
                     return response.status(400).json({
                         error: `Unauthorized error: It's required to provide a token with scopes inside.`

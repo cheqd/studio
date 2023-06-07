@@ -25,7 +25,7 @@ export const VERIDA_APP_NAME = 'Cheqd Verida Connector'
 export const VERIDA_CREDENTIAL_RECORD_SCHEMA =
   'https://common.schemas.verida.io/credential/base/v0.2.0/schema.json'
 
-const all_scopes: string[] = ALL_SCOPES ? ALL_SCOPES.split(' ') || [] : [];
+const all_scopes: string[] = ALL_SCOPES ? ALL_SCOPES.split(' ') || [] : []
 // Map for path and required user scope for that action
 export const configLogToExpress = {
 	endpoint: LOGTO_ENDPOINT,
