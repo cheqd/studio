@@ -46,7 +46,7 @@ export class IssuerController {
   
   public async createKey(request: Request, response: Response) {
     try {
-      const key = await Identity.createKey('Ed25519', response.locals.customerId)
+      const key = await Identity.instance.createKey('Ed25519', response.locals.customerId)
       return response.status(200).json(key)
     } catch (error) {
         return response.status(500).json({
@@ -57,7 +57,7 @@ export class IssuerController {
 
   public async getKey(request: Request, response: Response) {
     try {
-      const key = await Identity.getKey(request.params.kid, response.locals.customerId)
+      const key = await Identity.instance.getKey(request.params.kid, response.locals.customerId)
       return response.status(200).json(key)
     } catch (error) {
         return response.status(500).json({
@@ -83,7 +83,7 @@ export class IssuerController {
       if (options.didDocument) {
         didDocument = options.didDocument
       } else if (verificationMethod) {
-        const key = await Identity.createKey('Ed25519', response.locals.customerId)
+        const key = await Identity.instance.createKey('Ed25519', response.locals.customerId)
         kids.push(key.kid)
         didDocument = generateDidDoc({
           verificationMethod: verificationMethod.type,
@@ -99,7 +99,7 @@ export class IssuerController {
         })
       }
 
-      const did = await Identity.createDid(network, didDocument, response.locals.customerId)
+      const did = await Identity.instance.createDid(network, didDocument, response.locals.customerId)
       return response.status(200).json(did)
     } catch (error) {
         return response.status(500).json({
@@ -122,7 +122,7 @@ export class IssuerController {
     let resourcePayload: Partial<MsgCreateResourcePayload> = {}
     try {
       // check if did is registered on the ledger
-      let resolvedDocument = await Identity.resolveDid(did)
+      let resolvedDocument: any = await Identity.instance.resolveDid(did)
       if(!resolvedDocument?.didDocument || resolvedDocument.didDocumentMetadata.deactivated) {
         return response.status(400).send({
             error: `${did} is a Deactivated DID`
@@ -141,7 +141,7 @@ export class IssuerController {
         alsoKnownAs
       }
       network = network || (did.split(':'))[2]
-      const result = await Identity.createResource( network, resourcePayload, response.locals.customerId)    
+      const result = await Identity.instance.createResource( network, resourcePayload, response.locals.customerId)    
       if ( result ) {
         return response.status(201).json({
             resource: resourcePayload
@@ -162,9 +162,9 @@ export class IssuerController {
     try {
       let did: any
       if(request.params.did) {
-        did = await Identity.resolveDid(request.params.did)
+        did = await Identity.instance.resolveDid(request.params.did)
       } else {
-        did = await Identity.listDids(response.locals.customerId)
+        did = await Identity.instance.listDids(response.locals.customerId)
       }
 
       return response.status(200).json(did)

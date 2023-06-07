@@ -1,4 +1,3 @@
-import { ContextType } from '@veramo/core-types'
 import { 
   IDIDManager,
   IKeyManager,
@@ -11,6 +10,10 @@ import {
 } from '@veramo/core'
 import { ICheqd } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import { ICredentialIssuerLD } from '@veramo/credential-ld'
+import { AbstractIdentifierProvider } from '@veramo/did-manager'
+import { AbstractKeyManagementSystem } from '@veramo/key-manager'
+import { DataSource } from 'typeorm'
+import { CheqdDIDProvider } from '@cheqd/did-provider-cheqd'
 
 export type ErrorResponse = {
   name: string
@@ -90,3 +93,12 @@ ICredentialIssuer &
 ICredentialVerifier & 
 ICheqd & 
 ICredentialIssuerLD>
+
+export type CreateAgentRequest = { 
+  providers?: Record<string, AbstractIdentifierProvider>,
+  kms?: Record<string, AbstractKeyManagementSystem>,
+  dbConnection: DataSource,
+  cheqdProviders?: CheqdDIDProvider[],
+  enableResolver?: boolean,
+  enableCredential?: boolean
+}

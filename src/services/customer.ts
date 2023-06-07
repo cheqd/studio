@@ -8,8 +8,6 @@ import { Identity } from './identity/index.js'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { ENABLE_EXTERNAL_DB } = process.env;
-
 export class CustomerService {
     public customerRepository: Repository<CustomerEntity>
 
@@ -23,7 +21,7 @@ export class CustomerService {
         if(await this.find(customerId, {})) {
             throw new Error('Customer exists')
         }
-        const kid = (await Identity.createKey('Secp256k1', customerId)).kid
+        const kid = (await Identity.instance.createKey('Secp256k1', customerId)).kid
         const customer = new CustomerEntity(customerId, kid, getCosmosAccount(kid))
         return (await this.customerRepository.insert(customer)).identifiers[0]
     }

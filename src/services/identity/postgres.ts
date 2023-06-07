@@ -1,11 +1,12 @@
 import {
-    CredentialPayload,
+  CredentialPayload,
   DIDDocument,
+  IDIDManager,
   IIdentifier,
+  IKeyManager,
+  IResolver,
   IVerifyResult,
   ManagedKeyInfo,
-  MinimalImportableIdentifier,
-  MinimalImportableKey,
   TAgent,
   VerifiableCredential,
   VerifiablePresentation,
@@ -21,16 +22,16 @@ import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } fro
 import { CheqdDIDProvider, getResolver as CheqdDidResolver, ResourcePayload, Cheqd } from '@cheqd/did-provider-cheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
 import { Resolver, ResolverRegistry } from 'did-resolver'
-import { v4 } from 'uuid'
 
 import { cheqdDidRegex, CredentialRequest, DefaultRPCUrl, VeramoAgent } from '../../types/types.js'
 import { Connection } from '../../database/connection/connection.js'
 import { CustomerEntity } from '../../database/entities/customer.entity.js'
 import { CustomerService } from '../customer.js'
 
-import * as dotenv from 'dotenv'
 import { IIdentity } from './IIdentity.js'
-import { VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js'
+
+import * as dotenv from 'dotenv'
+import { Veramo } from './agent.js'
 dotenv.config()
 
 const {
@@ -41,40 +42,31 @@ const {
 } = process.env
 
 export class PostgresIdentity implements IIdentity {
-  agent: TAgent<any>
+  agent: TAgent<IKeyManager & IDIDManager & IResolver>
   privateStore?: AbstractPrivateKeyStore
   public static instance = new PostgresIdentity()
-
+  
   constructor() {
     this.agent = this.initAgent()
   }
 
-  initAgent(): TAgent<any> {
+  initAgent(): TAgent<IKeyManager & IDIDManager & IResolver> {
+    if(this.agent) return this.agent
     const dbConnection = Connection.instance.dbConnection
     this.privateStore = new PrivateKeyStore(dbConnection, new SecretBox(EXTERNAL_DB_ENCRYPTION_KEY))
 
-    return createAgent({
-      plugins: [
-        new KeyManager({
-          store: new KeyStore(dbConnection),
-          kms: {
-            postgres: new KeyManagementSystem(
-              this.privateStore
-            )
-          }
-        }),
-        new DIDManager({
-          store: new DIDStore(dbConnection),
-          defaultProvider: 'did:cheqd:testnet',
-          providers: {}
-        }),
-        new DIDResolverPlugin({
-          resolver: new Resolver({
-            ...CheqdDidResolver({ url: RESOLVER_URL }) as ResolverRegistry
-          })
-        }),
-      ]
+    this.agent = Veramo.instance.createVeramoAgent({
+        dbConnection,
+        kms: {
+          local: new KeyManagementSystem(
+            this.privateStore
+          )
+        },
+        providers: {},
+        enableCredential: false,
+        enableResolver: true
     })
+    return this.agent
   }
 
   async createAgent(agentId: string) : Promise<VeramoAgent> {
@@ -103,49 +95,26 @@ export class PostgresIdentity implements IIdentity {
       }
     )
 
-    return createAgent<VeramoAgent>({
-      plugins: [
-        new KeyManager({
-          store: new KeyStore(dbConnection),
-          kms: {
-            postgres: new KeyManagementSystem(
-              this.privateStore
-            )
-          }
-        }),
-        new DIDManager({
-          store: new DIDStore(dbConnection),
-          defaultProvider: 'did:cheqd:testnet',
-          providers: {
-            'did:cheqd:mainnet': mainnetProvider,
-            'did:cheqd:testnet': testnetProvider
-          }
-        }),
-        new DIDResolverPlugin({
-          resolver: new Resolver({
-            ...CheqdDidResolver({ url: RESOLVER_URL }) as ResolverRegistry
-          })
-        }),
-        new CredentialPlugin(),
-        new CredentialIssuerLD({
-          contextMaps: [LdDefaultContexts],
-          suites: [new VeramoEd25519Signature2018()]
-        }),
-        new Cheqd({
-            providers: [mainnetProvider, testnetProvider]
-        })
-      ]
+    return Veramo.instance.createVeramoAgent({
+        dbConnection,
+        kms: {
+          local: new KeyManagementSystem(
+            this.privateStore
+          )
+        },
+        providers: {
+          'did:cheqd:mainnet': mainnetProvider,
+          'did:cheqd:testnet': testnetProvider
+        },
+        cheqdProviders: [mainnetProvider, testnetProvider],
+        enableCredential: true,
+        enableResolver: true
     })
   }
 
   async createKey(type: 'Ed25519' | 'Secp256k1'='Ed25519', agentId: string): Promise<ManagedKeyInfo> {
-    if (!this.agent) throw new Error('No initialised agent found.')
-    const [kms] = await this.agent.keyManagerGetKeyManagementSystems()
-    const key = await this.agent.keyManagerCreate({
-      type: type || 'Ed25519',
-      kms,
-    })
-    await CustomerService.instance.update(agentId, { kids: [key.kid] })
+    const key = await Veramo.instance.createKey(this.agent, type)
+    if(await CustomerService.instance.find(agentId, {})) await CustomerService.instance.update(agentId, { kids: [key.kid] })
     return key
   }
 
@@ -154,7 +123,7 @@ export class PostgresIdentity implements IIdentity {
     if(!isOwner) {
         throw new Error(`Customer not found`)
     }
-    return await this.agent.keyManagerGet({ kid })
+    return await Veramo.instance.getKey(this.agent, kid)
   }
 
   private async getPrivateKey(kid: string) {
@@ -166,15 +135,7 @@ export class PostgresIdentity implements IIdentity {
       const agent = await this.createAgent(agentId)
       if (!agent) throw new Error('No initialised agent found.')
 
-      const [kms] = await agent.keyManagerGetKeyManagementSystems()
-
-      const identifier: IIdentifier = await agent.didManagerCreate({
-        provider: `did:cheqd:${network}`,
-        kms,
-        options: {
-          document: didDocument
-        }
-      })
+      const identifier: IIdentifier = await Veramo.instance.createDid(agent, network, didDocument)
       await CustomerService.instance.update(agentId, { dids: [identifier.did] })
       return identifier
     } catch (error) {
@@ -188,42 +149,27 @@ export class PostgresIdentity implements IIdentity {
   }
 
   async resolveDid(did: string) {
-    return await this.agent.resolveDid({ didUrl: did })
+    return await Veramo.instance.resolveDid(this.agent, did)
   }
 
   async getDid(did: string) {
-    return await this.agent.didManagerGet({ did })
+    return await Veramo.instance.getDid(this.agent, did)
   }
 
-  async importDid(did: string, privateKeyHex: string, publicKeyHex: string): Promise<IIdentifier> {
-    if (!this.agent) throw new Error('No initialised agent found.')
-
-    const [kms] = await this.agent.keyManagerGetKeyManagementSystems()
-
+  async importDid(did: string, privateKeyHex: string, publicKeyHex: string, agentId: string): Promise<IIdentifier> {
     if (!did.match(cheqdDidRegex)) {
       throw new Error('Invalid DID')
     }
 
-    const key: MinimalImportableKey = { kms: kms, type: 'Ed25519', kid: v4(), privateKeyHex, publicKeyHex }
-
-    const identifier: IIdentifier = await this.agent.didManagerImport({ keys: [key], did, controllerKeyId: key.kid } as MinimalImportableIdentifier)
-
+    const identifier: IIdentifier = await Veramo.instance.importDid(this.agent, did, privateKeyHex, publicKeyHex)
+    await CustomerService.instance.update(agentId, { dids: [identifier.did]})
     return identifier
   }
 
   async createResource(network: string, payload: ResourcePayload, agentId: string) {
     try {
         const agent = await this.createAgent(agentId)
-        if (!agent) throw new Error('No initialised agent found.')
-
-        const [kms] = await agent.keyManagerGetKeyManagementSystems()
-
-        const result: boolean = await agent.cheqdCreateLinkedResource({
-            kms,
-            payload,
-            network: network as CheqdNetwork
-        })
-        return result
+        return await Veramo.instance.createResource(agent, network, payload)
     } catch (error) {
         throw new Error(`${error}`)
     }    
@@ -236,15 +182,7 @@ export class PostgresIdentity implements IIdentity {
           throw new Error('Customer not found')
         }
         const agent = await this.createAgent(agentId)
-        const verifiable_credential = await agent.createVerifiableCredential(
-            {
-                save: false,
-                credential,
-                proofFormat: format == 'jsonld' ? 'lds' : VC_PROOF_FORMAT,
-                removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS
-            }
-        )
-        return verifiable_credential
+        return await Veramo.instance.createCredential(agent, credential, format)
     } catch (error) {
         throw new Error(`${error}`)
     }          
@@ -252,11 +190,11 @@ export class PostgresIdentity implements IIdentity {
 
   async verifyCredential(credential: string | VerifiableCredential, agentId: string): Promise<IVerifyResult> {
     const agent = await this.createAgent(agentId)
-    return await agent.verifyCredential({ credential, fetchRemoteContexts: true })
+    return await Veramo.instance.verifyCredential(agent, credential)
   }
 
   async verifyPresentation(presentation: VerifiablePresentation | string, agentId: string): Promise<IVerifyResult> {
     const agent = await this.createAgent(agentId)
-    return await agent.verifyPresentation({ presentation, fetchRemoteContexts: true })
+    return await Veramo.instance.verifyPresentation(agent, presentation)
   }
 }
