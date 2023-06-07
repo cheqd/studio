@@ -51,7 +51,7 @@ export class PostgresIdentity implements IIdentity {
     const dbConnection = Connection.instance.dbConnection
     this.privateStore = new PrivateKeyStore(dbConnection, new SecretBox(EXTERNAL_DB_ENCRYPTION_KEY))
 
-    return createAgent({
+    this.agent = createAgent({
       plugins: [
         new KeyManager({
           store: new KeyStore(dbConnection),
@@ -73,6 +73,7 @@ export class PostgresIdentity implements IIdentity {
         }),
       ]
     })
+    return this.agent
   }
 
   async createAgent(agentId: string) : Promise<VeramoAgent> {

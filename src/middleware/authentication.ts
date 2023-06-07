@@ -51,7 +51,7 @@ export class Authentication {
                 }
                 break
             default:
-                if (request.path != '/account' && !await CustomerService.instance.find(response.locals.customerId, {})) {
+                if (!['/account', '/', '/store'].includes(request.path) && !await CustomerService.instance.find(response.locals.customerId, {})) {
                     message = 'Customer not found'
                 }
                 break

@@ -14,6 +14,7 @@ import { CORS_ERROR_MSG } from './types/constants.js'
 import swaggerJSONDoc from '../swagger.json' assert { type: "json" }
 
 import * as dotenv from 'dotenv'
+import { Identity } from './services/identity/index.js'
 dotenv.config()
 
 class App {
@@ -28,7 +29,7 @@ class App {
 
   private middleware() {
     this.express.use(express.json({ limit: '50mb' }))
-	  this.express.use(express.urlencoded({ extended: false }))
+	this.express.use(express.urlencoded({ extended: false }))
     this.express.use(Helmet())
     this.express.use(cors({
         origin: function(origin, callback){

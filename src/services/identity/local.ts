@@ -48,8 +48,9 @@ export class LocalIdentity implements IIdentity {
     if (!FEE_PAYER_MNEMONIC) {
         throw new Error(`No fee payer found`)
     }
-
-    if (this.agent) return this.agent
+    if(this.agent) {
+        return this.agent
+    }
     const dbConnection = Connection.instance.dbConnection
     this.privateStore = new MemoryPrivateKeyStore()
 
@@ -69,7 +70,7 @@ export class LocalIdentity implements IIdentity {
         rpcUrl: TESTNET_RPC_URL || DefaultRPCUrl.Testnet,
       }
     )
-    return createAgent<TAgent<VeramoAgent>>({
+    this.agent = createAgent<TAgent<VeramoAgent>>({
       plugins: [
         new KeyManager({
           store: new KeyStore(dbConnection),
@@ -102,6 +103,7 @@ export class LocalIdentity implements IIdentity {
         })
       ]
     })
+    return this.agent
   }
 
   async createKey(): Promise<ManagedKeyInfo> {
@@ -136,12 +138,13 @@ export class LocalIdentity implements IIdentity {
     if (!ISSUER_DID.match(cheqdDidRegex)) {
       throw new Error('Invalid DID')
     }
-
-    const key: MinimalImportableKey = { kms: kms, type: 'Ed25519', kid: ISSUER_ID_PUBLIC_KEY_HEX, privateKeyHex: ISSUER_ID_PRIVATE_KEY_HEX, publicKeyHex: ISSUER_ID_PUBLIC_KEY_HEX }
-
-    const identifier: IIdentifier = await this.initAgent().didManagerImport({ keys: [key], did: ISSUER_DID, controllerKeyId: key.kid } as MinimalImportableIdentifier)
-
-    return identifier
+    try {
+        return await this.getDid(ISSUER_DID)
+    } catch {
+        const key: MinimalImportableKey = { kms, type: 'Ed25519', privateKeyHex: ISSUER_ID_PRIVATE_KEY_HEX, publicKeyHex: ISSUER_ID_PUBLIC_KEY_HEX }
+        const identifier: IIdentifier = await this.initAgent().didManagerImport({ keys: [key], did: ISSUER_DID, controllerKeyId: key.kid } as MinimalImportableIdentifier)
+        return identifier
+    }
   }
 
   async createResource(network: string, payload: ResourcePayload) {
@@ -171,7 +174,7 @@ export class LocalIdentity implements IIdentity {
                 save: false,
                 credential,
                 proofFormat: format == 'jsonld' ? 'lds' : VC_PROOF_FORMAT,
-                removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS
+                removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS,
             }
         )
         return verifiable_credential

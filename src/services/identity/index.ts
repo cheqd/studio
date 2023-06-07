@@ -16,7 +16,6 @@ export class Identity {
         } else {
             this.agent = LocalIdentity.instance
         }
-
         this.agent.initAgent()
     }
 }
