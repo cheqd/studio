@@ -45,6 +45,10 @@ export class Authentication {
 
     static async accessControl(request: Request, response: Response, next: NextFunction) {
         let message = undefined
+
+        if (apiGuarding.skipPath(request.path)) 
+            return next()
+
         switch(ENABLE_EXTERNAL_DB) {
             case 'false':
                 if (['/account', '/did/create', '/key/create'].includes(request.path)) {
