@@ -2,7 +2,7 @@ import { ReservedScope, UserScope } from '@logto/express'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const {ALL_SCOPES, LOGTO_ENDPOINT, AUDIENCE_ENDPOINT, LOGTO_APP_ID, LOGTO_APP_SECRET, APPLICATION_BASE_URL} = process.env
+const {ALL_SCOPES, LOGTO_ENDPOINT, LOGTO_RESOURCE_URL, LOGTO_APP_ID, LOGTO_APP_SECRET, APPLICATION_BASE_URL} = process.env
 
 
 export const HEADERS = {
@@ -32,8 +32,8 @@ export const configLogToExpress = {
 	appId: LOGTO_APP_ID,
 	appSecret: LOGTO_APP_SECRET,
 	baseUrl: APPLICATION_BASE_URL,
-	resources: [AUDIENCE_ENDPOINT], // You may need to replace it with your app's production address
-	resource: AUDIENCE_ENDPOINT,
+	resources: [LOGTO_RESOURCE_URL], // You may need to replace it with your app's production address
+	resource: LOGTO_RESOURCE_URL,
 	scopes: [ReservedScope.OpenId, ReservedScope.OfflineAccess, UserScope.Identities, ...all_scopes],
 	getAccessToken: true,
 }

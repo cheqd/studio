@@ -1,5 +1,5 @@
 import { EnvironmentType } from "@verida/types"
-import { NetworkType } from "./types"
+import { Network } from "@verida/client-ts"
 
 declare global {
   namespace NodeJS {
