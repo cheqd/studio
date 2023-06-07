@@ -2,9 +2,9 @@ import express from 'express'
 import Helmet from 'helmet'
 import cors from 'cors'
 import swaggerUi from 'swagger-ui-express'
-import session from 'express-session';
-import cookieParser from 'cookie-parser';
-import {withLogto, handleAuthRoutes } from '@logto/express';
+import session from 'express-session'
+import cookieParser from 'cookie-parser'
+import {withLogto, handleAuthRoutes } from '@logto/express'
 
 import { CredentialController } from './controllers/credentials.js'
 import { StoreController } from './controllers/store.js'
@@ -17,11 +17,11 @@ import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js'
 import swaggerJSONDoc from '../swagger.json' assert { type: "json" }
 
 import * as dotenv from 'dotenv'
-import { UserInfo } from './controllers/user_info.js';
+import { UserInfo } from './controllers/user_info.js'
 
 const swagger_options = {
   customJs: '/custom_button.js',
-};
+}
 
 dotenv.config()
 
@@ -50,12 +50,12 @@ class App {
         }
     }))
 
-    this.express.use(cookieParser());
-    this.express.use(session({ secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 } }));
-    this.express.use(handleAuthRoutes(configLogToExpress));
-    this.express.use(withLogto(configLogToExpress));
-    this.express.use(express.text());
-    this.express.use(express.static(process.cwd() + '/src/static'));
+    this.express.use(cookieParser())
+    this.express.use(session({ secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 } }))
+    this.express.use(handleAuthRoutes(configLogToExpress))
+    this.express.use(withLogto(configLogToExpress))
+    this.express.use(express.text())
+    this.express.use(express.static(process.cwd() + '/src/static'))
 
     this.express.use(
       '/swagger',
@@ -64,7 +64,7 @@ class App {
         return res.send(swaggerUi.generateHTML(swaggerJSONDoc, swagger_options))
       }
     )
-    this.express.use(Authentication.guard);
+    this.express.use(Authentication.guard)
     this.express.use(Authentication.handleError)
     this.express.use(Authentication.accessControl)
   }
@@ -73,7 +73,7 @@ class App {
     const app = this.express
     app.get('/', (req, res) => res.redirect('swagger'))
 
-    app.get('/user', new UserInfo().getUserInfo);
+    app.get('/user', new UserInfo().getUserInfo)
 
     // credentials
     app.post(`/credential/issue`, CredentialController.issueValidator, new CredentialController().issue)

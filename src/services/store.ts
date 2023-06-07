@@ -6,7 +6,7 @@ export class LocalStore {
     public static instance = new LocalStore()
 
     constructor() {
-        this.cache = new NodeCache()
+        this.cache = new NodeCache() 
     }
 
     setItem(data: string) : string {
