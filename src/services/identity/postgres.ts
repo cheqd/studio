@@ -1,5 +1,5 @@
 import {
-    CredentialPayload,
+  CredentialPayload,
   DIDDocument,
   IIdentifier,
   IVerifyResult,
@@ -28,9 +28,10 @@ import { Connection } from '../../database/connection/connection.js'
 import { CustomerEntity } from '../../database/entities/customer.entity.js'
 import { CustomerService } from '../customer.js'
 
-import * as dotenv from 'dotenv'
 import { IIdentity } from './IIdentity.js'
 import { VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js'
+
+import * as dotenv from 'dotenv'
 dotenv.config()
 
 const {
@@ -41,15 +42,12 @@ const {
 } = process.env
 
 export class PostgresIdentity implements IIdentity {
-  agent: TAgent<any>
+  agent?: TAgent<any>
   privateStore?: AbstractPrivateKeyStore
   public static instance = new PostgresIdentity()
 
-  constructor() {
-    this.agent = this.initAgent()
-  }
-
   initAgent(): TAgent<any> {
+    if(this.agent) return this.agent
     const dbConnection = Connection.instance.dbConnection
     this.privateStore = new PrivateKeyStore(dbConnection, new SecretBox(EXTERNAL_DB_ENCRYPTION_KEY))
 
@@ -154,7 +152,7 @@ export class PostgresIdentity implements IIdentity {
     if(!isOwner) {
         throw new Error(`Customer not found`)
     }
-    return await this.agent.keyManagerGet({ kid })
+    return await this.initAgent().keyManagerGet({ kid })
   }
 
   private async getPrivateKey(kid: string) {
@@ -188,11 +186,11 @@ export class PostgresIdentity implements IIdentity {
   }
 
   async resolveDid(did: string) {
-    return await this.agent.resolveDid({ didUrl: did })
+    return await this.initAgent().resolveDid({ didUrl: did })
   }
 
   async getDid(did: string) {
-    return await this.agent.didManagerGet({ did })
+    return await this.initAgent().didManagerGet({ did })
   }
 
   async importDid(did: string, privateKeyHex: string, publicKeyHex: string): Promise<IIdentifier> {

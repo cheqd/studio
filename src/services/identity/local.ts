@@ -1,5 +1,4 @@
 import {
-  DIDDocument,
   IIdentifier,
   ManagedKeyInfo,
   MinimalImportableIdentifier,
@@ -19,14 +18,15 @@ import { KeyStore, DIDStore } from '@veramo/data-store'
 import { Cheqd, CheqdDIDProvider, getResolver as CheqdDidResolver, ResourcePayload } from '@cheqd/did-provider-cheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
 import { Resolver, ResolverRegistry } from 'did-resolver'
-
-import { cheqdDidRegex, CredentialRequest, DefaultRPCUrl, VeramoAgent } from '../../types/types.js'
-import * as dotenv from 'dotenv'
-import { Connection } from '../../database/connection/connection.js'
-import { IIdentity } from './IIdentity.js'
-import { VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js'
 import { CredentialPlugin } from '@veramo/credential-w3c'
 import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
+
+import { cheqdDidRegex, CredentialRequest, DefaultRPCUrl, VeramoAgent } from '../../types/types.js'
+import { VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js'
+import { Connection } from '../../database/connection/connection.js'
+import { IIdentity } from './IIdentity.js'
+
+import * as dotenv from 'dotenv'
 dotenv.config()
 
 const {
@@ -40,18 +40,16 @@ const {
 } = process.env
 
 export class LocalIdentity implements IIdentity {
-  agent: VeramoAgent
+  agent?: VeramoAgent
   privateStore?: AbstractPrivateKeyStore
   public static instance = new LocalIdentity()
 
-  constructor() {
-    this.agent = this.initAgent()
+  initAgent() {
     if (!FEE_PAYER_MNEMONIC) {
         throw new Error(`No fee payer found`)
     }
-  }
 
-  initAgent() {
+    if (this.agent) return this.agent
     const dbConnection = Connection.instance.dbConnection
     this.privateStore = new MemoryPrivateKeyStore()
 
@@ -111,7 +109,7 @@ export class LocalIdentity implements IIdentity {
   }
 
   async getKey(kid: string) {
-    return await this.agent.keyManagerGet({ kid })
+    return await this.initAgent().keyManagerGet({ kid })
   }
 
   async createDid(): Promise<IIdentifier> {
@@ -123,18 +121,18 @@ export class LocalIdentity implements IIdentity {
   }
 
   async resolveDid(did: string) {
-    return await this.agent.resolveDid({ didUrl: did })
+    return await this.initAgent().resolveDid({ didUrl: did })
   }
 
   async getDid(did: string) {
-    return await this.agent.didManagerGet({ did })
+    return await this.initAgent().didManagerGet({ did })
   }
 
   async importDid(): Promise<IIdentifier> {
     if (!this.agent) throw new Error('No initialised agent found.')
     if (!(ISSUER_DID && ISSUER_ID_PUBLIC_KEY_HEX && ISSUER_ID_PRIVATE_KEY_HEX)) throw new Error('No DIDs and Keys found')
 
-    const [kms] = await this.agent.keyManagerGetKeyManagementSystems()
+    const [kms] = await this.initAgent().keyManagerGetKeyManagementSystems()
 
     if (!ISSUER_DID.match(cheqdDidRegex)) {
       throw new Error('Invalid DID')
@@ -151,11 +149,9 @@ export class LocalIdentity implements IIdentity {
     try {
         // import DID
         await this.importDid()
-        if (!this.agent) throw new Error('No initialised agent found.')
+        const [kms] = await this.initAgent().keyManagerGetKeyManagementSystems()
 
-        const [kms] = await this.agent.keyManagerGetKeyManagementSystems()
-
-        const result: boolean = await this.agent.cheqdCreateLinkedResource({
+        const result: boolean = await this.initAgent().cheqdCreateLinkedResource({
             kms,
             payload,
             network: network as CheqdNetwork
@@ -171,7 +167,7 @@ export class LocalIdentity implements IIdentity {
     try {
         // import DID
         await this.importDid()
-        const verifiable_credential = await this.agent.createVerifiableCredential(
+        const verifiable_credential = await this.initAgent().createVerifiableCredential(
             {
                 save: false,
                 credential,
@@ -186,10 +182,10 @@ export class LocalIdentity implements IIdentity {
   }
 
   async verifyCredential(credential: VerifiableCredential | string): Promise<IVerifyResult> {
-    return await this.agent.verifyCredential({ credential, fetchRemoteContexts: true })
+    return await this.initAgent().verifyCredential({ credential, fetchRemoteContexts: true })
   }
 
   async verifyPresentation(presentation: VerifiablePresentation | string): Promise<IVerifyResult> {
-    return await this.agent.verifyPresentation({ presentation, fetchRemoteContexts: true })
+    return await this.initAgent().verifyPresentation({ presentation, fetchRemoteContexts: true })
   }
 }
