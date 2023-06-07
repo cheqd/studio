@@ -9,7 +9,16 @@ import * as dotenv from 'dotenv'
 import {apiGuarding} from "../types/types.js";
 dotenv.config()
 
-const { LOGTO_ENDPOINT, AUDIENCE_ENDPOINT, ENABLE_AUTH, CUSTOMER_ID } = process.env
+const {
+  LOGTO_ENDPOINT,
+  LOGTO_RESOURCE_URL,
+  ENABLE_AUTHENTICATION,
+  DEFAULT_CUSTOMER_ID,
+  ENABLE_EXTERNAL_DB
+} = process.env
+
+const OIDC_ISSUER = LOGTO_ENDPOINT + '/oidc'
+const OIDC_JWKS_ENDPOINT = LOGTO_ENDPOINT + '/oidc/jwks'
 const bearerTokenIdentifier = 'Bearer'
 
 export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHeaders) => {
@@ -24,6 +33,7 @@ export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHea
 };
 
 export class Authentication {
+
     static handleError(error: Error, jwtRequest: JWTRequest, response: Response, next: NextFunction) {
         if (error) {
           return response.status(401).send({
@@ -33,18 +43,26 @@ export class Authentication {
         next()
     }
 
-    static async authenticate(jwtRequest: JWTRequest, response: Response, next: NextFunction) {
-        if(jwtRequest.path == '/') return next()
+    static async accessControl(request: Request, response: Response, next: NextFunction) {
+        let message = undefined
+        switch(ENABLE_EXTERNAL_DB) {
+            case 'false':
+                if (['/account', '/did/create', '/key/create'].includes(request.path)) {
+                  message = 'Api not supported'
+                }
+                break
+            default:
+                if (request.path != '/account' && !await CustomerService.instance.find(response.locals.customerId, {})) {
+                    message = 'Customer not found'
+                }
+                break
+        }
 
-        if (!jwtRequest.auth?.sub) return response.status(401).json({
-            error: 'Invalid auth token'
-        })
-
-        if(jwtRequest.path != '/account' && !await CustomerService.instance.find(jwtRequest.auth.sub, {})) return response.status(401).json({
-            error: 'Customer not found'
-        })
-
-        response.locals.customerId = jwtRequest.auth.sub
+        if(message) {
+            return response.status(400).json({
+                error: message
+            })
+        }
         next()
     }
 
@@ -54,10 +72,7 @@ export class Authentication {
             return next()
 
 		try {
-            if (ENABLE_AUTH === 'true') {
-                const OIDC_JWKS_ENDPOINT = `${LOGTO_ENDPOINT}/oidc/jwks`;
-                const OIDC_ISSUER = `${LOGTO_ENDPOINT}/oidc`;
-
+            if (ENABLE_AUTHENTICATION === 'true') {
                 const token = extractBearerTokenFromHeaders(jwtRequest.headers)
     
                 const { payload } = await jwtVerify(
@@ -67,7 +82,7 @@ export class Authentication {
                         // expected issuer of the token, should be issued by the Logto server
                         issuer: OIDC_ISSUER,
                         // expected audience token, should be the resource indicator of the current API
-                        audience: AUDIENCE_ENDPOINT,
+                        audience: LOGTO_RESOURCE_URL,
                     }
                 );
 
@@ -88,8 +103,8 @@ export class Authentication {
             
                 // custom payload logic
                 response.locals.customerId = payload.sub
-            } else if (CUSTOMER_ID) {
-                response.locals.customerId = CUSTOMER_ID
+            } else if (DEFAULT_CUSTOMER_ID) {
+                response.locals.customerId = DEFAULT_CUSTOMER_ID
             } else {
                 return response.status(400).json({
                     error: `Unauthorized error. It requires ENABLE_AUTH=true and bearerToken in headers or CUSTOMER_ID to be set.`

@@ -444,7 +444,7 @@
                                 "properties": {
                                     "credential": {
                                         "type": "string",
-                                        "example": "<Place the JWT here>"
+                                        "example": "<Place the credential object or JWT string here>"
                                     }
                                 }
                             }

@@ -1,5 +1,33 @@
 # Changelog
 
+## [2.1.0-develop.16](https://github.com/cheqd/credential-service/compare/2.1.0-develop.15...2.1.0-develop.16) (2023-06-06)
+
+
+### Features
+
+* Implement USE_EXTERNAL_DB toggle [DEV 2630]  ([#233](https://github.com/cheqd/credential-service/issues/233)) ([a023242](https://github.com/cheqd/credential-service/commit/a02324284de8882447a1eb7c2c246d1f6e3a40b9))
+
+## [2.1.0-develop.15](https://github.com/cheqd/credential-service/compare/2.1.0-develop.14...2.1.0-develop.15) (2023-06-05)
+
+
+### Bug Fixes
+
+* Get string env variables back ([#246](https://github.com/cheqd/credential-service/issues/246)) ([1f6439b](https://github.com/cheqd/credential-service/commit/1f6439b5a3777725c2866d6653dc5842a74926bf))
+
+## [2.1.0-develop.14](https://github.com/cheqd/credential-service/compare/2.1.0-develop.13...2.1.0-develop.14) (2023-06-05)
+
+
+### Bug Fixes
+
+* Restructure environment variables / configuration parameters [DEV-2758] ([#240](https://github.com/cheqd/credential-service/issues/240)) ([b206958](https://github.com/cheqd/credential-service/commit/b20695851e2c3b4d16cfd22c59dfdfe4123e333b))
+
+## [2.1.0-develop.13](https://github.com/cheqd/credential-service/compare/2.1.0-develop.12...2.1.0-develop.13) (2023-06-01)
+
+
+### Bug Fixes
+
+* Dockerfile permission && credential verification [CU-85zt6ng2p] ([#239](https://github.com/cheqd/credential-service/issues/239)) ([45bb6d7](https://github.com/cheqd/credential-service/commit/45bb6d785a6552bfdee51124d0ca8d71f2e51c9a))
+
 ## [2.1.0-develop.12](https://github.com/cheqd/credential-service/compare/2.1.0-develop.11...2.1.0-develop.12) (2023-05-31)
 
 ## [2.1.0-develop.11](https://github.com/cheqd/credential-service/compare/2.1.0-develop.10...2.1.0-develop.11) (2023-05-31)

@@ -66,6 +66,7 @@ class App {
     )
     this.express.use(Authentication.guard);
     this.express.use(Authentication.handleError)
+    this.express.use(Authentication.accessControl)
   }
 
   private routes() {

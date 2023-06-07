@@ -32,11 +32,6 @@ export class CredentialController {
       return response.status(400).json({ error: result.array()[0].msg })
     }
     try {
-      if (!await CustomerService.instance.find(response.locals.customerId, {did: request.body.issuerDid})) {
-        return response.status(400).json({
-            error: `Issuer DID ${request.body.issuerDid} not found`
-        })
-      }
       const credential: VerifiableCredential = await Credentials.instance.issue_credential(request.body, response.locals.customerId)
       response.status(200).json(credential)
     } catch (error) {
@@ -56,9 +51,6 @@ export class CredentialController {
       return response.status(400).json({ error: result.array()[0].msg })
     }
     try {
-        if(request.body.credential.proof.jws) {
-          return response.status(200).json(await Credentials.instance.verifyCredentialLd(request.body.credential, response.locals.customerId)) 
-        }
 		return response.status(200).json(await Credentials.instance.verify_credentials(request.body.credential, response.locals.customerId))
     } catch (error) {
         return response.status(500).json({
