@@ -27,7 +27,8 @@
 		"lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
 		"test": "jest --config jestconfig.json --verbose",
 		"typeorm": "typeorm-ts-node-esm  -d ./dist/src/database/ormconfig.js",
-		"migration": "npm run typeorm migration:generate . && npm run typeorm migration:run"
+		"migration": "npm run typeorm migration:generate . && npm run typeorm migration:run",
+		"compose-run": "npm run migration && npm run start"
 	},
 	"eslintConfig": {
 		"root": true,
