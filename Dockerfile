@@ -16,9 +16,6 @@ RUN npm ci
 # Build the app
 RUN npm run build
 
-# Migration for the app
-RUN npm run migration
-
 
 ###############################################################
 ###         STAGE 2: Build credential-service runner        ###
@@ -45,7 +42,7 @@ RUN npm ci
 
 # Base arguments: build-time
 ARG NPM_CONFIG_LOGLEVEL=warn
-ARG PORT=3000
+ARG PORT=8787
 
 # Network API endpoints: build-time
 ARG MAINNET_RPC_URL=https://rpc.cheqd.net:443
@@ -53,6 +50,9 @@ ARG TESTNET_RPC_URL=https://rpc.cheqd.network:443
 ARG RESOLVER_URL=https://resolver.cheqd.net/1.0/identifiers/
 
 # Veramo Database configuration: build-time
+ARG POSTGRES_USER
+ARG POSTGRES_PASSWORD
+ARG POSTGRES_DB
 ARG DB_CONNECTION_URL
 ARG DB_ENCRYPTION_KEY
 ARG DB_CERTIFICATE
@@ -83,6 +83,9 @@ ENV TESTNET_RPC_URL ${TESTNET_RPC_URL}
 ENV RESOLVER_URL ${RESOLVER_URL}
 
 # Environment variables: Veramo Database configuration
+ENV POSTGRES_USER ${POSTGRES_USER}
+ENV POSTGRES_PASSWORD ${POSTGRES_PASSWORD}
+ENV POSTGRES_DB ${POSTGRES_DB}
 ENV DB_CONNECTION_URL ${DB_CONNECTION_URL}
 ENV DB_ENCRYPTION_KEY ${DB_ENCRYPTION_KEY}
 ENV DB_CERTIFICATE ${DB_CERTIFICATE}
@@ -112,6 +115,3 @@ EXPOSE ${PORT}
 # Set user and shell
 USER node
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
-
-# Run the application
-CMD ["npm", "start"]
