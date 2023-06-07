@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express'
-import { expressjwt, Request as JWTRequest } from 'express-jwt'
-import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { Request as JWTRequest } from 'express-jwt'
+import { createRemoteJWKSet, jwtVerify } from 'jose'
 
 import { CustomerService } from '../services/customer.js'
-import { IncomingHttpHeaders } from 'http';
+import { IncomingHttpHeaders } from 'http'
 
 import * as dotenv from 'dotenv'
 dotenv.config()
@@ -28,8 +28,8 @@ export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHea
         throw new Error(`Authorization token type is not supported. Valid type: "${bearerTokenIdentifier}".`)
     }
   
-    return authorization.slice(bearerTokenIdentifier.length + 1);
-};
+    return authorization.slice(bearerTokenIdentifier.length + 1)
+}
 
 export class Authentication {
 
@@ -51,7 +51,7 @@ export class Authentication {
                 }
                 break
             default:
-                if (request.path != '/account' && !await CustomerService.instance.find(response.locals.customerId, {})) {
+                if (!['/account', '/', '/store'].includes(request.path) && !await CustomerService.instance.find(response.locals.customerId, {})) {
                     message = 'Customer not found'
                 }
                 break
@@ -82,7 +82,7 @@ export class Authentication {
                         // expected audience token, should be the resource indicator of the current API
                         audience: LOGTO_RESOURCE_URL,
                     }
-                );
+                )
             
                 // custom payload logic
                 response.locals.customerId = payload.sub

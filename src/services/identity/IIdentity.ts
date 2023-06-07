@@ -16,7 +16,7 @@ import { CredentialRequest, VeramoAgent } from '../../types/types'
 dotenv.config()
 
 export interface IIdentity {
-  agent: TAgent<any>
+  agent?: TAgent<any>
   privateStore?: AbstractPrivateKeyStore
   initAgent(): TAgent<any>
   createAgent?(agentId: string): Promise<VeramoAgent>

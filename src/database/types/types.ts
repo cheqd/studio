@@ -8,10 +8,10 @@ import { CreateCustomersTable1683723285946 } from '../migrations/CreateCustomers
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
+const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env
 
 export interface AbstractDatabase {
-    setup(): DataSource;
+    setup(): DataSource
 }
 
 export class Memory implements AbstractDatabase {
@@ -24,13 +24,13 @@ export class Memory implements AbstractDatabase {
             migrations: [...migrations],
             migrationsRun: true,
             logging: ['error', 'info', 'warn']
-        });
+        })
     }
 }
 
 export class Postgres implements AbstractDatabase {
     setup(): DataSource {
-        const { parse } = pkg;
+        const { parse } = pkg
         const config = parse(EXTERNAL_DB_CONNECTION_URL)
         if (!(config.host && config.port && config.database)) {
             throw new Error(`Error: Invalid Database URL`)
@@ -49,6 +49,6 @@ export class Postgres implements AbstractDatabase {
             migrations: [...migrations, CreateCustomersTable1683723285946],
             entities: [...Entities, CustomerEntity],
             logging: ['error', 'info', 'warn']
-        });
+        })
     }
 }

@@ -27,7 +27,7 @@ export class CredentialController {
   ]
 
   public async issue(request: Request, response: Response) {
-    const result = validationResult(request);
+    const result = validationResult(request)
     if (!result.isEmpty()) {
       return response.status(400).json({ error: result.array()[0].msg })
     }
@@ -46,7 +46,7 @@ export class CredentialController {
       return response.status(405).json({ error: 'Unsupported media type.' })
     }
 
-    const result = validationResult(request);
+    const result = validationResult(request)
     if (!result.isEmpty()) {
       return response.status(400).json({ error: result.array()[0].msg })
     }
