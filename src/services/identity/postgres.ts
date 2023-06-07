@@ -137,13 +137,12 @@ export class PostgresIdentity implements IIdentity {
   }
 
   async createKey(type: 'Ed25519' | 'Secp256k1'='Ed25519', agentId: string): Promise<ManagedKeyInfo> {
-    if (!this.agent) throw new Error('No initialised agent found.')
-    const [kms] = await this.agent.keyManagerGetKeyManagementSystems()
-    const key = await this.agent.keyManagerCreate({
+    const [kms] = await this.initAgent().keyManagerGetKeyManagementSystems()
+    const key = await this.initAgent().keyManagerCreate({
       type: type || 'Ed25519',
       kms,
     })
-    await CustomerService.instance.update(agentId, { kids: [key.kid] })
+    if(await CustomerService.instance.find(agentId, {})) await CustomerService.instance.update(agentId, { kids: [key.kid] })
     return key
   }
 
@@ -194,9 +193,7 @@ export class PostgresIdentity implements IIdentity {
   }
 
   async importDid(did: string, privateKeyHex: string, publicKeyHex: string): Promise<IIdentifier> {
-    if (!this.agent) throw new Error('No initialised agent found.')
-
-    const [kms] = await this.agent.keyManagerGetKeyManagementSystems()
+    const [kms] = await this.initAgent().keyManagerGetKeyManagementSystems()
 
     if (!did.match(cheqdDidRegex)) {
       throw new Error('Invalid DID')
@@ -204,7 +201,7 @@ export class PostgresIdentity implements IIdentity {
 
     const key: MinimalImportableKey = { kms: kms, type: 'Ed25519', kid: v4(), privateKeyHex, publicKeyHex }
 
-    const identifier: IIdentifier = await this.agent.didManagerImport({ keys: [key], did, controllerKeyId: key.kid } as MinimalImportableIdentifier)
+    const identifier: IIdentifier = await this.initAgent().didManagerImport({ keys: [key], did, controllerKeyId: key.kid } as MinimalImportableIdentifier)
 
     return identifier
   }

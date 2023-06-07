@@ -129,7 +129,6 @@ export class LocalIdentity implements IIdentity {
   }
 
   async importDid(): Promise<IIdentifier> {
-    if (!this.agent) throw new Error('No initialised agent found.')
     if (!(ISSUER_DID && ISSUER_ID_PUBLIC_KEY_HEX && ISSUER_ID_PRIVATE_KEY_HEX)) throw new Error('No DIDs and Keys found')
 
     const [kms] = await this.initAgent().keyManagerGetKeyManagementSystems()
@@ -140,7 +139,7 @@ export class LocalIdentity implements IIdentity {
 
     const key: MinimalImportableKey = { kms: kms, type: 'Ed25519', kid: ISSUER_ID_PUBLIC_KEY_HEX, privateKeyHex: ISSUER_ID_PRIVATE_KEY_HEX, publicKeyHex: ISSUER_ID_PUBLIC_KEY_HEX }
 
-    const identifier: IIdentifier = await this.agent.didManagerImport({ keys: [key], did: ISSUER_DID, controllerKeyId: key.kid } as MinimalImportableIdentifier)
+    const identifier: IIdentifier = await this.initAgent().didManagerImport({ keys: [key], did: ISSUER_DID, controllerKeyId: key.kid } as MinimalImportableIdentifier)
 
     return identifier
   }
