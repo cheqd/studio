@@ -1,0 +1,35 @@
+version: '3.8'
+
+# CAUTION: Please ensure you edit necessary values in .env before using this Docker Compose file.
+
+# SYNTAX: docker compose -f docker/docker-compose.yml up --detach
+
+services:
+  credential-service:
+    # OPTIONAL: Rebuild cheqd did-resolver Docker image, if you want build your own
+    # Default is to pull in the pre-published image on GitHub Container Registry
+    # SYNTAX: docker compose -f docker/docker-compose.yml build
+    # build:
+    #   context: ../
+    #   dockerfile: docker/Dockerfile
+    #   target: resolver
+    # CAUTION: Change IMAGE_VERSION to local in docker-compose.env if building your own image in section below
+    image: ghcr.io/cheqd/credential-service:latest
+    ports:
+      - 8787:8787
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    entrypoint: "npm run compose-run"
+
+  database:
+    image: postgres
+    ports:
+      - 5432:5432
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      
+    
