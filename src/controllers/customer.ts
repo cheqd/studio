@@ -1,14 +1,12 @@
 import type { Request, Response } from 'express'
 
 import { CustomerService } from '../services/customer.js'
-import { Identity } from '../services/identity.js'
 
 export class CustomerController {
 
     public async create(request: Request, response: Response) {
         try {
-            const kid = (await Identity.instance.createKey('Secp256k1')).kid
-            const customer = await CustomerService.instance.create(response.locals.customerId, kid)
+            const customer = await CustomerService.instance.create(response.locals.customerId)
             if(!customer) {
                 return response.status(400).json({
                     error: `Error creating customer. Please try again`
@@ -16,7 +14,6 @@ export class CustomerController {
             }
             return response.status(200).json({
                 customerId: customer.customerId,
-                address: customer.address
             })
         } catch (error) {
             return response.status(500).json({

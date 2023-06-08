@@ -1,14 +1,20 @@
 import { Request, Response, NextFunction } from 'express'
-import { expressjwt, Request as JWTRequest } from 'express-jwt'
-import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { Request as JWTRequest } from 'express-jwt'
+import { createRemoteJWKSet, jwtVerify } from 'jose'
 
 import { CustomerService } from '../services/customer.js'
-import { IncomingHttpHeaders } from 'http';
+import { IncomingHttpHeaders } from 'http'
 
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const { LOGTO_ENDPOINT, LOGTO_RESOURCE_URL, ENABLE_AUTHENTICATION, DEFAULT_CUSTOMER_ID } = process.env
+const {
+  LOGTO_ENDPOINT,
+  LOGTO_RESOURCE_URL,
+  ENABLE_AUTHENTICATION,
+  DEFAULT_CUSTOMER_ID,
+  ENABLE_EXTERNAL_DB
+} = process.env
 
 const OIDC_ISSUER = LOGTO_ENDPOINT + '/oidc'
 const OIDC_JWKS_ENDPOINT = LOGTO_ENDPOINT + '/oidc/jwks'
@@ -22,15 +28,10 @@ export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHea
         throw new Error(`Authorization token type is not supported. Valid type: "${bearerTokenIdentifier}".`)
     }
   
-    return authorization.slice(bearerTokenIdentifier.length + 1);
-};
+    return authorization.slice(bearerTokenIdentifier.length + 1)
+}
 
 export class Authentication {
-    static expressJWT = expressjwt({
-        secret: "random-secret",
-        algorithms: ["ES384"],
-        credentialsRequired: false
-    })
 
     static handleError(error: Error, jwtRequest: JWTRequest, response: Response, next: NextFunction) {
         if (error) {
@@ -41,18 +42,26 @@ export class Authentication {
         next()
     }
 
-    static async authenticate(jwtRequest: JWTRequest, response: Response, next: NextFunction) {
-        if(jwtRequest.path == '/') return next()
+    static async accessControl(request: Request, response: Response, next: NextFunction) {
+        let message = undefined
+        switch(ENABLE_EXTERNAL_DB) {
+            case 'false':
+                if (['/account', '/did/create', '/key/create'].includes(request.path)) {
+                  message = 'Api not supported'
+                }
+                break
+            default:
+                if (!['/account', '/', '/store'].includes(request.path) && !await CustomerService.instance.find(response.locals.customerId, {})) {
+                    message = 'Customer not found'
+                }
+                break
+        }
 
-        if (!jwtRequest.auth?.sub) return response.status(401).json({
-            error: 'Invalid auth token'
-        })
-
-        if(jwtRequest.path != '/account' && !await CustomerService.instance.find(jwtRequest.auth.sub, {})) return response.status(401).json({
-            error: 'Customer not found'
-        })
-
-        response.locals.customerId = jwtRequest.auth.sub
+        if(message) {
+            return response.status(400).json({
+                error: message
+            })
+        }
         next()
     }
 
@@ -73,7 +82,7 @@ export class Authentication {
                         // expected audience token, should be the resource indicator of the current API
                         audience: LOGTO_RESOURCE_URL,
                     }
-                );
+                )
             
                 // custom payload logic
                 response.locals.customerId = payload.sub

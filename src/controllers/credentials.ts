@@ -27,16 +27,11 @@ export class CredentialController {
   ]
 
   public async issue(request: Request, response: Response) {
-    const result = validationResult(request);
+    const result = validationResult(request)
     if (!result.isEmpty()) {
       return response.status(400).json({ error: result.array()[0].msg })
     }
     try {
-      if (!await CustomerService.instance.find(response.locals.customerId, {did: request.body.issuerDid})) {
-        return response.status(400).json({
-            error: `Issuer DID ${request.body.issuerDid} not found`
-        })
-      }
       const credential: VerifiableCredential = await Credentials.instance.issue_credential(request.body, response.locals.customerId)
       response.status(200).json(credential)
     } catch (error) {
@@ -51,7 +46,7 @@ export class CredentialController {
       return response.status(405).json({ error: 'Unsupported media type.' })
     }
 
-    const result = validationResult(request);
+    const result = validationResult(request)
     if (!result.isEmpty()) {
       return response.status(400).json({ error: result.array()[0].msg })
     }

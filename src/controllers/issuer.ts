@@ -5,10 +5,8 @@ import { v4 } from 'uuid'
 import { MethodSpecificIdAlgo, VerificationMethods, CheqdNetwork } from '@cheqd/sdk'
 import { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js'
 
-import { Identity } from '../services/identity.js'
-import { CustomerService } from '../services/customer.js'
+import { Identity } from '../services/identity/index.js'
 import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers.js'
-import { CustomerEntity } from '../database/entities/customer.entity.js'
 import { check, param, validationResult } from 'express-validator'
 import { fromString } from 'uint8arrays'
 
@@ -48,8 +46,7 @@ export class IssuerController {
   
   public async createKey(request: Request, response: Response) {
     try {
-      const key = await Identity.instance.createKey()
-      await CustomerService.instance.update(response.locals.customerId, { kids: [key.kid] })
+      const key = await Identity.instance.createKey('Ed25519', response.locals.customerId)
       return response.status(200).json(key)
     } catch (error) {
         return response.status(500).json({
@@ -60,11 +57,7 @@ export class IssuerController {
 
   public async getKey(request: Request, response: Response) {
     try {
-      const isOwner = await CustomerService.instance.find(response.locals.customerId, {kid: request.params.kid})
-      if(!isOwner) {
-          return response.status(401).json(`Not found`)
-      }
-      const key = await Identity.instance.getKey(request.params.kid)
+      const key = await Identity.instance.getKey(request.params.kid, response.locals.customerId)
       return response.status(200).json(key)
     } catch (error) {
         return response.status(500).json({
@@ -90,7 +83,7 @@ export class IssuerController {
       if (options.didDocument) {
         didDocument = options.didDocument
       } else if (verificationMethod) {
-        const key = await Identity.instance.createKey()
+        const key = await Identity.instance.createKey('Ed25519', response.locals.customerId)
         kids.push(key.kid)
         didDocument = generateDidDoc({
           verificationMethod: verificationMethod.type,
@@ -107,7 +100,6 @@ export class IssuerController {
       }
 
       const did = await Identity.instance.createDid(network, didDocument, response.locals.customerId)
-      await CustomerService.instance.update(response.locals.customerId, { kids, dids: [did.did] })
       return response.status(200).json(did)
     } catch (error) {
         return response.status(500).json({
@@ -130,7 +122,7 @@ export class IssuerController {
     let resourcePayload: Partial<MsgCreateResourcePayload> = {}
     try {
       // check if did is registered on the ledger
-      let resolvedDocument = await Identity.instance.resolveDid(did)
+      let resolvedDocument: any = await Identity.instance.resolveDid(did)
       if(!resolvedDocument?.didDocument || resolvedDocument.didDocumentMetadata.deactivated) {
         return response.status(400).send({
             error: `${did} is a Deactivated DID`
@@ -172,8 +164,7 @@ export class IssuerController {
       if(request.params.did) {
         did = await Identity.instance.resolveDid(request.params.did)
       } else {
-        const customer = await CustomerService.instance.get(response.locals.customerId) as CustomerEntity
-        did = customer.dids
+        did = await Identity.instance.listDids(response.locals.customerId)
       }
 
       return response.status(200).json(did)

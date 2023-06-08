@@ -11,12 +11,13 @@ declare global {
       // Network API endpoints
       MAINNET_RPC_URL: string
       TESTNET_RPC_URL: string
-	    RESOLVER_URL: string
-
-      // Veramo Database configuration
-      DB_CONNECTION_URL: string
-      DB_ENCRYPTION_KEY: string
-      DB_CERTIFICATE: string | undefined
+      RESOLVER_URL: string
+      ALLOWED_ORIGINS: string | undefined
+      ENABLE_EXTERNAL_DB: string
+      EXTERNAL_DB_CONNECTION_URL: string
+      EXTERNAL_DB_ENCRYPTION_KEY: string
+      EXTERNAL_DB_CERT: string | undefined
+      ISSUER_DATABASE_CERT: string | undefined
 
       // LogTo
       ENABLE_AUTHENTICATION: string
@@ -33,6 +34,12 @@ declare global {
       POLYGON_RPC_URL: string
       VERIDA_PRIVATE_KEY: string
       POLYGON_PRIVATE_KEY: string
+
+      // Without external db
+      ISSUER_ID_PRIVATE_KEY_HEX: string
+      ISSUER_ID_PUBLIC_KEY_HEX: string
+      FEE_PAYER_MNEMONIC: string
+      ISSUER_DID: string
     }
   }
 }
