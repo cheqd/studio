@@ -5,7 +5,7 @@ dotenv.config()
 
 export class UserInfo {
 
-    public async getUserInfo(request: Request, response: Response, next: NextFunction) {
+    public async getUserInfo(request: Request, response: Response) {
         if (request.user.isAuthenticated) {
             response.header("Content-Type",'application/json')
             response.send(JSON.stringify(request.user, null, 4))
