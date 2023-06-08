@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express'
-import { Request as JWTRequest } from 'express-jwt'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 
 import { CustomerService } from '../services/customer.js'
@@ -34,7 +33,7 @@ export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHea
 
 export class Authentication {
 
-    static handleError(error: Error, jwtRequest: JWTRequest, response: Response, next: NextFunction) {
+    static handleError(error: Error, request: Request, response: Response, next: NextFunction) {
         if (error) {
           return response.status(401).send({
             error: `${error.message}`
