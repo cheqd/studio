@@ -6,13 +6,13 @@ version: '3.8'
 
 services:
   credential-service:
-    # OPTIONAL: Rebuild cheqd did-resolver Docker image, if you want build your own
+    # OPTIONAL: Rebuild cheqd credential-service Docker image, if you want build your own
     # Default is to pull in the pre-published image on GitHub Container Registry
     # SYNTAX: docker compose -f docker/docker-compose.yml build
     # build:
     #   context: ../
     #   dockerfile: docker/Dockerfile
-    # CAUTION: Change IMAGE_VERSION to local in docker-compose.env if building your own image in section below
+    # CAUTION: Change image section's value if building your own image in section below
     image: ghcr.io/cheqd/credential-service:latest
     ports:
       - 8787:8787
