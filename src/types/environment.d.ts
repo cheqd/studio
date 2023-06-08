@@ -17,7 +17,6 @@ declare global {
       EXTERNAL_DB_CONNECTION_URL: string
       EXTERNAL_DB_ENCRYPTION_KEY: string
       EXTERNAL_DB_CERT: string | undefined
-      ISSUER_DATABASE_CERT: string | undefined
 
       // LogTo
       ENABLE_AUTHENTICATION: string
@@ -26,7 +25,6 @@ declare global {
       LOGTO_RESOURCE_URL: string
       LOGTO_APP_ID: string
       LOGTO_APP_SECRET: string
-      ALLOWED_ORIGINS: string | undefined
 
       // Verida
       ENABLE_VERIDA_CONNECTOR: string
