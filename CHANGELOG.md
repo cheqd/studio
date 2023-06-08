@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.17](https://github.com/cheqd/credential-service/compare/2.1.0-develop.16...2.1.0-develop.17) (2023-06-07)
+
+
+### Bug Fixes
+
+* External db toggle panic ([#248](https://github.com/cheqd/credential-service/issues/248)) ([a33cd25](https://github.com/cheqd/credential-service/commit/a33cd25b7aa17972afd83c64937ed571f4bf1e2b))
+
 ## [2.1.0-develop.16](https://github.com/cheqd/credential-service/compare/2.1.0-develop.15...2.1.0-develop.16) (2023-06-06)
 
 

@@ -53,7 +53,8 @@ The application allows configuring the following parameters using environment va
 1. `MAINNET_RPC_URL`: RPC endpoint for cheqd mainnet (Default: `https://rpc.cheqd.net:443`).
 2. `TESTNET_RPC_URL`: RPC endpoint for cheqd testnet (`https://rpc.cheqd.network:443`).
 3. `RESOLVER_URL`: API endpoint for a [DID Resolver](https://github.com/cheqd/did-resolver) endpoint that supports `did:cheqd`.
-4. `ALLOWED_ORIGINS`: CORS allowed origins used in the app.
+4. `APPLICATION_BASE_URL`: URL of the application (external domain name).
+5. `ALLOWED_ORIGINS`: CORS allowed origins used in the app.
 
 #### Veramo KMS Database
 
@@ -76,6 +77,12 @@ We use a self-hosted version of [LogTo](https://logto.io/), which supports OpenI
 
 1. `ENABLE_AUTHENTICATION`: Turns API authentication guards on/off (Default: `false`). If `ENABLE_AUTHENTICATION=false`, then define below environment variable in `.env` file:
     - `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users.
+2. `LOGTO_ENDPOINT`: API endpoint for LogTo server
+3. `LOGTO_RESOURCE_URL`: API resource associated with application
+4. `LOGTO_APP_ID`: Application ID from LogTo. For now, Application is supposed to be a TraditionalWeb
+5. `LOGTO_APP_SECRET`: Application secret. Also should encrypted in deployment
+6. `ALL_SCOPES`: List of all scopes. Should be a string with scopes divided by whitespace, like `account:create account:read did:create`
+7. `COOKIE_SECRET`: Secret for cookie encryption.
 
 ### 3rd Party Connectors
 
