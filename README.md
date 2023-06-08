@@ -99,9 +99,9 @@ docker pull postgres
 docker run --name some-postgres -e POSTGRES_PASSWORD=mysecretpassword -d postgres
 ```
 
-Construct the postgres url and configure the env variables mentioned above
+Construct the postgres URL and configure the env variables mentioned above.
 
-Once configured, the app can be install dependencies and build using NPM:
+Once configured, install dependencies and the app can be build using NPM:
 
 ```bash
 npm install
@@ -124,7 +124,7 @@ npm start
 
 ### Running your own credential-service using Docker
 
-Construct the postgres url and configure the env variables mentioned above.
+Construct the postgres URL and configure the env variables mentioned above.
 
 Spinning up a Docker container from the [pre-built credential-service Docker image on Github](https://github.com/cheqd/credential-service/pkgs/container/credential-service) is as simple as the command below:
 
