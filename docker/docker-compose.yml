@@ -12,7 +12,6 @@ services:
     # build:
     #   context: ../
     #   dockerfile: docker/Dockerfile
-    #   target: resolver
     # CAUTION: Change IMAGE_VERSION to local in docker-compose.env if building your own image in section below
     image: ghcr.io/cheqd/credential-service:latest
     ports:
