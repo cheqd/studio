@@ -128,9 +128,17 @@ Construct the postgres URL and configure the env variables mentioned above.
 
 Spinning up a Docker container from the [pre-built credential-service Docker image on Github](https://github.com/cheqd/credential-service/pkgs/container/credential-service) is as simple as the command below:
 
-```bash
-docker compose -f docker/docker-compose.yml up --detach
-```
+- Running credential-service using Docker with external database:
+
+    ```bash
+    docker compose -f docker/docker-compose.yml up --detach
+  ```
+
+- Running credential-service using Docker without external database (In memory database):
+
+    ```bash
+    docker compose -f docker/docker-compose.yml up credential-service --detach
+    ```
 
 ### Build using Docker
 
