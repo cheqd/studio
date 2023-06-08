@@ -59,7 +59,7 @@ The application allows configuring the following parameters using environment va
 
 The application supports two modes in which keys are managed: either just storing them in-memory while a container is running, or persisting them in a PostgresSQL database with Veramo SDK. Using an external Postgres database allows for "custodian" mode where identity and cheqd/Cosmos keys can be offloaded by client applications to be stored in the database.
 
-1. `ENABLE_EXTERNAL_DB`: Turns external database on/off (Default: `false`). If `ENABLE_EXTERNAL_DB=true`, then define below environment variables in your `.env` file:
+1. `ENABLE_EXTERNAL_DB`: Turns external database on/off (Default: `false`). If `ENABLE_EXTERNAL_DB=true`, then define below environment variables in `.env` file:
     - `DB_CONNECTION_URL`: Postgres database connection URL, e.g. `postgres://<user>:<password>@<host>:<port>/<database>`.
     - `DB_ENCRYPTION_KEY`: Secret key used to encrypt the Veramo key-specific database tables. This adds a layer of protection by not storing the database in plaintext.
     - `DB_CERTIFICATE`: Custom CA certificate required to connect to the database (optional).
@@ -74,7 +74,7 @@ By default, the application has API authentication disabled (which can be change
 
 We use a self-hosted version of [LogTo](https://logto.io/), which supports OpenID Connect. Theoretically, these values could also be replaced with [LogTo Cloud](http://cloud.logto.io/) or any other OpenID Connect identity provider.
 
-1. `ENABLE_AUTHENTICATION`: Turns API authentication guards on/off (Default: `false`). If `ENABLE_AUTHENTICATION=false`, then define below environment variable in your `.env` file:
+1. `ENABLE_AUTHENTICATION`: Turns API authentication guards on/off (Default: `false`). If `ENABLE_AUTHENTICATION=false`, then define below environment variable in `.env` file:
     - `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users.
 
 ### 3rd Party Connectors
@@ -85,10 +85,10 @@ The app supports 3rd party connectors for credential storage and delivery.
 
 The app's [Verida Network](https://www.verida.network/) connector can be enabled to deliver generated credentials to Verida Wallet.
 
-1. `ENABLE_VERIDA_CONNECTOR`: Turns Verida connector on/off (Default: `false`). If `ENABLE_VERIDA_CONNECTOR=true`, then define below environment variables in your `.env` file:
-    1. `VERIDA_NETWORK`: Verida Network type to connect to. (Default: `testnet`)
-    2. `VERIDA_PRIVATE_KEY`: Secret key for Verida Network API.
-    3. `POLYGON_PRIVATE_KEY`: Secret key for Polygon Network.
+1. `ENABLE_VERIDA_CONNECTOR`: Turns Verida connector on/off (Default: `false`). If `ENABLE_VERIDA_CONNECTOR=true`, then define below environment variables in `.env` file:
+    - `VERIDA_NETWORK`: Verida Network type to connect to. (Default: `testnet`)
+    - `VERIDA_PRIVATE_KEY`: Secret key for Verida Network API.
+    - `POLYGON_PRIVATE_KEY`: Secret key for Polygon Network.
 
 ### Run the application
 
@@ -153,4 +153,3 @@ Please reach out to us there for discussions, help, and feedback on the project.
 ## 🙋 Find us elsewhere
 
 [![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge\&logo=telegram\&logoColor=white)](https://t.me/cheqd) [![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge\&logo=discord\&logoColor=white)](http://cheqd.link/discord-github) [![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge\&logo=twitter\&logoColor=white)](https://twitter.com/intent/follow?screen\_name=cheqd\_io) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge\&logo=linkedin\&logoColor=white)](http://cheqd.link/linkedin) [![Slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge\&logo=slack\&logoColor=white)](http://cheqd.link/join-cheqd-slack) [![Medium](https://img.shields.io/badge/Medium-12100E?style=for-the-badge\&logo=medium\&logoColor=white)](https://blog.cheqd.io) [![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge\&logo=youtube\&logoColor=white)](https://www.youtube.com/channel/UCBUGvvH6t3BAYo5u41hJPzw/)
-
