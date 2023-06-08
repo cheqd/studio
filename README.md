@@ -50,17 +50,23 @@ The application allows configuring the following parameters using environment va
 
 #### Network API endpoints
 
-1. `MAINNET_RPC_URL`: RPC endpoint for cheqd mainnet. (Default: `https://rpc.cheqd.net:443`)
-2. `TESTNET_RPC_URL`: RPC endpoint for cheqd testnet. (`https://rpc.cheqd.network:443`)
+1. `MAINNET_RPC_URL`: RPC endpoint for cheqd mainnet (Default: `https://rpc.cheqd.net:443`).
+2. `TESTNET_RPC_URL`: RPC endpoint for cheqd testnet (`https://rpc.cheqd.network:443`).
 3. `RESOLVER_URL`: API endpoint for a [DID Resolver](https://github.com/cheqd/did-resolver) endpoint that supports `did:cheqd`.
+4. `ALLOWED_ORIGINS`: CORS allowed origins used in the app.
 
 #### Veramo KMS Database
 
 The application supports two modes in which keys are managed: either just storing them in-memory while a container is running, or persisting them in a PostgresSQL database with Veramo SDK. Using an external Postgres database allows for "custodian" mode where identity and cheqd/Cosmos keys can be offloaded by client applications to be stored in the database.
 
-1. `DB_CONNECTION_URL`: Postgres database connection URL, e.g. `postgres://<user>:<password>@<host>:<port>/<database>`
-2. `DB_ENCRYPTION_KEY`: Secret key used to encrypt the Veramo key-specific database tables. This adds a layer of protection by not storing the database in plaintext.
-3. `DB_CERTIFICATE`: Custom CA certificate required to connect to the database (optional).
+1. `ENABLE_EXTERNAL_DB`: Turns external database on/off (Default: `false`). If `ENABLE_EXTERNAL_DB=true`, then define below environment variables in your `.env` file:
+    - `DB_CONNECTION_URL`: Postgres database connection URL, e.g. `postgres://<user>:<password>@<host>:<port>/<database>`.
+    - `DB_ENCRYPTION_KEY`: Secret key used to encrypt the Veramo key-specific database tables. This adds a layer of protection by not storing the database in plaintext.
+    - `DB_CERTIFICATE`: Custom CA certificate required to connect to the database (optional).
+    - `POSTGRES_USER`: Postgres database username using in database connection URL.
+    - `POSTGRES_PASSWORD`: Postgres database password using in database connection URL.
+    - `POSTGRES_DB`: Postgres database name using in database connection URL.
+    > **Note:** `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` environment variables need only for [running your own credential-service using Docker](#running-your-own-credential-service-using-docker).
 
 #### API Authentication using LogTo
 
@@ -68,10 +74,8 @@ By default, the application has API authentication disabled (which can be change
 
 We use a self-hosted version of [LogTo](https://logto.io/), which supports OpenID Connect. Theoretically, these values could also be replaced with [LogTo Cloud](http://cloud.logto.io/) or any other OpenID Connect identity provider.
 
-1. `ENABLE_AUTHENTICATION`: Turns API authentication guards on/off. (Default: `false`)
-2. `LOGTO_ENDPOINT`: API endpoint for LogTo server
-3. `ALLOWED_ORIGINS`: CORS allowed origins used in the app
-4. `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users.
+1. `ENABLE_AUTHENTICATION`: Turns API authentication guards on/off (Default: `false`). If `ENABLE_AUTHENTICATION=false`, then define below environment variable in your `.env` file:
+    - `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users.
 
 ### 3rd Party Connectors
 
@@ -81,11 +85,10 @@ The app supports 3rd party connectors for credential storage and delivery.
 
 The app's [Verida Network](https://www.verida.network/) connector can be enabled to deliver generated credentials to Verida Wallet.
 
-1. `ENABLE_VERIDA_CONNECTOR`: Turns Verida connector on/off. (Default: `false`)
-2. `VERIDA_NETWORK`: Verida Network type to connect to. (Default: `testnet`)
-3. `VERIDA_PRIVATE_KEY`: Secret key for Verida Network API.
-4. `POLYGON_RPC_URL`: Polygon Network RPC URL for connections.
-5. `POLYGON_PRIVATE_KEY`: Secret key for Polygon Network.
+1. `ENABLE_VERIDA_CONNECTOR`: Turns Verida connector on/off (Default: `false`). If `ENABLE_VERIDA_CONNECTOR=true`, then define below environment variables in your `.env` file:
+    1. `VERIDA_NETWORK`: Verida Network type to connect to. (Default: `testnet`)
+    2. `VERIDA_PRIVATE_KEY`: Secret key for Verida Network API.
+    3. `POLYGON_PRIVATE_KEY`: Secret key for Polygon Network.
 
 ### Run the application
 
@@ -98,7 +101,20 @@ docker run --name some-postgres -e POSTGRES_PASSWORD=mysecretpassword -d postgre
 
 Construct the postgres url and configure the env variables mentioned above
 
-Once configured, the app can be run using NPM:
+Once configured, the app can be install dependencies and build using NPM:
+
+```bash
+npm install
+npm run build
+```
+
+Run migration using NPM:
+
+```bash
+npm run migration
+```
+
+The app can be run using NPM:
 
 ```bash
 npm start
@@ -106,21 +122,22 @@ npm start
 
 ## 🧑‍💻🛠 Developer Guide
 
-### Build using NPM
+### Running your own credential-service using Docker
 
-Dependencies can be installed using NPM or any other node package manager.
+Construct the postgres url and configure the env variables mentioned above.
+
+Spinning up a Docker container from the [pre-built credential-service Docker image on Github](https://github.com/cheqd/credential-service/pkgs/container/credential-service) is as simple as the command below:
 
 ```bash
-npm install
-npm run build
+docker compose -f docker/docker-compose.yml up --detach
 ```
 
 ### Build using Docker
 
-To build and run in Docker, use the [Dockerfile](Dockerfile) provided.
+To build and run in Docker, use the [Dockerfile](docker/Dockerfile) provided.
 
 ```bash
-docker build -t credential-service .
+docker build --file docker/Dockerfile --tag credential-service .
 ```
 
 ## 🐞 Bug reports & 🤔 feature requests
