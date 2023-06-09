@@ -18,17 +18,12 @@ services:
       - 8787:8787
     env_file:
       - .env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     entrypoint: "npm run compose-run"
 
   database:
     image: postgres
+    user: postgres
     ports:
       - 5432:5432
     env_file:
       - .env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-      
-    
