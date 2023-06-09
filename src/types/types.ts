@@ -115,6 +115,7 @@ class MethodToScope {
 export class ApiGuarding {
   private routeToScoupe: MethodToScope[] = []
   private static pathSkip = ['/', '/swagger', '/user']
+  private static regExpSkip = new RegExp("^/.*js")
   constructor() {
     this.registerRoute('/account', 'GET', 'account:read')
     this.registerRoute('/account', 'POST', 'account:create')
@@ -165,7 +166,7 @@ export class ApiGuarding {
   }
 
   public skipPath(path: string): boolean {
-    return ApiGuarding.pathSkip.includes(path)
+    return ApiGuarding.pathSkip.includes(path) || path.match(ApiGuarding.regExpSkip) !== null
   }
 }
 
