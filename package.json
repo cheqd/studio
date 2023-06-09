@@ -21,7 +21,7 @@
 		}
 	},
 	"scripts": {
-		"copy-files": "copyfiles -u 1 src/static/**/*.js dist/src/static ",
+		"copy-files": "copyfiles -u 1 src/static/**/*.js dist/src",
 		"postbuild": "npm run copy-files",
 		"build": "tsc",
 		"start": "node dist/src/index.js",
