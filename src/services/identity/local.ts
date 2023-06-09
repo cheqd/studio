@@ -1,25 +1,17 @@
 import {
   IIdentifier,
   ManagedKeyInfo,
-  TAgent,
-  createAgent,
   CredentialPayload,
   VerifiableCredential,
   IVerifyResult,
   VerifiablePresentation,
 } from '@veramo/core'
-import { DIDManager } from '@veramo/did-manager'
-import { DIDResolverPlugin } from '@veramo/did-resolver'
-import { AbstractPrivateKeyStore, KeyManager, MemoryPrivateKeyStore } from '@veramo/key-manager'
+import { AbstractPrivateKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager'
 import { KeyManagementSystem } from '@veramo/kms-local'
-import { KeyStore, DIDStore } from '@veramo/data-store'
-import { Cheqd, CheqdDIDProvider, getResolver as CheqdDidResolver, ResourcePayload } from '@cheqd/did-provider-cheqd'
+import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
-import { Resolver, ResolverRegistry } from 'did-resolver'
-import { CredentialPlugin } from '@veramo/credential-w3c'
-import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 
-import { CredentialRequest, DefaultRPCUrl, VeramoAgent } from '../../types/types.js'
+import { CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, VeramoAgent, VerifyStatusOptions } from '../../types/types.js'
 import { Connection } from '../../database/connection/connection.js'
 import { IIdentity } from './IIdentity.js'
 import { Veramo } from './agent.js'
@@ -31,7 +23,6 @@ dotenv.config()
 const {
   MAINNET_RPC_URL,
   TESTNET_RPC_URL,
-  RESOLVER_URL,
   FEE_PAYER_MNEMONIC,
   ISSUER_ID_PUBLIC_KEY_HEX,
   ISSUER_ID_PRIVATE_KEY_HEX,
@@ -130,20 +121,28 @@ export class LocalIdentity implements IIdentity {
     }    
   }
 
-  async createCredential(credential: CredentialPayload, format: CredentialRequest['format']): Promise<VerifiableCredential> {
+  async createCredential(credential: CredentialPayload, format: CredentialRequest['format'], statusListOptions: StatusOptions | null): Promise<VerifiableCredential> {
     try {
         await this.importDid()
-        return await Veramo.instance.createCredential(this.initAgent(), credential, format)
+        return await Veramo.instance.createCredential(this.initAgent(), credential, format, statusListOptions)
     } catch (error) {
         throw new Error(`${error}`)
     }          
   }
 
-  async verifyCredential(credential: VerifiableCredential | string): Promise<IVerifyResult> {
-    return await Veramo.instance.verifyCredential(this.initAgent(), credential)
+  async verifyCredential(credential: VerifiableCredential | string,  statusOptions: VerifyStatusOptions | null): Promise<IVerifyResult> {
+    return await Veramo.instance.verifyCredential(this.initAgent(), credential, statusOptions)
   }
 
   async verifyPresentation(presentation: VerifiablePresentation | string): Promise<IVerifyResult> {
     return await Veramo.instance.verifyPresentation(this.initAgent(), presentation)
+  }
+
+  async createStatusList2021(did: string, network: string, resourceOptions: ResourcePayload,  statusListOptions: CreateStatusListOptions): Promise<boolean> {
+    return await Veramo.instance.createStatusList2021(this.initAgent(), did, network, resourceOptions, statusListOptions)
+  }
+
+  async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], agentId: string) {
+    return await Veramo.instance.revokeCredentials(this.initAgent(), credentials)
   }
 }

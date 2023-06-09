@@ -10,11 +10,11 @@ import { CustomerController } from './controllers/customer.js'
 import { Authentication } from './middleware/authentication.js'
 import { Connection } from './database/connection/connection.js'
 import { CORS_ERROR_MSG } from './types/constants.js'
+import { RevocationController } from './controllers/revocation.js'
 
 import swaggerJSONDoc from '../swagger.json' assert { type: "json" }
 
 import * as dotenv from 'dotenv'
-import { Identity } from './services/identity/index.js'
 dotenv.config()
 
 class App {
@@ -61,6 +61,10 @@ class App {
     // credentials
     app.post(`/credential/issue`, CredentialController.issueValidator, new CredentialController().issue)
     app.post(`/credential/verify`, CredentialController.verifyValidator, new CredentialController().verify)
+    app.post(`/credential/revoke`, new CredentialController().revoke)
+
+    //revocation
+    app.post('/revocation/statusList2021/create', RevocationController.statusListValidator, new RevocationController().createStatusList)
 
     // store
     app.post(`/store`, new StoreController().set)

@@ -3,6 +3,7 @@ import {
   CredentialPayload,
   DIDDocument,
   IAgentPlugin,
+  ICreateVerifiableCredentialArgs,
   IDIDManager,
   IIdentifier,
   IKeyManager,
@@ -15,19 +16,36 @@ import {
   VerifiableCredential,
   VerifiablePresentation,
 } from '@veramo/core'
-
-import { Cheqd, getResolver as CheqdDidResolver, ResourcePayload } from '@cheqd/did-provider-cheqd'
-import { CheqdNetwork } from '@cheqd/sdk'
-
-import { cheqdDidRegex, CreateAgentRequest, CredentialRequest, VeramoAgent } from '../../types/types.js'
-import { VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js'
 import { KeyManager } from '@veramo/key-manager'
 import { DIDStore, KeyStore } from '@veramo/data-store'
 import { DIDManager } from '@veramo/did-manager'
 import { DIDResolverPlugin } from '@veramo/did-resolver'
-import { Resolver, ResolverRegistry } from 'did-resolver'
 import { CredentialPlugin } from '@veramo/credential-w3c'
 import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
+import { Cheqd, getResolver as CheqdDidResolver, ResourcePayload } from '@cheqd/did-provider-cheqd'
+import { CheqdNetwork } from '@cheqd/sdk'
+import { Resolver, ResolverRegistry } from 'did-resolver'
+import { fromString } from 'uint8arrays'
+import {
+  ICheqdCreateStatusList2021Args,
+  ICheqdGenerateStatusList2021Args,
+  ICheqdVerifyCredentialWithStatusList2021Args,
+  VerificationResult
+} from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
+import { v4 } from 'uuid'
+
+import {
+  cheqdDidRegex,
+  CreateAgentRequest,
+  CreateStatusListOptions,
+  CredentialRequest,
+  RevocationStatusOptions,
+  StatusOptions,
+  SuspensionStatusOptions,
+  VeramoAgent,
+  VerifyStatusOptions
+} from '../../types/types.js'
+import { VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js'
 
 export class Veramo {
 
@@ -148,27 +166,76 @@ export class Veramo {
     }    
   }
 
-  async createCredential(agent: VeramoAgent, credential: CredentialPayload, format: CredentialRequest['format']): Promise<VerifiableCredential> {
+  async createCredential(agent: VeramoAgent, credential: CredentialPayload, format: CredentialRequest['format'], statusListOptions: StatusOptions | null): Promise<VerifiableCredential> {
+    const issuanceOptions : ICreateVerifiableCredentialArgs = {
+        save: false,
+        credential,
+        proofFormat: format == 'jsonld' ? 'lds' : VC_PROOF_FORMAT,
+        removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS
+    }
     try {
-        const verifiable_credential = await agent.createVerifiableCredential(
-            {
-                save: false,
-                credential,
-                proofFormat: format == 'jsonld' ? 'lds' : VC_PROOF_FORMAT,
-                removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS
-            }
-        )
+        let verifiable_credential: VerifiableCredential
+        if (statusListOptions) {
+            verifiable_credential = statusListOptions.statusPurpose == 'revocation' ? 
+            await agent.cheqdIssueRevocableCredentialWithStatusList2021({
+                issuanceOptions,
+                statusOptions: statusListOptions as RevocationStatusOptions
+            })
+            :
+            await agent.cheqdIssueSuspendableCredentialWithStatusList2021({
+                issuanceOptions,
+                statusOptions: statusListOptions as SuspensionStatusOptions
+            })
+        } else {
+            verifiable_credential = await agent.createVerifiableCredential(issuanceOptions)
+        }
         return verifiable_credential
     } catch (error) {
         throw new Error(`${error}`)
     }          
   }
 
-  async verifyCredential(agent: VeramoAgent, credential: string | VerifiableCredential): Promise<IVerifyResult> {
+  async verifyCredential(agent: VeramoAgent, credential: string | VerifiableCredential, statusOptions: VerifyStatusOptions | null): Promise<IVerifyResult> {
+    if(statusOptions) {
+        return typeof credential === 'string' ? 
+        {verified: false, error: 'Provide a complete credential to verify status'} as VerificationResult
+        :
+        await agent.cheqdVerifyCredential({
+            credential: credential as VerifiableCredential,
+            ...statusOptions
+        } as ICheqdVerifyCredentialWithStatusList2021Args)
+    }
     return await agent.verifyCredential({ credential, fetchRemoteContexts: true })
   }
 
   async verifyPresentation(agent: VeramoAgent, presentation: VerifiablePresentation | string): Promise<IVerifyResult> {
     return await agent.verifyPresentation({ presentation, fetchRemoteContexts: true })
   }
+
+  async createStatusList2021(agent: VeramoAgent, did: string, network: string, resourceOptions: ResourcePayload, statusOptions: CreateStatusListOptions) {
+    const statusList = await agent.cheqdGenerateStatusList2021({
+      buffer: resourceOptions.data,
+      length: statusOptions.length,
+      bitstringEncoding: 'base64'
+    } as ICheqdGenerateStatusList2021Args)
+    console.log(statusList)
+    const [kms] = await agent.keyManagerGetKeyManagementSystems()
+
+    return await agent.cheqdCreateStatusList2021({
+      kms,
+      payload: {
+         collectionId: did.split(':')[3],
+         data: fromString(statusList, 'base64'),
+         resourceType: 'StatusList2021',
+         name: resourceOptions.name,
+         id: v4(),
+      },
+      network: network as CheqdNetwork
+   } as ICheqdCreateStatusList2021Args)
+ }
+
+ async revokeCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[]) {
+    if (Array.isArray(credentials)) return await agent.cheqdRevokeCredentials({ credentials, fetchList: true, publish: true })
+    return await agent.cheqdRevokeCredential({ credential: credentials, fetchList: true, publish: true })
+}
 }

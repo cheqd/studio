@@ -494,6 +494,76 @@
                 }
             }
         },
+        "/credential/revoke": {
+            "post": {
+                "tags": [
+                    "Credential"
+                ],
+                "summary": "Revoke a credential",
+                "description": "<p>This endpoint verifies the credential. As input it takes the entire credential itself or just the JWT string</p>",
+                "operationId": "revoke",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "credential": {
+                                        "type": "string",
+                                        "example": "<Place the credential object here>"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RevocationResult"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/account": {
             "post": {
                 "tags": [
@@ -630,6 +700,113 @@
                 "responses": {
                     "200": {
                         "description": "The resource is created successfully"
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/revocation/statusList2021/create": {
+            "post": {
+                "tags": [
+                    "Revocation"
+                ],
+                "summary": "Create statuslist 2021",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "did",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/CreateResourceRequest"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "length": {
+                                                "type": "number"
+                                            }
+                                        }
+                                    }
+                                ],
+                                "example": {
+                                    "length": 20,
+                                    "name": "cheqd-employee-credentials",
+                                    "version": "2023"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "StatusList is created successfully"
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1102,10 +1279,6 @@
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
-                    "jobId": {
-                        "description": "This input field is used to keep track of an ongoing DID deactivation process. See <a href=\"https://identity.foundation/did-registration/#jobid\">https://identity.foundation/did-registration/#jobid</a>.",
-                        "type": "string"
-                    },
                     "data": {
                         "type": "string"
                     },
@@ -1137,6 +1310,13 @@
                     "data": "SGVsbG8gV29ybGQ=",
                     "name": "ResourceName",
                     "type": "TextDocument"
+                }
+            },
+            "RevocationResult": {
+                "properties": {
+                    "revoked": {
+                        "type": "boolean"
+                    }
                 }
             }
         }

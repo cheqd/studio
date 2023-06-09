@@ -10,34 +10,26 @@ import {
   TAgent,
   VerifiableCredential,
   VerifiablePresentation,
-  createAgent,
 } from '@veramo/core'
-import { CredentialPlugin } from '@veramo/credential-w3c'
-import { DIDManager } from '@veramo/did-manager'
-import { DIDResolverPlugin } from '@veramo/did-resolver'
-import { AbstractPrivateKeyStore, KeyManager } from '@veramo/key-manager'
+import { AbstractPrivateKeyStore } from '@veramo/key-manager'
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
-import { KeyStore, DIDStore, PrivateKeyStore } from '@veramo/data-store'
-import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
-import { CheqdDIDProvider, getResolver as CheqdDidResolver, ResourcePayload, Cheqd } from '@cheqd/did-provider-cheqd'
+import { PrivateKeyStore } from '@veramo/data-store'
+import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
-import { Resolver, ResolverRegistry } from 'did-resolver'
-
-import { cheqdDidRegex, CredentialRequest, DefaultRPCUrl, VeramoAgent } from '../../types/types.js'
+import { cheqdDidRegex, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, VeramoAgent, VerifyStatusOptions } from '../../types/types.js'
 import { Connection } from '../../database/connection/connection.js'
 import { CustomerEntity } from '../../database/entities/customer.entity.js'
-import { CustomerService } from '../customer.js'
-
+import { RevocationResult } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
 import { IIdentity } from './IIdentity.js'
+import { CustomerService } from '../customer.js'
+import { Veramo } from './agent.js'
 
 import * as dotenv from 'dotenv'
-import { Veramo } from './agent.js'
 dotenv.config()
 
 const {
   MAINNET_RPC_URL,
   TESTNET_RPC_URL,
-  RESOLVER_URL,
   EXTERNAL_DB_ENCRYPTION_KEY,
 } = process.env
 
@@ -58,7 +50,7 @@ export class PostgresIdentity implements IIdentity {
     this.agent = Veramo.instance.createVeramoAgent({
         dbConnection,
         kms: {
-          local: new KeyManagementSystem(
+          postgres: new KeyManagementSystem(
             this.privateStore
           )
         },
@@ -98,7 +90,7 @@ export class PostgresIdentity implements IIdentity {
     return Veramo.instance.createVeramoAgent({
         dbConnection,
         kms: {
-          local: new KeyManagementSystem(
+          postgres: new KeyManagementSystem(
             this.privateStore
           )
         },
@@ -175,26 +167,36 @@ export class PostgresIdentity implements IIdentity {
     }    
   }
 
-  async createCredential(credential: CredentialPayload, format: CredentialRequest['format'], agentId: string): Promise<VerifiableCredential> {
+  async createCredential(credential: CredentialPayload, format: CredentialRequest['format'], statusListOptions: StatusOptions | null, agentId: string): Promise<VerifiableCredential> {
     try {
         const did = typeof(credential.issuer) == 'string' ? credential.issuer : credential.issuer.id
         if (!await CustomerService.instance.find(agentId, {did})) {
           throw new Error('Customer not found')
         }
         const agent = await this.createAgent(agentId)
-        return await Veramo.instance.createCredential(agent, credential, format)
+        return await Veramo.instance.createCredential(agent, credential, format, statusListOptions)
     } catch (error) {
         throw new Error(`${error}`)
     }          
   }
 
-  async verifyCredential(credential: string | VerifiableCredential, agentId: string): Promise<IVerifyResult> {
+  async verifyCredential(credential: string | VerifiableCredential, statusOptions: VerifyStatusOptions | null, agentId: string): Promise<IVerifyResult> {
     const agent = await this.createAgent(agentId)
-    return await Veramo.instance.verifyCredential(agent, credential)
+    return await Veramo.instance.verifyCredential(agent, credential, statusOptions)
   }
 
   async verifyPresentation(presentation: VerifiablePresentation | string, agentId: string): Promise<IVerifyResult> {
     const agent = await this.createAgent(agentId)
     return await Veramo.instance.verifyPresentation(agent, presentation)
+  }
+
+  async createStatusList2021(did: string, network: string, resourceOptions: ResourcePayload,  statusListOptions: CreateStatusListOptions, agentId: string): Promise<boolean> {
+    const agent = await this.createAgent(agentId)
+    return await Veramo.instance.createStatusList2021(agent, did, network, resourceOptions, statusListOptions)
+  }
+
+  async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], agentId: string) {
+    const agent = await this.createAgent(agentId)
+    return await Veramo.instance.revokeCredentials(agent, credentials)
   }
 }

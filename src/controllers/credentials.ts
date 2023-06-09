@@ -4,7 +4,7 @@ import type { VerifiableCredential } from '@veramo/core'
 import { check, validationResult } from 'express-validator'
 
 import { Credentials } from '../services/credentials.js'
-import { CustomerService } from '../services/customer.js'
+import { Identity } from '../services/identity/index.js'
 
 export class CredentialController {
 
@@ -43,15 +43,30 @@ export class CredentialController {
 
   public async verify(request: Request, response: Response) {
     if (request?.headers && (!request.headers['content-type'] || request.headers['content-type'] != 'application/json')) {
-      return response.status(405).json({ error: 'Unsupported media type.' })
+        return response.status(405).json({ error: 'Unsupported media type.' })
     }
 
     const result = validationResult(request)
     if (!result.isEmpty()) {
-      return response.status(400).json({ error: result.array()[0].msg })
+        return response.status(400).json({ error: result.array()[0].msg })
     }
     try {
-		return response.status(200).json(await Credentials.instance.verify_credentials(request.body.credential, response.locals.customerId))
+		return response.status(200).json(await Credentials.instance.verify_credentials(request.body.credential, request.body.statusOptions, response.locals.customerId))
+    } catch (error) {
+        return response.status(500).json({
+            error: `${error}`
+        })
+    }
+  }
+
+  public async revoke(request: Request, response: Response) {
+    const result = validationResult(request)
+    if (!result.isEmpty()) {
+        return response.status(400).json({ error: result.array()[0].msg })
+    }
+
+    try {
+		return response.status(200).json(await Identity.instance.revokeCredentials(request.body.credential, response.locals.customerId))
     } catch (error) {
         return response.status(500).json({
             error: `${error}`
