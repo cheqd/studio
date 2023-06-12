@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.1.0-develop.20](https://github.com/cheqd/credential-service/compare/2.1.0-develop.19...2.1.0-develop.20) (2023-06-09)
+
+
+### Bug Fixes
+
+* Fix static files copying ([#254](https://github.com/cheqd/credential-service/issues/254)) ([1ea85d3](https://github.com/cheqd/credential-service/commit/1ea85d3f1d1cb290a8304269da1ba8a6219572e9))
+
+## [2.1.0-develop.19](https://github.com/cheqd/credential-service/compare/2.1.0-develop.18...2.1.0-develop.19) (2023-06-09)
+
+
+### Bug Fixes
+
+* Copy static files to the dist while building ([#253](https://github.com/cheqd/credential-service/issues/253)) ([4f076c0](https://github.com/cheqd/credential-service/commit/4f076c0f62bd8ee6e32f1e97bf6c8b724ff3393f))
+
+## [2.1.0-develop.18](https://github.com/cheqd/credential-service/compare/2.1.0-develop.17...2.1.0-develop.18) (2023-06-08)
+
+
+### Features
+
+* Add API guarding [DEV-2621] ([#249](https://github.com/cheqd/credential-service/issues/249)) ([3706b4c](https://github.com/cheqd/credential-service/commit/3706b4c63006be4282cfeed530c2d15f44da4164)), closes [#2](https://github.com/cheqd/credential-service/issues/2)
+
 ## [2.1.0-develop.17](https://github.com/cheqd/credential-service/compare/2.1.0-develop.16...2.1.0-develop.17) (2023-06-07)
 
 
