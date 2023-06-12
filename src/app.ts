@@ -60,12 +60,12 @@ class App {
 
     // credentials
     app.post(`/credential/issue`, CredentialController.issueValidator, new CredentialController().issue)
-    app.post(`/credential/verify`, CredentialController.verifyValidator, new CredentialController().verify)
-    app.post(`/credential/revoke`, new CredentialController().revoke)
+    app.post(`/credential/verify`, CredentialController.credentialValidator, new CredentialController().verify)
+    app.post(`/credential/revoke`, CredentialController.credentialValidator, new CredentialController().revoke)
 
     //revocation
-    app.post('/revocation/statusList2021/create', RevocationController.statusListValidator, new RevocationController().createStatusList)
-
+    app.post('/revocation/statusList2021/create', RevocationController.didValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
+    app.get('/revocation/statusList2021/list', RevocationController.didValidator, new RevocationController().fetchStatusList)
     // store
     app.post(`/store`, new StoreController().set)
     app.get(`/store/:id`, new StoreController().get)

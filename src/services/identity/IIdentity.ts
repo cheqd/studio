@@ -35,5 +35,5 @@ export interface IIdentity {
   verifyCredential(credential: VerifiableCredential | string, statusOptions: VerifyStatusOptions | null, agentId?: string): Promise<IVerifyResult>
   verifyPresentation(presentation: VerifiablePresentation | string, agentId?: string): Promise<IVerifyResult>
   createStatusList2021(did: string, network: string, resourceOptions: ResourcePayload, statusOptions: CreateStatusListOptions, agentId: string): Promise<boolean>
-  revokeCredentials(credential: VerifiableCredential | VerifiableCredential[], agentId?: string): Promise<RevocationResult| RevocationResult[]>
+  revokeCredentials(credential: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId?: string): Promise<RevocationResult| RevocationResult[]>
 }

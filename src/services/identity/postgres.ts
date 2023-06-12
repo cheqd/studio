@@ -195,8 +195,8 @@ export class PostgresIdentity implements IIdentity {
     return await Veramo.instance.createStatusList2021(agent, did, network, resourceOptions, statusListOptions)
   }
 
-  async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], agentId: string) {
+  async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId: string) {
     const agent = await this.createAgent(agentId)
-    return await Veramo.instance.revokeCredentials(agent, credentials)
+    return await Veramo.instance.revokeCredentials(agent, credentials, publish)
   }
 }

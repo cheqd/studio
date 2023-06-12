@@ -47,6 +47,8 @@ import {
 } from '../../types/types.js'
 import { VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js'
 
+const resolverUrl = "https://resolver.cheqd.net/1.0/identifiers/"
+
 export class Veramo {
 
   static instance = new Veramo()
@@ -216,16 +218,16 @@ export class Veramo {
     const statusList = await agent.cheqdGenerateStatusList2021({
       buffer: resourceOptions.data,
       length: statusOptions.length,
-      bitstringEncoding: 'base64'
+      bitstringEncoding: statusOptions.encoding
     } as ICheqdGenerateStatusList2021Args)
-    console.log(statusList)
+
     const [kms] = await agent.keyManagerGetKeyManagementSystems()
 
     return await agent.cheqdCreateStatusList2021({
       kms,
       payload: {
          collectionId: did.split(':')[3],
-         data: fromString(statusList, 'base64'),
+         data: fromString(statusList, statusOptions.encoding || 'base64url'),
          resourceType: 'StatusList2021',
          name: resourceOptions.name,
          id: v4(),
@@ -234,8 +236,16 @@ export class Veramo {
    } as ICheqdCreateStatusList2021Args)
  }
 
- async revokeCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[]) {
+ async revokeCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish: boolean=true) {
     if (Array.isArray(credentials)) return await agent.cheqdRevokeCredentials({ credentials, fetchList: true, publish: true })
-    return await agent.cheqdRevokeCredential({ credential: credentials, fetchList: true, publish: true })
-}
+    return await agent.cheqdRevokeCredential({ credential: credentials, fetchList: true, publish })
+ }
+
+ async resolve(didUrl: string) {
+    const result = await fetch(process.env.RESOLVER_URL || resolverUrl + didUrl, {
+        headers: { 'Content-Type': 'application/did+ld+json' },
+    })
+    const ddo = (await result.json())
+    return ddo
+ }
 }

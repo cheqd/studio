@@ -515,6 +515,10 @@
                                     "credential": {
                                         "type": "string",
                                         "example": "<Place the credential object here>"
+                                    },
+                                    "publish": {
+                                        "type": "boolean",
+                                        "example": true
                                     }
                                 }
                             }
@@ -778,6 +782,58 @@
                 "responses": {
                     "200": {
                         "description": "StatusList is created successfully"
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/revocation/statusList2021/list": {
+            "get": {
+                "tags": [
+                    "Revocation"
+                ],
+                "summary": "List published statuslist 2021",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "did",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "StatusList is fetched successfully"
                     },
                     "400": {
                         "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",

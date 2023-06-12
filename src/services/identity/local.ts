@@ -142,7 +142,7 @@ export class LocalIdentity implements IIdentity {
     return await Veramo.instance.createStatusList2021(this.initAgent(), did, network, resourceOptions, statusListOptions)
   }
 
-  async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], agentId: string) {
-    return await Veramo.instance.revokeCredentials(this.initAgent(), credentials)
+  async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId: string) {
+    return await Veramo.instance.revokeCredentials(this.initAgent(), credentials, publish)
   }
 }

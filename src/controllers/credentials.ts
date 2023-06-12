@@ -22,8 +22,16 @@ export class CredentialController {
     check('format').optional().isString().withMessage('Invalid credential format')
   ]
 
-  public static verifyValidator = [
+  public static credentialValidator = [
     check('credential').exists().withMessage('W3c verifiable credential was not provided')
+    .custom((value) => {
+        if (typeof value === 'string' || typeof value === 'object') {
+          return true
+        }
+        return false
+      })
+    .withMessage('Entry must be a jwt string or an credential'),
+    check('publish').optional().isBoolean().withMessage('publish should be a boolean value')
   ]
 
   public async issue(request: Request, response: Response) {
@@ -66,7 +74,7 @@ export class CredentialController {
     }
 
     try {
-		return response.status(200).json(await Identity.instance.revokeCredentials(request.body.credential, response.locals.customerId))
+		return response.status(200).json(await Identity.instance.revokeCredentials(request.body.credential, request.body.publish, response.locals.customerId))
     } catch (error) {
         return response.status(500).json({
             error: `${error}`
