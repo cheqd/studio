@@ -198,12 +198,10 @@ export class Veramo {
   }
 
   async verifyCredential(agent: VeramoAgent, credential: string | VerifiableCredential, statusOptions: VerifyStatusOptions | null): Promise<IVerifyResult> {
-    if(statusOptions) {
-        return typeof credential === 'string' ? 
-        {verified: false, error: 'Provide a complete credential to verify status'} as VerificationResult
-        :
-        await agent.cheqdVerifyCredential({
+    if(typeof credential !== 'string') {
+        return await agent.cheqdVerifyCredential({
             credential: credential as VerifiableCredential,
+            fetchList: true,
             ...statusOptions
         } as ICheqdVerifyCredentialWithStatusList2021Args)
     }

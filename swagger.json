@@ -833,7 +833,35 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "StatusList is fetched successfully"
+                        "description": "StatusList is fetched successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "statusListName": {
+                                                "type": "string"
+                                            },
+                                            "statusListVersion": {
+                                                "type": "string"
+                                            },
+                                            "mediaType": {
+                                                "type": "string",
+                                                "enum": ["application/gzip", "application/octet-stream"]
+                                            },
+                                            "statusListId": {
+                                                "type": "string"
+                                            },
+                                            "statusListNextVersion": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     },
                     "400": {
                         "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
@@ -1091,6 +1119,36 @@
                             "jwt",
                             "lds"
                         ]
+                    },
+                    "credentialStatus": {
+                        "type": "object",
+                        "properties": {
+                            "statusPurpose": {
+                                "type": "string",
+                                "enum": [
+                                    "revocation",
+                                    "suspension"
+                                ]
+                            },
+                            "statusListName": {
+                                "type": "string"
+                            },
+                            "statusListIndex": {
+                                "type": "number"
+                            },
+                            "statusListVersipon": {
+                                "type": "string"
+                            },
+                            "statusListRangeStart": {
+                                "type": "number"
+                            },
+                            "statusListRangeEnd": {
+                                "type": "number"
+                            },
+                            "indexNotIn": {
+                                "type": "number"
+                            }
+                        }
                     }
                 },
                 "required": [
@@ -1111,7 +1169,12 @@
                     "type": [
                         "Person"
                     ],
-                    "format": "jwt"
+                    "format": "jwt",
+                    "credentialStatus": {
+                        "statusPurpose": "revocation",
+                        "statusListName": "employee-credentials",
+                        "statusListIndex": 10
+                    }
                 }
             },
             "Credential": {

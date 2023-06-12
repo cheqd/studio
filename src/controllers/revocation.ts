@@ -4,6 +4,7 @@ import { fromString } from 'uint8arrays'
 
 import { Identity } from '../services/identity/index.js'
 import { Veramo } from '../services/identity/agent.js'
+import { ResourceMetadata } from '../types/types.js'
 
 export class RevocationController {
 
@@ -50,8 +51,20 @@ export class RevocationController {
         }
 
         try {
-          const result = await Veramo.instance.resolve(`${request.query.did}?resourceType=StatusList2021&resourceMetadata=true`)
-          return response.status(200).json(result.contentStream?.linkedResourceMetadata || []) 
+          let result = await Veramo.instance.resolve(`${request.query.did}?resourceType=StatusList2021&resourceMetadata=true`)
+          result = result.contentStream?.linkedResourceMetadata || []
+          const statusList = result
+                .filter((resource: ResourceMetadata)=>resource.mediaType=='application/octet-stream' || resource.mediaType=='application/gzip')
+                .map((resource: ResourceMetadata)=>{
+                    return {
+                        statusListName: resource.resourceName,
+                        statusListVersion: resource.resourceVersion,
+                        mediaType: resource.mediaType,
+                        statusListId: resource.resourceId,
+                        statusListNextVersion: resource.nextVersionId
+                    }
+                })
+          return response.status(200).json(statusList) 
         } catch (error) {
           return response.status(500).json({
             error: `Internal error: ${error}`

@@ -220,3 +220,18 @@ export type VerifyStatusOptions = {
   }
   bootstrapOptions: {}
 }
+
+export interface ResourceMetadata {
+  collectionId: string
+  resourceId: string
+  resourceName: string
+  resourceVersion: string
+  resourceType: string
+  mediaType: string
+  created:
+    | Date
+    | undefined;
+  checksum: string;
+  previousVersionId: string;
+  nextVersionId: string;
+}
