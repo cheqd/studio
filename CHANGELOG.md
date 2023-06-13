@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.25](https://github.com/cheqd/credential-service/compare/2.1.0-develop.24...2.1.0-develop.25) (2023-06-13)
+
+
+### Features
+
+* Add credentialSchema attribute ([#262](https://github.com/cheqd/credential-service/issues/262)) ([0e4268a](https://github.com/cheqd/credential-service/commit/0e4268aaf70f85d803512177d59b28db4f7cff9d))
+
 ## [2.1.0-develop.24](https://github.com/cheqd/credential-service/compare/2.1.0-develop.23...2.1.0-develop.24) (2023-06-13)
 
 
