@@ -18,6 +18,7 @@ import swaggerJSONDoc from '../swagger.json' assert { type: "json" }
 
 import * as dotenv from 'dotenv'
 import { UserInfo } from './controllers/user_info.js'
+import path from 'path'
 
 const swagger_options = {
   customJs: '/custom_button.js',
@@ -55,7 +56,7 @@ class App {
     this.express.use(handleAuthRoutes(configLogToExpress))
     this.express.use(withLogto(configLogToExpress))
     this.express.use(express.text())
-    this.express.use(express.static(process.cwd() + '/src/static'))
+    this.express.use(express.static(path.join(process.cwd(), 'src/static')))
 
     this.express.use(
       '/swagger',
