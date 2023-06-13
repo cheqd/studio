@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.24](https://github.com/cheqd/credential-service/compare/2.1.0-develop.23...2.1.0-develop.24) (2023-06-13)
+
+
+### Bug Fixes
+
+* Move custom_button.js script into static root ([#261](https://github.com/cheqd/credential-service/issues/261)) ([8544020](https://github.com/cheqd/credential-service/commit/8544020c586c147bf64824665bbba4d4eba9a991))
+
 ## [2.1.0-develop.23](https://github.com/cheqd/credential-service/compare/2.1.0-develop.22...2.1.0-develop.23) (2023-06-13)
 
 
