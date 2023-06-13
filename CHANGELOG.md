@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.22](https://github.com/cheqd/credential-service/compare/2.1.0-develop.21...2.1.0-develop.22) (2023-06-13)
+
+
+### Bug Fixes
+
+* One more attempt to fix static files ([#260](https://github.com/cheqd/credential-service/issues/260)) ([abaed7a](https://github.com/cheqd/credential-service/commit/abaed7a7c2d7d2a18ecfe8bfcc77bb4647b3efe6))
+
 ## [2.1.0-develop.21](https://github.com/cheqd/credential-service/compare/2.1.0-develop.20...2.1.0-develop.21) (2023-06-13)
 
 
