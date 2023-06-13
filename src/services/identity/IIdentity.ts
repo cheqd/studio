@@ -1,5 +1,5 @@
-import {
-    CredentialPayload,
+import type {
+  CredentialPayload,
   DIDDocument,
   DIDResolutionResult,
   IIdentifier,
@@ -9,11 +9,10 @@ import {
   VerifiableCredential,
   VerifiablePresentation,
 } from '@veramo/core'
-import { AbstractPrivateKeyStore } from '@veramo/key-manager'
-import { ResourcePayload } from '@cheqd/did-provider-cheqd'
-import * as dotenv from 'dotenv'
-import { CredentialRequest, VeramoAgent } from '../../types/types'
-dotenv.config()
+import type { AbstractPrivateKeyStore } from '@veramo/key-manager'
+import type { ResourcePayload } from '@cheqd/did-provider-cheqd'
+import type { RevocationResult, SuspensionResult, UnsuspensionResult } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
+import type { CreateStatusListOptions, CredentialRequest, StatusOptions, VeramoAgent, VerifyStatusOptions } from '../../types/types'
 
 export interface IIdentity {
   agent?: TAgent<any>
@@ -28,7 +27,11 @@ export interface IIdentity {
   getDid(did: string, agentId?: string): Promise<any>
   importDid(did: string, privateKeyHex: string, publicKeyHex: string, agentId?: string): Promise<IIdentifier> 
   createResource(network: string, payload: ResourcePayload, agentId?: string): Promise<any>
-  createCredential(credential: CredentialPayload, format: CredentialRequest['format'], agentId?: string): Promise<VerifiableCredential>
-  verifyCredential(credential: VerifiableCredential | string, agentId?: string): Promise<IVerifyResult>
+  createCredential(credential: CredentialPayload, format: CredentialRequest['format'], statusListOptions: StatusOptions | null, agentId?: string): Promise<VerifiableCredential>
+  verifyCredential(credential: VerifiableCredential | string, statusOptions: VerifyStatusOptions | null, agentId?: string): Promise<IVerifyResult>
   verifyPresentation(presentation: VerifiablePresentation | string, agentId?: string): Promise<IVerifyResult>
+  createStatusList2021(did: string, network: string, resourceOptions: ResourcePayload, statusOptions: CreateStatusListOptions, agentId: string): Promise<boolean>
+  revokeCredentials(credential: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId?: string): Promise<RevocationResult| RevocationResult[]>
+  suspendCredentials(credential: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId?: string): Promise<SuspensionResult| SuspensionResult[]>
+  reinstateCredentials(credential: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId?: string): Promise<UnsuspensionResult| UnsuspensionResult[]>
 }
