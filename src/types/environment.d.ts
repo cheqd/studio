@@ -1,3 +1,4 @@
+import { EnvironmentType } from "@verida/types"
 import { Network } from "@verida/client-ts"
 
 declare global {
@@ -18,15 +19,19 @@ declare global {
       EXTERNAL_DB_ENCRYPTION_KEY: string
       EXTERNAL_DB_CERT: string | undefined
       ISSUER_DATABASE_CERT: string | undefined
+      APPLICATION_BASE_URL: string
 
       // LogTo
-      ENABLE_AUTHENTICATION: string
-      DEFAULT_CUSTOMER_ID: string | undefined
       LOGTO_ENDPOINT: string
-      LOGTO_RESOURCE_URL: string
       LOGTO_APP_ID: string
       LOGTO_APP_SECRET: string
-      ALLOWED_ORIGINS: string | undefined
+      LOGTO_RESOURCE_URL: string
+
+      // Authentication
+      ENABLE_AUTHENTICATION: string
+      DEFAULT_CUSTOMER_ID: string | undefined
+      ALL_SCOPES: string
+      COOKIE_SECRET: string
 
       // Verida
       ENABLE_VERIDA_CONNECTOR: string

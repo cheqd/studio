@@ -4,7 +4,7 @@ import type { VerifiableCredential } from '@veramo/core'
 import { check, validationResult } from 'express-validator'
 
 import { Credentials } from '../services/credentials.js'
-import { CustomerService } from '../services/customer.js'
+import { Identity } from '../services/identity/index.js'
 
 export class CredentialController {
 
@@ -22,8 +22,16 @@ export class CredentialController {
     check('format').optional().isString().withMessage('Invalid credential format')
   ]
 
-  public static verifyValidator = [
+  public static credentialValidator = [
     check('credential').exists().withMessage('W3c verifiable credential was not provided')
+    .custom((value) => {
+        if (typeof value === 'string' || typeof value === 'object') {
+          return true
+        }
+        return false
+      })
+    .withMessage('Entry must be a jwt string or an credential'),
+    check('publish').optional().isBoolean().withMessage('publish should be a boolean value')
   ]
 
   public async issue(request: Request, response: Response) {
@@ -43,15 +51,60 @@ export class CredentialController {
 
   public async verify(request: Request, response: Response) {
     if (request?.headers && (!request.headers['content-type'] || request.headers['content-type'] != 'application/json')) {
-      return response.status(405).json({ error: 'Unsupported media type.' })
+        return response.status(405).json({ error: 'Unsupported media type.' })
     }
 
     const result = validationResult(request)
     if (!result.isEmpty()) {
-      return response.status(400).json({ error: result.array()[0].msg })
+        return response.status(400).json({ error: result.array()[0].msg })
     }
     try {
-		return response.status(200).json(await Credentials.instance.verify_credentials(request.body.credential, response.locals.customerId))
+		return response.status(200).json(await Credentials.instance.verify_credentials(request.body.credential, request.body.statusOptions, response.locals.customerId))
+    } catch (error) {
+        return response.status(500).json({
+            error: `${error}`
+        })
+    }
+  }
+
+  public async revoke(request: Request, response: Response) {
+    const result = validationResult(request)
+    if (!result.isEmpty()) {
+        return response.status(400).json({ error: result.array()[0].msg })
+    }
+
+    try {
+		return response.status(200).json(await Identity.instance.revokeCredentials(request.body.credential, request.body.publish, response.locals.customerId))
+    } catch (error) {
+        return response.status(500).json({
+            error: `${error}`
+        })
+    }
+  }
+
+  public async suspend(request: Request, response: Response) {
+    const result = validationResult(request)
+    if (!result.isEmpty()) {
+        return response.status(400).json({ error: result.array()[0].msg })
+    }
+
+    try {
+		return response.status(200).json(await Identity.instance.suspendCredentials(request.body.credential, request.body.publish, response.locals.customerId))
+    } catch (error) {
+        return response.status(500).json({
+            error: `${error}`
+        })
+    }
+  }
+
+  public async reinstate(request: Request, response: Response) {
+    const result = validationResult(request)
+    if (!result.isEmpty()) {
+        return response.status(400).json({ error: result.array()[0].msg })
+    }
+
+    try {
+		return response.status(200).json(await Identity.instance.reinstateCredentials(request.body.credential, request.body.publish, response.locals.customerId))
     } catch (error) {
         return response.status(500).json({
             error: `${error}`

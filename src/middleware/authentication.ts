@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from 'express'
-import { Request as JWTRequest } from 'express-jwt'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 
 import { CustomerService } from '../services/customer.js'
 import { IncomingHttpHeaders } from 'http'
 
 import * as dotenv from 'dotenv'
+import {apiGuarding} from "../types/types.js"
 dotenv.config()
 
 const {
@@ -33,7 +33,7 @@ export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHea
 
 export class Authentication {
 
-    static handleError(error: Error, jwtRequest: JWTRequest, response: Response, next: NextFunction) {
+    static handleError(error: Error, request: Request, response: Response, next: NextFunction) {
         if (error) {
           return response.status(401).send({
             error: `${error.message}`
@@ -44,6 +44,10 @@ export class Authentication {
 
     static async accessControl(request: Request, response: Response, next: NextFunction) {
         let message = undefined
+
+        if (apiGuarding.skipPath(request.path)) 
+            return next()
+
         switch(ENABLE_EXTERNAL_DB) {
             case 'false':
                 if (['/account', '/did/create', '/key/create'].includes(request.path)) {
@@ -66,8 +70,9 @@ export class Authentication {
     }
 
     static async guard(jwtRequest: Request, response: Response, next: NextFunction) {
-		const { claim, provider } = jwtRequest.body as { claim: string, provider: string }
-        if (jwtRequest.path == '/' || jwtRequest.path == '/swagger') return next()
+		const { provider } = jwtRequest.body as { claim: string, provider: string }
+        if (apiGuarding.skipPath(jwtRequest.path)) 
+            return next()
 
 		try {
             if (ENABLE_AUTHENTICATION === 'true') {
@@ -83,6 +88,21 @@ export class Authentication {
                         audience: LOGTO_RESOURCE_URL,
                     }
                 )
+
+                let scopes: string[] = []
+                if (payload.scope) {
+                    scopes = (payload.scope as string).split(' ')
+                } else {
+                    return response.status(400).json({
+                        error: `Unauthorized error: It's required to provide a token with scopes inside.`
+                    })
+                }
+
+                if (!apiGuarding.areValidScopes(jwtRequest.path, jwtRequest.method, scopes)) {
+                    return response.status(400).json({
+                        error: `Unauthorized error: Provided token does not have the required scopes. You need ${apiGuarding.getScopeForRoute(jwtRequest.path, jwtRequest.method)} scope(s).`
+                    })
+                }
             
                 // custom payload logic
                 response.locals.customerId = payload.sub
@@ -90,7 +110,7 @@ export class Authentication {
                 response.locals.customerId = DEFAULT_CUSTOMER_ID
             } else {
                 return response.status(400).json({
-                    error: `Unauthorized error`
+                    error: `Unauthorized error. It requires ENABLE_AUTHENTICATION=true and bearerToken in headers or DEFAULT_CUSTOMER_ID to be set.`
                 })
             }
             next()

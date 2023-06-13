@@ -119,6 +119,7 @@ export class VeridaService {
     messageSubject: string,
     credential: VerifiableCredential,
     credentialName: string,
+    credentialSchema: string,
     credentialSummary?: string
   ) {
     // The Credential record is how Verida wrap the credential to store it on the Network. Check the JSdoc of the type and each property. They are following the Verida Credential Record schema.
@@ -127,7 +128,7 @@ export class VeridaService {
       summary: credentialSummary,
       schema: VERIDA_CREDENTIAL_RECORD_SCHEMA,
       didJwtVc: credential.proof.jwt,
-      credentialSchema: (credential['@context'] as string[]).find(e => !VC_CONTEXT.includes(e)) || VC_CONTEXT[0],
+      credentialSchema,
       credentialData: credential,
     }
     await this.sendData(recipientDid, messageSubject, credentialRecord)

@@ -2,6 +2,9 @@ import express from 'express'
 import Helmet from 'helmet'
 import cors from 'cors'
 import swaggerUi from 'swagger-ui-express'
+import session from 'express-session'
+import cookieParser from 'cookie-parser'
+import {withLogto, handleAuthRoutes } from '@logto/express'
 
 import { CredentialController } from './controllers/credentials.js'
 import { StoreController } from './controllers/store.js'
@@ -9,13 +12,20 @@ import { IssuerController } from './controllers/issuer.js'
 import { CustomerController } from './controllers/customer.js'
 import { Authentication } from './middleware/authentication.js'
 import { Connection } from './database/connection/connection.js'
-import { CORS_ERROR_MSG } from './types/constants.js'
+import { RevocationController } from './controllers/revocation.js'
+import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js'
 
 import swaggerJSONDoc from '../swagger.json' assert { type: "json" }
 
 import * as dotenv from 'dotenv'
-import { Identity } from './services/identity/index.js'
 dotenv.config()
+
+import { UserInfo } from './controllers/user_info.js'
+import path from 'path'
+
+const swagger_options = {
+  customJs: '/static/custom_button.js',
+}
 
 class App {
   public express: express.Application
@@ -41,11 +51,18 @@ class App {
             return callback(null, true)
         }
     }))
+
+    this.express.use(cookieParser())
+    this.express.use(session({ secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 } }))
+    this.express.use(handleAuthRoutes(configLogToExpress))
+    this.express.use(withLogto(configLogToExpress))
+    this.express.use(express.text())
+
     this.express.use(
-      '/swagger', 
+      '/swagger',
       swaggerUi.serve, 
       async (_req: express.Request, res: express.Response) => {
-        return res.send(swaggerUi.generateHTML(swaggerJSONDoc))
+        return res.send(swaggerUi.generateHTML(swaggerJSONDoc, swagger_options))
       }
     )
     this.express.use(Authentication.guard)
@@ -55,13 +72,20 @@ class App {
 
   private routes() {
     const app = this.express
-
     app.get('/', (req, res) => res.redirect('swagger'))
+
+    app.get('/user', new UserInfo().getUserInfo)
 
     // credentials
     app.post(`/credential/issue`, CredentialController.issueValidator, new CredentialController().issue)
-    app.post(`/credential/verify`, CredentialController.verifyValidator, new CredentialController().verify)
+    app.post(`/credential/verify`, CredentialController.credentialValidator, new CredentialController().verify)
+    app.post(`/credential/revoke`, CredentialController.credentialValidator, new CredentialController().revoke)
+    app.post('/credential/suspend', new CredentialController().suspend)
+    app.post('/credential/reinstate', new CredentialController().reinstate)
 
+    //revocation
+    app.post('/revocation/statusList2021/create', RevocationController.didValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
+    app.get('/revocation/statusList2021/list', RevocationController.didValidator, new RevocationController().fetchStatusList)
     // store
     app.post(`/store`, new StoreController().set)
     app.get(`/store/:id`, new StoreController().get)
@@ -77,6 +101,12 @@ class App {
     // customer
     app.post(`/account`, new CustomerController().create)
     app.get(`/account`, new CustomerController().get)
+
+    // static files
+    app.get('/static/custom_button.js', 
+        express.static(
+          path.join(process.cwd(), '/dist/src'), 
+          {extensions: ['js'], index: false}))
 
     // 404 for all other requests
     app.all('*', (req, res) => res.status(400).send('Bad request'))
