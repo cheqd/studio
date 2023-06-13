@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.23](https://github.com/cheqd/credential-service/compare/2.1.0-develop.22...2.1.0-develop.23) (2023-06-13)
+
+
+### Features
+
+* Add support issue verify & revoke credentials [DEV-2669] ([#255](https://github.com/cheqd/credential-service/issues/255)) ([c69df47](https://github.com/cheqd/credential-service/commit/c69df47960ad6f8e7716215c6a05c7611e0b668e))
+
 ## [2.1.0-develop.22](https://github.com/cheqd/credential-service/compare/2.1.0-develop.21...2.1.0-develop.22) (2023-06-13)
 
 
