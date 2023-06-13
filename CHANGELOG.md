@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-develop.21](https://github.com/cheqd/credential-service/compare/2.1.0-develop.20...2.1.0-develop.21) (2023-06-13)
+
+
+### Bug Fixes
+
+* Static files for swagger ([#259](https://github.com/cheqd/credential-service/issues/259)) ([a1fe566](https://github.com/cheqd/credential-service/commit/a1fe566c42ede1cd8bc08a9b8f142f35b153f7b6))
+
 ## [2.1.0-develop.20](https://github.com/cheqd/credential-service/compare/2.1.0-develop.19...2.1.0-develop.20) (2023-06-09)
 
 
