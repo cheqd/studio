@@ -147,6 +147,12 @@ Spinning up a Docker container from the [pre-built credential-service Docker ima
     docker compose -f docker/docker-compose.yml up credential-service --detach
     ```
 
+- Running credential-service using Docker with Postgres&LogTo
+
+  ```bash
+  docker compose -f docker/logto/docker-compose.yml up --detach
+  ```
+
 ### Build using Docker
 
 To build and run in Docker, use the [Dockerfile](docker/Dockerfile) provided.
