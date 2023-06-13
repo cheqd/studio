@@ -170,7 +170,7 @@ export class PostgresIdentity implements IIdentity {
     try {
         const did = typeof(credential.issuer) == 'string' ? credential.issuer : credential.issuer.id
         if (!await CustomerService.instance.find(agentId, {did})) {
-          throw new Error('Customer not found')
+          throw new Error(`${did} not found in wallet`)
         }
         const agent = await this.createAgent(agentId)
         return await Veramo.instance.createCredential(agent, credential, format, statusListOptions)
