@@ -21,7 +21,7 @@ import { UserInfo } from './controllers/user_info.js'
 import path from 'path'
 
 const swagger_options = {
-  customJs: './custom_button.js',
+  customJs: '/static/custom_button.js',
 }
 
 dotenv.config()
@@ -56,7 +56,6 @@ class App {
     this.express.use(handleAuthRoutes(configLogToExpress))
     this.express.use(withLogto(configLogToExpress))
     this.express.use(express.text())
-    this.express.use(express.static(path.join(process.cwd(), '/src/static')))
 
     this.express.use(
       '/swagger',
@@ -95,6 +94,12 @@ class App {
     // customer
     app.post(`/account`, new CustomerController().create)
     app.get(`/account`, new CustomerController().get)
+
+    // static files
+    app.get('/static/custom_button.js', 
+        express.static(
+          path.join(process.cwd(), '/dist/src'), 
+          {extensions: ['js'], index: false}))
 
     // 404 for all other requests
     app.all('*', (req, res) => res.status(400).send('Bad request'))

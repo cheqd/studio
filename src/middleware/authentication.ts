@@ -110,7 +110,7 @@ export class Authentication {
                 response.locals.customerId = DEFAULT_CUSTOMER_ID
             } else {
                 return response.status(400).json({
-                    error: `Unauthorized error. It requires ENABLE_AUTH=true and bearerToken in headers or CUSTOMER_ID to be set.`
+                    error: `Unauthorized error. It requires ENABLE_AUTHENTICATION=true and bearerToken in headers or DEFAULT_CUSTOMER_ID to be set.`
                 })
             }
             next()
