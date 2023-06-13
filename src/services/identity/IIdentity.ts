@@ -15,7 +15,7 @@ import { ResourcePayload } from '@cheqd/did-provider-cheqd'
 import { CreateStatusListOptions, CredentialRequest, StatusOptions, VeramoAgent, VerifyStatusOptions } from '../../types/types'
 
 import * as dotenv from 'dotenv'
-import { RevocationResult, SuspensionResult } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
+import { RevocationResult, SuspensionResult, UnsuspensionResult } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 dotenv.config()
 
 export interface IIdentity {
@@ -37,4 +37,5 @@ export interface IIdentity {
   createStatusList2021(did: string, network: string, resourceOptions: ResourcePayload, statusOptions: CreateStatusListOptions, agentId: string): Promise<boolean>
   revokeCredentials(credential: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId?: string): Promise<RevocationResult| RevocationResult[]>
   suspendCredentials(credential: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId?: string): Promise<SuspensionResult| SuspensionResult[]>
+  reinstateCredentials(credential: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId?: string): Promise<UnsuspensionResult| UnsuspensionResult[]>
 }

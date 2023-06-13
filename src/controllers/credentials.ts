@@ -104,7 +104,7 @@ export class CredentialController {
     }
 
     try {
-		return response.status(200).json(await Identity.instance.suspendCredentials(request.body.credential, request.body.publish, response.locals.customerId))
+		return response.status(200).json(await Identity.instance.reinstateCredentials(request.body.credential, request.body.publish, response.locals.customerId))
     } catch (error) {
         return response.status(500).json({
             error: `${error}`

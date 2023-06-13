@@ -513,8 +513,7 @@
                             "schema": {
                                 "properties": {
                                     "credential": {
-                                        "type": "string",
-                                        "example": "<Place the credential object here>"
+                                        "type": "object"
                                     },
                                     "publish": {
                                         "type": "boolean",
@@ -532,6 +531,152 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/RevocationResult"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/credential/suspend": {
+            "post": {
+                "tags": [
+                    "Credential"
+                ],
+                "summary": "Suspend a credential",
+                "description": "<p>This endpoint suspends the credential. As input it takes the entire credential itself</p>",
+                "operationId": "suspend",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "credential": {
+                                        "type": "object"
+                                    },
+                                    "publish": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SuspensionResult"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/credential/reinstate": {
+            "post": {
+                "tags": [
+                    "Credential"
+                ],
+                "summary": "Reinstate a credential",
+                "description": "<p>This endpoint reinstates the credential. As input it takes the entire credential itself</p>",
+                "operationId": "reinstate",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "credential": {
+                                        "type": "object"
+                                    },
+                                    "publish": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnSuspensionResult"
                                 }
                             }
                         }
@@ -1436,6 +1581,26 @@
                     "revoked": {
                         "type": "boolean"
                     }
+                }
+            },
+            "SuspensionResult": { 
+                "properties": {
+                   "suspended": {
+                      "type": "boolean"
+                   },
+                   "statusList": {
+                      "type": "string"
+                   }
+                }
+            },
+            "UnSuspensionResult": { 
+                "properties": {
+                   "unsuspended": {
+                      "type": "boolean"
+                   },
+                   "statusList": {
+                      "type": "string"
+                   }
                 }
             }
         }

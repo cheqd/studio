@@ -207,6 +207,6 @@ export class PostgresIdentity implements IIdentity {
 
   async reinstateCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId: string) {
     const agent = await this.createAgent(agentId)
-    return await Veramo.instance.suspendCredentials(agent, credentials, publish)
+    return await Veramo.instance.unsuspendCredentials(agent, credentials, publish)
   }
 }

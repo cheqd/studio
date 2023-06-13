@@ -248,12 +248,12 @@ export class Veramo {
  }
 
  async suspendCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish: boolean=true) {
-    if (Array.isArray(credentials)) return await agent.cheqdSuspendCredentials({ credentials, fetchList: true, publish: true })
+    if (Array.isArray(credentials)) return await agent.cheqdSuspendCredentials({ credentials, fetchList: true, publish })
     return await agent.cheqdSuspendCredential({ credential: credentials, fetchList: true, publish })
  }
 
  async unsuspendCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish: boolean=true) {
-    if (Array.isArray(credentials)) return await agent.cheqdUnsuspendCredentials({ credentials, fetchList: true, publish: true })
+    if (Array.isArray(credentials)) return await agent.cheqdUnsuspendCredentials({ credentials, fetchList: true, publish })
     return await agent.cheqdUnsuspendCredential({ credential: credentials, fetchList: true, publish })
  }
 }
