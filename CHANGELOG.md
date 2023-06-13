@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.3.0](https://github.com/cheqd/credential-service/compare/2.2.0...2.3.0) (2023-06-13)
+
+
+### Features
+
+* Add API guarding [DEV-2621] ([#249](https://github.com/cheqd/credential-service/issues/249)) ([3706b4c](https://github.com/cheqd/credential-service/commit/3706b4c63006be4282cfeed530c2d15f44da4164)), closes [#2](https://github.com/cheqd/credential-service/issues/2)
+* Add credentialSchema attribute ([#262](https://github.com/cheqd/credential-service/issues/262)) ([0e4268a](https://github.com/cheqd/credential-service/commit/0e4268aaf70f85d803512177d59b28db4f7cff9d))
+* Add support issue verify & revoke credentials [DEV-2669] ([#255](https://github.com/cheqd/credential-service/issues/255)) ([c69df47](https://github.com/cheqd/credential-service/commit/c69df47960ad6f8e7716215c6a05c7611e0b668e))
+
+
+### Bug Fixes
+
+* Copy static files to the dist while building ([#253](https://github.com/cheqd/credential-service/issues/253)) ([4f076c0](https://github.com/cheqd/credential-service/commit/4f076c0f62bd8ee6e32f1e97bf6c8b724ff3393f))
+* Fix static files copying ([#254](https://github.com/cheqd/credential-service/issues/254)) ([1ea85d3](https://github.com/cheqd/credential-service/commit/1ea85d3f1d1cb290a8304269da1ba8a6219572e9))
+* Move custom_button.js script into static root ([#261](https://github.com/cheqd/credential-service/issues/261)) ([8544020](https://github.com/cheqd/credential-service/commit/8544020c586c147bf64824665bbba4d4eba9a991))
+* One more attempt to fix static files ([#260](https://github.com/cheqd/credential-service/issues/260)) ([abaed7a](https://github.com/cheqd/credential-service/commit/abaed7a7c2d7d2a18ecfe8bfcc77bb4647b3efe6))
+* Static files for swagger ([#259](https://github.com/cheqd/credential-service/issues/259)) ([a1fe566](https://github.com/cheqd/credential-service/commit/a1fe566c42ede1cd8bc08a9b8f142f35b153f7b6))
+
 ## [2.2.0](https://github.com/cheqd/credential-service/compare/2.1.1...2.2.0) (2023-06-08)
 
 
