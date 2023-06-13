@@ -4,7 +4,7 @@ import {
   VC_CONTEXT,
   VC_TYPE
 } from '../types/constants.js'
-import { CredentialRequest, StatusOptions, VerifyStatusOptions } from '../types/types.js'
+import { CredentialRequest, VerifyStatusOptions } from '../types/types.js'
 import { Identity } from './identity/index.js'
 import { VeridaService } from '../services/connectors/verida.js'
 import { v4 } from 'uuid'
@@ -21,6 +21,7 @@ export class Credentials {
             '@context': [ ...request['@context'] || [], ...VC_CONTEXT ],
             type: [ ...request.type || [], VC_TYPE ],
             issuer: { id: request.issuerDid },
+            credentialSchema: request.credentialSchema,
             credentialSubject: {
                 id: request.subjectDid,
                 ...request.attributes
@@ -37,11 +38,13 @@ export class Credentials {
         let verifiable_credential = await Identity.instance.createCredential(credential, request.format, statusOptions, agentId)
         
         if (ENABLE_VERIDA_CONNECTOR === 'true' && request.subjectDid.startsWith('did:vda')) {
+          if(!request.credentialSchema) throw new Error('Credential schema is required')
           await VeridaService.instance.sendCredential(
             request.subjectDid,
             "New Verifiable Credential",
             verifiable_credential,
             request.credentialName || v4(),
+            request.credentialSchema,
             request.credentialSummary
           )
         }
