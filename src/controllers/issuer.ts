@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express'
-
+import { check, param, validationResult } from 'express-validator'
+import { fromString } from 'uint8arrays'
 import { DIDDocument } from 'did-resolver'
 import { v4 } from 'uuid'
 import { MethodSpecificIdAlgo, VerificationMethods, CheqdNetwork } from '@cheqd/sdk'
@@ -7,8 +8,6 @@ import { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/inde
 
 import { Identity } from '../services/identity/index.js'
 import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers.js'
-import { check, param, validationResult } from 'express-validator'
-import { fromString } from 'uint8arrays'
 
 export class IssuerController {
 

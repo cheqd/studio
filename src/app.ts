@@ -12,19 +12,20 @@ import { IssuerController } from './controllers/issuer.js'
 import { CustomerController } from './controllers/customer.js'
 import { Authentication } from './middleware/authentication.js'
 import { Connection } from './database/connection/connection.js'
+import { RevocationController } from './controllers/revocation.js'
 import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js'
 
 import swaggerJSONDoc from '../swagger.json' assert { type: "json" }
 
 import * as dotenv from 'dotenv'
+dotenv.config()
+
 import { UserInfo } from './controllers/user_info.js'
 import path from 'path'
 
 const swagger_options = {
   customJs: '/static/custom_button.js',
 }
-
-dotenv.config()
 
 class App {
   public express: express.Application
@@ -77,8 +78,14 @@ class App {
 
     // credentials
     app.post(`/credential/issue`, CredentialController.issueValidator, new CredentialController().issue)
-    app.post(`/credential/verify`, CredentialController.verifyValidator, new CredentialController().verify)
+    app.post(`/credential/verify`, CredentialController.credentialValidator, new CredentialController().verify)
+    app.post(`/credential/revoke`, CredentialController.credentialValidator, new CredentialController().revoke)
+    app.post('/credential/suspend', new CredentialController().suspend)
+    app.post('/credential/reinstate', new CredentialController().reinstate)
 
+    //revocation
+    app.post('/revocation/statusList2021/create', RevocationController.didValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
+    app.get('/revocation/statusList2021/list', RevocationController.didValidator, new RevocationController().fetchStatusList)
     // store
     app.post(`/store`, new StoreController().set)
     app.get(`/store/:id`, new StoreController().get)

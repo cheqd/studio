@@ -1,6 +1,6 @@
 {
 	"name": "@cheqd/credential-service",
-	"version": "2.1.0-develop.21",
+	"version": "2.1.0-develop.23",
 	"description": "cheqd Credential Service Backend",
 	"source": "src/index.ts",
 	"main": "dist/index.js",
@@ -45,7 +45,7 @@
 		"README.md"
 	],
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "^3.3.0",
+		"@cheqd/did-provider-cheqd": "^3.3.1",
 		"@cosmjs/amino": "^0.30.1",
 		"@cosmjs/encoding": "^0.30.1",
 		"@logto/express": "^2.0.1",
