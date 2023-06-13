@@ -1,6 +1,6 @@
 {
 	"name": "@cheqd/credential-service",
-	"version": "2.1.0-develop.18",
+	"version": "2.1.0-develop.20",
 	"description": "cheqd Credential Service Backend",
 	"source": "src/index.ts",
 	"main": "dist/index.js",
@@ -21,6 +21,8 @@
 		}
 	},
 	"scripts": {
+		"copy-files": "copyfiles -u 1 src/static/**/*.js dist/src",
+		"postbuild": "npm run copy-files",
 		"build": "tsc",
 		"start": "node dist/src/index.js",
 		"format": "prettier --write  '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
@@ -61,6 +63,7 @@
 		"@verida/client-ts": "^2.3.5",
 		"@verida/types": "^2.3.1",
 		"cookie-parser": "^1.4.6",
+		"copyfiles": "^2.4.1",
 		"cors": "^2.8.5",
 		"did-resolver": "^4.1.0",
 		"dotenv": "^16.1.3",
