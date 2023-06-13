@@ -21,7 +21,7 @@ import { UserInfo } from './controllers/user_info.js'
 import path from 'path'
 
 const swagger_options = {
-  customJs: '/custom_button.js',
+  customJs: './custom_button.js',
 }
 
 dotenv.config()
@@ -56,7 +56,7 @@ class App {
     this.express.use(handleAuthRoutes(configLogToExpress))
     this.express.use(withLogto(configLogToExpress))
     this.express.use(express.text())
-    this.express.use(express.static(path.join(process.cwd(), 'src/static')))
+    this.express.use(express.static(path.join(process.cwd(), '/src/static')))
 
     this.express.use(
       '/swagger',
