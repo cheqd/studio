@@ -148,10 +148,19 @@ Spinning up a Docker container from the [pre-built credential-service Docker ima
     ```
 
 - Running credential-service using Docker with Postgres&LogTo
+  - Run Docker with Postgres&Logto:
 
-  ```bash
-  docker compose -f docker/logto/docker-compose.yml up --detach
-  ```
+    ```bash
+    docker compose -f docker/logto/docker-compose.yml up logto postgres --detach
+    ```
+
+  - Set `LOGTO_APP_ID`, `LOGTO_APP_SECRET` environment variables in `docker/logto/.env`.
+
+  - Run credential-service:
+
+    ```bash
+    docker compose -f docker/logto/docker-compose.yml up app --detach
+    ```
 
 ### Build using Docker
 
