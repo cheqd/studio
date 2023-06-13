@@ -29,8 +29,7 @@ import { fromString } from 'uint8arrays'
 import {
   ICheqdCreateStatusList2021Args,
   ICheqdGenerateStatusList2021Args,
-  ICheqdVerifyCredentialWithStatusList2021Args,
-  VerificationResult
+  ICheqdVerifyCredentialWithStatusList2021Args
 } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
 import { v4 } from 'uuid'
 
@@ -227,6 +226,7 @@ export class Veramo {
          collectionId: did.split(':')[3],
          data: fromString(statusList, statusOptions.encoding || 'base64url'),
          resourceType: 'StatusList2021',
+         version: resourceOptions.version,
          name: resourceOptions.name,
          id: v4(),
       },

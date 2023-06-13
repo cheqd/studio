@@ -1,4 +1,4 @@
-import {
+import type {
   CredentialPayload,
   DIDDocument,
   DIDResolutionResult,
@@ -9,14 +9,10 @@ import {
   VerifiableCredential,
   VerifiablePresentation,
 } from '@veramo/core'
-import { AbstractPrivateKeyStore } from '@veramo/key-manager'
-import { ResourcePayload } from '@cheqd/did-provider-cheqd'
-
-import { CreateStatusListOptions, CredentialRequest, StatusOptions, VeramoAgent, VerifyStatusOptions } from '../../types/types'
-
-import * as dotenv from 'dotenv'
-import { RevocationResult, SuspensionResult, UnsuspensionResult } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
-dotenv.config()
+import type { AbstractPrivateKeyStore } from '@veramo/key-manager'
+import type { ResourcePayload } from '@cheqd/did-provider-cheqd'
+import type { RevocationResult, SuspensionResult, UnsuspensionResult } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
+import type { CreateStatusListOptions, CredentialRequest, StatusOptions, VeramoAgent, VerifyStatusOptions } from '../../types/types'
 
 export interface IIdentity {
   agent?: TAgent<any>
