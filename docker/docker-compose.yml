@@ -13,7 +13,7 @@ services:
     #   context: ../
     #   dockerfile: docker/Dockerfile
     # CAUTION: Change image section's value if building your own image in section below
-    image: cheqd/credential-service:latest
+    image: ghcr.io/cheqd/credential-service:staging-latest
     ports:
       - 8787:8787
     env_file:
@@ -33,7 +33,7 @@ services:
     #   context: ../
     #   dockerfile: docker/Dockerfile
     # CAUTION: Change image section's value if building your own image in section below
-    image: cheqd/credential-service:latest
+    image: ghcr.io/cheqd/credential-service:staging-latest
     ports:
       - 8787:8787
     env_file:
