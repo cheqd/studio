@@ -6,6 +6,23 @@ version: '3.8'
 
 services:
   app:
+    # OPTIONAL: Rebuild cheqd credential-service Docker image, if you want build your own
+    # Default is to pull in the pre-published image on GitHub Container Registry
+    # SYNTAX: docker compose -f docker/docker-compose.yml build
+    # build:
+    #   context: ../
+    #   dockerfile: docker/Dockerfile
+    # CAUTION: Change image section's value if building your own image in section below
+    image: cheqd/credential-service:latest
+    ports:
+      - 8787:8787
+    env_file:
+      - .env
+    entrypoint: "npm run compose-run"
+    profiles:
+      - credential-service
+
+  app-with-postgres:
     depends_on:
       postgres:
         condition: service_healthy
@@ -16,12 +33,14 @@ services:
     #   context: ../
     #   dockerfile: docker/Dockerfile
     # CAUTION: Change image section's value if building your own image in section below
-    image: ghcr.io/cheqd/credential-service:staging-latest
+    image: cheqd/credential-service:latest
     ports:
       - 8787:8787
     env_file:
       - .env
     entrypoint: "npm run compose-run"
+    profiles:
+      - credential-service-with-external-db
 
   postgres:
     image: postgres
@@ -35,3 +54,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    profiles:
+      - credential-service-with-external-db
+
