@@ -133,9 +133,9 @@ Spinning up a Docker container from the [pre-built credential-service Docker ima
 
 - Running credential-service using Docker with external database:
   - Set `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` environment variables in `docker/.env`:
-    - `POSTGRES_USER`: Postgres database username using in database connection URL.
-    - `POSTGRES_PASSWORD`: Postgres database password using in database connection URL.
-    - `POSTGRES_DB`: Postgres database name using in database connection URL.
+    - `POSTGRES_USER`: Postgres database username using in Docker database service.
+    - `POSTGRES_PASSWORD`: Postgres database password using in Docker database service.
+    - `POSTGRES_DB`: Postgres database name using in Docker database service.
 
   - Run credential-service with external database:
 
