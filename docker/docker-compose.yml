@@ -13,9 +13,9 @@ services:
     #   context: ../
     #   dockerfile: docker/Dockerfile
     # CAUTION: Change image section's value if building your own image in section below
-    image: ghcr.io/cheqd/credential-service:staging-latest
+    image: cheqd/credential-service:latest
     ports:
-      - 8787:8787
+      - 3000:3000
     env_file:
       - .env
     entrypoint: "npm run compose-run"
@@ -33,9 +33,9 @@ services:
     #   context: ../
     #   dockerfile: docker/Dockerfile
     # CAUTION: Change image section's value if building your own image in section below
-    image: ghcr.io/cheqd/credential-service:staging-latest
+    image: cheqd/credential-service:latest
     ports:
-      - 8787:8787
+      - 3000:3000
     env_file:
       - .env
     entrypoint: "npm run compose-run"

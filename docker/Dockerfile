@@ -45,7 +45,7 @@ RUN npm ci
 
 # Base arguments: build-time
 ARG NPM_CONFIG_LOGLEVEL=warn
-ARG PORT=8787
+ARG PORT=3000
 
 # Network API endpoints: build-time
 ARG MAINNET_RPC_URL=https://rpc.cheqd.net:443
@@ -53,7 +53,7 @@ ARG TESTNET_RPC_URL=https://rpc.cheqd.network:443
 ARG RESOLVER_URL=https://resolver.cheqd.net/1.0/identifiers/
 
 # Veramo Database configuration: build-time
-ARG ENABLE_EXTERNAL_DB
+ARG ENABLE_EXTERNAL_DB=false
 ARG EXTERNAL_DB_CONNECTION_URL
 ARG EXTERNAL_DB_ENCRYPTION_KEY
 ARG EXTERNAL_DB_CERT
