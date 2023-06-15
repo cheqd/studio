@@ -61,13 +61,9 @@ The application allows configuring the following parameters using environment va
 The application supports two modes in which keys are managed: either just storing them in-memory while a container is running, or persisting them in a PostgresSQL database with Veramo SDK. Using an external Postgres database allows for "custodian" mode where identity and cheqd/Cosmos keys can be offloaded by client applications to be stored in the database.
 
 1. `ENABLE_EXTERNAL_DB`: Turns external database on/off (Default: `false`). If `ENABLE_EXTERNAL_DB=true`, then define below environment variables in `.env` file:
-    - `DB_CONNECTION_URL`: Postgres database connection URL, e.g. `postgres://<user>:<password>@<host>:<port>/<database>`.
-    - `DB_ENCRYPTION_KEY`: Secret key used to encrypt the Veramo key-specific database tables. This adds a layer of protection by not storing the database in plaintext.
-    - `DB_CERTIFICATE`: Custom CA certificate required to connect to the database (optional).
-    - `POSTGRES_USER`: Postgres database username using in database connection URL.
-    - `POSTGRES_PASSWORD`: Postgres database password using in database connection URL.
-    - `POSTGRES_DB`: Postgres database name using in database connection URL.
-    > **Note:** `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` environment variables need only for [running your own credential-service using Docker](#running-your-own-credential-service-using-docker).
+    - `EXTERNAL_DB_CONNECTION_URL`: Postgres database connection URL, e.g. `postgres://<user>:<password>@<host>:<port>/<database>`.
+    - `EXTERNAL_DB_ENCRYPTION_KEY`: Secret key used to encrypt the Veramo key-specific database tables. This adds a layer of protection by not storing the database in plaintext.
+    - `EXTERNAL_DB_CERTIFICATE`: Custom CA certificate required to connect to the database (optional).
 
 #### API Authentication using LogTo
 
@@ -136,15 +132,21 @@ Construct the postgres URL and configure the env variables mentioned above.
 Spinning up a Docker container from the [pre-built credential-service Docker image on Github](https://github.com/cheqd/credential-service/pkgs/container/credential-service) is as simple as the command below:
 
 - Running credential-service using Docker with external database:
+  - Set `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` environment variables in `docker/.env`:
+    - `POSTGRES_USER`: Postgres database username using in database connection URL.
+    - `POSTGRES_PASSWORD`: Postgres database password using in database connection URL.
+    - `POSTGRES_DB`: Postgres database name using in database connection URL.
+
+  - Run credential-service with external database:
 
     ```bash
-    docker compose -f docker/docker-compose.yml up --detach
-  ```
+    docker compose -f docker/docker-compose.yml --profile credential-service-with-external-db up --detach
+    ```
 
 - Running credential-service using Docker without external database (In memory database):
 
     ```bash
-    docker compose -f docker/docker-compose.yml up credential-service --detach
+    docker compose -f docker/docker-compose.yml --profile credential-service up --detach
     ```
 
 ### Build using Docker
