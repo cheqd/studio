@@ -23,6 +23,7 @@ import { DIDResolverPlugin } from '@veramo/did-resolver'
 import { CredentialPlugin } from '@veramo/credential-w3c'
 import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 import { Cheqd, getResolver as CheqdDidResolver, ResourcePayload } from '@cheqd/did-provider-cheqd'
+import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key'
 import { CheqdNetwork } from '@cheqd/sdk'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import { fromString } from 'uint8arrays'
@@ -82,7 +83,8 @@ export class Veramo {
         plugins.push(
           new DIDResolverPlugin({
             resolver: new Resolver({
-              ...CheqdDidResolver({ url: process.env.RESOLVER_URL }) as ResolverRegistry
+              ...CheqdDidResolver({ url: process.env.RESOLVER_URL }) as ResolverRegistry,
+              ...KeyDidResolver(),  
             })
           })
         )
