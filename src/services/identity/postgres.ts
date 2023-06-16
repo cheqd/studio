@@ -16,7 +16,7 @@ import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
 import { PrivateKeyStore } from '@veramo/data-store'
 import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
-import { cheqdDidRegex, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, VeramoAgent, VerifyStatusOptions } from '../../types/types.js'
+import { cheqdDidRegex, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types.js'
 import { Connection } from '../../database/connection/connection.js'
 import { CustomerEntity } from '../../database/entities/customer.entity.js'
 import { IIdentity } from './IIdentity.js'
@@ -179,14 +179,14 @@ export class PostgresIdentity implements IIdentity {
     }          
   }
 
-  async verifyCredential(credential: string | VerifiableCredential, statusOptions: VerifyStatusOptions | null, agentId: string): Promise<IVerifyResult> {
+  async verifyCredential(credential: string | VerifiableCredential, statusOptions: VerifyCredentialStatusOptions | null, agentId: string): Promise<IVerifyResult> {
     const agent = await this.createAgent(agentId)
     return await Veramo.instance.verifyCredential(agent, credential, statusOptions)
   }
 
-  async verifyPresentation(presentation: VerifiablePresentation | string, agentId: string): Promise<IVerifyResult> {
+  async verifyPresentation(presentation: VerifiablePresentation | string, statusOptions: VerifyPresentationStatusOptions | null, agentId: string): Promise<IVerifyResult> {
     const agent = await this.createAgent(agentId)
-    return await Veramo.instance.verifyPresentation(agent, presentation)
+    return await Veramo.instance.verifyPresentation(agent, presentation, statusOptions)
   }
 
   async createStatusList2021(did: string, network: string, resourceOptions: ResourcePayload,  statusListOptions: CreateStatusListOptions, agentId: string): Promise<boolean> {

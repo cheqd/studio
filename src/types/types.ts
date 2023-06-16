@@ -9,7 +9,7 @@ import {
   TAgent,
   CredentialStatusReference
 } from '@veramo/core'
-import { ICheqd, ICheqdStatusList2021Options } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
+import { AccessControlConditionBalanceArgs, AccessControlConditionMemoNonceArgs, ICheqd, ICheqdStatusList2021Options } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import { ICredentialIssuerLD } from '@veramo/credential-ld'
 import { AbstractIdentifierProvider } from '@veramo/did-manager'
 import { AbstractKeyManagementSystem } from '@veramo/key-manager'
@@ -211,7 +211,7 @@ export type StatusOptions = {
 export type RevocationStatusOptions = StatusOptions & { statusPurpose: 'revocation' }
 export type SuspensionStatusOptions = StatusOptions & { statusPurpose: 'suspension' }
 
-export type VerifyStatusOptions = {
+export type VerifyCredentialStatusOptions = {
   fetchList?: boolean
   encryptedSymmetricKey?: string
   options?: ICheqdStatusList2021Options
@@ -221,6 +221,11 @@ export type VerifyStatusOptions = {
   bootstrapOptions: {}
 }
 
+export type VerifyPresentationStatusOptions = Omit<VerifyCredentialStatusOptions, 'decryptionOptions'> & { 
+    decryptionOptions: {
+        accessControlConditions: (AccessControlConditionMemoNonceArgs | AccessControlConditionBalanceArgs)[]
+    }
+}
 export interface ResourceMetadata {
   collectionId: string
   resourceId: string

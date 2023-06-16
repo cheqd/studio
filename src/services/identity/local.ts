@@ -11,7 +11,7 @@ import { KeyManagementSystem } from '@veramo/kms-local'
 import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
 
-import { CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, VeramoAgent, VerifyStatusOptions } from '../../types/types.js'
+import { CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types.js'
 import { Connection } from '../../database/connection/connection.js'
 import { IIdentity } from './IIdentity.js'
 import { Veramo } from './agent.js'
@@ -130,12 +130,12 @@ export class LocalIdentity implements IIdentity {
     }          
   }
 
-  async verifyCredential(credential: VerifiableCredential | string,  statusOptions: VerifyStatusOptions | null): Promise<IVerifyResult> {
+  async verifyCredential(credential: VerifiableCredential | string,  statusOptions: VerifyCredentialStatusOptions | null): Promise<IVerifyResult> {
     return await Veramo.instance.verifyCredential(this.initAgent(), credential, statusOptions)
   }
 
-  async verifyPresentation(presentation: VerifiablePresentation | string): Promise<IVerifyResult> {
-    return await Veramo.instance.verifyPresentation(this.initAgent(), presentation)
+  async verifyPresentation(presentation: VerifiablePresentation | string, statusOptions: VerifyPresentationStatusOptions | null): Promise<IVerifyResult> {
+    return await Veramo.instance.verifyPresentation(this.initAgent(), presentation, statusOptions)
   }
 
   async createStatusList2021(did: string, network: string, resourceOptions: ResourcePayload,  statusListOptions: CreateStatusListOptions): Promise<boolean> {

@@ -34,6 +34,17 @@ export class CredentialController {
     check('publish').optional().isBoolean().withMessage('publish should be a boolean value')
   ]
 
+  public static presentationValidator = [
+    check('presentation').exists().withMessage('W3c verifiable presentation was not provided')
+    .custom((value) => {
+        if (typeof value === 'string' || typeof value === 'object') {
+          return true
+        }
+        return false
+      })
+    .withMessage('Entry must be a jwt string or a presentation'),
+  ]
+
   public async issue(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
@@ -105,6 +116,21 @@ export class CredentialController {
 
     try {
 		return response.status(200).json(await Identity.instance.reinstateCredentials(request.body.credential, request.body.publish, response.locals.customerId))
+    } catch (error) {
+        return response.status(500).json({
+            error: `${error}`
+        })
+    }
+  }
+
+  public async verifyPresentation(request: Request, response: Response) {
+    const result = validationResult(request)
+    if (!result.isEmpty()) {
+        return response.status(400).json({ error: result.array()[0].msg })
+    }
+
+    try {
+		return response.status(200).json(await Identity.instance.verifyPresentation(request.body.presentation, request.body.statusOptions, response.locals.customerId))
     } catch (error) {
         return response.status(500).json({
             error: `${error}`

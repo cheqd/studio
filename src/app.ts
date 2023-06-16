@@ -83,9 +83,13 @@ class App {
     app.post('/credential/suspend', new CredentialController().suspend)
     app.post('/credential/reinstate', new CredentialController().reinstate)
 
+    // presentation
+    app.post(`/presentation/verify`, CredentialController.presentationValidator, new CredentialController().verifyPresentation)
+
     //revocation
-    app.post('/revocation/statusList2021/create', RevocationController.didValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
-    app.get('/revocation/statusList2021/list', RevocationController.didValidator, new RevocationController().fetchStatusList)
+    app.post('/credential-status/statusList2021/create', RevocationController.didValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
+    app.get('/credential-status/statusList2021/list', RevocationController.didValidator, new RevocationController().fetchStatusList)
+
     // store
     app.post(`/store`, new StoreController().set)
     app.get(`/store/:id`, new StoreController().get)
@@ -96,7 +100,7 @@ class App {
     app.post(`/did/create`, IssuerController.didValidator, new IssuerController().createDid)
     app.get(`/did/list`, new IssuerController().getDids)
     app.get(`/did/:did`, new IssuerController().getDids)
-    app.post(`/:did/create-resource`, IssuerController.resourceValidator, new IssuerController().createResource)
+    app.post(`/:did/resource/create`, IssuerController.resourceValidator, new IssuerController().createResource)
 
     // customer
     app.post(`/account`, new CustomerController().create)

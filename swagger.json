@@ -713,6 +713,75 @@
                 }
             }
         },
+        "/presentation/verify": {
+            "post": {
+                "tags": [
+                    "Presentation"
+                ],
+                "summary": "Verify a credential presentation",
+                "description": "<p>This endpoint verifies the credential presentation. As input it takes the entire presentation itself</p>",
+                "operationId": "presentation",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "presentation": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnSuspensionResult"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/account": {
             "post": {
                 "tags": [
@@ -821,7 +890,7 @@
                 }
             }
         },
-        "/{did}/create-resource": {
+        "/{did}/resource/create": {
             "post": {
                 "tags": [
                     "Resource"
@@ -882,10 +951,10 @@
                 }
             }
         },
-        "/revocation/statusList2021/create": {
+        "/credential-status/statusList2021/create": {
             "post": {
                 "tags": [
-                    "Revocation"
+                    "Credential Status"
                 ],
                 "summary": "Create statuslist 2021",
                 "parameters": [
@@ -960,10 +1029,10 @@
                 }
             }
         },
-        "/revocation/statusList2021/list": {
+        "/credential-status/statusList2021/list": {
             "get": {
                 "tags": [
-                    "Revocation"
+                    "Credential Status"
                 ],
                 "summary": "List published statuslist 2021",
                 "parameters": [

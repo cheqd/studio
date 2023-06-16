@@ -12,7 +12,7 @@ import type {
 import type { AbstractPrivateKeyStore } from '@veramo/key-manager'
 import type { ResourcePayload } from '@cheqd/did-provider-cheqd'
 import type { RevocationResult, SuspensionResult, UnsuspensionResult } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
-import type { CreateStatusListOptions, CredentialRequest, StatusOptions, VeramoAgent, VerifyStatusOptions } from '../../types/types'
+import type { CreateStatusListOptions, CredentialRequest, StatusOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types'
 
 export interface IIdentity {
   agent?: TAgent<any>
@@ -28,8 +28,8 @@ export interface IIdentity {
   importDid(did: string, privateKeyHex: string, publicKeyHex: string, agentId?: string): Promise<IIdentifier> 
   createResource(network: string, payload: ResourcePayload, agentId?: string): Promise<any>
   createCredential(credential: CredentialPayload, format: CredentialRequest['format'], statusListOptions: StatusOptions | null, agentId?: string): Promise<VerifiableCredential>
-  verifyCredential(credential: VerifiableCredential | string, statusOptions: VerifyStatusOptions | null, agentId?: string): Promise<IVerifyResult>
-  verifyPresentation(presentation: VerifiablePresentation | string, agentId?: string): Promise<IVerifyResult>
+  verifyCredential(credential: VerifiableCredential | string, statusOptions: VerifyCredentialStatusOptions | null, agentId?: string): Promise<IVerifyResult>
+  verifyPresentation(presentation: VerifiablePresentation | string, statusOptions: VerifyPresentationStatusOptions, agentId?: string): Promise<IVerifyResult>
   createStatusList2021(did: string, network: string, resourceOptions: ResourcePayload, statusOptions: CreateStatusListOptions, agentId: string): Promise<boolean>
   revokeCredentials(credential: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId?: string): Promise<RevocationResult| RevocationResult[]>
   suspendCredentials(credential: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId?: string): Promise<SuspensionResult| SuspensionResult[]>

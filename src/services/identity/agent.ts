@@ -29,7 +29,8 @@ import { fromString } from 'uint8arrays'
 import {
   ICheqdCreateStatusList2021Args,
   ICheqdGenerateStatusList2021Args,
-  ICheqdVerifyCredentialWithStatusList2021Args
+  ICheqdVerifyCredentialWithStatusList2021Args,
+  ICheqdVerifyPresentationWithStatusList2021Args
 } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
 import { v4 } from 'uuid'
 
@@ -42,7 +43,8 @@ import {
   StatusOptions,
   SuspensionStatusOptions,
   VeramoAgent,
-  VerifyStatusOptions
+  VerifyCredentialStatusOptions,
+  VerifyPresentationStatusOptions
 } from '../../types/types.js'
 import { VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js'
 
@@ -196,7 +198,7 @@ export class Veramo {
     }          
   }
 
-  async verifyCredential(agent: VeramoAgent, credential: string | VerifiableCredential, statusOptions: VerifyStatusOptions | null): Promise<IVerifyResult> {
+  async verifyCredential(agent: VeramoAgent, credential: string | VerifiableCredential, statusOptions: VerifyCredentialStatusOptions | null): Promise<IVerifyResult> {
     if(typeof credential !== 'string') {
         return await agent.cheqdVerifyCredential({
             credential: credential as VerifiableCredential,
@@ -207,7 +209,14 @@ export class Veramo {
     return await agent.verifyCredential({ credential, fetchRemoteContexts: true })
   }
 
-  async verifyPresentation(agent: VeramoAgent, presentation: VerifiablePresentation | string): Promise<IVerifyResult> {
+  async verifyPresentation(agent: VeramoAgent, presentation: VerifiablePresentation | string, statusOptions: VerifyPresentationStatusOptions | null): Promise<IVerifyResult> {
+    if(typeof presentation !== 'string') {
+        return await agent.cheqdVerifyPresentation({
+            presentation: presentation as VerifiablePresentation,
+            fetchList: true,
+            ...statusOptions
+        } as ICheqdVerifyPresentationWithStatusList2021Args)
+    }
     return await agent.verifyPresentation({ presentation, fetchRemoteContexts: true })
   }
 
