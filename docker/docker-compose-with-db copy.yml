@@ -1,0 +1,59 @@
+version: '3.8'
+
+# CAUTION: Please ensure you edit necessary values in .env before using this Docker Compose file.
+
+# SYNTAX: docker compose -f docker/docker-compose.yml up --detach
+
+services:
+  app:
+    # OPTIONAL: Rebuild cheqd credential-service Docker image, if you want build your own
+    # Default is to pull in the pre-published image on GitHub Container Registry
+    # SYNTAX: docker compose -f docker/docker-compose.yml build
+    # build:
+    #   context: ../
+    #   dockerfile: docker/Dockerfile
+    # CAUTION: Change image section's value if building your own image in section below
+    image: cheqd/credential-service:latest
+    ports:
+      - 3000:3000
+    env_file:
+      - .env
+    entrypoint: "npm run compose-run"
+    profiles:
+      - credential-service
+
+  app-with-postgres:
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # OPTIONAL: Rebuild cheqd credential-service Docker image, if you want build your own
+    # Default is to pull in the pre-published image on GitHub Container Registry
+    # SYNTAX: docker compose -f docker/docker-compose.yml build
+    # build:
+    #   context: ../
+    #   dockerfile: docker/Dockerfile
+    # CAUTION: Change image section's value if building your own image in section below
+    image: cheqd/credential-service:latest
+    ports:
+      - 3000:3000
+    env_file:
+      - .env
+    entrypoint: "npm run compose-run"
+    profiles:
+      - credential-service-with-external-db
+
+  postgres:
+    image: postgres
+    user: postgres
+    ports:
+      - 5432:5432
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - credential-service-with-external-db
+
