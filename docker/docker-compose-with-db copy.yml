@@ -6,41 +6,49 @@ version: '3.8'
 
 services:
   app:
-    # OPTIONAL: Rebuild cheqd credential-service Docker image, if you want build your own
-    # Default is to pull in the pre-published image on GitHub Container Registry
-    # SYNTAX: docker compose -f docker/docker-compose.yml build
-    # build:
-    #   context: ../
-    #   dockerfile: docker/Dockerfile
-    # CAUTION: Change image section's value if building your own image in section below
-    image: cheqd/credential-service:latest
-    ports:
-      - 3000:3000
-    env_file:
-      - .env
-    entrypoint: "npm run compose-run"
-    profiles:
-      - credential-service
-
-  app-with-postgres:
+    image: ghcr.io/cheqd/credential-service:latest
     depends_on:
       postgres:
         condition: service_healthy
-    # OPTIONAL: Rebuild cheqd credential-service Docker image, if you want build your own
-    # Default is to pull in the pre-published image on GitHub Container Registry
-    # SYNTAX: docker compose -f docker/docker-compose.yml build
-    # build:
-    #   context: ../
-    #   dockerfile: docker/Dockerfile
-    # CAUTION: Change image section's value if building your own image in section below
-    image: cheqd/credential-service:latest
     ports:
       - 3000:3000
     env_file:
-      - .env
-    entrypoint: "npm run compose-run"
+      - .env.with-db
+
+  app-migrations:
+    image: ghcr.io/cheqd/credential-service:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - 3000:3000
+    env_file:
+      - .env.with-db
+    entrypoint: [ "npm", "run", "migrate", "&&", "npm", "run", "seed" ]
     profiles:
-      - credential-service-with-external-db
+      - setup
+
+  logto:
+    image: ghcr.io/cheqd/creds-auth:latest
+    ports:
+      - 3001:3001
+      - 3002:3002
+    env_file:
+      - .env
+    profiles:
+      - logto
+
+  logto-migrations:
+    image: ghcr.io/cheqd/creds-auth:latest
+    ports:
+      - 3001:3001
+      - 3002:3002
+    env_file:
+      - .env
+    entrypoint: [ "npm", "run", "migrate", "&&", "npm", "run", "seed" ]
+    profiles:
+      - setup
+      - logto
 
   postgres:
     image: postgres
@@ -55,5 +63,5 @@ services:
       timeout: 5s
       retries: 5
     profiles:
-      - credential-service-with-external-db
-
+      - external-kms
+      - logto

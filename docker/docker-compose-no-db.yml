@@ -11,13 +11,3 @@ services:
       - 3000:3000
     env_file:
       - .env.no-db
-
-  app-migrations:
-    image: ghcr.io/cheqd/credential-service:latest
-    ports:
-      - 3000:3000
-    env_file:
-      - .env.no-db
-    entrypoint: [ "npm", "run", "migrate", "&&", "npm", "run", "seed" ]
-    profiles:
-      - setup
