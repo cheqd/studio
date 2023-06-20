@@ -173,9 +173,9 @@
                                                     "type": {
                                                         "type": "string",
                                                         "enum": [
-                                                            "Ed25519VerificationKey2020",
+                                                            "Ed25519VerificationKey2018",
                                                             "JsonWebKey2020",
-                                                            "Ed25519VerificationKey2018"
+                                                            "Ed25519VerificationKey2020"
                                                         ]
                                                     },
                                                     "id": {
@@ -1103,7 +1103,7 @@
                     },
                     "id": {
                         "type": "string",
-                        "example": "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09"
+                        "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
                     },
                     "controller": {
                         "type": "array",
@@ -1111,7 +1111,7 @@
                             "type": "string"
                         },
                         "example": [
-                            "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09"
+                            "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
                         ]
                     },
                     "authentication": {
@@ -1120,7 +1120,7 @@
                             "type": "string"
                         },
                         "example": [
-                            "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09#key-0"
+                            "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-0"
                         ]
                     },
                     "assertionMethod": {
@@ -1161,20 +1161,20 @@
                     }
                 },
                 "example": {
-                    "id": "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09",
+                    "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
                     "controller": [
-                        "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09"
+                        "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
                     ],
                     "verificationMethod": [
                         {
-                            "id": "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09#key-1",
-                            "type": "Ed25519VerificationKey2020",
-                            "controller": "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09",
-                            "publicKeyMultibase": "z6Mkt9Vg1a1Jbg5a1NkToUeWH23Z33TwGUua5MrqAYUz2AL3"
+                            "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
+                            "type": "Ed25519VerificationKey2018",
+                            "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+                            "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt"
                         }
                     ],
                     "authentication": [
-                        "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09#key-1"
+                        "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1"
                     ]
                 }
             },
@@ -1183,19 +1183,19 @@
                 "properties": {
                     "id": {
                         "type": "string",
-                        "example": "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09#key-0"
+                        "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-0"
                     },
                     "type": {
                         "type": "string",
-                        "example": "Ed25519VerificationKey2020"
+                        "example": "Ed25519VerificationKey2018"
                     },
                     "controller": {
                         "type": "string",
-                        "example": "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09"
+                        "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
                     },
                     "publicKeyMultibase": {
                         "type": "string",
-                        "example": "z6Mkt9Vg1a1Jbg5a1NkToUeWH23Z33TwGUua5MrqAYUz2AL3"
+                        "example": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt"
                     },
                     "publicKeyJwk": {
                         "type": "array",
@@ -1210,7 +1210,7 @@
                 "properties": {
                     "id": {
                         "type": "string",
-                        "example": "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09#rand,"
+                        "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#rand,"
                     },
                     "type": {
                         "type": "string",
@@ -1302,7 +1302,7 @@
                     "attributes"
                 ],
                 "example": {
-                    "issuerDid": "did:cheqd:testnet:ca9ff47c-0286-4614-a4be-8ffa83911e09",
+                    "issuerDid": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
                     "subjectDid": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
                     "attributes": {
                         "gender": "male",
@@ -1375,26 +1375,27 @@
                 },
                 "example": {
                     "@context": [
-                        "https://www.w3.org/2018/credentials/v1",
-                        "https://schema.org/Person"
+                      "https://www.w3.org/2018/credentials/v1",
+                      "https://schema.org",
+                      "https://veramo.io/contexts/profile/v1"
                     ],
-                    "type": [
-                        "VerifiableCredential",
-                        "Person"
-                    ],
-                    "issuer": {
-                        "id": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228"
-                    },
                     "credentialSubject": {
-                        "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-                        "gender": "male",
-                        "name": "Bob"
+                      "gender": "male",
+                      "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+                      "name": "Bob"
                     },
-                    "issuanceDate": "2023-03-22T07:00:47.749Z",
+                    "issuanceDate": "2023-06-08T13:49:28.000Z",
+                    "issuer": {
+                      "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+                    },
                     "proof": {
-                        "type": "JwtProof2020",
-                        "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vc2NoZW1hLm9yZy9QZXJzb24iLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXSwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiJkaWQ6a2V5Ono2TWtoYVhnQlpEdm90RGtMNTI1N2ZhaXp0aUdpQzJRdEtMR3Bibm5FR3RhMmRvSyIsImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn19LCJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vc2NoZW1hLm9yZy9QZXJzb24iLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXSwiaXNzdWVyIjp7ImlkIjoiZGlkOmNoZXFkOnRlc3RuZXQ6MzFmYjVmYzEtMGQyNC00M2Y5LTg3MGYtYmU4YjZiNmI5YzMzIn0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImlkIjoiZGlkOmtleTp6Nk1raGFYZ0JaRHZvdERrTDUyNTdmYWl6dGlHaUMyUXRLTEdwYm5uRUd0YTJkb0siLCJnZW5kZXIiOiJtYWxlIiwibmFtZSI6IkJvYiJ9LCJpc3N1YW5jZURhdGUiOiIyMDIzLTA1LTEyVDEyOjQ4OjE2LjU1NloiLCJzdWIiOiJkaWQ6a2V5Ono2TWtoYVhnQlpEdm90RGtMNTI1N2ZhaXp0aUdpQzJRdEtMR3Bibm5FR3RhMmRvSyIsIm5iZiI6MTY4Mzg5NTY5NiwiaXNzIjoiZGlkOmNoZXFkOnRlc3RuZXQ6MzFmYjVmYzEtMGQyNC00M2Y5LTg3MGYtYmU4YjZiNmI5YzMzIn0.MP2MvNnjxGXNKqT4itdEfRBd82nad30-a4-BupjskETb-10-Kyj94b5FDMxdwe3HQ39ztNwFRj3TPFiZS8z1Bw"
-                    }
+                      "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg",
+                      "type": "JwtProof2020"
+                    },
+                    "type": [
+                      "VerifiableCredential",
+                      "Person"
+                    ]
                 }
             },
             "Customer": {
@@ -1451,91 +1452,80 @@
                     }
                 },
                 "example": {
-                    "verified": true,
                     "didResolutionResult": {
-                        "didDocumentMetadata": {
-                            "created": "2023-03-17T10:36:09.353270749Z",
-                            "updated": "1970-01-01T00:00:00Z",
-                            "versionId": "5181e19a-7f2c-4c02-b033-dd739811e893"
-                        },
-                        "didResolutionMetadata": {
-                            "contentType": "application/did+ld+json",
-                            "retrieved": "2023-03-22T07:10:59Z",
-                            "did": {
-                                "didString": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228",
-                                "methodSpecificId": "8790869e-624c-4325-98df-c30e0e473228",
-                                "method": "cheqd"
-                            }
-                        },
-                        "didDocument": {
-                            "@context": [
-                                "https://www.w3.org/ns/did/v1",
-                                "https://w3id.org/security/suites/ed25519-2018/v1"
-                            ],
-                            "id": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228",
-                            "verificationMethod": [
-                                {
-                                    "id": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228#key-1",
-                                    "type": "Ed25519VerificationKey2018",
-                                    "controller": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228",
-                                    "publicKeyBase58": "334yXce19pCbMskUtTmgouKmY9SKMoo8XmZMS1tG6aZx"
-                                }
-                            ],
-                            "authentication": [
-                                "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228#key-1"
-                            ],
-                            "assertionMethod": [
-                                "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228#key-1"
-                            ]
-                        },
-                        "@context": "https://w3id.org/did-resolution/v1"
-                    },
-                    "issuer": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228",
-                    "signer": {
-                        "id": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228#key-1",
-                        "type": "Ed25519VerificationKey2018",
-                        "controller": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228",
-                        "publicKeyBase58": "334yXce19pCbMskUtTmgouKmY9SKMoo8XmZMS1tG6aZx"
-                    },
-                    "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vc2NoZW1hLm9yZy9QZXJzb24iLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXSwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiJkaWQ6a2V5Ono2TWtoYVhnQlpEdm90RGtMNTI1N2ZhaXp0aUdpQzJRdEtMR3Bibm5FR3RhMmRvSyIsImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn19LCJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vc2NoZW1hLm9yZy9QZXJzb24iLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXSwiaXNzdWVyIjp7ImlkIjoiZGlkOmNoZXFkOnRlc3RuZXQ6MzFmYjVmYzEtMGQyNC00M2Y5LTg3MGYtYmU4YjZiNmI5YzMzIn0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImlkIjoiZGlkOmtleTp6Nk1raGFYZ0JaRHZvdERrTDUyNTdmYWl6dGlHaUMyUXRLTEdwYm5uRUd0YTJkb0siLCJnZW5kZXIiOiJtYWxlIiwibmFtZSI6IkJvYiJ9LCJpc3N1YW5jZURhdGUiOiIyMDIzLTA1LTEyVDEyOjQ4OjE2LjU1NloiLCJzdWIiOiJkaWQ6a2V5Ono2TWtoYVhnQlpEdm90RGtMNTI1N2ZhaXp0aUdpQzJRdEtMR3Bibm5FR3RhMmRvSyIsIm5iZiI6MTY4Mzg5NTY5NiwiaXNzIjoiZGlkOmNoZXFkOnRlc3RuZXQ6MzFmYjVmYzEtMGQyNC00M2Y5LTg3MGYtYmU4YjZiNmI5YzMzIn0.MP2MvNnjxGXNKqT4itdEfRBd82nad30-a4-BupjskETb-10-Kyj94b5FDMxdwe3HQ39ztNwFRj3TPFiZS8z1Bw",
-                    "policies": {},
-                    "verifiableCredential": {
+                      "@context": "https://w3id.org/did-resolution/v1",
+                      "didDocument": {
                         "@context": [
-                            "https://www.w3.org/2018/credentials/v1",
-                            "https://veramo.io/contexts/profile/v1"
+                          "https://www.w3.org/ns/did/v1",
+                          "https://w3id.org/security/suites/ed25519-2018/v1"
                         ],
-                        "type": [
-                            "VerifiableCredential"
+                        "assertionMethod": [
+                          "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1"
                         ],
-                        "issuer": {
-                            "id": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228"
+                        "authentication": [
+                          "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1"
+                        ],
+                        "controller": [
+                          "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+                        ],
+                        "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+                        "verificationMethod": [
+                          {
+                            "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+                            "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
+                            "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
+                            "type": "Ed25519VerificationKey2018"
+                          }
+                        ]
+                      },
+                      "didDocumentMetadata": {
+                        "created": "2023-06-07T15:53:59.629128532Z",
+                        "versionId": "8e286b55-7a25-44bb-af93-f0f8fd9df1b7"
+                      },
+                      "didResolutionMetadata": {
+                        "contentType": "application/did+ld+json",
+                        "did": {
+                          "didString": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+                          "method": "cheqd",
+                          "methodSpecificId": "7bf81a20-633c-4cc7-bc4a-5a45801005e0"
                         },
-                        "credentialSubject": {
-                            "id": "did:key:z6MkrMspwyE1z2XkfcDafXAhgKYJ8nbSNCfZzB8WiZcvrLkF"
-                        },
-                        "issuanceDate": "2023-03-21T13:24:04.305Z",
-                        "reservationId": "123",
-                        "reservationStatus": "https://schema.org/ReservationConfirmed",
-                        "provider": {
-                            "brand": "EventBrite",
-                            "image": "/did:cheqd:testnet:f41e48cc-0ab4-4750-9ba9-6ff9e5c8006c/resources/"
-                        },
-                        "reservationFor": {
-                            "@type": "Event",
-                            "name": "Internet Identity Workshop IIWXXXV",
-                            "startDate": "2022-11-16T16:00:00",
-                            "endDate": "2022-11-18T00:00:00",
-                            "location": "Computer History Museum, 1401 N Shoreline Blvd, Mountain View, CA 94043",
-                            "logo": "/did:cheqd:testnet:f41e48cc-0ab4-4750-9ba9-6ff9e5c8006c/resources/"
-                        },
-                        "sub": "did:key:z6MkrMspwyE1z2XkfcDafXAhgKYJ8nbSNCfZzB8WiZcvrLkF",
-                        "nbf": 1679405044,
-                        "iss": "did:cheqd:mainnet:8790869e-624c-4325-98df-c30e0e473228",
-                        "proof": {
-                            "type": "JwtProof2020",
-                            "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vc2NoZW1hLm9yZy9QZXJzb24iLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXSwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiJkaWQ6a2V5Ono2TWtoYVhnQlpEdm90RGtMNTI1N2ZhaXp0aUdpQzJRdEtMR3Bibm5FR3RhMmRvSyIsImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn19LCJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vc2NoZW1hLm9yZy9QZXJzb24iLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXSwiaXNzdWVyIjp7ImlkIjoiZGlkOmNoZXFkOnRlc3RuZXQ6MzFmYjVmYzEtMGQyNC00M2Y5LTg3MGYtYmU4YjZiNmI5YzMzIn0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImlkIjoiZGlkOmtleTp6Nk1raGFYZ0JaRHZvdERrTDUyNTdmYWl6dGlHaUMyUXRLTEdwYm5uRUd0YTJkb0siLCJnZW5kZXIiOiJtYWxlIiwibmFtZSI6IkJvYiJ9LCJpc3N1YW5jZURhdGUiOiIyMDIzLTA1LTEyVDEyOjQ4OjE2LjU1NloiLCJzdWIiOiJkaWQ6a2V5Ono2TWtoYVhnQlpEdm90RGtMNTI1N2ZhaXp0aUdpQzJRdEtMR3Bibm5FR3RhMmRvSyIsIm5iZiI6MTY4Mzg5NTY5NiwiaXNzIjoiZGlkOmNoZXFkOnRlc3RuZXQ6MzFmYjVmYzEtMGQyNC00M2Y5LTg3MGYtYmU4YjZiNmI5YzMzIn0.MP2MvNnjxGXNKqT4itdEfRBd82nad30-a4-BupjskETb-10-Kyj94b5FDMxdwe3HQ39ztNwFRj3TPFiZS8z1Bw"
-                        }
-                    }
+                        "retrieved": "2023-06-08T13:51:18Z"
+                      }
+                    },
+                    "issuer": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+                    "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg",
+                    "policies": {},
+                    "signer": {
+                      "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+                      "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
+                      "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
+                      "type": "Ed25519VerificationKey2018"
+                    },
+                    "verifiableCredential": {
+                      "@context": [
+                        "https://www.w3.org/2018/credentials/v1",
+                        "https://schema.org",
+                        "https://veramo.io/contexts/profile/v1"
+                      ],
+                      "credentialSubject": {
+                        "gender": "male",
+                        "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+                        "name": "Bob"
+                      },
+                      "issuanceDate": "2023-06-08T13:49:28.000Z",
+                      "issuer": {
+                        "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+                      },
+                      "proof": {
+                        "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg",
+                        "type": "JwtProof2020"
+                      },
+                      "type": [
+                        "VerifiableCredential",
+                        "Person"
+                      ]
+                    },
+                    "verified": true
                 }
             },
             "CreateResourceRequest": {
