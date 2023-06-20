@@ -52,7 +52,6 @@ jobs:
           RELEASE_VERSION=$( git describe --tags "${{ github.sha }}")
           echo "RELEASE_VERSION=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
 
-
   release-docker:
     name: "Release Docker image"
     needs: release-node
@@ -115,7 +114,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: Dockerfile
+          file: docker/Dockerfile
           platforms: linux/amd64
           load: true
           target: runner
