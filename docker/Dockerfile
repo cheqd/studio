@@ -16,9 +16,6 @@ RUN npm ci
 # Build the app
 RUN npm run build
 
-# Postbuild script for the app
-RUN npm run postbuild
-
 
 ###############################################################
 ###         STAGE 2: Build credential-service runner        ###
@@ -119,3 +116,6 @@ EXPOSE ${PORT}
 # Set user and shell
 USER node
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
+# Run the application
+CMD ["npm", "start"]
