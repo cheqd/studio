@@ -55,7 +55,7 @@ class App {
     this.express.use(cookieParser())
     this.express.use(session({ secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 } }))
     this.express.use(handleAuthRoutes(configLogToExpress))
-    this.express.use(withLogto(configLogToExpress))
+    // this.express.use(withLogto(configLogToExpress))
     this.express.use(express.text())
 
     this.express.use(
@@ -65,6 +65,7 @@ class App {
         return res.send(swaggerUi.generateHTML(swaggerJSONDoc, swagger_options))
       }
     )
+    this.express.use(Authentication.withLogtoWrapper)
     this.express.use(Authentication.guard)
     this.express.use(Authentication.handleError)
     this.express.use(Authentication.accessControl)

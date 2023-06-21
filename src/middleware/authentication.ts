@@ -2,15 +2,17 @@ import { Request, Response, NextFunction } from 'express'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 
 import { CustomerService } from '../services/customer.js'
-import { IncomingHttpHeaders } from 'http'
 
 import * as dotenv from 'dotenv'
-import {apiGuarding} from "../types/types.js"
+import { apiGuarding } from "../types/types.js"
+import { withLogto } from '@logto/express'
+import { configLogToExpress } from '../types/constants.js'
+import { request } from 'http'
 dotenv.config()
 
 const {
   LOGTO_ENDPOINT,
-  LOGTO_RESOURCE_URL,
+  LOGTO_DEFAULT_RESOURCE_URL,
   ENABLE_AUTHENTICATION,
   DEFAULT_CUSTOMER_ID,
   ENABLE_EXTERNAL_DB
@@ -18,20 +20,17 @@ const {
 
 const OIDC_ISSUER = LOGTO_ENDPOINT + '/oidc'
 const OIDC_JWKS_ENDPOINT = LOGTO_ENDPOINT + '/oidc/jwks'
-const bearerTokenIdentifier = 'Bearer'
-
-export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHeaders) => {
-    if (!authorization) {
-        throw new Error('Authorization header is missing.')
-    }
-    if (!authorization.startsWith(bearerTokenIdentifier)) {
-        throw new Error(`Authorization token type is not supported. Valid type: "${bearerTokenIdentifier}".`)
-    }
-  
-    return authorization.slice(bearerTokenIdentifier.length + 1)
-}
 
 export class Authentication {
+
+    private static buildResourceAPIUrl(request: Request) {
+        const api_root = request.path.split('/')[1]
+        if (!api_root) {
+            // Skip if no api root
+            return null
+        }
+        return `${LOGTO_DEFAULT_RESOURCE_URL}/${api_root}`
+    }
 
     static handleError(error: Error, request: Request, response: Response, next: NextFunction) {
         if (error) {
@@ -71,12 +70,25 @@ export class Authentication {
 
     static async guard(jwtRequest: Request, response: Response, next: NextFunction) {
 		const { provider } = jwtRequest.body as { claim: string, provider: string }
+        const namespace = apiGuarding.getNamespaceFromRequest(jwtRequest)
         if (apiGuarding.skipPath(jwtRequest.path)) 
             return next()
 
 		try {
             if (ENABLE_AUTHENTICATION === 'true') {
-                const token = extractBearerTokenFromHeaders(jwtRequest.headers)
+                const token = Object.getOwnPropertyNames(jwtRequest.user).length > 0 ? jwtRequest.user.accessToken : null;
+                if (!token) {
+                    return response.status(400).json({
+                        error: `Unauthorized error: Looks like you are not logged in using LogTo properly.`
+                    })
+                }
+
+                const resourceAPI = Authentication.buildResourceAPIUrl(jwtRequest)
+                if (!resourceAPI) {
+                    return response.status(400).json({
+                        error: `Unauthorized error: Looks like you are not logged in using LogTo properly.`
+                    })
+                }
     
                 const { payload } = await jwtVerify(
                     token, // The raw Bearer Token extracted from the request header
@@ -85,22 +97,22 @@ export class Authentication {
                         // expected issuer of the token, should be issued by the Logto server
                         issuer: OIDC_ISSUER,
                         // expected audience token, should be the resource indicator of the current API
-                        audience: LOGTO_RESOURCE_URL,
+                        audience: resourceAPI,
                     }
                 )
 
-                let scopes: string[] = []
-                if (payload.scope) {
-                    scopes = (payload.scope as string).split(' ')
-                } else {
+                const scopes = jwtRequest.user.scopes;
+                if (!scopes) {
                     return response.status(400).json({
-                        error: `Unauthorized error: It's required to provide a token with scopes inside.`
+                        error: `Unauthorized error: Seems your LogTo account does not have any scopes. 
+                        Ask your administrator to assign scopes to your account.`
                     })
                 }
 
-                if (!apiGuarding.areValidScopes(jwtRequest.path, jwtRequest.method, scopes)) {
+                if (!apiGuarding.areValidScopes(jwtRequest.path, jwtRequest.method, scopes, namespace)) {
                     return response.status(400).json({
-                        error: `Unauthorized error: Provided token does not have the required scopes. You need ${apiGuarding.getScopeForRoute(jwtRequest.path, jwtRequest.method)} scope(s).`
+                        error: `Unauthorized error: Current LogTo account does not have the required scopes. 
+                        You need ${apiGuarding.getScopeForRoute(jwtRequest.path, jwtRequest.method, namespace)} scope(s).`
                     })
                 }
             
@@ -123,4 +135,29 @@ export class Authentication {
             })
 		}
 	}
+    
+    static async withLogtoWrapper(request: Request, response: Response, next: NextFunction) {
+        if (apiGuarding.skipPath(request.path)) 
+            return next()
+        try {
+            if (ENABLE_AUTHENTICATION === 'true') {
+                // compile API resource
+                const resourceAPI = Authentication.buildResourceAPIUrl(request)
+                if (!resourceAPI) {
+                    return next()
+                }
+                return withLogto({...configLogToExpress, resource: resourceAPI})(request, response, next)
+                
+            }
+            else {
+                next()
+            }
+		} catch (err) {
+			return response.status(500).send({
+                authenticated: false,
+                error: `${err}`,
+                customerId: null,
+            })
+		}
+    }
 }

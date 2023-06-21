@@ -9,6 +9,7 @@ import {
   TAgent,
   CredentialStatusReference
 } from '@veramo/core'
+import { Request } from 'express'
 import { ICheqd, ICheqdStatusList2021Options } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import { ICredentialIssuerLD } from '@veramo/credential-ld'
 import { AbstractIdentifierProvider } from '@veramo/did-manager'
@@ -16,6 +17,7 @@ import { AbstractKeyManagementSystem } from '@veramo/key-manager'
 import { DataSource } from 'typeorm'
 import { CheqdDIDProvider } from '@cheqd/did-provider-cheqd'
 import { CosmosAccessControlCondition } from '@cheqd/did-provider-cheqd/build/types/dkg-threshold/lit-protocol'
+import stringify from 'json-stringify-safe'
 
 export type ErrorResponse = {
   name: string
@@ -103,12 +105,12 @@ class MethodToScope {
     this.scope = scope
   }
   
-  public validate(route: string, method: string, scope: string): boolean {
-    return this.route === route && this.method === method && this.scope === scope
+  public validate(route: string, method: string, scope: string, namespace="testnet"): boolean {
+    return this.route === route && this.method === method && this.scope === scope && this.scope.includes(namespace)
   }
 
-  public isRule(route: string, method: string): boolean {
-    return this.route === route && this.method === method
+  public isRule(route: string, method: string, namespace="testnet"): boolean {
+    return this.route === route && this.method === method && this.scope.includes(namespace)
   }
 
   public getScope(): string {
@@ -121,48 +123,55 @@ export class ApiGuarding {
   private static pathSkip = ['/', '/swagger', '/user', '/static/custom_button.js']
   private static regExpSkip = new RegExp("^/.*js")
   constructor() {
-    this.registerRoute('/account', 'GET', 'account:read')
-    this.registerRoute('/account', 'POST', 'account:create')
-    this.registerRoute('/key', 'POST', 'key:create')
-    this.registerRoute('/key', 'GET', 'key:read')
-    this.registerRoute('/credential/issue', 'POST', 'credential:issue')
-    this.registerRoute('/credential/verify', 'POST', 'credential:verify')
-    this.registerRoute('/did/create', 'POST', 'did:create')
+    this.registerRoute('/account', 'GET', 'account:read:testnet')
+    this.registerRoute('/account', 'GET', 'account:read:mainnet')
+    this.registerRoute('/account', 'POST', 'account:create:testnet')
+    this.registerRoute('/account', 'POST', 'account:create:mainnet')
+    this.registerRoute('/key', 'POST', 'key:create:testnet')
+    this.registerRoute('/key', 'POST', 'key:create:mainnet')
+    this.registerRoute('/key', 'GET', 'key:read:testnet')
+    this.registerRoute('/key', 'GET', 'key:read:mainnet')
+    this.registerRoute('/credential/issue', 'POST', 'credential:issue:testnet')
+    this.registerRoute('/credential/issue', 'POST', 'credential:issue:mainnet')
+    this.registerRoute('/credential/verify', 'POST', 'credential:verify:testnet')
+    this.registerRoute('/credential/verify', 'POST', 'credential:verify:mainnet')
+    this.registerRoute('/did/create', 'POST', 'did:create:testnet')
+    this.registerRoute('/did/create', 'POST', 'did:create:mainnet')
   }
 
   private registerRoute(route: string, method: string, scope: string): void {
     this.routeToScoupe.push(new MethodToScope(route, method, scope))
   }
 
-  private findRule(route: string, method: string): MethodToScope | null {
+  private findRule(route: string, method: string, namespace="testnet"): MethodToScope | null {
     for (const item of this.routeToScoupe) {
-      if (item.isRule(route, method)) {
+      if (item.isRule(route, method, namespace)) {
         return item
       }
     }
     return null
   }
 
-  public getScopeForRoute(route: string, method: string): string | null {
-    const rule = this.findRule(route, method)
+  public getScopeForRoute(route: string, method: string, namespace: string): string | null {
+    const rule = this.findRule(route, method, namespace)
     if (rule) {
       return rule.getScope()
     }
     return null
   }
 
-  public isValidScope(route: string, method: string, scope: string): boolean {
-    const rule = this.findRule(route, method)
+  public isValidScope(route: string, method: string, scope: string, namespace="testnet"): boolean {
+    const rule = this.findRule(route, method, namespace)
     if (rule) {
-      return rule.validate(route, method, scope)
+      return rule.validate(route, method, scope, namespace)
     }
     // If no rule for route, then allow
     return true
   }
 
-  public areValidScopes(route: string, method: string, scopes: string[]): boolean {
+  public areValidScopes(route: string, method: string, scopes: string[], namespace="testnet"): boolean {
     for (const scope of scopes) {
-      if (this.isValidScope(route, method, scope)) {
+      if (this.isValidScope(route, method, scope, namespace)) {
         return true
       }
     }
@@ -171,6 +180,14 @@ export class ApiGuarding {
 
   public skipPath(path: string): boolean {
     return ApiGuarding.pathSkip.includes(path) || path.match(ApiGuarding.regExpSkip) !== null
+  }
+
+  public getNamespaceFromRequest(req: Request): string {
+    const matches = stringify(req.body).match(cheqdDidRegex)
+    if (matches && matches.length > 0) {
+      return matches[1]
+    }
+    return 'testnet'
   }
 }
 
