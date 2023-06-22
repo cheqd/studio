@@ -11,22 +11,22 @@
 	"exports": {
 		".": {
 			"types": "./dist/types/index.d.ts",
-			"import": "./dist/src/index.js",
-			"default": "./dist/src/index.js"
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
 		},
 		"./*": {
 			"types": "./dist/types/*.d.ts",
-			"import": "./dist/src/*.js",
-			"default": "./dist/src/*.js"
+			"import": "./dist/*.js",
+			"default": "./dist/*.js"
 		}
 	},
 	"scripts": {
 		"build": "tsc",
-		"start": "node dist/src/index.js",
+		"start": "node dist/index.js",
 		"format": "prettier --write  '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
 		"lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
 		"test": "jest --config jestconfig.json --verbose",
-		"typeorm": "typeorm-ts-node-esm  -d ./dist/src/database/ormconfig.js",
+		"typeorm": "typeorm-ts-node-esm  -d ./dist/database/ormconfig.js",
 		"migration": "npm run typeorm migration:generate . && npm run typeorm migration:run"
 	},
 	"eslintConfig": {
@@ -38,10 +38,10 @@
 	},
 	"files": [
 		"dist/**/*",
+		"static/**/*",
 		"LICENSE",
 		"package.json",
-		"README.md",
-		"swagger.json"
+		"README.md"
 	],
 	"dependencies": {
 		"@cheqd/did-provider-cheqd": "3.3.1",
