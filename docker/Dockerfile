@@ -34,7 +34,6 @@ RUN apk update && \
     apk add --no-cache bash ca-certificates
 
 # Copy files from builder
-COPY --from=builder --chown=node:node /home/node/app/*.json /home/node/app/*.md ./
 COPY --from=builder --chown=node:node /home/node/app/dist ./dist
 
 # Install production dependencies
