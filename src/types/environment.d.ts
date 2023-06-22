@@ -40,9 +40,9 @@ declare global {
       POLYGON_PRIVATE_KEY: string
 
       // Without external db
-      ISSUER_ID_PRIVATE_KEY_HEX: string
-      ISSUER_ID_PUBLIC_KEY_HEX: string
-      FEE_PAYER_MNEMONIC: string
+      ISSUER_PRIVATE_KEY_HEX: string
+      ISSUER_PUBLIC_KEY_HEX: string
+      DEFAULT_FEE_PAYER_MNEMONIC: string
       ISSUER_DID: string
     }
   }
