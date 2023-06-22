@@ -3,11 +3,10 @@
 **/.github
 **/node_modules
 **/dist
+**/docker
 
 # Skip unnecessary files
 **/*.md
-Dockerfile
-docker-compose.yml
 
 # Exceptions
 !LICENSE

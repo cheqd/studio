@@ -1,11 +1,15 @@
 ### APP-SPECIFIC EXCLUSIONS ###
+
+### Folders ###
 tmp
-database.sqlite
-tsconfig.tsbuildinfo
-worker/
-transpiled
+
+### Files ###
 .env
 .snyk
+**/docker-compose-no-db-local.yml
+database.sqlite
+**/no-db-local.env
+tsconfig.tsbuildinfo
 
 ### GENERAL EXCLUSIONS ###
 

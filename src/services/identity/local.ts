@@ -23,9 +23,9 @@ dotenv.config()
 const {
   MAINNET_RPC_URL,
   TESTNET_RPC_URL,
-  FEE_PAYER_MNEMONIC,
-  ISSUER_ID_PUBLIC_KEY_HEX,
-  ISSUER_ID_PRIVATE_KEY_HEX,
+  DEFAULT_FEE_PAYER_MNEMONIC,
+  ISSUER_PUBLIC_KEY_HEX,
+  ISSUER_PRIVATE_KEY_HEX,
   ISSUER_DID
 } = process.env
 
@@ -34,8 +34,12 @@ export class LocalIdentity implements IIdentity {
   privateStore?: AbstractPrivateKeyStore
   public static instance = new LocalIdentity()
 
+  constructor() {
+    this.agent = this.initAgent()
+  }
+
   initAgent() {
-    if (!FEE_PAYER_MNEMONIC) {
+    if (!DEFAULT_FEE_PAYER_MNEMONIC) {
         throw new Error(`No fee payer found`)
     }
     if(this.agent) {
@@ -47,7 +51,7 @@ export class LocalIdentity implements IIdentity {
     const mainnetProvider = new CheqdDIDProvider(
       {
         defaultKms: 'local',
-        cosmosPayerSeed: FEE_PAYER_MNEMONIC,
+        cosmosPayerSeed: DEFAULT_FEE_PAYER_MNEMONIC,
         networkType: CheqdNetwork.Mainnet,
         rpcUrl: MAINNET_RPC_URL || DefaultRPCUrl.Mainnet,
       }
@@ -55,7 +59,7 @@ export class LocalIdentity implements IIdentity {
     const testnetProvider = new CheqdDIDProvider(
       {
         defaultKms: 'local',
-        cosmosPayerSeed: FEE_PAYER_MNEMONIC,
+        cosmosPayerSeed: DEFAULT_FEE_PAYER_MNEMONIC,
         networkType: CheqdNetwork.Testnet,
         rpcUrl: TESTNET_RPC_URL || DefaultRPCUrl.Testnet,
       }
@@ -103,11 +107,11 @@ export class LocalIdentity implements IIdentity {
   }
 
   async importDid(): Promise<IIdentifier> {
-    if (!(ISSUER_DID && ISSUER_ID_PUBLIC_KEY_HEX && ISSUER_ID_PRIVATE_KEY_HEX)) throw new Error('No DIDs and Keys found')
+    if (!(ISSUER_DID && ISSUER_PUBLIC_KEY_HEX && ISSUER_PRIVATE_KEY_HEX)) throw new Error('No DIDs and Keys found')
     try {
         return await this.getDid(ISSUER_DID)
     } catch {
-        const identifier: IIdentifier = await Veramo.instance.importDid(this.initAgent(), ISSUER_DID, ISSUER_ID_PRIVATE_KEY_HEX, ISSUER_ID_PUBLIC_KEY_HEX)
+        const identifier: IIdentifier = await Veramo.instance.importDid(this.initAgent(), ISSUER_DID, ISSUER_PRIVATE_KEY_HEX, ISSUER_PUBLIC_KEY_HEX)
         return identifier
     }
   }

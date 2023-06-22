@@ -118,7 +118,7 @@ class MethodToScope {
 
 export class ApiGuarding {
   private routeToScoupe: MethodToScope[] = []
-  private static pathSkip = ['/', '/swagger', '/user', '/static/custom_button.js']
+  private static pathSkip = ['/', '/swagger', '/user', '/static/custom-button.js']
   private static regExpSkip = new RegExp("^/.*js")
   constructor() {
     this.registerRoute('/account', 'GET', 'account:read')
