@@ -15,7 +15,7 @@ import { Connection } from './database/connection/connection.js'
 import { RevocationController } from './controllers/revocation.js'
 import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js'
 
-import swaggerJSONDoc from '../static/swagger.json' assert { type: "json" }
+import swaggerJSONDoc from './static/swagger.json' assert { type: "json" }
 
 import * as dotenv from 'dotenv'
 dotenv.config()
@@ -103,9 +103,9 @@ class App {
     app.get(`/account`, new CustomerController().get)
 
     // static files
-    app.get('custom_button.js', 
+    app.get('/static/custom_button.js', 
         express.static(
-          path.join(process.cwd(), '/static'), 
+          path.join(process.cwd(), '/dist/src'), 
           {extensions: ['js'], index: false}))
 
     // 404 for all other requests
