@@ -15,7 +15,7 @@ import { Connection } from './database/connection/connection.js'
 import { RevocationController } from './controllers/revocation.js'
 import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js'
 
-import swaggerJSONDoc from './static/swagger.json' assert { type: "json" }
+import swaggerJSONDoc from './swagger.json' assert { type: "json" }
 
 import * as dotenv from 'dotenv'
 dotenv.config()
