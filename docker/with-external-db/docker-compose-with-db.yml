@@ -24,7 +24,7 @@ services:
       - 3000:3000
     env_file:
       - .env.with-db
-    entrypoint: [ "npm", "run", "migrate", "&&", "npm", "run", "seed" ]
+    entrypoint: [ "npm", "run", "migrate", "&&", "npm", "run", "start" ]
     profiles:
       - setup
 
