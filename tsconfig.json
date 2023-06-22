@@ -1,12 +1,4 @@
 {
-  "include": [
-    "src/**/*",
-    "src/static/**/*",
-  ],
-  "exclude": [
-    "node_modules",
-    "docker",
-  ],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
 
