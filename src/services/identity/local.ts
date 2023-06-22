@@ -34,6 +34,10 @@ export class LocalIdentity implements IIdentity {
   privateStore?: AbstractPrivateKeyStore
   public static instance = new LocalIdentity()
 
+  constructor() {
+    this.agent = this.initAgent()
+  }
+
   initAgent() {
     if (!FEE_PAYER_MNEMONIC) {
         throw new Error(`No fee payer found`)
