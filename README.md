@@ -77,7 +77,7 @@ The app's [Verida Network](https://www.verida.network/) connector can be enabled
 If you want to run the application without any external databases or dependent services, we provide [a Docker Compose file](docker/no-external-db/docker-compose-no-db.yml) to spin up a standalone service.
 
 ```bash
-docker compose -f docker/docker-compose-no-db.yml up --detach
+docker compose -f docker/no-external-db/docker-compose-no-db.yml up --detach
 ```
 
 This standalone service uses an in-memory database with no persistence, and therefore is recommended only if you're managing key/secret storage separately.
