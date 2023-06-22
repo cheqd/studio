@@ -2,7 +2,7 @@ version: '3.8'
 
 # CAUTION: Please ensure you edit necessary values in .env.no-db before using this Docker Compose file.
 
-# SYNTAX: docker compose -f docker/docker-compose.yml up --detach
+# SYNTAX: docker compose -f docker/docker-compose-no-db.yml up --detach
 
 services:
   app:
