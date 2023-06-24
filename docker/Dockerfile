@@ -16,9 +16,6 @@ RUN npm ci
 # Build the app
 RUN npm run build
 
-# Postbuild script for the app
-RUN npm run postbuild
-
 
 ###############################################################
 ###         STAGE 2: Build credential-service runner        ###
@@ -45,7 +42,7 @@ RUN npm ci
 
 # Base arguments: build-time
 ARG NPM_CONFIG_LOGLEVEL=warn
-ARG PORT=8787
+ARG PORT=3000
 
 # Network API endpoints: build-time
 ARG MAINNET_RPC_URL=https://rpc.cheqd.net:443
@@ -119,3 +116,6 @@ EXPOSE ${PORT}
 # Set user and shell
 USER node
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
+# Run the application
+CMD ["npm", "start"]
