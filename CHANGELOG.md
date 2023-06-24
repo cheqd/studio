@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.2-develop.2](https://github.com/cheqd/credential-service/compare/2.3.2-develop.1...2.3.2-develop.2) (2023-06-24)
+
+
+### Bug Fixes
+
+* Fix local storage instantiating ([#269](https://github.com/cheqd/credential-service/issues/269)) ([6ec820f](https://github.com/cheqd/credential-service/commit/6ec820f83c6d1c9b0a34e0bde10bcec25a51c5ef))
+
 ## [2.3.2-develop.1](https://github.com/cheqd/credential-service/compare/2.3.1...2.3.2-develop.1) (2023-06-22)
 
 ## [2.3.1](https://github.com/cheqd/credential-service/compare/2.3.0...2.3.1) (2023-06-22)

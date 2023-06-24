@@ -32,7 +32,6 @@ const {
 export class LocalIdentity implements IIdentity {
   agent?: VeramoAgent
   privateStore?: AbstractPrivateKeyStore
-  public static instance = new LocalIdentity()
 
   constructor() {
     this.agent = this.initAgent()
