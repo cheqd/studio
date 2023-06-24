@@ -53,7 +53,9 @@ class App {
     }))
 
     this.express.use(cookieParser())
-    this.express.use(session({ secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 } }))
+    if (process.env.ENABLE_AUTHENTICATION === 'true') {
+      this.express.use(session({secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 }}))
+    }
     this.express.use(handleAuthRoutes(configLogToExpress))
     this.express.use(withLogto(configLogToExpress))
     this.express.use(express.text())
