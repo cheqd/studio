@@ -1,6 +1,6 @@
 version: '3.8'
 
-# CAUTION: Please ensure you edit necessary values in .env before using this Docker Compose file.
+# CAUTION: Please ensure you edit necessary values in with-db.env before using this Docker Compose file.
 
 # SYNTAX: docker compose -f docker/docker-compose.yml up --detach
 
@@ -13,7 +13,9 @@ services:
     ports:
       - 3000:3000
     env_file:
-      - .env.with-db
+      - with-db.env
+    profiles:
+      - app-without-external-db
 
   app-migrations:
     image: ghcr.io/cheqd/credential-service:latest
@@ -23,31 +25,23 @@ services:
     ports:
       - 3000:3000
     env_file:
-      - .env.with-db
-    entrypoint: [ "npm", "run", "migrate", "&&", "npm", "run", "start" ]
+      - with-db.env
+    entrypoint: [ "sh", "-c", "npm run migration && npm run start" ]
     profiles:
-      - setup
+      - app-with-external-db
 
   logto:
-    image: ghcr.io/cheqd/creds-auth:latest
+    image: ghcr.io/logto-io/logto:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - 3001:3001
       - 3002:3002
+    entrypoint: ["sh", "-c", "npm run cli db seed -- --swe && npm start"]
     env_file:
       - .env
     profiles:
-      - logto
-
-  logto-migrations:
-    image: ghcr.io/cheqd/creds-auth:latest
-    ports:
-      - 3001:3001
-      - 3002:3002
-    env_file:
-      - .env
-    entrypoint: [ "npm", "run", "migrate", "&&", "npm", "run", "seed" ]
-    profiles:
-      - setup
       - logto
 
   postgres:
