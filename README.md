@@ -10,37 +10,14 @@
 
 The purpose of this service is to issue and verify credentials. This service by itself does not take care of storing the credentials. If you'd like to store credentials, you would have to pair this service with [secret-box-service](https://github.com/cheqd/secret-box-service.git). This service is also dependent on [auth0-service](https://github.com/cheqd/auth0-service)
 
-## 📖 Endpoints
+## 📖 Usage
 
-### Issue a credential
+We run hosted endpoints for this package (in case you don't want to run it yourself) which have Swagger / OpenAPI definition endpoints that list all of the APIs and how they work.
 
-- **Endpoint** POST `/credentials/issue`
-- **Accepts**: `application/json`
-- **Request Body**: JSON object with following fields
-  - `attributes` - A json object with all the credential attributes
-  - `subjectDid` - DID of the holder of the credential
-  - `type` - A string representation of the credential type e.g. "PERSON" (optional)
-  - `@context` - context of the issued credential (optional)
-  - `expirationDate` - Date of expiration of the JWT (optional)
-- **Success Response Code**: 200
-- **Invalid Request Response Code** - 400
-- **Internal Error Response Code** - 500
+The Swagger API definition pages are:
 
-### Verify a Credential
-
-- **Endpoint** POST `/credentials/verify`
-- **Accepts**: `application/json`
-- **Request Body**: JSON object with following fields:
-  - `credential` - A verifiable credential or the JWT string
-- **Success Response Code** - 200
-- **Invalid Request Response Code**:
-  - 400: Bad request body
-  - 405: Wrong content type
-- **Internal Error Response Code** - 500
-
-### Health Check
-
-- **Endpoint**: `/` (This endpoint redirects to the swagger api docs)
+- [Production / Stable Release APIs](https://credential-service.cheqd.net/swagger/)
+- [Staging / Development Release APIs](https://credential-service-staging.cheqd.net/swagger/)
 
 ## 🔧 Configuration
 
@@ -93,39 +70,21 @@ The app's [Verida Network](https://www.verida.network/) connector can be enabled
     - `VERIDA_PRIVATE_KEY`: Secret key for Verida Network API.
     - `POLYGON_PRIVATE_KEY`: Secret key for Polygon Network.
 
-### Run the application
-
-Initiate a Postgres database, in case you're using an external database.
-
-```bash
-docker pull postgres
-docker run --name some-postgres -e POSTGRES_PASSWORD=mysecretpassword -d postgres
-```
-
-Construct the postgres URL and configure the env variables mentioned above.
-
-Once configured, install dependencies and the app can be build using NPM:
-
-```bash
-npm install
-npm run build
-```
-
-Run migration using NPM:
-
-```bash
-npm run migration
-```
-
-The app can be run using NPM:
-
-```bash
-npm start
-```
-
 ## 🧑‍💻🛠 Developer Guide
 
-### Running your own credential-service using Docker
+### Run as standalone application using Docker Compose
+
+If you want to run the application without any external databases or dependent services, we provide [a Docker Compose file](docker/no-external-db/docker-compose-no-db.yml) to spin up a standalone service.
+
+```bash
+docker compose -f docker/no-external-db/docker-compose-no-db.yml up --detach
+```
+
+This standalone service uses an in-memory database with no persistence, and therefore is recommended only if you're managing key/secret storage separately.
+
+The [`no-db.env` file](docker/no-external-db/no-db.env) in the same folder contains all the environment variables necessary to configure the service. (See section *Configuration* above.)
+
+### Run with external Key Management System (KMS) and/or authentication service using Docker Compose
 
 Construct the postgres URL and configure the env variables mentioned above.
 
@@ -137,39 +96,18 @@ Spinning up a Docker container from the [pre-built credential-service Docker ima
     - `POSTGRES_PASSWORD`: Postgres database password using in Docker database service.
     - `POSTGRES_DB`: Postgres database name using in Docker database service.
 
-  - Run credential-service with external database:
+Run credential-service with external database:
 
-    ```bash
-    docker compose -f docker/docker-compose.yml --profile credential-service-with-external-db up --detach
-    ```
-
-- Running credential-service using Docker without external database (In memory database):
-
-    ```bash
-    docker compose -f docker/docker-compose.yml --profile credential-service up --detach
-    ```
-
-- Running credential-service using Docker with Postgres&LogTo
-  - Run Docker with Postgres&Logto:
-
-    ```bash
-    docker compose -f docker/logto/docker-compose.yml up logto postgres --detach
-    ```
-
-  - Set `LOGTO_APP_ID`, `LOGTO_APP_SECRET` environment variables in `docker/logto/.env`.
-
-  - Run credential-service:
-
-    ```bash
-    docker compose -f docker/logto/docker-compose.yml up app --detach
-    ```
+```bash
+docker compose -f docker/docker-compose.yml --profile credential-service-with-external-db up --detach
+```
 
 ### Build using Docker
 
-To build and run in Docker, use the [Dockerfile](docker/Dockerfile) provided.
+To build your own image using Docker, use the [Dockerfile](docker/Dockerfile) provided.
 
 ```bash
-docker build --file docker/Dockerfile --tag credential-service .
+docker build --file docker/Dockerfile --target runner . --tag credential-service:local
 ```
 
 ## 🐞 Bug reports & 🤔 feature requests

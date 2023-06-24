@@ -53,7 +53,7 @@ ARG TESTNET_RPC_URL=https://rpc.cheqd.network:443
 ARG RESOLVER_URL=https://resolver.cheqd.net/1.0/identifiers/
 
 # Veramo Database configuration: build-time
-ARG ENABLE_EXTERNAL_DB
+ARG ENABLE_EXTERNAL_DB=false
 ARG EXTERNAL_DB_CONNECTION_URL
 ARG EXTERNAL_DB_ENCRYPTION_KEY
 ARG EXTERNAL_DB_CERT

@@ -1,6 +1,6 @@
 {
 	"name": "@cheqd/credential-service",
-	"version": "2.1.0-develop.25",
+	"version": "2.3.2-develop.1",
 	"description": "cheqd Credential Service Backend",
 	"source": "src/index.ts",
 	"main": "dist/index.js",
@@ -11,26 +11,23 @@
 	"exports": {
 		".": {
 			"types": "./dist/types/index.d.ts",
-			"import": "./dist/src/index.js",
-			"default": "./dist/src/index.js"
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
 		},
 		"./*": {
 			"types": "./dist/types/*.d.ts",
-			"import": "./dist/src/*.js",
-			"default": "./dist/src/*.js"
+			"import": "./dist/*.js",
+			"default": "./dist/*.js"
 		}
 	},
 	"scripts": {
-		"copy-files": "copyfiles -u 1 src/static/**/*.js dist/src",
-		"postbuild": "npm run copy-files",
 		"build": "tsc",
-		"start": "node dist/src/index.js",
+		"start": "node dist/index.js",
 		"format": "prettier --write  '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
 		"lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
 		"test": "jest --config jestconfig.json --verbose",
-		"typeorm": "typeorm-ts-node-esm  -d ./dist/src/database/ormconfig.js",
-		"migration": "npm run typeorm migration:generate . && npm run typeorm migration:run",
-		"compose-run": "npm run migration && npm run start"
+		"typeorm": "typeorm-ts-node-esm  -d ./dist/database/ormconfig.js",
+		"migration": "npm run typeorm migration:generate . && npm run typeorm migration:run"
 	},
 	"eslintConfig": {
 		"root": true,
@@ -46,7 +43,7 @@
 		"README.md"
 	],
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "^3.3.2",
+		"@cheqd/did-provider-cheqd": "3.3.1",
 		"@cosmjs/amino": "^0.30.1",
 		"@cosmjs/encoding": "^0.30.1",
 		"@logto/express": "^2.0.2",
@@ -82,11 +79,11 @@
 	},
 	"devDependencies": {
 		"@semantic-release/changelog": "^6.0.3",
-		"@semantic-release/commit-analyzer": "^9.0.2",
+		"@semantic-release/commit-analyzer": "^10.0.1",
 		"@semantic-release/git": "^10.0.1",
-		"@semantic-release/github": "^8.1.0",
-		"@semantic-release/npm": "^10.0.4",
-		"@semantic-release/release-notes-generator": "^11.0.3",
+		"@semantic-release/github": "^9.0.3",
+		"@semantic-release/npm": "^10.0.3",
+		"@semantic-release/release-notes-generator": "^11.0.2",
 		"@types/cookie-parser": "^1.4.3",
 		"@types/cors": "^2.8.13",
 		"@types/debug": "^4.1.8",
