@@ -11,11 +11,10 @@ export class Identity {
     static instance = new Identity().agent
 
     constructor() {
-        if (process.env.ENABLE_EXTERNAL_DB == 'true') {
-            this.agent = PostgresIdentity.instance
+        if (process.env.ENABLE_EXTERNAL_DB === 'true') {
+            this.agent = new PostgresIdentity()
         } else {
-            this.agent = LocalIdentity.instance
+            this.agent = new LocalIdentity()
         }
-        this.agent.initAgent()
     }
 }

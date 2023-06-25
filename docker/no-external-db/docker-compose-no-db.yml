@@ -1,0 +1,13 @@
+version: '3.8'
+
+# CAUTION: Please ensure you edit necessary values in .env.no-db before using this Docker Compose file.
+
+# SYNTAX: docker compose -f docker/docker-compose-no-db.yml up --detach
+
+services:
+  app:
+    image: ghcr.io/cheqd/credential-service:latest
+    ports:
+      - 3000:3000
+    env_file:
+      - no-db.env

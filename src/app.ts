@@ -15,7 +15,7 @@ import { Connection } from './database/connection/connection.js'
 import { RevocationController } from './controllers/revocation.js'
 import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js'
 
-import swaggerJSONDoc from '../swagger.json' assert { type: "json" }
+import swaggerJSONDoc from './static/swagger.json' assert { type: "json" }
 
 import * as dotenv from 'dotenv'
 dotenv.config()
@@ -24,7 +24,7 @@ import { UserInfo } from './controllers/user_info.js'
 import path from 'path'
 
 const swagger_options = {
-  customJs: '/static/custom_button.js',
+  customJs: '/static/custom-button.js',
 }
 
 class App {
@@ -53,7 +53,9 @@ class App {
     }))
 
     this.express.use(cookieParser())
-    this.express.use(session({ secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 } }))
+    if (process.env.ENABLE_AUTHENTICATION === 'true') {
+      this.express.use(session({secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 }}))
+    }
     this.express.use(handleAuthRoutes(configLogToExpress))
     // this.express.use(withLogto(configLogToExpress))
     this.express.use(express.text())
@@ -104,9 +106,9 @@ class App {
     app.get(`/account`, new CustomerController().get)
 
     // static files
-    app.get('/static/custom_button.js', 
+    app.get('/static/custom-button.js', 
         express.static(
-          path.join(process.cwd(), '/dist/src'), 
+          path.join(process.cwd(), '/dist'), 
           {extensions: ['js'], index: false}))
 
     // 404 for all other requests

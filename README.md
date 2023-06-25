@@ -10,37 +10,14 @@
 
 The purpose of this service is to issue and verify credentials. This service by itself does not take care of storing the credentials. If you'd like to store credentials, you would have to pair this service with [secret-box-service](https://github.com/cheqd/secret-box-service.git). This service is also dependent on [auth0-service](https://github.com/cheqd/auth0-service)
 
-## 📖 Endpoints
+## 📖 Usage
 
-### Issue a credential
+We run hosted endpoints for this package (in case you don't want to run it yourself) which have Swagger / OpenAPI definition endpoints that list all of the APIs and how they work.
 
-- **Endpoint** POST `/credentials/issue`
-- **Accepts**: `application/json`
-- **Request Body**: JSON object with following fields
-  - `attributes` - A json object with all the credential attributes
-  - `subjectDid` - DID of the holder of the credential
-  - `type` - A string representation of the credential type e.g. "PERSON" (optional)
-  - `@context` - context of the issued credential (optional)
-  - `expirationDate` - Date of expiration of the JWT (optional)
-- **Success Response Code**: 200
-- **Invalid Request Response Code** - 400
-- **Internal Error Response Code** - 500
+The Swagger API definition pages are:
 
-### Verify a Credential
-
-- **Endpoint** POST `/credentials/verify`
-- **Accepts**: `application/json`
-- **Request Body**: JSON object with following fields:
-  - `credential` - A verifiable credential or the JWT string
-- **Success Response Code** - 200
-- **Invalid Request Response Code**:
-  - 400: Bad request body
-  - 405: Wrong content type
-- **Internal Error Response Code** - 500
-
-### Health Check
-
-- **Endpoint**: `/` (This endpoint redirects to the swagger api docs)
+- [Production / Stable Release APIs](https://credential-service.cheqd.net/swagger/)
+- [Staging / Development Release APIs](https://credential-service-staging.cheqd.net/swagger/)
 
 ## 🔧 Configuration
 
@@ -50,18 +27,20 @@ The application allows configuring the following parameters using environment va
 
 #### Network API endpoints
 
-1. `MAINNET_RPC_URL`: RPC endpoint for cheqd mainnet. (Default: `https://rpc.cheqd.net:443`)
-2. `TESTNET_RPC_URL`: RPC endpoint for cheqd testnet. (`https://rpc.cheqd.network:443`)
+1. `MAINNET_RPC_URL`: RPC endpoint for cheqd mainnet (Default: `https://rpc.cheqd.net:443`).
+2. `TESTNET_RPC_URL`: RPC endpoint for cheqd testnet (`https://rpc.cheqd.network:443`).
 3. `RESOLVER_URL`: API endpoint for a [DID Resolver](https://github.com/cheqd/did-resolver) endpoint that supports `did:cheqd`.
-4. `APPLICATION_BASE_URL`: URL of the application (external domain name)
+4. `APPLICATION_BASE_URL`: URL of the application (external domain name).
+5. `ALLOWED_ORIGINS`: CORS allowed origins used in the app.
 
 #### Veramo KMS Database
 
 The application supports two modes in which keys are managed: either just storing them in-memory while a container is running, or persisting them in a PostgresSQL database with Veramo SDK. Using an external Postgres database allows for "custodian" mode where identity and cheqd/Cosmos keys can be offloaded by client applications to be stored in the database.
 
-1. `DB_CONNECTION_URL`: Postgres database connection URL, e.g. `postgres://<user>:<password>@<host>:<port>/<database>`
-2. `DB_ENCRYPTION_KEY`: Secret key used to encrypt the Veramo key-specific database tables. This adds a layer of protection by not storing the database in plaintext.
-3. `DB_CERTIFICATE`: Custom CA certificate required to connect to the database (optional).
+1. `ENABLE_EXTERNAL_DB`: Turns external database on/off (Default: `false`). If `ENABLE_EXTERNAL_DB=true`, then define below environment variables in `.env` file:
+    - `EXTERNAL_DB_CONNECTION_URL`: Postgres database connection URL, e.g. `postgres://<user>:<password>@<host>:<port>/<database>`.
+    - `EXTERNAL_DB_ENCRYPTION_KEY`: Secret key used to encrypt the Veramo key-specific database tables. This adds a layer of protection by not storing the database in plaintext.
+    - `EXTERNAL_DB_CERTIFICATE`: Custom CA certificate required to connect to the database (optional).
 
 #### API Authentication using LogTo
 
@@ -69,7 +48,8 @@ By default, the application has API authentication disabled (which can be change
 
 We use a self-hosted version of [LogTo](https://logto.io/), which supports OpenID Connect. Theoretically, these values could also be replaced with [LogTo Cloud](http://cloud.logto.io/) or any other OpenID Connect identity provider.
 
-1. `ENABLE_AUTHENTICATION`: Turns API authentication guards on/off. (Default: `false`)
+1. `ENABLE_AUTHENTICATION`: Turns API authentication guards on/off (Default: `false`). If `ENABLE_AUTHENTICATION=false`, then define below environment variable in `.env` file:
+    - `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users.
 2. `LOGTO_ENDPOINT`: API endpoint for LogTo server
 3. `LOGTO_DEFAULT_RESOURCE_URL`: API resource associated with application
 4. `LOGTO_APP_ID`: Application ID from LogTo. For now, Application is supposed to be a TraditionalWeb
@@ -87,46 +67,49 @@ The app supports 3rd party connectors for credential storage and delivery.
 
 The app's [Verida Network](https://www.verida.network/) connector can be enabled to deliver generated credentials to Verida Wallet.
 
-1. `ENABLE_VERIDA_CONNECTOR`: Turns Verida connector on/off. (Default: `false`)
-2. `VERIDA_NETWORK`: Verida Network type to connect to. (Default: `testnet`)
-3. `VERIDA_PRIVATE_KEY`: Secret key for Verida Network API.
-4. `POLYGON_RPC_URL`: Polygon Network RPC URL for connections.
-5. `POLYGON_PRIVATE_KEY`: Secret key for Polygon Network.
-
-### Run the application
-
-Initiate a Postgres database, in case you're using an external database.
-
-```bash
-docker pull postgres
-docker run --name some-postgres -e POSTGRES_PASSWORD=mysecretpassword -d postgres
-```
-
-Construct the postgres url and configure the env variables mentioned above
-
-Once configured, the app can be run using NPM:
-
-```bash
-npm start
-```
+1. `ENABLE_VERIDA_CONNECTOR`: Turns Verida connector on/off (Default: `false`). If `ENABLE_VERIDA_CONNECTOR=true`, then define below environment variables in `.env` file:
+    - `VERIDA_NETWORK`: Verida Network type to connect to. (Default: `testnet`)
+    - `VERIDA_PRIVATE_KEY`: Secret key for Verida Network API.
+    - `POLYGON_PRIVATE_KEY`: Secret key for Polygon Network.
 
 ## 🧑‍💻🛠 Developer Guide
 
-### Build using NPM
+### Run as standalone application using Docker Compose
 
-Dependencies can be installed using NPM or any other node package manager.
+If you want to run the application without any external databases or dependent services, we provide [a Docker Compose file](docker/no-external-db/docker-compose-no-db.yml) to spin up a standalone service.
 
 ```bash
-npm install
-npm run build
+docker compose -f docker/no-external-db/docker-compose-no-db.yml up --detach
+```
+
+This standalone service uses an in-memory database with no persistence, and therefore is recommended only if you're managing key/secret storage separately.
+
+The [`no-db.env` file](docker/no-external-db/no-db.env) in the same folder contains all the environment variables necessary to configure the service. (See section *Configuration* above.)
+
+### Run with external Key Management System (KMS) and/or authentication service using Docker Compose
+
+Construct the postgres URL and configure the env variables mentioned above.
+
+Spinning up a Docker container from the [pre-built credential-service Docker image on Github](https://github.com/cheqd/credential-service/pkgs/container/credential-service) is as simple as the command below:
+
+- Running credential-service using Docker with external database:
+  - Set `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` environment variables in `docker/.env`:
+    - `POSTGRES_USER`: Postgres database username using in Docker database service.
+    - `POSTGRES_PASSWORD`: Postgres database password using in Docker database service.
+    - `POSTGRES_DB`: Postgres database name using in Docker database service.
+
+Run credential-service with external database:
+
+```bash
+docker compose -f docker/docker-compose.yml --profile credential-service-with-external-db up --detach
 ```
 
 ### Build using Docker
 
-To build and run in Docker, use the [Dockerfile](Dockerfile) provided.
+To build your own image using Docker, use the [Dockerfile](docker/Dockerfile) provided.
 
 ```bash
-docker build -t credential-service .
+docker build --file docker/Dockerfile --target runner . --tag credential-service:local
 ```
 
 ## 🐞 Bug reports & 🤔 feature requests
@@ -142,4 +125,3 @@ Please reach out to us there for discussions, help, and feedback on the project.
 ## 🙋 Find us elsewhere
 
 [![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge\&logo=telegram\&logoColor=white)](https://t.me/cheqd) [![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge\&logo=discord\&logoColor=white)](http://cheqd.link/discord-github) [![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge\&logo=twitter\&logoColor=white)](https://twitter.com/intent/follow?screen\_name=cheqd\_io) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge\&logo=linkedin\&logoColor=white)](http://cheqd.link/linkedin) [![Slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge\&logo=slack\&logoColor=white)](http://cheqd.link/join-cheqd-slack) [![Medium](https://img.shields.io/badge/Medium-12100E?style=for-the-badge\&logo=medium\&logoColor=white)](https://blog.cheqd.io) [![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge\&logo=youtube\&logoColor=white)](https://www.youtube.com/channel/UCBUGvvH6t3BAYo5u41hJPzw/)
-
