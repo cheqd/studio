@@ -5,6 +5,7 @@ import stringify from 'json-stringify-safe'
 import { cheqdDidRegex } from '../../types/types.js'
 import { MethodToScope, IAuthResourceHandler, Namespaces, IAuthResponse } from '../../types/authentication.js'
 import { IncomingHttpHeaders } from "http";
+import { LogToHelper } from "./logto.js";
 
 dotenv.config()
 
@@ -25,10 +26,12 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
     private namespace: Namespaces
     private token: string
     private scopes: string[] | unknown
+    private logToHelper?: LogToHelper
+
     public customer_id: string
 
     private routeToScoupe: MethodToScope[] = []
-    private static pathSkip = ['/', '/swagger', '/user', '/static']
+    private static pathSkip = ['/swagger', '/user', '/static', '/logto']
     // private static regExpSkip = new RegExp("^/.*js")
 
     constructor () {
@@ -37,9 +40,12 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
         this.token = '' as string
         this.scopes = undefined
         this.customer_id = '' as string
+        if (process.env.ENABLE_AUTHENTICATION) {
+            this.logToHelper = new LogToHelper()
+        }
     }
 
-    public async commonPermissionCheck(request: Request, response: Response): Promise<IAuthResponse> {
+    public async commonPermissionCheck(request: Request): Promise<IAuthResponse> {
         // Tries to get token from the request and other preps
         const _setup = this.setupAuth(request)
         if (_setup) {
@@ -113,7 +119,12 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
     }
 
     public skipPath(path: string): boolean {
-        return AbstractAuthHandler.pathSkip.includes(path)
+        for (const ps of AbstractAuthHandler.pathSkip) {
+            if (path === "/" || path.startsWith(ps)) {
+                return true
+            }
+        }
+        return false
     }
 
     // Verifies the JWT token for resourceAPI
@@ -230,6 +241,24 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
 
     public getCustomerId(): string {
         return this.customer_id
+    }
+
+    public getAllLogToScopes(): string[] | void {
+        if (this.logToHelper) {
+            return this.logToHelper.getAllScopes()
+        }
+    }
+
+    public getDefaultLogToScopes(): string[] | void {
+        if (this.logToHelper) {
+            return this.logToHelper.getDefaultScopes()
+        }
+    }
+
+    public getAllLogToResources(): string[] | void {
+        if (this.logToHelper) {
+            return this.logToHelper.getAllResourcesWithNames()
+        }
     }
 
     // Route and scope related funcs

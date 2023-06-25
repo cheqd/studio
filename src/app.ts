@@ -23,8 +23,11 @@ dotenv.config()
 import { UserInfo } from './controllers/user_info.js'
 import path from 'path'
 
-const swagger_options = {
-  customJs: '/static/custom-button.js',
+let swagger_options = {}
+if (process.env.ENABLE_AUTHENTICATION === 'true') {
+  swagger_options = {
+    customJs: '/static/custom-button.js',
+  }
 }
 
 class App {
@@ -55,9 +58,10 @@ class App {
     this.express.use(cookieParser())
     if (process.env.ENABLE_AUTHENTICATION === 'true') {
       this.express.use(session({secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 }}))
+      this.express.use(Authentication.withLogtoWrapper)
+      this.express.use(Authentication.guard)
+      this.express.use(Authentication.wrapperHandleAuthRoutes)
     }
-    this.express.use(handleAuthRoutes(configLogToExpress))
-    // this.express.use(withLogto(configLogToExpress))
     this.express.use(express.text())
 
     this.express.use(
@@ -67,8 +71,6 @@ class App {
         return res.send(swaggerUi.generateHTML(swaggerJSONDoc, swagger_options))
       }
     )
-    this.express.use(Authentication.withLogtoWrapper)
-    this.express.use(Authentication.guard)
     this.express.use(Authentication.handleError)
     this.express.use(Authentication.accessControl)
   }
@@ -86,9 +88,9 @@ class App {
     app.post('/credential/suspend', new CredentialController().suspend)
     app.post('/credential/reinstate', new CredentialController().reinstate)
 
-    //revocation
-    app.post('/revocation/statusList2021/create', RevocationController.didValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
-    app.get('/revocation/statusList2021/list', RevocationController.didValidator, new RevocationController().fetchStatusList)
+    //credential-status
+    app.post('/credential-status/statusList2021/create', RevocationController.didValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
+    app.get('/credential-status/statusList2021/list', RevocationController.didValidator, new RevocationController().fetchStatusList)
     // store
     app.post(`/store`, new StoreController().set)
     app.get(`/store/:id`, new StoreController().get)

@@ -38,6 +38,12 @@ export interface IAuthResponse{
     error: string
 }
 
+export interface ILogToErrorResponse {
+    status: number,
+    error: string,
+    data: any
+}
+
 export interface IAuthResourceHandler {
     setNext(handler: IAuthResourceHandler): IAuthResourceHandler
     handle(request: Request, response: Response): Promise<IAuthResponse>

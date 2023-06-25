@@ -6,17 +6,16 @@ export class KeyAuthHandler extends AbstractAuthHandler {
 
     constructor () {
         super()
-        this.registerRoute('/key', 'POST', 'key:create:testnet')
-        this.registerRoute('/key', 'POST', 'key:create:mainnet')
-        this.registerRoute('/key', 'GET', 'key:read:testnet')
-        this.registerRoute('/key', 'GET', 'key:read:mainnet')
+        this.registerRoute('/key', 'POST', 'create:key')
+        this.registerRoute('/key', 'GET', 'read:key')
+        this.registerRoute('/key/list', 'GET', 'list:key')
     }
 
     public async handle(request: Request, response: Response): Promise<IAuthResponse> {
         if (!request.path.includes('/key')) {
             return super.handle(request, response)
         }
-        return this.commonPermissionCheck(request, response)
+        return this.commonPermissionCheck(request)
 
     }
 

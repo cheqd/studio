@@ -3,7 +3,6 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 const {ALL_API_RESOURCES, 
-	ALL_POSSIBLE_SCOPES, 
 	LOGTO_ENDPOINT, 
 	LOGTO_DEFAULT_RESOURCE_URL, 
 	LOGTO_APP_ID, 
@@ -31,17 +30,11 @@ export const VERIDA_APP_NAME = 'Cheqd Verida Connector'
 export const VERIDA_CREDENTIAL_RECORD_SCHEMA =
   'https://common.schemas.verida.io/credential/base/v0.2.0/schema.json'
 
-const all_scopes: string[] = ALL_POSSIBLE_SCOPES ? ALL_POSSIBLE_SCOPES.split(' ') || [] : []
-// ToDo: change it to the APPLICATION_BASE_URL. localhost is only for testing
-const all_api_resources: string[] = ALL_API_RESOURCES ? ALL_API_RESOURCES.split(' ').map((scope) => `${"http://localhost"}/${scope}`) || [] : []
 // Map for path and required user scope for that action
 export const configLogToExpress = {
 	endpoint: LOGTO_ENDPOINT,
 	appId: LOGTO_APP_ID,
 	appSecret: LOGTO_APP_SECRET,
 	baseUrl: APPLICATION_BASE_URL,
-	resources: [LOGTO_DEFAULT_RESOURCE_URL, ...all_api_resources], // You may need to replace it with your app's production address
-	resource: LOGTO_DEFAULT_RESOURCE_URL,
-	scopes: all_scopes,
 	getAccessToken: true,
 }

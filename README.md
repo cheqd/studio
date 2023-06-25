@@ -51,13 +51,15 @@ We use a self-hosted version of [LogTo](https://logto.io/), which supports OpenI
 1. `ENABLE_AUTHENTICATION`: Turns API authentication guards on/off (Default: `false`). If `ENABLE_AUTHENTICATION=false`, then define below environment variable in `.env` file:
     - `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users.
 2. `LOGTO_ENDPOINT`: API endpoint for LogTo server
-3. `LOGTO_DEFAULT_RESOURCE_URL`: API resource associated with application
+3. `LOGTO_DEFAULT_RESOURCE_URL`: Usually it will be a root of all API resources. All the resourceAPI will be constructed on top of that.
 4. `LOGTO_APP_ID`: Application ID from LogTo. For now, Application is supposed to be a TraditionalWeb
 5. `LOGTO_APP_SECRET`: Application secret. Also should encrypted in deployment
-6. `ALLOWED_ORIGINS`: CORS allowed origins used in the app
-7. `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users
-8. `ALL_POSSIBLE_SCOPES`: List of all scopes. Should be a string with scopes divided by whitespace, like `account:create account:read did:create`
-9. `COOKIE_SECRET`: Secret for cookie encryption.
+6. `LOGTO_M2M_APP_ID`: Machine-to-machine Application ID
+7. `LOGTO_M2M_APP_SECRET`: Machine-to-machine Application secret
+8. `LOGTO_MANAGEMENT_API`: URL of management API for LogTo (default is `https://default.logto.app/api`)
+9. `ALLOWED_ORIGINS`: CORS allowed origins used in the app
+10. `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users
+11. `COOKIE_SECRET`: Secret for cookie encryption.
 
 ### 3rd Party Connectors
 

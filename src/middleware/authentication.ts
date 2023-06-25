@@ -3,17 +3,18 @@ import { Request, Response, NextFunction } from 'express'
 import { CustomerService } from '../services/customer.js'
 
 import * as dotenv from 'dotenv'
-import { withLogto } from '@logto/express'
+import { withLogto, handleAuthRoutes } from '@logto/express'
 import { configLogToExpress } from '../types/constants.js'
 import { AccountAuthHandler } from './auth/account_auth.js'
 import { CredentialAuthHandler } from './auth/credential_auth.js'
 import { DidAuthHandler } from './auth/did_auth.js'
 import { KeyAuthHandler } from './auth/key_auth.js'
+import { CredentialStatusAuthHandler } from './auth/credential-status.js'
+import { AbstractAuthHandler } from './auth/base_auth.js'
 
 dotenv.config()
 
 const {
-  LOGTO_DEFAULT_RESOURCE_URL,
   ENABLE_AUTHENTICATION,
   DEFAULT_CUSTOMER_ID,
   ENABLE_EXTERNAL_DB
@@ -22,17 +23,16 @@ const {
 const authHandler = new AccountAuthHandler()
 authHandler.setNext(new CredentialAuthHandler()).
 setNext(new DidAuthHandler()).
-setNext(new KeyAuthHandler())
+setNext(new KeyAuthHandler()).
+setNext(new CredentialStatusAuthHandler())
 
 export class Authentication {
 
-    private static buildResourceAPIUrl(request: Request) {
-        const api_root = request.path.split('/')[1]
-        if (!api_root) {
-            // Skip if no api root
-            return null
-        }
-        return `${LOGTO_DEFAULT_RESOURCE_URL}/${api_root}`
+    static wrapperHandleAuthRoutes(request: Request, response: Response, next: NextFunction) {
+        return handleAuthRoutes(
+            {...configLogToExpress, 
+            scopes: authHandler.getAllLogToScopes() as string[],
+            resources: authHandler.getAllLogToResources() as string[]})(request, response, next)
     }
 
     static handleError(error: Error, request: Request, response: Response, next: NextFunction) {
@@ -108,18 +108,11 @@ export class Authentication {
         if (authHandler.skipPath(request.path)) 
             return next()
         try {
-            if (ENABLE_AUTHENTICATION === 'true') {
-                // compile API resource
-                const resourceAPI = Authentication.buildResourceAPIUrl(request)
-                if (!resourceAPI) {
-                    return next()
-                }
-                return withLogto({...configLogToExpress, resource: resourceAPI})(request, response, next)
-                
+            const resourceAPI = AbstractAuthHandler.buildResourceAPIUrl(request)
+            if (!resourceAPI) {
+                return next()
             }
-            else {
-                next()
-            }
+            return withLogto({...configLogToExpress, resource: resourceAPI, scopes: authHandler.getAllLogToScopes() as string[]})(request, response, next)
 		} catch (err) {
 			return response.status(500).send({
                 authenticated: false,
