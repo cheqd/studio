@@ -1,80 +1,74 @@
 # Changelog
 
-## [2.1.0-develop.25](https://github.com/cheqd/credential-service/compare/2.1.0-develop.24...2.1.0-develop.25) (2023-06-13)
-
-
-### Features
-
-* Add credentialSchema attribute ([#262](https://github.com/cheqd/credential-service/issues/262)) ([0e4268a](https://github.com/cheqd/credential-service/commit/0e4268aaf70f85d803512177d59b28db4f7cff9d))
-
-## [2.1.0-develop.24](https://github.com/cheqd/credential-service/compare/2.1.0-develop.23...2.1.0-develop.24) (2023-06-13)
+## [2.3.2-develop.2](https://github.com/cheqd/credential-service/compare/2.3.2-develop.1...2.3.2-develop.2) (2023-06-24)
 
 
 ### Bug Fixes
 
-* Move custom_button.js script into static root ([#261](https://github.com/cheqd/credential-service/issues/261)) ([8544020](https://github.com/cheqd/credential-service/commit/8544020c586c147bf64824665bbba4d4eba9a991))
+* Fix local storage instantiating ([#269](https://github.com/cheqd/credential-service/issues/269)) ([6ec820f](https://github.com/cheqd/credential-service/commit/6ec820f83c6d1c9b0a34e0bde10bcec25a51c5ef))
 
-## [2.1.0-develop.23](https://github.com/cheqd/credential-service/compare/2.1.0-develop.22...2.1.0-develop.23) (2023-06-13)
+## [2.3.2-develop.1](https://github.com/cheqd/credential-service/compare/2.3.1...2.3.2-develop.1) (2023-06-22)
 
+## [2.3.1](https://github.com/cheqd/credential-service/compare/2.3.0...2.3.1) (2023-06-22)
 
-### Features
-
-* Add support issue verify & revoke credentials [DEV-2669] ([#255](https://github.com/cheqd/credential-service/issues/255)) ([c69df47](https://github.com/cheqd/credential-service/commit/c69df47960ad6f8e7716215c6a05c7611e0b668e))
-
-## [2.1.0-develop.22](https://github.com/cheqd/credential-service/compare/2.1.0-develop.21...2.1.0-develop.22) (2023-06-13)
-
-
-### Bug Fixes
-
-* One more attempt to fix static files ([#260](https://github.com/cheqd/credential-service/issues/260)) ([abaed7a](https://github.com/cheqd/credential-service/commit/abaed7a7c2d7d2a18ecfe8bfcc77bb4647b3efe6))
-
-## [2.1.0-develop.21](https://github.com/cheqd/credential-service/compare/2.1.0-develop.20...2.1.0-develop.21) (2023-06-13)
-
-
-### Bug Fixes
-
-* Static files for swagger ([#259](https://github.com/cheqd/credential-service/issues/259)) ([a1fe566](https://github.com/cheqd/credential-service/commit/a1fe566c42ede1cd8bc08a9b8f142f35b153f7b6))
-
-## [2.1.0-develop.20](https://github.com/cheqd/credential-service/compare/2.1.0-develop.19...2.1.0-develop.20) (2023-06-09)
-
-
-### Bug Fixes
-
-* Fix static files copying ([#254](https://github.com/cheqd/credential-service/issues/254)) ([1ea85d3](https://github.com/cheqd/credential-service/commit/1ea85d3f1d1cb290a8304269da1ba8a6219572e9))
-
-## [2.1.0-develop.19](https://github.com/cheqd/credential-service/compare/2.1.0-develop.18...2.1.0-develop.19) (2023-06-09)
-
-
-### Bug Fixes
-
-* Copy static files to the dist while building ([#253](https://github.com/cheqd/credential-service/issues/253)) ([4f076c0](https://github.com/cheqd/credential-service/commit/4f076c0f62bd8ee6e32f1e97bf6c8b724ff3393f))
-
-## [2.1.0-develop.18](https://github.com/cheqd/credential-service/compare/2.1.0-develop.17...2.1.0-develop.18) (2023-06-08)
+## [2.3.0](https://github.com/cheqd/credential-service/compare/2.2.0...2.3.0) (2023-06-13)
 
 
 ### Features
 
 * Add API guarding [DEV-2621] ([#249](https://github.com/cheqd/credential-service/issues/249)) ([3706b4c](https://github.com/cheqd/credential-service/commit/3706b4c63006be4282cfeed530c2d15f44da4164)), closes [#2](https://github.com/cheqd/credential-service/issues/2)
-
-## [2.1.0-develop.17](https://github.com/cheqd/credential-service/compare/2.1.0-develop.16...2.1.0-develop.17) (2023-06-07)
+* Add credentialSchema attribute ([#262](https://github.com/cheqd/credential-service/issues/262)) ([0e4268a](https://github.com/cheqd/credential-service/commit/0e4268aaf70f85d803512177d59b28db4f7cff9d))
+* Add support issue verify & revoke credentials [DEV-2669] ([#255](https://github.com/cheqd/credential-service/issues/255)) ([c69df47](https://github.com/cheqd/credential-service/commit/c69df47960ad6f8e7716215c6a05c7611e0b668e))
 
 
 ### Bug Fixes
 
-* External db toggle panic ([#248](https://github.com/cheqd/credential-service/issues/248)) ([a33cd25](https://github.com/cheqd/credential-service/commit/a33cd25b7aa17972afd83c64937ed571f4bf1e2b))
+* Copy static files to the dist while building ([#253](https://github.com/cheqd/credential-service/issues/253)) ([4f076c0](https://github.com/cheqd/credential-service/commit/4f076c0f62bd8ee6e32f1e97bf6c8b724ff3393f))
+* Fix static files copying ([#254](https://github.com/cheqd/credential-service/issues/254)) ([1ea85d3](https://github.com/cheqd/credential-service/commit/1ea85d3f1d1cb290a8304269da1ba8a6219572e9))
+* Move custom_button.js script into static root ([#261](https://github.com/cheqd/credential-service/issues/261)) ([8544020](https://github.com/cheqd/credential-service/commit/8544020c586c147bf64824665bbba4d4eba9a991))
+* One more attempt to fix static files ([#260](https://github.com/cheqd/credential-service/issues/260)) ([abaed7a](https://github.com/cheqd/credential-service/commit/abaed7a7c2d7d2a18ecfe8bfcc77bb4647b3efe6))
+* Static files for swagger ([#259](https://github.com/cheqd/credential-service/issues/259)) ([a1fe566](https://github.com/cheqd/credential-service/commit/a1fe566c42ede1cd8bc08a9b8f142f35b153f7b6))
 
-## [2.1.0-develop.16](https://github.com/cheqd/credential-service/compare/2.1.0-develop.15...2.1.0-develop.16) (2023-06-06)
+## [2.2.0](https://github.com/cheqd/credential-service/compare/2.1.1...2.2.0) (2023-06-08)
 
 
 ### Features
 
 * Implement USE_EXTERNAL_DB toggle [DEV 2630]  ([#233](https://github.com/cheqd/credential-service/issues/233)) ([a023242](https://github.com/cheqd/credential-service/commit/a02324284de8882447a1eb7c2c246d1f6e3a40b9))
 
-## [2.1.0-develop.15](https://github.com/cheqd/credential-service/compare/2.1.0-develop.14...2.1.0-develop.15) (2023-06-05)
+
+### Bug Fixes
+
+* External db toggle panic ([#248](https://github.com/cheqd/credential-service/issues/248)) ([a33cd25](https://github.com/cheqd/credential-service/commit/a33cd25b7aa17972afd83c64937ed571f4bf1e2b))
+
+## [2.1.1](https://github.com/cheqd/credential-service/compare/2.1.0...2.1.1) (2023-06-05)
 
 
 ### Bug Fixes
 
+* Get string env variables back ([#246](https://github.com/cheqd/credential-service/issues/246)) ([1f6439b](https://github.com/cheqd/credential-service/commit/1f6439b5a3777725c2866d6653dc5842a74926bf))
+* Restructure environment variables / configuration parameters [DEV-2758] ([#240](https://github.com/cheqd/credential-service/issues/240)) ([b206958](https://github.com/cheqd/credential-service/commit/b20695851e2c3b4d16cfd22c59dfdfe4123e333b))
+
+## [2.1.0](https://github.com/cheqd/credential-service/compare/2.0.0...2.1.0) (2023-06-01)
+
+
+### Features
+
+* [DEV-2619] Create workspace with frontend and backend packages ([#212](https://github.com/cheqd/credential-service/issues/212)) ([08e6a45](https://github.com/cheqd/credential-service/commit/08e6a45e79243691879304fc061917a0458daacb)), closes [#211](https://github.com/cheqd/credential-service/issues/211) [#194](https://github.com/cheqd/credential-service/issues/194) [#193](https://github.com/cheqd/credential-service/issues/193)
+* Add auth toggle && missing api's ([#234](https://github.com/cheqd/credential-service/issues/234)) ([5c44288](https://github.com/cheqd/credential-service/commit/5c44288dd3726d5f38828126641d1476f9d0a897))
+* Add verida connector ([#227](https://github.com/cheqd/credential-service/issues/227)) ([c1ac128](https://github.com/cheqd/credential-service/commit/c1ac128220f45d98530913a8fbd89c30f88083d1))
+* Switch back to backend only, split front-end to own repo [DEV-2665] ([#221](https://github.com/cheqd/credential-service/issues/221)) ([168608a](https://github.com/cheqd/credential-service/commit/168608a67dc53bbb598e805db4d67bb65b12f06a))
+* Update .envs ([#238](https://github.com/cheqd/credential-service/issues/238)) ([ce0e57b](https://github.com/cheqd/credential-service/commit/ce0e57baad5712c879f88a548d2f08c4d6c010d7))
+* Update refactor verida ([6194a28](https://github.com/cheqd/credential-service/commit/6194a28a6e131f123598b70019ccff968115454d))
+
+
+### Bug Fixes
+
+* Dockerfile command ([5d4defb](https://github.com/cheqd/credential-service/commit/5d4defb19b21c11b21b38453a49a1b282fd20bfc))
+* Dockerfile permission && credential verification [CU-85zt6ng2p] ([#239](https://github.com/cheqd/credential-service/issues/239)) ([45bb6d7](https://github.com/cheqd/credential-service/commit/45bb6d785a6552bfdee51124d0ca8d71f2e51c9a))
+* Jsonld credentials ([#236](https://github.com/cheqd/credential-service/issues/236)) ([c56a0a0](https://github.com/cheqd/credential-service/commit/c56a0a07cfcb4999cf0e40094dfe58b0a1b16712))
+* Minor issues && swagger ([#235](https://github.com/cheqd/credential-service/issues/235)) ([51d2790](https://github.com/cheqd/credential-service/commit/51d2790712b7470e46dceb97743da5e2ed5c2420))
+* Update Dockerfile variables and Swagger generation ([#228](https://github.com/cheqd/credential-service/issues/228)) ([f659754](https://github.com/cheqd/credential-service/commit/f659754bc0930d5118fac0e9d26d0f34f9fbae14))
 * Get string env variables back ([#246](https://github.com/cheqd/credential-service/issues/246)) ([1f6439b](https://github.com/cheqd/credential-service/commit/1f6439b5a3777725c2866d6653dc5842a74926bf))
 
 ## [2.1.0-develop.14](https://github.com/cheqd/credential-service/compare/2.1.0-develop.13...2.1.0-develop.14) (2023-06-05)

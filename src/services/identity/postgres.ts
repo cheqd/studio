@@ -35,8 +35,7 @@ const {
 export class PostgresIdentity implements IIdentity {
   agent: TAgent<IKeyManager & IDIDManager & IResolver>
   privateStore?: AbstractPrivateKeyStore
-  public static instance = new PostgresIdentity()
-  
+
   constructor() {
     this.agent = this.initAgent()
   }
