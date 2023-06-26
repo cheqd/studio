@@ -530,7 +530,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/RevocationResult"
+                                    "$ref": "#/components/schemas/credentialStatusResult"
                                 }
                             }
                         }
@@ -882,7 +882,7 @@
                 }
             }
         },
-        "/revocation/statusList2021/create": {
+        "/credential-status/statusList2021/create": {
             "post": {
                 "tags": [
                     "Revocation"
@@ -960,7 +960,7 @@
                 }
             }
         },
-        "/revocation/statusList2021/list": {
+        "/credential-status/statusList2021/list": {
             "get": {
                 "tags": [
                     "Revocation"
@@ -1566,7 +1566,7 @@
                     "type": "TextDocument"
                 }
             },
-            "RevocationResult": {
+            "credentialStatusResult": {
                 "properties": {
                     "revoked": {
                         "type": "boolean"

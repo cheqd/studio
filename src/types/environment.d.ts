@@ -24,12 +24,15 @@ declare global {
       LOGTO_ENDPOINT: string
       LOGTO_APP_ID: string
       LOGTO_APP_SECRET: string
-      LOGTO_RESOURCE_URL: string
+      LOGTO_DEFAULT_RESOURCE_URL: string
+      LOGTO_M2M_APP_ID: string
+      LOGTO_M2M_APP_SECRET: string
+      LOGTO_MANAGEMENT_API: string
+      ALL_API_RESOURCES: string
 
       // Authentication
       ENABLE_AUTHENTICATION: string | "false"
       DEFAULT_CUSTOMER_ID: string | undefined
-      ALL_SCOPES: string
       COOKIE_SECRET: string
 
       // Verida

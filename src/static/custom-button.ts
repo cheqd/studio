@@ -8,13 +8,6 @@ window.addEventListener("load", function () {
       window.location.href = base_url + '/logto/sign-in';
     };
   
-    const user_button: HTMLButtonElement = document.createElement('button');
-    user_button.innerHTML = 'User info';
-    user_button.classList.add('btn', 'authorize');
-    user_button.onclick = function () {
-      window.location.href = base_url + '/user';
-    };
-  
     const logout_button: HTMLButtonElement = document.createElement('button');
     logout_button.innerHTML = 'Log out';
     logout_button.classList.add('btn', 'authorize');
@@ -24,7 +17,6 @@ window.addEventListener("load", function () {
   
     const auth_pan: Element = document.getElementsByClassName('auth-wrapper')[0];
     auth_pan.appendChild(login_button);
-    auth_pan.appendChild(user_button);
     auth_pan.appendChild(logout_button);
   });
   

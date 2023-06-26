@@ -1,37 +1,39 @@
 import { Request, Response, NextFunction } from 'express'
-import { createRemoteJWKSet, jwtVerify } from 'jose'
 
 import { CustomerService } from '../services/customer.js'
-import { IncomingHttpHeaders } from 'http'
 
 import * as dotenv from 'dotenv'
-import {apiGuarding} from "../types/types.js"
+import { withLogto, handleAuthRoutes } from '@logto/express'
+import { configLogToExpress } from '../types/constants.js'
+import { AccountAuthHandler } from './auth/account_auth.js'
+import { CredentialAuthHandler } from './auth/credential_auth.js'
+import { DidAuthHandler } from './auth/did_auth.js'
+import { KeyAuthHandler } from './auth/key_auth.js'
+import { CredentialStatusAuthHandler } from './auth/credential-status.js'
+import { AbstractAuthHandler } from './auth/base_auth.js'
+
 dotenv.config()
 
 const {
-  LOGTO_ENDPOINT,
-  LOGTO_RESOURCE_URL,
   ENABLE_AUTHENTICATION,
   DEFAULT_CUSTOMER_ID,
   ENABLE_EXTERNAL_DB
 } = process.env
 
-const OIDC_ISSUER = LOGTO_ENDPOINT + '/oidc'
-const OIDC_JWKS_ENDPOINT = LOGTO_ENDPOINT + '/oidc/jwks'
-const bearerTokenIdentifier = 'Bearer'
-
-export const extractBearerTokenFromHeaders = ({ authorization }: IncomingHttpHeaders) => {
-    if (!authorization) {
-        throw new Error('Authorization header is missing.')
-    }
-    if (!authorization.startsWith(bearerTokenIdentifier)) {
-        throw new Error(`Authorization token type is not supported. Valid type: "${bearerTokenIdentifier}".`)
-    }
-  
-    return authorization.slice(bearerTokenIdentifier.length + 1)
-}
+const authHandler = new AccountAuthHandler()
+authHandler.setNext(new CredentialAuthHandler()).
+setNext(new DidAuthHandler()).
+setNext(new KeyAuthHandler()).
+setNext(new CredentialStatusAuthHandler())
 
 export class Authentication {
+
+    static wrapperHandleAuthRoutes(request: Request, response: Response, next: NextFunction) {
+        return handleAuthRoutes(
+            {...configLogToExpress, 
+            scopes: authHandler.getAllLogToScopes() as string[],
+            resources: authHandler.getAllLogToResources() as string[]})(request, response, next)
+    }
 
     static handleError(error: Error, request: Request, response: Response, next: NextFunction) {
         if (error) {
@@ -45,7 +47,7 @@ export class Authentication {
     static async accessControl(request: Request, response: Response, next: NextFunction) {
         let message = undefined
 
-        if (apiGuarding.skipPath(request.path)) 
+        if (authHandler.skipPath(request.path)) 
             return next()
 
         switch(ENABLE_EXTERNAL_DB) {
@@ -71,41 +73,19 @@ export class Authentication {
 
     static async guard(jwtRequest: Request, response: Response, next: NextFunction) {
 		const { provider } = jwtRequest.body as { claim: string, provider: string }
-        if (apiGuarding.skipPath(jwtRequest.path)) 
+        // const namespace = apiGuarding.getNamespaceFromRequest(jwtRequest)
+        if (authHandler.skipPath(jwtRequest.path)) 
             return next()
 
 		try {
             if (ENABLE_AUTHENTICATION === 'true') {
-                const token = extractBearerTokenFromHeaders(jwtRequest.headers)
-    
-                const { payload } = await jwtVerify(
-                    token, // The raw Bearer Token extracted from the request header
-                    createRemoteJWKSet(new URL(OIDC_JWKS_ENDPOINT)), // generate a jwks using jwks_uri inquired from Logto server
-                    {
-                        // expected issuer of the token, should be issued by the Logto server
-                        issuer: OIDC_ISSUER,
-                        // expected audience token, should be the resource indicator of the current API
-                        audience: LOGTO_RESOURCE_URL,
-                    }
-                )
-
-                let scopes: string[] = []
-                if (payload.scope) {
-                    scopes = (payload.scope as string).split(' ')
-                } else {
-                    return response.status(400).json({
-                        error: `Unauthorized error: It's required to provide a token with scopes inside.`
-                    })
+                // If response got back that means error was raised
+                const _resp = await authHandler.handle(jwtRequest, response)
+                if (_resp && _resp.status !== 200) {
+                    return response.status(_resp.status).json({
+                        error: _resp.error})
                 }
-
-                if (!apiGuarding.areValidScopes(jwtRequest.path, jwtRequest.method, scopes)) {
-                    return response.status(400).json({
-                        error: `Unauthorized error: Provided token does not have the required scopes. You need ${apiGuarding.getScopeForRoute(jwtRequest.path, jwtRequest.method)} scope(s).`
-                    })
-                }
-            
-                // custom payload logic
-                response.locals.customerId = payload.sub
+                response.locals.customerId = _resp.data.customerId
             } else if (DEFAULT_CUSTOMER_ID) {
                 response.locals.customerId = DEFAULT_CUSTOMER_ID
             } else {
@@ -123,4 +103,22 @@ export class Authentication {
             })
 		}
 	}
+    
+    static async withLogtoWrapper(request: Request, response: Response, next: NextFunction) {
+        if (authHandler.skipPath(request.path)) 
+            return next()
+        try {
+            const resourceAPI = AbstractAuthHandler.buildResourceAPIUrl(request)
+            if (!resourceAPI) {
+                return next()
+            }
+            return withLogto({...configLogToExpress, resource: resourceAPI, scopes: authHandler.getAllLogToScopes() as string[]})(request, response, next)
+		} catch (err) {
+			return response.status(500).send({
+                authenticated: false,
+                error: `${err}`,
+                customerId: null,
+            })
+		}
+    }
 }
