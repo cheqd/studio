@@ -4,7 +4,7 @@ import cors from 'cors'
 import swaggerUi from 'swagger-ui-express'
 import session from 'express-session'
 import cookieParser from 'cookie-parser'
-import {withLogto, handleAuthRoutes } from '@logto/express'
+import { withLogto, handleAuthRoutes } from '@logto/express'
 
 import { CredentialController } from './controllers/credentials.js'
 import { StoreController } from './controllers/store.js'
@@ -55,9 +55,9 @@ class App {
     this.express.use(cookieParser())
     if (process.env.ENABLE_AUTHENTICATION === 'true') {
       this.express.use(session({secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 }}))
+      this.express.use(handleAuthRoutes(configLogToExpress))
+      this.express.use(withLogto(configLogToExpress))
     }
-    this.express.use(handleAuthRoutes(configLogToExpress))
-    this.express.use(withLogto(configLogToExpress))
     this.express.use(express.text())
 
     this.express.use(

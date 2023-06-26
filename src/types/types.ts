@@ -196,6 +196,8 @@ export type CreateAgentRequest = {
 export type CreateStatusListOptions = {
   length?: number | undefined,
   encoding?: 'base64' | 'base64url' | 'hex' | undefined
+  statusPurpose?: 'revocation' | 'suspension'
+  encrypted?: boolean
 }
 
 export type StatusOptions = {
@@ -235,8 +237,8 @@ export interface ResourceMetadata {
   mediaType: string
   created:
     | Date
-    | undefined;
-  checksum: string;
-  previousVersionId: string;
-  nextVersionId: string;
+    | undefined
+  checksum: string
+  previousVersionId: string
+  nextVersionId: string
 }

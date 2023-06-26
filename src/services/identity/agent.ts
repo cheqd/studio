@@ -19,21 +19,20 @@ import {
 import { KeyManager } from '@veramo/key-manager'
 import { DIDStore, KeyStore } from '@veramo/data-store'
 import { DIDManager } from '@veramo/did-manager'
-import { DIDResolverPlugin } from '@veramo/did-resolver'
+import { DIDResolverPlugin, getUniversalResolver as UniversalResolver } from '@veramo/did-resolver'
+import { getResolver as VeridaResolver } from '@verida/vda-did-resolver'
 import { CredentialPlugin } from '@veramo/credential-w3c'
 import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld'
 import { Cheqd, getResolver as CheqdDidResolver, ResourcePayload } from '@cheqd/did-provider-cheqd'
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key'
 import { CheqdNetwork } from '@cheqd/sdk'
 import { Resolver, ResolverRegistry } from 'did-resolver'
-import { fromString } from 'uint8arrays'
 import {
   ICheqdCreateStatusList2021Args,
   ICheqdGenerateStatusList2021Args,
   ICheqdVerifyCredentialWithStatusList2021Args,
   ICheqdVerifyPresentationWithStatusList2021Args
 } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
-import { v4 } from 'uuid'
 
 import {
   cheqdDidRegex,
@@ -84,7 +83,9 @@ export class Veramo {
           new DIDResolverPlugin({
             resolver: new Resolver({
               ...CheqdDidResolver({ url: process.env.RESOLVER_URL }) as ResolverRegistry,
-              ...KeyDidResolver(),  
+              ...KeyDidResolver(),
+              ...VeridaResolver(),
+              ...UniversalResolver()
             })
           })
         )
@@ -219,7 +220,7 @@ export class Veramo {
             ...statusOptions
         } as ICheqdVerifyPresentationWithStatusList2021Args)
     }
-    return await agent.verifyPresentation({ presentation, fetchRemoteContexts: true })
+    return await agent.verifyPresentation({ presentation, fetchRemoteContexts: true, policies: {audience: false} })
   }
 
   async createStatusList2021(agent: VeramoAgent, did: string, network: string, resourceOptions: ResourcePayload, statusOptions: CreateStatusListOptions) {
@@ -231,18 +232,18 @@ export class Veramo {
 
     const [kms] = await agent.keyManagerGetKeyManagementSystems()
 
+    if (!resourceOptions.name) {
+        throw new Error(`StatusList name is required`)
+    }
     return await agent.cheqdCreateStatusList2021({
       kms,
-      payload: {
-         collectionId: did.split(':')[3],
-         data: fromString(statusList, statusOptions.encoding || 'base64url'),
-         resourceType: 'StatusList2021',
-         version: resourceOptions.version,
-         name: resourceOptions.name,
-         id: v4(),
-      },
-      network: network as CheqdNetwork
-   } as ICheqdCreateStatusList2021Args)
+      issuerDid: did,
+      statusListName: resourceOptions.name,
+      statusPurpose: statusOptions.statusPurpose || 'revocation',
+      statusListEncoding: statusOptions.encoding || 'base64url',
+      statusListLength: statusOptions.length,
+      encrypted: statusOptions.encrypted || false
+   } satisfies ICheqdCreateStatusList2021Args)
  }
 
  async revokeCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish: boolean=true) {

@@ -24,6 +24,7 @@ import { CustomerService } from '../customer.js'
 import { Veramo } from './agent.js'
 
 import * as dotenv from 'dotenv'
+import { CreateEncryptedStatusList2021Result, CreateStatusList2021Result } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
 dotenv.config()
 
 const {
@@ -188,7 +189,7 @@ export class PostgresIdentity implements IIdentity {
     return await Veramo.instance.verifyPresentation(agent, presentation, statusOptions)
   }
 
-  async createStatusList2021(did: string, network: string, resourceOptions: ResourcePayload,  statusListOptions: CreateStatusListOptions, agentId: string): Promise<boolean> {
+  async createStatusList2021(did: string, network: string, resourceOptions: ResourcePayload,  statusListOptions: CreateStatusListOptions, agentId: string): Promise<CreateStatusList2021Result | CreateEncryptedStatusList2021Result> {
     const agent = await this.createAgent(agentId)
     return await Veramo.instance.createStatusList2021(agent, did, network, resourceOptions, statusListOptions)
   }

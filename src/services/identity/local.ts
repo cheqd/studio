@@ -9,6 +9,7 @@ import {
 import { AbstractPrivateKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager'
 import { KeyManagementSystem } from '@veramo/kms-local'
 import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd'
+import { CreateEncryptedStatusList2021Result, CreateStatusList2021Result } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
 
 import { CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types.js'
@@ -141,19 +142,19 @@ export class LocalIdentity implements IIdentity {
     return await Veramo.instance.verifyPresentation(this.initAgent(), presentation, statusOptions)
   }
 
-  async createStatusList2021(did: string, network: string, resourceOptions: ResourcePayload,  statusListOptions: CreateStatusListOptions): Promise<boolean> {
+  async createStatusList2021(did: string, network: string, resourceOptions: ResourcePayload,  statusListOptions: CreateStatusListOptions): Promise<CreateStatusList2021Result | CreateEncryptedStatusList2021Result> {
     return await Veramo.instance.createStatusList2021(this.initAgent(), did, network, resourceOptions, statusListOptions)
   }
 
-  async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId: string) {
+  async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean) {
     return await Veramo.instance.revokeCredentials(this.initAgent(), credentials, publish)
   }
 
-  async suspendCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId: string) {
+  async suspendCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean) {
     return await Veramo.instance.suspendCredentials(this.initAgent(), credentials, publish)
   }
 
-  async reinstateCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId: string) {
+  async reinstateCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean) {
     return await Veramo.instance.unsuspendCredentials(this.initAgent(), credentials, publish)
   }
 }
