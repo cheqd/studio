@@ -26,14 +26,17 @@ export class RevocationController {
         }
 
         let { length, encoding } = request.body
-        let { data, name, type, alsoKnownAs, version, network } = request.body
+        let { data, name, statusPurpose, alsoKnownAs, version } = request.body
         
         const did = request.query.did as string
-        network = network || (did.split(':'))[2]
         data = data ? fromString(data, 'base64') : undefined
         
         try {
-          const result = await Identity.instance.createStatusList2021(did, network, { data, name, alsoKnownAs, version, resourceType: type }, { length, encoding }, response.locals.customerId)
+          let result: any
+          if (data) {
+            result = await Identity.instance.broadcastStatusList2021(did, { data, name, alsoKnownAs, version }, { encoding, statusPurpose }, response.locals.customerId)
+          }
+          result = await Identity.instance.createStatusList2021(did, { name, alsoKnownAs, version }, { length, encoding, statusPurpose }, response.locals.customerId)
           return response.status(200).json({
             success: result
           })

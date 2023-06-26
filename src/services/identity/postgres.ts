@@ -16,7 +16,7 @@ import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
 import { PrivateKeyStore } from '@veramo/data-store'
 import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
-import { cheqdDidRegex, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types.js'
+import { BroadCastStatusListOptions, cheqdDidRegex, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types.js'
 import { Connection } from '../../database/connection/connection.js'
 import { CustomerEntity } from '../../database/entities/customer.entity.js'
 import { IIdentity } from './IIdentity.js'
@@ -189,9 +189,14 @@ export class PostgresIdentity implements IIdentity {
     return await Veramo.instance.verifyPresentation(agent, presentation, statusOptions)
   }
 
-  async createStatusList2021(did: string, network: string, resourceOptions: ResourcePayload,  statusListOptions: CreateStatusListOptions, agentId: string): Promise<CreateStatusList2021Result | CreateEncryptedStatusList2021Result> {
+  async createStatusList2021(did: string, resourceOptions: ResourcePayload,  statusListOptions: CreateStatusListOptions, agentId: string): Promise<CreateStatusList2021Result | CreateEncryptedStatusList2021Result> {
     const agent = await this.createAgent(agentId)
-    return await Veramo.instance.createStatusList2021(agent, did, network, resourceOptions, statusListOptions)
+    return await Veramo.instance.createStatusList2021(agent, did, resourceOptions, statusListOptions)
+  }
+
+  async broadcastStatusList2021(did: string, resourceOptions: ResourcePayload, statusOptions: BroadCastStatusListOptions, agentId: string): Promise<boolean> {
+    const agent = await this.createAgent(agentId)
+    return await Veramo.instance.broadcastStatusList2021(agent, did, resourceOptions, statusOptions)
   }
 
   async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId: string) {

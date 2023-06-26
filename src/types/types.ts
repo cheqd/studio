@@ -16,6 +16,7 @@ import { AbstractKeyManagementSystem } from '@veramo/key-manager'
 import { DataSource } from 'typeorm'
 import { CheqdDIDProvider } from '@cheqd/did-provider-cheqd'
 import { CosmosAccessControlCondition } from '@cheqd/did-provider-cheqd/build/types/dkg-threshold/lit-protocol'
+import { DefaultStatusList2021ResourceType, DefaultStatusList2021StatusPurposeType } from '@cheqd/did-provider-cheqd/build/types/did-manager/cheqd-did-provider'
 
 export type ErrorResponse = {
   name: string
@@ -196,12 +197,14 @@ export type CreateAgentRequest = {
 export type CreateStatusListOptions = {
   length?: number | undefined,
   encoding?: 'base64' | 'base64url' | 'hex' | undefined
-  statusPurpose?: 'revocation' | 'suspension'
+  statusPurpose?: DefaultStatusList2021StatusPurposeType
   encrypted?: boolean
 }
 
+export type BroadCastStatusListOptions = Omit<CreateStatusListOptions, 'length'>
+
 export type StatusOptions = {
-  statusPurpose: 'revocation' | 'suspension'
+  statusPurpose: DefaultStatusList2021StatusPurposeType
   statusListName: string
   statusListIndex?: number
   statusListVersion?: string

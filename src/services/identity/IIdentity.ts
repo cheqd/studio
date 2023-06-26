@@ -12,7 +12,7 @@ import type {
 import type { AbstractPrivateKeyStore } from '@veramo/key-manager'
 import type { ResourcePayload } from '@cheqd/did-provider-cheqd'
 import type { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, CreateEncryptedStatusList2021Result, CreateStatusList2021Result, RevocationResult, SuspensionResult, UnsuspensionResult } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
-import type { CreateStatusListOptions, CredentialRequest, StatusOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types'
+import type { BroadCastStatusListOptions, CreateStatusListOptions, CredentialRequest, StatusOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types'
 
 export interface IIdentity {
   agent?: TAgent<any>
@@ -30,7 +30,8 @@ export interface IIdentity {
   createCredential(credential: CredentialPayload, format: CredentialRequest['format'], statusListOptions: StatusOptions | null, agentId?: string): Promise<VerifiableCredential>
   verifyCredential(credential: VerifiableCredential | string, statusOptions: VerifyCredentialStatusOptions | null, agentId?: string): Promise<IVerifyResult>
   verifyPresentation(presentation: VerifiablePresentation | string, statusOptions: VerifyPresentationStatusOptions, agentId?: string): Promise<IVerifyResult>
-  createStatusList2021(did: string, network: string, resourceOptions: ResourcePayload, statusOptions: CreateStatusListOptions, agentId: string): Promise<CreateStatusList2021Result | CreateEncryptedStatusList2021Result>
+  createStatusList2021(did: string, resourceOptions: ResourcePayload, statusOptions: CreateStatusListOptions, agentId: string): Promise<CreateStatusList2021Result | CreateEncryptedStatusList2021Result>
+  broadcastStatusList2021(did: string, resourceOptions: ResourcePayload, statusOptions: BroadCastStatusListOptions, agentId?: string): Promise<boolean>
   revokeCredentials(credential: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId?: string): Promise<RevocationResult| BulkRevocationResult>
   suspendCredentials(credential: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId?: string): Promise<SuspensionResult| BulkSuspensionResult>
   reinstateCredentials(credential: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId?: string): Promise<UnsuspensionResult| BulkUnsuspensionResult>

@@ -9,15 +9,16 @@ import {
 import { AbstractPrivateKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager'
 import { KeyManagementSystem } from '@veramo/kms-local'
 import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd'
-import { CreateEncryptedStatusList2021Result, CreateStatusList2021Result } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
+import { CreateEncryptedStatusList2021Result, CreateStatusList2021Result, ICheqdBroadcastEncryptedStatusList2021Args } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
 
-import { CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types.js'
+import { BroadCastStatusListOptions, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types.js'
 import { Connection } from '../../database/connection/connection.js'
 import { IIdentity } from './IIdentity.js'
 import { Veramo } from './agent.js'
 
 import * as dotenv from 'dotenv'
+import { StatusList2021ResourcePayload } from '@cheqd/did-provider-cheqd/build/types/did-manager/cheqd-did-provider.js'
 
 dotenv.config()
 
@@ -142,8 +143,12 @@ export class LocalIdentity implements IIdentity {
     return await Veramo.instance.verifyPresentation(this.initAgent(), presentation, statusOptions)
   }
 
-  async createStatusList2021(did: string, network: string, resourceOptions: ResourcePayload,  statusListOptions: CreateStatusListOptions): Promise<CreateStatusList2021Result | CreateEncryptedStatusList2021Result> {
-    return await Veramo.instance.createStatusList2021(this.initAgent(), did, network, resourceOptions, statusListOptions)
+  async createStatusList2021(did: string, resourceOptions: ResourcePayload,  statusListOptions: CreateStatusListOptions): Promise<CreateStatusList2021Result | CreateEncryptedStatusList2021Result> {
+    return await Veramo.instance.createStatusList2021(this.initAgent(), did, resourceOptions, statusListOptions)
+  }
+
+  async broadcastStatusList2021(did: string, resourceOptions: ResourcePayload, statusOptions: BroadCastStatusListOptions): Promise<boolean> {
+    return await Veramo.instance.broadcastStatusList2021(this.initAgent(), did, resourceOptions, statusOptions)
   }
 
   async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean) {

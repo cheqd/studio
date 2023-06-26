@@ -90,6 +90,7 @@ class App {
 
     //revocation
     app.post('/credential-status/statusList2021/create', RevocationController.didValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
+    app.post('/credential-status/statusList2021/publish', RevocationController.didValidator, new RevocationController().createStatusList)
     app.get('/credential-status/statusList2021/list', RevocationController.didValidator, new RevocationController().fetchStatusList)
 
     // store
