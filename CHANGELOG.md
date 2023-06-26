@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0-develop.2](https://github.com/cheqd/credential-service/compare/2.4.0-develop.1...2.4.0-develop.2) (2023-06-26)
+
+
+### Bug Fixes
+
+* Fix for the order of auth handlers ([#275](https://github.com/cheqd/credential-service/issues/275)) ([6d3bb77](https://github.com/cheqd/credential-service/commit/6d3bb778c7e9884e66058941431da9a898025333))
+
 ## [2.4.0-develop.1](https://github.com/cheqd/credential-service/compare/2.3.2-develop.2...2.4.0-develop.1) (2023-06-26)
 
 
