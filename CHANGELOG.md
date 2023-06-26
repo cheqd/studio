@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0-develop.1](https://github.com/cheqd/credential-service/compare/2.3.2-develop.2...2.4.0-develop.1) (2023-06-26)
+
+
+### Features
+
+* Add "authenticated" user roles and permissions, and amend API definitions [DEV-2684] ([#267](https://github.com/cheqd/credential-service/issues/267)) ([2a6b30f](https://github.com/cheqd/credential-service/commit/2a6b30f93dba29f1738f298e535303437a9a1971))
+
 ## [2.3.2-develop.2](https://github.com/cheqd/credential-service/compare/2.3.2-develop.1...2.3.2-develop.2) (2023-06-24)
 
 

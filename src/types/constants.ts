@@ -1,4 +1,3 @@
-import { ReservedScope, UserScope } from '@logto/express'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
