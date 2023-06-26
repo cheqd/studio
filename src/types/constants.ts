@@ -2,9 +2,8 @@ import { ReservedScope, UserScope } from '@logto/express'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const {ALL_API_RESOURCES, 
-	LOGTO_ENDPOINT, 
-	LOGTO_DEFAULT_RESOURCE_URL, 
+const { 
+	LOGTO_ENDPOINT,
 	LOGTO_APP_ID, 
 	LOGTO_APP_SECRET, 
 	APPLICATION_BASE_URL} = process.env

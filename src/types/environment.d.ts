@@ -28,7 +28,6 @@ declare global {
       LOGTO_M2M_APP_ID: string
       LOGTO_M2M_APP_SECRET: string
       LOGTO_MANAGEMENT_API: string
-      ALL_API_RESOURCES: string
 
       // Authentication
       ENABLE_AUTHENTICATION: string | "false"
