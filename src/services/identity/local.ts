@@ -18,7 +18,6 @@ import { IIdentity } from './IIdentity.js'
 import { Veramo } from './agent.js'
 
 import * as dotenv from 'dotenv'
-import { StatusList2021ResourcePayload } from '@cheqd/did-provider-cheqd/build/types/did-manager/cheqd-did-provider.js'
 
 dotenv.config()
 

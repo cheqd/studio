@@ -27,17 +27,13 @@ import { Cheqd, getResolver as CheqdDidResolver, ResourcePayload } from '@cheqd/
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key'
 import { CheqdNetwork } from '@cheqd/sdk'
 import { Resolver, ResolverRegistry } from 'did-resolver'
-import {
+import type {
   ICheqdBroadcastStatusList2021Args,
   ICheqdCreateStatusList2021Args,
-  ICheqdGenerateStatusList2021Args,
   ICheqdVerifyCredentialWithStatusList2021Args,
-  ICheqdVerifyPresentationWithStatusList2021Args
-} from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
-import { fromString } from 'uint8arrays'
-
+} from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import {
-    BroadCastStatusListOptions,
+  BroadCastStatusListOptions,
   cheqdDidRegex,
   CreateAgentRequest,
   CreateStatusListOptions,
@@ -50,7 +46,6 @@ import {
   VerifyPresentationStatusOptions
 } from '../../types/types.js'
 import { VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js'
-import { DefaultStatusList2021ResourceType, DefaultStatusList2021ResourceTypes, StatusList2021ResourcePayload } from '@cheqd/did-provider-cheqd/build/types/did-manager/cheqd-did-provider.js'
 
 const resolverUrl = "https://resolver.cheqd.net/1.0/identifiers/"
 
@@ -258,8 +253,8 @@ export class Veramo {
             ...resourceOptions,
             collectionId: did.split(':')[3],
             data: resourceOptions.data,
-            resourceType: DefaultStatusList2021ResourceTypes[statusOptions.statusPurpose|| 'default']
-        } satisfies StatusList2021ResourcePayload,
+            resourceType: statusOptions.statusPurpose === 'revocation' ? 'StatusList2021Revocation' : 'StatusList2021Suspension'
+        },
         network: did.split(':')[2] as CheqdNetwork,
      } satisfies ICheqdBroadcastStatusList2021Args)
  }

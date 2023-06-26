@@ -4,7 +4,7 @@ import { fromString } from 'uint8arrays'
 
 import { Identity } from '../services/identity/index.js'
 import { Veramo } from '../services/identity/agent.js'
-import { ResourceMetadata } from '../types/types.js'
+import { ResourceMetadata, StatusList2021ResourceTypes } from '../types/types.js'
 
 export class RevocationController {
 
@@ -54,10 +54,15 @@ export class RevocationController {
         }
 
         try {
-          let result = await Veramo.instance.resolve(`${request.query.did}?resourceType=StatusList2021&resourceMetadata=true`)
-          result = result.contentStream?.linkedResourceMetadata || []
-          const statusList = result
-                .filter((resource: ResourceMetadata)=>resource.mediaType=='application/octet-stream' || resource.mediaType=='application/gzip')
+          const resourceTypes = request.query.resourceType ? [request.query.resourceType] : [StatusList2021ResourceTypes.revocation, StatusList2021ResourceTypes.suspension];
+          let metadata: ResourceMetadata[] = [];
+            
+          for (const resourceType of resourceTypes) {
+            const result = await Veramo.instance.resolve(`${request.query.did}?resourceType=${resourceType}&resourceMetadata=true`);
+            metadata = metadata.concat(result.contentStream?.linkedResourceMetadata || []);
+          }
+          const statusList = metadata
+                .filter((resource: ResourceMetadata)=>resource.mediaType=='application/json')
                 .map((resource: ResourceMetadata)=>{
                     return {
                         statusListName: resource.resourceName,
