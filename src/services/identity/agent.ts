@@ -5,6 +5,8 @@ import {
   IAgentPlugin,
   ICreateVerifiableCredentialArgs,
   IDIDManager,
+  IDIDManagerDeleteArgs,
+  IDIDManagerUpdateArgs,
   IIdentifier,
   IKeyManager,
   IResolver,
@@ -30,6 +32,7 @@ import { Resolver, ResolverRegistry } from 'did-resolver'
 import type {
   ICheqdBroadcastStatusList2021Args,
   ICheqdCreateStatusList2021Args,
+  ICheqdDeactivateIdentifierArgs,
   ICheqdVerifyCredentialWithStatusList2021Args,
 } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import {
@@ -127,6 +130,38 @@ export class Veramo {
         }
       })
       return identifier
+    } catch (error) {
+      throw new Error(`${error}`)
+    }
+  }
+
+  async updateDid(agent: TAgent<IDIDManager>, didDocument: DIDDocument): Promise<IIdentifier> {
+    try {
+      const [kms] = await agent.keyManagerGetKeyManagementSystems()
+
+      const identifier: IIdentifier = await agent.didManagerUpdate({
+        did: didDocument.id,
+        document: didDocument
+      } satisfies IDIDManagerUpdateArgs)
+      return identifier
+    } catch (error) {
+      throw new Error(`${error}`)
+    }
+  }
+
+  async deactivateDid(agent: VeramoAgent, did: string): Promise<boolean> {
+    try {
+      const [kms] = await agent.keyManagerGetKeyManagementSystems()
+      const didDocument = (await this.resolveDid(agent, did)).didDocument
+
+      if (!didDocument) {
+        throw new Error('DID document not found')
+      }
+      const result = await agent.cheqdDeactivateIdentifier({
+        kms,
+        document: didDocument
+      } satisfies ICheqdDeactivateIdentifierArgs)
+      return result
     } catch (error) {
       throw new Error(`${error}`)
     }

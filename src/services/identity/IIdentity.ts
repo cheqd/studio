@@ -22,6 +22,8 @@ export interface IIdentity {
   createKey(type: 'Ed25519' | 'Secp256k1', agentId?: string): Promise<ManagedKeyInfo>
   getKey(kid: string, agentId?: string): Promise<ManagedKeyInfo>
   createDid(network: string, didDocument: DIDDocument, agentId?: string): Promise<IIdentifier> 
+  updateDid(didDocument: DIDDocument, agentId?: string): Promise<IIdentifier> 
+  deactivateDid(did: string, agentId?: string): Promise<boolean> 
   listDids(agentId?: string): Promise<string[]>
   resolveDid(did: string): Promise<DIDResolutionResult>
   getDid(did: string, agentId?: string): Promise<any>

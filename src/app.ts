@@ -92,9 +92,9 @@ class App {
     app.post(`/presentation/verify`, CredentialController.presentationValidator, new CredentialController().verifyPresentation)
 
     //revocation
-    app.post('/credential-status/statusList2021/create', RevocationController.didValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
-    app.post('/credential-status/statusList2021/publish', RevocationController.didValidator, new RevocationController().createStatusList)
-    app.get('/credential-status/statusList2021/list', RevocationController.didValidator, new RevocationController().fetchStatusList)
+    app.post('/:did/credential-status/create', RevocationController.paramValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
+    app.post('/:did/credential-status/publish', RevocationController.paramValidator, new RevocationController().createStatusList)
+    app.get('/:did/credential-status/list', RevocationController.paramValidator, new RevocationController().fetchStatusList)
 
     // store
     app.post(`/store`, new StoreController().set)
@@ -103,7 +103,9 @@ class App {
     // issuer
     app.post(`/key/create`, new IssuerController().createKey)
     app.get(`/key/:kid`, new IssuerController().getKey)
-    app.post(`/did/create`, IssuerController.didValidator, new IssuerController().createDid)
+    app.post(`/did/create`, IssuerController.createValidator, new IssuerController().createDid)
+    app.post(`/did/update`, IssuerController.updateValidator, new IssuerController().updateDid)
+    app.post(`/did/deactivate`, IssuerController.deactivateValidator, new IssuerController().deactivateDid)
     app.get(`/did/list`, new IssuerController().getDids)
     app.get(`/did/:did`, new IssuerController().getDids)
     app.post(`/:did/resource/create`, IssuerController.resourceValidator, new IssuerController().createResource)

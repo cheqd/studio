@@ -11,8 +11,8 @@ import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers
 
 export class IssuerController {
 
-  public static didValidator = [
-    check('didDocument').optional().isArray().custom((value)=>{
+  public static createValidator = [
+    check('didDocument').optional().isObject().custom((value)=>{
       const { valid } = validateSpecCompliantPayload(value)
       return valid
     }).withMessage('Invalid didDocument'),
@@ -27,6 +27,17 @@ export class IssuerController {
       .withMessage('Invalid verificationMethod'),      
     check('options.methodSpecificIdAlgo').optional().isString().isIn([MethodSpecificIdAlgo.Base58, MethodSpecificIdAlgo.Uuid]).withMessage('Invalid methodSpecificIdAlgo'),
     check('options.network').optional().isString().isIn([CheqdNetwork.Mainnet, CheqdNetwork.Testnet]).withMessage('Invalid network'),
+  ]
+
+  public static updateValidator = [
+    check('didDocument').isObject().custom((value)=>{
+        const { valid } = validateSpecCompliantPayload(value)
+        return valid
+      }).withMessage('Invalid didDocument')
+  ]
+
+  public static deactivateValidator = [
+    param('did').exists().isString().contains('did:cheqd').withMessage('Invalid DID')
   ]
 
   public static resourceValidator = [
@@ -99,6 +110,43 @@ export class IssuerController {
       }
 
       const did = await Identity.instance.createDid(network, didDocument, response.locals.customerId)
+      return response.status(200).json(did)
+    } catch (error) {
+        return response.status(500).json({
+            error: `${error}`
+        })
+    }
+  }
+
+  public async updateDid(request: Request, response: Response) {
+    const result = validationResult(request)
+    if (!result.isEmpty()) {
+      return response.status(400).json({
+        error: result.array()[0].msg
+      })
+    }
+
+    const { options } = request.body
+    try {
+      const did = await Identity.instance.updateDid(options.didDocument, response.locals.customerId)
+      return response.status(200).json(did)
+    } catch (error) {
+        return response.status(500).json({
+            error: `${error}`
+        })
+    }
+  }
+
+  public async deactivateDid(request: Request, response: Response) {
+    const result = validationResult(request)
+    if (!result.isEmpty()) {
+      return response.status(400).json({
+        error: result.array()[0].msg
+      })
+    }
+
+    try {
+      const did = await Identity.instance.deactivateDid(request.params.did, response.locals.customerId)
       return response.status(200).json(did)
     } catch (error) {
         return response.status(500).json({

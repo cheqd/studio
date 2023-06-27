@@ -124,11 +124,28 @@ export class PostgresIdentity implements IIdentity {
   async createDid(network: string, didDocument: DIDDocument, agentId: string): Promise<IIdentifier> {
     try {
       const agent = await this.createAgent(agentId)
-      if (!agent) throw new Error('No initialised agent found.')
-
       const identifier: IIdentifier = await Veramo.instance.createDid(agent, network, didDocument)
       await CustomerService.instance.update(agentId, { dids: [identifier.did] })
       return identifier
+    } catch (error) {
+      throw new Error(`${error}`)
+    }
+  }
+
+  async updateDid(didDocument: DIDDocument, agentId: string): Promise<IIdentifier> {
+    try {
+      const agent = await this.createAgent(agentId)
+      const identifier: IIdentifier = await Veramo.instance.updateDid(agent, didDocument)
+      return identifier
+    } catch (error) {
+      throw new Error(`${error}`)
+    }
+  }
+
+  async deactivateDid(did: string, agentId: string): Promise<boolean> {
+    try {
+      const agent = await this.createAgent(agentId)
+      return await Veramo.instance.deactivateDid(agent, did)
     } catch (error) {
       throw new Error(`${error}`)
     }

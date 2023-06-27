@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express'
-import { check, query, validationResult } from 'express-validator'
+import { check, param, query, validationResult } from 'express-validator'
 import { fromString } from 'uint8arrays'
 
 import { Identity } from '../services/identity/index.js'
@@ -11,12 +11,16 @@ export class RevocationController {
     static statusListValidator = [
         check('length').isNumeric().withMessage('length should be a number'),
         check('data').optional().isString().withMessage('data should be string'),
-        check('encoding').optional().isIn(['base64', 'base64url', 'hex']).withMessage('invalid encoding')
+        check('encoding').optional().isIn(['base64', 'base64url', 'hex']).withMessage('invalid encoding'),
+        check('statusPurpose').optional().isIn(['revocation', 'suspension']).withMessage('invalid statusPurpose')
     ]
 
-    static didValidator = [
-        query('did').isString().withMessage('DID is required')
-        .contains('did:cheqd:').withMessage('Provide a valid cheqd DID')
+    static paramValidator = [
+        param('did').isString().withMessage('DID is required')
+        .contains('did:cheqd:').withMessage('Provide a valid cheqd DID'),
+        query('statusPurpose').optional().isString().withMessage('statusPurpose should be a string')
+        .isIn(['suspension', 'revocation']).withMessage('Invalid statuspurpose'),
+        query('encrypted').optional().isBoolean().withMessage('encrypted should be a boolean value')
     ]
 
     async createStatusList(request: Request, response: Response) {

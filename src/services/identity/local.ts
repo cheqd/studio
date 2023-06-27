@@ -94,6 +94,18 @@ export class LocalIdentity implements IIdentity {
     throw new Error('Not supported')
   }
 
+  async updateDid(): Promise<IIdentifier> {
+    throw new Error('Not supported')
+  }
+
+  async deactivateDid(did: string): Promise<boolean> {
+    try {
+      return await Veramo.instance.deactivateDid(this.initAgent(), did)
+    } catch (error) {
+      throw new Error(`${error}`)
+    }
+  }
+
   async listDids() {
     return [(await this.importDid()).did]
   }
