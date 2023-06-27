@@ -28,7 +28,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
     private scopes: string[] | unknown
     private logToHelper?: LogToHelper
 
-    public customer_id: string
+    public customerId: string
 
     private routeToScoupe: MethodToScope[] = []
     private static pathSkip = ['/swagger', '/user', '/static', '/logto']
@@ -39,50 +39,74 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
         this.namespace = '' as Namespaces
         this.token = '' as string
         this.scopes = undefined
-        this.customer_id = '' as string
-        if (process.env.ENABLE_AUTHENTICATION) {
+        this.customerId = '' as string
+        if (process.env.ENABLE_AUTHENTICATION === "true") {
             this.logToHelper = new LogToHelper()
         }
     }
 
+    public isAuthenticated(request: Request) {
+        return 'user' in request && request.user.isAuthenticated
+    }
+
     public async commonPermissionCheck(request: Request): Promise<IAuthResponse> {
+        let scopes = []
         // Tries to get token from the request and other preps
-        const _setup = this.setupAuth(request)
-        if (_setup) {
-            return _setup
-        }
+        // If there is no token that means that user was not authenticated. 
+        // Let's fall back to unauth check
+        const _setup_err = this.setupAuth(request)
+        if (_setup_err && _setup_err.status === 401) {
+            scopes = this.getDefaultLogToScopes() as string[]
+             // Checks if the token has the required scopes
+            if (!this.areValidScopes(request.path, request.method, scopes, this.getNamespace())) {
+                return {
+                    status: 400,
+                    error: `Unauthorized error: Seems like default scopes are not enough for such action. 
+                    Please login.`,
+                    data: {
+                        customerId: '',
+                        scopes: [],
+                        namespace: this.getNamespace(),
+                    }
 
-        const resourceAPI = AbstractAuthHandler.buildResourceAPIUrl(request)
-        if (!resourceAPI) {
-            return {
-                status: 500,
-                error: `Internal error. Issue with building resource API for the path ${request.path}`,
-                data: {
-                    customerId: '',
-                    scopes: [],
-                    namespace: this.getNamespace(),
                 }
-
             }
-        }
-        // Verifies token for the resource API
-        const _resp = await this.verifyJWTToken(this.getToken(), resourceAPI)
-        if (_resp && _resp.status !== 200) {
-            return _resp
-        }
+        } else {
 
-        // Checks if the token has the required scopes
-        if (!this.areValidScopes(request.path, request.method, this.getScopes() as string[], this.getNamespace())) {
-            return {
-                status: 400,
-                error: `Unauthorized error: Current LogTo account does not have the required scopes. 
-                You need ${this.getScopeForRoute(request.path, request.method, this.getNamespace())} scope(s).`,
-                data: {
-                    customerId: '',
-                    scopes: [],
-                    namespace: this.getNamespace(),
+            const resourceAPI = AbstractAuthHandler.buildResourceAPIUrl(request)
+            if (!resourceAPI) {
+                return {
+                    status: 500,
+                    error: `Internal error. Issue with building resource API for the path ${request.path}`,
+                    data: {
+                        customerId: '',
+                        scopes: [],
+                        namespace: this.getNamespace(),
+                    }
+
                 }
+            }
 
+            // Verifies token for the resource API
+            const _resp = await this.verifyJWTToken(this.getToken(), resourceAPI)
+            if (_resp && _resp.status !== 200) {
+                return _resp
+            }
+            scopes = this.getScopes() as string[]
+
+            // Checks if the token has the required scopes
+            if (!this.areValidScopes(request.path, request.method, scopes, this.getNamespace())) {
+                return {
+                    status: 400,
+                    error: `Unauthorized error: Current LogTo account does not have the required scopes. 
+                    You need ${this.getScopeForRoute(request.path, request.method, this.getNamespace())} scope(s).`,
+                    data: {
+                        customerId: '',
+                        scopes: [],
+                        namespace: this.getNamespace(),
+                    }
+
+                }
             }
         }
         return {
@@ -154,7 +178,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
                 }
             }
             this.scopes = (payload.scope as string).split(' ')
-            this.customer_id = payload.sub as string
+            this.customerId = payload.sub as string
 
         } catch (error) {
             return {
@@ -240,7 +264,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
     }
 
     public getCustomerId(): string {
-        return this.customer_id
+        return this.customerId
     }
 
     public getAllLogToScopes(): string[] | void {
@@ -268,7 +292,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
 
     private findRule(route: string, method: string, namespace=Namespaces.Testnet): MethodToScope | null {
         for (const item of this.routeToScoupe) {
-            if (item.isRule(route, method, namespace)) {
+            if (item.isRuleAccepted(route, method, namespace)) {
                 return item
             }
         }

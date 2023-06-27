@@ -19,7 +19,7 @@ export class MethodToScope {
       return this.route === route && this.method === method && this.scope === scope && this.scope.includes(namespace)
     }
   
-    public isRule(route: string, method: string, namespace=Namespaces.Testnet): boolean {
+    public isRuleAccepted(route: string, method: string, namespace=Namespaces.Testnet): boolean {
       return this.route === route && this.method === method && this.scope.includes(namespace)
     }
   

@@ -9,7 +9,7 @@ import { AccountAuthHandler } from './auth/account_auth.js'
 import { CredentialAuthHandler } from './auth/credential_auth.js'
 import { DidAuthHandler } from './auth/did_auth.js'
 import { KeyAuthHandler } from './auth/key_auth.js'
-import { CredentialStatusAuthHandler } from './auth/credential-status.js'
+import { CredentialStatusAuthHandler } from './auth/credential-status_auth.js'
 import { AbstractAuthHandler } from './auth/base_auth.js'
 
 dotenv.config()
@@ -57,7 +57,7 @@ export class Authentication {
                 }
                 break
             default:
-                if (!['/account', '/', '/store'].includes(request.path) && !await CustomerService.instance.find(response.locals.customerId, {})) {
+                if (!['/account', '/', '/store', '/credential/verify'].includes(request.path) && !await CustomerService.instance.find(response.locals.customerId, {})) {
                     message = 'Customer not found'
                 }
                 break
