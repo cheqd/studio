@@ -1146,7 +1146,7 @@
                 }
             }
         },
-        "/{did}/resource/create": {
+        "/resource/create/{did}": {
             "post": {
                 "tags": [
                     "Resource"
@@ -1392,7 +1392,7 @@
                 }
             }
         },
-        "/credential-status/statusList2021/publish": {
+        "/credential-status/publish": {
             "post": {
                 "tags": [
                     "Credential Status"
@@ -1496,7 +1496,7 @@
                 }
             }
         },
-        "/credential-status/statusList2021/list": {
+        "/credential-status/list": {
             "get": {
                 "tags": [
                     "Credential Status"
@@ -1520,6 +1520,13 @@
                                 "revocation",
                                 "suspension"
                             ]
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "statusListName",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],

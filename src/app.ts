@@ -60,7 +60,9 @@ class App {
       // Authentication funcitons/methods
       this.express.use(Authentication.wrapperHandleAuthRoutes)
       this.express.use(Authentication.withLogtoWrapper)
-      this.express.use(Authentication.guard)
+    }
+    if (process.env.ENABLE_EXTERNAL_DB === 'true') {
+        this.express.use(Authentication.guard)
     }
     this.express.use(express.text())
 
@@ -108,7 +110,7 @@ class App {
     app.post(`/did/deactivate/:did`, IssuerController.deactivateValidator, new IssuerController().deactivateDid)
     app.get(`/did/list`, new IssuerController().getDids)
     app.get(`/did/:did`, new IssuerController().getDids)
-    app.post(`/:did/resource/create`, IssuerController.resourceValidator, new IssuerController().createResource)
+    app.post(`/resource/create/:did`, IssuerController.resourceValidator, new IssuerController().createResource)
 
     // customer
     app.post(`/account`, new CustomerController().create)

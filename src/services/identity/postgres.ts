@@ -61,6 +61,9 @@ export class PostgresIdentity implements IIdentity {
   }
 
   async createAgent(agentId: string) : Promise<VeramoAgent> {
+    if(!agentId) {
+        throw new Error('Customer not found')
+    }
     const customer = await CustomerService.instance.get(agentId) as CustomerEntity
     const dbConnection = Connection.instance.dbConnection
 
@@ -104,6 +107,9 @@ export class PostgresIdentity implements IIdentity {
   }
 
   async createKey(type: 'Ed25519' | 'Secp256k1'='Ed25519', agentId: string): Promise<ManagedKeyInfo> {
+    if(!agentId) {
+        throw new Error('Customer not found')
+    }
     const key = await Veramo.instance.createKey(this.agent, type)
     if(await CustomerService.instance.find(agentId, {})) await CustomerService.instance.update(agentId, { kids: [key.kid] })
     return key
@@ -122,6 +128,9 @@ export class PostgresIdentity implements IIdentity {
   }
 
   async createDid(network: string, didDocument: DIDDocument, agentId: string): Promise<IIdentifier> {
+    if(!agentId) {
+        throw new Error('Customer not found')
+    }
     try {
       const agent = await this.createAgent(agentId)
       const identifier: IIdentifier = await Veramo.instance.createDid(agent, network, didDocument)
@@ -133,6 +142,9 @@ export class PostgresIdentity implements IIdentity {
   }
 
   async updateDid(didDocument: DIDDocument, agentId: string): Promise<IIdentifier> {
+    if(!agentId) {
+        throw new Error('Customer not found')
+    }
     try {
       const agent = await this.createAgent(agentId)
       const identifier: IIdentifier = await Veramo.instance.updateDid(agent, didDocument)
@@ -143,6 +155,9 @@ export class PostgresIdentity implements IIdentity {
   }
 
   async deactivateDid(did: string, agentId: string): Promise<boolean> {
+    if(!agentId) {
+        throw new Error('Customer not found')
+    }
     try {
       const agent = await this.createAgent(agentId)
       return await Veramo.instance.deactivateDid(agent, did)
@@ -152,6 +167,9 @@ export class PostgresIdentity implements IIdentity {
   }
 
   async listDids(agentId: string) {
+    if(!agentId) {
+        throw new Error('Customer not found')
+    }
     const customer = await CustomerService.instance.get(agentId) as CustomerEntity
     return customer?.dids || []
   }
@@ -165,6 +183,10 @@ export class PostgresIdentity implements IIdentity {
   }
 
   async importDid(did: string, privateKeyHex: string, publicKeyHex: string, agentId: string): Promise<IIdentifier> {
+    if(!agentId) {
+        throw new Error('Customer not found')
+    }
+
     if (!did.match(cheqdDidRegex)) {
       throw new Error('Invalid DID')
     }
@@ -175,6 +197,9 @@ export class PostgresIdentity implements IIdentity {
   }
 
   async createResource(network: string, payload: ResourcePayload, agentId: string) {
+    if(!agentId) {
+        throw new Error('Customer not found')
+    }
     try {
         const agent = await this.createAgent(agentId)
         return await Veramo.instance.createResource(agent, network, payload)

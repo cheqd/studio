@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express'
-import { check, param, query, validationResult } from 'express-validator'
+import { check, query, validationResult } from 'express-validator'
 import { fromString } from 'uint8arrays'
 
 import { Identity } from '../services/identity/index.js'
@@ -58,18 +58,25 @@ export class RevocationController {
         }
 
         try {
-          const resourceTypes = request.query.resourceType ? [request.query.resourceType] : [StatusList2021ResourceTypes.revocation, StatusList2021ResourceTypes.suspension];
-          let metadata: ResourceMetadata[] = [];
+          const statusPurpose = request.query.statusPurpose as 'revocation' | 'suspension'
+          const resourceTypes =  statusPurpose ? [StatusList2021ResourceTypes[`${statusPurpose}`]] : [StatusList2021ResourceTypes.revocation, StatusList2021ResourceTypes.suspension]
+          let metadata: ResourceMetadata[] = []
             
           for (const resourceType of resourceTypes) {
-            const result = await Veramo.instance.resolve(`${request.query.did}?resourceType=${resourceType}&resourceMetadata=true`);
-            metadata = metadata.concat(result.contentStream?.linkedResourceMetadata || []);
+            const result = await Veramo.instance.resolve(`${request.query.did}?resourceType=${resourceType}&resourceMetadata=true`)
+            metadata = metadata.concat(result.contentStream?.linkedResourceMetadata || [])
           }
           const statusList = metadata
-                .filter((resource: ResourceMetadata)=>resource.mediaType=='application/json')
+                .filter((resource: ResourceMetadata)=>{
+                    if (request.query.statusListName) {
+                      return resource.resourceName === request.query.statusListName && resource.mediaType == 'application/json'
+                    }
+                    return resource.mediaType == 'application/json'
+                })
                 .map((resource: ResourceMetadata)=>{
                     return {
                         statusListName: resource.resourceName,
+                        statusPurpose: resource.resourceType,
                         statusListVersion: resource.resourceVersion,
                         mediaType: resource.mediaType,
                         statusListId: resource.resourceId,
