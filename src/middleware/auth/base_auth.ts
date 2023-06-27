@@ -40,7 +40,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
         this.token = '' as string
         this.scopes = undefined
         this.customer_id = '' as string
-        if (process.env.ENABLE_AUTHENTICATION) {
+        if (process.env.ENABLE_AUTHENTICATION === 'true') {
             this.logToHelper = new LogToHelper()
         }
     }
