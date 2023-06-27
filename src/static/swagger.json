@@ -530,7 +530,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/RevocationResult"
+                                    "$ref": "#/components/schemas/credentialStatusResult"
                                 }
                             }
                         }
@@ -1944,7 +1944,7 @@
                     "type": "TextDocument"
                 }
             },
-            "RevocationResult": {
+            "credentialStatusResult": {
                 "properties": {
                     "revoked": {
                         "type": "boolean"

@@ -6,8 +6,7 @@ import {
   ICredentialIssuer,
   ICredentialVerifier,
   W3CVerifiableCredential,
-  TAgent,
-  CredentialStatusReference
+  TAgent
 } from '@veramo/core'
 import { AccessControlConditionBalanceArgs, AccessControlConditionMemoNonceArgs, ICheqd, ICheqdStatusList2021Options } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import { ICredentialIssuerLD } from '@veramo/credential-ld'
@@ -93,88 +92,7 @@ export type SpecValidationResult = {
   error?: string
 }
 
-class MethodToScope {
-  private route: string
-  private method: string
-  private scope: string
-  constructor(route: string, method: string, scope: string) {
-    this.route = route
-    this.method = method
-    this.scope = scope
-  }
-  
-  public validate(route: string, method: string, scope: string): boolean {
-    return this.route === route && this.method === method && this.scope === scope
-  }
 
-  public isRule(route: string, method: string): boolean {
-    return this.route === route && this.method === method
-  }
-
-  public getScope(): string {
-    return this.scope
-  }
-}
-
-export class ApiGuarding {
-  private routeToScoupe: MethodToScope[] = []
-  private static pathSkip = ['/', '/swagger', '/user', '/static/custom-button.js']
-  private static regExpSkip = new RegExp("^/.*js")
-  constructor() {
-    this.registerRoute('/account', 'GET', 'account:read')
-    this.registerRoute('/account', 'POST', 'account:create')
-    this.registerRoute('/key', 'POST', 'key:create')
-    this.registerRoute('/key', 'GET', 'key:read')
-    this.registerRoute('/credential/issue', 'POST', 'credential:issue')
-    this.registerRoute('/credential/verify', 'POST', 'credential:verify')
-    this.registerRoute('/did/create', 'POST', 'did:create')
-  }
-
-  private registerRoute(route: string, method: string, scope: string): void {
-    this.routeToScoupe.push(new MethodToScope(route, method, scope))
-  }
-
-  private findRule(route: string, method: string): MethodToScope | null {
-    for (const item of this.routeToScoupe) {
-      if (item.isRule(route, method)) {
-        return item
-      }
-    }
-    return null
-  }
-
-  public getScopeForRoute(route: string, method: string): string | null {
-    const rule = this.findRule(route, method)
-    if (rule) {
-      return rule.getScope()
-    }
-    return null
-  }
-
-  public isValidScope(route: string, method: string, scope: string): boolean {
-    const rule = this.findRule(route, method)
-    if (rule) {
-      return rule.validate(route, method, scope)
-    }
-    // If no rule for route, then allow
-    return true
-  }
-
-  public areValidScopes(route: string, method: string, scopes: string[]): boolean {
-    for (const scope of scopes) {
-      if (this.isValidScope(route, method, scope)) {
-        return true
-      }
-    }
-    return false
-  }
-
-  public skipPath(path: string): boolean {
-    return ApiGuarding.pathSkip.includes(path) || path.match(ApiGuarding.regExpSkip) !== null
-  }
-}
-
-export const apiGuarding = new ApiGuarding()
 export type VeramoAgent = TAgent<IDIDManager & 
 IKeyManager & 
 IDataStore & 

@@ -4,7 +4,6 @@ import cors from 'cors'
 import swaggerUi from 'swagger-ui-express'
 import session from 'express-session'
 import cookieParser from 'cookie-parser'
-import { withLogto, handleAuthRoutes } from '@logto/express'
 
 import { CredentialController } from './controllers/credentials.js'
 import { StoreController } from './controllers/store.js'
@@ -13,7 +12,7 @@ import { CustomerController } from './controllers/customer.js'
 import { Authentication } from './middleware/authentication.js'
 import { Connection } from './database/connection/connection.js'
 import { RevocationController } from './controllers/revocation.js'
-import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js'
+import { CORS_ERROR_MSG } from './types/constants.js'
 
 import swaggerJSONDoc from './static/swagger.json' assert { type: "json" }
 
@@ -23,8 +22,11 @@ dotenv.config()
 import { UserInfo } from './controllers/user_info.js'
 import path from 'path'
 
-const swagger_options = {
-  customJs: '/static/custom-button.js',
+let swagger_options = {}
+if (process.env.ENABLE_AUTHENTICATION === 'true') {
+  swagger_options = {
+    customJs: '/static/custom-button.js',
+  }
 }
 
 class App {
@@ -55,8 +57,10 @@ class App {
     this.express.use(cookieParser())
     if (process.env.ENABLE_AUTHENTICATION === 'true') {
       this.express.use(session({secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 }}))
-      this.express.use(handleAuthRoutes(configLogToExpress))
-      this.express.use(withLogto(configLogToExpress))
+      // Authentication funcitons/methods
+      this.express.use(Authentication.wrapperHandleAuthRoutes)
+      this.express.use(Authentication.withLogtoWrapper)
+      this.express.use(Authentication.guard)
     }
     this.express.use(express.text())
 
@@ -67,7 +71,6 @@ class App {
         return res.send(swaggerUi.generateHTML(swaggerJSONDoc, swagger_options))
       }
     )
-    this.express.use(Authentication.guard)
     this.express.use(Authentication.handleError)
     this.express.use(Authentication.accessControl)
   }
