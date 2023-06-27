@@ -15,8 +15,8 @@ export class RevocationController {
         check('statusPurpose').optional().isIn(['revocation', 'suspension']).withMessage('invalid statusPurpose')
     ]
 
-    static paramValidator = [
-        param('did').isString().withMessage('DID is required')
+    static queryValidator = [
+        query('did').isString().withMessage('DID is required')
         .contains('did:cheqd:').withMessage('Provide a valid cheqd DID'),
         query('statusPurpose').optional().isString().withMessage('statusPurpose should be a string')
         .isIn(['suspension', 'revocation']).withMessage('Invalid statuspurpose'),
