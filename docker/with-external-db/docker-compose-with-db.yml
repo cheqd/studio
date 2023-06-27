@@ -6,17 +6,24 @@ version: '3.8'
 
 services:
   app:
+    # To change the image version, edit the ":latest" tag to the desired version
+    # For production/stable release, use ":latest"
+    # For development/staging release, use ":staging-latest"
     image: ghcr.io/cheqd/credential-service:latest
     depends_on:
       postgres:
+        condition: service_healthy
+      app-migrations:
+        condition: service_healthy
+      logto:
         condition: service_healthy
     ports:
       - 3000:3000
     env_file:
       - with-db.env
-    profiles:
-      - app-without-external-db
 
+  # This service is used as a ONE-TIME setup service to run migrations
+  # Only relevant if you're using the app with EXTERNAL_DB=true
   app-migrations:
     image: ghcr.io/cheqd/credential-service:latest
     depends_on:
@@ -26,31 +33,24 @@ services:
       - 3000:3000
     env_file:
       - with-db.env
-    entrypoint: [ "sh", "-c", "npm run migration && npm run start" ]
+    entrypoint: [ "npm run migration" ]
     profiles:
-      - app-with-external-db
+      - app-setup
+      - external-kms
 
-  logto:
-    image: ghcr.io/logto-io/logto:latest
-    depends_on:
-      postgres:
-        condition: service_healthy
-    ports:
-      - 3001:3001
-      - 3002:3002
-    entrypoint: ["sh", "-c", "npm run cli db seed -- --swe && npm start"]
-    env_file:
-      - .env
-    profiles:
-      - logto
-
+  # This service is used to run a PostgreSQL database
+  # Used in the following scenarios:
+  # 1. When you're using the app with EXTERNAL_DB=true
+  # 2. When you're using the app with LogTo enabled using ENABLE_AUTHENTICATION=true
   postgres:
-    image: postgres
+    image: postgres:15-alpine
     user: postgres
     ports:
       - 5432:5432
+    # Edit the environment variables in postgres.env to change the database name, username, password, etc.
+    # Postgres setup and configuration is outside the scope of this file.
     env_file:
-      - .env
+      - postgres.env
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready" ]
       interval: 10s
@@ -59,3 +59,37 @@ services:
     profiles:
       - external-kms
       - logto
+
+  # This service is used to run a LogTo instance for authentication
+  # Used when ENABLE_AUTHENTICATION=true
+  logto:
+    image: ghcr.io/logto-io/logto:1.3.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      logto-migrations:
+        condition: service_healthy
+    ports:
+      - 3001:3001
+      - 3002:3002
+    env_file:
+      - logto.env
+    profiles:
+      - logto
+
+  # This service is used as a ONE-TIME setup service to run migrations for LogTo
+  # Only relevant if you're using the app with EXTERNAL_AUTHENTICATION=true
+  logto-migrations:
+    image: ghcr.io/logto-io/logto:1.3.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - 3001:3001
+      - 3002:3002
+    entrypoint: [ "/etc/logto/entrypoint.sh --alter-db 1.3.0" ]
+    env_file:
+      - logto.env
+    profiles:
+      - logto
+      - logto-setup
