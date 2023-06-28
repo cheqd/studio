@@ -814,8 +814,19 @@
                 ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "presentation": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        },
                         "application/json": {
                             "schema": {
+                                "type": "object",
                                 "properties": {
                                     "presentation": {
                                         "type": "object"
@@ -1740,6 +1751,10 @@
                     },
                     "credentialStatus": {
                         "type": "object",
+                        "required": [
+                            "statusPurpose",
+                            "statusListName"
+                        ],
                         "properties": {
                             "statusPurpose": {
                                 "type": "string",
@@ -1766,6 +1781,10 @@
                             "indexNotIn": {
                                 "type": "number"
                             }
+                        },
+                        "example": {
+                            "statusPurpose": "revocation",
+                            "statusListName": "employee-credentials"
                         }
                     }
                 },
