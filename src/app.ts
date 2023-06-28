@@ -21,6 +21,8 @@ dotenv.config()
 
 import { UserInfo } from './controllers/user_info.js'
 import path from 'path'
+import e from 'express'
+import { Middleware } from './middleware/middleware.js'
 
 let swagger_options = {}
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -41,7 +43,8 @@ class App {
 
   private middleware() {
     this.express.use(express.json({ limit: '50mb' }))
-	this.express.use(express.urlencoded({ extended: false }))
+	this.express.use(express.urlencoded({ extended: true }))
+    this.express.use(Middleware.parseUrlEncodedJson)
     this.express.use(Helmet())
     this.express.use(cors({
         origin: function(origin, callback){

@@ -126,9 +126,8 @@ export class IssuerController {
       })
     }
 
-    const { options } = request.body
     try {
-      const did = await Identity.instance.updateDid(options.didDocument, response.locals.customerId)
+      const did = await Identity.instance.updateDid(request.body.didDocument, response.locals.customerId)
       return response.status(200).json(did)
     } catch (error) {
         return response.status(500).json({

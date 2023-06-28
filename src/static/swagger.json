@@ -138,58 +138,14 @@
                 ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DIDCreateRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "required": [
-                                    "options"
-                                ],
-                                "properties": {
-                                    "options": {
-                                        "type": "object",
-                                        "properties": {
-                                            "network": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "testnet",
-                                                    "mainnet"
-                                                ]
-                                            },
-                                            "methodSpecificIdAlgo": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "uuid",
-                                                    "base58btc"
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    "secret": {
-                                        "type": "object",
-                                        "properties": {
-                                            "verificationMethod": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "type": {
-                                                        "type": "string",
-                                                        "enum": [
-                                                            "Ed25519VerificationKey2018",
-                                                            "JsonWebKey2020",
-                                                            "Ed25519VerificationKey2020"
-                                                        ]
-                                                    },
-                                                    "id": {
-                                                        "type": "string",
-                                                        "example": "key-1"
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "didDocument": {
-                                        "$ref": "#/components/schemas/DidDocument"
-                                    }
-                                }
+                                "$ref": "#/components/schemas/DIDCreateRequest"
                             }
                         }
                     }
@@ -251,17 +207,14 @@
                 ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DIDUpdateRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "required": [
-                                    "didDocument"
-                                ],
-                                "properties": {
-                                    "didDocument": {
-                                        "$ref": "#/components/schemas/DidDocument"
-                                    }
-                                }
+                                "$ref": "#/components/schemas/DIDUpdateRequest"
                             }
                         }
                     }
@@ -511,6 +464,11 @@
                 ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/CredentialRequest"
@@ -576,14 +534,14 @@
                 ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialVerifyRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
-                                "properties": {
-                                    "credential": {
-                                        "type": "string",
-                                        "example": "<Place the credential object or JWT string here>"
-                                    }
-                                }
+                                "$ref": "#/components/schemas/CredentialVerifyRequest"
                             }
                         }
                     }
@@ -646,17 +604,14 @@
                 ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialRevokeRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
-                                "properties": {
-                                    "credential": {
-                                        "type": "object"
-                                    },
-                                    "publish": {
-                                        "type": "boolean",
-                                        "example": true
-                                    }
-                                }
+                                "$ref": "#/components/schemas/CredentialRevokeRequest"
                             }
                         }
                     }
@@ -719,17 +674,14 @@
                 ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialRevokeRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
-                                "properties": {
-                                    "credential": {
-                                        "type": "object"
-                                    },
-                                    "publish": {
-                                        "type": "boolean",
-                                        "example": true
-                                    }
-                                }
+                                "$ref": "#/components/schemas/CredentialRevokeRequest"
                             }
                         }
                     }
@@ -792,17 +744,14 @@
                 ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialRevokeRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
-                                "properties": {
-                                    "credential": {
-                                        "type": "object"
-                                    },
-                                    "publish": {
-                                        "type": "boolean",
-                                        "example": true
-                                    }
-                                }
+                                "$ref": "#/components/schemas/CredentialRevokeRequest"
                             }
                         }
                     }
@@ -1164,6 +1113,11 @@
                 ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateResourceRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/CreateResourceRequest"
@@ -1245,34 +1199,14 @@
                 ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialStatusCreateRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
-                                "allOf": [
-                                    {
-                                        "$ref": "#/components/schemas/CreateResourceRequest"
-                                    },
-                                    {
-                                        "type": "object",
-                                        "properties": {
-                                            "length": {
-                                                "type": "number"
-                                            },
-                                            "encoding": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "base64url",
-                                                    "base64",
-                                                    "hex"
-                                                ]
-                                            }
-                                        }
-                                    }
-                                ],
-                                "example": {
-                                    "length": 140000,
-                                    "name": "cheqd-employee-credentials",
-                                    "version": "2023"
-                                }
+                                "$ref": "#/components/schemas/CredentialStatusCreateRequest"
                             }
                         }
                     }
@@ -1430,32 +1364,14 @@
                 ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialStatusPublishRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
-                                "allOf": [
-                                    {
-                                        "$ref": "#/components/schemas/CreateResourceRequest"
-                                    },
-                                    {
-                                        "type": "object",
-                                        "properties": {
-                                            "encoding": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "base64url",
-                                                    "base64",
-                                                    "hex"
-                                                ]
-                                            }
-                                        }
-                                    }
-                                ],
-                                "example": {
-                                    "name": "cheqd-employee-credentials",
-                                    "version": "2023",
-                                    "data": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
-                                    "encoding": "base64url"
-                                }
+                                "$ref": "#/components/schemas/CredentialStatusPublishRequest"
                             }
                         }
                     }
@@ -2148,6 +2064,144 @@
                     "statusList": {
                         "type": "string"
                     }
+                }
+            },
+            "DIDCreateRequest": {
+                "type": "object",
+                "required": [
+                    "options"
+                ],
+                "properties": {
+                    "options": {
+                        "type": "object",
+                        "properties": {
+                            "network": {
+                                "type": "string",
+                                "enum": [
+                                    "testnet",
+                                    "mainnet"
+                                ]
+                            },
+                            "methodSpecificIdAlgo": {
+                                "type": "string",
+                                "enum": [
+                                    "uuid",
+                                    "base58btc"
+                                ]
+                            }
+                        }
+                    },
+                    "secret": {
+                        "type": "object",
+                        "properties": {
+                            "verificationMethod": {
+                                "type": "object",
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "Ed25519VerificationKey2018",
+                                            "JsonWebKey2020",
+                                            "Ed25519VerificationKey2020"
+                                        ]
+                                    },
+                                    "id": {
+                                        "type": "string",
+                                        "example": "key-1"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "didDocument": {
+                        "$ref": "#/components/schemas/DidDocument"
+                    }
+                }
+            },
+            "DIDUpdateRequest": {
+                "type": "object",
+                "required": [
+                    "didDocument"
+                ],
+                "properties": {
+                    "didDocument": {
+                        "$ref": "#/components/schemas/DidDocument"
+                    }
+                }
+            },
+            "CredentialVerifyRequest": {
+                "type": "object",
+                "properties": {
+                    "credential": {
+                        "type": "object",
+                        "example": "<Place the credential object or JWT string here>"
+                    }
+                }
+            },
+            "CredentialRevokeRequest": {
+                "type": "object",
+                "properties": {
+                    "credential": {
+                        "type": "object"
+                    },
+                    "publish": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                }
+            },
+            "CredentialStatusCreateRequest": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/CreateResourceRequest"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "length": {
+                                "type": "number"
+                            },
+                            "encoding": {
+                                "type": "string",
+                                "enum": [
+                                    "base64url",
+                                    "base64",
+                                    "hex"
+                                ]
+                            }
+                        },
+                        "example": {
+                            "length": 140000,
+                            "name": "cheqd-employee-credentials",
+                            "version": "2023"
+                        }
+                    }
+                ]
+            },
+            "CredentialStatusPublishRequest": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/CreateResourceRequest"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "encoding": {
+                                "type": "string",
+                                "enum": [
+                                    "base64url",
+                                    "base64",
+                                    "hex"
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "example": {
+                    "name": "cheqd-employee-credentials",
+                    "version": "2023",
+                    "data": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
+                    "encoding": "base64url"
                 }
             }
         }

@@ -33,6 +33,7 @@ import type {
   ICheqdBroadcastStatusList2021Args,
   ICheqdCreateStatusList2021Args,
   ICheqdDeactivateIdentifierArgs,
+  ICheqdUpdateIdentifierArgs,
   ICheqdVerifyCredentialWithStatusList2021Args,
 } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import {
@@ -135,15 +136,15 @@ export class Veramo {
     }
   }
 
-  async updateDid(agent: TAgent<IDIDManager>, didDocument: DIDDocument): Promise<IIdentifier> {
+  async updateDid(agent: VeramoAgent, didDocument: DIDDocument): Promise<IIdentifier> {
     try {
       const [kms] = await agent.keyManagerGetKeyManagementSystems()
 
-      const identifier: IIdentifier = await agent.didManagerUpdate({
-        did: didDocument.id,
-        document: didDocument
-      } satisfies IDIDManagerUpdateArgs)
-      return identifier
+      const result = await agent.cheqdUpdateIdentifier({
+        kms,
+        document: didDocument,
+      } satisfies ICheqdUpdateIdentifierArgs)
+      return {...result, provider: 'cheqd'}
     } catch (error) {
       throw new Error(`${error}`)
     }
