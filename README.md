@@ -95,9 +95,10 @@ Construct the postgres URL and configure the env variables mentioned above.
 Spinning up a Docker container from the [pre-built credential-service Docker image on Github](https://github.com/cheqd/credential-service/pkgs/container/credential-service) is as simple as the command below:
 
 - Running credential-service using Docker with external database:
-  - Set `POSTGRES_USER`, `POSTGRES_PASSWORD` environment variables in `docker/with-external-db/.env`:
+  - Set `POSTGRES_USER`, `POSTGRES_PASSWORD` environment variables in `docker/with-external-db/postgres.env`:
     - `POSTGRES_USER`: Postgres database username using in Docker database service.
     - `POSTGRES_PASSWORD`: Postgres database password using in Docker database service.
+    - `POSTGRES_MULTIPLE_DATABASES`: Postgres multiple databases, e.g.: `POSTGRES_MULTIPLE_DATABASES="app,logto"`.
 
 Run LogTo service:
 
@@ -105,10 +106,10 @@ Run LogTo service:
 docker compose -f docker/with-external-db/docker-compose-with-db.yml --profile logto up --detach
 ```
 
-Run credential-service with an external database:
+Run credential-service:
 
 ```bash
-docker compose -f docker/with-external-db/docker-compose-with-db.yml --profile app-with-external-db up --detach
+docker compose -f docker/with-external-db/docker-compose-with-db.yml --profile app up --detach
 ```
 
 ### Build using Docker
