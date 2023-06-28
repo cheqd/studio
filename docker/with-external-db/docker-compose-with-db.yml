@@ -14,13 +14,15 @@ services:
       postgres:
         condition: service_healthy
       app-migrations:
-        condition: service_healthy
+        condition: service_started
       logto:
-        condition: service_healthy
+        condition: service_started
     ports:
       - 3000:3000
     env_file:
       - with-db.env
+    profiles:
+      - app
 
   # This service is used as a ONE-TIME setup service to run migrations
   # Only relevant if you're using the app with EXTERNAL_DB=true
@@ -29,14 +31,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - 3000:3000
     env_file:
       - with-db.env
-    entrypoint: [ "npm run migration" ]
+    entrypoint: [ "npm", "run", "migration" ]
     profiles:
       - app-setup
       - external-kms
+      - app
 
   # This service is used to run a PostgreSQL database
   # Used in the following scenarios:
@@ -45,6 +46,8 @@ services:
   postgres:
     image: postgres:15-alpine
     user: postgres
+    volumes:
+      - ./pg-init-scripts:/docker-entrypoint-initdb.d
     ports:
       - 5432:5432
     # Edit the environment variables in postgres.env to change the database name, username, password, etc.
@@ -59,16 +62,17 @@ services:
     profiles:
       - external-kms
       - logto
+      - app
 
   # This service is used to run a LogTo instance for authentication
   # Used when ENABLE_AUTHENTICATION=true
   logto:
-    image: ghcr.io/logto-io/logto:1.3.0
+    image: ghcr.io/cheqd/connector-telegram:latest
     depends_on:
       postgres:
         condition: service_healthy
       logto-migrations:
-        condition: service_healthy
+        condition: service_started
     ports:
       - 3001:3001
       - 3002:3002
@@ -76,20 +80,19 @@ services:
       - logto.env
     profiles:
       - logto
+      - app
 
   # This service is used as a ONE-TIME setup service to run migrations for LogTo
   # Only relevant if you're using the app with EXTERNAL_AUTHENTICATION=true
   logto-migrations:
-    image: ghcr.io/logto-io/logto:1.3.0
+    image: ghcr.io/cheqd/connector-telegram:latest
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - 3001:3001
-      - 3002:3002
-    entrypoint: [ "/etc/logto/entrypoint.sh --alter-db 1.3.0" ]
+    entrypoint: ["bash", "/etc/logto/entrypoint.sh", "--alter-db", "1.3.0"]
     env_file:
       - logto.env
     profiles:
       - logto
       - logto-setup
+      - app
