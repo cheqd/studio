@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.4.0-develop.4](https://github.com/cheqd/credential-service/compare/2.4.0-develop.3...2.4.0-develop.4) (2023-06-28)
+
+## [2.4.0-develop.3](https://github.com/cheqd/credential-service/compare/2.4.0-develop.2...2.4.0-develop.3) (2023-06-27)
+
+
+### Bug Fixes
+
+* Fix bug where credential-service expects config variables with authentication and external DB disabled [DEV-2843] ([#276](https://github.com/cheqd/credential-service/issues/276)) ([4008bdf](https://github.com/cheqd/credential-service/commit/4008bdfcc0e372af4b31a914e121c561da3ed63c))
+
 ## [2.4.0-develop.2](https://github.com/cheqd/credential-service/compare/2.4.0-develop.1...2.4.0-develop.2) (2023-06-26)
 
 
