@@ -99,6 +99,18 @@ Spinning up a Docker container from the [pre-built credential-service Docker ima
     - `POSTGRES_USER`: Postgres database username using in Docker database service.
     - `POSTGRES_PASSWORD`: Postgres database password using in Docker database service.
     - `POSTGRES_MULTIPLE_DATABASES`: Postgres multiple databases, e.g.: `POSTGRES_MULTIPLE_DATABASES="app,logto"`.
+  
+  - Add permission for running postgres initialization scripts inside Docker:
+
+    ```bash
+    chmod +x docker/with-external-db/pg-init-scripts/create-multiple-postgresql-databases.sh
+    ```
+
+  - Add permission for using SSL secret key inside Docker:
+
+    ```bash
+    chmod 600 '<path/to/server.key>'
+    ```
 
 Run LogTo service:
 
