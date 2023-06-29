@@ -14,7 +14,7 @@ services:
       postgres:
         condition: service_healthy
       app-migrations:
-        condition: service_started
+        condition: service_completed_successfully
       logto:
         condition: service_started
     ports:
@@ -72,7 +72,7 @@ services:
       postgres:
         condition: service_healthy
       logto-migrations:
-        condition: service_started
+        condition: service_completed_successfully
     ports:
       - 3001:3001
       - 3002:3002
