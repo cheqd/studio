@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.4.0](https://github.com/cheqd/credential-service/compare/2.3.1...2.4.0) (2023-06-29)
+
+
+### Features
+
+* Add "authenticated" user roles and permissions, and amend API definitions [DEV-2684] ([#267](https://github.com/cheqd/credential-service/issues/267)) ([2a6b30f](https://github.com/cheqd/credential-service/commit/2a6b30f93dba29f1738f298e535303437a9a1971))
+
+
+### Bug Fixes
+
+* Fix bug where credential-service expects config variables with authentication and external DB disabled [DEV-2843] ([#276](https://github.com/cheqd/credential-service/issues/276)) ([4008bdf](https://github.com/cheqd/credential-service/commit/4008bdfcc0e372af4b31a914e121c561da3ed63c))
+* Fix for the order of auth handlers ([#275](https://github.com/cheqd/credential-service/issues/275)) ([6d3bb77](https://github.com/cheqd/credential-service/commit/6d3bb778c7e9884e66058941431da9a898025333))
+* Fix local storage instantiating ([#269](https://github.com/cheqd/credential-service/issues/269)) ([6ec820f](https://github.com/cheqd/credential-service/commit/6ec820f83c6d1c9b0a34e0bde10bcec25a51c5ef))
+
 ## [2.4.0-develop.4](https://github.com/cheqd/credential-service/compare/2.4.0-develop.3...2.4.0-develop.4) (2023-06-28)
 
 ## [2.4.0-develop.3](https://github.com/cheqd/credential-service/compare/2.4.0-develop.2...2.4.0-develop.3) (2023-06-27)
