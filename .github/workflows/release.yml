@@ -123,6 +123,10 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=min
+
+      - name: Debug if fails
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
       
       - name: Push image to GitHub Container Registry
         run: docker image push --all-tags ghcr.io/${{ env.IMAGE_NAME }}
