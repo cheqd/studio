@@ -16,7 +16,7 @@ services:
       app-migrations:
         condition: service_completed_successfully
       logto:
-        condition: service_started
+        condition: service_healthy
     ports:
       - 3000:3000
     env_file:
@@ -78,6 +78,11 @@ services:
       - 3002:3002
     env_file:
       - logto.env
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "--tries=1", "--timeout=5", "http://localhost:3002/api/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     profiles:
       - logto
       - app
