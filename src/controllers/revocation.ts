@@ -16,7 +16,7 @@ export class RevocationController {
     ]
 
     static queryValidator = [
-        query('did').isString().withMessage('DID is required')
+        check('did').isString().withMessage('DID is required')
         .contains('did:cheqd:').withMessage('Provide a valid cheqd DID'),
         query('statusPurpose').optional().isString().withMessage('statusPurpose should be a string')
         .isIn(['suspension', 'revocation']).withMessage('Invalid statuspurpose'),
@@ -29,11 +29,11 @@ export class RevocationController {
           return response.status(400).json({ error: result.array()[0].msg })
         }
 
-        let { length, encoding } = request.body
-        let { data, name, statusPurpose, alsoKnownAs, version } = request.body
+        let { data, name, alsoKnownAs, version, length, encoding } = request.body
+        const { statusPurpose } = request.query as { statusPurpose: 'revocation' | 'suspension' }
         
         const did = request.query.did as string
-        data = data ? fromString(data, 'base64') : undefined
+        data = data ? fromString(data, encoding) : undefined
         
         try {
           let result: any

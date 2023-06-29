@@ -130,7 +130,7 @@
                     "DID"
                 ],
                 "summary": "Create a DID",
-                "description": "<p>This endpoint creates a DID by taking DID document or a verification method as an input.</p>",
+                "description": "<p>This endpoint creates a DID by taking a set of input parameters or the whole didDocument itself</p>",
                 "security": [
                     {
                         "bearerAuth": []
@@ -199,7 +199,7 @@
                     "DID"
                 ],
                 "summary": "Update a DID",
-                "description": "<p>This endpoint updates a DID by taking DID document or a verification method as an input.</p>",
+                "description": "<p>This endpoint updates a DID by taking DID document or the particular fields needed to be updated</p>",
                 "security": [
                     {
                         "bearerAuth": []
@@ -333,7 +333,7 @@
                     "DID"
                 ],
                 "summary": "Fetch DIDs from wallet",
-                "description": "<p>This endpoint creates a DID by taking DID document as an input.</p>",
+                "description": "<p>This endpoint returns the list of DIDs controlled by the account</p>",
                 "security": [
                     {
                         "bearerAuth": []
@@ -390,8 +390,8 @@
                 "tags": [
                     "DID"
                 ],
-                "summary": "Fetch DIDs from wallet",
-                "description": "<p>This endpoint creates a DID by taking DID document as an input.</p>",
+                "summary": "Resolve a DID",
+                "description": "<p>This endpoint resolved a DID</p>",
                 "security": [
                     {
                         "bearerAuth": []
@@ -456,7 +456,7 @@
                     "Credential"
                 ],
                 "summary": "Issue a credential",
-                "description": "<p>This endpoint creates a DID. As input it takes the list of attributes, subjectDid, context and expiration date of the credential to be issued.</p>",
+                "description": "<p>This endpoint issues a credential. As input it takes the list of attributes, subjectDid, context and expiration date of the credential to be issued.</p>",
                 "security": [
                     {
                         "bearerAuth": []
@@ -622,7 +622,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/credentialStatusResult"
+                                    "$ref": "#/components/schemas/CredentialStatusResult"
                                 }
                             }
                         }
@@ -816,22 +816,12 @@
                     "content": {
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "presentation": {
-                                        "type": "object"
-                                    }
-                                }
+                                "$ref": "#/components/schemas/PresentationRequest"
                             }
                         },
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "presentation": {
-                                        "type": "object"
-                                    }
-                                }
+                                "$ref": "#/components/schemas/PresentationRequest"
                             }
                         }
                     }
@@ -1181,14 +1171,6 @@
                 "parameters": [
                     {
                         "in": "query",
-                        "name": "did",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "in": "query",
                         "name": "statusPurpose",
                         "required": true,
                         "schema": {
@@ -1344,14 +1326,6 @@
                 ],
                 "summary": "Publish statuslist 2021",
                 "parameters": [
-                    {
-                        "in": "query",
-                        "name": "did",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "in": "query",
                         "name": "statusPurpose",
@@ -1576,7 +1550,7 @@
                 }
             },
             "DidDocument": {
-                "description": "This input field contains either a complete DID document, or an incremental change (diff) to a DID document. See <a href=\"https://identity.foundation/did-registration/#diddocument\">https://identity.foundation/did-registration/#diddocument</a>.",
+                "description": "This input field contains a complete DID document",
                 "type": "object",
                 "properties": {
                     "context": {
@@ -1725,24 +1699,29 @@
                         "type": "string"
                     },
                     "attributes": {
+                        "description": "Json input of the attributes",
                         "type": "object"
                     },
                     "@context": {
+                        "description": "Additional contexts to be included in the credential",
                         "type": "array",
                         "items": {
                             "type": "string"
                         }
                     },
                     "type": {
+                        "description": "Additional type property to be included in the credential",
                         "type": "array",
                         "items": {
                             "type": "string"
                         }
                     },
                     "expirationDate": {
+                        "description": "Optional expiration date according to the <a href=\"https://www.w3.org/TR/vc-data-model/#expiration\">specification</a>",
                         "type": "string"
                     },
                     "format": {
+                        "description": "Select one of the supported credential formats, jwt by default",
                         "type": "string",
                         "enum": [
                             "jwt",
@@ -1750,6 +1729,7 @@
                         ]
                     },
                     "credentialStatus": {
+                        "description": "Optional field to support revocation or suspension, which takes statusListName and statusListPurpose as inputs.",
                         "type": "object",
                         "required": [
                             "statusPurpose",
@@ -1972,9 +1952,7 @@
                         },
                         "didDocumentMetadata": {
                             "created": "2023-06-07T15:53:59.629128532Z",
-                            "versionId": "8e286b55-7a25-44bb-af93-f0f8fd9df1b7"
-                        },
-                        "didResolutionMetadata": {
+                            "versionId": "8e286b55-7a25-44bb-af93-f0f8fd9df1b7",
                             "contentType": "application/did+ld+json",
                             "did": {
                                 "didString": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
@@ -2024,14 +2002,32 @@
                 "description": "Input fields for the resource creation",
                 "type": "object",
                 "additionalProperties": false,
+                "required": [
+                    "name",
+                    "type",
+                    "data",
+                    "encoding"
+                ],
                 "properties": {
                     "data": {
+                        "description": "Provide encoded string for the resource data",
                         "type": "string"
                     },
+                    "encoding": {
+                        "description": "The encoding format of the resource data",
+                        "type": "string",
+                        "enum": [
+                            "base64url",
+                            "base64",
+                            "hex"
+                        ]
+                    },
                     "name": {
+                        "description": "Resource name",
                         "type": "string"
                     },
                     "type": {
+                        "description": "Resource type",
                         "type": "string"
                     },
                     "alsoKnownAs": {
@@ -2058,7 +2054,7 @@
                     "type": "TextDocument"
                 }
             },
-            "credentialStatusResult": {
+            "CredentialStatusResult": {
                 "properties": {
                     "revoked": {
                         "type": "boolean"
@@ -2087,50 +2083,36 @@
             },
             "DIDCreateRequest": {
                 "type": "object",
-                "required": [
-                    "options"
-                ],
                 "properties": {
-                    "options": {
-                        "type": "object",
-                        "properties": {
-                            "network": {
-                                "type": "string",
-                                "enum": [
-                                    "testnet",
-                                    "mainnet"
-                                ]
-                            },
-                            "methodSpecificIdAlgo": {
-                                "type": "string",
-                                "enum": [
-                                    "uuid",
-                                    "base58btc"
-                                ]
-                            }
-                        }
+                    "network": {
+                        "type": "string",
+                        "enum": [
+                            "testnet",
+                            "mainnet"
+                        ]
                     },
-                    "secret": {
-                        "type": "object",
-                        "properties": {
-                            "verificationMethod": {
-                                "type": "object",
-                                "properties": {
-                                    "type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "Ed25519VerificationKey2018",
-                                            "JsonWebKey2020",
-                                            "Ed25519VerificationKey2020"
-                                        ]
-                                    },
-                                    "id": {
-                                        "type": "string",
-                                        "example": "key-1"
-                                    }
-                                }
-                            }
-                        }
+                    "methodSpecificIdAlgo": {
+                        "type": "string",
+                        "enum": [
+                            "uuid",
+                            "base58btc"
+                        ]
+                    },
+                    "verificationMethodType": {
+                        "type": "string",
+                        "enum": [
+                            "Ed25519VerificationKey2018",
+                            "JsonWebKey2020",
+                            "Ed25519VerificationKey2020"
+                        ]
+                    },
+                    "serviceEndpoint": {
+                        "type": "string"
+                    },
+                    "assertionMethod": {
+                        "description": "An assertion method is required to issue JSONLD credentials",
+                        "type": "boolean",
+                        "default": true
                     },
                     "didDocument": {
                         "$ref": "#/components/schemas/DidDocument"
@@ -2139,10 +2121,28 @@
             },
             "DIDUpdateRequest": {
                 "type": "object",
-                "required": [
-                    "didDocument"
-                ],
                 "properties": {
+                    "did": {
+                        "type": "string"
+                    },
+                    "service": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Service"
+                        }
+                    },
+                    "verificationMethod": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/VerificationMethod"
+                        }
+                    },
+                    "authentication": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
                     "didDocument": {
                         "$ref": "#/components/schemas/DidDocument"
                     }
@@ -2152,8 +2152,15 @@
                 "type": "object",
                 "properties": {
                     "credential": {
-                        "type": "object",
-                        "example": "<Place the credential object or JWT string here>"
+                        "description": "This field takes the credential object or the JWT as input",
+                        "oneOf": [
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
                     }
                 }
             },
@@ -2161,7 +2168,15 @@
                 "type": "object",
                 "properties": {
                     "credential": {
-                        "type": "object"
+                        "description": "This field takes the credential object or the JWT as input",
+                        "oneOf": [
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
                     },
                     "publish": {
                         "type": "boolean",
@@ -2172,55 +2187,133 @@
             "CredentialStatusCreateRequest": {
                 "allOf": [
                     {
-                        "$ref": "#/components/schemas/CreateResourceRequest"
-                    },
-                    {
                         "type": "object",
+                        "required": [
+                            "did",
+                            "name"
+                        ],
                         "properties": {
+                            "did": {
+                                "description": "The DID of the statuslist publisher",
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
                             "length": {
                                 "type": "number"
                             },
                             "encoding": {
+                                "description": "The encoding format of the statusList to be published",
                                 "type": "string",
                                 "enum": [
                                     "base64url",
                                     "base64",
                                     "hex"
                                 ]
-                            }
-                        },
-                        "example": {
-                            "length": 140000,
-                            "name": "cheqd-employee-credentials",
-                            "version": "2023"
-                        }
-                    }
-                ]
-            },
-            "CredentialStatusPublishRequest": {
-                "allOf": [
-                    {
-                        "$ref": "#/components/schemas/CreateResourceRequest"
-                    },
-                    {
-                        "type": "object",
-                        "properties": {
-                            "encoding": {
-                                "type": "string",
-                                "enum": [
-                                    "base64url",
-                                    "base64",
-                                    "hex"
-                                ]
+                            },
+                            "version": {
+                                "type": "string"
+                            },
+                            "alsoKnownAs": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "uri": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 ],
                 "example": {
+                    "did": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+                    "length": 140000,
+                    "name": "cheqd-employee-credentials",
+                    "version": "2023"
+                }
+            },
+            "CredentialStatusPublishRequest": {
+                "allOf": [
+                    {
+                        "type": "object",
+                        "required": [
+                            "did",
+                            "data",
+                            "name",
+                            "encoding"
+                        ],
+                        "properties": {
+                            "did": {
+                                "description": "The DID of the statuslist publisher",
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "data": {
+                                "description": "Provide encoded string for the resource data",
+                                "type": "string"
+                            },
+                            "encoding": {
+                                "description": "The encoding format of the statusList to be published",
+                                "type": "string",
+                                "enum": [
+                                    "base64url",
+                                    "base64",
+                                    "hex"
+                                ]
+                            },
+                            "version": {
+                                "type": "string"
+                            },
+                            "alsoKnownAs": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "uri": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ],
+                "example": {
+                    "did": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
                     "name": "cheqd-employee-credentials",
                     "version": "2023",
                     "data": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
                     "encoding": "base64url"
+                }
+            },
+            "PresentationRequest": {
+                "type": "object",
+                "required": [
+                    "presentation"
+                ],
+                "properties": {
+                    "presentation": {
+                        "oneOf": [
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
                 }
             }
         }
