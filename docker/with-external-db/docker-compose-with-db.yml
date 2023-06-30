@@ -48,16 +48,12 @@ services:
     user: postgres
     volumes:
       - ./pg-init-scripts:/docker-entrypoint-initdb.d
-      - ${ROOT_CERT_PATH}:/var/lib/postgresql/root.crt
-      - ${SERVER_CERT_PATH}:/var/lib/postgresql/server.crt
-      - ${SERVER_KEY_PATH}:/var/lib/postgresql/server.key
     ports:
       - 5432:5432
     # Edit the environment variables in postgres.env to change the database name, username, password, etc.
     # Postgres setup and configuration is outside the scope of this file.
     env_file:
       - postgres.env
-    command: "-c ssl=on -c ssl_ca_file=/var/lib/postgresql/root.crt -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready" ]
       interval: 10s
