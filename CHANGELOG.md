@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.1](https://github.com/cheqd/credential-service/compare/2.4.0...2.4.1) (2023-06-30)
+
+
+### Bug Fixes
+
+* Fix building image for release ([2352114](https://github.com/cheqd/credential-service/commit/2352114e191499ffbc37e456ab8539c2f7fbbcb3))
+
 ## [2.4.0](https://github.com/cheqd/credential-service/compare/2.3.1...2.4.0) (2023-06-29)
 
 
