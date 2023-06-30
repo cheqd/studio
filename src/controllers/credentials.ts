@@ -16,8 +16,6 @@ export class CredentialController {
     check('attributes')
     .exists().withMessage('attributes are required')
     .isObject().withMessage('attributes should be an object'),
-    check('type').optional().isArray().withMessage('type should be a string array'),
-    check('@context').optional().isArray().withMessage('@context should be a string array'),
     check('expirationDate').optional().isDate().withMessage('Invalid expiration date'),
     check('format').optional().isString().withMessage('Invalid credential format')
   ]
@@ -50,6 +48,15 @@ export class CredentialController {
     if (!result.isEmpty()) {
       return response.status(400).json({ error: result.array()[0].msg })
     }
+
+    // Handles string input instead of an array
+    if(typeof request.body.type === 'string') {
+        request.body.type = [request.body.type]
+    }
+    if(typeof request.body['@context'] === 'string') {
+        request.body['@context'] = [request.body['@context']]
+    }
+
     try {
       const credential: VerifiableCredential = await Credentials.instance.issue_credential(request.body, response.locals.customerId)
       response.status(200).json(credential)

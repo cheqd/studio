@@ -1,13 +1,13 @@
 import type { Request, Response } from 'express'
 import { check, param, validationResult } from 'express-validator'
 import { fromString } from 'uint8arrays'
-import { DIDDocument } from 'did-resolver'
+import { DIDDocument, Service, VerificationMethod } from 'did-resolver'
 import { v4 } from 'uuid'
 import { MethodSpecificIdAlgo, VerificationMethods, CheqdNetwork } from '@cheqd/sdk'
 import { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js'
 
 import { Identity } from '../services/identity/index.js'
-import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers.js'
+import { generateDidDoc, isValidService, isValidVerificationMethod, validateSpecCompliantPayload } from '../helpers/helpers.js'
 
 export class IssuerController {
 
@@ -26,10 +26,16 @@ export class IssuerController {
   ]
 
   public static updateValidator = [
-    check('didDocument').isObject().custom((value)=>{
-        const { valid } = validateSpecCompliantPayload(value)
-        return valid
-      }).withMessage('Invalid didDocument')
+    check('didDocument').custom((value, {req})=>{
+        if(value) {
+            console.log('value', value)
+            const { valid } = validateSpecCompliantPayload(value)
+            return valid
+        } else {
+            const { did, service, verificationMethod, authentication } = req.body
+            return did && (service || verificationMethod || authentication )
+        }
+      }).withMessage('Provide a valid DIDDocument or a DID and atleast one field to update')
   ]
 
   public static deactivateValidator = [
@@ -101,7 +107,7 @@ export class IssuerController {
             didDocument.service = [{
                 id: `${didDocument.id}#service-1`,
                 type: 'service-1',
-                serviceEndpoint
+                serviceEndpoint: [serviceEndpoint]
             }]
         }
       } else {
@@ -129,22 +135,27 @@ export class IssuerController {
 
     try {
 
-      const { did, service, verificationMethod, authentication } = request.body
+      const { did, service, verificationMethod, authentication } = request.body as { did: string, service: Service, verificationMethod: VerificationMethod, authentication: string }
       let updatedDocument: DIDDocument
       if (request.body.didDocument) {
         updatedDocument = request.body.didDocument
       } else if (did && (service || verificationMethod || authentication)) {
-        let resolvedDocument: any = await Identity.instance.resolveDid(did)
-        if(!resolvedDocument?.didDocument || resolvedDocument.didDocumentMetadata.deactivated) {
+        let resolvedResult = await Identity.instance.resolveDid(did)
+        if(!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
           return response.status(400).send({
               error: `${did} is either Deactivated or Not found`
           })
-        } else {
-          resolvedDocument = resolvedDocument.didDocument
         }
-        if (service) resolvedDocument.service = service
-        if (verificationMethod) resolvedDocument.verificationMethod = verificationMethod
-        if (authentication) resolvedDocument.authentication = authentication
+        const resolvedDocument = resolvedResult.didDocument
+        if (service && isValidService(service)) {
+            resolvedDocument.service = resolvedDocument.service ? resolvedDocument.service.concat(service) : [service]
+        }
+        if (verificationMethod && isValidVerificationMethod(verificationMethod)) {
+            resolvedDocument.verificationMethod?.push(verificationMethod)
+        }
+        if (authentication) {
+            resolvedDocument.authentication = resolvedDocument.authentication ? resolvedDocument.authentication.concat(authentication) : [authentication]
+        }
 
         updatedDocument = resolvedDocument
       } else {

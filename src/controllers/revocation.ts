@@ -78,7 +78,6 @@ export class RevocationController {
                         statusListName: resource.resourceName,
                         statusPurpose: resource.resourceType,
                         statusListVersion: resource.resourceVersion,
-                        mediaType: resource.mediaType,
                         statusListId: resource.resourceId,
                         statusListNextVersion: resource.nextVersionId
                     }

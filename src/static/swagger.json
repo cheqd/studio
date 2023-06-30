@@ -1447,13 +1447,6 @@
                                             "statusListVersion": {
                                                 "type": "string"
                                             },
-                                            "mediaType": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "application/gzip",
-                                                    "application/octet-stream"
-                                                ]
-                                            },
                                             "statusListId": {
                                                 "type": "string"
                                             },
@@ -1651,6 +1644,10 @@
                         "type": "string",
                         "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
                     },
+                    "publicKeyBase58": {
+                        "type": "string",
+                        "example": "so1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt"
+                    }, 
                     "publicKeyMultibase": {
                         "type": "string",
                         "example": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt"
@@ -1661,6 +1658,12 @@
                             "type": "string"
                         }
                     }
+                },
+                "example": {
+                    "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+                    "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
+                    "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
+                    "type": "Ed25519VerificationKey2018"
                 }
             },
             "Service": {
@@ -2126,22 +2129,16 @@
                         "type": "string"
                     },
                     "service": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/Service"
-                        }
+                        "description": "This input field appends a service Object to the didDocument",
+                        "$ref": "#/components/schemas/Service"
                     },
                     "verificationMethod": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/VerificationMethod"
-                        }
+                        "description": "This input field appends a verificationMethod to the didDocument",
+                        "$ref": "#/components/schemas/VerificationMethod"
                     },
                     "authentication": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
+                        "description": "This input field appends a authenticationMethod to the didDocument",
+                        "type": "string"
                     },
                     "didDocument": {
                         "$ref": "#/components/schemas/DidDocument"

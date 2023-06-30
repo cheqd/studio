@@ -8,16 +8,20 @@ export class Middleware {
             for (const key in request.body) {
               try {
                   if (request.body[key] === '') {
-                    request.body[key] = undefined;
+                    request.body[key] = undefined
                   } else {
                     request.body[key] = JSON.parse(request.body[key])
-                  }
+
+                    if (typeof request.body[key] === 'string' && request.body[key].includes(',')) {
+                        // Check if the value contains commas
+                        request.body[key] = request.body[key].split(',')
+                    }
+                  }    
               } catch (error) {
                 // Failed to parse the value as JSON, leave it as is
               }
             }
           }
-        
         next()
     }
 }
