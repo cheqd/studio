@@ -71,7 +71,7 @@ services:
   # This service is used to run a LogTo instance for authentication
   # Used when ENABLE_AUTHENTICATION=true
   logto:
-    image: ghcr.io/cheqd/connector-telegram:latest
+    image: ghcr.io/cheqd/creds-auth:develop
     depends_on:
       postgres:
         condition: service_healthy
@@ -94,7 +94,7 @@ services:
   # This service is used as a ONE-TIME setup service to run migrations for LogTo
   # Only relevant if you're using the app with EXTERNAL_AUTHENTICATION=true
   logto-migrations:
-    image: ghcr.io/cheqd/connector-telegram:latest
+    image: ghcr.io/cheqd/creds-auth:develop
     depends_on:
       postgres:
         condition: service_healthy
