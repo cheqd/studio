@@ -134,7 +134,7 @@ export class IssuerController {
 
     try {
 
-      const { did, service, verificationMethod, authentication } = request.body as { did: string, service: Service, verificationMethod: VerificationMethod, authentication: string }
+      const { did, service, verificationMethod, authentication } = request.body as { did: string, service: Service[], verificationMethod: VerificationMethod[], authentication: string[] }
       let updatedDocument: DIDDocument
       if (request.body.didDocument) {
         updatedDocument = request.body.didDocument
@@ -146,14 +146,14 @@ export class IssuerController {
           })
         }
         const resolvedDocument = resolvedResult.didDocument
-        if (service && isValidService(service)) {
-            resolvedDocument.service = resolvedDocument.service ? resolvedDocument.service.concat(service) : [service]
+        if (service) {
+            resolvedDocument.service = Array.isArray(service) ? service : [service]
         }
-        if (verificationMethod && isValidVerificationMethod(verificationMethod)) {
-            resolvedDocument.verificationMethod?.push(verificationMethod)
+        if (verificationMethod) {
+            resolvedDocument.verificationMethod = Array.isArray(verificationMethod) ? verificationMethod : [verificationMethod]
         }
         if (authentication) {
-            resolvedDocument.authentication = resolvedDocument.authentication ? resolvedDocument.authentication.concat(authentication) : [authentication]
+            resolvedDocument.authentication = Array.isArray(authentication) ? authentication : [authentication]
         }
 
         updatedDocument = resolvedDocument

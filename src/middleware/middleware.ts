@@ -10,12 +10,11 @@ export class Middleware {
                   if (request.body[key] === '') {
                     request.body[key] = undefined
                   } else {
-                    request.body[key] = JSON.parse(request.body[key])
-
                     if (typeof request.body[key] === 'string' && request.body[key].includes(',')) {
                         // Check if the value contains commas
                         request.body[key] = request.body[key].split(',')
                     }
+                    request.body[key] = JSON.parse(request.body[key])
                   }    
               } catch (error) {
                 // Failed to parse the value as JSON, leave it as is

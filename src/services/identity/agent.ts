@@ -5,8 +5,6 @@ import {
   IAgentPlugin,
   ICreateVerifiableCredentialArgs,
   IDIDManager,
-  IDIDManagerDeleteArgs,
-  IDIDManagerUpdateArgs,
   IIdentifier,
   IKeyManager,
   IResolver,
@@ -332,7 +330,8 @@ export class Veramo {
                     statusListVersion: statusOptions.statusListVersion
                 },
                 fetchList: true,
-                publish
+                publish,
+                returnUpdatedStatusList: !publish
             })
         case 'suspend':
             return await agent.cheqdSuspendCredentials({
@@ -343,7 +342,8 @@ export class Veramo {
                     statusListVersion: statusOptions.statusListVersion
                 },
                 fetchList: true,
-                publish
+                publish,
+                returnUpdatedStatusList: !publish
             })
         case 'reinstate':
             return await agent.cheqdUnsuspendCredentials({
@@ -354,7 +354,8 @@ export class Veramo {
                     statusListVersion: statusOptions.statusListVersion
                 },
                 fetchList: true,
-                publish
+                publish,
+                returnUpdatedStatusList: !publish
             })           
     }
  }

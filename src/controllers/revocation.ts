@@ -25,8 +25,13 @@ export class RevocationController {
 
     static updateValidator = [
         check('index').optional().isNumeric().withMessage('index should be a number'),
-        check('indices').custom((value, {req})=>!(value && req.body.index))
-        .withMessage('Either an index or list of indices should be provided'),
+        check('indices').custom((value, {req})=>{
+            if(value) {
+                return Array.isArray(value)
+            } else {
+                return req.body.index
+            }
+        }).withMessage('Either an index or an array of indices should be provided'),
         check('statusListName').exists().withMessage('StatusListName is required').isString(),
         check('statusListVerion').optional().isString().withMessage('Invalid statusListVersion'),
         query('statusAction').exists().withMessage('StatusAction is required')

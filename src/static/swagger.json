@@ -2234,28 +2234,25 @@
                         "type": "string"
                     },
                     "service": {
-                        "allOf": [
-                            {
-                                "description": "This input field appends a service Object to the didDocument"
-                            },
-                            {
-                                "$ref": "#/components/schemas/Service"
-                            }
-                        ]
+                        "type": "array",
+                        "description": "This input field assigns the provided service array to the didDocument",
+                        "items": {
+                            "$ref": "#/components/schemas/Service"
+                        }
                     },
                     "verificationMethod": {
-                        "allOf": [
-                            {
-                                "description": "This input field appends a verificationMethod to the didDocument"
-                            },
-                            {
-                                "$ref": "#/components/schemas/VerificationMethod"
-                            }
-                        ]
+                        "type": "array",
+                        "description": "This input field assigns the provided verificationMethod array to the didDocument",
+                        "items": {
+                            "$ref": "#/components/schemas/VerificationMethod"
+                        }
                     },
                     "authentication": {
-                        "description": "This input field appends a authenticationMethod to the didDocument",
-                        "type": "string"
+                        "description": "This input field assigns the provided authentication array to the didDocument",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "didDocument": {
                         "$ref": "#/components/schemas/DidDocument"
