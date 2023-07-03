@@ -98,6 +98,7 @@ class App {
 
     //revocation
     app.post('/credential-status/create', RevocationController.queryValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
+    app.post('/credential-status/update', RevocationController.updateValidator, new RevocationController().updateStatusList)
     app.post('/credential-status/publish', RevocationController.queryValidator, new RevocationController().createStatusList)
     app.get('/credential-status/list', RevocationController.queryValidator, new RevocationController().fetchStatusList)
 

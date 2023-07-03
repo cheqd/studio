@@ -9,10 +9,10 @@ import {
 import { AbstractPrivateKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager'
 import { KeyManagementSystem } from '@veramo/kms-local'
 import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd'
-import { CreateEncryptedStatusList2021Result, CreateStatusList2021Result, ICheqdBroadcastEncryptedStatusList2021Args } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
+import { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, CreateEncryptedStatusList2021Result, CreateStatusList2021Result, ICheqdBroadcastEncryptedStatusList2021Args } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
 
-import { BroadCastStatusListOptions, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types.js'
+import { BroadCastStatusListOptions, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, UpdateStatusListOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types.js'
 import { Connection } from '../../database/connection/connection.js'
 import { IIdentity } from './IIdentity.js'
 import { Veramo } from './agent.js'
@@ -156,6 +156,10 @@ export class LocalIdentity implements IIdentity {
 
   async createStatusList2021(did: string, resourceOptions: ResourcePayload,  statusListOptions: CreateStatusListOptions): Promise<CreateStatusList2021Result | CreateEncryptedStatusList2021Result> {
     return await Veramo.instance.createStatusList2021(this.initAgent(), did, resourceOptions, statusListOptions)
+  }
+
+  async updateStatusList2021(did: string, statusOptions: UpdateStatusListOptions, publish: boolean): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
+    return await Veramo.instance.updateStatusList2021(this.initAgent(), did, statusOptions, publish)
   }
 
   async broadcastStatusList2021(did: string, resourceOptions: ResourcePayload, statusOptions: BroadCastStatusListOptions): Promise<boolean> {

@@ -33,6 +33,7 @@ import type {
   ICheqdBroadcastStatusList2021Args,
   ICheqdCreateStatusList2021Args,
   ICheqdDeactivateIdentifierArgs,
+  ICheqdRevokeBulkCredentialsWithStatusList2021Args,
   ICheqdUpdateIdentifierArgs,
   ICheqdVerifyCredentialWithStatusList2021Args,
 } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
@@ -45,6 +46,7 @@ import {
   RevocationStatusOptions,
   StatusOptions,
   SuspensionStatusOptions,
+  UpdateStatusListOptions,
   VeramoAgent,
   VerifyCredentialStatusOptions,
   VerifyPresentationStatusOptions
@@ -272,7 +274,8 @@ export class Veramo {
       statusPurpose: statusOptions.statusPurpose || 'revocation',
       statusListEncoding: statusOptions.encoding || 'base64url',
       statusListLength: statusOptions.length,
-      encrypted: statusOptions.encrypted || false
+      encrypted: statusOptions.encrypted || false,
+      resourceVersion: resourceOptions.version
    } satisfies ICheqdCreateStatusList2021Args)
  }
 
@@ -296,7 +299,7 @@ export class Veramo {
  }
 
  async revokeCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish: boolean=true) {
-    if (Array.isArray(credentials)) return await agent.cheqdRevokeCredentials({ credentials, fetchList: true, publish: true })
+    if (Array.isArray(credentials)) return await agent.cheqdRevokeCredentials({ credentials, fetchList: true, publish: true } satisfies ICheqdRevokeBulkCredentialsWithStatusList2021Args)
     return await agent.cheqdRevokeCredential({ credential: credentials, fetchList: true, publish })
  }
 
@@ -316,5 +319,43 @@ export class Veramo {
  async unsuspendCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish: boolean=true) {
     if (Array.isArray(credentials)) return await agent.cheqdUnsuspendCredentials({ credentials, fetchList: true, publish })
     return await agent.cheqdUnsuspendCredential({ credential: credentials, fetchList: true, publish })
+ }
+
+ async updateStatusList2021(agent: VeramoAgent, did: string, statusOptions: UpdateStatusListOptions, publish: boolean=true) {
+    switch(statusOptions.statusAction) {
+        case 'revoke': 
+            return await agent.cheqdRevokeCredentials({
+                revocationOptions: {
+                    issuerDid: did,
+                    statusListIndices: statusOptions.indices,
+                    statusListName: statusOptions.statusListName,
+                    statusListVersion: statusOptions.statusListVersion
+                },
+                fetchList: true,
+                publish
+            })
+        case 'suspend':
+            return await agent.cheqdSuspendCredentials({
+                suspensionOptions: {
+                    issuerDid: did,
+                    statusListIndices: statusOptions.indices,
+                    statusListName: statusOptions.statusListName,
+                    statusListVersion: statusOptions.statusListVersion
+                },
+                fetchList: true,
+                publish
+            })
+        case 'reinstate':
+            return await agent.cheqdUnsuspendCredentials({
+                unsuspensionOptions: {
+                    issuerDid: did,
+                    statusListIndices: statusOptions.indices,
+                    statusListName: statusOptions.statusListName,
+                    statusListVersion: statusOptions.statusListVersion
+                },
+                fetchList: true,
+                publish
+            })           
+    }
  }
 }

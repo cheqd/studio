@@ -16,7 +16,7 @@ import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
 import { PrivateKeyStore } from '@veramo/data-store'
 import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
-import { BroadCastStatusListOptions, cheqdDidRegex, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types.js'
+import { BroadCastStatusListOptions, cheqdDidRegex, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, UpdateStatusListOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types.js'
 import { Connection } from '../../database/connection/connection.js'
 import { CustomerEntity } from '../../database/entities/customer.entity.js'
 import { IIdentity } from './IIdentity.js'
@@ -24,7 +24,7 @@ import { CustomerService } from '../customer.js'
 import { Veramo } from './agent.js'
 
 import * as dotenv from 'dotenv'
-import { CreateEncryptedStatusList2021Result, CreateStatusList2021Result } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
+import { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, CreateEncryptedStatusList2021Result, CreateStatusList2021Result } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
 dotenv.config()
 
 const {
@@ -183,10 +183,6 @@ export class PostgresIdentity implements IIdentity {
   }
 
   async importDid(did: string, privateKeyHex: string, publicKeyHex: string, agentId: string): Promise<IIdentifier> {
-    if(!agentId) {
-        throw new Error('Customer not found')
-    }
-
     if (!did.match(cheqdDidRegex)) {
       throw new Error('Invalid DID')
     }
@@ -197,9 +193,6 @@ export class PostgresIdentity implements IIdentity {
   }
 
   async createResource(network: string, payload: ResourcePayload, agentId: string) {
-    if(!agentId) {
-        throw new Error('Customer not found')
-    }
     try {
         const agent = await this.createAgent(agentId)
         return await Veramo.instance.createResource(agent, network, payload)
@@ -208,14 +201,14 @@ export class PostgresIdentity implements IIdentity {
     }    
   }
 
-  async createCredential(credential: CredentialPayload, format: CredentialRequest['format'], statusListOptions: StatusOptions | null, agentId: string): Promise<VerifiableCredential> {
+  async createCredential(credential: CredentialPayload, format: CredentialRequest['format'], statusOptions: StatusOptions | null, agentId: string): Promise<VerifiableCredential> {
     try {
         const did = typeof(credential.issuer) == 'string' ? credential.issuer : credential.issuer.id
         if (!await CustomerService.instance.find(agentId, {did})) {
           throw new Error(`${did} not found in wallet`)
         }
         const agent = await this.createAgent(agentId)
-        return await Veramo.instance.createCredential(agent, credential, format, statusListOptions)
+        return await Veramo.instance.createCredential(agent, credential, format, statusOptions)
     } catch (error) {
         throw new Error(`${error}`)
     }          
@@ -231,9 +224,14 @@ export class PostgresIdentity implements IIdentity {
     return await Veramo.instance.verifyPresentation(agent, presentation, statusOptions)
   }
 
-  async createStatusList2021(did: string, resourceOptions: ResourcePayload,  statusListOptions: CreateStatusListOptions, agentId: string): Promise<CreateStatusList2021Result | CreateEncryptedStatusList2021Result> {
+  async createStatusList2021(did: string, resourceOptions: ResourcePayload,  statusOptions: CreateStatusListOptions, agentId: string): Promise<CreateStatusList2021Result | CreateEncryptedStatusList2021Result> {
     const agent = await this.createAgent(agentId)
-    return await Veramo.instance.createStatusList2021(agent, did, resourceOptions, statusListOptions)
+    return await Veramo.instance.createStatusList2021(agent, did, resourceOptions, statusOptions)
+  }
+
+  async updateStatusList2021(did: string, statusOptions: UpdateStatusListOptions, publish: boolean, agentId: string): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
+    const agent = await this.createAgent(agentId)
+    return await Veramo.instance.updateStatusList2021(agent, did, statusOptions, publish)
   }
 
   async broadcastStatusList2021(did: string, resourceOptions: ResourcePayload, statusOptions: BroadCastStatusListOptions, agentId: string): Promise<boolean> {

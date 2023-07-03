@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express'
 import type { VerifiableCredential } from '@veramo/core'
 
-import { check, validationResult } from 'express-validator'
+import { check, query, validationResult } from 'express-validator'
 
 import { Credentials } from '../services/credentials.js'
 import { Identity } from '../services/identity/index.js'
@@ -29,7 +29,7 @@ export class CredentialController {
         return false
       })
     .withMessage('Entry must be a jwt string or an credential'),
-    check('publish').optional().isBoolean().withMessage('publish should be a boolean value')
+    query('publish').optional().isBoolean().withMessage('publish should be a boolean value')
   ]
 
   public static presentationValidator = [
@@ -90,9 +90,10 @@ export class CredentialController {
     if (!result.isEmpty()) {
         return response.status(400).json({ error: result.array()[0].msg })
     }
-
+    
+    const publish = request.query.publish === 'false' ? false : true
     try {
-		return response.status(200).json(await Identity.instance.revokeCredentials(request.body.credential, request.body.publish, response.locals.customerId))
+		return response.status(200).json(await Identity.instance.revokeCredentials(request.body.credential, publish, response.locals.customerId))
     } catch (error) {
         return response.status(500).json({
             error: `${error}`

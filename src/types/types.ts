@@ -153,6 +153,7 @@ export type VerifyPresentationStatusOptions = Omit<VerifyCredentialStatusOptions
         accessControlConditions: (AccessControlConditionMemoNonceArgs | AccessControlConditionBalanceArgs)[]
     }
 }
+
 export interface ResourceMetadata {
   collectionId: string
   resourceId: string
@@ -166,4 +167,11 @@ export interface ResourceMetadata {
   checksum: string
   previousVersionId: string
   nextVersionId: string
+}
+
+export interface UpdateStatusListOptions {
+  indices: number[]
+  statusListName: string
+  statusListVersion?: string
+  statusAction: 'revoke' | 'suspend' | 'reinstate'   
 }

@@ -602,6 +602,15 @@
                         "bearerAuth": []
                     }
                 ],
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "publish",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "content": {
                         "application/x-www-form-urlencoded": {
@@ -672,6 +681,15 @@
                         "bearerAuth": []
                     }
                 ],
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "publish",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "content": {
                         "application/x-www-form-urlencoded": {
@@ -740,6 +758,15 @@
                 "security": [
                     {
                         "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "publish",
+                        "schema": {
+                            "type": "boolean"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -1319,6 +1346,84 @@
                 }
             }
         },
+        "/credential-status/update": {
+            "post": {
+                "tags": [
+                    "Credential Status"
+                ],
+                "summary": "Publish statuslist 2021",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "statusAction",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "revoke",
+                                "suspend",
+                                "reinstate"
+                            ]
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "publish",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialStatusUpdateRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialStatusUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "StatusList is published successfully"
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/credential-status/publish": {
             "post": {
                 "tags": [
@@ -1647,7 +1752,7 @@
                     "publicKeyBase58": {
                         "type": "string",
                         "example": "so1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt"
-                    }, 
+                    },
                     "publicKeyMultibase": {
                         "type": "string",
                         "example": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt"
@@ -1671,11 +1776,11 @@
                 "properties": {
                     "id": {
                         "type": "string",
-                        "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#rand,"
+                        "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#rand"
                     },
                     "type": {
                         "type": "string",
-                        "example": "rand,"
+                        "example": "rand"
                     },
                     "serviceEndpoint": {
                         "type": "array",
@@ -2129,12 +2234,24 @@
                         "type": "string"
                     },
                     "service": {
-                        "description": "This input field appends a service Object to the didDocument",
-                        "$ref": "#/components/schemas/Service"
+                        "allOf": [
+                            {
+                                "description": "This input field appends a service Object to the didDocument"
+                            },
+                            {
+                                "$ref": "#/components/schemas/Service"
+                            }
+                        ]
                     },
                     "verificationMethod": {
-                        "description": "This input field appends a verificationMethod to the didDocument",
-                        "$ref": "#/components/schemas/VerificationMethod"
+                        "allOf": [
+                            {
+                                "description": "This input field appends a verificationMethod to the didDocument"
+                            },
+                            {
+                                "$ref": "#/components/schemas/VerificationMethod"
+                            }
+                        ]
                     },
                     "authentication": {
                         "description": "This input field appends a authenticationMethod to the didDocument",
@@ -2174,10 +2291,6 @@
                                 "type": "string"
                             }
                         ]
-                    },
-                    "publish": {
-                        "type": "boolean",
-                        "example": true
                     }
                 }
             },
@@ -2234,6 +2347,33 @@
                     "length": 140000,
                     "name": "cheqd-employee-credentials",
                     "version": "2023"
+                }
+            },
+            "CredentialStatusUpdateRequest": {
+                "type": "object",
+                "required": [
+                    "did",
+                    "statusListName"
+                ],
+                "properties": {
+                    "did": {
+                        "type": "string"
+                    },
+                    "statusListName": {
+                        "type": "string"
+                    },
+                    "statusListVersion": {
+                        "type": "string"
+                    },
+                    "index": {
+                        "type": "number"
+                    },
+                    "indices": {
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        }
+                    }
                 }
             },
             "CredentialStatusPublishRequest": {

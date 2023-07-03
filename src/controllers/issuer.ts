@@ -28,7 +28,6 @@ export class IssuerController {
   public static updateValidator = [
     check('didDocument').custom((value, {req})=>{
         if(value) {
-            console.log('value', value)
             const { valid } = validateSpecCompliantPayload(value)
             return valid
         } else {
