@@ -606,8 +606,10 @@
                     {
                         "in": "query",
                         "name": "publish",
+                        "required": true,
                         "schema": {
-                            "type": "boolean"
+                            "type": "boolean",
+                            "default": true
                         }
                     }
                 ],
@@ -631,7 +633,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/CredentialStatusResult"
+                                    "$ref": "#/components/schemas/RevocationResult"
                                 }
                             }
                         }
@@ -862,123 +864,21 @@
                                     "$ref": "#/components/schemas/IVerifyResult"
                                 },
                                 "example": {
-                                    "didResolutionResult": {
-                                        "didDocument": {
-                                            "@context": [
-                                                "https://www.w3.org/ns/did/v1",
-                                                "https://w3id.org/security/suites/ed25519-2018/v1",
-                                                "https://w3id.org/security/suites/x25519-2019/v1"
-                                            ],
-                                            "assertionMethod": [
-                                                "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n#z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n"
-                                            ],
-                                            "authentication": [
-                                                "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n#z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n"
-                                            ],
-                                            "capabilityDelegation": [
-                                                "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n#z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n"
-                                            ],
-                                            "capabilityInvocation": [
-                                                "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n#z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n"
-                                            ],
-                                            "id": "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n",
-                                            "keyAgreement": [
-                                                "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n#z6LSk6KHqQqzQKCePu3ACuH2wLSQTeE8t6V3ed9finJ8Zecr"
-                                            ],
-                                            "verificationMethod": [
-                                                {
-                                                    "controller": "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n",
-                                                    "id": "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n#z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n",
-                                                    "publicKeyBase58": "Br7NQy3XBVMViiiFUKQP2SFNbvYj634PeNjGiZc9WmEQ",
-                                                    "type": "Ed25519VerificationKey2018"
-                                                },
-                                                {
-                                                    "controller": "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n",
-                                                    "id": "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n#z6LSk6KHqQqzQKCePu3ACuH2wLSQTeE8t6V3ed9finJ8Zecr",
-                                                    "publicKeyBase58": "9R98K738JrUuJWfPgFm5ckDvcVh2BVJtmeRzEKebrGr6",
-                                                    "type": "X25519KeyAgreementKey2019"
-                                                }
-                                            ]
-                                        },
-                                        "didDocumentMetadata": {},
-                                        "didResolutionMetadata": {}
-                                    },
-                                    "issuer": "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n",
-                                    "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2cCI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSJdLCJ0eXBlIjpbIlZlcmlmaWFibGVQcmVzZW50YXRpb24iLCJQcm9maWxlIl0sInZlcmlmaWFibGVDcmVkZW50aWFsIjpbImV5SmhiR2NpT2lKRlpFUlRRU0lzSW5SNWNDSTZJa3BYVkNKOS5leUoyWXlJNmV5SkFZMjl1ZEdWNGRDSTZXeUpvZEhSd2N6b3ZMM2QzZHk1M015NXZjbWN2TWpBeE9DOWpjbVZrWlc1MGFXRnNjeTkyTVNJc0ltaDBkSEJ6T2k4dmRtVnlZVzF2TG1sdkwyTnZiblJsZUhSekwzQnliMlpwYkdVdmRqRWlYU3dpZEhsd1pTSTZXeUpXWlhKcFptbGhZbXhsUTNKbFpHVnVkR2xoYkNJc0lsQnliMlpwYkdVaVhTd2lZM0psWkdWdWRHbGhiRk4xWW1wbFkzUWlPbnNpYm1GdFpTSTZJbUYxWkdsbGJpSjlmU3dpYzNWaUlqb2laR2xrT210bGVUcDZOazFyY1VwT1VqRkVTSGhZTW5GNGNVUlplRGwwVGtSeldHOU9VbFp3WVZaMlNtdE1VR1ZEV1hGaFFWSjZNVzRpTENKdVltWWlPakUyT0RjM05qRTJNaklzSW1semN5STZJbVJwWkRwclpYazZlalpOYTJoQmVFSktSREZ5Y1c5V2NHSjFjRzB6UTBaT2RtdG9kbEZrTjB4WWRFeHZhWEJtYmxkbGFIWllRbWhGSW4wLmRQVTBibGxwYUZyR1Q5ZTl3X09HNGJhSWFnajAtQ21WV2VweF9qU0NHU1Z0R0JHbkNJclpRZFEzelEtdVVxRjR5SDZLM2NHUTdnaF95UUE4b1FYOUF3Il19LCJ0YWciOiJ4eXoxMjMiLCJuYmYiOjE2ODc3ODE5MDksImlzcyI6ImRpZDprZXk6ejZNa3FKTlIxREh4WDJxeHFEWXg5dE5Ec1hvTlJWcGFWdkprTFBlQ1lxYUFSejFuIiwiYXVkIjpbImRpZDprZXk6ejZNa2hBeEJKRDFycW9WcGJ1cG0zQ0ZOdmtodlFkN0xYdExvaXBmbldlaHZYQmhFIl19.oxATMZEv2283eo4-fC0fg6nYPBOZF7fH_F6x3bjSZ28NRAmo9IFwii0OedSBHt1IHpTUOybprQpFlPVy3b-FAA",
-                                    "payload": {
-                                        "aud": [
-                                            "did:key:z6MkhAxBJD1rqoVpbupm3CFNvkhvQd7LXtLoipfnWehvXBhE"
-                                        ],
-                                        "iss": "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n",
-                                        "nbf": 1687781909,
-                                        "tag": "xyz123",
-                                        "vp": {
-                                            "@context": [
-                                                "https://www.w3.org/2018/credentials/v1"
-                                            ],
-                                            "type": [
-                                                "VerifiablePresentation",
-                                                "Profile"
-                                            ],
-                                            "verifiableCredential": [
-                                                "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vdmVyYW1vLmlvL2NvbnRleHRzL3Byb2ZpbGUvdjEiXSwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIlByb2ZpbGUiXSwiY3JlZGVudGlhbFN1YmplY3QiOnsibmFtZSI6ImF1ZGllbiJ9fSwic3ViIjoiZGlkOmtleTp6Nk1rcUpOUjFESHhYMnF4cURZeDl0TkRzWG9OUlZwYVZ2SmtMUGVDWXFhQVJ6MW4iLCJuYmYiOjE2ODc3NjE2MjIsImlzcyI6ImRpZDprZXk6ejZNa2hBeEJKRDFycW9WcGJ1cG0zQ0ZOdmtodlFkN0xYdExvaXBmbldlaHZYQmhFIn0.dPU0bllpaFrGT9e9w_OG4baIagj0-CmVWepx_jSCGSVtGBGnCIrZQdQ3zQ-uUqF4yH6K3cGQ7gh_yQA8oQX9Aw"
-                                            ]
-                                        }
-                                    },
+                                    "verified": true,
                                     "policies": {
                                         "aud": false,
                                         "audience": false
                                     },
+                                    "issuer": "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n",
                                     "signer": {
                                         "controller": "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n",
                                         "id": "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n#z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n",
                                         "publicKeyBase58": "Br7NQy3XBVMViiiFUKQP2SFNbvYj634PeNjGiZc9WmEQ",
-                                        "type": "Ed25519VerificationKey2018"
-                                    },
-                                    "verifiablePresentation": {
-                                        "@context": [
-                                            "https://www.w3.org/2018/credentials/v1"
-                                        ],
-                                        "holder": "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n",
-                                        "issuanceDate": "2023-06-26T12:18:29.000Z",
-                                        "proof": {
-                                            "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2cCI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSJdLCJ0eXBlIjpbIlZlcmlmaWFibGVQcmVzZW50YXRpb24iLCJQcm9maWxlIl0sInZlcmlmaWFibGVDcmVkZW50aWFsIjpbImV5SmhiR2NpT2lKRlpFUlRRU0lzSW5SNWNDSTZJa3BYVkNKOS5leUoyWXlJNmV5SkFZMjl1ZEdWNGRDSTZXeUpvZEhSd2N6b3ZMM2QzZHk1M015NXZjbWN2TWpBeE9DOWpjbVZrWlc1MGFXRnNjeTkyTVNJc0ltaDBkSEJ6T2k4dmRtVnlZVzF2TG1sdkwyTnZiblJsZUhSekwzQnliMlpwYkdVdmRqRWlYU3dpZEhsd1pTSTZXeUpXWlhKcFptbGhZbXhsUTNKbFpHVnVkR2xoYkNJc0lsQnliMlpwYkdVaVhTd2lZM0psWkdWdWRHbGhiRk4xWW1wbFkzUWlPbnNpYm1GdFpTSTZJbUYxWkdsbGJpSjlmU3dpYzNWaUlqb2laR2xrT210bGVUcDZOazFyY1VwT1VqRkVTSGhZTW5GNGNVUlplRGwwVGtSeldHOU9VbFp3WVZaMlNtdE1VR1ZEV1hGaFFWSjZNVzRpTENKdVltWWlPakUyT0RjM05qRTJNaklzSW1semN5STZJbVJwWkRwclpYazZlalpOYTJoQmVFSktSREZ5Y1c5V2NHSjFjRzB6UTBaT2RtdG9kbEZrTjB4WWRFeHZhWEJtYmxkbGFIWllRbWhGSW4wLmRQVTBibGxwYUZyR1Q5ZTl3X09HNGJhSWFnajAtQ21WV2VweF9qU0NHU1Z0R0JHbkNJclpRZFEzelEtdVVxRjR5SDZLM2NHUTdnaF95UUE4b1FYOUF3Il19LCJ0YWciOiJ4eXoxMjMiLCJuYmYiOjE2ODc3ODE5MDksImlzcyI6ImRpZDprZXk6ejZNa3FKTlIxREh4WDJxeHFEWXg5dE5Ec1hvTlJWcGFWdkprTFBlQ1lxYUFSejFuIiwiYXVkIjpbImRpZDprZXk6ejZNa2hBeEJKRDFycW9WcGJ1cG0zQ0ZOdmtodlFkN0xYdExvaXBmbldlaHZYQmhFIl19.oxATMZEv2283eo4-fC0fg6nYPBOZF7fH_F6x3bjSZ28NRAmo9IFwii0OedSBHt1IHpTUOybprQpFlPVy3b-FAA",
-                                            "type": "JwtProof2020"
-                                        },
-                                        "tag": "xyz123",
-                                        "type": [
-                                            "VerifiablePresentation",
-                                            "Profile"
-                                        ],
-                                        "verifiableCredential": [
-                                            {
-                                                "@context": [
-                                                    "https://www.w3.org/2018/credentials/v1",
-                                                    "https://veramo.io/contexts/profile/v1"
-                                                ],
-                                                "credentialSubject": {
-                                                    "id": "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n",
-                                                    "name": "audien"
-                                                },
-                                                "issuanceDate": "2023-06-26T06:40:22.000Z",
-                                                "issuer": {
-                                                    "id": "did:key:z6MkhAxBJD1rqoVpbupm3CFNvkhvQd7LXtLoipfnWehvXBhE"
-                                                },
-                                                "proof": {
-                                                    "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vdmVyYW1vLmlvL2NvbnRleHRzL3Byb2ZpbGUvdjEiXSwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIlByb2ZpbGUiXSwiY3JlZGVudGlhbFN1YmplY3QiOnsibmFtZSI6ImF1ZGllbiJ9fSwic3ViIjoiZGlkOmtleTp6Nk1rcUpOUjFESHhYMnF4cURZeDl0TkRzWG9OUlZwYVZ2SmtMUGVDWXFhQVJ6MW4iLCJuYmYiOjE2ODc3NjE2MjIsImlzcyI6ImRpZDprZXk6ejZNa2hBeEJKRDFycW9WcGJ1cG0zQ0ZOdmtodlFkN0xYdExvaXBmbldlaHZYQmhFIn0.dPU0bllpaFrGT9e9w_OG4baIagj0-CmVWepx_jSCGSVtGBGnCIrZQdQ3zQ-uUqF4yH6K3cGQ7gh_yQA8oQX9Aw",
-                                                    "type": "JwtProof2020"
-                                                },
-                                                "type": [
-                                                    "VerifiableCredential",
-                                                    "Profile"
-                                                ]
-                                            }
-                                        ],
+                                        "type": "Ed25519VerificationKey2018",
                                         "verifier": [
                                             "did:key:z6MkhAxBJD1rqoVpbupm3CFNvkhvQd7LXtLoipfnWehvXBhE"
                                         ]
-                                    },
-                                    "verified": true
+                                    }
                                 }
                             }
                         }
@@ -1213,7 +1113,8 @@
                         "name": "encrypted",
                         "required": true,
                         "schema": {
-                            "type": "boolean"
+                            "type": "boolean",
+                            "default": false
                         }
                     }
                 ],
@@ -1237,79 +1138,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": {
-                                            "type": "object",
-                                            "properties": {
-                                                "created": {
-                                                    "type": "boolean"
-                                                },
-                                                "resourceNetadata": {
-                                                    "type": "object"
-                                                },
-                                                "statusList2021": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "StatusList2021": {
-                                                            "type": "object",
-                                                            "properties": {
-                                                                "encodedList": {
-                                                                    "type": "string"
-                                                                },
-                                                                "type": {
-                                                                    "type": "string"
-                                                                },
-                                                                "validFrom": {
-                                                                    "type": "string"
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                },
-                                                "metadata": {
-                                                    "type": "string",
-                                                    "properties": {
-                                                        "encoding": {
-                                                            "type": "string"
-                                                        },
-                                                        "encrypted": {
-                                                            "type": "boolean"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                "example": {
-                                    "success": {
-                                        "created": true,
-                                        "resourceMetadata": {
-                                            "checksum": "909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2",
-                                            "created": "2023-06-26T11:45:20Z",
-                                            "mediaType": "application/json",
-                                            "nextVersionId": null,
-                                            "previousVersionId": null,
-                                            "resourceCollectionId": "7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
-                                            "resourceId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
-                                            "resourceName": "cheqd-revocation-1",
-                                            "resourceType": "StatusList2021Revocation",
-                                            "resourceURI": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc",
-                                            "resourceVersion": "2023-06-26T11:45:19.349Z"
-                                        },
-                                        "statusList2021": {
-                                            "StatusList2021": {
-                                                "encodedList": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
-                                                "type": "StatusList2021Revocation",
-                                                "validFrom": "2023-06-26T11:45:19.349Z"
-                                            },
-                                            "metadata": {
-                                                "encoding": "base64url",
-                                                "encrypted": false
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/CredentialStatusResult"
                                 }
                             }
                         }
@@ -1369,8 +1198,10 @@
                     {
                         "in": "query",
                         "name": "publish",
+                        "required": true,
                         "schema": {
-                            "type": "boolean"
+                            "type": "boolean",
+                            "default": true
                         }
                     }
                 ],
@@ -1390,7 +1221,14 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "StatusList is published successfully"
+                        "description": "StatusList is published successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CredentialStatusResult"
+                                }
+                            }
+                        }
                     },
                     "400": {
                         "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
@@ -1448,7 +1286,8 @@
                         "name": "encrypted",
                         "required": true,
                         "schema": {
-                            "type": "boolean"
+                            "type": "boolean",
+                            "default": false
                         }
                     }
                 ],
@@ -1468,7 +1307,14 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "StatusList is published successfully"
+                        "description": "StatusList is published successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CredentialStatusResult"
+                                }
+                            }
+                        }
                     },
                     "400": {
                         "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
@@ -1502,12 +1348,12 @@
                 }
             }
         },
-        "/credential-status/list": {
+        "/credential-status/search": {
             "get": {
                 "tags": [
                     "Credential Status"
                 ],
-                "summary": "List published statuslist 2021",
+                "summary": "Fetch statusList's published by a DID",
                 "parameters": [
                     {
                         "in": "query",
@@ -1938,6 +1784,30 @@
                             }
                         }
                     },
+                    "credentialStatus": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "statusListIndex": {
+                                "type": "string"
+                            },
+                            "statusPurpose": {
+                                "type": "string",
+                                "enum": [
+                                    "revocation",
+                                    "suspension"
+                                ]
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "StatusList2021Entry"
+                                ]
+                            }
+                        }
+                    },
                     "issuanceDate": {
                         "type": "string"
                     },
@@ -1963,6 +1833,12 @@
                         "gender": "male",
                         "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
                         "name": "Bob"
+                    },
+                    "credentialStatus": {
+                        "id": "https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-suspension-1&resourceType=StatusList2021Suspension#20",
+                        "statusListIndex": "20",
+                        "statusPurpose": "suspension",
+                        "type": "StatusList2021Entry"
                     },
                     "issuanceDate": "2023-06-08T13:49:28.000Z",
                     "issuer": {
@@ -2015,9 +1891,6 @@
                     "verified": {
                         "type": "boolean"
                     },
-                    "didResolutionResult": {
-                        "type": "object"
-                    },
                     "issuer": {
                         "type": "string"
                     },
@@ -2032,78 +1905,15 @@
                     }
                 },
                 "example": {
-                    "didResolutionResult": {
-                        "@context": "https://w3id.org/did-resolution/v1",
-                        "didDocument": {
-                            "@context": [
-                                "https://www.w3.org/ns/did/v1",
-                                "https://w3id.org/security/suites/ed25519-2018/v1"
-                            ],
-                            "assertionMethod": [
-                                "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1"
-                            ],
-                            "authentication": [
-                                "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1"
-                            ],
-                            "controller": [
-                                "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
-                            ],
-                            "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-                            "verificationMethod": [
-                                {
-                                    "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-                                    "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
-                                    "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
-                                    "type": "Ed25519VerificationKey2018"
-                                }
-                            ]
-                        },
-                        "didDocumentMetadata": {
-                            "created": "2023-06-07T15:53:59.629128532Z",
-                            "versionId": "8e286b55-7a25-44bb-af93-f0f8fd9df1b7",
-                            "contentType": "application/did+ld+json",
-                            "did": {
-                                "didString": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-                                "method": "cheqd",
-                                "methodSpecificId": "7bf81a20-633c-4cc7-bc4a-5a45801005e0"
-                            },
-                            "retrieved": "2023-06-08T13:51:18Z"
-                        }
-                    },
-                    "issuer": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-                    "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg",
+                    "verified": true,
                     "policies": {},
+                    "issuer": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
                     "signer": {
                         "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
                         "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
                         "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
                         "type": "Ed25519VerificationKey2018"
-                    },
-                    "verifiableCredential": {
-                        "@context": [
-                            "https://www.w3.org/2018/credentials/v1",
-                            "https://schema.org",
-                            "https://veramo.io/contexts/profile/v1"
-                        ],
-                        "credentialSubject": {
-                            "gender": "male",
-                            "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-                            "name": "Bob"
-                        },
-                        "issuanceDate": "2023-06-08T13:49:28.000Z",
-                        "issuer": {
-                            "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
-                        },
-                        "proof": {
-                            "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg",
-                            "type": "JwtProof2020"
-                        },
-                        "type": [
-                            "VerifiableCredential",
-                            "Person"
-                        ]
-                    },
-                    "verified": true
+                    }
                 }
             },
             "CreateResourceRequest": {
@@ -2162,7 +1972,7 @@
                     "type": "TextDocument"
                 }
             },
-            "CredentialStatusResult": {
+            "RevocationResult": {
                 "properties": {
                     "revoked": {
                         "type": "boolean"
@@ -2263,8 +2073,8 @@
                 "type": "object",
                 "properties": {
                     "credential": {
-                        "description": "This field takes the credential object or the JWT as input",
-                        "oneOf": [
+                        "description": "This input field takes the credential object or the JWT string",
+                        "allOf": [
                             {
                                 "type": "object"
                             },
@@ -2279,7 +2089,7 @@
                 "type": "object",
                 "properties": {
                     "credential": {
-                        "description": "This field takes the credential object or the JWT as input",
+                        "description": "This input field takes the credential object or the JWT string",
                         "oneOf": [
                             {
                                 "type": "object"
@@ -2297,32 +2107,37 @@
                         "type": "object",
                         "required": [
                             "did",
-                            "name"
+                            "statusListName"
                         ],
                         "properties": {
                             "did": {
                                 "description": "The DID of the statuslist publisher",
                                 "type": "string"
                             },
-                            "name": {
+                            "statusListName": {
+                                "description": "The name of the statusList to be created",
                                 "type": "string"
                             },
                             "length": {
+                                "description": "The length of the statusList to be created, The default and minimum length is 140000 which is 16kb",
                                 "type": "number"
                             },
                             "encoding": {
                                 "description": "The encoding format of the statusList to be published",
                                 "type": "string",
+                                "default": "base64url",
                                 "enum": [
                                     "base64url",
                                     "base64",
                                     "hex"
                                 ]
                             },
-                            "version": {
+                            "statusListVersion": {
+                                "description": "This input field is OPTIONAL, If present assigns the version to be assigned to the statusList",
                                 "type": "string"
                             },
                             "alsoKnownAs": {
+                                "description": "The input field is OPTIONAL. If present, the value MUST be a set where each item in the set is a uri",
                                 "type": "array",
                                 "items": {
                                     "type": "object",
@@ -2341,35 +2156,35 @@
                 ],
                 "example": {
                     "did": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
-                    "length": 140000,
-                    "name": "cheqd-employee-credentials",
-                    "version": "2023"
+                    "name": "cheqd-employee-credentials"
                 }
             },
             "CredentialStatusUpdateRequest": {
                 "type": "object",
                 "required": [
                     "did",
-                    "statusListName"
+                    "statusListName",
+                    "indices"
                 ],
                 "properties": {
                     "did": {
+                        "description": "The DID of the statuslist publisher",
                         "type": "string"
                     },
                     "statusListName": {
+                        "description": "The name of the statusList to be created",
                         "type": "string"
-                    },
-                    "statusListVersion": {
-                        "type": "string"
-                    },
-                    "index": {
-                        "type": "number"
                     },
                     "indices": {
+                        "description": "Provide the list of indices to be updated",
                         "type": "array",
                         "items": {
                             "type": "number"
                         }
+                    },
+                    "statusListVersion": {
+                        "description": "This input field is OPTIONAL, If present uses the provided statusListVersion for the update operation",
+                        "type": "string"
                     }
                 }
             },
@@ -2379,8 +2194,8 @@
                         "type": "object",
                         "required": [
                             "did",
-                            "data",
-                            "name",
+                            "encodedList",
+                            "statusListName",
                             "encoding"
                         ],
                         "properties": {
@@ -2388,15 +2203,16 @@
                                 "description": "The DID of the statuslist publisher",
                                 "type": "string"
                             },
-                            "name": {
+                            "statusListName": {
+                                "description": "The name of the statusList to be published",
                                 "type": "string"
                             },
-                            "data": {
+                            "encodedList": {
                                 "description": "Provide encoded string for the resource data",
                                 "type": "string"
                             },
                             "encoding": {
-                                "description": "The encoding format of the statusList to be published",
+                                "description": "The encoding format of the statusList provided",
                                 "type": "string",
                                 "enum": [
                                     "base64url",
@@ -2404,10 +2220,12 @@
                                     "hex"
                                 ]
                             },
-                            "version": {
+                            "statusListVersion": {
+                                "description": "This input field is OPTIONAL, If present assigns the version to be assigned to the statusList",
                                 "type": "string"
                             },
                             "alsoKnownAs": {
+                                "description": "The input field is OPTIONAL. If present, the value MUST be a set where each item in the set is a uri",
                                 "type": "array",
                                 "items": {
                                     "type": "object",
@@ -2439,14 +2257,88 @@
                 ],
                 "properties": {
                     "presentation": {
-                        "oneOf": [
-                            {
-                                "type": "object"
-                            },
+                        "description": "This input field takes the presentation object or the JWT string",
+                        "allOf": [
                             {
                                 "type": "string"
+                            },
+                            {
+                                "type": "object"
                             }
                         ]
+                    }
+                }
+            },
+            "CredentialStatusResult": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "object",
+                        "properties": {
+                            "created": {
+                                "type": "boolean"
+                            },
+                            "resourceNetadata": {
+                                "type": "object"
+                            },
+                            "statusList2021": {
+                                "type": "object",
+                                "properties": {
+                                    "StatusList2021": {
+                                        "type": "object",
+                                        "properties": {
+                                            "encodedList": {
+                                                "type": "string"
+                                            },
+                                            "type": {
+                                                "type": "string"
+                                            },
+                                            "validFrom": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "metadata": {
+                                "type": "string",
+                                "properties": {
+                                    "encoding": {
+                                        "type": "string"
+                                    },
+                                    "encrypted": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "example": {
+                    "created": true,
+                    "resource": {
+                        "StatusList2021": {
+                            "encodedList": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
+                            "type": "StatusList2021Revocation",
+                            "validFrom": "2023-06-26T11:45:19.349Z"
+                        },
+                        "metadata": {
+                            "encoding": "base64url",
+                            "encrypted": false
+                        }
+                    },
+                    "resourceMetadata": {
+                        "checksum": "909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2",
+                        "created": "2023-06-26T11:45:20Z",
+                        "mediaType": "application/json",
+                        "nextVersionId": null,
+                        "previousVersionId": null,
+                        "resourceCollectionId": "7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+                        "resourceId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
+                        "resourceName": "cheqd-revocation-1",
+                        "resourceType": "StatusList2021Revocation",
+                        "resourceURI": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc",
+                        "resourceVersion": "2023-06-26T11:45:19.349Z"
                     }
                 }
             }

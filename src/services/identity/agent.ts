@@ -237,14 +237,27 @@ export class Veramo {
   }
 
   async verifyCredential(agent: VeramoAgent, credential: string | VerifiableCredential, statusOptions: VerifyCredentialStatusOptions | null): Promise<IVerifyResult> {
-    if(typeof credential !== 'string') {
+    if(typeof credential !== 'string' && credential.credentialStatus) {
         return await agent.cheqdVerifyCredential({
             credential: credential as VerifiableCredential,
             fetchList: true,
             ...statusOptions
         } as ICheqdVerifyCredentialWithStatusList2021Args)
     }
-    return await agent.verifyCredential({ credential, fetchRemoteContexts: true })
+
+    const result = await agent.verifyCredential({ credential, fetchRemoteContexts: true })
+    if (result.didResolutionResult) {
+        delete(result.didResolutionResult)
+    }
+
+    if (result.jwt) {
+        delete(result.jwt)
+    }
+
+    if (result.verifiableCredential) {
+        delete(result.verifiableCredential)
+    }
+    return result
   }
 
   async verifyPresentation(agent: VeramoAgent, presentation: VerifiablePresentation | string, statusOptions: VerifyPresentationStatusOptions | null): Promise<IVerifyResult> {
@@ -256,7 +269,19 @@ export class Veramo {
     //         ...statusOptions
     //     } as ICheqdVerifyPresentationWithStatusList2021Args)
     // }
-    return await agent.verifyPresentation({ presentation, fetchRemoteContexts: true, policies: {audience: false} })
+    const result = await agent.verifyPresentation({ presentation, fetchRemoteContexts: true, policies: {audience: false} })
+    if (result.didResolutionResult) {
+        delete(result.didResolutionResult)
+    }
+
+    if (result.jwt) {
+        delete(result.jwt)
+    }
+
+    if (result.verifiablePresentation) {
+        delete(result.verifiablePresentation)
+    }
+    return result
   }
 
   async createStatusList2021(agent: VeramoAgent, did: string, resourceOptions: ResourcePayload, statusOptions: CreateStatusListOptions) {

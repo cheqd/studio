@@ -29,7 +29,7 @@ export class CredentialController {
         return false
       })
     .withMessage('Entry must be a jwt string or an credential'),
-    query('publish').optional().isBoolean().withMessage('publish should be a boolean value')
+    query('publish').isBoolean().withMessage('publish should be a boolean value')
   ]
 
   public static presentationValidator = [
@@ -77,7 +77,14 @@ export class CredentialController {
         return response.status(400).json({ error: result.array()[0].msg })
     }
     try {
-		return response.status(200).json(await Credentials.instance.verify_credentials(request.body.credential, request.body.statusOptions, response.locals.customerId))
+        const result = await Credentials.instance.verify_credentials(request.body.credential, request.body.statusOptions, response.locals.customerId)
+        if (result.error) {
+            return response.status(400).json({
+                verified: result.verified,
+                error: result.error
+            })
+        }
+		return response.status(200).json(result)
     } catch (error) {
         return response.status(500).json({
             error: `${error}`
@@ -138,7 +145,14 @@ export class CredentialController {
     }
 
     try {
-		return response.status(200).json(await Identity.instance.verifyPresentation(request.body.presentation, request.body.statusOptions, response.locals.customerId))
+        const result = await Identity.instance.verifyPresentation(request.body.presentation, request.body.statusOptions, response.locals.customerId)
+        if (result.error) {
+            return response.status(400).json({
+                verified: result.verified,
+                error: result.error
+            })
+        }
+		return response.status(200).json(result)
     } catch (error) {
         return response.status(500).json({
             error: `${error}`

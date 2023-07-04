@@ -36,7 +36,7 @@ export class RevocationController {
         check('statusListVerion').optional().isString().withMessage('Invalid statusListVersion'),
         query('statusAction').exists().withMessage('StatusAction is required')
         .isIn(['revoke', 'suspend', 'reinstate']),
-        query('publish').optional().isBoolean().withMessage('publish should be a boolean value')
+        query('publish').isBoolean().withMessage('publish should be a boolean value')
     ]
 
     async createStatusList(request: Request, response: Response) {
@@ -56,9 +56,10 @@ export class RevocationController {
             result = await Identity.instance.broadcastStatusList2021(did, { data, name, alsoKnownAs, version }, { encoding, statusPurpose }, response.locals.customerId)
           }
           result = await Identity.instance.createStatusList2021(did, { name, alsoKnownAs, version }, { length, encoding, statusPurpose }, response.locals.customerId)
-          return response.status(200).json({
-            success: result
-          })
+          if (result.error) {
+            return response.status(400).json(result)
+          }
+          return response.status(200).json(result)
         } catch (error) {
           return response.status(500).json({
             error: `Internal error: ${error}`
@@ -117,9 +118,10 @@ export class RevocationController {
         try {
           let result: any
           result = await Identity.instance.updateStatusList2021(did, { indices: indices || [index], statusListName, statusListVersion, statusAction }, publish, response.locals.customerId) 
-          return response.status(200).json({
-            success: result
-          })
+          if (result.error) {
+            return response.status(400).json(result)
+          }
+          return response.status(200).json(result)
         } catch (error) {
           return response.status(500).json({
             error: `Internal error: ${error}`
