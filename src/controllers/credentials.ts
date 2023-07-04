@@ -29,7 +29,7 @@ export class CredentialController {
         return false
       })
     .withMessage('Entry must be a jwt string or an credential'),
-    query('publish').isBoolean().withMessage('publish should be a boolean value')
+    query('publish').optional().isBoolean().withMessage('publish should be a boolean value')
   ]
 
   public static presentationValidator = [
