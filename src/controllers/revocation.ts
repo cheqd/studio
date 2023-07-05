@@ -25,13 +25,9 @@ export class RevocationController {
 
     static updateValidator = [
         check('index').optional().isNumeric().withMessage('index should be a number'),
-        check('indices').custom((value, {req})=>{
-            if(value) {
-                return Array.isArray(value)
-            } else {
-                return req.body.index
-            }
-        }).withMessage('Either an index or an array of indices should be provided'),
+        check('indices').custom((value)=>{
+            return value && (Array.isArray(value) || typeof value === 'number')
+        }).withMessage('An array of indices should be provided'),
         check('statusListName').exists().withMessage('StatusListName is required').isString(),
         check('statusListVerion').optional().isString().withMessage('Invalid statusListVersion'),
         query('statusAction').exists().withMessage('StatusAction is required')
@@ -112,12 +108,14 @@ export class RevocationController {
           return response.status(400).json({ error: result.array()[0].msg })
         }
 
-        let { did, statusListName, statusListVersion, index, indices } = request.body
+        let { did, statusListName, statusListVersion, indices } = request.body
         const { statusAction } = request.query as { statusAction: 'revoke' | 'suspend' | 'reinstate' }
         const publish = request.query.publish === 'false' ? false : true
+        indices = typeof indices === 'number' ? [indices] : indices
+
         try {
           let result: any
-          result = await Identity.instance.updateStatusList2021(did, { indices: indices || [index], statusListName, statusListVersion, statusAction }, publish, response.locals.customerId) 
+          result = await Identity.instance.updateStatusList2021(did, { indices, statusListName, statusListVersion, statusAction }, publish, response.locals.customerId) 
           if (result.error) {
             return response.status(400).json(result)
           }
