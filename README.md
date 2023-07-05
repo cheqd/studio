@@ -106,23 +106,17 @@ Spinning up a Docker container from the [pre-built credential-service Docker ima
     chmod +x docker/with-external-db/pg-init-scripts/create-multiple-postgresql-databases.sh
     ```
 
-  - Add permission for using SSL secret key inside Docker:
+  - Run LogTo service:
 
     ```bash
-    chmod 600 '<path/to/server.key>'
+    docker compose -f docker/with-external-db/docker-compose-with-db.yml --profile logto up --detach
     ```
 
-Run LogTo service:
+  - Run credential-service:
 
-```bash
-docker compose -f docker/with-external-db/docker-compose-with-db.yml --profile logto up --detach
-```
-
-Run credential-service:
-
-```bash
-docker compose -f docker/with-external-db/docker-compose-with-db.yml --profile app up --detach
-```
+    ```bash
+    docker compose -f docker/with-external-db/docker-compose-with-db.yml --profile app up --detach
+    ```
 
 ### Build using Docker
 
