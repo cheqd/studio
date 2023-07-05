@@ -23,13 +23,6 @@ dotenv.config()
 import { UserInfo } from './controllers/user_info.js'
 import path from 'path'
 
-let swagger_options = {}
-if (process.env.ENABLE_AUTHENTICATION === 'true') {
-  swagger_options = {
-    customJs: '/static/custom-button.js',
-  }
-}
-
 class App {
   public express: express.Application
 
@@ -69,7 +62,7 @@ class App {
       '/swagger',
       swaggerUi.serve, 
       async (_req: express.Request, res: express.Response) => {
-        return res.send(swaggerUi.generateHTML(swaggerJSONDoc, swagger_options))
+        return res.send(swaggerUi.generateHTML(swaggerJSONDoc))
       }
     )
     this.express.use(Authentication.handleError)
