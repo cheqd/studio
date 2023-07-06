@@ -74,10 +74,11 @@ The app supports 3rd party connectors for credential storage and delivery.
 
 The app's [Verida Network](https://www.verida.network/) connector can be enabled to deliver generated credentials to Verida Wallet.
 
-1. `ENABLE_VERIDA_CONNECTOR`: Turns Verida connector on/off (Default: `false`). If `ENABLE_VERIDA_CONNECTOR=true`, then define below environment variables in `.env` file:
-    - `VERIDA_NETWORK`: Verida Network type to connect to. (Default: `testnet`)
-    - `VERIDA_PRIVATE_KEY`: Secret key for Verida Network API.
-    - `POLYGON_PRIVATE_KEY`: Secret key for Polygon Network.
+By default, `ENABLE_VERIDA_CONNECTOR` is set to off/`false`. To enable external Veramo KMS database, set `ENABLE_VERIDA_CONNECTOR` to `true`, then define below environment variables in `.env` file:
+
+1. `VERIDA_NETWORK`: Verida Network type to connect to. (Default: `testnet`)
+2. `VERIDA_PRIVATE_KEY`: Secret key for Verida Network API.
+3. `POLYGON_PRIVATE_KEY`: Secret key for Polygon Network.
 
 ## 🧑‍💻🛠 Developer Guide
 
@@ -99,29 +100,59 @@ Construct the postgres URL and configure the env variables mentioned above.
 
 Spinning up a Docker container from the [pre-built credential-service Docker image on Github](https://github.com/cheqd/credential-service/pkgs/container/credential-service) is as simple as the command below:
 
-- Running credential-service using Docker with external database:
-  - Set `POSTGRES_USER`, `POSTGRES_PASSWORD` environment variables in `docker/with-external-db/postgres.env`:
-    - `POSTGRES_USER`: Postgres database username using in Docker database service.
-    - `POSTGRES_PASSWORD`: Postgres database password using in Docker database service.
-    - `POSTGRES_MULTIPLE_DATABASES`: Postgres multiple databases, e.g.: `POSTGRES_MULTIPLE_DATABASES="app,logto"`.
-  
-  - Add permission for running postgres initialization scripts inside Docker:
+#### Configure PostgreSQL database
 
-    ```bash
-    chmod +x docker/with-external-db/pg-init-scripts/create-multiple-postgresql-databases.sh
-    ```
+Configure the environment variables in the [`postgres.env` file](docker/with-external-db/postgres.env):
 
-  - Run LogTo service:
+1. `POSTGRES_USER`: Username for Postgres database
+2. `POSTGRES_PASSWORD`: Password for Postgres database
+3. `POSTGRES_MULTIPLE_DATABASES`: Database names for multiple databases in the same cluster, e.g.: `"app,logto"`. This sets up multiple databases in the same cluster, which can be used independently for External Veramo KMS or LogTo service.
 
-    ```bash
-    docker compose -f docker/with-external-db/docker-compose-with-db.yml --profile logto up --detach
-    ```
+Then, make the Postgres initialisation scripts executable:
 
-  - Run credential-service:
+```bash
+chmod +x docker/with-external-db/pg-init-scripts/create-multiple-postgresql-databases.sh
+```
 
-    ```bash
-    docker compose -f docker/with-external-db/docker-compose-with-db.yml --profile app up --detach
-    ```
+#### Start LogTo service
+
+Configure the environment variables in the [`logto.env` file](docker/with-external-db/logto.env) with the settings described in section above.
+
+Then, run the LogTo service to configure the LogTo application API resources, applications, sign-in experiences, roles etc using Docker Compose:
+
+```bash
+docker compose -f docker/with-external-db/docker-compose-with-db.yml --profile logto up --detach
+```
+
+Configuring LogTo is outside the scope of this guide, and we recommend reading [LogTo documentation](https://docs.logto.io/) to familiarise yourself.
+
+#### Start credential-service app
+
+Configure the environment variables in the [`with-db.env` file](docker/with-external-db/with-db.env) with the settings described in section above. Depending on whether you are using external Veramo KMS only, LogTo only, or both you will need to have previously provisioned these services as there are environment variables in this file that originate from Postgres/LogTo.
+
+Then, start the service using Docker Compose:
+
+```bash
+docker compose -f docker/with-external-db/docker-compose-with-db.yml up --detach
+```
+
+#### Running app or LogTo migrations
+
+When upgrading either the external Veramo KMS or LogTo, you might need to run migrations for the underlying databases.
+
+You can run *just* the migration scripts using [Docker Compose profiles](https://docs.docker.com/compose/profiles/) defined in the Compose file.
+
+For example, to run Credential Service app migrations on an existing Postgres database (for external Veramo KMS):
+
+```bash
+docker compose -f docker/with-external-db/docker-compose-with-db.yml --profile app-setup up --detach
+```
+
+Or to run LogTo migrations on an existing Postgres database:
+
+```bash
+docker compose -f docker/with-external-db/docker-compose-with-db.yml --profile logto-setup up --detach
+```
 
 ### Build using Docker
 
