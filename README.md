@@ -57,9 +57,11 @@ We use a self-hosted version of [LogTo](https://logto.io/), which supports OpenI
 6. `LOGTO_M2M_APP_ID`: Machine-to-machine Application ID
 7. `LOGTO_M2M_APP_SECRET`: Machine-to-machine Application secret
 8. `LOGTO_MANAGEMENT_API`: URL of management API for LogTo (default is `https://default.logto.app/api`)
-9. `ALLOWED_ORIGINS`: CORS allowed origins used in the app
-10. `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users
-11. `COOKIE_SECRET`: Secret for cookie encryption.
+9. `LOGTO_DEFAULT_ROLE`: By default it's "Authenticated User - Testnet". So, it's a name of role with default set of permissions for the user which only created or logged in.
+10. `LOGTO_WEBHOOK_SECRET`: WebHook secret which come from LogTo Webhooks page. Needed for checking that web hook was originally sent from LogTo
+11. `ALLOWED_ORIGINS`: CORS allowed origins used in the app
+12. `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users
+13. `COOKIE_SECRET`: Secret for cookie encryption.
 
 ### 3rd Party Connectors
 

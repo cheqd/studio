@@ -15,7 +15,6 @@ export class LogToHelper {
     this.allScopes = []
     this.defaultScopes = []
     this.allResourceWithNames = []
-    this.setup()
   }
 
   public async setup(): Promise<ILogToErrorResponse | void>{
@@ -48,6 +47,135 @@ export class LogToHelper {
 
   public getAllResourcesWithNames(): string[] {
     return this.allResourceWithNames
+  }
+
+  public async setDefaultRoleForUser(userId: string): Promise<ILogToErrorResponse | void> {
+    const roles = await this.getRolesForUser(userId)
+    if (roles && roles.status === 200 && roles.data.length === 0) {
+        const default_role = await this.getDefaultRole()
+        if (default_role && default_role.status === 200) {
+            return await this.assignDefaultRoleForUser(userId, default_role.data.id)
+        }
+    }
+  }
+
+  private async assignDefaultRoleForUser(userId: string, roleId: string): Promise<ILogToErrorResponse | void> {
+    const uri = new URL(`/api/roles/${roleId}/users`, process.env.LOGTO_ENDPOINT);
+    try {
+        const body = {
+            userIds: [userId],
+        };
+        const response = await fetch(uri, {
+            headers: {
+                Authorization: 'Bearer ' + this.m2mToken,
+                'Content-Type': 'application/json',
+            },
+            method: 'POST',
+            body: JSON.stringify(body),
+        });
+
+        if (response.ok) {
+            
+            return {
+                status: 200,
+                error: "",
+                data: {}
+            }
+        }
+        return {
+            error: await response.text(),
+            status: response.status,
+            data: {}
+        }
+
+        
+    } catch (err) {
+        return {
+            error: `getRolesForUser ${err}`,
+            status: 500,
+            data: {}
+        }
+    }
+  }
+
+  private async getDefaultRole(): Promise<ILogToErrorResponse | void> {
+    const uri = new URL(`/api/roles`, process.env.LOGTO_ENDPOINT);
+    try {
+        const response = await fetch(uri, {
+            headers: {
+                Authorization: 'Bearer ' + this.m2mToken,
+            },
+        });
+
+        if (response.ok) {
+
+            const metadata = await response.json()
+
+            for (const role of metadata) {
+                if (role.name === process.env.LOGTO_DEFAULT_ROLE) {
+                    return {
+                        status: 200,
+                        error: "",
+                        data: role
+                    }
+                }
+            }
+            
+            return {
+                status: 200,
+                error: "",
+                data: metadata
+            }
+        }
+        return {
+            error: await response.text(),
+            status: response.status,
+            data: {}
+        }
+
+        
+    } catch (err) {
+        return {
+            error: `getRolesForUser ${err}`,
+            status: 500,
+            data: {}
+        }
+    }
+  }
+
+  private async getRolesForUser(userId: string): Promise<ILogToErrorResponse | void> {
+    const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
+    try {
+        const response = await fetch(uri, {
+            headers: {
+                Authorization: 'Bearer ' + this.m2mToken,
+            },
+        });
+
+        if (response.ok) {
+
+            const metadata = await response.json()
+            
+            return {
+                status: 200,
+                error: "",
+                data: metadata
+            }
+        }
+        return {
+            error: await response.text(),
+            status: response.status,
+            data: {}
+        }
+
+        
+    } catch (err) {
+        return {
+            error: `getRolesForUser ${err}`,
+            status: 500,
+            data: {}
+        }
+    }
   }
 
   private async setDefaultScopes(): Promise<ILogToErrorResponse | void>{
@@ -89,7 +217,7 @@ export class LogToHelper {
             },
         });
         const data = await response.json();
-        if (response.status === 200) {
+        if (response.ok) {
             this.m2mToken = data.access_token
         }
     } catch (err) {
@@ -141,7 +269,7 @@ export class LogToHelper {
             },
         });
 
-        if (response.status === 200) {
+        if (response.ok) {
 
             const metadata = await response.json()
             for (const sc of metadata) {
@@ -179,7 +307,7 @@ export class LogToHelper {
             },
         });
         
-        if (response.status === 200) {
+        if (response.ok) {
             const metadata = (await response.json())
             return {
                 error: "",

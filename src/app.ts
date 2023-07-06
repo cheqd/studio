@@ -4,7 +4,6 @@ import cors from 'cors'
 import swaggerUi from 'swagger-ui-express'
 import session from 'express-session'
 import cookieParser from 'cookie-parser'
-import {withLogto, handleAuthRoutes } from '@logto/express'
 
 import { CredentialController } from './controllers/credentials.js'
 import { StoreController } from './controllers/store.js'
@@ -13,7 +12,7 @@ import { CustomerController } from './controllers/customer.js'
 import { Authentication } from './middleware/authentication.js'
 import { Connection } from './database/connection/connection.js'
 import { RevocationController } from './controllers/revocation.js'
-import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js'
+import { CORS_ERROR_MSG } from './types/constants.js'
 
 import swaggerJSONDoc from './static/swagger.json' assert { type: "json" }
 
@@ -22,6 +21,7 @@ dotenv.config()
 
 import { UserInfo } from './controllers/user_info.js'
 import path from 'path'
+import { LogToWebHook } from './middleware/hook.js'
 
 let swagger_options = {}
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -41,7 +41,6 @@ class App {
   }
 
   private middleware() {
-    this.express.use(express.json({ limit: '50mb' }))
 	this.express.use(express.urlencoded({ extended: false }))
     this.express.use(Helmet())
     this.express.use(cors({
@@ -58,7 +57,7 @@ class App {
     this.express.use(cookieParser())
     if (process.env.ENABLE_AUTHENTICATION === 'true') {
       this.express.use(session({secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 }}))
-      // Authentication funcitons/methods
+      // Authentication functions/methods
       this.express.use(Authentication.wrapperHandleAuthRoutes)
       this.express.use(Authentication.withLogtoWrapper)
       this.express.use(Authentication.guard)
@@ -78,16 +77,19 @@ class App {
 
   private routes() {
     const app = this.express
+    const jsonMiddleware = express.json({ limit: '50mb' })
+    const rawMiddleware = express.raw({ type: '*/*' })
+    // routes
     app.get('/', (req, res) => res.redirect('swagger'))
 
-    app.get('/user', new UserInfo().getUserInfo)
+    app.get('/user', jsonMiddleware, new UserInfo().getUserInfo)
 
     // credentials
-    app.post(`/credential/issue`, CredentialController.issueValidator, new CredentialController().issue)
-    app.post(`/credential/verify`, CredentialController.credentialValidator, new CredentialController().verify)
-    app.post(`/credential/revoke`, CredentialController.credentialValidator, new CredentialController().revoke)
-    app.post('/credential/suspend', new CredentialController().suspend)
-    app.post('/credential/reinstate', new CredentialController().reinstate)
+    app.post(`/credential/issue`, jsonMiddleware, CredentialController.issueValidator, new CredentialController().issue)
+    app.post(`/credential/verify`, jsonMiddleware, CredentialController.credentialValidator, new CredentialController().verify)
+    app.post(`/credential/revoke`, jsonMiddleware, CredentialController.credentialValidator, new CredentialController().revoke)
+    app.post('/credential/suspend', jsonMiddleware, new CredentialController().suspend)
+    app.post('/credential/reinstate', jsonMiddleware, new CredentialController().reinstate)
 
     //credential-status
     app.post('/credential-status/statusList2021/create', RevocationController.didValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
@@ -107,6 +109,9 @@ class App {
     // customer
     app.post(`/account`, new CustomerController().create)
     app.get(`/account`, new CustomerController().get)
+    // LogTo webhooks
+    app.post(`/account/set-default-role`, rawMiddleware, LogToWebHook.verifyHookSignature, new CustomerController().setupDefaultRole)
+
 
     // static files
     app.get('/static/custom-button.js', 

@@ -8,6 +8,7 @@ import pkg from 'secp256k1'
 import { fromString } from 'uint8arrays'
 
 import { SpecValidationResult } from '../types/types.js'
+import { createHmac } from 'node:crypto'
 
 export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecValidationResult {
   // id is required, validated on both compile and runtime
@@ -64,6 +65,13 @@ export function getCosmosAccount(kid: string) {
   const { publicKeyConvert } = pkg
   return toBech32('cheqd', rawSecp256k1PubkeyToRawAddress(publicKeyConvert(fromString(kid, 'hex'), true)))
 }
+
+export function verifyHookSignature(signingKey: string, rawBody: Buffer, expectedSignature: string): boolean {
+  const hmac = createHmac('sha256', signingKey);
+  hmac.update(rawBody);
+  const signature = hmac.digest('hex');
+  return signature === expectedSignature;
+};
 
 export interface IDidDocOptions {
   verificationMethod: VerificationMethods

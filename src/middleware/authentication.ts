@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express'
 import { CustomerService } from '../services/customer.js'
 
 import * as dotenv from 'dotenv'
-import { withLogto, handleAuthRoutes } from '@logto/express'
+import { withLogto, handleAuthRoutes, LogtoExpressConfig } from '@logto/express'
 import { configLogToExpress } from '../types/constants.js'
 import { AccountAuthHandler } from './auth/account_auth.js'
 import { CredentialAuthHandler } from './auth/credential_auth.js'
@@ -11,6 +11,7 @@ import { DidAuthHandler } from './auth/did_auth.js'
 import { KeyAuthHandler } from './auth/key_auth.js'
 import { CredentialStatusAuthHandler } from './auth/credential-status.js'
 import { AbstractAuthHandler } from './auth/base_auth.js'
+import { LogToHelper } from './auth/logto.js'
 
 dotenv.config()
 
@@ -21,21 +22,35 @@ const {
 } = process.env
 
 const authHandler = new AccountAuthHandler()
-authHandler.setNext(new CredentialAuthHandler()).
-setNext(new DidAuthHandler()).
-setNext(new KeyAuthHandler()).
-setNext(new CredentialStatusAuthHandler())
+const didAuthHandler = new DidAuthHandler()
+const keyAuthHandler = new KeyAuthHandler()
+const credentialAuthHandler = new CredentialAuthHandler()
+const credentialStatusAuthHandler = new CredentialStatusAuthHandler()
+
+if (process.env.ENABLE_AUTHENTICATION === 'true') {
+    authHandler.setNext(new CredentialAuthHandler()).
+    setNext(didAuthHandler).
+    setNext(keyAuthHandler).
+    setNext(credentialAuthHandler).
+    setNext(credentialStatusAuthHandler)
+
+}
 
 export class Authentication {
 
-    static wrapperHandleAuthRoutes(request: Request, response: Response, next: NextFunction) {
+    static async wrapperHandleAuthRoutes(request: Request, response: Response, next: NextFunction) {
+        await authHandler.setup()
+        await didAuthHandler.setup()
+        await keyAuthHandler.setup()
+        await credentialAuthHandler.setup()
+        await credentialStatusAuthHandler.setup()
         return handleAuthRoutes(
             {...configLogToExpress, 
             scopes: authHandler.getAllLogToScopes() as string[],
             resources: authHandler.getAllLogToResources() as string[]})(request, response, next)
     }
 
-    static handleError(error: Error, request: Request, response: Response, next: NextFunction) {
+    static async handleError(error: Error, request: Request, response: Response, next: NextFunction) {
         if (error) {
           return response.status(401).send({
             error: `${error.message}`
@@ -78,7 +93,6 @@ export class Authentication {
             return next()
 
 		try {
-            if (ENABLE_AUTHENTICATION === 'true') {
                 // If response got back that means error was raised
                 const _resp = await authHandler.handle(jwtRequest, response)
                 if (_resp && _resp.status !== 200) {
@@ -86,13 +100,6 @@ export class Authentication {
                         error: _resp.error})
                 }
                 response.locals.customerId = _resp.data.customerId
-            } else if (DEFAULT_CUSTOMER_ID) {
-                response.locals.customerId = DEFAULT_CUSTOMER_ID
-            } else {
-                return response.status(400).json({
-                    error: `Unauthorized error. It requires ENABLE_AUTHENTICATION=true and bearerToken in headers or DEFAULT_CUSTOMER_ID to be set.`
-                })
-            }
             next()
 		} catch (err) {
 			return response.status(500).send({
@@ -108,11 +115,15 @@ export class Authentication {
         if (authHandler.skipPath(request.path)) 
             return next()
         try {
-            const resourceAPI = AbstractAuthHandler.buildResourceAPIUrl(request)
-            if (!resourceAPI) {
-                return next()
+            let config: LogtoExpressConfig = configLogToExpress
+            if (! authHandler.skipPath(request.path)) {
+                const resourceAPI = AbstractAuthHandler.buildResourceAPIUrl(request)
+                if (!resourceAPI) {
+                    return next()
+                }
+                config = {...configLogToExpress, resource: resourceAPI, scopes: authHandler.getAllLogToScopes() as string[]}
             }
-            return withLogto({...configLogToExpress, resource: resourceAPI, scopes: authHandler.getAllLogToScopes() as string[]})(request, response, next)
+            return withLogto(config)(request, response, next)
 		} catch (err) {
 			return response.status(500).send({
                 authenticated: false,

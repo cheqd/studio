@@ -26,12 +26,12 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
     private namespace: Namespaces
     private token: string
     private scopes: string[] | unknown
-    private logToHelper?: LogToHelper
+    private logToHelper: LogToHelper
 
     public customer_id: string
 
     private routeToScoupe: MethodToScope[] = []
-    private static pathSkip = ['/swagger', '/user', '/static', '/logto']
+    private static pathSkip = ['/swagger', '/user', '/static', '/logto', '/account/set-default-role']
     // private static regExpSkip = new RegExp("^/.*js")
 
     constructor () {
@@ -40,9 +40,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
         this.token = '' as string
         this.scopes = undefined
         this.customer_id = '' as string
-        if (process.env.ENABLE_AUTHENTICATION === 'true') {
-            this.logToHelper = new LogToHelper()
-        }
+        this.logToHelper = new LogToHelper()
     }
 
     public async commonPermissionCheck(request: Request): Promise<IAuthResponse> {
@@ -94,6 +92,10 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
                 namespace: this.getNamespace(),
             }
         }
+    }
+
+    public async setup() {
+        await this.logToHelper.setup()
     }
 
     // interface implementation
