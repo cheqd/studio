@@ -41,7 +41,8 @@ class App {
   }
 
   private middleware() {
-	this.express.use(express.urlencoded({ extended: false }))
+    const auth = new Authentication()
+	  this.express.use(express.urlencoded({ extended: false }))
     this.express.use(Helmet())
     this.express.use(cors({
         origin: function(origin, callback){
@@ -58,9 +59,10 @@ class App {
     if (process.env.ENABLE_AUTHENTICATION === 'true') {
       this.express.use(session({secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 }}))
       // Authentication functions/methods
-      this.express.use(Authentication.wrapperHandleAuthRoutes)
-      this.express.use(Authentication.withLogtoWrapper)
-      this.express.use(Authentication.guard)
+      this.express.use(async (req, res, next) => await auth.setup(req, res, next))
+      this.express.use(async (req, res, next) => await auth.wrapperHandleAuthRoutes(req, res, next))
+      this.express.use(async (req, res, next) => await auth.withLogtoWrapper(req, res, next))
+      this.express.use(async (req, res, next) => await auth.guard(req, res, next))
     }
     this.express.use(express.text())
 
@@ -71,8 +73,8 @@ class App {
         return res.send(swaggerUi.generateHTML(swaggerJSONDoc, swagger_options))
       }
     )
-    this.express.use(Authentication.handleError)
-    this.express.use(Authentication.accessControl)
+    this.express.use(auth.handleError)
+    this.express.use(async (req, res, next) => await auth.accessControl(req, res, next))
   }
 
   private routes() {

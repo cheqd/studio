@@ -94,10 +94,6 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
         }
     }
 
-    public async setup() {
-        await this.logToHelper.setup()
-    }
-
     // interface implementation
     public setNext(handler: IAuthResourceHandler): IAuthResourceHandler {
         this.nextHandler = handler;
@@ -186,7 +182,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
             if (!token) {
                 return {
                     status: 401,
-                    error: `Unauthorized error: Looks like you are not logged in using LogTo properly.`,
+                    error: `Unauthorized error: Looks like you are not logged in using LogTo properly or don't have needed permissions.`,
                     data: {
                         customerId: '',
                         scopes: [],
@@ -200,6 +196,10 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
     }
 
     // common utils
+    public setLogToHelper(logToHelper: LogToHelper) {
+        this.logToHelper = logToHelper
+    }
+    
     public static getNamespaceFromRequest(req: Request): Namespaces {
         const matches = stringify(req.body).match(cheqdDidRegex)
         if (matches && matches.length > 0) {
