@@ -28,19 +28,20 @@ The application allows configuring the following parameters using environment va
 #### Network API endpoints
 
 1. `MAINNET_RPC_URL`: RPC endpoint for cheqd mainnet (Default: `https://rpc.cheqd.net:443`).
-2. `TESTNET_RPC_URL`: RPC endpoint for cheqd testnet (`https://rpc.cheqd.network:443`).
-3. `RESOLVER_URL`: API endpoint for a [DID Resolver](https://github.com/cheqd/did-resolver) endpoint that supports `did:cheqd`.
+2. `TESTNET_RPC_URL`: RPC endpoint for cheqd testnet (Default: `https://rpc.cheqd.network:443`).
+3. `RESOLVER_URL`: API endpoint for a [DID Resolver](https://github.com/cheqd/did-resolver) endpoint that supports `did:cheqd` (Default: `https://resolver.cheqd.net/1.0/identifiers/`).
 4. `APPLICATION_BASE_URL`: URL of the application (external domain name).
-5. `ALLOWED_ORIGINS`: CORS allowed origins used in the app.
+5. `CORS_ALLOWED_ORIGINS`: CORS allowed origins used in the app.
 
 #### Veramo KMS Database
 
 The application supports two modes in which keys are managed: either just storing them in-memory while a container is running, or persisting them in a PostgresSQL database with Veramo SDK. Using an external Postgres database allows for "custodian" mode where identity and cheqd/Cosmos keys can be offloaded by client applications to be stored in the database.
 
-1. `ENABLE_EXTERNAL_DB`: Turns external database on/off (Default: `false`). If `ENABLE_EXTERNAL_DB=true`, then define below environment variables in `.env` file:
-    - `EXTERNAL_DB_CONNECTION_URL`: Postgres database connection URL, e.g. `postgres://<user>:<password>@<host>:<port>/<database>`.
-    - `EXTERNAL_DB_ENCRYPTION_KEY`: Secret key used to encrypt the Veramo key-specific database tables. This adds a layer of protection by not storing the database in plaintext.
-    - `EXTERNAL_DB_CERTIFICATE`: Custom CA certificate required to connect to the database (optional).
+By default, `ENABLE_EXTERNAL_DB` is set to off/`false`. To enable external Veramo KMS database, set `ENABLE_EXTERNAL_DB` to `true`, then define below environment variables in `.env` file:
+
+1. `EXTERNAL_DB_CONNECTION_URL`: PostgreSQL database connection URL, e.g. `postgres://<user>:<password>@<host>:<port>/<database>`.
+2. `EXTERNAL_DB_ENCRYPTION_KEY`: Secret key used to encrypt the Veramo key-specific database tables. This adds a layer of protection by not storing the database in plaintext.
+3. `EXTERNAL_DB_CERTIFICATE`: Custom CA certificate required to connect to the database (optional).
 
 #### API Authentication using LogTo
 
@@ -48,18 +49,22 @@ By default, the application has API authentication disabled (which can be change
 
 We use a self-hosted version of [LogTo](https://logto.io/), which supports OpenID Connect. Theoretically, these values could also be replaced with [LogTo Cloud](http://cloud.logto.io/) or any other OpenID Connect identity provider.
 
-1. `ENABLE_AUTHENTICATION`: Turns API authentication guards on/off (Default: `false`). If `ENABLE_AUTHENTICATION=false`, then define below environment variable in `.env` file:
-    - `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users.
-2. `LOGTO_ENDPOINT`: API endpoint for LogTo server
-3. `LOGTO_DEFAULT_RESOURCE_URL`: Usually it will be a root of all API resources. All the resourceAPI will be constructed on top of that.
-4. `LOGTO_APP_ID`: Application ID from LogTo. For now, Application is supposed to be a TraditionalWeb
-5. `LOGTO_APP_SECRET`: Application secret. Also should encrypted in deployment
-6. `LOGTO_M2M_APP_ID`: Machine-to-machine Application ID
-7. `LOGTO_M2M_APP_SECRET`: Machine-to-machine Application secret
-8. `LOGTO_MANAGEMENT_API`: URL of management API for LogTo (default is `https://default.logto.app/api`)
-9. `ALLOWED_ORIGINS`: CORS allowed origins used in the app
-10. `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users
-11. `COOKIE_SECRET`: Secret for cookie encryption.
+By default, `ENABLE_AUTHENTICATION` is set to off/`false`. To enable external Veramo KMS database, set `ENABLE_AUTHENTICATION` to `true`, then define below environment variables in `.env` file:
+
+1. **Endpoints**
+   1. `LOGTO_ENDPOINT`: API endpoint for LogTo server
+   2. `LOGTO_DEFAULT_RESOURCE_URL`: Root of API resources in this application to be guarded. (Default: `http://localhost:3000/api` on localhost.)
+   3. `LOGTO_MANAGEMENT_API`: URL of management API for LogTo (default is `https://default.logto.app/api`)
+   4. `CORS_ALLOWED_ORIGINS`: CORS allowed origins used in the app
+2. **User-facing APIs**
+   1. `LOGTO_APP_ID`: Application ID for the Credential Service application in LogTo. This can be set up as type "Traditional Web"
+   2. `LOGTO_APP_SECRET`: Application secret associated with App ID above.
+3. **Machine-to-machine backend APIs**
+   1. `LOGTO_M2M_APP_ID`: Application ID for machine-to-machine application in LogTo. This is used for elevated management APIs within LogTo.
+   2. `LOGTO_M2M_APP_SECRET`: Application secret
+4. **Miscellaneous**
+   1. `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users
+   2. `COOKIE_SECRET`: Secret for cookie encryption.
 
 ### 3rd Party Connectors
 
