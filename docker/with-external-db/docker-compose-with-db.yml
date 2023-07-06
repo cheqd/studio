@@ -1,6 +1,9 @@
 version: '3.8'
 
-# CAUTION: Please ensure you edit necessary values in with-db.env before using this Docker Compose file.
+## CAUTION: Please ensure you edit the following environment files before running this Docker Compose file:
+# 1. with-db.env
+# 2. postgres.env (If using External DB and/or LogTo)
+# 3. logto.env (If using LogTo)
 
 # SYNTAX: docker compose -f docker/with-external-db/docker-compose-with-db.yml up --detach
 
@@ -21,8 +24,11 @@ services:
       - 3000:3000
     env_file:
       - with-db.env
-    profiles:
-      - app
+    healthcheck:
+      test: [ "CMD", "wget", "--quiet", "--spider", "http://localhost:3000/swagger" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # This service is used as a ONE-TIME setup service to run migrations
   # Only relevant if you're using the app with EXTERNAL_DB=true
@@ -37,7 +43,6 @@ services:
     profiles:
       - app-setup
       - external-kms
-      - app
 
   # This service is used to run a PostgreSQL database
   # Used in the following scenarios:
@@ -62,12 +67,11 @@ services:
     profiles:
       - external-kms
       - logto
-      - app
 
   # This service is used to run a LogTo instance for authentication
   # Used when ENABLE_AUTHENTICATION=true
   logto:
-    image: ghcr.io/cheqd/creds-auth:develop
+    image: ghcr.io/cheqd/creds-auth:production-latest
     depends_on:
       postgres:
         condition: service_healthy
@@ -79,25 +83,24 @@ services:
     env_file:
       - logto.env
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--spider", "--tries=1", "--timeout=5", "http://localhost:3002/api/status"]
+      test: [ "CMD", "wget", "--quiet", "--spider", "http://localhost:3002/api/status" ]
       interval: 10s
       timeout: 5s
       retries: 5
     profiles:
       - logto
-      - app
 
   # This service is used as a ONE-TIME setup service to run migrations for LogTo
   # Only relevant if you're using the app with EXTERNAL_AUTHENTICATION=true
   logto-migrations:
-    image: ghcr.io/cheqd/creds-auth:develop
+    image: ghcr.io/cheqd/creds-auth:production-latest
     depends_on:
       postgres:
         condition: service_healthy
-    entrypoint: ["bash", "/etc/logto/entrypoint.sh", "--alter-db", "1.3.0"]
+    # Change the value of "--alter-db" to the desired migration version for LogTo
+    entrypoint: [ "/etc/logto/entrypoint.sh", "--alter-db", "1.6.0" ]
     env_file:
       - logto.env
     profiles:
       - logto
       - logto-setup
-      - app
