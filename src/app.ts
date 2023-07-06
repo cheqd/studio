@@ -50,7 +50,7 @@ class App {
         origin: function(origin, callback){
 
         if(!origin) return callback(null, true)
-            if(process.env.ALLOWED_ORIGINS?.indexOf(origin) === -1){
+            if(process.env.CORS_ALLOWED_ORIGINS?.indexOf(origin) === -1){
             return callback(new Error(CORS_ERROR_MSG), false)
             }
             return callback(null, true)
