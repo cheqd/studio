@@ -42,6 +42,7 @@ class App {
 
   private middleware() {
     const auth = new Authentication()
+    this.express.use(express.json({ limit: '50mb' }))
 	  this.express.use(express.urlencoded({ extended: false }))
     this.express.use(Helmet())
     this.express.use(cors({
@@ -79,19 +80,18 @@ class App {
 
   private routes() {
     const app = this.express
-    const jsonMiddleware = express.json({ limit: '50mb' })
-    const rawMiddleware = express.raw({ type: '*/*' })
+    const rawMiddleware = express.raw({ type: 'application/octet-stream' })
     // routes
     app.get('/', (req, res) => res.redirect('swagger'))
 
-    app.get('/user', jsonMiddleware, new UserInfo().getUserInfo)
+    app.get('/user', new UserInfo().getUserInfo)
 
     // credentials
-    app.post(`/credential/issue`, jsonMiddleware, CredentialController.issueValidator, new CredentialController().issue)
-    app.post(`/credential/verify`, jsonMiddleware, CredentialController.credentialValidator, new CredentialController().verify)
-    app.post(`/credential/revoke`, jsonMiddleware, CredentialController.credentialValidator, new CredentialController().revoke)
-    app.post('/credential/suspend', jsonMiddleware, new CredentialController().suspend)
-    app.post('/credential/reinstate', jsonMiddleware, new CredentialController().reinstate)
+    app.post(`/credential/issue`, CredentialController.issueValidator, new CredentialController().issue)
+    app.post(`/credential/verify`, CredentialController.credentialValidator, new CredentialController().verify)
+    app.post(`/credential/revoke`, CredentialController.credentialValidator, new CredentialController().revoke)
+    app.post('/credential/suspend', new CredentialController().suspend)
+    app.post('/credential/reinstate', new CredentialController().reinstate)
 
     //credential-status
     app.post('/credential-status/statusList2021/create', RevocationController.didValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
