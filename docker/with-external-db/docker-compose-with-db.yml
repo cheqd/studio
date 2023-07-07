@@ -1,62 +1,64 @@
 version: '3.8'
 
-# CAUTION: Please ensure you edit necessary values in .env before using this Docker Compose file.
+## CAUTION: Please ensure you edit the following environment files before running this Docker Compose file:
+# 1. with-db.env
+# 2. postgres.env (If using External DB and/or LogTo)
+# 3. logto.env (If using LogTo)
 
-# SYNTAX: docker compose -f docker/docker-compose.yml up --detach
+# SYNTAX: docker compose -f docker/with-external-db/docker-compose-with-db.yml up --detach
 
 services:
   app:
+    # To change the image version, edit the ":latest" tag to the desired version
+    # For production/stable release, use ":latest"
+    # For development/staging release, use ":staging-latest"
     image: ghcr.io/cheqd/credential-service:latest
     depends_on:
       postgres:
         condition: service_healthy
+      app-migrations:
+        condition: service_completed_successfully
+      logto:
+        condition: service_healthy
     ports:
       - 3000:3000
     env_file:
-      - .env.with-db
+      - with-db.env
+    healthcheck:
+      test: [ "CMD", "wget", "--quiet", "--spider", "http://localhost:3000/swagger" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # This service is used as a ONE-TIME setup service to run migrations
+  # Only relevant if you're using the app with EXTERNAL_DB=true
   app-migrations:
     image: ghcr.io/cheqd/credential-service:latest
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - 3000:3000
     env_file:
-      - .env.with-db
-    entrypoint: [ "npm", "run", "migrate", "&&", "npm", "run", "start" ]
+      - with-db.env
+    entrypoint: [ "npm", "run", "migration" ]
     profiles:
-      - setup
+      - app-setup
+      - external-kms
 
-  logto:
-    image: ghcr.io/cheqd/creds-auth:latest
-    ports:
-      - 3001:3001
-      - 3002:3002
-    env_file:
-      - .env
-    profiles:
-      - logto
-
-  logto-migrations:
-    image: ghcr.io/cheqd/creds-auth:latest
-    ports:
-      - 3001:3001
-      - 3002:3002
-    env_file:
-      - .env
-    entrypoint: [ "npm", "run", "migrate", "&&", "npm", "run", "seed" ]
-    profiles:
-      - setup
-      - logto
-
+  # This service is used to run a PostgreSQL database
+  # Used in the following scenarios:
+  # 1. When you're using the app with EXTERNAL_DB=true
+  # 2. When you're using the app with LogTo enabled using ENABLE_AUTHENTICATION=true
   postgres:
-    image: postgres
+    image: postgres:15-alpine
     user: postgres
+    volumes:
+      - ./pg-init-scripts:/docker-entrypoint-initdb.d
     ports:
       - 5432:5432
+    # Edit the environment variables in postgres.env to change the database name, username, password, etc.
+    # Postgres setup and configuration is outside the scope of this file.
     env_file:
-      - .env
+      - postgres.env
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready" ]
       interval: 10s
@@ -65,3 +67,40 @@ services:
     profiles:
       - external-kms
       - logto
+
+  # This service is used to run a LogTo instance for authentication
+  # Used when ENABLE_AUTHENTICATION=true
+  logto:
+    image: ghcr.io/cheqd/creds-auth:production-latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+      logto-migrations:
+        condition: service_completed_successfully
+    ports:
+      - 3001:3001
+      - 3002:3002
+    env_file:
+      - logto.env
+    healthcheck:
+      test: [ "CMD", "wget", "--quiet", "--spider", "http://localhost:3002/api/status" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - logto
+
+  # This service is used as a ONE-TIME setup service to run migrations for LogTo
+  # Only relevant if you're using the app with EXTERNAL_AUTHENTICATION=true
+  logto-migrations:
+    image: ghcr.io/cheqd/creds-auth:production-latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Change the value of "--alter-db" to the desired migration version for LogTo
+    entrypoint: [ "/etc/logto/entrypoint.sh", "--alter-db", "1.6.0" ]
+    env_file:
+      - logto.env
+    profiles:
+      - logto
+      - logto-setup

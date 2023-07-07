@@ -4,7 +4,6 @@ import cors from 'cors'
 import swaggerUi from 'swagger-ui-express'
 import session from 'express-session'
 import cookieParser from 'cookie-parser'
-import {withLogto, handleAuthRoutes } from '@logto/express'
 
 import { CredentialController } from './controllers/credentials.js'
 import { StoreController } from './controllers/store.js'
@@ -13,7 +12,7 @@ import { CustomerController } from './controllers/customer.js'
 import { Authentication } from './middleware/authentication.js'
 import { Connection } from './database/connection/connection.js'
 import { RevocationController } from './controllers/revocation.js'
-import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js'
+import { CORS_ERROR_MSG } from './types/constants.js'
 
 import swaggerJSONDoc from './static/swagger.json' assert { type: "json" }
 
@@ -22,6 +21,8 @@ dotenv.config()
 
 import { UserInfo } from './controllers/user_info.js'
 import path from 'path'
+import e from 'express'
+import { Middleware } from './middleware/middleware.js'
 
 class App {
   public express: express.Application
@@ -35,13 +36,14 @@ class App {
 
   private middleware() {
     this.express.use(express.json({ limit: '50mb' }))
-	this.express.use(express.urlencoded({ extended: false }))
+	this.express.use(express.urlencoded({ extended: true }))
+    this.express.use(Middleware.parseUrlEncodedJson)
     this.express.use(Helmet())
     this.express.use(cors({
         origin: function(origin, callback){
 
         if(!origin) return callback(null, true)
-            if(process.env.ALLOWED_ORIGINS?.indexOf(origin) === -1){
+            if(process.env.CORS_ALLOWED_ORIGINS?.indexOf(origin) === -1){
             return callback(new Error(CORS_ERROR_MSG), false)
             }
             return callback(null, true)
@@ -54,7 +56,9 @@ class App {
       // Authentication funcitons/methods
       this.express.use(Authentication.wrapperHandleAuthRoutes)
       this.express.use(Authentication.withLogtoWrapper)
-      this.express.use(Authentication.guard)
+    }
+    if (process.env.ENABLE_EXTERNAL_DB === 'true') {
+        this.express.use(Authentication.guard)
     }
     this.express.use(express.text())
 
@@ -82,9 +86,15 @@ class App {
     app.post('/credential/suspend', new CredentialController().suspend)
     app.post('/credential/reinstate', new CredentialController().reinstate)
 
-    //credential-status
-    app.post('/credential-status/statusList2021/create', RevocationController.didValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
-    app.get('/credential-status/statusList2021/list', RevocationController.didValidator, new RevocationController().fetchStatusList)
+    // presentation
+    app.post(`/presentation/verify`, CredentialController.presentationValidator, new CredentialController().verifyPresentation)
+
+    //revocation
+    app.post('/credential-status/create', RevocationController.queryValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
+    app.post('/credential-status/update', RevocationController.updateValidator, new RevocationController().updateStatusList)
+    app.post('/credential-status/publish', RevocationController.queryValidator, new RevocationController().createStatusList)
+    app.get('/credential-status/search', RevocationController.queryValidator, new RevocationController().fetchStatusList)
+
     // store
     app.post(`/store`, new StoreController().set)
     app.get(`/store/:id`, new StoreController().get)
@@ -92,10 +102,12 @@ class App {
     // issuer
     app.post(`/key/create`, new IssuerController().createKey)
     app.get(`/key/:kid`, new IssuerController().getKey)
-    app.post(`/did/create`, IssuerController.didValidator, new IssuerController().createDid)
+    app.post(`/did/create`, IssuerController.createValidator, new IssuerController().createDid)
+    app.post(`/did/update`, IssuerController.updateValidator, new IssuerController().updateDid)
+    app.post(`/did/deactivate/:did`, IssuerController.deactivateValidator, new IssuerController().deactivateDid)
     app.get(`/did/list`, new IssuerController().getDids)
     app.get(`/did/:did`, new IssuerController().getDids)
-    app.post(`/:did/create-resource`, IssuerController.resourceValidator, new IssuerController().createResource)
+    app.post(`/resource/create/:did`, IssuerController.resourceValidator, new IssuerController().createResource)
 
     // customer
     app.post(`/account`, new CustomerController().create)

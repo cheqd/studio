@@ -24,29 +24,34 @@ export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecVali
   if (!didDocument.verificationMethod.length) return { valid: false, error: 'verificationMethod must be not be empty' }
 
   // verificationMethod types must be supported
-  const isValidVerificationMethod = didDocument.verificationMethod.every((vm) => {
-    switch (vm.type) {
-      case VerificationMethods.Ed255192020:
-        return vm.publicKeyMultibase != null
-      case VerificationMethods.JWK:
-        return vm.publicKeyJwk != null
-      case VerificationMethods.Ed255192018:
-        return vm.publicKeyBase58 != null
-      default:
-        return false
-    }
-  })
+  if (!isValidVerificationMethod(didDocument)) return { valid: false, error: 'verificationMethod publicKey is Invalid' }
 
-  if (!isValidVerificationMethod) return { valid: false, error: 'verificationMethod publicKey is Invalid' }
+  if (!isValidService(didDocument)) return { valid: false, error: 'Service is Invalid' }
+  return { valid: true } as SpecValidationResult
+}
 
-  const isValidService = didDocument.service
+export function isValidService(didDocument: DIDDocument) : boolean {
+    return didDocument.service
     ? didDocument?.service?.every((s) => {
         return s?.serviceEndpoint && s?.id && s?.type
       })
     : true
+}
 
-  if (!isValidService) return { valid: false, error: 'Service is Invalid' }
-  return { valid: true } as SpecValidationResult
+export function isValidVerificationMethod(didDocument: DIDDocument) : boolean {
+    if (!didDocument.verificationMethod) return false
+    return didDocument.verificationMethod.every((vm) => {
+        switch (vm.type) {
+          case VerificationMethods.Ed255192020:
+            return vm.publicKeyMultibase != null
+          case VerificationMethods.JWK:
+            return vm.publicKeyJwk != null
+          case VerificationMethods.Ed255192018:
+            return vm.publicKeyBase58 != null
+          default:
+            return false
+        }
+   })
 }
 
 export function generateDidDoc(options: IDidDocOptions) {

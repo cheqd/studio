@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.4.0-develop.7](https://github.com/cheqd/credential-service/compare/2.4.0-develop.6...2.4.0-develop.7) (2023-07-07)
+
+
+### Features
+
+* Add verify presentation API and update StatusList APIs [DEV-2811] & [DEV-2669] ([#265](https://github.com/cheqd/credential-service/issues/265)) ([4e43430](https://github.com/cheqd/credential-service/commit/4e43430c221a5e6029f446a6a6bca1617745ab53))
+
+## [2.4.0-develop.6](https://github.com/cheqd/credential-service/compare/2.4.0-develop.5...2.4.0-develop.6) (2023-07-06)
+
 ## [2.4.0-develop.5](https://github.com/cheqd/credential-service/compare/2.4.0-develop.4...2.4.0-develop.5) (2023-07-03)
 
 ## [2.4.1](https://github.com/cheqd/credential-service/compare/2.4.0...2.4.1) (2023-06-30)

@@ -8,7 +8,7 @@ import {
   W3CVerifiableCredential,
   TAgent
 } from '@veramo/core'
-import { ICheqd, ICheqdStatusList2021Options } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
+import { AccessControlConditionBalanceArgs, AccessControlConditionMemoNonceArgs, ICheqd, ICheqdStatusList2021Options } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import { ICredentialIssuerLD } from '@veramo/credential-ld'
 import { AbstractIdentifierProvider } from '@veramo/did-manager'
 import { AbstractKeyManagementSystem } from '@veramo/key-manager'
@@ -111,13 +111,22 @@ export type CreateAgentRequest = {
   enableCredential?: boolean
 }
 
+export const StatusList2021ResourceTypes = {
+  revocation: 'StatusList2021Revocation',
+  suspension: 'StatusList2021Suspension'
+}
+
 export type CreateStatusListOptions = {
   length?: number | undefined,
   encoding?: 'base64' | 'base64url' | 'hex' | undefined
+  statusPurpose: 'revocation' | 'suspension'
+  encrypted?: boolean
 }
 
+export type BroadCastStatusListOptions = Omit<CreateStatusListOptions, 'length'>
+
 export type StatusOptions = {
-  statusPurpose: 'revocation' | 'suspension'
+  statusPurpose: CreateStatusListOptions['statusPurpose']
   statusListName: string
   statusListIndex?: number
   statusListVersion?: string
@@ -129,7 +138,7 @@ export type StatusOptions = {
 export type RevocationStatusOptions = StatusOptions & { statusPurpose: 'revocation' }
 export type SuspensionStatusOptions = StatusOptions & { statusPurpose: 'suspension' }
 
-export type VerifyStatusOptions = {
+export type VerifyCredentialStatusOptions = {
   fetchList?: boolean
   encryptedSymmetricKey?: string
   options?: ICheqdStatusList2021Options
@@ -137,6 +146,12 @@ export type VerifyStatusOptions = {
     unifiedAccessControlConditions: CosmosAccessControlCondition[]
   }
   bootstrapOptions: {}
+}
+
+export type VerifyPresentationStatusOptions = Omit<VerifyCredentialStatusOptions, 'decryptionOptions'> & { 
+    decryptionOptions: {
+        accessControlConditions: (AccessControlConditionMemoNonceArgs | AccessControlConditionBalanceArgs)[]
+    }
 }
 
 export interface ResourceMetadata {
@@ -148,8 +163,15 @@ export interface ResourceMetadata {
   mediaType: string
   created:
     | Date
-    | undefined;
-  checksum: string;
-  previousVersionId: string;
-  nextVersionId: string;
+    | undefined
+  checksum: string
+  previousVersionId: string
+  nextVersionId: string
+}
+
+export interface UpdateStatusListOptions {
+  indices: number[]
+  statusListName: string
+  statusListVersion?: string
+  statusAction: 'revoke' | 'suspend' | 'reinstate'   
 }
