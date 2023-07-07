@@ -8,8 +8,6 @@ export class CredentialAuthHandler extends AbstractAuthHandler {
         super()
         this.registerRoute('/credential/issue', 'POST', 'issue:credential:testnet')
         this.registerRoute('/credential/issue', 'POST', 'issue:credential:mainnet')
-        this.registerRoute('/credential/verify', 'POST', 'verify:credential:testnet')
-        this.registerRoute('/credential/verify', 'POST', 'verify:credential:mainnet')
         this.registerRoute('/credential/revoke', 'POST', 'revoke:credential:testnet')
         this.registerRoute('/credential/revoke', 'POST', 'revoke:credential:mainnet')
         this.registerRoute('/credential/suspend', 'POST', 'suspend:credential:testnet')
