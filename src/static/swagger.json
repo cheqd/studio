@@ -862,23 +862,6 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/IVerifyResult"
-                                },
-                                "example": {
-                                    "verified": true,
-                                    "policies": {
-                                        "aud": false,
-                                        "audience": false
-                                    },
-                                    "issuer": "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n",
-                                    "signer": {
-                                        "controller": "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n",
-                                        "id": "did:key:z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n#z6MkqJNR1DHxX2qxqDYx9tNDsXoNRVpaVvJkLPeCYqaARz1n",
-                                        "publicKeyBase58": "Br7NQy3XBVMViiiFUKQP2SFNbvYj634PeNjGiZc9WmEQ",
-                                        "type": "Ed25519VerificationKey2018",
-                                        "verifier": [
-                                            "did:key:z6MkhAxBJD1rqoVpbupm3CFNvkhvQd7LXtLoipfnWehvXBhE"
-                                        ]
-                                    }
                                 }
                             }
                         }
