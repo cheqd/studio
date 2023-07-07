@@ -10,7 +10,7 @@ export class RevocationController {
 
     static statusListValidator = [
         check('length').optional().isNumeric().withMessage('length should be a number'),
-        check('data').optional().isString().withMessage('data should be string'),
+        check('encodedList').optional().isString().withMessage('data should be string'),
         check('encoding').optional().isIn(['base64', 'base64url', 'hex']).withMessage('invalid encoding'),
         check('statusPurpose').optional().isIn(['revocation', 'suspension']).withMessage('invalid statusPurpose')
     ]
@@ -24,7 +24,6 @@ export class RevocationController {
     ]
 
     static updateValidator = [
-        check('index').optional().isNumeric().withMessage('index should be a number'),
         check('indices').custom((value)=>{
             return value && (Array.isArray(value) || typeof value === 'number')
         }).withMessage('An array of indices should be provided'),
@@ -41,17 +40,17 @@ export class RevocationController {
           return response.status(400).json({ error: result.array()[0].msg })
         }
 
-        let { did, data, name, alsoKnownAs, version, length, encoding } = request.body
+        let { did, encodedList, statusListName, alsoKnownAs, statusListVersion, length, encoding } = request.body
         const { statusPurpose } = request.query as { statusPurpose: 'revocation' | 'suspension' }
         
-        data = data ? fromString(data, encoding) : undefined
+        const data = encodedList ? fromString(encodedList, encoding) : undefined
         
         try {
           let result: any
           if (data) {
-            result = await Identity.instance.broadcastStatusList2021(did, { data, name, alsoKnownAs, version }, { encoding, statusPurpose }, response.locals.customerId)
+            result = await Identity.instance.broadcastStatusList2021(did, { data, name: statusListName, alsoKnownAs, version: statusListVersion }, { encoding, statusPurpose }, response.locals.customerId)
           }
-          result = await Identity.instance.createStatusList2021(did, { name, alsoKnownAs, version }, { length, encoding, statusPurpose }, response.locals.customerId)
+          result = await Identity.instance.createStatusList2021(did, { name: statusListName, alsoKnownAs, version: statusListVersion }, { length, encoding, statusPurpose }, response.locals.customerId)
           if (result.error) {
             return response.status(400).json(result)
           }
