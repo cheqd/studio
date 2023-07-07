@@ -81,39 +81,46 @@ class App {
 
   private routes() {
     const app = this.express
-    // routes
+    
+    // Top-level routes
     app.get('/', (req, res) => res.redirect('swagger'))
 
+    // User API
     app.get('/user', new UserInfo().getUserInfo)
 
-    // credentials
+    // Credential API
     app.post(`/credential/issue`, CredentialController.issueValidator, new CredentialController().issue)
     app.post(`/credential/verify`, CredentialController.credentialValidator, new CredentialController().verify)
     app.post(`/credential/revoke`, CredentialController.credentialValidator, new CredentialController().revoke)
     app.post('/credential/suspend', new CredentialController().suspend)
     app.post('/credential/reinstate', new CredentialController().reinstate)
 
-    //credential-status
+    // Credential Status API
     app.post('/credential-status/statusList2021/create', RevocationController.didValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
     app.get('/credential-status/statusList2021/list', RevocationController.didValidator, new RevocationController().fetchStatusList)
-    // store
+    
+    // Store API
     app.post(`/store`, new StoreController().set)
     app.get(`/store/:id`, new StoreController().get)
 
-    // issuer
+    // Keys API
     app.post(`/key/create`, new IssuerController().createKey)
     app.get(`/key/:kid`, new IssuerController().getKey)
+
+    // DID API
     app.post(`/did/create`, IssuerController.didValidator, new IssuerController().createDid)
     app.get(`/did/list`, new IssuerController().getDids)
     app.get(`/did/:did`, new IssuerController().getDids)
+
+    // Resource API
     app.post(`/:did/create-resource`, IssuerController.resourceValidator, new IssuerController().createResource)
 
-    // customer
+    // Account API
     app.post(`/account`, new CustomerController().create)
     app.get(`/account`, new CustomerController().get)
+    
     // LogTo webhooks
     app.post(`/account/set-default-role`, LogToWebHook.verifyHookSignature, new CustomerController().setupDefaultRole)
-
 
     // static files
     app.get('/static/custom-button.js', 
