@@ -22,6 +22,8 @@ dotenv.config()
 import { UserInfo } from './controllers/user_info.js'
 import path from 'path'
 import { LogToWebHook } from './middleware/hook.js'
+import e from 'express'
+import { Middleware } from './middleware/middleware.js'
 
 let swagger_options = {}
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -43,8 +45,9 @@ class App {
   private middleware() {
     const auth = new Authentication()
     this.express.use(express.json({ limit: '50mb' }))
-	  this.express.use(express.urlencoded({ extended: false }))
     this.express.use(express.raw({ type: 'application/octet-stream' }))
+	  this.express.use(express.urlencoded({ extended: true }))
+    this.express.use(Middleware.parseUrlEncodedJson)
     this.express.use(Helmet())
     this.express.use(cors({
         origin: function(origin, callback){
@@ -64,7 +67,9 @@ class App {
       this.express.use(async (req, res, next) => await auth.setup(req, res, next))
       this.express.use(async (req, res, next) => await auth.wrapperHandleAuthRoutes(req, res, next))
       this.express.use(async (req, res, next) => await auth.withLogtoWrapper(req, res, next))
-      this.express.use(async (req, res, next) => await auth.guard(req, res, next))
+      if (process.env.ENABLE_EXTERNAL_DB === 'true') {
+        this.express.use(async (req, res, next) => await auth.guard(req, res, next))
+      }
     }
     this.express.use(express.text())
 
@@ -95,11 +100,16 @@ class App {
     app.post('/credential/suspend', new CredentialController().suspend)
     app.post('/credential/reinstate', new CredentialController().reinstate)
 
-    // Credential Status API
-    app.post('/credential-status/statusList2021/create', RevocationController.didValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
-    app.get('/credential-status/statusList2021/list', RevocationController.didValidator, new RevocationController().fetchStatusList)
-    
-    // Store API
+    // presentation
+    app.post(`/presentation/verify`, CredentialController.presentationValidator, new CredentialController().verifyPresentation)
+
+    //revocation
+    app.post('/credential-status/create', RevocationController.queryValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
+    app.post('/credential-status/update', RevocationController.updateValidator, new RevocationController().updateStatusList)
+    app.post('/credential-status/publish', RevocationController.queryValidator, new RevocationController().createStatusList)
+    app.get('/credential-status/search', RevocationController.queryValidator, new RevocationController().fetchStatusList)
+
+    // store
     app.post(`/store`, new StoreController().set)
     app.get(`/store/:id`, new StoreController().get)
 
@@ -107,13 +117,13 @@ class App {
     app.post(`/key/create`, new IssuerController().createKey)
     app.get(`/key/:kid`, new IssuerController().getKey)
 
-    // DID API
-    app.post(`/did/create`, IssuerController.didValidator, new IssuerController().createDid)
+    // DIDs API 
+    app.post(`/did/create`, IssuerController.createValidator, new IssuerController().createDid)
+    app.post(`/did/update`, IssuerController.updateValidator, new IssuerController().updateDid)
+    app.post(`/did/deactivate/:did`, IssuerController.deactivateValidator, new IssuerController().deactivateDid)
     app.get(`/did/list`, new IssuerController().getDids)
     app.get(`/did/:did`, new IssuerController().getDids)
-
-    // Resource API
-    app.post(`/:did/create-resource`, IssuerController.resourceValidator, new IssuerController().createResource)
+    app.post(`/resource/create/:did`, IssuerController.resourceValidator, new IssuerController().createResource)
 
     // Account API
     app.post(`/account`, new CustomerController().create)

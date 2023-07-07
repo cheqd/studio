@@ -130,7 +130,7 @@
                     "DID"
                 ],
                 "summary": "Create a DID",
-                "description": "<p>This endpoint creates a DID by taking DID document or a verification method as an input.</p>",
+                "description": "<p>This endpoint creates a DID by taking a set of input parameters or the whole didDocument itself</p>",
                 "security": [
                     {
                         "bearerAuth": []
@@ -138,62 +138,152 @@
                 ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DIDCreateRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "required": [
-                                    "options"
-                                ],
-                                "properties": {
-                                    "options": {
-                                        "type": "object",
-                                        "properties": {
-                                            "network": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "testnet",
-                                                    "mainnet"
-                                                ]
-                                            },
-                                            "methodSpecificIdAlgo": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "uuid",
-                                                    "base58btc"
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    "secret": {
-                                        "type": "object",
-                                        "properties": {
-                                            "verificationMethod": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "type": {
-                                                        "type": "string",
-                                                        "enum": [
-                                                            "Ed25519VerificationKey2018",
-                                                            "JsonWebKey2020",
-                                                            "Ed25519VerificationKey2020"
-                                                        ]
-                                                    },
-                                                    "id": {
-                                                        "type": "string",
-                                                        "example": "key-1"
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "didDocument": {
-                                        "$ref": "#/components/schemas/DidDocument"
-                                    }
-                                }
+                                "$ref": "#/components/schemas/DIDCreateRequest"
                             }
                         }
                     }
                 },
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DidResult"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/did/update": {
+            "post": {
+                "tags": [
+                    "DID"
+                ],
+                "summary": "Update a DID",
+                "description": "<p>This endpoint updates a DID by taking DID document or the particular fields needed to be updated</p>",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DIDUpdateRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DIDUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DidResult"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/did/deactivate/{did}": {
+            "post": {
+                "tags": [
+                    "DID"
+                ],
+                "summary": "Deactivate a DID",
+                "description": "<p>This endpoint deactivates a DID by taking DID document or a verification method as an input.</p>",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "did",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "The request was successful",
@@ -243,7 +333,7 @@
                     "DID"
                 ],
                 "summary": "Fetch DIDs from wallet",
-                "description": "<p>This endpoint creates a DID by taking DID document as an input.</p>",
+                "description": "<p>This endpoint returns the list of DIDs controlled by the account</p>",
                 "security": [
                     {
                         "bearerAuth": []
@@ -300,8 +390,8 @@
                 "tags": [
                     "DID"
                 ],
-                "summary": "Fetch DIDs from wallet",
-                "description": "<p>This endpoint creates a DID by taking DID document as an input.</p>",
+                "summary": "Resolve a DID",
+                "description": "<p>This endpoint resolved a DID</p>",
                 "security": [
                     {
                         "bearerAuth": []
@@ -366,7 +456,7 @@
                     "Credential"
                 ],
                 "summary": "Issue a credential",
-                "description": "<p>This endpoint creates a DID. As input it takes the list of attributes, subjectDid, context and expiration date of the credential to be issued.</p>",
+                "description": "<p>This endpoint issues a credential. As input it takes the list of attributes, subjectDid, context and expiration date of the credential to be issued.</p>",
                 "security": [
                     {
                         "bearerAuth": []
@@ -374,6 +464,11 @@
                 ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/CredentialRequest"
@@ -439,14 +534,14 @@
                 ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialVerifyRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
-                                "properties": {
-                                    "credential": {
-                                        "type": "string",
-                                        "example": "<Place the credential object or JWT string here>"
-                                    }
-                                }
+                                "$ref": "#/components/schemas/CredentialVerifyRequest"
                             }
                         }
                     }
@@ -507,19 +602,27 @@
                         "bearerAuth": []
                     }
                 ],
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "publish",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialRevokeRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
-                                "properties": {
-                                    "credential": {
-                                        "type": "object"
-                                    },
-                                    "publish": {
-                                        "type": "boolean",
-                                        "example": true
-                                    }
-                                }
+                                "$ref": "#/components/schemas/CredentialRevokeRequest"
                             }
                         }
                     }
@@ -530,7 +633,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/credentialStatusResult"
+                                    "$ref": "#/components/schemas/RevocationResult"
                                 }
                             }
                         }
@@ -580,19 +683,25 @@
                         "bearerAuth": []
                     }
                 ],
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "publish",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialRevokeRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
-                                "properties": {
-                                    "credential": {
-                                        "type": "object"
-                                    },
-                                    "publish": {
-                                        "type": "boolean",
-                                        "example": true
-                                    }
-                                }
+                                "$ref": "#/components/schemas/CredentialRevokeRequest"
                             }
                         }
                     }
@@ -653,19 +762,25 @@
                         "bearerAuth": []
                     }
                 ],
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "publish",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialRevokeRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
-                                "properties": {
-                                    "credential": {
-                                        "type": "object"
-                                    },
-                                    "publish": {
-                                        "type": "boolean",
-                                        "example": true
-                                    }
-                                }
+                                "$ref": "#/components/schemas/CredentialRevokeRequest"
                             }
                         }
                     }
@@ -677,6 +792,76 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/UnSuspensionResult"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/presentation/verify": {
+            "post": {
+                "tags": [
+                    "Presentation"
+                ],
+                "summary": "Verify a credential presentation",
+                "description": "<p>This endpoint verifies the credential presentation. As input it takes the entire presentation itself</p>",
+                "operationId": "presentation",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PresentationRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PresentationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The request was successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/IVerifyResult"
                                 }
                             }
                         }
@@ -821,7 +1006,7 @@
                 }
             }
         },
-        "/{did}/create-resource": {
+        "/resource/create/{did}": {
             "post": {
                 "tags": [
                     "Resource"
@@ -839,6 +1024,11 @@
                 ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateResourceRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/CreateResourceRequest"
@@ -882,51 +1072,59 @@
                 }
             }
         },
-        "/credential-status/statusList2021/create": {
+        "/credential-status/create": {
             "post": {
                 "tags": [
-                    "Revocation"
+                    "Credential Status"
                 ],
                 "summary": "Create statuslist 2021",
                 "parameters": [
                     {
                         "in": "query",
-                        "name": "did",
+                        "name": "statusPurpose",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                                "revocation",
+                                "suspension"
+                            ]
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "encrypted",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
                         }
                     }
                 ],
                 "requestBody": {
                     "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialStatusCreateRequest"
+                            }
+                        },
                         "application/json": {
                             "schema": {
-                                "allOf": [
-                                    {
-                                        "$ref": "#/components/schemas/CreateResourceRequest"
-                                    },
-                                    {
-                                        "type": "object",
-                                        "properties": {
-                                            "length": {
-                                                "type": "number"
-                                            }
-                                        }
-                                    }
-                                ],
-                                "example": {
-                                    "length": 20,
-                                    "name": "cheqd-employee-credentials",
-                                    "version": "2023"
-                                }
+                                "$ref": "#/components/schemas/CredentialStatusCreateRequest"
                             }
                         }
                     }
                 },
                 "responses": {
                     "200": {
-                        "description": "StatusList is created successfully"
+                        "description": "StatusList is created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CredentialStatusResult"
+                                }
+                            }
+                        }
                     },
                     "400": {
                         "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
@@ -960,17 +1158,208 @@
                 }
             }
         },
-        "/credential-status/statusList2021/list": {
+        "/credential-status/update": {
+            "post": {
+                "tags": [
+                    "Credential Status"
+                ],
+                "summary": "Publish statuslist 2021",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "statusAction",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "revoke",
+                                "suspend",
+                                "reinstate"
+                            ]
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "publish",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialStatusUpdateRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialStatusUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "StatusList is published successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CredentialStatusResult"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/credential-status/publish": {
+            "post": {
+                "tags": [
+                    "Credential Status"
+                ],
+                "summary": "Publish statuslist 2021",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "statusPurpose",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "revocation",
+                                "suspension"
+                            ]
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "encrypted",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialStatusPublishRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CredentialStatusPublishRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "StatusList is published successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CredentialStatusResult"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Invalid Request"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/schemas/UnauthorizedError"
+                    },
+                    "500": {
+                        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvalidRequest"
+                                },
+                                "example": {
+                                    "error": "Internal Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/credential-status/search": {
             "get": {
                 "tags": [
-                    "Revocation"
+                    "Credential Status"
                 ],
-                "summary": "List published statuslist 2021",
+                "summary": "Fetch statusList's published by a DID",
                 "parameters": [
                     {
                         "in": "query",
                         "name": "did",
                         "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "statusPurpose",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "revocation",
+                                "suspension"
+                            ]
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "statusListName",
                         "schema": {
                             "type": "string"
                         }
@@ -991,10 +1380,6 @@
                                             },
                                             "statusListVersion": {
                                                 "type": "string"
-                                            },
-                                            "mediaType": {
-                                                "type": "string",
-                                                "enum": ["application/gzip", "application/octet-stream"]
                                             },
                                             "statusListId": {
                                                 "type": "string"
@@ -1092,7 +1477,7 @@
                 }
             },
             "DidDocument": {
-                "description": "This input field contains either a complete DID document, or an incremental change (diff) to a DID document. See <a href=\"https://identity.foundation/did-registration/#diddocument\">https://identity.foundation/did-registration/#diddocument</a>.",
+                "description": "This input field contains a complete DID document",
                 "type": "object",
                 "properties": {
                     "context": {
@@ -1193,6 +1578,10 @@
                         "type": "string",
                         "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
                     },
+                    "publicKeyBase58": {
+                        "type": "string",
+                        "example": "so1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt"
+                    },
                     "publicKeyMultibase": {
                         "type": "string",
                         "example": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt"
@@ -1203,6 +1592,12 @@
                             "type": "string"
                         }
                     }
+                },
+                "example": {
+                    "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+                    "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
+                    "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
+                    "type": "Ed25519VerificationKey2018"
                 }
             },
             "Service": {
@@ -1210,11 +1605,11 @@
                 "properties": {
                     "id": {
                         "type": "string",
-                        "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#rand,"
+                        "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#rand"
                     },
                     "type": {
                         "type": "string",
-                        "example": "rand,"
+                        "example": "rand"
                     },
                     "serviceEndpoint": {
                         "type": "array",
@@ -1241,24 +1636,29 @@
                         "type": "string"
                     },
                     "attributes": {
+                        "description": "Json input of the attributes",
                         "type": "object"
                     },
                     "@context": {
+                        "description": "Additional contexts to be included in the credential",
                         "type": "array",
                         "items": {
                             "type": "string"
                         }
                     },
                     "type": {
+                        "description": "Additional type property to be included in the credential",
                         "type": "array",
                         "items": {
                             "type": "string"
                         }
                     },
                     "expirationDate": {
+                        "description": "Optional expiration date according to the <a href=\"https://www.w3.org/TR/vc-data-model/#expiration\">specification</a>",
                         "type": "string"
                     },
                     "format": {
+                        "description": "Select one of the supported credential formats, jwt by default",
                         "type": "string",
                         "enum": [
                             "jwt",
@@ -1266,7 +1666,12 @@
                         ]
                     },
                     "credentialStatus": {
+                        "description": "Optional field to support revocation or suspension, which takes statusListName and statusListPurpose as inputs.",
                         "type": "object",
+                        "required": [
+                            "statusPurpose",
+                            "statusListName"
+                        ],
                         "properties": {
                             "statusPurpose": {
                                 "type": "string",
@@ -1293,6 +1698,10 @@
                             "indexNotIn": {
                                 "type": "number"
                             }
+                        },
+                        "example": {
+                            "statusPurpose": "revocation",
+                            "statusListName": "employee-credentials"
                         }
                     }
                 },
@@ -1358,6 +1767,30 @@
                             }
                         }
                     },
+                    "credentialStatus": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "statusListIndex": {
+                                "type": "string"
+                            },
+                            "statusPurpose": {
+                                "type": "string",
+                                "enum": [
+                                    "revocation",
+                                    "suspension"
+                                ]
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "StatusList2021Entry"
+                                ]
+                            }
+                        }
+                    },
                     "issuanceDate": {
                         "type": "string"
                     },
@@ -1375,26 +1808,32 @@
                 },
                 "example": {
                     "@context": [
-                      "https://www.w3.org/2018/credentials/v1",
-                      "https://schema.org",
-                      "https://veramo.io/contexts/profile/v1"
+                        "https://www.w3.org/2018/credentials/v1",
+                        "https://schema.org",
+                        "https://veramo.io/contexts/profile/v1"
                     ],
                     "credentialSubject": {
-                      "gender": "male",
-                      "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-                      "name": "Bob"
+                        "gender": "male",
+                        "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+                        "name": "Bob"
+                    },
+                    "credentialStatus": {
+                        "id": "https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-suspension-1&resourceType=StatusList2021Suspension#20",
+                        "statusListIndex": "20",
+                        "statusPurpose": "suspension",
+                        "type": "StatusList2021Entry"
                     },
                     "issuanceDate": "2023-06-08T13:49:28.000Z",
                     "issuer": {
-                      "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+                        "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
                     },
                     "proof": {
-                      "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg",
-                      "type": "JwtProof2020"
+                        "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg",
+                        "type": "JwtProof2020"
                     },
                     "type": [
-                      "VerifiableCredential",
-                      "Person"
+                        "VerifiableCredential",
+                        "Person"
                     ]
                 }
             },
@@ -1435,9 +1874,6 @@
                     "verified": {
                         "type": "boolean"
                     },
-                    "didResolutionResult": {
-                        "type": "object"
-                    },
                     "issuer": {
                         "type": "string"
                     },
@@ -1452,94 +1888,47 @@
                     }
                 },
                 "example": {
-                    "didResolutionResult": {
-                      "@context": "https://w3id.org/did-resolution/v1",
-                      "didDocument": {
-                        "@context": [
-                          "https://www.w3.org/ns/did/v1",
-                          "https://w3id.org/security/suites/ed25519-2018/v1"
-                        ],
-                        "assertionMethod": [
-                          "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1"
-                        ],
-                        "authentication": [
-                          "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1"
-                        ],
-                        "controller": [
-                          "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
-                        ],
-                        "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-                        "verificationMethod": [
-                          {
-                            "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-                            "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
-                            "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
-                            "type": "Ed25519VerificationKey2018"
-                          }
-                        ]
-                      },
-                      "didDocumentMetadata": {
-                        "created": "2023-06-07T15:53:59.629128532Z",
-                        "versionId": "8e286b55-7a25-44bb-af93-f0f8fd9df1b7"
-                      },
-                      "didResolutionMetadata": {
-                        "contentType": "application/did+ld+json",
-                        "did": {
-                          "didString": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-                          "method": "cheqd",
-                          "methodSpecificId": "7bf81a20-633c-4cc7-bc4a-5a45801005e0"
-                        },
-                        "retrieved": "2023-06-08T13:51:18Z"
-                      }
-                    },
-                    "issuer": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-                    "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg",
+                    "verified": true,
                     "policies": {},
+                    "issuer": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
                     "signer": {
-                      "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-                      "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
-                      "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
-                      "type": "Ed25519VerificationKey2018"
-                    },
-                    "verifiableCredential": {
-                      "@context": [
-                        "https://www.w3.org/2018/credentials/v1",
-                        "https://schema.org",
-                        "https://veramo.io/contexts/profile/v1"
-                      ],
-                      "credentialSubject": {
-                        "gender": "male",
-                        "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-                        "name": "Bob"
-                      },
-                      "issuanceDate": "2023-06-08T13:49:28.000Z",
-                      "issuer": {
-                        "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
-                      },
-                      "proof": {
-                        "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg",
-                        "type": "JwtProof2020"
-                      },
-                      "type": [
-                        "VerifiableCredential",
-                        "Person"
-                      ]
-                    },
-                    "verified": true
+                        "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+                        "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
+                        "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
+                        "type": "Ed25519VerificationKey2018"
+                    }
                 }
             },
             "CreateResourceRequest": {
                 "description": "Input fields for the resource creation",
                 "type": "object",
                 "additionalProperties": false,
+                "required": [
+                    "name",
+                    "type",
+                    "data",
+                    "encoding"
+                ],
                 "properties": {
                     "data": {
+                        "description": "Provide encoded string for the resource data",
                         "type": "string"
                     },
+                    "encoding": {
+                        "description": "The encoding format of the resource data",
+                        "type": "string",
+                        "enum": [
+                            "base64url",
+                            "base64",
+                            "hex"
+                        ]
+                    },
                     "name": {
+                        "description": "Resource name",
                         "type": "string"
                     },
                     "type": {
+                        "description": "Resource type",
                         "type": "string"
                     },
                     "alsoKnownAs": {
@@ -1566,31 +1955,374 @@
                     "type": "TextDocument"
                 }
             },
-            "credentialStatusResult": {
+            "RevocationResult": {
                 "properties": {
                     "revoked": {
                         "type": "boolean"
                     }
                 }
             },
-            "SuspensionResult": { 
+            "SuspensionResult": {
                 "properties": {
-                   "suspended": {
-                      "type": "boolean"
-                   },
-                   "statusList": {
-                      "type": "string"
-                   }
+                    "suspended": {
+                        "type": "boolean"
+                    },
+                    "statusList": {
+                        "type": "string"
+                    }
                 }
             },
-            "UnSuspensionResult": { 
+            "UnSuspensionResult": {
                 "properties": {
-                   "unsuspended": {
-                      "type": "boolean"
-                   },
-                   "statusList": {
-                      "type": "string"
-                   }
+                    "unsuspended": {
+                        "type": "boolean"
+                    },
+                    "statusList": {
+                        "type": "string"
+                    }
+                }
+            },
+            "DIDCreateRequest": {
+                "type": "object",
+                "properties": {
+                    "network": {
+                        "type": "string",
+                        "enum": [
+                            "testnet",
+                            "mainnet"
+                        ]
+                    },
+                    "methodSpecificIdAlgo": {
+                        "type": "string",
+                        "enum": [
+                            "uuid",
+                            "base58btc"
+                        ]
+                    },
+                    "verificationMethodType": {
+                        "type": "string",
+                        "enum": [
+                            "Ed25519VerificationKey2018",
+                            "JsonWebKey2020",
+                            "Ed25519VerificationKey2020"
+                        ]
+                    },
+                    "serviceEndpoint": {
+                        "type": "string"
+                    },
+                    "assertionMethod": {
+                        "description": "An assertion method is required to issue JSONLD credentials",
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "didDocument": {
+                        "$ref": "#/components/schemas/DidDocument"
+                    }
+                }
+            },
+            "DIDUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "did": {
+                        "type": "string"
+                    },
+                    "service": {
+                        "type": "array",
+                        "description": "This input field assigns the provided service array to the didDocument",
+                        "items": {
+                            "$ref": "#/components/schemas/Service"
+                        }
+                    },
+                    "verificationMethod": {
+                        "type": "array",
+                        "description": "This input field assigns the provided verificationMethod array to the didDocument",
+                        "items": {
+                            "$ref": "#/components/schemas/VerificationMethod"
+                        }
+                    },
+                    "authentication": {
+                        "description": "This input field assigns the provided authentication array to the didDocument",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "didDocument": {
+                        "$ref": "#/components/schemas/DidDocument"
+                    }
+                }
+            },
+            "CredentialVerifyRequest": {
+                "type": "object",
+                "properties": {
+                    "credential": {
+                        "description": "This input field takes the credential object or the JWT string",
+                        "allOf": [
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                }
+            },
+            "CredentialRevokeRequest": {
+                "type": "object",
+                "properties": {
+                    "credential": {
+                        "description": "This input field takes the credential object or the JWT string",
+                        "oneOf": [
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    }
+                }
+            },
+            "CredentialStatusCreateRequest": {
+                "allOf": [
+                    {
+                        "type": "object",
+                        "required": [
+                            "did",
+                            "statusListName"
+                        ],
+                        "properties": {
+                            "did": {
+                                "description": "The DID of the statuslist publisher",
+                                "type": "string"
+                            },
+                            "statusListName": {
+                                "description": "The name of the statusList to be created",
+                                "type": "string"
+                            },
+                            "length": {
+                                "description": "The length of the statusList to be created, The default and minimum length is 140000 which is 16kb",
+                                "type": "number"
+                            },
+                            "encoding": {
+                                "description": "The encoding format of the statusList to be published",
+                                "type": "string",
+                                "default": "base64url",
+                                "enum": [
+                                    "base64url",
+                                    "base64",
+                                    "hex"
+                                ]
+                            },
+                            "statusListVersion": {
+                                "description": "This input field is OPTIONAL, If present assigns the version to be assigned to the statusList",
+                                "type": "string"
+                            },
+                            "alsoKnownAs": {
+                                "description": "The input field is OPTIONAL. If present, the value MUST be a set where each item in the set is a uri",
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "uri": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ],
+                "example": {
+                    "did": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+                    "statusListName": "cheqd-employee-credentials"
+                }
+            },
+            "CredentialStatusUpdateRequest": {
+                "type": "object",
+                "required": [
+                    "did",
+                    "statusListName",
+                    "indices"
+                ],
+                "properties": {
+                    "did": {
+                        "description": "The DID of the statuslist publisher",
+                        "type": "string"
+                    },
+                    "statusListName": {
+                        "description": "The name of the statusList to be created",
+                        "type": "string"
+                    },
+                    "indices": {
+                        "description": "Provide the list of indices to be updated",
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        }
+                    },
+                    "statusListVersion": {
+                        "description": "This input field is OPTIONAL, If present uses the provided statusListVersion for the update operation",
+                        "type": "string"
+                    }
+                }
+            },
+            "CredentialStatusPublishRequest": {
+                "allOf": [
+                    {
+                        "type": "object",
+                        "required": [
+                            "did",
+                            "encodedList",
+                            "statusListName",
+                            "encoding"
+                        ],
+                        "properties": {
+                            "did": {
+                                "description": "The DID of the statuslist publisher",
+                                "type": "string"
+                            },
+                            "statusListName": {
+                                "description": "The name of the statusList to be published",
+                                "type": "string"
+                            },
+                            "encodedList": {
+                                "description": "Provide encoded string for the resource data",
+                                "type": "string"
+                            },
+                            "encoding": {
+                                "description": "The encoding format of the statusList provided",
+                                "type": "string",
+                                "enum": [
+                                    "base64url",
+                                    "base64",
+                                    "hex"
+                                ]
+                            },
+                            "statusListVersion": {
+                                "description": "This input field is OPTIONAL, If present assigns the version to be assigned to the statusList",
+                                "type": "string"
+                            },
+                            "alsoKnownAs": {
+                                "description": "The input field is OPTIONAL. If present, the value MUST be a set where each item in the set is a uri",
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "uri": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ],
+                "example": {
+                    "did": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+                    "name": "cheqd-employee-credentials",
+                    "version": "2023",
+                    "data": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
+                    "encoding": "base64url"
+                }
+            },
+            "PresentationRequest": {
+                "type": "object",
+                "required": [
+                    "presentation"
+                ],
+                "properties": {
+                    "presentation": {
+                        "description": "This input field takes the presentation object or the JWT string",
+                        "allOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "object"
+                            }
+                        ]
+                    }
+                }
+            },
+            "CredentialStatusResult": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "object",
+                        "properties": {
+                            "created": {
+                                "type": "boolean"
+                            },
+                            "resourceNetadata": {
+                                "type": "object"
+                            },
+                            "statusList2021": {
+                                "type": "object",
+                                "properties": {
+                                    "StatusList2021": {
+                                        "type": "object",
+                                        "properties": {
+                                            "encodedList": {
+                                                "type": "string"
+                                            },
+                                            "type": {
+                                                "type": "string"
+                                            },
+                                            "validFrom": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "metadata": {
+                                "type": "string",
+                                "properties": {
+                                    "encoding": {
+                                        "type": "string"
+                                    },
+                                    "encrypted": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "example": {
+                    "created": true,
+                    "resource": {
+                        "StatusList2021": {
+                            "encodedList": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
+                            "type": "StatusList2021Revocation",
+                            "validFrom": "2023-06-26T11:45:19.349Z"
+                        },
+                        "metadata": {
+                            "encoding": "base64url",
+                            "encrypted": false
+                        }
+                    },
+                    "resourceMetadata": {
+                        "checksum": "909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2",
+                        "created": "2023-06-26T11:45:20Z",
+                        "mediaType": "application/json",
+                        "nextVersionId": null,
+                        "previousVersionId": null,
+                        "resourceCollectionId": "7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+                        "resourceId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
+                        "resourceName": "cheqd-revocation-1",
+                        "resourceType": "StatusList2021Revocation",
+                        "resourceURI": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc",
+                        "resourceVersion": "2023-06-26T11:45:19.349Z"
+                    }
                 }
             }
         }
