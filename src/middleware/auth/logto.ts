@@ -51,92 +51,60 @@ export class LogToHelper {
 
   public async setDefaultRoleForUser(userId: string): Promise<ILogToErrorResponse | void> {
     const roles = await this.getRolesForUser(userId)
+    let isDefaultRoleSet = false
     if (roles && roles.status === 200 && roles.data.length === 0) {
-        const default_role = await this.getDefaultRole()
-        if (default_role && default_role.status === 200) {
-            return await this.assignDefaultRoleForUser(userId, default_role.data.id)
+        // Check that default roles is not set yet
+        for (const role of roles.data) {
+            if (role.id === process.env.LOGTO_DEFAULT_ROLE_ID) {
+                isDefaultRoleSet = true
+            }
+        }
+        if (!isDefaultRoleSet) {
+            return await this.assignDefaultRoleForUser(userId, process.env.LOGTO_DEFAULT_ROLE_ID)
         }
     }
   }
 
   private async assignDefaultRoleForUser(userId: string, roleId: string): Promise<ILogToErrorResponse | void> {
-    const uri = new URL(`/api/roles/${roleId}/users`, process.env.LOGTO_ENDPOINT);
-    try {
-        const body = {
-            userIds: [userId],
-        };
-        const response = await fetch(uri, {
-            headers: {
-                Authorization: 'Bearer ' + this.m2mToken,
-                'Content-Type': 'application/json',
-            },
-            method: 'POST',
-            body: JSON.stringify(body),
-        });
+    const userInfo = await this.getUserInfo(userId)
+    const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
 
-        if (response.ok) {
-            
+    if (userInfo && userInfo.status === 200) {
+        // Means that user exists
+        if (userInfo.data.isSuspended === 'true') {
             return {
-                status: 200,
-                error: "",
+                error: 'User is suspended',
+                status: 401,
                 data: {}
             }
         }
-        return {
-            error: await response.text(),
-            status: response.status,
-            data: {}
-        }
-
-        
-    } catch (err) {
-        return {
-            error: `getRolesForUser ${err}`,
-            status: 500,
-            data: {}
-        }
-    }
-  }
-
-  private async getDefaultRole(): Promise<ILogToErrorResponse | void> {
-    const uri = new URL(`/api/roles`, process.env.LOGTO_ENDPOINT);
-    try {
-        const response = await fetch(uri, {
-            headers: {
-                Authorization: 'Bearer ' + this.m2mToken,
-            },
-        });
-
-        if (response.ok) {
-
-            const metadata = await response.json()
-
-            for (const role of metadata) {
-                if (role.name === process.env.LOGTO_DEFAULT_ROLE) {
-                    return {
-                        status: 200,
-                        error: "",
-                        data: role
-                    }
+        // Means it's not suspended
+        const role = await this.getRoleInfo(roleId)
+        if (role && role.status === 200) {
+            // Such role exists
+            try {
+                const body = {
+                    roleIds: [roleId],
+                };
+                return await this.postToLogto(uri, body, {'Content-Type': 'application/json'})
+            } catch (err) {
+                return {
+                    error: `getRolesForUser ${err}`,
+                    status: 500,
+                    data: {}
                 }
             }
-            
+        } else {
             return {
-                status: 200,
-                error: "",
-                data: metadata
+                error: 'Looks like default role does not exist',
+                status: 500,
+                data: {}
             }
         }
-        return {
-            error: await response.text(),
-            status: response.status,
-            data: {}
-        }
-
         
-    } catch (err) {
+    } else {
         return {
-            error: `getRolesForUser ${err}`,
+            error: 'Looks like user does not exist',
             status: 500,
             data: {}
         }
@@ -146,29 +114,7 @@ export class LogToHelper {
   private async getRolesForUser(userId: string): Promise<ILogToErrorResponse | void> {
     const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
     try {
-        const response = await fetch(uri, {
-            headers: {
-                Authorization: 'Bearer ' + this.m2mToken,
-            },
-        });
-
-        if (response.ok) {
-
-            const metadata = await response.json()
-            
-            return {
-                status: 200,
-                error: "",
-                data: metadata
-            }
-        }
-        return {
-            error: await response.text(),
-            status: response.status,
-            data: {}
-        }
-
-        
+        return await this.getToLogto(uri, 'GET')
     } catch (err) {
         return {
             error: `getRolesForUser ${err}`,
@@ -178,13 +124,89 @@ export class LogToHelper {
     }
   }
 
+  private async postToLogto(uri: URL, body: any, headers: any = {}): Promise<ILogToErrorResponse | void> {
+    const response = await fetch(uri, {
+        headers: {
+            ...headers,
+            Authorization: 'Bearer ' + this.m2mToken,
+        },
+        body: JSON.stringify(body),
+        method: "POST"
+    });
+
+    if (!response.ok) {
+        return {
+            status: response.status,
+            error: await response.json(),
+            data: {}
+        }
+    }
+    return {
+        error: await response.text(),
+        status: response.status,
+        data: {}
+    }
+  }
+
+  private async getToLogto(uri: URL, headers: any = {}): Promise<ILogToErrorResponse | void> {
+    const response = await fetch(uri, {
+        headers: {
+            ...headers,
+            Authorization: 'Bearer ' + this.m2mToken,
+        },
+        method: "GET"
+    });
+
+    if (response.ok) {
+
+        const metadata = await response.json()
+        
+        return {
+            status: 200,
+            error: "",
+            data: metadata
+        }
+    }
+    return {
+        error: await response.text(),
+        status: response.status,
+        data: {}
+    }
+  }
+
+  private async getUserInfo(userId: string): Promise<ILogToErrorResponse | void> {
+    const uri = new URL(`/api/users/${userId}`, process.env.LOGTO_ENDPOINT);
+    try {
+        return await this.getToLogto(uri, 'GET')
+    } catch (err) {
+        return {
+            error: `getUserInfo ${err}`,
+            status: 500,
+            data: {}
+        }
+    }
+  }
+
+  private async getRoleInfo(roleId: string): Promise<ILogToErrorResponse | void> {
+    const uri = new URL(`/api/roles/${roleId}`, process.env.LOGTO_ENDPOINT);
+    try {
+        return await this.getToLogto(uri, 'GET')
+    } catch (err) {
+        return {
+            error: `getUserInfo ${err}`,
+            status: 500,
+            data: {}
+        }
+    }
+  }
+
   private async setDefaultScopes(): Promise<ILogToErrorResponse | void>{
     const _r = await this.getAllResources()
-    if (_r.status === 200) {
+    if (_r && _r.status === 200) {
         for (const r of _r.data) {
             if (r.indicator === process.env.LOGTO_DEFAULT_RESOURCE_URL) {
                 const _rr = await this.askForScopes(r.id)
-                if (_rr.status === 200) {
+                if (_rr && _rr.status === 200) {
                     this.defaultScopes = _rr.data
                 }
                 else {
@@ -232,24 +254,34 @@ export class LogToHelper {
   private async setAllScopes(): Promise<ILogToErrorResponse | void> {
 
     const allResources = await this.getAllResources()
-    if (allResources.status === 200) {
+    if (allResources && allResources.status === 200) {
         for (const resource of allResources.data) {
             if (resource.id !== "management-api") {
                 const scopes = await this.askForScopes(resource.id)
-                if (scopes.status == 200) {
+                if (scopes && scopes.status == 200) {
                     this.allScopes = this.allScopes.concat(scopes.data)    
+                } else {
+                    return {
+                        status: 500,
+                        error: `setAllScopes: Error while getting the scopes for ${resource.id}`,
+                        data: {}
+                    }
                 }
             }
         }
         
     } else {
-        return allResources
+        return {
+            status: 500,
+            error: `setAllScopes: Error while getting all resources`,
+            data: {}
+        }
     }
   }
 
   private async setAllResourcesWithNames(): Promise<ILogToErrorResponse | void> {
     const allResources = await this.getAllResources()
-    if (allResources.status === 200) {
+    if (allResources && allResources.status === 200) {
         for (const resource of allResources.data) {
             this.allResourceWithNames.push(resource.indicator)
         }
@@ -258,21 +290,14 @@ export class LogToHelper {
     }
   }
 
-  private async askForScopes(resourceId: string): Promise<ILogToErrorResponse> {
+  private async askForScopes(resourceId: string): Promise<ILogToErrorResponse | void> {
     const uri = new URL(`/api/resources/${resourceId}/scopes`, process.env.LOGTO_ENDPOINT);
     const scopes = []
 
     try {
-        const response = await fetch(uri, {
-            headers: {
-                Authorization: 'Bearer ' + this.m2mToken,
-            },
-        });
-
-        if (response.ok) {
-
-            const metadata = await response.json()
-            for (const sc of metadata) {
+        const metadata = await this.getToLogto(uri, 'GET')
+        if (metadata && metadata.status === 200) {
+            for (const sc of metadata.data) {
                 scopes.push(sc.name)
             }
             return {
@@ -280,14 +305,13 @@ export class LogToHelper {
                 error: "",
                 data: scopes
             }
+        } else {
+            return {
+                status: 500,
+                error: `askForScopes: Error while getting the all scopes for the resource ${resourceId}`,
+                data: {}
+            }
         }
-        return {
-            error: await response.text(),
-            status: response.status,
-            data: {}
-        }
-
-        
     } catch (err) {
         return {
             error: `askForScopes ${err}`,
@@ -297,30 +321,11 @@ export class LogToHelper {
     }
   }
 
-  private async getAllResources(): Promise<ILogToErrorResponse> {
+  private async getAllResources(): Promise<ILogToErrorResponse | void> {
     const uri = new URL(`/api/resources`, process.env.LOGTO_ENDPOINT);
 
     try {
-        const response = await fetch(uri, {
-            headers: {
-                Authorization: 'Bearer ' + this.m2mToken,
-            },
-        });
-        
-        if (response.ok) {
-            const metadata = (await response.json())
-            return {
-                error: "",
-                status: 200,
-                data: metadata,
-            }
-        }
-        return {
-            error: await response.text(),
-            status: response.status,
-            data: {}
-        }
-        
+        return await this.getToLogto(uri, 'GET')  
     } catch (err) {
         return {
             error: `getAllResources ${err}`,

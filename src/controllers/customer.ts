@@ -61,11 +61,11 @@ export class CustomerController {
                 const logToHelper = new LogToHelper()
                 await logToHelper.setup()
                 const resp = await logToHelper.setDefaultRoleForUser(body.user.id as string)
-                if (resp && resp.status !== 200) {
+                if (resp) {
                     return response.status(resp.status).json({
                         error: resp.error})
                 }
-                return response.status(200).json({})
+                return response.status(500).json({})
             }
         }
         return response.status(400).json({})
