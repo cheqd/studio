@@ -3,7 +3,7 @@ import { Context, Network } from '@verida/client-ts'
 import { AutoAccount } from '@verida/account-node'
 
 import { CredentialDataRecord, DataRecord } from '../../types/verida.js'
-import { VC_CONTEXT, VERIDA_APP_NAME, VERIDA_CREDENTIAL_RECORD_SCHEMA } from '../../types/constants.js'
+import { VERIDA_APP_NAME, VERIDA_CREDENTIAL_RECORD_SCHEMA } from '../../types/constants.js'
 
 import * as dotenv from 'dotenv'
 import { VerifiableCredential } from '@veramo/core'

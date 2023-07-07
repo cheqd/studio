@@ -4,7 +4,7 @@ import {
   VC_CONTEXT,
   VC_TYPE
 } from '../types/constants.js'
-import { CredentialRequest, VerifyStatusOptions } from '../types/types.js'
+import { CredentialRequest, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../types/types.js'
 import { Identity } from './identity/index.js'
 import { VeridaService } from '../services/connectors/verida.js'
 import { v4 } from 'uuid'
@@ -51,14 +51,14 @@ export class Credentials {
         return verifiable_credential
 	}
 
-	async verify_credentials(credential: W3CVerifiableCredential | string,  statusOptions: VerifyStatusOptions | null, agentId: string): Promise<IVerifyResult> {
+	async verify_credentials(credential: W3CVerifiableCredential | string,  statusOptions: VerifyCredentialStatusOptions | null, agentId: string): Promise<IVerifyResult> {
 		const result = await Identity.instance.verifyCredential(credential, statusOptions, agentId)
         delete(result.payload)
         return result
 	}
 
-    async verify_presentation(presentation: W3CVerifiablePresentation, agentId: string): Promise<IVerifyResult> {
-        const result = await Identity.instance.verifyPresentation(presentation, agentId)
+    async verify_presentation(presentation: W3CVerifiablePresentation, statusOptions: VerifyPresentationStatusOptions | null, agentId: string): Promise<IVerifyResult> {
+        const result = await Identity.instance.verifyPresentation(presentation, statusOptions, agentId)
         return result
     }
 }
