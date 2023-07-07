@@ -12,7 +12,6 @@ import { CustomerController } from './controllers/customer.js'
 import { Authentication } from './middleware/authentication.js'
 import { Connection } from './database/connection/connection.js'
 import { RevocationController } from './controllers/revocation.js'
-import { CORS_ERROR_MSG } from './types/constants.js'
 
 import swaggerJSONDoc from './static/swagger.json' assert { type: "json" }
 
@@ -36,18 +35,25 @@ class App {
 
   private middleware() {
     this.express.use(express.json({ limit: '50mb' }))
-	this.express.use(express.urlencoded({ extended: true }))
+    this.express.use(express.urlencoded({ extended: true }))
     this.express.use(Middleware.parseUrlEncodedJson)
-    this.express.use(Helmet())
+    this.express.use(Helmet(
+      {
+        contentSecurityPolicy: {
+          directives: {
+            "script-src": ["'self'"],
+            "connect-src": ["'self'", "localhost:3001"],
+            "style-src": ["self", "'unsafe-inline'", "localhost:8787"],
+            "img-src": ["'self'", "data:"],
+            "default-src": ["'self'"],
+            "font-src": ["'self'"],
+            "object-src": ["'none'"],
+          },
+        },
+      }
+    ))
     this.express.use(cors({
-        origin: function(origin, callback){
-
-        if(!origin) return callback(null, true)
-            if(process.env.CORS_ALLOWED_ORIGINS?.indexOf(origin) === -1){
-            return callback(new Error(CORS_ERROR_MSG), false)
-            }
-            return callback(null, true)
-        }
+        origin: process.env.ALLOWED_ORIGINS,
     }))
 
     this.express.use(cookieParser())
@@ -61,14 +67,6 @@ class App {
         this.express.use(Authentication.guard)
     }
     this.express.use(express.text())
-
-    this.express.use(
-      '/swagger',
-      swaggerUi.serve, 
-      async (_req: express.Request, res: express.Response) => {
-        return res.send(swaggerUi.generateHTML(swaggerJSONDoc))
-      }
-    )
     this.express.use(Authentication.handleError)
     this.express.use(Authentication.accessControl)
   }
@@ -112,6 +110,18 @@ class App {
     // customer
     app.post(`/account`, new CustomerController().create)
     app.get(`/account`, new CustomerController().get)
+
+    const oauthOptions = {
+      oauth: {
+        clientId: process.env.LOGTO_APP_ID,
+        clientSecret: process.env.LOGTO_APP_SECRET,
+        appName: 'Credential',
+        scopeSeparator: ' ',
+        additionalQueryStringParams: { prompt: 'consent' },
+        scopes: ['issue:credential:testnet'],
+      }
+    };
+    app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerJSONDoc, {}, oauthOptions))
 
     // static files
     app.get('/static/custom-button.js', 
