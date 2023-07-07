@@ -392,11 +392,6 @@
                 ],
                 "summary": "Resolve a DID",
                 "description": "<p>This endpoint resolved a DID</p>",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
                 "parameters": [
                     {
                         "in": "path",
@@ -527,11 +522,6 @@
                 "summary": "Verify a credential",
                 "description": "<p>This endpoint verifies the credential. As input it takes the entire credential itself or just the JWT string</p>",
                 "operationId": "verify",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
                 "requestBody": {
                     "content": {
                         "application/x-www-form-urlencoded": {
@@ -836,11 +826,6 @@
                 "summary": "Verify a credential presentation",
                 "description": "<p>This endpoint verifies the credential presentation. As input it takes the entire presentation itself</p>",
                 "operationId": "presentation",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
                 "requestBody": {
                     "content": {
                         "application/x-www-form-urlencoded": {
