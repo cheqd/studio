@@ -19,10 +19,8 @@ import swaggerJSONDoc from './static/swagger.json' assert { type: "json" }
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-import { UserInfo } from './controllers/user_info.js'
 import path from 'path'
 import { LogToWebHook } from './middleware/hook.js'
-import e from 'express'
 import { Middleware } from './middleware/middleware.js'
 
 let swagger_options = {}
@@ -90,9 +88,6 @@ class App {
     // Top-level routes
     app.get('/', (req, res) => res.redirect('swagger'))
 
-    // User API
-    app.get('/user', new UserInfo().getUserInfo)
-
     // Credential API
     app.post(`/credential/issue`, CredentialController.issueValidator, new CredentialController().issue)
     app.post(`/credential/verify`, CredentialController.credentialValidator, new CredentialController().verify)
@@ -123,6 +118,8 @@ class App {
     app.post(`/did/deactivate/:did`, IssuerController.deactivateValidator, new IssuerController().deactivateDid)
     app.get(`/did/list`, new IssuerController().getDids)
     app.get(`/did/:did`, new IssuerController().getDids)
+
+    // Resource API
     app.post(`/resource/create/:did`, IssuerController.resourceValidator, new IssuerController().createResource)
 
     // Account API
