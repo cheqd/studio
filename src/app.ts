@@ -44,6 +44,7 @@ class App {
     const auth = new Authentication()
     this.express.use(express.json({ limit: '50mb' }))
 	  this.express.use(express.urlencoded({ extended: false }))
+    this.express.use(express.raw({ type: 'application/octet-stream' }))
     this.express.use(Helmet())
     this.express.use(cors({
         origin: function(origin, callback){
@@ -80,7 +81,6 @@ class App {
 
   private routes() {
     const app = this.express
-    const rawMiddleware = express.raw({ type: 'application/octet-stream' })
     // routes
     app.get('/', (req, res) => res.redirect('swagger'))
 
@@ -112,7 +112,7 @@ class App {
     app.post(`/account`, new CustomerController().create)
     app.get(`/account`, new CustomerController().get)
     // LogTo webhooks
-    app.post(`/account/set-default-role`, rawMiddleware, LogToWebHook.verifyHookSignature, new CustomerController().setupDefaultRole)
+    app.post(`/account/set-default-role`, LogToWebHook.verifyHookSignature, new CustomerController().setupDefaultRole)
 
 
     // static files
