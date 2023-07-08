@@ -15,13 +15,32 @@ import { Connection } from './database/connection/connection.js'
 import { RevocationController } from './controllers/revocation.js'
 import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js'
 
-import swaggerJSONDoc from './static/swagger.json' assert { type: "json" }
-
 import * as dotenv from 'dotenv'
 dotenv.config()
 
 import { UserInfo } from './controllers/user_info.js'
 import path from 'path'
+
+import swaggerJsdoc from 'swagger-jsdoc';
+
+const options = {
+  swaggerDefinition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Hello World',
+      version: '1.0.0',
+    },
+    components: {}
+  },
+  apis: ['./src/controllers/*.ts'], // files containing annotations as above
+  security: [
+    {
+        bearerAuth: []
+    }
+  ]
+};
+
+const openApiSpecification = swaggerJsdoc(options);
 
 let swagger_options = {}
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -67,10 +86,8 @@ class App {
 
     this.express.use(
       '/swagger',
-      swaggerUi.serve, 
-      async (_req: express.Request, res: express.Response) => {
-        return res.send(swaggerUi.generateHTML(swaggerJSONDoc, swagger_options))
-      }
+      swaggerUi.serve,
+      swaggerUi.setup(openApiSpecification, swagger_options)
     )
     this.express.use(Authentication.handleError)
     this.express.use(Authentication.accessControl)
