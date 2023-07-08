@@ -9,6 +9,120 @@ import { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/inde
 import { Identity } from '../services/identity/index.js'
 import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers.js'
 
+/**
+ * @openapi
+ * 
+ * components:
+ *   schemas:
+ *     KeyResult:
+ *       type: object
+ *       properties:
+ *         kid:
+ *           type: string
+ *         type:
+ *           type: string
+ *           enum: [ Ed25519, Secp256k1 ]
+ *         publicKeyHex:
+ *           type: string
+ *     DidDocument:
+ *       description: This input field contains either a complete DID document, or an incremental change (diff) to a DID document. See <a href=\"https://identity.foundation/did-registration/#diddocument\">https://identity.foundation/did-registration/#diddocument</a>.
+ *       type: object
+ *       properties:
+ *         context:
+ *           type: array
+ *           items:
+ *             type: string
+ *         id:
+ *          type: string
+ *          example: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
+ *         controllers:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: [
+ *             did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
+ *           ]
+ *         authentication:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: [
+ *             did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-0
+ *           ]
+ *         assertionMethod:
+ *           type: array
+ *           items:
+ *             type: string
+ *         capabilityInvocation:
+ *           type: array
+ *           items:
+ *             type: string
+ *         capabilityDelegation:
+ *           type: array
+ *           items:
+ *             type: string
+ *         keyAgreement:
+ *           type: array
+ *           items:
+ *             type: string
+ *         verificationMethod:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/VerificationMethod'
+ *         service:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Service'
+ *     DidResult:
+ *       type: object
+ *       properties:
+ *         did:
+ *           type: string
+ *         controllerKeyId:
+ *           type: string
+ *         keys:
+ *           type: array
+ *           items:
+ *             type: object
+ *         services:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Service'
+ *     VerificationMethod:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-0
+ *         type:
+ *           type: string
+ *           example: Ed25519VerificationKey2018
+ *         controller:
+ *           type: string
+ *           example: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
+ *         publicKeyMultibase:
+ *           type: string
+ *           example: BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt
+ *         publicKeyJwk:
+ *           type: array
+ *           items:
+ *             type: string
+ *     Service:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#rand
+ *         type:
+ *           type: string
+ *           example: rand
+ *         serviceEndpoint:
+ *           type: array
+ *           items:
+ *             type: string
+ *             example: https://rand.in
+*/
+
 export class IssuerController {
 
   public static didValidator = [
@@ -43,6 +157,40 @@ export class IssuerController {
     check('alsoKnownAs.*.description').isString().withMessage('Invalid description')
   ]
   
+  /**
+   * @openapi
+   * 
+   * /key/create:
+   *   post:
+   *     tags: [ Key ]
+   *     summary: Create a key pair.
+   *     security: [ bearerAuth: [] ]
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/KeyResult'
+   *       400:
+   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/InvalidRequest'
+   *             example:
+   *               error: Invalid Request
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/InvalidRequest'
+   *             example: 
+   *               error: Internal Error
+   */
   public async createKey(request: Request, response: Response) {
     try {
       const key = await Identity.instance.createKey('Ed25519', response.locals.customerId)
@@ -54,6 +202,46 @@ export class IssuerController {
     }
   }
 
+  /**
+   * @openapi
+   * 
+   * /key/{kid}:
+   *   get:
+   *     tags: [ Key ]
+   *     summary: Fetch a key pair.
+   *     security: [ bearerAuth: [] ]
+   *     parameters:
+   *       - name: kid
+   *         in: path
+   *         schema:
+   *           type: string
+   *         required: true
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/KeyResult'
+   *       400:
+   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/InvalidRequest'
+   *             example:
+   *               error: Invalid Request
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/InvalidRequest'
+   *             example: 
+   *               error: Internal Error
+   */
   public async getKey(request: Request, response: Response) {
     try {
       const key = await Identity.instance.getKey(request.params.kid, response.locals.customerId)
