@@ -19,9 +19,8 @@ import swaggerJSONDoc from './static/swagger.json' assert { type: "json" }
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-import { UserInfo } from './controllers/user_info.js'
 import path from 'path'
-import e from 'express'
+import { LogToWebHook } from './middleware/hook.js'
 import { Middleware } from './middleware/middleware.js'
 
 let swagger_options = {}
@@ -42,8 +41,10 @@ class App {
   }
 
   private middleware() {
+    const auth = new Authentication()
     this.express.use(express.json({ limit: '50mb' }))
-	this.express.use(express.urlencoded({ extended: true }))
+    this.express.use(express.raw({ type: 'application/octet-stream' }))
+	  this.express.use(express.urlencoded({ extended: true }))
     this.express.use(Middleware.parseUrlEncodedJson)
     this.express.use(Helmet())
     this.express.use(cors({
@@ -60,12 +61,13 @@ class App {
     this.express.use(cookieParser())
     if (process.env.ENABLE_AUTHENTICATION === 'true') {
       this.express.use(session({secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 }}))
-      // Authentication funcitons/methods
-      this.express.use(Authentication.wrapperHandleAuthRoutes)
-      this.express.use(Authentication.withLogtoWrapper)
-    }
-    if (process.env.ENABLE_EXTERNAL_DB === 'true') {
-        this.express.use(Authentication.guard)
+      // Authentication functions/methods
+      this.express.use(async (req, res, next) => await auth.setup(req, res, next))
+      this.express.use(async (req, res, next) => await auth.wrapperHandleAuthRoutes(req, res, next))
+      this.express.use(async (req, res, next) => await auth.withLogtoWrapper(req, res, next))
+      if (process.env.ENABLE_EXTERNAL_DB === 'true') {
+        this.express.use(async (req, res, next) => await auth.guard(req, res, next))
+      }
     }
     this.express.use(express.text())
 
@@ -76,17 +78,17 @@ class App {
         return res.send(swaggerUi.generateHTML(swaggerJSONDoc, swagger_options))
       }
     )
-    this.express.use(Authentication.handleError)
-    this.express.use(Authentication.accessControl)
+    this.express.use(auth.handleError)
+    this.express.use(async (req, res, next) => await auth.accessControl(req, res, next))
   }
 
   private routes() {
     const app = this.express
+    
+    // Top-level routes
     app.get('/', (req, res) => res.redirect('swagger'))
 
-    app.get('/user', new UserInfo().getUserInfo)
-
-    // credentials
+    // Credential API
     app.post(`/credential/issue`, CredentialController.issueValidator, new CredentialController().issue)
     app.post(`/credential/verify`, CredentialController.credentialValidator, new CredentialController().verify)
     app.post(`/credential/revoke`, CredentialController.credentialValidator, new CredentialController().revoke)
@@ -106,19 +108,26 @@ class App {
     app.post(`/store`, new StoreController().set)
     app.get(`/store/:id`, new StoreController().get)
 
-    // issuer
+    // Keys API
     app.post(`/key/create`, new IssuerController().createKey)
     app.get(`/key/:kid`, new IssuerController().getKey)
+
+    // DIDs API 
     app.post(`/did/create`, IssuerController.createValidator, new IssuerController().createDid)
     app.post(`/did/update`, IssuerController.updateValidator, new IssuerController().updateDid)
     app.post(`/did/deactivate/:did`, IssuerController.deactivateValidator, new IssuerController().deactivateDid)
     app.get(`/did/list`, new IssuerController().getDids)
     app.get(`/did/:did`, new IssuerController().getDids)
+
+    // Resource API
     app.post(`/resource/create/:did`, IssuerController.resourceValidator, new IssuerController().createResource)
 
-    // customer
+    // Account API
     app.post(`/account`, new CustomerController().create)
     app.get(`/account`, new CustomerController().get)
+    
+    // LogTo webhooks
+    app.post(`/account/set-default-role`, LogToWebHook.verifyHookSignature, new CustomerController().setupDefaultRole)
 
     // static files
     app.get('/static/custom-button.js', 

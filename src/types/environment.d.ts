@@ -28,6 +28,8 @@ declare global {
       LOGTO_M2M_APP_ID: string
       LOGTO_M2M_APP_SECRET: string
       LOGTO_MANAGEMENT_API: string
+      LOGTO_DEFAULT_ROLE_ID: string
+      LOGTO_WEBHOOK_SECRET: string
 
       // Authentication
       ENABLE_AUTHENTICATION: string | "false"
