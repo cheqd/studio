@@ -8,6 +8,7 @@ import pkg from 'secp256k1'
 import { fromString } from 'uint8arrays'
 
 import { SpecValidationResult } from '../types/types.js'
+import { createHmac } from 'node:crypto'
 
 export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecValidationResult {
   // id is required, validated on both compile and runtime
@@ -24,29 +25,34 @@ export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecVali
   if (!didDocument.verificationMethod.length) return { valid: false, error: 'verificationMethod must be not be empty' }
 
   // verificationMethod types must be supported
-  const isValidVerificationMethod = didDocument.verificationMethod.every((vm) => {
-    switch (vm.type) {
-      case VerificationMethods.Ed255192020:
-        return vm.publicKeyMultibase != null
-      case VerificationMethods.JWK:
-        return vm.publicKeyJwk != null
-      case VerificationMethods.Ed255192018:
-        return vm.publicKeyBase58 != null
-      default:
-        return false
-    }
-  })
+  if (!isValidVerificationMethod(didDocument)) return { valid: false, error: 'verificationMethod publicKey is Invalid' }
 
-  if (!isValidVerificationMethod) return { valid: false, error: 'verificationMethod publicKey is Invalid' }
+  if (!isValidService(didDocument)) return { valid: false, error: 'Service is Invalid' }
+  return { valid: true } as SpecValidationResult
+}
 
-  const isValidService = didDocument.service
+export function isValidService(didDocument: DIDDocument) : boolean {
+    return didDocument.service
     ? didDocument?.service?.every((s) => {
         return s?.serviceEndpoint && s?.id && s?.type
       })
     : true
+}
 
-  if (!isValidService) return { valid: false, error: 'Service is Invalid' }
-  return { valid: true } as SpecValidationResult
+export function isValidVerificationMethod(didDocument: DIDDocument) : boolean {
+    if (!didDocument.verificationMethod) return false
+    return didDocument.verificationMethod.every((vm) => {
+        switch (vm.type) {
+          case VerificationMethods.Ed255192020:
+            return vm.publicKeyMultibase != null
+          case VerificationMethods.JWK:
+            return vm.publicKeyJwk != null
+          case VerificationMethods.Ed255192018:
+            return vm.publicKeyBase58 != null
+          default:
+            return false
+        }
+   })
 }
 
 export function generateDidDoc(options: IDidDocOptions) {
@@ -64,6 +70,13 @@ export function getCosmosAccount(kid: string) {
   const { publicKeyConvert } = pkg
   return toBech32('cheqd', rawSecp256k1PubkeyToRawAddress(publicKeyConvert(fromString(kid, 'hex'), true)))
 }
+
+export function verifyHookSignature(signingKey: string, rawBody: Buffer, expectedSignature: string): boolean {
+  const hmac = createHmac('sha256', signingKey);
+  hmac.update(rawBody);
+  const signature = hmac.digest('hex');
+  return signature === expectedSignature;
+};
 
 export interface IDidDocOptions {
   verificationMethod: VerificationMethods

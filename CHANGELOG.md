@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.4.0-develop.8](https://github.com/cheqd/credential-service/compare/2.4.0-develop.7...2.4.0-develop.8) (2023-07-09)
+
+
+### Features
+
+* Add Default role assigning while creating and account or signing in [DEV-2905] ([#286](https://github.com/cheqd/credential-service/issues/286)) ([c99bed2](https://github.com/cheqd/credential-service/commit/c99bed205cd2821e5ff14d76a4f78f160faeb967))
+
+## [2.4.0-develop.7](https://github.com/cheqd/credential-service/compare/2.4.0-develop.6...2.4.0-develop.7) (2023-07-07)
+
+
+### Features
+
+* Add verify presentation API and update StatusList APIs [DEV-2811] & [DEV-2669] ([#265](https://github.com/cheqd/credential-service/issues/265)) ([4e43430](https://github.com/cheqd/credential-service/commit/4e43430c221a5e6029f446a6a6bca1617745ab53))
+
 ## [2.4.0-develop.6](https://github.com/cheqd/credential-service/compare/2.4.0-develop.5...2.4.0-develop.6) (2023-07-06)
 
 ## [2.4.0-develop.5](https://github.com/cheqd/credential-service/compare/2.4.0-develop.4...2.4.0-develop.5) (2023-07-03)

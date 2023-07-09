@@ -26,12 +26,12 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
     private namespace: Namespaces
     private token: string
     private scopes: string[] | unknown
-    private logToHelper?: LogToHelper
+    private logToHelper: LogToHelper
 
     public customer_id: string
 
     private routeToScoupe: MethodToScope[] = []
-    private static pathSkip = ['/swagger', '/user', '/static', '/logto']
+    private static pathSkip = ['/swagger', '/user', '/static', '/logto', '/account/set-default-role']
     // private static regExpSkip = new RegExp("^/.*js")
 
     constructor () {
@@ -40,9 +40,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
         this.token = '' as string
         this.scopes = undefined
         this.customer_id = '' as string
-        if (process.env.ENABLE_AUTHENTICATION === 'true') {
-            this.logToHelper = new LogToHelper()
-        }
+        this.logToHelper = new LogToHelper()
     }
 
     public async commonPermissionCheck(request: Request): Promise<IAuthResponse> {
@@ -184,7 +182,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
             if (!token) {
                 return {
                     status: 401,
-                    error: `Unauthorized error: Looks like you are not logged in using LogTo properly.`,
+                    error: `Unauthorized error: Looks like you are not logged in using LogTo properly or don't have needed permissions.`,
                     data: {
                         customerId: '',
                         scopes: [],
@@ -198,6 +196,10 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
     }
 
     // common utils
+    public setLogToHelper(logToHelper: LogToHelper) {
+        this.logToHelper = logToHelper
+    }
+    
     public static getNamespaceFromRequest(req: Request): Namespaces {
         const matches = stringify(req.body).match(cheqdDidRegex)
         if (matches && matches.length > 0) {

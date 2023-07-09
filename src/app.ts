@@ -4,7 +4,6 @@ import cors from 'cors'
 import swaggerUi from 'swagger-ui-express'
 import session from 'express-session'
 import cookieParser from 'cookie-parser'
-import {withLogto, handleAuthRoutes } from '@logto/express'
 
 import { CredentialController } from './controllers/credentials.js'
 import { StoreController } from './controllers/store.js'
@@ -13,13 +12,14 @@ import { CustomerController } from './controllers/customer.js'
 import { Authentication } from './middleware/authentication.js'
 import { Connection } from './database/connection/connection.js'
 import { RevocationController } from './controllers/revocation.js'
-import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js'
+import { CORS_ERROR_MSG } from './types/constants.js'
 
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-import { UserInfo } from './controllers/user_info.js'
 import path from 'path'
+import { LogToWebHook } from './middleware/hook.js'
+import { Middleware } from './middleware/middleware.js'
 
 import swaggerJsdoc from 'swagger-jsdoc';
 
@@ -60,8 +60,11 @@ class App {
   }
 
   private middleware() {
+    const auth = new Authentication()
     this.express.use(express.json({ limit: '50mb' }))
-	this.express.use(express.urlencoded({ extended: false }))
+    this.express.use(express.raw({ type: 'application/octet-stream' }))
+	  this.express.use(express.urlencoded({ extended: true }))
+    this.express.use(Middleware.parseUrlEncodedJson)
     this.express.use(Helmet())
     this.express.use(cors({
         origin: function(origin, callback){
@@ -77,10 +80,13 @@ class App {
     this.express.use(cookieParser())
     if (process.env.ENABLE_AUTHENTICATION === 'true') {
       this.express.use(session({secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 }}))
-      // Authentication funcitons/methods
-      this.express.use(Authentication.wrapperHandleAuthRoutes)
-      this.express.use(Authentication.withLogtoWrapper)
-      this.express.use(Authentication.guard)
+      // Authentication functions/methods
+      this.express.use(async (req, res, next) => await auth.setup(req, res, next))
+      this.express.use(async (req, res, next) => await auth.wrapperHandleAuthRoutes(req, res, next))
+      this.express.use(async (req, res, next) => await auth.withLogtoWrapper(req, res, next))
+      if (process.env.ENABLE_EXTERNAL_DB === 'true') {
+        this.express.use(async (req, res, next) => await auth.guard(req, res, next))
+      }
     }
     this.express.use(express.text())
 
@@ -89,41 +95,56 @@ class App {
       swaggerUi.serve,
       swaggerUi.setup(openApiSpecification, swagger_options)
     )
-    this.express.use(Authentication.handleError)
-    this.express.use(Authentication.accessControl)
+    this.express.use(auth.handleError)
+    this.express.use(async (req, res, next) => await auth.accessControl(req, res, next))
   }
 
   private routes() {
     const app = this.express
+    
+    // Top-level routes
     app.get('/', (req, res) => res.redirect('swagger'))
 
-    app.get('/user', new UserInfo().getUserInfo)
-
-    // credentials
+    // Credential API
     app.post(`/credential/issue`, CredentialController.issueValidator, new CredentialController().issue)
     app.post(`/credential/verify`, CredentialController.credentialValidator, new CredentialController().verify)
     app.post(`/credential/revoke`, CredentialController.credentialValidator, new CredentialController().revoke)
     app.post('/credential/suspend', new CredentialController().suspend)
     app.post('/credential/reinstate', new CredentialController().reinstate)
 
-    //credential-status
-    app.post('/credential-status/statusList2021/create', RevocationController.didValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
-    app.get('/credential-status/statusList2021/list', RevocationController.didValidator, new RevocationController().fetchStatusList)
+    // presentation
+    app.post(`/presentation/verify`, CredentialController.presentationValidator, new CredentialController().verifyPresentation)
+
+    //revocation
+    app.post('/credential-status/create', RevocationController.queryValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
+    app.post('/credential-status/update', RevocationController.updateValidator, new RevocationController().updateStatusList)
+    app.post('/credential-status/publish', RevocationController.queryValidator, new RevocationController().createStatusList)
+    app.get('/credential-status/search', RevocationController.queryValidator, new RevocationController().fetchStatusList)
+
     // store
     app.post(`/store`, new StoreController().set)
     app.get(`/store/:id`, new StoreController().get)
 
-    // issuer
+    // Keys API
     app.post(`/key/create`, new IssuerController().createKey)
     app.get(`/key/:kid`, new IssuerController().getKey)
-    app.post(`/did/create`, IssuerController.didValidator, new IssuerController().createDid)
+
+    // DIDs API 
+    app.post(`/did/create`, IssuerController.createValidator, new IssuerController().createDid)
+    app.post(`/did/update`, IssuerController.updateValidator, new IssuerController().updateDid)
+    app.post(`/did/deactivate/:did`, IssuerController.deactivateValidator, new IssuerController().deactivateDid)
     app.get(`/did/list`, new IssuerController().getDids)
     app.get(`/did/:did`, new IssuerController().getDids)
-    app.post(`/:did/create-resource`, IssuerController.resourceValidator, new IssuerController().createResource)
 
-    // customer
+    // Resource API
+    app.post(`/resource/create/:did`, IssuerController.resourceValidator, new IssuerController().createResource)
+
+    // Account API
     app.post(`/account`, new CustomerController().create)
     app.get(`/account`, new CustomerController().get)
+    
+    // LogTo webhooks
+    app.post(`/account/set-default-role`, LogToWebHook.verifyHookSignature, new CustomerController().setupDefaultRole)
 
     // static files
     app.get('/static/custom-button.js', 
