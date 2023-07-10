@@ -602,7 +602,7 @@ export class IssuerController {
    * @openapi
    * 
    * /resource/create/{did}:
-   *   get:
+   *   post:
    *     tags: [ Resource ]
    *     summary: Create a Resource.
    *     parameters:

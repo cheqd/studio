@@ -27,17 +27,21 @@ const options = {
   swaggerDefinition: {
     openapi: '3.0.0',
     info: {
-      title: 'Hello World',
-      version: '1.0.0',
+      title: 'Credential Service for cheqd network',
+      version: '2.0.0',
+      description: 'API service to create and manage DIDs and credentials on cheqd network.'
     },
+    tags: [
+      {
+        name: 'Credential',
+        externalDocs: {
+          url: 'https://github.com/cheqd/credential-service#readme'
+        }
+      }
+    ],
     components: {}
   },
-  apis: ['./src/controllers/*.ts'], // files containing annotations as above
-  security: [
-    {
-        bearerAuth: []
-    }
-  ]
+  apis: ['./src/controllers/*.ts'],
 };
 
 const openApiSpecification = swaggerJsdoc(options);
