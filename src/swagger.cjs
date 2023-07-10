@@ -1,5 +1,10 @@
 module.exports = {
   openapi: '3.0.0',
+  servers: [
+    {
+      url: '/'
+    }
+  ],
   info: {
     // API information (required)
     title: 'Credential Service for cheqd network', // Title (required)

@@ -3,44 +3,6 @@ import type { Request, Response } from 'express'
 import { CustomerService } from '../services/customer.js'
 import { LogToHelper } from '../middleware/auth/logto.js'
 
-/**
- * @openapi
- * 
- * tags:
- *   name: Account
- */
-
-/**
- * @openapi
- * 
- * components:
- *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
- *   schemas:
- *     Customer:
- *       type: object
- *       properties:
- *         customerId:
- *           type: string
- *         address:
- *           type: string
- *     InvalidRequest:
- *       type: object
- *       properties:
- *         error:
- *           type: string
- *     UnauthorizedError:
- *       description: Access token is missing or invalid
- *       type: object
- *       properties:
- *         error:
- *           type: string
- *           example: Unauthorized Error
- */
-
 export class CustomerController {
 
     /**

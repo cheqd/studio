@@ -21,7 +21,7 @@
 		}
 	},
 	"scripts": {
-		"prebuild": "swagger-jsdoc -d src/swagger.cjs -o src/static/swagger.json ./src/controllers/*.ts",
+		"prebuild": "swagger-jsdoc -d src/swagger.cjs -o src/static/swagger.json ./src/controllers/*.ts ./src/types/swagger-types.ts",
 		"build": "tsc",
 		"start": "node dist/index.js",
 		"format": "prettier --write  '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",

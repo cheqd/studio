@@ -1,5 +1,10 @@
 {
   "openapi": "3.0.0",
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
   "info": {
     "title": "Credential Service for cheqd network",
     "version": "2.0.0",
@@ -11,12 +16,16 @@
       "externalDocs": {
         "url": "https://github.com/cheqd/credential-service#readme"
       }
-    },
-    {
-      "name": "Account"
     }
   ],
   "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
     "schemas": {
       "CredentialRequest": {
         "description": "Input fields for the create operation.",
@@ -25,44 +34,32 @@
         "properties": {
           "issuerDid": {
             "description": "This input field is the Issuer's DID.",
-            "type": "string",
-            "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+            "type": "string"
           },
           "subjectDid": {
             "description": "This input field is the holder's DID.",
-            "type": "string",
-            "example": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+            "type": "string"
           },
           "attributes": {
             "description": "Json input of the attributes.",
-            "type": "object",
-            "example": {
-              "gender": "male",
-              "name": "bob"
-            }
+            "type": "object"
           },
           "@context": {
             "description": "Additional contexts to be included in the credential.",
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "example": [
-              "https://schema.org"
-            ]
+            }
           },
           "type": {
             "description": "Additional type property to be included in the credential.",
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "example": [
-              "Person"
-            ]
+            }
           },
           "expirationDate": {
-            "description": "Optional expiration date according to the https://www.w3.org/TR/vc-data-model/#expiration specification."
+            "description": "Optional expiration date according to the <a href=https://www.w3.org/TR/vc-data-model/#expiration> specification</a>."
           },
           "format": {
             "description": "Select one of the supported credential formats, jwt by default.",
@@ -70,8 +67,7 @@
             "enum": [
               "jwt",
               "lds"
-            ],
-            "example": "jwt"
+            ]
           },
           "credentialStatus": {
             "description": "Optional field to support revocation or suspension, which takes statusListName and statusListPurpose as inputs.",
@@ -86,12 +82,10 @@
                 "enum": [
                   "revocation",
                   "suspension"
-                ],
-                "example": "revocation"
+                ]
               },
               "statusListName": {
-                "type": "string",
-                "example": "employee-credentials"
+                "type": "string"
               },
               "statusListIndex": {
                 "type": "number",
@@ -116,7 +110,26 @@
           "issuerDid",
           "subjectDid",
           "attributes"
-        ]
+        ],
+        "example": {
+          "issuerDid": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+          "subjectDid": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+          "attributes": null,
+          "gender": "male",
+          "name": "Bob",
+          "@context": [
+            "https://schema.org"
+          ],
+          "type": [
+            "Person"
+          ],
+          "format": "jwt",
+          "credentialStatus": {
+            "statusPurpose": "revocation",
+            "statusListName": "employee-credentials",
+            "statusListIndex": 10
+          }
+        }
       },
       "Credential": {
         "description": "Input fields for the update operation.",
@@ -127,22 +140,13 @@
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "example": [
-              "https://www.w3.org/2018/credentials/v1",
-              "https://schema.org",
-              "https://veramo.io/contexts/profile/v1"
-            ]
+            }
           },
           "type": {
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "example": [
-              "VerifiableCredential",
-              "Person"
-            ]
+            }
           },
           "expirationDate": {
             "type": "string"
@@ -151,8 +155,7 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "string",
-                "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+                "type": "string"
               }
             }
           },
@@ -162,58 +165,76 @@
               "id": {
                 "type": "string"
               }
-            },
-            "example": {
-              "gender": "male",
-              "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-              "name": "Bob"
             }
           },
           "credentialStatus": {
             "type": "object",
             "properties": {
               "id": {
-                "type": "string",
-                "example": "https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-suspension-1&resourceType=StatusList2021Suspension#20"
+                "type": "string"
               },
               "statusListIndex": {
-                "type": "string",
-                "example": 20
+                "type": "string"
               },
               "statusPurpose": {
                 "type": "string",
                 "enum": [
                   "revocation",
                   "suspension"
-                ],
-                "example": "suspension"
+                ]
               },
               "type": {
                 "type": "string",
                 "enum": [
                   "StatusList2021Entry"
-                ],
-                "example": "StatusList2021Entry"
+                ]
               }
             }
           },
           "issuanceDate": {
-            "type": "string",
-            "example": "2023-06-08T13:49:28.000Z"
+            "type": "string"
           },
           "proof": {
             "type": "object",
             "properties": {
               "type": {
-                "type": "string",
-                "example": "JwtProof2020"
+                "type": "string"
               },
               "jwt": {
-                "type": "string",
-                "example": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg"
+                "type": "string"
               }
             }
           }
+        },
+        "example": {
+          "@context": [
+            "https://www.w3.org/2018/credentials/v1",
+            "https://schema.org",
+            "https://veramo.io/contexts/profile/v1"
+          ],
+          "credentialSubject": {
+            "gender": "male",
+            "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+            "name": "Bob"
+          },
+          "credentialStatus": {
+            "id": "https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-suspension-1&resourceType=StatusList2021Suspension#20",
+            "statusIndex": 20,
+            "statusPurpose": "suspension",
+            "type": "StatusList2021Entry"
+          },
+          "issuanceDate": "2023-06-08T13:49:28.000Z",
+          "issuer": {
+            "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+          },
+          "proof": {
+            "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg",
+            "type": "JwtProof2020"
+          },
+          "type": [
+            "VerifiableCredential",
+            "Person"
+          ]
         }
       },
       "CredentialRevokeRequest": {
@@ -279,27 +300,30 @@
         "type": "object",
         "properties": {
           "verified": {
-            "type": "boolean",
-            "example": true
+            "type": "boolean"
           },
           "issuer": {
-            "type": "string",
-            "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+            "type": "string"
           },
           "signer": {
-            "type": "object",
-            "example": {
-              "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-              "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
-              "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
-              "type": "Ed25519VerificationKey2018"
-            }
+            "type": "object"
           },
           "jwt": {
             "type": "string"
           },
           "verifiableCredential": {
             "type": "object"
+          }
+        },
+        "example": {
+          "verified": true,
+          "polices": {},
+          "issuer": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+          "signer": {
+            "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+            "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
+            "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
+            "type": "Ed25519VerificationKey2018"
           }
         }
       },
@@ -322,33 +346,199 @@
           }
         }
       },
-      "Customer": {
+      "CredentialStatusCreateRequest": {
+        "allOf": [
+          {
+            "type": "object",
+            "required": [
+              "did",
+              "statusListName"
+            ],
+            "properties": {
+              "did": {
+                "description": "The DID of the status list publisher.",
+                "type": "string"
+              },
+              "statusListName": {
+                "description": "The name of the status list to be created.",
+                "type": "string"
+              },
+              "length": {
+                "description": "The length of the status list to be created. The default and minimum length is 140000 which is 16kb."
+              },
+              "encoding": {
+                "description": "The encoding format of the statusList to be published.",
+                "type": "string",
+                "default": "base64url",
+                "enum": [
+                  "base64url",
+                  "base64",
+                  "hex"
+                ]
+              },
+              "statusListVersion": {
+                "description": "This input field is OPTIONAL, If present assigns the version to be assigned to the statusList.",
+                "type": "string"
+              },
+              "alsoKnownAs": {
+                "description": "The input field is OPTIONAL. If present, the value MUST be a set where each item in the set is a uri.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "uri": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "example": {
+          "did": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+          "statusListName": "cheqd-employee-credentials"
+        }
+      },
+      "CredentialStatusResult": {
         "type": "object",
         "properties": {
-          "customerId": {
-            "type": "string"
+          "success": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "boolean"
+              },
+              "resource": {
+                "type": "object",
+                "metadata": {
+                  "encoding": "base64url",
+                  "encrypted": false
+                }
+              },
+              "resourceMetadata": {
+                "type": "object"
+              },
+              "statusList2021": {
+                "type": "object",
+                "properties": {
+                  "statusList2021": {
+                    "type": "object",
+                    "properties": {
+                      "encodedList": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "validFrom": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              "metadata": {
+                "type": "string",
+                "properties": {
+                  "encoding": {
+                    "type": "string"
+                  },
+                  "encrypted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "example": {
+          "created": true,
+          "resource": {
+            "StatusList2021": {
+              "encodedList": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
+              "type": "StatusList2021Revocation",
+              "validFrom": "2023-06-26T11:45:19.349Z"
+            },
+            "metadata": {
+              "encoding": "base64url",
+              "encrypted": false
+            }
           },
-          "address": {
-            "type": "string"
+          "resourceMetadata": {
+            "checksum": "909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2",
+            "created": "2023-06-26T11:45:20Z",
+            "mediaType": "application/json",
+            "nextVersionId": null,
+            "previousVersionId": null,
+            "resourceCollectionId": "7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+            "resourceId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
+            "resourceName": "cheqd-revocation-1",
+            "resourceType": "StatusList2021Revocation",
+            "resourceURI": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc",
+            "resourceVersion": "2023-06-26T11:45:19.349Z"
           }
         }
       },
-      "InvalidRequest": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string"
+      "CredentialStatusPublishRequest": {
+        "allOf": [
+          {
+            "type": "object",
+            "required": [
+              "did",
+              "encodedList",
+              "statusListName",
+              "encoding"
+            ],
+            "properties": {
+              "did": {
+                "description": "The DID of the status list publisher.",
+                "type": "string"
+              },
+              "statusListName": {
+                "description": "The name of the statusList to be published",
+                "type": "string"
+              },
+              "encodedList": {
+                "description": "The encoding format of the statusList provided",
+                "type": "string",
+                "enum": [
+                  "base64url",
+                  "base64",
+                  "hex"
+                ]
+              },
+              "statusListVersion": {
+                "description": "This input field is OPTIONAL, If present assigns the version to be assigned to the statusList",
+                "type": "string"
+              },
+              "alsoKnownAs": {
+                "description": "The input field is OPTIONAL. If present, the value MUST be a set where each item in the set is a uri.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "uri": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
-        }
-      },
-      "UnauthorizedError": {
-        "description": "Access token is missing or invalid",
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "example": "Unauthorized Error"
-          }
+        ],
+        "example": {
+          "did": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+          "name": "cheqd-employee-credentials",
+          "version": 2023,
+          "data": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
+          "encoding": "base64url"
         }
       },
       "KeyResult": {
@@ -373,33 +563,26 @@
         "description": "This input field contains either a complete DID document, or an incremental change (diff) to a DID document. See <a href=\\\"https://identity.foundation/did-registration/#diddocument\\\">https://identity.foundation/did-registration/#diddocument</a>.",
         "type": "object",
         "properties": {
-          "context": {
+          "@context": {
             "type": "array",
             "items": {
               "type": "string"
             }
           },
           "id": {
-            "type": "string",
-            "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+            "type": "string"
           },
           "controllers": {
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "example": [
-              "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
-            ]
+            }
           },
           "authentication": {
             "type": "array",
             "items": {
               "type": "string"
-            },
-            "example": [
-              "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-0"
-            ]
+            }
           },
           "assertionMethod": {
             "type": "array",
@@ -437,6 +620,23 @@
               "$ref": "#/components/schemas/Service"
             }
           }
+        },
+        "example": {
+          "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+          "controller": [
+            "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+          ],
+          "verificationMethod": [
+            {
+              "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
+              "type": "Ed25519VerificationKey2018",
+              "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+              "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt"
+            }
+          ],
+          "authentication": [
+            "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1"
+          ]
         }
       },
       "DidResult": {
@@ -466,20 +666,16 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-0"
+            "type": "string"
           },
           "type": {
-            "type": "string",
-            "example": "Ed25519VerificationKey2018"
+            "type": "string"
           },
           "controller": {
-            "type": "string",
-            "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+            "type": "string"
           },
           "publicKeyMultibase": {
-            "type": "string",
-            "example": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt"
+            "type": "string"
           },
           "publicKeyJwk": {
             "type": "array",
@@ -487,6 +683,12 @@
               "type": "string"
             }
           }
+        },
+        "example": {
+          "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+          "id": "did:cheqd:testnet :7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
+          "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
+          "type": "Ed25519VerificationKey2018"
         }
       },
       "Service": {
@@ -593,198 +795,34 @@
           "type": "TextDocument"
         }
       },
-      "CredentialStatusCreateRequest": {
-        "allOf": [
-          {
-            "type": "object",
-            "required": [
-              "did",
-              "statusListName"
-            ],
-            "properties": {
-              "did": {
-                "description": "The DID of the status list publisher.",
-                "type": "string",
-                "example": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e"
-              },
-              "statusListName": {
-                "description": "The name of the status list to be created.",
-                "type": "string",
-                "example": "cheqd-employee-credentials"
-              },
-              "length": {
-                "description": "The length of the status list to be created. The default and minimum length is 140000 which is 16kb."
-              },
-              "encoding": {
-                "description": "The encoding format of the statusList to be published.",
-                "type": "string",
-                "default": "base64url",
-                "enum": [
-                  "base64url",
-                  "base64",
-                  "hex"
-                ]
-              },
-              "statusListVersion": {
-                "description": "This input field is OPTIONAL, If present assigns the version to be assigned to the statusList.",
-                "type": "string"
-              },
-              "alsoKnownAs": {
-                "description": "The input field is OPTIONAL. If present, the value MUST be a set where each item in the set is a uri.",
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "uri": {
-                      "type": "string"
-                    },
-                    "description": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      },
-      "CredentialStatusResult": {
+      "Customer": {
         "type": "object",
         "properties": {
-          "success": {
-            "type": "object",
-            "properties": {
-              "created": {
-                "type": "boolean",
-                "example": true
-              },
-              "resource": {
-                "type": "object",
-                "example": {
-                  "StatusList2021": {
-                    "encodedList": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
-                    "type": "StatusList2021Revocation",
-                    "validFrom": "2023-06-26T11:45:19.349Z"
-                  },
-                  "metadata": {
-                    "encoding": "base64url",
-                    "encrypted": false
-                  }
-                }
-              },
-              "resourceMetadata": {
-                "type": "object",
-                "example": {
-                  "resourceMetadata": {
-                    "checksum": "909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2",
-                    "created": "2023-06-26T11:45:20Z",
-                    "mediaType": "application/json",
-                    "nextVersionId": null,
-                    "previousVersionId": null,
-                    "resourceCollectionId": "7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
-                    "resourceId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
-                    "resourceName": "cheqd-revocation-1",
-                    "resourceType": "StatusList2021Revocation",
-                    "resourceURI": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc",
-                    "resourceVersion": "2023-06-26T11:45:19.349Z"
-                  }
-                }
-              },
-              "statusList2021": {
-                "type": "object",
-                "properties": {
-                  "statusList2021": {
-                    "type": "object",
-                    "properties": {
-                      "encodedList": {
-                        "type": "string"
-                      },
-                      "type": {
-                        "type": "string"
-                      },
-                      "validFrom": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                }
-              },
-              "metadata": {
-                "type": "string",
-                "properties": {
-                  "encoding": {
-                    "type": "string"
-                  },
-                  "encrypted": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
+          "customerId": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
           }
         }
       },
-      "CredentialStatusPublishRequest": {
-        "allOf": [
-          {
-            "type": "object",
-            "required": [
-              "did",
-              "encodedList",
-              "statusListName",
-              "encoding"
-            ],
-            "properties": {
-              "did": {
-                "description": "The DID of the status list publisher.",
-                "type": "string",
-                "example": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e"
-              },
-              "statusListName": {
-                "description": "The name of the statusList to be published",
-                "type": "string",
-                "example": "cheqd-employee-credentials"
-              },
-              "encodedList": {
-                "description": "The encoding format of the statusList provided",
-                "type": "string",
-                "enum": [
-                  "base64url",
-                  "base64",
-                  "hex"
-                ],
-                "example": "base64url"
-              },
-              "statusListVersion": {
-                "description": "This input field is OPTIONAL, If present assigns the version to be assigned to the statusList",
-                "type": "string",
-                "example": 2023
-              },
-              "alsoKnownAs": {
-                "description": "The input field is OPTIONAL. If present, the value MUST be a set where each item in the set is a uri.",
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "uri": {
-                      "type": "string"
-                    },
-                    "description": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
+      "InvalidRequest": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
           }
-        ]
-      }
-    },
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT"
+        }
+      },
+      "UnauthorizedError": {
+        "description": "Access token is missing or invalid",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "Unauthorized Error"
+          }
+        }
       }
     }
   },
