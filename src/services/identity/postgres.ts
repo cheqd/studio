@@ -16,7 +16,7 @@ import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
 import { PrivateKeyStore } from '@veramo/data-store'
 import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
-import { BroadCastStatusListOptions, cheqdDidRegex, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, UpdateStatusListOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types.js'
+import { BroadCastStatusListOptions, cheqdDidRegex, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, UpdateStatusListOptions, VeramoAgent, VerificationOptions } from '../../types/types.js'
 import { Connection } from '../../database/connection/connection.js'
 import { CustomerEntity } from '../../database/entities/customer.entity.js'
 import { IIdentity } from './IIdentity.js'
@@ -24,7 +24,7 @@ import { CustomerService } from '../customer.js'
 import { Veramo } from './agent.js'
 
 import * as dotenv from 'dotenv'
-import { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, CreateEncryptedStatusList2021Result, CreateStatusList2021Result } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
+import { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, CreateStatusList2021Result } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
 dotenv.config()
 
 const {
@@ -214,17 +214,17 @@ export class PostgresIdentity implements IIdentity {
     }          
   }
 
-  async verifyCredential(credential: string | VerifiableCredential, statusOptions: VerifyCredentialStatusOptions | null, agentId: string): Promise<IVerifyResult> {
+  async verifyCredential(credential: string | VerifiableCredential, verificationOptions: VerificationOptions, agentId: string): Promise<IVerifyResult> {
     const agent = await this.createAgent(agentId)
-    return await Veramo.instance.verifyCredential(agent, credential, statusOptions)
+    return await Veramo.instance.verifyCredential(agent, credential, verificationOptions)
   }
 
-  async verifyPresentation(presentation: VerifiablePresentation | string, statusOptions: VerifyPresentationStatusOptions | null, agentId: string): Promise<IVerifyResult> {
+  async verifyPresentation(presentation: VerifiablePresentation | string, verificationOptions: VerificationOptions, agentId: string): Promise<IVerifyResult> {
     const agent = await this.createAgent(agentId)
-    return await Veramo.instance.verifyPresentation(agent, presentation, statusOptions)
+    return await Veramo.instance.verifyPresentation(agent, presentation, verificationOptions)
   }
 
-  async createStatusList2021(did: string, resourceOptions: ResourcePayload,  statusOptions: CreateStatusListOptions, agentId: string): Promise<CreateStatusList2021Result | CreateEncryptedStatusList2021Result> {
+  async createStatusList2021(did: string, resourceOptions: ResourcePayload,  statusOptions: CreateStatusListOptions, agentId: string): Promise<CreateStatusList2021Result> {
     const agent = await this.createAgent(agentId)
     return await Veramo.instance.createStatusList2021(agent, did, resourceOptions, statusOptions)
   }

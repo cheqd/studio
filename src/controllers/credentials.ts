@@ -76,8 +76,17 @@ export class CredentialController {
     if (!result.isEmpty()) {
         return response.status(400).json({ error: result.array()[0].msg })
     }
+
+    const { credential, policies } = request.body
+    const verifyStatus = request.query.verifyStatus === 'true' ? true : false 
     try {
-        const result = await Credentials.instance.verify_credentials(request.body.credential, request.body.statusOptions, response.locals.customerId)
+        const result = await Identity.instance.verifyCredential(
+            credential, 
+            {
+                verifyStatus,
+                policies
+            },
+            response.locals.customerId)
         if (result.error) {
             return response.status(400).json({
                 verified: result.verified,
@@ -144,8 +153,18 @@ export class CredentialController {
         return response.status(400).json({ error: result.array()[0].msg })
     }
 
+    const { presentation, domain, policies } = request.body
+    const verifyStatus = request.query.verifyStatus === 'true' ? true : false 
     try {
-        const result = await Identity.instance.verifyPresentation(request.body.presentation, request.body.statusOptions, response.locals.customerId)
+        const result = await Identity.instance.verifyPresentation(
+            presentation, 
+            {
+                verifyStatus,
+                policies,
+                domain
+            }, 
+            response.locals.customerId
+        )
         if (result.error) {
             return response.status(400).json({
                 verified: result.verified,
