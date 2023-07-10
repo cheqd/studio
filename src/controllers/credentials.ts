@@ -202,6 +202,16 @@ import { Identity } from '../services/identity/index.js'
  *           type: string
  *         verifiableCredential:
  *           type: object
+ *     PresentationRequest:
+ *       type: object
+ *       required:
+ *         - presentation
+ *       properties:
+ *         presentation:
+ *           description: This input field takes the presentation object or the JWT string.
+ *           allOf:
+ *             - type: string
+ *             - type: object
  */
 
 export class CredentialController {
@@ -308,6 +318,50 @@ export class CredentialController {
     }
   }
 
+  /**
+   * @openapi
+   * 
+   * /credential/verify:
+   *   post:
+   *     tags: [ Credential ]
+   *     summary: Verify a credential.
+   *     description: This endpoint verifies the credential. As input it takes the entire credential itself or just the JWT string.
+   *     operationId: verify
+   *     security: [ bearerAuth: [] ]
+   *     requestBody:
+   *       content:
+   *         application/x-www-form-urlencoded:
+   *           schema:
+   *             $ref: '#/components/schemas/CredentialVerifyRequest'
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/CredentialVerifyRequest'
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/IVerifyResult'
+   *       400:
+   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/InvalidRequest'
+   *             example:
+   *               error: Invalid Request
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/InvalidRequest'
+   *             example: 
+   *               error: Internal Error
+   */
   public async verify(request: Request, response: Response) {
     if (request?.headers && (!request.headers['content-type'] || request.headers['content-type'] != 'application/json')) {
         return response.status(405).json({ error: 'Unsupported media type.' })
@@ -527,24 +581,25 @@ export class CredentialController {
         })
     }
   }
+  
   /**
    * @openapi
    * 
-   * /credential/verify:
+   * /presentation/verify:
    *   post:
-   *     tags: [ Credential ]
-   *     summary: Verify a credential.
-   *     description: This endpoint verifies the credential. As input it takes the entire credential itself or just the JWT string.
-   *     operationId: verify
+   *     tags: [ Presentation ]
+   *     summary: Verify a credential presentation.
+   *     description: This endpoint verifies the credential presentation. As input it takes the entire presentation itself.
+   *     operationId: presentation
    *     security: [ bearerAuth: [] ]
    *     requestBody:
    *       content:
    *         application/x-www-form-urlencoded:
    *           schema:
-   *             $ref: '#/components/schemas/CredentialVerifyRequest'
+   *             $ref: '#/components/schemas/PresentationRequest'
    *         application/json:
    *           schema:
-   *             $ref: '#/components/schemas/CredentialVerifyRequest'
+   *             $ref: '#/components/schemas/PresentationRequest'
    *     responses:
    *       200:
    *         description: The request was successful.
