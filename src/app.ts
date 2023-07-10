@@ -14,14 +14,41 @@ import { Connection } from './database/connection/connection.js'
 import { RevocationController } from './controllers/revocation.js'
 import { CORS_ERROR_MSG } from './types/constants.js'
 
-import swaggerJSONDoc from './static/swagger.json' assert { type: "json" }
-
 import * as dotenv from 'dotenv'
 dotenv.config()
 
 import path from 'path'
 import { LogToWebHook } from './middleware/hook.js'
 import { Middleware } from './middleware/middleware.js'
+import swaggerJsdoc from 'swagger-jsdoc'
+
+const options = {
+  swaggerDefinition: {
+    openapi: '3.0.0',
+    servers: [
+      {
+        url: '/'
+      }
+    ],
+    info: {
+      title: 'Credential Service for cheqd network',
+      version: '2.0.0',
+      description: 'API service to create and manage DIDs and credentials on cheqd network.'
+    },
+    components: {}
+  },
+  apis: ['./src/controllers/*.ts', './src/types/swagger-types.ts'], // files containing annotations as above
+  tags: [
+    {
+      name: 'Credential',
+      externalDocs: {
+        url: 'https://github.com/cheqd/credential-service#readme'
+      }
+    }
+  ],
+};
+
+const openApiSpecification = swaggerJsdoc(options);
 
 let swagger_options = {}
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -73,10 +100,8 @@ class App {
 
     this.express.use(
       '/swagger',
-      swaggerUi.serve, 
-      async (_req: express.Request, res: express.Response) => {
-        return res.send(swaggerUi.generateHTML(swaggerJSONDoc, swagger_options))
-      }
+      swaggerUi.serve,
+      swaggerUi.setup(openApiSpecification, swagger_options)
     )
     this.express.use(auth.handleError)
     this.express.use(async (req, res, next) => await auth.accessControl(req, res, next))
