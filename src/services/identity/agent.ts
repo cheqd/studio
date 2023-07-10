@@ -29,6 +29,7 @@ import { CheqdNetwork } from '@cheqd/sdk'
 import { Resolver, ResolverRegistry } from 'did-resolver'
 import type {
   ICheqdBroadcastStatusList2021Args,
+  ICheqdCheckCredentialStatusWithStatusList2021Args,
   ICheqdCreateStatusList2021Args,
   ICheqdDeactivateIdentifierArgs,
   ICheqdRevokeBulkCredentialsWithStatusList2021Args,
@@ -37,6 +38,7 @@ import type {
 } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import {
   BroadCastStatusListOptions,
+  CheckStatusListOptions,
   cheqdDidRegex,
   CreateAgentRequest,
   CreateStatusListOptions,
@@ -383,5 +385,18 @@ export class Veramo {
                 returnUpdatedStatusList: !publish
             })           
     }
+ }
+
+ async checkStatusList2021(agent: VeramoAgent, did: string, statusOptions: CheckStatusListOptions) {
+    return await agent.cheqdCheckCredentialStatus({
+        statusOptions: {
+            issuerDid: did,
+            ...statusOptions,
+        },
+        decryptionOptions: {
+            accessControlConditions: []
+        },
+        bootstrapOptions: {}
+    } satisfies ICheqdCheckCredentialStatusWithStatusList2021Args)
  }
 }

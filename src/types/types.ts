@@ -8,7 +8,7 @@ import {
   W3CVerifiableCredential,
   TAgent
 } from '@veramo/core'
-import { AccessControlConditionBalanceArgs, AccessControlConditionMemoNonceArgs, ICheqd, ICheqdStatusList2021Options } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
+import { AccessControlConditionBalanceArgs, AccessControlConditionMemoNonceArgs, ICheqd, ICheqdCheckCredentialWithStatusList2021StatusOptions, ICheqdStatusList2021Options } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import { ICredentialIssuerLD } from '@veramo/credential-ld'
 import { AbstractIdentifierProvider } from '@veramo/did-manager'
 import { AbstractKeyManagementSystem } from '@veramo/key-manager'
@@ -175,3 +175,5 @@ export interface UpdateStatusListOptions {
   statusListVersion?: string
   statusAction: 'revoke' | 'suspend' | 'reinstate'   
 }
+
+export type CheckStatusListOptions = Omit<ICheqdCheckCredentialWithStatusList2021StatusOptions, 'issuerDid'>
