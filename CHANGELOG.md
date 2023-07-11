@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0-develop.11](https://github.com/cheqd/credential-service/compare/2.4.0-develop.10...2.4.0-develop.11) (2023-07-11)
+
+
+### Bug Fixes
+
+* Fix issue with broken webhook being used for setting default user role in LogTo [DEV-2962] ([#295](https://github.com/cheqd/credential-service/issues/295)) ([a3c8fde](https://github.com/cheqd/credential-service/commit/a3c8fde62d9b3c75d6e8efefd49bbd1d1fd6d6a0))
+
 ## [2.4.0-develop.10](https://github.com/cheqd/credential-service/compare/2.4.0-develop.9...2.4.0-develop.10) (2023-07-11)
 
 
