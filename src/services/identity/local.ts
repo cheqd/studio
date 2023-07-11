@@ -9,10 +9,10 @@ import {
 import { AbstractPrivateKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager'
 import { KeyManagementSystem } from '@veramo/kms-local'
 import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd'
-import { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, CreateStatusList2021Result } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
+import { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, CreateStatusList2021Result, StatusCheckResult } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
 
-import { BroadCastStatusListOptions, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, UpdateStatusListOptions, VeramoAgent, VerificationOptions } from '../../types/types.js'
+import { BroadCastStatusListOptions, CheckStatusListOptions, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, UpdateStatusListOptions, VeramoAgent, VerificationOptions } from '../../types/types.js'
 import { Connection } from '../../database/connection/connection.js'
 import { IIdentity } from './IIdentity.js'
 import { Veramo } from './agent.js'
@@ -164,6 +164,10 @@ export class LocalIdentity implements IIdentity {
 
   async broadcastStatusList2021(did: string, resourceOptions: ResourcePayload, statusOptions: BroadCastStatusListOptions): Promise<boolean> {
     return await Veramo.instance.broadcastStatusList2021(this.initAgent(), did, resourceOptions, statusOptions)
+  }
+
+  async checkStatusList2021(did: string, statusOptions: CheckStatusListOptions): Promise<StatusCheckResult> {
+    return await Veramo.instance.checkStatusList2021(this.initAgent(), did, statusOptions)
   }
 
   async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean) {

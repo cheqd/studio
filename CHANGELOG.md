@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0-develop.10](https://github.com/cheqd/credential-service/compare/2.4.0-develop.9...2.4.0-develop.10) (2023-07-11)
+
+
+### Features
+
+* Add credential-status check API [DEV-2940] ([#293](https://github.com/cheqd/credential-service/issues/293)) ([34ad827](https://github.com/cheqd/credential-service/commit/34ad82732d5bb411903c29f385e694d58c72d958))
+
 ## [2.4.0-develop.9](https://github.com/cheqd/credential-service/compare/2.4.0-develop.8...2.4.0-develop.9) (2023-07-11)
 
 

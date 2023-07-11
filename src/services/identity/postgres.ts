@@ -16,7 +16,7 @@ import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
 import { PrivateKeyStore } from '@veramo/data-store'
 import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
-import { BroadCastStatusListOptions, cheqdDidRegex, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, UpdateStatusListOptions, VeramoAgent, VerificationOptions } from '../../types/types.js'
+import { BroadCastStatusListOptions, CheckStatusListOptions, cheqdDidRegex, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, UpdateStatusListOptions, VeramoAgent, VerificationOptions } from '../../types/types.js'
 import { Connection } from '../../database/connection/connection.js'
 import { CustomerEntity } from '../../database/entities/customer.entity.js'
 import { IIdentity } from './IIdentity.js'
@@ -24,7 +24,7 @@ import { CustomerService } from '../customer.js'
 import { Veramo } from './agent.js'
 
 import * as dotenv from 'dotenv'
-import { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, CreateStatusList2021Result } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
+import { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, CreateStatusList2021Result, StatusCheckResult } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
 dotenv.config()
 
 const {
@@ -232,6 +232,11 @@ export class PostgresIdentity implements IIdentity {
   async updateStatusList2021(did: string, statusOptions: UpdateStatusListOptions, publish: boolean, agentId: string): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
     const agent = await this.createAgent(agentId)
     return await Veramo.instance.updateStatusList2021(agent, did, statusOptions, publish)
+  }
+
+  async checkStatusList2021(did: string, statusOptions: CheckStatusListOptions, agentId: string): Promise<StatusCheckResult> {
+    const agent = await this.createAgent(agentId)
+    return await Veramo.instance.checkStatusList2021(agent, did, statusOptions)
   }
 
   async broadcastStatusList2021(did: string, resourceOptions: ResourcePayload, statusOptions: BroadCastStatusListOptions, agentId: string): Promise<boolean> {
