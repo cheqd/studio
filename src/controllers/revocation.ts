@@ -153,7 +153,7 @@ export class RevocationController {
      *         content:
      *           application/json:
      *             schema:
-     *               $ref: '#/components/schemas/CredentialStatusPublishRequest'
+     *               $ref: '#/components/schemas/CredentialStatusResult'
      *       400:
      *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
      *         content:
@@ -327,10 +327,10 @@ export class RevocationController {
      *       content:
      *         application/x-www-form-urlencoded:
      *           schema:
-     *             $ref: '#/components/schemas/CredentialStatusPublishRequest'
+     *             $ref: '#/components/schemas/CredentialStatusUpdateRequest'
      *         application/json:
      *           schema:
-     *             $ref: '#/components/schemas/CredentialStatusPublishRequest'
+     *             $ref: '#/components/schemas/CredentialStatusUpdateRequest'
      *     responses:
      *       200:
      *         description: The request was successful.

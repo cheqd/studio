@@ -56,7 +56,6 @@
  *               type: string
  *             statusListIndex:
  *               type: number
- *               example: 10
  *             statusListVersion:
  *               type: string
  *             statusListRangeStart:
@@ -73,8 +72,8 @@
  *         issuerDid: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
  *         subjectDid: did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
  *         attributes:
- *         gender: male
- *         name: Bob
+ *           gender: male
+ *           name: Bob
  *         '@context':
  *           - https://schema.org
  *         type:
@@ -354,9 +353,30 @@
  *       example:
  *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
  *         name: cheqd-employee-credentials
- *         version: 2023
+ *         version: '2023'
  *         data: H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA
  *         encoding: base64url
+ *     CredentialStatusUpdateRequest:
+ *       type: object
+ *       required:
+ *         - did
+ *         - statusListName
+ *         - indices
+ *       properties:
+ *         did:
+ *           description: The DID of the status list publisher.
+ *           type: string
+ *         statusListName:
+ *           description: The name of the status list to be created.
+ *           type: string
+ *         indices:
+ *           description: Provide the list of indices to be updated.
+ *           type: array
+ *           items:
+ *             type: number
+ *         statusListVersion:
+ *           description: The input field is OPTIONAL, If present uses the provided statusListVersion for the update operation.
+ *           type: string
  *     KeyResult:
  *       type: object
  *       properties:
@@ -420,6 +440,33 @@
  *             publicKeyBase58: BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt
  *         authentication:
  *           - did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1
+ *     DidCreateRequest:
+ *       type: object
+ *       properties:
+ *         network:
+ *           type: string
+ *           enum:
+ *             - testnet
+ *             - mainnet
+ *         methodSpecificIdAlgo:
+ *           type: string
+ *           enum:
+ *             - uuid
+ *             - base58btc
+ *         verificationMethodType:
+ *           type: string
+ *           enum:
+ *             - Ed25519VerificationKey2018
+ *             - JsonWebKey2020
+ *             - Ed25519VerificationKey2020
+ *         serviceEndpoint:
+ *           type: string
+ *         assertionMethod:
+ *           description: An assertion method is required to issue JSONLD credentials.
+ *           type: boolean
+ *           default: true
+ *         didDocument:
+ *           $ref: '#/components/schemas/DidDocument'
  *     DidResult:
  *       type: object
  *       properties:

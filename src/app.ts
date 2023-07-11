@@ -30,6 +30,14 @@ const options = {
         url: '/'
       }
     ],
+    tags: [
+      {
+        name: 'Credential',
+        externalDocs: {
+          url: 'https://github.com/cheqd/credential-service#readme'
+        }
+      }
+    ],
     info: {
       title: 'Credential Service for cheqd network',
       version: '2.0.0',

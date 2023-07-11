@@ -156,42 +156,16 @@ export class IssuerController {
    *   post:
    *     tags: [ DID ]
    *     summary: Create a DID.
-   *     description: This endpoint creates a DID by taking DID document or a verification method as an input.
+   *     description: This endpoint creates a DID by taking a set of input parameters or the whole didDocument itself.
    *     security: [ bearerAuth: [] ]
    *     requestBody:
    *       content:
+   *         application/x-www-form-urlencoded:
+   *           schema:
+   *             $ref: '#/components/schemas/DidCreateRequest'
    *         application/json:
    *           schema:
-   *             type: object
-   *             required: [ options ]
-   *             properties:
-   *               options:
-   *                 type: object
-   *                 properties:
-   *                   network:
-   *                     type: string
-   *                     enum: [testnet, mainnet]
-   *                   methodSpecificIdAlgo:
-   *                     type: string
-   *                     enum: [uuid, base58btc]
-   *               secret:
-   *                 type: object
-   *                 properties:
-   *                   verificationMethod:
-   *                     type: object
-   *                     properties:
-   *                       type:
-   *                         type: string
-   *                         enum: [
-   *                           Ed25519VerificationKey2018,
-   *                           Ed25519VerificationKey2020,
-   *                           JsonWebKey2020S
-   *                         ]
-   *                       id:
-   *                         type: string
-   *                         example: key-1
-   *               didDocument:
-   *                 $ref: '#/components/schemas/DidDocument'
+   *             $ref: '#/components/schemas/DidCreateRequest'
    *     responses:
    *       200:
    *         description: The request was successful.
