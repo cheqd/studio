@@ -6,9 +6,10 @@ import {
   ICredentialIssuer,
   ICredentialVerifier,
   W3CVerifiableCredential,
-  TAgent
+  TAgent,
+  VerificationPolicies
 } from '@veramo/core'
-import { AccessControlConditionBalanceArgs, AccessControlConditionMemoNonceArgs, ICheqd, ICheqdStatusList2021Options } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
+import { ICheqd, ICheqdStatusList2021Options } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import { ICredentialIssuerLD } from '@veramo/credential-ld'
 import { AbstractIdentifierProvider } from '@veramo/did-manager'
 import { AbstractKeyManagementSystem } from '@veramo/key-manager'
@@ -138,22 +139,6 @@ export type StatusOptions = {
 export type RevocationStatusOptions = StatusOptions & { statusPurpose: 'revocation' }
 export type SuspensionStatusOptions = StatusOptions & { statusPurpose: 'suspension' }
 
-export type VerifyCredentialStatusOptions = {
-  fetchList?: boolean
-  encryptedSymmetricKey?: string
-  options?: ICheqdStatusList2021Options
-  decryptionOptions: {
-    unifiedAccessControlConditions: CosmosAccessControlCondition[]
-  }
-  bootstrapOptions: {}
-}
-
-export type VerifyPresentationStatusOptions = Omit<VerifyCredentialStatusOptions, 'decryptionOptions'> & { 
-    decryptionOptions: {
-        accessControlConditions: (AccessControlConditionMemoNonceArgs | AccessControlConditionBalanceArgs)[]
-    }
-}
-
 export interface ResourceMetadata {
   collectionId: string
   resourceId: string
@@ -174,4 +159,11 @@ export interface UpdateStatusListOptions {
   statusListName: string
   statusListVersion?: string
   statusAction: 'revoke' | 'suspend' | 'reinstate'   
+}
+
+export interface VerificationOptions {
+  fetchRemoteContexts?: boolean
+  policies?: VerificationPolicies
+  domain?: string
+  verifyStatus?: boolean
 }
