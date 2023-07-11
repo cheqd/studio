@@ -28,19 +28,20 @@ The application allows configuring the following parameters using environment va
 #### Network API endpoints
 
 1. `MAINNET_RPC_URL`: RPC endpoint for cheqd mainnet (Default: `https://rpc.cheqd.net:443`).
-2. `TESTNET_RPC_URL`: RPC endpoint for cheqd testnet (`https://rpc.cheqd.network:443`).
-3. `RESOLVER_URL`: API endpoint for a [DID Resolver](https://github.com/cheqd/did-resolver) endpoint that supports `did:cheqd`.
+2. `TESTNET_RPC_URL`: RPC endpoint for cheqd testnet (Default: `https://rpc.cheqd.network:443`).
+3. `RESOLVER_URL`: API endpoint for a [DID Resolver](https://github.com/cheqd/did-resolver) endpoint that supports `did:cheqd` (Default: `https://resolver.cheqd.net/1.0/identifiers/`).
 4. `APPLICATION_BASE_URL`: URL of the application (external domain name).
-5. `ALLOWED_ORIGINS`: CORS allowed origins used in the app.
+5. `CORS_ALLOWED_ORIGINS`: CORS allowed origins used in the app.
 
 #### Veramo KMS Database
 
 The application supports two modes in which keys are managed: either just storing them in-memory while a container is running, or persisting them in a PostgresSQL database with Veramo SDK. Using an external Postgres database allows for "custodian" mode where identity and cheqd/Cosmos keys can be offloaded by client applications to be stored in the database.
 
-1. `ENABLE_EXTERNAL_DB`: Turns external database on/off (Default: `false`). If `ENABLE_EXTERNAL_DB=true`, then define below environment variables in `.env` file:
-    - `EXTERNAL_DB_CONNECTION_URL`: Postgres database connection URL, e.g. `postgres://<user>:<password>@<host>:<port>/<database>`.
-    - `EXTERNAL_DB_ENCRYPTION_KEY`: Secret key used to encrypt the Veramo key-specific database tables. This adds a layer of protection by not storing the database in plaintext.
-    - `EXTERNAL_DB_CERTIFICATE`: Custom CA certificate required to connect to the database (optional).
+By default, `ENABLE_EXTERNAL_DB` is set to off/`false`. To enable external Veramo KMS database, set `ENABLE_EXTERNAL_DB` to `true`, then define below environment variables in `.env` file:
+
+1. `EXTERNAL_DB_CONNECTION_URL`: PostgreSQL database connection URL, e.g. `postgres://<user>:<password>@<host>:<port>/<database>`.
+2. `EXTERNAL_DB_ENCRYPTION_KEY`: Secret key used to encrypt the Veramo key-specific database tables. This adds a layer of protection by not storing the database in plaintext.
+3. `EXTERNAL_DB_CERTIFICATE`: Custom CA certificate required to connect to the database (optional).
 
 #### API Authentication using LogTo
 
@@ -48,18 +49,25 @@ By default, the application has API authentication disabled (which can be change
 
 We use a self-hosted version of [LogTo](https://logto.io/), which supports OpenID Connect. Theoretically, these values could also be replaced with [LogTo Cloud](http://cloud.logto.io/) or any other OpenID Connect identity provider.
 
-1. `ENABLE_AUTHENTICATION`: Turns API authentication guards on/off (Default: `false`). If `ENABLE_AUTHENTICATION=false`, then define below environment variable in `.env` file:
-    - `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users.
-2. `LOGTO_ENDPOINT`: API endpoint for LogTo server
-3. `LOGTO_DEFAULT_RESOURCE_URL`: Usually it will be a root of all API resources. All the resourceAPI will be constructed on top of that.
-4. `LOGTO_APP_ID`: Application ID from LogTo. For now, Application is supposed to be a TraditionalWeb
-5. `LOGTO_APP_SECRET`: Application secret. Also should encrypted in deployment
-6. `LOGTO_M2M_APP_ID`: Machine-to-machine Application ID
-7. `LOGTO_M2M_APP_SECRET`: Machine-to-machine Application secret
-8. `LOGTO_MANAGEMENT_API`: URL of management API for LogTo (default is `https://default.logto.app/api`)
-9. `ALLOWED_ORIGINS`: CORS allowed origins used in the app
-10. `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users
-11. `COOKIE_SECRET`: Secret for cookie encryption.
+By default, `ENABLE_AUTHENTICATION` is set to off/`false`. To enable external Veramo KMS database, set `ENABLE_AUTHENTICATION` to `true`, then define below environment variables in `.env` file:
+
+1. **Endpoints**
+   1. `LOGTO_ENDPOINT`: API endpoint for LogTo server
+   2. `LOGTO_DEFAULT_RESOURCE_URL`: Root of API resources in this application to be guarded. (Default: `http://localhost:3000/api` on localhost.)
+   3. `LOGTO_MANAGEMENT_API`: URL of management API for LogTo (default is `https://default.logto.app/api`)
+   4. `CORS_ALLOWED_ORIGINS`: CORS allowed origins used in the app
+2. **User-facing APIs**
+   1. `LOGTO_APP_ID`: Application ID for the Credential Service application in LogTo. This can be set up as type "Traditional Web"
+   2. `LOGTO_APP_SECRET`: Application secret associated with App ID above.
+3. **Machine-to-machine backend APIs**
+   1. `LOGTO_M2M_APP_ID`: Application ID for machine-to-machine application in LogTo. This is used for elevated management APIs within LogTo.
+   2. `LOGTO_M2M_APP_SECRET`: Application secret
+4. **Default role update using [LogTo webhooks](https://docs.logto.io/next/docs/recipes/webhooks/)**: LogTo supports webhooks to fire of requests to an API when it detects certain actions/changes. If you want to  automatically assign a role to users, a webhook is recommended to be setup for firing off whenever there's a new account created, or a new sign-in.
+   1. `LOGTO_DEFAULT_ROLE_ID`: LogTo Role ID for the default role to put new users into.
+   2. `LOGTO_WEBHOOK_SECRET`: Webhook secret to authenticate incoming webhook requests from LogTo.
+5. **Miscellaneous**
+   1. `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users
+   2. `COOKIE_SECRET`: Secret for cookie encryption.
 
 ### 3rd Party Connectors
 
@@ -69,10 +77,11 @@ The app supports 3rd party connectors for credential storage and delivery.
 
 The app's [Verida Network](https://www.verida.network/) connector can be enabled to deliver generated credentials to Verida Wallet.
 
-1. `ENABLE_VERIDA_CONNECTOR`: Turns Verida connector on/off (Default: `false`). If `ENABLE_VERIDA_CONNECTOR=true`, then define below environment variables in `.env` file:
-    - `VERIDA_NETWORK`: Verida Network type to connect to. (Default: `testnet`)
-    - `VERIDA_PRIVATE_KEY`: Secret key for Verida Network API.
-    - `POLYGON_PRIVATE_KEY`: Secret key for Polygon Network.
+By default, `ENABLE_VERIDA_CONNECTOR` is set to off/`false`. To enable external Veramo KMS database, set `ENABLE_VERIDA_CONNECTOR` to `true`, then define below environment variables in `.env` file:
+
+1. `VERIDA_NETWORK`: Verida Network type to connect to. (Default: `testnet`)
+2. `VERIDA_PRIVATE_KEY`: Secret key for Verida Network API.
+3. `POLYGON_PRIVATE_KEY`: Secret key for Polygon Network.
 
 ## 🧑‍💻🛠 Developer Guide
 
@@ -94,16 +103,58 @@ Construct the postgres URL and configure the env variables mentioned above.
 
 Spinning up a Docker container from the [pre-built credential-service Docker image on Github](https://github.com/cheqd/credential-service/pkgs/container/credential-service) is as simple as the command below:
 
-- Running credential-service using Docker with external database:
-  - Set `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` environment variables in `docker/.env`:
-    - `POSTGRES_USER`: Postgres database username using in Docker database service.
-    - `POSTGRES_PASSWORD`: Postgres database password using in Docker database service.
-    - `POSTGRES_DB`: Postgres database name using in Docker database service.
+#### Configure PostgreSQL database
 
-Run credential-service with external database:
+Configure the environment variables in the [`postgres.env` file](docker/with-external-db/postgres.env):
+
+1. `POSTGRES_USER`: Username for Postgres database
+2. `POSTGRES_PASSWORD`: Password for Postgres database
+3. `POSTGRES_MULTIPLE_DATABASES`: Database names for multiple databases in the same cluster, e.g.: `"app,logto"`. This sets up multiple databases in the same cluster, which can be used independently for External Veramo KMS or LogTo service.
+
+Then, make the Postgres initialisation scripts executable:
 
 ```bash
-docker compose -f docker/docker-compose.yml --profile credential-service-with-external-db up --detach
+chmod +x docker/with-external-db/pg-init-scripts/create-multiple-postgresql-databases.sh
+```
+
+#### Start LogTo service
+
+Configure the environment variables in the [`logto.env` file](docker/with-external-db/logto.env) with the settings described in section above.
+
+Then, run the LogTo service to configure the LogTo application API resources, applications, sign-in experiences, roles etc using Docker Compose:
+
+```bash
+docker compose -f docker/with-external-db/docker-compose-with-db.yml --profile logto up --detach
+```
+
+Configuring LogTo is outside the scope of this guide, and we recommend reading [LogTo documentation](https://docs.logto.io/) to familiarise yourself.
+
+#### Start credential-service app
+
+Configure the environment variables in the [`with-db.env` file](docker/with-external-db/with-db.env) with the settings described in section above. Depending on whether you are using external Veramo KMS only, LogTo only, or both you will need to have previously provisioned these services as there are environment variables in this file that originate from Postgres/LogTo.
+
+Then, start the service using Docker Compose:
+
+```bash
+docker compose -f docker/with-external-db/docker-compose-with-db.yml up --detach
+```
+
+#### Running app or LogTo migrations
+
+When upgrading either the external Veramo KMS or LogTo, you might need to run migrations for the underlying databases.
+
+You can run *just* the migration scripts using [Docker Compose profiles](https://docs.docker.com/compose/profiles/) defined in the Compose file.
+
+For example, to run Credential Service app migrations on an existing Postgres database (for external Veramo KMS):
+
+```bash
+docker compose -f docker/with-external-db/docker-compose-with-db.yml --profile app-setup up --detach
+```
+
+Or to run LogTo migrations on an existing Postgres database:
+
+```bash
+docker compose -f docker/with-external-db/docker-compose-with-db.yml --profile logto-setup up --detach
 ```
 
 ### Build using Docker

@@ -1,5 +1,59 @@
 # Changelog
 
+## [2.5.0-develop.1](https://github.com/cheqd/credential-service/compare/2.4.1...2.5.0-develop.1) (2023-07-11)
+
+
+### Features
+
+* Add credential-status check API [DEV-2940] ([#293](https://github.com/cheqd/credential-service/issues/293)) ([34ad827](https://github.com/cheqd/credential-service/commit/34ad82732d5bb411903c29f385e694d58c72d958))
+* Add Default role assigning while creating and account or signing in [DEV-2905] ([#286](https://github.com/cheqd/credential-service/issues/286)) ([c99bed2](https://github.com/cheqd/credential-service/commit/c99bed205cd2821e5ff14d76a4f78f160faeb967))
+* Add verify presentation API and update StatusList APIs [DEV-2811] & [DEV-2669] ([#265](https://github.com/cheqd/credential-service/issues/265)) ([4e43430](https://github.com/cheqd/credential-service/commit/4e43430c221a5e6029f446a6a6bca1617745ab53))
+
+
+### Bug Fixes
+
+* Add policies to Verification API [DEV-2951] ([#294](https://github.com/cheqd/credential-service/issues/294)) ([d3c6ea9](https://github.com/cheqd/credential-service/commit/d3c6ea91a6319ab8ba7b1bfd65b9c553063624e8))
+* Fix issue with broken webhook being used for setting default user role in LogTo [DEV-2962] ([#295](https://github.com/cheqd/credential-service/issues/295)) ([a3c8fde](https://github.com/cheqd/credential-service/commit/a3c8fde62d9b3c75d6e8efefd49bbd1d1fd6d6a0))
+
+## [2.4.0-develop.11](https://github.com/cheqd/credential-service/compare/2.4.0-develop.10...2.4.0-develop.11) (2023-07-11)
+
+
+### Bug Fixes
+
+* Fix issue with broken webhook being used for setting default user role in LogTo [DEV-2962] ([#295](https://github.com/cheqd/credential-service/issues/295)) ([a3c8fde](https://github.com/cheqd/credential-service/commit/a3c8fde62d9b3c75d6e8efefd49bbd1d1fd6d6a0))
+
+## [2.4.0-develop.10](https://github.com/cheqd/credential-service/compare/2.4.0-develop.9...2.4.0-develop.10) (2023-07-11)
+
+
+### Features
+
+* Add credential-status check API [DEV-2940] ([#293](https://github.com/cheqd/credential-service/issues/293)) ([34ad827](https://github.com/cheqd/credential-service/commit/34ad82732d5bb411903c29f385e694d58c72d958))
+
+## [2.4.0-develop.9](https://github.com/cheqd/credential-service/compare/2.4.0-develop.8...2.4.0-develop.9) (2023-07-11)
+
+
+### Bug Fixes
+
+* Add policies to Verification API [DEV-2951] ([#294](https://github.com/cheqd/credential-service/issues/294)) ([d3c6ea9](https://github.com/cheqd/credential-service/commit/d3c6ea91a6319ab8ba7b1bfd65b9c553063624e8))
+
+## [2.4.0-develop.8](https://github.com/cheqd/credential-service/compare/2.4.0-develop.7...2.4.0-develop.8) (2023-07-09)
+
+
+### Features
+
+* Add Default role assigning while creating and account or signing in [DEV-2905] ([#286](https://github.com/cheqd/credential-service/issues/286)) ([c99bed2](https://github.com/cheqd/credential-service/commit/c99bed205cd2821e5ff14d76a4f78f160faeb967))
+
+## [2.4.0-develop.7](https://github.com/cheqd/credential-service/compare/2.4.0-develop.6...2.4.0-develop.7) (2023-07-07)
+
+
+### Features
+
+* Add verify presentation API and update StatusList APIs [DEV-2811] & [DEV-2669] ([#265](https://github.com/cheqd/credential-service/issues/265)) ([4e43430](https://github.com/cheqd/credential-service/commit/4e43430c221a5e6029f446a6a6bca1617745ab53))
+
+## [2.4.0-develop.6](https://github.com/cheqd/credential-service/compare/2.4.0-develop.5...2.4.0-develop.6) (2023-07-06)
+
+## [2.4.0-develop.5](https://github.com/cheqd/credential-service/compare/2.4.0-develop.4...2.4.0-develop.5) (2023-07-03)
+
 ## [2.4.1](https://github.com/cheqd/credential-service/compare/2.4.0...2.4.1) (2023-06-30)
 
 

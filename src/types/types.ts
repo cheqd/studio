@@ -6,15 +6,15 @@ import {
   ICredentialIssuer,
   ICredentialVerifier,
   W3CVerifiableCredential,
-  TAgent
+  TAgent,
+  VerificationPolicies
 } from '@veramo/core'
-import { ICheqd, ICheqdStatusList2021Options } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
+import { ICheqd, ICheqdCheckCredentialWithStatusList2021StatusOptions } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import { ICredentialIssuerLD } from '@veramo/credential-ld'
 import { AbstractIdentifierProvider } from '@veramo/did-manager'
 import { AbstractKeyManagementSystem } from '@veramo/key-manager'
 import { DataSource } from 'typeorm'
 import { CheqdDIDProvider } from '@cheqd/did-provider-cheqd'
-import { CosmosAccessControlCondition } from '@cheqd/did-provider-cheqd/build/types/dkg-threshold/lit-protocol'
 
 export type ErrorResponse = {
   name: string
@@ -111,13 +111,22 @@ export type CreateAgentRequest = {
   enableCredential?: boolean
 }
 
+export const StatusList2021ResourceTypes = {
+  revocation: 'StatusList2021Revocation',
+  suspension: 'StatusList2021Suspension'
+}
+
 export type CreateStatusListOptions = {
   length?: number | undefined,
   encoding?: 'base64' | 'base64url' | 'hex' | undefined
+  statusPurpose: 'revocation' | 'suspension'
+  encrypted?: boolean
 }
 
+export type BroadCastStatusListOptions = Omit<CreateStatusListOptions, 'length'>
+
 export type StatusOptions = {
-  statusPurpose: 'revocation' | 'suspension'
+  statusPurpose: CreateStatusListOptions['statusPurpose']
   statusListName: string
   statusListIndex?: number
   statusListVersion?: string
@@ -129,16 +138,6 @@ export type StatusOptions = {
 export type RevocationStatusOptions = StatusOptions & { statusPurpose: 'revocation' }
 export type SuspensionStatusOptions = StatusOptions & { statusPurpose: 'suspension' }
 
-export type VerifyStatusOptions = {
-  fetchList?: boolean
-  encryptedSymmetricKey?: string
-  options?: ICheqdStatusList2021Options
-  decryptionOptions: {
-    unifiedAccessControlConditions: CosmosAccessControlCondition[]
-  }
-  bootstrapOptions: {}
-}
-
 export interface ResourceMetadata {
   collectionId: string
   resourceId: string
@@ -148,8 +147,24 @@ export interface ResourceMetadata {
   mediaType: string
   created:
     | Date
-    | undefined;
-  checksum: string;
-  previousVersionId: string;
-  nextVersionId: string;
+    | undefined
+  checksum: string
+  previousVersionId: string
+  nextVersionId: string
+}
+
+export interface UpdateStatusListOptions {
+  indices: number[]
+  statusListName: string
+  statusListVersion?: string
+  statusAction: 'revoke' | 'suspend' | 'reinstate'   
+}
+
+export type CheckStatusListOptions = Omit<ICheqdCheckCredentialWithStatusList2021StatusOptions, 'issuerDid'>
+
+export interface VerificationOptions {
+  fetchRemoteContexts?: boolean
+  policies?: VerificationPolicies
+  domain?: string
+  verifyStatus?: boolean
 }

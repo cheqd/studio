@@ -13,12 +13,12 @@ declare global {
       MAINNET_RPC_URL: string
       TESTNET_RPC_URL: string
       RESOLVER_URL: string
-      ALLOWED_ORIGINS: string | undefined
+      CORS_ALLOWED_ORIGINS: string | undefined
       ENABLE_EXTERNAL_DB: string | "false"
       EXTERNAL_DB_CONNECTION_URL: string
       EXTERNAL_DB_ENCRYPTION_KEY: string
       EXTERNAL_DB_CERT: string | undefined
-      APPLICATION_BASE_URL: string
+      APPLICATION_BASE_URL: string | "http://localhost:3000"
 
       // LogTo
       LOGTO_ENDPOINT: string
@@ -28,6 +28,8 @@ declare global {
       LOGTO_M2M_APP_ID: string
       LOGTO_M2M_APP_SECRET: string
       LOGTO_MANAGEMENT_API: string
+      LOGTO_DEFAULT_ROLE_ID: string
+      LOGTO_WEBHOOK_SECRET: string
 
       // Authentication
       ENABLE_AUTHENTICATION: string | "false"

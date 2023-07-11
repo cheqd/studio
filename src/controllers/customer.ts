@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express'
 
 import { CustomerService } from '../services/customer.js'
+import { LogToHelper } from '../middleware/auth/logto.js'
 
 export class CustomerController {
 
@@ -51,5 +52,22 @@ export class CustomerController {
                 error: `${error}`
             })
         }
+    }
+
+    public async setupDefaultRole(request: Request, response: Response) {
+        if (request.body) {
+            const body = JSON.parse(request.body)
+            if (!body.user.isSuspended) {
+                const logToHelper = new LogToHelper()
+                await logToHelper.setup()
+                const resp = await logToHelper.setDefaultRoleForUser(body.user.id as string)
+                if (resp) {
+                    return response.status(resp.status).json({
+                        error: resp.error})
+                }
+                return response.status(500).json({})
+            }
+        }
+        return response.status(400).json({})
     }
 }
