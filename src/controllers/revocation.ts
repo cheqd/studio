@@ -15,7 +15,7 @@ export class RevocationController {
         check('statusPurpose').optional().isIn(['revocation', 'suspension']).withMessage('invalid statusPurpose')
     ]
 
-    static queryValidator = [
+    static commonValidator = [
         check('did').isString().withMessage('DID is required')
         .contains('did:cheqd:').withMessage('Provide a valid cheqd DID'),
         query('statusPurpose').optional().isString().withMessage('statusPurpose should be a string')
@@ -32,6 +32,13 @@ export class RevocationController {
         query('statusAction').exists().withMessage('StatusAction is required')
         .isIn(['revoke', 'suspend', 'reinstate']),
         query('publish').isBoolean().withMessage('publish should be a boolean value')
+    ]
+
+    static checkValidator = [
+        check('index').exists().withMessage('Index is required')
+        .isNumeric().withMessage('Index should be a number'),
+        check('statusListName').exists().withMessage('StatusListName is required')
+        .isString().withMessage('Invalid statusListName')
     ]
 
     async createStatusList(request: Request, response: Response) {
@@ -101,7 +108,7 @@ export class RevocationController {
         }
     }
 
-    async  updateStatusList(request: Request, response: Response) {
+    async updateStatusList(request: Request, response: Response) {
         const result = validationResult(request)
         if (!result.isEmpty()) {
           return response.status(400).json({ error: result.array()[0].msg })
@@ -115,6 +122,29 @@ export class RevocationController {
         try {
           let result: any
           result = await Identity.instance.updateStatusList2021(did, { indices, statusListName, statusListVersion, statusAction }, publish, response.locals.customerId) 
+          if (result.error) {
+            return response.status(400).json(result)
+          }
+          return response.status(200).json(result)
+        } catch (error) {
+          return response.status(500).json({
+            error: `Internal error: ${error}`
+          })
+        }
+    }
+
+    async checkStatusList(request: Request, response: Response) {
+        const result = validationResult(request)
+        if (!result.isEmpty()) {
+          return response.status(400).json({ error: result.array()[0].msg })
+        }
+
+        let { did, statusListName, index } = request.body
+        const statusPurpose = request.query.statusPurpose as 'revocation' | 'suspension'
+
+        try {
+          let result: any
+          result = await Identity.instance.checkStatusList2021(did, { statusListIndex: index, statusListName, statusPurpose }, response.locals.customerId) 
           if (result.error) {
             return response.status(400).json(result)
           }
