@@ -29,6 +29,8 @@ export class CredentialController {
         return false
       })
     .withMessage('Entry must be a jwt string or an credential'),
+    check('policies').optional().isObject().withMessage('Verification policies should be an object'),
+    query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value'),
     query('publish').optional().isBoolean().withMessage('publish should be a boolean value')
   ]
 
@@ -41,6 +43,9 @@ export class CredentialController {
         return false
       })
     .withMessage('Entry must be a jwt string or a presentation'),
+    check('verifierDid').optional().isString().withMessage('Invalid verifier DID'),
+    check('policies').optional().isObject().withMessage('Verification policies should be an object'),
+    query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value')
   ]
 
   public async issue(request: Request, response: Response) {
@@ -86,7 +91,8 @@ export class CredentialController {
                 verifyStatus,
                 policies
             },
-            response.locals.customerId)
+            response.locals.customerId
+        )
         if (result.error) {
             return response.status(400).json({
                 verified: result.verified,
@@ -153,7 +159,7 @@ export class CredentialController {
         return response.status(400).json({ error: result.array()[0].msg })
     }
 
-    const { presentation, domain, policies } = request.body
+    const { presentation, verifierDid, policies } = request.body
     const verifyStatus = request.query.verifyStatus === 'true' ? true : false 
     try {
         const result = await Identity.instance.verifyPresentation(
@@ -161,7 +167,7 @@ export class CredentialController {
             {
                 verifyStatus,
                 policies,
-                domain
+                domain: verifierDid
             }, 
             response.locals.customerId
         )

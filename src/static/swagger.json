@@ -2295,12 +2295,12 @@
                             }
                         ]
                     },
-                    "domain": {
-                        "description": "domain parameter to verify the verifiable presentation against",
+                    "verifierDid": {
+                        "description": "Provide an optional verifier DID also known as domain parameter, if the verifier DID in the presentation is not managed in the wallet",
                         "type": "string"
                     },
                     "policies": {
-                        "description": "Specifc Verification Policies",
+                        "description": "Specific Verification Policies",
                         "type": "object",
                         "properties": {
                             "now": {
