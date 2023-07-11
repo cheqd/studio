@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0-develop.9](https://github.com/cheqd/credential-service/compare/2.4.0-develop.8...2.4.0-develop.9) (2023-07-11)
+
+
+### Bug Fixes
+
+* Add policies to Verification API [DEV-2951] ([#294](https://github.com/cheqd/credential-service/issues/294)) ([d3c6ea9](https://github.com/cheqd/credential-service/commit/d3c6ea91a6319ab8ba7b1bfd65b9c553063624e8))
+
 ## [2.4.0-develop.8](https://github.com/cheqd/credential-service/compare/2.4.0-develop.7...2.4.0-develop.8) (2023-07-09)
 
 
