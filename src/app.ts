@@ -1,10 +1,9 @@
 import express from 'express'
 import Helmet from 'helmet'
 import cors from 'cors'
-import swaggerUi from 'swagger-ui-express'
 import session from 'express-session'
 import cookieParser from 'cookie-parser'
-
+import path from 'path'
 import { CredentialController } from './controllers/credentials.js'
 import { StoreController } from './controllers/store.js'
 import { IssuerController } from './controllers/issuer.js'
@@ -13,54 +12,19 @@ import { Authentication } from './middleware/authentication.js'
 import { Connection } from './database/connection/connection.js'
 import { RevocationController } from './controllers/revocation.js'
 import { CORS_ERROR_MSG } from './types/constants.js'
+import { LogToWebHook } from './middleware/hook.js'
+import { Middleware } from './middleware/middleware.js'
+import swaggerUi from 'swagger-ui-express'
 
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-import path from 'path'
-import { LogToWebHook } from './middleware/hook.js'
-import { Middleware } from './middleware/middleware.js'
-import swaggerJsdoc from 'swagger-jsdoc'
+// Define Swagger file
+const swaggerDocument = require('./static/swagger.json')
 
-const options = {
-  swaggerDefinition: {
-    openapi: '3.0.0',
-    servers: [
-      {
-        url: '/'
-      }
-    ],
-    tags: [
-      {
-        name: 'Credential',
-        externalDocs: {
-          url: 'https://github.com/cheqd/credential-service#readme'
-        }
-      }
-    ],
-    info: {
-      title: 'Credential Service for cheqd network',
-      version: '2.0.0',
-      description: 'API service to create and manage DIDs and credentials on cheqd network.'
-    },
-    components: {}
-  },
-  apis: ['./src/controllers/*.ts', './src/types/swagger-types.ts'], // files containing annotations as above
-  tags: [
-    {
-      name: 'Credential',
-      externalDocs: {
-        url: 'https://github.com/cheqd/credential-service#readme'
-      }
-    }
-  ],
-};
-
-const openApiSpecification = swaggerJsdoc(options);
-
-let swagger_options = {}
+let swaggerOptions = {}
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
-  swagger_options = {
+  swaggerOptions = {
     customJs: '/static/custom-button.js',
   }
 }
@@ -109,7 +73,7 @@ class App {
     this.express.use(
       '/swagger',
       swaggerUi.serve,
-      swaggerUi.setup(openApiSpecification, swagger_options)
+      swaggerUi.setup(swaggerDocument, swaggerOptions)
     )
     this.express.use(auth.handleError)
     this.express.use(async (req, res, next) => await auth.accessControl(req, res, next))
