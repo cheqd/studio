@@ -8,7 +8,7 @@ import {
   W3CVerifiableCredential,
   TAgent
 } from '@veramo/core'
-import { AccessControlConditionBalanceArgs, AccessControlConditionMemoNonceArgs, ICheqd, ICheqdCheckCredentialWithStatusList2021StatusOptions, ICheqdStatusList2021Options } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
+import { ICheqd, ICheqdCheckCredentialWithStatusList2021StatusOptions, ICheqdStatusList2021Options } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import { ICredentialIssuerLD } from '@veramo/credential-ld'
 import { AbstractIdentifierProvider } from '@veramo/did-manager'
 import { AbstractKeyManagementSystem } from '@veramo/key-manager'
@@ -142,17 +142,9 @@ export type VerifyCredentialStatusOptions = {
   fetchList?: boolean
   encryptedSymmetricKey?: string
   options?: ICheqdStatusList2021Options
-  decryptionOptions: {
-    unifiedAccessControlConditions: CosmosAccessControlCondition[]
-  }
-  bootstrapOptions: {}
 }
 
-export type VerifyPresentationStatusOptions = Omit<VerifyCredentialStatusOptions, 'decryptionOptions'> & { 
-    decryptionOptions: {
-        accessControlConditions: (AccessControlConditionMemoNonceArgs | AccessControlConditionBalanceArgs)[]
-    }
-}
+export type VerifyPresentationStatusOptions = Omit<VerifyCredentialStatusOptions, 'decryptionOptions'>
 
 export interface ResourceMetadata {
   collectionId: string

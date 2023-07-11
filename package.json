@@ -43,7 +43,7 @@
 		"README.md"
 	],
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "^3.4.1",
+		"@cheqd/did-provider-cheqd": "^3.5.0",
 		"@cosmjs/amino": "^0.31.0",
 		"@cosmjs/encoding": "^0.30.1",
 		"@logto/express": "^2.0.2",

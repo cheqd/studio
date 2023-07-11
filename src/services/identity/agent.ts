@@ -393,10 +393,7 @@ export class Veramo {
             issuerDid: did,
             ...statusOptions,
         },
-        decryptionOptions: {
-            accessControlConditions: []
-        },
-        bootstrapOptions: {}
+        fetchList: true
     } satisfies ICheqdCheckCredentialStatusWithStatusList2021Args)
  }
 }
