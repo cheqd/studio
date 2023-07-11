@@ -21,7 +21,8 @@
 		}
 	},
 	"scripts": {
-		"build": "tsc",
+		"build": "npm run build:app && npm run build:swagger",
+		"build:app": "tsc",
 		"build:swagger": "swagger-jsdoc -d src/swagger.cjs -o src/static/swagger.json ./src/controllers/*.ts ./src/types/swagger-types.ts",
 		"start": "node dist/index.js",
 		"format": "prettier --write  '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
