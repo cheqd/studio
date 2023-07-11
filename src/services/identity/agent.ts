@@ -14,7 +14,7 @@ import {
   MinimalImportableKey,
   TAgent,
   VerifiableCredential,
-  VerifiablePresentation,
+  VerifiablePresentation
 } from '@veramo/core'
 import { KeyManager } from '@veramo/key-manager'
 import { DIDStore, KeyStore } from '@veramo/data-store'
@@ -34,6 +34,7 @@ import type {
   ICheqdRevokeBulkCredentialsWithStatusList2021Args,
   ICheqdUpdateIdentifierArgs,
   ICheqdVerifyCredentialWithStatusList2021Args,
+  ICheqdVerifyPresentationWithStatusList2021Args,
 } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import {
   BroadCastStatusListOptions,
@@ -46,10 +47,10 @@ import {
   SuspensionStatusOptions,
   UpdateStatusListOptions,
   VeramoAgent,
-  VerifyCredentialStatusOptions,
-  VerifyPresentationStatusOptions
+  VerificationOptions
 } from '../../types/types.js'
 import { VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js'
+import { decodeJWT } from 'did-jwt'
 
 const resolverUrl = "https://resolver.cheqd.net/1.0/identifiers/"
 
@@ -236,16 +237,26 @@ export class Veramo {
     }          
   }
 
-  async verifyCredential(agent: VeramoAgent, credential: string | VerifiableCredential, statusOptions: VerifyCredentialStatusOptions | null): Promise<IVerifyResult> {
-    if(typeof credential !== 'string' && credential.credentialStatus) {
-        return await agent.cheqdVerifyCredential({
+  async verifyCredential(agent: VeramoAgent, credential: string | VerifiableCredential, verificationOptions: VerificationOptions = {}): Promise<IVerifyResult> {
+    const decodedCredential = typeof credential === 'string' ? decodeJWT(credential) as unknown as VerifiableCredential : credential
+    let result: IVerifyResult
+    if(verificationOptions.verifyStatus) {
+        result = await agent.cheqdVerifyCredential({
             credential: credential as VerifiableCredential,
             fetchList: true,
-            ...statusOptions
+            verificationArgs: {
+                ...verificationOptions,
+                fetchRemoteContexts: verificationOptions.fetchRemoteContexts || decodedCredential.proof.jws
+            }
         } as ICheqdVerifyCredentialWithStatusList2021Args)
+    } else {
+        result = await agent.verifyCredential({
+            credential, 
+            ...verificationOptions,
+            fetchRemoteContexts: verificationOptions.fetchRemoteContexts || decodedCredential.proof.jws
+        })
     }
 
-    const result = await agent.verifyCredential({ credential, fetchRemoteContexts: true })
     if (result.didResolutionResult) {
         delete(result.didResolutionResult)
     }
@@ -257,19 +268,28 @@ export class Veramo {
     if (result.verifiableCredential) {
         delete(result.verifiableCredential)
     }
+
+    if (result.payload) {
+        delete(result.payload)
+    }
+
     return result
   }
 
-  async verifyPresentation(agent: VeramoAgent, presentation: VerifiablePresentation | string, statusOptions: VerifyPresentationStatusOptions | null): Promise<IVerifyResult> {
-    // TODO: expose domain in did-provider-cheqd
-    // if(typeof presentation !== 'string') {
-    //     return await agent.cheqdVerifyPresentation({
-    //         presentation: presentation as VerifiablePresentation,
-    //         fetchList: true,
-    //         ...statusOptions
-    //     } as ICheqdVerifyPresentationWithStatusList2021Args)
-    // }
-    const result = await agent.verifyPresentation({ presentation, fetchRemoteContexts: true, policies: {audience: false} })
+  async verifyPresentation(agent: VeramoAgent, presentation: VerifiablePresentation | string, verificationOptions: VerificationOptions = {}): Promise<IVerifyResult> {
+    let result: IVerifyResult
+    if(verificationOptions.verifyStatus) {
+        result = await agent.cheqdVerifyPresentation({
+            presentation: presentation as VerifiablePresentation,
+            fetchList: true,
+            verificationArgs: {
+                ...verificationOptions
+            },
+        } as ICheqdVerifyPresentationWithStatusList2021Args)
+    } else {
+        result = await agent.verifyPresentation({ presentation, ...verificationOptions, fetchRemoteContexts: verificationOptions.fetchRemoteContexts || false })
+    }
+
     if (result.didResolutionResult) {
         delete(result.didResolutionResult)
     }
@@ -281,6 +301,11 @@ export class Veramo {
     if (result.verifiablePresentation) {
         delete(result.verifiablePresentation)
     }
+
+    if (result.payload) {
+        delete(result.payload)
+    }
+
     return result
   }
 

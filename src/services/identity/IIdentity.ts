@@ -11,8 +11,8 @@ import type {
 } from '@veramo/core'
 import type { AbstractPrivateKeyStore } from '@veramo/key-manager'
 import type { ResourcePayload } from '@cheqd/did-provider-cheqd'
-import type { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, CreateEncryptedStatusList2021Result, CreateStatusList2021Result, RevocationResult, SuspensionResult, UnsuspensionResult } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
-import type { BroadCastStatusListOptions, CreateStatusListOptions, CredentialRequest, StatusOptions, UpdateStatusListOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types'
+import type { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, CreateStatusList2021Result, RevocationResult, SuspensionResult, UnsuspensionResult } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
+import type { BroadCastStatusListOptions, CreateStatusListOptions, CredentialRequest, StatusOptions, UpdateStatusListOptions, VeramoAgent, VerificationOptions } from '../../types/types'
 
 export interface IIdentity {
   agent?: TAgent<any>
@@ -30,9 +30,9 @@ export interface IIdentity {
   importDid(did: string, privateKeyHex: string, publicKeyHex: string, agentId?: string): Promise<IIdentifier> 
   createResource(network: string, payload: ResourcePayload, agentId?: string): Promise<any>
   createCredential(credential: CredentialPayload, format: CredentialRequest['format'], statusOptions: StatusOptions | null, agentId?: string): Promise<VerifiableCredential>
-  verifyCredential(credential: VerifiableCredential | string, statusOptions: VerifyCredentialStatusOptions | null, agentId?: string): Promise<IVerifyResult>
-  verifyPresentation(presentation: VerifiablePresentation | string, statusOptions: VerifyPresentationStatusOptions, agentId?: string): Promise<IVerifyResult>
-  createStatusList2021(did: string, resourceOptions: ResourcePayload, statusOptions: CreateStatusListOptions, agentId: string): Promise<CreateStatusList2021Result | CreateEncryptedStatusList2021Result>
+  verifyCredential(credential: VerifiableCredential | string, verificationOptions: VerificationOptions, agentId?: string): Promise<IVerifyResult>
+  verifyPresentation(presentation: VerifiablePresentation | string, verificationOptions: VerificationOptions, agentId?: string): Promise<IVerifyResult>
+  createStatusList2021(did: string, resourceOptions: ResourcePayload, statusOptions: CreateStatusListOptions, agentId: string): Promise<CreateStatusList2021Result>
   updateStatusList2021(did: string, statusOptions: UpdateStatusListOptions, publish?: boolean, agentId?: string): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult>
   broadcastStatusList2021(did: string, resourceOptions: ResourcePayload, statusOptions: BroadCastStatusListOptions, agentId?: string): Promise<boolean>
   revokeCredentials(credential: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId?: string): Promise<RevocationResult| BulkRevocationResult>

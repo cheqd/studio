@@ -522,6 +522,25 @@
                 "summary": "Verify a credential",
                 "description": "<p>This endpoint verifies the credential. As input it takes the entire credential itself or just the JWT string</p>",
                 "operationId": "verify",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "verifyStatus",
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "fetchRemoteContexts",
+                        "description": "When dealing with JSON-LD you also MUST provide the proper contexts. * Set this to `true` ONLY if you want the `@context` URLs to be fetched in case they are a custom context.",
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                ],
                 "requestBody": {
                     "content": {
                         "application/x-www-form-urlencoded": {
@@ -826,6 +845,25 @@
                 "summary": "Verify a credential presentation",
                 "description": "<p>This endpoint verifies the credential presentation. As input it takes the entire presentation itself</p>",
                 "operationId": "presentation",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "verifyStatus",
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "fetchRemoteContexts",
+                        "description": "When dealing with JSON-LD you also MUST provide the proper contexts. * Set this to `true` ONLY if you want the `@context` URLs to be fetched in case they are a custom context.",
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                ],
                 "requestBody": {
                     "content": {
                         "application/x-www-form-urlencoded": {
@@ -2050,6 +2088,28 @@
                                 "type": "string"
                             }
                         ]
+                    },
+                    "policies": {
+                        "description": "Custom verification policies to execute when verifying credential",
+                        "type": "object",
+                        "properties": {
+                            "now": {
+                                "description": "policy to verify over the now (current time) during the verification check (UNIX time in seconds)",
+                                "type": "number"
+                            },
+                            "issuanceDate": {
+                                "description": "policy to skip the issuanceDate (nbf) timestamp check when set to `false`",
+                                "type": "boolean"
+                            },
+                            "expirationDate": {
+                                "description": "policy to skip the expirationDate (exp) timestamp check when set to `false`",
+                                "type": "boolean"
+                            },
+                            "audience": {
+                                "description": "policy to skip the audience check when set to `false`",
+                                "type": "boolean"
+                            }
+                        }
                     }
                 }
             },
@@ -2234,6 +2294,32 @@
                                 "type": "object"
                             }
                         ]
+                    },
+                    "verifierDid": {
+                        "description": "Provide an optional verifier DID (also known as 'domain' parameter), if the verifier DID in the presentation is not managed in the wallet",
+                        "type": "string"
+                    },
+                    "policies": {
+                        "description": "Custom verification policies to execute when verifying presentation",
+                        "type": "object",
+                        "properties": {
+                            "now": {
+                                "description": "policy to verify over the now (current time) during the verification check (UNIX time in seconds)",
+                                "type": "number"
+                            },
+                            "issuanceDate": {
+                                "description": "policy to skip the issuanceDate (nbf) timestamp check when set to `false`",
+                                "type": "boolean"
+                            },
+                            "expirationDate": {
+                                "description": "policy to skip the expirationDate (exp) timestamp check when set to `false`",
+                                "type": "boolean"
+                            },
+                            "audience": {
+                                "description": "policy to skip the audience check when set to `false`",
+                                "type": "boolean"
+                            }
+                        }
                     }
                 }
             },
