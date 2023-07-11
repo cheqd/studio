@@ -45,7 +45,7 @@
 	"dependencies": {
 		"@cheqd/did-provider-cheqd": "^3.6.0",
 		"@cosmjs/amino": "^0.31.0",
-		"@cosmjs/encoding": "^0.30.1",
+		"@cosmjs/encoding": "^0.31.0",
 		"@logto/express": "^2.0.2",
 		"@veramo/core": "^5.2.0",
 		"@veramo/credential-ld": "^5.2.0",
