@@ -2090,7 +2090,7 @@
                         ]
                     },
                     "policies": {
-                        "description": "Specifc Verification Policies",
+                        "description": "Custom verification policies to execute when verifying credential",
                         "type": "object",
                         "properties": {
                             "now": {
@@ -2296,11 +2296,11 @@
                         ]
                     },
                     "verifierDid": {
-                        "description": "Provide an optional verifier DID also known as domain parameter, if the verifier DID in the presentation is not managed in the wallet",
+                        "description": "Provide an optional verifier DID (also known as 'domain' parameter), if the verifier DID in the presentation is not managed in the wallet",
                         "type": "string"
                     },
                     "policies": {
-                        "description": "Specific Verification Policies",
+                        "description": "Custom verification policies to execute when verifying presentation",
                         "type": "object",
                         "properties": {
                             "now": {
