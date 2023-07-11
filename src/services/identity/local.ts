@@ -12,7 +12,7 @@ import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd'
 import { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, CreateStatusList2021Result, StatusCheckResult } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
 
-import { BroadCastStatusListOptions, CheckStatusListOptions, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, UpdateStatusListOptions, VeramoAgent, VerifyCredentialStatusOptions, VerifyPresentationStatusOptions } from '../../types/types.js'
+import { BroadCastStatusListOptions, CheckStatusListOptions, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl, StatusOptions, UpdateStatusListOptions, VeramoAgent, VerificationOptions } from '../../types/types.js'
 import { Connection } from '../../database/connection/connection.js'
 import { IIdentity } from './IIdentity.js'
 import { Veramo } from './agent.js'
@@ -146,12 +146,12 @@ export class LocalIdentity implements IIdentity {
     }          
   }
 
-  async verifyCredential(credential: VerifiableCredential | string,  statusOptions: VerifyCredentialStatusOptions | null): Promise<IVerifyResult> {
-    return await Veramo.instance.verifyCredential(this.initAgent(), credential, statusOptions)
+  async verifyCredential(credential: VerifiableCredential | string,  verificationOptions: VerificationOptions): Promise<IVerifyResult> {
+    return await Veramo.instance.verifyCredential(this.initAgent(), credential, verificationOptions)
   }
 
-  async verifyPresentation(presentation: VerifiablePresentation | string, statusOptions: VerifyPresentationStatusOptions | null): Promise<IVerifyResult> {
-    return await Veramo.instance.verifyPresentation(this.initAgent(), presentation, statusOptions)
+  async verifyPresentation(presentation: VerifiablePresentation | string, verificationOptions: VerificationOptions): Promise<IVerifyResult> {
+    return await Veramo.instance.verifyPresentation(this.initAgent(), presentation, verificationOptions)
   }
 
   async createStatusList2021(did: string, resourceOptions: ResourcePayload,  statusListOptions: CreateStatusListOptions): Promise<CreateStatusList2021Result> {

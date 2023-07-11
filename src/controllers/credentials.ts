@@ -29,6 +29,8 @@ export class CredentialController {
         return false
       })
     .withMessage('Entry must be a jwt string or an credential'),
+    check('policies').optional().isObject().withMessage('Verification policies should be an object'),
+    query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value'),
     query('publish').optional().isBoolean().withMessage('publish should be a boolean value')
   ]
 
@@ -41,6 +43,9 @@ export class CredentialController {
         return false
       })
     .withMessage('Entry must be a jwt string or a presentation'),
+    check('verifierDid').optional().isString().withMessage('Invalid verifier DID'),
+    check('policies').optional().isObject().withMessage('Verification policies should be an object'),
+    query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value')
   ]
 
   public async issue(request: Request, response: Response) {
@@ -76,8 +81,18 @@ export class CredentialController {
     if (!result.isEmpty()) {
         return response.status(400).json({ error: result.array()[0].msg })
     }
+
+    const { credential, policies } = request.body
+    const verifyStatus = request.query.verifyStatus === 'true' ? true : false 
     try {
-        const result = await Credentials.instance.verify_credentials(request.body.credential, request.body.statusOptions, response.locals.customerId)
+        const result = await Identity.instance.verifyCredential(
+            credential, 
+            {
+                verifyStatus,
+                policies
+            },
+            response.locals.customerId
+        )
         if (result.error) {
             return response.status(400).json({
                 verified: result.verified,
@@ -144,8 +159,18 @@ export class CredentialController {
         return response.status(400).json({ error: result.array()[0].msg })
     }
 
+    const { presentation, verifierDid, policies } = request.body
+    const verifyStatus = request.query.verifyStatus === 'true' ? true : false 
     try {
-        const result = await Identity.instance.verifyPresentation(request.body.presentation, request.body.statusOptions, response.locals.customerId)
+        const result = await Identity.instance.verifyPresentation(
+            presentation, 
+            {
+                verifyStatus,
+                policies,
+                domain: verifierDid
+            }, 
+            response.locals.customerId
+        )
         if (result.error) {
             return response.status(400).json({
                 verified: result.verified,
