@@ -58,19 +58,7 @@ export class CustomerController {
         }
     }
 
-    // This method never use.
-    public async update(request: Request, response: Response) {
-        try {
-            const result = await CustomerService.instance.update(response.locals.customerId, request.body)
-            return response.status(200).json(result)
-        } catch (error) {
-            return response.status(500).json({
-                error: `${error}`
-            })
-        }
-    }
-
-     /**
+    /**
      * @openapi
      * 
      * /account:
