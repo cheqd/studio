@@ -20,7 +20,7 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 // Define Swagger file
-const swaggerDocument = require('./static/swagger.json')
+import swaggerDocument from './static/swagger.json' assert { type: "json" }
 
 let swaggerOptions = {}
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
