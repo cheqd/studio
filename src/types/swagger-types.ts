@@ -34,6 +34,7 @@
  *             type: string
  *         expirationDate:
  *           description: Optional expiration date according to the <a href=https://www.w3.org/TR/vc-data-model/#expiration> specification</a>.
+ *           type: string
  *         format:
  *           description: Select one of the supported credential formats, jwt by default.
  *           type: string
@@ -64,6 +65,9 @@
  *               type: number
  *             indexNotIn:
  *               type: number
+ *           example:
+ *             statusPurpose: revocation
+ *             statusListName: employee-credentials
  *       required:
  *         - issuerDid
  *         - subjectDid
@@ -188,6 +192,22 @@
  *           allOf:
  *             - type: object
  *             - type: string
+ *         policies:
+ *           description: Custom verification policies to execute when verifying credential.
+ *           type: object
+ *           properties:
+ *             now:
+ *               description: policy to verify over the now (current time) during the verification check (UNIX time in seconds).
+ *               type: number
+ *             issuanceDate:
+ *               description: policy to skip the issuanceDate (nbf) timestamp check when set to `false`.
+ *               type: boolean
+ *             expirationDate:
+ *               description: policy to skip the expirationDate (exp) timestamp check when set to `false`.
+ *               type: boolean
+ *             audience:
+ *               description: policy to skip the audience check when set to `false`.
+ *               type: boolean
  *     IVerifyResult:
  *       type: object
  *       properties:
@@ -220,6 +240,26 @@
  *           allOf:
  *             - type: string
  *             - type: object
+ *         verifiedDid:
+ *           description: Provide an optional verifier DID (also known as 'domain' parameter), if the verifier DID in the presentation is not managed in the wallet.
+ *           type: string
+ *         policies:
+ *           description: Custom verification policies to execute when verifying presentation.
+ *           type: object
+ *           properties:
+ *             now:
+ *               description: policy to verify over the now (current time) during the verification check (UNIX time in seconds).
+ *               type: number
+ *             issuanceDate:
+ *               description: policy to skip the issuanceDate (nbf) timestamp check when set to `false`.
+ *               type: boolean
+ *             expirationDate:
+ *               description: policy to skip the expirationDate (exp) timestamp check when set to `false`.
+ *               type: boolean
+ *             audience:
+ *               description: policy to skip the audience check when set to `false`.
+ *               type: boolean
+ * 
  *     CredentialStatusCreateRequest:
  *       allOf:
  *         - type: object
@@ -267,11 +307,6 @@
  *           properties: 
  *             created:
  *               type: boolean
- *             resource:
- *               type: object
- *               metadata:
- *                 encoding: base64url
- *                 encrypted: false
  *             resourceMetadata:
  *               type: object
  *             statusList2021:
@@ -328,10 +363,10 @@
  *               description: The DID of the status list publisher.
  *               type: string
  *             statusListName:
- *               description: The name of the statusList to be published
+ *               description: The name of the statusList to be published.
  *               type: string
  *             encodedList:
- *               description: The encoding format of the statusList provided
+ *               description: Provide encoded string for the resource data.
  *               type: string
  *               enum:
  *                 - base64url
@@ -377,6 +412,18 @@
  *         statusListVersion:
  *           description: The input field is OPTIONAL, If present uses the provided statusListVersion for the update operation.
  *           type: string
+ *     CredentialStatusCheckRequest:
+ *       type: object
+ *       properties:
+ *         did:
+ *           description: The DID of the status list publisher.
+ *           type: string
+ *         statusListName:
+ *           description: The name of the status list to be published.
+ *           type: string
+ *         index:
+ *           description: Provide the statusList index to be verified.
+ *           type: number
  *     KeyResult:
  *       type: object
  *       properties:

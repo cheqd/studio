@@ -123,7 +123,18 @@ export class CredentialController {
    *     summary: Verify a credential.
    *     description: This endpoint verifies the credential. As input it takes the entire credential itself or just the JWT string.
    *     operationId: verify
-   *     security: [ bearerAuth: [] ]
+   *     parameters:
+   *       - in: query
+   *         name: verifyStatus
+   *         schema:
+   *           type: boolean
+   *           default: false
+   *       - in: query
+   *         name: fetchRemoteContexts
+   *         description: When dealing with JSON-LD you also MUST provide the proper contexts. * Set this to `true` ONLY if you want the `@context` URLs to be fetched in case they are a custom context.
+   *         schema:
+   *           type: boolean
+   *           default: false
    *     requestBody:
    *       content:
    *         application/x-www-form-urlencoded:
@@ -397,7 +408,18 @@ export class CredentialController {
    *     summary: Verify a credential presentation.
    *     description: This endpoint verifies the credential presentation. As input it takes the entire presentation itself.
    *     operationId: presentation
-   *     security: [ bearerAuth: [] ]
+   *     parameters:
+   *       - in: query
+   *         name: verifyStatus
+   *         schema:
+   *           type: boolean
+   *           default: false
+   *       - in: query
+   *         name: fetchRemoteContexts
+   *         description: When dealing with JSON-LD you also MUST provide the proper contexts. * Set this to `true` ONLY if you want the `@context` URLs to be fetched in case they are a custom context.
+   *         schema:
+   *           type: boolean
+   *           default: false
    *     requestBody:
    *       content:
    *         application/x-www-form-urlencoded:

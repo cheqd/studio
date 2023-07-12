@@ -388,7 +388,69 @@ export class RevocationController {
           })
         }
     }
-
+    
+    /**
+     * @openapi
+     * 
+     * /credential-status/check:
+     *   post:
+     *     tags: [ Credential Status ]
+     *     summary: Check Credential Status of an index in status list 2021.
+     *     parameters:
+     *       - in: query
+     *         name: statusPurpose
+     *         required: true
+     *         schema:
+     *           type: string
+     *           enum:
+     *             - revocation
+     *             - suspension
+     *       - in: query
+     *         name: encrypted
+     *         required: true
+     *         schema:
+     *           type: boolean
+     *           default: false
+     *     requestBody:
+     *       content:
+     *         application/x-www-form-urlencoded:
+     *           schema:
+     *             $ref: '#/components/schemas/CredentialStatusCheckRequest'
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/CredentialStatusCheckRequest'
+     *     responses:
+     *       200:
+     *         description: The request was successful.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 revoked:
+     *                   type: boolean
+     *                 suspended:
+     *                   type: boolean
+     *                   example: false
+     *       400:
+     *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
+     *         content:
+     *           application/json:
+     *             schema: 
+     *               $ref: '#/components/schemas/InvalidRequest'
+     *             example:
+     *               error: Invalid Request
+     *       401:
+     *         $ref: '#/components/schemas/UnauthorizedError'
+     *       500:
+     *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/InvalidRequest'
+     *             example: 
+     *               error: Internal Error
+     */
     async checkStatusList(request: Request, response: Response) {
         const result = validationResult(request)
         if (!result.isEmpty()) {
