@@ -9,13 +9,12 @@ import {
   TAgent,
   VerificationPolicies
 } from '@veramo/core'
-import { ICheqd, ICheqdStatusList2021Options } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
+import { ICheqd, ICheqdCheckCredentialWithStatusList2021StatusOptions } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import { ICredentialIssuerLD } from '@veramo/credential-ld'
 import { AbstractIdentifierProvider } from '@veramo/did-manager'
 import { AbstractKeyManagementSystem } from '@veramo/key-manager'
 import { DataSource } from 'typeorm'
 import { CheqdDIDProvider } from '@cheqd/did-provider-cheqd'
-import { CosmosAccessControlCondition } from '@cheqd/did-provider-cheqd/build/types/dkg-threshold/lit-protocol'
 
 export type ErrorResponse = {
   name: string
@@ -160,6 +159,8 @@ export interface UpdateStatusListOptions {
   statusListVersion?: string
   statusAction: 'revoke' | 'suspend' | 'reinstate'   
 }
+
+export type CheckStatusListOptions = Omit<ICheqdCheckCredentialWithStatusList2021StatusOptions, 'issuerDid'>
 
 export interface VerificationOptions {
   fetchRemoteContexts?: boolean
