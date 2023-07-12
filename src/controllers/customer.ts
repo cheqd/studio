@@ -3,7 +3,7 @@ import type { Request, Response } from 'express'
 import { CustomerService } from '../services/customer.js'
 import { LogToHelper } from '../middleware/auth/logto.js'
 
-export class CustomerController {
+export class AccountController {
 
     /**
      * @openapi

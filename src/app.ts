@@ -7,7 +7,7 @@ import path from 'path'
 import { CredentialController } from './controllers/credentials.js'
 import { StoreController } from './controllers/store.js'
 import { IssuerController } from './controllers/issuer.js'
-import { CustomerController } from './controllers/customer.js'
+import { AccountController } from './controllers/customer.js'
 import { Authentication } from './middleware/authentication.js'
 import { Connection } from './database/connection/connection.js'
 import { RevocationController } from './controllers/revocation.js'
@@ -121,11 +121,11 @@ class App {
     app.post(`/resource/create/:did`, IssuerController.resourceValidator, new IssuerController().createResource)
 
     // Account API
-    app.post(`/account`, new CustomerController().create)
-    app.get(`/account`, new CustomerController().get)
+    app.post(`/account`, new AccountController().create)
+    app.get(`/account`, new AccountController().get)
     
     // LogTo webhooks
-    app.post(`/account/set-default-role`, LogToWebHook.verifyHookSignature, new CustomerController().setupDefaultRole)
+    app.post(`/account/set-default-role`, LogToWebHook.verifyHookSignature, new AccountController().setupDefaultRole)
 
     // static files
     app.get('/static/custom-button.js', 
