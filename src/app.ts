@@ -96,7 +96,7 @@ class App {
     app.post(`/presentation/verify`, CredentialController.presentationValidator, new CredentialController().verifyPresentation)
 
     // revocation
-    app.post('/credential-status/create', RevocationController.queryValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
+    app.post('/credential-status/create', RevocationController.commonValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
     app.post('/credential-status/update', RevocationController.updateValidator, new RevocationController().updateStatusList)
     app.post('/credential-status/publish', RevocationController.commonValidator, new RevocationController().createStatusList)
     app.post('/credential-status/check', RevocationController.commonValidator, RevocationController.checkValidator, new RevocationController().checkStatusList)

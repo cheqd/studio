@@ -33,6 +33,13 @@ export class RevocationController {
         query('publish').isBoolean().withMessage('publish should be a boolean value')
     ]
 
+    static checkValidator = [
+      check('index').exists().withMessage('Index is required')
+      .isNumeric().withMessage('Index should be a number'),
+      check('statusListName').exists().withMessage('StatusListName is required')
+      .isString().withMessage('Invalid statusListName')
+  ]
+
     /**
      * @openapi
      * 
