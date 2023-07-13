@@ -435,7 +435,7 @@
  *         publicKeyHex:
  *           type: string
  *     DidDocument:
- *       description: This input field contains either a complete DID document, or an incremental change (diff) to a DID document. See <a href=\"https://identity.foundation/did-registration/#diddocument\">https://identity.foundation/did-registration/#diddocument</a>.
+ *       description: This input field contains either a complete DID document, or an incremental change (diff) to a DID document. See <a href="https://identity.foundation/did-registration/#diddocument">Universal DID Registrar specification</a>.
  *       type: object
  *       properties:
  *         '@context':
@@ -509,7 +509,7 @@
  *         serviceEndpoint:
  *           type: string
  *         assertionMethod:
- *           description: An assertion method is required to issue JSONLD credentials.
+ *           description: An assertion method is required to issue JSON-LD credentials.
  *           type: boolean
  *           default: true
  *         didDocument:
@@ -570,23 +570,23 @@
  *           type: string
  *         service:
  *           type: array
- *           description: This input field assigns the provided service array to the DID Document.
+ *           description: Service section of the DID Document.
  *           items:
  *             $ref: '#/components/schemas/Service'
  *         verificationMethod:
  *           type: array
- *           description: This input field assigns the provided verificationMethod array to the DID Document.
+ *           description: Verification Method section of the DID Document.
  *           items:
  *             $ref: '#/components/schemas/VerificationMethod'
  *         authentication:
- *           description: This input field assigns the provided authentication array to the DID Document.
+ *           description: Authentication section of the DID Document.
  *           type: array
  *           items:
  *             type: string
  *         didDocument:
  *           $ref: '#/components/schemas/DidDocument'
  *     CreateResourceRequest:
- *       description: Input fields for the resource creation
+ *       description: Input fields for DID-Linked Resource creation.
  *       type: object
  *       additionalProperties: false
  *       required:
@@ -596,22 +596,23 @@
  *         - encoding
  *       properties:
  *         data:
- *           description: Provide encoded string for the resource data.
+ *           description: Encoded string containing the data to be stored in the DID-Linked Resource.
  *           type: string
  *         encoding:
- *           description: The encoding format of the resource data.
+ *           description: Encoding format used to encode the data.
  *           type: string
  *           enum:
  *             - base64url
  *             - base64
  *             - hex
  *         name:
- *           description: Resource name.
+ *           description: Name of DID-Linked Resource.
  *           type: string
  *         type:
- *           description: Resource type.
+ *           description: Type of DID-Linked Resource. This is NOT the same as the media type, which is calculated automatically ledger-side.
  *           type: string
  *         alsoKnownAs:
+ * 			 description: Optional field to assign a set of alternative URIs where the DID-Linked Resource can be fetched from.
  *           type: array
  *           items:
  *             type: object
@@ -621,6 +622,7 @@
  *               description:
  *                 type: string
  *         version:
+ * 		 	 description: Optional field to assign a human-readable version in the DID-Linked Resource.
  *           type: string
  *       example:
  *         data: SGVsbG8gV29ybGQ=
