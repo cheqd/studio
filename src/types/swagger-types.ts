@@ -608,6 +608,9 @@
  *         name:
  *           description: Resource name.
  *           type: string
+ *         type:
+ *           description: Resource type.
+ *           type: string
  *         alsoKnownAs:
  *           type: array
  *           items:
