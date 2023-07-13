@@ -11,8 +11,8 @@ export class AccountController {
      * /account:
      *   post:
      *     tags: [Account]
-     *     summary: Create a client.
-     *     description: This endpoint verifies the JWT token and creates a customer if they don't exist.
+     *     summary: Create a new custodian-mode client.
+     *     description: This endpoint creates a new custodian-mode client and creates issuer DIDs and Cosmos/cheqd accounts for the client.
      *     security: [ bearerAuth: [] ]
      *     responses:
      *       200:
@@ -52,8 +52,8 @@ export class AccountController {
      * /account:
      *   get:
      *     tags: [Account]
-     *     summary: Fetch a client.
-     *     description: This endpoint verifies the JWT token and returns the customer if it exists.
+     *     summary: Fetch custodian-mode client details.
+     *     description: This endpoint returns the custodian-mode client details for authenticated users.
      *     security: [ bearerAuth: [] ]
      *     responses:
      *       200:
