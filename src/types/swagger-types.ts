@@ -1,6 +1,6 @@
 /**
  * @openapi
- * 
+ *
  * components:
  *   securitySchemes:
  *     bearerAuth:
@@ -152,12 +152,12 @@
  *           statusPurpose: suspension
  *           type: StatusList2021Entry
  *         issuanceDate: 2023-06-08T13:49:28.000Z
- *         issuer: 
+ *         issuer:
  *           id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
  *         proof:
  *           jwt: eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg
  *           type: JwtProof2020
- *         type: 
+ *         type:
  *           - VerifiableCredential
  *           - Person
  *     CredentialRevokeRequest:
@@ -259,7 +259,6 @@
  *             audience:
  *               description: Policy to skip the audience check when set to `false`.
  *               type: boolean
- * 
  *     CredentialStatusCreateRequest:
  *       allOf:
  *         - type: object
@@ -304,7 +303,7 @@
  *       properties:
  *         success:
  *           type: object
- *           properties: 
+ *           properties:
  *             created:
  *               type: boolean
  *             resourceMetadata:
@@ -330,8 +329,8 @@
  *                   type: boolean
  *       example:
  *         created: true
- *         resource: 
- *           StatusList2021: 
+ *         resource:
+ *           StatusList2021:
  *             encodedList: H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA
  *             type: StatusList2021Revocation
  *             validFrom: 2023-06-26T11:45:19.349Z
@@ -476,7 +475,7 @@
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/Service'
- *       example: 
+ *       example:
  *         id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
  *         controller:
  *           - did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
@@ -612,7 +611,7 @@
  *           description: Type of DID-Linked Resource. This is NOT the same as the media type, which is calculated automatically ledger-side.
  *           type: string
  *         alsoKnownAs:
- * 			 description: Optional field to assign a set of alternative URIs where the DID-Linked Resource can be fetched from.
+ *           description: Optional field to assign a set of alternative URIs where the DID-Linked Resource can be fetched from.
  *           type: array
  *           items:
  *             type: object
@@ -622,7 +621,7 @@
  *               description:
  *                 type: string
  *         version:
- * 		 	 description: Optional field to assign a human-readable version in the DID-Linked Resource.
+ *           description: Optional field to assign a human-readable version in the DID-Linked Resource.
  *           type: string
  *       example:
  *         data: SGVsbG8gV29ybGQ=
