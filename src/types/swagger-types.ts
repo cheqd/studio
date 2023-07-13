@@ -9,40 +9,40 @@
  *       bearerFormat: JWT
  *   schemas:
  *     CredentialRequest:
- *       description: Input fields for the create operation.
+ *       description: Input fields for the creating a Verifiable Credential.
  *       type: object
  *       additionalProperties: false
  *       properties:
  *         issuerDid:
- *           description: This input field is the Issuer's DID.
+ *           description: DID of the Verifiable Credential issuer. This needs to be a `did:cheqd` DID.
  *           type: string
  *         subjectDid:
- *           description: This input field is the holder's DID.
+ *           description: DID of the Verifiable Credential holder/subject. This needs to be a `did:key` DID.
  *           type: string
  *         attributes:
- *           description: Json input of the attributes.
+ *           description: JSON object containing the attributes to be included in the credential.
  *           type: object
  *         '@context':
- *           description: Additional contexts to be included in the credential.
+ *           description: Optional properties to be included in the `@context` property of the credential.
  *           type: array
  *           items:
  *             type: string
  *         type:
- *           description: Additional type property to be included in the credential.
+ *           description: Optional properties to be included in the `type` property of the credential.
  *           type: array
  *           items:
  *             type: string
  *         expirationDate:
- *           description: Optional expiration date according to the <a href=https://www.w3.org/TR/vc-data-model/#expiration> specification</a>.
+ *           description: Optional expiration date according to the <a href=https://www.w3.org/TR/vc-data-model/#expiration> VC Data Model specification</a>.
  *           type: string
  *         format:
- *           description: Select one of the supported credential formats, jwt by default.
+ *           description: Format of the Verifiable Credential. Defaults to VC-JWT.
  *           type: string
  *           enum:
  *             - jwt
  *             - lds
  *         credentialStatus:
- *           description: Optional field to support revocation or suspension, which takes statusListName and statusListPurpose as inputs.
+ *           description: Optional `credentialStatus` properties for VC revocation or suspension. Takes `statusListName` and `statusListPurpose` as inputs.
  *           type: object
  *           required:
  *             - statusPurpose
@@ -88,7 +88,7 @@
  *           statusListName: employee-credentials
  *           statusListIndex: 10
  *     Credential:
- *       description: Input fields for the update operation.
+ *       description: Input fields for revoking/suspending a Verifiable Credential.
  *       type: object
  *       additionalProperties: false
  *       properties:
@@ -164,7 +164,7 @@
  *       type: object
  *       properties:
  *         credential:
- *           description: This input field takes the credential object or the JWT string
+ *           description: Verifiable Credential to be revoked as a VC-JWT string or a JSON object.
  *           oneOf:
  *             - type: object
  *             - type: string
@@ -188,7 +188,7 @@
  *       type: object
  *       properties:
  *         credential:
- *           description: This input field takes the credential object or the JWT string.\
+ *           description: Verifiable Credential to be verified as a VC-JWT string or a JSON object.
  *           allOf:
  *             - type: object
  *             - type: string
@@ -197,16 +197,16 @@
  *           type: object
  *           properties:
  *             now:
- *               description: policy to verify over the now (current time) during the verification check (UNIX time in seconds).
+ *               description: Policy to verify current time during the verification check (provided as Unix/epoch time).
  *               type: number
  *             issuanceDate:
- *               description: policy to skip the issuanceDate (nbf) timestamp check when set to `false`.
+ *               description: Policy to skip the `issuanceDate` (`nbf`) timestamp check when set to `false`.
  *               type: boolean
  *             expirationDate:
- *               description: policy to skip the expirationDate (exp) timestamp check when set to `false`.
+ *               description: Policy to skip the `expirationDate` (`exp`) timestamp check when set to `false`.
  *               type: boolean
  *             audience:
- *               description: policy to skip the audience check when set to `false`.
+ *               description: Policy to skip the audience check when set to `false`.
  *               type: boolean
  *     IVerifyResult:
  *       type: object
@@ -236,7 +236,7 @@
  *         - presentation
  *       properties:
  *         presentation:
- *           description: This input field takes the presentation object or the JWT string.
+ *           description: Verifiable Presentation to be verified as a VP-JWT string or a JSON object.
  *           allOf:
  *             - type: string
  *             - type: object
@@ -248,16 +248,16 @@
  *           type: object
  *           properties:
  *             now:
- *               description: policy to verify over the now (current time) during the verification check (UNIX time in seconds).
+ *               description: Policy to verify current time during the verification check (provided as Unix/epoch time).
  *               type: number
  *             issuanceDate:
- *               description: policy to skip the issuanceDate (nbf) timestamp check when set to `false`.
+ *               description: Policy to skip the `issuanceDate` (`nbf`) timestamp check when set to `false`.
  *               type: boolean
  *             expirationDate:
- *               description: policy to skip the expirationDate (exp) timestamp check when set to `false`.
+ *               description: Policy to skip the `expirationDate` (`exp`) timestamp check when set to `false`.
  *               type: boolean
  *             audience:
- *               description: policy to skip the audience check when set to `false`.
+ *               description: Policy to skip the audience check when set to `false`.
  *               type: boolean
  * 
  *     CredentialStatusCreateRequest:
@@ -268,15 +268,15 @@
  *             - statusListName
  *           properties:
  *             did:
- *               description: The DID of the status list publisher.
+ *               description: DID of the StatusList2021 publisher.
  *               type: string
  *             statusListName:
- *               description: The name of the status list to be created.
+ *               description: The name of the StatusList2021 DID-Linked Resource to be created.
  *               type: string
  *             length:
  *               description: The length of the status list to be created. The default and minimum length is 140000 which is 16kb.
  *             encoding:
- *               description: The encoding format of the statusList to be published.
+ *               description: The encoding format of the StatusList2021 DiD-Linked Resource to be created.
  *               type: string
  *               default: base64url
  *               enum:
@@ -284,10 +284,10 @@
  *                 - base64
  *                 - hex
  *             statusListVersion:
- *               description: This input field is OPTIONAL, If present assigns the version to be assigned to the statusList.
+ *               description: Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.
  *               type: string
  *             alsoKnownAs:
- *               description: The input field is OPTIONAL. If present, the value MUST be a set where each item in the set is a uri.
+ *               description: Optional field to assign a set of alternative URIs where the StatusList2021 DID-Linked Resource can be fetched from.
  *               type: array
  *               items:
  *                 type: object
@@ -360,23 +360,23 @@
  *             - encoding
  *           properties:
  *             did:
- *               description: The DID of the status list publisher.
+ *               description: DID of the StatusList2021 publisher.
  *               type: string
  *             statusListName:
- *               description: The name of the statusList to be published.
+ *               description: The name of the StatusList2021 DID-Linked Resource to be published.
  *               type: string
  *             encodedList:
- *               description: Provide encoded string for the resource data.
+ *               description: The encoding format of the StatusList2021 DiD-Linked Resource to be published.
  *               type: string
  *               enum:
  *                 - base64url
  *                 - base64
  *                 - hex
  *             statusListVersion:
- *               description: This input field is OPTIONAL, If present assigns the version to be assigned to the statusList
+ *               description: Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.
  *               type: string
  *             alsoKnownAs:
- *                description: The input field is OPTIONAL. If present, the value MUST be a set where each item in the set is a uri.
+ *                description: Optional field to assign a set of alternative URIs where the StatusList2021 DID-Linked Resource can be fetched from.
  *                type: array
  *                items:
  *                  type: object
@@ -399,30 +399,30 @@
  *         - indices
  *       properties:
  *         did:
- *           description: The DID of the status list publisher.
+ *           description: DID of the StatusList2021 publisher.
  *           type: string
  *         statusListName:
- *           description: The name of the status list to be created.
+ *           description: The name of the StatusList2021 DID-Linked Resource to be updated.
  *           type: string
  *         indices:
- *           description: Provide the list of indices to be updated.
+ *           description: List of credential status indices to be updated. The indices must be in the range of the status list.
  *           type: array
  *           items:
  *             type: number
  *         statusListVersion:
- *           description: The input field is OPTIONAL, If present uses the provided statusListVersion for the update operation.
+ *           description: Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.
  *           type: string
  *     CredentialStatusCheckRequest:
  *       type: object
  *       properties:
  *         did:
- *           description: The DID of the status list publisher.
+ *           description: DID of the StatusList2021 publisher.
  *           type: string
  *         statusListName:
- *           description: The name of the status list to be published.
+ *           description: The name of the StatusList2021 DID-Linked Resource to be checked.
  *           type: string
  *         index:
- *           description: Provide the statusList index to be verified.
+ *           description: Credential status index to be checked for revocation or suspension.
  *           type: number
  *     KeyResult:
  *       type: object
