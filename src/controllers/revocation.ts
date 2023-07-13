@@ -78,23 +78,11 @@ export class RevocationController {
      *             schema:
      *               $ref: '#/components/schemas/CredentialStatusResult'
      *       400:
-     *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
-     *         content:
-     *           application/json:
-     *             schema: 
-     *               $ref: '#/components/schemas/InvalidRequest'
-     *             example:
-     *               error: Invalid Request
+     *         $ref: '#/components/schemas/Invalid Request'
      *       401:
      *         $ref: '#/components/schemas/UnauthorizedError'
      *       500:
-     *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/InvalidRequest'
-     *             example: 
-     *               error: Internal Error
+     *         $ref: '#/components/schemas/InternalError'
      */
     async createStatusList(request: Request, response: Response) {
         const result = validationResult(request)
@@ -162,23 +150,11 @@ export class RevocationController {
      *             schema:
      *               $ref: '#/components/schemas/CredentialStatusResult'
      *       400:
-     *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
-     *         content:
-     *           application/json:
-     *             schema: 
-     *               $ref: '#/components/schemas/InvalidRequest'
-     *             example:
-     *               error: Invalid Request
+     *         $ref: '#/components/schemas/Invalid Request'
      *       401:
      *         $ref: '#/components/schemas/UnauthorizedError'
      *       500:
-     *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/InvalidRequest'
-     *             example: 
-     *               error: Internal Error
+     *         $ref: '#/components/schemas/InternalError'
      */
     async publishStatusList(request: Request, response: Response) {
       const result = validationResult(request)
@@ -251,23 +227,11 @@ export class RevocationController {
      *                   statusListNextVersion:
      *                     type: string
      *       400:
-     *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
-     *         content:
-     *           application/json:
-     *             schema: 
-     *               $ref: '#/components/schemas/InvalidRequest'
-     *             example:
-     *               error: Invalid Request
+     *         $ref: '#/components/schemas/Invalid Request'
      *       401:
      *         $ref: '#/components/schemas/UnauthorizedError'
      *       500:
-     *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/InvalidRequest'
-     *             example: 
-     *               error: Internal Error
+     *         $ref: '#/components/schemas/InternalError'
      */  
     async fetchStatusList(request: Request, response: Response) {
         const result = validationResult(request)
@@ -346,23 +310,11 @@ export class RevocationController {
      *             schema:
      *               $ref: '#/components/schemas/CredentialStatusResult'
      *       400:
-     *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
-     *         content:
-     *           application/json:
-     *             schema: 
-     *               $ref: '#/components/schemas/InvalidRequest'
-     *             example:
-     *               error: Invalid Request
+     *         $ref: '#/components/schemas/Invalid Request'
      *       401:
      *         $ref: '#/components/schemas/UnauthorizedError'
      *       500:
-     *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/InvalidRequest'
-     *             example: 
-     *               error: Internal Error
+     *         $ref: '#/components/schemas/InternalError'
      */
     async  updateStatusList(request: Request, response: Response) {
         const result = validationResult(request)
@@ -433,23 +385,11 @@ export class RevocationController {
      *                   type: boolean
      *                   example: false
      *       400:
-     *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
-     *         content:
-     *           application/json:
-     *             schema: 
-     *               $ref: '#/components/schemas/InvalidRequest'
-     *             example:
-     *               error: Invalid Request
+     *         $ref: '#/components/schemas/Invalid Request'
      *       401:
      *         $ref: '#/components/schemas/UnauthorizedError'
      *       500:
-     *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/InvalidRequest'
-     *             example: 
-     *               error: Internal Error
+     *         $ref: '#/components/schemas/InternalError'
      */
     async checkStatusList(request: Request, response: Response) {
         const result = validationResult(request)

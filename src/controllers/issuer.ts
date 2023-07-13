@@ -266,23 +266,11 @@ export class IssuerController {
    *             schema: 
    *               $ref: '#/components/schemas/DidResult'
    *       400:
-   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema: 
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example:
-   *               error: Invalid Request
+   *         $ref: '#/components/schemas/Invalid Request'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
-   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example: 
-   *               error: Internal Error
+   *         $ref: '#/components/schemas/InternalError'
    */
   public async updateDid(request: Request, response: Response) {
     const result = validationResult(request)
@@ -355,23 +343,11 @@ export class IssuerController {
    *             schema: 
    *               $ref: '#/components/schemas/DidResult'
    *       400:
-   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema: 
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example:
-   *               error: Invalid Request
+   *         $ref: '#/components/schemas/Invalid Request'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
-   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example: 
-   *               error: Internal Error
+   *         $ref: '#/components/schemas/InternalError'
    */
   public async deactivateDid(request: Request, response: Response) {
     const result = validationResult(request)
@@ -416,23 +392,11 @@ export class IssuerController {
    *       200:
    *         description: The request was successful.
    *       400:
-   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema: 
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example:
-   *               error: Invalid Request
+   *         $ref: '#/components/schemas/Invalid Request'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
-   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example: 
-   *               error: Internal Error
+   *         $ref: '#/components/schemas/InternalError'
    */
   public async createResource(request: Request, response: Response) {
     const result = validationResult(request)
@@ -503,23 +467,11 @@ export class IssuerController {
    *               items:
    *                 type: string
    *       400:
-   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema: 
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example:
-   *               error: Invalid Request
+   *         $ref: '#/components/schemas/Invalid Request'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
-   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example: 
-   *               error: Internal Error
+   *         $ref: '#/components/schemas/InternalError'
    */
   public async getDids(request: Request, response: Response) {
     try {
@@ -560,23 +512,11 @@ export class IssuerController {
    *             schema: 
    *               $ref: '#/components/schemas/DidDocument'
    *       400:
-   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema: 
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example:
-   *               error: Invalid Request
+   *         $ref: '#/components/schemas/Invalid Request'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
-   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example: 
-   *               error: Internal Error
+   *         $ref: '#/components/schemas/InternalError'
    */
   public async getDid(request: Request, response: Response) {
     try {

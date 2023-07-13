@@ -631,10 +631,19 @@
  *         address:
  *           type: string
  *     InvalidRequest:
+ *       description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
  *       type: object
  *       properties:
  *         error:
  *           type: string
+ *           example: InvalidRequest
+ *     InternalError:
+ *       description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
+ *       type: object
+ *       properties:
+ *         error:
+ *           type: string
+ *           example: Internal Error
  *     UnauthorizedError:
  *       description: Access token is missing or invalid
  *       type: object

@@ -72,23 +72,11 @@ export class CredentialController {
    *             schema: 
    *               $ref: '#/components/schemas/Credential'
    *       400:
-   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema: 
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example:
-   *               error: Invalid Request
+   *         $ref: '#/components/schemas/Invalid Request'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
-   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example: 
-   *               error: Internal Error
+   *         $ref: '#/components/schemas/InternalError'
    */
   public async issue(request: Request, response: Response) {
     const result = validationResult(request)
@@ -151,23 +139,11 @@ export class CredentialController {
    *             schema: 
    *               $ref: '#/components/schemas/IVerifyResult'
    *       400:
-   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema: 
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example:
-   *               error: Invalid Request
+   *         $ref: '#/components/schemas/Invalid Request'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
-   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example: 
-   *               error: Internal Error
+   *         $ref: '#/components/schemas/InternalError'
    */
   public async verify(request: Request, response: Response) {
     if (request?.headers && (!request.headers['content-type'] || request.headers['content-type'] != 'application/json')) {
@@ -237,23 +213,11 @@ export class CredentialController {
    *             schema: 
    *               $ref: '#/components/schemas/RevocationResult'
    *       400:
-   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema: 
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example:
-   *               error: Invalid Request
+   *         $ref: '#/components/schemas/Invalid Request'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
-   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example: 
-   *               error: Internal Error
+   *         $ref: '#/components/schemas/InternalError'
    */
   public async revoke(request: Request, response: Response) {
     const result = validationResult(request)
@@ -302,23 +266,11 @@ export class CredentialController {
    *             schema: 
    *               $ref: '#/components/schemas/SuspensionResult'
    *       400:
-   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema: 
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example:
-   *               error: Invalid Request
+   *         $ref: '#/components/schemas/Invalid Request'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
-   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example: 
-   *               error: Internal Error
+   *         $ref: '#/components/schemas/InternalError'
    */
   public async suspend(request: Request, response: Response) {
     const result = validationResult(request)
@@ -366,23 +318,11 @@ export class CredentialController {
    *             schema: 
    *               $ref: '#/components/schemas/UnSuspensionResult'
    *       400:
-   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema: 
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example:
-   *               error: Invalid Request
+   *         $ref: '#/components/schemas/Invalid Request'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
-   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example: 
-   *               error: Internal Error
+   *         $ref: '#/components/schemas/InternalError'
    */
   public async reinstate(request: Request, response: Response) {
     const result = validationResult(request)
@@ -436,23 +376,11 @@ export class CredentialController {
    *             schema: 
    *               $ref: '#/components/schemas/IVerifyResult'
    *       400:
-   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema: 
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example:
-   *               error: Invalid Request
+   *         $ref: '#/components/schemas/Invalid Request'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
-   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/InvalidRequest'
-   *             example: 
-   *               error: Internal Error
+   *         $ref: '#/components/schemas/InternalError'
    */
   public async verifyPresentation(request: Request, response: Response) {
     const result = validationResult(request)
