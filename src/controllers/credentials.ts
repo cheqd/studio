@@ -108,18 +108,19 @@ export class CredentialController {
    * /credential/verify:
    *   post:
    *     tags: [ Credential ]
-   *     summary: Verify a credential.
-   *     description: This endpoint verifies the credential. As input it takes the entire credential itself or just the JWT string.
+   *     summary: Verify a Verifiable Credential.
+   *     description: This endpoint verifies a Verifiable Credential passed to it. As input, it can take the VC-JWT as a string or the entire credential itself.
    *     operationId: verify
    *     parameters:
    *       - in: query
    *         name: verifyStatus
+   *         description: If set to `true` the verification will also check the status of the credential. Requires the VC to have a `credentialStatus` property.
    *         schema:
    *           type: boolean
    *           default: false
    *       - in: query
    *         name: fetchRemoteContexts
-   *         description: When dealing with JSON-LD you also MUST provide the proper contexts. * Set this to `true` ONLY if you want the `@context` URLs to be fetched in case they are a custom context.
+   *         description: When dealing with JSON-LD you also MUST provide the proper contexts. Set this to `true` ONLY if you want the `@context` URLs to be fetched in case they are a custom context.
    *         schema:
    *           type: boolean
    *           default: false
@@ -186,13 +187,14 @@ export class CredentialController {
    * /credential/revoke:
    *   post:
    *     tags: [ Credential ]
-   *     summary: Revoke a credential.
-   *     description: This endpoint verifies the credential. As input it takes the entire credential itself or just the JWT string.
+   *     summary: Revoke a Verifiable Credential.
+   *     description: This endpoint revokes a given Verifiable Credential. As input, it can take the VC-JWT as a string or the entire credential itself. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.
    *     operationId: revoke
    *     security: [ bearerAuth: [] ]
    *     parameters:
    *       - in: query
    *         name: publish
+   *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
    *         required: true
    *         schema:
    *           type: boolean
@@ -241,13 +243,14 @@ export class CredentialController {
    * /credential/suspend:
    *   post:
    *     tags: [ Credential ]
-   *     summary: Suspend a credential.
-   *     description: This endpoint suspends the credential. As input it takes the entire credential itself.
+   *     summary: Suspend a Verifiable Credential.
+   *     description: This endpoint suspends a given Verifiable Credential.  As input, it can take the VC-JWT as a string or the entire credential itself.
    *     operationId: suspend
    *     security: [ bearerAuth: [] ]
    *     parameters:
    *       - in: query
    *         name: publish
+   *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
    *         schema:
    *           type: boolean
    *     requestBody:
@@ -293,13 +296,14 @@ export class CredentialController {
    * /credential/reinstate:
    *   post:
    *     tags: [ Credential ]
-   *     summary: Reinstate a credential.
-   *     description: This endpoint reinstates the credential. As input it takes the entire credential itself.
+   *     summary: Reinstate a suspended Verifiable Credential.
+   *     description: This endpoint reinstates a suspended Verifiable Credential. description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
    *     operationId: reinstate
    *     security: [ bearerAuth: [] ]
    *     parameters:
    *       - in: query
    *         name: publish
+   *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
    *         schema:
    *           type: boolean
    *     requestBody:
@@ -345,12 +349,13 @@ export class CredentialController {
    * /presentation/verify:
    *   post:
    *     tags: [ Presentation ]
-   *     summary: Verify a credential presentation.
-   *     description: This endpoint verifies the credential presentation. As input it takes the entire presentation itself.
+   *     summary: Verify a Verifiable Presentation generated from credential(s).
+   *     description: This endpoint verifies the Verifiable Presentation generated from credential(s). As input, it can take the Verifiable Presentation JWT as a string or the entire Verifiable Presentation itself.
    *     operationId: presentation
    *     parameters:
    *       - in: query
    *         name: verifyStatus
+   *         description: If set to `true` the verification will also check the status of the presentation. Requires the VP to have a `credentialStatus` property.
    *         schema:
    *           type: boolean
    *           default: false
