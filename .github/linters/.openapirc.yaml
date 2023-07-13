@@ -9,4 +9,4 @@
 extends: spectral:oas
 
 rules:
-  oas2-schema: warn
+  oas3-schema: warn
