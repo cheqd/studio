@@ -621,6 +621,7 @@
  *           type: string
  *       example:
  *         data: SGVsbG8gV29ybGQ=
+ *         example: base64url
  *         name: ResourceName
  *         type: TextDocument
  *     Customer:
