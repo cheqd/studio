@@ -53,8 +53,8 @@ export class CredentialController {
    * /credential/issue:
    *   post:
    *     tags: [ Credential ]
-   *     summary: Issue a credential.
-   *     description: This endpoint issues a credential. As input it takes the list of attributes, subjectDid, context and expiration date of the credential to be issued.
+   *     summary: Issue a Verifiable Credential
+   *     description: This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued.
    *     security: [ bearerAuth: [] ]
    *     requestBody:
    *       content:
