@@ -158,8 +158,8 @@ export class IssuerController {
    * /did/create:
    *   post:
    *     tags: [ DID ]
-   *     summary: Create a DID.
-   *     description: This endpoint creates a DID by taking a set of input parameters or the whole didDocument itself.
+   *     summary: Create a DID Document.
+   *     description: This endpoint creates a DID and associated DID Document. As input, it can take the DID Document parameters via a form, or the fully-assembled DID Document itself.
    *     security: [ bearerAuth: [] ]
    *     requestBody:
    *       content:
@@ -250,8 +250,8 @@ export class IssuerController {
    * /did/update:
    *   post:
    *     tags: [ DID ]
-   *     summary: Update a DID.
-   *     description: This endpoint updates a DID by taking DID document or the particular fields needed to be updated.
+   *     summary: Update a DID Document.
+   *     description: This endpoint updates a DID Document. As an input, it can take JUST the sections/parameters that need to be updated in the DID Document (in this scenario, it fetches the current DID Document and applies the updated section). Alternatively, it take the fully-assembled DID Document with updated sections as well as unchanged sections.
    *     security: [ bearerAuth: [] ]
    *     requestBody:
    *       content:
@@ -329,12 +329,13 @@ export class IssuerController {
    * /did/deactivate/{did}:
    *   post:
    *     tags: [ DID ]
-   *     summary: Deactivate a DID.
-   *     description: This endpoint deactivates a DID by taking DID document or a verification method as an input.
+   *     summary: Deactivate a DID Document.
+   *     description: This endpoint deactivates a DID Document by taking the DID identifier as input. Must be called and signed by the DID owner.
    *     security: [ bearerAuth: [] ]
    *     parameters:
    *       - in: path
    *         name: did
+   *         description: DID identifier to deactivate.
    *         schema:
    *           type: string
    *         required: true
@@ -376,10 +377,12 @@ export class IssuerController {
    * /resource/create/{did}:
    *   post:
    *     tags: [ Resource ]
-   *     summary: Create a Resource.
+   *     summary: Create a DID-Linked Resource.
+   *     description: This endpoint creates a DID-Linked Resource. As input, it can take the DID identifier and the resource parameters via a form, or the fully-assembled resource itself.
    *     parameters:
    *       - in: path
    *         name: did
+   *         description: DID identifier to link the resource to.
    *         schema:
    *           type: string
    *         required: true
@@ -457,7 +460,7 @@ export class IssuerController {
    * /did/list:
    *   get:
    *     tags: [ DID ]
-   *     summary: Fetch DIDs from wallet.
+   *     summary: Fetch DIDs associated with an account.
    *     description: This endpoint returns the list of DIDs controlled by the account.
    *     security: [ bearerAuth: [] ]
    *     responses:
@@ -499,11 +502,12 @@ export class IssuerController {
    * /did/{did}:
    *   get:
    *     tags: [ DID ]
-   *     summary: Resolve a DID.
-   *     description: This endpoint resolved a DID.
+   *     summary: Resolve a DID Document.
+   *     description: This endpoint resolves the latest DID Document for a given DID identifier.
    *     parameters:
    *       - in: path
    *         name: did
+   *         description: DID identifier to resolve.
    *         schema:
    *           type: string
    *         required: true
