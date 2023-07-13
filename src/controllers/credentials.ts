@@ -297,7 +297,7 @@ export class CredentialController {
    *   post:
    *     tags: [ Credential ]
    *     summary: Reinstate a suspended Verifiable Credential.
-   *     description: This endpoint reinstates a suspended Verifiable Credential. description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
+   *     description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
    *     operationId: reinstate
    *     security: [ bearerAuth: [] ]
    *     parameters:

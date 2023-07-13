@@ -37,8 +37,8 @@
         "tags": [
           "Credential"
         ],
-        "summary": "Issue a credential.",
-        "description": "This endpoint issues a credential. As input it takes the list of attributes, subjectDid, context and expiration date of the credential to be issued.",
+        "summary": "Issue a Verifiable Credential",
+        "description": "This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued.",
         "security": [
           {
             "bearerAuth": []
@@ -86,13 +86,14 @@
         "tags": [
           "Credential"
         ],
-        "summary": "Verify a credential.",
-        "description": "This endpoint verifies the credential. As input it takes the entire credential itself or just the JWT string.",
+        "summary": "Verify a Verifiable Credential.",
+        "description": "This endpoint verifies a Verifiable Credential passed to it. As input, it can take the VC-JWT as a string or the entire credential itself.",
         "operationId": "verify",
         "parameters": [
           {
             "in": "query",
             "name": "verifyStatus",
+            "description": "If set to `true` the verification will also check the status of the credential. Requires the VC to have a `credentialStatus` property.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -101,7 +102,7 @@
           {
             "in": "query",
             "name": "fetchRemoteContexts",
-            "description": "When dealing with JSON-LD you also MUST provide the proper contexts. * Set this to `true` ONLY if you want the `@context` URLs to be fetched in case they are a custom context.",
+            "description": "When dealing with JSON-LD you also MUST provide the proper contexts. Set this to `true` ONLY if you want the `@context` URLs to be fetched in case they are a custom context.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -150,8 +151,8 @@
         "tags": [
           "Credential"
         ],
-        "summary": "Revoke a credential.",
-        "description": "This endpoint verifies the credential. As input it takes the entire credential itself or just the JWT string.",
+        "summary": "Revoke a Verifiable Credential.",
+        "description": "This endpoint revokes a given Verifiable Credential. As input, it can take the VC-JWT as a string or the entire credential itself. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.",
         "operationId": "revoke",
         "security": [
           {
@@ -162,6 +163,7 @@
           {
             "in": "query",
             "name": "publish",
+            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
             "required": true,
             "schema": {
               "type": "boolean",
@@ -211,8 +213,8 @@
         "tags": [
           "Credential"
         ],
-        "summary": "Suspend a credential.",
-        "description": "This endpoint suspends the credential. As input it takes the entire credential itself.",
+        "summary": "Suspend a Verifiable Credential.",
+        "description": "This endpoint suspends a given Verifiable Credential.  As input, it can take the VC-JWT as a string or the entire credential itself.",
         "operationId": "suspend",
         "security": [
           {
@@ -223,6 +225,7 @@
           {
             "in": "query",
             "name": "publish",
+            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
             "schema": {
               "type": "boolean"
             }
@@ -270,8 +273,8 @@
         "tags": [
           "Credential"
         ],
-        "summary": "Reinstate a credential.",
-        "description": "This endpoint reinstates the credential. As input it takes the entire credential itself.",
+        "summary": "Reinstate a suspended Verifiable Credential.",
+        "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
         "operationId": "reinstate",
         "security": [
           {
@@ -282,6 +285,7 @@
           {
             "in": "query",
             "name": "publish",
+            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
             "schema": {
               "type": "boolean"
             }
@@ -329,13 +333,14 @@
         "tags": [
           "Presentation"
         ],
-        "summary": "Verify a credential presentation.",
-        "description": "This endpoint verifies the credential presentation. As input it takes the entire presentation itself.",
+        "summary": "Verify a Verifiable Presentation generated from credential(s).",
+        "description": "This endpoint verifies the Verifiable Presentation generated from credential(s). As input, it can take the Verifiable Presentation JWT as a string or the entire Verifiable Presentation itself.",
         "operationId": "presentation",
         "parameters": [
           {
             "in": "query",
             "name": "verifyStatus",
+            "description": "If set to `true` the verification will also check the status of the presentation. Requires the VP to have a `credentialStatus` property.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -393,8 +398,8 @@
         "tags": [
           "Account"
         ],
-        "summary": "Create a client.",
-        "description": "This endpoint verifies the JWT token and creates a customer if they don't exist.",
+        "summary": "Create a new custodian-mode client.",
+        "description": "This endpoint creates a new custodian-mode client and creates issuer DIDs and Cosmos/cheqd accounts for the client.",
         "security": [
           {
             "bearerAuth": []
@@ -426,8 +431,8 @@
         "tags": [
           "Account"
         ],
-        "summary": "Fetch a client.",
-        "description": "This endpoint verifies the JWT token and returns the customer if it exists.",
+        "summary": "Fetch custodian-mode client details.",
+        "description": "This endpoint returns the custodian-mode client details for authenticated users.",
         "security": [
           {
             "bearerAuth": []
@@ -461,7 +466,8 @@
         "tags": [
           "Key"
         ],
-        "summary": "Create a key pair.",
+        "summary": "Create an identity key pair.",
+        "description": "This endpoint creates an identity key pair associated with the user's account for custodian-mode clients.",
         "security": [
           {
             "bearerAuth": []
@@ -515,7 +521,8 @@
         "tags": [
           "Key"
         ],
-        "summary": "Fetch a key pair.",
+        "summary": "Fetch an identity key pair.",
+        "description": "This endpoint fetches an identity key pair's details for a given key ID. Only the user account associated with the custodian-mode client can fetch the key pair.",
         "security": [
           {
             "bearerAuth": []
@@ -524,6 +531,7 @@
         "parameters": [
           {
             "name": "kid",
+            "description": "Key ID of the identity key pair to fetch.",
             "in": "path",
             "schema": {
               "type": "string"
@@ -579,8 +587,8 @@
         "tags": [
           "DID"
         ],
-        "summary": "Create a DID.",
-        "description": "This endpoint creates a DID by taking a set of input parameters or the whole didDocument itself.",
+        "summary": "Create a DID Document.",
+        "description": "This endpoint creates a DID and associated DID Document. As input, it can take the DID Document parameters via a form, or the fully-assembled DID Document itself.",
         "security": [
           {
             "bearerAuth": []
@@ -648,8 +656,8 @@
         "tags": [
           "DID"
         ],
-        "summary": "Update a DID.",
-        "description": "This endpoint updates a DID by taking DID document or the particular fields needed to be updated.",
+        "summary": "Update a DID Document.",
+        "description": "This endpoint updates a DID Document. As an input, it can take JUST the sections/parameters that need to be updated in the DID Document (in this scenario, it fetches the current DID Document and applies the updated section). Alternatively, it take the fully-assembled DID Document with updated sections as well as unchanged sections.",
         "security": [
           {
             "bearerAuth": []
@@ -697,8 +705,8 @@
         "tags": [
           "DID"
         ],
-        "summary": "Deactivate a DID.",
-        "description": "This endpoint deactivates a DID by taking DID document or a verification method as an input.",
+        "summary": "Deactivate a DID Document.",
+        "description": "This endpoint deactivates a DID Document by taking the DID identifier as input. Must be called and signed by the DID owner.",
         "security": [
           {
             "bearerAuth": []
@@ -708,6 +716,7 @@
           {
             "in": "path",
             "name": "did",
+            "description": "DID identifier to deactivate.",
             "schema": {
               "type": "string"
             },
@@ -742,11 +751,13 @@
         "tags": [
           "Resource"
         ],
-        "summary": "Create a Resource.",
+        "summary": "Create a DID-Linked Resource.",
+        "description": "This endpoint creates a DID-Linked Resource. As input, it can take the DID identifier and the resource parameters via a form, or the fully-assembled resource itself.",
         "parameters": [
           {
             "in": "path",
             "name": "did",
+            "description": "DID identifier to link the resource to.",
             "schema": {
               "type": "string"
             },
@@ -788,7 +799,7 @@
         "tags": [
           "DID"
         ],
-        "summary": "Fetch DIDs from wallet.",
+        "summary": "Fetch DIDs associated with an account.",
         "description": "This endpoint returns the list of DIDs controlled by the account.",
         "security": [
           {
@@ -826,12 +837,13 @@
         "tags": [
           "DID"
         ],
-        "summary": "Resolve a DID.",
-        "description": "This endpoint resolved a DID.",
+        "summary": "Resolve a DID Document.",
+        "description": "This endpoint resolves the latest DID Document for a given DID identifier.",
         "parameters": [
           {
             "in": "path",
             "name": "did",
+            "description": "DID identifier to resolve.",
             "schema": {
               "type": "string"
             },
@@ -866,11 +878,13 @@
         "tags": [
           "Credential Status"
         ],
-        "summary": "Create status list 2021.",
+        "summary": "Create a StatusList2021 credential status list.",
+        "description": "This endpoint creates a StatusList2021 credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.",
         "parameters": [
           {
             "in": "query",
             "name": "statusPurpose",
+            "description": "The purpose of the status list. Can be either revocation or suspension. Once this is set, it cannot be changed. A new status list must be created to change the purpose.",
             "required": true,
             "schema": {
               "type": "string",
@@ -883,6 +897,7 @@
           {
             "in": "query",
             "name": "encrypted",
+            "description": "Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied.",
             "required": true,
             "schema": {
               "type": "boolean",
@@ -932,11 +947,13 @@
         "tags": [
           "Credential Status"
         ],
-        "summary": "Publish status list 2021.",
+        "summary": "Publish a StatusList2021 credential status list.",
+        "description": "Published a pre-assembled StatusList2021 as a DID-Linked Resource. As input, it needs to be provided the `encodedList` property, along with the associated DID-Linked Resource properties in the original status list (if already created previously).",
         "parameters": [
           {
             "in": "query",
             "name": "statusPurpose",
+            "description": "The purpose of the status list. Can be either revocation or suspension. Once this is set, it cannot be changed. A new status list must be created to change the purpose.",
             "required": true,
             "schema": {
               "type": "string",
@@ -949,6 +966,7 @@
           {
             "in": "query",
             "name": "encrypted",
+            "description": "Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied. When publishing a new version, this should match the original property.",
             "required": true,
             "schema": {
               "type": "boolean",
@@ -998,11 +1016,12 @@
         "tags": [
           "Credential Status"
         ],
-        "summary": "Fetch statusList's published by a DID.",
+        "summary": "Fetch StatusList2021 DID-Linked Resource based on search criteria.",
         "parameters": [
           {
             "in": "query",
             "name": "did",
+            "description": "The DID of the issuer of the status list.",
             "required": true,
             "schema": {
               "type": "string"
@@ -1011,6 +1030,7 @@
           {
             "in": "query",
             "name": "statusPurpose",
+            "description": "The purpose of the status list. Can be either revocation or suspension.",
             "schema": {
               "type": "string",
               "enum": [
@@ -1022,6 +1042,7 @@
           {
             "in": "query",
             "name": "statusListName",
+            "description": "The name of the StatusList2021 DID-Linked Resource.",
             "schema": {
               "type": "string"
             }
@@ -1072,11 +1093,12 @@
         "tags": [
           "Credential Status"
         ],
-        "summary": "Update status list 2021.",
+        "summary": "Update an existing StatusList2021 credential status list.",
         "parameters": [
           {
             "in": "query",
             "name": "statusPurpose",
+            "description": "The purpose of the status list. Can be either revocation or suspension. Once this is set, it cannot be changed. A new status list must be created to change the purpose.",
             "required": true,
             "schema": {
               "type": "string",
@@ -1089,6 +1111,7 @@
           {
             "in": "query",
             "name": "encrypted",
+            "description": "Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied. When publishing a new version, this should match the original property.",
             "required": true,
             "schema": {
               "type": "boolean",
@@ -1138,11 +1161,13 @@
         "tags": [
           "Credential Status"
         ],
-        "summary": "Check Credential Status of an index in status list 2021.",
+        "summary": "Check a StatusList2021 index for a given Verifiable Credential.",
+        "description": "This endpoint checks a StatusList2021 index for a given Verifiable Credential and reports whether it is revoked or suspended. It offers a standalone method for checking an index without passing the entire Verifiable Credential or Verifiable Presentation.",
         "parameters": [
           {
             "in": "query",
             "name": "statusPurpose",
+            "description": "The purpose of the status list. Can be either revocation or suspension.",
             "required": true,
             "schema": {
               "type": "string",
@@ -1155,6 +1180,7 @@
           {
             "in": "query",
             "name": "encrypted",
+            "description": "Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied.",
             "required": true,
             "schema": {
               "type": "boolean",
@@ -1209,959 +1235,5 @@
       }
     }
   },
-  "components": {
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT"
-      }
-    },
-    "schemas": {
-      "CredentialRequest": {
-        "description": "Input fields for the create operation.",
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "issuerDid": {
-            "description": "This input field is the Issuer's DID.",
-            "type": "string"
-          },
-          "subjectDid": {
-            "description": "This input field is the holder's DID.",
-            "type": "string"
-          },
-          "attributes": {
-            "description": "Json input of the attributes.",
-            "type": "object"
-          },
-          "@context": {
-            "description": "Additional contexts to be included in the credential.",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "type": {
-            "description": "Additional type property to be included in the credential.",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "expirationDate": {
-            "description": "Optional expiration date according to the <a href=https://www.w3.org/TR/vc-data-model/#expiration> specification</a>.",
-            "type": "string"
-          },
-          "format": {
-            "description": "Select one of the supported credential formats, jwt by default.",
-            "type": "string",
-            "enum": [
-              "jwt",
-              "lds"
-            ]
-          },
-          "credentialStatus": {
-            "description": "Optional field to support revocation or suspension, which takes statusListName and statusListPurpose as inputs.",
-            "type": "object",
-            "required": [
-              "statusPurpose",
-              "statusListName"
-            ],
-            "properties": {
-              "statusPurpose": {
-                "type": "string",
-                "enum": [
-                  "revocation",
-                  "suspension"
-                ]
-              },
-              "statusListName": {
-                "type": "string"
-              },
-              "statusListIndex": {
-                "type": "number"
-              },
-              "statusListVersion": {
-                "type": "string"
-              },
-              "statusListRangeStart": {
-                "type": "number"
-              },
-              "statusListRangeEnd": {
-                "type": "number"
-              },
-              "indexNotIn": {
-                "type": "number"
-              }
-            },
-            "example": {
-              "statusPurpose": "revocation",
-              "statusListName": "employee-credentials"
-            }
-          }
-        },
-        "required": [
-          "issuerDid",
-          "subjectDid",
-          "attributes"
-        ],
-        "example": {
-          "issuerDid": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-          "subjectDid": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-          "attributes": {
-            "gender": "male",
-            "name": "Bob"
-          },
-          "@context": [
-            "https://schema.org"
-          ],
-          "type": [
-            "Person"
-          ],
-          "format": "jwt",
-          "credentialStatus": {
-            "statusPurpose": "revocation",
-            "statusListName": "employee-credentials",
-            "statusListIndex": 10
-          }
-        }
-      },
-      "Credential": {
-        "description": "Input fields for the update operation.",
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "@context": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "type": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "expirationDate": {
-            "type": "string"
-          },
-          "issuer": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              }
-            }
-          },
-          "credentialSubject": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              }
-            }
-          },
-          "credentialStatus": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "statusListIndex": {
-                "type": "string"
-              },
-              "statusPurpose": {
-                "type": "string",
-                "enum": [
-                  "revocation",
-                  "suspension"
-                ]
-              },
-              "type": {
-                "type": "string",
-                "enum": [
-                  "StatusList2021Entry"
-                ]
-              }
-            }
-          },
-          "issuanceDate": {
-            "type": "string"
-          },
-          "proof": {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string"
-              },
-              "jwt": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "example": {
-          "@context": [
-            "https://www.w3.org/2018/credentials/v1",
-            "https://schema.org",
-            "https://veramo.io/contexts/profile/v1"
-          ],
-          "credentialSubject": {
-            "gender": "male",
-            "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-            "name": "Bob"
-          },
-          "credentialStatus": {
-            "id": "https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-suspension-1&resourceType=StatusList2021Suspension#20",
-            "statusIndex": 20,
-            "statusPurpose": "suspension",
-            "type": "StatusList2021Entry"
-          },
-          "issuanceDate": "2023-06-08T13:49:28.000Z",
-          "issuer": {
-            "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
-          },
-          "proof": {
-            "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg",
-            "type": "JwtProof2020"
-          },
-          "type": [
-            "VerifiableCredential",
-            "Person"
-          ]
-        }
-      },
-      "CredentialRevokeRequest": {
-        "type": "object",
-        "properties": {
-          "credential": {
-            "description": "This input field takes the credential object or the JWT string",
-            "oneOf": [
-              {
-                "type": "object"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        }
-      },
-      "RevocationResult": {
-        "properties": {
-          "revoked": {
-            "type": "boolean"
-          }
-        }
-      },
-      "SuspensionResult": {
-        "properties": {
-          "suspended": {
-            "type": "boolean"
-          },
-          "statusList": {
-            "type": "string"
-          }
-        }
-      },
-      "UnSuspensionResult": {
-        "properties": {
-          "unsuspended": {
-            "type": "boolean"
-          },
-          "statusList": {
-            "type": "string"
-          }
-        }
-      },
-      "CredentialVerifyRequest": {
-        "type": "object",
-        "properties": {
-          "credential": {
-            "description": "This input field takes the credential object or the JWT string.\\",
-            "allOf": [
-              {
-                "type": "object"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "policies": {
-            "description": "Custom verification policies to execute when verifying credential.",
-            "type": "object",
-            "properties": {
-              "now": {
-                "description": "policy to verify over the now (current time) during the verification check (UNIX time in seconds).",
-                "type": "number"
-              },
-              "issuanceDate": {
-                "description": "policy to skip the issuanceDate (nbf) timestamp check when set to `false`.",
-                "type": "boolean"
-              },
-              "expirationDate": {
-                "description": "policy to skip the expirationDate (exp) timestamp check when set to `false`.",
-                "type": "boolean"
-              },
-              "audience": {
-                "description": "policy to skip the audience check when set to `false`.",
-                "type": "boolean"
-              }
-            }
-          }
-        }
-      },
-      "IVerifyResult": {
-        "type": "object",
-        "properties": {
-          "verified": {
-            "type": "boolean"
-          },
-          "issuer": {
-            "type": "string"
-          },
-          "signer": {
-            "type": "object"
-          },
-          "jwt": {
-            "type": "string"
-          },
-          "verifiableCredential": {
-            "type": "object"
-          }
-        },
-        "example": {
-          "verified": true,
-          "polices": {},
-          "issuer": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-          "signer": {
-            "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-            "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
-            "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
-            "type": "Ed25519VerificationKey2018"
-          }
-        }
-      },
-      "PresentationRequest": {
-        "type": "object",
-        "required": [
-          "presentation"
-        ],
-        "properties": {
-          "presentation": {
-            "description": "This input field takes the presentation object or the JWT string.",
-            "allOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "object"
-              }
-            ]
-          },
-          "verifiedDid": {
-            "description": "Provide an optional verifier DID (also known as 'domain' parameter), if the verifier DID in the presentation is not managed in the wallet.",
-            "type": "string"
-          },
-          "policies": {
-            "description": "Custom verification policies to execute when verifying presentation.",
-            "type": "object",
-            "properties": {
-              "now": {
-                "description": "policy to verify over the now (current time) during the verification check (UNIX time in seconds).",
-                "type": "number"
-              },
-              "issuanceDate": {
-                "description": "policy to skip the issuanceDate (nbf) timestamp check when set to `false`.",
-                "type": "boolean"
-              },
-              "expirationDate": {
-                "description": "policy to skip the expirationDate (exp) timestamp check when set to `false`.",
-                "type": "boolean"
-              },
-              "audience": {
-                "description": "policy to skip the audience check when set to `false`.",
-                "type": "boolean"
-              }
-            }
-          }
-        }
-      },
-      "CredentialStatusCreateRequest": {
-        "allOf": [
-          {
-            "type": "object",
-            "required": [
-              "did",
-              "statusListName"
-            ],
-            "properties": {
-              "did": {
-                "description": "The DID of the status list publisher.",
-                "type": "string"
-              },
-              "statusListName": {
-                "description": "The name of the status list to be created.",
-                "type": "string"
-              },
-              "length": {
-                "description": "The length of the status list to be created. The default and minimum length is 140000 which is 16kb."
-              },
-              "encoding": {
-                "description": "The encoding format of the statusList to be published.",
-                "type": "string",
-                "default": "base64url",
-                "enum": [
-                  "base64url",
-                  "base64",
-                  "hex"
-                ]
-              },
-              "statusListVersion": {
-                "description": "This input field is OPTIONAL, If present assigns the version to be assigned to the statusList.",
-                "type": "string"
-              },
-              "alsoKnownAs": {
-                "description": "The input field is OPTIONAL. If present, the value MUST be a set where each item in the set is a uri.",
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "uri": {
-                      "type": "string"
-                    },
-                    "description": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ],
-        "example": {
-          "did": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
-          "statusListName": "cheqd-employee-credentials"
-        }
-      },
-      "CredentialStatusResult": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "object",
-            "properties": {
-              "created": {
-                "type": "boolean"
-              },
-              "resourceMetadata": {
-                "type": "object"
-              },
-              "statusList2021": {
-                "type": "object",
-                "properties": {
-                  "statusList2021": {
-                    "type": "object",
-                    "properties": {
-                      "encodedList": {
-                        "type": "string"
-                      },
-                      "type": {
-                        "type": "string"
-                      },
-                      "validFrom": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                }
-              },
-              "metadata": {
-                "type": "string",
-                "properties": {
-                  "encoding": {
-                    "type": "string"
-                  },
-                  "encrypted": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "example": {
-          "created": true,
-          "resource": {
-            "StatusList2021": {
-              "encodedList": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
-              "type": "StatusList2021Revocation",
-              "validFrom": "2023-06-26T11:45:19.349Z"
-            },
-            "metadata": {
-              "encoding": "base64url",
-              "encrypted": false
-            }
-          },
-          "resourceMetadata": {
-            "checksum": "909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2",
-            "created": "2023-06-26T11:45:20Z",
-            "mediaType": "application/json",
-            "nextVersionId": null,
-            "previousVersionId": null,
-            "resourceCollectionId": "7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
-            "resourceId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
-            "resourceName": "cheqd-revocation-1",
-            "resourceType": "StatusList2021Revocation",
-            "resourceURI": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc",
-            "resourceVersion": "2023-06-26T11:45:19.349Z"
-          }
-        }
-      },
-      "CredentialStatusPublishRequest": {
-        "allOf": [
-          {
-            "type": "object",
-            "required": [
-              "did",
-              "encodedList",
-              "statusListName",
-              "encoding"
-            ],
-            "properties": {
-              "did": {
-                "description": "The DID of the status list publisher.",
-                "type": "string"
-              },
-              "statusListName": {
-                "description": "The name of the statusList to be published.",
-                "type": "string"
-              },
-              "encodedList": {
-                "description": "Provide encoded string for the resource data.",
-                "type": "string",
-                "enum": [
-                  "base64url",
-                  "base64",
-                  "hex"
-                ]
-              },
-              "statusListVersion": {
-                "description": "This input field is OPTIONAL, If present assigns the version to be assigned to the statusList",
-                "type": "string"
-              },
-              "alsoKnownAs": {
-                "description": "The input field is OPTIONAL. If present, the value MUST be a set where each item in the set is a uri.",
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "uri": {
-                      "type": "string"
-                    },
-                    "description": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ],
-        "example": {
-          "did": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
-          "name": "cheqd-employee-credentials",
-          "version": "2023",
-          "data": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
-          "encoding": "base64url"
-        }
-      },
-      "CredentialStatusUpdateRequest": {
-        "type": "object",
-        "required": [
-          "did",
-          "statusListName",
-          "indices"
-        ],
-        "properties": {
-          "did": {
-            "description": "The DID of the status list publisher.",
-            "type": "string"
-          },
-          "statusListName": {
-            "description": "The name of the status list to be created.",
-            "type": "string"
-          },
-          "indices": {
-            "description": "Provide the list of indices to be updated.",
-            "type": "array",
-            "items": {
-              "type": "number"
-            }
-          },
-          "statusListVersion": {
-            "description": "The input field is OPTIONAL, If present uses the provided statusListVersion for the update operation.",
-            "type": "string"
-          }
-        }
-      },
-      "CredentialStatusCheckRequest": {
-        "type": "object",
-        "properties": {
-          "did": {
-            "description": "The DID of the status list publisher.",
-            "type": "string"
-          },
-          "statusListName": {
-            "description": "The name of the status list to be published.",
-            "type": "string"
-          },
-          "index": {
-            "description": "Provide the statusList index to be verified.",
-            "type": "number"
-          }
-        }
-      },
-      "KeyResult": {
-        "type": "object",
-        "properties": {
-          "kid": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "Ed25519",
-              "Secp256k1"
-            ]
-          },
-          "publicKeyHex": {
-            "type": "string"
-          }
-        }
-      },
-      "DidDocument": {
-        "description": "This input field contains either a complete DID document, or an incremental change (diff) to a DID document. See <a href=\\\"https://identity.foundation/did-registration/#diddocument\\\">https://identity.foundation/did-registration/#diddocument</a>.",
-        "type": "object",
-        "properties": {
-          "@context": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "id": {
-            "type": "string"
-          },
-          "controllers": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "authentication": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "assertionMethod": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "capabilityInvocation": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "capabilityDelegation": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "keyAgreement": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "verificationMethod": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/VerificationMethod"
-            }
-          },
-          "service": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Service"
-            }
-          }
-        },
-        "example": {
-          "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-          "controller": [
-            "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
-          ],
-          "verificationMethod": [
-            {
-              "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
-              "type": "Ed25519VerificationKey2018",
-              "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-              "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt"
-            }
-          ],
-          "authentication": [
-            "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1"
-          ]
-        }
-      },
-      "DidCreateRequest": {
-        "type": "object",
-        "properties": {
-          "network": {
-            "type": "string",
-            "enum": [
-              "testnet",
-              "mainnet"
-            ]
-          },
-          "methodSpecificIdAlgo": {
-            "type": "string",
-            "enum": [
-              "uuid",
-              "base58btc"
-            ]
-          },
-          "verificationMethodType": {
-            "type": "string",
-            "enum": [
-              "Ed25519VerificationKey2018",
-              "JsonWebKey2020",
-              "Ed25519VerificationKey2020"
-            ]
-          },
-          "serviceEndpoint": {
-            "type": "string"
-          },
-          "assertionMethod": {
-            "description": "An assertion method is required to issue JSONLD credentials.",
-            "type": "boolean",
-            "default": true
-          },
-          "didDocument": {
-            "$ref": "#/components/schemas/DidDocument"
-          }
-        }
-      },
-      "DidResult": {
-        "type": "object",
-        "properties": {
-          "did": {
-            "type": "string"
-          },
-          "controllerKeyId": {
-            "type": "string"
-          },
-          "keys": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          },
-          "services": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Service"
-            }
-          }
-        }
-      },
-      "VerificationMethod": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          },
-          "controller": {
-            "type": "string"
-          },
-          "publicKeyMultibase": {
-            "type": "string"
-          },
-          "publicKeyJwk": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "example": {
-          "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-          "id": "did:cheqd:testnet :7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
-          "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
-          "type": "Ed25519VerificationKey2018"
-        }
-      },
-      "Service": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#rand"
-          },
-          "type": {
-            "type": "string",
-            "example": "rand"
-          },
-          "serviceEndpoint": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "example": "https://rand.in"
-            }
-          }
-        }
-      },
-      "DidUpdateRequest": {
-        "type": "object",
-        "properties": {
-          "did": {
-            "type": "string"
-          },
-          "service": {
-            "type": "array",
-            "description": "This input field assigns the provided service array to the DID Document.",
-            "items": {
-              "$ref": "#/components/schemas/Service"
-            }
-          },
-          "verificationMethod": {
-            "type": "array",
-            "description": "This input field assigns the provided verificationMethod array to the DID Document.",
-            "items": {
-              "$ref": "#/components/schemas/VerificationMethod"
-            }
-          },
-          "authentication": {
-            "description": "This input field assigns the provided authentication array to the DID Document.",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "didDocument": {
-            "$ref": "#/components/schemas/DidDocument"
-          }
-        }
-      },
-      "CreateResourceRequest": {
-        "description": "Input fields for the resource creation",
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "name",
-          "type",
-          "data",
-          "encoding"
-        ],
-        "properties": {
-          "data": {
-            "description": "Provide encoded string for the resource data.",
-            "type": "string"
-          },
-          "encoding": {
-            "description": "The encoding format of the resource data.",
-            "type": "string",
-            "enum": [
-              "base64url",
-              "base64",
-              "hex"
-            ]
-          },
-          "name": {
-            "description": "Resource name.",
-            "type": "string"
-          },
-          "type": {
-            "description": "Resource type.",
-            "type": "string"
-          },
-          "alsoKnownAs": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "uri": {
-                  "type": "string"
-                },
-                "description": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "version": {
-            "type": "string"
-          }
-        },
-        "example": {
-          "data": "SGVsbG8gV29ybGQ=",
-          "encoding": "base64url",
-          "name": "ResourceName",
-          "type": "TextDocument"
-        }
-      },
-      "Customer": {
-        "type": "object",
-        "properties": {
-          "customerId": {
-            "type": "string"
-          },
-          "address": {
-            "type": "string"
-          }
-        }
-      },
-      "InvalidRequest": {
-        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "example": "InvalidRequest"
-          }
-        }
-      },
-      "InternalError": {
-        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "example": "Internal Error"
-          }
-        }
-      },
-      "UnauthorizedError": {
-        "description": "Access token is missing or invalid",
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "example": "Unauthorized Error"
-          }
-        }
-      }
-    }
-  }
+  "components": {}
 }
