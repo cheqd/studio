@@ -78,7 +78,7 @@ export class RevocationController {
      *             schema:
      *               $ref: '#/components/schemas/CredentialStatusResult'
      *       400:
-     *         $ref: '#/components/schemas/Invalid Request'
+     *         $ref: '#/components/schemas/InvalidRequest'
      *       401:
      *         $ref: '#/components/schemas/UnauthorizedError'
      *       500:
@@ -150,7 +150,7 @@ export class RevocationController {
      *             schema:
      *               $ref: '#/components/schemas/CredentialStatusResult'
      *       400:
-     *         $ref: '#/components/schemas/Invalid Request'
+     *         $ref: '#/components/schemas/InvalidRequest'
      *       401:
      *         $ref: '#/components/schemas/UnauthorizedError'
      *       500:
@@ -227,7 +227,7 @@ export class RevocationController {
      *                   statusListNextVersion:
      *                     type: string
      *       400:
-     *         $ref: '#/components/schemas/Invalid Request'
+     *         $ref: '#/components/schemas/InvalidRequest'
      *       401:
      *         $ref: '#/components/schemas/UnauthorizedError'
      *       500:
@@ -310,7 +310,7 @@ export class RevocationController {
      *             schema:
      *               $ref: '#/components/schemas/CredentialStatusResult'
      *       400:
-     *         $ref: '#/components/schemas/Invalid Request'
+     *         $ref: '#/components/schemas/InvalidRequest'
      *       401:
      *         $ref: '#/components/schemas/UnauthorizedError'
      *       500:
@@ -385,7 +385,7 @@ export class RevocationController {
      *                   type: boolean
      *                   example: false
      *       400:
-     *         $ref: '#/components/schemas/Invalid Request'
+     *         $ref: '#/components/schemas/InvalidRequest'
      *       401:
      *         $ref: '#/components/schemas/UnauthorizedError'
      *       500:

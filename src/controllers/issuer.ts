@@ -75,7 +75,7 @@ export class IssuerController {
    *             schema: 
    *               $ref: '#/components/schemas/InvalidRequest'
    *             example:
-   *               error: Invalid Request
+   *               error: InvalidRequest
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
@@ -126,7 +126,7 @@ export class IssuerController {
    *             schema: 
    *               $ref: '#/components/schemas/InvalidRequest'
    *             example:
-   *               error: Invalid Request
+   *               error: InvalidRequest
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
@@ -180,7 +180,7 @@ export class IssuerController {
    *             schema: 
    *               $ref: '#/components/schemas/InvalidRequest'
    *             example:
-   *               error: Invalid Request
+   *               error: InvalidRequest
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
@@ -266,7 +266,7 @@ export class IssuerController {
    *             schema: 
    *               $ref: '#/components/schemas/DidResult'
    *       400:
-   *         $ref: '#/components/schemas/Invalid Request'
+   *         $ref: '#/components/schemas/InvalidRequest'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
@@ -343,7 +343,7 @@ export class IssuerController {
    *             schema: 
    *               $ref: '#/components/schemas/DidResult'
    *       400:
-   *         $ref: '#/components/schemas/Invalid Request'
+   *         $ref: '#/components/schemas/InvalidRequest'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
@@ -392,7 +392,7 @@ export class IssuerController {
    *       200:
    *         description: The request was successful.
    *       400:
-   *         $ref: '#/components/schemas/Invalid Request'
+   *         $ref: '#/components/schemas/InvalidRequest'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
@@ -467,7 +467,7 @@ export class IssuerController {
    *               items:
    *                 type: string
    *       400:
-   *         $ref: '#/components/schemas/Invalid Request'
+   *         $ref: '#/components/schemas/InvalidRequest'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
@@ -512,7 +512,7 @@ export class IssuerController {
    *             schema: 
    *               $ref: '#/components/schemas/DidDocument'
    *       400:
-   *         $ref: '#/components/schemas/Invalid Request'
+   *         $ref: '#/components/schemas/InvalidRequest'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:

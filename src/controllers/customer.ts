@@ -22,7 +22,7 @@ export class AccountController {
      *             schema: 
      *               $ref: '#/components/schemas/Customer'
      *       400:
-     *         $ref: '#/components/schemas/Invalid Request'
+     *         $ref: '#/components/schemas/InvalidRequest'
      *       401:
      *         $ref: '#/components/schemas/UnauthorizedError'
      *       500:
@@ -63,7 +63,7 @@ export class AccountController {
      *             schema: 
      *               $ref: '#/components/schemas/Customer'
      *       400:
-     *         $ref: '#/components/schemas/Invalid Request'
+     *         $ref: '#/components/schemas/InvalidRequest'
      *       401:
      *         $ref: '#/components/schemas/UnauthorizedError'
      *       500:

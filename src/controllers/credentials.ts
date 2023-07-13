@@ -72,7 +72,7 @@ export class CredentialController {
    *             schema: 
    *               $ref: '#/components/schemas/Credential'
    *       400:
-   *         $ref: '#/components/schemas/Invalid Request'
+   *         $ref: '#/components/schemas/InvalidRequest'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
@@ -139,7 +139,7 @@ export class CredentialController {
    *             schema: 
    *               $ref: '#/components/schemas/IVerifyResult'
    *       400:
-   *         $ref: '#/components/schemas/Invalid Request'
+   *         $ref: '#/components/schemas/InvalidRequest'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
@@ -213,7 +213,7 @@ export class CredentialController {
    *             schema: 
    *               $ref: '#/components/schemas/RevocationResult'
    *       400:
-   *         $ref: '#/components/schemas/Invalid Request'
+   *         $ref: '#/components/schemas/InvalidRequest'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
@@ -266,7 +266,7 @@ export class CredentialController {
    *             schema: 
    *               $ref: '#/components/schemas/SuspensionResult'
    *       400:
-   *         $ref: '#/components/schemas/Invalid Request'
+   *         $ref: '#/components/schemas/InvalidRequest'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
@@ -318,7 +318,7 @@ export class CredentialController {
    *             schema: 
    *               $ref: '#/components/schemas/UnSuspensionResult'
    *       400:
-   *         $ref: '#/components/schemas/Invalid Request'
+   *         $ref: '#/components/schemas/InvalidRequest'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:
@@ -376,7 +376,7 @@ export class CredentialController {
    *             schema: 
    *               $ref: '#/components/schemas/IVerifyResult'
    *       400:
-   *         $ref: '#/components/schemas/Invalid Request'
+   *         $ref: '#/components/schemas/InvalidRequest'
    *       401:
    *         $ref: '#/components/schemas/UnauthorizedError'
    *       500:

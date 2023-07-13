@@ -70,7 +70,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -134,7 +134,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -195,7 +195,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -254,7 +254,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -313,7 +313,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -377,7 +377,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -412,7 +412,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -445,7 +445,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -486,7 +486,7 @@
                   "$ref": "#/components/schemas/InvalidRequest"
                 },
                 "example": {
-                  "error": "Invalid Request"
+                  "error": "InvalidRequest"
                 }
               }
             }
@@ -550,7 +550,7 @@
                   "$ref": "#/components/schemas/InvalidRequest"
                 },
                 "example": {
-                  "error": "Invalid Request"
+                  "error": "InvalidRequest"
                 }
               }
             }
@@ -619,7 +619,7 @@
                   "$ref": "#/components/schemas/InvalidRequest"
                 },
                 "example": {
-                  "error": "Invalid Request"
+                  "error": "InvalidRequest"
                 }
               }
             }
@@ -681,7 +681,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -726,7 +726,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -772,7 +772,7 @@
             "description": "The request was successful."
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -810,7 +810,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -850,7 +850,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -916,7 +916,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -982,7 +982,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -1056,7 +1056,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -1122,7 +1122,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -1197,7 +1197,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/Invalid Request"
+            "$ref": "#/components/schemas/InvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
