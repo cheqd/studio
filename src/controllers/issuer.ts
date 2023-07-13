@@ -59,7 +59,8 @@ export class IssuerController {
    * /key/create:
    *   post:
    *     tags: [ Key ]
-   *     summary: Create a key pair.
+   *     summary: Create an identity key pair.
+   *     description: This endpoint creates an identity key pair associated with the user's account for custodian-mode clients.
    *     security: [ bearerAuth: [] ]
    *     responses:
    *       200:
@@ -104,10 +105,12 @@ export class IssuerController {
    * /key/{kid}:
    *   get:
    *     tags: [ Key ]
-   *     summary: Fetch a key pair.
+   *     summary: Fetch an identity key pair.
+   *     description: This endpoint fetches an identity key pair's details for a given key ID. Only the user account associated with the custodian-mode client can fetch the key pair.
    *     security: [ bearerAuth: [] ]
    *     parameters:
    *       - name: kid
+   *         description: Key ID of the identity key pair to fetch.
    *         in: path
    *         schema:
    *           type: string
