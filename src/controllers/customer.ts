@@ -3,8 +3,31 @@ import type { Request, Response } from 'express'
 import { CustomerService } from '../services/customer.js'
 import { LogToHelper } from '../middleware/auth/logto.js'
 
-export class CustomerController {
+export class AccountController {
 
+    /**
+     * @openapi
+     * 
+     * /account:
+     *   post:
+     *     tags: [Account]
+     *     summary: Create a new custodian-mode client.
+     *     description: This endpoint creates a new custodian-mode client and creates issuer DIDs and Cosmos/cheqd accounts for the client.
+     *     security: [ bearerAuth: [] ]
+     *     responses:
+     *       200:
+     *         description: The request was successful.
+     *         content:
+     *           application/json:
+     *             schema: 
+     *               $ref: '#/components/schemas/Customer'
+     *       400:
+     *         $ref: '#/components/schemas/InvalidRequest'
+     *       401:
+     *         $ref: '#/components/schemas/UnauthorizedError'
+     *       500:
+     *         $ref: '#/components/schemas/InternalError'
+     */
     public async create(request: Request, response: Response) {
         try {
             const customer = await CustomerService.instance.create(response.locals.customerId)
@@ -23,17 +46,29 @@ export class CustomerController {
         }
     }
 
-    public async update(request: Request, response: Response) {
-        try {
-            const result = await CustomerService.instance.update(response.locals.customerId, request.body)
-            return response.status(200).json(result)
-        } catch (error) {
-            return response.status(500).json({
-                error: `${error}`
-            })
-        }
-    }
-
+    /**
+     * @openapi
+     * 
+     * /account:
+     *   get:
+     *     tags: [Account]
+     *     summary: Fetch custodian-mode client details.
+     *     description: This endpoint returns the custodian-mode client details for authenticated users.
+     *     security: [ bearerAuth: [] ]
+     *     responses:
+     *       200:
+     *         description: The request was successful.
+     *         content:
+     *           application/json:
+     *             schema: 
+     *               $ref: '#/components/schemas/Customer'
+     *       400:
+     *         $ref: '#/components/schemas/InvalidRequest'
+     *       401:
+     *         $ref: '#/components/schemas/UnauthorizedError'
+     *       500:
+     *         $ref: '#/components/schemas/InternalError'
+     */
     public async get(request: Request, response: Response) {
         try {
             const result = await CustomerService.instance.get(response.locals.customerId)

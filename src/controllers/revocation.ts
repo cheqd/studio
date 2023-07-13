@@ -5,7 +5,6 @@ import { fromString } from 'uint8arrays'
 import { Identity } from '../services/identity/index.js'
 import { Veramo } from '../services/identity/agent.js'
 import { ResourceMetadata, StatusList2021ResourceTypes } from '../types/types.js'
-
 export class RevocationController {
 
     static statusListValidator = [
@@ -35,12 +34,59 @@ export class RevocationController {
     ]
 
     static checkValidator = [
-        check('index').exists().withMessage('Index is required')
-        .isNumeric().withMessage('Index should be a number'),
-        check('statusListName').exists().withMessage('StatusListName is required')
-        .isString().withMessage('Invalid statusListName')
-    ]
+      check('index').exists().withMessage('Index is required')
+      .isNumeric().withMessage('Index should be a number'),
+      check('statusListName').exists().withMessage('StatusListName is required')
+      .isString().withMessage('Invalid statusListName')
+  ]
 
+    /**
+     * @openapi
+     * 
+     * /credential-status/create:
+     *   post:
+     *     tags: [ Credential Status ]
+     *     summary: Create a StatusList2021 credential status list.
+     *     description: This endpoint creates a StatusList2021 credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.
+     *     parameters:
+     *       - in: query
+     *         name: statusPurpose
+     *         description: The purpose of the status list. Can be either revocation or suspension. Once this is set, it cannot be changed. A new status list must be created to change the purpose.
+     *         required: true
+     *         schema:
+     *           type: string
+     *           enum:
+     *             - revocation
+     *             - suspension
+     *       - in: query
+     *         name: encrypted
+     *         description: Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied.
+     *         required: true
+     *         schema:
+     *           type: boolean
+     *           default: false
+     *     requestBody:
+     *       content:
+     *         application/x-www-form-urlencoded:
+     *           schema:
+     *             $ref: '#/components/schemas/CredentialStatusCreateRequest'
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/CredentialStatusCreateRequest'
+     *     responses:
+     *       200:
+     *         description: The request was successful.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/CredentialStatusResult'
+     *       400:
+     *         $ref: '#/components/schemas/InvalidRequest'
+     *       401:
+     *         $ref: '#/components/schemas/UnauthorizedError'
+     *       500:
+     *         $ref: '#/components/schemas/InternalError'
+     */
     async createStatusList(request: Request, response: Response) {
         const result = validationResult(request)
         if (!result.isEmpty()) {
@@ -69,6 +115,133 @@ export class RevocationController {
         }
     }
 
+    /**
+     * @openapi
+     * 
+     * /credential-status/publish:
+     *   post:
+     *     tags: [ Credential Status ]
+     *     summary: Publish a StatusList2021 credential status list.
+     *     description: Published a pre-assembled StatusList2021 as a DID-Linked Resource. As input, it needs to be provided the `encodedList` property, along with the associated DID-Linked Resource properties in the original status list (if already created previously).
+     *     parameters:
+     *       - in: query
+     *         name: statusPurpose
+     *         description: The purpose of the status list. Can be either revocation or suspension. Once this is set, it cannot be changed. A new status list must be created to change the purpose.
+     *         required: true
+     *         schema:
+     *           type: string
+     *           enum:
+     *             - revocation
+     *             - suspension
+     *       - in: query
+     *         name: encrypted
+     *         description: Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied. When publishing a new version, this should match the original property.
+     *         required: true
+     *         schema:
+     *           type: boolean
+     *           default: false
+     *     requestBody:
+     *       content:
+     *         application/x-www-form-urlencoded:
+     *           schema:
+     *             $ref: '#/components/schemas/CredentialStatusPublishRequest'
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/CredentialStatusPublishRequest'
+     *     responses:
+     *       200:
+     *         description: The request was successful.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/CredentialStatusResult'
+     *       400:
+     *         $ref: '#/components/schemas/InvalidRequest'
+     *       401:
+     *         $ref: '#/components/schemas/UnauthorizedError'
+     *       500:
+     *         $ref: '#/components/schemas/InternalError'
+     */
+    async publishStatusList(request: Request, response: Response) {
+      const result = validationResult(request)
+      if (!result.isEmpty()) {
+        return response.status(400).json({ error: result.array()[0].msg })
+      }
+
+      let { did, encodedList, statusListName, alsoKnownAs, statusListVersion, length, encoding } = request.body
+      const { statusPurpose } = request.query as { statusPurpose: 'revocation' | 'suspension' }
+      
+      const data = encodedList ? fromString(encodedList, encoding) : undefined
+      
+      try {
+        let result: any
+        if (data) {
+          result = await Identity.instance.broadcastStatusList2021(did, { data, name: statusListName, alsoKnownAs, version: statusListVersion }, { encoding, statusPurpose }, response.locals.customerId)
+        }
+        result = await Identity.instance.createStatusList2021(did, { name: statusListName, alsoKnownAs, version: statusListVersion }, { length, encoding, statusPurpose }, response.locals.customerId)
+        if (result.error) {
+          return response.status(400).json(result)
+        }
+        return response.status(200).json(result)
+      } catch (error) {
+        return response.status(500).json({
+          error: `Internal error: ${error}`
+        })
+      }
+  }
+
+    /**
+     * @openapi
+     * 
+     * /credential-status/search:
+     *   get:
+     *     tags: [ Credential Status ]
+     *     summary: Fetch StatusList2021 DID-Linked Resource based on search criteria.
+     *     parameters:
+     *       - in: query
+     *         name: did
+     *         description: The DID of the issuer of the status list.
+     *         required: true
+     *         schema:
+     *           type: string
+     *       - in: query
+     *         name: statusPurpose
+     *         description: The purpose of the status list. Can be either revocation or suspension.
+     *         schema:
+     *           type: string
+     *           enum:
+     *             - revocation
+     *             - suspension
+     *       - in: query
+     *         name: statusListName
+     *         description: The name of the StatusList2021 DID-Linked Resource.
+     *         schema:
+     *           type: string
+     *     responses:
+     *       200:
+     *         description: The request was successful.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 type: object
+     *                 properties:
+     *                   statusListName:
+     *                     type: string
+     *                   statusListVersion:
+     *                     type: string
+     *                   statusListId:
+     *                     type: string
+     *                   statusListNextVersion:
+     *                     type: string
+     *       400:
+     *         $ref: '#/components/schemas/InvalidRequest'
+     *       401:
+     *         $ref: '#/components/schemas/UnauthorizedError'
+     *       500:
+     *         $ref: '#/components/schemas/InternalError'
+     */  
     async fetchStatusList(request: Request, response: Response) {
         const result = validationResult(request)
         if (!result.isEmpty()) {
@@ -108,7 +281,53 @@ export class RevocationController {
         }
     }
 
-    async updateStatusList(request: Request, response: Response) {
+    /**
+     * @openapi
+     * 
+     * /credential-status/update:
+     *   post:
+     *     tags: [ Credential Status ]
+     *     summary: Update an existing StatusList2021 credential status list.
+     *     parameters:
+     *       - in: query
+     *         name: statusPurpose
+     *         description: The purpose of the status list. Can be either revocation or suspension. Once this is set, it cannot be changed. A new status list must be created to change the purpose.
+     *         required: true
+     *         schema:
+     *           type: string
+     *           enum:
+     *             - revocation
+     *             - suspension
+     *       - in: query
+     *         name: encrypted
+     *         description: Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied. When publishing a new version, this should match the original property.
+     *         required: true
+     *         schema:
+     *           type: boolean
+     *           default: false
+     *     requestBody:
+     *       content:
+     *         application/x-www-form-urlencoded:
+     *           schema:
+     *             $ref: '#/components/schemas/CredentialStatusUpdateRequest'
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/CredentialStatusUpdateRequest'
+     *     responses:
+     *       200:
+     *         description: The request was successful.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/CredentialStatusResult'
+     *       400:
+     *         $ref: '#/components/schemas/InvalidRequest'
+     *       401:
+     *         $ref: '#/components/schemas/UnauthorizedError'
+     *       500:
+     *         $ref: '#/components/schemas/InternalError'
+     */
+    async  updateStatusList(request: Request, response: Response) {
         const result = validationResult(request)
         if (!result.isEmpty()) {
           return response.status(400).json({ error: result.array()[0].msg })
@@ -132,7 +351,60 @@ export class RevocationController {
           })
         }
     }
-
+    
+    /**
+     * @openapi
+     * 
+     * /credential-status/check:
+     *   post:
+     *     tags: [ Credential Status ]
+     *     summary: Check a StatusList2021 index for a given Verifiable Credential.
+     *     description: This endpoint checks a StatusList2021 index for a given Verifiable Credential and reports whether it is revoked or suspended. It offers a standalone method for checking an index without passing the entire Verifiable Credential or Verifiable Presentation.
+     *     parameters:
+     *       - in: query
+     *         name: statusPurpose
+     *         description: The purpose of the status list. Can be either revocation or suspension.
+     *         required: true
+     *         schema:
+     *           type: string
+     *           enum:
+     *             - revocation
+     *             - suspension
+     *       - in: query
+     *         name: encrypted
+     *         description: Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied.
+     *         required: true
+     *         schema:
+     *           type: boolean
+     *           default: false
+     *     requestBody:
+     *       content:
+     *         application/x-www-form-urlencoded:
+     *           schema:
+     *             $ref: '#/components/schemas/CredentialStatusCheckRequest'
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/CredentialStatusCheckRequest'
+     *     responses:
+     *       200:
+     *         description: The request was successful.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 revoked:
+     *                   type: boolean
+     *                 suspended:
+     *                   type: boolean
+     *                   example: false
+     *       400:
+     *         $ref: '#/components/schemas/InvalidRequest'
+     *       401:
+     *         $ref: '#/components/schemas/UnauthorizedError'
+     *       500:
+     *         $ref: '#/components/schemas/InternalError'
+     */
     async checkStatusList(request: Request, response: Response) {
         const result = validationResult(request)
         if (!result.isEmpty()) {
