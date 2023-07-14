@@ -45,7 +45,7 @@ class App {
     this.express.use(express.json({ limit: '50mb', verify: (req: Request, res, buf) => {
       req.rawBody = buf
     }}))
-    this.express.use(express.raw({ type: '*/*' }))
+    this.express.use(express.raw({ type: 'application/octet-stream' }))
 	  this.express.use(express.urlencoded({ extended: true }))
     this.express.use(Middleware.parseUrlEncodedJson)
     this.express.use(Helmet())
