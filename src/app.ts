@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Request } from 'express'
 import Helmet from 'helmet'
 import cors from 'cors'
 import swaggerUi from 'swagger-ui-express'
@@ -42,8 +42,10 @@ class App {
 
   private middleware() {
     const auth = new Authentication()
-    this.express.use(express.json({ limit: '50mb' }))
-    this.express.use(express.raw({ type: 'application/octet-stream' }))
+    this.express.use(express.json({ limit: '50mb', verify: (req: Request, res, buf) => {
+      req.rawBody = buf
+    }}))
+    this.express.use(express.raw({ type: '*/*' }))
 	  this.express.use(express.urlencoded({ extended: true }))
     this.express.use(Middleware.parseUrlEncodedJson)
     this.express.use(Helmet())

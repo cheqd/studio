@@ -50,6 +50,12 @@ declare global {
       ISSUER_DID: string
     }
   }
+
+  namespace Express {
+    interface Request {
+      rawBody: Buffer
+    }
+  }
 }
 
 export { }
