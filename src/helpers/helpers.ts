@@ -71,10 +71,9 @@ export function getCosmosAccount(kid: string) {
   return toBech32('cheqd', rawSecp256k1PubkeyToRawAddress(publicKeyConvert(fromString(kid, 'hex'), true)))
 }
 
-export function verifyHookSignature(signingKey: string, rawBody: Record<string, unknown>, expectedSignature: string): boolean {
+export function verifyHookSignature(signingKey: string, rawBody: string, expectedSignature: string): boolean {
   const hmac = createHmac('sha256', signingKey);
-  const payloadString = JSON.stringify(rawBody);
-  hmac.update(payloadString);
+  hmac.update(rawBody);
   const signature = hmac.digest('hex');
   return signature === expectedSignature;
 };

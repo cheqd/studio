@@ -56,7 +56,7 @@ export class CustomerController {
 
     public async setupDefaultRole(request: Request, response: Response) {
         if (request.body) {
-            const body = JSON.parse(request.body)
+            const { body } = request
             if (!body.user.isSuspended) {
                 const logToHelper = new LogToHelper()
                 await logToHelper.setup()
