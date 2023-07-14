@@ -1,31 +1,30 @@
 import express, { Request } from 'express'
 import Helmet from 'helmet'
 import cors from 'cors'
-import swaggerUi from 'swagger-ui-express'
 import session from 'express-session'
 import cookieParser from 'cookie-parser'
-
+import path from 'path'
 import { CredentialController } from './controllers/credentials.js'
 import { StoreController } from './controllers/store.js'
 import { IssuerController } from './controllers/issuer.js'
-import { CustomerController } from './controllers/customer.js'
+import { AccountController } from './controllers/customer.js'
 import { Authentication } from './middleware/authentication.js'
 import { Connection } from './database/connection/connection.js'
 import { RevocationController } from './controllers/revocation.js'
 import { CORS_ERROR_MSG } from './types/constants.js'
-
-import swaggerJSONDoc from './static/swagger.json' assert { type: "json" }
+import { LogToWebHook } from './middleware/hook.js'
+import { Middleware } from './middleware/middleware.js'
+import swaggerUi from 'swagger-ui-express'
 
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-import path from 'path'
-import { LogToWebHook } from './middleware/hook.js'
-import { Middleware } from './middleware/middleware.js'
+// Define Swagger file
+import swaggerDocument from './static/swagger.json' assert { type: "json" }
 
-let swagger_options = {}
+let swaggerOptions = {}
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
-  swagger_options = {
+  swaggerOptions = {
     customJs: '/static/custom-button.js',
   }
 }
@@ -75,10 +74,8 @@ class App {
 
     this.express.use(
       '/swagger',
-      swaggerUi.serve, 
-      async (_req: express.Request, res: express.Response) => {
-        return res.send(swaggerUi.generateHTML(swaggerJSONDoc, swagger_options))
-      }
+      swaggerUi.serve,
+      swaggerUi.setup(swaggerDocument, swaggerOptions)
     )
     this.express.use(auth.handleError)
     this.express.use(async (req, res, next) => await auth.accessControl(req, res, next))
@@ -100,7 +97,7 @@ class App {
     // presentation
     app.post(`/presentation/verify`, CredentialController.presentationValidator, new CredentialController().verifyPresentation)
 
-    //revocation
+    // revocation
     app.post('/credential-status/create', RevocationController.commonValidator, RevocationController.statusListValidator, new RevocationController().createStatusList)
     app.post('/credential-status/update', RevocationController.updateValidator, new RevocationController().updateStatusList)
     app.post('/credential-status/publish', RevocationController.commonValidator, new RevocationController().createStatusList)
@@ -120,17 +117,17 @@ class App {
     app.post(`/did/update`, IssuerController.updateValidator, new IssuerController().updateDid)
     app.post(`/did/deactivate/:did`, IssuerController.deactivateValidator, new IssuerController().deactivateDid)
     app.get(`/did/list`, new IssuerController().getDids)
-    app.get(`/did/:did`, new IssuerController().getDids)
+    app.get(`/did/:did`, new IssuerController().getDid)
 
     // Resource API
     app.post(`/resource/create/:did`, IssuerController.resourceValidator, new IssuerController().createResource)
 
     // Account API
-    app.post(`/account`, new CustomerController().create)
-    app.get(`/account`, new CustomerController().get)
+    app.post(`/account`, new AccountController().create)
+    app.get(`/account`, new AccountController().get)
     
     // LogTo webhooks
-    app.post(`/account/set-default-role`, LogToWebHook.verifyHookSignature, new CustomerController().setupDefaultRole)
+    app.post(`/account/set-default-role`, LogToWebHook.verifyHookSignature, new AccountController().setupDefaultRole)
 
     // static files
     app.get('/static/custom-button.js', 

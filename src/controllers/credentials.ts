@@ -7,7 +7,6 @@ import { Credentials } from '../services/credentials.js'
 import { Identity } from '../services/identity/index.js'
 
 export class CredentialController {
-
   public static issueValidator = [
     check(['subjectDid', 'issuerDid'])
     .exists().withMessage('DID is required')
@@ -48,6 +47,37 @@ export class CredentialController {
     query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value')
   ]
 
+  /**
+   * @openapi
+   * 
+   * /credential/issue:
+   *   post:
+   *     tags: [ Credential ]
+   *     summary: Issue a Verifiable Credential
+   *     description: This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued.
+   *     security: [ bearerAuth: [] ]
+   *     requestBody:
+   *       content:
+   *         application/x-www-form-urlencoded:
+   *           schema:
+   *             $ref: '#/components/schemas/CredentialRequest'
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/CredentialRequest'
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/Credential'
+   *       400:
+   *         $ref: '#/components/schemas/InvalidRequest'
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         $ref: '#/components/schemas/InternalError'
+   */
   public async issue(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
@@ -72,6 +102,50 @@ export class CredentialController {
     }
   }
 
+  /**
+   * @openapi
+   * 
+   * /credential/verify:
+   *   post:
+   *     tags: [ Credential ]
+   *     summary: Verify a Verifiable Credential.
+   *     description: This endpoint verifies a Verifiable Credential passed to it. As input, it can take the VC-JWT as a string or the entire credential itself.
+   *     operationId: verify
+   *     parameters:
+   *       - in: query
+   *         name: verifyStatus
+   *         description: If set to `true` the verification will also check the status of the credential. Requires the VC to have a `credentialStatus` property.
+   *         schema:
+   *           type: boolean
+   *           default: false
+   *       - in: query
+   *         name: fetchRemoteContexts
+   *         description: When dealing with JSON-LD you also MUST provide the proper contexts. Set this to `true` ONLY if you want the `@context` URLs to be fetched in case they are a custom context.
+   *         schema:
+   *           type: boolean
+   *           default: false
+   *     requestBody:
+   *       content:
+   *         application/x-www-form-urlencoded:
+   *           schema:
+   *             $ref: '#/components/schemas/CredentialVerifyRequest'
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/CredentialVerifyRequest'
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/IVerifyResult'
+   *       400:
+   *         $ref: '#/components/schemas/InvalidRequest'
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         $ref: '#/components/schemas/InternalError'
+   */
   public async verify(request: Request, response: Response) {
     if (request?.headers && (!request.headers['content-type'] || request.headers['content-type'] != 'application/json')) {
         return response.status(405).json({ error: 'Unsupported media type.' })
@@ -107,6 +181,46 @@ export class CredentialController {
     }
   }
 
+  /**
+   * @openapi
+   * 
+   * /credential/revoke:
+   *   post:
+   *     tags: [ Credential ]
+   *     summary: Revoke a Verifiable Credential.
+   *     description: This endpoint revokes a given Verifiable Credential. As input, it can take the VC-JWT as a string or the entire credential itself. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.
+   *     operationId: revoke
+   *     security: [ bearerAuth: [] ]
+   *     parameters:
+   *       - in: query
+   *         name: publish
+   *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
+   *         required: true
+   *         schema:
+   *           type: boolean
+   *           default: true
+   *     requestBody:
+   *       content:
+   *         application/x-www-form-urlencoded:
+   *           schema:
+   *             $ref: '#/components/schemas/CredentialRevokeRequest'
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/CredentialRevokeRequest'
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/RevocationResult'
+   *       400:
+   *         $ref: '#/components/schemas/InvalidRequest'
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         $ref: '#/components/schemas/InternalError'
+   */
   public async revoke(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
@@ -123,6 +237,44 @@ export class CredentialController {
     }
   }
 
+  /**
+   * @openapi
+   * 
+   * /credential/suspend:
+   *   post:
+   *     tags: [ Credential ]
+   *     summary: Suspend a Verifiable Credential.
+   *     description: This endpoint suspends a given Verifiable Credential.  As input, it can take the VC-JWT as a string or the entire credential itself.
+   *     operationId: suspend
+   *     security: [ bearerAuth: [] ]
+   *     parameters:
+   *       - in: query
+   *         name: publish
+   *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
+   *         schema:
+   *           type: boolean
+   *     requestBody:
+   *       content:
+   *         application/x-www-form-urlencoded:
+   *           schema:
+   *             $ref: '#/components/schemas/CredentialRevokeRequest'
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/CredentialRevokeRequest'
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/SuspensionResult'
+   *       400:
+   *         $ref: '#/components/schemas/InvalidRequest'
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         $ref: '#/components/schemas/InternalError'
+   */
   public async suspend(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
@@ -138,6 +290,44 @@ export class CredentialController {
     }
   }
 
+  /**
+   * @openapi
+   * 
+   * /credential/reinstate:
+   *   post:
+   *     tags: [ Credential ]
+   *     summary: Reinstate a suspended Verifiable Credential.
+   *     description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
+   *     operationId: reinstate
+   *     security: [ bearerAuth: [] ]
+   *     parameters:
+   *       - in: query
+   *         name: publish
+   *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
+   *         schema:
+   *           type: boolean
+   *     requestBody:
+   *       content:
+   *         application/x-www-form-urlencoded:
+   *           schema:
+   *             $ref: '#/components/schemas/CredentialRevokeRequest'
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/CredentialRevokeRequest'
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/UnSuspensionResult'
+   *       400:
+   *         $ref: '#/components/schemas/InvalidRequest'
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         $ref: '#/components/schemas/InternalError'
+   */
   public async reinstate(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
@@ -152,7 +342,51 @@ export class CredentialController {
         })
     }
   }
-
+  
+  /**
+   * @openapi
+   * 
+   * /presentation/verify:
+   *   post:
+   *     tags: [ Presentation ]
+   *     summary: Verify a Verifiable Presentation generated from credential(s).
+   *     description: This endpoint verifies the Verifiable Presentation generated from credential(s). As input, it can take the Verifiable Presentation JWT as a string or the entire Verifiable Presentation itself.
+   *     operationId: presentation
+   *     parameters:
+   *       - in: query
+   *         name: verifyStatus
+   *         description: If set to `true` the verification will also check the status of the presentation. Requires the VP to have a `credentialStatus` property.
+   *         schema:
+   *           type: boolean
+   *           default: false
+   *       - in: query
+   *         name: fetchRemoteContexts
+   *         description: When dealing with JSON-LD you also MUST provide the proper contexts. * Set this to `true` ONLY if you want the `@context` URLs to be fetched in case they are a custom context.
+   *         schema:
+   *           type: boolean
+   *           default: false
+   *     requestBody:
+   *       content:
+   *         application/x-www-form-urlencoded:
+   *           schema:
+   *             $ref: '#/components/schemas/PresentationRequest'
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/PresentationRequest'
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/IVerifyResult'
+   *       400:
+   *         $ref: '#/components/schemas/InvalidRequest'
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         $ref: '#/components/schemas/InternalError'
+   */
   public async verifyPresentation(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {

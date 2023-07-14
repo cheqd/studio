@@ -68,7 +68,6 @@ Temporary Items
 # IDEs
 .idea/**
 .idea_modules/**
-.prettierrc
 
 
 ### LANGUAGE/FRAMEWORK SPECIFIC EXCLUSIONS ###

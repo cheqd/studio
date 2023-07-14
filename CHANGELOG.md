@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.6.0](https://github.com/cheqd/credential-service/compare/2.5.0...2.6.0) (2023-07-13)
+
+
+### Features
+
+* Generate Swagger docs automatically using semantic release [DEV-2773] ([#292](https://github.com/cheqd/credential-service/issues/292)) ([38441d0](https://github.com/cheqd/credential-service/commit/38441d06617963a3350021bbe899f6f24342a3b3))
+
+## [2.6.0-develop.1](https://github.com/cheqd/credential-service/compare/2.5.0...2.6.0-develop.1) (2023-07-13)
+
+
+### Features
+
+* Generate Swagger docs automatically using semantic release [DEV-2773] ([#292](https://github.com/cheqd/credential-service/issues/292)) ([38441d0](https://github.com/cheqd/credential-service/commit/38441d06617963a3350021bbe899f6f24342a3b3))
+
 ## [2.5.0](https://github.com/cheqd/credential-service/compare/2.4.1...2.5.0) (2023-07-11)
 
 

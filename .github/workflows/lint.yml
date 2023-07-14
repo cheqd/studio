@@ -33,7 +33,6 @@ jobs:
         env:
           IGNORE_GITIGNORED_FILES: true
           DEFAULT_BRANCH: main
-          LINTER_RULES_PATH: '.github/linters'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LOG_LEVEL: WARN
           VALIDATE_ALL_CODEBASE: true
@@ -44,6 +43,6 @@ jobs:
           VALIDATE_JSONC: true
           VALIDATE_JSX: true
           VALIDATE_MARKDOWN: true
-          VALIDATE_TSX: true
+          VALIDATE_OPENAPI: true
           VALIDATE_TYPESCRIPT_ES: true
           VALIDATE_YAML: true

@@ -53,6 +53,41 @@ export class IssuerController {
     check('alsoKnownAs.*.description').isString().withMessage('Invalid description')
   ]
   
+  /**
+   * @openapi
+   * 
+   * /key/create:
+   *   post:
+   *     tags: [ Key ]
+   *     summary: Create an identity key pair.
+   *     description: This endpoint creates an identity key pair associated with the user's account for custodian-mode clients.
+   *     security: [ bearerAuth: [] ]
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/KeyResult'
+   *       400:
+   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/InvalidRequest'
+   *             example:
+   *               error: InvalidRequest
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/InvalidRequest'
+   *             example: 
+   *               error: Internal Error
+   */
   public async createKey(request: Request, response: Response) {
     try {
       const key = await Identity.instance.createKey('Ed25519', response.locals.customerId)
@@ -64,6 +99,48 @@ export class IssuerController {
     }
   }
 
+  /**
+   * @openapi
+   * 
+   * /key/{kid}:
+   *   get:
+   *     tags: [ Key ]
+   *     summary: Fetch an identity key pair.
+   *     description: This endpoint fetches an identity key pair's details for a given key ID. Only the user account associated with the custodian-mode client can fetch the key pair.
+   *     security: [ bearerAuth: [] ]
+   *     parameters:
+   *       - name: kid
+   *         description: Key ID of the identity key pair to fetch.
+   *         in: path
+   *         schema:
+   *           type: string
+   *         required: true
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/KeyResult'
+   *       400:
+   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/InvalidRequest'
+   *             example:
+   *               error: InvalidRequest
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/InvalidRequest'
+   *             example: 
+   *               error: Internal Error
+   */
   public async getKey(request: Request, response: Response) {
     try {
       const key = await Identity.instance.getKey(request.params.kid, response.locals.customerId)
@@ -75,6 +152,49 @@ export class IssuerController {
     }
   }
 
+  /**
+   * @openapi
+   * 
+   * /did/create:
+   *   post:
+   *     tags: [ DID ]
+   *     summary: Create a DID Document.
+   *     description: This endpoint creates a DID and associated DID Document. As input, it can take the DID Document parameters via a form, or the fully-assembled DID Document itself.
+   *     security: [ bearerAuth: [] ]
+   *     requestBody:
+   *       content:
+   *         application/x-www-form-urlencoded:
+   *           schema:
+   *             $ref: '#/components/schemas/DidCreateRequest'
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/DidCreateRequest'
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/DidResult'
+   *       400:
+   *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/InvalidRequest'
+   *             example:
+   *               error: InvalidRequest
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/InvalidRequest'
+   *             example: 
+   *               error: Internal Error
+   */
   public async createDid(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
@@ -124,6 +244,37 @@ export class IssuerController {
     }
   }
 
+  /**
+   * @openapi
+   * 
+   * /did/update:
+   *   post:
+   *     tags: [ DID ]
+   *     summary: Update a DID Document.
+   *     description: This endpoint updates a DID Document. As an input, it can take JUST the sections/parameters that need to be updated in the DID Document (in this scenario, it fetches the current DID Document and applies the updated section). Alternatively, it take the fully-assembled DID Document with updated sections as well as unchanged sections.
+   *     security: [ bearerAuth: [] ]
+   *     requestBody:
+   *       content:
+   *         application/x-www-form-urlencoded:
+   *           schema:
+   *             $ref: '#/components/schemas/DidUpdateRequest'
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/DidUpdateRequest'
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/DidResult'
+   *       400:
+   *         $ref: '#/components/schemas/InvalidRequest'
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         $ref: '#/components/schemas/InternalError'
+   */
   public async updateDid(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
@@ -172,6 +323,36 @@ export class IssuerController {
     }
   }
 
+  /**
+   * @openapi
+   * 
+   * /did/deactivate/{did}:
+   *   post:
+   *     tags: [ DID ]
+   *     summary: Deactivate a DID Document.
+   *     description: This endpoint deactivates a DID Document by taking the DID identifier as input. Must be called and signed by the DID owner.
+   *     security: [ bearerAuth: [] ]
+   *     parameters:
+   *       - in: path
+   *         name: did
+   *         description: DID identifier to deactivate.
+   *         schema:
+   *           type: string
+   *         required: true
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/DidResult'
+   *       400:
+   *         $ref: '#/components/schemas/InvalidRequest'
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         $ref: '#/components/schemas/InternalError'
+   */
   public async deactivateDid(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
@@ -190,6 +371,39 @@ export class IssuerController {
     }
   }
 
+  /**
+   * @openapi
+   * 
+   * /resource/create/{did}:
+   *   post:
+   *     tags: [ Resource ]
+   *     summary: Create a DID-Linked Resource.
+   *     description: This endpoint creates a DID-Linked Resource. As input, it can take the DID identifier and the resource parameters via a form, or the fully-assembled resource itself.
+   *     parameters:
+   *       - in: path
+   *         name: did
+   *         description: DID identifier to link the resource to.
+   *         schema:
+   *           type: string
+   *         required: true
+   *     requestBody:
+   *       content:
+   *         application/x-www-form-urlencoded:
+   *             schema:
+   *               $ref: '#/components/schemas/CreateResourceRequest'
+   *         application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/CreateResourceRequest'
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *       400:
+   *         $ref: '#/components/schemas/InvalidRequest'
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         $ref: '#/components/schemas/InternalError'
+   */
   public async createResource(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
@@ -240,6 +454,31 @@ export class IssuerController {
     }
   }
 
+  /**
+   * @openapi
+   * 
+   * /did/list:
+   *   get:
+   *     tags: [ DID ]
+   *     summary: Fetch DIDs associated with an account.
+   *     description: This endpoint returns the list of DIDs controlled by the account.
+   *     security: [ bearerAuth: [] ]
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               type: array
+   *               items:
+   *                 type: string
+   *       400:
+   *         $ref: '#/components/schemas/InvalidRequest'
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         $ref: '#/components/schemas/InternalError'
+   */
   public async getDids(request: Request, response: Response) {
     try {
       let did: any
@@ -257,4 +496,47 @@ export class IssuerController {
     }
   }
 
+  /**
+   * @openapi
+   * 
+   * /did/{did}:
+   *   get:
+   *     tags: [ DID ]
+   *     summary: Resolve a DID Document.
+   *     description: This endpoint resolves the latest DID Document for a given DID identifier.
+   *     parameters:
+   *       - in: path
+   *         name: did
+   *         description: DID identifier to resolve.
+   *         schema:
+   *           type: string
+   *         required: true
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema: 
+   *               $ref: '#/components/schemas/DidDocument'
+   *       400:
+   *         $ref: '#/components/schemas/InvalidRequest'
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         $ref: '#/components/schemas/InternalError'
+   */
+  public async getDid(request: Request, response: Response) {
+    try {
+      let did: any
+      if(request.params.did) {
+        did = await Identity.instance.resolveDid(request.params.did)
+        return response.status(200).json(did)
+      }
+    } catch (error) {
+        return response.status(500).json({
+            error: `${error}`
+        })
+    }
+  }
 }
+
