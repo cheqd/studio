@@ -10,7 +10,7 @@ import { CredentialAuthHandler } from './auth/credential_auth.js'
 import { DidAuthHandler } from './auth/did_auth.js'
 import { KeyAuthHandler } from './auth/key_auth.js'
 import { CredentialStatusAuthHandler } from './auth/credential-status_auth.js'
-import { AbstractAuthHandler } from './auth/base_auth.js'
+import { AbstractAuthHandler } from './auth/base-auth.js'
 import { LogToHelper } from './auth/logto.js'
 
 dotenv.config()

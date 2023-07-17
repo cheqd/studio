@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { AbstractAuthHandler } from "./base_auth.js";
+import { AbstractAuthHandler } from "./base-auth.js";
 import { IAuthResponse } from "../../types/authentication.js";
 
 export class CredentialStatusAuthHandler extends AbstractAuthHandler {
