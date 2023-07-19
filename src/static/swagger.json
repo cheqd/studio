@@ -41,7 +41,7 @@
         "description": "This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued.",
         "security": [
           {
-            "bearerAuth": []
+            "oAuth2Password": []
           }
         ],
         "requestBody": {
@@ -156,7 +156,7 @@
         "operationId": "revoke",
         "security": [
           {
-            "bearerAuth": []
+            "oAuth2Password": []
           }
         ],
         "parameters": [
@@ -218,7 +218,7 @@
         "operationId": "suspend",
         "security": [
           {
-            "bearerAuth": []
+            "oAuth2Password": []
           }
         ],
         "parameters": [
@@ -278,7 +278,7 @@
         "operationId": "reinstate",
         "security": [
           {
-            "bearerAuth": []
+            "oAuth2Password": []
           }
         ],
         "parameters": [
@@ -402,7 +402,7 @@
         "description": "This endpoint creates a new custodian-mode client and creates issuer DIDs and Cosmos/cheqd accounts for the client.",
         "security": [
           {
-            "bearerAuth": []
+            "oAuth2Password": []
           }
         ],
         "responses": {
@@ -435,7 +435,7 @@
         "description": "This endpoint returns the custodian-mode client details for authenticated users.",
         "security": [
           {
-            "bearerAuth": []
+            "oAuth2Password": []
           }
         ],
         "responses": {
@@ -470,7 +470,7 @@
         "description": "This endpoint creates an identity key pair associated with the user's account for custodian-mode clients.",
         "security": [
           {
-            "bearerAuth": []
+            "oAuth2Password": []
           }
         ],
         "responses": {
@@ -525,7 +525,7 @@
         "description": "This endpoint fetches an identity key pair's details for a given key ID. Only the user account associated with the custodian-mode client can fetch the key pair.",
         "security": [
           {
-            "bearerAuth": []
+            "oAuth2Password": []
           }
         ],
         "parameters": [
@@ -591,7 +591,7 @@
         "description": "This endpoint creates a DID and associated DID Document. As input, it can take the DID Document parameters via a form, or the fully-assembled DID Document itself.",
         "security": [
           {
-            "bearerAuth": []
+            "oAuth2Password": []
           }
         ],
         "requestBody": {
@@ -660,7 +660,7 @@
         "description": "This endpoint updates a DID Document. As an input, it can take JUST the sections/parameters that need to be updated in the DID Document (in this scenario, it fetches the current DID Document and applies the updated section). Alternatively, it take the fully-assembled DID Document with updated sections as well as unchanged sections.",
         "security": [
           {
-            "bearerAuth": []
+            "oAuth2Password": []
           }
         ],
         "requestBody": {
@@ -709,7 +709,7 @@
         "description": "This endpoint deactivates a DID Document by taking the DID identifier as input. Must be called and signed by the DID owner.",
         "security": [
           {
-            "bearerAuth": []
+            "oAuth2Password": []
           }
         ],
         "parameters": [
@@ -803,7 +803,7 @@
         "description": "This endpoint returns the list of DIDs controlled by the account.",
         "security": [
           {
-            "bearerAuth": []
+            "oAuth2Password": []
           }
         ],
         "responses": {
@@ -1237,10 +1237,17 @@
   },
   "components": {
     "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT"
+      "oAuth2Password": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "http://localhost:3001/oidc/auth",
+            "tokenUrl": "http://localhost:3001/oidc/token",
+            "scopes": {
+              "openid": "Open ID"
+            }
+          }
+        }
       }
     },
     "schemas": {

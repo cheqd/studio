@@ -22,12 +22,33 @@ dotenv.config()
 // Define Swagger file
 import swaggerDocument from './static/swagger.json' assert { type: "json" }
 
-let swaggerOptions = {}
-if (process.env.ENABLE_AUTHENTICATION === 'true') {
-  swaggerOptions = {
-    customJs: '/static/custom-button.js',
-  }
-}
+const oauthConfig = {
+  clientId: process.env.LOGTO_APP_ID,
+  clientSecret: process.env.LOGTO_APP_SECRET,
+  // Replace the following URLs with the appropriate OAuth 2.0 URLs for your service
+  // The authorizationUrl is the endpoint where users will be redirected to login and authorize the application.
+  // The tokenUrl is the endpoint where Swagger UI will request the access token.
+  // The refreshUrl is the endpoint to request a new access token using a refresh token.
+  // The scopes specify the access permissions the application is requesting.
+  // The useBasicAuthenticationWithAccessCodeGrant sets to true if you want to use basic authentication with access code grant.
+  // If you're not sure about these URLs, consult your OAuth 2.0 provider's documentation.
+  // Make sure to fill the correct URLs for your specific OAuth 2.0 provider.
+  additionalQueryStringParams: { audience: 'YOUR_AUDIENCE' },
+  auth: {
+    authorizationUrl: 'http://localhost:3001/oidc/auth',
+    tokenUrl: 'http://localhost:3001/oidc/token',
+    refreshUrl: 'YOUR_REFRESH_URL',
+    scopes: ['openid'],
+    useBasicAuthenticationWithAccessCodeGrant: false,
+  },
+  redirectUri: 'http://localhost:8787/logto/sign-in-callback'
+};
+
+const swaggerOptions = {
+  swaggerOptions: {
+    oauth: oauthConfig,
+  },
+};
 
 class App {
   public express: express.Application

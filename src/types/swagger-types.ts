@@ -3,10 +3,14 @@
  *
  * components:
  *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
+ *     oAuth2Password:
+ *       type: oauth2
+ *       flows:
+ *         authorizationCode:
+ *           authorizationUrl: http://localhost:3001/oidc/auth
+ *           tokenUrl: http://localhost:3001/oidc/token
+ *           scopes:
+ *             openid: Open ID
  *   schemas:
  *     CredentialRequest:
  *       description: Input fields for the creating a Verifiable Credential.
