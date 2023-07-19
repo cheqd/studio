@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.1](https://github.com/cheqd/credential-service/compare/2.6.0...2.6.1) (2023-07-19)
+
+
+### Bug Fixes
+
+* Fix issue with broken webhook being used for setting default user role in LogTo [DEV-2962] ([#298](https://github.com/cheqd/credential-service/issues/298)) ([1d58103](https://github.com/cheqd/credential-service/commit/1d581034958c98ad64b3aef3d755db27301865c6))
+
 ## [2.6.1-develop.1](https://github.com/cheqd/credential-service/compare/2.6.0...2.6.1-develop.1) (2023-07-17)
 
 
