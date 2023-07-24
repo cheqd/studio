@@ -39,14 +39,14 @@ const oauthConfig = {
     tokenUrl: 'http://localhost:3001/oidc/token',
     refreshUrl: 'YOUR_REFRESH_URL',
     scopes: ['openid'],
-    useBasicAuthenticationWithAccessCodeGrant: false,
+    useBasicAuthenticationWithAccessCodeGrant: false
   },
-  redirectUri: 'http://localhost:8787/logto/sign-in-callback'
 };
 
 const swaggerOptions = {
   swaggerOptions: {
     oauth: oauthConfig,
+    oauth2RedirectUrl: 'http://localhost:8787/logto/sign-in-callback'
   },
 };
 
