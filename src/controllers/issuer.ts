@@ -61,8 +61,7 @@ export class IssuerController {
    *     tags: [ Key ]
    *     summary: Create an identity key pair.
    *     description: This endpoint creates an identity key pair associated with the user's account for custodian-mode clients.
-   *     security: [ bearerAuth: [] ]
-   *     responses:
+     *     responses:
    *       200:
    *         description: The request was successful.
    *         content:
@@ -107,8 +106,7 @@ export class IssuerController {
    *     tags: [ Key ]
    *     summary: Fetch an identity key pair.
    *     description: This endpoint fetches an identity key pair's details for a given key ID. Only the user account associated with the custodian-mode client can fetch the key pair.
-   *     security: [ bearerAuth: [] ]
-   *     parameters:
+     *     parameters:
    *       - name: kid
    *         description: Key ID of the identity key pair to fetch.
    *         in: path
@@ -160,7 +158,6 @@ export class IssuerController {
    *     tags: [ DID ]
    *     summary: Create a DID Document.
    *     description: This endpoint creates a DID and associated DID Document. As input, it can take the DID Document parameters via a form, or the fully-assembled DID Document itself.
-   *     security: [ bearerAuth: [] ]
    *     requestBody:
    *       content:
    *         application/x-www-form-urlencoded:
@@ -252,7 +249,6 @@ export class IssuerController {
    *     tags: [ DID ]
    *     summary: Update a DID Document.
    *     description: This endpoint updates a DID Document. As an input, it can take JUST the sections/parameters that need to be updated in the DID Document (in this scenario, it fetches the current DID Document and applies the updated section). Alternatively, it take the fully-assembled DID Document with updated sections as well as unchanged sections.
-   *     security: [ bearerAuth: [] ]
    *     requestBody:
    *       content:
    *         application/x-www-form-urlencoded:
@@ -331,8 +327,7 @@ export class IssuerController {
    *     tags: [ DID ]
    *     summary: Deactivate a DID Document.
    *     description: This endpoint deactivates a DID Document by taking the DID identifier as input. Must be called and signed by the DID owner.
-   *     security: [ bearerAuth: [] ]
-   *     parameters:
+     *     parameters:
    *       - in: path
    *         name: did
    *         description: DID identifier to deactivate.
@@ -462,8 +457,7 @@ export class IssuerController {
    *     tags: [ DID ]
    *     summary: Fetch DIDs associated with an account.
    *     description: This endpoint returns the list of DIDs controlled by the account.
-   *     security: [ bearerAuth: [] ]
-   *     responses:
+     *     responses:
    *       200:
    *         description: The request was successful.
    *         content:

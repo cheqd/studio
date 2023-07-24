@@ -55,7 +55,6 @@ export class CredentialController {
    *     tags: [ Credential ]
    *     summary: Issue a Verifiable Credential
    *     description: This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued.
-   *     security: [ bearerAuth: [] ]
    *     requestBody:
    *       content:
    *         application/x-www-form-urlencoded:
@@ -190,7 +189,6 @@ export class CredentialController {
    *     summary: Revoke a Verifiable Credential.
    *     description: This endpoint revokes a given Verifiable Credential. As input, it can take the VC-JWT as a string or the entire credential itself. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.
    *     operationId: revoke
-   *     security: [ bearerAuth: [] ]
    *     parameters:
    *       - in: query
    *         name: publish
@@ -246,8 +244,7 @@ export class CredentialController {
    *     summary: Suspend a Verifiable Credential.
    *     description: This endpoint suspends a given Verifiable Credential.  As input, it can take the VC-JWT as a string or the entire credential itself.
    *     operationId: suspend
-   *     security: [ bearerAuth: [] ]
-   *     parameters:
+     *     parameters:
    *       - in: query
    *         name: publish
    *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
@@ -299,7 +296,6 @@ export class CredentialController {
    *     summary: Reinstate a suspended Verifiable Credential.
    *     description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
    *     operationId: reinstate
-   *     security: [ bearerAuth: [] ]
    *     parameters:
    *       - in: query
    *         name: publish
