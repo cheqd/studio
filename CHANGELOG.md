@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.1-develop.2](https://github.com/cheqd/credential-service/compare/2.6.1-develop.1...2.6.1-develop.2) (2023-07-24)
+
+
+### Bug Fixes
+
+* Fix chain of responsibility setting up [DEV-3047] ([#303](https://github.com/cheqd/credential-service/issues/303)) ([6312601](https://github.com/cheqd/credential-service/commit/6312601a98439882853a181b2b0420f9211f91fc))
+
 ## [2.6.1-develop.1](https://github.com/cheqd/credential-service/compare/2.6.0...2.6.1-develop.1) (2023-07-17)
 
 
