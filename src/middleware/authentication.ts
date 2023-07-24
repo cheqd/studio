@@ -39,12 +39,6 @@ export class Authentication {
             const credentialAuthHandler = new CredentialAuthHandler()
             const credentialStatusAuthHandler = new CredentialStatusAuthHandler()
 
-            // Set chain of responsibility
-            this.authHandler.setNext(didAuthHandler)
-            .setNext(keyAuthHandler)
-            .setNext(credentialAuthHandler)
-            .setNext(credentialStatusAuthHandler)
-
             // Set logToHelper. We do it for avoiding re-asking LogToHelper.setup() in each auth handler
             // cause it does a lot of requests to LogTo
             this.authHandler.setLogToHelper(this.logToHelper)
@@ -52,6 +46,12 @@ export class Authentication {
             keyAuthHandler.setLogToHelper(this.logToHelper)
             credentialAuthHandler.setLogToHelper(this.logToHelper)
             credentialStatusAuthHandler.setLogToHelper(this.logToHelper)
+
+            // Set chain of responsibility
+            this.authHandler.setNext(didAuthHandler)
+            .setNext(keyAuthHandler)
+            .setNext(credentialAuthHandler)
+            .setNext(credentialStatusAuthHandler)
 
             this.isSetup = true
         }
