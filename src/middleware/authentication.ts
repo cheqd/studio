@@ -34,19 +34,28 @@ export class Authentication {
         if (!this.isSetup) {
             await this.logToHelper.setup()
 
+            const didAuthHandler = new DidAuthHandler()
+            const keyAuthHandler = new KeyAuthHandler()
+            const credentialAuthHandler = new CredentialAuthHandler()
+            const credentialStatusAuthHandler = new CredentialStatusAuthHandler()
+
+            // Set logToHelper. We do it for avoiding re-asking LogToHelper.setup() in each auth handler
+            // cause it does a lot of requests to LogTo
             this.authHandler.setLogToHelper(this.logToHelper)
-            this.setupAuthHandler(new DidAuthHandler())
-            this.setupAuthHandler(new KeyAuthHandler())
-            this.setupAuthHandler(new CredentialAuthHandler())
-            this.setupAuthHandler(new CredentialStatusAuthHandler())
+            didAuthHandler.setLogToHelper(this.logToHelper)
+            keyAuthHandler.setLogToHelper(this.logToHelper)
+            credentialAuthHandler.setLogToHelper(this.logToHelper)
+            credentialStatusAuthHandler.setLogToHelper(this.logToHelper)
+
+            // Set chain of responsibility
+            this.authHandler.setNext(didAuthHandler)
+            .setNext(keyAuthHandler)
+            .setNext(credentialAuthHandler)
+            .setNext(credentialStatusAuthHandler)
+
             this.isSetup = true
         }
         next()
-    }
-
-    private setupAuthHandler(authHandler: AbstractAuthHandler) {
-        authHandler.setLogToHelper(this.logToHelper)
-        this.authHandler.setNext(authHandler)
     }
 
     public async wrapperHandleAuthRoutes(request: Request, response: Response, next: NextFunction) {
