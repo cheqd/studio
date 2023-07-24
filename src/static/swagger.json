@@ -1244,7 +1244,9 @@
             "authorizationUrl": "http://localhost:3001/oidc/auth",
             "tokenUrl": "http://localhost:3001/oidc/token",
             "scopes": {
-              "openid": "Open ID"
+              "openid": "Open ID",
+              "offline_access": "Offline access",
+              "profile": "Profile"
             }
           }
         }

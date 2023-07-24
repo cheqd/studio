@@ -11,6 +11,8 @@
  *           tokenUrl: http://localhost:3001/oidc/token
  *           scopes:
  *             openid: Open ID
+ *             offline_access: Offline access
+ *             profile: Profile
  *   schemas:
  *     CredentialRequest:
  *       description: Input fields for the creating a Verifiable Credential.

@@ -33,20 +33,18 @@ const oauthConfig = {
   // The useBasicAuthenticationWithAccessCodeGrant sets to true if you want to use basic authentication with access code grant.
   // If you're not sure about these URLs, consult your OAuth 2.0 provider's documentation.
   // Make sure to fill the correct URLs for your specific OAuth 2.0 provider.
-  additionalQueryStringParams: { audience: 'YOUR_AUDIENCE' },
   auth: {
     authorizationUrl: 'http://localhost:3001/oidc/auth',
     tokenUrl: 'http://localhost:3001/oidc/token',
-    refreshUrl: 'YOUR_REFRESH_URL',
-    scopes: ['openid'],
-    useBasicAuthenticationWithAccessCodeGrant: false
+    scopes: ['openid', 'offline_access', 'profile'],
   },
+  usePkceWithAuthorizationCodeGrant: true
 };
 
 const swaggerOptions = {
   swaggerOptions: {
     oauth: oauthConfig,
-    oauth2RedirectUrl: 'http://localhost:8787/logto/sign-in-callback'
+    oauth2RedirectUrl: 'http://localhost:8787/logto/sign-in-callback',
   },
 };
 
