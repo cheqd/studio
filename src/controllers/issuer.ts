@@ -7,7 +7,7 @@ import { MethodSpecificIdAlgo, VerificationMethods, CheqdNetwork } from '@cheqd/
 import { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js'
 
 import { Identity } from '../services/identity/index.js'
-import { generateDidDoc, isValidService, isValidVerificationMethod, validateSpecCompliantPayload } from '../helpers/helpers.js'
+import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers.js'
 
 export class IssuerController {
 
