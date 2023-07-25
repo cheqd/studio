@@ -111,7 +111,6 @@ export class Authentication {
 
     public async guard(jwtRequest: Request, response: Response, next: NextFunction) {
 		const { provider } = jwtRequest.body as { claim: string, provider: string }
-        // const namespace = apiGuarding.getNamespaceFromRequest(jwtRequest)
         if (this.authHandler.skipPath(jwtRequest.path)) 
             return next()
 

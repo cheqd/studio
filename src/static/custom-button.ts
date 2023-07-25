@@ -21,4 +21,3 @@ window.addEventListener("load", function () {
     const scheme_pan = document.getElementsByClassName('scheme-container')[0];
     scheme_pan.children[0].appendChild(auth_pan);
 });
-//# sourceMappingURL=custom-button.js.map
