@@ -12,6 +12,10 @@ export class CredentialStatusAuthHandler extends AbstractAuthHandler {
         this.registerRoute('/credential-status/publish', 'POST', 'publish:credential-status:mainnet')
         this.registerRoute('/credential-status/update', 'POST', 'update:credential-status:testnet')
         this.registerRoute('/credential-status/update', 'POST', 'update:credential-status:mainnet')
+        this.registerRoute('/credential-status/search', 'GET', 'search:credential-status:testnet')
+        this.registerRoute('/credential-status/search', 'GET', 'search:credential-status:mainnet')
+        this.registerRoute('/credential-status/check', 'POST', 'check:credential-status:testnet')
+        this.registerRoute('/credential-status/check', 'POST', 'check:credential-status:mainnet')
     }
     public async handle(request: Request, response: Response): Promise<IAuthResponse> {
         if (!request.path.includes('/credential-status')) {
