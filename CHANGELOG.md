@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.6.2](https://github.com/cheqd/credential-service/compare/2.6.1...2.6.2) (2023-07-25)
+
+
+### Bug Fixes
+
+* Cleanups ([#305](https://github.com/cheqd/credential-service/issues/305)) ([988fb58](https://github.com/cheqd/credential-service/commit/988fb58025b647587e11c5268f1911513b28e400))
+* Fix chain of responsibility setting up [DEV-3047] ([#303](https://github.com/cheqd/credential-service/issues/303)) ([6312601](https://github.com/cheqd/credential-service/commit/6312601a98439882853a181b2b0420f9211f91fc))
+* Fix verifyCredential && resolve function ([#304](https://github.com/cheqd/credential-service/issues/304)) ([bcafb54](https://github.com/cheqd/credential-service/commit/bcafb54d182094fad092a51b2248e9fcfc899d6b))
+
 ## [2.6.1](https://github.com/cheqd/credential-service/compare/2.6.0...2.6.1) (2023-07-19)
 
 ## [2.6.1-develop.4](https://github.com/cheqd/credential-service/compare/2.6.1-develop.3...2.6.1-develop.4) (2023-07-25)
