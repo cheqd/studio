@@ -13,7 +13,7 @@ export class AccountController {
      *     tags: [Account]
      *     summary: Create a new custodian-mode client.
      *     description: This endpoint creates a new custodian-mode client and creates issuer DIDs and Cosmos/cheqd accounts for the client.
-         *     responses:
+     *     responses:
      *       200:
      *         description: The request was successful.
      *         content:
@@ -53,7 +53,7 @@ export class AccountController {
      *     tags: [Account]
      *     summary: Fetch custodian-mode client details.
      *     description: This endpoint returns the custodian-mode client details for authenticated users.
-         *     responses:
+     *     responses:
      *       200:
      *         description: The request was successful.
      *         content:
