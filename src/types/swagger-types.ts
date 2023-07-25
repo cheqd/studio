@@ -2,11 +2,6 @@
  * @openapi
  *
  * components:
- *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
  *   schemas:
  *     CredentialRequest:
  *       description: Input fields for the creating a Verifiable Credential.

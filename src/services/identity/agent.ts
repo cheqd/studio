@@ -52,7 +52,6 @@ import {
   VerificationOptions
 } from '../../types/types.js'
 import { VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js'
-import { decodeJWT } from 'did-jwt'
 
 const resolverUrl = "https://resolver.cheqd.net/1.0/identifiers/"
 
@@ -240,22 +239,23 @@ export class Veramo {
   }
 
   async verifyCredential(agent: VeramoAgent, credential: string | VerifiableCredential, verificationOptions: VerificationOptions = {}): Promise<IVerifyResult> {
-    const decodedCredential = typeof credential === 'string' ? decodeJWT(credential) as unknown as VerifiableCredential : credential
     let result: IVerifyResult
     if(verificationOptions.verifyStatus) {
         result = await agent.cheqdVerifyCredential({
             credential: credential as VerifiableCredential,
             fetchList: true,
             verificationArgs: {
-                ...verificationOptions,
-                fetchRemoteContexts: verificationOptions.fetchRemoteContexts || decodedCredential.proof.jws
+                ...verificationOptions
             }
         } as ICheqdVerifyCredentialWithStatusList2021Args)
     } else {
         result = await agent.verifyCredential({
             credential, 
             ...verificationOptions,
-            fetchRemoteContexts: verificationOptions.fetchRemoteContexts || decodedCredential.proof.jws
+            policies: {
+                ...verificationOptions.policies,
+                credentialStatus: false,
+            }
         })
     }
 
@@ -289,7 +289,14 @@ export class Veramo {
             },
         } as ICheqdVerifyPresentationWithStatusList2021Args)
     } else {
-        result = await agent.verifyPresentation({ presentation, ...verificationOptions, fetchRemoteContexts: verificationOptions.fetchRemoteContexts || false })
+        result = await agent.verifyPresentation({
+            presentation, 
+            ...verificationOptions,
+            policies: {
+                ...verificationOptions.policies,
+                credentialStatus: false
+            }
+        })
     }
 
     if (result.didResolutionResult) {
@@ -354,7 +361,7 @@ export class Veramo {
  }
 
  async resolve(didUrl: string) {
-    const result = await fetch(process.env.RESOLVER_URL || resolverUrl + didUrl, {
+    const result = await fetch((process.env.RESOLVER_URL || resolverUrl) + didUrl, {
         headers: { 'Content-Type': 'application/did+ld+json' },
     })
     const ddo = (await result.json())
