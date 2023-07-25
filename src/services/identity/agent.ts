@@ -255,7 +255,8 @@ export class Veramo {
         result = await agent.verifyCredential({
             credential, 
             ...verificationOptions,
-            fetchRemoteContexts: verificationOptions.fetchRemoteContexts || decodedCredential.proof?.jws
+            fetchRemoteContexts: verificationOptions.fetchRemoteContexts || decodedCredential.proof?.jws,
+            credentialStatus: false
         })
     }
 
@@ -289,7 +290,7 @@ export class Veramo {
             },
         } as ICheqdVerifyPresentationWithStatusList2021Args)
     } else {
-        result = await agent.verifyPresentation({ presentation, ...verificationOptions, fetchRemoteContexts: verificationOptions.fetchRemoteContexts || false })
+        result = await agent.verifyPresentation({ presentation, ...verificationOptions, fetchRemoteContexts: verificationOptions.fetchRemoteContexts || false, credentialStatus: false })
     }
 
     if (result.didResolutionResult) {
