@@ -1,6 +1,7 @@
 # Changelog
 
 ## [2.6.1](https://github.com/cheqd/credential-service/compare/2.6.0...2.6.1) (2023-07-19)
+
 ## [2.6.1-develop.4](https://github.com/cheqd/credential-service/compare/2.6.1-develop.3...2.6.1-develop.4) (2023-07-25)
 
 
