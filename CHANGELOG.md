@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.1-develop.3](https://github.com/cheqd/credential-service/compare/2.6.1-develop.2...2.6.1-develop.3) (2023-07-25)
+
+
+### Bug Fixes
+
+* Fix verifyCredential && resolve function ([#304](https://github.com/cheqd/credential-service/issues/304)) ([bcafb54](https://github.com/cheqd/credential-service/commit/bcafb54d182094fad092a51b2248e9fcfc899d6b))
+
 ## [2.6.1-develop.2](https://github.com/cheqd/credential-service/compare/2.6.1-develop.1...2.6.1-develop.2) (2023-07-24)
 
 
