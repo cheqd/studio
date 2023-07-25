@@ -354,7 +354,7 @@ export class Veramo {
  }
 
  async resolve(didUrl: string) {
-    const result = await fetch(process.env.RESOLVER_URL || resolverUrl + didUrl, {
+    const result = await fetch((process.env.RESOLVER_URL || resolverUrl) + didUrl, {
         headers: { 'Content-Type': 'application/did+ld+json' },
     })
     const ddo = (await result.json())
