@@ -248,14 +248,14 @@ export class Veramo {
             fetchList: true,
             verificationArgs: {
                 ...verificationOptions,
-                fetchRemoteContexts: verificationOptions.fetchRemoteContexts || decodedCredential.proof.jws
+                fetchRemoteContexts: verificationOptions.fetchRemoteContexts || decodedCredential.proof?.jws
             }
         } as ICheqdVerifyCredentialWithStatusList2021Args)
     } else {
         result = await agent.verifyCredential({
             credential, 
             ...verificationOptions,
-            fetchRemoteContexts: verificationOptions.fetchRemoteContexts || decodedCredential.proof.jws
+            fetchRemoteContexts: verificationOptions.fetchRemoteContexts || decodedCredential.proof?.jws
         })
     }
 
