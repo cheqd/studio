@@ -244,7 +244,7 @@ export class CredentialController {
    *     summary: Suspend a Verifiable Credential.
    *     description: This endpoint suspends a given Verifiable Credential.  As input, it can take the VC-JWT as a string or the entire credential itself.
    *     operationId: suspend
-     *     parameters:
+   *     parameters:
    *       - in: query
    *         name: publish
    *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.

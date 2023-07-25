@@ -7,7 +7,7 @@ import { MethodSpecificIdAlgo, VerificationMethods, CheqdNetwork } from '@cheqd/
 import { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js'
 
 import { Identity } from '../services/identity/index.js'
-import { generateDidDoc, isValidService, isValidVerificationMethod, validateSpecCompliantPayload } from '../helpers/helpers.js'
+import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers.js'
 
 export class IssuerController {
 
@@ -61,7 +61,7 @@ export class IssuerController {
    *     tags: [ Key ]
    *     summary: Create an identity key pair.
    *     description: This endpoint creates an identity key pair associated with the user's account for custodian-mode clients.
-     *     responses:
+   *     responses:
    *       200:
    *         description: The request was successful.
    *         content:
@@ -106,7 +106,7 @@ export class IssuerController {
    *     tags: [ Key ]
    *     summary: Fetch an identity key pair.
    *     description: This endpoint fetches an identity key pair's details for a given key ID. Only the user account associated with the custodian-mode client can fetch the key pair.
-     *     parameters:
+   *     parameters:
    *       - name: kid
    *         description: Key ID of the identity key pair to fetch.
    *         in: path
@@ -327,7 +327,7 @@ export class IssuerController {
    *     tags: [ DID ]
    *     summary: Deactivate a DID Document.
    *     description: This endpoint deactivates a DID Document by taking the DID identifier as input. Must be called and signed by the DID owner.
-     *     parameters:
+   *     parameters:
    *       - in: path
    *         name: did
    *         description: DID identifier to deactivate.
@@ -457,7 +457,7 @@ export class IssuerController {
    *     tags: [ DID ]
    *     summary: Fetch DIDs associated with an account.
    *     description: This endpoint returns the list of DIDs controlled by the account.
-     *     responses:
+   *     responses:
    *       200:
    *         description: The request was successful.
    *         content:
