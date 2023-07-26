@@ -69,6 +69,14 @@ By default, `ENABLE_AUTHENTICATION` is set to off/`false`. To enable external Ve
    1. `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users
    2. `COOKIE_SECRET`: Secret for cookie encryption.
 
+#### Faucet settings
+
+This section describes bootstrapping things for newcomers accounts. If it's enabled the CredentialService auto-populates some tokens on the testnet for making the process simpler.
+
+1. `FAUCET_ENABLED` - enable/disable such functionality (`false` by default)
+2. `FAUCET_URI` - URI when the faucet service is located (`https://faucet-api.cheqd.network/credit` by default)
+3. `FAUCET_DENOM` - the denom of token to assign (`ncheq` by default)
+
 ### 3rd Party Connectors
 
 The app supports 3rd party connectors for credential storage and delivery.

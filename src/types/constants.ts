@@ -36,3 +36,6 @@ export const configLogToExpress = {
 	baseUrl: APPLICATION_BASE_URL,
 	getAccessToken: true,
 }
+
+export const DEFAULT_FAUCET_DENOM = process.env.FAUCET_DENOM || 'ncheq'
+export const DEFAULT_FAUCET_URI = process.env.FAUCET_URI || 'https://faucet-api.cheqd.network/credit'

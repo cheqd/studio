@@ -22,8 +22,14 @@ export class CustomerService {
             throw new Error('Customer exists')
         }
         const kid = (await Identity.instance.createKey('Secp256k1', customerId)).kid
-        const customer = new CustomerEntity(customerId, kid, getCosmosAccount(kid))
-        return (await this.customerRepository.insert(customer)).identifiers[0]
+        const address = getCosmosAccount(kid)
+        const customer = new CustomerEntity(customerId, kid, address)
+        const customerEntity = (await this.customerRepository.insert(customer)).identifiers[0]
+        return {
+            customerId: customerEntity.customerId,  
+            address: address
+        }
+                
     }
 
     public async update(customerId: string, { kids=[], dids=[], claimIds=[], presentationIds=[]} : { kids?: string[], dids?: string[], claimIds?: string[], presentationIds?: string[] }) {

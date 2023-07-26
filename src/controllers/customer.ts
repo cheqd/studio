@@ -2,6 +2,7 @@ import type { Request, Response } from 'express'
 
 import { CustomerService } from '../services/customer.js'
 import { LogToHelper } from '../middleware/auth/logto.js'
+import { FaucetHelper } from '../helpers/faucet.js'
 
 export class AccountController {
 
@@ -35,8 +36,17 @@ export class AccountController {
                     error: `Error creating customer. Please try again`
                 })
             }
+            // Send some tokens for testnet
+            if (process.env.FAUCET_ENABLED === 'true') {
+                const resp = await FaucetHelper.delegateTokens(customer.address)
+                if (resp.status !== 200) {
+                    return response.status(resp.status).json({
+                        error: resp.error})
+                }
+            }
             return response.status(200).json({
                 customerId: customer.customerId,
+                address: customer.address,
             })
         } catch (error) {
             return response.status(500).json({

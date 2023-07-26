@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv'
-import { ILogToErrorResponse } from '../../types/authentication'
+import { ICommonErrorResponse } from '../../types/authentication'
 dotenv.config()
 
 
@@ -17,8 +17,8 @@ export class LogToHelper {
     this.allResourceWithNames = []
   }
 
-  public async setup(): Promise<ILogToErrorResponse | void>{
-    let _r = {} as ILogToErrorResponse | void
+  public async setup(): Promise<ICommonErrorResponse | void>{
+    let _r = {} as ICommonErrorResponse | void
     _r = await this.setM2MToken()
     if (_r && _r.status !== 200) {
         return _r
@@ -49,7 +49,7 @@ export class LogToHelper {
     return this.allResourceWithNames
   }
 
-  public async setDefaultRoleForUser(userId: string): Promise<ILogToErrorResponse | void> {
+  public async setDefaultRoleForUser(userId: string): Promise<ICommonErrorResponse | void> {
     const roles = await this.getRolesForUser(userId)
     if (roles && roles.status === 200) {
         // Check that default role is set
@@ -64,7 +64,7 @@ export class LogToHelper {
     }
   }
 
-  private async assignDefaultRoleForUser(userId: string, roleId: string): Promise<ILogToErrorResponse | void> {
+  private async assignDefaultRoleForUser(userId: string, roleId: string): Promise<ICommonErrorResponse | void> {
     const userInfo = await this.getUserInfo(userId)
     const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
 
@@ -110,7 +110,7 @@ export class LogToHelper {
     }
   }
 
-  private async getRolesForUser(userId: string): Promise<ILogToErrorResponse | void> {
+  private async getRolesForUser(userId: string): Promise<ICommonErrorResponse | void> {
     const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
     try {
         // Note: By default, the API returns first 20 roles.
@@ -125,7 +125,7 @@ export class LogToHelper {
     }
   }
 
-  private async postToLogto(uri: URL, body: any, headers: any = {}): Promise<ILogToErrorResponse | void> {
+  private async postToLogto(uri: URL, body: any, headers: any = {}): Promise<ICommonErrorResponse | void> {
     const response = await fetch(uri, {
         headers: {
             ...headers,
@@ -149,7 +149,7 @@ export class LogToHelper {
     }
   }
 
-  private async getToLogto(uri: URL, headers: any = {}): Promise<ILogToErrorResponse | void> {
+  private async getToLogto(uri: URL, headers: any = {}): Promise<ICommonErrorResponse | void> {
     const response = await fetch(uri, {
         headers: {
             ...headers,
@@ -175,7 +175,7 @@ export class LogToHelper {
     }
   }
 
-  private async getUserInfo(userId: string): Promise<ILogToErrorResponse | void> {
+  private async getUserInfo(userId: string): Promise<ICommonErrorResponse | void> {
     const uri = new URL(`/api/users/${userId}`, process.env.LOGTO_ENDPOINT);
     try {
         return await this.getToLogto(uri, 'GET')
@@ -188,7 +188,7 @@ export class LogToHelper {
     }
   }
 
-  private async getRoleInfo(roleId: string): Promise<ILogToErrorResponse | void> {
+  private async getRoleInfo(roleId: string): Promise<ICommonErrorResponse | void> {
     const uri = new URL(`/api/roles/${roleId}`, process.env.LOGTO_ENDPOINT);
     try {
         return await this.getToLogto(uri, 'GET')
@@ -201,7 +201,7 @@ export class LogToHelper {
     }
   }
 
-  private async setDefaultScopes(): Promise<ILogToErrorResponse | void>{
+  private async setDefaultScopes(): Promise<ICommonErrorResponse | void>{
     const _r = await this.getAllResources()
     if (_r && _r.status === 200) {
         for (const r of _r.data) {
@@ -220,7 +220,7 @@ export class LogToHelper {
     }
   }
 
-  private async setM2MToken() : Promise<ILogToErrorResponse | void> {
+  private async setM2MToken() : Promise<ICommonErrorResponse | void> {
     const searchParams = new URLSearchParams({
         grant_type: 'client_credentials',
         resource: process.env.LOGTO_MANAGEMENT_API as string,
@@ -252,7 +252,7 @@ export class LogToHelper {
     }
   }
 
-  private async setAllScopes(): Promise<ILogToErrorResponse | void> {
+  private async setAllScopes(): Promise<ICommonErrorResponse | void> {
 
     const allResources = await this.getAllResources()
     if (allResources && allResources.status === 200) {
@@ -280,7 +280,7 @@ export class LogToHelper {
     }
   }
 
-  private async setAllResourcesWithNames(): Promise<ILogToErrorResponse | void> {
+  private async setAllResourcesWithNames(): Promise<ICommonErrorResponse | void> {
     const allResources = await this.getAllResources()
     if (allResources && allResources.status === 200) {
         for (const resource of allResources.data) {
@@ -291,7 +291,7 @@ export class LogToHelper {
     }
   }
 
-  private async askForScopes(resourceId: string): Promise<ILogToErrorResponse | void> {
+  private async askForScopes(resourceId: string): Promise<ICommonErrorResponse | void> {
     const uri = new URL(`/api/resources/${resourceId}/scopes`, process.env.LOGTO_ENDPOINT);
     const scopes = []
 
@@ -322,7 +322,7 @@ export class LogToHelper {
     }
   }
 
-  private async getAllResources(): Promise<ILogToErrorResponse | void> {
+  private async getAllResources(): Promise<ICommonErrorResponse | void> {
     const uri = new URL(`/api/resources`, process.env.LOGTO_ENDPOINT);
 
     try {

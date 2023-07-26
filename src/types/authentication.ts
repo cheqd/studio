@@ -38,7 +38,7 @@ export interface IAuthResponse{
     error: string
 }
 
-export interface ILogToErrorResponse {
+export interface ICommonErrorResponse {
     status: number,
     error: string,
     data: any

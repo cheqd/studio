@@ -286,7 +286,7 @@ export class IssuerController {
       if (request.body.didDocument) {
         updatedDocument = request.body.didDocument
       } else if (did && (service || verificationMethod || authentication)) {
-        let resolvedResult = await Identity.instance.resolveDid(did)
+        const resolvedResult = await Identity.instance.resolveDid(did)
         if(!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
           return response.status(400).send({
               error: `${did} is either Deactivated or Not found`
