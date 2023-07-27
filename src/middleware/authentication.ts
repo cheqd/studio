@@ -10,7 +10,6 @@ import { CredentialAuthHandler } from './auth/credential-auth.js'
 import { DidAuthHandler } from './auth/did-auth.js'
 import { KeyAuthHandler } from './auth/key-auth.js'
 import { CredentialStatusAuthHandler } from './auth/credential-status-auth.js'
-import { PresentationAuthHandler } from './auth/presentation-auth.js'
 import { ResourceAuthHandler } from './auth/resource-auth.js'
 import { AbstractAuthHandler } from './auth/base-auth.js'
 import { LogToHelper } from './auth/logto.js'
@@ -40,7 +39,6 @@ export class Authentication {
             const keyAuthHandler = new KeyAuthHandler()
             const credentialAuthHandler = new CredentialAuthHandler()
             const credentialStatusAuthHandler = new CredentialStatusAuthHandler()
-            const presentationAuthHandler = new PresentationAuthHandler()
             const resourceAuthHandler = new ResourceAuthHandler()
 
             // Set logToHelper. We do it for avoiding re-asking LogToHelper.setup() in each auth handler
@@ -50,7 +48,6 @@ export class Authentication {
             keyAuthHandler.setLogToHelper(this.logToHelper)
             credentialAuthHandler.setLogToHelper(this.logToHelper)
             credentialStatusAuthHandler.setLogToHelper(this.logToHelper)
-            presentationAuthHandler.setLogToHelper(this.logToHelper)
             resourceAuthHandler.setLogToHelper(this.logToHelper)
 
             // Set chain of responsibility
@@ -58,7 +55,6 @@ export class Authentication {
             .setNext(keyAuthHandler)
             .setNext(credentialAuthHandler)
             .setNext(credentialStatusAuthHandler)
-            .setNext(presentationAuthHandler)
             .setNext(resourceAuthHandler)
 
             this.isSetup = true

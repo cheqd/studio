@@ -10,8 +10,6 @@ export class DidAuthHandler extends AbstractAuthHandler {
         this.registerRoute('/did/create', 'POST', 'create:did:mainnet')
         this.registerRoute('/did/list', 'GET', 'list:did:testnet')
         this.registerRoute('/did/list', 'GET', 'list:did:mainnet')
-        this.registerRoute('/did', 'GET', 'read:did:testnet')
-        this.registerRoute('/did', 'GET', 'read:did:mainnet')
         this.registerRoute('/did/update', 'POST', 'update:did:testnet')
         this.registerRoute('/did/update', 'POST', 'update:did:mainnet')
         this.registerRoute('/did/deactivate', 'POST', 'update:did:testnet')
