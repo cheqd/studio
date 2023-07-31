@@ -25,70 +25,84 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
     private nextHandler: IAuthResourceHandler
     private namespace: Namespaces
     private token: string
-    private scopes: string[] | unknown
+    private scopes: string[]
     private logToHelper: LogToHelper
 
     public customer_id: string
 
     private routeToScoupe: MethodToScope[] = []
-    private static pathSkip = ['/swagger', '/user', '/static', '/logto', '/account/set-default-role']
-    // private static regExpSkip = new RegExp("^/.*js")
+    private static pathSkip = [
+        '/swagger', 
+        '/user', 
+        '/static', 
+        '/logto', 
+        '/account/set-default-role']
 
     constructor () {
         this.nextHandler = {} as IAuthResourceHandler
         this.namespace = '' as Namespaces
         this.token = '' as string
-        this.scopes = undefined
+        this.scopes = []
         this.customer_id = '' as string
         this.logToHelper = new LogToHelper()
     }
 
     public async commonPermissionCheck(request: Request): Promise<IAuthResponse> {
-        // Tries to get token from the request and other preps
-        const _setup = this.setupAuth(request)
-        if (_setup) {
-            return _setup
+        // Firstly - try to find the rule for the request
+        const rule = this.findRule(request.path, request.method, this.getNamespace())
+
+        if (rule && rule.isAllowedUnauthorized()) {
+            return this.returnOk()
         }
 
-        const resourceAPI = AbstractAuthHandler.buildResourceAPIUrl(request)
-        if (!resourceAPI) {
-            return {
-                status: 500,
-                error: `Internal error. Issue with building resource API for the path ${request.path}`,
-                data: {
-                    customerId: '',
-                    scopes: [],
-                    namespace: this.getNamespace(),
-                }
+        // If there is no rule for the request - return error
+        if (rule === null) {
+            return this.returnError(500, `Internal error. Issue with finding the rule for the path ${request.path}`)
+        } else {
+            // Tries to get token from the request and other preps
+            const _setup = this.setupAuthToken(request)
 
+            // If token is not provided - try to proceed without it
+            // If token is provided - verify it and get the scopes
+            if (_setup.status !== 200) {
+                return _setup 
             }
-        }
-        // Verifies token for the resource API
-        const _resp = await this.verifyJWTToken(this.getToken(), resourceAPI)
-        if (_resp && _resp.status !== 200) {
-            return _resp
-        }
-
-        // Checks if the token has the required scopes
-        if (!this.areValidScopes(request.path, request.method, this.getScopes() as string[], this.getNamespace())) {
-            return {
-                status: 400,
-                error: `Unauthorized error: Current LogTo account does not have the required scopes. 
-                You need ${this.getScopeForRoute(request.path, request.method, this.getNamespace())} scope(s).`,
-                data: {
-                    customerId: '',
-                    scopes: [],
-                    namespace: this.getNamespace(),
-                }
-
+            const resourceAPI = AbstractAuthHandler.buildResourceAPIUrl(request)
+            if (!resourceAPI) {
+                return this.returnError(500, `Internal error. Issue with building resource API for the path ${request.path}`)
             }
+            // Verifies token for the resource API
+            const _resp = await this.verifyJWTToken(this.getToken(), resourceAPI)
+            if (_resp.status !== 200) {
+                return _resp
+            }
+            // Checks if the token has the required scopes
+            if (!this.areValidScopes(rule, this.getScopes())) {
+                this.returnError(400, `Unauthorized error: Current LogTo account does not have the required scopes. You need ${this.getScopeForRoute(request.path, request.method, this.getNamespace())} scope(s).`)
+            }
+            return this.returnOk()
         }
+    }
+
+    private returnOk(): IAuthResponse {
         return {
             status: 200,
             error: '',
             data: {
                 customerId: this.getCustomerId(),
                 scopes: this.getScopes() as string[],
+                namespace: this.getNamespace(),
+            }
+        }
+    }
+
+    private returnError(status: number, error: string,): IAuthResponse {
+        return {
+            status: status,
+            error: error,
+            data: {
+                customerId: '',
+                scopes: [],
                 namespace: this.getNamespace(),
             }
         }
@@ -105,15 +119,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
             return this.nextHandler.handle(request, response)
         }
         // If request.path was not registered in the routeToScope, then skip the auth check
-        return {
-            status: 200,
-            error: '',
-            data: {
-                customerId: '',
-                scopes: [],
-                namespace: this.getNamespace(),
-            }
-        }
+        return this.returnOk()
     }
 
     public skipPath(path: string): boolean {
@@ -126,7 +132,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
     }
 
     // Verifies the JWT token for resourceAPI
-    public async verifyJWTToken(token: string, resourceAPI: string): Promise<IAuthResponse | void> {
+    public async verifyJWTToken(token: string, resourceAPI: string): Promise<IAuthResponse> {
         try {
             const { payload } = await jwtVerify(
                 token, // The raw Bearer Token extracted from the request header
@@ -140,36 +146,19 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
             )
             // Setup the scopes from the token
             if (!payload.scope) {
-                return {
-                    status: 400,
-                    error: `Unauthorized error: No scope found in the token.`,
-                    data: {
-                        customerId: '',
-                        scopes: [],
-                        namespace: this.namespace
-                    }
-
-                }
+                return this.returnError(400, `Unauthorized error: No scope found in the token.`)
             }
             this.scopes = (payload.scope as string).split(' ')
             this.customer_id = payload.sub as string
 
         } catch (error) {
-            return {
-                status: 400,
-                error: `Unauthorized error: ${error}`,
-                data: {
-                    customerId: '',
-                    scopes: [],
-                    namespace: this.namespace
-                }
-
-            }
+            return this.returnError(400, `Unauthorized error: ${error}`)
         }
+        return this.returnOk()
     }
 
     // Make all the possible preps for the auth handler
-    public setupAuth(request: Request): IAuthResponse | void {
+    public setupAuthToken(request: Request): IAuthResponse {
         // setting up namespace. It should be testnet or mainnet
         this.namespace = AbstractAuthHandler.getNamespaceFromRequest(request)
 
@@ -180,32 +169,31 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
             // Otherwise try to get it from the user structure in the request
             token = Object.getOwnPropertyNames(request.user).length > 0 ? request.user.accessToken as string : "";
             if (!token) {
-                return {
-                    status: 401,
-                    error: `Unauthorized error: Looks like you are not logged in using LogTo properly or don't have needed permissions.`,
-                    data: {
-                        customerId: '',
-                        scopes: [],
-                        namespace: this.namespace
-                    }
-
-                }
+                return this.returnError(401, `Unauthorized error: Looks like you are not logged in using LogTo properly or don't have needed permissions.`)
             }
         }
         this.token = token
+        return this.returnOk()
     }
 
     // common utils
     public setLogToHelper(logToHelper: LogToHelper) {
         this.logToHelper = logToHelper
     }
+
+    private static doesMatchMainnet(matches: string[] | null): boolean {
+        if (matches && matches.length > 0) {
+            return Namespaces.Mainnet === matches[0]
+        }
+        return false
+    }
     
     public static getNamespaceFromRequest(req: Request): Namespaces {
-        const matches = stringify(req.body).match(cheqdDidRegex)
-        if (matches && matches.length > 0) {
-            if (Namespaces.Mainnet === matches[0]) {
-                return Namespaces.Mainnet
-            }
+        if (AbstractAuthHandler.doesMatchMainnet(stringify(req.body).match(cheqdDidRegex))) {
+            return Namespaces.Mainnet
+        }
+        if (AbstractAuthHandler.doesMatchMainnet(req.path.match(cheqdDidRegex))) {
+            return Namespaces.Mainnet
         }
         return Namespaces.Testnet
     }
@@ -224,7 +212,6 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
         if (authorization && authorization.startsWith(bearerTokenIdentifier)) {
             return authorization.slice(bearerTokenIdentifier.length + 1)
         }
-      
         return undefined
     }
 
@@ -237,7 +224,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
         return this.token
     }
 
-    public getScopes(): string[] | unknown {
+    public getScopes(): string[] {
         return this.scopes
     }
 
@@ -264,14 +251,14 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
     }
 
     // Route and scope related funcs
-    public registerRoute(route: string, method: string, scope: string): void {
-        this.routeToScoupe.push(new MethodToScope(route, method, scope))
+    public registerRoute(route: string, method: string, scope: string, allowedUnauthorized = false): void {
+        this.routeToScoupe.push(new MethodToScope(route, method, scope, allowedUnauthorized))
     }
 
-    private findRule(route: string, method: string, namespace=Namespaces.Testnet): MethodToScope | null {
-        for (const item of this.routeToScoupe) {
-            if (item.isRule(route, method, namespace)) {
-                return item
+    public findRule(route: string, method: string, namespace=Namespaces.Testnet): MethodToScope | null {
+        for (const rule of this.routeToScoupe) {
+            if (rule.isRuleMatches(route, method, namespace)) {
+                return rule
             }
         }
         return null
@@ -285,18 +272,13 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
         return null
     }
 
-    public isValidScope(route: string, method: string, scope: string, namespace=Namespaces.Testnet): boolean {
-        const rule = this.findRule(route, method, namespace)
-        if (rule) {
-            return rule.validate(route, method, scope, namespace)
-        }
-        // If no rule for route, then allow
-        return true
+    public isValidScope(rule: MethodToScope, scope: string): boolean {
+        return rule.validate(scope)
     }
 
-    public areValidScopes(route: string, method: string, scopes: string[], namespace=Namespaces.Testnet): boolean {
+    public areValidScopes(rule: MethodToScope, scopes: string[]): boolean {
         for (const scope of scopes) {
-            if (this.isValidScope(route, method, scope, namespace)) {
+            if (this.isValidScope(rule, scope)) {
                 return true
             }
         }

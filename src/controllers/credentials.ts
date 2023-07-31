@@ -154,13 +154,12 @@ export class CredentialController {
     const { credential, policies } = request.body
     const verifyStatus = request.query.verifyStatus === 'true' ? true : false 
     try {
-        const result = await Identity.instance.verifyCredential(
+        const result = await Identity.unauthorized.verifyCredential(
             credential, 
             {
                 verifyStatus,
                 policies
-            },
-            response.locals.customerId
+            }
         )
         if (result.error) {
             return response.status(400).json({
@@ -388,14 +387,13 @@ export class CredentialController {
     const { presentation, verifierDid, policies } = request.body
     const verifyStatus = request.query.verifyStatus === 'true' ? true : false 
     try {
-        const result = await Identity.instance.verifyPresentation(
+        const result = await Identity.unauthorized.verifyPresentation(
             presentation, 
             {
                 verifyStatus,
                 policies,
                 domain: verifierDid
-            }, 
-            response.locals.customerId
+            }
         )
         if (result.error) {
             return response.status(400).json({

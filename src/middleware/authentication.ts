@@ -1,7 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
 
-import { CustomerService } from '../services/customer.js'
-
 import * as dotenv from 'dotenv'
 import { withLogto, handleAuthRoutes, LogtoExpressConfig } from '@logto/express'
 import { configLogToExpress } from '../types/constants.js'
@@ -13,6 +11,7 @@ import { CredentialStatusAuthHandler } from './auth/credential-status-auth.js'
 import { ResourceAuthHandler } from './auth/resource-auth.js'
 import { AbstractAuthHandler } from './auth/base-auth.js'
 import { LogToHelper } from './auth/logto.js'
+import { PresentationAuthHandler } from './auth/presentation-auth.js'
 
 dotenv.config()
 
@@ -40,6 +39,7 @@ export class Authentication {
             const credentialAuthHandler = new CredentialAuthHandler()
             const credentialStatusAuthHandler = new CredentialStatusAuthHandler()
             const resourceAuthHandler = new ResourceAuthHandler()
+            const presentationAuthHandler = new PresentationAuthHandler()
 
             // Set logToHelper. We do it for avoiding re-asking LogToHelper.setup() in each auth handler
             // cause it does a lot of requests to LogTo
@@ -49,6 +49,7 @@ export class Authentication {
             credentialAuthHandler.setLogToHelper(this.logToHelper)
             credentialStatusAuthHandler.setLogToHelper(this.logToHelper)
             resourceAuthHandler.setLogToHelper(this.logToHelper)
+            presentationAuthHandler.setLogToHelper(this.logToHelper)
 
             // Set chain of responsibility
             this.authHandler.setNext(didAuthHandler)
@@ -56,6 +57,7 @@ export class Authentication {
             .setNext(credentialAuthHandler)
             .setNext(credentialStatusAuthHandler)
             .setNext(resourceAuthHandler)
+            .setNext(presentationAuthHandler)
 
             this.isSetup = true
         }
@@ -84,23 +86,13 @@ export class Authentication {
         if (this.authHandler.skipPath(request.path)) 
             return next()
 
-        switch(ENABLE_EXTERNAL_DB) {
-            case 'false':
-                if (['/account', '/did/create', '/key/create'].includes(request.path)) {
-                  message = 'Api not supported'
-                }
-                break
-            default:
-                if (!['/account', '/', '/store'].includes(request.path) && !await CustomerService.instance.find(response.locals.customerId, {})) {
-                    message = 'Customer not found'
-                }
-                break
-        }
-
-        if(message) {
-            return response.status(400).json({
-                error: message
-            })
+        if (ENABLE_EXTERNAL_DB === 'false'){
+            if (['/account', '/did/create', '/key/create'].includes(request.path)) {
+                message = 'Api not supported'
+                return response.status(400).json({
+                    error: message
+                })
+            }
         }
         next()
     }

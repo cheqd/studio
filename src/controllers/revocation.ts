@@ -415,8 +415,7 @@ export class RevocationController {
         const statusPurpose = request.query.statusPurpose as 'revocation' | 'suspension'
 
         try {
-          let result: any
-          result = await Identity.instance.checkStatusList2021(did, { statusListIndex: index, statusListName, statusPurpose }, response.locals.customerId) 
+          const result = await Identity.unauthorized.checkStatusList2021(did, { statusListIndex: index, statusListName, statusPurpose }) 
           if (result.error) {
             return response.status(400).json(result)
           }
