@@ -222,7 +222,7 @@ export class CredentialController {
     
     const publish = request.query.publish === 'false' ? false : true
     try {
-		return response.status(200).json(await Identity.instance.revokeCredentials(request.body.credential, publish, response.locals.customerId))
+		return response.status(200).json(await new Identity(response.locals.customerId).agent.revokeCredentials(request.body.credential, publish, response.locals.customerId))
     } catch (error) {
         return response.status(500).json({
             error: `${error}`
@@ -274,7 +274,7 @@ export class CredentialController {
     }
 
     try {
-		return response.status(200).json(await Identity.instance.suspendCredentials(request.body.credential, request.body.publish, response.locals.customerId))
+		return response.status(200).json(await new Identity(response.locals.customerId).agent.suspendCredentials(request.body.credential, request.body.publish, response.locals.customerId))
     } catch (error) {
         return response.status(500).json({
             error: `${error}`
@@ -326,7 +326,7 @@ export class CredentialController {
     }
 
     try {
-		return response.status(200).json(await Identity.instance.reinstateCredentials(request.body.credential, request.body.publish, response.locals.customerId))
+		return response.status(200).json(await new Identity(response.locals.customerId).agent.reinstateCredentials(request.body.credential, request.body.publish, response.locals.customerId))
     } catch (error) {
         return response.status(500).json({
             error: `${error}`

@@ -6,8 +6,8 @@ export class PresentationAuthHandler extends AbstractAuthHandler {
 
     constructor () {
         super()
-        // true means allowedUnauthorized
-        this.registerRoute('/presentation/verify', 'POST', '', true)
+        // true means allowUnauthorized
+        this.registerRoute('/presentation/verify', 'POST', '', { allowUnauthorized: true })
     }
     public async handle(request: Request, response: Response): Promise<IAuthResponse> {
         if (!request.path.includes('/presentation')) {

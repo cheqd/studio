@@ -14,8 +14,8 @@ export class DidAuthHandler extends AbstractAuthHandler {
         this.registerRoute('/did/update', 'POST', 'update:did:mainnet')
         this.registerRoute('/did/deactivate', 'POST', 'deactivate:did:testnet')
         this.registerRoute('/did/deactivate', 'POST', 'deactivate:did:mainnet')
-        // true means allowedUnauthorized
-        this.registerRoute('/did/(.*)', 'GET', '', true)
+        // true means allowUnauthorized
+        this.registerRoute('/did/(.*)', 'GET', '', { allowUnauthorized: true })
     }
 
     public async handle(request: Request, response: Response): Promise<IAuthResponse> {

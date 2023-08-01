@@ -101,9 +101,9 @@ export class RevocationController {
         try {
           let result: any
           if (data) {
-            result = await Identity.instance.broadcastStatusList2021(did, { data, name: statusListName, alsoKnownAs, version: statusListVersion }, { encoding, statusPurpose }, response.locals.customerId)
+            result = await new Identity(response.locals.customerId).agent.broadcastStatusList2021(did, { data, name: statusListName, alsoKnownAs, version: statusListVersion }, { encoding, statusPurpose }, response.locals.customerId)
           }
-          result = await Identity.instance.createStatusList2021(did, { name: statusListName, alsoKnownAs, version: statusListVersion }, { length, encoding, statusPurpose }, response.locals.customerId)
+          result = await new Identity(response.locals.customerId).agent.createStatusList2021(did, { name: statusListName, alsoKnownAs, version: statusListVersion }, { length, encoding, statusPurpose }, response.locals.customerId)
           if (result.error) {
             return response.status(400).json(result)
           }
@@ -176,9 +176,9 @@ export class RevocationController {
       try {
         let result: any
         if (data) {
-          result = await Identity.instance.broadcastStatusList2021(did, { data, name: statusListName, alsoKnownAs, version: statusListVersion }, { encoding, statusPurpose }, response.locals.customerId)
+          result = await new Identity(response.locals.customerId).agent.broadcastStatusList2021(did, { data, name: statusListName, alsoKnownAs, version: statusListVersion }, { encoding, statusPurpose }, response.locals.customerId)
         }
-        result = await Identity.instance.createStatusList2021(did, { name: statusListName, alsoKnownAs, version: statusListVersion }, { length, encoding, statusPurpose }, response.locals.customerId)
+        result = await new Identity(response.locals.customerId).agent.createStatusList2021(did, { name: statusListName, alsoKnownAs, version: statusListVersion }, { length, encoding, statusPurpose }, response.locals.customerId)
         if (result.error) {
           return response.status(400).json(result)
         }
@@ -339,8 +339,7 @@ export class RevocationController {
         indices = typeof indices === 'number' ? [indices] : indices
 
         try {
-          let result: any
-          result = await Identity.instance.updateStatusList2021(did, { indices, statusListName, statusListVersion, statusAction }, publish, response.locals.customerId) 
+          const result = await new Identity(response.locals.customerId).agent.updateStatusList2021(did, { indices, statusListName, statusListVersion, statusAction }, publish, response.locals.customerId) 
           if (result.error) {
             return response.status(400).json(result)
           }
@@ -415,7 +414,11 @@ export class RevocationController {
         const statusPurpose = request.query.statusPurpose as 'revocation' | 'suspension'
 
         try {
-          const result = await Identity.unauthorized.checkStatusList2021(did, { statusListIndex: index, statusListName, statusPurpose }) 
+          const result = await new Identity(response.locals.customerId).agent.checkStatusList2021(
+              did, 
+              { statusListIndex: index, statusListName, statusPurpose },
+              response.locals.customerId)
+
           if (result.error) {
             return response.status(400).json(result)
           }

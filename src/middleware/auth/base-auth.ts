@@ -251,8 +251,8 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
     }
 
     // Route and scope related funcs
-    public registerRoute(route: string, method: string, scope: string, allowedUnauthorized = false): void {
-        this.routeToScoupe.push(new MethodToScope(route, method, scope, allowedUnauthorized))
+    public registerRoute(route: string, method: string, scope: string, options = {}): void {
+        this.routeToScoupe.push(new MethodToScope(route, method, scope, options))
     }
 
     public findRule(route: string, method: string, namespace=Namespaces.Testnet): MethodToScope | null {
