@@ -18,7 +18,7 @@ export class Identity {
 
     private setStrategy(strategy: IIdentity) {
         // If is already set up - skip
-        if (this.agent !== strategy) return
+        if (this.agent === strategy) return
         this.agent = strategy
     }
 
