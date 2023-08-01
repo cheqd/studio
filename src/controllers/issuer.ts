@@ -89,7 +89,7 @@ export class IssuerController {
    */
   public async createKey(request: Request, response: Response) {
     try {
-      const key = await Identity.instance.createKey('Ed25519', response.locals.customerId)
+      const key = await new Identity(response.locals.customerId).agent.createKey('Ed25519', response.locals.customerId)
       return response.status(200).json(key)
     } catch (error) {
         return response.status(500).json({
@@ -141,7 +141,7 @@ export class IssuerController {
    */
   public async getKey(request: Request, response: Response) {
     try {
-      const key = await Identity.instance.getKey(request.params.kid, response.locals.customerId)
+      const key = await new Identity(response.locals.customerId).agent.getKey(request.params.kid, response.locals.customerId)
       return response.status(200).json(key)
     } catch (error) {
         return response.status(500).json({
@@ -206,7 +206,7 @@ export class IssuerController {
       if (request.body.didDocument) {
         didDocument = request.body.didDocument
       } else if (verificationMethodType) {
-        const key = await Identity.instance.createKey('Ed25519', response.locals.customerId)
+        const key = await new Identity(response.locals.customerId).agent.createKey('Ed25519', response.locals.customerId)
         didDocument = generateDidDoc({
           verificationMethod: verificationMethodType || VerificationMethods.Ed255192018,
           verificationMethodId: 'key-1',
@@ -232,7 +232,7 @@ export class IssuerController {
         })
       }
 
-      const did = await Identity.instance.createDid(network || didDocument.id.split(':')[2], didDocument, response.locals.customerId)
+      const did = await new Identity(response.locals.customerId).agent.createDid(network || didDocument.id.split(':')[2], didDocument, response.locals.customerId)
       return response.status(200).json(did)
     } catch (error) {
         return response.status(500).json({
@@ -286,7 +286,7 @@ export class IssuerController {
       if (request.body.didDocument) {
         updatedDocument = request.body.didDocument
       } else if (did && (service || verificationMethod || authentication)) {
-        let resolvedResult = await Identity.instance.resolveDid(did)
+        let resolvedResult = await new Identity(response.locals.customerId).agent.resolveDid(did)
         if(!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
           return response.status(400).send({
               error: `${did} is either Deactivated or Not found`
@@ -310,7 +310,7 @@ export class IssuerController {
         })
       }
 
-      const result = await Identity.instance.updateDid(updatedDocument, response.locals.customerId)
+      const result = await new Identity(response.locals.customerId).agent.updateDid(updatedDocument, response.locals.customerId)
       return response.status(200).json(result)
     } catch (error) {
         return response.status(500).json({
@@ -357,7 +357,7 @@ export class IssuerController {
     }
 
     try {
-      const did = await Identity.instance.deactivateDid(request.params.did, response.locals.customerId)
+      const did = await new Identity(response.locals.customerId).agent.deactivateDid(request.params.did, response.locals.customerId)
       return response.status(200).json(did)
     } catch (error) {
         return response.status(500).json({
@@ -413,7 +413,7 @@ export class IssuerController {
     let resourcePayload: Partial<MsgCreateResourcePayload> = {}
     try {
       // check if did is registered on the ledger
-      let resolvedDocument: any = await Identity.instance.resolveDid(did)
+      let resolvedDocument: any = await new Identity(response.locals.customerId).agent.resolveDid(did)
       if(!resolvedDocument?.didDocument || resolvedDocument.didDocumentMetadata.deactivated) {
         return response.status(400).send({
             error: `${did} is a either Deactivated or Not found`
@@ -432,7 +432,7 @@ export class IssuerController {
         alsoKnownAs
       }
       network = network || (did.split(':'))[2]
-      const result = await Identity.instance.createResource( network, resourcePayload, response.locals.customerId)    
+      const result = await new Identity(response.locals.customerId).agent.createResource( network, resourcePayload, response.locals.customerId)    
       if ( result ) {
         return response.status(201).json({
             resource: resourcePayload
@@ -477,9 +477,9 @@ export class IssuerController {
     try {
       let did: any
       if(request.params.did) {
-        did = await Identity.instance.resolveDid(request.params.did)
+        did = await new Identity(response.locals.customerId).agent.resolveDid(request.params.did)
       } else {
-        did = await Identity.instance.listDids(response.locals.customerId)
+        did = await new Identity(response.locals.customerId).agent.listDids(response.locals.customerId)
       }
 
       return response.status(200).json(did)
@@ -523,7 +523,7 @@ export class IssuerController {
     try {
       let did: any
       if(request.params.did) {
-        did = await Identity.instance.resolveDid(request.params.did)
+        did = await new Identity(response.locals.customerId).agent.resolveDid(request.params.did)
         return response.status(200).json(did)
       }
     } catch (error) {

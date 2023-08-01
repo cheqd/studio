@@ -21,7 +21,7 @@ export class CustomerService {
         if(await this.find(customerId, {})) {
             throw new Error('Customer exists')
         }
-        const kid = (await Identity.instance.createKey('Secp256k1', customerId)).kid
+        const kid = (await new Identity(customerId).agent.createKey('Secp256k1', customerId)).kid
         const customer = new CustomerEntity(customerId, kid, getCosmosAccount(kid))
         return (await this.customerRepository.insert(customer)).identifiers[0]
     }

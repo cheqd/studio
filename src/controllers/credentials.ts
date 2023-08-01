@@ -154,13 +154,12 @@ export class CredentialController {
     const { credential, policies } = request.body
     const verifyStatus = request.query.verifyStatus === 'true' ? true : false 
     try {
-        const result = await Identity.instance.verifyCredential(
+        const result = await Identity.unauthorized.verifyCredential(
             credential, 
             {
                 verifyStatus,
                 policies
-            },
-            response.locals.customerId
+            }
         )
         if (result.error) {
             return response.status(400).json({
@@ -223,7 +222,7 @@ export class CredentialController {
     
     const publish = request.query.publish === 'false' ? false : true
     try {
-		return response.status(200).json(await Identity.instance.revokeCredentials(request.body.credential, publish, response.locals.customerId))
+		return response.status(200).json(await new Identity(response.locals.customerId).agent.revokeCredentials(request.body.credential, publish, response.locals.customerId))
     } catch (error) {
         return response.status(500).json({
             error: `${error}`
@@ -275,7 +274,7 @@ export class CredentialController {
     }
 
     try {
-		return response.status(200).json(await Identity.instance.suspendCredentials(request.body.credential, request.body.publish, response.locals.customerId))
+		return response.status(200).json(await new Identity(response.locals.customerId).agent.suspendCredentials(request.body.credential, request.body.publish, response.locals.customerId))
     } catch (error) {
         return response.status(500).json({
             error: `${error}`
@@ -327,7 +326,7 @@ export class CredentialController {
     }
 
     try {
-		return response.status(200).json(await Identity.instance.reinstateCredentials(request.body.credential, request.body.publish, response.locals.customerId))
+		return response.status(200).json(await new Identity(response.locals.customerId).agent.reinstateCredentials(request.body.credential, request.body.publish, response.locals.customerId))
     } catch (error) {
         return response.status(500).json({
             error: `${error}`
@@ -388,14 +387,13 @@ export class CredentialController {
     const { presentation, verifierDid, policies } = request.body
     const verifyStatus = request.query.verifyStatus === 'true' ? true : false 
     try {
-        const result = await Identity.instance.verifyPresentation(
+        const result = await Identity.unauthorized.verifyPresentation(
             presentation, 
             {
                 verifyStatus,
                 policies,
                 domain: verifierDid
-            }, 
-            response.locals.customerId
+            }
         )
         if (result.error) {
             return response.status(400).json({
