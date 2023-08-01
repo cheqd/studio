@@ -290,14 +290,15 @@ export class RevocationController {
      *     summary: Update an existing StatusList2021 credential status list.
      *     parameters:
      *       - in: query
-     *         name: statusPurpose
-     *         description: The purpose of the status list. Can be either revocation or suspension. Once this is set, it cannot be changed. A new status list must be created to change the purpose.
+     *         name: statusAction
+     *         description: The update action to be performed on the statuslist, can be revoke, suspend or reinstate
      *         required: true
      *         schema:
      *           type: string
      *           enum:
-     *             - revocation
-     *             - suspension
+     *             - revoke
+     *             - suspend
+     *             - reinstate
      *       - in: query
      *         name: encrypted
      *         description: Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied. When publishing a new version, this should match the original property.
