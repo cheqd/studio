@@ -13,11 +13,11 @@ export class CredentialStatusAuthHandler extends AbstractAuthHandler {
         this.registerRoute('/credential-status/update', 'POST', 'update:credential-status:testnet')
         this.registerRoute('/credential-status/update', 'POST', 'update:credential-status:mainnet')
         // true means allowUnauthorized
-        this.registerRoute('/credential-status/search', 'GET', '', { allowUnauthorized: true })
-        this.registerRoute('/credential-status/check', 'POST', '', { allowUnauthorized: true })
+        this.registerRoute('/credential-status/search', 'GET', '', { allowUnauthorized: true, skipNamespace: true })
+        this.registerRoute('/credential-status/check', 'POST', '', { allowUnauthorized: true, skipNamespace: true })
     }
     public async handle(request: Request, response: Response): Promise<IAuthResponse> {
-        if (!request.path.includes('/credential-status')) {
+        if (!request.path.includes('/credential-status/')) {
             return super.handle(request, response)
         }
         return this.commonPermissionCheck(request)
