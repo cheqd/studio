@@ -1237,21 +1237,6 @@
     }
   },
   "components": {
-    "securitySchemes": {
-      "oAuth2Password": {
-        "type": "oauth2",
-        "flows": {
-          "implicit": {
-            "authorizationUrl": "http://localhost:8787/logto/sign-in",
-            "scopes": {
-              "openid": "Open ID",
-              "offline_access": "Offline access",
-              "profile": "Profile"
-            }
-          }
-        }
-      }
-    },
     "schemas": {
       "CredentialRequest": {
         "description": "Input fields for the creating a Verifiable Credential.",

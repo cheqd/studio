@@ -1,6 +1,7 @@
 /**
  * @openapi
  *
+ * components:
  *   schemas:
  *     CredentialRequest:
  *       description: Input fields for the creating a Verifiable Credential.
