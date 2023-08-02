@@ -6,9 +6,8 @@
  *     oAuth2Password:
  *       type: oauth2
  *       flows:
- *         authorizationCode:
- *           authorizationUrl: http://localhost:3001/oidc/auth
- *           tokenUrl: http://localhost:3001/oidc/token
+ *         implicit:
+ *           authorizationUrl: http://localhost:8787/logto/sign-in
  *           scopes:
  *             openid: Open ID
  *             offline_access: Offline access

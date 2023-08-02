@@ -1,5 +1,4 @@
 import express from 'express'
-import Helmet from 'helmet'
 import cors from 'cors'
 import session from 'express-session'
 import cookieParser from 'cookie-parser'
@@ -23,28 +22,12 @@ dotenv.config()
 import swaggerDocument from './static/swagger.json' assert { type: "json" }
 
 const oauthConfig = {
-  clientId: process.env.LOGTO_APP_ID,
-  clientSecret: process.env.LOGTO_APP_SECRET,
-  // Replace the following URLs with the appropriate OAuth 2.0 URLs for your service
-  // The authorizationUrl is the endpoint where users will be redirected to login and authorize the application.
-  // The tokenUrl is the endpoint where Swagger UI will request the access token.
-  // The refreshUrl is the endpoint to request a new access token using a refresh token.
-  // The scopes specify the access permissions the application is requesting.
-  // The useBasicAuthenticationWithAccessCodeGrant sets to true if you want to use basic authentication with access code grant.
-  // If you're not sure about these URLs, consult your OAuth 2.0 provider's documentation.
-  // Make sure to fill the correct URLs for your specific OAuth 2.0 provider.
-  auth: {
-    authorizationUrl: 'http://localhost:3001/oidc/auth',
-    tokenUrl: 'http://localhost:3001/oidc/token',
-    scopes: ['openid', 'offline_access', 'profile'],
-  },
-  usePkceWithAuthorizationCodeGrant: true
+  clientId: process.env.LOGTO_APP_ID
 };
 
 const swaggerOptions = {
   swaggerOptions: {
     oauth: oauthConfig,
-    oauth2RedirectUrl: 'http://localhost:8787/logto/sign-in-callback',
   },
 };
 
@@ -64,7 +47,6 @@ class App {
     this.express.use(express.raw({ type: 'application/octet-stream' }))
 	  this.express.use(express.urlencoded({ extended: true }))
     this.express.use(Middleware.parseUrlEncodedJson)
-    this.express.use(Helmet())
     this.express.use(cors({
         origin: function(origin, callback){
 
