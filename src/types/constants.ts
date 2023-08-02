@@ -5,7 +5,8 @@ const {
 	LOGTO_ENDPOINT,
 	LOGTO_APP_ID, 
 	LOGTO_APP_SECRET, 
-	APPLICATION_BASE_URL} = process.env
+	APPLICATION_BASE_URL
+} = process.env
 
 
 export const HEADERS = {

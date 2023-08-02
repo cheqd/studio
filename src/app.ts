@@ -1,4 +1,5 @@
-import express from 'express'
+import express, { Request } from 'express'
+import Helmet from 'helmet'
 import cors from 'cors'
 import session from 'express-session'
 import cookieParser from 'cookie-parser'
@@ -22,7 +23,8 @@ dotenv.config()
 import swaggerDocument from './static/swagger.json' assert { type: "json" }
 
 const oauthConfig = {
-  clientId: process.env.LOGTO_APP_ID
+  clientId: process.env.LOGTO_APP_ID,
+  clientSecret: process.env.LOGTO_APP_SECRET
 };
 
 const swaggerOptions = {
@@ -49,6 +51,7 @@ class App {
     this.express.use(express.raw({ type: 'application/octet-stream' }))
 	  this.express.use(express.urlencoded({ extended: true }))
     this.express.use(Middleware.parseUrlEncodedJson)
+    this.express.use(Helmet())
     this.express.use(cors({
         origin: function(origin, callback){
 
