@@ -32,7 +32,7 @@ if (process.env.ENABLE_AUTHENTICATION === 'true') {
       clientId: process.env.LOGTO_APP_ID,
       clientSecret: process.env.LOGTO_APP_SECRET,
       scopes: "openid offline_access profile email custom_data identities",
-    },
+    }
   }
 };
 
