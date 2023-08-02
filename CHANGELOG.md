@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.6.4-develop.1](https://github.com/cheqd/credential-service/compare/2.6.3...2.6.4-develop.1) (2023-08-02)
+
+
+### Bug Fixes
+
+* Cleanups ([#314](https://github.com/cheqd/credential-service/issues/314)) ([3b8e4ad](https://github.com/cheqd/credential-service/commit/3b8e4adaa3154ce4df793d14777be978b05a91e9))
+* Cleanups [DEV-3050] ([#307](https://github.com/cheqd/credential-service/issues/307)) ([2e6b969](https://github.com/cheqd/credential-service/commit/2e6b9699203b8e013bf5e36a03a396d4a0bc649e))
+
 ## [2.6.3-develop.2](https://github.com/cheqd/credential-service/compare/2.6.3-develop.1...2.6.3-develop.2) (2023-08-02)
 
 ## [2.6.3](https://github.com/cheqd/credential-service/compare/2.6.2...2.6.3) (2023-08-01)
