@@ -155,7 +155,7 @@ export class CredentialController {
     const { credential, policies } = request.body
     const verifyStatus = request.query.verifyStatus === 'true' ? true : false 
     try {
-        const result = await Identity.unauthorized.verifyCredential(
+        const result = await new Identity(response.locals.customerId).agent.verifyCredential(
             credential, 
             {
                 verifyStatus,
@@ -391,7 +391,7 @@ export class CredentialController {
     const { presentation, verifierDid, policies } = request.body
     const verifyStatus = request.query.verifyStatus === 'true' ? true : false 
     try {
-        const result = await Identity.unauthorized.verifyPresentation(
+        const result = await new Identity(response.locals.customerId).agent.verifyPresentation(
             presentation, 
             {
                 verifyStatus,
