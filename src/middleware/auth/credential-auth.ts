@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { AbstractAuthHandler } from "./base_auth.js";
+import { AbstractAuthHandler } from "./base-auth.js";
 import { IAuthResponse } from "../../types/authentication.js";
 
 export class CredentialAuthHandler extends AbstractAuthHandler {
@@ -14,6 +14,8 @@ export class CredentialAuthHandler extends AbstractAuthHandler {
         this.registerRoute('/credential/suspend', 'POST', 'suspend:credential:mainnet')
         this.registerRoute('/credential/reinstate', 'POST', 'reinstate:credential:testnet')
         this.registerRoute('/credential/reinstate', 'POST', 'reinstate:credential:mainnet')
+        // true means allowUnauthorized
+        this.registerRoute('/credential/verify', 'POST', '', { allowUnauthorized: true })
     }
 
     public async handle(request: Request, response: Response): Promise<IAuthResponse>{

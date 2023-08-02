@@ -1,10 +1,10 @@
-import { CredentialPayload, IVerifyResult, VerifiableCredential, W3CVerifiableCredential, W3CVerifiablePresentation } from '@veramo/core'
+import { CredentialPayload, VerifiableCredential } from '@veramo/core'
 
 import {
   VC_CONTEXT,
   VC_TYPE
 } from '../types/constants.js'
-import { CredentialRequest, VerificationOptions } from '../types/types.js'
+import { CredentialRequest } from '../types/types.js'
 import { Identity } from './identity/index.js'
 import { VeridaService } from '../services/connectors/verida.js'
 import { v4 } from 'uuid'
@@ -35,7 +35,7 @@ export class Credentials {
 
         const statusOptions = request.credentialStatus || null
 
-        let verifiable_credential = await Identity.instance.createCredential(credential, request.format, statusOptions, agentId)
+        const verifiable_credential = await new Identity(agentId).agent.createCredential(credential, request.format, statusOptions, agentId)
         
         if (ENABLE_VERIDA_CONNECTOR === 'true' && request.subjectDid.startsWith('did:vda')) {
           if(!request.credentialSchema) throw new Error('Credential schema is required')

@@ -1,16 +1,16 @@
 import { Request, Response } from "express";
-import { AbstractAuthHandler } from "./base_auth.js";
+import { AbstractAuthHandler } from "./base-auth.js";
 import { IAuthResponse } from "../../types/authentication.js";
 
-export class PresentationAuthHandler extends AbstractAuthHandler {
+export class AccountAuthHandler extends AbstractAuthHandler {
 
     constructor () {
         super()
-        this.registerRoute('/resource/create/:did', 'POST', 'create:resource:testnet')
-        this.registerRoute('/resource/create/:did', 'POST', 'create:resource:mainnet')
+        this.registerRoute('/account', 'GET', 'read:account', { skipNamespace: true })
+        this.registerRoute('/account', 'POST', 'create:account', { skipNamespace: true })
     }
     public async handle(request: Request, response: Response): Promise<IAuthResponse> {
-        if (!request.path.includes('/resource')) {
+        if (!request.path.includes('/account')) {
             return super.handle(request, response)
         }
         return this.commonPermissionCheck(request)

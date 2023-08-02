@@ -51,17 +51,16 @@ export class LogToHelper {
 
   public async setDefaultRoleForUser(userId: string): Promise<ILogToErrorResponse | void> {
     const roles = await this.getRolesForUser(userId)
-    let isDefaultRoleSet = false
-    if (roles && roles.status === 200 && roles.data.length === 0) {
-        // Check that default roles is not set yet
+    if (roles && roles.status === 200) {
+        // Check that default role is set
         for (const role of roles.data) {
             if (role.id === process.env.LOGTO_DEFAULT_ROLE_ID) {
-                isDefaultRoleSet = true
+                return { status: 201, error: "", data: roles.data } 
             }
         }
-        if (!isDefaultRoleSet) {
-            return await this.assignDefaultRoleForUser(userId, process.env.LOGTO_DEFAULT_ROLE_ID)
-        }
+        
+        // Assign a default role to a user
+        return await this.assignDefaultRoleForUser(userId, process.env.LOGTO_DEFAULT_ROLE_ID)
     }
   }
 
@@ -114,6 +113,8 @@ export class LogToHelper {
   private async getRolesForUser(userId: string): Promise<ILogToErrorResponse | void> {
     const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
     try {
+        // Note: By default, the API returns first 20 roles.
+        // If our roles per user grows to more than 20, we need to implement pagination
         return await this.getToLogto(uri, 'GET')
     } catch (err) {
         return {
