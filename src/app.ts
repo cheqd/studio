@@ -22,15 +22,18 @@ dotenv.config()
 // Define Swagger file
 import swaggerDocument from './static/swagger.json' assert { type: "json" }
 
-const oauthConfig = {
-  clientId: process.env.LOGTO_APP_ID,
-  clientSecret: process.env.LOGTO_APP_SECRET
-};
+let swaggerOptions = {};
 
-const swaggerOptions = {
-  swaggerOptions: {
-    oauth: oauthConfig,
-  },
+if (process.env.ENABLE_AUTHENTICATION === 'true') {
+  swaggerOptions = {
+    oauth2RedirectUrl: process.env.APPLICATION_BASE_URL + '/logto/sign-in',
+    persistAuthorization: true,
+    oauth: {
+      clientId: process.env.LOGTO_APP_ID,
+      clientSecret: process.env.LOGTO_APP_SECRET,
+      scopes: "openid offline_access profile email custom_data identities",
+    },
+  }
 };
 
 class App {
