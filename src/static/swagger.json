@@ -39,11 +39,6 @@
         ],
         "summary": "Issue a Verifiable Credential",
         "description": "This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued.",
-        "security": [
-          {
-            "oAuth2Password": []
-          }
-        ],
         "requestBody": {
           "content": {
             "application/x-www-form-urlencoded": {
@@ -154,11 +149,6 @@
         "summary": "Revoke a Verifiable Credential.",
         "description": "This endpoint revokes a given Verifiable Credential. As input, it can take the VC-JWT as a string or the entire credential itself. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.",
         "operationId": "revoke",
-        "security": [
-          {
-            "oAuth2Password": []
-          }
-        ],
         "parameters": [
           {
             "in": "query",
@@ -216,11 +206,6 @@
         "summary": "Suspend a Verifiable Credential.",
         "description": "This endpoint suspends a given Verifiable Credential.  As input, it can take the VC-JWT as a string or the entire credential itself.",
         "operationId": "suspend",
-        "security": [
-          {
-            "oAuth2Password": []
-          }
-        ],
         "parameters": [
           {
             "in": "query",
@@ -276,11 +261,6 @@
         "summary": "Reinstate a suspended Verifiable Credential.",
         "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
         "operationId": "reinstate",
-        "security": [
-          {
-            "oAuth2Password": []
-          }
-        ],
         "parameters": [
           {
             "in": "query",
@@ -400,11 +380,6 @@
         ],
         "summary": "Create a new custodian-mode client.",
         "description": "This endpoint creates a new custodian-mode client and creates issuer DIDs and Cosmos/cheqd accounts for the client.",
-        "security": [
-          {
-            "oAuth2Password": []
-          }
-        ],
         "responses": {
           "200": {
             "description": "The request was successful.",
@@ -433,11 +408,6 @@
         ],
         "summary": "Fetch custodian-mode client details.",
         "description": "This endpoint returns the custodian-mode client details for authenticated users.",
-        "security": [
-          {
-            "oAuth2Password": []
-          }
-        ],
         "responses": {
           "200": {
             "description": "The request was successful.",
@@ -468,11 +438,6 @@
         ],
         "summary": "Create an identity key pair.",
         "description": "This endpoint creates an identity key pair associated with the user's account for custodian-mode clients.",
-        "security": [
-          {
-            "oAuth2Password": []
-          }
-        ],
         "responses": {
           "200": {
             "description": "The request was successful.",
@@ -523,11 +488,6 @@
         ],
         "summary": "Fetch an identity key pair.",
         "description": "This endpoint fetches an identity key pair's details for a given key ID. Only the user account associated with the custodian-mode client can fetch the key pair.",
-        "security": [
-          {
-            "oAuth2Password": []
-          }
-        ],
         "parameters": [
           {
             "name": "kid",
@@ -589,11 +549,6 @@
         ],
         "summary": "Create a DID Document.",
         "description": "This endpoint creates a DID and associated DID Document. As input, it can take the DID Document parameters via a form, or the fully-assembled DID Document itself.",
-        "security": [
-          {
-            "oAuth2Password": []
-          }
-        ],
         "requestBody": {
           "content": {
             "application/x-www-form-urlencoded": {
@@ -658,11 +613,6 @@
         ],
         "summary": "Update a DID Document.",
         "description": "This endpoint updates a DID Document. As an input, it can take JUST the sections/parameters that need to be updated in the DID Document (in this scenario, it fetches the current DID Document and applies the updated section). Alternatively, it take the fully-assembled DID Document with updated sections as well as unchanged sections.",
-        "security": [
-          {
-            "oAuth2Password": []
-          }
-        ],
         "requestBody": {
           "content": {
             "application/x-www-form-urlencoded": {
@@ -707,11 +657,6 @@
         ],
         "summary": "Deactivate a DID Document.",
         "description": "This endpoint deactivates a DID Document by taking the DID identifier as input. Must be called and signed by the DID owner.",
-        "security": [
-          {
-            "oAuth2Password": []
-          }
-        ],
         "parameters": [
           {
             "in": "path",
@@ -801,11 +746,6 @@
         ],
         "summary": "Fetch DIDs associated with an account.",
         "description": "This endpoint returns the list of DIDs controlled by the account.",
-        "security": [
-          {
-            "oAuth2Password": []
-          }
-        ],
         "responses": {
           "200": {
             "description": "The request was successful.",
