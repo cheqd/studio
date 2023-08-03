@@ -1,10 +1,47 @@
 # Changelog
 
+## [2.6.4-develop.1](https://github.com/cheqd/credential-service/compare/2.6.3...2.6.4-develop.1) (2023-08-02)
+
+
+### Bug Fixes
+
+* Cleanups ([#314](https://github.com/cheqd/credential-service/issues/314)) ([3b8e4ad](https://github.com/cheqd/credential-service/commit/3b8e4adaa3154ce4df793d14777be978b05a91e9))
+* Cleanups [DEV-3050] ([#307](https://github.com/cheqd/credential-service/issues/307)) ([2e6b969](https://github.com/cheqd/credential-service/commit/2e6b9699203b8e013bf5e36a03a396d4a0bc649e))
+
+## [2.6.3-develop.2](https://github.com/cheqd/credential-service/compare/2.6.3-develop.1...2.6.3-develop.2) (2023-08-02)
+
+## [2.6.3](https://github.com/cheqd/credential-service/compare/2.6.2...2.6.3) (2023-08-01)
+
+
+### Bug Fixes
+
+* Cleanups ([#314](https://github.com/cheqd/credential-service/issues/314)) ([3b8e4ad](https://github.com/cheqd/credential-service/commit/3b8e4adaa3154ce4df793d14777be978b05a91e9))
+* Fix status update swagger ([#313](https://github.com/cheqd/credential-service/issues/313)) ([4468c5f](https://github.com/cheqd/credential-service/commit/4468c5fb6078acbbd66a362f7939f3f4209b3e1a))
+
+## [2.6.3-develop.1](https://github.com/cheqd/credential-service/compare/2.6.2...2.6.3-develop.1) (2023-08-01)
+
+
+### Bug Fixes
+
+* Cleanups [DEV-3050] ([#307](https://github.com/cheqd/credential-service/issues/307)) ([2e6b969](https://github.com/cheqd/credential-service/commit/2e6b9699203b8e013bf5e36a03a396d4a0bc649e))
+
+## [2.6.2](https://github.com/cheqd/credential-service/compare/2.6.1...2.6.2) (2023-07-25)
+
+
+### Bug Fixes
+
+* Cleanups ([#305](https://github.com/cheqd/credential-service/issues/305)) ([988fb58](https://github.com/cheqd/credential-service/commit/988fb58025b647587e11c5268f1911513b28e400))
+* Fix chain of responsibility setting up [DEV-3047] ([#303](https://github.com/cheqd/credential-service/issues/303)) ([6312601](https://github.com/cheqd/credential-service/commit/6312601a98439882853a181b2b0420f9211f91fc))
+* Fix verifyCredential && resolve function ([#304](https://github.com/cheqd/credential-service/issues/304)) ([bcafb54](https://github.com/cheqd/credential-service/commit/bcafb54d182094fad092a51b2248e9fcfc899d6b))
+
+## [2.6.1](https://github.com/cheqd/credential-service/compare/2.6.0...2.6.1) (2023-07-19)
+
 ## [2.6.1-develop.4](https://github.com/cheqd/credential-service/compare/2.6.1-develop.3...2.6.1-develop.4) (2023-07-25)
 
 
 ### Bug Fixes
 
+* Fix issue with broken webhook being used for setting default user role in LogTo [DEV-2962] ([#298](https://github.com/cheqd/credential-service/issues/298)) ([1d58103](https://github.com/cheqd/credential-service/commit/1d581034958c98ad64b3aef3d755db27301865c6))
 * Cleanups ([#305](https://github.com/cheqd/credential-service/issues/305)) ([988fb58](https://github.com/cheqd/credential-service/commit/988fb58025b647587e11c5268f1911513b28e400))
 
 ## [2.6.1-develop.3](https://github.com/cheqd/credential-service/compare/2.6.1-develop.2...2.6.1-develop.3) (2023-07-25)

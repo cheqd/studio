@@ -6,8 +6,8 @@ export class AccountAuthHandler extends AbstractAuthHandler {
 
     constructor () {
         super()
-        this.registerRoute('/account', 'GET', 'read:account')
-        this.registerRoute('/account', 'POST', 'create:account')
+        this.registerRoute('/account', 'GET', 'read:account', { skipNamespace: true })
+        this.registerRoute('/account', 'POST', 'create:account', { skipNamespace: true })
     }
     public async handle(request: Request, response: Response): Promise<IAuthResponse> {
         if (!request.path.includes('/account')) {

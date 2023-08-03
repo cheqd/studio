@@ -101,9 +101,9 @@ export class RevocationController {
         try {
           let result: any
           if (data) {
-            result = await Identity.instance.broadcastStatusList2021(did, { data, name: statusListName, alsoKnownAs, version: statusListVersion }, { encoding, statusPurpose }, response.locals.customerId)
+            result = await new Identity(response.locals.customerId).agent.broadcastStatusList2021(did, { data, name: statusListName, alsoKnownAs, version: statusListVersion }, { encoding, statusPurpose }, response.locals.customerId)
           }
-          result = await Identity.instance.createStatusList2021(did, { name: statusListName, alsoKnownAs, version: statusListVersion }, { length, encoding, statusPurpose }, response.locals.customerId)
+          result = await new Identity(response.locals.customerId).agent.createStatusList2021(did, { name: statusListName, alsoKnownAs, version: statusListVersion }, { length, encoding, statusPurpose }, response.locals.customerId)
           if (result.error) {
             return response.status(400).json(result)
           }
@@ -176,9 +176,9 @@ export class RevocationController {
       try {
         let result: any
         if (data) {
-          result = await Identity.instance.broadcastStatusList2021(did, { data, name: statusListName, alsoKnownAs, version: statusListVersion }, { encoding, statusPurpose }, response.locals.customerId)
+          result = await new Identity(response.locals.customerId).agent.broadcastStatusList2021(did, { data, name: statusListName, alsoKnownAs, version: statusListVersion }, { encoding, statusPurpose }, response.locals.customerId)
         }
-        result = await Identity.instance.createStatusList2021(did, { name: statusListName, alsoKnownAs, version: statusListVersion }, { length, encoding, statusPurpose }, response.locals.customerId)
+        result = await new Identity(response.locals.customerId).agent.createStatusList2021(did, { name: statusListName, alsoKnownAs, version: statusListVersion }, { length, encoding, statusPurpose }, response.locals.customerId)
         if (result.error) {
           return response.status(400).json(result)
         }
@@ -290,14 +290,15 @@ export class RevocationController {
      *     summary: Update an existing StatusList2021 credential status list.
      *     parameters:
      *       - in: query
-     *         name: statusPurpose
-     *         description: The purpose of the status list. Can be either revocation or suspension. Once this is set, it cannot be changed. A new status list must be created to change the purpose.
+     *         name: statusAction
+     *         description: The update action to be performed on the statuslist, can be revoke, suspend or reinstate
      *         required: true
      *         schema:
      *           type: string
      *           enum:
-     *             - revocation
-     *             - suspension
+     *             - revoke
+     *             - suspend
+     *             - reinstate
      *       - in: query
      *         name: encrypted
      *         description: Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied. When publishing a new version, this should match the original property.
@@ -339,8 +340,7 @@ export class RevocationController {
         indices = typeof indices === 'number' ? [indices] : indices
 
         try {
-          let result: any
-          result = await Identity.instance.updateStatusList2021(did, { indices, statusListName, statusListVersion, statusAction }, publish, response.locals.customerId) 
+          const result = await new Identity(response.locals.customerId).agent.updateStatusList2021(did, { indices, statusListName, statusListVersion, statusAction }, publish, response.locals.customerId) 
           if (result.error) {
             return response.status(400).json(result)
           }
@@ -415,8 +415,11 @@ export class RevocationController {
         const statusPurpose = request.query.statusPurpose as 'revocation' | 'suspension'
 
         try {
-          let result: any
-          result = await Identity.instance.checkStatusList2021(did, { statusListIndex: index, statusListName, statusPurpose }, response.locals.customerId) 
+          const result = await new Identity(response.locals.customerId).agent.checkStatusList2021(
+              did, 
+              { statusListIndex: index, statusListName, statusPurpose },
+              response.locals.customerId)
+
           if (result.error) {
             return response.status(400).json(result)
           }
