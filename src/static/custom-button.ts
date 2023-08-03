@@ -1,4 +1,5 @@
 "use strict";
+
 window.addEventListener("load", function () {
     const base_url = window.location.origin;
     const login_button = document.createElement('button');
@@ -8,6 +9,7 @@ window.addEventListener("load", function () {
         window.location.href = base_url + '/logto/sign-in';
     };
     const logout_button = document.createElement('button');
+    logout_button.disabled = true;
     logout_button.innerHTML = 'Log out';
     logout_button.classList.add('btn', 'authorize');
     logout_button.onclick = function () {
@@ -20,4 +22,23 @@ window.addEventListener("load", function () {
 
     const scheme_pan = document.getElementsByClassName('scheme-container')[0];
     scheme_pan.children[0].appendChild(auth_pan);
+
+    fetchUserInfoWithInterval(login_button, logout_button, 2000);
 });
+
+function fetchUserInfoWithInterval(login_button: HTMLButtonElement, logout_button: HTMLButtonElement, interval: number) {
+    setInterval(() => {
+        fetchUserInfo(login_button, logout_button);
+    }, interval);
+}
+
+async function fetchUserInfo(login_button: HTMLButtonElement, logout_button: HTMLButtonElement) {
+    const res = await fetch(`${window.location.origin}/user`);
+    if (res.status === 200) { 
+        const body = await res.json();
+        if (body.username != "") {
+            login_button.disabled = true;
+            logout_button.disabled = false;
+        }
+    }
+}
