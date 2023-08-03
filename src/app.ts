@@ -130,7 +130,7 @@ class App {
     // LogTo webhooks
     app.post(`/account/set-default-role`, LogToWebHook.verifyHookSignature, new AccountController().setupDefaultRole)
 
-    // Get LogTo user info
+    // LogTo user info
     app.get('/user', withLogto({ ...configLogToExpress, fetchUserInfo: true }), (req, res) => {
       res.json(req.user.userInfo);
     });
