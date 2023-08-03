@@ -36,7 +36,7 @@ async function fetchUserInfo(login_button: HTMLButtonElement, logout_button: HTM
     const res = await fetch(`${window.location.origin}/user`);
     if (res.status === 200) { 
         const body = await res.json();
-        if (body.username != "") {
+        if (body.isAuthenticated as boolean) {
             login_button.disabled = true;
             logout_button.disabled = false;
         }

@@ -132,7 +132,7 @@ class App {
 
     // LogTo user info
     app.get('/user', withLogto({ ...configLogToExpress, fetchUserInfo: true }), (req, res) => {
-      res.json(req.user.userInfo);
+      res.json(req.user);
     });
 
     // static files
