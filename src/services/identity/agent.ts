@@ -355,7 +355,7 @@ export class Veramo {
      } satisfies ICheqdBroadcastStatusList2021Args)
  }
 
- async revokeCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish: boolean=true) {
+ async revokeCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish=true) {
     if (Array.isArray(credentials)) return await agent.cheqdRevokeCredentials({ credentials, fetchList: true, publish: true } satisfies ICheqdRevokeBulkCredentialsWithStatusList2021Args)
     return await agent.cheqdRevokeCredential({ credential: credentials, fetchList: true, publish })
  }
@@ -368,17 +368,17 @@ export class Veramo {
     return ddo
  }
 
- async suspendCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish: boolean=true) {
+ async suspendCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish=true) {
     if (Array.isArray(credentials)) return await agent.cheqdSuspendCredentials({ credentials, fetchList: true, publish })
     return await agent.cheqdSuspendCredential({ credential: credentials, fetchList: true, publish })
  }
 
- async unsuspendCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish: boolean=true) {
+ async unsuspendCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish=true) {
     if (Array.isArray(credentials)) return await agent.cheqdUnsuspendCredentials({ credentials, fetchList: true, publish })
     return await agent.cheqdUnsuspendCredential({ credential: credentials, fetchList: true, publish })
  }
 
- async updateStatusList2021(agent: VeramoAgent, did: string, statusOptions: UpdateStatusListOptions, publish: boolean=true) {
+ async updateStatusList2021(agent: VeramoAgent, did: string, statusOptions: UpdateStatusListOptions, publish=true) {
     switch(statusOptions.statusAction) {
         case 'revoke': 
             return await agent.cheqdRevokeCredentials({

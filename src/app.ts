@@ -11,7 +11,7 @@ import { AccountController } from './controllers/customer.js'
 import { Authentication } from './middleware/authentication.js'
 import { Connection } from './database/connection/connection.js'
 import { RevocationController } from './controllers/revocation.js'
-import { CORS_ERROR_MSG } from './types/constants.js'
+import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js'
 import { LogToWebHook } from './middleware/hook.js'
 import { Middleware } from './middleware/middleware.js'
 import swaggerUi from 'swagger-ui-express'
@@ -21,6 +21,7 @@ dotenv.config()
 
 // Define Swagger file
 import swaggerDocument from './static/swagger.json' assert { type: "json" }
+import { handleAuthRoutes, withLogto } from '@logto/express'
 
 let swaggerOptions = {}
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -63,9 +64,9 @@ class App {
     if (process.env.ENABLE_AUTHENTICATION === 'true') {
       this.express.use(session({secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 }}))
       // Authentication functions/methods
-      this.express.use(async (req, res, next) => await auth.setup(req, res, next))
-      this.express.use(async (req, res, next) => await auth.wrapperHandleAuthRoutes(req, res, next))
-      this.express.use(async (req, res, next) => await auth.withLogtoWrapper(req, res, next))
+      this.express.use(async (req, res, next) => await auth.setup(next))
+      this.express.use(handleAuthRoutes(configLogToExpress))
+      this.express.use(withLogto(configLogToExpress))
       if (process.env.ENABLE_EXTERNAL_DB === 'true') {
         this.express.use(async (req, res, next) => await auth.guard(req, res, next))
       }
