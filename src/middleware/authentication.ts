@@ -30,7 +30,7 @@ export class Authentication {
         this.logToHelper = new LogToHelper()
     }
 
-    public async setup(request: Request, response: Response, next: NextFunction) {
+    public async setup(next: NextFunction) {
         if (!this.isSetup) {
             await this.logToHelper.setup()
 
@@ -64,13 +64,6 @@ export class Authentication {
         next()
     }
 
-    public async wrapperHandleAuthRoutes(request: Request, response: Response, next: NextFunction) {
-        return handleAuthRoutes(
-            {...configLogToExpress, 
-            scopes: this.authHandler.getAllLogToScopes() as string[],
-            resources: this.authHandler.getAllLogToResources() as string[]})(request, response, next)
-    }
-
     public async handleError(error: Error, request: Request, response: Response, next: NextFunction) {
         if (error) {
           return response.status(401).send({
@@ -97,15 +90,15 @@ export class Authentication {
         next()
     }
 
-    public async guard(jwtRequest: Request, response: Response, next: NextFunction) {
-		const { provider } = jwtRequest.body as { claim: string, provider: string }
-        if (this.authHandler.skipPath(jwtRequest.path)) 
+    public async guard(request: Request, response: Response, next: NextFunction) {
+		const { provider } = request.body as { claim: string, provider: string }
+        if (this.authHandler.skipPath(request.path)) 
             return next()
 
 		try {
                 // If response got back that means error was raised
-                const _resp = await this.authHandler.handle(jwtRequest, response)
-                if (_resp && _resp.status !== 200) {
+                const _resp = await this.authHandler.handle(request, response)
+                if (_resp.status !== 200) {
                     return response.status(_resp.status).json({
                         error: _resp.error})
                 }
@@ -120,26 +113,4 @@ export class Authentication {
             })
 		}
 	}
-    
-    public async withLogtoWrapper(request: Request, response: Response, next: NextFunction) {
-        if (this.authHandler.skipPath(request.path)) 
-            return next()
-        try {
-            let config: LogtoExpressConfig = configLogToExpress
-            if (! this.authHandler.skipPath(request.path)) {
-                const resourceAPI = AbstractAuthHandler.buildResourceAPIUrl(request)
-                if (!resourceAPI) {
-                    return next()
-                }
-                config = {...configLogToExpress, resource: resourceAPI, scopes: this.authHandler.getAllLogToScopes() as string[]}
-            }
-            return withLogto(config)(request, response, next)
-		} catch (err) {
-			return response.status(500).send({
-                authenticated: false,
-                error: `${err}`,
-                customerId: null,
-            })
-		}
-    }
 }

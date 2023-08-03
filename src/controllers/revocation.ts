@@ -93,7 +93,7 @@ export class RevocationController {
           return response.status(400).json({ error: result.array()[0].msg })
         }
 
-        let { did, encodedList, statusListName, alsoKnownAs, statusListVersion, length, encoding } = request.body
+        const { did, encodedList, statusListName, alsoKnownAs, statusListVersion, length, encoding } = request.body
         const { statusPurpose } = request.query as { statusPurpose: 'revocation' | 'suspension' }
         
         const data = encodedList ? fromString(encodedList, encoding) : undefined
@@ -168,7 +168,7 @@ export class RevocationController {
         return response.status(400).json({ error: result.array()[0].msg })
       }
 
-      let { did, encodedList, statusListName, alsoKnownAs, statusListVersion, length, encoding } = request.body
+      const { did, encodedList, statusListName, alsoKnownAs, statusListVersion, length, encoding } = request.body
       const { statusPurpose } = request.query as { statusPurpose: 'revocation' | 'suspension' }
       
       const data = encodedList ? fromString(encodedList, encoding) : undefined
