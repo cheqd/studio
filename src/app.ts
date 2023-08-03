@@ -11,10 +11,11 @@ import { AccountController } from './controllers/customer.js'
 import { Authentication } from './middleware/authentication.js'
 import { Connection } from './database/connection/connection.js'
 import { RevocationController } from './controllers/revocation.js'
-import { CORS_ERROR_MSG } from './types/constants.js'
+import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js'
 import { LogToWebHook } from './middleware/hook.js'
 import { Middleware } from './middleware/middleware.js'
 import swaggerUi from 'swagger-ui-express'
+import { withLogto } from '@logto/express'
 
 import * as dotenv from 'dotenv'
 dotenv.config()
@@ -128,6 +129,11 @@ class App {
     
     // LogTo webhooks
     app.post(`/account/set-default-role`, LogToWebHook.verifyHookSignature, new AccountController().setupDefaultRole)
+
+    // Get LogTo user info
+    app.get('/user', withLogto({ ...configLogToExpress, fetchUserInfo: true }), (req, res) => {
+      res.json(req.user.userInfo);
+    });
 
     // static files
     app.get('/static/custom-button.js', 
