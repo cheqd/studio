@@ -33,7 +33,6 @@ declare global {
 
       // Authentication
       ENABLE_AUTHENTICATION: string | "false"
-      DEFAULT_CUSTOMER_ID: string | undefined
       COOKIE_SECRET: string
 
       // Verida
