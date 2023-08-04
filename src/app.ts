@@ -15,7 +15,6 @@ import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js'
 import { LogToWebHook } from './middleware/hook.js'
 import { Middleware } from './middleware/middleware.js'
 import swaggerUi from 'swagger-ui-express'
-import { withLogto } from '@logto/express'
 
 import * as dotenv from 'dotenv'
 dotenv.config()
