@@ -1,24 +1,11 @@
 import { Request, Response } from "express";
 import * as dotenv from 'dotenv'
-import { createRemoteJWKSet, jwtVerify } from 'jose'
 import stringify from 'json-stringify-safe'
 import { cheqdDidRegex } from '../../types/types.js'
 import { MethodToScope, IAuthResourceHandler, Namespaces, IAuthResponse } from '../../types/authentication.js'
-import { IncomingHttpHeaders } from "http";
 import { LogToHelper } from "./logto.js";
 
 dotenv.config()
-
-const {
-    LOGTO_ENDPOINT,
-    LOGTO_DEFAULT_RESOURCE_URL,
-} = process.env
-
-// Constants
-const OIDC_ISSUER = LOGTO_ENDPOINT + '/oidc'
-const OIDC_JWKS_ENDPOINT = LOGTO_ENDPOINT + '/oidc/jwks'
-const bearerTokenIdentifier = 'Bearer'
-
 
 export abstract class AbstractAuthHandler implements IAuthResourceHandler
 {

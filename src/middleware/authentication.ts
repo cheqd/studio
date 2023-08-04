@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 
 import * as dotenv from 'dotenv'
-import { withLogto, handleAuthRoutes, LogtoExpressConfig } from '@logto/express'
-import { configLogToExpress } from '../types/constants.js'
 import { AccountAuthHandler } from './auth/account-auth.js'
 import { CredentialAuthHandler } from './auth/credential-auth.js'
 import { DidAuthHandler } from './auth/did-auth.js'
