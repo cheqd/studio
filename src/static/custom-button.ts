@@ -27,7 +27,7 @@ window.addEventListener("load", function () {
 });
 
 async function fetchUserInfo(login_button: HTMLButtonElement, logout_button: HTMLButtonElement) {
-    const res = await fetch(`${window.location.origin}/user`);
+    const res = await fetch(`${window.location.origin}/auth/user-info`);
     if (res.status === 200) { 
         const body = await res.json();
         if (body.isAuthenticated as boolean) {
