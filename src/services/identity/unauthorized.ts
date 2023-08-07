@@ -76,7 +76,7 @@ export class Unauthorized extends LocalIdentity {
         return await Veramo.instance.verifyPresentation(this.initAgent(), presentation, verificationOptions)
     }
 
-    async checkStatusList2021(did: string, statusOptions: CheckStatusListOptions, agentId?: string): Promise<StatusCheckResult> {
+    async checkStatusList2021(did: string, statusOptions: CheckStatusListOptions): Promise<StatusCheckResult> {
         return await Veramo.instance.checkStatusList2021(this.initAgent(), did, statusOptions)
     }
 }
