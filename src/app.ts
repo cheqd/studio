@@ -4,23 +4,25 @@ import cors from 'cors'
 import session from 'express-session'
 import cookieParser from 'cookie-parser'
 import path from 'path'
+import swaggerUi from 'swagger-ui-express'
+import { StatusCodes } from 'http-status-codes'
+
 import { CredentialController } from './controllers/credentials.js'
-import { StoreController } from './controllers/store.js'
 import { IssuerController } from './controllers/issuer.js'
 import { AccountController } from './controllers/customer.js'
 import { Authentication } from './middleware/authentication.js'
 import { Connection } from './database/connection/connection.js'
 import { RevocationController } from './controllers/revocation.js'
-import { CORS_ERROR_MSG } from './types/constants.js'
+import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js'
 import { LogToWebHook } from './middleware/hook.js'
 import { Middleware } from './middleware/middleware.js'
-import swaggerUi from 'swagger-ui-express'
 
 import * as dotenv from 'dotenv'
 dotenv.config()
 
 // Define Swagger file
 import swaggerDocument from './static/swagger.json' assert { type: "json" }
+import { handleAuthRoutes, withLogto } from '@logto/express'
 
 let swaggerOptions = {}
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -63,9 +65,9 @@ class App {
     if (process.env.ENABLE_AUTHENTICATION === 'true') {
       this.express.use(session({secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 }}))
       // Authentication functions/methods
-      this.express.use(async (req, res, next) => await auth.setup(req, res, next))
-      this.express.use(async (req, res, next) => await auth.wrapperHandleAuthRoutes(req, res, next))
-      this.express.use(async (req, res, next) => await auth.withLogtoWrapper(req, res, next))
+      this.express.use(async (req, res, next) => await auth.setup(next))
+      this.express.use(handleAuthRoutes(configLogToExpress))
+      this.express.use(withLogto(configLogToExpress))
       if (process.env.ENABLE_EXTERNAL_DB === 'true') {
         this.express.use(async (req, res, next) => await auth.guard(req, res, next))
       }
@@ -104,13 +106,9 @@ class App {
     app.post('/credential-status/check', RevocationController.commonValidator, RevocationController.checkValidator, new RevocationController().checkStatusList)
     app.get('/credential-status/search', RevocationController.commonValidator, new RevocationController().fetchStatusList)
 
-    // store
-    app.post(`/store`, new StoreController().set)
-    app.get(`/store/:id`, new StoreController().get)
-
     // Keys API
     app.post(`/key/create`, new IssuerController().createKey)
-    app.get(`/key/:kid`, new IssuerController().getKey)
+    app.get(`/key/read/:kid`, new IssuerController().getKey)
 
     // DIDs API 
     app.post(`/did/create`, IssuerController.createValidator, new IssuerController().createDid)
@@ -136,7 +134,7 @@ class App {
           {extensions: ['js'], index: false}))
 
     // 404 for all other requests
-    app.all('*', (req, res) => res.status(400).send('Bad request'))
+    app.all('*', (req, res) => res.status(StatusCodes.BAD_REQUEST).send('Bad request'))
   }
   
 }

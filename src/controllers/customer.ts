@@ -2,6 +2,7 @@ import type { Request, Response } from 'express'
 
 import { CustomerService } from '../services/customer.js'
 import { LogToHelper } from '../middleware/auth/logto.js'
+import { StatusCodes } from 'http-status-codes'
 
 export class AccountController {
 
@@ -31,15 +32,15 @@ export class AccountController {
         try {
             const customer = await CustomerService.instance.create(response.locals.customerId)
             if(!customer) {
-                return response.status(400).json({
+                return response.status(StatusCodes.BAD_REQUEST).json({
                     error: `Error creating customer. Please try again`
                 })
             }
-            return response.status(200).json({
+            return response.status(StatusCodes.OK).json({
                 customerId: customer.customerId,
             })
         } catch (error) {
-            return response.status(500).json({
+            return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
                 error: `Error creating customer ${error}`
             })
         }
@@ -71,17 +72,17 @@ export class AccountController {
         try {
             const result = await CustomerService.instance.get(response.locals.customerId)
             if(result && !Array.isArray(result)) {
-                return response.status(200).json({
+                return response.status(StatusCodes.OK).json({
                     customerId: result.customerId,
                     address: result.address
                 })
             }
 
-            return response.status(400).json({
+            return response.status(StatusCodes.BAD_REQUEST).json({
                 error: 'Customer not found'
             })
         } catch (error) {
-            return response.status(500).json({
+            return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
                 error: `${error}`
             })
         }
@@ -92,15 +93,17 @@ export class AccountController {
             const { body } = request
             if (!body.user.isSuspended) {
                 const logToHelper = new LogToHelper()
-                await logToHelper.setup()
-                const resp = await logToHelper.setDefaultRoleForUser(body.user.id as string)
-                if (resp) {
-                    return response.status(resp.status).json({
-                        error: resp.error})
+                const _r = await logToHelper.setup()
+                if (_r.status !== StatusCodes.OK) {
+                    return response.status(StatusCodes.BAD_GATEWAY).json({
+                        error: _r.error
+                    })
                 }
-                return response.status(500).json({})
+                const resp = await logToHelper.setDefaultRoleForUser(body.user.id as string)
+                return response.status(resp.status).json({
+                    error: resp.error})
             }
         }
-        return response.status(400).json({})
+        return response.status(StatusCodes.BAD_REQUEST).json({})
     }
 }

@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express'
 import { check, query, validationResult } from 'express-validator'
 import { fromString } from 'uint8arrays'
+import { StatusCodes } from 'http-status-codes'
 
 import { Identity } from '../services/identity/index.js'
 import { Veramo } from '../services/identity/agent.js'
@@ -90,10 +91,10 @@ export class RevocationController {
     async createStatusList(request: Request, response: Response) {
         const result = validationResult(request)
         if (!result.isEmpty()) {
-          return response.status(400).json({ error: result.array()[0].msg })
+          return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg })
         }
 
-        let { did, encodedList, statusListName, alsoKnownAs, statusListVersion, length, encoding } = request.body
+        const { did, encodedList, statusListName, alsoKnownAs, statusListVersion, length, encoding } = request.body
         const { statusPurpose } = request.query as { statusPurpose: 'revocation' | 'suspension' }
         
         const data = encodedList ? fromString(encodedList, encoding) : undefined
@@ -105,11 +106,11 @@ export class RevocationController {
           }
           result = await new Identity(response.locals.customerId).agent.createStatusList2021(did, { name: statusListName, alsoKnownAs, version: statusListVersion }, { length, encoding, statusPurpose }, response.locals.customerId)
           if (result.error) {
-            return response.status(400).json(result)
+            return response.status(StatusCodes.BAD_REQUEST).json(result)
           }
-          return response.status(200).json(result)
+          return response.status(StatusCodes.OK).json(result)
         } catch (error) {
-          return response.status(500).json({
+          return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `Internal error: ${error}`
           })
         }
@@ -165,10 +166,10 @@ export class RevocationController {
     async publishStatusList(request: Request, response: Response) {
       const result = validationResult(request)
       if (!result.isEmpty()) {
-        return response.status(400).json({ error: result.array()[0].msg })
+        return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg })
       }
 
-      let { did, encodedList, statusListName, alsoKnownAs, statusListVersion, length, encoding } = request.body
+      const { did, encodedList, statusListName, alsoKnownAs, statusListVersion, length, encoding } = request.body
       const { statusPurpose } = request.query as { statusPurpose: 'revocation' | 'suspension' }
       
       const data = encodedList ? fromString(encodedList, encoding) : undefined
@@ -180,11 +181,11 @@ export class RevocationController {
         }
         result = await new Identity(response.locals.customerId).agent.createStatusList2021(did, { name: statusListName, alsoKnownAs, version: statusListVersion }, { length, encoding, statusPurpose }, response.locals.customerId)
         if (result.error) {
-          return response.status(400).json(result)
+          return response.status(StatusCodes.BAD_REQUEST).json(result)
         }
-        return response.status(200).json(result)
+        return response.status(StatusCodes.OK).json(result)
       } catch (error) {
-        return response.status(500).json({
+        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
           error: `Internal error: ${error}`
         })
       }
@@ -245,7 +246,7 @@ export class RevocationController {
     async fetchStatusList(request: Request, response: Response) {
         const result = validationResult(request)
         if (!result.isEmpty()) {
-          return response.status(400).json({ error: result.array()[0].msg })
+          return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg })
         }
 
         try {
@@ -273,9 +274,9 @@ export class RevocationController {
                         statusListNextVersion: resource.nextVersionId
                     }
                 })
-          return response.status(200).json(statusList) 
+          return response.status(StatusCodes.OK).json(statusList) 
         } catch (error) {
-          return response.status(500).json({
+          return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `Internal error: ${error}`
           })
         }
@@ -331,7 +332,7 @@ export class RevocationController {
     async  updateStatusList(request: Request, response: Response) {
         const result = validationResult(request)
         if (!result.isEmpty()) {
-          return response.status(400).json({ error: result.array()[0].msg })
+          return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg })
         }
 
         let { did, statusListName, statusListVersion, indices } = request.body
@@ -342,11 +343,11 @@ export class RevocationController {
         try {
           const result = await new Identity(response.locals.customerId).agent.updateStatusList2021(did, { indices, statusListName, statusListVersion, statusAction }, publish, response.locals.customerId) 
           if (result.error) {
-            return response.status(400).json(result)
+            return response.status(StatusCodes.BAD_REQUEST).json(result)
           }
-          return response.status(200).json(result)
+          return response.status(StatusCodes.OK).json(result)
         } catch (error) {
-          return response.status(500).json({
+          return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `Internal error: ${error}`
           })
         }
@@ -408,7 +409,7 @@ export class RevocationController {
     async checkStatusList(request: Request, response: Response) {
         const result = validationResult(request)
         if (!result.isEmpty()) {
-          return response.status(400).json({ error: result.array()[0].msg })
+          return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg })
         }
 
         let { did, statusListName, index } = request.body
@@ -421,11 +422,11 @@ export class RevocationController {
               response.locals.customerId)
 
           if (result.error) {
-            return response.status(400).json(result)
+            return response.status(StatusCodes.BAD_REQUEST).json(result)
           }
-          return response.status(200).json(result)
+          return response.status(StatusCodes.OK).json(result)
         } catch (error) {
-          return response.status(500).json({
+          return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `Internal error: ${error}`
           })
         }
