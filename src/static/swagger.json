@@ -772,7 +772,7 @@
         }
       }
     },
-    "/did/{did}": {
+    "/did/search/{did}": {
       "get": {
         "tags": [
           "DID"
