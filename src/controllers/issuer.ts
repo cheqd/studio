@@ -5,6 +5,7 @@ import { DIDDocument, Service, VerificationMethod } from 'did-resolver'
 import { v4 } from 'uuid'
 import { MethodSpecificIdAlgo, VerificationMethods, CheqdNetwork } from '@cheqd/sdk'
 import { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js'
+import { StatusCodes } from 'http-status-codes'
 
 import { Identity } from '../services/identity/index.js'
 import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers.js'
@@ -90,9 +91,9 @@ export class IssuerController {
   public async createKey(request: Request, response: Response) {
     try {
       const key = await new Identity(response.locals.customerId).agent.createKey('Ed25519', response.locals.customerId)
-      return response.status(200).json(key)
+      return response.status(StatusCodes.OK).json(key)
     } catch (error) {
-        return response.status(500).json({
+        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `${error}`
         })
     }
@@ -101,7 +102,7 @@ export class IssuerController {
   /**
    * @openapi
    * 
-   * /key/{kid}:
+   * /key/read/{kid}:
    *   get:
    *     tags: [ Key ]
    *     summary: Fetch an identity key pair.
@@ -142,9 +143,9 @@ export class IssuerController {
   public async getKey(request: Request, response: Response) {
     try {
       const key = await new Identity(response.locals.customerId).agent.getKey(request.params.kid, response.locals.customerId)
-      return response.status(200).json(key)
+      return response.status(StatusCodes.OK).json(key)
     } catch (error) {
-        return response.status(500).json({
+        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `${error}`
         })
     }
@@ -195,7 +196,7 @@ export class IssuerController {
   public async createDid(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
-      return response.status(400).json({
+      return response.status(StatusCodes.BAD_REQUEST).json({
         error: result.array()[0].msg
       })
     }
@@ -227,15 +228,15 @@ export class IssuerController {
             }]
         }
       } else {
-        return response.status(400).json({
+        return response.status(StatusCodes.BAD_REQUEST).json({
             error: 'Provide a DID Document or the network type to create a DID'
         })
       }
 
       const did = await new Identity(response.locals.customerId).agent.createDid(network || didDocument.id.split(':')[2], didDocument, response.locals.customerId)
-      return response.status(200).json(did)
+      return response.status(StatusCodes.OK).json(did)
     } catch (error) {
-        return response.status(500).json({
+        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `${error}`
         })
     }
@@ -274,7 +275,7 @@ export class IssuerController {
   public async updateDid(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
-      return response.status(400).json({
+      return response.status(StatusCodes.BAD_REQUEST).json({
         error: result.array()[0].msg
       })
     }
@@ -286,9 +287,9 @@ export class IssuerController {
       if (request.body.didDocument) {
         updatedDocument = request.body.didDocument
       } else if (did && (service || verificationMethod || authentication)) {
-        let resolvedResult = await new Identity(response.locals.customerId).agent.resolveDid(did)
+        const resolvedResult = await new Identity(response.locals.customerId).agent.resolveDid(did)
         if(!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
-          return response.status(400).send({
+          return response.status(StatusCodes.BAD_REQUEST).send({
               error: `${did} is either Deactivated or Not found`
           })
         }
@@ -305,15 +306,15 @@ export class IssuerController {
 
         updatedDocument = resolvedDocument
       } else {
-        return response.status(400).json({
+        return response.status(StatusCodes.BAD_REQUEST).json({
             error: 'Provide a DID Document or atleast one field to update'
         })
       }
 
       const result = await new Identity(response.locals.customerId).agent.updateDid(updatedDocument, response.locals.customerId)
-      return response.status(200).json(result)
+      return response.status(StatusCodes.OK).json(result)
     } catch (error) {
-        return response.status(500).json({
+        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `${error}`
         })
     }
@@ -351,16 +352,16 @@ export class IssuerController {
   public async deactivateDid(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
-      return response.status(400).json({
+      return response.status(StatusCodes.BAD_REQUEST).json({
         error: result.array()[0].msg
       })
     }
 
     try {
       const did = await new Identity(response.locals.customerId).agent.deactivateDid(request.params.did, response.locals.customerId)
-      return response.status(200).json(did)
+      return response.status(StatusCodes.OK).json(did)
     } catch (error) {
-        return response.status(500).json({
+        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `${error}`
         })
     }
@@ -402,7 +403,7 @@ export class IssuerController {
   public async createResource(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
-      return response.status(400).json({
+      return response.status(StatusCodes.BAD_REQUEST).json({
         error: result.array()[0].msg
       })
     }
@@ -415,7 +416,7 @@ export class IssuerController {
       // check if did is registered on the ledger
       let resolvedDocument: any = await new Identity(response.locals.customerId).agent.resolveDid(did)
       if(!resolvedDocument?.didDocument || resolvedDocument.didDocumentMetadata.deactivated) {
-        return response.status(400).send({
+        return response.status(StatusCodes.BAD_REQUEST).send({
             error: `${did} is a either Deactivated or Not found`
         })
       } else {
@@ -434,16 +435,16 @@ export class IssuerController {
       network = network || (did.split(':'))[2]
       const result = await new Identity(response.locals.customerId).agent.createResource( network, resourcePayload, response.locals.customerId)    
       if ( result ) {
-        return response.status(201).json({
+        return response.status(StatusCodes.CREATED).json({
             resource: resourcePayload
         })
       } else {
-        return response.status(500).json({
+        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: 'Error creating resource'
         })
       }
     } catch (error) {
-      return response.status(500).json({
+      return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
         error: `${error}`
       })
     }
@@ -482,9 +483,9 @@ export class IssuerController {
         did = await new Identity(response.locals.customerId).agent.listDids(response.locals.customerId)
       }
 
-      return response.status(200).json(did)
+      return response.status(StatusCodes.OK).json(did)
     } catch (error) {
-        return response.status(500).json({
+        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `${error}`
         })
     }
@@ -524,10 +525,10 @@ export class IssuerController {
       let did: any
       if(request.params.did) {
         did = await new Identity(response.locals.customerId).agent.resolveDid(request.params.did)
-        return response.status(200).json(did)
+        return response.status(StatusCodes.OK).json(did)
       }
     } catch (error) {
-        return response.status(500).json({
+        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `${error}`
         })
     }

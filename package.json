@@ -70,6 +70,7 @@
 		"express-session": "^1.17.3",
 		"express-validator": "^7.0.1",
 		"helmet": "^7.0.0",
+		"http-status-codes": "^2.2.0",
 		"json-stringify-safe": "^5.0.1",
 		"node-cache": "^5.1.2",
 		"pg": "^8.11.2",

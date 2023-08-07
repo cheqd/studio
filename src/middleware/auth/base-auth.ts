@@ -1,24 +1,12 @@
-import { Request, Response } from "express";
+import { Request, Response } from "express"
 import * as dotenv from 'dotenv'
-import { createRemoteJWKSet, jwtVerify } from 'jose'
+import {StatusCodes} from 'http-status-codes'
 import stringify from 'json-stringify-safe'
 import { cheqdDidRegex } from '../../types/types.js'
 import { MethodToScope, IAuthResourceHandler, Namespaces, IAuthResponse } from '../../types/authentication.js'
-import { IncomingHttpHeaders } from "http";
-import { LogToHelper } from "./logto.js";
+import { LogToHelper } from "./logto.js"
 
 dotenv.config()
-
-const {
-    LOGTO_ENDPOINT,
-    LOGTO_DEFAULT_RESOURCE_URL,
-} = process.env
-
-// Constants
-const OIDC_ISSUER = LOGTO_ENDPOINT + '/oidc'
-const OIDC_JWKS_ENDPOINT = LOGTO_ENDPOINT + '/oidc/jwks'
-const bearerTokenIdentifier = 'Bearer'
-
 
 export abstract class AbstractAuthHandler implements IAuthResourceHandler
 {
@@ -28,7 +16,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
     private scopes: string[]
     private logToHelper: LogToHelper
 
-    public customer_id: string
+    public customerId: string
 
     private routeToScoupe: MethodToScope[] = []
     private static pathSkip = [
@@ -43,7 +31,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
         this.namespace = '' as Namespaces
         this.token = '' as string
         this.scopes = []
-        this.customer_id = '' as string
+        this.customerId = '' as string
         this.logToHelper = new LogToHelper()
     }
 
@@ -57,28 +45,29 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
 
         // If there is no rule for the request - return error
         if (rule === null) {
-            return this.returnError(500, `Internal error. Issue with finding the rule for the path ${request.path}`)
+            return this.returnError(StatusCodes.INTERNAL_SERVER_ERROR, `Internal error: Issue with finding the rule for the path ${request.path}`)
         } else {
-            // Tries to get token from the request and other preps
-            const _setup = this.setupAuthToken(request)
-
-            // If token is not provided - try to proceed without it
-            // If token is provided - verify it and get the scopes
-            if (_setup.status !== 200) {
-                return _setup 
+            // If the user is not authenticated - return error
+            if (!request.user.isAuthenticated) {
+                return this.returnError(StatusCodes.UNAUTHORIZED, "Unauthorized error: Seems like you are not authenticated. Please follow the authentication process using 'LogIn' button")
             }
-            const resourceAPI = AbstractAuthHandler.buildResourceAPIUrl(request)
-            if (!resourceAPI) {
-                return this.returnError(500, `Internal error. Issue with building resource API for the path ${request.path}`)
+            // Tries to get customerId from the logTo user structure
+            if (request.user && request.user.claims) {
+                this.customerId = request.user.claims.sub
+            } else {
+                return this.returnError(StatusCodes.BAD_GATEWAY, "Internal error: Seems like authentication process was corrupted and there are problems with getting customerId")
             }
-            // Verifies token for the resource API
-            const _resp = await this.verifyJWTToken(this.getToken(), resourceAPI)
+            // Tries to get scopes for current user and check that required scopes are present
+            const _resp = await this.logToHelper.getUserScopes(this.getCustomerId())
             if (_resp.status !== 200) {
                 return _resp
             }
-            // Checks if the token has the required scopes
+            if (_resp.data) {
+                this.scopes = _resp.data
+            }
+            // Checks if the list of scopes from user enough to make an action
             if (!this.areValidScopes(rule, this.getScopes())) {
-                this.returnError(400, `Unauthorized error: Current LogTo account does not have the required scopes. You need ${this.getScopeForRoute(request.path, request.method, this.getNamespace())} scope(s).`)
+                this.returnError(StatusCodes.FORBIDDEN, `Unauthorized error: Current LogTo account does not have the required scopes. You need ${this.getScopeForRoute(request.path, request.method, this.getNamespace())} scope(s).`)
             }
             return this.returnOk()
         }
@@ -86,7 +75,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
 
     private returnOk(): IAuthResponse {
         return {
-            status: 200,
+            status: StatusCodes.OK,
             error: '',
             data: {
                 customerId: this.getCustomerId(),
@@ -131,51 +120,6 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
         return false
     }
 
-    // Verifies the JWT token for resourceAPI
-    public async verifyJWTToken(token: string, resourceAPI: string): Promise<IAuthResponse> {
-        try {
-            const { payload } = await jwtVerify(
-                token, // The raw Bearer Token extracted from the request header
-                createRemoteJWKSet(new URL(OIDC_JWKS_ENDPOINT)), // generate a jwks using jwks_uri inquired from Logto server
-                {
-                    // expected issuer of the token, should be issued by the Logto server
-                    issuer: OIDC_ISSUER,
-                    // expected audience token, should be the resource indicator of the current API
-                    audience: resourceAPI,
-                }
-            )
-            // Setup the scopes from the token
-            if (!payload.scope) {
-                return this.returnError(400, `Unauthorized error: No scope found in the token.`)
-            }
-            this.scopes = (payload.scope as string).split(' ')
-            this.customer_id = payload.sub as string
-
-        } catch (error) {
-            return this.returnError(400, `Unauthorized error: ${error}`)
-        }
-        return this.returnOk()
-    }
-
-    // Make all the possible preps for the auth handler
-    public setupAuthToken(request: Request): IAuthResponse {
-        // setting up namespace. It should be testnet or mainnet
-        this.namespace = AbstractAuthHandler.getNamespaceFromRequest(request)
-
-        // getting the accessToken from the request
-        // Firstly try to get it from the headers
-        let token: string = AbstractAuthHandler.extractBearerTokenFromHeaders(request.headers) as string
-        if (!token) {
-            // Otherwise try to get it from the user structure in the request
-            token = Object.getOwnPropertyNames(request.user).length > 0 ? request.user.accessToken as string : "";
-            if (!token) {
-                return this.returnError(401, `Unauthorized error: Looks like you are not logged in using LogTo properly or don't have needed permissions.`)
-            }
-        }
-        this.token = token
-        return this.returnOk()
-    }
-
     // common utils
     public setLogToHelper(logToHelper: LogToHelper) {
         this.logToHelper = logToHelper
@@ -198,23 +142,6 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
         return Namespaces.Testnet
     }
 
-    public static buildResourceAPIUrl(request: Request): string {
-        const api_root = request.path.split('/')[1]
-        if (!api_root) {
-            // Skip if no api root
-            return ""
-        }
-        return `${LOGTO_DEFAULT_RESOURCE_URL}/${api_root}`
-    }
-
-    public static extractBearerTokenFromHeaders({ authorization }: IncomingHttpHeaders): string | unknown {
-
-        if (authorization && authorization.startsWith(bearerTokenIdentifier)) {
-            return authorization.slice(bearerTokenIdentifier.length + 1)
-        }
-        return undefined
-    }
-
     // Getters
     public getNamespace(): Namespaces {
         return this.namespace
@@ -229,7 +156,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
     }
 
     public getCustomerId(): string {
-        return this.customer_id
+        return this.customerId
     }
 
     public getAllLogToScopes(): string[] | void {
