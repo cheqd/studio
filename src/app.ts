@@ -127,6 +127,11 @@ class App {
     // LogTo webhooks
     app.post(`/account/set-default-role`, LogToWebHook.verifyHookSignature, new AccountController().setupDefaultRole)
 
+    // LogTo user info
+    app.get('/auth/user-info', (req, res) => {
+      res.json(req.user);
+    });
+
     // static files
     app.get('/static/custom-button.js', 
         express.static(
