@@ -25,7 +25,7 @@ export interface IIdentity {
   updateDid(didDocument: DIDDocument, agentId?: string): Promise<IIdentifier> 
   deactivateDid(did: string, agentId?: string): Promise<boolean> 
   listDids(agentId?: string): Promise<string[]>
-  resolveDid(did: string): Promise<DIDResolutionResult>
+  resolveDid(didUrl: string): Promise<DIDResolutionResult>
   getDid(did: string, agentId?: string): Promise<any>
   importDid(did: string, privateKeyHex: string, publicKeyHex: string, agentId?: string): Promise<IIdentifier> 
   createResource(network: string, payload: ResourcePayload, agentId?: string): Promise<any>

@@ -174,8 +174,9 @@ export class PostgresIdentity implements IIdentity {
     return customer?.dids || []
   }
 
-  async resolveDid(did: string) {
-    return await Veramo.instance.resolveDid(this.agent, did)
+  async resolveDid(didUrl: string) {
+    const res = await fetch(`${process.env.RESOLVER_URL}/${didUrl}`)
+    return res.json()
   }
 
   async getDid(did: string) {

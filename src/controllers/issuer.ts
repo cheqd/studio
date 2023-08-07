@@ -8,6 +8,7 @@ import { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/inde
 
 import { Identity } from '../services/identity/index.js'
 import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers.js'
+import { stringify } from 'qs'
 
 export class IssuerController {
 
@@ -523,7 +524,7 @@ export class IssuerController {
     try {
       let did: any
       if(request.params.did) {
-        did = await new Identity(response.locals.customerId).agent.resolveDid(request.params.did)
+        did = await new Identity(response.locals.customerId).agent.resolveDid(request.params.did+stringify(request.query))
         return response.status(200).json(did)
       }
     } catch (error) {

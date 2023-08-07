@@ -110,8 +110,9 @@ export class LocalIdentity implements IIdentity {
     return [(await this.importDid()).did]
   }
 
-  async resolveDid(did: string) {
-    return Veramo.instance.resolveDid(this.initAgent(), did)
+  async resolveDid(didUrl: string) {
+    const res = await fetch(`${process.env.RESOLVER_URL}/${didUrl}`)
+    return res.json()
   }
 
   async getDid(did: string) {
