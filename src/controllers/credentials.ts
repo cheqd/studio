@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express'
 import type { VerifiableCredential } from '@veramo/core'
+import { StatusCodes } from 'http-status-codes'
 
 import { check, query, validationResult } from 'express-validator'
 
@@ -80,7 +81,7 @@ export class CredentialController {
   public async issue(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
-      return response.status(400).json({ error: result.array()[0].msg })
+      return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg })
     }
 
     // Handles string input instead of an array
@@ -93,9 +94,9 @@ export class CredentialController {
 
     try {
       const credential: VerifiableCredential = await Credentials.instance.issue_credential(request.body, response.locals.customerId)
-      response.status(200).json(credential)
+      response.status(StatusCodes.OK).json(credential)
     } catch (error) {
-        return response.status(500).json({
+        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `${error}`
         })
     }
@@ -148,7 +149,7 @@ export class CredentialController {
   public async verify(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
-        return response.status(400).json({ error: result.array()[0].msg })
+        return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg })
     }
 
     const { credential, policies } = request.body
@@ -162,14 +163,14 @@ export class CredentialController {
             }
         )
         if (result.error) {
-            return response.status(400).json({
+            return response.status(StatusCodes.BAD_REQUEST).json({
                 verified: result.verified,
                 error: result.error
             })
         }
-		return response.status(200).json(result)
+		return response.status(StatusCodes.OK).json(result)
     } catch (error) {
-        return response.status(500).json({
+        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `${error}`
         })
     }
@@ -217,14 +218,14 @@ export class CredentialController {
   public async revoke(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
-        return response.status(400).json({ error: result.array()[0].msg })
+        return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg })
     }
     
     const publish = request.query.publish === 'false' ? false : true
     try {
-		return response.status(200).json(await new Identity(response.locals.customerId).agent.revokeCredentials(request.body.credential, publish, response.locals.customerId))
+		return response.status(StatusCodes.OK).json(await new Identity(response.locals.customerId).agent.revokeCredentials(request.body.credential, publish, response.locals.customerId))
     } catch (error) {
-        return response.status(500).json({
+        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `${error}`
         })
     }
@@ -270,13 +271,13 @@ export class CredentialController {
   public async suspend(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
-        return response.status(400).json({ error: result.array()[0].msg })
+        return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg })
     }
 
     try {
-		return response.status(200).json(await new Identity(response.locals.customerId).agent.suspendCredentials(request.body.credential, request.body.publish, response.locals.customerId))
+		return response.status(StatusCodes.OK).json(await new Identity(response.locals.customerId).agent.suspendCredentials(request.body.credential, request.body.publish, response.locals.customerId))
     } catch (error) {
-        return response.status(500).json({
+        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `${error}`
         })
     }
@@ -322,13 +323,13 @@ export class CredentialController {
   public async reinstate(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
-        return response.status(400).json({ error: result.array()[0].msg })
+        return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg })
     }
 
     try {
-		return response.status(200).json(await new Identity(response.locals.customerId).agent.reinstateCredentials(request.body.credential, request.body.publish, response.locals.customerId))
+		return response.status(StatusCodes.OK).json(await new Identity(response.locals.customerId).agent.reinstateCredentials(request.body.credential, request.body.publish, response.locals.customerId))
     } catch (error) {
-        return response.status(500).json({
+        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `${error}`
         })
     }
@@ -381,7 +382,7 @@ export class CredentialController {
   public async verifyPresentation(request: Request, response: Response) {
     const result = validationResult(request)
     if (!result.isEmpty()) {
-        return response.status(400).json({ error: result.array()[0].msg })
+        return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg })
     }
 
     const { presentation, verifierDid, policies } = request.body
@@ -396,14 +397,14 @@ export class CredentialController {
             }
         )
         if (result.error) {
-            return response.status(400).json({
+            return response.status(StatusCodes.BAD_REQUEST).json({
                 verified: result.verified,
                 error: result.error
             })
         }
-		return response.status(200).json(result)
+		return response.status(StatusCodes.OK).json(result)
     } catch (error) {
-        return response.status(500).json({
+        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
             error: `${error}`
         })
     }
