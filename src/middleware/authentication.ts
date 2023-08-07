@@ -1,8 +1,7 @@
-import { Request, Response, NextFunction } from 'express'
+import { Request, Response, NextFunction, response } from 'express'
+import { StatusCodes } from 'http-status-codes'
 
 import * as dotenv from 'dotenv'
-import { withLogto, handleAuthRoutes, LogtoExpressConfig } from '@logto/express'
-import { configLogToExpress } from '../types/constants.js'
 import { AccountAuthHandler } from './auth/account-auth.js'
 import { CredentialAuthHandler } from './auth/credential-auth.js'
 import { DidAuthHandler } from './auth/did-auth.js'
@@ -32,7 +31,10 @@ export class Authentication {
 
     public async setup(next: NextFunction) {
         if (!this.isSetup) {
-            await this.logToHelper.setup()
+            const _r = await this.logToHelper.setup()
+            if (_r.status !== StatusCodes.OK) {
+                return response.status(StatusCodes.BAD_GATEWAY).json(_r.error)
+            }
 
             const didAuthHandler = new DidAuthHandler()
             const keyAuthHandler = new KeyAuthHandler()
@@ -66,7 +68,7 @@ export class Authentication {
 
     public async handleError(error: Error, request: Request, response: Response, next: NextFunction) {
         if (error) {
-          return response.status(401).send({
+          return response.status(StatusCodes.UNAUTHORIZED).send({
             error: `${error.message}`
           })
         }
@@ -82,7 +84,7 @@ export class Authentication {
         if (ENABLE_EXTERNAL_DB === 'false'){
             if (['/account', '/did/create', '/key/create'].includes(request.path)) {
                 message = 'Api not supported'
-                return response.status(400).json({
+                return response.status(StatusCodes.METHOD_NOT_ALLOWED).json({
                     error: message
                 })
             }
@@ -98,14 +100,14 @@ export class Authentication {
 		try {
                 // If response got back that means error was raised
                 const _resp = await this.authHandler.handle(request, response)
-                if (_resp.status !== 200) {
+                if (_resp.status !== StatusCodes.OK) {
                     return response.status(_resp.status).json({
                         error: _resp.error})
                 }
                 response.locals.customerId = _resp.data.customerId
             next()
 		} catch (err) {
-			return response.status(500).send({
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
                 authenticated: false,
                 error: `${err}`,
                 customerId: null,

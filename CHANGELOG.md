@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.7.0-develop.1](https://github.com/cheqd/credential-service/compare/2.6.4-develop.1...2.7.0-develop.1) (2023-08-04)
+
+
+### Features
+
+* Remove `DEFAULT_CUSTOMER_ID` [DEV-2851] ([#318](https://github.com/cheqd/credential-service/issues/318)) ([c072af6](https://github.com/cheqd/credential-service/commit/c072af6a96ac5485e54b976753fa48f852fd8354))
+
 ## [2.6.4-develop.1](https://github.com/cheqd/credential-service/compare/2.6.3...2.6.4-develop.1) (2023-08-02)
 
 

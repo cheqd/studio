@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv'
 import { ICommonErrorResponse } from '../../types/authentication'
+import { StatusCodes } from 'http-status-codes'
 dotenv.config()
 
 
@@ -17,24 +18,25 @@ export class LogToHelper {
     this.allResourceWithNames = []
   }
 
-  public async setup(): Promise<ICommonErrorResponse | void>{
-    let _r = {} as ICommonErrorResponse | void
+  public async setup(): Promise<ICommonErrorResponse>{
+    let _r = {} as ICommonErrorResponse
     _r = await this.setM2MToken()
-    if (_r.status !== 200) {
+    if (_r.status !== StatusCodes.OK) {
         return _r
     }
     _r = await this.setDefaultScopes()
-    if (_r.status !== 200) {
+    if (_r.status !== StatusCodes.OK) {
         return _r
     }
     _r = await this.setAllScopes()
-    if (_r.status !== 200) {
+    if (_r.status !== StatusCodes.OK) {
         return _r
     }
     _r = await this.setAllResourcesWithNames()
-    if (_r.status !== 200) {
+    if (_r.status !== StatusCodes.OK) {
         return _r
     }
+    return this.returnOk({})
   }
 
   public getAllScopes(): string[] {
@@ -51,7 +53,7 @@ export class LogToHelper {
 
   public async setDefaultRoleForUser(userId: string): Promise<ICommonErrorResponse> {
     const roles = await this.getRolesForUser(userId)
-    if (roles.status === 200) {
+    if (roles.status === StatusCodes.OK) {
         // Check that default role is set
         for (const role of roles.data) {
             if (role.id === process.env.LOGTO_DEFAULT_ROLE_ID) {
@@ -67,7 +69,7 @@ export class LogToHelper {
 
   private returnOk(data: any): ICommonErrorResponse {
     return {
-        status: 200,
+        status: StatusCodes.OK,
         error: '',
         data: data
     }
@@ -101,14 +103,14 @@ export class LogToHelper {
     const userInfo = await this.getUserInfo(userId)
     const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
 
-    if (userInfo.status === 200) {
+    if (userInfo.status === StatusCodes.OK) {
         // Means that user exists
         if (userInfo.data.isSuspended === 'true') {
-            return this.returnError(401, 'User is suspended')
+            return this.returnError(StatusCodes.FORBIDDEN, 'User is suspended')
         }
         // Means it's not suspended
         const role = await this.getRoleInfo(roleId)
-        if (role.status === 200) {
+        if (role.status === StatusCodes.OK) {
             // Such role exists
             try {
                 const body = {
@@ -116,14 +118,14 @@ export class LogToHelper {
                 };
                 return await this.postToLogto(uri, body, {'Content-Type': 'application/json'})
             } catch (err) {
-                return this.returnError(500, `getRolesForUser ${err}`)
+                return this.returnError(StatusCodes.BAD_GATEWAY, `getRolesForUser ${err}`)
             }
         } else {
-            return this.returnError(500, `Could not fetch the info about role with roleId ${roleId}`)
+            return this.returnError(StatusCodes.BAD_GATEWAY, `Could not fetch the info about role with roleId ${roleId}`)
         }
         
     } else {
-        return this.returnError(500, `Could not fetch the info about user with userId ${userId}`)
+        return this.returnError(StatusCodes.INTERNAL_SERVER_ERROR, `Could not fetch the info about user with userId ${userId}`)
     }
   }
 
@@ -134,7 +136,7 @@ export class LogToHelper {
         // If our roles per user grows to more than 20, we need to implement pagination
         return await this.getToLogto(uri, 'GET')
     } catch (err) {
-        return this.returnError(500, `getRolesForUser ${err}`)
+        return this.returnError(StatusCodes.BAD_GATEWAY, `getRolesForUser ${err}`)
     }
   }
 
@@ -149,7 +151,7 @@ export class LogToHelper {
     });
 
     if (!response.ok) {
-        return this.returnError(response.status, await response.json())
+        return this.returnError(StatusCodes.BAD_GATEWAY, await response.json())
     }
     return this.returnOk({})
   }
@@ -164,7 +166,7 @@ export class LogToHelper {
     });
 
     if (!response.ok) {
-        return this.returnError(response.status, await response.json())
+        return this.returnError(StatusCodes.BAD_GATEWAY, await response.json())
     }
     const metadata = await response.json()
     return this.returnOk(metadata)
@@ -175,7 +177,7 @@ export class LogToHelper {
     try {
         return await this.getToLogto(uri, 'GET')
     } catch (err) {
-        return this.returnError(500, `getUserInfo ${err}`)
+        return this.returnError(StatusCodes.BAD_GATEWAY, `getUserInfo ${err}`)
     }
   }
 
@@ -184,17 +186,17 @@ export class LogToHelper {
     try {
         return await this.getToLogto(uri, 'GET')
     } catch (err) {
-        return this.returnError(500, `getRoleInfo ${err}`)
+        return this.returnError(StatusCodes.BAD_GATEWAY, `getRoleInfo ${err}`)
     }
   }
 
   private async setDefaultScopes(): Promise<ICommonErrorResponse>{
     const _r = await this.getAllResources()
-    if ( _r.status === 200) {
+    if ( _r.status === StatusCodes.OK) {
         for (const r of _r.data) {
             if (r.indicator === process.env.LOGTO_DEFAULT_RESOURCE_URL) {
                 const _rr = await this.askResourceForScopes(r.id)
-                if (_rr.status === 200) {
+                if (_rr.status === StatusCodes.OK) {
                     this.defaultScopes = _rr.data
                     return this.returnOk({})
                 }
@@ -203,7 +205,7 @@ export class LogToHelper {
                 }
             }
         }
-        return this.returnError(500, `Looks like ${process.env.LOGTO_DEFAULT_RESOURCE_URL} is not setup on LogTo side`)
+        return this.returnError(StatusCodes.BAD_GATEWAY, `Looks like ${process.env.LOGTO_DEFAULT_RESOURCE_URL} is not setup on LogTo side`)
     } else {
         return _r
     }
@@ -229,40 +231,40 @@ export class LogToHelper {
             },
         });
         if (!response.ok) {
-            return this.returnError(response.status, await response.text())
+            return this.returnError(StatusCodes.BAD_GATEWAY, "Error while bootstrapping the connection with authority server")
             
         }
         const data = await response.json();
         this.m2mToken = data.access_token
         return this.returnOk({})
     } catch (err) {
-        return this.returnError(500, `setM2MToken: ${err}`)
+        return this.returnError(StatusCodes.BAD_GATEWAY, "Error while communicating with authority server")
     }
   }
 
   private async setAllScopes(): Promise<ICommonErrorResponse> {
 
     const allResources = await this.getAllResources()
-    if (allResources.status === 200) {
+    if (allResources.status === StatusCodes.OK) {
         for (const resource of allResources.data) {
             if (resource.id !== "management-api") {
                 const scopes = await this.askResourceForScopes(resource.id)
-                if (scopes.status == 200) {
+                if (scopes.status == StatusCodes.OK) {
                     this.allScopes = this.allScopes.concat(scopes.data)    
                 } else {
-                    return this.returnError(500, `setAllScopes: Error while getting the scopes for ${resource.id}`)
+                    return this.returnError(StatusCodes.BAD_GATEWAY, `setAllScopes: Error while getting the scopes for ${resource.id}`)
                 }
             }
         }
         return this.returnOk({})
     } else {
-        return this.returnError(500, `setAllScopes: Error while getting all resources`)
+        return this.returnError(StatusCodes.BAD_GATEWAY, `setAllScopes: Error while getting all resources`)
     }
   }
 
   private async setAllResourcesWithNames(): Promise<ICommonErrorResponse> {
     const allResources = await this.getAllResources()
-    if (allResources.status === 200) {
+    if (allResources.status === StatusCodes.OK) {
         for (const resource of allResources.data) {
             this.allResourceWithNames.push(resource.indicator)
         }
@@ -278,16 +280,16 @@ export class LogToHelper {
 
     try {
         const metadata = await this.getToLogto(uri, 'GET')
-        if (metadata && metadata.status === 200) {
+        if (metadata && metadata.status === StatusCodes.OK) {
             for (const sc of metadata.data) {
                 scopes.push(sc.name)
             }
             return this.returnOk(scopes)
         } else {
-            return this.returnError(500, `askRoleForScopes: Error while getting the all scopes for the role ${roleId}`)
+            return this.returnError(StatusCodes.BAD_GATEWAY, `askRoleForScopes: Error while getting the all scopes for the role ${roleId}`)
         }
     } catch (err) {
-        return this.returnError(500, `askRoleForScopes ${err}`)
+        return this.returnError(StatusCodes.BAD_GATEWAY, `askRoleForScopes ${err}`)
     }
   }
 
@@ -297,16 +299,16 @@ export class LogToHelper {
 
     try {
         const metadata = await this.getToLogto(uri, 'GET')
-        if (metadata && metadata.status === 200) {
+        if (metadata && metadata.status === StatusCodes.OK) {
             for (const sc of metadata.data) {
                 scopes.push(sc.name)
             }
             return this.returnOk(scopes)
         } else {
-            return this.returnError(500, `askResourceForScopes: Error while getting the all scopes for the resource ${resourceId}`)
+            return this.returnError(StatusCodes.BAD_GATEWAY, `askResourceForScopes: Error while getting the all scopes for the resource ${resourceId}`)
         }
     } catch (err) {
-        return this.returnError(500, `askResourceForScopes ${err}`)
+        return this.returnError(StatusCodes.BAD_GATEWAY, `askResourceForScopes ${err}`)
     }
   }
 
@@ -316,7 +318,7 @@ export class LogToHelper {
     try {
         return await this.getToLogto(uri, 'GET')  
     } catch (err) {
-        return this.returnError(500, `getAllResources ${err}`)
+        return this.returnError(StatusCodes.BAD_GATEWAY, `getAllResources ${err}`)
     }
   }
 }

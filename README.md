@@ -66,8 +66,7 @@ By default, `ENABLE_AUTHENTICATION` is set to off/`false`. To enable external Ve
    1. `LOGTO_DEFAULT_ROLE_ID`: LogTo Role ID for the default role to put new users into.
    2. `LOGTO_WEBHOOK_SECRET`: Webhook secret to authenticate incoming webhook requests from LogTo.
 5. **Miscellaneous**
-   1. `DEFAULT_CUSTOMER_ID`: Customer/user in LogTo to use for unauthenticated users
-   2. `COOKIE_SECRET`: Secret for cookie encryption.
+   1. `COOKIE_SECRET`: Secret for cookie encryption.
 
 #### Faucet settings
 

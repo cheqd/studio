@@ -1,24 +1,12 @@
-import { Request, Response } from "express";
+import { Request, Response } from "express"
 import * as dotenv from 'dotenv'
-import { createRemoteJWKSet, jwtVerify } from 'jose'
+import {StatusCodes} from 'http-status-codes'
 import stringify from 'json-stringify-safe'
 import { cheqdDidRegex } from '../../types/types.js'
 import { MethodToScope, IAuthResourceHandler, Namespaces, IAuthResponse } from '../../types/authentication.js'
-import { IncomingHttpHeaders } from "http";
-import { LogToHelper } from "./logto.js";
+import { LogToHelper } from "./logto.js"
 
 dotenv.config()
-
-const {
-    LOGTO_ENDPOINT,
-    LOGTO_DEFAULT_RESOURCE_URL,
-} = process.env
-
-// Constants
-const OIDC_ISSUER = LOGTO_ENDPOINT + '/oidc'
-const OIDC_JWKS_ENDPOINT = LOGTO_ENDPOINT + '/oidc/jwks'
-const bearerTokenIdentifier = 'Bearer'
-
 
 export abstract class AbstractAuthHandler implements IAuthResourceHandler
 {
@@ -57,17 +45,17 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
 
         // If there is no rule for the request - return error
         if (rule === null) {
-            return this.returnError(500, `Internal error. Issue with finding the rule for the path ${request.path}`)
+            return this.returnError(StatusCodes.INTERNAL_SERVER_ERROR, `Internal error: Issue with finding the rule for the path ${request.path}`)
         } else {
             // If the user is not authenticated - return error
             if (!request.user.isAuthenticated) {
-                return this.returnError(400, "Unauthorized error: Seems like you are not authenticated. Please follow the authentication process using 'LogIn' button")
+                return this.returnError(StatusCodes.UNAUTHORIZED, "Unauthorized error: Seems like you are not authenticated. Please follow the authentication process using 'LogIn' button")
             }
             // Tries to get customerId from the logTo user structure
             if (request.user && request.user.claims) {
                 this.customerId = request.user.claims.sub
             } else {
-                return this.returnError(500, "Unauthorized error: Seems like authentication process was corrupted and there are problems with getting customerId")
+                return this.returnError(StatusCodes.BAD_GATEWAY, "Internal error: Seems like authentication process was corrupted and there are problems with getting customerId")
             }
             // Tries to get scopes for current user and check that required scopes are present
             const _resp = await this.logToHelper.getUserScopes(this.getCustomerId())
@@ -79,7 +67,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
             }
             // Checks if the list of scopes from user enough to make an action
             if (!this.areValidScopes(rule, this.getScopes())) {
-                this.returnError(400, `Unauthorized error: Current LogTo account does not have the required scopes. You need ${this.getScopeForRoute(request.path, request.method, this.getNamespace())} scope(s).`)
+                this.returnError(StatusCodes.FORBIDDEN, `Unauthorized error: Current LogTo account does not have the required scopes. You need ${this.getScopeForRoute(request.path, request.method, this.getNamespace())} scope(s).`)
             }
             return this.returnOk()
         }
@@ -87,7 +75,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
 
     private returnOk(): IAuthResponse {
         return {
-            status: 200,
+            status: StatusCodes.OK,
             error: '',
             data: {
                 customerId: this.getCustomerId(),
