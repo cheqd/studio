@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.7.0-develop.2](https://github.com/cheqd/credential-service/compare/2.7.0-develop.1...2.7.0-develop.2) (2023-08-07)
+
+
+### Bug Fixes
+
+* Implement dynamic login/logout button based on user's logged in state [DEV-3092] ([#316](https://github.com/cheqd/credential-service/issues/316)) ([4a2e40d](https://github.com/cheqd/credential-service/commit/4a2e40d685d3ed7b3a69298f8fd4dbc5b6d82f2c))
+* Move to using scopes correctly from LogTo [DEV-3090] ([#317](https://github.com/cheqd/credential-service/issues/317)) ([3f5e16b](https://github.com/cheqd/credential-service/commit/3f5e16bab1b2b8b2c937cb353692a2734a98dba3))
+
 ## [2.7.0-develop.1](https://github.com/cheqd/credential-service/compare/2.6.4-develop.1...2.7.0-develop.1) (2023-08-04)
 
 

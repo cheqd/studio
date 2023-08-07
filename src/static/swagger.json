@@ -481,7 +481,7 @@
         }
       }
     },
-    "/key/{kid}": {
+    "/key/read/{kid}": {
       "get": {
         "tags": [
           "Key"
