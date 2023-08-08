@@ -44,7 +44,9 @@ import {
   CreateAgentRequest,
   CreateStatusListOptions,
   CredentialRequest,
+  ResourceMetadata,
   RevocationStatusOptions,
+  StatusList2021ResourceTypes,
   StatusOptions,
   SuspensionStatusOptions,
   UpdateStatusListOptions,
@@ -59,56 +61,56 @@ export class Veramo {
 
   static instance = new Veramo()
 
-  public createVeramoAgent({ providers, kms, dbConnection, cheqdProviders, enableResolver, enableCredential }: CreateAgentRequest) : VeramoAgent {
+  public createVeramoAgent({ providers, kms, dbConnection, cheqdProviders, enableResolver, enableCredential }: CreateAgentRequest): VeramoAgent {
     const plugins: IAgentPlugin[] = []
 
-    if(providers) {
-        plugins.push(new DIDManager({
-            store: new DIDStore(dbConnection),
-            defaultProvider: 'did:cheqd:testnet',
-            providers
-        }))
+    if (providers) {
+      plugins.push(new DIDManager({
+        store: new DIDStore(dbConnection),
+        defaultProvider: 'did:cheqd:testnet',
+        providers
+      }))
     }
 
-    if(kms) {
-        plugins.push(new KeyManager({
-            store: new KeyStore(dbConnection),
-            kms
-        }))
+    if (kms) {
+      plugins.push(new KeyManager({
+        store: new KeyStore(dbConnection),
+        kms
+      }))
     }
 
-    if(cheqdProviders) {
-        plugins.push(new Cheqd({
-            providers: cheqdProviders
-        }))
+    if (cheqdProviders) {
+      plugins.push(new Cheqd({
+        providers: cheqdProviders
+      }))
     }
 
     if (enableResolver) {
-        plugins.push(
-          new DIDResolverPlugin({
-            resolver: new Resolver({
-              ...CheqdDidResolver({ url: process.env.RESOLVER_URL }) as ResolverRegistry,
-              ...KeyDidResolver(),
-              ...VeridaResolver(),
-              ...UniversalResolver()
-            })
+      plugins.push(
+        new DIDResolverPlugin({
+          resolver: new Resolver({
+            ...CheqdDidResolver({ url: process.env.RESOLVER_URL }) as ResolverRegistry,
+            ...KeyDidResolver(),
+            ...VeridaResolver(),
+            ...UniversalResolver()
           })
-        )
+        })
+      )
     }
 
     if (enableCredential) {
-        plugins.push(
-            new CredentialPlugin(),
-            new CredentialIssuerLD({
-            contextMaps: [LdDefaultContexts],
-            suites: [new VeramoEd25519Signature2018()]
-            })
-        )
+      plugins.push(
+        new CredentialPlugin(),
+        new CredentialIssuerLD({
+          contextMaps: [LdDefaultContexts],
+          suites: [new VeramoEd25519Signature2018()]
+        })
+      )
     }
     return createAgent({ plugins })
   }
 
-  async createKey(agent: TAgent<IKeyManager>, type: 'Ed25519' | 'Secp256k1'='Ed25519'): Promise<ManagedKeyInfo> {
+  async createKey(agent: TAgent<IKeyManager>, type: 'Ed25519' | 'Secp256k1' = 'Ed25519'): Promise<ManagedKeyInfo> {
     const [kms] = await agent.keyManagerGetKeyManagementSystems()
     const key = await agent.keyManagerCreate({
       type: type || 'Ed25519',
@@ -146,7 +148,7 @@ export class Veramo {
         kms,
         document: didDocument,
       } satisfies ICheqdUpdateIdentifierArgs)
-      return {...result, provider: 'cheqd'}
+      return { ...result, provider: 'cheqd' }
     } catch (error) {
       throw new Error(`${error}`)
     }
@@ -171,7 +173,7 @@ export class Veramo {
   }
 
   async listDids(agent: TAgent<IDIDManager>) {
-    return (await agent.didManagerFind()).map((res)=>res.did)
+    return (await agent.didManagerFind()).map((res) => res.did)
   }
 
   async resolveDid(agent: TAgent<IResolver>, did: string) {
@@ -196,83 +198,83 @@ export class Veramo {
 
   async createResource(agent: VeramoAgent, network: string, payload: ResourcePayload) {
     try {
-        const [kms] = await agent.keyManagerGetKeyManagementSystems()
+      const [kms] = await agent.keyManagerGetKeyManagementSystems()
 
-        const result: boolean = await agent.cheqdCreateLinkedResource({
-            kms,
-            payload,
-            network: network as CheqdNetwork
-        })
-        return result
+      const result: boolean = await agent.cheqdCreateLinkedResource({
+        kms,
+        payload,
+        network: network as CheqdNetwork
+      })
+      return result
     } catch (error) {
-        throw new Error(`${error}`)
-    }    
+      throw new Error(`${error}`)
+    }
   }
 
   async createCredential(agent: VeramoAgent, credential: CredentialPayload, format: CredentialRequest['format'], statusListOptions: StatusOptions | null): Promise<VerifiableCredential> {
-    const issuanceOptions : ICreateVerifiableCredentialArgs = {
-        save: false,
-        credential,
-        proofFormat: format == 'jsonld' ? 'lds' : VC_PROOF_FORMAT,
-        removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS
+    const issuanceOptions: ICreateVerifiableCredentialArgs = {
+      save: false,
+      credential,
+      proofFormat: format == 'jsonld' ? 'lds' : VC_PROOF_FORMAT,
+      removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS
     }
     try {
-        let verifiable_credential: VerifiableCredential
-        if (statusListOptions) {
-            verifiable_credential = statusListOptions.statusPurpose == 'revocation' ? 
-            await agent.cheqdIssueRevocableCredentialWithStatusList2021({
-                issuanceOptions,
-                statusOptions: statusListOptions as RevocationStatusOptions
-            })
-            :
-            await agent.cheqdIssueSuspendableCredentialWithStatusList2021({
-                issuanceOptions,
-                statusOptions: statusListOptions as SuspensionStatusOptions
-            })
-        } else {
-            verifiable_credential = await agent.createVerifiableCredential(issuanceOptions)
-        }
-        return verifiable_credential
+      let verifiable_credential: VerifiableCredential
+      if (statusListOptions) {
+        verifiable_credential = statusListOptions.statusPurpose == 'revocation' ?
+          await agent.cheqdIssueRevocableCredentialWithStatusList2021({
+            issuanceOptions,
+            statusOptions: statusListOptions as RevocationStatusOptions
+          })
+          :
+          await agent.cheqdIssueSuspendableCredentialWithStatusList2021({
+            issuanceOptions,
+            statusOptions: statusListOptions as SuspensionStatusOptions
+          })
+      } else {
+        verifiable_credential = await agent.createVerifiableCredential(issuanceOptions)
+      }
+      return verifiable_credential
     } catch (error) {
-        throw new Error(`${error}`)
-    }          
+      throw new Error(`${error}`)
+    }
   }
 
   async verifyCredential(agent: VeramoAgent, credential: string | VerifiableCredential, verificationOptions: VerificationOptions = {}): Promise<IVerifyResult> {
     let result: IVerifyResult
-    if(verificationOptions.verifyStatus) {
-        result = await agent.cheqdVerifyCredential({
-            credential: credential as VerifiableCredential,
-            fetchList: true,
-            verificationArgs: {
-                ...verificationOptions
-            }
-        } as ICheqdVerifyCredentialWithStatusList2021Args)
+    if (verificationOptions.verifyStatus) {
+      result = await agent.cheqdVerifyCredential({
+        credential: credential as VerifiableCredential,
+        fetchList: true,
+        verificationArgs: {
+          ...verificationOptions
+        }
+      } as ICheqdVerifyCredentialWithStatusList2021Args)
     } else {
-        result = await agent.verifyCredential({
-            credential, 
-            ...verificationOptions,
-            policies: {
-                ...verificationOptions.policies,
-                credentialStatus: false,
-            }
-        })
+      result = await agent.verifyCredential({
+        credential,
+        ...verificationOptions,
+        policies: {
+          ...verificationOptions.policies,
+          credentialStatus: false,
+        }
+      })
     }
 
     if (result.didResolutionResult) {
-        delete(result.didResolutionResult)
+      delete (result.didResolutionResult)
     }
 
     if (result.jwt) {
-        delete(result.jwt)
+      delete (result.jwt)
     }
 
     if (result.verifiableCredential) {
-        delete(result.verifiableCredential)
+      delete (result.verifiableCredential)
     }
 
     if (result.payload) {
-        delete(result.payload)
+      delete (result.payload)
     }
 
     return result
@@ -280,39 +282,39 @@ export class Veramo {
 
   async verifyPresentation(agent: VeramoAgent, presentation: VerifiablePresentation | string, verificationOptions: VerificationOptions = {}): Promise<IVerifyResult> {
     let result: IVerifyResult
-    if(verificationOptions.verifyStatus) {
-        result = await agent.cheqdVerifyPresentation({
-            presentation: presentation as VerifiablePresentation,
-            fetchList: true,
-            verificationArgs: {
-                ...verificationOptions
-            },
-        } as ICheqdVerifyPresentationWithStatusList2021Args)
+    if (verificationOptions.verifyStatus) {
+      result = await agent.cheqdVerifyPresentation({
+        presentation: presentation as VerifiablePresentation,
+        fetchList: true,
+        verificationArgs: {
+          ...verificationOptions
+        },
+      } as ICheqdVerifyPresentationWithStatusList2021Args)
     } else {
-        result = await agent.verifyPresentation({
-            presentation, 
-            ...verificationOptions,
-            policies: {
-                ...verificationOptions.policies,
-                credentialStatus: false
-            }
-        })
+      result = await agent.verifyPresentation({
+        presentation,
+        ...verificationOptions,
+        policies: {
+          ...verificationOptions.policies,
+          credentialStatus: false
+        }
+      })
     }
 
     if (result.didResolutionResult) {
-        delete(result.didResolutionResult)
+      delete (result.didResolutionResult)
     }
 
     if (result.jwt) {
-        delete(result.jwt)
+      delete (result.jwt)
     }
 
     if (result.verifiablePresentation) {
-        delete(result.verifiablePresentation)
+      delete (result.verifiablePresentation)
     }
 
     if (result.payload) {
-        delete(result.payload)
+      delete (result.payload)
     }
 
     return result
@@ -322,7 +324,7 @@ export class Veramo {
     const [kms] = await agent.keyManagerGetKeyManagementSystems()
 
     if (!resourceOptions.name) {
-        throw new Error(`StatusList name is required`)
+      throw new Error(`StatusList name is required`)
     }
     return await agent.cheqdCreateStatusList2021({
       kms,
@@ -333,99 +335,124 @@ export class Veramo {
       statusListLength: statusOptions.length,
       encrypted: statusOptions.encrypted || false,
       resourceVersion: resourceOptions.version
-   } satisfies ICheqdCreateStatusList2021Args)
- }
+    } satisfies ICheqdCreateStatusList2021Args)
+  }
 
- async broadcastStatusList2021(agent: VeramoAgent, did: string, resourceOptions: ResourcePayload, statusOptions: BroadCastStatusListOptions) {
+  async broadcastStatusList2021(agent: VeramoAgent, did: string, resourceOptions: ResourcePayload, statusOptions: BroadCastStatusListOptions) {
     const [kms] = await agent.keyManagerGetKeyManagementSystems()
 
     if (!resourceOptions.data) {
-        throw new Error(`StatusList data is required`)
+      throw new Error(`StatusList data is required`)
     }
 
     return await agent.cheqdBroadcastStatusList2021({
-        kms,
-        payload: {
-            ...resourceOptions,
-            collectionId: did.split(':')[3],
-            data: resourceOptions.data,
-            resourceType: statusOptions.statusPurpose === 'revocation' ? 'StatusList2021Revocation' : 'StatusList2021Suspension'
-        },
-        network: did.split(':')[2] as CheqdNetwork,
-     } satisfies ICheqdBroadcastStatusList2021Args)
- }
+      kms,
+      payload: {
+        ...resourceOptions,
+        collectionId: did.split(':')[3],
+        data: resourceOptions.data,
+        resourceType: statusOptions.statusPurpose === 'revocation' ? 'StatusList2021Revocation' : 'StatusList2021Suspension'
+      },
+      network: did.split(':')[2] as CheqdNetwork,
+    } satisfies ICheqdBroadcastStatusList2021Args)
+  }
 
- async revokeCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish=true) {
+  async revokeCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish = true) {
     if (Array.isArray(credentials)) return await agent.cheqdRevokeCredentials({ credentials, fetchList: true, publish: true } satisfies ICheqdRevokeBulkCredentialsWithStatusList2021Args)
     return await agent.cheqdRevokeCredential({ credential: credentials, fetchList: true, publish })
- }
+  }
 
- async resolve(didUrl: string) {
+  async resolve(didUrl: string) {
     const result = await fetch((process.env.RESOLVER_URL || resolverUrl) + didUrl, {
-        headers: { 'Content-Type': 'application/did+ld+json' },
+      headers: { 'Content-Type': 'application/did+ld+json' },
     })
     const ddo = (await result.json())
     return ddo
- }
+  }
 
- async suspendCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish=true) {
+  async suspendCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish = true) {
     if (Array.isArray(credentials)) return await agent.cheqdSuspendCredentials({ credentials, fetchList: true, publish })
     return await agent.cheqdSuspendCredential({ credential: credentials, fetchList: true, publish })
- }
+  }
 
- async unsuspendCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish=true) {
+  async unsuspendCredentials(agent: VeramoAgent, credentials: VerifiableCredential | VerifiableCredential[], publish = true) {
     if (Array.isArray(credentials)) return await agent.cheqdUnsuspendCredentials({ credentials, fetchList: true, publish })
     return await agent.cheqdUnsuspendCredential({ credential: credentials, fetchList: true, publish })
- }
+  }
 
- async updateStatusList2021(agent: VeramoAgent, did: string, statusOptions: UpdateStatusListOptions, publish=true) {
-    switch(statusOptions.statusAction) {
-        case 'revoke': 
-            return await agent.cheqdRevokeCredentials({
-                revocationOptions: {
-                    issuerDid: did,
-                    statusListIndices: statusOptions.indices,
-                    statusListName: statusOptions.statusListName,
-                    statusListVersion: statusOptions.statusListVersion
-                },
-                fetchList: true,
-                publish,
-                returnUpdatedStatusList: !publish
-            })
-        case 'suspend':
-            return await agent.cheqdSuspendCredentials({
-                suspensionOptions: {
-                    issuerDid: did,
-                    statusListIndices: statusOptions.indices,
-                    statusListName: statusOptions.statusListName,
-                    statusListVersion: statusOptions.statusListVersion
-                },
-                fetchList: true,
-                publish,
-                returnUpdatedStatusList: !publish
-            })
-        case 'reinstate':
-            return await agent.cheqdUnsuspendCredentials({
-                unsuspensionOptions: {
-                    issuerDid: did,
-                    statusListIndices: statusOptions.indices,
-                    statusListName: statusOptions.statusListName,
-                    statusListVersion: statusOptions.statusListVersion
-                },
-                fetchList: true,
-                publish,
-                returnUpdatedStatusList: !publish
-            })           
-    }
- }
-
- async checkStatusList2021(agent: VeramoAgent, did: string, statusOptions: CheckStatusListOptions) {
-    return await agent.cheqdCheckCredentialStatus({
-        statusOptions: {
+  async updateStatusList2021(agent: VeramoAgent, did: string, statusOptions: UpdateStatusListOptions, publish = true) {
+    switch (statusOptions.statusAction) {
+      case 'revoke':
+        return await agent.cheqdRevokeCredentials({
+          revocationOptions: {
             issuerDid: did,
-            ...statusOptions,
-        },
-        fetchList: true
+            statusListIndices: statusOptions.indices,
+            statusListName: statusOptions.statusListName,
+            statusListVersion: statusOptions.statusListVersion
+          },
+          fetchList: true,
+          publish,
+          returnUpdatedStatusList: !publish
+        })
+      case 'suspend':
+        return await agent.cheqdSuspendCredentials({
+          suspensionOptions: {
+            issuerDid: did,
+            statusListIndices: statusOptions.indices,
+            statusListName: statusOptions.statusListName,
+            statusListVersion: statusOptions.statusListVersion
+          },
+          fetchList: true,
+          publish,
+          returnUpdatedStatusList: !publish
+        })
+      case 'reinstate':
+        return await agent.cheqdUnsuspendCredentials({
+          unsuspensionOptions: {
+            issuerDid: did,
+            statusListIndices: statusOptions.indices,
+            statusListName: statusOptions.statusListName,
+            statusListVersion: statusOptions.statusListVersion
+          },
+          fetchList: true,
+          publish,
+          returnUpdatedStatusList: !publish
+        })
+    }
+  }
+
+  async checkStatusList2021(agent: VeramoAgent, did: string, statusOptions: CheckStatusListOptions) {
+    return await agent.cheqdCheckCredentialStatus({
+      statusOptions: {
+        issuerDid: did,
+        ...statusOptions,
+      },
+      fetchList: true
     } satisfies ICheqdCheckCredentialStatusWithStatusList2021Args)
- }
+  }
+
+  async searchStatusList2021(agent: VeramoAgent, did: string, statusListName: string, statusPurpose: 'revocation' | 'suspension') {
+    const resourceTypes = statusPurpose ? [StatusList2021ResourceTypes[`${statusPurpose}`]] : [StatusList2021ResourceTypes.revocation, StatusList2021ResourceTypes.suspension]
+    let metadata: ResourceMetadata[] = []
+
+    for (const resourceType of resourceTypes) {
+      const result = await Veramo.instance.resolve(`${did}?resourceType=${resourceType}&resourceMetadata=true`)
+      metadata = metadata.concat(result.contentStream?.linkedResourceMetadata || [])
+    }
+
+    return metadata.filter((resource: ResourceMetadata) => {
+      if (statusListName) {
+        return resource.resourceName === statusListName && resource.mediaType == 'application/json'
+      }
+      return resource.mediaType == 'application/json'
+    }).map((resource: ResourceMetadata) => {
+      return {
+        statusListName: resource.resourceName,
+        statusPurpose: resource.resourceType,
+        statusListVersion: resource.resourceVersion,
+        statusListId: resource.resourceId,
+        statusListNextVersion: resource.nextVersionId
+      }
+    })
+  }
 }
