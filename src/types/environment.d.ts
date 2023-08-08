@@ -52,6 +52,7 @@ declare global {
       FAUCET_ENABLED: string | "false"
       FAUCET_URI: string | "https://faucet-api.cheqd.network/credit"
       FAUCET_DENOM: string | "ncheq"
+      TESTNET_MINIMUM_BALANCE: number | 50000000000
     }
   }
 

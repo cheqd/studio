@@ -24,7 +24,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
         '/user', 
         '/static', 
         '/logto', 
-        '/account/set-default-role']
+        '/account/bootstrap']
 
     constructor () {
         this.nextHandler = {} as IAuthResourceHandler

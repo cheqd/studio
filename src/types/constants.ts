@@ -35,7 +35,10 @@ export const configLogToExpress = {
 	appSecret: LOGTO_APP_SECRET,
 	baseUrl: APPLICATION_BASE_URL,
 	getAccessToken: true,
+	fetchUserInfo: true,
 }
 
 export const DEFAULT_FAUCET_DENOM = process.env.FAUCET_DENOM || 'ncheq'
 export const DEFAULT_FAUCET_URI = process.env.FAUCET_URI || 'https://faucet-api.cheqd.network/credit'
+// Amount for creating DID
+export const TESTNET_MINIMUM_BALANCE = process.env.TESTNET_MINIMUM_BALANCE || 50000000000

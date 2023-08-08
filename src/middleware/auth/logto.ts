@@ -129,7 +129,7 @@ export class LogToHelper {
     }
   }
 
-  private async getRolesForUser(userId: string): Promise<ICommonErrorResponse> {
+  public async getRolesForUser(userId: string): Promise<ICommonErrorResponse> {
     const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
     try {
         // Note: By default, the API returns first 20 roles.
@@ -138,6 +138,34 @@ export class LogToHelper {
     } catch (err) {
         return this.returnError(StatusCodes.BAD_GATEWAY, `getRolesForUser ${err}`)
     }
+  }
+
+  public async updateCustomData(userId: string, customData: any): Promise<ICommonErrorResponse> {
+    const uri = new URL(`/api/users/${userId}/custom-data`, process.env.LOGTO_ENDPOINT);
+    try {
+        const body = {
+            customData: customData,
+        };
+        return await this.patchToLogto(uri, body, {'Content-Type': 'application/json'})
+    } catch (err) {
+        return this.returnError(500, `updateCustomData ${err}`)
+    }
+  }
+
+  private async patchToLogto(uri: URL, body: any, headers: any = {}): Promise<ICommonErrorResponse> {
+    const response = await fetch(uri, {
+        headers: {
+            ...headers,
+            Authorization: 'Bearer ' + this.m2mToken,
+        },
+        body: JSON.stringify(body),
+        method: "PATCH"
+    });
+
+    if (!response.ok) {
+        return this.returnError(response.status, await response.json())
+    }
+    return this.returnOk({})
   }
 
   private async postToLogto(uri: URL, body: any, headers: any = {}): Promise<ICommonErrorResponse> {
@@ -178,6 +206,15 @@ export class LogToHelper {
         return await this.getToLogto(uri, 'GET')
     } catch (err) {
         return this.returnError(StatusCodes.BAD_GATEWAY, `getUserInfo ${err}`)
+    }
+  }
+
+  public async getCustomData(userId: string): Promise<ICommonErrorResponse> {
+    const uri = new URL(`/api/users/${userId}/custom-data`, process.env.LOGTO_ENDPOINT);
+    try {
+        return await this.getToLogto(uri, 'GET')
+    } catch (err) {
+        return this.returnError(StatusCodes.BAD_GATEWAY, `getCustomData ${err}`)
     }
   }
 

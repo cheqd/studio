@@ -125,7 +125,7 @@ class App {
     app.get(`/account`, new AccountController().get)
     
     // LogTo webhooks
-    app.post(`/account/set-default-role`, LogToWebHook.verifyHookSignature, new AccountController().setupDefaultRole)
+    app.post(`/account/bootstrap`, LogToWebHook.verifyHookSignature, new AccountController().bootstrap)
 
     // LogTo user info
     app.get('/auth/user-info', (req, res) => {
