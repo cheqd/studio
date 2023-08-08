@@ -20,11 +20,11 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
 
     private routeToScoupe: MethodToScope[] = []
     private static pathSkip = [
-        '/swagger', 
-        '/user', 
+        '/swagger',  
         '/static', 
-        '/logto', 
-        '/account/set-default-role']
+        '/logto',
+        '/account/set-default-role',
+        '/auth/user-info']
 
     constructor () {
         this.nextHandler = {} as IAuthResourceHandler
@@ -35,7 +35,16 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
         this.logToHelper = new LogToHelper()
     }
 
+    private reset() {
+        this.namespace = '' as Namespaces
+        this.token = '' as string
+        this.scopes = []
+        this.customerId = '' as string
+    }
+
     public async commonPermissionCheck(request: Request): Promise<IAuthResponse> {
+        // Reset all variables
+        this.reset()
         // Firstly - try to find the rule for the request
         const rule = this.findRule(request.path, request.method, this.getNamespace())
 
