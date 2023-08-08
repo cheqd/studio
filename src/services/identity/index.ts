@@ -1,10 +1,9 @@
 import { LocalIdentity } from './local.js'
 import { PostgresIdentity } from './postgres.js'
-export { IIdentity } from './IIdentity.js'
+import { IIdentity } from './IIdentity.js'
+import { Unauthorized } from './unauthorized.js'
 
 import * as dotenv from 'dotenv'
-import { Unauthorized } from './unauthorized.js'
-import { IIdentity } from './IIdentity.js'
 dotenv.config()
 
 export class Identity {

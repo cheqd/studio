@@ -15,10 +15,9 @@ import {
 } from '../../types/types.js'
 import { Connection } from '../../database/connection/connection.js'
 import { Veramo } from './agent.js'
-
-import * as dotenv from 'dotenv'
 import { DefaultIdentity } from './default.js'
 
+import * as dotenv from 'dotenv'
 dotenv.config()
 
 const {
