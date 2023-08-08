@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.7.0-develop.3](https://github.com/cheqd/credential-service/compare/2.7.0-develop.2...2.7.0-develop.3) (2023-08-07)
+
+
+### Bug Fixes
+
+* Fix auth button ([#324](https://github.com/cheqd/credential-service/issues/324)) ([3f88668](https://github.com/cheqd/credential-service/commit/3f8866847b0a90534a80a0a131604cb148c8b701))
+
 ## [2.7.0-develop.2](https://github.com/cheqd/credential-service/compare/2.7.0-develop.1...2.7.0-develop.2) (2023-08-07)
 
 

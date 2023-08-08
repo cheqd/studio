@@ -130,8 +130,8 @@ class App {
     app.post(`/account/set-default-role`, LogToWebHook.verifyHookSignature, new AccountController().setupDefaultRole)
 
     // LogTo user info
-    app.get('/auth/user-info', (req, res) => {
-      res.json(req.user);
+    app.get('/auth/user-info', async (req, res) => {
+      return res.json(req.user)
     });
 
     // static files
