@@ -243,7 +243,7 @@ export class RevocationController {
      *       500:
      *         $ref: '#/components/schemas/InternalError'
      */  
-    async fetchStatusList(request: Request, response: Response) {
+    async searchStatusList(request: Request, response: Response) {
         const result = validationResult(request)
         if (!result.isEmpty()) {
           return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg })

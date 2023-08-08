@@ -104,7 +104,7 @@ class App {
     app.post('/credential-status/update', RevocationController.updateValidator, new RevocationController().updateStatusList)
     app.post('/credential-status/publish', RevocationController.commonValidator, new RevocationController().createStatusList)
     app.post('/credential-status/check', RevocationController.commonValidator, RevocationController.checkValidator, new RevocationController().checkStatusList)
-    app.get('/credential-status/search', RevocationController.commonValidator, new RevocationController().fetchStatusList)
+    app.get('/credential-status/search', RevocationController.commonValidator, new RevocationController().searchStatusList)
 
     // Keys API
     app.post(`/key/create`, new IssuerController().createKey)
