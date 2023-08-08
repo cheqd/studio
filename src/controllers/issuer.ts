@@ -13,7 +13,7 @@ import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers
 export class IssuerController {
 
   public static createValidator = [
-    check('didDocument').optional().isObject().custom((value)=>{
+    check('didDocument').optional().isObject().custom((value) => {
       const { valid } = validateSpecCompliantPayload(value)
       return valid
     }).withMessage('Invalid didDocument'),
@@ -21,21 +21,21 @@ export class IssuerController {
       .optional()
       .isString()
       .isIn([VerificationMethods.Ed255192020, VerificationMethods.Ed255192018, VerificationMethods.JWK])
-      .withMessage('Invalid verificationMethod'),    
+      .withMessage('Invalid verificationMethod'),
     check('methodSpecificIdAlgo').optional().isString().isIn([MethodSpecificIdAlgo.Base58, MethodSpecificIdAlgo.Uuid]).withMessage('Invalid methodSpecificIdAlgo'),
     check('network').optional().isString().isIn([CheqdNetwork.Mainnet, CheqdNetwork.Testnet]).withMessage('Invalid network'),
   ]
 
   public static updateValidator = [
-    check('didDocument').custom((value, {req})=>{
-        if(value) {
-            const { valid } = validateSpecCompliantPayload(value)
-            return valid
-        } else {
-            const { did, service, verificationMethod, authentication } = req.body
-            return did && (service || verificationMethod || authentication )
-        }
-      }).withMessage('Provide a valid DIDDocument or a DID and atleast one field to update')
+    check('didDocument').custom((value, { req }) => {
+      if (value) {
+        const { valid } = validateSpecCompliantPayload(value)
+        return valid
+      } else {
+        const { did, service, verificationMethod, authentication } = req.body
+        return did && (service || verificationMethod || authentication)
+      }
+    }).withMessage('Provide a valid DIDDocument or a DID and atleast one field to update')
   ]
 
   public static deactivateValidator = [
@@ -48,12 +48,12 @@ export class IssuerController {
     check('type').exists().withMessage('type is required').isString().withMessage('Invalid type'),
     check('data').exists().withMessage('data is required').isString().withMessage('Invalid data'),
     check('encoding').exists().withMessage('encoding is required')
-    .isString().isIn(['hex', 'base64', 'base64url']).withMessage('Invalid encoding'),
+      .isString().isIn(['hex', 'base64', 'base64url']).withMessage('Invalid encoding'),
     check('alsoKnownAs').optional().isArray().withMessage('Invalid alsoKnownAs'),
     check('alsoKnownAs.*.uri').isString().withMessage('Invalid uri'),
     check('alsoKnownAs.*.description').isString().withMessage('Invalid description')
   ]
-  
+
   /**
    * @openapi
    * 
@@ -93,9 +93,9 @@ export class IssuerController {
       const key = await new Identity(response.locals.customerId).agent.createKey('Ed25519', response.locals.customerId)
       return response.status(StatusCodes.OK).json(key)
     } catch (error) {
-        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
-            error: `${error}`
-        })
+      return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        error: `${error}`
+      })
     }
   }
 
@@ -145,9 +145,9 @@ export class IssuerController {
       const key = await new Identity(response.locals.customerId).agent.getKey(request.params.kid, response.locals.customerId)
       return response.status(StatusCodes.OK).json(key)
     } catch (error) {
-        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
-            error: `${error}`
-        })
+      return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        error: `${error}`
+      })
     }
   }
 
@@ -201,7 +201,7 @@ export class IssuerController {
       })
     }
 
-    const { methodSpecificIdAlgo, network, verificationMethodType, assertionMethod=true, serviceEndpoint } = request.body
+    const { methodSpecificIdAlgo, network, verificationMethodType, assertionMethod = true, serviceEndpoint } = request.body
     let didDocument: DIDDocument
     try {
       if (request.body.didDocument) {
@@ -221,24 +221,24 @@ export class IssuerController {
         }
 
         if (serviceEndpoint) {
-            didDocument.service = [{
-                id: `${didDocument.id}#service-1`,
-                type: 'service-1',
-                serviceEndpoint: [serviceEndpoint]
-            }]
+          didDocument.service = [{
+            id: `${didDocument.id}#service-1`,
+            type: 'service-1',
+            serviceEndpoint: [serviceEndpoint]
+          }]
         }
       } else {
         return response.status(StatusCodes.BAD_REQUEST).json({
-            error: 'Provide a DID Document or the network type to create a DID'
+          error: 'Provide a DID Document or the network type to create a DID'
         })
       }
 
       const did = await new Identity(response.locals.customerId).agent.createDid(network || didDocument.id.split(':')[2], didDocument, response.locals.customerId)
       return response.status(StatusCodes.OK).json(did)
     } catch (error) {
-        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
-            error: `${error}`
-        })
+      return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        error: `${error}`
+      })
     }
   }
 
@@ -288,35 +288,35 @@ export class IssuerController {
         updatedDocument = request.body.didDocument
       } else if (did && (service || verificationMethod || authentication)) {
         const resolvedResult = await new Identity(response.locals.customerId).agent.resolveDid(did)
-        if(!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
+        if (!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
           return response.status(StatusCodes.BAD_REQUEST).send({
-              error: `${did} is either Deactivated or Not found`
+            error: `${did} is either Deactivated or Not found`
           })
         }
         const resolvedDocument = resolvedResult.didDocument
         if (service) {
-            resolvedDocument.service = Array.isArray(service) ? service : [service]
+          resolvedDocument.service = Array.isArray(service) ? service : [service]
         }
         if (verificationMethod) {
-            resolvedDocument.verificationMethod = Array.isArray(verificationMethod) ? verificationMethod : [verificationMethod]
+          resolvedDocument.verificationMethod = Array.isArray(verificationMethod) ? verificationMethod : [verificationMethod]
         }
         if (authentication) {
-            resolvedDocument.authentication = Array.isArray(authentication) ? authentication : [authentication]
+          resolvedDocument.authentication = Array.isArray(authentication) ? authentication : [authentication]
         }
 
         updatedDocument = resolvedDocument
       } else {
         return response.status(StatusCodes.BAD_REQUEST).json({
-            error: 'Provide a DID Document or atleast one field to update'
+          error: 'Provide a DID Document or atleast one field to update'
         })
       }
 
       const result = await new Identity(response.locals.customerId).agent.updateDid(updatedDocument, response.locals.customerId)
       return response.status(StatusCodes.OK).json(result)
     } catch (error) {
-        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
-            error: `${error}`
-        })
+      return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        error: `${error}`
+      })
     }
   }
 
@@ -361,9 +361,9 @@ export class IssuerController {
       const did = await new Identity(response.locals.customerId).agent.deactivateDid(request.params.did, response.locals.customerId)
       return response.status(StatusCodes.OK).json(did)
     } catch (error) {
-        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
-            error: `${error}`
-        })
+      return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        error: `${error}`
+      })
     }
   }
 
@@ -410,19 +410,19 @@ export class IssuerController {
 
     const { did } = request.params
     let { data, encoding, name, type, alsoKnownAs, version, network } = request.body
-    
+
     let resourcePayload: Partial<MsgCreateResourcePayload> = {}
     try {
       // check if did is registered on the ledger
       let resolvedDocument: any = await new Identity(response.locals.customerId).agent.resolveDid(did)
-      if(!resolvedDocument?.didDocument || resolvedDocument.didDocumentMetadata.deactivated) {
+      if (!resolvedDocument?.didDocument || resolvedDocument.didDocumentMetadata.deactivated) {
         return response.status(StatusCodes.BAD_REQUEST).send({
-            error: `${did} is a either Deactivated or Not found`
+          error: `${did} is a either Deactivated or Not found`
         })
       } else {
         resolvedDocument = resolvedDocument.didDocument
       }
-      
+
       resourcePayload = {
         collectionId: did.split(':').pop()!,
         id: v4(),
@@ -433,18 +433,18 @@ export class IssuerController {
         alsoKnownAs
       }
       network = network || (did.split(':'))[2]
-      const result = await new Identity(response.locals.customerId).agent.createResource( network, resourcePayload, response.locals.customerId)    
-      if ( result ) {
+      const result = await new Identity(response.locals.customerId).agent.createResource(network, resourcePayload, response.locals.customerId)
+      if (result) {
         return response.status(StatusCodes.CREATED).json({
-            resource: resourcePayload
+          resource: resourcePayload
         })
       } else {
-        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
-            error: 'Error creating resource'
+        return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+          error: 'Error creating resource'
         })
       }
     } catch (error) {
-      return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
+      return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
         error: `${error}`
       })
     }
@@ -477,7 +477,7 @@ export class IssuerController {
   public async getDids(request: Request, response: Response) {
     try {
       let did: any
-      if(request.params.did) {
+      if (request.params.did) {
         did = await new Identity(response.locals.customerId).agent.resolveDid(request.params.did)
       } else {
         did = await new Identity(response.locals.customerId).agent.listDids(response.locals.customerId)
@@ -485,9 +485,9 @@ export class IssuerController {
 
       return response.status(StatusCodes.OK).json(did)
     } catch (error) {
-        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
-            error: `${error}`
-        })
+      return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        error: `${error}`
+      })
     }
   }
 
@@ -523,14 +523,14 @@ export class IssuerController {
   public async getDid(request: Request, response: Response) {
     try {
       let did: any
-      if(request.params.did) {
+      if (request.params.did) {
         did = await new Identity(response.locals.customerId).agent.resolveDid(request.params.did)
         return response.status(StatusCodes.OK).json(did)
       }
     } catch (error) {
-        return response.status(StatusCodes. INTERNAL_SERVER_ERROR).json({
-            error: `${error}`
-        })
+      return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        error: `${error}`
+      })
     }
   }
 }

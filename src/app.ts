@@ -43,27 +43,29 @@ class App {
 
   private middleware() {
     const auth = new Authentication()
-    this.express.use(express.json({ limit: '50mb', verify: (req: Request, res, buf) => {
-      req.rawBody = buf
-    }}))
+    this.express.use(express.json({
+      limit: '50mb', verify: (req: Request, res, buf) => {
+        req.rawBody = buf
+      }
+    }))
     this.express.use(express.raw({ type: 'application/octet-stream' }))
-	  this.express.use(express.urlencoded({ extended: true }))
+    this.express.use(express.urlencoded({ extended: true }))
     this.express.use(Middleware.parseUrlEncodedJson)
     this.express.use(Helmet())
     this.express.use(cors({
-        origin: function(origin, callback){
+      origin: function (origin, callback) {
 
-        if(!origin) return callback(null, true)
-            if(process.env.CORS_ALLOWED_ORIGINS?.indexOf(origin) === -1){
-            return callback(new Error(CORS_ERROR_MSG), false)
-            }
-            return callback(null, true)
+        if (!origin) return callback(null, true)
+        if (process.env.CORS_ALLOWED_ORIGINS?.indexOf(origin) === -1) {
+          return callback(new Error(CORS_ERROR_MSG), false)
         }
+        return callback(null, true)
+      }
     }))
 
     this.express.use(cookieParser())
     if (process.env.ENABLE_AUTHENTICATION === 'true') {
-      this.express.use(session({secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 }}))
+      this.express.use(session({ secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 } }))
       // Authentication functions/methods
       this.express.use(async (req, res, next) => await auth.setup(next))
       this.express.use(handleAuthRoutes(configLogToExpress))
@@ -85,7 +87,7 @@ class App {
 
   private routes() {
     const app = this.express
-    
+
     // Top-level routes
     app.get('/', (req, res) => res.redirect('swagger'))
 
@@ -123,7 +125,7 @@ class App {
     // Account API
     app.post(`/account`, new AccountController().create)
     app.get(`/account`, new AccountController().get)
-    
+
     // LogTo webhooks
     app.post(`/account/set-default-role`, LogToWebHook.verifyHookSignature, new AccountController().setupDefaultRole)
 
@@ -133,15 +135,15 @@ class App {
     });
 
     // static files
-    app.get('/static/custom-button.js', 
-        express.static(
-          path.join(process.cwd(), '/dist'), 
-          {extensions: ['js'], index: false}))
+    app.get('/static/custom-button.js',
+      express.static(
+        path.join(process.cwd(), '/dist'),
+        { extensions: ['js'], index: false }))
 
     // 404 for all other requests
     app.all('*', (req, res) => res.status(StatusCodes.BAD_REQUEST).send('Bad request'))
   }
-  
+
 }
 
 export default new App().express

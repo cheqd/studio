@@ -84,7 +84,6 @@ export class LocalIdentity extends AbstractIdentity {
     return Veramo.instance.getKey(this.initAgent(), kid)
   }
 
-  // Should Local support updateDid method?
   async deactivateDid(did: string): Promise<boolean> {
     try {
       return await Veramo.instance.deactivateDid(this.initAgent(), did)

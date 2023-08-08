@@ -250,9 +250,10 @@ export class RevocationController {
     try {
       const { did, statusListName } = request.body
       const statusPurpose = request.query.statusPurpose as 'revocation' | 'suspension'
-      const statusList = await new Identity(response.locals.customerId).agent.searchStatusList2021(did, statusListName, statusPurpose)
+      const statusList = await new Identity(response.locals.customerId).agent.searchStatusList2021(
+        did, statusListName, statusPurpose,
+      )
       return response.status(StatusCodes.OK).json(statusList)
-
     } catch (error) {
       return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
         error: `Internal error: ${error}`
