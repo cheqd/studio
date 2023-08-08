@@ -494,14 +494,14 @@ export class IssuerController {
   /**
    * @openapi
    * 
-   * /did/search/{did}:
+   * /did/search/{didUrl}:
    *   get:
    *     tags: [ DID ]
    *     summary: Resolve a DID Document.
    *     description: This endpoint resolves the latest DID Document for a given DID identifier.
    *     parameters:
    *       - in: path
-   *         name: did
+   *         name: didUrl
    *         description: DID identifier to resolve.
    *         schema:
    *           type: string
@@ -522,10 +522,10 @@ export class IssuerController {
    */
   public async getDid(request: Request, response: Response) {
     try {
-      let did: any
-      if (request.params.did) {
-        did = await new Identity(response.locals.customerId).agent.resolveDid(request.params.did)
-        return response.status(StatusCodes.OK).json(did)
+      let res: any
+      if (request.params.didUrl) {
+        res = await new Identity(response.locals.customerId).agent.resolveDid(request.params.didUrl)
+        return response.status(StatusCodes.OK).json(res)
       }
     } catch (error) {
       return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
