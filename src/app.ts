@@ -128,8 +128,8 @@ class App {
     app.post(`/account/bootstrap`, LogToWebHook.verifyHookSignature, new AccountController().bootstrap)
 
     // LogTo user info
-    app.get('/auth/user-info', (req, res) => {
-      res.json(req.user);
+    app.get('/auth/user-info', async (req, res) => {
+      return res.json(req.user)
     });
 
     // static files
