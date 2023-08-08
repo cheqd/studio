@@ -9,7 +9,7 @@ import type {
   RevocationResult, StatusCheckResult, SuspensionResult, UnsuspensionResult,
 } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
 import type { BroadCastStatusListOptions, CheckStatusListOptions, CreateStatusListOptions, CredentialRequest, StatusOptions, UpdateStatusListOptions, VeramoAgent, VerificationOptions } from '../../types/types'
-import { Veramo } from "./agent"
+import { Veramo } from './agent.js'
 
 export interface IIdentity {
   initAgent(): TAgent<any>

@@ -7,7 +7,7 @@ import { Veramo } from './agent.js'
 import { CheqdDIDProvider } from "@cheqd/did-provider-cheqd";
 import { CheqdNetwork } from '@cheqd/sdk'
 import * as dotenv from 'dotenv'
-import { AbstractIdentity } from "./InterfaceIdentity.js";
+import { AbstractIdentity } from './IIdentity.js'
 
 dotenv.config()
 

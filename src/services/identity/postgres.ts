@@ -15,13 +15,13 @@ import {
   BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, 
   CreateStatusList2021Result, StatusCheckResult,
 } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
-import { AbstractIdentity } from './InterfaceIdentity.js'
 import { Connection } from '../../database/connection/connection.js'
 import { CustomerEntity } from '../../database/entities/customer.entity.js'
 import { CustomerService } from '../customer.js'
 import { Veramo } from './agent.js'
 
 import * as dotenv from 'dotenv'
+import { AbstractIdentity } from './IIdentity.js'
 dotenv.config()
 
 const {
