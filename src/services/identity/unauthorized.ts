@@ -1,19 +1,13 @@
-import { LocalIdentity } from "./local.js";
-import {
-    VerifiableCredential,
-    IVerifyResult,
-    VerifiablePresentation,
-  } from '@veramo/core'
-  import { MemoryPrivateKeyStore } from '@veramo/key-manager'
-  import { KeyManagementSystem } from '@veramo/kms-local'
-  import { StatusCheckResult } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
-  
-  import { CheckStatusListOptions, VerificationOptions, DefaultRPCUrl } from '../../types/types.js'
-  import { Connection } from '../../database/connection/connection.js'
-  import { Veramo } from './agent.js'
+import { MemoryPrivateKeyStore } from '@veramo/key-manager'
+import { KeyManagementSystem } from '@veramo/kms-local'
+
+import { DefaultRPCUrl } from '../../types/types.js'
+import { Connection } from '../../database/connection/connection.js'
+import { Veramo } from './agent.js'
 import { CheqdDIDProvider } from "@cheqd/did-provider-cheqd";
 import { CheqdNetwork } from '@cheqd/sdk'
 import * as dotenv from 'dotenv'
+import { AbstractIdentity } from "./InterfaceIdentity.js";
 
 dotenv.config()
 
@@ -22,61 +16,50 @@ const {
   TESTNET_RPC_URL
 } = process.env
 
-export class Unauthorized extends LocalIdentity {
-    initAgent() {
-        if(this.agent) {
-            return this.agent
-        }
-        const dbConnection = Connection.instance.dbConnection
-        this.privateStore = new MemoryPrivateKeyStore()
-        const mainnetProvider = new CheqdDIDProvider(
-            {
-              defaultKms: 'local',
-              cosmosPayerSeed: "",
-              networkType: CheqdNetwork.Mainnet,
-              rpcUrl: MAINNET_RPC_URL || DefaultRPCUrl.Mainnet,
-            }
-          )
-          const testnetProvider = new CheqdDIDProvider(
-            {
-              defaultKms: 'local',
-              cosmosPayerSeed: "",
-              networkType: CheqdNetwork.Testnet,
-              rpcUrl: TESTNET_RPC_URL || DefaultRPCUrl.Testnet,
-            }
-          )
+export class Unauthorized extends AbstractIdentity {
+  constructor() {
+    super();
+    this.agent = this.initAgent()
+  }
 
-        this.agent = Veramo.instance.createVeramoAgent({
-            dbConnection,
-            kms: {
-            local: new KeyManagementSystem(
-                this.privateStore
-            )
-            },
-            providers: {
-                'did:cheqd:mainnet': mainnetProvider,
-                'did:cheqd:testnet': testnetProvider
-              },
-            cheqdProviders: [mainnetProvider, testnetProvider],
-            enableCredential: true,
-            enableResolver: true
-        })
-        return this.agent
+  initAgent() {
+    if (this.agent) {
+      return this.agent
     }
+    const dbConnection = Connection.instance.dbConnection
+    this.privateStore = new MemoryPrivateKeyStore()
+    const mainnetProvider = new CheqdDIDProvider(
+      {
+        defaultKms: 'local',
+        cosmosPayerSeed: "",
+        networkType: CheqdNetwork.Mainnet,
+        rpcUrl: MAINNET_RPC_URL || DefaultRPCUrl.Mainnet,
+      }
+    )
+    const testnetProvider = new CheqdDIDProvider(
+      {
+        defaultKms: 'local',
+        cosmosPayerSeed: "",
+        networkType: CheqdNetwork.Testnet,
+        rpcUrl: TESTNET_RPC_URL || DefaultRPCUrl.Testnet,
+      }
+    )
 
-    async getDid(did: string) {
-        return Veramo.instance.getDid(this.initAgent(), did)
-    }
-
-    async verifyCredential(credential: VerifiableCredential | string,  verificationOptions: VerificationOptions): Promise<IVerifyResult> {
-        return await Veramo.instance.verifyCredential(this.initAgent(), credential, verificationOptions)
-    }
-
-    async verifyPresentation(presentation: VerifiablePresentation | string, verificationOptions: VerificationOptions): Promise<IVerifyResult> {
-        return await Veramo.instance.verifyPresentation(this.initAgent(), presentation, verificationOptions)
-    }
-
-    async checkStatusList2021(did: string, statusOptions: CheckStatusListOptions): Promise<StatusCheckResult> {
-        return await Veramo.instance.checkStatusList2021(this.initAgent(), did, statusOptions)
-    }
+    this.agent = Veramo.instance.createVeramoAgent({
+      dbConnection,
+      kms: {
+        local: new KeyManagementSystem(
+          this.privateStore
+        )
+      },
+      providers: {
+        'did:cheqd:mainnet': mainnetProvider,
+        'did:cheqd:testnet': testnetProvider
+      },
+      cheqdProviders: [mainnetProvider, testnetProvider],
+      enableCredential: true,
+      enableResolver: true
+    })
+    return this.agent
+  }
 }
