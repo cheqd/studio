@@ -9,7 +9,6 @@ import { StatusCodes } from 'http-status-codes'
 
 import { Identity } from '../services/identity/index.js'
 import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers.js'
-import { stringify } from 'qs'
 
 export class IssuerController {
 
