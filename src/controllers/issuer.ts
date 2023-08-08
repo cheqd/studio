@@ -476,13 +476,7 @@ export class IssuerController {
    */
   public async getDids(request: Request, response: Response) {
     try {
-      let did: any
-      if (request.params.did) {
-        did = await new Identity(response.locals.customerId).agent.resolveDid(request.params.did)
-      } else {
-        did = await new Identity(response.locals.customerId).agent.listDids(response.locals.customerId)
-      }
-
+      const did = await new Identity(response.locals.customerId).agent.listDids(response.locals.customerId)
       return response.status(StatusCodes.OK).json(did)
     } catch (error) {
       return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
