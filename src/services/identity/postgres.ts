@@ -22,6 +22,7 @@ import { Veramo } from './agent.js'
 
 import * as dotenv from 'dotenv'
 import { AbstractIdentity } from './IIdentity.js'
+import { DefaultIdentity } from './default.js'
 dotenv.config()
 
 const {
@@ -30,7 +31,7 @@ const {
   EXTERNAL_DB_ENCRYPTION_KEY,
 } = process.env
 
-export class PostgresIdentity extends AbstractIdentity {
+export class PostgresIdentity extends DefaultIdentity {
   constructor() {
     super();
     this.agent = this.initAgent()

@@ -17,7 +17,7 @@ import { Connection } from '../../database/connection/connection.js'
 import { Veramo } from './agent.js'
 
 import * as dotenv from 'dotenv'
-import { AbstractIdentity } from './IIdentity.js'
+import { DefaultIdentity } from './default.js'
 
 dotenv.config()
 
@@ -30,7 +30,7 @@ const {
   ISSUER_DID
 } = process.env
 
-export class LocalIdentity extends AbstractIdentity {
+export class LocalIdentity extends DefaultIdentity {
   constructor() {
     super();
     this.agent = this.initAgent()

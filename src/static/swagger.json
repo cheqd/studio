@@ -772,7 +772,7 @@
         }
       }
     },
-    "/did/search/{did}": {
+    "/did/search/{didUrl}": {
       "get": {
         "tags": [
           "DID"
@@ -782,7 +782,7 @@
         "parameters": [
           {
             "in": "path",
-            "name": "did",
+            "name": "didUrl",
             "description": "DID identifier to resolve.",
             "schema": {
               "type": "string"

@@ -8,6 +8,7 @@ import { CheqdDIDProvider } from "@cheqd/did-provider-cheqd";
 import { CheqdNetwork } from '@cheqd/sdk'
 import * as dotenv from 'dotenv'
 import { AbstractIdentity } from './IIdentity.js'
+import { DefaultIdentity } from './default.js'
 
 dotenv.config()
 
@@ -16,7 +17,7 @@ const {
   TESTNET_RPC_URL
 } = process.env
 
-export class Unauthorized extends AbstractIdentity {
+export class Unauthorized extends DefaultIdentity {
   constructor() {
     super();
     this.agent = this.initAgent()

@@ -12,7 +12,6 @@ import type {
 	BroadCastStatusListOptions, CheckStatusListOptions, CreateStatusListOptions, CredentialRequest,
 	StatusOptions, UpdateStatusListOptions, VeramoAgent, VerificationOptions,
 } from '../../types/types'
-import { Veramo } from './agent.js'
 
 export interface IIdentity {
 	initAgent(): TAgent<any>
@@ -44,7 +43,9 @@ export abstract class AbstractIdentity implements IIdentity {
 	agent?: VeramoAgent
 	privateStore?: AbstractPrivateKeyStore
 
-	abstract initAgent(): VeramoAgent;
+	initAgent(): VeramoAgent {
+		throw new Error(`Not supported`)
+	}
 
 	createKey(type: 'Ed25519' | 'Secp256k1', agentId?: string): Promise<ManagedKeyInfo> {
 		throw new Error(`Not supported`)
@@ -95,24 +96,23 @@ export abstract class AbstractIdentity implements IIdentity {
 		throw new Error(`Not supported`)
 	}
 
-	async resolveDid(didUrl: string): Promise<DIDResolutionResult> {
-		const res = await fetch(`${process.env.RESOLVER_URL}/${didUrl}`)
-		return res.json()
+	resolveDid(didUrl: string): Promise<DIDResolutionResult> {
+		throw new Error(`Not supported`)
 	}
 
 	verifyCredential(credential: VerifiableCredential | string, verificationOptions: VerificationOptions, agentId?: string): Promise<IVerifyResult> {
-		return Veramo.instance.verifyCredential(this.initAgent(), credential, verificationOptions)
+		throw new Error(`Not supported`)
 	}
 
 	verifyPresentation(presentation: VerifiablePresentation | string, verificationOptions: VerificationOptions, agentId?: string): Promise<IVerifyResult> {
-		return Veramo.instance.verifyPresentation(this.initAgent(), presentation, verificationOptions)
+		throw new Error(`Not supported`)
 	}
 
 	checkStatusList2021(did: string, statusOptions: CheckStatusListOptions, agentId?: string): Promise<StatusCheckResult> {
-		return Veramo.instance.checkStatusList2021(this.initAgent(), did, statusOptions)
+		throw new Error(`Not supported`)
 	}
 
-	async searchStatusList2021(did: string, statusListName: string, statusPurpose: 'revocation' | 'suspension', agentId?: string): Promise<any> {
-		return Veramo.instance.searchStatusList2021(this.initAgent(), did, statusListName, statusPurpose)
+	searchStatusList2021(did: string, statusListName: string, statusPurpose: 'revocation' | 'suspension', agentId?: string): Promise<any> {
+		throw new Error(`Not supported`)
 	}
 }
