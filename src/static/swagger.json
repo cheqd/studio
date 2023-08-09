@@ -739,6 +739,97 @@
         }
       }
     },
+    "/resource/list/{did}": {
+      "get": {
+        "tags": [
+          "Resource"
+        ],
+        "summary": "Get a DID-Linked Resource List.",
+        "description": "This endpoint returns the DID-Linked Resource List for a given DID identifier.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "did",
+            "description": "DID identifier to returns Resource List.",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/resource/search/{did}/{resourceId}": {
+      "get": {
+        "tags": [
+          "Resource"
+        ],
+        "summary": "Get a DID-Linked Resource.",
+        "description": "This endpoint returns the DID-Linked Resource for a given DID identifier and resourceId.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "did",
+            "description": "DID identifier",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "resourceId",
+            "description": "Resource identifier",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
     "/did/list": {
       "get": {
         "tags": [
@@ -2081,6 +2172,57 @@
           "encoding": "base64url",
           "name": "ResourceName",
           "type": "TextDocument"
+        }
+      },
+      "ResourceList": {
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "string",
+            "example": "https://w3id.org/did-resolution/v1"
+          },
+          "contentMetadata": {
+            "type": "object"
+          },
+          "contentStream": {
+            "type": "object"
+          },
+          "dereferencingMetadata": {
+            "$ref": "#/components/schemas/DereferencingMetadata"
+          }
+        }
+      },
+      "DereferencingMetadata": {
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "type": "string",
+            "example": "application/did+ld+json"
+          },
+          "did": {
+            "$ref": "#/components/schemas/DidProperties"
+          },
+          "error": {
+            "type": "string"
+          },
+          "retrieved": {
+            "type": "string",
+            "example": "2021-09-01T12:00:00Z"
+          }
+        }
+      },
+      "DidProperties": {
+        "type": "object",
+        "properties": {
+          "did": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "methodSpecificId": {
+            "type": "string"
+          }
         }
       },
       "Customer": {
