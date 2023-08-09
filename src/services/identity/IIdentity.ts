@@ -26,6 +26,8 @@ export interface IIdentity {
 	getDid(did: string, agentId?: string): Promise<any>
 	importDid(did: string, privateKeyHex: string, publicKeyHex: string, agentId?: string): Promise<IIdentifier>
 	createResource(network: string, payload: ResourcePayload, agentId?: string): Promise<any>
+	resourceList(did: string): Promise<any>
+	getResource(did: string, resourceId: string): Promise<any>
 	createCredential(credential: CredentialPayload, format: CredentialRequest['format'], statusOptions: StatusOptions | null, agentId?: string): Promise<VerifiableCredential>
 	verifyCredential(credential: VerifiableCredential | string, verificationOptions: VerificationOptions, agentId?: string): Promise<IVerifyResult>
 	verifyPresentation(presentation: VerifiablePresentation | string, verificationOptions: VerificationOptions, agentId?: string): Promise<IVerifyResult>
@@ -63,6 +65,12 @@ export abstract class AbstractIdentity implements IIdentity {
 		throw new Error(`Not supported`)
 	}
 	createResource(network: string, payload: ResourcePayload, agentId?: string): Promise<any> {
+		throw new Error(`Not supported`)
+	}
+	resourceList(did: string): Promise<any> {
+		throw new Error(`Not supported`)
+	}
+	getResource(did: string, resourceId: string): Promise<any> {
 		throw new Error(`Not supported`)
 	}
 	createCredential(credential: CredentialPayload, format: CredentialRequest['format'], statusOptions: StatusOptions | null, agentId?: string): Promise<VerifiableCredential> {

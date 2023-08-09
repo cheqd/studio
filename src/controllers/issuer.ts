@@ -453,6 +453,98 @@ export class IssuerController {
   /**
    * @openapi
    * 
+   * /resource/list/{did}:
+   *   get:
+   *     tags: [ Resource ]
+   *     summary: Get a DID-Linked Resource List.
+   *     description: This endpoint returns the DID-Linked Resource List for a given DID identifier.
+   *     parameters:
+   *       - in: path
+   *         name: did
+   *         description: DID identifier to returns Resource List.
+   *         schema:
+   *           type: string
+   *         required: true
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ResourceList'
+   *       400:
+   *         $ref: '#/components/schemas/InvalidRequest'
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         $ref: '#/components/schemas/InternalError'
+   */
+  public async getResourceList(request: Request, response: Response) {
+    try {
+      if (request.params.did) {
+        const resourceList = await new Identity(response.locals.customerId).agent.resourceList(request.params.did)
+        return response.status(StatusCodes.OK).json(resourceList)
+      }
+    } catch (error) {
+      return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        error: `${error}`
+      })
+    }
+  }
+
+  /**
+   * @openapi
+   * 
+   * /resource/search/{did}/{resourceId}:
+   *   get:
+   *     tags: [ Resource ]
+   *     summary: Get a DID-Linked Resource.
+   *     description: This endpoint returns the DID-Linked Resource for a given DID identifier and resourceId.
+   *     parameters:
+   *       - in: path
+   *         name: did
+   *         description: DID identifier
+   *         schema:
+   *           type: string
+   *         required: true
+   *       - in: path
+   *         name: resourceId
+   *         description: Resource identifier
+   *         schema:
+   *           type: string
+   *         required: true
+   *     responses:
+   *       200:
+   *         description: The request was successful.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *       400:
+   *         $ref: '#/components/schemas/InvalidRequest'
+   *       401:
+   *         $ref: '#/components/schemas/UnauthorizedError'
+   *       500:
+   *         $ref: '#/components/schemas/InternalError'
+   */
+  public async getResource(request: Request, response: Response) {
+    try {
+      if (request.params.did && request.params.resourceId) {
+        const resource = await new Identity(response.locals.customerId).agent.getResource(
+          request.params.did, request.params.resourceId,
+        )
+        return response.status(StatusCodes.OK).json(resource)
+      }
+    } catch (error) {
+      return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        error: `${error}`
+      })
+    }
+  }
+
+  /**
+   * @openapi
+   * 
    * /did/list:
    *   get:
    *     tags: [ DID ]

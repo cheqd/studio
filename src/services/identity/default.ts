@@ -7,8 +7,14 @@ import { Veramo } from "./agent.js";
 
 export class DefaultIdentity extends AbstractIdentity {
     async resolveDid(didUrl: string): Promise<DIDResolutionResult> {
-		const res = await fetch(`${process.env.RESOLVER_URL}/${didUrl}`)
-		return res.json()
+		return (await fetch(`${process.env.RESOLVER_URL}/${didUrl}`)).json()
+	}
+
+	async resourceList(did: string): Promise<any> {
+		return (await fetch(`${process.env.RESOLVER_URL}/${did}/metadata`)).json()
+	}
+	async getResource(did: string, resourceId: string): Promise<any> {
+		return (await fetch(`${process.env.RESOLVER_URL}/${did}/resources/${resourceId}`)).json()
 	}
 
 	verifyCredential(credential: VerifiableCredential | string, verificationOptions: VerificationOptions, agentId?: string): Promise<IVerifyResult> {
