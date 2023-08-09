@@ -395,7 +395,8 @@ export class CredentialController {
                 verifyStatus,
                 policies,
                 domain: verifierDid
-            }
+            },
+            response.locals.customerId
         )
         if (result.error) {
             return response.status(StatusCodes.BAD_REQUEST).json({
