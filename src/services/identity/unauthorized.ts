@@ -68,11 +68,11 @@ export class Unauthorized extends LocalIdentity {
         return Veramo.instance.getDid(this.initAgent(), did)
     }
 
-    async verifyCredential(credential: VerifiableCredential | string,  verificationOptions: VerificationOptions): Promise<IVerifyResult> {
+    async verifyCredential(credential: VerifiableCredential | string,  verificationOptions: VerificationOptions, agentId?: string): Promise<IVerifyResult> {
         return await Veramo.instance.verifyCredential(this.initAgent(), credential, verificationOptions)
     }
 
-    async verifyPresentation(presentation: VerifiablePresentation | string, verificationOptions: VerificationOptions): Promise<IVerifyResult> {
+    async verifyPresentation(presentation: VerifiablePresentation | string, verificationOptions: VerificationOptions, agentId?: string): Promise<IVerifyResult> {
         return await Veramo.instance.verifyPresentation(this.initAgent(), presentation, verificationOptions)
     }
 
