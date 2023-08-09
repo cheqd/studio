@@ -22,12 +22,12 @@ export class Identity {
     }
 
     public setupIdentityStrategy(agentId?: string) {
-        if (process.env.ENABLE_EXTERNAL_DB === 'true') {
-            if (agentId) {
+        if (agentId) {
+            if (process.env.ENABLE_EXTERNAL_DB === 'true') {
                 this.setStrategy(new PostgresIdentity())
+            } else {
+                this.setStrategy(new LocalIdentity())
             }
-        } else {
-            this.setStrategy(new LocalIdentity())
         }
     }
 }
