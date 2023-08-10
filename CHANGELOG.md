@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.8.0-develop.1](https://github.com/cheqd/credential-service/compare/2.7.0...2.8.0-develop.1) (2023-08-10)
+
+
+### Features
+
+* Account bootstrapping [DEV-3051] ([#306](https://github.com/cheqd/credential-service/issues/306)) ([d157535](https://github.com/cheqd/credential-service/commit/d15753545d0b90d499e083ea6219bf28f97913ff))
+* Remove `DEFAULT_CUSTOMER_ID` [DEV-2851] ([#318](https://github.com/cheqd/credential-service/issues/318)) ([c072af6](https://github.com/cheqd/credential-service/commit/c072af6a96ac5485e54b976753fa48f852fd8354))
+
+
+### Bug Fixes
+
+* Add data reset before each check ([#326](https://github.com/cheqd/credential-service/issues/326)) ([659a120](https://github.com/cheqd/credential-service/commit/659a120e5dd6221d32b0132802c381ca819860a0))
+* Add M2M token refreshing [DEV-3117] ([#327](https://github.com/cheqd/credential-service/issues/327)) ([be04d92](https://github.com/cheqd/credential-service/commit/be04d928669fe1637c9bea795566bbcb80c61360))
+* Cleanups ([#314](https://github.com/cheqd/credential-service/issues/314)) ([3b8e4ad](https://github.com/cheqd/credential-service/commit/3b8e4adaa3154ce4df793d14777be978b05a91e9))
+* Cleanups [DEV-3050] ([#307](https://github.com/cheqd/credential-service/issues/307)) ([2e6b969](https://github.com/cheqd/credential-service/commit/2e6b9699203b8e013bf5e36a03a396d4a0bc649e))
+* Fix auth button ([#324](https://github.com/cheqd/credential-service/issues/324)) ([3f88668](https://github.com/cheqd/credential-service/commit/3f8866847b0a90534a80a0a131604cb148c8b701))
+* Implement dynamic login/logout button based on user's logged in state [DEV-3092] ([#316](https://github.com/cheqd/credential-service/issues/316)) ([4a2e40d](https://github.com/cheqd/credential-service/commit/4a2e40d685d3ed7b3a69298f8fd4dbc5b6d82f2c))
+* Move to using scopes correctly from LogTo [DEV-3090] ([#317](https://github.com/cheqd/credential-service/issues/317)) ([3f5e16b](https://github.com/cheqd/credential-service/commit/3f5e16bab1b2b8b2c937cb353692a2734a98dba3))
+
 ## [2.7.0](https://github.com/cheqd/credential-service/compare/2.6.3...2.7.0) (2023-08-10)
 
 ## [2.7.0-develop.6](https://github.com/cheqd/credential-service/compare/2.7.0-develop.5...2.7.0-develop.6) (2023-08-10)
