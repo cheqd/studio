@@ -484,6 +484,10 @@ export class IssuerController {
       if (request.params.did) {
         const resourceList = await new Identity(response.locals.customerId).agent.resourceList(request.params.did)
         return response.status(StatusCodes.OK).json(resourceList)
+      } else {
+        return response.status(StatusCodes.BAD_REQUEST).json({
+          error: "The didUrl parameter is empty."
+        })
       }
     } catch (error) {
       return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -529,17 +533,21 @@ export class IssuerController {
    */
   public async getResource(request: Request, response: Response) {
     try {
-      if (request.params.did && request.params.resourceId) {
-        const resource = await new Identity(response.locals.customerId).agent.getResource(
-          request.params.did, request.params.resourceId,
-        )
-        return response.status(StatusCodes.OK).json(resource)
-      }
-    } catch (error) {
-      return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        error: `${error}`
+    if (request.params.did && request.params.resourceId) {
+      const [contentType, body] = await new Identity(response.locals.customerId).agent.getResource(
+        request.params.did, request.params.resourceId,
+      )
+      return response.setHeader("Content-Type", contentType).status(200).send(body);
+    } else {
+      return response.status(StatusCodes.BAD_REQUEST).json({
+        error: "The didUrl or resourceId parameter is empty."
       })
     }
+  } catch(error) {
+    return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      error: `${error}`
+    })
+  }
   }
 
   /**
