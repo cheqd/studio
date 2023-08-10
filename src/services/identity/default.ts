@@ -1,12 +1,12 @@
 import { AbstractIdentity } from "./IIdentity.js";
-import { DIDResolutionResult, IVerifyResult, VerifiableCredential, VerifiablePresentation } from "@veramo/core";
+import { IVerifyResult, VerifiableCredential, VerifiablePresentation } from "@veramo/core";
 import { CheckStatusListOptions, VerificationOptions } from "../../types/types";
 import { StatusCheckResult } from "@cheqd/did-provider-cheqd/build/types/agent/ICheqd";
 import { Veramo } from "./agent.js";
 
 export class DefaultIdentity extends AbstractIdentity {
-    async resolveDid(didUrl: string): Promise<DIDResolutionResult> {
-		return (await fetch(`${process.env.RESOLVER_URL}/${didUrl}`)).json()
+    async resolveDid(didUrl: string): Promise<[string, string]> {
+		return fetchResponseBody(`${process.env.RESOLVER_URL}/${didUrl}`)
 	}
 
 	async resourceList(did: string): Promise<any> {

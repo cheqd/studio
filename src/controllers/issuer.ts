@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express'
 import { check, param, validationResult } from 'express-validator'
 import { fromString } from 'uint8arrays'
-import { DIDDocument, Service, VerificationMethod } from 'did-resolver'
+import { DIDDocument, DIDResolutionResult, Service, VerificationMethod } from 'did-resolver'
 import { v4 } from 'uuid'
 import { MethodSpecificIdAlgo, VerificationMethods, CheqdNetwork } from '@cheqd/sdk'
 import { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js'
@@ -287,7 +287,8 @@ export class IssuerController {
       if (request.body.didDocument) {
         updatedDocument = request.body.didDocument
       } else if (did && (service || verificationMethod || authentication)) {
-        const resolvedResult = await new Identity(response.locals.customerId).agent.resolveDid(did)
+        const body = await (await fetch(`${process.env.RESOLVER_URL}/${did}`)).json()
+        const resolvedResult: DIDResolutionResult = JSON.parse(body)
         if (!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
           return response.status(StatusCodes.BAD_REQUEST).send({
             error: `${did} is either Deactivated or Not found`
@@ -616,10 +617,13 @@ export class IssuerController {
    */
   public async getDid(request: Request, response: Response) {
     try {
-      let res: any
       if (request.params.didUrl) {
-        res = await new Identity(response.locals.customerId).agent.resolveDid(request.params.didUrl)
-        return response.status(StatusCodes.OK).json(res)
+        const [contentType, body] = await new Identity(response.locals.customerId).agent.resolveDid(request.params.didUrl)
+        return response.setHeader("Content-Type", contentType).status(200).send(body);
+      } else {
+        return response.status(StatusCodes.BAD_REQUEST).json({
+          error: "The didUrl parameter is empty."
+        })
       }
     } catch (error) {
       return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

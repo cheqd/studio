@@ -22,7 +22,7 @@ export interface IIdentity {
 	updateDid(didDocument: DIDDocument, agentId?: string): Promise<IIdentifier>
 	deactivateDid(did: string, agentId?: string): Promise<boolean>
 	listDids(agentId?: string): Promise<string[]>
-	resolveDid(didUrl: string): Promise<DIDResolutionResult>
+	resolveDid(didUrl: string): Promise<[string, string]>
 	getDid(did: string, agentId?: string): Promise<any>
 	importDid(did: string, privateKeyHex: string, publicKeyHex: string, agentId?: string): Promise<IIdentifier>
 	createResource(network: string, payload: ResourcePayload, agentId?: string): Promise<any>
@@ -104,7 +104,7 @@ export abstract class AbstractIdentity implements IIdentity {
 		throw new Error(`Not supported`)
 	}
 
-	resolveDid(didUrl: string): Promise<DIDResolutionResult> {
+	resolveDid(didUrl: string): Promise<[string, string]> {
 		throw new Error(`Not supported`)
 	}
 
