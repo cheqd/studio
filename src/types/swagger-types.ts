@@ -1,6 +1,9 @@
 /**
  * @openapi
  *
+ * host: credential-service.cheqd.net
+ * schemes:
+ *  - https
  * components:
  *   schemas:
  *     CredentialRequest:

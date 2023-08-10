@@ -1,7 +1,8 @@
 # Changelog
 
-## [2.7.0-develop.6](https://github.com/cheqd/credential-service/compare/2.7.0-develop.5...2.7.0-develop.6) (2023-08-10)
+## [2.7.0](https://github.com/cheqd/credential-service/compare/2.6.3...2.7.0) (2023-08-10)
 
+## [2.7.0-develop.6](https://github.com/cheqd/credential-service/compare/2.7.0-develop.5...2.7.0-develop.6) (2023-08-10)
 
 ### Features
 
@@ -56,6 +57,7 @@
     ([2e6b969](https://github.com/cheqd/credential-service/commit/2e6b9699203b8e013bf5e36a03a396d4a0bc649e))
 
 ## [2.6.3-develop.2](https://github.com/cheqd/credential-service/compare/2.6.3-develop.1...2.6.3-develop.2) (2023-08-02)
+* Add host and schemes sections into swagger.json ([#328](https://github.com/cheqd/credential-service/issues/328)) ([9022ec1](https://github.com/cheqd/credential-service/commit/9022ec153fce2162487e660eb8159002f4a7244c))
 
 ## [2.6.3](https://github.com/cheqd/credential-service/compare/2.6.2...2.6.3) (2023-08-01)
 
