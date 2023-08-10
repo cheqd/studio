@@ -780,7 +780,7 @@
         }
       }
     },
-    "/resource/search/{did}/{resourceId}": {
+    "/resource/dereferencing/{did}/{resourceId}": {
       "get": {
         "tags": [
           "Resource"
