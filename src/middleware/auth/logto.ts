@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv'
-import { ILogToErrorResponse } from '../../types/authentication'
+import { ICommonErrorResponse } from '../../types/authentication'
 import { StatusCodes } from 'http-status-codes'
 import jwt from 'jsonwebtoken'
 dotenv.config()
@@ -19,8 +19,8 @@ export class LogToHelper {
     this.allResourceWithNames = []
   }
 
-  public async setup(): Promise<ILogToErrorResponse>{
-    let _r = {} as ILogToErrorResponse
+  public async setup(): Promise<ICommonErrorResponse>{
+    let _r = {} as ICommonErrorResponse
     _r = await this.setM2MToken()
     if (_r.status !== StatusCodes.OK) {
         return _r
@@ -66,7 +66,7 @@ export class LogToHelper {
     return this.allResourceWithNames
   }
 
-  public async setDefaultRoleForUser(userId: string): Promise<ILogToErrorResponse> {
+  public async setDefaultRoleForUser(userId: string): Promise<ICommonErrorResponse> {
     const roles = await this.getRolesForUser(userId)
     if (roles.status !== StatusCodes.OK) {
         return this.returnError(StatusCodes.BAD_GATEWAY, roles.error)
@@ -82,7 +82,7 @@ export class LogToHelper {
     return await this.assignDefaultRoleForUser(userId, process.env.LOGTO_DEFAULT_ROLE_ID)
   }
 
-  private returnOk(data: any): ILogToErrorResponse {
+  private returnOk(data: any): ICommonErrorResponse {
     return {
         status: StatusCodes.OK,
         error: '',
@@ -90,7 +90,7 @@ export class LogToHelper {
     }
   }
 
-  private returnError(status: number, error: string, data: any = {}): ILogToErrorResponse {
+  private returnError(status: number, error: string, data: any = {}): ICommonErrorResponse {
         return {
             status: status,
             error: error,
@@ -98,7 +98,7 @@ export class LogToHelper {
         }
   }
 
-  public async getUserScopes(userId: string): Promise<ILogToErrorResponse> {
+  public async getUserScopes(userId: string): Promise<ICommonErrorResponse> {
     const scopes = [] as string[]
     const roles = await this.getRolesForUser(userId)
     if (roles.status !== StatusCodes.OK) {
@@ -114,7 +114,7 @@ export class LogToHelper {
     return this.returnOk(scopes)
 }
 
-  private async assignDefaultRoleForUser(userId: string, roleId: string): Promise<ILogToErrorResponse> {
+  private async assignDefaultRoleForUser(userId: string, roleId: string): Promise<ICommonErrorResponse> {
     const userInfo = await this.getUserInfo(userId)
     const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
 
@@ -141,7 +141,7 @@ export class LogToHelper {
     }
   }
 
-  private async getRolesForUser(userId: string): Promise<ILogToErrorResponse> {
+  public async getRolesForUser(userId: string): Promise<ICommonErrorResponse> {
     const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
     try {
         // Note: By default, the API returns first 20 roles.
@@ -152,7 +152,35 @@ export class LogToHelper {
     }
   }
 
-  private async postToLogto(uri: URL, body: any, headers: any = {}): Promise<ILogToErrorResponse> {
+  public async updateCustomData(userId: string, customData: any): Promise<ICommonErrorResponse> {
+    const uri = new URL(`/api/users/${userId}/custom-data`, process.env.LOGTO_ENDPOINT);
+    try {
+        const body = {
+            customData: customData,
+        };
+        return await this.patchToLogto(uri, body, {'Content-Type': 'application/json'})
+    } catch (err) {
+        return this.returnError(500, `updateCustomData ${err}`)
+    }
+  }
+
+  private async patchToLogto(uri: URL, body: any, headers: any = {}): Promise<ICommonErrorResponse> {
+    const response = await fetch(uri, {
+        headers: {
+            ...headers,
+            Authorization: 'Bearer ' + this.m2mToken,
+        },
+        body: JSON.stringify(body),
+        method: "PATCH"
+    });
+
+    if (!response.ok) {
+        return this.returnError(response.status, await response.json())
+    }
+    return this.returnOk({})
+  }
+
+  private async postToLogto(uri: URL, body: any, headers: any = {}): Promise<ICommonErrorResponse> {
     const response = await fetch(uri, {
         headers: {
             ...headers,
@@ -168,7 +196,7 @@ export class LogToHelper {
     return this.returnOk({})
   }
 
-  private async getToLogto(uri: URL, headers: any = {}): Promise<ILogToErrorResponse> {
+  private async getToLogto(uri: URL, headers: any = {}): Promise<ICommonErrorResponse> {
     const response = await fetch(uri, {
         headers: {
             ...headers,
@@ -184,7 +212,7 @@ export class LogToHelper {
     return this.returnOk(metadata)
   }
 
-  private async getUserInfo(userId: string): Promise<ILogToErrorResponse> {
+  private async getUserInfo(userId: string): Promise<ICommonErrorResponse> {
     const uri = new URL(`/api/users/${userId}`, process.env.LOGTO_ENDPOINT);
     try {
         return await this.getToLogto(uri, 'GET')
@@ -193,7 +221,16 @@ export class LogToHelper {
     }
   }
 
-  private async getRoleInfo(roleId: string): Promise<ILogToErrorResponse> {
+  public async getCustomData(userId: string): Promise<ICommonErrorResponse> {
+    const uri = new URL(`/api/users/${userId}/custom-data`, process.env.LOGTO_ENDPOINT);
+    try {
+        return await this.getToLogto(uri, 'GET')
+    } catch (err) {
+        return this.returnError(StatusCodes.BAD_GATEWAY, `getCustomData ${err}`)
+    }
+  }
+
+  private async getRoleInfo(roleId: string): Promise<ICommonErrorResponse> {
     const uri = new URL(`/api/roles/${roleId}`, process.env.LOGTO_ENDPOINT);
     try {
         return await this.getToLogto(uri, 'GET')
@@ -202,7 +239,7 @@ export class LogToHelper {
     }
   }
 
-  private async setDefaultScopes(): Promise<ILogToErrorResponse>{
+  private async setDefaultScopes(): Promise<ICommonErrorResponse>{
     const _r = await this.getAllResources()
     if ( _r.status !== StatusCodes.OK) {
         return this.returnError(StatusCodes.BAD_GATEWAY, `Looks like ${process.env.LOGTO_DEFAULT_RESOURCE_URL} is not setup on LogTo side`)
@@ -222,7 +259,7 @@ export class LogToHelper {
     return this.returnError(StatusCodes.BAD_GATEWAY, `Looks like resource with id ${process.env.LOGTO_DEFAULT_RESOURCE_URL} is not placed on LogTo`)
   }
 
-  private async setM2MToken() : Promise<ILogToErrorResponse> {
+  private async setM2MToken() : Promise<ICommonErrorResponse> {
     const searchParams = new URLSearchParams({
         grant_type: 'client_credentials',
         resource: process.env.LOGTO_MANAGEMENT_API as string,
@@ -253,7 +290,7 @@ export class LogToHelper {
     }
   }
 
-  private async setAllScopes(): Promise<ILogToErrorResponse> {
+  private async setAllScopes(): Promise<ICommonErrorResponse> {
 
     const allResources = await this.getAllResources()
     if (allResources.status !== StatusCodes.OK) {
@@ -271,7 +308,7 @@ export class LogToHelper {
     return this.returnOk({})
   }
 
-  private async setAllResourcesWithNames(): Promise<ILogToErrorResponse> {
+  private async setAllResourcesWithNames(): Promise<ICommonErrorResponse> {
     const allResources = await this.getAllResources()
     if (allResources.status !== StatusCodes.OK) {
         return this.returnError(StatusCodes.BAD_GATEWAY, `setAllResourcesWithNames: Error while getting all resources`)
@@ -282,7 +319,7 @@ export class LogToHelper {
     return this.returnOk({})
   }
 
-  private async askRoleForScopes(roleId: string): Promise<ILogToErrorResponse> {
+  private async askRoleForScopes(roleId: string): Promise<ICommonErrorResponse> {
     const uri = new URL(`/api/roles/${roleId}/scopes`, process.env.LOGTO_ENDPOINT);
     const scopes = []
 
@@ -300,7 +337,7 @@ export class LogToHelper {
     }
   }
 
-  private async askResourceForScopes(resourceId: string): Promise<ILogToErrorResponse> {
+  private async askResourceForScopes(resourceId: string): Promise<ICommonErrorResponse> {
     const uri = new URL(`/api/resources/${resourceId}/scopes`, process.env.LOGTO_ENDPOINT);
     const scopes = []
 
@@ -318,7 +355,7 @@ export class LogToHelper {
     }
   }
 
-  private async getAllResources(): Promise<ILogToErrorResponse> {
+  private async getAllResources(): Promise<ICommonErrorResponse> {
     const uri = new URL(`/api/resources`, process.env.LOGTO_ENDPOINT);
 
     try {

@@ -2,7 +2,7 @@ import { ArrayContains, Repository } from 'typeorm'
 
 import { Connection } from '../database/connection/connection.js'
 import { CustomerEntity } from '../database/entities/customer.entity.js'
-import { getCosmosAccount } from '../helpers/helpers.js'
+import { getCosmosAccount } from '@cheqd/sdk'
 import { Identity } from './identity/index.js'
 
 import * as dotenv from 'dotenv'
@@ -22,8 +22,14 @@ export class CustomerService {
             throw new Error('Customer exists')
         }
         const kid = (await new Identity(customerId).agent.createKey('Secp256k1', customerId)).kid
+        const address = getCosmosAccount(kid)
         const customer = new CustomerEntity(customerId, kid, getCosmosAccount(kid))
-        return (await this.customerRepository.insert(customer)).identifiers[0]
+        const customerEntity = (await this.customerRepository.insert(customer)).identifiers[0]
+        return {
+            customerId: customerEntity.customerId,  
+            address: address
+        }
+                
     }
 
     public async update(customerId: string, { kids=[], dids=[], claimIds=[], presentationIds=[]} : { kids?: string[], dids?: string[], claimIds?: string[], presentationIds?: string[] }) {

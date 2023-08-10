@@ -22,8 +22,8 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler
     private static pathSkip = [
         '/swagger',  
         '/static', 
-        '/logto',
-        '/account/set-default-role',
+        '/logto', 
+        '/account/bootstrap',
         '/auth/user-info']
 
     constructor () {
