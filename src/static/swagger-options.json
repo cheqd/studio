@@ -1,34 +1,34 @@
 {
-   "openapi": "3.0.0",
-   "info": {
-      "title": "Credential Service API for cheqd network",
-      "version": "2.0.0",
-      "description": "API service to create and manage DIDs, Verifiable Credentials, and DID-Linked Resources",
-      "contact": {
-         "name": "Cheqd Foundation Limited",
-         "url": "https://github.com/cheqd/credential-service",
-         "email": "support-github@cheqd.io"
-      },
-      "license": {
-         "name": "Apache 2.0",
-         "url": "https://github.com/cheqd/credential-service/blob/main/LICENSE"
-      }
-   },
-   "tags": [
-      {
-         "name": "Credential",
-         "externalDocs": {
-            "url": "https://github.com/cheqd/credential-service#readme"
-         }
-      }
-   ],
-   "externalDocs": {
-      "description": "Credential Service API Documentation",
-      "url": "https://docs.cheqd.io/identity"
-   },
-   "servers": [
-      {
-         "url": "/"
-      }
-   ]
+	"openapi": "3.0.0",
+	"info": {
+		"title": "Credential Service API for cheqd network",
+		"version": "2.0.0",
+		"description": "API service to create and manage DIDs, Verifiable Credentials, and DID-Linked Resources",
+		"contact": {
+			"name": "Cheqd Foundation Limited",
+			"url": "https://github.com/cheqd/credential-service",
+			"email": "support-github@cheqd.io"
+		},
+		"license": {
+			"name": "Apache 2.0",
+			"url": "https://github.com/cheqd/credential-service/blob/main/LICENSE"
+		}
+	},
+	"tags": [
+		{
+			"name": "Credential",
+			"externalDocs": {
+				"url": "https://github.com/cheqd/credential-service#readme"
+			}
+		}
+	],
+	"externalDocs": {
+		"description": "Credential Service API Documentation",
+		"url": "https://docs.cheqd.io/identity"
+	},
+	"servers": [
+		{
+			"url": "/"
+		}
+	]
 }

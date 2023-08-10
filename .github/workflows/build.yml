@@ -1,75 +1,73 @@
-name: "Build"
+name: 'Build'
 on:
-  workflow_call:
+    workflow_call:
 defaults:
-  run:
-    shell: bash
-
+    run:
+        shell: bash
 
 jobs:
+    build-node:
+        name: 'Build Node.js'
+        runs-on: ubuntu-latest
 
-  build-node:
-    name: "Build Node.js"
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v3
+        steps:
+            - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'npm'
-    
-      - name: "Clean install dependencies"
-        run: npm ci
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: 18
+                  cache: 'npm'
 
-      - name: "Run npm build"
-        run: npm run build
+            - name: 'Clean install dependencies'
+              run: npm ci
 
-  build-docker:
-    name: "Build Docker image"
-    runs-on: ubuntu-latest
-    env:
-      IMAGE_NAME: ${{ github.repository }}
+            - name: 'Run npm build'
+              run: npm run build
 
-    steps:
-      - uses: actions/checkout@v3
+    build-docker:
+        name: 'Build Docker image'
+        runs-on: ubuntu-latest
+        env:
+            IMAGE_NAME: ${{ github.repository }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        id: buildx
-        with:
-          install: true
-          version: latest
-    
-      - name: Configure Docker image metadata
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ${{ env.IMAGE_NAME }}
-            ghcr.io/${{ env.IMAGE_NAME }}
-            registry.digitalocean.com/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=raw,value=staging-latest
-            type=sha,format=long
+        steps:
+            - uses: actions/checkout@v3
 
-      - name: Build image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: docker/Dockerfile
-          platforms: linux/amd64
-          load: true
-          target: runner
-          tags: ${{ steps.meta.outputs.tags }}
-          outputs: type=docker,dest=credential-service-staging.tar
-          cache-from: type=gha
-          cache-to: type=gha,mode=min
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v2
+              id: buildx
+              with:
+                  install: true
+                  version: latest
 
-      - name: Upload build image as artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: credential-service-staging
-          path: credential-service-staging.tar
+            - name: Configure Docker image metadata
+              id: meta
+              uses: docker/metadata-action@v4
+              with:
+                  images: |
+                      ${{ env.IMAGE_NAME }}
+                      ghcr.io/${{ env.IMAGE_NAME }}
+                      registry.digitalocean.com/${{ env.IMAGE_NAME }}
+                  tags: |
+                      type=ref,event=branch
+                      type=raw,value=staging-latest
+                      type=sha,format=long
+
+            - name: Build image
+              uses: docker/build-push-action@v4
+              with:
+                  context: .
+                  file: docker/Dockerfile
+                  platforms: linux/amd64
+                  load: true
+                  target: runner
+                  tags: ${{ steps.meta.outputs.tags }}
+                  outputs: type=docker,dest=credential-service-staging.tar
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=min
+
+            - name: Upload build image as artifact
+              uses: actions/upload-artifact@v3
+              with:
+                  name: credential-service-staging
+                  path: credential-service-staging.tar

@@ -1,16 +1,15 @@
-name: "Cleanup - Cache"
+name: 'Cleanup - Cache'
 on:
-  schedule:
-    # Cron schedule is every 2 days because this repo's cache is quite large
-    - cron: "0 0 * * */2"
-  workflow_dispatch:
+    schedule:
+        # Cron schedule is every 2 days because this repo's cache is quite large
+        - cron: '0 0 * * */2'
+    workflow_dispatch:
 
 jobs:
+    delete-caches:
+        name: 'Delete Actions caches'
+        runs-on: ubuntu-latest
 
-  delete-caches:
-    name: "Delete Actions caches"
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: "Wipe Github Actions cache"
-        uses: easimon/wipe-cache@v2
+        steps:
+            - name: 'Wipe Github Actions cache'
+              uses: easimon/wipe-cache@v2

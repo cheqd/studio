@@ -5,11 +5,11 @@ MD001: true
 
 # Heading style <https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md#md003>
 MD003:
-  style: 'consistent'
+    style: 'consistent'
 
 # Unordered list style <https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md#md004>
 MD004:
-  style: 'consistent'
+    style: 'consistent'
 
 # Inconsistent indentation for list items at the same level <https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md#md005>
 MD005: true
@@ -31,7 +31,7 @@ MD011: true
 
 # Multiple consecutive blank lines <https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md#md012>
 MD012:
-  maximum: 2
+    maximum: 2
 
 # Line length <https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md#md013>
 MD013: false
@@ -59,7 +59,7 @@ MD023: true
 
 # Multiple headings with the same content <https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md#md024>
 MD024:
-  allow_different_nesting: true
+    allow_different_nesting: true
 
 # Multiple top level headings in the same document <https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md#md025>
 MD025: false
@@ -75,7 +75,7 @@ MD028: false
 
 # Ordered list item prefix <https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md#md029>
 MD029:
-  style: 'one_or_ordered'
+    style: 'one_or_ordered'
 
 # Spaces after list markers <https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md#md030>
 MD030: true
@@ -88,14 +88,14 @@ MD032: true
 
 # Inline HTML <https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md#md033>
 MD033:
-  allowed_elements: ['a']
+    allowed_elements: ['a']
 
 # Bare URL used <https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md#md034>
 MD034: true
 
 # Horizontal rule style <https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md#md035>
 MD035:
-  style: 'consistent'
+    style: 'consistent'
 
 # Emphasis used instead of a heading <https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md#md036>
 MD036: true
@@ -129,11 +129,11 @@ MD045: true
 
 # Code block style <https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md#md046>
 MD046:
-  style: 'consistent'
+    style: 'consistent'
 
 # Files should end with a single newline character <https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md#md047>
 MD047: true
 
 # Code fence style <https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md#md048>
 MD048:
-  style: 'consistent'
+    style: 'consistent'

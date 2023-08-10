@@ -1,5 +1,4 @@
 ---
-
 ##########################
 ##########################
 ## OpenAPI Linter rules ##
@@ -9,4 +8,4 @@
 extends: spectral:oas
 
 rules:
-  oas3-schema: warn
+    oas3-schema: warn
