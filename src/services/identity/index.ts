@@ -1,9 +1,10 @@
 import { LocalIdentity } from './local.js'
 import { PostgresIdentity } from './postgres.js'
-import { IIdentity } from './IIdentity.js'
-import { Unauthorized } from './unauthorized.js'
+export { IIdentity } from './IIdentity.js'
 
 import * as dotenv from 'dotenv'
+import { Unauthorized } from './unauthorized.js'
+import { IIdentity } from './IIdentity.js'
 dotenv.config()
 
 export class Identity {
@@ -22,12 +23,12 @@ export class Identity {
     }
 
     public setupIdentityStrategy(agentId?: string) {
-        if (agentId) {
-            if (process.env.ENABLE_EXTERNAL_DB === 'true') {
+        if (process.env.ENABLE_EXTERNAL_DB === 'true') {
+            if (agentId) {
                 this.setStrategy(new PostgresIdentity())
-            } else {
-                this.setStrategy(new LocalIdentity())
             }
+        } else {
+            this.setStrategy(new LocalIdentity())
         }
     }
 }
