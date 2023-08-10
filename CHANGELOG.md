@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.7.0-develop.6](https://github.com/cheqd/credential-service/compare/2.7.0-develop.5...2.7.0-develop.6) (2023-08-10)
+
+
+### Features
+
+* Account bootstrapping [DEV-3051] ([#306](https://github.com/cheqd/credential-service/issues/306)) ([d157535](https://github.com/cheqd/credential-service/commit/d15753545d0b90d499e083ea6219bf28f97913ff))
+
 ## [2.7.0-develop.5](https://github.com/cheqd/credential-service/compare/2.7.0-develop.4...2.7.0-develop.5) (2023-08-10)
 
 
