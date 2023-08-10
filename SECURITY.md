@@ -9,5 +9,5 @@ time and release a public security bulletin discussing the impact and credit the
 
 There are two ways to report a security bug:
 
--   Email us at [security-github@cheqd.io](mailto:security-github@cheqd.io)
--   Join [our cheqd Community Slack](http://cheqd.link/join-cheqd-slack) and post a message on the #security channel
+- Email us at [security-github@cheqd.io](mailto:security-github@cheqd.io)
+- Join [our cheqd Community Slack](http://cheqd.link/join-cheqd-slack) and post a message on the #security channel

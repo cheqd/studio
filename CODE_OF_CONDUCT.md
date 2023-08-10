@@ -13,21 +13,21 @@ We pledge to act and interact in ways that contribute to an open, welcoming, div
 
 Examples of behaviour that contributes to a positive environment for our community include:
 
--   Demonstrating empathy and kindness toward other people
--   Being respectful of differing opinions, viewpoints, and experiences
--   Giving and gracefully accepting constructive feedback
--   Accepting responsibility and apologizing to those affected by our mistakes, and learning from the experience
--   Focusing on what is best not just for us as individuals, but for the overall community
+- Demonstrating empathy and kindness toward other people
+- Being respectful of differing opinions, viewpoints, and experiences
+- Giving and gracefully accepting constructive feedback
+- Accepting responsibility and apologizing to those affected by our mistakes, and learning from the experience
+- Focusing on what is best not just for us as individuals, but for the overall community
 
 Examples of unacceptable behaviour include:
 
--   The use of sexualized language or imagery, and sexual attention or advances of any kind
--   Use of inappropriate or non-inclusive language or other behaviour deemed unprofessional or unwelcome in the
+- The use of sexualized language or imagery, and sexual attention or advances of any kind
+- Use of inappropriate or non-inclusive language or other behaviour deemed unprofessional or unwelcome in the
     community
--   Trolling, insulting or derogatory comments, and personal or political attacks
--   Public or private harassment
--   Publishing others' private information, such as a physical or email address, without their explicit permission
--   Other conduct which could reasonably be considered inappropriate in a professional setting
+- Trolling, insulting or derogatory comments, and personal or political attacks
+- Public or private harassment
+- Publishing others' private information, such as a physical or email address, without their explicit permission
+- Other conduct which could reasonably be considered inappropriate in a professional setting
 
 ## Enforcement Responsibilities
 
