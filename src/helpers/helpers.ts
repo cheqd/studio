@@ -78,6 +78,12 @@ export function verifyHookSignature(signingKey: string, rawBody: string, expecte
   return signature === expectedSignature;
 };
 
+export async function fetchResponseBody(url: string): Promise<[string, string]> {
+	const response = await fetch(url)
+	const body = await response.arrayBuffer()
+	return [response.headers.get("content-type")!, new TextDecoder().decode(body)]
+}
+
 export interface IDidDocOptions {
   verificationMethod: VerificationMethods
   verificationMethodId: any

@@ -3,6 +3,7 @@ import { IVerifyResult, VerifiableCredential, VerifiablePresentation } from "@ve
 import { CheckStatusListOptions, VerificationOptions } from "../../types/types";
 import { StatusCheckResult } from "@cheqd/did-provider-cheqd/build/types/agent/ICheqd";
 import { Veramo } from "./agent.js";
+import { fetchResponseBody } from "../../helpers/helpers.js";
 
 export class DefaultIdentity extends AbstractIdentity {
     async resolveDid(didUrl: string): Promise<[string, string]> {
@@ -31,10 +32,4 @@ export class DefaultIdentity extends AbstractIdentity {
 	searchStatusList2021(did: string, statusListName: string, statusPurpose: 'revocation' | 'suspension', agentId?: string): Promise<any> {
 		return Veramo.instance.searchStatusList2021(this.initAgent(), did, statusListName, statusPurpose)
 	}
-}
-
-async function fetchResponseBody(url: string): Promise<[string, string]> {
-	const response = await fetch(url)
-	const body = await response.arrayBuffer()
-	return [response.headers.get("content-type")!, new TextDecoder().decode(body)]
 }
