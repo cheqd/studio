@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.7.0-develop.5](https://github.com/cheqd/credential-service/compare/2.7.0-develop.4...2.7.0-develop.5) (2023-08-10)
+
+
+### Bug Fixes
+
+* Add M2M token refreshing [DEV-3117] ([#327](https://github.com/cheqd/credential-service/issues/327)) ([be04d92](https://github.com/cheqd/credential-service/commit/be04d928669fe1637c9bea795566bbcb80c61360))
+
+## [2.7.0-develop.4](https://github.com/cheqd/credential-service/compare/2.7.0-develop.3...2.7.0-develop.4) (2023-08-09)
+
+
+### Bug Fixes
+
+* Add data reset before each check ([#326](https://github.com/cheqd/credential-service/issues/326)) ([659a120](https://github.com/cheqd/credential-service/commit/659a120e5dd6221d32b0132802c381ca819860a0))
+
 ## [2.7.0-develop.3](https://github.com/cheqd/credential-service/compare/2.7.0-develop.2...2.7.0-develop.3) (2023-08-07)
 
 
