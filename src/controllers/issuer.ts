@@ -290,7 +290,7 @@ export class IssuerController {
         const body = await (await fetch(`${process.env.RESOLVER_URL}/${did}`)).json()
         const resolvedResult: DIDResolutionResult = JSON.parse(body)
         if (!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
-          return response.status(StatusCodes.BAD_REQUEST).send({
+          return response.status(StatusCodes.BAD_GATEWAY).send({
             error: `${did} is either Deactivated or Not found`
           })
         }
