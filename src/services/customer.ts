@@ -2,7 +2,7 @@ import { ArrayContains, Repository } from 'typeorm'
 
 import { Connection } from '../database/connection/connection.js'
 import { CustomerEntity } from '../database/entities/customer.entity.js'
-import { getCosmosAccount } from '../helpers/helpers.js'
+import { getCosmosAccount } from '@cheqd/sdk'
 import { Identity } from './identity/index.js'
 
 import * as dotenv from 'dotenv'

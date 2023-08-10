@@ -1,12 +1,11 @@
 import type { Request, Response } from 'express'
-import { StargateClient } from "@cosmjs/stargate"
+import { checkBalance } from '@cheqd/sdk'
 
 import { CustomerService } from '../services/customer.js'
 import { LogToHelper } from '../middleware/auth/logto.js'
 import { FaucetHelper } from '../helpers/faucet.js'
 import { StatusCodes } from 'http-status-codes'
 import { LogToWebHook } from '../middleware/hook.js'
-import { NetworkType } from '../types/types.js'
 
 export class AccountController {
 
@@ -174,23 +173,19 @@ export class AccountController {
 
         // 3. Check the token balance for Testnet account
         if (customer.address && process.env.FAUCET_ENABLED === 'true') {
-            const balance = await AccountController.checkBalance(customer.address)
-            if (!balance || +balance.amount < process.env.TESTNET_MINIMUM_BALANCE) {
-                // 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
-                const resp = await FaucetHelper.delegateTokens(customer.address)
-                if (resp.status !== StatusCodes.OK) {
-                    return response.status(StatusCodes.BAD_GATEWAY).json({
-                        error: resp.error})
+            const balances = await checkBalance(customer.address, process.env.TESTNET_RPC_URL)
+            if (balances.length === 0) {
+                const balance = balances[0]
+                if (!balance || +balance.amount < process.env.TESTNET_MINIMUM_BALANCE) {
+                    // 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
+                    const resp = await FaucetHelper.delegateTokens(customer.address)
+                    if (resp.status !== StatusCodes.OK) {
+                        return response.status(StatusCodes.BAD_GATEWAY).json({
+                            error: resp.error})
+                    }
                 }
             }
         }
         return response.status(StatusCodes.OK).json({})
-    }
-
-    public static async checkBalance(address: string, network = NetworkType.Testnet) {
-        const rpc_address = network === NetworkType.Testnet ? process.env.TESTNET_RPC_URL : process.env.MAINNET_RPC_URL
-        const client = await StargateClient.connect(rpc_address)
-        const balances = await client.getAllBalances(address)
-        return balances[0]
     }
 }

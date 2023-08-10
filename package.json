@@ -45,6 +45,7 @@
 		"README.md"
 	],
 	"dependencies": {
+		"@cheqd/sdk": "^3.6.1",
 		"@cheqd/did-provider-cheqd": "^3.6.1",
 		"@cosmjs/amino": "^0.31.0",
 		"@cosmjs/encoding": "^0.31.0",
