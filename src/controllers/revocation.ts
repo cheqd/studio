@@ -5,9 +5,10 @@ import { StatusCodes } from 'http-status-codes';
 
 import { Identity } from '../services/identity/index.js';
 import { Veramo } from '../services/identity/agent.js';
-import { ResourceMetadata, StatusList2021ResourceTypes } from '../types/types.js';
+import { ResourceMetadata, StatusList2021ResourceTypes } from '../types/shared.js';
+
 export class RevocationController {
-	static statusListValidator = [
+	static createValidator = [
 		check('length').optional().isNumeric().withMessage('length should be a number'),
 		check('encodedList').optional().isString().withMessage('data should be string'),
 		check('encoding').optional().isIn(['base64', 'base64url', 'hex']).withMessage('invalid encoding'),
@@ -103,30 +104,32 @@ export class RevocationController {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
 		}
 
-		const { did, encodedList, statusListName, alsoKnownAs, statusListVersion, length, encoding } = request.body;
+		const { did, encodedList, statusListName, alsoKnownAs, statusListVersion, encrypted, length, encoding } = request.body;
 		const { statusPurpose } = request.query as { statusPurpose: 'revocation' | 'suspension' };
 
 		const data = encodedList ? fromString(encodedList, encoding) : undefined;
 
 		try {
-			let result: any;
 			if (data) {
-				result = await new Identity(response.locals.customerId).agent.broadcastStatusList2021(
+				const result = await new Identity(response.locals.customerId).agent.broadcastStatusList2021(
 					did,
 					{ data, name: statusListName, alsoKnownAs, version: statusListVersion },
-					{ encoding, statusPurpose },
+					{ encoding, statusPurpose, encrypted },
 					response.locals.customerId
 				);
+				return response.status(StatusCodes.OK).json(result);
 			}
-			result = await new Identity(response.locals.customerId).agent.createStatusList2021(
+			const result = await new Identity(response.locals.customerId).agent.createStatusList2021(
 				did,
 				{ name: statusListName, alsoKnownAs, version: statusListVersion },
-				{ length, encoding, statusPurpose },
+				{ length, encoding, statusPurpose, encrypted },
 				response.locals.customerId
 			);
+
 			if (result.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json(result);
 			}
+
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -194,16 +197,16 @@ export class RevocationController {
 		const data = encodedList ? fromString(encodedList, encoding) : undefined;
 
 		try {
-			let result: any;
 			if (data) {
-				result = await new Identity(response.locals.customerId).agent.broadcastStatusList2021(
+				const result = await new Identity(response.locals.customerId).agent.broadcastStatusList2021(
 					did,
 					{ data, name: statusListName, alsoKnownAs, version: statusListVersion },
 					{ encoding, statusPurpose },
 					response.locals.customerId
 				);
+				return response.status(StatusCodes.OK).json(result);
 			}
-			result = await new Identity(response.locals.customerId).agent.createStatusList2021(
+			const result = await new Identity(response.locals.customerId).agent.createStatusList2021(
 				did,
 				{ name: statusListName, alsoKnownAs, version: statusListVersion },
 				{ length, encoding, statusPurpose },
@@ -371,15 +374,14 @@ export class RevocationController {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
 		}
 
-		let { did, statusListName, statusListVersion, indices } = request.body;
+		const { did, statusListName, statusListVersion, indices } = request.body;
 		const { statusAction } = request.query as { statusAction: 'revoke' | 'suspend' | 'reinstate' };
 		const publish = request.query.publish === 'false' ? false : true;
-		indices = typeof indices === 'number' ? [indices] : indices;
 
 		try {
 			const result = await new Identity(response.locals.customerId).agent.updateStatusList2021(
 				did,
-				{ indices, statusListName, statusListVersion, statusAction },
+				{ indices: typeof indices === 'number' ? [indices] : indices, statusListName, statusListVersion, statusAction },
 				publish,
 				response.locals.customerId
 			);
@@ -453,7 +455,7 @@ export class RevocationController {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
 		}
 
-		let { did, statusListName, index } = request.body;
+		const { did, statusListName, index } = request.body;
 		const statusPurpose = request.query.statusPurpose as 'revocation' | 'suspension';
 
 		try {

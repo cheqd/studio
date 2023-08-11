@@ -8,7 +8,7 @@ import { DidAuthHandler } from './auth/did-auth.js';
 import { KeyAuthHandler } from './auth/key-auth.js';
 import { CredentialStatusAuthHandler } from './auth/credential-status-auth.js';
 import { ResourceAuthHandler } from './auth/resource-auth.js';
-import { AbstractAuthHandler } from './auth/base-auth.js';
+import type { AbstractAuthHandler } from './auth/base-auth.js';
 import { LogToHelper } from './auth/logto.js';
 import { PresentationAuthHandler } from './auth/presentation-auth.js';
 
@@ -62,7 +62,7 @@ export class Authentication {
 
 			this.isSetup = true;
 		}
-		next();
+		return next();
 	}
 
 	public async handleError(error: Error, request: Request, response: Response, next: NextFunction) {
@@ -71,7 +71,7 @@ export class Authentication {
 				error: `${error.message}`,
 			});
 		}
-		next();
+		return next();
 	}
 
 	public async accessControl(request: Request, response: Response, next: NextFunction) {

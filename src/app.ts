@@ -46,7 +46,7 @@ class App {
 		this.express.use(
 			express.json({
 				limit: '50mb',
-				verify: (req: Request, res, buf) => {
+				verify: (req: Request, _res, buf) => {
 					req.rawBody = buf;
 				},
 			})
@@ -71,7 +71,7 @@ class App {
 		if (process.env.ENABLE_AUTHENTICATION === 'true') {
 			this.express.use(session({ secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 } }));
 			// Authentication functions/methods
-			this.express.use(async (req, res, next) => await auth.setup(next));
+			this.express.use(async (_req, _res, next) => await auth.setup(next));
 			this.express.use(handleAuthRoutes(configLogToExpress));
 			this.express.use(withLogto(configLogToExpress));
 			if (process.env.ENABLE_EXTERNAL_DB === 'true') {
@@ -89,7 +89,7 @@ class App {
 		const app = this.express;
 
 		// Top-level routes
-		app.get('/', (req, res) => res.redirect('swagger'));
+		app.get('/', (_req, res) => res.redirect('swagger'));
 
 		// Credential API
 		app.post(`/credential/issue`, CredentialController.issueValidator, new CredentialController().issue);
@@ -109,7 +109,7 @@ class App {
 		app.post(
 			'/credential-status/create',
 			RevocationController.commonValidator,
-			RevocationController.statusListValidator,
+			RevocationController.createValidator,
 			new RevocationController().createStatusList
 		);
 		app.post(
@@ -135,25 +135,25 @@ class App {
 		);
 
 		// Keys API
-		app.post(`/key/create`, new IssuerController().createKey);
-		app.get(`/key/read/:kid`, new IssuerController().getKey);
+		app.post('/key/create', new IssuerController().createKey);
+		app.get('/key/read/:kid', new IssuerController().getKey);
 
 		// DIDs API
-		app.post(`/did/create`, IssuerController.createValidator, new IssuerController().createDid);
-		app.post(`/did/update`, IssuerController.updateValidator, new IssuerController().updateDid);
-		app.post(`/did/deactivate/:did`, IssuerController.deactivateValidator, new IssuerController().deactivateDid);
-		app.get(`/did/list`, new IssuerController().getDids);
-		app.get(`/did/:did`, new IssuerController().getDid);
+		app.post('/did/create', IssuerController.createValidator, new IssuerController().createDid);
+		app.post('/did/update', IssuerController.updateValidator, new IssuerController().updateDid);
+		app.post('/did/deactivate/:did', IssuerController.deactivateValidator, new IssuerController().deactivateDid);
+		app.get('/did/list', new IssuerController().getDids);
+		app.get('/did/:did', new IssuerController().getDid);
 
 		// Resource API
-		app.post(`/resource/create/:did`, IssuerController.resourceValidator, new IssuerController().createResource);
+		app.post('/resource/create/:did', IssuerController.resourceValidator, new IssuerController().createResource);
 
 		// Account API
-		app.post(`/account`, new AccountController().create);
-		app.get(`/account`, new AccountController().get);
+		app.post('/account', new AccountController().create);
+		app.get('/account', new AccountController().get);
 
 		// LogTo webhooks
-		app.post(`/account/bootstrap`, LogToWebHook.verifyHookSignature, new AccountController().bootstrap);
+		app.post('/account/bootstrap', LogToWebHook.verifyHookSignature, new AccountController().bootstrap);
 
 		// LogTo user info
 		app.get('/auth/user-info', async (req, res) => {
@@ -167,7 +167,7 @@ class App {
 		);
 
 		// 404 for all other requests
-		app.all('*', (req, res) => res.status(StatusCodes.BAD_REQUEST).send('Bad request'));
+		app.all('*', (_req, res) => res.status(StatusCodes.BAD_REQUEST).send('Bad request'));
 	}
 }
 

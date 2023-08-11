@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
 import * as dotenv from 'dotenv';
@@ -16,7 +16,7 @@ export class LogToWebHook {
 				error: 'Invalid signature in LogTo webhook',
 			});
 		}
-		next();
+		return next();
 	}
 
 	static getCustomerId(request: Request): string {

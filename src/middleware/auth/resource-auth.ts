@@ -1,6 +1,6 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { AbstractAuthHandler } from './base-auth.js';
-import { IAuthResponse } from '../../types/authentication.js';
+import type { IAuthResponse } from '../../types/authentication.js';
 
 export class ResourceAuthHandler extends AbstractAuthHandler {
 	constructor() {

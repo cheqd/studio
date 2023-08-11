@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
 import { StatusCodes } from 'http-status-codes';
 import stringify from 'json-stringify-safe';
-import { cheqdDidRegex } from '../../types/types.js';
+import { cheqdDidRegex } from '../../types/shared.js';
 import { MethodToScope, IAuthResourceHandler, Namespaces, IAuthResponse } from '../../types/authentication.js';
 import { LogToHelper } from './logto.js';
 

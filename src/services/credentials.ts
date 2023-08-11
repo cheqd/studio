@@ -1,7 +1,7 @@
-import { CredentialPayload, VerifiableCredential } from '@veramo/core';
+import type { CredentialPayload, VerifiableCredential } from '@veramo/core';
 
 import { VC_CONTEXT, VC_TYPE } from '../types/constants.js';
-import { CredentialRequest } from '../types/types.js';
+import type { CredentialRequest } from '../types/shared.js';
 import { Identity } from './identity/index.js';
 import { VeridaService } from '../services/connectors/verida.js';
 import { v4 } from 'uuid';
