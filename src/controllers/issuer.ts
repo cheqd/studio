@@ -648,7 +648,7 @@ export class IssuerController {
 	/**
 	 * @openapi
 	 *
-	 * /did/resolve/{didUrl}:
+	 * /did/search/{didUrl}:
 	 *   get:
 	 *     tags: [ DID ]
 	 *     summary: Resolve a DID Document.
