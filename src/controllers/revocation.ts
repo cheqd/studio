@@ -104,7 +104,8 @@ export class RevocationController {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
 		}
 
-		const { did, encodedList, statusListName, alsoKnownAs, statusListVersion, encrypted, length, encoding } = request.body;
+		const { did, encodedList, statusListName, alsoKnownAs, statusListVersion, encrypted, length, encoding } =
+			request.body;
 		const { statusPurpose } = request.query as { statusPurpose: 'revocation' | 'suspension' };
 
 		const data = encodedList ? fromString(encodedList, encoding) : undefined;
@@ -381,7 +382,12 @@ export class RevocationController {
 		try {
 			const result = await new Identity(response.locals.customerId).agent.updateStatusList2021(
 				did,
-				{ indices: typeof indices === 'number' ? [indices] : indices, statusListName, statusListVersion, statusAction },
+				{
+					indices: typeof indices === 'number' ? [indices] : indices,
+					statusListName,
+					statusListVersion,
+					statusAction,
+				},
 				publish,
 				response.locals.customerId
 			);

@@ -464,7 +464,9 @@ export class IssuerController {
 		let resourcePayload: Partial<MsgCreateResourcePayload> = {};
 		try {
 			// check if did is registered on the ledger
-			const { didDocument, didDocumentMetadata } = await new Identity(response.locals.customerId).agent.resolveDid(did);
+			const { didDocument, didDocumentMetadata } = await new Identity(
+				response.locals.customerId
+			).agent.resolveDid(did);
 			if (!didDocument || !didDocumentMetadata || didDocumentMetadata.deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
 					error: `${did} is a either Deactivated or Not found`,
@@ -576,7 +578,7 @@ export class IssuerController {
 			}
 
 			// should never happen
-			return response.status(StatusCodes.BAD_REQUEST)
+			return response.status(StatusCodes.BAD_REQUEST);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,

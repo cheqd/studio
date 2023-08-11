@@ -1,9 +1,5 @@
 import { LocalIdentity } from './local.js';
-import type {
-	VerifiableCredential,
-	IVerifyResult,
-	VerifiablePresentation,
-} from '@veramo/core';
+import type { VerifiableCredential, IVerifyResult, VerifiablePresentation } from '@veramo/core';
 import { MemoryPrivateKeyStore } from '@veramo/key-manager';
 import { KeyManagementSystem } from '@veramo/kms-local';
 

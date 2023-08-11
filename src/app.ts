@@ -69,7 +69,16 @@ class App {
 
 		this.express.use(cookieParser());
 		if (process.env.ENABLE_AUTHENTICATION === 'true') {
-			this.express.use(session({ secret: process.env.COOKIE_SECRET || (function(){throw new Error('COOKIE_SECRET is not defined')}()), cookie: { maxAge: 14 * 24 * 60 * 60 } }));
+			this.express.use(
+				session({
+					secret:
+						process.env.COOKIE_SECRET ||
+						(function () {
+							throw new Error('COOKIE_SECRET is not defined');
+						})(),
+					cookie: { maxAge: 14 * 24 * 60 * 60 },
+				})
+			);
 			// Authentication functions/methods
 			this.express.use(async (_req, _res, next) => await auth.setup(next));
 			this.express.use(handleAuthRoutes(configLogToExpress));
