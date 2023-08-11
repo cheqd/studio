@@ -38,7 +38,6 @@ import {
 		return this.agent
 	  }
 	  const dbConnection = Connection.instance.dbConnection
-	  this.privateStore = new MemoryPrivateKeyStore()
   
 	  const mainnetProvider = new CheqdDIDProvider(
 		{
@@ -60,7 +59,7 @@ import {
 		dbConnection,
 		kms: {
 		  local: new KeyManagementSystem(
-			this.privateStore
+			new MemoryPrivateKeyStore()
 		  )
 		},
 		providers: {

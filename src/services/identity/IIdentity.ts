@@ -14,6 +14,8 @@ import type {
 } from '../../types/types'
 
 export interface IIdentity {
+	agent?: VeramoAgent
+
 	initAgent(): TAgent<any>
 	createAgent?(agentId: string): Promise<VeramoAgent>
 	createKey(type: 'Ed25519' | 'Secp256k1', agentId?: string): Promise<ManagedKeyInfo>
@@ -23,7 +25,7 @@ export interface IIdentity {
 	deactivateDid(did: string, agentId?: string): Promise<boolean>
 	listDids(agentId?: string): Promise<string[]>
 	resolveDid(did: string, agentId?: string): Promise<DIDResolutionResult>
-	resolve(didUrl: string): Promise<[string, string]>
+	resolve(didUrl: string): Promise<Response>
 	getDid(did: string, agentId?: string): Promise<any>
 	importDid(did: string, privateKeyHex: string, publicKeyHex: string, agentId?: string): Promise<IIdentifier>
 	createResource(network: string, payload: ResourcePayload, agentId?: string): Promise<any>
@@ -42,7 +44,6 @@ export interface IIdentity {
 
 export abstract class AbstractIdentity implements IIdentity {
 	agent?: VeramoAgent
-	privateStore?: AbstractPrivateKeyStore
 
 	initAgent(): VeramoAgent {
 		throw new Error(`Not supported`)
@@ -101,7 +102,7 @@ export abstract class AbstractIdentity implements IIdentity {
 		throw new Error(`Not supported`)
 	}
 
-	resolve(didUrl: string): Promise<[string, string]> {
+	resolve(didUrl: string): Promise<Response> {
 		throw new Error(`Not supported`)
 	}
 

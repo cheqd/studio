@@ -15,7 +15,7 @@ export class DefaultIdentity extends AbstractIdentity {
 		return Veramo.instance.resolveDid(this.initAgent(), did)
 	}
 
-	async resolve(didUrl: string): Promise<[string, string]> {
+	async resolve(didUrl: string): Promise<Response> {
 		return Veramo.instance.resolve(didUrl)
 	}
 

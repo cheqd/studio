@@ -22,6 +22,7 @@ import { Veramo } from './agent.js'
 
 import * as dotenv from 'dotenv'
 import { DefaultIdentity } from './default.js'
+import { AbstractPrivateKeyStore } from '@veramo/key-manager'
 dotenv.config()
 
 const {
@@ -31,6 +32,8 @@ const {
 } = process.env
 
 export class PostgresIdentity extends DefaultIdentity {
+	privateStore?: AbstractPrivateKeyStore
+	
 	initAgent() {
 		if (this.agent) return this.agent
 		const dbConnection = Connection.instance.dbConnection

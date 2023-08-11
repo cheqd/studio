@@ -811,7 +811,7 @@
           "200": {
             "description": "The request was successful.",
             "content": {
-              "application/json": {
+              "any": {
                 "schema": {
                   "type": "object"
                 }
@@ -885,7 +885,7 @@
           "200": {
             "description": "The request was successful.",
             "content": {
-              "application/json": {
+              "any": {
                 "schema": {
                   "type": "object"
                 }

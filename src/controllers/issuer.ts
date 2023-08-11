@@ -537,8 +537,12 @@ export class IssuerController {
 		try {
 			if (request.params.did) {
 				const didUrl = request.params.did+'?metadata=true'
-				const [contentType, body] = await new Identity(response.locals.customerId).agent.resolve(didUrl)
-				return response.setHeader("Content-Type", contentType).status(200).send(body);
+				const res = await new Identity(response.locals.customerId).agent.resolve(didUrl)
+
+				const contentType = res.headers.get("Content-Type")
+				const body = new TextDecoder().decode(await res.arrayBuffer())
+
+				return response.setHeader("Content-Type", contentType!).status(200).send(body);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: "The DID parameter is empty."
@@ -576,7 +580,7 @@ export class IssuerController {
 	 *       200:
 	 *         description: The request was successful.
 	 *         content:
-	 *           application/json:
+	 *           any:
 	 *             schema:
 	 *               type: object
 	 *       400:
@@ -590,8 +594,12 @@ export class IssuerController {
 		try {
 			if (request.params.did && request.params.resourceId) {
 				const didUrl = request.params.did+"?resourceId="+request.params.resourceId
-				const [contentType, body] = await new Identity(response.locals.customerId).agent.resolve(didUrl)
-				return response.setHeader("Content-Type", contentType).status(200).send(body);
+				const res = await new Identity(response.locals.customerId).agent.resolve(didUrl)
+
+				const contentType = res.headers.get("Content-Type")
+				const body = new TextDecoder().decode(await res.arrayBuffer())
+
+				return response.setHeader("Content-Type", contentType!).status(200).send(body);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: "The DID or resourceId parameter is empty."
@@ -664,7 +672,7 @@ export class IssuerController {
 	 *       200:
 	 *         description: The request was successful.
 	 *         content:
-	 *           application/json:
+	 *           any:
 	 *             schema:
 	 *               type: object
 	 *       400:
@@ -677,8 +685,12 @@ export class IssuerController {
 	public async resolveDidUrl(request: Request, response: Response) {
 		try {
 			if (request.params.didUrl) {
-				const [contentType, body] = await new Identity(response.locals.customerId).agent.resolve(request.params.didUrl)
-				return response.setHeader("Content-Type", contentType).status(200).send(body);
+				const res = await new Identity(response.locals.customerId).agent.resolve(request.params.didUrl)
+
+				const contentType = res.headers.get("Content-Type")
+				const body = new TextDecoder().decode(await res.arrayBuffer())
+
+				return response.setHeader("Content-Type", contentType!).status(200).send(body);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: "The DIDUrl parameter is empty."

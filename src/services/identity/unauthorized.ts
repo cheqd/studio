@@ -22,7 +22,6 @@ export class Unauthorized extends DefaultIdentity {
 			return this.agent
 		}
 		const dbConnection = Connection.instance.dbConnection
-		this.privateStore = new MemoryPrivateKeyStore()
 		const mainnetProvider = new CheqdDIDProvider(
 			{
 				defaultKms: 'local',
@@ -44,7 +43,7 @@ export class Unauthorized extends DefaultIdentity {
 			dbConnection,
 			kms: {
 				local: new KeyManagementSystem(
-					this.privateStore
+					new MemoryPrivateKeyStore()
 				)
 			},
 			providers: {

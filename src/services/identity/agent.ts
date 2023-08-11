@@ -193,8 +193,8 @@ export class Veramo {
 		return await agent.resolveDid({ didUrl: did });
 	}
 
-	async resolve(didUrl: string) : Promise<[string, string]> {
-		return fetchResponseBody(`${process.env.RESOLVER_URL || resolverUrl}/${didUrl}`)
+	async resolve(didUrl: string) : Promise<Response> {
+		return fetch(`${process.env.RESOLVER_URL || resolverUrl}/${didUrl}`)
 	}
 
 	async getDid(agent: TAgent<IDIDManager>, did: string) {
