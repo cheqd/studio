@@ -28,7 +28,7 @@
   },
   "servers": [
     {
-      "url": "/"
+      "url": "https://credential-service.cheqd.net"
     }
   ],
   "paths": {
