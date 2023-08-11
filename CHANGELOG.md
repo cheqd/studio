@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.7.1](https://github.com/cheqd/credential-service/compare/2.7.0...2.7.1) (2023-08-11)
+
+
+### Bug Fixes
+
+* Fix host in swagger.json for gitbook displaying [DEV-3122] ([#332](https://github.com/cheqd/credential-service/issues/332)) ([b99873d](https://github.com/cheqd/credential-service/commit/b99873d2485ce90f84fcf18246b83528b4437bc3))
+
 ## [2.7.0](https://github.com/cheqd/credential-service/compare/2.6.3...2.7.0) (2023-08-10)
 
 
