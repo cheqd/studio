@@ -14,11 +14,11 @@ export class DidAuthHandler extends AbstractAuthHandler {
 		this.registerRoute('/did/deactivate', 'POST', 'deactivate:did:testnet');
 		this.registerRoute('/did/deactivate', 'POST', 'deactivate:did:mainnet');
 		// true means allowUnauthorized
-		this.registerRoute('/did/(.*)', 'GET', '', { allowUnauthorized: true, skipNamespace: true });
+		this.registerRoute('/did/resolve/(.*)', 'GET', '', { allowUnauthorized: true, skipNamespace: true });
 	}
 
 	public async handle(request: Request, response: Response): Promise<IAuthResponse> {
-		if (!request.path.includes('/did')) {
+		if (!request.path.includes('/did/')) {
 			return super.handle(request, response);
 		}
 		return this.commonPermissionCheck(request);
