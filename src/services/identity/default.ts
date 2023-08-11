@@ -6,6 +6,11 @@ import { Veramo } from "./agent.js";
 import { fetchResponseBody } from "../../helpers/helpers.js";
 
 export class DefaultIdentity extends AbstractIdentity {
+	constructor() {
+		super();
+	  	this.agent = this.initAgent()
+	}
+
     async resolveDid(did: string, agentId?: string): Promise<DIDResolutionResult> {
 		return Veramo.instance.resolveDid(this.initAgent(), did)
 	}

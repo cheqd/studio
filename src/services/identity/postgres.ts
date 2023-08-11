@@ -31,11 +31,6 @@ const {
 } = process.env
 
 export class PostgresIdentity extends DefaultIdentity {
-	constructor() {
-		super();
-		this.agent = this.initAgent()
-	}
-
 	initAgent() {
 		if (this.agent) return this.agent
 		const dbConnection = Connection.instance.dbConnection
