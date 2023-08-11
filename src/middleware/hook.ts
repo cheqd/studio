@@ -7,10 +7,14 @@ import { verifyHookSignature } from '../helpers/helpers.js';
 dotenv.config();
 
 export class LogToWebHook {
-	static async verifyHookSignature(request: Request, response: Response, next: NextFunction) {
+	static async verifyHookSignature(request: Request & { rawBody?: Buffer }, response: Response, next: NextFunction) {
 		const logtoSignature = request.headers['logto-signature-sha-256'] as string;
 		if (
-			!verifyHookSignature(process.env.LOGTO_WEBHOOK_SECRET as string, request.rawBody.toString(), logtoSignature)
+			!verifyHookSignature(
+				process.env.LOGTO_WEBHOOK_SECRET as string,
+				request?.rawBody?.toString() || '',
+				logtoSignature
+			)
 		) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: 'Invalid signature in LogTo webhook',

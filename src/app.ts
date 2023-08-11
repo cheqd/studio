@@ -46,7 +46,7 @@ class App {
 		this.express.use(
 			express.json({
 				limit: '50mb',
-				verify: (req: express.Request, _res, buf) => {
+				verify: (req: express.Request & { rawBody: Buffer }, _res, buf) => {
 					req.rawBody = buf;
 				},
 			})
