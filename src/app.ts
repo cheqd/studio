@@ -1,4 +1,4 @@
-import express, { Request } from 'express';
+import express from 'express';
 import Helmet from 'helmet';
 import cors from 'cors';
 import session from 'express-session';
@@ -46,7 +46,7 @@ class App {
 		this.express.use(
 			express.json({
 				limit: '50mb',
-				verify: (req: Request, _res, buf) => {
+				verify: (req: express.Request, _res, buf) => {
 					req.rawBody = buf;
 				},
 			})
@@ -69,7 +69,7 @@ class App {
 
 		this.express.use(cookieParser());
 		if (process.env.ENABLE_AUTHENTICATION === 'true') {
-			this.express.use(session({ secret: process.env.COOKIE_SECRET, cookie: { maxAge: 14 * 24 * 60 * 60 } }));
+			this.express.use(session({ secret: process.env.COOKIE_SECRET || (function(){throw new Error('COOKIE_SECRET is not defined')}()), cookie: { maxAge: 14 * 24 * 60 * 60 } }));
 			// Authentication functions/methods
 			this.express.use(async (_req, _res, next) => await auth.setup(next));
 			this.express.use(handleAuthRoutes(configLogToExpress));

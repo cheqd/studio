@@ -75,15 +75,12 @@ export class Authentication {
 	}
 
 	public async accessControl(request: Request, response: Response, next: NextFunction) {
-		let message = undefined;
-
 		if (this.authHandler.skipPath(request.path)) return next();
 
 		if (ENABLE_EXTERNAL_DB === 'false') {
 			if (['/account', '/did/create', '/key/create'].includes(request.path)) {
-				message = 'Api not supported';
 				return response.status(StatusCodes.METHOD_NOT_ALLOWED).json({
-					error: message,
+					error: 'Api not supported',
 				});
 			}
 		}
