@@ -537,8 +537,8 @@ export class IssuerController {
 		try {
 			if (request.params.did) {
 				const didUrl = request.params.did+'?metadata=true'
-				const resourceList = await new Identity(response.locals.customerId).agent.resolve(didUrl)
-				return response.status(StatusCodes.OK).json(resourceList)
+				const [contentType, body] = await new Identity(response.locals.customerId).agent.resolve(didUrl)
+				return response.setHeader("Content-Type", contentType).status(200).send(body);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: "The DID parameter is empty."
