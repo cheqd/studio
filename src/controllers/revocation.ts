@@ -8,13 +8,6 @@ import { Veramo } from '../services/identity/agent.js';
 import { ResourceMetadata, StatusList2021ResourceTypes } from '../types/shared.js';
 
 export class RevocationController {
-	static createValidator = [
-		check('length').optional().isNumeric().withMessage('length should be a number'),
-		check('encodedList').optional().isString().withMessage('data should be string'),
-		check('encoding').optional().isIn(['base64', 'base64url', 'hex']).withMessage('invalid encoding'),
-		check('statusPurpose').optional().isIn(['revocation', 'suspension']).withMessage('invalid statusPurpose'),
-	];
-
 	static commonValidator = [
 		check('did')
 			.isString()
@@ -28,6 +21,13 @@ export class RevocationController {
 			.isIn(['suspension', 'revocation'])
 			.withMessage('Invalid statuspurpose'),
 		query('encrypted').optional().isBoolean().withMessage('encrypted should be a boolean value'),
+	];
+
+	static createValidator = [
+		check('length').optional().isNumeric().withMessage('length should be a number'),
+		check('encodedList').optional().isString().withMessage('data should be string'),
+		check('encoding').optional().isIn(['base64', 'base64url', 'hex']).withMessage('invalid encoding'),
+		check('statusPurpose').optional().isIn(['revocation', 'suspension']).withMessage('invalid statusPurpose'),
 	];
 
 	static updateValidator = [
