@@ -863,7 +863,7 @@
         }
       }
     },
-    "/did/{didUrl}": {
+    "/did/resolve/{didUrl}": {
       "get": {
         "tags": [
           "DID"
