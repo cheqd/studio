@@ -272,45 +272,19 @@ export class RevocationController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
-	async fetchStatusList(request: Request, response: Response) {
+	async searchStatusList(request: Request, response: Response) {
 		const result = validationResult(request);
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
 		}
 
 		try {
-			const statusPurpose = request.query.statusPurpose as 'revocation' | 'suspension';
-			const resourceTypes = statusPurpose
-				? [StatusList2021ResourceTypes[`${statusPurpose}`]]
-				: [StatusList2021ResourceTypes.revocation, StatusList2021ResourceTypes.suspension];
-			let metadata: ResourceMetadata[] = [];
-
-			for (const resourceType of resourceTypes) {
-				const result = await Veramo.instance.resolve(
-					`${request.query.did}?resourceType=${resourceType}&resourceMetadata=true`
-				);
-				metadata = metadata.concat(result.contentStream?.linkedResourceMetadata || []);
-			}
-			const statusList = metadata
-				.filter((resource: ResourceMetadata) => {
-					if (request.query.statusListName) {
-						return (
-							resource.resourceName === request.query.statusListName &&
-							resource.mediaType == 'application/json'
-						);
-					}
-					return resource.mediaType == 'application/json';
-				})
-				.map((resource: ResourceMetadata) => {
-					return {
-						statusListName: resource.resourceName,
-						statusPurpose: resource.resourceType,
-						statusListVersion: resource.resourceVersion,
-						statusListId: resource.resourceId,
-						statusListNextVersion: resource.nextVersionId,
-					};
-				});
-			return response.status(StatusCodes.OK).json(statusList);
+			const { did, statusListName } = request.body
+      		const statusPurpose = request.query.statusPurpose as 'revocation' | 'suspension'
+      		const statusList = await new Identity(response.locals.customerId).agent.searchStatusList2021(
+        		did, statusListName, statusPurpose,
+      		)
+      		return response.status(StatusCodes.OK).json(statusList)
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${error}`,

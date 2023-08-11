@@ -626,6 +626,40 @@
  *         encoding: base64url
  *         name: ResourceName
  *         type: TextDocument
+ *     ResourceList:
+ *       type: object
+ *       properties:
+ *         '@context':
+ *           type: string
+ *           example: https://w3id.org/did-resolution/v1
+ *         contentMetadata:
+ *           type: object
+ *         contentStream:
+ *           type: object
+ *         dereferencingMetadata:
+ *           $ref: '#/components/schemas/DereferencingMetadata'
+ *     DereferencingMetadata:
+ *       type: object
+ *       properties:
+ *         contentType:
+ *           type: string
+ *           example: application/did+ld+json
+ *         did:
+ *           $ref: '#/components/schemas/DidProperties'
+ *         error:
+ *           type: string
+ *         retrieved:
+ *           type: string
+ *           example: "2021-09-01T12:00:00Z"
+ *     DidProperties:
+ *       type: object
+ *       properties:
+ *         did:
+ *           type: string
+ *         method:
+ *           type: string
+ *         methodSpecificId:
+ *           type: string
  *     Customer:
  *       type: object
  *       properties:

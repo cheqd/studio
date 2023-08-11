@@ -506,6 +506,106 @@ export class IssuerController {
 
 	/**
 	 * @openapi
+	 * 
+	 * /resource/list/{did}:
+	 *   get:
+	 *     tags: [ Resource ]
+	 *     summary: Get a DID-Linked Resource List.
+	 *     description: This endpoint returns the DID-Linked Resource List for a given DID identifier.
+	 *     parameters:
+	 *       - in: path
+	 *         name: did
+	 *         description: DID identifier to returns Resource List.
+	 *         schema:
+	 *           type: string
+	 *         required: true
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/ResourceList'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async getResourceList(request: Request, response: Response) {
+		try {
+			if (request.params.did) {
+				const didUrl = request.params.did+'?metadata=true'
+				const resourceList = await new Identity(response.locals.customerId).agent.resolve(didUrl)
+				return response.status(StatusCodes.OK).json(resourceList)
+			} else {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: "The DID parameter is empty."
+				})
+			}
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `${error}`
+			})
+		}
+	}
+
+	/**
+	 * @openapi
+	 * 
+	 * /resource/dereferencing/{did}/{resourceId}:
+	 *   get:
+	 *     tags: [ Resource ]
+	 *     summary: Get a DID-Linked Resource.
+	 *     description: This endpoint returns the DID-Linked Resource for a given DID identifier and resourceId.
+	 *     parameters:
+	 *       - in: path
+	 *         name: did
+	 *         description: DID identifier
+	 *         schema:
+	 *           type: string
+	 *         required: true
+	 *       - in: path
+	 *         name: resourceId
+	 *         description: Resource identifier
+	 *         schema:
+	 *           type: string
+	 *         required: true
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               type: object
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async getResource(request: Request, response: Response) {
+		try {
+			if (request.params.did && request.params.resourceId) {
+				const didUrl = request.params.did+"?resourceId="+request.params.resourceId
+				const [contentType, body] = await new Identity(response.locals.customerId).agent.resolve(didUrl)
+				return response.setHeader("Content-Type", contentType).status(200).send(body);
+			} else {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: "The DID or resourceId parameter is empty."
+				})
+			}
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `${error}`
+			})
+		}
+	}
+
+	/**
+	 * @openapi
 	 *
 	 * /did/list:
 	 *   get:
@@ -548,14 +648,14 @@ export class IssuerController {
 	/**
 	 * @openapi
 	 *
-	 * /did/{did}:
+	 * /did/{didUrl}:
 	 *   get:
 	 *     tags: [ DID ]
 	 *     summary: Resolve a DID Document.
 	 *     description: This endpoint resolves the latest DID Document for a given DID identifier.
 	 *     parameters:
 	 *       - in: path
-	 *         name: did
+	 *         name: didUrl
 	 *         description: DID identifier to resolve.
 	 *         schema:
 	 *           type: string
@@ -566,7 +666,7 @@ export class IssuerController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/DidDocument'
+	 *               type: object
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -574,12 +674,15 @@ export class IssuerController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
-	public async getDid(request: Request, response: Response) {
+	public async resolveDidUrl(request: Request, response: Response) {
 		try {
-			let did: any;
-			if (request.params.did) {
-				did = await new Identity(response.locals.customerId).agent.resolveDid(request.params.did);
-				return response.status(StatusCodes.OK).json(did);
+			if (request.params.didUrl) {
+				const [contentType, body] = await new Identity(response.locals.customerId).agent.resolve(request.params.didUrl)
+				return response.setHeader("Content-Type", contentType).status(200).send(body);
+			} else {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: "The DIDUrl parameter is empty."
+				})
 			}
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
