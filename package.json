@@ -94,7 +94,7 @@
 		"@types/express-session": "^1.17.7",
 		"@types/helmet": "^4.0.0",
 		"@types/json-stringify-safe": "^5.0.0",
-		"@types/node": "^20.4.2",
+		"@types/node": "^20.4.3",
 		"@types/secp256k1": "^4.0.3",
 		"@types/swagger-jsdoc": "^6.0.1",
 		"@types/swagger-ui-express": "^4.1.3",
