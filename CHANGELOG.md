@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.0-develop.2](https://github.com/cheqd/credential-service/compare/2.8.0-develop.1...2.8.0-develop.2) (2023-08-14)
+
+
+### Bug Fixes
+
+* Swagger UI fixes and other small tech debts [DEV-3121] ([#339](https://github.com/cheqd/credential-service/issues/339)) ([d7b3daa](https://github.com/cheqd/credential-service/commit/d7b3daa0e2f0d7b6958124c93099561b353a0f5d))
+
 ## [2.8.0-develop.1](https://github.com/cheqd/credential-service/compare/2.7.0...2.8.0-develop.1) (2023-08-10)
 
 ### Features

@@ -18,7 +18,7 @@ export class DidAuthHandler extends AbstractAuthHandler {
 	}
 
 	public async handle(request: Request, response: Response): Promise<IAuthResponse> {
-		if (!request.path.includes('/did')) {
+		if (!request.path.includes('/did/')) {
 			return super.handle(request, response);
 		}
 		return this.commonPermissionCheck(request);
