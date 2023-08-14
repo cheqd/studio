@@ -19,13 +19,6 @@ export class DefaultIdentity extends AbstractIdentity {
 		return Veramo.instance.resolve(didUrl)
 	}
 
-	async resourceList(did: string): Promise<any> {
-		return (await fetch(`${process.env.RESOLVER_URL}/${did}/metadata`)).json()
-	}
-	async getResource(did: string, resourceId: string): Promise<[string, string]> {
-		return fetchResponseBody(`${process.env.RESOLVER_URL}/${did}/resources/${resourceId}`)
-	}
-
 	verifyCredential(credential: VerifiableCredential | string, verificationOptions: VerificationOptions, agentId?: string): Promise<IVerifyResult> {
 		return Veramo.instance.verifyCredential(this.initAgent(), credential, verificationOptions)
 	}

@@ -76,12 +76,6 @@ export function verifyHookSignature(signingKey: string, rawBody: string, expecte
 	return signature === expectedSignature;
 }
 
-export async function fetchResponseBody(url: string): Promise<[string, string]> {
-	const response = await fetch(url)
-	const body = await response.arrayBuffer()
-	return [response.headers.get("content-type")!, new TextDecoder().decode(body)]
-}
-
 export function getQueryParams(queryParams: QueryString.ParsedQs) {
 	// Convert the query parameters object to a single string in text format
 	const queryParamsText = Object.keys(queryParams)
