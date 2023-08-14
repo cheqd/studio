@@ -507,57 +507,6 @@ export class IssuerController {
 	/**
 	 * @openapi
 	 * 
-	 * /resource/list/{did}:
-	 *   get:
-	 *     tags: [ Resource ]
-	 *     summary: Get a DID-Linked Resource List.
-	 *     description: This endpoint returns the DID-Linked Resource List for a given DID identifier.
-	 *     parameters:
-	 *       - in: path
-	 *         name: did
-	 *         description: DID identifier to returns Resource List.
-	 *         schema:
-	 *           type: string
-	 *         required: true
-	 *     responses:
-	 *       200:
-	 *         description: The request was successful.
-	 *         content:
-	 *           application/json:
-	 *             schema:
-	 *               $ref: '#/components/schemas/ResourceList'
-	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
-	 *       401:
-	 *         $ref: '#/components/schemas/UnauthorizedError'
-	 *       500:
-	 *         $ref: '#/components/schemas/InternalError'
-	 */
-	public async getResourceList(request: Request, response: Response) {
-		try {
-			if (request.params.did) {
-				const didUrl = request.params.did+'?metadata=true'
-				const res = await new Identity(response.locals.customerId).agent.resolve(didUrl)
-
-				const contentType = res.headers.get("Content-Type")
-				const body = new TextDecoder().decode(await res.arrayBuffer())
-
-				return response.setHeader("Content-Type", contentType!).status(200).send(body);
-			} else {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: "The DID parameter is empty."
-				})
-			}
-		} catch (error) {
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `${error}`
-			})
-		}
-	}
-
-	/**
-	 * @openapi
-	 * 
 	 * /resource/dereferencing/{did}/{resourceId}:
 	 *   get:
 	 *     tags: [ Resource ]
