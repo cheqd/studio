@@ -143,7 +143,7 @@ class App {
 		app.post(`/did/update`, IssuerController.updateValidator, new IssuerController().updateDid);
 		app.post(`/did/deactivate/:did`, IssuerController.deactivateValidator, new IssuerController().deactivateDid);
 		app.get(`/did/list`, new IssuerController().getDids);
-		app.get(`/did/search/:didUrl`, new IssuerController().resolveDidUrl);
+		app.get(`/did/search/:did`, new IssuerController().resolveDidUrl);
 
 		// Resource API
 		app.post(`/resource/create/:did`, IssuerController.resourceValidator, new IssuerController().createResource);

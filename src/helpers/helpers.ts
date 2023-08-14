@@ -9,6 +9,7 @@ import { fromString } from 'uint8arrays';
 
 import { SpecValidationResult } from '../types/types.js';
 import { createHmac } from 'node:crypto';
+import QueryString from 'qs';
 
 export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecValidationResult {
 	// id is required, validated on both compile and runtime
@@ -79,6 +80,15 @@ export async function fetchResponseBody(url: string): Promise<[string, string]> 
 	const response = await fetch(url)
 	const body = await response.arrayBuffer()
 	return [response.headers.get("content-type")!, new TextDecoder().decode(body)]
+}
+
+export function getQueryParams(queryParams: QueryString.ParsedQs) {
+	// Convert the query parameters object to a single string in text format
+	const queryParamsText = Object.keys(queryParams)
+		.map(key => `${key}=${queryParams[key]}`)
+		.join('&');
+
+	return queryParamsText ? "?"+queryParamsText : queryParamsText;
 }
 
 export interface IDidDocOptions {

@@ -8,7 +8,7 @@ import { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/inde
 import { StatusCodes } from 'http-status-codes';
 
 import { Identity } from '../services/identity/index.js';
-import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers.js';
+import { generateDidDoc, getQueryParams, validateSpecCompliantPayload } from '../helpers/helpers.js';
 
 export class IssuerController {
 	public static createValidator = [
@@ -656,18 +656,88 @@ export class IssuerController {
 	/**
 	 * @openapi
 	 *
-	 * /did/search/{didUrl}:
+	 * /did/search/{did}:
 	 *   get:
 	 *     tags: [ DID ]
 	 *     summary: Resolve a DID Document.
 	 *     description: This endpoint resolves the latest DID Document for a given DID identifier.
 	 *     parameters:
 	 *       - in: path
-	 *         name: didUrl
+	 *         name: did
 	 *         description: DID identifier to resolve.
 	 *         schema:
 	 *           type: string
 	 *         required: true
+	 *       - in: query
+	 *         name: versionId
+	 *         description: Version.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: versionTime
+	 *         description: Created of Updated time of DID Document.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: transformKeys
+	 *         description: Can transform Verification Method into another type.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: service
+	 *         description: Redirects to Service Endpoint.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: relativeRef
+	 *         description: Addition to Service Endpoint.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: metadata
+	 *         description: Show only metadata of DID Document.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: resourceId
+	 *         description: Filter by ResourceId.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: resourceCollectionId
+	 *         description: Filter by CollectionId.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: resourceType
+	 *         description: Filter by Resource Type.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: resourceName
+	 *         description: Filter by Resource Name.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: resourceVersion
+	 *         description: Filter by Resource Version.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: resourceVersionTime
+	 *         description: Get the nearest resource by creation time.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: resourceMetadata
+	 *         description: Show only metadata of resources.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: checksum
+	 *         description: Sanity check that Checksum of resource is the same as expected.
+	 *         schema:
+	 *           type: string
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -684,17 +754,19 @@ export class IssuerController {
 	 */
 	public async resolveDidUrl(request: Request, response: Response) {
 		try {
-			if (request.params.didUrl) {
-				const res = await new Identity(response.locals.customerId).agent.resolve(request.params.didUrl)
+			if (request.params.did) {
+				const res = await new Identity(response.locals.customerId).agent.resolve(
+					request.params.didUrl+getQueryParams(request.query)
+				);
 
-				const contentType = res.headers.get("Content-Type")
-				const body = new TextDecoder().decode(await res.arrayBuffer())
+				const contentType = res.headers.get("Content-Type");
+				const body = new TextDecoder().decode(await res.arrayBuffer());
 
 				return response.setHeader("Content-Type", contentType!).status(200).send(body);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: "The DIDUrl parameter is empty."
-				})
+				});
 			}
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

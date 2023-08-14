@@ -863,7 +863,7 @@
         }
       }
     },
-    "/did/search/{didUrl}": {
+    "/did/search/{did}": {
       "get": {
         "tags": [
           "DID"
@@ -873,12 +873,124 @@
         "parameters": [
           {
             "in": "path",
-            "name": "didUrl",
+            "name": "did",
             "description": "DID identifier to resolve.",
             "schema": {
               "type": "string"
             },
             "required": true
+          },
+          {
+            "in": "query",
+            "name": "versionId",
+            "description": "Version.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "versionTime",
+            "description": "Created of Updated time of DID Document.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "transformKeys",
+            "description": "Can transform Verification Method into another type.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "service",
+            "description": "Redirects to Service Endpoint.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "relativeRef",
+            "description": "Addition to Service Endpoint.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "metadata",
+            "description": "Show only metadata of DID Document.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resourceId",
+            "description": "Filter by ResourceId.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resourceCollectionId",
+            "description": "Filter by CollectionId.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resourceType",
+            "description": "Filter by Resource Type.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resourceName",
+            "description": "Filter by Resource Name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resourceVersion",
+            "description": "Filter by Resource Version.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resourceVersionTime",
+            "description": "Get the nearest resource by creation time.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resourceMetadata",
+            "description": "Show only metadata of resources.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "checksum",
+            "description": "Sanity check that Checksum of resource is the same as expected.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
