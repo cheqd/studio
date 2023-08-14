@@ -739,47 +739,6 @@
         }
       }
     },
-    "/resource/list/{did}": {
-      "get": {
-        "tags": [
-          "Resource"
-        ],
-        "summary": "Get a DID-Linked Resource List.",
-        "description": "This endpoint returns the DID-Linked Resource List for a given DID identifier.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "did",
-            "description": "DID identifier to returns Resource List.",
-            "schema": {
-              "type": "string"
-            },
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResourceList"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
     "/resource/dereferencing/{did}/{resourceId}": {
       "get": {
         "tags": [
