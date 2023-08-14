@@ -24,20 +24,11 @@ export const VERIDA_CREDENTIAL_RECORD_SCHEMA = 'https://common.schemas.verida.io
 // Map for path and required user scope for that action
 export const configLogToExpress = {
 	endpoint:
-		LOGTO_ENDPOINT ||
-		(function () {
-			throw new Error('LOGTO_ENDPOINT is not defined');
-		})(),
+		LOGTO_ENDPOINT || '',
 	appId:
-		LOGTO_APP_ID ||
-		(function () {
-			throw new Error('LOGTO_APP_ID is not defined');
-		})(),
+		LOGTO_APP_ID || '',
 	appSecret:
-		LOGTO_APP_SECRET ||
-		(function () {
-			throw new Error('LOGTO_APP_SECRET is not defined');
-		})(),
+		LOGTO_APP_SECRET || '',
 	baseUrl:
 		APPLICATION_BASE_URL ||
 		(function () {
