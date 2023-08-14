@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-const { LOGTO_ENDPOINT, LOGTO_APP_ID, LOGTO_APP_SECRET, APPLICATION_BASE_URL } = process.env;
+const { LOGTO_ENDPOINT, LOGTO_APP_ID, LOGTO_APP_SECRET, APPLICATION_BASE_URL, ENABLE_AUTHENTICATION } = process.env;
 
 export const HEADERS = {
 	json: { 'Content-Type': 'application/json' },
@@ -24,11 +24,23 @@ export const VERIDA_CREDENTIAL_RECORD_SCHEMA = 'https://common.schemas.verida.io
 // Map for path and required user scope for that action
 export const configLogToExpress = {
 	endpoint:
-		LOGTO_ENDPOINT || '',
+		LOGTO_ENDPOINT ||
+		(function () {
+			if (ENABLE_AUTHENTICATION === 'true') throw new Error('LOGTO_ENDPOINT is not defined');
+			return ''
+		})(),
 	appId:
-		LOGTO_APP_ID || '',
+		LOGTO_APP_ID ||
+		(function () {
+			if (ENABLE_AUTHENTICATION === 'true') throw new Error('LOGTO_APP_ID is not defined');
+			return ''
+		})(),
 	appSecret:
-		LOGTO_APP_SECRET || '',
+		LOGTO_APP_SECRET ||
+		(function () {
+			if (ENABLE_AUTHENTICATION === 'true') throw new Error('LOGTO_APP_SECRET is not defined');
+			return ''
+		})(),
 	baseUrl:
 		APPLICATION_BASE_URL ||
 		(function () {
