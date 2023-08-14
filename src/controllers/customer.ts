@@ -179,18 +179,16 @@ export class AccountController {
 		// 3. Check the token balance for Testnet account
 		if (customer.address && process.env.FAUCET_ENABLED === 'true') {
 			const balances = await checkBalance(customer.address, process.env.TESTNET_RPC_URL);
-			if (balances.length === 0) {
-				const balance = balances[0];
-				if (!balance || +balance.amount < process.env.TESTNET_MINIMUM_BALANCE) {
-					// 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
-					const resp = await FaucetHelper.delegateTokens(customer.address);
-					if (resp.status !== StatusCodes.OK) {
-						return response.status(StatusCodes.BAD_GATEWAY).json({
-							error: resp.error,
-						});
-					}
-				}
-			}
+            const balance = balances[0];
+            if (!balance || +balance.amount < process.env.TESTNET_MINIMUM_BALANCE) {
+                // 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
+                const resp = await FaucetHelper.delegateTokens(customer.address);
+                if (resp.status !== StatusCodes.OK) {
+                    return response.status(StatusCodes.BAD_GATEWAY).json({
+                        error: resp.error,
+                    });
+                }
+            }
 		}
 		return response.status(StatusCodes.OK).json({});
 	}
