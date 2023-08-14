@@ -88,7 +88,7 @@ export function getQueryParams(queryParams: QueryString.ParsedQs) {
 		.map(key => `${key}=${queryParams[key]}`)
 		.join('&');
 
-	return queryParamsText ? "?"+queryParamsText : queryParamsText;
+	return queryParamsText.length == 0 ? queryParamsText : "?"+queryParamsText;
 }
 
 export interface IDidDocOptions {

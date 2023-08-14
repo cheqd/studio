@@ -901,7 +901,12 @@
             "name": "transformKeys",
             "description": "Can transform Verification Method into another type.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "Ed25519VerificationKey2018",
+                "Ed25519VerificationKey2020",
+                "JsonWebKey2020"
+              ]
             }
           },
           {
@@ -925,7 +930,7 @@
             "name": "metadata",
             "description": "Show only metadata of DID Document.",
             "schema": {
-              "type": "string"
+              "type": "boolean"
             }
           },
           {
@@ -981,7 +986,7 @@
             "name": "resourceMetadata",
             "description": "Show only metadata of resources.",
             "schema": {
-              "type": "string"
+              "type": "boolean"
             }
           },
           {

@@ -683,6 +683,7 @@ export class IssuerController {
 	 *         description: Can transform Verification Method into another type.
 	 *         schema:
 	 *           type: string
+	 *           enum: [Ed25519VerificationKey2018, Ed25519VerificationKey2020, JsonWebKey2020]
 	 *       - in: query
 	 *         name: service
 	 *         description: Redirects to Service Endpoint.
@@ -697,7 +698,7 @@ export class IssuerController {
 	 *         name: metadata
 	 *         description: Show only metadata of DID Document.
 	 *         schema:
-	 *           type: string
+	 *           type: boolean
 	 *       - in: query
 	 *         name: resourceId
 	 *         description: Filter by ResourceId.
@@ -732,7 +733,7 @@ export class IssuerController {
 	 *         name: resourceMetadata
 	 *         description: Show only metadata of resources.
 	 *         schema:
-	 *           type: string
+	 *           type: boolean
 	 *       - in: query
 	 *         name: checksum
 	 *         description: Sanity check that Checksum of resource is the same as expected.
@@ -756,7 +757,7 @@ export class IssuerController {
 		try {
 			if (request.params.did) {
 				const res = await new Identity(response.locals.customerId).agent.resolve(
-					request.params.didUrl+getQueryParams(request.query)
+					request.params.did+getQueryParams(request.query)
 				);
 
 				const contentType = res.headers.get("Content-Type");
