@@ -39,6 +39,8 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 	public async commonPermissionCheck(request: Request): Promise<IAuthResponse> {
 		// Reset all variables
 		this.reset();
+		// setting up namespace. It should be testnet or mainnet
+        this.namespace = AbstractAuthHandler.getNamespaceFromRequest(request)
 		// Firstly - try to find the rule for the request
 		const rule = this.findRule(request.path, request.method, this.getNamespace());
 
