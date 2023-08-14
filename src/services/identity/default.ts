@@ -3,7 +3,6 @@ import { DIDResolutionResult, IVerifyResult, VerifiableCredential, VerifiablePre
 import { CheckStatusListOptions, VerificationOptions } from "../../types/types";
 import { StatusCheckResult } from "@cheqd/did-provider-cheqd/build/types/agent/ICheqd";
 import { Veramo } from "./agent.js";
-import { fetchResponseBody } from "../../helpers/helpers.js";
 
 export class DefaultIdentity extends AbstractIdentity {
 	constructor() {

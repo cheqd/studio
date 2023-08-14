@@ -54,7 +54,6 @@ import {
 	ResourceMetadata,
 } from '../../types/types.js';
 import { VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js';
-import { fetchResponseBody } from '../../helpers/helpers.js';
 
 const resolverUrl = 'https://resolver.cheqd.net/1.0/identifiers/';
 
