@@ -120,7 +120,7 @@ class App {
 		app.post(
 			'/credential-status/publish',
 			RevocationController.commonValidator,
-			new RevocationController().createStatusList
+			new RevocationController().publishStatusList
 		);
 		app.post(
 			'/credential-status/check',

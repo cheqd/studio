@@ -336,6 +336,13 @@ export class RevocationController {
 	 *             - revoke
 	 *             - suspend
 	 *             - reinstate
+     *       - in: query
+	 *         name: publish
+	 *         description: Publish the status list to the DID network. The default is `false`, which means the status list is not published to the DID network.
+	 *         required: true
+	 *         schema:
+	 *           type: boolean
+	 *           default: false
 	 *       - in: query
 	 *         name: encrypted
 	 *         description: Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied. When publishing a new version, this should match the original property.

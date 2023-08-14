@@ -1,9 +1,6 @@
 /**
  * @openapi
  *
- * host: credential-service.cheqd.net
- * schemes:
- *  - https
  * components:
  *   schemas:
  *     CredentialRequest:
@@ -384,8 +381,8 @@
  *                      type: string
  *       example:
  *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
- *         name: cheqd-employee-credentials
- *         version: '2023'
+ *         statusListName: cheqd-employee-credentials
+ *         statusListVersion: '2023'
  *         data: H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA
  *         encoding: base64url
  *     CredentialStatusUpdateRequest:

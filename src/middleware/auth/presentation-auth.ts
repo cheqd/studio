@@ -9,7 +9,7 @@ export class PresentationAuthHandler extends AbstractAuthHandler {
 		this.registerRoute('/presentation/verify', 'POST', '', { allowUnauthorized: true, skipNamespace: true });
 	}
 	public async handle(request: Request, response: Response): Promise<IAuthResponse> {
-		if (!request.path.includes('/presentation')) {
+		if (!request.path.includes('/presentation/')) {
 			return super.handle(request, response);
 		}
 		return this.commonPermissionCheck(request);
