@@ -257,7 +257,7 @@ export class IssuerController {
 				if (serviceEndpoint) {
 					didDocument.service = [
 						{
-							id: didDocument.id+"#"+serviceId,
+							id: `${didDocument.id}#${serviceId}`,
 							type: serviceType,
 							serviceEndpoint: [serviceEndpoint],
 						},
