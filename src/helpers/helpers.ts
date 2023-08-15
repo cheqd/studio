@@ -13,7 +13,7 @@ import { createHmac } from 'node:crypto';
 export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecValidationResult {
 	if (didDocument) {
 		// id is required, validated on both compile and runtime
-		if (!didDocument.id && !didDocument.id.startsWith('did:cheqd:')) return { valid: false, error: 'id is required' };
+		if (didDocument.id?.startsWith('did:cheqd:')) return { valid: false, error: 'id is required' };
 
 		// verificationMethod is required
 		if (!didDocument.verificationMethod) return { valid: false, error: 'verificationMethod is required' };
@@ -32,7 +32,7 @@ export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecVali
 
 		if (!isValidService(didDocument)) return { valid: false, error: 'Service is Invalid' };
 	}
-
+	
 	return { valid: true } as SpecValidationResult;
 }
 
