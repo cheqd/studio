@@ -50,7 +50,7 @@ export const configLogToExpress = {
 	fetchUserInfo: true,
 };
 
-export const DEFAULT_FAUCET_DENOM = process.env.FAUCET_DENOM || 'ncheq';
-export const DEFAULT_FAUCET_URI = process.env.FAUCET_URI || 'https://faucet-api.cheqd.network/credit';
-// Amount for creating DID
-export const TESTNET_MINIMUM_BALANCE = process.env.TESTNET_MINIMUM_BALANCE || 50000000000;
+export const DEFAULT_FAUCET_DENOM = 'ncheq';
+export const FAUCET_URI = process.env.FAUCET_URI || 'https://faucet-api.cheqd.network/credit';
+export const DEFAULT_DENOM_EXPONENT = 9;
+export const TESTNET_MINIMUM_BALANCE = process.env.TESTNET_MINIMUM_BALANCE || 1000;

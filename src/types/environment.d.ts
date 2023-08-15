@@ -49,10 +49,9 @@ declare global {
 			ISSUER_DID: string;
 
 			// Faucet
-			FAUCET_ENABLED: string | 'false';
+			ENABLE_ACCOUNT_TOPUP: string | 'false';
 			FAUCET_URI: string | 'https://faucet-api.cheqd.network/credit';
-			FAUCET_DENOM: string | 'ncheq';
-			TESTNET_MINIMUM_BALANCE: number | 50000000000;
+			TESTNET_MINIMUM_BALANCE: number | 1000;
 		}
 	}
 

@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { checkBalance } from '@cheqd/sdk';
-
+import { TESTNET_MINIMUM_BALANCE, DEFAULT_DENOM_EXPONENT } from '../types/constants.js';
 import { CustomerService } from '../services/customer.js';
 import { LogToHelper } from '../middleware/auth/logto.js';
 import { FaucetHelper } from '../helpers/faucet.js';
@@ -39,7 +39,7 @@ export class AccountController {
 				});
 			}
 			// Send some tokens for testnet
-			if (process.env.FAUCET_ENABLED === 'true') {
+			if (process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
 				const resp = await FaucetHelper.delegateTokens(customer.address);
 				if (resp.status !== StatusCodes.OK) {
 					return response.status(resp.status).json({
@@ -177,10 +177,10 @@ export class AccountController {
 		}
 
 		// 3. Check the token balance for Testnet account
-		if (customer.address && process.env.FAUCET_ENABLED === 'true') {
+		if (customer.address && process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
 			const balances = await checkBalance(customer.address, process.env.TESTNET_RPC_URL);
             const balance = balances[0];
-            if (!balance || +balance.amount < process.env.TESTNET_MINIMUM_BALANCE) {
+            if (!balance || +balance.amount < (TESTNET_MINIMUM_BALANCE * Math.pow(10, DEFAULT_DENOM_EXPONENT))) {
                 // 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
                 const resp = await FaucetHelper.delegateTokens(customer.address);
                 if (resp.status !== StatusCodes.OK) {

@@ -99,11 +99,9 @@ By default, `ENABLE_AUTHENTICATION` is set to off/`false`. To enable external Ve
 This section describes bootstrapping things for newcomers accounts. If it's enabled the CredentialService auto-populates
 some tokens on the testnet for making the process simpler.
 
-1. `FAUCET_ENABLED` - enable/disable such functionality (`false` by default)
+1. `ENABLE_ACCOUNT_TOPUP` - enable/disable such functionality (`false` by default)
 2. `FAUCET_URI` - URI when the faucet service is located (`https://faucet-api.cheqd.network/credit` by default)
-3. `FAUCET_DENOM` - the denom of token to assign (`ncheq` by default)
-4. `TESTNET_MINIMUM_BALANCE` - the minimum amount of tokens for being on testnet account. Be default it's amount,
-   required for creating a DID
+3. `TESTNET_MINIMUM_BALANCE`: Minimum balance on account before it is automatically topped up from the faucet. This value should be expressed as an integer in `CHEQ` tokens, which will then be converted in the background to `ncheq` denomination. Account balance check is carried out on every account creation/login. (Default: 10,000 CHEQ testnet tokens)
 
 ### 3rd Party Connectors
 
