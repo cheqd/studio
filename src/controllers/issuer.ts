@@ -13,7 +13,7 @@ import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers
 export class IssuerController {
 	public static createValidator = [
 		check('didDocument')
-			.optional()
+			.optional({nullable: true})
 			.isObject()
 			.custom((value) => {
 				const { valid } = validateSpecCompliantPayload(value);

@@ -431,6 +431,7 @@
  *     DidDocument:
  *       description: This input field contains either a complete DID document, or an incremental change (diff) to a DID document. See <a href="https://identity.foundation/did-registration/#diddocument">Universal DID Registrar specification</a>.
  *       type: object
+ *       nullable: true
  *       properties:
  *         '@context':
  *           type: array
@@ -470,7 +471,7 @@
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/Service'
- *       example: {}
+ *       example: null
  *     DidCreateRequest:
  *       type: object
  *       properties:

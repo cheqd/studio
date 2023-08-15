@@ -11,25 +11,28 @@ import { SpecValidationResult } from '../types/types.js';
 import { createHmac } from 'node:crypto';
 
 export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecValidationResult {
-	// id is required, validated on both compile and runtime
-	if (!didDocument.id && !didDocument.id.startsWith('did:cheqd:')) return { valid: false, error: 'id is required' };
+	if (didDocument) {
+		// id is required, validated on both compile and runtime
+		if (!didDocument.id && !didDocument.id.startsWith('did:cheqd:')) return { valid: false, error: 'id is required' };
 
-	// verificationMethod is required
-	if (!didDocument.verificationMethod) return { valid: false, error: 'verificationMethod is required' };
+		// verificationMethod is required
+		if (!didDocument.verificationMethod) return { valid: false, error: 'verificationMethod is required' };
 
-	// verificationMethod must be an array
-	if (!Array.isArray(didDocument.verificationMethod))
-		return { valid: false, error: 'verificationMethod must be an array' };
+		// verificationMethod must be an array
+		if (!Array.isArray(didDocument.verificationMethod))
+			return { valid: false, error: 'verificationMethod must be an array' };
 
-	// verificationMethod must be not be empty
-	if (!didDocument.verificationMethod.length)
-		return { valid: false, error: 'verificationMethod must be not be empty' };
+		// verificationMethod must be not be empty
+		if (!didDocument.verificationMethod.length)
+			return { valid: false, error: 'verificationMethod must be not be empty' };
 
-	// verificationMethod types must be supported
-	if (!isValidVerificationMethod(didDocument))
-		return { valid: false, error: 'verificationMethod publicKey is Invalid' };
+		// verificationMethod types must be supported
+		if (!isValidVerificationMethod(didDocument))
+			return { valid: false, error: 'verificationMethod publicKey is Invalid' };
 
-	if (!isValidService(didDocument)) return { valid: false, error: 'Service is Invalid' };
+		if (!isValidService(didDocument)) return { valid: false, error: 'Service is Invalid' };
+	}
+
 	return { valid: true } as SpecValidationResult;
 }
 
