@@ -565,7 +565,9 @@
  *       type: object
  *       properties:
  *         did:
+ *           description: DID identifier to be updated.
  *           type: string
+ *           example: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
  *         service:
  *           type: array
  *           description: Service section of the DID Document.
@@ -666,8 +668,10 @@
  *       properties:
  *         customerId:
  *           type: string
+ *           example: 6w5drpiiwhhs
  *         address:
  *           type: string
+ *           example: cheqd1wgsvqwlkmdp60f4dek26ak0sjw6au3ytd3pz7f
  *     InvalidRequest:
  *       description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
  *       type: object
