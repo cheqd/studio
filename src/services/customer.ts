@@ -19,7 +19,7 @@ export class CustomerService {
 
 	public async create(customerId: string) {
 		if (await this.find(customerId, {})) {
-			throw new Error('Customer exists');
+			throw new Error('Cannot create a new customer since the user is already associated with a Customer ID');
 		}
 		const kid = (await new Identity(customerId).agent.createKey('Secp256k1', customerId)).kid;
 		const address = getCosmosAccount(kid);
