@@ -5,6 +5,5 @@
 	"proseWrap": "always",
 	"semi": true,
 	"singleQuote": true,
-	"trailingComma": "es5",
-	"pluginSearchDirs": ["."]
+	"trailingComma": "es5"
 }

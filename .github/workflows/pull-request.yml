@@ -1,48 +1,48 @@
-name: "PR Title Check"
+name: 'PR Title Check'
 on:
-  pull_request_target:
-    branches:
-      - main
-      - develop
-    types:
-      - opened
-      - reopened
-      - edited
-      - synchronize
-      - ready_for_review
-      - review_requested
+    pull_request_target:
+        branches:
+            - main
+            - develop
+        types:
+            - opened
+            - reopened
+            - edited
+            - synchronize
+            - ready_for_review
+            - review_requested
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
 
 jobs:
-  lint-pr:
-    name: "PR format check"
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v3
+    lint-pr:
+        name: 'PR format check'
+        runs-on: ubuntu-latest
 
-      - uses: amannn/action-semantic-pull-request@v5.2.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          # Configure which types are allowed (newline delimited).
-          # Default: https://github.com/commitizen/conventional-commit-types
-          types: |
-            feat
-            fix
-            build
-            chore
-            ci
-            docs
-            feat
-            fix
-            perf
-            refactor
-            revert
-            style
-            test
-            security
-          # Configure that a scope must always be provided.
-          requireScope: false
+        steps:
+            - uses: actions/checkout@v3
+
+            - uses: amannn/action-semantic-pull-request@v5.2.0
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  # Configure which types are allowed (newline delimited).
+                  # Default: https://github.com/commitizen/conventional-commit-types
+                  types: |
+                      feat
+                      fix
+                      build
+                      chore
+                      ci
+                      docs
+                      feat
+                      fix
+                      perf
+                      refactor
+                      revert
+                      style
+                      test
+                      security
+                  # Configure that a scope must always be provided.
+                  requireScope: false

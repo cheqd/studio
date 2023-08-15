@@ -1,46 +1,46 @@
-name: "Staging"
+name: 'Staging'
 on:
-  workflow_call:
+    workflow_call:
 defaults:
-  run:
-    shell: bash
+    run:
+        shell: bash
 
 jobs:
-  deploy-staging:
-    name: "Staging Deploy"
-    runs-on: ubuntu-latest
-    env: 
-      IMAGE_NAME: ${{ github.repository }}
-    environment: 
-      name: staging
-      url: https://credential-service-staging.cheqd.net
+    deploy-staging:
+        name: 'Staging Deploy'
+        runs-on: ubuntu-latest
+        env:
+            IMAGE_NAME: ${{ github.repository }}
+        environment:
+            name: staging
+            url: https://credential-service-staging.cheqd.net
 
-    steps:
-      - name: Install DigitalOcean CLI
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+        steps:
+            - name: Install DigitalOcean CLI
+              uses: digitalocean/action-doctl@v2
+              with:
+                  token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-      - name: Login to DOCR
-        run: doctl registry login --expiry-seconds 600
-      
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+            - name: Login to DOCR
+              run: doctl registry login --expiry-seconds 600
 
-      - name: Download docker image
-        uses: actions/download-artifact@v3
-        with:
-          name: credential-service-staging
+            - name: Login to GitHub Container Registry
+              uses: docker/login-action@v2
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Load Docker image
-        run: docker image load --input credential-service-staging.tar
+            - name: Download docker image
+              uses: actions/download-artifact@v3
+              with:
+                  name: credential-service-staging
 
-      - name: Push image to GitHub Container Registry
-        run: docker image push --all-tags ghcr.io/${{ env.IMAGE_NAME }}
+            - name: Load Docker image
+              run: docker image load --input credential-service-staging.tar
 
-      - name: Push images to DOCR
-        run: docker image push --all-tags registry.digitalocean.com/${{ env.IMAGE_NAME }}
+            - name: Push image to GitHub Container Registry
+              run: docker image push --all-tags ghcr.io/${{ env.IMAGE_NAME }}
+
+            - name: Push images to DOCR
+              run: docker image push --all-tags registry.digitalocean.com/${{ env.IMAGE_NAME }}
