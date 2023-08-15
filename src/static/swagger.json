@@ -837,7 +837,8 @@
             "schema": {
               "type": "string"
             },
-            "required": true
+            "required": true,
+            "example": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
           },
           {
             "in": "query",
@@ -864,7 +865,8 @@
             "schema": {
               "type": "string",
               "format": "date-time"
-            }
+            },
+            "example": "1970-01-01T00:00:00Z"
           },
           {
             "in": "query",
@@ -909,11 +911,12 @@
           },
           {
             "in": "query",
-            "name": "resourceCollectionId",
-            "description": "Filter by CollectionId.",
+            "name": "resourceName",
+            "description": "Filter a DID-Linked Resource query by Resource Name. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "Cheqd Issuer Logo"
           },
           {
             "in": "query",
@@ -923,15 +926,6 @@
               "type": "string"
             },
             "example": "IssuerLogo"
-          },
-          {
-            "in": "query",
-            "name": "resourceName",
-            "description": "Filter a DID-Linked Resource query by Resource Name. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
-            "schema": {
-              "type": "string"
-            },
-            "example": "Cheqd Issuer Logo"
           },
           {
             "in": "query",
