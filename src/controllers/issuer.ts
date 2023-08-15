@@ -609,7 +609,7 @@ export class IssuerController {
 	 *   get:
 	 *     tags: [ DID ]
 	 *     summary: Resolve a DID Document.
-	 *     description: This endpoint resolves the latest DID Document for a given DID identifier.
+	 *     description: Resolve a DID Document by DID identifier. Also supports DID Resolution Queries as defined in the <a href="https://w3c-ccg.github.io/did-resolution/">W3C DID Resolution specification</a>.
 	 *     parameters:
 	 *       - in: path
 	 *         name: did
@@ -618,41 +618,51 @@ export class IssuerController {
 	 *           type: string
 	 *         required: true
 	 *       - in: query
-	 *         name: versionId
-	 *         description: Version.
-	 *         schema:
-	 *           type: string
-	 *       - in: query
-	 *         name: versionTime
-	 *         description: Created of Updated time of DID Document.
-	 *         schema:
-	 *           type: string
-	 *       - in: query
-	 *         name: transformKeys
-	 *         description: Can transform Verification Method into another type.
-	 *         schema:
-	 *           type: string
-	 *           enum: [Ed25519VerificationKey2018, Ed25519VerificationKey2020, JsonWebKey2020]
-	 *       - in: query
-	 *         name: service
-	 *         description: Redirects to Service Endpoint.
-	 *         schema:
-	 *           type: string
-	 *       - in: query
-	 *         name: relativeRef
-	 *         description: Addition to Service Endpoint.
-	 *         schema:
-	 *           type: string
-	 *       - in: query
 	 *         name: metadata
-	 *         description: Show only metadata of DID Document.
+	 *         description: Return only metadata of DID Document instead of actual DID Document.
 	 *         schema:
 	 *           type: boolean
 	 *       - in: query
-	 *         name: resourceId
-	 *         description: Filter by ResourceId.
+	 *         name: versionId
+	 *         description: Unique UUID version identifier of DID Document. Allows for fetching a specific version of the DID Document. See <a href="https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#did-document-metadata">cheqd DID Method Specification</a> for more details.
 	 *         schema:
 	 *           type: string
+	 *           format: uuid
+	 *         example: 3ccde6ba-6ba5-56f2-9f4f-8825561a9860
+	 *       - in: query
+	 *         name: versionTime
+	 *         description: Returns the closest version of the DID Document *at* or *before* specified time. See <a href="https://docs.cheqd.io/identity/architecture/adr-list/adr-005-did-resolution-and-did-url-dereferencing">DID Resolution handling for `did:cheqd`</a> for more details.
+	 *         schema:
+	 *           type: string
+	 *           format: date-time
+	 *       - in: query
+	 *         name: transformKeys
+	 *         description: This directive transforms the Verification Method key format from the version in the DID Document to the specified format chosen below.
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - Ed25519VerificationKey2018 
+	 *             - Ed25519VerificationKey2020
+	 *             - JsonWebKey2020
+	 *       - in: query
+	 *         name: service
+	 *         description: Query DID Document for a specific Service Endpoint by Service ID (e.g., `service-1` in `did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1`). This will typically redirect to the Service Endpoint based on <a href="https://w3c-ccg.github.io/did-resolution/#dereferencing">DID Resolution specification</a> algorithm.
+	 *         schema:
+	 *           type: string
+	 *         example: service-1
+	 *       - in: query
+	 *         name: relativeRef
+	 *         description: Relative reference is a query fragment appended to the Service Endpoint URL. **Must** be used along with the `service` query property above. See <a href="https://w3c-ccg.github.io/did-resolution/#dereferencing">DID Resolution specification</a> algorithm for more details.
+	 *         schema:
+	 *           type: string
+	 *         example: /path/to/resource
+	 *       - in: query
+	 *         name: resourceId
+	 *         description: Fetch a DID-Linked Resource by Resource ID unique identifier. Since this is a unique identifier, other Resource query parameters are not required. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
+	 *         schema:
+	 *           type: string
+	 *           format: uuid
+	 *         example: 3ccde6ba-6ba5-56f2-9f4f-8825561a9860
 	 *       - in: query
 	 *         name: resourceCollectionId
 	 *         description: Filter by CollectionId.
@@ -660,34 +670,39 @@ export class IssuerController {
 	 *           type: string
 	 *       - in: query
 	 *         name: resourceType
-	 *         description: Filter by Resource Type.
+	 *         description: Filter a DID-Linked Resource query by Resource Type. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
 	 *         schema:
 	 *           type: string
+	 *         example: IssuerLogo
 	 *       - in: query
 	 *         name: resourceName
-	 *         description: Filter by Resource Name.
+	 *         description: Filter a DID-Linked Resource query by Resource Name. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
 	 *         schema:
 	 *           type: string
+	 *         example: Cheqd Issuer Logo
 	 *       - in: query
 	 *         name: resourceVersion
-	 *         description: Filter by Resource Version.
+	 *         description: Filter a DID-Linked Resource query by Resource Version, which is an optional free-text field used by issuers (e.g., "v1", "Final Version", "1st January 1970" etc). See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
 	 *         schema:
 	 *           type: string
 	 *       - in: query
 	 *         name: resourceVersionTime
-	 *         description: Get the nearest resource by creation time.
+	 *         description: Filter a DID-Linked Resource query which returns the closest version of the Resource *at* or *before* specified time. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
 	 *         schema:
 	 *           type: string
+	 *           format: date-time
+	 *         example: 1970-01-01T00:00:00Z
 	 *       - in: query
 	 *         name: resourceMetadata
-	 *         description: Show only metadata of resources.
+	 *         description: Return only metadata of DID-Linked Resource instead of actual DID-Linked Resource. Mutually exclusive with some of the other parameters.
 	 *         schema:
 	 *           type: boolean
 	 *       - in: query
 	 *         name: checksum
-	 *         description: Sanity check that Checksum of resource is the same as expected.
+	 *         description: Request integrity check against a given DID-Linked Resource by providing a SHA-256 checksum hash. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
 	 *         schema:
 	 *           type: string
+	 *         example: dc64474d062ed750a66bad58cb609928de55ed0d81defd231a4a4bf97358e9ed
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
