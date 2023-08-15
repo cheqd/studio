@@ -9,10 +9,13 @@ export const HEADERS = {
 
 // Application constants
 export const APPLICATION_BASE_URL = process.env.APPLICATION_BASE_URL || 'http://localhost:3000';
+export const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL || 'https://rpc.cheqd.net:443';
 export const CORS_ALLOWED_ORIGINS = process.env.CORS_ALLOWED_ORIGINS || APPLICATION_BASE_URL;
 
 // LogTo contants
 const { LOGTO_ENDPOINT, LOGTO_APP_ID, LOGTO_APP_SECRET, ENABLE_AUTHENTICATION } = process.env;
+
+export const LOGTO_MANAGEMENT_API = process.env.LOGTO_MANAGEMENT_API || 'https://default.logto.app/api';
 
 export const configLogToExpress = {
 	endpoint:
