@@ -485,25 +485,26 @@
  *       type: object
  *       properties:
  *         network:
+ *           description: Network to create the DID on (testnet or mainnet)
  *           type: string
  *           enum:
  *             - testnet
  *             - mainnet
  *         methodSpecificIdAlgo:
+ *           description: Algorithm to use for generating the method-specific ID. The two styles supported are UUIDs and Indy-style Base58. See <a href="https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#cheqd-did-method-did-cheqd">cheqd DID method documentation</a> for more details.
  *           type: string
  *           enum:
  *             - uuid
  *             - base58btc
  *         verificationMethodType:
+ *           description: Type of verification method to use for the DID. See <a href="https://www.w3.org/TR/did-core/#verification-methods">DID Core specification</a> for more details. Only the types listed below are supported.
  *           type: string
  *           enum:
  *             - Ed25519VerificationKey2018
  *             - JsonWebKey2020
  *             - Ed25519VerificationKey2020
- *         serviceEndpoint:
- *           type: string
  *         assertionMethod:
- *           description: An assertion method is required to issue JSON-LD credentials.
+ *           description: Usually a reference to a Verification Method. An Assertion Method is required to issue JSON-LD credentials. See <a href="https://w3c.github.io/did-core/#assertion">DID Core specification</a> for more details.
  *           type: boolean
  *           default: true
  *         didDocument:
@@ -547,16 +548,19 @@
  *       type: object
  *       properties:
  *         id:
+ *           description: DID appended with Service fragment ID (e.g., `#service-1` in `did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1`)
  *           type: string
- *           example: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#rand
+ *           example: did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1
  *         type:
+ *           description: Service type as defined in <a href="https://www.w3.org/TR/did-spec-registries/#service-types">DID Specification Registries</a>.
  *           type: string
- *           example: rand
+ *           example: LinkedDomains
  *         serviceEndpoint:
+ *           description: Service endpoint as defined in <a href="https://www.w3.org/TR/did-core/#services">DID Core Specification</a>.
  *           type: array
  *           items:
  *             type: string
- *             example: https://rand.in
+ *             example: https://example.com
  *     DidUpdateRequest:
  *       type: object
  *       properties:
