@@ -23,20 +23,24 @@ import { DIDResolverPlugin, getUniversalResolver as UniversalResolver } from '@v
 import { getResolver as VeridaResolver } from '@verida/vda-did-resolver';
 import { CredentialPlugin } from '@veramo/credential-w3c';
 import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld';
-import { Cheqd, getResolver as CheqdDidResolver, ResourcePayload } from '@cheqd/did-provider-cheqd';
+import {
+	Cheqd,
+	getResolver as CheqdDidResolver,
+	DefaultResolverUrl,
+	type ResourcePayload,
+	type ICheqdBroadcastStatusList2021Args,
+	type ICheqdCheckCredentialStatusWithStatusList2021Args,
+	type ICheqdCreateStatusList2021Args,
+	type ICheqdDeactivateIdentifierArgs,
+	type ICheqdRevokeBulkCredentialsWithStatusList2021Args,
+	type ICheqdUpdateIdentifierArgs,
+	type ICheqdVerifyCredentialWithStatusList2021Args,
+	type ICheqdVerifyPresentationWithStatusList2021Args,
+} from '@cheqd/did-provider-cheqd';
+import type { CheqdNetwork } from '@cheqd/sdk';
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key';
-import { CheqdNetwork } from '@cheqd/sdk';
 import { Resolver, ResolverRegistry } from 'did-resolver';
-import type {
-	ICheqdBroadcastStatusList2021Args,
-	ICheqdCheckCredentialStatusWithStatusList2021Args,
-	ICheqdCreateStatusList2021Args,
-	ICheqdDeactivateIdentifierArgs,
-	ICheqdRevokeBulkCredentialsWithStatusList2021Args,
-	ICheqdUpdateIdentifierArgs,
-	ICheqdVerifyCredentialWithStatusList2021Args,
-	ICheqdVerifyPresentationWithStatusList2021Args,
-} from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd';
+
 import {
 	BroadCastStatusListOptions,
 	CheckStatusListOptions,
@@ -44,6 +48,7 @@ import {
 	CreateAgentRequest,
 	CreateStatusListOptions,
 	CredentialRequest,
+	ResourceMetadata,
 	RevocationStatusOptions,
 	StatusList2021ResourceTypes,
 	StatusOptions,
@@ -51,11 +56,8 @@ import {
 	UpdateStatusListOptions,
 	VeramoAgent,
 	VerificationOptions,
-	ResourceMetadata,
-} from '../../types/types.js';
+} from '../../types/shared.js';
 import { VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js';
-
-const resolverUrl = 'https://resolver.cheqd.net/1.0/identifiers/';
 
 export class Veramo {
 	static instance = new Veramo();
@@ -193,7 +195,7 @@ export class Veramo {
 	}
 
 	async resolve(didUrl: string) : Promise<Response> {
-		return fetch(`${process.env.RESOLVER_URL || resolverUrl}/${didUrl}`)
+		return fetch(`${process.env.RESOLVER_URL || DefaultResolverUrl}/${didUrl}`)
 	}
 
 	async getDid(agent: TAgent<IDIDManager>, did: string) {

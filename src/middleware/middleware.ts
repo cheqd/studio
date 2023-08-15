@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 
 export class Middleware {
 	static async parseUrlEncodedJson(request: Request, response: Response, next: NextFunction) {

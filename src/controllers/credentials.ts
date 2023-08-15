@@ -106,7 +106,7 @@ export class CredentialController {
 				request.body,
 				response.locals.customerId
 			);
-			response.status(StatusCodes.OK).json(credential);
+			return response.status(StatusCodes.OK).json(credential);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,

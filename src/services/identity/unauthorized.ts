@@ -1,7 +1,7 @@
 import { MemoryPrivateKeyStore } from '@veramo/key-manager'
 import { KeyManagementSystem } from '@veramo/kms-local'
 
-import { DefaultRPCUrl } from '../../types/types.js'
+import { DefaultRPCUrl } from '../../types/shared.js'
 import { Connection } from '../../database/connection/connection.js'
 import { Veramo } from './agent.js'
 import { CheqdDIDProvider } from "@cheqd/did-provider-cheqd";

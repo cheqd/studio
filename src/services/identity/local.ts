@@ -1,10 +1,10 @@
-import {
+import type {
 	IIdentifier, CredentialPayload, VerifiableCredential,
   } from '@veramo/core'
   import { MemoryPrivateKeyStore } from '@veramo/key-manager'
   import { KeyManagementSystem } from '@veramo/kms-local'
   import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd'
-  import {
+  import type {
 	BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, CreateStatusList2021Result,
   } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd'
   import { CheqdNetwork } from '@cheqd/sdk'
@@ -12,7 +12,7 @@ import {
   import {
 	BroadCastStatusListOptions, CreateStatusListOptions, CredentialRequest, DefaultRPCUrl,
 	StatusOptions, UpdateStatusListOptions,
-  } from '../../types/types.js'
+  } from '../../types/shared.js'
   import { Connection } from '../../database/connection/connection.js'
   import { Veramo } from './agent.js'
   import { DefaultIdentity } from './default.js'

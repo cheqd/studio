@@ -1,4 +1,4 @@
-import { ICommonErrorResponse } from '../types/authentication.js';
+import type { ICommonErrorResponse } from '../types/authentication.js';
 import { DEFAULT_FAUCET_DENOM, DEFAULT_FAUCET_URI } from '../types/constants.js';
 
 export class FaucetHelper {

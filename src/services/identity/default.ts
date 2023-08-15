@@ -1,7 +1,7 @@
-import { AbstractIdentity } from "./IIdentity.js";
-import { DIDResolutionResult, IVerifyResult, VerifiableCredential, VerifiablePresentation } from "@veramo/core";
-import { CheckStatusListOptions, VerificationOptions } from "../../types/types";
-import { StatusCheckResult } from "@cheqd/did-provider-cheqd/build/types/agent/ICheqd";
+import { AbstractIdentity } from ".";
+import type { DIDResolutionResult, IVerifyResult, VerifiableCredential, VerifiablePresentation } from "@veramo/core";
+import type { CheckStatusListOptions, VerificationOptions } from "../../types/shared";
+import type { StatusCheckResult } from "@cheqd/did-provider-cheqd/build/types/agent/ICheqd";
 import { Veramo } from "./agent.js";
 
 export class DefaultIdentity extends AbstractIdentity {

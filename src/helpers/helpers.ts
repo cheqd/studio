@@ -1,9 +1,9 @@
 import type { DIDDocument } from 'did-resolver';
-import type { MethodSpecificIdAlgo, CheqdNetwork } from '@cheqd/sdk';
+import type { MethodSpecificIdAlgo, CheqdNetwork, TVerificationKey, TVerificationKeyPrefix } from '@cheqd/sdk';
 import { VerificationMethods, createVerificationKeys, createDidVerificationMethod, createDidPayload } from '@cheqd/sdk';
-import { SpecValidationResult } from '../types/types.js';
+import type { SpecValidationResult } from '../types/shared.js';
 import { createHmac } from 'node:crypto';
-import QueryString from 'qs';
+import type QueryString from 'qs';
 
 export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecValidationResult {
 	// id is required, validated on both compile and runtime
@@ -81,7 +81,7 @@ export function getQueryParams(queryParams: QueryString.ParsedQs) {
 
 export interface IDidDocOptions {
 	verificationMethod: VerificationMethods;
-	verificationMethodId: any;
+	verificationMethodId: TVerificationKey<TVerificationKeyPrefix, number>;
 	methodSpecificIdAlgo: MethodSpecificIdAlgo;
 	network: CheqdNetwork;
 	publicKey: string;

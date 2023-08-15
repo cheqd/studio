@@ -1,4 +1,4 @@
-import {
+import type {
 	CredentialPayload, DIDDocument, IIdentifier, IVerifyResult, ManagedKeyInfo,
 	VerifiableCredential, VerifiablePresentation,
 } from '@veramo/core'
@@ -10,19 +10,19 @@ import {
 	BroadCastStatusListOptions, CheckStatusListOptions, cheqdDidRegex, CreateStatusListOptions,
 	CredentialRequest, DefaultRPCUrl, StatusOptions, UpdateStatusListOptions, VeramoAgent,
 	VerificationOptions,
-} from '../../types/types.js'
-import {
+} from '../../types/shared.js'
+import type {
 	BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult,
 	CreateStatusList2021Result, StatusCheckResult,
 } from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js'
 import { Connection } from '../../database/connection/connection.js'
-import { CustomerEntity } from '../../database/entities/customer.entity.js'
+import type { CustomerEntity } from '../../database/entities/customer.entity.js'
 import { CustomerService } from '../customer.js'
 import { Veramo } from './agent.js'
 
 import * as dotenv from 'dotenv'
 import { DefaultIdentity } from './default.js'
-import { AbstractPrivateKeyStore } from '@veramo/key-manager'
+import type { AbstractPrivateKeyStore } from '@veramo/key-manager'
 dotenv.config()
 
 const {
