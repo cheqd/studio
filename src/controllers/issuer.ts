@@ -230,6 +230,8 @@ export class IssuerController {
 			verificationMethodType,
 			assertionMethod = true,
 			serviceEndpoint,
+			serviceId,
+			serviceType
 		} = request.body;
 		let didDocument: DIDDocument;
 		try {
@@ -255,8 +257,8 @@ export class IssuerController {
 				if (serviceEndpoint) {
 					didDocument.service = [
 						{
-							id: `${didDocument.id}#service-1`,
-							type: 'service-1',
+							id: didDocument.id+"#"+serviceId,
+							type: serviceType,
 							serviceEndpoint: [serviceEndpoint],
 						},
 					];

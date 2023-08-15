@@ -496,6 +496,10 @@
  *           description: An assertion method is required to issue JSON-LD credentials.
  *           type: boolean
  *           default: true
+ *         serviceId:
+ *           type: string
+ *         serviceType:
+ *           type: string
  *         didDocument:
  *           $ref: '#/components/schemas/DidDocument'
  *     DidResult:
