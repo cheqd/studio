@@ -961,9 +961,9 @@
           "200": {
             "description": "The request was successful.",
             "content": {
-              "any": {
+              "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/DidDocument"
                 }
               }
             }

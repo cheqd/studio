@@ -692,9 +692,9 @@ export class IssuerController {
 	 *       200:
 	 *         description: The request was successful.
 	 *         content:
-	 *           any:
+	 *           application/json:
 	 *             schema:
-	 *               type: object
+	 *               $ref: '#/components/schemas/DidDocument'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
