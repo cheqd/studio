@@ -1,4 +1,5 @@
 import type { ICommonErrorResponse } from '../../types/authentication';
+import { LOGTO_MANAGEMENT_API } from '../../types/constants';
 import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
@@ -271,7 +272,7 @@ export class LogToHelper {
 	private async setM2MToken(): Promise<ICommonErrorResponse> {
 		const searchParams = new URLSearchParams({
 			grant_type: 'client_credentials',
-			resource: process.env.LOGTO_MANAGEMENT_API as string,
+			resource: LOGTO_MANAGEMENT_API as string,
 			scope: 'all',
 		});
 
