@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.0-develop.3](https://github.com/cheqd/credential-service/compare/2.8.0-develop.2...2.8.0-develop.3) (2023-08-15)
+
+
+### Bug Fixes
+
+* Added base reference syntax + error handling [DEV-3127] ([#338](https://github.com/cheqd/credential-service/issues/338)) ([4b6048d](https://github.com/cheqd/credential-service/commit/4b6048d0029b0f25eeb838e845923af5ef252a7a))
+
 ## [2.8.0-develop.2](https://github.com/cheqd/credential-service/compare/2.8.0-develop.1...2.8.0-develop.2) (2023-08-14)
 
 
