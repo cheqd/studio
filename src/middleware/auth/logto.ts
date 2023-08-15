@@ -1,7 +1,7 @@
-import * as dotenv from 'dotenv';
-import { ICommonErrorResponse } from '../../types/authentication';
+import type { ICommonErrorResponse } from '../../types/authentication';
 import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
+import * as dotenv from 'dotenv';
 dotenv.config();
 
 export class LogToHelper {

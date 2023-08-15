@@ -1,13 +1,7 @@
 import type { DIDDocument } from 'did-resolver';
-import type { MethodSpecificIdAlgo, CheqdNetwork } from '@cheqd/sdk';
-
+import type { MethodSpecificIdAlgo, CheqdNetwork, TVerificationKey, TVerificationKeyPrefix } from '@cheqd/sdk';
 import { VerificationMethods, createVerificationKeys, createDidVerificationMethod, createDidPayload } from '@cheqd/sdk';
-import { rawSecp256k1PubkeyToRawAddress } from '@cosmjs/amino';
-import { toBech32 } from '@cosmjs/encoding';
-import pkg from 'secp256k1';
-import { fromString } from 'uint8arrays';
-
-import { SpecValidationResult } from '../types/types.js';
+import type { SpecValidationResult } from '../types/shared.js';
 import { createHmac } from 'node:crypto';
 
 export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecValidationResult {
@@ -77,7 +71,7 @@ export function verifyHookSignature(signingKey: string, rawBody: string, expecte
 
 export interface IDidDocOptions {
 	verificationMethod: VerificationMethods;
-	verificationMethodId: any;
+	verificationMethodId: TVerificationKey<TVerificationKeyPrefix, number>;
 	methodSpecificIdAlgo: MethodSpecificIdAlgo;
 	network: CheqdNetwork;
 	publicKey: string;

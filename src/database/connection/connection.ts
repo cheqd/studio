@@ -1,4 +1,4 @@
-import { DataSource } from 'typeorm';
+import type { DataSource } from 'typeorm';
 import { AbstractDatabase, Memory, Postgres } from '../types/types.js';
 
 import * as dotenv from 'dotenv';

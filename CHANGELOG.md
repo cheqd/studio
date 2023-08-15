@@ -9,12 +9,10 @@
 
 ## [2.8.0-develop.1](https://github.com/cheqd/credential-service/compare/2.7.0...2.8.0-develop.1) (2023-08-10)
 
-
 ### Features
 
 * Account bootstrapping [DEV-3051] ([#306](https://github.com/cheqd/credential-service/issues/306)) ([d157535](https://github.com/cheqd/credential-service/commit/d15753545d0b90d499e083ea6219bf28f97913ff))
 * Remove `DEFAULT_CUSTOMER_ID` [DEV-2851] ([#318](https://github.com/cheqd/credential-service/issues/318)) ([c072af6](https://github.com/cheqd/credential-service/commit/c072af6a96ac5485e54b976753fa48f852fd8354))
-
 
 ### Bug Fixes
 

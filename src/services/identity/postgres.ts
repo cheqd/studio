@@ -1,4 +1,4 @@
-import {
+import type {
 	CredentialPayload,
 	DIDDocument,
 	IDIDManager,
@@ -11,10 +11,18 @@ import {
 	VerifiableCredential,
 	VerifiablePresentation,
 } from '@veramo/core';
-import { AbstractPrivateKeyStore } from '@veramo/key-manager';
+import type { AbstractPrivateKeyStore } from '@veramo/key-manager';
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local';
 import { PrivateKeyStore } from '@veramo/data-store';
-import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd';
+import {
+	CheqdDIDProvider,
+	type ResourcePayload,
+	type BulkRevocationResult,
+	type BulkSuspensionResult,
+	type BulkUnsuspensionResult,
+	type CreateStatusList2021Result,
+	type StatusCheckResult,
+} from '@cheqd/did-provider-cheqd';
 import { CheqdNetwork } from '@cheqd/sdk';
 import {
 	BroadCastStatusListOptions,
@@ -27,21 +35,14 @@ import {
 	UpdateStatusListOptions,
 	VeramoAgent,
 	VerificationOptions,
-} from '../../types/types.js';
+} from '../../types/shared.js';
 import { Connection } from '../../database/connection/connection.js';
-import { CustomerEntity } from '../../database/entities/customer.entity.js';
-import { IIdentity } from './IIdentity.js';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { CustomerService } from '../customer.js';
 import { Veramo } from './agent.js';
-
+import type { IIdentity } from './index.js';
 import * as dotenv from 'dotenv';
-import {
-	BulkRevocationResult,
-	BulkSuspensionResult,
-	BulkUnsuspensionResult,
-	CreateStatusList2021Result,
-	StatusCheckResult,
-} from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd.js';
+
 dotenv.config();
 
 const { MAINNET_RPC_URL, TESTNET_RPC_URL, EXTERNAL_DB_ENCRYPTION_KEY } = process.env;
@@ -86,13 +87,13 @@ export class PostgresIdentity implements IIdentity {
 		const mainnetProvider = new CheqdDIDProvider({
 			defaultKms: 'postgres',
 			cosmosPayerSeed: privateKey,
-			networkType: CheqdNetwork.Mainnet as any,
+			networkType: CheqdNetwork.Mainnet,
 			rpcUrl: MAINNET_RPC_URL || DefaultRPCUrl.Mainnet,
 		});
 		const testnetProvider = new CheqdDIDProvider({
 			defaultKms: 'postgres',
 			cosmosPayerSeed: privateKey,
-			networkType: CheqdNetwork.Testnet as any,
+			networkType: CheqdNetwork.Testnet,
 			rpcUrl: TESTNET_RPC_URL || DefaultRPCUrl.Testnet,
 		});
 
