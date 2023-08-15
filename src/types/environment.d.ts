@@ -50,8 +50,8 @@ declare global {
 
 			// Faucet
 			ENABLE_ACCOUNT_TOPUP: string | 'false';
-			FAUCET_URI: string | 'https://faucet-api.cheqd.network/credit';
-			TESTNET_MINIMUM_BALANCE: number | 1000;
+			FAUCET_URI: string;
+			TESTNET_MINIMUM_BALANCE: number;
 		}
 	}
 
