@@ -9,7 +9,6 @@ export const HEADERS = {
 
 // Application constants
 export const APPLICATION_BASE_URL = process.env.APPLICATION_BASE_URL || 'http://localhost:3000';
-export const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL || 'https://rpc.cheqd.net:443';
 export const CORS_ALLOWED_ORIGINS = process.env.CORS_ALLOWED_ORIGINS || APPLICATION_BASE_URL;
 
 // LogTo contants
@@ -22,19 +21,19 @@ export const configLogToExpress = {
 		LOGTO_ENDPOINT ||
 		(function () {
 			if (ENABLE_AUTHENTICATION === 'true') throw new Error('LOGTO_ENDPOINT is not defined');
-			return ''
+			return '';
 		})(),
 	appId:
 		LOGTO_APP_ID ||
 		(function () {
 			if (ENABLE_AUTHENTICATION === 'true') throw new Error('LOGTO_APP_ID is not defined');
-			return ''
+			return '';
 		})(),
 	appSecret:
 		LOGTO_APP_SECRET ||
 		(function () {
 			if (ENABLE_AUTHENTICATION === 'true') throw new Error('LOGTO_APP_SECRET is not defined');
-			return ''
+			return '';
 		})(),
 	baseUrl:
 		APPLICATION_BASE_URL ||
