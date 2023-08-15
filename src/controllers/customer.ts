@@ -34,8 +34,8 @@ export class AccountController {
 		try {
 			const customer = await CustomerService.instance.create(response.locals.customerId);
 			if (!customer) {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: `Error creating customer. Please try again`,
+				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+					error: `Internal server error. Please try again later.`,
 				});
 			}
 			// Send some tokens for testnet
@@ -53,7 +53,7 @@ export class AccountController {
 			});
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `Error creating customer ${error}`,
+				error: `${error}`,
 			});
 		}
 	}
