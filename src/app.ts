@@ -13,7 +13,7 @@ import { AccountController } from './controllers/customer.js';
 import { Authentication } from './middleware/authentication.js';
 import { Connection } from './database/connection/connection.js';
 import { RevocationController } from './controllers/revocation.js';
-import { CORS_ERROR_MSG, configLogToExpress } from './types/constants.js';
+import { CORS_ALLOWED_ORIGINS, CORS_ERROR_MSG, configLogToExpress } from './types/constants.js';
 import { LogToWebHook } from './middleware/hook.js';
 import { Middleware } from './middleware/middleware.js';
 
@@ -59,7 +59,7 @@ class App {
 			cors({
 				origin: function (origin, callback) {
 					if (!origin) return callback(null, true);
-					if (process.env.CORS_ALLOWED_ORIGINS?.indexOf(origin) === -1) {
+					if (CORS_ALLOWED_ORIGINS?.indexOf(origin) === -1) {
 						return callback(new Error(CORS_ERROR_MSG), false);
 					}
 					return callback(null, true);

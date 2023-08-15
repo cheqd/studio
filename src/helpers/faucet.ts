@@ -1,10 +1,10 @@
 import type { ICommonErrorResponse } from '../types/authentication.js';
-import { DEFAULT_FAUCET_DENOM, DEFAULT_FAUCET_URI } from '../types/constants.js';
+import { DEFAULT_FAUCET_DENOM, FAUCET_URI } from '../types/constants.js';
 
 export class FaucetHelper {
 	// ...
 	static async delegateTokens(address: string): Promise<ICommonErrorResponse> {
-		const faucetURI = DEFAULT_FAUCET_URI;
+		const faucetURI = FAUCET_URI;
 		const faucetBody = {
 			denom: DEFAULT_FAUCET_DENOM,
 			address: address,
