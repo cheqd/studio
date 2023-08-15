@@ -617,6 +617,7 @@ export class IssuerController {
 	 *         schema:
 	 *           type: string
 	 *         required: true
+	 *         example: did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
 	 *       - in: query
 	 *         name: metadata
 	 *         description: Return only metadata of DID Document instead of actual DID Document.
@@ -635,6 +636,7 @@ export class IssuerController {
 	 *         schema:
 	 *           type: string
 	 *           format: date-time
+	 *         example: 1970-01-01T00:00:00Z
 	 *       - in: query
 	 *         name: transformKeys
 	 *         description: This directive transforms the Verification Method key format from the version in the DID Document to the specified format chosen below.
@@ -664,22 +666,17 @@ export class IssuerController {
 	 *           format: uuid
 	 *         example: 3ccde6ba-6ba5-56f2-9f4f-8825561a9860
 	 *       - in: query
-	 *         name: resourceCollectionId
-	 *         description: Filter by CollectionId.
+	 *         name: resourceName
+	 *         description: Filter a DID-Linked Resource query by Resource Name. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
 	 *         schema:
 	 *           type: string
+	 *         example: Cheqd Issuer Logo
 	 *       - in: query
 	 *         name: resourceType
 	 *         description: Filter a DID-Linked Resource query by Resource Type. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
 	 *         schema:
 	 *           type: string
 	 *         example: IssuerLogo
-	 *       - in: query
-	 *         name: resourceName
-	 *         description: Filter a DID-Linked Resource query by Resource Name. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
-	 *         schema:
-	 *           type: string
-	 *         example: Cheqd Issuer Logo
 	 *       - in: query
 	 *         name: resourceVersion
 	 *         description: Filter a DID-Linked Resource query by Resource Version, which is an optional free-text field used by issuers (e.g., "v1", "Final Version", "1st January 1970" etc). See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
