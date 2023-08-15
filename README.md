@@ -74,8 +74,8 @@ By default, `ENABLE_AUTHENTICATION` is set to off/`false`. To enable external Ve
 1. **Endpoints**
     1. `LOGTO_ENDPOINT`: API endpoint for LogTo server
     2. `LOGTO_DEFAULT_RESOURCE_URL`: Root of API resources in this application to be guarded. (Default:
-       `http://localhost:3000/api` on localhost.)
-    3. `LOGTO_MANAGEMENT_API`: URL of management API for LogTo (default is `https://default.logto.app/api`)
+       `http://localhost:3000/` on localhost.)
+    3. `LOGTO_MANAGEMENT_API`: URL of management API for LogTo. This is typically static within self-hosted LogTo applications and is not meant to be a resolvable URL. (Default: `https://default.logto.app/api`)
 2. **User-facing APIs**
     1. `LOGTO_APP_ID`: Application ID for the Credential Service application in LogTo. This can be set up as type
        "Traditional Web"
