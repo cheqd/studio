@@ -42,7 +42,7 @@ The application allows configuring the following parameters using environment va
 3. `RESOLVER_URL`: API endpoint for a [DID Resolver](https://github.com/cheqd/did-resolver) endpoint that supports
    `did:cheqd` (Default: `https://resolver.cheqd.net/1.0/identifiers/`).
 4. `APPLICATION_BASE_URL`: URL of the application (external domain name).
-5. `CORS_ALLOWED_ORIGINS`: CORS allowed origins used in the app.
+5. `CORS_ALLOWED_ORIGINS`: CORS allowed origins used in the app (optional). (Default: `APPLICATION_BASE_URL`).
 
 #### Veramo KMS Database
 
@@ -76,7 +76,6 @@ By default, `ENABLE_AUTHENTICATION` is set to off/`false`. To enable external Ve
     2. `LOGTO_DEFAULT_RESOURCE_URL`: Root of API resources in this application to be guarded. (Default:
        `http://localhost:3000/api` on localhost.)
     3. `LOGTO_MANAGEMENT_API`: URL of management API for LogTo (default is `https://default.logto.app/api`)
-    4. `CORS_ALLOWED_ORIGINS`: CORS allowed origins used in the app
 2. **User-facing APIs**
     1. `LOGTO_APP_ID`: Application ID for the Credential Service application in LogTo. This can be set up as type
        "Traditional Web"
