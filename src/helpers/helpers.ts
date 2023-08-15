@@ -1,12 +1,6 @@
 import type { DIDDocument } from 'did-resolver';
 import type { MethodSpecificIdAlgo, CheqdNetwork } from '@cheqd/sdk';
-
 import { VerificationMethods, createVerificationKeys, createDidVerificationMethod, createDidPayload } from '@cheqd/sdk';
-import { rawSecp256k1PubkeyToRawAddress } from '@cosmjs/amino';
-import { toBech32 } from '@cosmjs/encoding';
-import pkg from 'secp256k1';
-import { fromString } from 'uint8arrays';
-
 import { SpecValidationResult } from '../types/types.js';
 import { createHmac } from 'node:crypto';
 
