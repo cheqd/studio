@@ -1,4 +1,4 @@
-import {
+import type {
 	IDIDManager,
 	IKeyManager,
 	IDataStore,
@@ -9,15 +9,15 @@ import {
 	TAgent,
 	VerificationPolicies,
 } from '@veramo/core';
-import {
+import type {
 	ICheqd,
+	CheqdDIDProvider,
 	ICheqdCheckCredentialWithStatusList2021StatusOptions,
-} from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd';
-import { ICredentialIssuerLD } from '@veramo/credential-ld';
-import { AbstractIdentifierProvider } from '@veramo/did-manager';
-import { AbstractKeyManagementSystem } from '@veramo/key-manager';
-import { DataSource } from 'typeorm';
-import { CheqdDIDProvider } from '@cheqd/did-provider-cheqd';
+} from '@cheqd/did-provider-cheqd';
+import type { ICredentialIssuerLD } from '@veramo/credential-ld';
+import type { AbstractIdentifierProvider } from '@veramo/did-manager';
+import type { AbstractKeyManagementSystem } from '@veramo/key-manager';
+import type { DataSource } from 'typeorm';
 
 export type ErrorResponse = {
 	name: string;
@@ -44,6 +44,7 @@ export interface PresentationPayload {
 	expirationDate?: DateType;
 	id?: string;
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[x: string]: any;
 }
 
@@ -51,12 +52,12 @@ export type GenericAuthResponse = {
 	authenticated: boolean;
 	user: GenericAuthUser;
 	provider: string;
-	error?: any;
+	error?: unknown;
 };
 
 export interface CredentialRequest {
 	subjectDid: string;
-	attributes: Record<string, any>;
+	attributes: Record<string, unknown>;
 	'@context'?: string[];
 	type?: string[];
 	expirationDate?: DateType;
@@ -68,7 +69,7 @@ export interface CredentialRequest {
 	credentialSummary?: string;
 }
 
-export type GenericAuthUser = Record<string, any> | null | undefined;
+export type GenericAuthUser = Record<string, unknown> | null | undefined;
 
 const UUID = '([a-z,0-9,-]{36,36})';
 const ID_CHAR = `(?:[a-zA-Z0-9]{21,22}|${UUID})`;
@@ -84,10 +85,6 @@ export enum DefaultRPCUrl {
 export enum NetworkType {
 	Mainnet = 'mainnet',
 	Testnet = 'testnet',
-}
-
-export enum DefaultResolverUrl {
-	Cheqd = 'https://resolver.cheqd.net/',
 }
 
 export type SpecValidationResult = {

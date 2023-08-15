@@ -1,4 +1,4 @@
-import {
+import type {
 	IIdentifier,
 	ManagedKeyInfo,
 	CredentialPayload,
@@ -8,16 +8,16 @@ import {
 } from '@veramo/core';
 import { AbstractPrivateKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager';
 import { KeyManagementSystem } from '@veramo/kms-local';
-import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd';
 import {
-	BulkRevocationResult,
-	BulkSuspensionResult,
-	BulkUnsuspensionResult,
-	CreateStatusList2021Result,
-	StatusCheckResult,
-} from '@cheqd/did-provider-cheqd/build/types/agent/ICheqd';
+	CheqdDIDProvider,
+	type ResourcePayload,
+	type BulkRevocationResult,
+	type BulkSuspensionResult,
+	type BulkUnsuspensionResult,
+	type CreateStatusList2021Result,
+	type StatusCheckResult,
+} from '@cheqd/did-provider-cheqd';
 import { CheqdNetwork } from '@cheqd/sdk';
-
 import {
 	BroadCastStatusListOptions,
 	CheckStatusListOptions,
@@ -28,9 +28,9 @@ import {
 	UpdateStatusListOptions,
 	VeramoAgent,
 	VerificationOptions,
-} from '../../types/types.js';
+} from '../../types/shared.js';
+import type { IIdentity } from './index.js';
 import { Connection } from '../../database/connection/connection.js';
-import { IIdentity } from './IIdentity.js';
 import { Veramo } from './agent.js';
 
 import * as dotenv from 'dotenv';

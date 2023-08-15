@@ -1,10 +1,10 @@
 import type { Request, Response } from 'express';
 import { check, param, validationResult } from 'express-validator';
 import { fromString } from 'uint8arrays';
-import { DIDDocument, Service, VerificationMethod } from 'did-resolver';
+import type { DIDDocument, Service, VerificationMethod } from 'did-resolver';
 import { v4 } from 'uuid';
 import { MethodSpecificIdAlgo, VerificationMethods, CheqdNetwork } from '@cheqd/sdk';
-import { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js';
+import type { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js';
 import { StatusCodes } from 'http-status-codes';
 
 import { Identity } from '../services/identity/index.js';
@@ -461,22 +461,22 @@ export class IssuerController {
 		}
 
 		const { did } = request.params;
-		let { data, encoding, name, type, alsoKnownAs, version, network } = request.body;
+		const { data, encoding, name, type, alsoKnownAs, version, network } = request.body;
 
 		let resourcePayload: Partial<MsgCreateResourcePayload> = {};
 		try {
 			// check if did is registered on the ledger
-			let resolvedDocument: any = await new Identity(response.locals.customerId).agent.resolveDid(did);
-			if (!resolvedDocument?.didDocument || resolvedDocument.didDocumentMetadata.deactivated) {
+			const { didDocument, didDocumentMetadata } = await new Identity(
+				response.locals.customerId
+			).agent.resolveDid(did);
+			if (!didDocument || !didDocumentMetadata || didDocumentMetadata.deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
 					error: `${did} is a either Deactivated or Not found`,
 				});
-			} else {
-				resolvedDocument = resolvedDocument.didDocument;
 			}
 
 			resourcePayload = {
-				collectionId: did.split(':').pop()!,
+				collectionId: did.split(':').pop(),
 				id: v4(),
 				name,
 				resourceType: type,
@@ -484,9 +484,8 @@ export class IssuerController {
 				version,
 				alsoKnownAs,
 			};
-			network = network || did.split(':')[2];
 			const result = await new Identity(response.locals.customerId).agent.createResource(
-				network,
+				network || did.split(':')[2],
 				resourcePayload,
 				response.locals.customerId
 			);
@@ -532,12 +531,9 @@ export class IssuerController {
 	 */
 	public async getDids(request: Request, response: Response) {
 		try {
-			let did: any;
-			if (request.params.did) {
-				did = await new Identity(response.locals.customerId).agent.resolveDid(request.params.did);
-			} else {
-				did = await new Identity(response.locals.customerId).agent.listDids(response.locals.customerId);
-			}
+			const did = request.params.did
+				? await new Identity(response.locals.customerId).agent.resolveDid(request.params.did)
+				: await new Identity(response.locals.customerId).agent.listDids(response.locals.customerId);
 
 			return response.status(StatusCodes.OK).json(did);
 		} catch (error) {
@@ -578,11 +574,13 @@ export class IssuerController {
 	 */
 	public async getDid(request: Request, response: Response) {
 		try {
-			let did: any;
 			if (request.params.did) {
-				did = await new Identity(response.locals.customerId).agent.resolveDid(request.params.did);
+				const did = await new Identity(response.locals.customerId).agent.resolveDid(request.params.did);
 				return response.status(StatusCodes.OK).json(did);
 			}
+
+			// should never happen
+			return response.status(StatusCodes.BAD_REQUEST);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
