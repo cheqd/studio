@@ -13,7 +13,7 @@ import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers
 export class IssuerController {
 	public static createValidator = [
 		check('didDocument')
-			.optional({nullable: true})
+			.optional()
 			.isObject()
 			.custom((value) => {
 				const { valid } = validateSpecCompliantPayload(value);
@@ -235,7 +235,7 @@ export class IssuerController {
 		} = request.body;
 		let didDocument: DIDDocument;
 		try {
-			if (request.body.didDocument) {
+			if (Object.keys(request.body.didDocument).length !== 0) {
 				didDocument = request.body.didDocument;
 			} else if (verificationMethodType) {
 				const key = await new Identity(response.locals.customerId).agent.createKey(

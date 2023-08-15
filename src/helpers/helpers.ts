@@ -5,7 +5,7 @@ import { SpecValidationResult } from '../types/types.js';
 import { createHmac } from 'node:crypto';
 
 export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecValidationResult {
-	if (didDocument) {
+	if (Object.keys(didDocument).length !== 0) {
 		// id is required, validated on both compile and runtime
 		if (didDocument.id?.startsWith('did:cheqd:')) return { valid: false, error: 'id is required' };
 
