@@ -16,10 +16,28 @@
 	},
 	"tags": [
 		{
+			"name": "Account"
+		},
+		{
+			"name": "Key"
+		},
+		{
+			"name": "DID"
+		},
+		{
+			"name": "Resource"
+		},
+		{
 			"name": "Credential",
 			"externalDocs": {
 				"url": "https://github.com/cheqd/credential-service#readme"
 			}
+		},
+		{
+			"name": "Presentation"
+		},
+		{
+			"name": "Credential Status"
 		}
 	],
 	"externalDocs": {
