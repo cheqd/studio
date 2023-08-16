@@ -1,4 +1,4 @@
-import { AbstractIdentity } from ".";
+import { AbstractIdentity } from "./IIdentity.js";
 import type { DIDResolutionResult, IVerifyResult, VerifiableCredential, VerifiablePresentation } from "@veramo/core";
 import type { CheckStatusListOptions, VerificationOptions } from "../../types/shared";
 import type { StatusCheckResult } from "@cheqd/did-provider-cheqd/build/types/agent/ICheqd";
