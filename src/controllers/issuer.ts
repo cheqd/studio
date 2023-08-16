@@ -726,9 +726,6 @@ export class IssuerController {
 					error: "The DIDUrl parameter is empty."
 				});
 			}
-
-			// should never happen
-			return response.status(StatusCodes.BAD_REQUEST);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
