@@ -344,6 +344,30 @@
  *           resourceType: StatusList2021Revocation
  *           resourceURI: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc
  *           resourceVersion: 2023-06-26T11:45:19.349Z
+ *     CredentialStatusUpdateResponse:
+ *       type: object
+ *       properties:
+ *         statusList:
+ *           type: object
+ *           properties:
+ *             StatusList2021:
+ *               type: object
+ *               properties:
+ *                 encodedList:
+ *                   type: string
+ *                 statusPurpose:
+ *                   type: string
+ *                 validFrom:
+ *                   type: string
+ *             metadata:
+ *               type: object
+ *               properties:
+ *                 encoding:
+ *                   type: string
+ *                 encrypted:
+ *                   type: string
+ *                 type:
+ *                   type: string
  *     CredentialStatusPublishRequest:
  *       allOf:
  *         - type: object
@@ -427,6 +451,10 @@
  *           type: string
  *           enum: [ Ed25519, Secp256k1 ]
  *         publicKeyHex:
+ *           type: string
+ *         kms:
+ *           type: string
+ *         meta:
  *           type: string
  *     DidDocument:
  *       description: This input field contains either a complete DID document, or an incremental change (diff) to a DID document. See <a href="https://identity.foundation/did-registration/#diddocument">Universal DID Registrar specification</a>.
@@ -519,6 +547,8 @@
  *           type: array
  *           items:
  *             type: object
+ *         provider:
+ *           type: string
  *         services:
  *           type: array
  *           items:
@@ -623,6 +653,139 @@
  *         encoding: base64url
  *         name: ResourceName
  *         type: TextDocument
+ *     DidResolution:
+ *       type: object
+ *       properties:
+ *          '@context':
+ *            type: string
+ *          didDocument:
+ *            $ref: '#/components/schemas/DidDocument'
+ *          didDocumentMetadata:
+ *            $ref: '#/components/schemas/ResolutionDidDocMetadata'
+ *          didResolutionMetadata:
+ *            $ref: '#/components/schemas/ResolutionMetadata'
+ *     ResolutionDidDocMetadata:
+ *       type: object
+ *       properties:
+ *         created:
+ *           type: string
+ *           example: "2021-09-01T12:00:00Z"
+ *         deactivated:
+ *           type: boolean
+ *           example: false
+ *         linkedResourceMetadata:
+ *           items:
+ *             $ref: '#/components/schemas/DereferencedResource'
+ *           type: array
+ *         updated:
+ *           type: string
+ *           example: "2021-09-10T12:00:00Z"
+ *         versionId:
+ *           type: string
+ *           example: 4979BAF49599FEF0BAD5ED0849FDD708156761EBBC8EBE78D0907F8BECC9CB2E
+ *     DereferencedResource:
+ *       type: object
+ *       properties:
+ *         checksum:
+ *           type: string
+ *           example: a95380f460e63ad939541a57aecbfd795fcd37c6d78ee86c885340e33a91b559
+ *         created:
+ *           type: string
+ *           example: "2021-09-01T12:00:00Z"
+ *         mediaType:
+ *           type: string
+ *           example: image/png
+ *         nextVersionId:
+ *           type: string
+ *           example: d4829ac7-4566-478c-a408-b44767eddadc
+ *         previousVersionId:
+ *           type: string
+ *           example: ad7a8442-3531-46eb-a024-53953ec6e4ff
+ *         resourceCollectionId:
+ *           type: string
+ *           example: 55dbc8bf-fba3-4117-855c-1e0dc1d3bb47
+ *         resourceId:
+ *           type: string
+ *           example: 398cee0a-efac-4643-9f4c-74c48c72a14b
+ *         resourceName:
+ *           type: string
+ *           example: Image Resource
+ *         resourceType:
+ *           type: string
+ *           example: Image
+ *         resourceURI:
+ *           type: string
+ *           example: did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47/resources/398cee0a-efac-4643-9f4c-74c48c72a14b
+ *         resourceVersion:
+ *           type: string
+ *           example: "1.0"
+ *     ResolutionMetadata:
+ *       type: object
+ *       properties:
+ *         contentType:
+ *           allOf:
+ *           - $ref: '#/components/schemas/ContentType'
+ *           example: application/did+ld+json
+ *         did:
+ *           $ref: '#/components/schemas/DidProperties'
+ *         error:
+ *           type: string
+ *           nullable: true
+ *           example: null
+ *         retrieved:
+ *           type: string
+ *           example: '2021-09-01T12:00:00Z'
+ *     ContentType:
+ *       enum:
+ *       - application/did+json
+ *       - application/did+ld+json
+ *       - application/ld+json
+ *       - application/json
+ *       type: string
+ *     DidProperties:
+ *       type: object
+ *       properties:
+ *         didString:
+ *           type: string
+ *           example: did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47
+ *         method:
+ *           type: string
+ *           example: cheqd
+ *         methodSpecificId:
+ *           type: string
+ *           example: 55dbc8bf-fba3-4117-855c-1e0dc1d3bb47
+ *     CreateResourceResponse:
+ *       type: object
+ *       properties:
+ *         collectionId:
+ *           type: string
+ *           example: did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47
+ *         data:
+ *           type: object
+ *         id:
+ *           type: string
+ *           example: 398cee0a-efac-4643-9f4c-74c48c72a14b
+ *         name:
+ *           type: string
+ *           example: ResourceName
+ *         resourceType:
+ *           type: string
+ *           example: TextDocument
+ *     CredentialStatusSearchResponse:
+ *       type: array
+ *       items:
+ *         type: object
+ *         properties:
+ *           statusListId:
+ *             type: string
+ *           statusListName:
+ *             type: string
+ *           statusListVersion:
+ *             type: string
+ *           statusListNextVersion:
+ *             type: string
+ *           statusPurpose:
+ *             type: string
  *     Customer:
  *       type: object
  *       properties:

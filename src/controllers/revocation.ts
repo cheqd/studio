@@ -257,18 +257,7 @@ export class RevocationController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               type: array
-	 *               items:
-	 *                 type: object
-	 *                 properties:
-	 *                   statusListName:
-	 *                     type: string
-	 *                   statusListVersion:
-	 *                     type: string
-	 *                   statusListId:
-	 *                     type: string
-	 *                   statusListNextVersion:
-	 *                     type: string
+	 *               $ref: '#/components/schemas/CredentialStatusSearchResponse'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -368,7 +357,7 @@ export class RevocationController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/CredentialStatusResult'
+	 *               $ref: '#/components/schemas/CredentialStatusUpdateResponse'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:

@@ -388,7 +388,8 @@ export class IssuerController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/DidResult'
+	 *               type: boolean
+	 *               example: true
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -443,6 +444,10 @@ export class IssuerController {
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/CreateResourceResponse'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -562,7 +567,7 @@ export class IssuerController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/DidDocument'
+	 *               $ref: '#/components/schemas/DidResolution'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
