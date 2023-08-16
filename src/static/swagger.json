@@ -969,7 +969,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DidDocument"
+                  "$ref": "#/components/schemas/DidResolution"
                 }
               }
             }
@@ -1496,24 +1496,35 @@
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "example": [
+              "https://www.w3.org/2018/credentials/v1",
+              "https://schema.org",
+              "https://veramo.io/contexts/profile/v1"
+            ]
           },
           "type": {
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "example": [
+              "VerifiableCredential",
+              "Person"
+            ]
           },
           "expirationDate": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "example": "2023-06-08T13:49:28.000Z"
           },
           "issuer": {
             "type": "object",
             "properties": {
               "id": {
                 "type": "string",
-                "format": "DID"
+                "format": "DID",
+                "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
               }
             }
           },
@@ -1521,7 +1532,9 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "string"
+                "type": "string",
+                "format": "DID",
+                "example": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
               }
             }
           },
@@ -1529,17 +1542,20 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "string"
+                "type": "string",
+                "example": "https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-suspension-1&resourceType=StatusList2021Suspension#20"
               },
               "statusListIndex": {
-                "type": "string"
+                "type": "string",
+                "example": 20
               },
               "statusPurpose": {
                 "type": "string",
                 "enum": [
                   "revocation",
                   "suspension"
-                ]
+                ],
+                "example": "suspension"
               },
               "type": {
                 "type": "string",
@@ -1550,7 +1566,9 @@
             }
           },
           "issuanceDate": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-06-08T13:49:28.000Z"
           },
           "proof": {
             "type": "object",
@@ -1561,6 +1579,10 @@
               "jwt": {
                 "type": "string"
               }
+            },
+            "example": {
+              "type": "JwtProof2020",
+              "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg"
             }
           }
         },
@@ -2327,17 +2349,147 @@
           }
         }
       },
+      "DidResolution": {
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "string"
+          },
+          "didDocument": {
+            "$ref": "#/components/schemas/DidDocument"
+          },
+          "didDocumentMetadata": {
+            "$ref": "#/components/schemas/ResolutionDidDocMetadata"
+          },
+          "didResolutionMetadata": {
+            "$ref": "#/components/schemas/ResolutionMetadata"
+          }
+        }
+      },
+      "ResolutionDidDocMetadata": {
+        "type": "object",
+        "properties": {
+          "created": {
+            "type": "string",
+            "example": "2021-09-01T12:00:00Z"
+          },
+          "deactivated": {
+            "type": "boolean",
+            "example": false
+          },
+          "linkedResourceMetadata": {
+            "items": {
+              "$ref": "#/components/schemas/DereferencedResource"
+            },
+            "type": "array"
+          },
+          "updated": {
+            "type": "string",
+            "example": "2021-09-10T12:00:00Z"
+          },
+          "versionId": {
+            "type": "string",
+            "example": "4979BAF49599FEF0BAD5ED0849FDD708156761EBBC8EBE78D0907F8BECC9CB2E"
+          }
+        }
+      },
+      "DereferencedResource": {
+        "type": "object",
+        "properties": {
+          "checksum": {
+            "type": "string",
+            "example": "a95380f460e63ad939541a57aecbfd795fcd37c6d78ee86c885340e33a91b559"
+          },
+          "created": {
+            "type": "string",
+            "example": "2021-09-01T12:00:00Z"
+          },
+          "mediaType": {
+            "type": "string",
+            "example": "image/png"
+          },
+          "nextVersionId": {
+            "type": "string",
+            "example": "d4829ac7-4566-478c-a408-b44767eddadc"
+          },
+          "previousVersionId": {
+            "type": "string",
+            "example": "ad7a8442-3531-46eb-a024-53953ec6e4ff"
+          },
+          "resourceCollectionId": {
+            "type": "string",
+            "example": "55dbc8bf-fba3-4117-855c-1e0dc1d3bb47"
+          },
+          "resourceId": {
+            "type": "string",
+            "example": "398cee0a-efac-4643-9f4c-74c48c72a14b"
+          },
+          "resourceName": {
+            "type": "string",
+            "example": "Image Resource"
+          },
+          "resourceType": {
+            "type": "string",
+            "example": "Image"
+          },
+          "resourceURI": {
+            "type": "string",
+            "example": "did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47/resources/398cee0a-efac-4643-9f4c-74c48c72a14b"
+          },
+          "resourceVersion": {
+            "type": "string",
+            "example": "1.0"
+          }
+        }
+      },
+      "ResolutionMetadata": {
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContentType"
+              }
+            ],
+            "example": "application/did+ld+json"
+          },
+          "did": {
+            "$ref": "#/components/schemas/DidProperties"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "retrieved": {
+            "type": "string",
+            "example": "2021-09-01T12:00:00Z"
+          }
+        }
+      },
+      "ContentType": {
+        "enum": [
+          "application/did+json",
+          "application/did+ld+json",
+          "application/ld+json",
+          "application/json"
+        ],
+        "type": "string"
+      },
       "DidProperties": {
         "type": "object",
         "properties": {
-          "did": {
-            "type": "string"
+          "didString": {
+            "type": "string",
+            "example": "did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47"
           },
           "method": {
-            "type": "string"
+            "type": "string",
+            "example": "cheqd"
           },
           "methodSpecificId": {
-            "type": "string"
+            "type": "string",
+            "example": "55dbc8bf-fba3-4117-855c-1e0dc1d3bb47"
           }
         }
       },

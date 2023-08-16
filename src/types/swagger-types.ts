@@ -683,15 +683,107 @@
  *         retrieved:
  *           type: string
  *           example: "2021-09-01T12:00:00Z"
+ *     DidResolution:
+ *       type: object
+ *       properties:
+ *          '@context':
+ *            type: string
+ *          didDocument:
+ *            $ref: '#/components/schemas/DidDocument'
+ *          didDocumentMetadata:
+ *            $ref: '#/components/schemas/ResolutionDidDocMetadata'
+ *          didResolutionMetadata:
+ *            $ref: '#/components/schemas/ResolutionMetadata'
+ *     ResolutionDidDocMetadata:
+ *       type: object
+ *       properties:
+ *         created:
+ *           type: string
+ *           example: "2021-09-01T12:00:00Z"
+ *         deactivated:
+ *           type: boolean
+ *           example: false
+ *         linkedResourceMetadata:
+ *           items:
+ *             $ref: '#/components/schemas/DereferencedResource'
+ *           type: array
+ *         updated:
+ *           type: string
+ *           example: "2021-09-10T12:00:00Z"
+ *         versionId:
+ *           type: string
+ *           example: 4979BAF49599FEF0BAD5ED0849FDD708156761EBBC8EBE78D0907F8BECC9CB2E
+ *     DereferencedResource:
+ *       type: object
+ *       properties:
+ *         checksum:
+ *           type: string
+ *           example: a95380f460e63ad939541a57aecbfd795fcd37c6d78ee86c885340e33a91b559
+ *         created:
+ *           type: string
+ *           example: "2021-09-01T12:00:00Z"
+ *         mediaType:
+ *           type: string
+ *           example: image/png
+ *         nextVersionId:
+ *           type: string
+ *           example: d4829ac7-4566-478c-a408-b44767eddadc
+ *         previousVersionId:
+ *           type: string
+ *           example: ad7a8442-3531-46eb-a024-53953ec6e4ff
+ *         resourceCollectionId:
+ *           type: string
+ *           example: 55dbc8bf-fba3-4117-855c-1e0dc1d3bb47
+ *         resourceId:
+ *           type: string
+ *           example: 398cee0a-efac-4643-9f4c-74c48c72a14b
+ *         resourceName:
+ *           type: string
+ *           example: Image Resource
+ *         resourceType:
+ *           type: string
+ *           example: Image
+ *         resourceURI:
+ *           type: string
+ *           example: did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47/resources/398cee0a-efac-4643-9f4c-74c48c72a14b
+ *         resourceVersion:
+ *           type: string
+ *           example: "1.0"
+ *     ResolutionMetadata:
+ *       type: object
+ *       properties:
+ *         contentType:
+ *           allOf:
+ *           - $ref: '#/components/schemas/ContentType'
+ *           example: application/did+ld+json
+ *         did:
+ *           $ref: '#/components/schemas/DidProperties'
+ *         error:
+ *           type: string
+ *           nullable: true
+ *           example: null
+ *         retrieved:
+ *           type: string
+ *           example: '2021-09-01T12:00:00Z'
+ *     ContentType:
+ *       enum:
+ *       - application/did+json
+ *       - application/did+ld+json
+ *       - application/ld+json
+ *       - application/json
+ *       type: string
  *     DidProperties:
  *       type: object
  *       properties:
- *         did:
+ *         didString:
  *           type: string
+ *           example: did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47
  *         method:
  *           type: string
+ *           example: cheqd
  *         methodSpecificId:
  *           type: string
+ *           example: 55dbc8bf-fba3-4117-855c-1e0dc1d3bb47
  *     Customer:
  *       type: object
  *       properties:

@@ -702,7 +702,7 @@ export class IssuerController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/DidDocument'
+	 *               $ref: '#/components/schemas/DidResolution'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
