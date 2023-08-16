@@ -506,7 +506,7 @@ export class IssuerController {
 	/**
 	 * @openapi
 	 * 
-	 * /resource/dereferencing/{did}/{resourceId}:
+	 * /resource/search/{did}/{resourceId}:
 	 *   get:
 	 *     tags: [ Resource ]
 	 *     summary: Get a DID-Linked Resource.

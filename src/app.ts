@@ -156,7 +156,7 @@ class App {
 
 		// Resource API
 		app.post('/resource/create/:did', IssuerController.resourceValidator, new IssuerController().createResource);
-   	 	app.get('/resource/dereferencing/:did/:resourceId', new IssuerController().getResource);
+   	 	app.get('/resource/search/:did/:resourceId', new IssuerController().getResource);
 
 		// Account API
 		app.post('/account', new AccountController().create);
