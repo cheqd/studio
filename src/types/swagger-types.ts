@@ -11,31 +11,42 @@
  *         issuerDid:
  *           description: DID of the Verifiable Credential issuer. This needs to be a `did:cheqd` DID.
  *           type: string
+ *           example: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
  *         subjectDid:
  *           description: DID of the Verifiable Credential holder/subject. This needs to be a `did:key` DID.
  *           type: string
+ *           example: did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
  *         attributes:
  *           description: JSON object containing the attributes to be included in the credential.
  *           type: object
+ *           example: {
+ *              name: Bob,
+ *              gender: male
+ *           }
  *         '@context':
  *           description: Optional properties to be included in the `@context` property of the credential.
  *           type: array
  *           items:
  *             type: string
+ *           example: [https://schema.org/schema.jsonld, https://veramo.io/contexts/profile/v1]
  *         type:
  *           description: Optional properties to be included in the `type` property of the credential.
  *           type: array
  *           items:
  *             type: string
+ *           example: [Person]
  *         expirationDate:
  *           description: Optional expiration date according to the <a href=https://www.w3.org/TR/vc-data-model/#expiration> VC Data Model specification</a>.
  *           type: string
+ *           format: date-time
+ *           example: 2023-06-08T13:49:28.000Z
  *         format:
  *           description: Format of the Verifiable Credential. Defaults to VC-JWT.
  *           type: string
  *           enum:
  *             - jwt
  *             - lds
+ *           example: jwt
  *         credentialStatus:
  *           description: Optional `credentialStatus` properties for VC revocation or suspension. Takes `statusListName` and `statusListPurpose` as inputs.
  *           type: object
@@ -54,6 +65,7 @@
  *               type: number
  *             statusListVersion:
  *               type: string
+ *               format: date-time
  *             statusListRangeStart:
  *               type: number
  *             statusListRangeEnd:
@@ -91,40 +103,53 @@
  *           type: array
  *           items:
  *             type: string
+ *           example: [https://www.w3.org/2018/credentials/v1, https://schema.org, https://veramo.io/contexts/profile/v1]
  *         type:
  *           type: array
  *           items:
  *             type: string
+ *           example: [VerifiableCredential, Person]
  *         expirationDate:
  *           type: string
+ *           format: date-time
+ *           example: 2023-06-08T13:49:28.000Z
  *         issuer:
  *           type: object
  *           properties:
  *             id:
  *               type: string
+ *               format: DID
+ *               example: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
  *         credentialSubject:
  *           type: object
  *           properties:
  *             id:
  *               type: string
+ *               format: DID
+ *               example: did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
  *         credentialStatus:
  *           type: object
  *           properties:
  *             id:
  *               type: string
+ *               example: https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-suspension-1&resourceType=StatusList2021Suspension#20
  *             statusListIndex:
  *               type: string
+ *               example: 20
  *             statusPurpose:
  *               type: string
  *               enum:
  *                 - revocation
  *                 - suspension
+ *               example: suspension
  *             type:
  *               type: string
  *               enum:
  *                 - StatusList2021Entry
  *         issuanceDate:
  *           type: string
+ *           format: date-time
+ *           example: 2023-06-08T13:49:28.000Z
  *         proof:
  *           type: object
  *           properties:
@@ -132,6 +157,10 @@
  *               type: string
  *             jwt:
  *               type: string
+ *           example: {
+ *            type: JwtProof2020,
+ *            jwt: eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg,
+ *           }
  *       example:
  *         '@context':
  *           - https://www.w3.org/2018/credentials/v1
