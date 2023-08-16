@@ -148,15 +148,15 @@ class App {
 		app.get('/key/read/:kid', new IssuerController().getKey);
 
 		// DIDs API
-		app.post(`/did/create`, IssuerController.createValidator, new IssuerController().createDid);
-		app.post(`/did/update`, IssuerController.updateValidator, new IssuerController().updateDid);
-		app.post(`/did/deactivate/:did`, IssuerController.deactivateValidator, new IssuerController().deactivateDid);
-		app.get(`/did/list`, new IssuerController().getDids);
-		app.get(`/did/search/:did`, new IssuerController().resolveDidUrl);
+		app.post('/did/create', IssuerController.createValidator, new IssuerController().createDid);
+		app.post('/did/update', IssuerController.updateValidator, new IssuerController().updateDid);
+		app.post('/did/deactivate/:did', IssuerController.deactivateValidator, new IssuerController().deactivateDid);
+		app.get('/did/list', new IssuerController().getDids);
+		app.get('/did/search/:did', new IssuerController().resolveDidUrl);
 
 		// Resource API
-		app.post(`/resource/create/:did`, IssuerController.resourceValidator, new IssuerController().createResource);
-   	 	app.get(`/resource/dereferencing/:did/:resourceId`, new IssuerController().getResource);
+		app.post('/resource/create/:did', IssuerController.resourceValidator, new IssuerController().createResource);
+   	 	app.get('/resource/dereferencing/:did/:resourceId', new IssuerController().getResource);
 
 		// Account API
 		app.post('/account', new AccountController().create);

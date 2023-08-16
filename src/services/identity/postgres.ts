@@ -33,7 +33,7 @@ const {
 
 export class PostgresIdentity extends DefaultIdentity {
 	privateStore?: AbstractPrivateKeyStore
-	
+
 	initAgent() {
 		if (this.agent) return this.agent
 		const dbConnection = Connection.instance.dbConnection
