@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.0-develop.4](https://github.com/cheqd/credential-service/compare/2.8.0-develop.3...2.8.0-develop.4) (2023-08-15)
+
+
+### Bug Fixes
+
+* Faucet setup configuration variables [DEV-3135] ([#342](https://github.com/cheqd/credential-service/issues/342)) ([eb7feac](https://github.com/cheqd/credential-service/commit/eb7feac647e96bf1a5fab79bbbc891e4007539cc))
+
 ## [2.8.0-develop.3](https://github.com/cheqd/credential-service/compare/2.8.0-develop.2...2.8.0-develop.3) (2023-08-15)
 
 

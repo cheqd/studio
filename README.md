@@ -42,7 +42,7 @@ The application allows configuring the following parameters using environment va
 3. `RESOLVER_URL`: API endpoint for a [DID Resolver](https://github.com/cheqd/did-resolver) endpoint that supports
    `did:cheqd` (Default: `https://resolver.cheqd.net/1.0/identifiers/`).
 4. `APPLICATION_BASE_URL`: URL of the application (external domain name).
-5. `CORS_ALLOWED_ORIGINS`: CORS allowed origins used in the app.
+5. `CORS_ALLOWED_ORIGINS`: CORS allowed origins used in the app (optional). (Default: `APPLICATION_BASE_URL`).
 
 #### Veramo KMS Database
 
@@ -74,9 +74,8 @@ By default, `ENABLE_AUTHENTICATION` is set to off/`false`. To enable external Ve
 1. **Endpoints**
     1. `LOGTO_ENDPOINT`: API endpoint for LogTo server
     2. `LOGTO_DEFAULT_RESOURCE_URL`: Root of API resources in this application to be guarded. (Default:
-       `http://localhost:3000/api` on localhost.)
-    3. `LOGTO_MANAGEMENT_API`: URL of management API for LogTo (default is `https://default.logto.app/api`)
-    4. `CORS_ALLOWED_ORIGINS`: CORS allowed origins used in the app
+       `http://localhost:3000/` on localhost.)
+    3. `LOGTO_MANAGEMENT_API`: URL of management API for LogTo. This is typically static within self-hosted LogTo applications and is not meant to be a resolvable URL. (Default: `https://default.logto.app/api`)
 2. **User-facing APIs**
     1. `LOGTO_APP_ID`: Application ID for the Credential Service application in LogTo. This can be set up as type
        "Traditional Web"
@@ -99,11 +98,9 @@ By default, `ENABLE_AUTHENTICATION` is set to off/`false`. To enable external Ve
 This section describes bootstrapping things for newcomers accounts. If it's enabled the CredentialService auto-populates
 some tokens on the testnet for making the process simpler.
 
-1. `FAUCET_ENABLED` - enable/disable such functionality (`false` by default)
-2. `FAUCET_URI` - URI when the faucet service is located (`https://faucet-api.cheqd.network/credit` by default)
-3. `FAUCET_DENOM` - the denom of token to assign (`ncheq` by default)
-4. `TESTNET_MINIMUM_BALANCE` - the minimum amount of tokens for being on testnet account. Be default it's amount,
-   required for creating a DID
+1. `ENABLE_ACCOUNT_TOPUP`: Enable/disable such functionality (`false` by default)
+2. `FAUCET_URI`: Faucet service API endpoint (Default: `https://faucet-api.cheqd.network/credit`)
+3. `TESTNET_MINIMUM_BALANCE`: Minimum balance on account before it is automatically topped up from the faucet. This value should be expressed as an integer in `CHEQ` tokens, which will then be converted in the background to `ncheq` denomination. Account balance check is carried out on every account creation/login. (Default: 10,000 CHEQ testnet tokens)
 
 ### 3rd Party Connectors
 
