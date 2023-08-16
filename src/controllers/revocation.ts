@@ -312,7 +312,7 @@ export class RevocationController {
 	 *             - revoke
 	 *             - suspend
 	 *             - reinstate
-     *       - in: query
+	 *       - in: query
 	 *         name: publish
 	 *         description: Publish the status list to the DID network. The default is `false`, which means the status list is not published to the DID network.
 	 *         required: true

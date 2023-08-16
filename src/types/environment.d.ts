@@ -13,12 +13,12 @@ declare global {
 			MAINNET_RPC_URL: string;
 			TESTNET_RPC_URL: string;
 			RESOLVER_URL: string;
-			CORS_ALLOWED_ORIGINS: string | undefined;
+			APPLICATION_BASE_URL: string | 'http://localhost:3000';
+			CORS_ALLOWED_ORIGINS: string | APPLICATION_BASE_URL;
 			ENABLE_EXTERNAL_DB: string | 'false';
 			EXTERNAL_DB_CONNECTION_URL: string;
 			EXTERNAL_DB_ENCRYPTION_KEY: string;
 			EXTERNAL_DB_CERT: string | undefined;
-			APPLICATION_BASE_URL: string | 'http://localhost:3000';
 
 			// LogTo
 			LOGTO_ENDPOINT: string;
@@ -49,10 +49,9 @@ declare global {
 			ISSUER_DID: string;
 
 			// Faucet
-			FAUCET_ENABLED: string | 'false';
-			FAUCET_URI: string | 'https://faucet-api.cheqd.network/credit';
-			FAUCET_DENOM: string | 'ncheq';
-			TESTNET_MINIMUM_BALANCE: number | 50000000000;
+			ENABLE_ACCOUNT_TOPUP: string | 'false';
+			FAUCET_URI: string;
+			TESTNET_MINIMUM_BALANCE: number;
 		}
 	}
 
