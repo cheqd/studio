@@ -195,7 +195,9 @@ export class Veramo {
 	}
 
 	async resolve(didUrl: string) : Promise<Response> {
-		return fetch(`${process.env.RESOLVER_URL || DefaultResolverUrl}/${didUrl}`)
+		return fetch(`${process.env.RESOLVER_URL || DefaultResolverUrl}/${didUrl}`, {
+			headers: { 'Content-Type': '*/*' },
+		});
 	}
 
 	async getDid(agent: TAgent<IDIDManager>, did: string) {
