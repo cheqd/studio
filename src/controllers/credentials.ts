@@ -65,6 +65,13 @@ export class CredentialController {
 	 *     tags: [ Credential ]
 	 *     summary: Issue a Verifiable Credential
 	 *     description: This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued.
+	 *     parameters:
+	 *       - in: query
+	 *         name: allowDeactivated
+	 *         description: If set to `true` allow issue credential using deactivated DID.
+	 *         schema:
+	 *           type: boolean
+	 *           default: false
 	 *     requestBody:
 	 *       content:
 	 *         application/x-www-form-urlencoded:
@@ -99,6 +106,16 @@ export class CredentialController {
 		}
 		if (typeof request.body['@context'] === 'string') {
 			request.body['@context'] = [request.body['@context']];
+		}
+
+		const allowDeactivated = request.query.allowDeactivated === "true";
+		if (!allowDeactivated) {
+			const resolvedResult = await new Identity(response.locals.customerId).agent.resolveDid(request.body.issuerDid);
+			if (!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
+				return response.status(StatusCodes.BAD_REQUEST).send({
+					error: `${request.body.issuerDid} is either Deactivated or Not found`,
+				});
+			}
 		}
 
 		try {

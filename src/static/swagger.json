@@ -39,6 +39,17 @@
         ],
         "summary": "Issue a Verifiable Credential",
         "description": "This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "allowDeactivated",
+            "description": "If set to `true` allow issue credential using deactivated DID.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/x-www-form-urlencoded": {
