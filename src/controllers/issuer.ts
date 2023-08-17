@@ -692,7 +692,7 @@ export class IssuerController {
 	 *         description: Relative reference is a query fragment appended to the Service Endpoint URL. **Must** be used along with the `service` query property above. See <a href="https://w3c-ccg.github.io/did-resolution/#dereferencing">DID Resolution specification</a> algorithm for more details.
 	 *         schema:
 	 *           type: string
-	 *         example: /path/to/resource
+	 *         example: /path/to/file
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
