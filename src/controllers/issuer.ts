@@ -577,18 +577,19 @@ export class IssuerController {
 	 */
 	public async getResource(request: Request, response: Response) {
 		try {
+			let res: globalThis.Response
 			if (request.params.did) {
-				const res = await new Identity(response.locals.customerId).agent.resolve(
+				res = await new Identity(response.locals.customerId).agent.resolve(
 					request.params.did+getQueryParams(request.query)
 				);
 
 				const contentType = res.headers.get("Content-Type");
 				const body = new TextDecoder().decode(await res.arrayBuffer());
 
-				return response.setHeader("Content-Type", contentType!).status(200).send(body);
+				return response.setHeader("Content-Type", contentType!).status(res.status).send(body);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: "The DID or resourceId parameter is empty."
+					error: "The DID parameter is empty."
 				})
 			}
 		} catch (error) {
@@ -708,15 +709,16 @@ export class IssuerController {
 	 */
 	public async resolveDidUrl(request: Request, response: Response) {
 		try {
+			let res: globalThis.Response
 			if (request.params.did) {
-				const res = await new Identity(response.locals.customerId).agent.resolve(
+				res = await new Identity(response.locals.customerId).agent.resolve(
 					request.params.did+getQueryParams(request.query)
 				);
 
 				const contentType = res.headers.get("Content-Type");
 				const body = new TextDecoder().decode(await res.arrayBuffer());
 
-				return response.setHeader("Content-Type", contentType!).status(200).send(body);
+				return response.setHeader("Content-Type", contentType!).status(res.status).send(body);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: "The DIDUrl parameter is empty."
