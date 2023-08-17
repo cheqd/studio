@@ -281,10 +281,10 @@ export class RevocationController {
 		}
 
 		try {
-			const { did, statusListName } = request.body
+			const { did, statusListName } = request.query
       		const statusPurpose = request.query.statusPurpose as 'revocation' | 'suspension'
       		const statusList = await new Identity(response.locals.customerId).agent.searchStatusList2021(
-        		did, statusListName, statusPurpose,
+        		did as string, statusListName as string, statusPurpose,
       		)
       		return response.status(StatusCodes.OK).json(statusList)
 		} catch (error) {

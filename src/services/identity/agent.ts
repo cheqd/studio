@@ -501,19 +501,21 @@ export class Veramo {
 	}
 	
 	async searchStatusList2021(agent: VeramoAgent, did: string, statusListName: string, statusPurpose: 'revocation' | 'suspension') {
-		const resourceTypes = statusPurpose ? [StatusList2021ResourceTypes[`${statusPurpose}`]] : [StatusList2021ResourceTypes.revocation, StatusList2021ResourceTypes.suspension]
-		let metadata: ResourceMetadata[] = []
+		const resourceTypes = statusPurpose
+			? [StatusList2021ResourceTypes[`${statusPurpose}`]]
+			: [StatusList2021ResourceTypes.revocation, StatusList2021ResourceTypes.suspension];
+		let metadata: ResourceMetadata[] = [];
 	
 		for (const resourceType of resourceTypes) {
-		  const result = await (await fetch(`${did}?resourceType=${resourceType}&resourceMetadata=true`)).json()
-		  metadata = metadata.concat(result.contentStream?.linkedResourceMetadata || [])
+		  const result = await (await fetch(`${did}?resourceType=${resourceType}&resourceMetadata=true`)).json();
+		  metadata = metadata.concat(result.contentStream?.linkedResourceMetadata || []);
 		}
 	
 		return metadata.filter((resource: ResourceMetadata) => {
 		  if (statusListName) {
-			return resource.resourceName === statusListName && resource.mediaType == 'application/json'
+			return resource.resourceName === statusListName && resource.mediaType == 'application/json';
 		  }
-		  return resource.mediaType == 'application/json'
+		  return resource.mediaType == 'application/json';
 		}).map((resource: ResourceMetadata) => {
 		  return {
 			statusListName: resource.resourceName,
