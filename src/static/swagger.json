@@ -952,7 +952,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "/path/to/resource"
+            "example": "/path/to/file"
           }
         ],
         "responses": {
@@ -2037,6 +2037,18 @@
               "type": "string"
             }
           },
+          "verificationMethod": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VerificationMethod"
+            }
+          },
+          "service": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Service"
+            }
+          },
           "authentication": {
             "type": "array",
             "items": {
@@ -2066,21 +2078,12 @@
             "items": {
               "type": "string"
             }
-          },
-          "verificationMethod": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/VerificationMethod"
-            }
-          },
-          "service": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Service"
-            }
           }
         },
         "example": {
+          "@context": [
+            "https://www.w3.org/ns/did/v1"
+          ],
           "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
           "controller": [
             "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
@@ -2090,11 +2093,18 @@
               "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
               "type": "Ed25519VerificationKey2018",
               "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-              "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt"
+              "publicKeyBase58": "z6MkkVbyHJLLjdjU5B62DaJ4mkdMdUkttf9UqySSkA9bVTeZ"
             }
           ],
           "authentication": [
             "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1"
+          ],
+          "service": [
+            {
+              "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1",
+              "type": "LinkedDomains",
+              "serviceEndpoint": "https://example.com"
+            }
           ]
         }
       },
@@ -2345,20 +2355,21 @@
         "type": "object",
         "properties": {
           "@context": {
-            "type": "string"
+            "type": "string",
+            "example": "https://w3id.org/did-resolution/v1"
+          },
+          "didDidResolutionMetadata": {
+            "$ref": "#/components/schemas/DidResolutionMetadata"
           },
           "didDocument": {
             "$ref": "#/components/schemas/DidDocument"
           },
           "didDocumentMetadata": {
-            "$ref": "#/components/schemas/ResolutionDidDocMetadata"
-          },
-          "didResolutionMetadata": {
-            "$ref": "#/components/schemas/ResolutionMetadata"
+            "$ref": "#/components/schemas/DidDocumentMetadata"
           }
         }
       },
-      "ResolutionDidDocMetadata": {
+      "DidDocumentMetadata": {
         "type": "object",
         "properties": {
           "created": {
@@ -2369,19 +2380,19 @@
             "type": "boolean",
             "example": false
           },
-          "linkedResourceMetadata": {
-            "items": {
-              "$ref": "#/components/schemas/DereferencedResource"
-            },
-            "type": "array"
-          },
           "updated": {
             "type": "string",
             "example": "2021-09-10T12:00:00Z"
           },
           "versionId": {
             "type": "string",
-            "example": "4979BAF49599FEF0BAD5ED0849FDD708156761EBBC8EBE78D0907F8BECC9CB2E"
+            "example": "3ccde6ba-6ba5-56f2-9f4f-8825561a9860"
+          },
+          "linkedResourceMetadata": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DereferencedResource"
+            }
           }
         }
       },
@@ -2434,7 +2445,7 @@
           }
         }
       },
-      "ResolutionMetadata": {
+      "DidResolutionMetadata": {
         "type": "object",
         "properties": {
           "contentType": {
@@ -2445,17 +2456,16 @@
             ],
             "example": "application/did+ld+json"
           },
+          "retrieved": {
+            "type": "string",
+            "example": "2021-09-01T12:00:00Z"
+          },
           "did": {
             "$ref": "#/components/schemas/DidProperties"
           },
           "error": {
             "type": "string",
-            "nullable": true,
-            "example": null
-          },
-          "retrieved": {
-            "type": "string",
-            "example": "2021-09-01T12:00:00Z"
+            "nullable": true
           }
         }
       },
