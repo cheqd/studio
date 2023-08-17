@@ -1,4 +1,4 @@
-import type { IIdentity } from './IIdentity.js';
+import type { IIdentity } from './identity.js';
 import { LocalIdentity } from './local.js';
 import { PostgresIdentity } from './postgres.js';
 import { Unauthorized } from './unauthorized.js';

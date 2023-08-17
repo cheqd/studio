@@ -73,10 +73,10 @@ export function verifyHookSignature(signingKey: string, rawBody: string, expecte
 export function getQueryParams(queryParams: QueryString.ParsedQs) {
 	// Convert the query parameters object to a single string in text format
 	const queryParamsText = Object.keys(queryParams)
-		.map(key => `${key}=${queryParams[key]}`)
+		.map((key) => `${key}=${queryParams[key]}`)
 		.join('&');
 
-	return queryParamsText.length == 0 ? queryParamsText : "?"+queryParamsText;
+	return queryParamsText.length == 0 ? queryParamsText : '?' + queryParamsText;
 }
 
 export interface IDidDocOptions {

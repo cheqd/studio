@@ -505,7 +505,7 @@ export class IssuerController {
 
 	/**
 	 * @openapi
-	 * 
+	 *
 	 * /resource/search/{did}:
 	 *   get:
 	 *     tags: [ Resource ]
@@ -577,25 +577,25 @@ export class IssuerController {
 	 */
 	public async getResource(request: Request, response: Response) {
 		try {
-			let res: globalThis.Response
+			let res: globalThis.Response;
 			if (request.params.did) {
 				res = await new Identity(response.locals.customerId).agent.resolve(
-					request.params.did+getQueryParams(request.query)
+					request.params.did + getQueryParams(request.query)
 				);
 
-				const contentType = res.headers.get("Content-Type");
+				const contentType = res.headers.get('Content-Type');
 				const body = new TextDecoder().decode(await res.arrayBuffer());
 
-				return response.setHeader("Content-Type", contentType!).status(res.status).send(body);
+				return response.setHeader('Content-Type', contentType!).status(res.status).send(body);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: "The DID parameter is empty."
-				})
+					error: 'The DID parameter is empty.',
+				});
 			}
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `${error}`
-			})
+				error: `${error}`,
+			});
 		}
 	}
 
@@ -678,7 +678,7 @@ export class IssuerController {
 	 *         schema:
 	 *           type: string
 	 *           enum:
-	 *             - Ed25519VerificationKey2018 
+	 *             - Ed25519VerificationKey2018
 	 *             - Ed25519VerificationKey2020
 	 *             - JsonWebKey2020
 	 *       - in: query
@@ -709,19 +709,19 @@ export class IssuerController {
 	 */
 	public async resolveDidUrl(request: Request, response: Response) {
 		try {
-			let res: globalThis.Response
+			let res: globalThis.Response;
 			if (request.params.did) {
 				res = await new Identity(response.locals.customerId).agent.resolve(
-					request.params.did+getQueryParams(request.query)
+					request.params.did + getQueryParams(request.query)
 				);
 
-				const contentType = res.headers.get("Content-Type");
+				const contentType = res.headers.get('Content-Type');
 				const body = new TextDecoder().decode(await res.arrayBuffer());
 
-				return response.setHeader("Content-Type", contentType!).status(res.status).send(body);
+				return response.setHeader('Content-Type', contentType!).status(res.status).send(body);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: "The DIDUrl parameter is empty."
+					error: 'The DIDUrl parameter is empty.',
 				});
 			}
 		} catch (error) {

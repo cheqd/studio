@@ -24,7 +24,7 @@ import {
 } from '../../types/shared.js'
 import { Connection } from '../../database/connection/connection.js'
 import { Veramo } from './agent.js'
-import { DefaultIdentity } from './IIdentity.js'
+import { DefaultIdentity } from './identity.js'
 
 dotenv.config()
 

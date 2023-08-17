@@ -6,7 +6,7 @@ import { Connection } from '../../database/connection/connection.js'
 import { Veramo } from './agent.js'
 import { CheqdDIDProvider } from "@cheqd/did-provider-cheqd";
 import { CheqdNetwork } from '@cheqd/sdk'
-import { DefaultIdentity } from './IIdentity.js'
+import { DefaultIdentity } from './identity.js'
 
 dotenv.config()
 

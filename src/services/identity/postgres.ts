@@ -32,7 +32,7 @@ import { Connection } from '../../database/connection/connection.js'
 import type { CustomerEntity } from '../../database/entities/customer.entity.js'
 import { CustomerService } from '../customer.js'
 import { Veramo } from './agent.js'
-import { DefaultIdentity } from './IIdentity.js'
+import { DefaultIdentity } from './identity.js'
 import type { AbstractPrivateKeyStore } from '@veramo/key-manager'
 
 dotenv.config()
