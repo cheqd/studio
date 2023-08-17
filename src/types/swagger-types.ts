@@ -93,7 +93,7 @@
  *         credentialStatus:
  *           statusPurpose: revocation
  *           statusListName: employee-credentials
- *           statusListIndex: 10
+ *           statusListIndex: "10"
  *     Credential:
  *       description: Input fields for revoking/suspending a Verifiable Credential.
  *       type: object

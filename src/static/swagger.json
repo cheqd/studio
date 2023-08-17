@@ -1475,7 +1475,7 @@
           "credentialStatus": {
             "statusPurpose": "revocation",
             "statusListName": "employee-credentials",
-            "statusListIndex": 10
+            "statusListIndex": "10"
           }
         }
       },
