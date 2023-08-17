@@ -700,8 +700,8 @@
  *          didDocument:
  *            $ref: '#/components/schemas/DidDocument'
  *          didDocumentMetadata:
- *            $ref: '#/components/schemas/ResolutionDidDocMetadata'
- *     ResolutionDidDocMetadata:
+ *            $ref: '#/components/schemas/DidDocumentMetadata'
+ *     DidDocumentMetadata:
  *       type: object
  *       properties:
  *         created:
@@ -710,16 +710,16 @@
  *         deactivated:
  *           type: boolean
  *           example: false
- *         linkedResourceMetadata:
- *           items:
- *             $ref: '#/components/schemas/DereferencedResource'
- *           type: array
  *         updated:
  *           type: string
  *           example: "2021-09-10T12:00:00Z"
  *         versionId:
  *           type: string
- *           example: 4979BAF49599FEF0BAD5ED0849FDD708156761EBBC8EBE78D0907F8BECC9CB2E
+ *           example: 3ccde6ba-6ba5-56f2-9f4f-8825561a9860
+ *         linkedResourceMetadata:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/DereferencedResource'
  *     DereferencedResource:
  *       type: object
  *       properties:
@@ -763,15 +763,14 @@
  *           allOf:
  *           - $ref: '#/components/schemas/ContentType'
  *           example: application/did+ld+json
+ *         retrieved:
+ *           type: string
+ *           example: '2021-09-01T12:00:00Z'
  *         did:
  *           $ref: '#/components/schemas/DidProperties'
  *         error:
  *           type: string
  *           nullable: true
- *           example: null
- *         retrieved:
- *           type: string
- *           example: '2021-09-01T12:00:00Z'
  *     ContentType:
  *       enum:
  *       - application/did+json
