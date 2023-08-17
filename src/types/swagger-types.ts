@@ -684,8 +684,6 @@
  *           example: application/did+ld+json
  *         did:
  *           $ref: '#/components/schemas/DidProperties'
- *         error:
- *           type: string
  *         retrieved:
  *           type: string
  *           example: "2021-09-01T12:00:00Z"
@@ -719,25 +717,13 @@
  *         linkedResourceMetadata:
  *           type: array
  *           items:
- *             $ref: '#/components/schemas/DereferencedResource'
- *     DereferencedResource:
+ *             $ref: '#/components/schemas/ResourceMetadata'
+ *     ResourceMetadata:
  *       type: object
  *       properties:
- *         checksum:
+ *         resourceURI:
  *           type: string
- *           example: a95380f460e63ad939541a57aecbfd795fcd37c6d78ee86c885340e33a91b559
- *         created:
- *           type: string
- *           example: "2021-09-01T12:00:00Z"
- *         mediaType:
- *           type: string
- *           example: image/png
- *         nextVersionId:
- *           type: string
- *           example: d4829ac7-4566-478c-a408-b44767eddadc
- *         previousVersionId:
- *           type: string
- *           example: ad7a8442-3531-46eb-a024-53953ec6e4ff
+ *           example: did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47/resources/398cee0a-efac-4643-9f4c-74c48c72a14b
  *         resourceCollectionId:
  *           type: string
  *           example: 55dbc8bf-fba3-4117-855c-1e0dc1d3bb47
@@ -746,16 +732,28 @@
  *           example: 398cee0a-efac-4643-9f4c-74c48c72a14b
  *         resourceName:
  *           type: string
- *           example: Image Resource
+ *           example: cheqd-issuer-logo
  *         resourceType:
  *           type: string
- *           example: Image
- *         resourceURI:
+ *           example: CredentialArtwork
+ *         mediaType:
  *           type: string
- *           example: did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47/resources/398cee0a-efac-4643-9f4c-74c48c72a14b
+ *           example: image/png
  *         resourceVersion:
  *           type: string
  *           example: "1.0"
+ *         checksum:
+ *           type: string
+ *           example: a95380f460e63ad939541a57aecbfd795fcd37c6d78ee86c885340e33a91b559
+ *         created:
+ *           type: string
+ *           example: "2021-09-01T12:00:00Z"
+ *         nextVersionId:
+ *           type: string
+ *           example: d4829ac7-4566-478c-a408-b44767eddadc
+ *         previousVersionId:
+ *           type: string
+ *           example: ad7a8442-3531-46eb-a024-53953ec6e4ff
  *     DidResolutionMetadata:
  *       type: object
  *       properties:
@@ -768,9 +766,6 @@
  *           example: '2021-09-01T12:00:00Z'
  *         did:
  *           $ref: '#/components/schemas/DidProperties'
- *         error:
- *           type: string
- *           nullable: true
  *     ContentType:
  *       enum:
  *       - application/did+json
