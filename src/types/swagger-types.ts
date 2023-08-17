@@ -471,6 +471,14 @@
  *           type: array
  *           items:
  *             type: string
+ *         verificationMethod:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/VerificationMethod'
+ *         service:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Service'
  *         authentication:
  *           type: array
  *           items:
@@ -491,15 +499,9 @@
  *           type: array
  *           items:
  *             type: string
- *         verificationMethod:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/VerificationMethod'
- *         service:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/Service'
  *       example:
+ *         '@context':
+ *           - https://www.w3.org/ns/did/v1
  *         id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
  *         controller:
  *           - did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
@@ -507,9 +509,13 @@
  *           - id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1
  *             type: Ed25519VerificationKey2018
  *             controller: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
- *             publicKeyBase58: BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt
+ *             publicKeyBase58: z6MkkVbyHJLLjdjU5B62DaJ4mkdMdUkttf9UqySSkA9bVTeZ
  *         authentication:
  *           - did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1
+ *         service:
+ *           - id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1
+ *             type: LinkedDomains
+ *             serviceEndpoint: https://example.com
  *     DidCreateRequest:
  *       type: object
  *       properties:
@@ -688,12 +694,13 @@
  *       properties:
  *          '@context':
  *            type: string
+ *            example: https://w3id.org/did-resolution/v1
+ *          didDidResolutionMetadata:
+ *            $ref: '#/components/schemas/DidResolutionMetadata'
  *          didDocument:
  *            $ref: '#/components/schemas/DidDocument'
  *          didDocumentMetadata:
  *            $ref: '#/components/schemas/ResolutionDidDocMetadata'
- *          didResolutionMetadata:
- *            $ref: '#/components/schemas/ResolutionMetadata'
  *     ResolutionDidDocMetadata:
  *       type: object
  *       properties:
@@ -749,7 +756,7 @@
  *         resourceVersion:
  *           type: string
  *           example: "1.0"
- *     ResolutionMetadata:
+ *     DidResolutionMetadata:
  *       type: object
  *       properties:
  *         contentType:
