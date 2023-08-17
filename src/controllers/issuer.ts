@@ -519,9 +519,6 @@ export class IssuerController {
 	 *           type: string
 	 *         required: true
 	 *         example: did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
-	 *       - in: path
-	 *         name: resource Identifier
-	 *         description: Fetch a DID-Linked Resource by Resource ID unique identifier.
 	 *       - in: query
 	 *         name: resourceId
 	 *         description: Fetch a DID-Linked Resource by Resource ID unique identifier. Since this is a unique identifier, other Resource query parameters are not required. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
