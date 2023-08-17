@@ -531,18 +531,19 @@ export class IssuerController {
 	 *         description: Filter a DID-Linked Resource query by Resource Name. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
 	 *         schema:
 	 *           type: string
-	 *         example: Cheqd Issuer Logo
+	 *         example: cheqd-issuer-logo
 	 *       - in: query
 	 *         name: resourceType
 	 *         description: Filter a DID-Linked Resource query by Resource Type. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
 	 *         schema:
 	 *           type: string
-	 *         example: IssuerLogo
+	 *         example: CredentialArtwork
 	 *       - in: query
 	 *         name: resourceVersion
 	 *         description: Filter a DID-Linked Resource query by Resource Version, which is an optional free-text field used by issuers (e.g., "v1", "Final Version", "1st January 1970" etc). See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
 	 *         schema:
 	 *           type: string
+	 *         example: v1
 	 *       - in: query
 	 *         name: resourceVersionTime
 	 *         description: Filter a DID-Linked Resource query which returns the closest version of the Resource *at* or *before* specified time. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
@@ -551,16 +552,16 @@ export class IssuerController {
 	 *           format: date-time
 	 *         example: 1970-01-01T00:00:00Z
 	 *       - in: query
-	 *         name: resourceMetadata
-	 *         description: Return only metadata of DID-Linked Resource instead of actual DID-Linked Resource. Mutually exclusive with some of the other parameters.
-	 *         schema:
-	 *           type: boolean
-	 *       - in: query
 	 *         name: checksum
 	 *         description: Request integrity check against a given DID-Linked Resource by providing a SHA-256 checksum hash. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
 	 *         schema:
 	 *           type: string
 	 *         example: dc64474d062ed750a66bad58cb609928de55ed0d81defd231a4a4bf97358e9ed
+	 *       - in: query
+	 *         name: resourceMetadata
+	 *         description: Return only metadata of DID-Linked Resource instead of actual DID-Linked Resource. Mutually exclusive with some of the other parameters.
+	 *         schema:
+	 *           type: boolean
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.

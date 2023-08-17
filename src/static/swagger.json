@@ -774,7 +774,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "Cheqd Issuer Logo"
+            "example": "cheqd-issuer-logo"
           },
           {
             "in": "query",
@@ -783,7 +783,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "IssuerLogo"
+            "example": "CredentialArtwork"
           },
           {
             "in": "query",
@@ -791,7 +791,8 @@
             "description": "Filter a DID-Linked Resource query by Resource Version, which is an optional free-text field used by issuers (e.g., \"v1\", \"Final Version\", \"1st January 1970\" etc). See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "v1"
           },
           {
             "in": "query",
@@ -805,20 +806,20 @@
           },
           {
             "in": "query",
-            "name": "resourceMetadata",
-            "description": "Return only metadata of DID-Linked Resource instead of actual DID-Linked Resource. Mutually exclusive with some of the other parameters.",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "in": "query",
             "name": "checksum",
             "description": "Request integrity check against a given DID-Linked Resource by providing a SHA-256 checksum hash. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
             "schema": {
               "type": "string"
             },
             "example": "dc64474d062ed750a66bad58cb609928de55ed0d81defd231a4a4bf97358e9ed"
+          },
+          {
+            "in": "query",
+            "name": "resourceMetadata",
+            "description": "Return only metadata of DID-Linked Resource instead of actual DID-Linked Resource. Mutually exclusive with some of the other parameters.",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -2103,7 +2104,9 @@
             {
               "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1",
               "type": "LinkedDomains",
-              "serviceEndpoint": "https://example.com"
+              "serviceEndpoint": [
+                "https://example.com"
+              ]
             }
           ]
         }

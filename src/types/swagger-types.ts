@@ -515,7 +515,8 @@
  *         service:
  *           - id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1
  *             type: LinkedDomains
- *             serviceEndpoint: https://example.com
+ *             serviceEndpoint:
+ *               - https://example.com
  *     DidCreateRequest:
  *       type: object
  *       properties:
