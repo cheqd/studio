@@ -93,7 +93,7 @@
  *         credentialStatus:
  *           statusPurpose: revocation
  *           statusListName: employee-credentials
- *           statusListIndex: "10"
+ *           statusListIndex: 10
  *     Credential:
  *       description: Input fields for revoking/suspending a Verifiable Credential.
  *       type: object
@@ -134,7 +134,7 @@
  *               type: string
  *               example: https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-suspension-1&resourceType=StatusList2021Suspension#20
  *             statusListIndex:
- *               type: string
+ *               type: number
  *               example: 20
  *             statusPurpose:
  *               type: string
