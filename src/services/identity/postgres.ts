@@ -1,14 +1,27 @@
+import * as dotenv from 'dotenv'
 import type {
-	CredentialPayload, DIDDocument, IIdentifier, IVerifyResult, ManagedKeyInfo,
-	VerifiableCredential, VerifiablePresentation,
+	CredentialPayload,
+	DIDDocument, 
+	IIdentifier, 
+	IVerifyResult, 
+	ManagedKeyInfo,
+	VerifiableCredential, 
+	VerifiablePresentation,
 } from '@veramo/core'
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
 import { PrivateKeyStore } from '@veramo/data-store'
 import { CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
 import {
-	BroadCastStatusListOptions, CheckStatusListOptions, cheqdDidRegex, CreateStatusListOptions,
-	CredentialRequest, DefaultRPCUrl, StatusOptions, UpdateStatusListOptions, VeramoAgent,
+	BroadCastStatusListOptions,
+	CheckStatusListOptions,
+	cheqdDidRegex,
+	CreateStatusListOptions,
+	CredentialRequest,
+	DefaultRPCUrl,
+	StatusOptions,
+	UpdateStatusListOptions,
+	VeramoAgent,
 	VerificationOptions,
 } from '../../types/shared.js'
 import type {
@@ -19,10 +32,9 @@ import { Connection } from '../../database/connection/connection.js'
 import type { CustomerEntity } from '../../database/entities/customer.entity.js'
 import { CustomerService } from '../customer.js'
 import { Veramo } from './agent.js'
-
-import * as dotenv from 'dotenv'
-import { DefaultIdentity } from './default.js'
+import { DefaultIdentity } from './IIdentity.js'
 import type { AbstractPrivateKeyStore } from '@veramo/key-manager'
+
 dotenv.config()
 
 const {
