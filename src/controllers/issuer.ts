@@ -595,7 +595,7 @@ export class IssuerController {
 				return response.setHeader('Content-Type', contentType!).status(res.status).send(body);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'The DID parameter is empty.',
+					error: 'Required parameters for DID-Linked Resource query not provided',
 				});
 			}
 		} catch (error) {
