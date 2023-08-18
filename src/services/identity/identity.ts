@@ -113,7 +113,7 @@ export interface IIdentityService {
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult>;
 }
 
-export abstract class AbstractIdentity implements IIdentity {
+export abstract class AbstractIdentityService implements IIdentityService {
 	agent?: VeramoAgent
 
 	initAgent(): VeramoAgent {
