@@ -3,9 +3,8 @@ import { check, validationResult } from 'express-validator';
 import { fromString } from 'uint8arrays';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityStrategySetup } from '../services/identity/index.js';
-import { Veramo } from '../services/identity/agent.js';
-import { DefaultDidUrlPattern, DefaultStatusAction, DefaultStatusActions, MinimalPaymentCondition, type ResourceMetadata } from '../types/shared.js';
-import { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, DefaultStatusList2021Encodings, DefaultStatusList2021ResourceTypes, DefaultStatusList2021StatusPurposeTypes } from '@cheqd/did-provider-cheqd';
+import { DefaultDidUrlPattern, DefaultStatusAction, DefaultStatusActions, MinimalPaymentCondition } from '../types/shared.js';
+import { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, DefaultStatusList2021Encodings, DefaultStatusList2021StatusPurposeTypes } from '@cheqd/did-provider-cheqd';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
 
 export class RevocationController {

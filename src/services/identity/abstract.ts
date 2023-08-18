@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type {
 	CredentialPayload,
 	DIDDocument,
@@ -20,12 +22,14 @@ import type {
 	UnsuspensionResult,
 } from '@cheqd/did-provider-cheqd';
 import type {
-	BroadCastStatusListOptions,
+	BroadcastStatusListOptions,
 	CheckStatusListOptions,
-	CreateStatusListOptions,
+	CreateEncryptedStatusListOptions,
+	CreateUnencryptedStatusListOptions,
 	CredentialRequest,
 	StatusOptions,
-	UpdateStatusListOptions,
+	UpdateEncryptedStatusListOptions,
+	UpdateUnencryptedStatusListOptions,
 	VeramoAgent,
 	VerificationOptions,
 } from '../../types/shared';
@@ -41,21 +45,27 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	createKey(type: 'Ed25519' | 'Secp256k1', agentId?: string): Promise<ManagedKeyInfo> {
 		throw new Error(`Not supported`)
 	}
+
 	createDid(network: string, didDocument: DIDDocument, agentId?: string): Promise<IIdentifier> {
 		throw new Error(`Not supported`)
 	}
+
 	updateDid(didDocument: DIDDocument, agentId?: string): Promise<IIdentifier> {
 		throw new Error(`Not supported`)
 	}
+
 	deactivateDid(did: string, agentId?: string): Promise<boolean> {
 		throw new Error(`Not supported`)
 	}
+
 	importDid(did: string, privateKeyHex: string, publicKeyHex: string, agentId: string): Promise<IIdentifier> {
 		throw new Error(`Not supported`)
 	}
+
 	createResource(network: string, payload: ResourcePayload, agentId?: string): Promise<any> {
 		throw new Error(`Not supported`)
 	}
+
 	createCredential(
 		credential: CredentialPayload,
 		format: CredentialRequest['format'],
@@ -64,18 +74,32 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<VerifiableCredential> {
 		throw new Error(`Not supported`)
 	}
-	createStatusList2021(
+	createUnencryptedStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
-		statusOptions: CreateStatusListOptions,
+		statusOptions: CreateUnencryptedStatusListOptions,
 		agentId: string
 	): Promise<CreateStatusList2021Result> {
 		throw new Error(`Not supported`)
 	}
-	updateStatusList2021(
+	createEncryptedStatusList2021(
 		did: string,
-		statusOptions: UpdateStatusListOptions,
-		publish?: boolean,
+		resourceOptions: ResourcePayload,
+		statusOptions: CreateEncryptedStatusListOptions,
+		agentId: string
+	): Promise<CreateStatusList2021Result> {
+		throw new Error(`Not supported`)
+	}
+	updateUnencryptedStatusList2021(
+		did: string,
+		statusOptions: UpdateUnencryptedStatusListOptions,
+		agentId?: string
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
+		throw new Error(`Not supported`)
+	}
+	updateEncryptedStatusList2021(
+		did: string,
+		statusOptions: UpdateEncryptedStatusListOptions,
 		agentId?: string
 	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
 		throw new Error(`Not supported`)
@@ -83,7 +107,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	broadcastStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
-		statusOptions: BroadCastStatusListOptions,
+		statusOptions: BroadcastStatusListOptions,
 		agentId?: string
 	): Promise<boolean> {
 		throw new Error(`Not supported`)
@@ -118,15 +142,12 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	getDid(did: string): Promise<any> {
 		throw new Error(`Not supported`)
 	}
-
 	resolveDid(did: string, agentId?: string): Promise<DIDResolutionResult> {
 		throw new Error(`Not supported`)
 	}
-
 	resolve(didUrl: string): Promise<Response> {
 		throw new Error(`Not supported`)
 	}
-
 	verifyCredential(
 		credential: VerifiableCredential | string,
 		verificationOptions: VerificationOptions,
@@ -134,7 +155,6 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<IVerifyResult> {
 		throw new Error(`Not supported`)
 	}
-
 	verifyPresentation(
 		presentation: VerifiablePresentation | string,
 		verificationOptions: VerificationOptions,
@@ -142,7 +162,6 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<IVerifyResult> {
 		throw new Error(`Not supported`)
 	}
-
 	checkStatusList2021(
 		did: string,
 		statusOptions: CheckStatusListOptions,
@@ -150,7 +169,6 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<StatusCheckResult> {
 		throw new Error(`Not supported`)
 	}
-
 	searchStatusList2021(
 		did: string,
 		statusListName: string,

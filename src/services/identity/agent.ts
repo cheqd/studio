@@ -56,7 +56,6 @@ import {
 	CredentialRequest,
 	ResourceMetadata,
 	RevocationStatusOptions,
-	StatusList2021ResourceTypes,
 	StatusOptions,
 	SuspensionStatusOptions,
 	UpdateUnencryptedStatusListOptions,
@@ -204,7 +203,7 @@ export class Veramo {
 		return await agent.resolveDid({ didUrl: did });
 	}
 
-	async resolve(didUrl: string) : Promise<Response> {
+	async resolve(didUrl: string): Promise<Response> {
 		return fetch(`${process.env.RESOLVER_URL || DefaultResolverUrl}/${didUrl}`, {
 			headers: { 'Content-Type': '*/*' },
 		});
@@ -410,32 +409,39 @@ export class Veramo {
 		}
 
 		// construct payment conditions
-		const paymentConditions = (statusOptions?.paymentConditions
-			? statusOptions.paymentConditions.map((condition) => {
-					return {
-						feePaymentAddress: condition.feePaymentAddress,
-						feePaymentAmount: `${toMinimalDenom(condition.feePaymentAmount)}${MINIMAL_DENOM}`,
-						intervalInSeconds: condition.feePaymentWindow * 60,
-						type: 'timelockPayment'
-					}
-			})
-			: function () {
-				// validate relevant components - case: feePaymentAddress
-				if (!statusOptions.feePaymentAddress) throw new Error('createEncryptedStatusList2021: feePaymentAddress is required');
+		const paymentConditions = (
+			statusOptions?.paymentConditions
+				? statusOptions.paymentConditions.map((condition) => {
+						return {
+							feePaymentAddress: condition.feePaymentAddress,
+							feePaymentAmount: `${toMinimalDenom(condition.feePaymentAmount)}${MINIMAL_DENOM}`,
+							intervalInSeconds: condition.feePaymentWindow * 60,
+							type: 'timelockPayment',
+						};
+				  })
+				: (function () {
+						// validate relevant components - case: feePaymentAddress
+						if (!statusOptions.feePaymentAddress)
+							throw new Error('createEncryptedStatusList2021: feePaymentAddress is required');
 
-				// validate relevant components - case: feePaymentAmount
-				if (!statusOptions.feePaymentAmount) throw new Error('createEncryptedStatusList2021: feePaymentAmount is required');
+						// validate relevant components - case: feePaymentAmount
+						if (!statusOptions.feePaymentAmount)
+							throw new Error('createEncryptedStatusList2021: feePaymentAmount is required');
 
-				// validate relevant components - case: feePaymentWindow
-				if (!statusOptions.feePaymentWindow) throw new Error('createEncryptedStatusList2021: feePaymentWindow is required');
+						// validate relevant components - case: feePaymentWindow
+						if (!statusOptions.feePaymentWindow)
+							throw new Error('createEncryptedStatusList2021: feePaymentWindow is required');
 
-				return [{
-					feePaymentAddress: statusOptions.feePaymentAddress,
-					feePaymentAmount: `${toMinimalDenom(statusOptions.feePaymentAmount)}${MINIMAL_DENOM}`,
-					intervalInSeconds: statusOptions.feePaymentWindow * 60,
-					type: 'timelockPayment'
-				}]
-			}()) satisfies PaymentCondition[];
+						return [
+							{
+								feePaymentAddress: statusOptions.feePaymentAddress,
+								feePaymentAmount: `${toMinimalDenom(statusOptions.feePaymentAmount)}${MINIMAL_DENOM}`,
+								intervalInSeconds: statusOptions.feePaymentWindow * 60,
+								type: 'timelockPayment',
+							},
+						];
+				  })()
+		) satisfies PaymentCondition[];
 
 		return await agent.cheqdCreateStatusList2021({
 			kms,
@@ -447,7 +453,7 @@ export class Veramo {
 			resourceVersion: resourceOptions.version,
 			encrypted: true,
 			paymentConditions,
-			returnSymmetricKey: true
+			returnSymmetricKey: true,
 		} satisfies ICheqdCreateStatusList2021Args);
 	}
 
@@ -563,35 +569,47 @@ export class Veramo {
 		statusOptions: UpdateEncryptedStatusListOptions
 	) {
 		// construct payment conditions
-		const paymentConditions = (statusOptions?.paymentConditions
-			? statusOptions.paymentConditions.map((condition) => {
-					return {
-						feePaymentAddress: condition.feePaymentAddress,
-						feePaymentAmount: `${toMinimalDenom(condition.feePaymentAmount)}${MINIMAL_DENOM}`,
-						intervalInSeconds: condition.feePaymentWindow * 60,
-						type: 'timelockPayment'
-					}
-			})
-			: function () {
-				// validate relevant components
-				if (!statusOptions.feePaymentAddress && !statusOptions.feePaymentAmount && !statusOptions.feePaymentWindow) return undefined;
+		const paymentConditions = (
+			statusOptions?.paymentConditions
+				? statusOptions.paymentConditions.map((condition) => {
+						return {
+							feePaymentAddress: condition.feePaymentAddress,
+							feePaymentAmount: `${toMinimalDenom(condition.feePaymentAmount)}${MINIMAL_DENOM}`,
+							intervalInSeconds: condition.feePaymentWindow * 60,
+							type: 'timelockPayment',
+						};
+				  })
+				: (function () {
+						// validate relevant components
+						if (
+							!statusOptions.feePaymentAddress &&
+							!statusOptions.feePaymentAmount &&
+							!statusOptions.feePaymentWindow
+						)
+							return undefined;
 
-				// validate relevant components - case: feePaymentAddress
-				if (!statusOptions.feePaymentAddress) throw new Error('updateEncryptedStatusList2021: feePaymentAddress is required');
+						// validate relevant components - case: feePaymentAddress
+						if (!statusOptions.feePaymentAddress)
+							throw new Error('updateEncryptedStatusList2021: feePaymentAddress is required');
 
-				// validate relevant components - case: feePaymentAmount
-				if (!statusOptions.feePaymentAmount) throw new Error('updateEncryptedStatusList2021: feePaymentAmount is required');
+						// validate relevant components - case: feePaymentAmount
+						if (!statusOptions.feePaymentAmount)
+							throw new Error('updateEncryptedStatusList2021: feePaymentAmount is required');
 
-				// validate relevant components - case: feePaymentWindow
-				if (!statusOptions.feePaymentWindow) throw new Error('updateEncryptedStatusList2021: feePaymentWindow is required');
+						// validate relevant components - case: feePaymentWindow
+						if (!statusOptions.feePaymentWindow)
+							throw new Error('updateEncryptedStatusList2021: feePaymentWindow is required');
 
-				return [{
-					feePaymentAddress: statusOptions.feePaymentAddress,
-					feePaymentAmount: `${toMinimalDenom(statusOptions.feePaymentAmount)}${MINIMAL_DENOM}`,
-					intervalInSeconds: statusOptions.feePaymentWindow * 60,
-					type: 'timelockPayment'
-				}]
-			}()) satisfies PaymentCondition[] | undefined;
+						return [
+							{
+								feePaymentAddress: statusOptions.feePaymentAddress,
+								feePaymentAmount: `${toMinimalDenom(statusOptions.feePaymentAmount)}${MINIMAL_DENOM}`,
+								intervalInSeconds: statusOptions.feePaymentWindow * 60,
+								type: 'timelockPayment',
+							},
+						];
+				  })()
+		) satisfies PaymentCondition[] | undefined;
 
 		switch (statusOptions.statusAction) {
 			case DefaultStatusActions.revoke:
@@ -657,31 +675,38 @@ export class Veramo {
 			fetchList: true,
 		} satisfies ICheqdCheckCredentialStatusWithStatusList2021Args);
 	}
-	
-	async searchStatusList2021(agent: VeramoAgent, did: string, statusListName: string, statusPurpose: 'revocation' | 'suspension') {
+
+	async searchStatusList2021(
+		agent: VeramoAgent,
+		did: string,
+		statusListName: string,
+		statusPurpose: 'revocation' | 'suspension'
+	) {
 		const resourceTypes = statusPurpose
-			? [StatusList2021ResourceTypes[`${statusPurpose}`]]
-			: [StatusList2021ResourceTypes.revocation, StatusList2021ResourceTypes.suspension];
+			? [DefaultStatusList2021StatusPurposeTypes[statusPurpose]]
+			: [DefaultStatusList2021StatusPurposeTypes.revocation, DefaultStatusList2021StatusPurposeTypes.suspension];
 		let metadata: ResourceMetadata[] = [];
-	
+
 		for (const resourceType of resourceTypes) {
-		  const result = await (await fetch(`${did}?resourceType=${resourceType}&resourceMetadata=true`)).json();
-		  metadata = metadata.concat(result.contentStream?.linkedResourceMetadata || []);
+			const result = await (await fetch(`${did}?resourceType=${resourceType}&resourceMetadata=true`)).json();
+			metadata = metadata.concat(result.contentStream?.linkedResourceMetadata || []);
 		}
-	
-		return metadata.filter((resource: ResourceMetadata) => {
-		  if (statusListName) {
-			return resource.resourceName === statusListName && resource.mediaType == 'application/json';
-		  }
-		  return resource.mediaType == 'application/json';
-		}).map((resource: ResourceMetadata) => {
-		  return {
-			statusListName: resource.resourceName,
-			statusPurpose: resource.resourceType,
-			statusListVersion: resource.resourceVersion,
-			statusListId: resource.resourceId,
-			statusListNextVersion: resource.nextVersionId
-		  }
-		})
-	  }
+
+		return metadata
+			.filter((resource: ResourceMetadata) => {
+				if (statusListName) {
+					return resource.resourceName === statusListName && resource.mediaType == 'application/json';
+				}
+				return resource.mediaType == 'application/json';
+			})
+			.map((resource: ResourceMetadata) => {
+				return {
+					statusListName: resource.resourceName,
+					statusPurpose: resource.resourceType,
+					statusListVersion: resource.resourceVersion,
+					statusListId: resource.resourceId,
+					statusListNextVersion: resource.nextVersionId,
+				};
+			});
+	}
 }

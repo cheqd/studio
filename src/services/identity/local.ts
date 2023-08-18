@@ -4,9 +4,8 @@ import type {
 	CredentialPayload, 
 	VerifiableCredential,
 	IVerifyResult,
-	VerifiablePresentation,
 } from '@veramo/core';
-import { AbstractPrivateKeyStore, MemoryPrivateKeyStore } from '@veramo/key-manager';
+import { MemoryPrivateKeyStore } from '@veramo/key-manager';
 import { KeyManagementSystem } from '@veramo/kms-local';
 import {
 	CheqdDIDProvider,

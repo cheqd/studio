@@ -584,10 +584,10 @@ export class IssuerController {
 					request.params.did + getQueryParams(request.query)
 				);
 
-				const contentType = res.headers.get('Content-Type');
+				const contentType = res.headers.get('Content-Type') || 'application/octet-stream';
 				const body = new TextDecoder().decode(await res.arrayBuffer());
 
-				return response.setHeader('Content-Type', contentType!).status(res.status).send(body);
+				return response.setHeader('Content-Type', contentType).status(res.status).send(body);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'The DID parameter is empty.',
@@ -716,10 +716,10 @@ export class IssuerController {
 					request.params.did + getQueryParams(request.query)
 				);
 
-				const contentType = res.headers.get('Content-Type');
+				const contentType = res.headers.get('Content-Type') || 'application/octet-stream';
 				const body = new TextDecoder().decode(await res.arrayBuffer());
 
-				return response.setHeader('Content-Type', contentType!).status(res.status).send(body);
+				return response.setHeader('Content-Type', contentType).status(res.status).send(body);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'The DIDUrl parameter is empty.',
