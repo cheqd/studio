@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as dotenv from 'dotenv';
 import { LocalIdentityService } from './local.js';
 import { PostgresIdentityService } from './postgres.js';
