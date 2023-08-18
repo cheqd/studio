@@ -765,6 +765,112 @@
         }
       }
     },
+    "/resource/search/{did}": {
+      "get": {
+        "tags": [
+          "Resource"
+        ],
+        "summary": "Get a DID-Linked Resource.",
+        "description": "This endpoint returns the DID-Linked Resource for a given DID identifier and resource identifier.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "did",
+            "description": "DID identifier",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "example": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+          },
+          {
+            "in": "query",
+            "name": "resourceId",
+            "description": "Fetch a DID-Linked Resource by Resource ID unique identifier. Since this is a unique identifier, other Resource query parameters are not required. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "3ccde6ba-6ba5-56f2-9f4f-8825561a9860"
+          },
+          {
+            "in": "query",
+            "name": "resourceName",
+            "description": "Filter a DID-Linked Resource query by Resource Name. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "cheqd-issuer-logo"
+          },
+          {
+            "in": "query",
+            "name": "resourceType",
+            "description": "Filter a DID-Linked Resource query by Resource Type. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "CredentialArtwork"
+          },
+          {
+            "in": "query",
+            "name": "resourceVersion",
+            "description": "Filter a DID-Linked Resource query by Resource Version, which is an optional free-text field used by issuers (e.g., \"v1\", \"Final Version\", \"1st January 1970\" etc). See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "v1"
+          },
+          {
+            "in": "query",
+            "name": "resourceVersionTime",
+            "description": "Filter a DID-Linked Resource query which returns the closest version of the Resource *at* or *before* specified time. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "1970-01-01T00:00:00Z"
+          },
+          {
+            "in": "query",
+            "name": "checksum",
+            "description": "Request integrity check against a given DID-Linked Resource by providing a SHA-256 checksum hash. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "dc64474d062ed750a66bad58cb609928de55ed0d81defd231a4a4bf97358e9ed"
+          },
+          {
+            "in": "query",
+            "name": "resourceMetadata",
+            "description": "Return only metadata of DID-Linked Resource instead of actual DID-Linked Resource. Mutually exclusive with some of the other parameters.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "any": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
     "/did/list": {
       "get": {
         "tags": [
@@ -798,13 +904,13 @@
         }
       }
     },
-    "/did/{did}": {
+    "/did/search/{did}": {
       "get": {
         "tags": [
           "DID"
         ],
         "summary": "Resolve a DID Document.",
-        "description": "This endpoint resolves the latest DID Document for a given DID identifier.",
+        "description": "Resolve a DID Document by DID identifier. Also supports DID Resolution Queries as defined in the <a href=\"https://w3c-ccg.github.io/did-resolution/\">W3C DID Resolution specification</a>.",
         "parameters": [
           {
             "in": "path",
@@ -813,7 +919,67 @@
             "schema": {
               "type": "string"
             },
-            "required": true
+            "required": true,
+            "example": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+          },
+          {
+            "in": "query",
+            "name": "metadata",
+            "description": "Return only metadata of DID Document instead of actual DID Document.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "versionId",
+            "description": "Unique UUID version identifier of DID Document. Allows for fetching a specific version of the DID Document. See <a href=\"https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#did-document-metadata\">cheqd DID Method Specification</a> for more details.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "3ccde6ba-6ba5-56f2-9f4f-8825561a9860"
+          },
+          {
+            "in": "query",
+            "name": "versionTime",
+            "description": "Returns the closest version of the DID Document *at* or *before* specified time. See <a href=\"https://docs.cheqd.io/identity/architecture/adr-list/adr-005-did-resolution-and-did-url-dereferencing\">DID Resolution handling for `did:cheqd`</a> for more details.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "1970-01-01T00:00:00Z"
+          },
+          {
+            "in": "query",
+            "name": "transformKeys",
+            "description": "This directive transforms the Verification Method key format from the version in the DID Document to the specified format chosen below.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Ed25519VerificationKey2018",
+                "Ed25519VerificationKey2020",
+                "JsonWebKey2020"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "service",
+            "description": "Query DID Document for a specific Service Endpoint by Service ID (e.g., `service-1` in `did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1`). This will typically redirect to the Service Endpoint based on <a href=\"https://w3c-ccg.github.io/did-resolution/#dereferencing\">DID Resolution specification</a> algorithm.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "service-1"
+          },
+          {
+            "in": "query",
+            "name": "relativeRef",
+            "description": "Relative reference is a query fragment appended to the Service Endpoint URL. **Must** be used along with the `service` query property above. See <a href=\"https://w3c-ccg.github.io/did-resolution/#dereferencing\">DID Resolution specification</a> algorithm for more details.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "/path/to/file"
           }
         ],
         "responses": {
@@ -1204,33 +1370,48 @@
         "properties": {
           "issuerDid": {
             "description": "DID of the Verifiable Credential issuer. This needs to be a `did:cheqd` DID.",
-            "type": "string"
+            "type": "string",
+            "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
           },
           "subjectDid": {
             "description": "DID of the Verifiable Credential holder/subject. This needs to be a `did:key` DID.",
-            "type": "string"
+            "type": "string",
+            "example": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
           },
           "attributes": {
             "description": "JSON object containing the attributes to be included in the credential.",
-            "type": "object"
+            "type": "object",
+            "example": {
+              "name": "Bob",
+              "gender": "male"
+            }
           },
           "@context": {
             "description": "Optional properties to be included in the `@context` property of the credential.",
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "example": [
+              "https://schema.org/schema.jsonld",
+              "https://veramo.io/contexts/profile/v1"
+            ]
           },
           "type": {
             "description": "Optional properties to be included in the `type` property of the credential.",
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "example": [
+              "Person"
+            ]
           },
           "expirationDate": {
             "description": "Optional expiration date according to the <a href=https://www.w3.org/TR/vc-data-model/#expiration> VC Data Model specification</a>.",
-            "type": "string"
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-06-08T13:49:28.000Z"
           },
           "format": {
             "description": "Format of the Verifiable Credential. Defaults to VC-JWT.",
@@ -1238,7 +1419,8 @@
             "enum": [
               "jwt",
               "lds"
-            ]
+            ],
+            "example": "jwt"
           },
           "credentialStatus": {
             "description": "Optional `credentialStatus` properties for VC revocation or suspension. Takes `statusListName` and `statusListPurpose` as inputs.",
@@ -1262,7 +1444,8 @@
                 "type": "number"
               },
               "statusListVersion": {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               "statusListRangeStart": {
                 "type": "number"
@@ -1315,22 +1498,35 @@
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "example": [
+              "https://www.w3.org/2018/credentials/v1",
+              "https://schema.org",
+              "https://veramo.io/contexts/profile/v1"
+            ]
           },
           "type": {
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "example": [
+              "VerifiableCredential",
+              "Person"
+            ]
           },
           "expirationDate": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-06-08T13:49:28.000Z"
           },
           "issuer": {
             "type": "object",
             "properties": {
               "id": {
-                "type": "string"
+                "type": "string",
+                "format": "DID",
+                "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
               }
             }
           },
@@ -1338,7 +1534,9 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "string"
+                "type": "string",
+                "format": "DID",
+                "example": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
               }
             }
           },
@@ -1346,17 +1544,20 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "string"
+                "type": "string",
+                "example": "https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-suspension-1&resourceType=StatusList2021Suspension#20"
               },
               "statusListIndex": {
-                "type": "string"
+                "type": "number",
+                "example": 20
               },
               "statusPurpose": {
                 "type": "string",
                 "enum": [
                   "revocation",
                   "suspension"
-                ]
+                ],
+                "example": "suspension"
               },
               "type": {
                 "type": "string",
@@ -1367,7 +1568,9 @@
             }
           },
           "issuanceDate": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-06-08T13:49:28.000Z"
           },
           "proof": {
             "type": "object",
@@ -1378,6 +1581,10 @@
               "jwt": {
                 "type": "string"
               }
+            },
+            "example": {
+              "type": "JwtProof2020",
+              "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg"
             }
           }
         },
@@ -1884,6 +2091,18 @@
               "type": "string"
             }
           },
+          "verificationMethod": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VerificationMethod"
+            }
+          },
+          "service": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Service"
+            }
+          },
           "authentication": {
             "type": "array",
             "items": {
@@ -1913,21 +2132,12 @@
             "items": {
               "type": "string"
             }
-          },
-          "verificationMethod": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/VerificationMethod"
-            }
-          },
-          "service": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Service"
-            }
           }
         },
         "example": {
+          "@context": [
+            "https://www.w3.org/ns/did/v1"
+          ],
           "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
           "controller": [
             "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
@@ -1937,11 +2147,20 @@
               "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
               "type": "Ed25519VerificationKey2018",
               "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-              "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt"
+              "publicKeyBase58": "z6MkkVbyHJLLjdjU5B62DaJ4mkdMdUkttf9UqySSkA9bVTeZ"
             }
           ],
           "authentication": [
             "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1"
+          ],
+          "service": [
+            {
+              "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1",
+              "type": "LinkedDomains",
+              "serviceEndpoint": [
+                "https://example.com"
+              ]
+            }
           ]
         }
       },
@@ -1949,6 +2168,7 @@
         "type": "object",
         "properties": {
           "network": {
+            "description": "Network to create the DID on (testnet or mainnet)",
             "type": "string",
             "enum": [
               "testnet",
@@ -1956,6 +2176,7 @@
             ]
           },
           "methodSpecificIdAlgo": {
+            "description": "Algorithm to use for generating the method-specific ID. The two styles supported are UUIDs and Indy-style Base58. See <a href=\"https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#cheqd-did-method-did-cheqd\">cheqd DID method documentation</a> for more details.",
             "type": "string",
             "enum": [
               "uuid",
@@ -1963,6 +2184,7 @@
             ]
           },
           "verificationMethodType": {
+            "description": "Type of verification method to use for the DID. See <a href=\"https://www.w3.org/TR/did-core/#verification-methods\">DID Core specification</a> for more details. Only the types listed below are supported.",
             "type": "string",
             "enum": [
               "Ed25519VerificationKey2018",
@@ -1970,11 +2192,8 @@
               "Ed25519VerificationKey2020"
             ]
           },
-          "serviceEndpoint": {
-            "type": "string"
-          },
           "assertionMethod": {
-            "description": "An assertion method is required to issue JSON-LD credentials.",
+            "description": "Usually a reference to a Verification Method. An Assertion Method is required to issue JSON-LD credentials. See <a href=\"https://w3c.github.io/did-core/#assertion\">DID Core specification</a> for more details.",
             "type": "boolean",
             "default": true
           },
@@ -2042,18 +2261,21 @@
         "type": "object",
         "properties": {
           "id": {
+            "description": "DID appended with Service fragment ID (e.g., `#service-1` in `did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1`)",
             "type": "string",
-            "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#rand"
+            "example": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1"
           },
           "type": {
+            "description": "Service type as defined in <a href=\"https://www.w3.org/TR/did-spec-registries/#service-types\">DID Specification Registries</a>.",
             "type": "string",
-            "example": "rand"
+            "example": "LinkedDomains"
           },
           "serviceEndpoint": {
+            "description": "Service endpoint as defined in <a href=\"https://www.w3.org/TR/did-core/#services\">DID Core Specification</a>.",
             "type": "array",
             "items": {
               "type": "string",
-              "example": "https://rand.in"
+              "example": "https://example.com"
             }
           }
         }
@@ -2062,7 +2284,9 @@
         "type": "object",
         "properties": {
           "did": {
-            "type": "string"
+            "description": "DID identifier to be updated.",
+            "type": "string",
+            "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
           },
           "service": {
             "type": "array",
@@ -2153,20 +2377,21 @@
         "type": "object",
         "properties": {
           "@context": {
-            "type": "string"
+            "type": "string",
+            "example": "https://w3id.org/did-resolution/v1"
+          },
+          "didDidResolutionMetadata": {
+            "$ref": "#/components/schemas/DidResolutionMetadata"
           },
           "didDocument": {
             "$ref": "#/components/schemas/DidDocument"
           },
           "didDocumentMetadata": {
-            "$ref": "#/components/schemas/ResolutionDidDocMetadata"
-          },
-          "didResolutionMetadata": {
-            "$ref": "#/components/schemas/ResolutionMetadata"
+            "$ref": "#/components/schemas/DidDocumentMetadata"
           }
         }
       },
-      "ResolutionDidDocMetadata": {
+      "DidDocumentMetadata": {
         "type": "object",
         "properties": {
           "created": {
@@ -2177,44 +2402,28 @@
             "type": "boolean",
             "example": false
           },
-          "linkedResourceMetadata": {
-            "items": {
-              "$ref": "#/components/schemas/DereferencedResource"
-            },
-            "type": "array"
-          },
           "updated": {
             "type": "string",
             "example": "2021-09-10T12:00:00Z"
           },
           "versionId": {
             "type": "string",
-            "example": "4979BAF49599FEF0BAD5ED0849FDD708156761EBBC8EBE78D0907F8BECC9CB2E"
+            "example": "3ccde6ba-6ba5-56f2-9f4f-8825561a9860"
+          },
+          "linkedResourceMetadata": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceMetadata"
+            }
           }
         }
       },
-      "DereferencedResource": {
+      "ResourceMetadata": {
         "type": "object",
         "properties": {
-          "checksum": {
+          "resourceURI": {
             "type": "string",
-            "example": "a95380f460e63ad939541a57aecbfd795fcd37c6d78ee86c885340e33a91b559"
-          },
-          "created": {
-            "type": "string",
-            "example": "2021-09-01T12:00:00Z"
-          },
-          "mediaType": {
-            "type": "string",
-            "example": "image/png"
-          },
-          "nextVersionId": {
-            "type": "string",
-            "example": "d4829ac7-4566-478c-a408-b44767eddadc"
-          },
-          "previousVersionId": {
-            "type": "string",
-            "example": "ad7a8442-3531-46eb-a024-53953ec6e4ff"
+            "example": "did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47/resources/398cee0a-efac-4643-9f4c-74c48c72a14b"
           },
           "resourceCollectionId": {
             "type": "string",
@@ -2226,23 +2435,39 @@
           },
           "resourceName": {
             "type": "string",
-            "example": "Image Resource"
+            "example": "cheqd-issuer-logo"
           },
           "resourceType": {
             "type": "string",
-            "example": "Image"
+            "example": "CredentialArtwork"
           },
-          "resourceURI": {
+          "mediaType": {
             "type": "string",
-            "example": "did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47/resources/398cee0a-efac-4643-9f4c-74c48c72a14b"
+            "example": "image/png"
           },
           "resourceVersion": {
             "type": "string",
             "example": "1.0"
+          },
+          "checksum": {
+            "type": "string",
+            "example": "a95380f460e63ad939541a57aecbfd795fcd37c6d78ee86c885340e33a91b559"
+          },
+          "created": {
+            "type": "string",
+            "example": "2021-09-01T12:00:00Z"
+          },
+          "nextVersionId": {
+            "type": "string",
+            "example": "d4829ac7-4566-478c-a408-b44767eddadc"
+          },
+          "previousVersionId": {
+            "type": "string",
+            "example": "ad7a8442-3531-46eb-a024-53953ec6e4ff"
           }
         }
       },
-      "ResolutionMetadata": {
+      "DidResolutionMetadata": {
         "type": "object",
         "properties": {
           "contentType": {
@@ -2253,17 +2478,12 @@
             ],
             "example": "application/did+ld+json"
           },
-          "did": {
-            "$ref": "#/components/schemas/DidProperties"
-          },
-          "error": {
-            "type": "string",
-            "nullable": true,
-            "example": null
-          },
           "retrieved": {
             "type": "string",
             "example": "2021-09-01T12:00:00Z"
+          },
+          "did": {
+            "$ref": "#/components/schemas/DidProperties"
           }
         }
       },
@@ -2344,10 +2564,12 @@
         "type": "object",
         "properties": {
           "customerId": {
-            "type": "string"
+            "type": "string",
+            "example": "6w5drpiiwhhs"
           },
           "address": {
-            "type": "string"
+            "type": "string",
+            "example": "cheqd1wgsvqwlkmdp60f4dek26ak0sjw6au3ytd3pz7f"
           }
         }
       },

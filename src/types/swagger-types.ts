@@ -11,31 +11,42 @@
  *         issuerDid:
  *           description: DID of the Verifiable Credential issuer. This needs to be a `did:cheqd` DID.
  *           type: string
+ *           example: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
  *         subjectDid:
  *           description: DID of the Verifiable Credential holder/subject. This needs to be a `did:key` DID.
  *           type: string
+ *           example: did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
  *         attributes:
  *           description: JSON object containing the attributes to be included in the credential.
  *           type: object
+ *           example: {
+ *              name: Bob,
+ *              gender: male
+ *           }
  *         '@context':
  *           description: Optional properties to be included in the `@context` property of the credential.
  *           type: array
  *           items:
  *             type: string
+ *           example: [https://schema.org/schema.jsonld, https://veramo.io/contexts/profile/v1]
  *         type:
  *           description: Optional properties to be included in the `type` property of the credential.
  *           type: array
  *           items:
  *             type: string
+ *           example: [Person]
  *         expirationDate:
  *           description: Optional expiration date according to the <a href=https://www.w3.org/TR/vc-data-model/#expiration> VC Data Model specification</a>.
  *           type: string
+ *           format: date-time
+ *           example: 2023-06-08T13:49:28.000Z
  *         format:
  *           description: Format of the Verifiable Credential. Defaults to VC-JWT.
  *           type: string
  *           enum:
  *             - jwt
  *             - lds
+ *           example: jwt
  *         credentialStatus:
  *           description: Optional `credentialStatus` properties for VC revocation or suspension. Takes `statusListName` and `statusListPurpose` as inputs.
  *           type: object
@@ -54,6 +65,7 @@
  *               type: number
  *             statusListVersion:
  *               type: string
+ *               format: date-time
  *             statusListRangeStart:
  *               type: number
  *             statusListRangeEnd:
@@ -91,40 +103,53 @@
  *           type: array
  *           items:
  *             type: string
+ *           example: [https://www.w3.org/2018/credentials/v1, https://schema.org, https://veramo.io/contexts/profile/v1]
  *         type:
  *           type: array
  *           items:
  *             type: string
+ *           example: [VerifiableCredential, Person]
  *         expirationDate:
  *           type: string
+ *           format: date-time
+ *           example: 2023-06-08T13:49:28.000Z
  *         issuer:
  *           type: object
  *           properties:
  *             id:
  *               type: string
+ *               format: DID
+ *               example: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
  *         credentialSubject:
  *           type: object
  *           properties:
  *             id:
  *               type: string
+ *               format: DID
+ *               example: did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
  *         credentialStatus:
  *           type: object
  *           properties:
  *             id:
  *               type: string
+ *               example: https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-suspension-1&resourceType=StatusList2021Suspension#20
  *             statusListIndex:
- *               type: string
+ *               type: number
+ *               example: 20
  *             statusPurpose:
  *               type: string
  *               enum:
  *                 - revocation
  *                 - suspension
+ *               example: suspension
  *             type:
  *               type: string
  *               enum:
  *                 - StatusList2021Entry
  *         issuanceDate:
  *           type: string
+ *           format: date-time
+ *           example: 2023-06-08T13:49:28.000Z
  *         proof:
  *           type: object
  *           properties:
@@ -132,6 +157,10 @@
  *               type: string
  *             jwt:
  *               type: string
+ *           example: {
+ *            type: JwtProof2020,
+ *            jwt: eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg,
+ *           }
  *       example:
  *         '@context':
  *           - https://www.w3.org/2018/credentials/v1
@@ -470,6 +499,14 @@
  *           type: array
  *           items:
  *             type: string
+ *         verificationMethod:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/VerificationMethod'
+ *         service:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Service'
  *         authentication:
  *           type: array
  *           items:
@@ -490,15 +527,9 @@
  *           type: array
  *           items:
  *             type: string
- *         verificationMethod:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/VerificationMethod'
- *         service:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/Service'
  *       example:
+ *         '@context':
+ *           - https://www.w3.org/ns/did/v1
  *         id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
  *         controller:
  *           - did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
@@ -506,32 +537,38 @@
  *           - id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1
  *             type: Ed25519VerificationKey2018
  *             controller: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
- *             publicKeyBase58: BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt
+ *             publicKeyBase58: z6MkkVbyHJLLjdjU5B62DaJ4mkdMdUkttf9UqySSkA9bVTeZ
  *         authentication:
  *           - did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1
+ *         service:
+ *           - id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1
+ *             type: LinkedDomains
+ *             serviceEndpoint:
+ *               - https://example.com
  *     DidCreateRequest:
  *       type: object
  *       properties:
  *         network:
+ *           description: Network to create the DID on (testnet or mainnet)
  *           type: string
  *           enum:
  *             - testnet
  *             - mainnet
  *         methodSpecificIdAlgo:
+ *           description: Algorithm to use for generating the method-specific ID. The two styles supported are UUIDs and Indy-style Base58. See <a href="https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#cheqd-did-method-did-cheqd">cheqd DID method documentation</a> for more details.
  *           type: string
  *           enum:
  *             - uuid
  *             - base58btc
  *         verificationMethodType:
+ *           description: Type of verification method to use for the DID. See <a href="https://www.w3.org/TR/did-core/#verification-methods">DID Core specification</a> for more details. Only the types listed below are supported.
  *           type: string
  *           enum:
  *             - Ed25519VerificationKey2018
  *             - JsonWebKey2020
  *             - Ed25519VerificationKey2020
- *         serviceEndpoint:
- *           type: string
  *         assertionMethod:
- *           description: An assertion method is required to issue JSON-LD credentials.
+ *           description: Usually a reference to a Verification Method. An Assertion Method is required to issue JSON-LD credentials. See <a href="https://w3c.github.io/did-core/#assertion">DID Core specification</a> for more details.
  *           type: boolean
  *           default: true
  *         didDocument:
@@ -577,21 +614,26 @@
  *       type: object
  *       properties:
  *         id:
+ *           description: DID appended with Service fragment ID (e.g., `#service-1` in `did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1`)
  *           type: string
- *           example: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#rand
+ *           example: did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1
  *         type:
+ *           description: Service type as defined in <a href="https://www.w3.org/TR/did-spec-registries/#service-types">DID Specification Registries</a>.
  *           type: string
- *           example: rand
+ *           example: LinkedDomains
  *         serviceEndpoint:
+ *           description: Service endpoint as defined in <a href="https://www.w3.org/TR/did-core/#services">DID Core Specification</a>.
  *           type: array
  *           items:
  *             type: string
- *             example: https://rand.in
+ *             example: https://example.com
  *     DidUpdateRequest:
  *       type: object
  *       properties:
  *         did:
+ *           description: DID identifier to be updated.
  *           type: string
+ *           example: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
  *         service:
  *           type: array
  *           description: Service section of the DID Document.
@@ -658,13 +700,14 @@
  *       properties:
  *          '@context':
  *            type: string
+ *            example: https://w3id.org/did-resolution/v1
+ *          didDidResolutionMetadata:
+ *            $ref: '#/components/schemas/DidResolutionMetadata'
  *          didDocument:
  *            $ref: '#/components/schemas/DidDocument'
  *          didDocumentMetadata:
- *            $ref: '#/components/schemas/ResolutionDidDocMetadata'
- *          didResolutionMetadata:
- *            $ref: '#/components/schemas/ResolutionMetadata'
- *     ResolutionDidDocMetadata:
+ *            $ref: '#/components/schemas/DidDocumentMetadata'
+ *     DidDocumentMetadata:
  *       type: object
  *       properties:
  *         created:
@@ -673,34 +716,22 @@
  *         deactivated:
  *           type: boolean
  *           example: false
- *         linkedResourceMetadata:
- *           items:
- *             $ref: '#/components/schemas/DereferencedResource'
- *           type: array
  *         updated:
  *           type: string
  *           example: "2021-09-10T12:00:00Z"
  *         versionId:
  *           type: string
- *           example: 4979BAF49599FEF0BAD5ED0849FDD708156761EBBC8EBE78D0907F8BECC9CB2E
- *     DereferencedResource:
+ *           example: 3ccde6ba-6ba5-56f2-9f4f-8825561a9860
+ *         linkedResourceMetadata:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/ResourceMetadata'
+ *     ResourceMetadata:
  *       type: object
  *       properties:
- *         checksum:
+ *         resourceURI:
  *           type: string
- *           example: a95380f460e63ad939541a57aecbfd795fcd37c6d78ee86c885340e33a91b559
- *         created:
- *           type: string
- *           example: "2021-09-01T12:00:00Z"
- *         mediaType:
- *           type: string
- *           example: image/png
- *         nextVersionId:
- *           type: string
- *           example: d4829ac7-4566-478c-a408-b44767eddadc
- *         previousVersionId:
- *           type: string
- *           example: ad7a8442-3531-46eb-a024-53953ec6e4ff
+ *           example: did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47/resources/398cee0a-efac-4643-9f4c-74c48c72a14b
  *         resourceCollectionId:
  *           type: string
  *           example: 55dbc8bf-fba3-4117-855c-1e0dc1d3bb47
@@ -709,32 +740,40 @@
  *           example: 398cee0a-efac-4643-9f4c-74c48c72a14b
  *         resourceName:
  *           type: string
- *           example: Image Resource
+ *           example: cheqd-issuer-logo
  *         resourceType:
  *           type: string
- *           example: Image
- *         resourceURI:
+ *           example: CredentialArtwork
+ *         mediaType:
  *           type: string
- *           example: did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47/resources/398cee0a-efac-4643-9f4c-74c48c72a14b
+ *           example: image/png
  *         resourceVersion:
  *           type: string
  *           example: "1.0"
- *     ResolutionMetadata:
+ *         checksum:
+ *           type: string
+ *           example: a95380f460e63ad939541a57aecbfd795fcd37c6d78ee86c885340e33a91b559
+ *         created:
+ *           type: string
+ *           example: "2021-09-01T12:00:00Z"
+ *         nextVersionId:
+ *           type: string
+ *           example: d4829ac7-4566-478c-a408-b44767eddadc
+ *         previousVersionId:
+ *           type: string
+ *           example: ad7a8442-3531-46eb-a024-53953ec6e4ff
+ *     DidResolutionMetadata:
  *       type: object
  *       properties:
  *         contentType:
  *           allOf:
  *           - $ref: '#/components/schemas/ContentType'
  *           example: application/did+ld+json
- *         did:
- *           $ref: '#/components/schemas/DidProperties'
- *         error:
- *           type: string
- *           nullable: true
- *           example: null
  *         retrieved:
  *           type: string
  *           example: '2021-09-01T12:00:00Z'
+ *         did:
+ *           $ref: '#/components/schemas/DidProperties'
  *     ContentType:
  *       enum:
  *       - application/did+json
@@ -791,8 +830,10 @@
  *       properties:
  *         customerId:
  *           type: string
+ *           example: 6w5drpiiwhhs
  *         address:
  *           type: string
+ *           example: cheqd1wgsvqwlkmdp60f4dek26ak0sjw6au3ytd3pz7f
  *     InvalidRequest:
  *       description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
  *       type: object

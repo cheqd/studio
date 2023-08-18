@@ -140,7 +140,7 @@ class App {
 		app.get(
 			'/credential-status/search',
 			RevocationController.commonValidator,
-			new RevocationController().fetchStatusList
+			new RevocationController().searchStatusList
 		);
 
 		// Keys API
@@ -152,10 +152,11 @@ class App {
 		app.post('/did/update', IssuerController.updateValidator, new IssuerController().updateDid);
 		app.post('/did/deactivate/:did', IssuerController.deactivateValidator, new IssuerController().deactivateDid);
 		app.get('/did/list', new IssuerController().getDids);
-		app.get('/did/:did', new IssuerController().getDid);
+		app.get('/did/search/:did', new IssuerController().resolveDidUrl);
 
 		// Resource API
 		app.post('/resource/create/:did', IssuerController.resourceValidator, new IssuerController().createResource);
+   	 	app.get('/resource/search/:did', new IssuerController().getResource);
 
 		// Account API
 		app.post('/account', new AccountController().create);

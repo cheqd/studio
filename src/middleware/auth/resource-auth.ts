@@ -5,8 +5,10 @@ import type { IAuthResponse } from '../../types/authentication.js';
 export class ResourceAuthHandler extends AbstractAuthHandler {
 	constructor() {
 		super();
-		this.registerRoute('/resource/create/(.*)', 'POST', 'create:resource:testnet');
-		this.registerRoute('/resource/create/(.*)', 'POST', 'create:resource:mainnet');
+		this.registerRoute('/resource/create', 'POST', 'create:resource:testnet');
+		this.registerRoute('/resource/create', 'POST', 'create:resource:mainnet');
+		// true means allowUnauthorized
+		this.registerRoute('/resource/search/(.*)', 'GET', '', { allowUnauthorized: true, skipNamespace: true });
 	}
 	public async handle(request: Request, response: Response): Promise<IAuthResponse> {
 		if (!request.path.includes('/resource/')) {
