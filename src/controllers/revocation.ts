@@ -3,7 +3,7 @@ import { check, query, validationResult } from 'express-validator';
 import { fromString } from 'uint8arrays';
 import { StatusCodes } from 'http-status-codes';
 
-import { Identity } from '../services/identity/index.js';
+import { IdentityStrategySetup } from '../services/identity/index.js';
 
 export class RevocationController {
 	static commonValidator = [
@@ -110,7 +110,7 @@ export class RevocationController {
 
 		try {
 			if (data) {
-				const result = await new Identity(response.locals.customerId).agent.broadcastStatusList2021(
+				const result = await new IdentityStrategySetup(response.locals.customerId).agent.broadcastStatusList2021(
 					did,
 					{ data, name: statusListName, alsoKnownAs, version: statusListVersion },
 					{ encoding, statusPurpose, encrypted },
@@ -118,7 +118,7 @@ export class RevocationController {
 				);
 				return response.status(StatusCodes.OK).json(result);
 			}
-			const result = await new Identity(response.locals.customerId).agent.createStatusList2021(
+			const result = await new IdentityStrategySetup(response.locals.customerId).agent.createStatusList2021(
 				did,
 				{ name: statusListName, alsoKnownAs, version: statusListVersion },
 				{ length, encoding, statusPurpose, encrypted },
@@ -197,7 +197,7 @@ export class RevocationController {
 
 		try {
 			if (data) {
-				const result = await new Identity(response.locals.customerId).agent.broadcastStatusList2021(
+				const result = await new IdentityStrategySetup(response.locals.customerId).agent.broadcastStatusList2021(
 					did,
 					{ data, name: statusListName, alsoKnownAs, version: statusListVersion },
 					{ encoding, statusPurpose },
@@ -205,7 +205,7 @@ export class RevocationController {
 				);
 				return response.status(StatusCodes.OK).json(result);
 			}
-			const result = await new Identity(response.locals.customerId).agent.createStatusList2021(
+			const result = await new IdentityStrategySetup(response.locals.customerId).agent.createStatusList2021(
 				did,
 				{ name: statusListName, alsoKnownAs, version: statusListVersion },
 				{ length, encoding, statusPurpose },
@@ -283,7 +283,7 @@ export class RevocationController {
 		try {
 			const { did, statusListName } = request.query;
 			const statusPurpose = request.query.statusPurpose as 'revocation' | 'suspension';
-			const statusList = await new Identity(response.locals.customerId).agent.searchStatusList2021(
+			const statusList = await new IdentityStrategySetup(response.locals.customerId).agent.searchStatusList2021(
 				did as string,
 				statusListName as string,
 				statusPurpose
@@ -361,7 +361,7 @@ export class RevocationController {
 		const publish = request.query.publish === 'false' ? false : true;
 
 		try {
-			const result = await new Identity(response.locals.customerId).agent.updateStatusList2021(
+			const result = await new IdentityStrategySetup(response.locals.customerId).agent.updateStatusList2021(
 				did,
 				{
 					indices: typeof indices === 'number' ? [indices] : indices,
@@ -446,7 +446,7 @@ export class RevocationController {
 		const statusPurpose = request.query.statusPurpose as 'revocation' | 'suspension';
 
 		try {
-			const result = await new Identity(response.locals.customerId).agent.checkStatusList2021(
+			const result = await new IdentityStrategySetup(response.locals.customerId).agent.checkStatusList2021(
 				did,
 				{ statusListIndex: index, statusListName, statusPurpose },
 				response.locals.customerId

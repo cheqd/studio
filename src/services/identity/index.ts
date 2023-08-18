@@ -116,12 +116,12 @@ export interface IIdentityService {
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult>;
 }
 
-export class Identity {
+export class IdentityStrategySetup {
 	agent: IIdentityService;
 	static unauthorized = new Unauthorized();
 
 	constructor(agentId?: string) {
-		this.agent = Identity.unauthorized;
+		this.agent = IdentityStrategySetup.unauthorized;
 		this.setupIdentityStrategy(agentId);
 	}
 
