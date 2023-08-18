@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { check, validationResult } from 'express-validator';
 import { fromString } from 'uint8arrays';
 import { StatusCodes } from 'http-status-codes';
-import { Identity } from '../services/identity/index.js';
+import { IdentityStrategySetup } from '../services/identity/index.js';
 import { Veramo } from '../services/identity/agent.js';
 import { DefaultDidUrlPattern, DefaultStatusAction, DefaultStatusActions, MinimalPaymentCondition, type ResourceMetadata } from '../types/shared.js';
 import { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, DefaultStatusList2021Encodings, DefaultStatusList2021ResourceTypes, DefaultStatusList2021StatusPurposeTypes } from '@cheqd/did-provider-cheqd';
@@ -388,7 +388,7 @@ export class RevocationController {
 
 		try {
 			if (data) {
-				const result = await new Identity(response.locals.customerId).agent.broadcastStatusList2021(
+				const result = await new IdentityStrategySetup(response.locals.customerId).agent.broadcastStatusList2021(
 					did,
 					{ data, name: statusListName, alsoKnownAs, version: statusListVersion },
 					{ encoding, statusPurpose },
@@ -396,7 +396,7 @@ export class RevocationController {
 				);
 				return response.status(StatusCodes.OK).json(result);
 			}
-			const result = await new Identity(response.locals.customerId).agent.createUnencryptedStatusList2021(
+			const result = await new IdentityStrategySetup(response.locals.customerId).agent.createUnencryptedStatusList2021(
 				did,
 				{ name: statusListName, alsoKnownAs, version: statusListVersion },
 				{ length, encoding, statusPurpose },
@@ -466,7 +466,7 @@ export class RevocationController {
 		const { statusPurpose } = request.query as { statusPurpose: keyof typeof DefaultStatusList2021StatusPurposeTypes };
 
 		try {
-			const result = await new Identity(response.locals.customerId).agent.createEncryptedStatusList2021(
+			const result = await new IdentityStrategySetup(response.locals.customerId).agent.createEncryptedStatusList2021(
 				did,
 				{ name: statusListName, alsoKnownAs, version: statusListVersion },
 				{ length, encoding, statusPurpose, paymentConditions, feePaymentAddress, feePaymentAmount, feePaymentWindow },
@@ -535,7 +535,7 @@ export class RevocationController {
 		const { statusAction } = request.query as { statusAction: DefaultStatusAction };
 
 		try {
-			const result = await new Identity(response.locals.customerId).agent.updateUnencryptedStatusList2021(
+			const result = await new IdentityStrategySetup(response.locals.customerId).agent.updateUnencryptedStatusList2021(
 				did,
 				{
 					indices: typeof indices === 'number' ? [indices] : indices,
@@ -607,7 +607,7 @@ export class RevocationController {
 		const { statusAction } = request.query as { statusAction: DefaultStatusAction };
 
 		try {
-			const result = await new Identity(response.locals.customerId).agent.updateEncryptedStatusList2021(
+			const result = await new IdentityStrategySetup(response.locals.customerId).agent.updateEncryptedStatusList2021(
 				did,
 				{
 					indices: typeof indices === 'number' ? [indices] : indices,
@@ -700,7 +700,7 @@ export class RevocationController {
 		const statusPurpose = request.query.statusPurpose as keyof typeof DefaultStatusList2021StatusPurposeTypes;
 
 		try {
-			const result = await new Identity(response.locals.customerId).agent.checkStatusList2021(
+			const result = await new IdentityStrategySetup(response.locals.customerId).agent.checkStatusList2021(
 				did,
 				{ statusListIndex: index, statusListName, statusPurpose },
 				response.locals.customerId
@@ -769,44 +769,20 @@ export class RevocationController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
-	async fetchStatusList(request: Request, response: Response) {
+	async searchStatusList(request: Request, response: Response) {
 		const result = validationResult(request);
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
 		}
 
 		try {
-			const statusPurpose = request.query.statusPurpose as keyof typeof DefaultStatusList2021StatusPurposeTypes;
-			const resourceTypes = statusPurpose
-				? [DefaultStatusList2021ResourceTypes[statusPurpose]]
-				: [DefaultStatusList2021ResourceTypes.revocation, DefaultStatusList2021ResourceTypes.suspension];
-			let metadata: ResourceMetadata[] = [];
-
-			for (const resourceType of resourceTypes) {
-				const result = await Veramo.instance.resolve(
-					`${request.query.did}?resourceType=${resourceType}&resourceMetadata=true`
-				);
-				metadata = metadata.concat(result.contentStream?.linkedResourceMetadata || []);
-			}
-			const statusList = metadata
-				.filter((resource: ResourceMetadata) => {
-					if (request.query.statusListName) {
-						return (
-							resource.resourceName === request.query.statusListName &&
-							resource.mediaType == 'application/json'
-						);
-					}
-					return resource.mediaType == 'application/json';
-				})
-				.map((resource: ResourceMetadata) => {
-					return {
-						statusListName: resource.resourceName,
-						statusPurpose: resource.resourceType,
-						statusListVersion: resource.resourceVersion,
-						statusListId: resource.resourceId,
-						statusListNextVersion: resource.nextVersionId,
-					};
-				});
+			const { did, statusListName } = request.query;
+			const statusPurpose = request.query.statusPurpose as 'revocation' | 'suspension';
+			const statusList = await new IdentityStrategySetup(response.locals.customerId).agent.searchStatusList2021(
+				did as string,
+				statusListName as string,
+				statusPurpose
+			);
 			return response.status(StatusCodes.OK).json(statusList);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

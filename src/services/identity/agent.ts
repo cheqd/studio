@@ -54,7 +54,9 @@ import {
 	CreateAgentRequest,
 	CreateUnencryptedStatusListOptions,
 	CredentialRequest,
+	ResourceMetadata,
 	RevocationStatusOptions,
+	StatusList2021ResourceTypes,
 	StatusOptions,
 	SuspensionStatusOptions,
 	UpdateUnencryptedStatusListOptions,
@@ -200,6 +202,12 @@ export class Veramo {
 
 	async resolveDid(agent: TAgent<IResolver>, did: string) {
 		return await agent.resolveDid({ didUrl: did });
+	}
+
+	async resolve(didUrl: string) : Promise<Response> {
+		return fetch(`${process.env.RESOLVER_URL || DefaultResolverUrl}/${didUrl}`, {
+			headers: { 'Content-Type': '*/*' },
+		});
 	}
 
 	async getDid(agent: TAgent<IDIDManager>, did: string) {
@@ -484,14 +492,6 @@ export class Veramo {
 		return await agent.cheqdRevokeCredential({ credential: credentials, fetchList: true, publish });
 	}
 
-	async resolve(didUrl: string) {
-		const result = await fetch((process.env.RESOLVER_URL || DefaultResolverUrl) + didUrl, {
-			headers: { 'Content-Type': 'application/did+ld+json' },
-		});
-		const ddo = await result.json();
-		return ddo;
-	}
-
 	async suspendCredentials(
 		agent: VeramoAgent,
 		credentials: VerifiableCredential | VerifiableCredential[],
@@ -657,4 +657,31 @@ export class Veramo {
 			fetchList: true,
 		} satisfies ICheqdCheckCredentialStatusWithStatusList2021Args);
 	}
+	
+	async searchStatusList2021(agent: VeramoAgent, did: string, statusListName: string, statusPurpose: 'revocation' | 'suspension') {
+		const resourceTypes = statusPurpose
+			? [StatusList2021ResourceTypes[`${statusPurpose}`]]
+			: [StatusList2021ResourceTypes.revocation, StatusList2021ResourceTypes.suspension];
+		let metadata: ResourceMetadata[] = [];
+	
+		for (const resourceType of resourceTypes) {
+		  const result = await (await fetch(`${did}?resourceType=${resourceType}&resourceMetadata=true`)).json();
+		  metadata = metadata.concat(result.contentStream?.linkedResourceMetadata || []);
+		}
+	
+		return metadata.filter((resource: ResourceMetadata) => {
+		  if (statusListName) {
+			return resource.resourceName === statusListName && resource.mediaType == 'application/json';
+		  }
+		  return resource.mediaType == 'application/json';
+		}).map((resource: ResourceMetadata) => {
+		  return {
+			statusListName: resource.resourceName,
+			statusPurpose: resource.resourceType,
+			statusListVersion: resource.resourceVersion,
+			statusListId: resource.resourceId,
+			statusListNextVersion: resource.nextVersionId
+		  }
+		})
+	  }
 }

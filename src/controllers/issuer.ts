@@ -7,8 +7,8 @@ import { MethodSpecificIdAlgo, VerificationMethods, CheqdNetwork } from '@cheqd/
 import type { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js';
 import { StatusCodes } from 'http-status-codes';
 
-import { Identity } from '../services/identity/index.js';
-import { generateDidDoc, validateSpecCompliantPayload } from '../helpers/helpers.js';
+import { IdentityStrategySetup } from '../services/identity/index.js';
+import { generateDidDoc, getQueryParams, validateSpecCompliantPayload } from '../helpers/helpers.js';
 
 export class IssuerController {
 	public static createValidator = [
@@ -107,7 +107,7 @@ export class IssuerController {
 	 */
 	public async createKey(request: Request, response: Response) {
 		try {
-			const key = await new Identity(response.locals.customerId).agent.createKey(
+			const key = await new IdentityStrategySetup(response.locals.customerId).agent.createKey(
 				'Ed25519',
 				response.locals.customerId
 			);
@@ -162,7 +162,7 @@ export class IssuerController {
 	 */
 	public async getKey(request: Request, response: Response) {
 		try {
-			const key = await new Identity(response.locals.customerId).agent.getKey(
+			const key = await new IdentityStrategySetup(response.locals.customerId).agent.getKey(
 				request.params.kid,
 				response.locals.customerId
 			);
@@ -236,7 +236,7 @@ export class IssuerController {
 			if (request.body.didDocument) {
 				didDocument = request.body.didDocument;
 			} else if (verificationMethodType) {
-				const key = await new Identity(response.locals.customerId).agent.createKey(
+				const key = await new IdentityStrategySetup(response.locals.customerId).agent.createKey(
 					'Ed25519',
 					response.locals.customerId
 				);
@@ -267,7 +267,7 @@ export class IssuerController {
 				});
 			}
 
-			const did = await new Identity(response.locals.customerId).agent.createDid(
+			const did = await new IdentityStrategySetup(response.locals.customerId).agent.createDid(
 				network || didDocument.id.split(':')[2],
 				didDocument,
 				response.locals.customerId
@@ -329,7 +329,7 @@ export class IssuerController {
 			if (request.body.didDocument) {
 				updatedDocument = request.body.didDocument;
 			} else if (did && (service || verificationMethod || authentication)) {
-				const resolvedResult = await new Identity(response.locals.customerId).agent.resolveDid(did);
+				const resolvedResult = await new IdentityStrategySetup(response.locals.customerId).agent.resolveDid(did);
 				if (!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
 					return response.status(StatusCodes.BAD_REQUEST).send({
 						error: `${did} is either Deactivated or Not found`,
@@ -355,7 +355,7 @@ export class IssuerController {
 				});
 			}
 
-			const result = await new Identity(response.locals.customerId).agent.updateDid(
+			const result = await new IdentityStrategySetup(response.locals.customerId).agent.updateDid(
 				updatedDocument,
 				response.locals.customerId
 			);
@@ -405,7 +405,7 @@ export class IssuerController {
 		}
 
 		try {
-			const did = await new Identity(response.locals.customerId).agent.deactivateDid(
+			const did = await new IdentityStrategySetup(response.locals.customerId).agent.deactivateDid(
 				request.params.did,
 				response.locals.customerId
 			);
@@ -464,7 +464,7 @@ export class IssuerController {
 		let resourcePayload: Partial<MsgCreateResourcePayload> = {};
 		try {
 			// check if did is registered on the ledger
-			const { didDocument, didDocumentMetadata } = await new Identity(
+			const { didDocument, didDocumentMetadata } = await new IdentityStrategySetup(
 				response.locals.customerId
 			).agent.resolveDid(did);
 			if (!didDocument || !didDocumentMetadata || didDocumentMetadata.deactivated) {
@@ -482,7 +482,7 @@ export class IssuerController {
 				version,
 				alsoKnownAs,
 			};
-			const result = await new Identity(response.locals.customerId).agent.createResource(
+			const result = await new IdentityStrategySetup(response.locals.customerId).agent.createResource(
 				network || did.split(':')[2],
 				resourcePayload,
 				response.locals.customerId
@@ -494,6 +494,103 @@ export class IssuerController {
 			} else {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 					error: 'Error creating resource',
+				});
+			}
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `${error}`,
+			});
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /resource/search/{did}:
+	 *   get:
+	 *     tags: [ Resource ]
+	 *     summary: Get a DID-Linked Resource.
+	 *     description: This endpoint returns the DID-Linked Resource for a given DID identifier and resource identifier.
+	 *     parameters:
+	 *       - in: path
+	 *         name: did
+	 *         description: DID identifier
+	 *         schema:
+	 *           type: string
+	 *         required: true
+	 *         example: did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
+	 *       - in: query
+	 *         name: resourceId
+	 *         description: Fetch a DID-Linked Resource by Resource ID unique identifier. Since this is a unique identifier, other Resource query parameters are not required. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
+	 *         schema:
+	 *           type: string
+	 *           format: uuid
+	 *         example: 3ccde6ba-6ba5-56f2-9f4f-8825561a9860
+	 *       - in: query
+	 *         name: resourceName
+	 *         description: Filter a DID-Linked Resource query by Resource Name. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
+	 *         schema:
+	 *           type: string
+	 *         example: cheqd-issuer-logo
+	 *       - in: query
+	 *         name: resourceType
+	 *         description: Filter a DID-Linked Resource query by Resource Type. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
+	 *         schema:
+	 *           type: string
+	 *         example: CredentialArtwork
+	 *       - in: query
+	 *         name: resourceVersion
+	 *         description: Filter a DID-Linked Resource query by Resource Version, which is an optional free-text field used by issuers (e.g., "v1", "Final Version", "1st January 1970" etc). See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
+	 *         schema:
+	 *           type: string
+	 *         example: v1
+	 *       - in: query
+	 *         name: resourceVersionTime
+	 *         description: Filter a DID-Linked Resource query which returns the closest version of the Resource *at* or *before* specified time. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
+	 *         schema:
+	 *           type: string
+	 *           format: date-time
+	 *         example: 1970-01-01T00:00:00Z
+	 *       - in: query
+	 *         name: checksum
+	 *         description: Request integrity check against a given DID-Linked Resource by providing a SHA-256 checksum hash. See <a href="https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition">DID-Linked Resources</a> for more details.
+	 *         schema:
+	 *           type: string
+	 *         example: dc64474d062ed750a66bad58cb609928de55ed0d81defd231a4a4bf97358e9ed
+	 *       - in: query
+	 *         name: resourceMetadata
+	 *         description: Return only metadata of DID-Linked Resource instead of actual DID-Linked Resource. Mutually exclusive with some of the other parameters.
+	 *         schema:
+	 *           type: boolean
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           any:
+	 *             schema:
+	 *               type: object
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async getResource(request: Request, response: Response) {
+		try {
+			let res: globalThis.Response;
+			if (request.params.did) {
+				res = await new IdentityStrategySetup(response.locals.customerId).agent.resolve(
+					request.params.did + getQueryParams(request.query)
+				);
+
+				const contentType = res.headers.get('Content-Type');
+				const body = new TextDecoder().decode(await res.arrayBuffer());
+
+				return response.setHeader('Content-Type', contentType!).status(res.status).send(body);
+			} else {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: 'The DID parameter is empty.',
 				});
 			}
 		} catch (error) {
@@ -530,8 +627,8 @@ export class IssuerController {
 	public async getDids(request: Request, response: Response) {
 		try {
 			const did = request.params.did
-				? await new Identity(response.locals.customerId).agent.resolveDid(request.params.did)
-				: await new Identity(response.locals.customerId).agent.listDids(response.locals.customerId);
+				? await new IdentityStrategySetup(response.locals.customerId).agent.resolveDid(request.params.did)
+				: await new IdentityStrategySetup(response.locals.customerId).agent.listDids(response.locals.customerId);
 
 			return response.status(StatusCodes.OK).json(did);
 		} catch (error) {
@@ -544,11 +641,11 @@ export class IssuerController {
 	/**
 	 * @openapi
 	 *
-	 * /did/{did}:
+	 * /did/search/{did}:
 	 *   get:
 	 *     tags: [ DID ]
 	 *     summary: Resolve a DID Document.
-	 *     description: This endpoint resolves the latest DID Document for a given DID identifier.
+	 *     description: Resolve a DID Document by DID identifier. Also supports DID Resolution Queries as defined in the <a href="https://w3c-ccg.github.io/did-resolution/">W3C DID Resolution specification</a>.
 	 *     parameters:
 	 *       - in: path
 	 *         name: did
@@ -556,13 +653,54 @@ export class IssuerController {
 	 *         schema:
 	 *           type: string
 	 *         required: true
+	 *         example: did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
+	 *       - in: query
+	 *         name: metadata
+	 *         description: Return only metadata of DID Document instead of actual DID Document.
+	 *         schema:
+	 *           type: boolean
+	 *       - in: query
+	 *         name: versionId
+	 *         description: Unique UUID version identifier of DID Document. Allows for fetching a specific version of the DID Document. See <a href="https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#did-document-metadata">cheqd DID Method Specification</a> for more details.
+	 *         schema:
+	 *           type: string
+	 *           format: uuid
+	 *         example: 3ccde6ba-6ba5-56f2-9f4f-8825561a9860
+	 *       - in: query
+	 *         name: versionTime
+	 *         description: Returns the closest version of the DID Document *at* or *before* specified time. See <a href="https://docs.cheqd.io/identity/architecture/adr-list/adr-005-did-resolution-and-did-url-dereferencing">DID Resolution handling for `did:cheqd`</a> for more details.
+	 *         schema:
+	 *           type: string
+	 *           format: date-time
+	 *         example: 1970-01-01T00:00:00Z
+	 *       - in: query
+	 *         name: transformKeys
+	 *         description: This directive transforms the Verification Method key format from the version in the DID Document to the specified format chosen below.
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - Ed25519VerificationKey2018
+	 *             - Ed25519VerificationKey2020
+	 *             - JsonWebKey2020
+	 *       - in: query
+	 *         name: service
+	 *         description: Query DID Document for a specific Service Endpoint by Service ID (e.g., `service-1` in `did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1`). This will typically redirect to the Service Endpoint based on <a href="https://w3c-ccg.github.io/did-resolution/#dereferencing">DID Resolution specification</a> algorithm.
+	 *         schema:
+	 *           type: string
+	 *         example: service-1
+	 *       - in: query
+	 *         name: relativeRef
+	 *         description: Relative reference is a query fragment appended to the Service Endpoint URL. **Must** be used along with the `service` query property above. See <a href="https://w3c-ccg.github.io/did-resolution/#dereferencing">DID Resolution specification</a> algorithm for more details.
+	 *         schema:
+	 *           type: string
+	 *         example: /path/to/file
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/DidDocument'
+	 *               $ref: '#/components/schemas/DidResolution'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -570,15 +708,23 @@ export class IssuerController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
-	public async getDid(request: Request, response: Response) {
+	public async resolveDidUrl(request: Request, response: Response) {
 		try {
+			let res: globalThis.Response;
 			if (request.params.did) {
-				const did = await new Identity(response.locals.customerId).agent.resolveDid(request.params.did);
-				return response.status(StatusCodes.OK).json(did);
-			}
+				res = await new IdentityStrategySetup(response.locals.customerId).agent.resolve(
+					request.params.did + getQueryParams(request.query)
+				);
 
-			// should never happen
-			return response.status(StatusCodes.BAD_REQUEST);
+				const contentType = res.headers.get('Content-Type');
+				const body = new TextDecoder().decode(await res.arrayBuffer());
+
+				return response.setHeader('Content-Type', contentType!).status(res.status).send(body);
+			} else {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: 'The DIDUrl parameter is empty.',
+				});
+			}
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,

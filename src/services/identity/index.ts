@@ -1,7 +1,8 @@
 import * as dotenv from 'dotenv';
-import { LocalIdentity } from './local.js';
-import { PostgresIdentity } from './postgres.js';
+import { LocalIdentityService } from './local.js';
+import { PostgresIdentityService } from './postgres.js';
 import { Unauthorized } from './unauthorized.js';
+
 import type {
 	CredentialPayload,
 	DIDDocument,
@@ -13,7 +14,6 @@ import type {
 	VerifiableCredential,
 	VerifiablePresentation,
 } from '@veramo/core';
-import type { AbstractPrivateKeyStore } from '@veramo/key-manager';
 import type {
 	ResourcePayload,
 	BulkRevocationResult,
@@ -40,9 +40,9 @@ import type {
 
 dotenv.config();
 
-export interface IIdentity {
-	agent?: TAgent<any>;
-	privateStore?: AbstractPrivateKeyStore;
+export interface IIdentityService {
+	agent?: VeramoAgent;
+
 	initAgent(): TAgent<any>;
 	createAgent?(agentId: string): Promise<VeramoAgent>;
 	createKey(type: 'Ed25519' | 'Secp256k1', agentId?: string): Promise<ManagedKeyInfo>;
@@ -51,7 +51,8 @@ export interface IIdentity {
 	updateDid(didDocument: DIDDocument, agentId?: string): Promise<IIdentifier>;
 	deactivateDid(did: string, agentId?: string): Promise<boolean>;
 	listDids(agentId?: string): Promise<string[]>;
-	resolveDid(did: string): Promise<DIDResolutionResult>;
+	resolveDid(did: string, agentId?: string): Promise<DIDResolutionResult>;
+	resolve(didUrl: string): Promise<Response>;
 	getDid(did: string, agentId?: string): Promise<any>;
 	importDid(did: string, privateKeyHex: string, publicKeyHex: string, agentId?: string): Promise<IIdentifier>;
 	createResource(network: string, payload: ResourcePayload, agentId?: string): Promise<any>;
@@ -104,6 +105,12 @@ export interface IIdentity {
 		statusOptions: CheckStatusListOptions,
 		agentId?: string
 	): Promise<StatusCheckResult>;
+	searchStatusList2021(
+		did: string,
+		statusListName: string,
+		statusPurpose: 'revocation' | 'suspension',
+		agentId?: string
+	): Promise<any>;
 	revokeCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
@@ -121,16 +128,16 @@ export interface IIdentity {
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult>;
 }
 
-export class Identity {
-	agent: IIdentity;
+export class IdentityStrategySetup {
+	agent: IIdentityService;
 	static unauthorized = new Unauthorized();
 
 	constructor(agentId?: string) {
-		this.agent = Identity.unauthorized;
+		this.agent = IdentityStrategySetup.unauthorized;
 		this.setupIdentityStrategy(agentId);
 	}
 
-	private setStrategy(strategy: IIdentity) {
+	private setStrategy(strategy: IIdentityService) {
 		// If is already set up - skip
 		if (this.agent === strategy) return;
 		this.agent = strategy;
@@ -139,10 +146,10 @@ export class Identity {
 	public setupIdentityStrategy(agentId?: string) {
 		if (process.env.ENABLE_EXTERNAL_DB === 'true') {
 			if (agentId) {
-				this.setStrategy(new PostgresIdentity());
+				this.setStrategy(new PostgresIdentityService());
 			}
 		} else {
-			this.setStrategy(new LocalIdentity());
+			this.setStrategy(new LocalIdentityService());
 		}
 	}
 }

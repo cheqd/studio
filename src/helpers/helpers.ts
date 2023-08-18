@@ -16,6 +16,7 @@ export interface IDidDocOptions {
 export function toMinimalDenom(amount: number): number {
 	return amount * (10 ** DEFAULT_DENOM_EXPONENT);
 }
+import type QueryString from 'qs';
 
 export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecValidationResult {
 	// id is required, validated on both compile and runtime
@@ -80,4 +81,13 @@ export function verifyHookSignature(signingKey: string, rawBody: string, expecte
 	hmac.update(rawBody);
 	const signature = hmac.digest('hex');
 	return signature === expectedSignature;
+}
+
+export function getQueryParams(queryParams: QueryString.ParsedQs) {
+	// Convert the query parameters object to a single string in text format
+	const queryParamsText = Object.keys(queryParams)
+		.map((key) => `${key}=${queryParams[key]}`)
+		.join('&');
+
+	return queryParamsText.length == 0 ? queryParamsText : '?' + queryParamsText;
 }
