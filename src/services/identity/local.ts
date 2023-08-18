@@ -24,7 +24,7 @@ import {
 } from '../../types/shared.js'
 import { Connection } from '../../database/connection/connection.js'
 import { Veramo } from './agent.js'
-import { DefaultIdentity } from './identity.js'
+import { DefaultIdentityService } from './default.js'
 
 dotenv.config()
 
@@ -37,7 +37,7 @@ const {
 	ISSUER_DID
 } = process.env
 
-export class LocalIdentity extends DefaultIdentity {
+export class LocalIdentity extends DefaultIdentityService {
 	initAgent() {
 		if (!DEFAULT_FEE_PAYER_MNEMONIC) {
 			throw new Error(`No fee payer found`)

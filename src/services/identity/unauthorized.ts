@@ -6,7 +6,7 @@ import { Connection } from '../../database/connection/connection.js'
 import { Veramo } from './agent.js'
 import { CheqdDIDProvider } from "@cheqd/did-provider-cheqd";
 import { CheqdNetwork } from '@cheqd/sdk'
-import { DefaultIdentity } from './identity.js'
+import { DefaultIdentityService } from './default.js'
 
 dotenv.config()
 
@@ -15,7 +15,7 @@ const {
 	TESTNET_RPC_URL
 } = process.env
 
-export class Unauthorized extends DefaultIdentity {
+export class Unauthorized extends DefaultIdentityService {
 	initAgent() {
 		if (this.agent) {
 			return this.agent
