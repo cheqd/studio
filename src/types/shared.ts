@@ -13,11 +13,34 @@ import type {
 	ICheqd,
 	CheqdDIDProvider,
 	ICheqdCheckCredentialWithStatusList2021StatusOptions,
+	DefaultStatusList2021StatusPurposeTypes,
+	DefaultStatusList2021Encodings,
 } from '@cheqd/did-provider-cheqd';
 import type { ICredentialIssuerLD } from '@veramo/credential-ld';
 import type { AbstractIdentifierProvider } from '@veramo/did-manager';
 import type { AbstractKeyManagementSystem } from '@veramo/key-manager';
 import type { DataSource } from 'typeorm';
+import { CheqdNetwork } from '@cheqd/sdk';
+
+const DefaultUuidPattern = '([a-zA-Z0-9-]{36})';
+const DefaultMethodSpecificIdPattern = `(?:[a-zA-Z0-9]{21,22}|${DefaultUuidPattern})`;
+const DefaultNamespacePattern = `(${CheqdNetwork.Mainnet}|${CheqdNetwork.Testnet})`;
+
+export const DefaultDidUrlPattern = new RegExp(`^did:cheqd:${DefaultNamespacePattern}:${DefaultMethodSpecificIdPattern}$`);
+
+export const DefaultStatusActions = {
+	revoke: 'revoke',
+	suspend: 'suspend',
+	reinstate: 'reinstate',
+} as const;
+
+export type DefaultStatusAction = keyof typeof DefaultStatusActions;
+
+export type MinimalPaymentCondition = {
+	feePaymentAddress: string;
+	feePaymentAmount: number; // in CHEQ, decimals are allowed, strictly up to 2 decimal points, e.g. 1.5 CHEQ, 1.55 CHEQ
+	feePaymentWindow: number; // in minutes, strictly integer, e.g. 5 minutes, 10 minutes
+}
 
 export type ErrorResponse = {
 	name: string;
@@ -71,22 +94,6 @@ export interface CredentialRequest {
 
 export type GenericAuthUser = Record<string, unknown> | null | undefined;
 
-const UUID = '([a-z,0-9,-]{36,36})';
-const ID_CHAR = `(?:[a-zA-Z0-9]{21,22}|${UUID})`;
-const NETWORK = '(testnet|mainnet)';
-const METHOD_ID = `((?:${ID_CHAR}*:)*(${ID_CHAR}+))`;
-export const cheqdDidRegex = new RegExp(`^did:cheqd:${NETWORK}:${METHOD_ID}$`);
-
-export enum DefaultRPCUrl {
-	Mainnet = 'https://rpc.cheqd.net',
-	Testnet = 'https://rpc.cheqd.network',
-}
-
-export enum NetworkType {
-	Mainnet = 'mainnet',
-	Testnet = 'testnet',
-}
-
 export type SpecValidationResult = {
 	valid: boolean;
 	error?: string;
@@ -112,22 +119,38 @@ export type CreateAgentRequest = {
 	enableCredential?: boolean;
 };
 
-export const StatusList2021ResourceTypes = {
-	revocation: 'StatusList2021Revocation',
-	suspension: 'StatusList2021Suspension',
+export type CreateUnencryptedStatusListOptions = {
+	length?: number;
+	encoding?: keyof typeof DefaultStatusList2021Encodings;
+	statusPurpose: keyof typeof DefaultStatusList2021StatusPurposeTypes;
 };
 
-export type CreateStatusListOptions = {
-	length?: number | undefined;
-	encoding?: 'base64' | 'base64url' | 'hex' | undefined;
-	statusPurpose: 'revocation' | 'suspension';
-	encrypted?: boolean;
+export type CreateEncryptedStatusListOptions = CreateUnencryptedStatusListOptions & {
+	paymentConditions?: MinimalPaymentCondition[];
+	feePaymentAddress?: MinimalPaymentCondition['feePaymentAddress'];
+	feePaymentAmount?: MinimalPaymentCondition['feePaymentAmount'];
+	feePaymentWindow?: MinimalPaymentCondition['feePaymentWindow'];
+}
+
+export type UpdateUnencryptedStatusListOptions = {
+	indices: number[];
+	statusListName: string;
+	statusListVersion?: string;
+	statusAction: DefaultStatusAction;
+}
+
+export type UpdateEncryptedStatusListOptions = UpdateUnencryptedStatusListOptions & {
+	symmetricKey: string;
+	paymentConditions?: MinimalPaymentCondition[];
+	feePaymentAddress?: MinimalPaymentCondition['feePaymentAddress'];
+	feePaymentAmount?: MinimalPaymentCondition['feePaymentAmount'];
+	feePaymentWindow?: MinimalPaymentCondition['feePaymentWindow'];
 };
 
-export type BroadCastStatusListOptions = Omit<CreateStatusListOptions, 'length'>;
+export type BroadcastStatusListOptions = Omit<CreateUnencryptedStatusListOptions, 'length'>;
 
 export type StatusOptions = {
-	statusPurpose: CreateStatusListOptions['statusPurpose'];
+	statusPurpose: CreateUnencryptedStatusListOptions['statusPurpose'];
 	statusListName: string;
 	statusListIndex?: number;
 	statusListVersion?: string;
@@ -146,17 +169,10 @@ export interface ResourceMetadata {
 	resourceVersion: string;
 	resourceType: string;
 	mediaType: string;
-	created: Date | undefined;
+	created?: Date;
 	checksum: string;
 	previousVersionId: string;
 	nextVersionId: string;
-}
-
-export interface UpdateStatusListOptions {
-	indices: number[];
-	statusListName: string;
-	statusListVersion?: string;
-	statusAction: 'revoke' | 'suspend' | 'reinstate';
 }
 
 export type CheckStatusListOptions = Omit<ICheqdCheckCredentialWithStatusList2021StatusOptions, 'issuerDid'>;

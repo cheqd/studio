@@ -3,10 +3,10 @@ import type { VerifiableCredential, IVerifyResult, VerifiablePresentation } from
 import { MemoryPrivateKeyStore } from '@veramo/key-manager';
 import { KeyManagementSystem } from '@veramo/kms-local';
 
-import { type CheckStatusListOptions, type VerificationOptions, DefaultRPCUrl } from '../../types/shared.js';
+import type { CheckStatusListOptions, VerificationOptions } from '../../types/shared.js';
 import { Connection } from '../../database/connection/connection.js';
 import { Veramo } from './agent.js';
-import { CheqdDIDProvider, type StatusCheckResult } from '@cheqd/did-provider-cheqd';
+import { CheqdDIDProvider, DefaultRPCUrls, type StatusCheckResult } from '@cheqd/did-provider-cheqd';
 import { CheqdNetwork } from '@cheqd/sdk';
 import * as dotenv from 'dotenv';
 
@@ -25,13 +25,13 @@ export class Unauthorized extends LocalIdentity {
 			defaultKms: 'local',
 			cosmosPayerSeed: '',
 			networkType: CheqdNetwork.Mainnet,
-			rpcUrl: MAINNET_RPC_URL || DefaultRPCUrl.Mainnet,
+			rpcUrl: MAINNET_RPC_URL || DefaultRPCUrls.mainnet,
 		});
 		const testnetProvider = new CheqdDIDProvider({
 			defaultKms: 'local',
 			cosmosPayerSeed: '',
 			networkType: CheqdNetwork.Testnet,
-			rpcUrl: TESTNET_RPC_URL || DefaultRPCUrl.Testnet,
+			rpcUrl: TESTNET_RPC_URL || DefaultRPCUrls.testnet,
 		});
 
 		this.agent = Veramo.instance.createVeramoAgent({

@@ -813,13 +813,13 @@
         }
       }
     },
-    "/credential-status/create": {
+    "/credential-status/create/unencrypted": {
       "post": {
         "tags": [
           "Credential Status"
         ],
-        "summary": "Create a StatusList2021 credential status list.",
-        "description": "This endpoint creates a StatusList2021 credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.",
+        "summary": "Create an unencrypted StatusList2021 credential status list.",
+        "description": "This endpoint creates an unencrypted StatusList2021 credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.",
         "parameters": [
           {
             "in": "query",
@@ -832,16 +832,6 @@
                 "revocation",
                 "suspension"
               ]
-            }
-          },
-          {
-            "in": "query",
-            "name": "encrypted",
-            "description": "Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied.",
-            "required": true,
-            "schema": {
-              "type": "boolean",
-              "default": false
             }
           }
         ],
@@ -882,13 +872,13 @@
         }
       }
     },
-    "/credential-status/publish": {
+    "/credential-status/create/encrypted": {
       "post": {
         "tags": [
           "Credential Status"
         ],
-        "summary": "Publish a StatusList2021 credential status list.",
-        "description": "Published a pre-assembled StatusList2021 as a DID-Linked Resource. As input, it needs to be provided the `encodedList` property, along with the associated DID-Linked Resource properties in the original status list (if already created previously).",
+        "summary": "Create an encrypted StatusList2021 credential status list.",
+        "description": "This endpoint creates an encrypted StatusList2021 credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.",
         "parameters": [
           {
             "in": "query",
@@ -902,28 +892,18 @@
                 "suspension"
               ]
             }
-          },
-          {
-            "in": "query",
-            "name": "encrypted",
-            "description": "Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied. When publishing a new version, this should match the original property.",
-            "required": true,
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
           }
         ],
         "requestBody": {
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/CredentialStatusPublishRequest"
+                "$ref": "#/components/schemas/CredentialStatusCreateRequest"
               }
             },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CredentialStatusPublishRequest"
+                "$ref": "#/components/schemas/CredentialStatusCreateRequest"
               }
             }
           }
@@ -951,94 +931,17 @@
         }
       }
     },
-    "/credential-status/search": {
-      "get": {
-        "tags": [
-          "Credential Status"
-        ],
-        "summary": "Fetch StatusList2021 DID-Linked Resource based on search criteria.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "did",
-            "description": "The DID of the issuer of the status list.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "statusPurpose",
-            "description": "The purpose of the status list. Can be either revocation or suspension.",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "revocation",
-                "suspension"
-              ]
-            }
-          },
-          {
-            "in": "query",
-            "name": "statusListName",
-            "description": "The name of the StatusList2021 DID-Linked Resource.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "statusListName": {
-                        "type": "string"
-                      },
-                      "statusListVersion": {
-                        "type": "string"
-                      },
-                      "statusListId": {
-                        "type": "string"
-                      },
-                      "statusListNextVersion": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/credential-status/update": {
+    "/credential-status/update/unencrypted": {
       "post": {
         "tags": [
           "Credential Status"
         ],
-        "summary": "Update an existing StatusList2021 credential status list.",
+        "summary": "Update an existing unencrypted StatusList2021 credential status list.",
         "parameters": [
           {
             "in": "query",
             "name": "statusAction",
-            "description": "The update action to be performed on the statuslist, can be revoke, suspend or reinstate",
+            "description": "The update action to be performed on the unencrypted status list, can be revoke, suspend or reinstate",
             "required": true,
             "schema": {
               "type": "string",
@@ -1048,25 +951,64 @@
                 "reinstate"
               ]
             }
-          },
-          {
-            "in": "query",
-            "name": "publish",
-            "description": "Publish the status list to the DID network. The default is `false`, which means the status list is not published to the DID network.",
-            "required": true,
-            "schema": {
-              "type": "boolean",
-              "default": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusUpdateRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialStatusResult"
+                }
+              }
             }
           },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/update/encrypted": {
+      "post": {
+        "tags": [
+          "Credential Status"
+        ],
+        "summary": "Update an existing encrypted StatusList2021 credential status list.",
+        "parameters": [
           {
             "in": "query",
-            "name": "encrypted",
-            "description": "Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied. When publishing a new version, this should match the original property.",
+            "name": "statusAction",
+            "description": "The update action to be performed on the encrypted status list, can be revoke, suspend or reinstate",
             "required": true,
             "schema": {
-              "type": "boolean",
-              "default": false
+              "type": "string",
+              "enum": [
+                "revoke",
+                "suspend",
+                "reinstate"
+              ]
             }
           }
         ],
@@ -1167,6 +1109,83 @@
                     "suspended": {
                       "type": "boolean",
                       "example": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/search": {
+      "get": {
+        "tags": [
+          "Credential Status"
+        ],
+        "summary": "Fetch StatusList2021 DID-Linked Resource based on search criteria.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "did",
+            "description": "The DID of the issuer of the status list.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "statusPurpose",
+            "description": "The purpose of the status list. Can be either revocation or suspension.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "revocation",
+                "suspension"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "statusListName",
+            "description": "The name of the StatusList2021 DID-Linked Resource.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "statusListName": {
+                        "type": "string"
+                      },
+                      "statusListVersion": {
+                        "type": "string"
+                      },
+                      "statusListId": {
+                        "type": "string"
+                      },
+                      "statusListNextVersion": {
+                        "type": "string"
+                      }
                     }
                   }
                 }

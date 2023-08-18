@@ -26,12 +26,14 @@ import type {
 	UnsuspensionResult,
 } from '@cheqd/did-provider-cheqd';
 import type {
-	BroadCastStatusListOptions,
+	BroadcastStatusListOptions,
 	CheckStatusListOptions,
-	CreateStatusListOptions,
+	CreateEncryptedStatusListOptions,
+	CreateUnencryptedStatusListOptions,
 	CredentialRequest,
 	StatusOptions,
-	UpdateStatusListOptions,
+	UpdateEncryptedStatusListOptions,
+	UpdateUnencryptedStatusListOptions,
 	VeramoAgent,
 	VerificationOptions,
 } from '../../types/shared';
@@ -69,22 +71,32 @@ export interface IIdentity {
 		verificationOptions: VerificationOptions,
 		agentId?: string
 	): Promise<IVerifyResult>;
-	createStatusList2021(
+	createUnencryptedStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
-		statusOptions: CreateStatusListOptions,
+		statusOptions: CreateUnencryptedStatusListOptions,
 		agentId: string
 	): Promise<CreateStatusList2021Result>;
-	updateStatusList2021(
+	createEncryptedStatusList2021(
 		did: string,
-		statusOptions: UpdateStatusListOptions,
-		publish?: boolean,
+		resourceOptions: ResourcePayload,
+		statusOptions: CreateEncryptedStatusListOptions,
+		agentId: string
+	): Promise<CreateStatusList2021Result>;
+	updateUnencryptedStatusList2021(
+		did: string,
+		statusOptions: UpdateUnencryptedStatusListOptions,
+		agentId?: string
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult>;
+	updateEncryptedStatusList2021(
+		did: string,
+		statusOptions: UpdateEncryptedStatusListOptions,
 		agentId?: string
 	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult>;
 	broadcastStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
-		statusOptions: BroadCastStatusListOptions,
+		statusOptions: BroadcastStatusListOptions,
 		agentId?: string
 	): Promise<boolean>;
 	checkStatusList2021(

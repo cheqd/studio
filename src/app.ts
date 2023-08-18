@@ -116,30 +116,32 @@ class App {
 
 		// revocation
 		app.post(
-			'/credential-status/create',
-			RevocationController.commonValidator,
-			RevocationController.createValidator,
-			new RevocationController().createStatusList
+			'/credential-status/create/unencrypted',
+			RevocationController.createUnencryptedValidator,
+			new RevocationController().createUnencryptedStatusList
 		);
 		app.post(
-			'/credential-status/update',
-			RevocationController.updateValidator,
-			new RevocationController().updateStatusList
+			'/credential-status/create/encrypted',
+			RevocationController.createEncryptedValidator,
+			new RevocationController().createEncryptedStatusList
 		);
 		app.post(
-			'/credential-status/publish',
-			RevocationController.commonValidator,
-			new RevocationController().publishStatusList
+			'/credential-status/update/unencrypted',
+			RevocationController.updateUnencryptedValidator,
+			new RevocationController().updateUnencryptedStatusList
+		);
+		app.post(
+			'/credential-status/update/encrypted',
+			RevocationController.updateEncryptedValidator,
+			new RevocationController().updateEncryptedStatusList
 		);
 		app.post(
 			'/credential-status/check',
-			RevocationController.commonValidator,
 			RevocationController.checkValidator,
 			new RevocationController().checkStatusList
 		);
 		app.get(
 			'/credential-status/search',
-			RevocationController.commonValidator,
 			new RevocationController().fetchStatusList
 		);
 

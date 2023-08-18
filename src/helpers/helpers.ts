@@ -3,6 +3,19 @@ import type { MethodSpecificIdAlgo, CheqdNetwork, TVerificationKey, TVerificatio
 import { VerificationMethods, createVerificationKeys, createDidVerificationMethod, createDidPayload } from '@cheqd/sdk';
 import type { SpecValidationResult } from '../types/shared.js';
 import { createHmac } from 'node:crypto';
+import { DEFAULT_DENOM_EXPONENT } from '../types/constants.js';
+
+export interface IDidDocOptions {
+	verificationMethod: VerificationMethods;
+	verificationMethodId: TVerificationKey<TVerificationKeyPrefix, number>;
+	methodSpecificIdAlgo: MethodSpecificIdAlgo;
+	network: CheqdNetwork;
+	publicKey: string;
+}
+
+export function toMinimalDenom(amount: number): number {
+	return amount * (10 ** DEFAULT_DENOM_EXPONENT);
+}
 
 export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecValidationResult {
 	// id is required, validated on both compile and runtime
@@ -67,12 +80,4 @@ export function verifyHookSignature(signingKey: string, rawBody: string, expecte
 	hmac.update(rawBody);
 	const signature = hmac.digest('hex');
 	return signature === expectedSignature;
-}
-
-export interface IDidDocOptions {
-	verificationMethod: VerificationMethods;
-	verificationMethodId: TVerificationKey<TVerificationKeyPrefix, number>;
-	methodSpecificIdAlgo: MethodSpecificIdAlgo;
-	network: CheqdNetwork;
-	publicKey: string;
 }
