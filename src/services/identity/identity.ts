@@ -243,7 +243,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	}
 }
 
-export class DefaultIdentity extends AbstractIdentity {
+export class DefaultIdentityService extends AbstractIdentityService {
 	constructor() {
 		super();
 	  	this.agent = this.initAgent()
