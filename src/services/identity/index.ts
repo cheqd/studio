@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv';
-import { LocalIdentity } from './local.js';
-import { PostgresIdentity } from './postgres.js';
+import { LocalIdentityService } from './local.js';
+import { PostgresIdentityService } from './postgres.js';
 import { Unauthorized } from './unauthorized.js';
 
 import type {
@@ -134,10 +134,10 @@ export class Identity {
 	public setupIdentityStrategy(agentId?: string) {
 		if (process.env.ENABLE_EXTERNAL_DB === 'true') {
 			if (agentId) {
-				this.setStrategy(new PostgresIdentity());
+				this.setStrategy(new PostgresIdentityService());
 			}
 		} else {
-			this.setStrategy(new LocalIdentity());
+			this.setStrategy(new LocalIdentityService());
 		}
 	}
 }

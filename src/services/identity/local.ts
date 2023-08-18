@@ -37,7 +37,7 @@ const {
 	ISSUER_DID
 } = process.env
 
-export class LocalIdentity extends DefaultIdentityService {
+export class LocalIdentityService extends DefaultIdentityService {
 	initAgent() {
 		if (!DEFAULT_FEE_PAYER_MNEMONIC) {
 			throw new Error(`No fee payer found`)

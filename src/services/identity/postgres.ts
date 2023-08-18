@@ -43,7 +43,7 @@ const {
 	EXTERNAL_DB_ENCRYPTION_KEY,
 } = process.env
 
-export class PostgresIdentity extends DefaultIdentityService {
+export class PostgresIdentityService extends DefaultIdentityService {
 	privateStore?: AbstractPrivateKeyStore
 
 	initAgent() {
