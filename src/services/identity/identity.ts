@@ -35,7 +35,7 @@ import { Veramo } from './agent.js';
 
 dotenv.config();
 
-export interface IIdentity {
+export interface IIdentityService {
 	agent?: VeramoAgent;
 
 	initAgent(): TAgent<any>;
