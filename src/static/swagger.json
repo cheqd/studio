@@ -28,10 +28,7 @@
       "name": "Resource"
     },
     {
-      "name": "Credential",
-      "externalDocs": {
-        "url": "https://github.com/cheqd/credential-service#readme"
-      }
+      "name": "Credential"
     },
     {
       "name": "Presentation"
