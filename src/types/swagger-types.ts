@@ -814,17 +814,7 @@
  *       type: array
  *       items:
  *         type: object
- *         properties:
- *           statusListId:
- *             type: string
- *           statusListName:
- *             type: string
- *           statusListVersion:
- *             type: string
- *           statusListNextVersion:
- *             type: string
- *           statusPurpose:
- *             type: string
+ *         $ref: '#/components/schemas/ResourceMetadata'
  *     Customer:
  *       type: object
  *       properties:

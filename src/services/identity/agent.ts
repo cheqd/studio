@@ -509,23 +509,17 @@ export class Veramo {
 		let metadata: ResourceMetadata[] = [];
 	
 		for (const resourceType of resourceTypes) {
-		  const result = await (await fetch(`${did}?resourceType=${resourceType}&resourceMetadata=true`)).json();
+		  const result = await (await fetch(`${process.env.RESOLVER_URL || DefaultResolverUrl}/${did}?resourceType=${resourceType}&resourceMetadata=true`)).json();
 		  metadata = metadata.concat(result.contentStream?.linkedResourceMetadata || []);
 		}
-	
+		
 		return metadata.filter((resource: ResourceMetadata) => {
 		  if (statusListName) {
 			return resource.resourceName === statusListName && resource.mediaType == 'application/json';
 		  }
 		  return resource.mediaType == 'application/json';
 		}).map((resource: ResourceMetadata) => {
-		  return {
-			statusListName: resource.resourceName,
-			statusPurpose: resource.resourceType,
-			statusListVersion: resource.resourceVersion,
-			statusListId: resource.resourceId,
-			statusListNextVersion: resource.nextVersionId
-		  }
+		  return resource;
 		})
 	  }
 }
