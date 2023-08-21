@@ -796,7 +796,6 @@
  *     CredentialStatusSearchResponse:
  *       type: array
  *       items:
- *         type: object
  *         $ref: '#/components/schemas/ResourceMetadata'
  *     Customer:
  *       type: object
