@@ -40,7 +40,7 @@ const {
 export class LocalIdentityService extends DefaultIdentityService {
 	constructor() {
 		super();
-	  	this.agent = this.initAgent()
+	  	this.agent = this.initAgent();
 	}
 	
 	initAgent() {
