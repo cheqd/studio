@@ -15,6 +15,11 @@ const {
 } = process.env
 
 export class Unauthorized extends DefaultIdentityService {
+	constructor() {
+		super();
+		this.agent = this.initAgent();
+	}
+	
 	initAgent() {
 		if (this.agent) {
 			return this.agent

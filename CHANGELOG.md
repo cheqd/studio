@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.0-develop.2](https://github.com/cheqd/credential-service/compare/2.9.0-develop.1...2.9.0-develop.2) (2023-08-21)
+
+
+### Bug Fixes
+
+* Fix problem with agent initialize [DEV-3146] ([#346](https://github.com/cheqd/credential-service/issues/346)) ([45e1074](https://github.com/cheqd/credential-service/commit/45e1074925c6262d8034df1a0e3a5311987d36c2))
+
 ## [2.9.0-develop.1](https://github.com/cheqd/credential-service/compare/2.8.0...2.9.0-develop.1) (2023-08-18)
 
 

@@ -7,11 +7,6 @@ import type { StatusCheckResult, TransactionResult } from "@cheqd/did-provider-c
 import { Veramo } from "./agent.js";
 
 export class DefaultIdentityService extends AbstractIdentityService {
-	constructor() {
-		super();
-		this.agent = this.initAgent()
-	}
-
     async resolveDid(did: string, agentId?: string): Promise<DIDResolutionResult> {
 		return Veramo.instance.resolveDid(this.initAgent(), did)
 	}

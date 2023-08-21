@@ -53,6 +53,11 @@ const {
 export class PostgresIdentityService extends DefaultIdentityService {
 	privateStore?: AbstractPrivateKeyStore
 
+	constructor() {
+		super();
+		this.agent = this.initAgent();
+	}
+
 	initAgent() {
 		if (this.agent) return this.agent
 		const dbConnection = Connection.instance.dbConnection
