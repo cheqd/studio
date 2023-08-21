@@ -744,7 +744,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateResourceResponse"
+                  "$ref": "#/components/schemas/ResourceMetadata"
                 }
               }
             }
@@ -2506,30 +2506,6 @@
           "methodSpecificId": {
             "type": "string",
             "example": "55dbc8bf-fba3-4117-855c-1e0dc1d3bb47"
-          }
-        }
-      },
-      "CreateResourceResponse": {
-        "type": "object",
-        "properties": {
-          "collectionId": {
-            "type": "string",
-            "example": "did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47"
-          },
-          "data": {
-            "type": "object"
-          },
-          "id": {
-            "type": "string",
-            "example": "398cee0a-efac-4643-9f4c-74c48c72a14b"
-          },
-          "name": {
-            "type": "string",
-            "example": "ResourceName"
-          },
-          "resourceType": {
-            "type": "string",
-            "example": "TextDocument"
           }
         }
       },

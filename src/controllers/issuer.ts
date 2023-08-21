@@ -446,7 +446,7 @@ export class IssuerController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/CreateResourceResponse'
+	 *               $ref: '#/components/schemas/ResourceMetadata'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
