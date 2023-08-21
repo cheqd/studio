@@ -20,6 +20,7 @@ import type {
 	StatusCheckResult,
 	SuspensionResult,
 	UnsuspensionResult,
+	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
 import type {
 	BroadcastStatusListOptions,
@@ -104,6 +105,28 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
 		throw new Error(`Not supported`)
 	}
+	checkStatusList2021(
+		did: string,
+		statusOptions: CheckStatusListOptions,
+		agentId?: string
+	): Promise<StatusCheckResult> {
+		throw new Error(`Not supported`)
+	}
+	searchStatusList2021(
+		did: string,
+		statusListName: string,
+		statusPurpose: 'revocation' | 'suspension',
+		agentId?: string
+	): Promise<any> {
+		throw new Error(`Not supported`)
+	}
+	remunerateStatusList2021(
+		feePaymentAddress: string,
+		feePaymentAmount: string,
+		memo?: string
+	): Promise<TransactionResult> {
+		throw new Error(`Not supported`)
+	}
 	broadcastStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
@@ -160,21 +183,6 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		verificationOptions: VerificationOptions,
 		agentId?: string
 	): Promise<IVerifyResult> {
-		throw new Error(`Not supported`)
-	}
-	checkStatusList2021(
-		did: string,
-		statusOptions: CheckStatusListOptions,
-		agentId?: string
-	): Promise<StatusCheckResult> {
-		throw new Error(`Not supported`)
-	}
-	searchStatusList2021(
-		did: string,
-		statusListName: string,
-		statusPurpose: 'revocation' | 'suspension',
-		agentId?: string
-	): Promise<any> {
 		throw new Error(`Not supported`)
 	}
 }

@@ -32,6 +32,6 @@ export class DefaultIdentityService extends AbstractIdentityService {
 	}
 
 	searchStatusList2021(did: string, statusListName: string, statusPurpose: 'revocation' | 'suspension', agentId?: string): Promise<any> {
-		return Veramo.instance.searchStatusList2021(this.initAgent(), did, statusListName, statusPurpose)
+		return Veramo.instance.searchStatusList2021(did, statusListName, statusPurpose)
 	}
 }

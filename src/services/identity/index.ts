@@ -25,6 +25,7 @@ import type {
 	StatusCheckResult,
 	SuspensionResult,
 	UnsuspensionResult,
+	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
 import type {
 	BroadcastStatusListOptions,
@@ -32,6 +33,7 @@ import type {
 	CreateEncryptedStatusListOptions,
 	CreateUnencryptedStatusListOptions,
 	CredentialRequest,
+	SearchStatusListResult,
 	StatusOptions,
 	UpdateEncryptedStatusListOptions,
 	UpdateUnencryptedStatusListOptions,
@@ -95,12 +97,6 @@ export interface IIdentityService {
 		statusOptions: UpdateEncryptedStatusListOptions,
 		agentId?: string
 	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult>;
-	broadcastStatusList2021(
-		did: string,
-		resourceOptions: ResourcePayload,
-		statusOptions: BroadcastStatusListOptions,
-		agentId?: string
-	): Promise<boolean>;
 	checkStatusList2021(
 		did: string,
 		statusOptions: CheckStatusListOptions,
@@ -111,7 +107,18 @@ export interface IIdentityService {
 		statusListName: string,
 		statusPurpose: 'revocation' | 'suspension',
 		agentId?: string
-	): Promise<any>;
+	): Promise<SearchStatusListResult>;
+	broadcastStatusList2021(
+		did: string,
+		resourceOptions: ResourcePayload,
+		statusOptions: BroadcastStatusListOptions,
+		agentId?: string
+	): Promise<boolean>;
+	remunerateStatusList2021(
+		feePaymentAddress: string,
+		feePaymentAmount: string,
+		memo?: string,
+	): Promise<TransactionResult>
 	revokeCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
@@ -129,12 +136,12 @@ export interface IIdentityService {
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult>;
 }
 
-export class IdentityStrategySetup {
+export class IdentityServiceStrategySetup {
 	agent: IIdentityService;
 	static unauthorized = new Unauthorized();
 
 	constructor(agentId?: string) {
-		this.agent = IdentityStrategySetup.unauthorized;
+		this.agent = IdentityServiceStrategySetup.unauthorized;
 		this.setupIdentityStrategy(agentId);
 	}
 

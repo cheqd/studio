@@ -42,6 +42,11 @@ import {
 	DefaultStatusList2021Encodings,
 	ICheqdSuspendBulkCredentialsWithStatusList2021Args,
 	ICheqdUnsuspendBulkCredentialsWithStatusList2021Args,
+	DIDMetadataDereferencingResult,
+	StatusList2021Revocation,
+	StatusList2021Suspension,
+	DefaultStatusList2021StatusPurposeType,
+	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
 import type { CheqdNetwork } from '@cheqd/sdk';
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key';
@@ -54,7 +59,6 @@ import {
 	CreateAgentRequest,
 	CreateUnencryptedStatusListOptions,
 	CredentialRequest,
-	ResourceMetadata,
 	RevocationStatusOptions,
 	StatusOptions,
 	SuspensionStatusOptions,
@@ -64,9 +68,10 @@ import {
 	CreateEncryptedStatusListOptions,
 	DefaultStatusActions,
 	UpdateEncryptedStatusListOptions,
+	SearchStatusListResult,
 } from '../../types/shared.js';
 import { MINIMAL_DENOM, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js';
-import { toMinimalDenom } from '../../helpers/helpers.js';
+import { toCoin, toDefaultDkg, toMinimalDenom } from '../../helpers/helpers.js';
 
 export class Veramo {
 	static instance = new Veramo();
@@ -392,7 +397,7 @@ export class Veramo {
 			statusListEncoding: statusOptions.encoding || DefaultStatusList2021Encodings.base64url,
 			statusListLength: statusOptions.length,
 			resourceVersion: resourceOptions.version,
-			encrypted: false,
+			encrypted: false
 		} satisfies ICheqdCreateStatusList2021Args);
 	}
 
@@ -454,6 +459,7 @@ export class Veramo {
 			encrypted: true,
 			paymentConditions,
 			returnSymmetricKey: true,
+			dkgOptions: toDefaultDkg(did),
 		} satisfies ICheqdCreateStatusList2021Args);
 	}
 
@@ -482,6 +488,19 @@ export class Veramo {
 			},
 			network: did.split(':')[2] as CheqdNetwork,
 		} satisfies ICheqdBroadcastStatusList2021Args);
+	}
+
+	async remunerateStatusList2021(
+		agent: VeramoAgent,
+		feePaymentAddress: string,
+		feePaymentAmount: string,
+		memo?: string
+	): Promise<TransactionResult> {
+		return await agent.cheqdTransactSendTokens({
+			recipientAddress: feePaymentAddress,
+			amount: toCoin(feePaymentAmount),
+			memo,
+		})
 	}
 
 	async revokeCredentials(
@@ -628,6 +647,7 @@ export class Veramo {
 					returnSymmetricKey: true,
 					returnUpdatedStatusList: true,
 					returnStatusListMetadata: true,
+					dkgOptions: toDefaultDkg(did),
 				} satisfies ICheqdRevokeBulkCredentialsWithStatusList2021Args);
 			case DefaultStatusActions.suspend:
 				return await agent.cheqdSuspendCredentials({
@@ -645,6 +665,7 @@ export class Veramo {
 					returnSymmetricKey: true,
 					returnUpdatedStatusList: true,
 					returnStatusListMetadata: true,
+					dkgOptions: toDefaultDkg(did),
 				} satisfies ICheqdSuspendBulkCredentialsWithStatusList2021Args);
 			case DefaultStatusActions.reinstate:
 				return await agent.cheqdUnsuspendCredentials({
@@ -662,6 +683,7 @@ export class Veramo {
 					returnSymmetricKey: true,
 					returnUpdatedStatusList: true,
 					returnStatusListMetadata: true,
+					dkgOptions: toDefaultDkg(did),
 				} satisfies ICheqdUnsuspendBulkCredentialsWithStatusList2021Args);
 		}
 	}
@@ -673,40 +695,60 @@ export class Veramo {
 				...statusOptions,
 			},
 			fetchList: true,
+			dkgOptions: toDefaultDkg(did),
 		} satisfies ICheqdCheckCredentialStatusWithStatusList2021Args);
 	}
 
 	async searchStatusList2021(
-		agent: VeramoAgent,
 		did: string,
 		statusListName: string,
-		statusPurpose: 'revocation' | 'suspension'
-	) {
-		const resourceTypes = statusPurpose
-			? [DefaultStatusList2021StatusPurposeTypes[statusPurpose]]
-			: [DefaultStatusList2021StatusPurposeTypes.revocation, DefaultStatusList2021StatusPurposeTypes.suspension];
-		let metadata: ResourceMetadata[] = [];
+		statusPurpose: DefaultStatusList2021StatusPurposeType
+	): Promise<SearchStatusListResult> {
+		// construct url
+		const url = new URL(`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?resourceName=${statusListName}&resourceType=${DefaultStatusList2021ResourceTypes[statusPurpose]}&resourceMetadata=true`);
 
-		for (const resourceType of resourceTypes) {
-			const result = await (await fetch(`${did}?resourceType=${resourceType}&resourceMetadata=true`)).json();
-			metadata = metadata.concat(result.contentStream?.linkedResourceMetadata || []);
-		}
+		try {
+			// fetch resource metadata
+			const resourceMetadataVersioned = await (await fetch(url)).json() as DIDMetadataDereferencingResult;
 
-		return metadata
-			.filter((resource: ResourceMetadata) => {
-				if (statusListName) {
-					return resource.resourceName === statusListName && resource.mediaType == 'application/json';
-				}
-				return resource.mediaType == 'application/json';
-			})
-			.map((resource: ResourceMetadata) => {
+			// define arbitrary error
+			const arbitraryError = (resourceMetadataVersioned?.dereferencingMetadata as DIDMetadataDereferencingResult['dereferencingMetadata'] & { error?: string })?.error
+
+			// handle error
+			if (arbitraryError) {
 				return {
-					statusListName: resource.resourceName,
-					statusPurpose: resource.resourceType,
-					statusListVersion: resource.resourceVersion,
-					statusListId: resource.resourceId,
-					statusListNextVersion: resource.nextVersionId,
-				};
-			});
+					found: false,
+					error: arbitraryError,
+				}
+			}
+
+			// early return, if no resource metadata
+			if (!resourceMetadataVersioned?.contentStream?.linkedResourceMetadata) return { found: false, error: 'notFound' } satisfies SearchStatusListResult;
+
+			// get latest resource version by nextVersionId null pointer, or by latest created date as fallback
+			const resourceMetadata = resourceMetadataVersioned.contentStream.linkedResourceMetadata.find((resource) => !resource.nextVersionId) || resourceMetadataVersioned.contentStream.linkedResourceMetadata.sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())[0]
+
+			// unset resourceMetadata
+			url.searchParams.delete('resourceMetadata')
+
+			// fetch resource
+			const resource = await (await fetch(url)).json() as StatusList2021Revocation | StatusList2021Suspension;
+
+			// return result
+			return {
+				found: true,
+				resource,
+				resourceMetadata,
+			} satisfies SearchStatusListResult;
+		} catch (error) {
+			// silent fail
+			console.error(`searchStatusList2021: fetch: failed: ${error}`)
+
+			// return result
+			return {
+				found: false,
+				error: (error as Record<string, unknown>).toString(),
+			} satisfies SearchStatusListResult;
+		}
 	}
 }

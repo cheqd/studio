@@ -1,9 +1,9 @@
 import type { Request, Response } from 'express';
-import { check, validationResult } from 'express-validator';
+import { check, query, validationResult } from 'express-validator';
 import { fromString } from 'uint8arrays';
 import { StatusCodes } from 'http-status-codes';
-import { IdentityStrategySetup } from '../services/identity/index.js';
-import { DefaultDidUrlPattern, DefaultStatusAction, DefaultStatusActions, MinimalPaymentCondition } from '../types/shared.js';
+import { IdentityServiceStrategySetup } from '../services/identity/index.js';
+import { CheckStatusListRequestBody, CheckStatusListRequestQuery, CheckStatusListUnsuccessfulResponseBody, CreateEncryptedStatusListRequestBody, CreateEncryptedStatusListRequestQuery, CreateEncryptedStatusListSuccessfulResponseBody, CreateEncryptedStatusListUnsuccessfulResponseBody, CreateUnencryptedStatusListRequestBody, CreateUnencryptedStatusListRequestQuery, CreateUnencryptedStatusListSuccessfulResponseBody, CreateUnencryptedStatusListUnsuccessfulResponseBody, DefaultDidUrlPattern, DefaultStatusAction, DefaultStatusActionPurposeMap, DefaultStatusActions, MinimalPaymentCondition, SearchStatusListQuery, SearchStatusListSuccessfulResponseBody, SearchStatusListUnsuccessfulResponseBody, UpdateEncryptedStatusListRequestBody, UpdateEncryptedStatusListSuccessfulResponseBody, UpdateEncryptedStatusListUnsuccessfulResponseBody, UpdateUnencryptedStatusListRequestBody, UpdateUnencryptedStatusListRequestQuery, UpdateUnencryptedStatusListSuccessfulResponseBody, UpdateUnencryptedStatusListUnsuccessfulResponseBody } from '../types/shared.js';
 import { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, DefaultStatusList2021Encodings, DefaultStatusList2021StatusPurposeTypes } from '@cheqd/did-provider-cheqd';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
 
@@ -15,6 +15,9 @@ export class RevocationController {
 			.bail()
 			.isString()
 			.withMessage('did: should be a string')
+			.bail()
+			.notEmpty()
+			.withMessage('did: should be a non-empty string')
 			.bail()
 			.matches(DefaultDidUrlPattern)
 			.withMessage('did: invalid format, should be did:cheqd:<namespace>:<method_specific_identifier>')
@@ -35,6 +38,9 @@ export class RevocationController {
 			.bail()
 			.isString()
 			.withMessage('statusListName: should be a string')
+			.bail()
+			.notEmpty()
+			.withMessage('statusListName: should be a non-empty string')
 			.bail(),
 		check('statusListVersion')
 			.optional()
@@ -175,6 +181,9 @@ export class RevocationController {
 			.isString()
 			.withMessage('did: should be a string')
 			.bail()
+			.notEmpty()
+			.withMessage('did: should be a non-empty string')
+			.bail()
 			.matches(DefaultDidUrlPattern)
 			.withMessage('did: invalid format, should be did:cheqd:<namespace>:<method_specific_identifier>')
 			.bail(),
@@ -194,10 +203,11 @@ export class RevocationController {
 				(
 					(
 						Array.isArray(value) &&
-						value.every((item) => typeof item === 'number' && item >= 0)
+						value.every((item) => typeof item === 'number' && item >= 0 && Number.isInteger(item))
 					) || (
 						typeof value === 'number' &&
-						value >= 0
+						value >= 0 &&
+						Number.isInteger(value)
 					)
 				);
 			})
@@ -209,6 +219,9 @@ export class RevocationController {
 			.bail()
 			.isString()
 			.withMessage('statusListName: should be a string')
+			.bail()
+			.notEmpty()
+			.withMessage('statusListName: should be a non-empty string')
 			.bail(),
 		check('statusListVerion')
 			.optional()
@@ -325,13 +338,100 @@ export class RevocationController {
 	];
 
 	static checkValidator = [
-		check('index').exists().withMessage('Index is required').isNumeric().withMessage('Index should be a number'),
+		check('did')
+			.exists()
+			.withMessage('did: required')
+			.bail()
+			.isString()
+			.withMessage('did: should be a string')
+			.bail()
+			.notEmpty()
+			.withMessage('did: should be a non-empty string')
+			.bail()
+			.matches(DefaultDidUrlPattern)
+			.withMessage('did: invalid format, should be did:cheqd:<namespace>:<method_specific_identifier>')
+			.bail(),
 		check('statusListName')
 			.exists()
-			.withMessage('StatusListName is required')
+			.withMessage('statusListName: required')
+			.bail()
 			.isString()
-			.withMessage('Invalid statusListName'),
+			.withMessage('statusListName: should be a string')
+			.bail()
+			.notEmpty()
+			.withMessage('statusListName: should be a non-empty string')
+			.bail(),
+		check('statusPurpose')
+			.exists()
+			.withMessage('statusPurpose: required')
+			.bail()
+			.isString()
+			.withMessage('statusPurpose: should be a string')
+			.bail()
+			.notEmpty()
+			.withMessage('statusPurpose: should be a non-empty string')
+			.bail()
+			.isIn(Object.keys(DefaultStatusList2021StatusPurposeTypes))
+			.withMessage(`statusPurpose: invalid statusPurpose, should be one of ${Object.keys(DefaultStatusList2021StatusPurposeTypes).join(', ')}`)
+			.bail(),
+		check('index')
+			.exists()
+			.withMessage('index: required')
+			.bail()
+			.isNumeric()
+			.withMessage('index: should be a number')
+			.bail()
+			.custom((value) => value >= 0)
+			.withMessage('index: should be a positive number')
+			.bail()
+			.custom((value) => Number.isInteger(value))
+			.withMessage('index: should be an integer')
+			.bail(),
+		check('makeFeePayment')
+			.optional()
+			.isBoolean()
+			.withMessage('makeFeePayment: should be a boolean')
+			.bail(),
 	];
+
+	static searchValidator = [
+		query('did')
+			.exists()
+			.withMessage('did: required')
+			.bail()
+			.isString()
+			.withMessage('did: should be a string')
+			.bail()
+			.notEmpty()
+			.withMessage('did: should be a non-empty string')
+			.bail()
+			.matches(DefaultDidUrlPattern)
+			.withMessage('did: invalid format, should be did:cheqd:<namespace>:<method_specific_identifier>')
+			.bail(),
+		query('statusListName')
+			.exists()
+			.withMessage('statusListName: required')
+			.bail()
+			.isString()
+			.withMessage('statusListName: should be a string')
+			.bail()
+			.notEmpty()
+			.withMessage('statusListName: should be a non-empty string')
+			.bail(),
+		query('statusPurpose')
+			.exists()
+			.withMessage('statusPurpose: required')
+			.bail()
+			.isString()
+			.withMessage('statusPurpose: should be a string')
+			.bail()
+			.notEmpty()
+			.withMessage('statusPurpose: should be a non-empty string')
+			.bail()
+			.isIn(Object.keys(DefaultStatusList2021StatusPurposeTypes))
+			.withMessage(`statusPurpose: invalid statusPurpose, should be one of ${Object.keys(DefaultStatusList2021StatusPurposeTypes).join(', ')}`)
+			.bail(),
+	]
 
 	/**
 	 * @openapi
@@ -374,20 +474,28 @@ export class RevocationController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	async createUnencryptedStatusList(request: Request, response: Response) {
+		// validate request
 		const result = validationResult(request);
+
+		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
 
+		// collect request parameters - case: body
 		const { did, encodedList, statusListName, alsoKnownAs, statusListVersion, length, encoding } =
-			request.body;
-		const { statusPurpose } = request.query as { statusPurpose: keyof typeof DefaultStatusList2021StatusPurposeTypes };
+			request.body as CreateUnencryptedStatusListRequestBody;
 
+		// collect request parameters - case: query
+		const { statusPurpose } = request.query as CreateUnencryptedStatusListRequestQuery;
+
+		// define broadcast mode
 		const data = encodedList ? fromString(encodedList, encoding) : undefined;
 
 		try {
+			// broadcast, if applicable
 			if (data) {
-				const result = await new IdentityStrategySetup(response.locals.customerId).agent.broadcastStatusList2021(
+				const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.broadcastStatusList2021(
 					did,
 					{ data, name: statusListName, alsoKnownAs, version: statusListVersion },
 					{ encoding, statusPurpose },
@@ -395,22 +503,36 @@ export class RevocationController {
 				);
 				return response.status(StatusCodes.OK).json(result);
 			}
-			const result = await new IdentityStrategySetup(response.locals.customerId).agent.createUnencryptedStatusList2021(
-				did,
-				{ name: statusListName, alsoKnownAs, version: statusListVersion },
-				{ length, encoding, statusPurpose },
-				response.locals.customerId
-			);
 
+			// create unencrypted status list
+			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createUnencryptedStatusList2021(
+				did,
+				{
+					name: statusListName,
+					alsoKnownAs,
+					version: statusListVersion
+				},
+				{
+					length,
+					encoding,
+					statusPurpose
+				},
+				response.locals.customerId
+			) as CreateUnencryptedStatusListSuccessfulResponseBody;
+
+			// handle error
 			if (result.error) {
-				return response.status(StatusCodes.BAD_REQUEST).json(result);
+				return response.status(StatusCodes.BAD_REQUEST).json({ ...result, error: (result.error as Error).toString() } as CreateUnencryptedStatusListUnsuccessfulResponseBody);
 			}
 
+			// return result
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				created: false,
 				error: `Internal error: ${error}`,
-			});
+			} satisfies CreateUnencryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
 
@@ -455,32 +577,55 @@ export class RevocationController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	async createEncryptedStatusList(request: Request, response: Response) {
+		// validate request
 		const result = validationResult(request);
+
+		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
 
+		// collect request parameters - case: body
 		const { did, statusListName, alsoKnownAs, statusListVersion, length, encoding, paymentConditions, feePaymentAddress, feePaymentAmount, feePaymentWindow } =
-			request.body;
-		const { statusPurpose } = request.query as { statusPurpose: keyof typeof DefaultStatusList2021StatusPurposeTypes };
+			request.body as CreateEncryptedStatusListRequestBody;
+
+		// collect request parameters - case: query
+		const { statusPurpose } = request.query as CreateEncryptedStatusListRequestQuery;
 
 		try {
-			const result = await new IdentityStrategySetup(response.locals.customerId).agent.createEncryptedStatusList2021(
+			// create encrypted status list
+			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createEncryptedStatusList2021(
 				did,
-				{ name: statusListName, alsoKnownAs, version: statusListVersion },
-				{ length, encoding, statusPurpose, paymentConditions, feePaymentAddress, feePaymentAmount, feePaymentWindow },
+				{
+					name: statusListName,
+					alsoKnownAs,
+					version: statusListVersion
+				},
+				{
+					length,
+					encoding,
+					statusPurpose,
+					paymentConditions,
+					feePaymentAddress,
+					feePaymentAmount,
+					feePaymentWindow
+				},
 				response.locals.customerId
-			);
+			) as CreateEncryptedStatusListSuccessfulResponseBody;
 
+			// handle error
 			if (result.error) {
-				return response.status(StatusCodes.BAD_REQUEST).json(result);
+				return response.status(StatusCodes.BAD_REQUEST).json({ ...result, error: (result.error as Error).toString() } as CreateEncryptedStatusListUnsuccessfulResponseBody);
 			}
 
+			// return result
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				created: false,
 				error: `Internal error: ${error}`,
-			});
+			} satisfies CreateEncryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
 
@@ -525,16 +670,44 @@ export class RevocationController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	async updateUnencryptedStatusList(request: Request, response: Response) {
+		// validate request
 		const result = validationResult(request);
+
+		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
 
-		const { did, statusListName, statusListVersion, indices } = request.body;
-		const { statusAction } = request.query as { statusAction: DefaultStatusAction };
+		// collect request parameters - case: body
+		const { did, statusListName, statusListVersion, indices } = request.body as UpdateUnencryptedStatusListRequestBody;
+
+		// collect request parameters - case: query
+		const { statusAction } = request.query as UpdateUnencryptedStatusListRequestQuery;
+
+		// define identity service strategy setup
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customerId);
+
+		// ensure unencrypted status list
+		const unencrypted = await identityServiceStrategySetup.agent.searchStatusList2021(did, statusListName, DefaultStatusActionPurposeMap[statusAction])
+
+		// handle error
+		if (unencrypted.error) {
+			// handle notFound error
+			if (unencrypted.error === 'notFound') {
+				return response.status(StatusCodes.NOT_FOUND).json({ updated: false, error: `update: error: status list '${statusListName}' not found` } satisfies UpdateUnencryptedStatusListUnsuccessfulResponseBody);
+			}
+
+			// handle generic error
+			return response.status(StatusCodes.BAD_REQUEST).json({ updated: false, error: `update: error: ${unencrypted.error}` });
+		}
+
+		// validate unencrypted
+		if (unencrypted.resource?.metadata?.encrypted)
+			return response.status(StatusCodes.BAD_REQUEST).json({ updated: false, error: `update: error: status list '${statusListName}' is encrypted` } satisfies UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 
 		try {
-			const result = await new IdentityStrategySetup(response.locals.customerId).agent.updateUnencryptedStatusList2021(
+			// update unencrypted status list
+			const result = await identityServiceStrategySetup.agent.updateUnencryptedStatusList2021(
 				did,
 				{
 					indices: typeof indices === 'number' ? [indices] : indices,
@@ -543,15 +716,54 @@ export class RevocationController {
 					statusAction,
 				},
 				response.locals.customerId
-			);
+			) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult) & { updated?: boolean };
+
+			// enhance result
+			result.updated = function (that) {
+				// validate result - case: revocation
+				if (
+					(that as BulkRevocationResult)?.revoked?.every((item) => !!item) &&
+					(that as BulkRevocationResult)?.revoked?.length !== 0
+				) return true;
+
+				// validate result - case: suspension
+				if (
+					(that as BulkSuspensionResult)?.suspended?.every((item) => !!item) &&
+					(that as BulkSuspensionResult)?.suspended?.length !== 0
+				) return true;
+
+				// validate result - case: unsuspension
+				if (
+					(that as BulkUnsuspensionResult)?.unsuspended?.every((item) => !!item) &&
+					(that as BulkUnsuspensionResult)?.unsuspended?.length !== 0
+				) return true;
+
+				return false;
+			}(result);
+
+			// handle error
 			if (result.error) {
-				return response.status(StatusCodes.BAD_REQUEST).json(result);
+				return response.status(StatusCodes.BAD_REQUEST).json({ ...result, error: (result.error as Error).toString() } as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 			}
-			return response.status(StatusCodes.OK).json(result);
+
+			// construct formatted response
+			const formatted = {
+				updated: true,
+				revoked: (result as BulkRevocationResult)?.revoked || undefined,
+				suspended: (result as BulkSuspensionResult)?.suspended || undefined,
+				unsuspended: (result as BulkUnsuspensionResult)?.unsuspended || undefined,
+				resource: result.statusList,
+				resourceMetadata: result.resourceMetadata,
+				encrypted: false,
+			} satisfies UpdateUnencryptedStatusListSuccessfulResponseBody;
+
+			return response.status(StatusCodes.OK).json(formatted);
 		} catch (error) {
+			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				updated: false,
 				error: `Internal error: ${error}`,
-			});
+			} satisfies UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
 
@@ -596,17 +808,45 @@ export class RevocationController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	async updateEncryptedStatusList(request: Request, response: Response) {
+		// validate request
 		const result = validationResult(request);
 
+		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
 
-		const { did, statusListName, statusListVersion, indices, symmetricKey, paymentConditions, feePaymentAddress, feePaymentAmount, feePaymentWindow } = request.body;
+		// collect request parameters - case: body
+		const { did, statusListName, statusListVersion, indices, symmetricKey, paymentConditions, feePaymentAddress, feePaymentAmount, feePaymentWindow }
+			= request.body as UpdateEncryptedStatusListRequestBody;
+
+		// collect request parameters - case: query
 		const { statusAction } = request.query as { statusAction: DefaultStatusAction };
 
+		// define identity service strategy setup
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customerId);
+
+		// ensure encrypted status list
+		const encrypted = await identityServiceStrategySetup.agent.searchStatusList2021(did, statusListName, DefaultStatusActionPurposeMap[statusAction])
+
+		// handle error
+		if (encrypted.error) {
+			// handle notFound error
+			if (encrypted.error === 'notFound') {
+				return response.status(StatusCodes.NOT_FOUND).json({ updated: false, error: `update: error: status list '${statusListName}' not found` } satisfies UpdateEncryptedStatusListUnsuccessfulResponseBody);
+			}
+
+			// handle generic error
+			return response.status(StatusCodes.BAD_REQUEST).json({ updated: false, error: `update: error: ${encrypted.error}` } satisfies UpdateEncryptedStatusListUnsuccessfulResponseBody);
+		}
+
+		// validate encrypted
+		if (!encrypted.resource?.metadata?.encrypted)
+			return response.status(StatusCodes.BAD_REQUEST).json({ updated: false, error: `update: error: status list '${statusListName}' is unencrypted` } satisfies UpdateEncryptedStatusListUnsuccessfulResponseBody);
+
 		try {
-			const result = await new IdentityStrategySetup(response.locals.customerId).agent.updateEncryptedStatusList2021(
+			// update encrypted status list
+			const result = await identityServiceStrategySetup.agent.updateEncryptedStatusList2021(
 				did,
 				{
 					indices: typeof indices === 'number' ? [indices] : indices,
@@ -622,17 +862,51 @@ export class RevocationController {
 				response.locals.customerId
 			) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult) & { updated: boolean };
 
-			if (result.error) return response.status(StatusCodes.BAD_REQUEST).json(result);
-
+			// enhance result
 			result.updated = function (that) {
-				return (that as BulkRevocationResult)?.revoked?.every((item) => item) || (that as BulkSuspensionResult)?.suspended?.every((item) => item) || (that as BulkUnsuspensionResult)?.unsuspended?.every((item) => item);
+				// validate result - case: revocation
+				if (
+					(that as BulkRevocationResult)?.revoked?.every((item) => !!item) &&
+					(that as BulkRevocationResult)?.revoked?.length !== 0
+				) return true;
+
+				// validate result - case: suspension
+				if (
+					(that as BulkSuspensionResult)?.suspended?.every((item) => !!item) &&
+					(that as BulkSuspensionResult)?.suspended?.length !== 0
+				) return true;
+
+				// validate result - case: unsuspension
+				if (
+					(that as BulkUnsuspensionResult)?.unsuspended?.every((item) => !!item) &&
+					(that as BulkUnsuspensionResult)?.unsuspended?.length !== 0
+				) return true;
+
+				return false;
 			}(result);
 
-			return response.status(StatusCodes.OK).json(result);
+			// handle error
+			if (result.error) return response.status(StatusCodes.BAD_REQUEST).json({ ...result, error: (result.error as Error).toString() } as UpdateEncryptedStatusListUnsuccessfulResponseBody);
+
+			// construct formatted response
+			const formatted = {
+				updated: true,
+				revoked: (result as BulkRevocationResult)?.revoked || undefined,
+				suspended: (result as BulkSuspensionResult)?.suspended || undefined,
+				unsuspended: (result as BulkUnsuspensionResult)?.unsuspended || undefined,
+				resource: result.statusList,
+				resourceMetadata: result.resourceMetadata,
+				symmetricKey: result.symmetricKey,
+				encrypted: true,
+			} satisfies UpdateEncryptedStatusListSuccessfulResponseBody;
+
+			return response.status(StatusCodes.OK).json(formatted);
 		} catch (error) {
+			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				updated: false,
 				error: `Internal error: ${error}`,
-			});
+			} satisfies UpdateEncryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
 
@@ -654,13 +928,6 @@ export class RevocationController {
 	 *           enum:
 	 *             - revocation
 	 *             - suspension
-	 *       - in: query
-	 *         name: encrypted
-	 *         description: Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied.
-	 *         required: true
-	 *         schema:
-	 *           type: boolean
-	 *           default: false
 	 *     requestBody:
 	 *       content:
 	 *         application/x-www-form-urlencoded:
@@ -690,29 +957,78 @@ export class RevocationController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	async checkStatusList(request: Request, response: Response) {
+		// validate request
 		const result = validationResult(request);
+
+		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
 		}
 
-		const { did, statusListName, index } = request.body;
-		const statusPurpose = request.query.statusPurpose as keyof typeof DefaultStatusList2021StatusPurposeTypes;
+		// collect request parameters - case: body
+		const { did, statusListName, index, makeFeePayment } = request.body as CheckStatusListRequestBody;
+
+		// collect request parameters - case: query
+		const { statusPurpose } = request.query as CheckStatusListRequestQuery;
+
+		// define identity service strategy setup
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customerId);
+
+		// ensure status list
+		const statusList = await identityServiceStrategySetup.agent.searchStatusList2021(did, statusListName, statusPurpose);
+
+		// handle error
+		if (statusList.error) {
+			// handle notFound error
+			if (statusList.error === 'notFound') {
+				return response.status(StatusCodes.NOT_FOUND).json({ checked: false, error: `check: error: status list '${statusListName}' not found` } satisfies CheckStatusListUnsuccessfulResponseBody);
+			}
+
+			// handle generic error
+			return response.status(StatusCodes.BAD_REQUEST).json({ checked: false, error: `check: error: ${statusList.error}` } satisfies CheckStatusListUnsuccessfulResponseBody);
+		}
+
+		// make fee payment, if defined
+		if (makeFeePayment && statusList?.resource?.metadata?.encrypted) {
+			// make fee payment
+			const feePaymentResult = await Promise.all(statusList?.resource?.metadata?.paymentConditions?.map(async (condition) => {
+				return await identityServiceStrategySetup.agent.remunerateStatusList2021(
+					condition.feePaymentAddress,
+					condition.feePaymentAmount,
+				)
+			}) || []);
+
+			// handle error
+			if (feePaymentResult.some((result) => result.error)) {
+				return response.status(StatusCodes.BAD_REQUEST).json({ checked: false, error: `check: payment: error: ${feePaymentResult.find((result) => result.error)?.error}` } satisfies CheckStatusListUnsuccessfulResponseBody);
+			}
+		}
 
 		try {
-			const result = await new IdentityStrategySetup(response.locals.customerId).agent.checkStatusList2021(
+			// check status list
+			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.checkStatusList2021(
 				did,
-				{ statusListIndex: index, statusListName, statusPurpose },
+				{
+					statusListIndex: index,
+					statusListName,
+					statusPurpose
+				},
 				response.locals.customerId
 			);
 
+			// handle error
 			if (result.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json(result);
 			}
+
+			// return result
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				checked: false,
 				error: `Internal error: ${error}`,
-			});
+			} satisfies CheckStatusListUnsuccessfulResponseBody);
 		}
 	}
 
@@ -769,24 +1085,44 @@ export class RevocationController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	async searchStatusList(request: Request, response: Response) {
+		// validate request
 		const result = validationResult(request);
+
+		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
 
+		// collect request parameters - case: query
+		const { did, statusListName, statusPurpose } = request.query as SearchStatusListQuery;
+
 		try {
-			const { did, statusListName } = request.query;
-			const statusPurpose = request.query.statusPurpose as 'revocation' | 'suspension';
-			const statusList = await new IdentityStrategySetup(response.locals.customerId).agent.searchStatusList2021(
-				did as string,
-				statusListName as string,
+			// search status list
+			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.searchStatusList2021(
+				did,
+				statusListName,
 				statusPurpose
 			);
-			return response.status(StatusCodes.OK).json(statusList);
+
+			// handle error
+			if (result.error) {
+				// handle notFound error
+				if (result.error === 'notFound') {
+					return response.status(StatusCodes.NOT_FOUND).json({ found: false, error: `search: error: status list '${statusListName}' not found` } satisfies SearchStatusListUnsuccessfulResponseBody);
+				}
+
+				// handle generic error
+				return response.status(StatusCodes.BAD_REQUEST).json({ found: false, error: `search: error: ${result.error}` } satisfies SearchStatusListUnsuccessfulResponseBody);
+			}
+
+			// return result
+			return response.status(StatusCodes.OK).json(result as SearchStatusListSuccessfulResponseBody);
 		} catch (error) {
+			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				found: false,
 				error: `Internal error: ${error}`,
-			});
+			} satisfies SearchStatusListUnsuccessfulResponseBody);
 		}
 	}
 }

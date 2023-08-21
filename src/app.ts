@@ -142,6 +142,7 @@ class App {
 		);
 		app.get(
 			'/credential-status/search',
+			RevocationController.searchValidator,
 			new RevocationController().searchStatusList
 		);
 
@@ -158,7 +159,7 @@ class App {
 
 		// Resource API
 		app.post('/resource/create/:did', IssuerController.resourceValidator, new IssuerController().createResource);
-   	 	app.get('/resource/search/:did', new IssuerController().getResource);
+		app.get('/resource/search/:did', new IssuerController().getResource);
 
 		// Account API
 		app.post('/account', new AccountController().create);

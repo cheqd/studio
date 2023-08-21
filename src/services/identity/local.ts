@@ -16,6 +16,7 @@ import {
 	type CreateStatusList2021Result,
 	type StatusCheckResult,
 	DefaultRPCUrls,
+	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
 import { CheqdNetwork } from '@cheqd/sdk';
 import type {
@@ -59,13 +60,23 @@ export class LocalIdentityService extends DefaultIdentityService {
 			cosmosPayerSeed: DEFAULT_FEE_PAYER_MNEMONIC,
 			networkType: CheqdNetwork.Mainnet,
 			rpcUrl: MAINNET_RPC_URL || DefaultRPCUrls.mainnet,
+			dkgOptions: {
+				chain: 'cheqdMainnet',
+				network: 'serrano',
+			}
 		});
+
 		const testnetProvider = new CheqdDIDProvider({
 			defaultKms: 'local',
 			cosmosPayerSeed: DEFAULT_FEE_PAYER_MNEMONIC,
 			networkType: CheqdNetwork.Testnet,
 			rpcUrl: TESTNET_RPC_URL || DefaultRPCUrls.testnet,
+			dkgOptions: {
+				chain: 'cheqdTestnet',
+				network: 'serrano',
+			}
 		});
+
 		this.agent = Veramo.instance.createVeramoAgent({
 			dbConnection,
 			kms: {
@@ -81,6 +92,7 @@ export class LocalIdentityService extends DefaultIdentityService {
 			enableCredential: true,
 			enableResolver: true
 		})
+
 		return this.agent
 	}
 
@@ -174,6 +186,10 @@ export class LocalIdentityService extends DefaultIdentityService {
 		return await Veramo.instance.updateEncryptedStatusList2021(this.initAgent(), did, statusOptions);
 	}
 
+	async checkStatusList2021(did: string, statusOptions: CheckStatusListOptions): Promise<StatusCheckResult> {
+		return await Veramo.instance.checkStatusList2021(this.initAgent(), did, statusOptions);
+	}
+
 	async broadcastStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
@@ -182,8 +198,12 @@ export class LocalIdentityService extends DefaultIdentityService {
 		return await Veramo.instance.broadcastStatusList2021(this.initAgent(), did, resourceOptions, statusOptions);
 	}
 
-	async checkStatusList2021(did: string, statusOptions: CheckStatusListOptions): Promise<StatusCheckResult> {
-		return await Veramo.instance.checkStatusList2021(this.initAgent(), did, statusOptions);
+	async remunerateStatusList2021(
+		feePaymentAddress: string,
+		feePaymentAmount: string,
+		memo?: string
+	): Promise<TransactionResult> {
+		return await Veramo.instance.remunerateStatusList2021(this.initAgent(), feePaymentAddress, feePaymentAmount, memo);
 	}
 
 	async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean) {
