@@ -29,7 +29,12 @@ dotenv.config();
 // see: https://github.com/verida/verida-js/blob/c94b95de687c64cc776652602665bb45a327dfb6/packages/encryption-utils/src/index.ts#L10
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 JSON.stringify = function (value, _replacer, _space) {
-	return JSONStringify(value) || function () { throw new Error('JSON.stringify failed') }();
+	return (
+		JSONStringify(value) ||
+		(function () {
+			throw new Error('JSON.stringify failed');
+		})()
+	);
 };
 
 // Define Swagger file

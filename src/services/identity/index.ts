@@ -115,10 +115,7 @@ export interface IIdentityService {
 		statusOptions: BroadcastStatusListOptions,
 		agentId?: string
 	): Promise<boolean>;
-	remunerateStatusList2021(
-		feePaymentOptions: FeePaymentOptions,
-		agentId?: string
-	): Promise<TransactionResult>
+	remunerateStatusList2021(feePaymentOptions: FeePaymentOptions, agentId?: string): Promise<TransactionResult>;
 	revokeCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,

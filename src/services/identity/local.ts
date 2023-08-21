@@ -1,10 +1,5 @@
-import * as dotenv from 'dotenv'
-import type {
-	IIdentifier, 
-	CredentialPayload, 
-	VerifiableCredential,
-	IVerifyResult,
-} from '@veramo/core';
+import * as dotenv from 'dotenv';
+import type { IIdentifier, CredentialPayload, VerifiableCredential, IVerifyResult } from '@veramo/core';
 import { MemoryPrivateKeyStore } from '@veramo/key-manager';
 import { KeyManagementSystem } from '@veramo/kms-local';
 import {
@@ -37,7 +32,7 @@ import { DefaultIdentityService } from './default.js';
 import { Connection } from '../../database/connection/connection.js';
 import { Veramo } from './agent.js';
 
-dotenv.config()
+dotenv.config();
 
 const {
 	MAINNET_RPC_URL,
@@ -45,23 +40,23 @@ const {
 	DEFAULT_FEE_PAYER_MNEMONIC,
 	ISSUER_PUBLIC_KEY_HEX,
 	ISSUER_PRIVATE_KEY_HEX,
-	ISSUER_DID
-} = process.env
+	ISSUER_DID,
+} = process.env;
 
 export class LocalIdentityService extends DefaultIdentityService {
 	constructor() {
 		super();
-	  	this.agent = this.initAgent();
+		this.agent = this.initAgent();
 	}
-	
+
 	initAgent() {
 		if (!DEFAULT_FEE_PAYER_MNEMONIC) {
-			throw new Error(`No fee payer found`)
+			throw new Error(`No fee payer found`);
 		}
 		if (this.agent) {
-			return this.agent
+			return this.agent;
 		}
-		const dbConnection = Connection.instance.dbConnection
+		const dbConnection = Connection.instance.dbConnection;
 
 		const mainnetProvider = new CheqdDIDProvider({
 			defaultKms: 'local',
@@ -71,7 +66,7 @@ export class LocalIdentityService extends DefaultIdentityService {
 			dkgOptions: {
 				chain: LitCompatibleCosmosChains.cheqdMainnet,
 				network: LitNetworks.serrano,
-			}
+			},
 		});
 
 		const testnetProvider = new CheqdDIDProvider({
@@ -82,73 +77,80 @@ export class LocalIdentityService extends DefaultIdentityService {
 			dkgOptions: {
 				chain: LitCompatibleCosmosChains.cheqdTestnet,
 				network: LitNetworks.serrano,
-			}
+			},
 		});
 
 		this.agent = Veramo.instance.createVeramoAgent({
 			dbConnection,
 			kms: {
-				local: new KeyManagementSystem(
-					new MemoryPrivateKeyStore()
-				)
+				local: new KeyManagementSystem(new MemoryPrivateKeyStore()),
 			},
 			providers: {
 				'did:cheqd:mainnet': mainnetProvider,
-				'did:cheqd:testnet': testnetProvider
+				'did:cheqd:testnet': testnetProvider,
 			},
 			cheqdProviders: [mainnetProvider, testnetProvider],
 			enableCredential: true,
-			enableResolver: true
-		})
+			enableResolver: true,
+		});
 
-		return this.agent
+		return this.agent;
 	}
 
 	async getKey(kid: string) {
-		return Veramo.instance.getKey(this.initAgent(), kid)
+		return Veramo.instance.getKey(this.initAgent(), kid);
 	}
 
 	async deactivateDid(did: string): Promise<boolean> {
 		try {
-			return await Veramo.instance.deactivateDid(this.initAgent(), did)
+			return await Veramo.instance.deactivateDid(this.initAgent(), did);
 		} catch (error) {
-			throw new Error(`${error}`)
+			throw new Error(`${error}`);
 		}
 	}
 
 	async listDids() {
-		return [(await this.importDid()).did]
+		return [(await this.importDid()).did];
 	}
 
 	async getDid(did: string) {
-		return Veramo.instance.getDid(this.initAgent(), did)
+		return Veramo.instance.getDid(this.initAgent(), did);
 	}
 
 	async importDid(): Promise<IIdentifier> {
-		if (!(ISSUER_DID && ISSUER_PUBLIC_KEY_HEX && ISSUER_PRIVATE_KEY_HEX)) throw new Error('No DIDs and Keys found')
+		if (!(ISSUER_DID && ISSUER_PUBLIC_KEY_HEX && ISSUER_PRIVATE_KEY_HEX)) throw new Error('No DIDs and Keys found');
 		try {
-			return await this.getDid(ISSUER_DID)
+			return await this.getDid(ISSUER_DID);
 		} catch {
-			const identifier: IIdentifier = await Veramo.instance.importDid(this.initAgent(), ISSUER_DID, ISSUER_PRIVATE_KEY_HEX, ISSUER_PUBLIC_KEY_HEX)
-			return identifier
+			const identifier: IIdentifier = await Veramo.instance.importDid(
+				this.initAgent(),
+				ISSUER_DID,
+				ISSUER_PRIVATE_KEY_HEX,
+				ISSUER_PUBLIC_KEY_HEX
+			);
+			return identifier;
 		}
 	}
 
 	async createResource(network: string, payload: ResourcePayload) {
 		try {
-			await this.importDid()
-			return await Veramo.instance.createResource(this.initAgent(), network, payload)
+			await this.importDid();
+			return await Veramo.instance.createResource(this.initAgent(), network, payload);
 		} catch (error) {
-			throw new Error(`${error}`)
+			throw new Error(`${error}`);
 		}
 	}
 
-	async createCredential(credential: CredentialPayload, format: CredentialRequest['format'], statusListOptions: StatusOptions | null): Promise<VerifiableCredential> {
+	async createCredential(
+		credential: CredentialPayload,
+		format: CredentialRequest['format'],
+		statusListOptions: StatusOptions | null
+	): Promise<VerifiableCredential> {
 		try {
-			await this.importDid()
-			return await Veramo.instance.createCredential(this.initAgent(), credential, format, statusListOptions)
+			await this.importDid();
+			return await Veramo.instance.createCredential(this.initAgent(), credential, format, statusListOptions);
 		} catch (error) {
-			throw new Error(`${error}`)
+			throw new Error(`${error}`);
 		}
 	}
 
@@ -156,7 +158,6 @@ export class LocalIdentityService extends DefaultIdentityService {
 		credential: VerifiableCredential | string,
 		verificationOptions: VerificationOptions
 	): Promise<IVerifyResult> {
-
 		return await Veramo.instance.verifyCredential(this.initAgent(), credential, verificationOptions);
 	}
 
@@ -166,7 +167,12 @@ export class LocalIdentityService extends DefaultIdentityService {
 		statusListOptions: CreateUnencryptedStatusListOptions
 	): Promise<CreateStatusList2021Result> {
 		await this.importDid();
-		return await Veramo.instance.createUnencryptedStatusList2021(this.initAgent(), did, resourceOptions, statusListOptions);
+		return await Veramo.instance.createUnencryptedStatusList2021(
+			this.initAgent(),
+			did,
+			resourceOptions,
+			statusListOptions
+		);
 	}
 
 	async createEncryptedStatusList2021(
@@ -175,12 +181,17 @@ export class LocalIdentityService extends DefaultIdentityService {
 		statusListOptions: CreateEncryptedStatusListOptions
 	): Promise<CreateStatusList2021Result> {
 		await this.importDid();
-		return await Veramo.instance.createEncryptedStatusList2021(this.initAgent(), did, resourceOptions, statusListOptions);
+		return await Veramo.instance.createEncryptedStatusList2021(
+			this.initAgent(),
+			did,
+			resourceOptions,
+			statusListOptions
+		);
 	}
 
 	async updateUnencryptedStatusList2021(
 		did: string,
-		statusOptions: UpdateUnencryptedStatusListOptions,
+		statusOptions: UpdateUnencryptedStatusListOptions
 	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
 		await this.importDid();
 		return await Veramo.instance.updateUnencryptedStatusList2021(this.initAgent(), did, statusOptions);
@@ -188,7 +199,7 @@ export class LocalIdentityService extends DefaultIdentityService {
 
 	async updateEncryptedStatusList2021(
 		did: string,
-		statusOptions: UpdateEncryptedStatusListOptions,
+		statusOptions: UpdateEncryptedStatusListOptions
 	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
 		await this.importDid();
 		return await Veramo.instance.updateEncryptedStatusList2021(this.initAgent(), did, statusOptions);
@@ -206,21 +217,19 @@ export class LocalIdentityService extends DefaultIdentityService {
 		return await Veramo.instance.broadcastStatusList2021(this.initAgent(), did, resourceOptions, statusOptions);
 	}
 
-	async remunerateStatusList2021(
-		feePaymentOptions: FeePaymentOptions
-	): Promise<TransactionResult> {
+	async remunerateStatusList2021(feePaymentOptions: FeePaymentOptions): Promise<TransactionResult> {
 		return await Veramo.instance.remunerateStatusList2021(this.initAgent(), feePaymentOptions);
 	}
 
 	async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean) {
-		return await Veramo.instance.revokeCredentials(this.initAgent(), credentials, publish)
+		return await Veramo.instance.revokeCredentials(this.initAgent(), credentials, publish);
 	}
 
 	async suspendCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean) {
-		return await Veramo.instance.suspendCredentials(this.initAgent(), credentials, publish)
+		return await Veramo.instance.suspendCredentials(this.initAgent(), credentials, publish);
 	}
 
 	async reinstateCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean) {
-		return await Veramo.instance.unsuspendCredentials(this.initAgent(), credentials, publish)
+		return await Veramo.instance.unsuspendCredentials(this.initAgent(), credentials, publish);
 	}
 }

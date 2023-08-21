@@ -17,14 +17,14 @@ export interface IDidDocOptions {
 }
 
 export function toMinimalDenom(amount: number): number {
-	return amount * (10 ** DEFAULT_DENOM_EXPONENT);
+	return amount * 10 ** DEFAULT_DENOM_EXPONENT;
 }
 
 export function toCoin(amount: string): Coin {
 	return {
 		amount: amount.replace(/\D+.*/, ''),
 		denom: MINIMAL_DENOM,
-	}
+	};
 }
 
 export function toNetwork(did: string): CheqdNetwork {
@@ -48,13 +48,13 @@ export function toDefaultDkg(did: string): DkgOptions {
 			return {
 				chain: LitCompatibleCosmosChains.cheqdMainnet,
 				network: LitNetworks.serrano,
-			}
+			};
 		case CheqdNetwork.Testnet:
 		default:
 			return {
 				chain: LitCompatibleCosmosChains.cheqdTestnet,
 				network: LitNetworks.serrano,
-			}
+			};
 	}
 }
 

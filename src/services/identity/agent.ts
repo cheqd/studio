@@ -398,7 +398,7 @@ export class Veramo {
 			statusListEncoding: statusOptions.encoding || DefaultStatusList2021Encodings.base64url,
 			statusListLength: statusOptions.length,
 			resourceVersion: resourceOptions.version,
-			encrypted: false
+			encrypted: false,
 		} satisfies ICheqdCreateStatusList2021Args);
 	}
 
@@ -493,14 +493,14 @@ export class Veramo {
 
 	async remunerateStatusList2021(
 		agent: VeramoAgent,
-		feePaymentOptions: FeePaymentOptions,
+		feePaymentOptions: FeePaymentOptions
 	): Promise<TransactionResult> {
 		return await agent.cheqdTransactSendTokens({
 			recipientAddress: feePaymentOptions.feePaymentAddress,
 			amount: toCoin(feePaymentOptions.feePaymentAmount),
 			network: feePaymentOptions.feePaymentNetwork,
 			memo: feePaymentOptions.memo,
-		})
+		});
 	}
 
 	async revokeCredentials(
@@ -705,34 +705,49 @@ export class Veramo {
 		statusPurpose: DefaultStatusList2021StatusPurposeType
 	): Promise<SearchStatusListResult> {
 		// construct url
-		const url = new URL(`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?resourceName=${statusListName}&resourceType=${DefaultStatusList2021ResourceTypes[statusPurpose]}&resourceMetadata=true`);
+		const url = new URL(
+			`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?resourceName=${statusListName}&resourceType=${
+				DefaultStatusList2021ResourceTypes[statusPurpose]
+			}&resourceMetadata=true`
+		);
 
 		try {
 			// fetch resource metadata
-			const resourceMetadataVersioned = await (await fetch(url)).json() as DIDMetadataDereferencingResult;
+			const resourceMetadataVersioned = (await (await fetch(url)).json()) as DIDMetadataDereferencingResult;
 
 			// define arbitrary error
-			const arbitraryError = (resourceMetadataVersioned?.dereferencingMetadata as DIDMetadataDereferencingResult['dereferencingMetadata'] & { error?: string })?.error
+			const arbitraryError = (
+				resourceMetadataVersioned?.dereferencingMetadata as DIDMetadataDereferencingResult['dereferencingMetadata'] & {
+					error?: string;
+				}
+			)?.error;
 
 			// handle error
 			if (arbitraryError) {
 				return {
 					found: false,
 					error: arbitraryError,
-				}
+				};
 			}
 
 			// early return, if no resource metadata
-			if (!resourceMetadataVersioned?.contentStream?.linkedResourceMetadata) return { found: false, error: 'notFound' } satisfies SearchStatusListResult;
+			if (!resourceMetadataVersioned?.contentStream?.linkedResourceMetadata)
+				return { found: false, error: 'notFound' } satisfies SearchStatusListResult;
 
 			// get latest resource version by nextVersionId null pointer, or by latest created date as fallback
-			const resourceMetadata = resourceMetadataVersioned.contentStream.linkedResourceMetadata.find((resource) => !resource.nextVersionId) || resourceMetadataVersioned.contentStream.linkedResourceMetadata.sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())[0]
+			const resourceMetadata =
+				resourceMetadataVersioned.contentStream.linkedResourceMetadata.find(
+					(resource) => !resource.nextVersionId
+				) ||
+				resourceMetadataVersioned.contentStream.linkedResourceMetadata.sort(
+					(a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
+				)[0];
 
 			// unset resourceMetadata
-			url.searchParams.delete('resourceMetadata')
+			url.searchParams.delete('resourceMetadata');
 
 			// fetch resource
-			const resource = await (await fetch(url)).json() as StatusList2021Revocation | StatusList2021Suspension;
+			const resource = (await (await fetch(url)).json()) as StatusList2021Revocation | StatusList2021Suspension;
 
 			// return result
 			return {
@@ -742,7 +757,7 @@ export class Veramo {
 			} satisfies SearchStatusListResult;
 		} catch (error) {
 			// silent fail
-			console.error(`searchStatusList2021: fetch: failed: ${error}`)
+			console.error(`searchStatusList2021: fetch: failed: ${error}`);
 
 			// return result
 			return {

@@ -36,7 +36,9 @@ const DefaultUuidPattern = '([a-zA-Z0-9-]{36})';
 const DefaultMethodSpecificIdPattern = `(?:[a-zA-Z0-9]{21,22}|${DefaultUuidPattern})`;
 const DefaultNamespacePattern = `(${CheqdNetwork.Mainnet}|${CheqdNetwork.Testnet})`;
 
-export const DefaultDidUrlPattern = new RegExp(`^did:cheqd:${DefaultNamespacePattern}:${DefaultMethodSpecificIdPattern}$`);
+export const DefaultDidUrlPattern = new RegExp(
+	`^did:cheqd:${DefaultNamespacePattern}:${DefaultMethodSpecificIdPattern}$`
+);
 
 export const DefaultStatusActions = {
 	revoke: 'revoke',
@@ -56,7 +58,7 @@ export type MinimalPaymentCondition = {
 	feePaymentAddress: string;
 	feePaymentAmount: number; // in CHEQ, decimals are allowed, strictly up to 2 decimal points, e.g. 1.5 CHEQ, 1.55 CHEQ
 	feePaymentWindow: number; // in minutes, strictly integer, e.g. 5 minutes, 10 minutes
-}
+};
 
 export type CreateUnencryptedStatusListRequestBody = {
 	did: string;
@@ -66,33 +68,39 @@ export type CreateUnencryptedStatusListRequestBody = {
 	length?: number;
 	encoding?: keyof typeof DefaultStatusList2021Encodings;
 	encodedList?: string;
-}
+};
 
 export type CreateUnencryptedStatusListRequestQuery = {
 	statusPurpose: DefaultStatusList2021StatusPurposeType;
-}
+};
 
-export type CreateUnencryptedStatusListSuccessfulResponseBody = Pick<CreateStatusList2021Result, 'created' | 'error' | 'resource' | 'resourceMetadata'> & {
+export type CreateUnencryptedStatusListSuccessfulResponseBody = Pick<
+	CreateStatusList2021Result,
+	'created' | 'error' | 'resource' | 'resourceMetadata'
+> & {
 	encrypted: false;
-}
+};
 
 export type CreateUnencryptedStatusListUnsuccessfulResponseBody = {
 	created: false;
 	error: string;
-}
+};
 
 export type CreateEncryptedStatusListRequestBody = CreateUnencryptedStatusListRequestBody & {
 	paymentConditions?: MinimalPaymentCondition[];
 	feePaymentAddress?: MinimalPaymentCondition['feePaymentAddress'];
 	feePaymentAmount?: MinimalPaymentCondition['feePaymentAmount'];
 	feePaymentWindow?: MinimalPaymentCondition['feePaymentWindow'];
-}
+};
 
-export type CreateEncryptedStatusListRequestQuery = CreateUnencryptedStatusListRequestQuery
+export type CreateEncryptedStatusListRequestQuery = CreateUnencryptedStatusListRequestQuery;
 
-export type CreateEncryptedStatusListSuccessfulResponseBody = Pick<CreateStatusList2021Result, 'created' | 'error' | 'resource' | 'resourceMetadata' | 'symmetricKey'> & {
+export type CreateEncryptedStatusListSuccessfulResponseBody = Pick<
+	CreateStatusList2021Result,
+	'created' | 'error' | 'resource' | 'resourceMetadata' | 'symmetricKey'
+> & {
 	encrypted: true;
-}
+};
 
 export type CreateEncryptedStatusListUnsuccessfulResponseBody = CreateUnencryptedStatusListUnsuccessfulResponseBody;
 
@@ -101,21 +109,24 @@ export type UpdateUnencryptedStatusListRequestBody = {
 	indices: number | number[];
 	statusListName: string;
 	statusListVersion?: string;
-}
+};
 
 export type UpdateUnencryptedStatusListRequestQuery = {
 	statusAction: DefaultStatusAction;
-}
+};
 
 export type UpdateUnencryptedStatusListSuccessfulResponseBody = {
 	updated: true;
 } & Pick<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult, 'error' | 'resourceMetadata'> & {
-	revoked?: BulkRevocationResult['revoked'];
-	suspended?: BulkSuspensionResult['suspended'];
-	unsuspended?: BulkUnsuspensionResult['unsuspended'];
-	resource?: BulkRevocationResult['statusList'] | BulkSuspensionResult['statusList'] | BulkUnsuspensionResult['statusList'];
-	encrypted?: false;
-}
+		revoked?: BulkRevocationResult['revoked'];
+		suspended?: BulkSuspensionResult['suspended'];
+		unsuspended?: BulkUnsuspensionResult['unsuspended'];
+		resource?:
+			| BulkRevocationResult['statusList']
+			| BulkSuspensionResult['statusList']
+			| BulkUnsuspensionResult['statusList'];
+		encrypted?: false;
+	};
 
 export type UpdateUnencryptedStatusListUnsuccessfulResponseBody = {
 	updated: false;
@@ -123,7 +134,7 @@ export type UpdateUnencryptedStatusListUnsuccessfulResponseBody = {
 	revoked?: BulkRevocationResult['revoked'];
 	suspended?: BulkSuspensionResult['suspended'];
 	unsuspended?: BulkUnsuspensionResult['unsuspended'];
-}
+};
 
 export type UpdateEncryptedStatusListRequestBody = UpdateUnencryptedStatusListRequestBody & {
 	symmetricKey: string;
@@ -131,19 +142,25 @@ export type UpdateEncryptedStatusListRequestBody = UpdateUnencryptedStatusListRe
 	feePaymentAddress?: MinimalPaymentCondition['feePaymentAddress'];
 	feePaymentAmount?: MinimalPaymentCondition['feePaymentAmount'];
 	feePaymentWindow?: MinimalPaymentCondition['feePaymentWindow'];
-}
+};
 
 export type UpdateEncryptedStatusListRequestQuery = UpdateUnencryptedStatusListRequestQuery;
 
 export type UpdateEncryptedStatusListSuccessfulResponseBody = {
 	updated: true;
-} & Pick<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult, 'error' | 'resourceMetadata' | 'symmetricKey'> & {
-	revoked?: BulkRevocationResult['revoked'];
-	suspended?: BulkSuspensionResult['suspended'];
-	unsuspended?: BulkUnsuspensionResult['unsuspended'];
-	resource?: BulkRevocationResult['statusList'] | BulkSuspensionResult['statusList'] | BulkUnsuspensionResult['statusList'];
-	encrypted: true;
-}
+} & Pick<
+	BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult,
+	'error' | 'resourceMetadata' | 'symmetricKey'
+> & {
+		revoked?: BulkRevocationResult['revoked'];
+		suspended?: BulkSuspensionResult['suspended'];
+		unsuspended?: BulkUnsuspensionResult['unsuspended'];
+		resource?:
+			| BulkRevocationResult['statusList']
+			| BulkSuspensionResult['statusList']
+			| BulkUnsuspensionResult['statusList'];
+		encrypted: true;
+	};
 
 export type UpdateEncryptedStatusListUnsuccessfulResponseBody = UpdateUnencryptedStatusListUnsuccessfulResponseBody;
 
@@ -152,35 +169,37 @@ export type CheckStatusListRequestBody = {
 	statusListName: string;
 	index: number;
 	makeFeePayment?: boolean;
-}
+};
 
 export type CheckStatusListRequestQuery = {
 	statusPurpose: DefaultStatusList2021StatusPurposeType;
-}
+};
 
 export type CheckStatusListSuccessfulResponseBody = {
 	checked: true;
-} & Pick<StatusCheckResult, 'error' | 'revoked' | 'suspended'>
+} & Pick<StatusCheckResult, 'error' | 'revoked' | 'suspended'>;
 
 export type CheckStatusListUnsuccessfulResponseBody = {
 	checked: false;
 	error: string;
-}
+};
 
 export type SearchStatusListQuery = {
 	did: string;
 	statusListName: string;
 	statusPurpose: DefaultStatusList2021StatusPurposeType;
-}
+};
 
-export type SearchStatusListSuccessfulResponseBody = Required<Pick<SearchStatusListResult, 'resource' | 'resourceMetadata'>> & {
+export type SearchStatusListSuccessfulResponseBody = Required<
+	Pick<SearchStatusListResult, 'resource' | 'resourceMetadata'>
+> & {
 	found: true;
-}
+};
 
 export type SearchStatusListUnsuccessfulResponseBody = {
 	found: false;
 	error: string;
-}
+};
 
 export type ErrorResponse = {
 	name: string;
@@ -270,14 +289,14 @@ export type CreateEncryptedStatusListOptions = CreateUnencryptedStatusListOption
 	feePaymentAddress?: MinimalPaymentCondition['feePaymentAddress'];
 	feePaymentAmount?: MinimalPaymentCondition['feePaymentAmount'];
 	feePaymentWindow?: MinimalPaymentCondition['feePaymentWindow'];
-}
+};
 
 export type UpdateUnencryptedStatusListOptions = {
 	indices: number[];
 	statusListName: string;
 	statusListVersion?: string;
 	statusAction: DefaultStatusAction;
-}
+};
 
 export type UpdateEncryptedStatusListOptions = UpdateUnencryptedStatusListOptions & {
 	symmetricKey: string;
@@ -292,7 +311,7 @@ export type SearchStatusListResult = {
 	error?: string;
 	resource?: StatusList2021Revocation | StatusList2021Suspension;
 	resourceMetadata?: LinkedResourceMetadataResolutionResult;
-}
+};
 
 export type BroadcastStatusListOptions = Omit<CreateUnencryptedStatusListOptions, 'length'>;
 
@@ -314,7 +333,7 @@ export type FeePaymentOptions = {
 	feePaymentAmount: string;
 	feePaymentNetwork: CheqdNetwork;
 	memo?: string;
-}
+};
 
 export interface ResourceMetadata {
 	collectionId: string;

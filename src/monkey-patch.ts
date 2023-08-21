@@ -113,5 +113,5 @@ export const JSONStringify = (obj: Record<string, any> | null) => {
 		return `{` + removeComma(objStr) + `}`;
 	}
 
-    return undefined;
+	return undefined;
 };

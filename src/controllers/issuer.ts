@@ -329,7 +329,9 @@ export class IssuerController {
 			if (request.body.didDocument) {
 				updatedDocument = request.body.didDocument;
 			} else if (did && (service || verificationMethod || authentication)) {
-				const resolvedResult = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolveDid(did);
+				const resolvedResult = await new IdentityServiceStrategySetup(
+					response.locals.customerId
+				).agent.resolveDid(did);
 				if (!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
 					return response.status(StatusCodes.BAD_REQUEST).send({
 						error: `${did} is either Deactivated or Not found`,
@@ -627,8 +629,12 @@ export class IssuerController {
 	public async getDids(request: Request, response: Response) {
 		try {
 			const did = request.params.did
-				? await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolveDid(request.params.did)
-				: await new IdentityServiceStrategySetup(response.locals.customerId).agent.listDids(response.locals.customerId);
+				? await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolveDid(
+						request.params.did
+				  )
+				: await new IdentityServiceStrategySetup(response.locals.customerId).agent.listDids(
+						response.locals.customerId
+				  );
 
 			return response.status(StatusCodes.OK).json(did);
 		} catch (error) {

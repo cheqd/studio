@@ -3,8 +3,42 @@ import { check, query, validationResult } from 'express-validator';
 import { fromString } from 'uint8arrays';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import { CheckStatusListRequestBody, CheckStatusListRequestQuery, CheckStatusListUnsuccessfulResponseBody, CreateEncryptedStatusListRequestBody, CreateEncryptedStatusListRequestQuery, CreateEncryptedStatusListSuccessfulResponseBody, CreateEncryptedStatusListUnsuccessfulResponseBody, CreateUnencryptedStatusListRequestBody, CreateUnencryptedStatusListRequestQuery, CreateUnencryptedStatusListSuccessfulResponseBody, CreateUnencryptedStatusListUnsuccessfulResponseBody, DefaultDidUrlPattern, DefaultStatusAction, DefaultStatusActionPurposeMap, DefaultStatusActions, FeePaymentOptions, MinimalPaymentCondition, SearchStatusListQuery, SearchStatusListSuccessfulResponseBody, SearchStatusListUnsuccessfulResponseBody, UpdateEncryptedStatusListRequestBody, UpdateEncryptedStatusListSuccessfulResponseBody, UpdateEncryptedStatusListUnsuccessfulResponseBody, UpdateUnencryptedStatusListRequestBody, UpdateUnencryptedStatusListRequestQuery, UpdateUnencryptedStatusListSuccessfulResponseBody, UpdateUnencryptedStatusListUnsuccessfulResponseBody } from '../types/shared.js';
-import { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, DefaultStatusList2021Encodings, DefaultStatusList2021StatusPurposeTypes } from '@cheqd/did-provider-cheqd';
+import {
+	CheckStatusListRequestBody,
+	CheckStatusListRequestQuery,
+	CheckStatusListUnsuccessfulResponseBody,
+	CreateEncryptedStatusListRequestBody,
+	CreateEncryptedStatusListRequestQuery,
+	CreateEncryptedStatusListSuccessfulResponseBody,
+	CreateEncryptedStatusListUnsuccessfulResponseBody,
+	CreateUnencryptedStatusListRequestBody,
+	CreateUnencryptedStatusListRequestQuery,
+	CreateUnencryptedStatusListSuccessfulResponseBody,
+	CreateUnencryptedStatusListUnsuccessfulResponseBody,
+	DefaultDidUrlPattern,
+	DefaultStatusAction,
+	DefaultStatusActionPurposeMap,
+	DefaultStatusActions,
+	FeePaymentOptions,
+	MinimalPaymentCondition,
+	SearchStatusListQuery,
+	SearchStatusListSuccessfulResponseBody,
+	SearchStatusListUnsuccessfulResponseBody,
+	UpdateEncryptedStatusListRequestBody,
+	UpdateEncryptedStatusListSuccessfulResponseBody,
+	UpdateEncryptedStatusListUnsuccessfulResponseBody,
+	UpdateUnencryptedStatusListRequestBody,
+	UpdateUnencryptedStatusListRequestQuery,
+	UpdateUnencryptedStatusListSuccessfulResponseBody,
+	UpdateUnencryptedStatusListUnsuccessfulResponseBody,
+} from '../types/shared.js';
+import {
+	BulkRevocationResult,
+	BulkSuspensionResult,
+	BulkUnsuspensionResult,
+	DefaultStatusList2021Encodings,
+	DefaultStatusList2021StatusPurposeTypes,
+} from '@cheqd/did-provider-cheqd';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
 import { toNetwork } from '../helpers/helpers.js';
 
@@ -31,7 +65,11 @@ export class RevocationController {
 			.withMessage('statusPurpose: should be a string')
 			.bail()
 			.isIn(Object.keys(DefaultStatusList2021StatusPurposeTypes))
-			.withMessage(`statusPurpose: invalid statusPurpose, should be one of ${Object.keys(DefaultStatusList2021StatusPurposeTypes).join(', ')}`)
+			.withMessage(
+				`statusPurpose: invalid statusPurpose, should be one of ${Object.keys(
+					DefaultStatusList2021StatusPurposeTypes
+				).join(', ')}`
+			)
 			.bail(),
 		check('statusListName')
 			.exists()
@@ -57,16 +95,29 @@ export class RevocationController {
 			.withMessage('alsoKnownAs: should be a non-empty array')
 			.bail()
 			.custom((value) => {
-				return value.every((item: AlternativeUri) => item.description && typeof item.description === 'string' && item.uri && typeof item.uri === 'string');
+				return value.every(
+					(item: AlternativeUri) =>
+						item.description &&
+						typeof item.description === 'string' &&
+						item.uri &&
+						typeof item.uri === 'string'
+				);
 			})
-			.withMessage('alsoKnownAs: should be an array of objects with `description` and `uri` properties of type string, non-empty')
+			.withMessage(
+				'alsoKnownAs: should be an array of objects with `description` and `uri` properties of type string, non-empty'
+			)
 			.bail(),
 		check('length')
 			.optional()
 			.isNumeric()
 			.withMessage('length: should be a number')
 			.bail()
-			.custom((value) => !isNaN(parseInt(value.toString())) && isFinite(parseInt(value.toString())) && Number.isInteger(value))
+			.custom(
+				(value) =>
+					!isNaN(parseInt(value.toString())) &&
+					isFinite(parseInt(value.toString())) &&
+					Number.isInteger(value)
+			)
 			.withMessage('length: should be an integer')
 			.bail()
 			.custom((value) => value > 0)
@@ -75,13 +126,11 @@ export class RevocationController {
 		check('encoding')
 			.optional()
 			.isIn(Object.keys(DefaultStatusList2021Encodings))
-			.withMessage(`encoding: invalid encoding, should be one of ${Object.keys(DefaultStatusList2021Encodings).join(', ')}`)
+			.withMessage(
+				`encoding: invalid encoding, should be one of ${Object.keys(DefaultStatusList2021Encodings).join(', ')}`
+			)
 			.bail(),
-		check('encodedList')
-			.optional()
-			.isString()
-			.withMessage('encodedList: should be a string')
-			.bail(),
+		check('encodedList').optional().isString().withMessage('encodedList: should be a string').bail(),
 	];
 
 	static createEncryptedValidator = [
@@ -101,33 +150,41 @@ export class RevocationController {
 			.withMessage('paymentConditions: should be a non-empty array')
 			.bail()
 			.custom((value) => {
-				return value.every((item: MinimalPaymentCondition) =>
-					item.feePaymentAddress &&
-					typeof item.feePaymentAddress === 'string'
+				return value.every(
+					(item: MinimalPaymentCondition) =>
+						item.feePaymentAddress && typeof item.feePaymentAddress === 'string'
 				);
 			})
-			.withMessage('paymentConditions: should be an array of objects with feePaymentAddress property of type string, non-empty')
+			.withMessage(
+				'paymentConditions: should be an array of objects with feePaymentAddress property of type string, non-empty'
+			)
 			.bail()
 			.custom((value) => {
-				return value.every((item: MinimalPaymentCondition) =>
-					item.feePaymentAmount &&
-					typeof item.feePaymentAmount === 'number' &&
-					isFinite(parseFloat(item.feePaymentAmount.toString())) &&
-					/^[0-9]+(?:\.[0-9]{1,2})?$/.test(item.feePaymentAmount.toString()) // check if number is float with 2 decimal places max
+				return value.every(
+					(item: MinimalPaymentCondition) =>
+						item.feePaymentAmount &&
+						typeof item.feePaymentAmount === 'number' &&
+						isFinite(parseFloat(item.feePaymentAmount.toString())) &&
+						/^[0-9]+(?:\.[0-9]{1,2})?$/.test(item.feePaymentAmount.toString()) // check if number is float with 2 decimal places max
 				);
 			})
-			.withMessage('paymentConditions: should be an array of objects with feePaymentAmount property of type number, non-empty, integer or float with 2 decimal places max')
+			.withMessage(
+				'paymentConditions: should be an array of objects with feePaymentAmount property of type number, non-empty, integer or float with 2 decimal places max'
+			)
 			.bail()
 			.custom((value) => {
-				return value.every((item: MinimalPaymentCondition) =>
-					item.feePaymentWindow &&
-					typeof item.feePaymentWindow === 'number' &&
-					!isNaN(parseInt(item.feePaymentWindow.toString())) &&
-					isFinite(parseInt(item.feePaymentWindow.toString())) &&
-					parseInt(item.feePaymentWindow.toString()) > 0
+				return value.every(
+					(item: MinimalPaymentCondition) =>
+						item.feePaymentWindow &&
+						typeof item.feePaymentWindow === 'number' &&
+						!isNaN(parseInt(item.feePaymentWindow.toString())) &&
+						isFinite(parseInt(item.feePaymentWindow.toString())) &&
+						parseInt(item.feePaymentWindow.toString()) > 0
 				);
 			})
-			.withMessage('paymentConditions: should be an array of objects with feePaymentWindow property of type number, non-empty, integer, strictly positive')
+			.withMessage(
+				'paymentConditions: should be an array of objects with feePaymentWindow property of type number, non-empty, integer, strictly positive'
+			)
 			.bail(),
 		// define validation chain - case: content-type is application/x-www-form-urlencoded
 		check('feePaymentAddress')
@@ -193,23 +250,20 @@ export class RevocationController {
 			.withMessage('statusAction: required')
 			.bail()
 			.isIn(Object.keys(DefaultStatusActions))
-			.withMessage(`statusAction: invalid statusAction, should be one of ${Object.keys(DefaultStatusActions).join(', ')}`)
+			.withMessage(
+				`statusAction: invalid statusAction, should be one of ${Object.keys(DefaultStatusActions).join(', ')}`
+			)
 			.bail(),
 		check('indices')
 			.exists()
 			.withMessage('indices: required')
 			.bail()
 			.custom((value) => {
-				return value &&
-				(
-					(
-						Array.isArray(value) &&
-						value.every((item) => typeof item === 'number' && item >= 0 && Number.isInteger(item))
-					) || (
-						typeof value === 'number' &&
-						value >= 0 &&
-						Number.isInteger(value)
-					)
+				return (
+					value &&
+					((Array.isArray(value) &&
+						value.every((item) => typeof item === 'number' && item >= 0 && Number.isInteger(item))) ||
+						(typeof value === 'number' && value >= 0 && Number.isInteger(value)))
 				);
 			})
 			.withMessage('indices: should be a positive integer or an array of positive integers')
@@ -256,33 +310,41 @@ export class RevocationController {
 			.withMessage('paymentConditions: should be a non-empty array')
 			.bail()
 			.custom((value) => {
-				return value.every((item: MinimalPaymentCondition) =>
-					item.feePaymentAddress &&
-					typeof item.feePaymentAddress === 'string'
+				return value.every(
+					(item: MinimalPaymentCondition) =>
+						item.feePaymentAddress && typeof item.feePaymentAddress === 'string'
 				);
 			})
-			.withMessage('paymentConditions: should be an array of objects with feePaymentAddress property of type string, non-empty')
+			.withMessage(
+				'paymentConditions: should be an array of objects with feePaymentAddress property of type string, non-empty'
+			)
 			.bail()
 			.custom((value) => {
-				return value.every((item: MinimalPaymentCondition) =>
-					item.feePaymentAmount &&
-					typeof item.feePaymentAmount === 'number' &&
-					isFinite(parseFloat(item.feePaymentAmount.toString())) &&
-					/^[0-9]+(?:\.[0-9]{1,2})?$/.test(item.feePaymentAmount.toString()) // check if number is float with 2 decimal places max
+				return value.every(
+					(item: MinimalPaymentCondition) =>
+						item.feePaymentAmount &&
+						typeof item.feePaymentAmount === 'number' &&
+						isFinite(parseFloat(item.feePaymentAmount.toString())) &&
+						/^[0-9]+(?:\.[0-9]{1,2})?$/.test(item.feePaymentAmount.toString()) // check if number is float with 2 decimal places max
 				);
 			})
-			.withMessage('paymentConditions: should be an array of objects with feePaymentAmount property of type number, non-empty, integer or float with 2 decimal places max')
+			.withMessage(
+				'paymentConditions: should be an array of objects with feePaymentAmount property of type number, non-empty, integer or float with 2 decimal places max'
+			)
 			.bail()
 			.custom((value) => {
-				return value.every((item: MinimalPaymentCondition) =>
-					item.feePaymentWindow &&
-					typeof item.feePaymentWindow === 'number' &&
-					!isNaN(parseInt(item.feePaymentWindow.toString())) &&
-					isFinite(parseInt(item.feePaymentWindow.toString())) &&
-					parseInt(item.feePaymentWindow.toString()) > 0
+				return value.every(
+					(item: MinimalPaymentCondition) =>
+						item.feePaymentWindow &&
+						typeof item.feePaymentWindow === 'number' &&
+						!isNaN(parseInt(item.feePaymentWindow.toString())) &&
+						isFinite(parseInt(item.feePaymentWindow.toString())) &&
+						parseInt(item.feePaymentWindow.toString()) > 0
 				);
 			})
-			.withMessage('paymentConditions: should be an array of objects with feePaymentWindow property of type number, non-empty, integer, strictly positive')
+			.withMessage(
+				'paymentConditions: should be an array of objects with feePaymentWindow property of type number, non-empty, integer, strictly positive'
+			)
 			.bail(),
 		// define validation chain - case: content-type is application/x-www-form-urlencoded
 		check('feePaymentAddress')
@@ -335,7 +397,7 @@ export class RevocationController {
 			.withMessage('feePaymentWindow: should be a positive number')
 			.bail()
 			.custom((value) => Number.isInteger(value))
-			.withMessage('feePaymentWindow: should be an integer')
+			.withMessage('feePaymentWindow: should be an integer'),
 	];
 
 	static checkValidator = [
@@ -373,7 +435,11 @@ export class RevocationController {
 			.withMessage('statusPurpose: should be a non-empty string')
 			.bail()
 			.isIn(Object.keys(DefaultStatusList2021StatusPurposeTypes))
-			.withMessage(`statusPurpose: invalid statusPurpose, should be one of ${Object.keys(DefaultStatusList2021StatusPurposeTypes).join(', ')}`)
+			.withMessage(
+				`statusPurpose: invalid statusPurpose, should be one of ${Object.keys(
+					DefaultStatusList2021StatusPurposeTypes
+				).join(', ')}`
+			)
 			.bail(),
 		check('index')
 			.exists()
@@ -430,9 +496,13 @@ export class RevocationController {
 			.withMessage('statusPurpose: should be a non-empty string')
 			.bail()
 			.isIn(Object.keys(DefaultStatusList2021StatusPurposeTypes))
-			.withMessage(`statusPurpose: invalid statusPurpose, should be one of ${Object.keys(DefaultStatusList2021StatusPurposeTypes).join(', ')}`)
+			.withMessage(
+				`statusPurpose: invalid statusPurpose, should be one of ${Object.keys(
+					DefaultStatusList2021StatusPurposeTypes
+				).join(', ')}`
+			)
 			.bail(),
-	]
+	];
 
 	/**
 	 * @openapi
@@ -496,7 +566,9 @@ export class RevocationController {
 		try {
 			// broadcast, if applicable
 			if (data) {
-				const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.broadcastStatusList2021(
+				const result = await new IdentityServiceStrategySetup(
+					response.locals.customerId
+				).agent.broadcastStatusList2021(
 					did,
 					{ data, name: statusListName, alsoKnownAs, version: statusListVersion },
 					{ encoding, statusPurpose },
@@ -506,24 +578,29 @@ export class RevocationController {
 			}
 
 			// create unencrypted status list
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createUnencryptedStatusList2021(
+			const result = (await new IdentityServiceStrategySetup(
+				response.locals.customerId
+			).agent.createUnencryptedStatusList2021(
 				did,
 				{
 					name: statusListName,
 					alsoKnownAs,
-					version: statusListVersion
+					version: statusListVersion,
 				},
 				{
 					length,
 					encoding,
-					statusPurpose
+					statusPurpose,
 				},
 				response.locals.customerId
-			) as CreateUnencryptedStatusListSuccessfulResponseBody;
+			)) as CreateUnencryptedStatusListSuccessfulResponseBody;
 
 			// handle error
 			if (result.error) {
-				return response.status(StatusCodes.BAD_REQUEST).json({ ...result, error: (result.error as Error).toString() } as CreateUnencryptedStatusListUnsuccessfulResponseBody);
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					...result,
+					error: (result.error as Error).toString(),
+				} as CreateUnencryptedStatusListUnsuccessfulResponseBody);
 			}
 
 			// return result
@@ -587,20 +664,32 @@ export class RevocationController {
 		}
 
 		// collect request parameters - case: body
-		const { did, statusListName, alsoKnownAs, statusListVersion, length, encoding, paymentConditions, feePaymentAddress, feePaymentAmount, feePaymentWindow } =
-			request.body as CreateEncryptedStatusListRequestBody;
+		const {
+			did,
+			statusListName,
+			alsoKnownAs,
+			statusListVersion,
+			length,
+			encoding,
+			paymentConditions,
+			feePaymentAddress,
+			feePaymentAmount,
+			feePaymentWindow,
+		} = request.body as CreateEncryptedStatusListRequestBody;
 
 		// collect request parameters - case: query
 		const { statusPurpose } = request.query as CreateEncryptedStatusListRequestQuery;
 
 		try {
 			// create encrypted status list
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createEncryptedStatusList2021(
+			const result = (await new IdentityServiceStrategySetup(
+				response.locals.customerId
+			).agent.createEncryptedStatusList2021(
 				did,
 				{
 					name: statusListName,
 					alsoKnownAs,
-					version: statusListVersion
+					version: statusListVersion,
 				},
 				{
 					length,
@@ -609,14 +698,17 @@ export class RevocationController {
 					paymentConditions,
 					feePaymentAddress,
 					feePaymentAmount,
-					feePaymentWindow
+					feePaymentWindow,
 				},
 				response.locals.customerId
-			) as CreateEncryptedStatusListSuccessfulResponseBody;
+			)) as CreateEncryptedStatusListSuccessfulResponseBody;
 
 			// handle error
 			if (result.error) {
-				return response.status(StatusCodes.BAD_REQUEST).json({ ...result, error: (result.error as Error).toString() } as CreateEncryptedStatusListUnsuccessfulResponseBody);
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					...result,
+					error: (result.error as Error).toString(),
+				} as CreateEncryptedStatusListUnsuccessfulResponseBody);
 			}
 
 			// return result
@@ -680,7 +772,8 @@ export class RevocationController {
 		}
 
 		// collect request parameters - case: body
-		const { did, statusListName, statusListVersion, indices } = request.body as UpdateUnencryptedStatusListRequestBody;
+		const { did, statusListName, statusListVersion, indices } =
+			request.body as UpdateUnencryptedStatusListRequestBody;
 
 		// collect request parameters - case: query
 		const { statusAction } = request.query as UpdateUnencryptedStatusListRequestQuery;
@@ -689,26 +782,38 @@ export class RevocationController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customerId);
 
 		// ensure unencrypted status list
-		const unencrypted = await identityServiceStrategySetup.agent.searchStatusList2021(did, statusListName, DefaultStatusActionPurposeMap[statusAction])
+		const unencrypted = await identityServiceStrategySetup.agent.searchStatusList2021(
+			did,
+			statusListName,
+			DefaultStatusActionPurposeMap[statusAction]
+		);
 
 		// handle error
 		if (unencrypted.error) {
 			// handle notFound error
 			if (unencrypted.error === 'notFound') {
-				return response.status(StatusCodes.NOT_FOUND).json({ updated: false, error: `update: error: status list '${statusListName}' not found` } satisfies UpdateUnencryptedStatusListUnsuccessfulResponseBody);
+				return response.status(StatusCodes.NOT_FOUND).json({
+					updated: false,
+					error: `update: error: status list '${statusListName}' not found`,
+				} satisfies UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 			}
 
 			// handle generic error
-			return response.status(StatusCodes.BAD_REQUEST).json({ updated: false, error: `update: error: ${unencrypted.error}` });
+			return response
+				.status(StatusCodes.BAD_REQUEST)
+				.json({ updated: false, error: `update: error: ${unencrypted.error}` });
 		}
 
 		// validate unencrypted
 		if (unencrypted.resource?.metadata?.encrypted)
-			return response.status(StatusCodes.BAD_REQUEST).json({ updated: false, error: `update: error: status list '${statusListName}' is encrypted` } satisfies UpdateUnencryptedStatusListUnsuccessfulResponseBody);
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				updated: false,
+				error: `update: error: status list '${statusListName}' is encrypted`,
+			} satisfies UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 
 		try {
 			// update unencrypted status list
-			const result = await identityServiceStrategySetup.agent.updateUnencryptedStatusList2021(
+			const result = (await identityServiceStrategySetup.agent.updateUnencryptedStatusList2021(
 				did,
 				{
 					indices: typeof indices === 'number' ? [indices] : indices,
@@ -717,34 +822,40 @@ export class RevocationController {
 					statusAction,
 				},
 				response.locals.customerId
-			) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult) & { updated?: boolean };
+			)) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult) & { updated?: boolean };
 
 			// enhance result
-			result.updated = function (that) {
+			result.updated = (function (that) {
 				// validate result - case: revocation
 				if (
 					(that as BulkRevocationResult)?.revoked?.every((item) => !!item) &&
 					(that as BulkRevocationResult)?.revoked?.length !== 0
-				) return true;
+				)
+					return true;
 
 				// validate result - case: suspension
 				if (
 					(that as BulkSuspensionResult)?.suspended?.every((item) => !!item) &&
 					(that as BulkSuspensionResult)?.suspended?.length !== 0
-				) return true;
+				)
+					return true;
 
 				// validate result - case: unsuspension
 				if (
 					(that as BulkUnsuspensionResult)?.unsuspended?.every((item) => !!item) &&
 					(that as BulkUnsuspensionResult)?.unsuspended?.length !== 0
-				) return true;
+				)
+					return true;
 
 				return false;
-			}(result);
+			})(result);
 
 			// handle error
 			if (result.error) {
-				return response.status(StatusCodes.BAD_REQUEST).json({ ...result, error: (result.error as Error).toString() } as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					...result,
+					error: (result.error as Error).toString(),
+				} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 			}
 
 			// construct formatted response
@@ -818,8 +929,17 @@ export class RevocationController {
 		}
 
 		// collect request parameters - case: body
-		const { did, statusListName, statusListVersion, indices, symmetricKey, paymentConditions, feePaymentAddress, feePaymentAmount, feePaymentWindow }
-			= request.body as UpdateEncryptedStatusListRequestBody;
+		const {
+			did,
+			statusListName,
+			statusListVersion,
+			indices,
+			symmetricKey,
+			paymentConditions,
+			feePaymentAddress,
+			feePaymentAmount,
+			feePaymentWindow,
+		} = request.body as UpdateEncryptedStatusListRequestBody;
 
 		// collect request parameters - case: query
 		const { statusAction } = request.query as { statusAction: DefaultStatusAction };
@@ -828,26 +948,39 @@ export class RevocationController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customerId);
 
 		// ensure encrypted status list
-		const encrypted = await identityServiceStrategySetup.agent.searchStatusList2021(did, statusListName, DefaultStatusActionPurposeMap[statusAction])
+		const encrypted = await identityServiceStrategySetup.agent.searchStatusList2021(
+			did,
+			statusListName,
+			DefaultStatusActionPurposeMap[statusAction]
+		);
 
 		// handle error
 		if (encrypted.error) {
 			// handle notFound error
 			if (encrypted.error === 'notFound') {
-				return response.status(StatusCodes.NOT_FOUND).json({ updated: false, error: `update: error: status list '${statusListName}' not found` } satisfies UpdateEncryptedStatusListUnsuccessfulResponseBody);
+				return response.status(StatusCodes.NOT_FOUND).json({
+					updated: false,
+					error: `update: error: status list '${statusListName}' not found`,
+				} satisfies UpdateEncryptedStatusListUnsuccessfulResponseBody);
 			}
 
 			// handle generic error
-			return response.status(StatusCodes.BAD_REQUEST).json({ updated: false, error: `update: error: ${encrypted.error}` } satisfies UpdateEncryptedStatusListUnsuccessfulResponseBody);
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				updated: false,
+				error: `update: error: ${encrypted.error}`,
+			} satisfies UpdateEncryptedStatusListUnsuccessfulResponseBody);
 		}
 
 		// validate encrypted
 		if (!encrypted.resource?.metadata?.encrypted)
-			return response.status(StatusCodes.BAD_REQUEST).json({ updated: false, error: `update: error: status list '${statusListName}' is unencrypted` } satisfies UpdateEncryptedStatusListUnsuccessfulResponseBody);
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				updated: false,
+				error: `update: error: status list '${statusListName}' is unencrypted`,
+			} satisfies UpdateEncryptedStatusListUnsuccessfulResponseBody);
 
 		try {
 			// update encrypted status list
-			const result = await identityServiceStrategySetup.agent.updateEncryptedStatusList2021(
+			const result = (await identityServiceStrategySetup.agent.updateEncryptedStatusList2021(
 				did,
 				{
 					indices: typeof indices === 'number' ? [indices] : indices,
@@ -858,36 +991,43 @@ export class RevocationController {
 					symmetricKey,
 					feePaymentAddress,
 					feePaymentAmount,
-					feePaymentWindow
+					feePaymentWindow,
 				},
 				response.locals.customerId
-			) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult) & { updated: boolean };
+			)) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult) & { updated: boolean };
 
 			// enhance result
-			result.updated = function (that) {
+			result.updated = (function (that) {
 				// validate result - case: revocation
 				if (
 					(that as BulkRevocationResult)?.revoked?.every((item) => !!item) &&
 					(that as BulkRevocationResult)?.revoked?.length !== 0
-				) return true;
+				)
+					return true;
 
 				// validate result - case: suspension
 				if (
 					(that as BulkSuspensionResult)?.suspended?.every((item) => !!item) &&
 					(that as BulkSuspensionResult)?.suspended?.length !== 0
-				) return true;
+				)
+					return true;
 
 				// validate result - case: unsuspension
 				if (
 					(that as BulkUnsuspensionResult)?.unsuspended?.every((item) => !!item) &&
 					(that as BulkUnsuspensionResult)?.unsuspended?.length !== 0
-				) return true;
+				)
+					return true;
 
 				return false;
-			}(result);
+			})(result);
 
 			// handle error
-			if (result.error) return response.status(StatusCodes.BAD_REQUEST).json({ ...result, error: (result.error as Error).toString() } as UpdateEncryptedStatusListUnsuccessfulResponseBody);
+			if (result.error)
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					...result,
+					error: (result.error as Error).toString(),
+				} as UpdateEncryptedStatusListUnsuccessfulResponseBody);
 
 			// construct formatted response
 			const formatted = {
@@ -970,34 +1110,49 @@ export class RevocationController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customerId);
 
 		// ensure status list
-		const statusList = await identityServiceStrategySetup.agent.searchStatusList2021(did, statusListName, statusPurpose);
+		const statusList = await identityServiceStrategySetup.agent.searchStatusList2021(
+			did,
+			statusListName,
+			statusPurpose
+		);
 
 		// handle error
 		if (statusList.error) {
 			// handle notFound error
 			if (statusList.error === 'notFound') {
-				return response.status(StatusCodes.NOT_FOUND).json({ checked: false, error: `check: error: status list '${statusListName}' not found` } satisfies CheckStatusListUnsuccessfulResponseBody);
+				return response.status(StatusCodes.NOT_FOUND).json({
+					checked: false,
+					error: `check: error: status list '${statusListName}' not found`,
+				} satisfies CheckStatusListUnsuccessfulResponseBody);
 			}
 
 			// handle generic error
-			return response.status(StatusCodes.BAD_REQUEST).json({ checked: false, error: `check: error: ${statusList.error}` } satisfies CheckStatusListUnsuccessfulResponseBody);
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				checked: false,
+				error: `check: error: ${statusList.error}`,
+			} satisfies CheckStatusListUnsuccessfulResponseBody);
 		}
 
 		// make fee payment, if defined
 		if (makeFeePayment && statusList?.resource?.metadata?.encrypted) {
 			// make fee payment
-			const feePaymentResult = await Promise.all(statusList?.resource?.metadata?.paymentConditions?.map(async (condition) => {
-				return await identityServiceStrategySetup.agent.remunerateStatusList2021({
-					feePaymentAddress: condition.feePaymentAddress,
-					feePaymentAmount: condition.feePaymentAmount,
-					feePaymentNetwork: toNetwork(did),
-					memo: 'Automated status check fee payment, orchestrated by CaaS.',
-				} satisfies FeePaymentOptions)
-			}) || []);
+			const feePaymentResult = await Promise.all(
+				statusList?.resource?.metadata?.paymentConditions?.map(async (condition) => {
+					return await identityServiceStrategySetup.agent.remunerateStatusList2021({
+						feePaymentAddress: condition.feePaymentAddress,
+						feePaymentAmount: condition.feePaymentAmount,
+						feePaymentNetwork: toNetwork(did),
+						memo: 'Automated status check fee payment, orchestrated by CaaS.',
+					} satisfies FeePaymentOptions);
+				}) || []
+			);
 
 			// handle error
 			if (feePaymentResult.some((result) => result.error)) {
-				return response.status(StatusCodes.BAD_REQUEST).json({ checked: false, error: `check: payment: error: ${feePaymentResult.find((result) => result.error)?.error}` } satisfies CheckStatusListUnsuccessfulResponseBody);
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					checked: false,
+					error: `check: payment: error: ${feePaymentResult.find((result) => result.error)?.error}`,
+				} satisfies CheckStatusListUnsuccessfulResponseBody);
 			}
 		}
 
@@ -1008,7 +1163,7 @@ export class RevocationController {
 				{
 					statusListIndex: index,
 					statusListName,
-					statusPurpose
+					statusPurpose,
 				},
 				response.locals.customerId
 			);
@@ -1021,7 +1176,7 @@ export class RevocationController {
 			// return result
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
-			console.error(error)
+			console.error(error);
 
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -1086,21 +1241,25 @@ export class RevocationController {
 
 		try {
 			// search status list
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.searchStatusList2021(
-				did,
-				statusListName,
-				statusPurpose
-			);
+			const result = await new IdentityServiceStrategySetup(
+				response.locals.customerId
+			).agent.searchStatusList2021(did, statusListName, statusPurpose);
 
 			// handle error
 			if (result.error) {
 				// handle notFound error
 				if (result.error === 'notFound') {
-					return response.status(StatusCodes.NOT_FOUND).json({ found: false, error: `search: error: status list '${statusListName}' not found` } satisfies SearchStatusListUnsuccessfulResponseBody);
+					return response.status(StatusCodes.NOT_FOUND).json({
+						found: false,
+						error: `search: error: status list '${statusListName}' not found`,
+					} satisfies SearchStatusListUnsuccessfulResponseBody);
 				}
 
 				// handle generic error
-				return response.status(StatusCodes.BAD_REQUEST).json({ found: false, error: `search: error: ${result.error}` } satisfies SearchStatusListUnsuccessfulResponseBody);
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					found: false,
+					error: `search: error: ${result.error}`,
+				} satisfies SearchStatusListUnsuccessfulResponseBody);
 			}
 
 			// return result
