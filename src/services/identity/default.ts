@@ -1,14 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { DIDResolutionResult } from "did-resolver";
 import { AbstractIdentityService } from "./abstract.js";
 import type { IVerifyResult, VerifiableCredential, VerifiablePresentation } from "@veramo/core";
-import type { CheckStatusListOptions, VerificationOptions } from "../../types/shared";
-import type { StatusCheckResult } from "@cheqd/did-provider-cheqd";
+import type { CheckStatusListOptions, FeePaymentOptions, SearchStatusListResult, VerificationOptions } from "../../types/shared";
+import type { StatusCheckResult, TransactionResult } from "@cheqd/did-provider-cheqd";
 import { Veramo } from "./agent.js";
 
 export class DefaultIdentityService extends AbstractIdentityService {
 	constructor() {
 		super();
-	  	this.agent = this.initAgent()
+		this.agent = this.initAgent()
 	}
 
     async resolveDid(did: string, agentId?: string): Promise<DIDResolutionResult> {
@@ -31,7 +32,11 @@ export class DefaultIdentityService extends AbstractIdentityService {
 		return Veramo.instance.checkStatusList2021(this.initAgent(), did, statusOptions)
 	}
 
-	searchStatusList2021(did: string, statusListName: string, statusPurpose: 'revocation' | 'suspension', agentId?: string): Promise<any> {
+	searchStatusList2021(did: string, statusListName: string, statusPurpose: 'revocation' | 'suspension', agentId?: string): Promise<SearchStatusListResult> {
 		return Veramo.instance.searchStatusList2021(did, statusListName, statusPurpose)
+	}
+
+	remunerateStatusList2021(feePaymentOptions: FeePaymentOptions, agentId?: string): Promise<TransactionResult> {
+		return Veramo.instance.remunerateStatusList2021(this.initAgent(), feePaymentOptions)
 	}
 }

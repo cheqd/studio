@@ -33,6 +33,7 @@ import type {
 	CreateEncryptedStatusListOptions,
 	CreateUnencryptedStatusListOptions,
 	CredentialRequest,
+	FeePaymentOptions,
 	SearchStatusListResult,
 	StatusOptions,
 	UpdateEncryptedStatusListOptions,
@@ -115,9 +116,8 @@ export interface IIdentityService {
 		agentId?: string
 	): Promise<boolean>;
 	remunerateStatusList2021(
-		feePaymentAddress: string,
-		feePaymentAmount: string,
-		memo?: string,
+		feePaymentOptions: FeePaymentOptions,
+		agentId?: string
 	): Promise<TransactionResult>
 	revokeCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],

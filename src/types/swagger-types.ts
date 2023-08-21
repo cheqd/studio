@@ -202,7 +202,7 @@
  *           type: boolean
  *         statusList:
  *           type: string
- *     UnSuspensionResult:
+ *     UnsuspensionResult:
  *       properties:
  *         unsuspended:
  *           type: boolean
@@ -283,7 +283,7 @@
  *             audience:
  *               description: Policy to skip the audience check when set to `false`.
  *               type: boolean
- *     CredentialStatusCreateRequest:
+ *     CredentialStatusCreateUnencryptedRequest:
  *       allOf:
  *         - type: object
  *           required:
@@ -322,7 +322,120 @@
  *       example:
  *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
  *         statusListName: cheqd-employee-credentials
- *     CredentialStatusResult:
+ *     CredentialStatusCreateEncryptedJsonRequest:
+ *       allOf:
+ *         - type: object
+ *           required:
+ *             - did
+ *             - statusListName
+ *             - paymentConditions
+ *           properties:
+ *             did:
+ *               description: DID of the StatusList2021 publisher.
+ *               type: string
+ *             statusListName:
+ *               description: The name of the StatusList2021 DID-Linked Resource to be created.
+ *               type: string
+ *             paymentConditions:
+ *               description: The payment conditions for the StatusList2021 DID-Linked Resource to be created.
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   feePaymentAddress:
+ *                     description: The payment address for the StatusList2021 DID-Linked Resource to be created.
+ *                     type: string
+ *                   feePaymentAmount:
+ *                     description: The payment amount for the StatusList2021 DID-Linked Resource to be created.
+ *                     type: number
+ *                   feePaymentWindow:
+ *                     description: The payment window for the StatusList2021 DID-Linked Resource to be created.
+ *                     type: number
+ *             length:
+ *               description: The length of the status list to be created. The default and minimum length is 140000 which is 16kb.
+ *             encoding:
+ *               description: The encoding format of the StatusList2021 DiD-Linked Resource to be created.
+ *               type: string
+ *               default: base64url
+ *               enum:
+ *                 - base64url
+ *                 - base64
+ *                 - hex
+ *             statusListVersion:
+ *               description: Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.
+ *               type: string
+ *             alsoKnownAs:
+ *               description: Optional field to assign a set of alternative URIs where the StatusList2021 DID-Linked Resource can be fetched from.
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   uri:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *       example:
+ *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *         statusListName: cheqd-employee-credentials
+ *         paymentConditions:
+ *           - feePaymentAddress: cheqd12248whff96tpfyqm2vyvf9k4wda9h2dhdkf2e4
+ *             feePaymentAmount: 19.99
+ *             feePaymentWindow: 10
+ *     CredentialStatusCreateEncryptedFormRequest:
+ *       allOf:
+ *         - type: object
+ *           required:
+ *             - did
+ *             - statusListName
+ *             - feePaymentAddress
+ *             - feePaymentAmount
+ *             - feePaymentWindow
+ *           properties:
+ *             did:
+ *               description: DID of the StatusList2021 publisher.
+ *               type: string
+ *             statusListName:
+ *               description: The name of the StatusList2021 DID-Linked Resource to be created.
+ *               type: string
+ *             feePaymentAddress:
+ *               description: The payment address for the StatusList2021 DID-Linked Resource to be created.
+ *               type: string
+ *             feePaymentAmount:
+ *               description: The payment amount for the StatusList2021 DID-Linked Resource to be created.
+ *               type: number
+ *             feePaymentWindow:
+ *               description: The payment window for the StatusList2021 DID-Linked Resource to be created.
+ *               type: number
+ *             length:
+ *               description: The length of the status list to be created. The default and minimum length is 140000 which is 16kb.
+ *             encoding:
+ *               description: The encoding format of the StatusList2021 DiD-Linked Resource to be created.
+ *               type: string
+ *               default: base64url
+ *               enum:
+ *                 - base64url
+ *                 - base64
+ *                 - hex
+ *             statusListVersion:
+ *               description: Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.
+ *               type: string
+ *             alsoKnownAs:
+ *               description: Optional field to assign a set of alternative URIs where the StatusList2021 DID-Linked Resource can be fetched from.
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   uri:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *       example:
+ *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *         statusListName: cheqd-employee-credentials
+ *         feePaymentAddress: cheqd12248whff96tpfyqm2vyvf9k4wda9h2dhdkf2e4
+ *         feePaymentAmount: 19.99
+ *         feePaymentWindow: 10
+ *     CredentialStatusCreateUnencryptedResult:
  *       type: object
  *       properties:
  *         success:
@@ -332,25 +445,29 @@
  *               type: boolean
  *             resourceMetadata:
  *               type: object
- *             statusList2021:
+ *             resource:
  *               type: object
  *               properties:
- *                 statusList2021:
- *                   type: object
- *                   properties:
- *                     encodedList:
- *                       type: string
- *                     type:
- *                       type: string
- *                     validFrom:
- *                       type: string
- *             metadata:
- *               type: string
- *               properties:
- *                 encoding:
- *                   type: string
- *                 encrypted:
- *                   type: boolean
+ *                StatusList2021:
+ *                  type: object
+ *                  properties:
+ *                    encodedList:
+ *                      type: string
+ *                    type:
+ *                      type: string
+ *                    validFrom:
+ *                      type: string
+ *                metadata:
+ *                  type: object
+ *                  properties:
+ *                    type:
+ *                      type: string
+ *                    encoding:
+ *                      type: string
+ *                    encrypted:
+ *                      type: boolean
+ *             encrypted:
+ *               type: boolean
  *       example:
  *         created: true
  *         resource:
@@ -359,6 +476,7 @@
  *             type: StatusList2021Revocation
  *             validFrom: 2023-06-26T11:45:19.349Z
  *           metadata:
+ *             type: StatusList2021Revocation
  *             encoding: base64url
  *             encrypted: false
  *         resourceMetadata:
@@ -369,52 +487,91 @@
  *           previousVersionId: null
  *           resourceCollectionId: 7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
  *           resourceId: 5945233a-a4b5-422b-b893-eaed5cedd2dc
- *           resourceName: cheqd-revocation-1
+ *           resourceName: cheqd-revocation-unencrypted-1
  *           resourceType: StatusList2021Revocation
  *           resourceURI: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc
  *           resourceVersion: 2023-06-26T11:45:19.349Z
- *     CredentialStatusPublishRequest:
- *       allOf:
- *         - type: object
- *           required:
- *             - did
- *             - encodedList
- *             - statusListName
- *             - encoding
+ *         encrypted: false
+ *     CredentialStatusCreateEncryptedResult:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: object
  *           properties:
- *             did:
- *               description: DID of the StatusList2021 publisher.
- *               type: string
- *             statusListName:
- *               description: The name of the StatusList2021 DID-Linked Resource to be published.
- *               type: string
- *             encodedList:
- *               description: The encoding format of the StatusList2021 DiD-Linked Resource to be published.
- *               type: string
- *               enum:
- *                 - base64url
- *                 - base64
- *                 - hex
- *             statusListVersion:
- *               description: Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.
- *               type: string
- *             alsoKnownAs:
- *                description: Optional field to assign a set of alternative URIs where the StatusList2021 DID-Linked Resource can be fetched from.
- *                type: array
- *                items:
+ *             created:
+ *               type: boolean
+ *             resourceMetadata:
+ *               type: object
+ *             resource:
+ *               type: object
+ *               properties:
+ *                StatusList2021:
  *                  type: object
  *                  properties:
- *                    uri:
+ *                    encodedList:
  *                      type: string
- *                    description:
+ *                    type:
  *                      type: string
+ *                    validFrom:
+ *                      type: string
+ *                metadata:
+ *                  type: object
+ *                  properties:
+ *                    type:
+ *                      type: string
+ *                    encoding:
+ *                      type: string
+ *                    encrypted:
+ *                      type: boolean
+ *                    encryptedSymmetricKey:
+ *                      type: string
+ *                    paymentConditions:
+ *                      type: array
+ *                      items:
+ *                        type: object
+ *                        properties:
+ *                          feePaymentAddress:
+ *                            type: string
+ *                          feePaymentAmount:
+ *                            type: string
+ *                          intervalInSeconds:
+ *                            type: number
+ *             encrypted:
+ *               type: boolean
+ *             symmetricKey:
+ *               type: string
  *       example:
- *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
- *         statusListName: cheqd-employee-credentials
- *         statusListVersion: '2023'
- *         data: H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA
- *         encoding: base64url
- *     CredentialStatusUpdateRequest:
+ *         created: true
+ *         resource:
+ *           StatusList2021:
+ *             encodedList: 496fdfbeb745b4db03fcdb40566f9c4c4a1c0f184b31255e641b6e7bdfb9b6946c12be87ca3763be0393c00b67ac1e8737c106b32f46ef59c765754415b5e8cc7c65fccaa3374620430ea476301a5e0dd63340e7a27a68bc627518471f22e4a2
+ *             type: StatusList2021Revocation
+ *             validFrom: 2023-06-26T11:45:19.349Z
+ *           metadata:
+ *             type: StatusList2021Revocation
+ *             encoding: base64url
+ *             encrypted: true
+ *             encryptedSymmetricKey: b11182dc524b8181f9a6aef4c4ad0a1c14e40033b9112dffd8d1bcf6cc3b85abc07ded2205ee94068a99f4202502cb0855f322583fa6ce1534d3a05bf36891766ea2c5f90a982b3040680762977d404d758a2370224a239c8279aa7d21e980931c42055b17ca4c7dbffa4782480a8b6279cf989b2f166d5fdb4b2c1b5a63927200000000000000203018dcaba26df45a415bb599218b27ca853a70289d7a3ed3ed0e3730452e8f8d9af91b6e71312565d2c069341f6660ab
+ *             paymentConditions:
+ *               - feePaymentAddress: cheqd12248whff96tpfyqm2vyvf9k4wda9h2dhdkf2e4
+ *                 feePaymentAmount: 19990000000ncheq
+ *                 intervalInSeconds: 600
+ *                 type: timelockPayment
+ *         resourceMetadata:
+ *           checksum: 909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2
+ *           created: 2023-06-26T11:45:20Z
+ *           mediaType: application/json
+ *           nextVersionId: null
+ *           previousVersionId: null
+ *           resourceCollectionId: 7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *           resourceId: 5945233a-a4b5-422b-b893-eaed5cedd2dc
+ *           resourceName: cheqd-revocation-encrypted-1
+ *           resourceType: StatusList2021Revocation
+ *           resourceURI: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc
+ *           resourceVersion: 2023-06-26T11:45:19.349Z
+ *         encrypted: true
+ *         symmetricKey: dfe204ee95ae74ea5d74b94c3d8ff782273905b07fbc9f8c3d961c3b43849f18
+ *     CredentialStatusUpdateUnencryptedRequest:
  *       type: object
  *       required:
  *         - did
@@ -435,8 +592,251 @@
  *         statusListVersion:
  *           description: Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.
  *           type: string
+ *       example:
+ *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *         statusListName: cheqd-employee-credentials
+ *         indices:
+ *           - 10
+ *           - 3199
+ *           - 12109
+ *           - 130999
+ *         statusListVersion: 1.0.0
+ *     CredentialStatusUpdateEncryptedJsonRequest:
+ *       type: object
+ *       required:
+ *         - did
+ *         - statusListName
+ *         - indices
+ *         - symmetricKey
+ *       properties:
+ *         did:
+ *           description: DID of the StatusList2021 publisher.
+ *           type: string
+ *         statusListName:
+ *           description: The name of the StatusList2021 DID-Linked Resource to be updated.
+ *           type: string
+ *         indices:
+ *           description: List of credential status indices to be updated. The indices must be in the range of the status list.
+ *           type: array
+ *           items:
+ *             type: number
+ *         symmetricKey:
+ *           description: The symmetric key used to encrypt the StatusList2021 DID-Linked Resource.
+ *           type: string
+ *         paymentConditions:
+ *           description: The payment conditions for the StatusList2021 DID-Linked Resource to be updated.
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               feePaymentAddress:
+ *                 description: The payment address for the StatusList2021 DID-Linked Resource to be updated.
+ *                 type: string
+ *               feePaymentAmount:
+ *                 description: The payment amount for the StatusList2021 DID-Linked Resource to be updated.
+ *                 type: number
+ *               feePaymentWindow:
+ *                 description: The payment window for the StatusList2021 DID-Linked Resource to be updated.
+ *                 type: number
+ *         statusListVersion:
+ *           description: Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.
+ *           type: string
+ *       example:
+ *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *         statusListName: cheqd-employee-credentials
+ *         indices:
+ *           - 10
+ *           - 3199
+ *           - 12109
+ *           - 130999
+ *         symmetricKey: dfe204ee95ae74ea5d74b94c3d8ff782273905b07fbc9f8c3d961c3b43849f18
+ *         statusListVersion: 1.0.0
+ *     CredentialStatusUpdateEncryptedFormRequest:
+ *       type: object
+ *       required:
+ *         - did
+ *         - statusListName
+ *         - indices
+ *         - symmetricKey
+ *       properties:
+ *         did:
+ *           description: DID of the StatusList2021 publisher.
+ *           type: string
+ *         statusListName:
+ *           description: The name of the StatusList2021 DID-Linked Resource to be updated.
+ *           type: string
+ *         indices:
+ *           description: List of credential status indices to be updated. The indices must be in the range of the status list.
+ *           type: array
+ *           items:
+ *             type: number
+ *         symmetricKey:
+ *           description: The symmetric key used to encrypt the StatusList2021 DID-Linked Resource.
+ *           type: string
+ *         feePaymentAddress:
+ *           description: The payment address for the StatusList2021 DID-Linked Resource to be updated. Use this field to update the payment address, effective for the immediately following published updated StatusList2021 DID-Linked Resource.
+ *           type: string
+ *         feePaymentAmount:
+ *           description: The payment amount for the StatusList2021 DID-Linked Resource to be updated. Use this field to update the payment amount, effective for the immediately following published updated StatusList2021 DID-Linked Resource.
+ *           type: number
+ *         feePaymentWindow:
+ *           description: The payment window for the StatusList2021 DID-Linked Resource to be updated. Use this field to update the payment window, effective for the immediately following published updated StatusList2021 DID-Linked Resource.
+ *           type: number
+ *         statusListVersion:
+ *           description: Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.
+ *           type: string
+ *       example:
+ *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *         statusListName: cheqd-employee-credentials
+ *         indices:
+ *           - 10
+ *           - 3199
+ *           - 12109
+ *           - 130999
+ *         symmetricKey: dfe204ee95ae74ea5d74b94c3d8ff782273905b07fbc9f8c3d961c3b43849f18
+ *         statusListVersion: 1.0.0
+ *     CredentialStatusUpdateUnencryptedResult:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: object
+ *           properties:
+ *             updated:
+ *               type: boolean
+ *             resourceMetadata:
+ *               type: object
+ *             resource:
+ *               type: object
+ *               properties:
+ *                StatusList2021:
+ *                  type: object
+ *                  properties:
+ *                    encodedList:
+ *                      type: string
+ *                    type:
+ *                      type: string
+ *                    validFrom:
+ *                      type: string
+ *                metadata:
+ *                  type: object
+ *                  properties:
+ *                    type:
+ *                      type: string
+ *                    encoding:
+ *                      type: string
+ *                    encrypted:
+ *                      type: boolean
+ *             encrypted:
+ *               type: boolean
+ *       example:
+ *         updated: true
+ *         resource:
+ *           StatusList2021:
+ *             encodedList: H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA
+ *             type: StatusList2021Revocation
+ *             validFrom: 2023-06-26T11:45:19.349Z
+ *           metadata:
+ *             type: StatusList2021Revocation
+ *             encoding: base64url
+ *             encrypted: false
+ *         resourceMetadata:
+ *           checksum: 909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2
+ *           created: 2023-06-26T11:45:20Z
+ *           mediaType: application/json
+ *           nextVersionId: null
+ *           previousVersionId: 1036d66c-2d80-4e61-a8a7-62d2d5b8efd7
+ *           resourceCollectionId: 7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *           resourceId: 5945233a-a4b5-422b-b893-eaed5cedd2dc
+ *           resourceName: cheqd-revocation-unencrypted-1
+ *           resourceType: StatusList2021Revocation
+ *           resourceURI: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc
+ *           resourceVersion: 2023-06-26T11:45:19.349Z
+ *         encrypted: false
+ *     CredentialStatusUpdateEncryptedResult:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: object
+ *           properties:
+ *             updated:
+ *               type: boolean
+ *             resourceMetadata:
+ *               type: object
+ *             resource:
+ *               type: object
+ *               properties:
+ *                StatusList2021:
+ *                  type: object
+ *                  properties:
+ *                    encodedList:
+ *                      type: string
+ *                    type:
+ *                      type: string
+ *                    validFrom:
+ *                      type: string
+ *                metadata:
+ *                  type: object
+ *                  properties:
+ *                    type:
+ *                      type: string
+ *                    encoding:
+ *                      type: string
+ *                    encrypted:
+ *                      type: boolean
+ *                    encryptedSymmetricKey:
+ *                      type: string
+ *                    paymentConditions:
+ *                      type: array
+ *                      items:
+ *                        type: object
+ *                        properties:
+ *                          feePaymentAddress:
+ *                            type: string
+ *                          feePaymentAmount:
+ *                            type: string
+ *                          intervalInSeconds:
+ *                            type: number
+ *             encrypted:
+ *               type: boolean
+ *             symmetricKey:
+ *               type: string
+ *       example:
+ *         updated: true
+ *         resource:
+ *           StatusList2021:
+ *             encodedList: 496fdfbeb745b4db03fcdb40566f9c4c4a1c0f184b31255e641b6e7bdfb9b6946c12be87ca3763be0393c00b67ac1e8737c106b32f46ef59c765754415b5e8cc7c65fccaa3374620430ea476301a5e0dd63340e7a27a68bc627518471f22e4a2
+ *             type: StatusList2021Revocation
+ *             validFrom: 2023-06-26T11:45:19.349Z
+ *           metadata:
+ *             type: StatusList2021Revocation
+ *             encoding: base64url
+ *             encrypted: true
+ *             encryptedSymmetricKey: b11182dc524b8181f9a6aef4c4ad0a1c14e40033b9112dffd8d1bcf6cc3b85abc07ded2205ee94068a99f4202502cb0855f322583fa6ce1534d3a05bf36891766ea2c5f90a982b3040680762977d404d758a2370224a239c8279aa7d21e980931c42055b17ca4c7dbffa4782480a8b6279cf989b2f166d5fdb4b2c1b5a63927200000000000000203018dcaba26df45a415bb599218b27ca853a70289d7a3ed3ed0e3730452e8f8d9af91b6e71312565d2c069341f6660ab
+ *             paymentConditions:
+ *               - feePaymentAddress: cheqd12248whff96tpfyqm2vyvf9k4wda9h2dhdkf2e4
+ *                 feePaymentAmount: 19990000000ncheq
+ *                 intervalInSeconds: 600
+ *                 type: timelockPayment
+ *         resourceMetadata:
+ *           checksum: 909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2
+ *           created: 2023-06-26T11:45:20Z
+ *           mediaType: application/json
+ *           nextVersionId: null
+ *           previousVersionId: 22511a0f-67ac-428a-9a9f-514b9896da29
+ *           resourceCollectionId: 7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *           resourceId: 5945233a-a4b5-422b-b893-eaed5cedd2dc
+ *           resourceName: cheqd-revocation-encrypted-1
+ *           resourceType: StatusList2021Revocation
+ *           resourceURI: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc
+ *           resourceVersion: 2023-06-26T11:45:19.349Z
+ *         encrypted: true
+ *         symmetricKey: dfe204ee95ae74ea5d74b94c3d8ff782273905b07fbc9f8c3d961c3b43849f18
  *     CredentialStatusCheckRequest:
  *       type: object
+ *       required:
+ *         - did
+ *         - statusListName
+ *         - index
  *       properties:
  *         did:
  *           description: DID of the StatusList2021 publisher.
@@ -447,6 +847,100 @@
  *         index:
  *           description: Credential status index to be checked for revocation or suspension.
  *           type: number
+ *         makeFeePayment:
+ *           description: Optional field to make a fee payment for the credential status check.
+ *           type: boolean
+ *     CredentialStatusCheckResult:
+ *       oneOf:
+ *       - $ref: '#/components/schemas/CredentialStatusCheckRevocationResult'
+ *       - $ref: '#/components/schemas/CredentialStatusCheckSuspensionResult'
+ *     CredentialStatusCheckRevocationResult:
+ *       type: object
+ *       properties:
+ *         checked:
+ *           type: boolean
+ *         revoked:
+ *           type: boolean
+ *     CredentialStatusCheckSuspensionResult:
+ *       type: object
+ *       properties:
+ *         checked:
+ *           type: boolean
+ *         suspended:
+ *           type: boolean
+ *     CredentialStatusListSearchResult:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: object
+ *           properties:
+ *             found:
+ *               type: boolean
+ *             resourceMetadata:
+ *               type: object
+ *             resource:
+ *               type: object
+ *               properties:
+ *                 StatusList2021:
+ *                   type: object
+ *                   properties:
+ *                     encodedList:
+ *                       type: string
+ *                     type:
+ *                       type: string
+ *                     validFrom:
+ *                       type: string
+ *                 metadata:
+ *                   type: object
+ *                   properties:
+ *                     type:
+ *                       type: string
+ *                     encoding:
+ *                       type: string
+ *                     encrypted:
+ *                       type: boolean
+ *                     encryptedSymmetricKey:
+ *                       type: string
+ *                     paymentConditions:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           feePaymentAddress:
+ *                             type: string
+ *                           feePaymentAmount:
+ *                             type: string
+ *                           intervalInSeconds:
+ *                             type: number
+ *       example:
+ *         found: true
+ *         resource:
+ *           StatusList2021:
+ *             encodedList: 496fdfbeb745b4db03fcdb40566f9c4c4a1c0f184b31255e641b6e7bdfb9b6946c12be87ca3763be0393c00b67ac1e8737c106b32f46ef59c765754415b5e8cc7c65fccaa3374620430ea476301a5e0dd63340e7a27a68bc627518471f22e4a2
+ *             statusPurpose: revocation
+ *             validFrom: 2023-08-21T15:11:15.365Z
+ *           metadata:
+ *             type: StatusList2021Revocation
+ *             encoding: base64url
+ *             encrypted: true
+ *             encryptedSymmetricKey: b11182dc524b8181f9a6aef4c4ad0a1c14e40033b9112dffd8d1bcf6cc3b85abc07ded2205ee94068a99f4202502cb0855f322583fa6ce1534d3a05bf36891766ea2c5f90a982b3040680762977d404d758a2370224a239c8279aa7d21e980931c42055b17ca4c7dbffa4782480a8b6279cf989b2f166d5fdb4b2c1b5a63927200000000000000203018dcaba26df45a415bb599218b27ca853a70289d7a3ed3ed0e3730452e8f8d9af91b6e71312565d2c069341f6660ab
+ *             paymentConditions:
+ *               - feePaymentAddress: cheqd12248whff96tpfyqm2vyvf9k4wda9h2dhdkf2e4
+ *                 feePaymentAmount: 19990000000ncheq
+ *                 intervalInSeconds: 600
+ *                 type: timelockPayment
+ *         resourceMetadata:
+ *           resourceURI: did:cheqd:testnet:09b20561-7339-40ea-a377-05ea35a0e82a/resources/cac847e8-a099-4f8f-99b2-f1f764e5953b
+ *           resourceCollectionId: 09b20561-7339-40ea-a377-05ea35a0e82a
+ *           resourceId: cac847e8-a099-4f8f-99b2-f1f764e5953b
+ *           resourceName: sandbox-encrypted-beta
+ *           resourceType: StatusList2021Revocation
+ *           mediaType: application/json
+ *           resourceVersion: 2023-08-21T15:11:15.365Z
+ *           created: 2023-08-21T15:11:16Z
+ *           checksum: 8a28a3b44db99aab1ec31af3011ca037268c47e5c12677ceb3bd4eec2761e271
+ *           previousVersionId: 1c83c1f7-cc4b-4e28-98e7-4552186d06cc
+ *           nextVersionId: null
  *     KeyResult:
  *       type: object
  *       properties:

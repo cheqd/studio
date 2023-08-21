@@ -3,9 +3,10 @@ import { check, query, validationResult } from 'express-validator';
 import { fromString } from 'uint8arrays';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import { CheckStatusListRequestBody, CheckStatusListRequestQuery, CheckStatusListUnsuccessfulResponseBody, CreateEncryptedStatusListRequestBody, CreateEncryptedStatusListRequestQuery, CreateEncryptedStatusListSuccessfulResponseBody, CreateEncryptedStatusListUnsuccessfulResponseBody, CreateUnencryptedStatusListRequestBody, CreateUnencryptedStatusListRequestQuery, CreateUnencryptedStatusListSuccessfulResponseBody, CreateUnencryptedStatusListUnsuccessfulResponseBody, DefaultDidUrlPattern, DefaultStatusAction, DefaultStatusActionPurposeMap, DefaultStatusActions, MinimalPaymentCondition, SearchStatusListQuery, SearchStatusListSuccessfulResponseBody, SearchStatusListUnsuccessfulResponseBody, UpdateEncryptedStatusListRequestBody, UpdateEncryptedStatusListSuccessfulResponseBody, UpdateEncryptedStatusListUnsuccessfulResponseBody, UpdateUnencryptedStatusListRequestBody, UpdateUnencryptedStatusListRequestQuery, UpdateUnencryptedStatusListSuccessfulResponseBody, UpdateUnencryptedStatusListUnsuccessfulResponseBody } from '../types/shared.js';
+import { CheckStatusListRequestBody, CheckStatusListRequestQuery, CheckStatusListUnsuccessfulResponseBody, CreateEncryptedStatusListRequestBody, CreateEncryptedStatusListRequestQuery, CreateEncryptedStatusListSuccessfulResponseBody, CreateEncryptedStatusListUnsuccessfulResponseBody, CreateUnencryptedStatusListRequestBody, CreateUnencryptedStatusListRequestQuery, CreateUnencryptedStatusListSuccessfulResponseBody, CreateUnencryptedStatusListUnsuccessfulResponseBody, DefaultDidUrlPattern, DefaultStatusAction, DefaultStatusActionPurposeMap, DefaultStatusActions, FeePaymentOptions, MinimalPaymentCondition, SearchStatusListQuery, SearchStatusListSuccessfulResponseBody, SearchStatusListUnsuccessfulResponseBody, UpdateEncryptedStatusListRequestBody, UpdateEncryptedStatusListSuccessfulResponseBody, UpdateEncryptedStatusListUnsuccessfulResponseBody, UpdateUnencryptedStatusListRequestBody, UpdateUnencryptedStatusListRequestQuery, UpdateUnencryptedStatusListSuccessfulResponseBody, UpdateUnencryptedStatusListUnsuccessfulResponseBody } from '../types/shared.js';
 import { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, DefaultStatusList2021Encodings, DefaultStatusList2021StatusPurposeTypes } from '@cheqd/did-provider-cheqd';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
+import { toNetwork } from '../helpers/helpers.js';
 
 export class RevocationController {
 	static createUnencryptedValidator = [
@@ -455,17 +456,17 @@ export class RevocationController {
 	 *       content:
 	 *         application/x-www-form-urlencoded:
 	 *           schema:
-	 *             $ref: '#/components/schemas/CredentialStatusCreateRequest'
+	 *             $ref: '#/components/schemas/CredentialStatusCreateUnencryptedRequest'
 	 *         application/json:
 	 *           schema:
-	 *             $ref: '#/components/schemas/CredentialStatusCreateRequest'
+	 *             $ref: '#/components/schemas/CredentialStatusCreateUnencryptedRequest'
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/CredentialStatusResult'
+	 *               $ref: '#/components/schemas/CredentialStatusCreateUnencryptedResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -558,17 +559,17 @@ export class RevocationController {
 	 *       content:
 	 *         application/x-www-form-urlencoded:
 	 *           schema:
-	 *             $ref: '#/components/schemas/CredentialStatusCreateRequest'
+	 *             $ref: '#/components/schemas/CredentialStatusCreateEncryptedFormRequest'
 	 *         application/json:
 	 *           schema:
-	 *             $ref: '#/components/schemas/CredentialStatusCreateRequest'
+	 *             $ref: '#/components/schemas/CredentialStatusCreateEncryptedJsonRequest'
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/CredentialStatusResult'
+	 *               $ref: '#/components/schemas/CredentialStatusCreateEncryptedResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -624,7 +625,7 @@ export class RevocationController {
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				created: false,
-				error: `Internal error: ${error}`,
+				error: `Internal error: ${error instanceof Error ? error.message : error}`,
 			} satisfies CreateEncryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
@@ -651,17 +652,17 @@ export class RevocationController {
 	 *       content:
 	 *         application/x-www-form-urlencoded:
 	 *           schema:
-	 *             $ref: '#/components/schemas/CredentialStatusUpdateRequest'
+	 *             $ref: '#/components/schemas/CredentialStatusUpdateUnencryptedRequest'
 	 *         application/json:
 	 *           schema:
-	 *             $ref: '#/components/schemas/CredentialStatusUpdateRequest'
+	 *             $ref: '#/components/schemas/CredentialStatusUpdateUnencryptedRequest'
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/CredentialStatusResult'
+	 *               $ref: '#/components/schemas/CredentialStatusUpdateUnencryptedResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -789,17 +790,17 @@ export class RevocationController {
 	 *       content:
 	 *         application/x-www-form-urlencoded:
 	 *           schema:
-	 *             $ref: '#/components/schemas/CredentialStatusUpdateRequest'
+	 *             $ref: '#/components/schemas/CredentialStatusUpdateEncryptedFormRequest'
 	 *         application/json:
 	 *           schema:
-	 *             $ref: '#/components/schemas/CredentialStatusUpdateRequest'
+	 *             $ref: '#/components/schemas/CredentialStatusUpdateEncryptedJsonRequest'
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/CredentialStatusResult'
+	 *               $ref: '#/components/schemas/CredentialStatusUpdateEncryptedResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -942,13 +943,7 @@ export class RevocationController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               type: object
-	 *               properties:
-	 *                 revoked:
-	 *                   type: boolean
-	 *                 suspended:
-	 *                   type: boolean
-	 *                   example: false
+	 *               $ref: '#/components/schemas/CredentialStatusCheckResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -992,10 +987,12 @@ export class RevocationController {
 		if (makeFeePayment && statusList?.resource?.metadata?.encrypted) {
 			// make fee payment
 			const feePaymentResult = await Promise.all(statusList?.resource?.metadata?.paymentConditions?.map(async (condition) => {
-				return await identityServiceStrategySetup.agent.remunerateStatusList2021(
-					condition.feePaymentAddress,
-					condition.feePaymentAmount,
-				)
+				return await identityServiceStrategySetup.agent.remunerateStatusList2021({
+					feePaymentAddress: condition.feePaymentAddress,
+					feePaymentAmount: condition.feePaymentAmount,
+					feePaymentNetwork: toNetwork(did),
+					memo: 'Automated status check fee payment, orchestrated by CaaS.',
+				} satisfies FeePaymentOptions)
 			}) || []);
 
 			// handle error
@@ -1024,10 +1021,12 @@ export class RevocationController {
 			// return result
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			console.error(error)
+
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				checked: false,
-				error: `Internal error: ${error}`,
+				error: `Internal error: ${error instanceof Error ? error.message : error}`,
 			} satisfies CheckStatusListUnsuccessfulResponseBody);
 		}
 	}
@@ -1065,18 +1064,7 @@ export class RevocationController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               type: array
-	 *               items:
-	 *                 type: object
-	 *                 properties:
-	 *                   statusListName:
-	 *                     type: string
-	 *                   statusListVersion:
-	 *                     type: string
-	 *                   statusListId:
-	 *                     type: string
-	 *                   statusListNextVersion:
-	 *                     type: string
+	 *               $ref: '#/components/schemas/CredentialStatusListSearchResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:

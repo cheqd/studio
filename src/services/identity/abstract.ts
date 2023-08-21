@@ -28,6 +28,7 @@ import type {
 	CreateEncryptedStatusListOptions,
 	CreateUnencryptedStatusListOptions,
 	CredentialRequest,
+	FeePaymentOptions,
 	StatusOptions,
 	UpdateEncryptedStatusListOptions,
 	UpdateUnencryptedStatusListOptions,
@@ -121,9 +122,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`)
 	}
 	remunerateStatusList2021(
-		feePaymentAddress: string,
-		feePaymentAmount: string,
-		memo?: string
+		feePaymentOptions: FeePaymentOptions,
 	): Promise<TransactionResult> {
 		throw new Error(`Not supported`)
 	}

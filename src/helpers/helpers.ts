@@ -5,7 +5,7 @@ import { createHmac } from 'node:crypto';
 import type { ParsedQs } from 'qs';
 import type { SpecValidationResult } from '../types/shared.js';
 import { DEFAULT_DENOM_EXPONENT, MINIMAL_DENOM } from '../types/constants.js';
-import type { DkgOptions } from '@cheqd/did-provider-cheqd';
+import { LitCompatibleCosmosChains, type DkgOptions, LitNetworks } from '@cheqd/did-provider-cheqd';
 import type { Coin } from '@cosmjs/amino';
 
 export interface IDidDocOptions {
@@ -27,19 +27,33 @@ export function toCoin(amount: string): Coin {
 	}
 }
 
-export function toDefaultDkg(did: string): DkgOptions {
+export function toNetwork(did: string): CheqdNetwork {
 	// switch on namespace
 	switch (did.split(':')[2]) {
 		case CheqdNetwork.Mainnet:
+			return CheqdNetwork.Mainnet;
+		case CheqdNetwork.Testnet:
+		default:
+			return CheqdNetwork.Testnet;
+	}
+}
+
+export function toDefaultDkg(did: string): DkgOptions {
+	// define network
+	const network = toNetwork(did);
+
+	// switch on namespace
+	switch (network) {
+		case CheqdNetwork.Mainnet:
 			return {
-				chain: 'cheqdMainnet',
-				network: 'serrano',
+				chain: LitCompatibleCosmosChains.cheqdMainnet,
+				network: LitNetworks.serrano,
 			}
 		case CheqdNetwork.Testnet:
 		default:
 			return {
-				chain: 'cheqdTestnet',
-				network: 'serrano',
+				chain: LitCompatibleCosmosChains.cheqdTestnet,
+				network: LitNetworks.serrano,
 			}
 	}
 }

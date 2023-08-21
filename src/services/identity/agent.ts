@@ -69,6 +69,7 @@ import {
 	DefaultStatusActions,
 	UpdateEncryptedStatusListOptions,
 	SearchStatusListResult,
+	FeePaymentOptions,
 } from '../../types/shared.js';
 import { MINIMAL_DENOM, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js';
 import { toCoin, toDefaultDkg, toMinimalDenom } from '../../helpers/helpers.js';
@@ -418,10 +419,10 @@ export class Veramo {
 			statusOptions?.paymentConditions
 				? statusOptions.paymentConditions.map((condition) => {
 						return {
+							type: 'timelockPayment',
 							feePaymentAddress: condition.feePaymentAddress,
 							feePaymentAmount: `${toMinimalDenom(condition.feePaymentAmount)}${MINIMAL_DENOM}`,
 							intervalInSeconds: condition.feePaymentWindow * 60,
-							type: 'timelockPayment',
 						};
 				  })
 				: (function () {
@@ -439,10 +440,10 @@ export class Veramo {
 
 						return [
 							{
+								type: 'timelockPayment',
 								feePaymentAddress: statusOptions.feePaymentAddress,
 								feePaymentAmount: `${toMinimalDenom(statusOptions.feePaymentAmount)}${MINIMAL_DENOM}`,
 								intervalInSeconds: statusOptions.feePaymentWindow * 60,
-								type: 'timelockPayment',
 							},
 						];
 				  })()
@@ -492,14 +493,13 @@ export class Veramo {
 
 	async remunerateStatusList2021(
 		agent: VeramoAgent,
-		feePaymentAddress: string,
-		feePaymentAmount: string,
-		memo?: string
+		feePaymentOptions: FeePaymentOptions,
 	): Promise<TransactionResult> {
 		return await agent.cheqdTransactSendTokens({
-			recipientAddress: feePaymentAddress,
-			amount: toCoin(feePaymentAmount),
-			memo,
+			recipientAddress: feePaymentOptions.feePaymentAddress,
+			amount: toCoin(feePaymentOptions.feePaymentAmount),
+			network: feePaymentOptions.feePaymentNetwork,
+			memo: feePaymentOptions.memo,
 		})
 	}
 

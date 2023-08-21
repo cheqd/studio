@@ -341,7 +341,7 @@ export class CredentialController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/UnSuspensionResult'
+	 *               $ref: '#/components/schemas/UnsuspensionResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:

@@ -19,6 +19,7 @@ import {
 	type CreateStatusList2021Result,
 	type StatusCheckResult,
 	DefaultRPCUrls,
+	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
 import { CheqdNetwork } from '@cheqd/sdk';
 import {
@@ -32,6 +33,7 @@ import {
 	VeramoAgent,
 	VerificationOptions,
 	CreateEncryptedStatusListOptions,
+	FeePaymentOptions,
 } from '../../types/shared.js';
 import { Connection } from '../../database/connection/connection.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
@@ -282,6 +284,14 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	): Promise<boolean> {
 		const agent = await this.createAgent(agentId);
 		return await Veramo.instance.broadcastStatusList2021(agent, did, resourceOptions, statusOptions);
+	}
+
+	async remunerateStatusList2021(
+		feePaymentOptions: FeePaymentOptions,
+		agentId: string,
+	): Promise<TransactionResult> {
+		const agent = await this.createAgent(agentId);
+		return await Veramo.instance.remunerateStatusList2021(agent, feePaymentOptions);
 	}
 
 	async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId: string) {

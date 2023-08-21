@@ -309,6 +309,13 @@ export type StatusOptions = {
 export type RevocationStatusOptions = StatusOptions & { statusPurpose: 'revocation' };
 export type SuspensionStatusOptions = StatusOptions & { statusPurpose: 'suspension' };
 
+export type FeePaymentOptions = {
+	feePaymentAddress: string;
+	feePaymentAmount: string;
+	feePaymentNetwork: CheqdNetwork;
+	memo?: string;
+}
+
 export interface ResourceMetadata {
 	collectionId: string;
 	resourceId: string;

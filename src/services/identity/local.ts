@@ -17,6 +17,8 @@ import {
 	type StatusCheckResult,
 	DefaultRPCUrls,
 	TransactionResult,
+	LitCompatibleCosmosChains,
+	LitNetworks,
 } from '@cheqd/did-provider-cheqd';
 import { CheqdNetwork } from '@cheqd/sdk';
 import type {
@@ -25,6 +27,7 @@ import type {
 	CreateEncryptedStatusListOptions,
 	CreateUnencryptedStatusListOptions,
 	CredentialRequest,
+	FeePaymentOptions,
 	StatusOptions,
 	UpdateEncryptedStatusListOptions,
 	UpdateUnencryptedStatusListOptions,
@@ -61,8 +64,8 @@ export class LocalIdentityService extends DefaultIdentityService {
 			networkType: CheqdNetwork.Mainnet,
 			rpcUrl: MAINNET_RPC_URL || DefaultRPCUrls.mainnet,
 			dkgOptions: {
-				chain: 'cheqdMainnet',
-				network: 'serrano',
+				chain: LitCompatibleCosmosChains.cheqdMainnet,
+				network: LitNetworks.serrano,
 			}
 		});
 
@@ -72,8 +75,8 @@ export class LocalIdentityService extends DefaultIdentityService {
 			networkType: CheqdNetwork.Testnet,
 			rpcUrl: TESTNET_RPC_URL || DefaultRPCUrls.testnet,
 			dkgOptions: {
-				chain: 'cheqdTestnet',
-				network: 'serrano',
+				chain: LitCompatibleCosmosChains.cheqdTestnet,
+				network: LitNetworks.serrano,
 			}
 		});
 
@@ -199,11 +202,9 @@ export class LocalIdentityService extends DefaultIdentityService {
 	}
 
 	async remunerateStatusList2021(
-		feePaymentAddress: string,
-		feePaymentAmount: string,
-		memo?: string
+		feePaymentOptions: FeePaymentOptions
 	): Promise<TransactionResult> {
-		return await Veramo.instance.remunerateStatusList2021(this.initAgent(), feePaymentAddress, feePaymentAmount, memo);
+		return await Veramo.instance.remunerateStatusList2021(this.initAgent(), feePaymentOptions);
 	}
 
 	async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean) {
