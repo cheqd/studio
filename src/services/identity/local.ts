@@ -3,6 +3,7 @@ import type {
 	IIdentifier, 
 	CredentialPayload, 
 	VerifiableCredential,
+	DIDResolutionResult,
 } from '@veramo/core'
 import { MemoryPrivateKeyStore } from '@veramo/key-manager'
 import { KeyManagementSystem } from '@veramo/kms-local'
@@ -85,7 +86,7 @@ export class LocalIdentityService extends DefaultIdentityService {
 		return Veramo.instance.getKey(this.initAgent(), kid)
 	}
 
-	async deactivateDid(did: string): Promise<boolean> {
+	async deactivateDid(did: string): Promise<DIDResolutionResult> {
 		try {
 			return await Veramo.instance.deactivateDid(this.initAgent(), did)
 		} catch (error) {

@@ -39,7 +39,7 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import type { CheqdNetwork } from '@cheqd/sdk';
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key';
-import { Resolver, ResolverRegistry } from 'did-resolver';
+import { DIDResolutionResult, Resolver, ResolverRegistry } from 'did-resolver';
 
 import {
 	BroadCastStatusListOptions,
@@ -168,7 +168,7 @@ export class Veramo {
 		}
 	}
 
-	async deactivateDid(agent: VeramoAgent, did: string): Promise<boolean> {
+	async deactivateDid(agent: VeramoAgent, did: string): Promise<DIDResolutionResult> {
 		try {
 			const [kms] = await agent.keyManagerGetKeyManagementSystems();
 			const didDocument = (await this.resolveDid(agent, did)).didDocument;
@@ -176,11 +176,11 @@ export class Veramo {
 			if (!didDocument) {
 				throw new Error('DID document not found');
 			}
-			const result = await agent.cheqdDeactivateIdentifier({
+			await agent.cheqdDeactivateIdentifier({
 				kms,
 				document: didDocument,
 			} satisfies ICheqdDeactivateIdentifierArgs);
-			return result;
+			return await this.resolveDid(agent, did);
 		} catch (error) {
 			throw new Error(`${error}`);
 		}

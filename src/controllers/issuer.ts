@@ -388,8 +388,7 @@ export class IssuerController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               type: boolean
-	 *               example: true
+	 *               $ref: '#/components/schemas/DidResolution'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -406,11 +405,11 @@ export class IssuerController {
 		}
 
 		try {
-			const did = await new IdentityStrategySetup(response.locals.customerId).agent.deactivateDid(
+			const result = await new IdentityStrategySetup(response.locals.customerId).agent.deactivateDid(
 				request.params.did,
 				response.locals.customerId
 			);
-			return response.status(StatusCodes.OK).json(did);
+			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,

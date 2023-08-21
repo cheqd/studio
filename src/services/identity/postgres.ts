@@ -2,6 +2,7 @@ import * as dotenv from 'dotenv'
 import type {
 	CredentialPayload,
 	DIDDocument, 
+	DIDResolutionResult, 
 	IIdentifier, 
 	IVerifyResult, 
 	ManagedKeyInfo,
@@ -159,7 +160,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async deactivateDid(did: string, agentId: string): Promise<boolean> {
+	async deactivateDid(did: string, agentId: string): Promise<DIDResolutionResult> {
 		if (!agentId) {
 			throw new Error('Customer not found')
 		}
