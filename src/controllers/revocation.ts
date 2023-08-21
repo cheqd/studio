@@ -599,7 +599,7 @@ export class RevocationController {
 			if (result.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					...result,
-					error: (result.error as Error).toString(),
+					error: result.error?.message || result.error.toString(),
 				} as CreateUnencryptedStatusListUnsuccessfulResponseBody);
 			}
 
@@ -609,7 +609,7 @@ export class RevocationController {
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				created: false,
-				error: `Internal error: ${error}`,
+				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
 			} satisfies CreateUnencryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
@@ -707,7 +707,7 @@ export class RevocationController {
 			if (result.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					...result,
-					error: (result.error as Error).toString(),
+					error: result.error?.message || result.error.toString(),
 				} as CreateEncryptedStatusListUnsuccessfulResponseBody);
 			}
 
@@ -717,7 +717,7 @@ export class RevocationController {
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				created: false,
-				error: `Internal error: ${error instanceof Error ? error.message : error}`,
+				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
 			} satisfies CreateEncryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
@@ -854,7 +854,7 @@ export class RevocationController {
 			if (result.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					...result,
-					error: (result.error as Error).toString(),
+					error: result.error?.message || result.error.toString(),
 				} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 			}
 
@@ -874,7 +874,7 @@ export class RevocationController {
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				updated: false,
-				error: `Internal error: ${error}`,
+				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
 			} satisfies UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
@@ -1026,7 +1026,7 @@ export class RevocationController {
 			if (result.error)
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					...result,
-					error: (result.error as Error).toString(),
+					error: result.error?.message || result.error.toString(),
 				} as UpdateEncryptedStatusListUnsuccessfulResponseBody);
 
 			// construct formatted response
@@ -1046,7 +1046,7 @@ export class RevocationController {
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				updated: false,
-				error: `Internal error: ${error}`,
+				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
 			} satisfies UpdateEncryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
@@ -1176,12 +1176,20 @@ export class RevocationController {
 			// return result
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
-			console.error(error);
+			// define error
+			const errorRef = error as Record<string, unknown>;
+
+			// handle doesn't meet condition
+			if (errorRef?.errorCode === 'NodeAccessControlConditionsReturnedNotAuthorized')
+				return response.status(StatusCodes.UNAUTHORIZED).json({
+					checked: false,
+					error: `check: error: ${errorRef?.message ? 'unauthorised: decryption conditions are not met' : (error as Record<string, unknown>).toString()}`,
+				} satisfies CheckStatusListUnsuccessfulResponseBody);
 
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				checked: false,
-				error: `Internal error: ${error instanceof Error ? error.message : error}`,
+				error: `Internal error: ${errorRef?.message || errorRef.toString()}`,
 			} satisfies CheckStatusListUnsuccessfulResponseBody);
 		}
 	}
@@ -1268,7 +1276,7 @@ export class RevocationController {
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				found: false,
-				error: `Internal error: ${error}`,
+				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
 			} satisfies SearchStatusListUnsuccessfulResponseBody);
 		}
 	}
