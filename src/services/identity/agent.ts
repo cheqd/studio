@@ -716,11 +716,7 @@ export class Veramo {
 			const resourceMetadataVersioned = (await (await fetch(url)).json()) as DIDMetadataDereferencingResult;
 
 			// define arbitrary error
-			const arbitraryError = (
-				resourceMetadataVersioned?.dereferencingMetadata as DIDMetadataDereferencingResult['dereferencingMetadata'] & {
-					error?: string;
-				}
-			)?.error;
+			const arbitraryError = resourceMetadataVersioned?.dereferencingMetadata?.error;
 
 			// handle error
 			if (arbitraryError) {
