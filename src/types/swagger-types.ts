@@ -760,6 +760,18 @@
  *           properties:
  *             updated:
  *               type: boolean
+ *             revoked:
+ *               type: array
+ *               items:
+ *                 type: boolean
+ *             suspended:
+ *               type: array
+ *               items:
+ *                 type: boolean
+ *             unsuspended:
+ *               type: array
+ *               items:
+ *                 type: boolean
  *             resourceMetadata:
  *               type: object
  *             resource:
@@ -802,6 +814,8 @@
  *               type: string
  *       example:
  *         updated: true
+ *         revoked:
+ *           - true
  *         resource:
  *           StatusList2021:
  *             encodedList: 496fdfbeb745b4db03fcdb40566f9c4c4a1c0f184b31255e641b6e7bdfb9b6946c12be87ca3763be0393c00b67ac1e8737c106b32f46ef59c765754415b5e8cc7c65fccaa3374620430ea476301a5e0dd63340e7a27a68bc627518471f22e4a2
