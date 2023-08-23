@@ -4,6 +4,8 @@ import { fromString } from 'uint8arrays';
 import { StatusCodes } from 'http-status-codes';
 
 import { IdentityStrategySetup } from '../services/identity/index.js';
+import { DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
+import type { UpdateStatusList2021Result } from '../types/shared.js';
 
 export class RevocationController {
 	static commonValidator = [
@@ -350,7 +352,7 @@ export class RevocationController {
 		const publish = request.query.publish === 'false' ? false : true;
 
 		try {
-			const result = await new IdentityStrategySetup(response.locals.customerId).agent.updateStatusList2021(
+			const res = await new IdentityStrategySetup(response.locals.customerId).agent.updateStatusList2021(
 				did,
 				{
 					indices: typeof indices === 'number' ? [indices] : indices,
@@ -361,9 +363,26 @@ export class RevocationController {
 				publish,
 				response.locals.customerId
 			);
-			if (result.error) {
-				return response.status(StatusCodes.BAD_REQUEST).json(result);
+			if (res.error) {
+				return response.status(StatusCodes.BAD_REQUEST).json(res);
 			}
+
+			const metadata = await (
+				await fetch(`${
+					process.env.RESOLVER_URL || DefaultResolverUrl
+				}/${did}?resourceName=${statusListName}&resourceVersion=${statusListVersion}&resourceMetadata=true`
+			)).json();
+			const resourceData = await (
+				await fetch(`${
+					process.env.RESOLVER_URL || DefaultResolverUrl
+				}/${did}?resourceName=${statusListName}&resourceVersion=${statusListVersion}`
+			)).json();
+			
+			const result: UpdateStatusList2021Result = {
+				updated: true,
+				resource: resourceData,
+				resourceMetadata: metadata.contentStream?.linkedResourceMetadata
+			};
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

@@ -1861,7 +1861,7 @@
                 }
               },
               "metadata": {
-                "type": "string",
+                "type": "object",
                 "properties": {
                   "encoding": {
                     "type": "string"
@@ -1905,20 +1905,31 @@
       "CredentialStatusUpdateResponse": {
         "type": "object",
         "properties": {
-          "statusList": {
+          "success": {
             "type": "object",
             "properties": {
-              "StatusList2021": {
+              "updated": {
+                "type": "boolean"
+              },
+              "resourceMetadata": {
+                "type": "object"
+              },
+              "statusList2021": {
                 "type": "object",
                 "properties": {
-                  "encodedList": {
-                    "type": "string"
-                  },
-                  "statusPurpose": {
-                    "type": "string"
-                  },
-                  "validFrom": {
-                    "type": "string"
+                  "statusList2021": {
+                    "type": "object",
+                    "properties": {
+                      "encodedList": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "validFrom": {
+                        "type": "string"
+                      }
+                    }
                   }
                 }
               },
@@ -1929,14 +1940,38 @@
                     "type": "string"
                   },
                   "encrypted": {
-                    "type": "string"
-                  },
-                  "type": {
-                    "type": "string"
+                    "type": "boolean"
                   }
                 }
               }
             }
+          }
+        },
+        "example": {
+          "updated": true,
+          "resource": {
+            "StatusList2021": {
+              "encodedList": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
+              "type": "StatusList2021Revocation",
+              "validFrom": "2023-06-26T11:45:19.349Z"
+            },
+            "metadata": {
+              "encoding": "base64url",
+              "encrypted": false
+            }
+          },
+          "resourceMetadata": {
+            "checksum": "909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2",
+            "created": "2023-06-26T11:45:20Z",
+            "mediaType": "application/json",
+            "nextVersionId": null,
+            "previousVersionId": null,
+            "resourceCollectionId": "7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+            "resourceId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
+            "resourceName": "cheqd-revocation-1",
+            "resourceType": "StatusList2021Revocation",
+            "resourceURI": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc",
+            "resourceVersion": "2023-06-26T11:45:19.349Z"
           }
         }
       },
