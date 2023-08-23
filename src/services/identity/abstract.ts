@@ -47,7 +47,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	updateDid(didDocument: DIDDocument, agentId?: string): Promise<IIdentifier> {
 		throw new Error(`Not supported`)
 	}
-	deactivateDid(did: string, agentId?: string): Promise<DIDResolutionResult> {
+	deactivateDid(did: string, agentId?: string): Promise<boolean> {
 		throw new Error(`Not supported`)
 	}
 	importDid(did: string, privateKeyHex: string, publicKeyHex: string, agentId: string): Promise<IIdentifier> {

@@ -172,9 +172,3 @@ export type SearchStatusList2021Result = {
 	resource: any;
 	resourceMetadata: ResourceMetadata[];
 }
-
-export type UpdateStatusList2021Result = {
-	updated: boolean;
-	resource: any;
-	resourceMetadata: ResourceMetadata;
-}

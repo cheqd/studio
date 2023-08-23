@@ -5,7 +5,6 @@ import { StatusCodes } from 'http-status-codes';
 
 import { IdentityStrategySetup } from '../services/identity/index.js';
 import { DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
-import type { UpdateStatusList2021Result } from '../types/shared.js';
 
 export class RevocationController {
 	static commonValidator = [
@@ -367,23 +366,24 @@ export class RevocationController {
 				return response.status(StatusCodes.BAD_REQUEST).json(res);
 			}
 
+			const resource = await (
+				await fetch(
+					`${process.env.RESOLVER_URL || DefaultResolverUrl}/` +
+					`${did}?resourceName=${statusListName}&resourceVersion=${statusListVersion}`
+				)
+			).json();
 			const metadata = await (
-				await fetch(`${
-					process.env.RESOLVER_URL || DefaultResolverUrl
-				}/${did}?resourceName=${statusListName}&resourceVersion=${statusListVersion}&resourceMetadata=true`
-			)).json();
-			const resourceData = await (
-				await fetch(`${
-					process.env.RESOLVER_URL || DefaultResolverUrl
-				}/${did}?resourceName=${statusListName}&resourceVersion=${statusListVersion}`
-			)).json();
-			
-			const result: UpdateStatusList2021Result = {
+				await fetch(
+					`${process.env.RESOLVER_URL || DefaultResolverUrl}/` +
+					`${did}?resourceName=${statusListName}&resourceVersion=${statusListVersion}&resourceMetadata=true`
+				)
+			).json();
+
+			return response.status(StatusCodes.OK).json({
 				updated: true,
-				resource: resourceData,
+				resource: resource,
 				resourceMetadata: metadata.contentStream?.linkedResourceMetadata
-			};
-			return response.status(StatusCodes.OK).json(result);
+			});
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${error}`,

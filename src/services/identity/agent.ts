@@ -39,7 +39,7 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import type { CheqdNetwork } from '@cheqd/sdk';
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key';
-import { DIDResolutionResult, Resolver, ResolverRegistry } from 'did-resolver';
+import { Resolver, ResolverRegistry } from 'did-resolver';
 
 import {
 	BroadCastStatusListOptions,
@@ -168,7 +168,7 @@ export class Veramo {
 		}
 	}
 
-	async deactivateDid(agent: VeramoAgent, did: string): Promise<DIDResolutionResult> {
+	async deactivateDid(agent: VeramoAgent, did: string): Promise<boolean> {
 		try {
 			const [kms] = await agent.keyManagerGetKeyManagementSystems();
 			const didDocument = (await this.resolveDid(agent, did)).didDocument;
@@ -176,11 +176,11 @@ export class Veramo {
 			if (!didDocument) {
 				throw new Error('DID document not found');
 			}
-			await agent.cheqdDeactivateIdentifier({
+			const result = await agent.cheqdDeactivateIdentifier({
 				kms,
 				document: didDocument,
 			} satisfies ICheqdDeactivateIdentifierArgs);
-			return await this.resolveDid(agent, did);
+			return result;
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
@@ -509,18 +509,21 @@ export class Veramo {
 
 		let res: SearchStatusList2021Result[] = [];
 		for (const resourceType of resourceTypes) {
+			const resource = await (
+				await fetch(
+					`${process.env.RESOLVER_URL || DefaultResolverUrl}/` +
+					`${did}?resourceType=${resourceType}&resourceName=${statusListName}`
+				)
+			).json();
 			const metadata = await (
-				await fetch(`${
-					process.env.RESOLVER_URL || DefaultResolverUrl
-				}/${did}?resourceType=${resourceType}&resourceName=${statusListName}&resourceMetadata=true`
-			)).json();
-			const resourceData = await (
-				await fetch(`${
-					process.env.RESOLVER_URL || DefaultResolverUrl
-				}/${did}?resourceType=${resourceType}&resourceName=${statusListName}`
-			)).json();
+				await fetch(
+					`${process.env.RESOLVER_URL || DefaultResolverUrl}/` +
+					`${did}?resourceType=${resourceType}&resourceName=${statusListName}&resourceMetadata=true`
+				)
+			).json();
+
 			res = res.concat({
-				resource: resourceData,
+				resource: resource,
 				resourceMetadata: metadata.contentStream?.linkedResourceMetadata
 			});
 		}

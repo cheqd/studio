@@ -47,7 +47,7 @@ export interface IIdentityService {
 	getKey(kid: string, agentId?: string): Promise<ManagedKeyInfo>;
 	createDid(network: string, didDocument: DIDDocument, agentId?: string): Promise<IIdentifier>;
 	updateDid(didDocument: DIDDocument, agentId?: string): Promise<IIdentifier>;
-	deactivateDid(did: string, agentId?: string): Promise<DIDResolutionResult>;
+	deactivateDid(did: string, agentId?: string): Promise<boolean>;
 	listDids(agentId?: string): Promise<string[]>;
 	resolveDid(did: string, agentId?: string): Promise<DIDResolutionResult>;
 	resolve(didUrl: string): Promise<Response>;

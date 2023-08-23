@@ -405,10 +405,19 @@ export class IssuerController {
 		}
 
 		try {
-			const result = await new IdentityStrategySetup(response.locals.customerId).agent.deactivateDid(
+			const deactivated = await new IdentityStrategySetup(response.locals.customerId).agent.deactivateDid(
 				request.params.did,
 				response.locals.customerId
 			);
+			if (!deactivated) {
+				return response.status(StatusCodes.BAD_REQUEST).json({deactivated: false});
+			}
+
+			const result = await new IdentityStrategySetup(response.locals.customerId).agent.resolveDid(
+				request.params.did,
+				response.locals.customerId
+			)
+
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
