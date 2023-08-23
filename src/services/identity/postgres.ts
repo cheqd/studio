@@ -272,37 +272,38 @@ export class PostgresIdentityService extends DefaultIdentityService {
 
 	async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId: string) {
 		const agent = await this.createAgent(agentId)
-        for(var credential in credentials) {
-            const decodedCredential = typeof credential === 'string' ? await Cheqd.decodeCredentialJWT(credential) : credential
-            const did = typeof (decodedCredential.issuer) == 'string' ? decodedCredential.issuer : decodedCredential.issuer.id
-            if (!await CustomerService.instance.find(agentId, { did })) {
-                throw new Error(`${did} not found in wallet`)
-            }
-        }
+        await this.validateCredentialAccess(credentials, agentId)
 		return await Veramo.instance.revokeCredentials(agent, credentials, publish)
 	}
 
 	async suspendCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId: string) {
 		const agent = await this.createAgent(agentId)
-        for(var credential in credentials) {
-            const decodedCredential = typeof credential === 'string' ? await Cheqd.decodeCredentialJWT(credential) : credential
-            const did = typeof (decodedCredential.issuer) == 'string' ? decodedCredential.issuer : decodedCredential.issuer.id
-            if (!await CustomerService.instance.find(agentId, { did })) {
-                throw new Error(`${did} not found in wallet`)
-            }
-        }
+        await this.validateCredentialAccess(credentials, agentId)
 		return await Veramo.instance.suspendCredentials(agent, credentials, publish)
 	}
 
 	async reinstateCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean, agentId: string) {
 		const agent = await this.createAgent(agentId)
-        for(var credential in credentials) {
-            const decodedCredential = typeof credential === 'string' ? await Cheqd.decodeCredentialJWT(credential) : credential
-            const did = typeof (decodedCredential.issuer) == 'string' ? decodedCredential.issuer : decodedCredential.issuer.id
-            if (!await CustomerService.instance.find(agentId, { did })) {
-                throw new Error(`${did} not found in wallet`)
-            }
-        }
+        await this.validateCredentialAccess(credentials, agentId)
 		return await Veramo.instance.unsuspendCredentials(agent, credentials, publish)
 	}
+
+    private async validateCredentialAccess(credentials: VerifiableCredential | VerifiableCredential[], agentId: string) {
+        credentials = Array.isArray(credentials) ? credentials : [credentials]
+        for(let credential of credentials) {
+            const decodedCredential = typeof credential === 'string'
+            ? await Cheqd.decodeCredentialJWT(credential)
+            : credential;
+    
+            const issuerId = typeof decodedCredential.issuer === 'string'
+                ? decodedCredential.issuer
+                : decodedCredential.issuer.id;
+        
+            const existsInWallet = await CustomerService.instance.find(agentId, { did: issuerId });
+        
+            if (!existsInWallet) {
+                throw new Error(`${issuerId} not found in wallet`);
+            }
+        }
+    }
 }
