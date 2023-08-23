@@ -286,7 +286,10 @@ export class PostgresIdentityService extends DefaultIdentityService {
 
     private async validateCredentialAccess(credentials: VerifiableCredential | VerifiableCredential[], agentId: string) {
         credentials = Array.isArray(credentials) ? credentials : [credentials]
-        const customer = await CustomerService.instance.get(agentId) as CustomerEntity
+        const customer = await CustomerService.instance.get(agentId) as CustomerEntity | null
+        if(!customer) {
+            throw new Error('Customer not found')
+        }
 
         for(let credential of credentials) {
             const decodedCredential = typeof credential === 'string'
