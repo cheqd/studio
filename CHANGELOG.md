@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.0-develop.3](https://github.com/cheqd/credential-service/compare/2.9.0-develop.2...2.9.0-develop.3) (2023-08-23)
+
+
+### Bug Fixes
+
+* Validate did access on operation ([#351](https://github.com/cheqd/credential-service/issues/351)) ([8bbfce1](https://github.com/cheqd/credential-service/commit/8bbfce19a462e78004f7a8f884929ee89d8fcc40))
+
 ## [2.9.0-develop.2](https://github.com/cheqd/credential-service/compare/2.9.0-develop.1...2.9.0-develop.2) (2023-08-21)
 
 
