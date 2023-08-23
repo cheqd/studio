@@ -48,8 +48,8 @@ import {
 	CreateAgentRequest,
 	CreateStatusListOptions,
 	CredentialRequest,
-	ResourceMetadata,
 	RevocationStatusOptions,
+	SearchStatusList2021Result,
 	StatusList2021ResourceTypes,
 	StatusOptions,
 	SuspensionStatusOptions,
@@ -194,7 +194,7 @@ export class Veramo {
 		return await agent.resolveDid({ didUrl: did });
 	}
 
-	async resolve(didUrl: string) : Promise<Response> {
+	async resolve(didUrl: string): Promise<Response> {
 		return fetch(`${process.env.RESOLVER_URL || DefaultResolverUrl}/${didUrl}`, {
 			headers: { 'Content-Type': '*/*' },
 		});
@@ -258,13 +258,13 @@ export class Veramo {
 				verifiable_credential =
 					statusListOptions.statusPurpose == 'revocation'
 						? await agent.cheqdIssueRevocableCredentialWithStatusList2021({
-								issuanceOptions,
-								statusOptions: statusListOptions as RevocationStatusOptions,
-						  })
+							issuanceOptions,
+							statusOptions: statusListOptions as RevocationStatusOptions,
+						})
 						: await agent.cheqdIssueSuspendableCredentialWithStatusList2021({
-								issuanceOptions,
-								statusOptions: statusListOptions as SuspensionStatusOptions,
-						  });
+							issuanceOptions,
+							statusOptions: statusListOptions as SuspensionStatusOptions,
+						});
 			} else {
 				verifiable_credential = await agent.createVerifiableCredential(issuanceOptions);
 			}
@@ -501,25 +501,30 @@ export class Veramo {
 			fetchList: true,
 		} satisfies ICheqdCheckCredentialStatusWithStatusList2021Args);
 	}
-	
+
 	async searchStatusList2021(agent: VeramoAgent, did: string, statusListName: string, statusPurpose: 'revocation' | 'suspension') {
 		const resourceTypes = statusPurpose
 			? [StatusList2021ResourceTypes[`${statusPurpose}`]]
 			: [StatusList2021ResourceTypes.revocation, StatusList2021ResourceTypes.suspension];
-		let metadata: ResourceMetadata[] = [];
-	
+
+		let res: SearchStatusList2021Result[] = [];
 		for (const resourceType of resourceTypes) {
-		  const result = await (await fetch(`${process.env.RESOLVER_URL || DefaultResolverUrl}/${did}?resourceType=${resourceType}&resourceMetadata=true`)).json();
-		  metadata = metadata.concat(result.contentStream?.linkedResourceMetadata || []);
+			const metadata = await (
+				await fetch(`${
+					process.env.RESOLVER_URL || DefaultResolverUrl
+				}/${did}?resourceType=${resourceType}&resourceName=${statusListName}&resourceMetadata=true`
+			)).json();
+			const resourceData = await (
+				await fetch(`${
+					process.env.RESOLVER_URL || DefaultResolverUrl
+				}/${did}?resourceType=${resourceType}&resourceName=${statusListName}`
+			)).json();
+			res = res.concat({
+				resource: resourceData,
+				resourceMetadata: metadata.contentStream?.linkedResourceMetadata
+			});
 		}
-		
-		return metadata.filter((resource: ResourceMetadata) => {
-		  if (statusListName) {
-			return resource.resourceName === statusListName && resource.mediaType == 'application/json';
-		  }
-		  return resource.mediaType == 'application/json';
-		}).map((resource: ResourceMetadata) => {
-		  return resource;
-		})
-	  }
+
+		return res;
+	}
 }

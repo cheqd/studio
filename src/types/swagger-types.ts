@@ -796,7 +796,16 @@
  *     CredentialStatusSearchResponse:
  *       type: array
  *       items:
- *         $ref: '#/components/schemas/ResourceMetadata'
+ *         type: object
+ *         properties:
+ *           resource:
+ *             type: object
+ *             example:
+ *                 encodedList: H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA
+ *                 type: StatusList2021Revocation
+ *                 validFrom: 2023-06-26T11:45:19.349Z
+ *           resourceMetadata:
+ *             $ref: '#/components/schemas/ResourceMetadata'
  *     Customer:
  *       type: object
  *       properties:

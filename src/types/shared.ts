@@ -167,3 +167,8 @@ export interface VerificationOptions {
 	domain?: string;
 	verifyStatus?: boolean;
 }
+
+export type SearchStatusList2021Result = {
+	resource: any;
+	resourceMetadata: ResourceMetadata[];
+}
