@@ -12,7 +12,6 @@ import { KeyManagementSystem, SecretBox } from '@veramo/kms-local'
 import { PrivateKeyStore } from '@veramo/data-store'
 import { Cheqd, CheqdDIDProvider, ResourcePayload } from '@cheqd/did-provider-cheqd'
 import { CheqdNetwork } from '@cheqd/sdk'
-import jwt, { JwtPayload } from 'jsonwebtoken'
 import {
 	BroadCastStatusListOptions,
 	CheckStatusListOptions,
@@ -256,9 +255,6 @@ export class PostgresIdentityService extends DefaultIdentityService {
 
 	async checkStatusList2021(did: string, statusOptions: CheckStatusListOptions, agentId: string): Promise<StatusCheckResult> {
 		const agent = await this.createAgent(agentId)
-        if (!await CustomerService.instance.find(agentId, { did })) {
-            throw new Error(`${did} not found in wallet`)
-        }
 		return await Veramo.instance.checkStatusList2021(agent, did, statusOptions)
 	}
 
@@ -290,19 +286,21 @@ export class PostgresIdentityService extends DefaultIdentityService {
 
     private async validateCredentialAccess(credentials: VerifiableCredential | VerifiableCredential[], agentId: string) {
         credentials = Array.isArray(credentials) ? credentials : [credentials]
+        const customer = await CustomerService.instance.get(agentId) as CustomerEntity
+
         for(let credential of credentials) {
             const decodedCredential = typeof credential === 'string'
             ? await Cheqd.decodeCredentialJWT(credential)
-            : credential;
+            : credential
     
             const issuerId = typeof decodedCredential.issuer === 'string'
                 ? decodedCredential.issuer
-                : decodedCredential.issuer.id;
-        
-            const existsInWallet = await CustomerService.instance.find(agentId, { did: issuerId });
+                : decodedCredential.issuer.id
+            
+            const existsInWallet = customer.dids.find((did) => did === issuerId)
         
             if (!existsInWallet) {
-                throw new Error(`${issuerId} not found in wallet`);
+                throw new Error(`${issuerId} not found in wallet`)
             }
         }
     }
