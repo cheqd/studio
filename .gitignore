@@ -460,3 +460,9 @@ v[0-9,a-z]*
 
 # sqlite
 *.sqlite
+
+# Playwright reports
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/.state.json
