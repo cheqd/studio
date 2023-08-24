@@ -315,8 +315,9 @@
  *               type: string
  *             length:
  *               description: The length of the status list to be created. The default and minimum length is 140000 which is 16kb.
- *               type: number
+ *               type: integer
  *               minimum: 0
+ *               exclusiveMinimum: true
  *               default: 140000
  *             encoding:
  *               description: The encoding format of the StatusList2021 DiD-Linked Resource to be created.
@@ -409,11 +410,13 @@
  *           description: Amount in CHEQ tokens to unlocked the encrypted StatusList2021 DID-Linked Resource.
  *           type: number
  *           minimum: 0
+ *           exclusiveMinimum: true
  *           default: 20
  *         feePaymentWindow:
  *           description: Time window (in minutes) within which the payment to unlock the encrypted StatusList2021 DID-Linked Resource is considered valid.
  *           type: number
  *           minimum: 0
+ *           exclusiveMinimum: true
  *           default: 10
  *     CredentialStatusEncryptedPaymentConditionsJson:
  *       type: object
@@ -517,7 +520,7 @@
  *           resourceVersion: 2023-06-26T11:45:19.349Z
  *         encrypted: true
  *         symmetricKey: dfe204ee95ae74ea5d74b94c3d8ff782273905b07fbc9f8c3d961c3b43849f18
- *     CredentialStatusUpdateUnencryptedRequest:
+ *     CredentialStatusUpdateBody:
  *       type: object
  *       required:
  *         - did
@@ -527,6 +530,7 @@
  *         did:
  *           description: DID of the StatusList2021 publisher.
  *           type: string
+ *           format: uri
  *         statusListName:
  *           description: The name of the StatusList2021 DID-Linked Resource to be updated.
  *           type: string
@@ -535,9 +539,14 @@
  *           type: array
  *           items:
  *             type: number
+ *             minimum: 0
+ *             exclusiveMinimum: false
  *         statusListVersion:
  *           description: Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.
  *           type: string
+ *     CredentialStatusUpdateUnencryptedRequest:
+ *       allOf:
+ *         - $ref: '#/components/schemas/CredentialStatusUpdateBody'
  *       example:
  *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
  *         statusListName: cheqd-employee-credentials
