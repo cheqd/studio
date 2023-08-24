@@ -1826,6 +1826,120 @@
           "encoding": "base64url"
         }
       },
+      "CredentialStatusCreateUnencryptedResult": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "boolean"
+              },
+              "resourceMetadata": {
+                "type": "object"
+              },
+              "resource": {
+                "type": "object",
+                "properties": {
+                  "StatusList2021": {
+                    "type": "object",
+                    "properties": {
+                      "encodedList": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "validFrom": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      },
+                      "encoding": {
+                        "type": "string"
+                      },
+                      "encrypted": {
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                }
+              },
+              "encrypted": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "example": {
+          "created": true,
+          "resource": {
+            "StatusList2021": {
+              "encodedList": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
+              "type": "StatusList2021Revocation",
+              "validFrom": "2023-06-26T11:45:19.349Z"
+            },
+            "metadata": {
+              "type": "StatusList2021Revocation",
+              "encoding": "base64url",
+              "encrypted": false
+            }
+          },
+          "resourceMetadata": {
+            "checksum": "909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2",
+            "created": "2023-06-26T11:45:20Z",
+            "mediaType": "application/json",
+            "nextVersionId": null,
+            "previousVersionId": null,
+            "resourceCollectionId": "7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+            "resourceId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
+            "resourceName": "cheqd-revocation-unencrypted-1",
+            "resourceType": "StatusList2021Revocation",
+            "resourceURI": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc",
+            "resourceVersion": "2023-06-26T11:45:19.349Z"
+          }
+        }
+      },
+      "CredentialStatusCreateEncryptedFormRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CredentialStatusCreateRequest"
+          },
+          {
+            "type": "object",
+            "required": [
+              "feePaymentAddress",
+              "feePaymentAmount",
+              "feePaymentWindow"
+            ],
+            "properties": {
+              "feePaymentAddress": {
+                "description": "The cheqd/Cosmos payment address where payments to unlock the encrypted StatusList2021 DID-Linked Resource need to be sent.",
+                "type": "string",
+                "example": "cheqd1qs0nhyk868c246defezhz5eymlt0dmajna2csg"
+              },
+              "feePaymentAmount": {
+                "description": "Amount in CHEQ tokens to unlocked the encrypted StatusList2021 DID-Linked Resource.",
+                "type": "number",
+                "minimum": 0,
+                "default": 10
+              },
+              "feePaymentWindow": {
+                "description": "Time window (in minutes) within which the payment to unlock the encrypted StatusList2021 DID-Linked Resource is considered valid.",
+                "type": "number",
+                "minimum": 0,
+                "default": 10
+              }
+            }
+          }
+        ]
+      },
       "CredentialStatusCreateEncryptedJsonRequest": {
         "allOf": [
           {
@@ -1910,162 +2024,6 @@
               "feePaymentWindow": 10
             }
           ]
-        }
-      },
-      "CredentialStatusCreateEncryptedFormRequest": {
-        "allOf": [
-          {
-            "type": "object",
-            "required": [
-              "did",
-              "statusListName",
-              "feePaymentAddress",
-              "feePaymentAmount",
-              "feePaymentWindow"
-            ],
-            "properties": {
-              "did": {
-                "description": "DID of the StatusList2021 publisher.",
-                "type": "string"
-              },
-              "statusListName": {
-                "description": "The name of the StatusList2021 DID-Linked Resource to be created.",
-                "type": "string"
-              },
-              "feePaymentAddress": {
-                "description": "The payment address for the StatusList2021 DID-Linked Resource to be created.",
-                "type": "string"
-              },
-              "feePaymentAmount": {
-                "description": "The payment amount for the StatusList2021 DID-Linked Resource to be created.",
-                "type": "number"
-              },
-              "feePaymentWindow": {
-                "description": "The payment window for the StatusList2021 DID-Linked Resource to be created.",
-                "type": "number"
-              },
-              "length": {
-                "description": "The length of the status list to be created. The default and minimum length is 140000 which is 16kb."
-              },
-              "encoding": {
-                "description": "The encoding format of the StatusList2021 DiD-Linked Resource to be created.",
-                "type": "string",
-                "default": "base64url",
-                "enum": [
-                  "base64url",
-                  "base64",
-                  "hex"
-                ]
-              },
-              "statusListVersion": {
-                "description": "Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.",
-                "type": "string"
-              },
-              "alsoKnownAs": {
-                "description": "Optional field to assign a set of alternative URIs where the StatusList2021 DID-Linked Resource can be fetched from.",
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "uri": {
-                      "type": "string"
-                    },
-                    "description": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ],
-        "example": {
-          "did": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
-          "statusListName": "cheqd-employee-credentials",
-          "feePaymentAddress": "cheqd12248whff96tpfyqm2vyvf9k4wda9h2dhdkf2e4",
-          "feePaymentAmount": 19.99,
-          "feePaymentWindow": 10
-        }
-      },
-      "CredentialStatusCreateUnencryptedResult": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "object",
-            "properties": {
-              "created": {
-                "type": "boolean"
-              },
-              "resourceMetadata": {
-                "type": "object"
-              },
-              "resource": {
-                "type": "object",
-                "properties": {
-                  "StatusList2021": {
-                    "type": "object",
-                    "properties": {
-                      "encodedList": {
-                        "type": "string"
-                      },
-                      "type": {
-                        "type": "string"
-                      },
-                      "validFrom": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "metadata": {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      },
-                      "encoding": {
-                        "type": "string"
-                      },
-                      "encrypted": {
-                        "type": "boolean"
-                      }
-                    }
-                  }
-                }
-              },
-              "encrypted": {
-                "type": "boolean"
-              }
-            }
-          }
-        },
-        "example": {
-          "created": true,
-          "resource": {
-            "StatusList2021": {
-              "encodedList": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
-              "type": "StatusList2021Revocation",
-              "validFrom": "2023-06-26T11:45:19.349Z"
-            },
-            "metadata": {
-              "type": "StatusList2021Revocation",
-              "encoding": "base64url",
-              "encrypted": false
-            }
-          },
-          "resourceMetadata": {
-            "checksum": "909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2",
-            "created": "2023-06-26T11:45:20Z",
-            "mediaType": "application/json",
-            "nextVersionId": null,
-            "previousVersionId": null,
-            "resourceCollectionId": "7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
-            "resourceId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
-            "resourceName": "cheqd-revocation-unencrypted-1",
-            "resourceType": "StatusList2021Revocation",
-            "resourceURI": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc",
-            "resourceVersion": "2023-06-26T11:45:19.349Z"
-          },
-          "encrypted": false
         }
       },
       "CredentialStatusCreateEncryptedResult": {
