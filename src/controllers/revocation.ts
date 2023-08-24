@@ -81,11 +81,7 @@ export class RevocationController {
 			.notEmpty()
 			.withMessage('statusListName: should be a non-empty string')
 			.bail(),
-		check('statusListVersion')
-			.optional()
-			.isString()
-			.withMessage('statusListVersion: should be a string')
-			.bail(),
+		check('statusListVersion').optional().isString().withMessage('statusListVersion: should be a string').bail(),
 		check('alsoKnownAs')
 			.optional()
 			.isArray()
@@ -278,11 +274,7 @@ export class RevocationController {
 			.notEmpty()
 			.withMessage('statusListName: should be a non-empty string')
 			.bail(),
-		check('statusListVerion')
-			.optional()
-			.isString()
-			.withMessage('statusListVersion: should be a string')
-			.bail(),
+		check('statusListVersion').optional().isString().withMessage('statusListVersion: should be a string').bail(),
 	];
 
 	static updateEncryptedValidator = [
@@ -454,11 +446,7 @@ export class RevocationController {
 			.custom((value) => Number.isInteger(value))
 			.withMessage('index: should be an integer')
 			.bail(),
-		check('makeFeePayment')
-			.optional()
-			.isBoolean()
-			.withMessage('makeFeePayment: should be a boolean')
-			.bail(),
+		check('makeFeePayment').optional().isBoolean().withMessage('makeFeePayment: should be a boolean').bail(),
 	];
 
 	static searchValidator = [
@@ -1183,7 +1171,11 @@ export class RevocationController {
 			if (errorRef?.errorCode === 'NodeAccessControlConditionsReturnedNotAuthorized')
 				return response.status(StatusCodes.UNAUTHORIZED).json({
 					checked: false,
-					error: `check: error: ${errorRef?.message ? 'unauthorised: decryption conditions are not met' : (error as Record<string, unknown>).toString()}`,
+					error: `check: error: ${
+						errorRef?.message
+							? 'unauthorised: decryption conditions are not met'
+							: (error as Record<string, unknown>).toString()
+					}`,
 				} satisfies CheckStatusListUnsuccessfulResponseBody);
 
 			// return catch-all error
