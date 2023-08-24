@@ -3,6 +3,22 @@
  *
  * components:
  *   schemas:
+ *     AlsoKnownAs:
+ *       type: object
+ *       properties:
+ *         alsoKnownAs:
+ *           type: array
+ *           description: Optional field to assign a set of alternative URIs where the DID-Linked Resource can be fetched from.
+ *           items:
+ *             type: object
+ *             properties:
+ *               uri:
+ *                 type: string
+ *                 format: uri
+ *                 description: URI where the DID-Linked Resource can be fetched from. Can be any type of URI (e.g., DID, HTTPS, IPFS, etc.)
+ *               description:
+ *                 type: string
+ *                 description: Optional description of the URI.
  *     CredentialRequest:
  *       description: Input fields for the creating a Verifiable Credential.
  *       type: object
@@ -283,7 +299,7 @@
  *             audience:
  *               description: Policy to skip the audience check when set to `false`.
  *               type: boolean
- *     CredentialStatusCreateUnencryptedRequest:
+ *     CredentialStatusCreateRequest:
  *       allOf:
  *         - type: object
  *           required:
@@ -293,11 +309,15 @@
  *             did:
  *               description: DID of the StatusList2021 publisher.
  *               type: string
+ *               format: uri
  *             statusListName:
  *               description: The name of the StatusList2021 DID-Linked Resource to be created.
  *               type: string
  *             length:
  *               description: The length of the status list to be created. The default and minimum length is 140000 which is 16kb.
+ *               type: number
+ *               minimum: 0
+ *               default: 140000
  *             encoding:
  *               description: The encoding format of the StatusList2021 DiD-Linked Resource to be created.
  *               type: string
@@ -309,16 +329,10 @@
  *             statusListVersion:
  *               description: Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.
  *               type: string
- *             alsoKnownAs:
- *               description: Optional field to assign a set of alternative URIs where the StatusList2021 DID-Linked Resource can be fetched from.
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   uri:
- *                     type: string
- *                   description:
- *                     type: string
+ *         - $ref: '#/components/schemas/AlsoKnownAs'
+ *     CredentialStatusCreateUnencryptedRequest:
+ *       allOf:
+ *         - $ref: '#/components/schemas/CredentialStatusCreateRequest'
  *       example:
  *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
  *         statusListName: cheqd-employee-credentials
@@ -1278,12 +1292,12 @@
  *         did:
  *           $ref: '#/components/schemas/DidProperties'
  *     ContentType:
+ *       type: string
  *       enum:
  *       - application/did+json
  *       - application/did+ld+json
  *       - application/ld+json
  *       - application/json
- *       type: string
  *     DidProperties:
  *       type: object
  *       properties:
