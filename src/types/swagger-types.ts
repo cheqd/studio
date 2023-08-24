@@ -394,81 +394,43 @@
  *           resourceType: StatusList2021Revocation
  *           resourceURI: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc
  *           resourceVersion: 2023-06-26T11:45:19.349Z
+ *     CredentialStatusEncryptedPaymentConditionsForm:
+ *       type: object
+ *       required:
+ *         - feePaymentAddress
+ *         - feePaymentAmount
+ *         - feePaymentWindow
+ *       properties:
+ *         feePaymentAddress:
+ *           description: The cheqd/Cosmos payment address where payments to unlock the encrypted StatusList2021 DID-Linked Resource need to be sent.
+ *           type: string
+ *           example: cheqd1qs0nhyk868c246defezhz5eymlt0dmajna2csg
+ *         feePaymentAmount:
+ *           description: Amount in CHEQ tokens to unlocked the encrypted StatusList2021 DID-Linked Resource.
+ *           type: number
+ *           minimum: 0
+ *           default: 20
+ *         feePaymentWindow:
+ *           description: Time window (in minutes) within which the payment to unlock the encrypted StatusList2021 DID-Linked Resource is considered valid.
+ *           type: number
+ *           minimum: 0
+ *           default: 10
+ *     CredentialStatusEncryptedPaymentConditionsJson:
+ *       type: object
+ *       required:
+ *         - paymentConditions
+ *       properties:
+ *         paymentConditions:
+ *           allOf:
+ *            - $ref: '#/components/schemas/CredentialStatusEncryptedPaymentConditionsForm'
  *     CredentialStatusCreateEncryptedFormRequest:
  *       allOf:
  *         - $ref: '#/components/schemas/CredentialStatusCreateRequest'
- *         - type: object
- *           required:
- *             - feePaymentAddress
- *             - feePaymentAmount
- *             - feePaymentWindow
- *           properties:
- *             feePaymentAddress:
- *               description: The cheqd/Cosmos payment address where payments to unlock the encrypted StatusList2021 DID-Linked Resource need to be sent.
- *               type: string
- *               example: cheqd1qs0nhyk868c246defezhz5eymlt0dmajna2csg
- *             feePaymentAmount:
- *               description: Amount in CHEQ tokens to unlocked the encrypted StatusList2021 DID-Linked Resource.
- *               type: number
- *               minimum: 0
- *               default: 20
- *             feePaymentWindow:
- *               description: Time window (in minutes) within which the payment to unlock the encrypted StatusList2021 DID-Linked Resource is considered valid.
- *               type: number
- *               minimum: 0
- *               default: 10
+ *         - $ref: '#/components/schemas/CredentialStatusEncryptedPaymentConditionsForm'
  *     CredentialStatusCreateEncryptedJsonRequest:
  *       allOf:
- *         - type: object
- *           required:
- *             - did
- *             - statusListName
- *             - paymentConditions
- *           properties:
- *             did:
- *               description: DID of the StatusList2021 publisher.
- *               type: string
- *             statusListName:
- *               description: The name of the StatusList2021 DID-Linked Resource to be created.
- *               type: string
- *             paymentConditions:
- *               description: The payment conditions for the StatusList2021 DID-Linked Resource to be created.
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   feePaymentAddress:
- *                     description: The payment address for the StatusList2021 DID-Linked Resource to be created.
- *                     type: string
- *                   feePaymentAmount:
- *                     description: The payment amount for the StatusList2021 DID-Linked Resource to be created.
- *                     type: number
- *                   feePaymentWindow:
- *                     description: The payment window for the StatusList2021 DID-Linked Resource to be created.
- *                     type: number
- *             length:
- *               description: The length of the status list to be created. The default and minimum length is 140000 which is 16kb.
- *             encoding:
- *               description: The encoding format of the StatusList2021 DiD-Linked Resource to be created.
- *               type: string
- *               default: base64url
- *               enum:
- *                 - base64url
- *                 - base64
- *                 - hex
- *             statusListVersion:
- *               description: Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.
- *               type: string
- *             alsoKnownAs:
- *               description: Optional field to assign a set of alternative URIs where the StatusList2021 DID-Linked Resource can be fetched from.
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   uri:
- *                     type: string
- *                   description:
- *                     type: string
+ *         - $ref: '#/components/schemas/CredentialStatusCreateRequest'
+ *         - $ref: '#/components/schemas/CredentialStatusEncryptedPaymentConditionsJson'
  *       example:
  *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
  *         statusListName: cheqd-employee-credentials
