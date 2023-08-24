@@ -299,7 +299,7 @@
  *             audience:
  *               description: Policy to skip the audience check when set to `false`.
  *               type: boolean
- *     CredentialStatusCreateRequest:
+ *     CredentialStatusCreateBody:
  *       allOf:
  *         - type: object
  *           required:
@@ -332,7 +332,7 @@
  *         - $ref: '#/components/schemas/AlsoKnownAs'
  *     CredentialStatusCreateUnencryptedRequest:
  *       allOf:
- *         - $ref: '#/components/schemas/CredentialStatusCreateRequest'
+ *         - $ref: '#/components/schemas/CredentialStatusCreateBody'
  *       example:
  *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
  *         statusListName: cheqd-employee-credentials
@@ -394,7 +394,7 @@
  *           resourceType: StatusList2021Revocation
  *           resourceURI: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc
  *           resourceVersion: 2023-06-26T11:45:19.349Z
- *     CredentialStatusEncryptedPaymentConditionsForm:
+ *     CredentialStatusEncryptedPaymentConditionsBody:
  *       type: object
  *       required:
  *         - feePaymentAddress
@@ -422,21 +422,21 @@
  *       properties:
  *         paymentConditions:
  *           allOf:
- *            - $ref: '#/components/schemas/CredentialStatusEncryptedPaymentConditionsForm'
+ *            - $ref: '#/components/schemas/CredentialStatusEncryptedPaymentConditionsBody'
  *     CredentialStatusCreateEncryptedFormRequest:
  *       allOf:
- *         - $ref: '#/components/schemas/CredentialStatusCreateRequest'
- *         - $ref: '#/components/schemas/CredentialStatusEncryptedPaymentConditionsForm'
+ *         - $ref: '#/components/schemas/CredentialStatusCreateBody'
+ *         - $ref: '#/components/schemas/CredentialStatusEncryptedPaymentConditionsBody'
  *     CredentialStatusCreateEncryptedJsonRequest:
  *       allOf:
- *         - $ref: '#/components/schemas/CredentialStatusCreateRequest'
+ *         - $ref: '#/components/schemas/CredentialStatusCreateBody'
  *         - $ref: '#/components/schemas/CredentialStatusEncryptedPaymentConditionsJson'
  *       example:
  *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
- *         statusListName: cheqd-employee-credentials
+ *         statusListName: cheqd-employee-credentials-encrypted
  *         paymentConditions:
- *           - feePaymentAddress: cheqd12248whff96tpfyqm2vyvf9k4wda9h2dhdkf2e4
- *             feePaymentAmount: 19.99
+ *           - feePaymentAddress: cheqd1qs0nhyk868c246defezhz5eymlt0dmajna2csg
+ *             feePaymentAmount: 20
  *             feePaymentWindow: 10
  *     CredentialStatusCreateEncryptedResult:
  *       type: object
