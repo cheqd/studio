@@ -77,9 +77,7 @@ export type CreateUnencryptedStatusListRequestQuery = {
 export type CreateUnencryptedStatusListSuccessfulResponseBody = Pick<
 	CreateStatusList2021Result,
 	'created' | 'error' | 'resource' | 'resourceMetadata'
-> & {
-	encrypted: false;
-};
+>;
 
 export type CreateUnencryptedStatusListUnsuccessfulResponseBody = {
 	created: false;
@@ -98,9 +96,7 @@ export type CreateEncryptedStatusListRequestQuery = CreateUnencryptedStatusListR
 export type CreateEncryptedStatusListSuccessfulResponseBody = Pick<
 	CreateStatusList2021Result,
 	'created' | 'error' | 'resource' | 'resourceMetadata' | 'symmetricKey'
-> & {
-	encrypted: true;
-};
+>;
 
 export type CreateEncryptedStatusListUnsuccessfulResponseBody = CreateUnencryptedStatusListUnsuccessfulResponseBody;
 
@@ -125,7 +121,6 @@ export type UpdateUnencryptedStatusListSuccessfulResponseBody = {
 			| BulkRevocationResult['statusList']
 			| BulkSuspensionResult['statusList']
 			| BulkUnsuspensionResult['statusList'];
-		encrypted?: false;
 	};
 
 export type UpdateUnencryptedStatusListUnsuccessfulResponseBody = {

@@ -322,6 +322,8 @@
  *       example:
  *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
  *         statusListName: cheqd-employee-credentials
+ *         length: 140000
+ *         encoding: base64url
  *     CredentialStatusCreateEncryptedJsonRequest:
  *       allOf:
  *         - type: object
