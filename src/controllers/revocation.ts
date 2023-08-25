@@ -1024,8 +1024,7 @@ export class RevocationController {
 				unsuspended: (result as BulkUnsuspensionResult)?.unsuspended || undefined,
 				resource: result.statusList,
 				resourceMetadata: result.resourceMetadata,
-				symmetricKey: result.symmetricKey,
-				encrypted: true,
+				symmetricKey: result.symmetricKey
 			} satisfies UpdateEncryptedStatusListSuccessfulResponseBody;
 
 			return response.status(StatusCodes.OK).json(formatted);
