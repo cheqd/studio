@@ -594,98 +594,17 @@
  *           - 130999
  *         symmetricKey: dfe204ee95ae74ea5d74b94c3d8ff782273905b07fbc9f8c3d961c3b43849f18
  *     CredentialStatusUpdateEncryptedResult:
- *       type: object
- *       properties:
- *         success:
- *           type: object
+ *       allOf:
+ *         - type: object
  *           properties:
  *             updated:
  *               type: boolean
- *             revoked:
- *               type: array
- *               items:
- *                 type: boolean
- *             suspended:
- *               type: array
- *               items:
- *                 type: boolean
- *             unsuspended:
- *               type: array
- *               items:
- *                 type: boolean
- *             resourceMetadata:
- *               type: object
- *             resource:
- *               type: object
- *               properties:
- *                StatusList2021:
- *                  type: object
- *                  properties:
- *                    encodedList:
- *                      type: string
- *                    type:
- *                      type: string
- *                    validFrom:
- *                      type: string
- *                metadata:
- *                  type: object
- *                  properties:
- *                    type:
- *                      type: string
- *                    encoding:
- *                      type: string
- *                    encrypted:
- *                      type: boolean
- *                    encryptedSymmetricKey:
- *                      type: string
- *                    paymentConditions:
- *                      type: array
- *                      items:
- *                        type: object
- *                        properties:
- *                          feePaymentAddress:
- *                            type: string
- *                          feePaymentAmount:
- *                            type: string
- *                          intervalInSeconds:
- *                            type: number
- *             encrypted:
- *               type: boolean
- *             symmetricKey:
- *               type: string
- *       example:
- *         updated: true
- *         revoked:
- *           - true
- *         resource:
- *           StatusList2021:
- *             encodedList: 496fdfbeb745b4db03fcdb40566f9c4c4a1c0f184b31255e641b6e7bdfb9b6946c12be87ca3763be0393c00b67ac1e8737c106b32f46ef59c765754415b5e8cc7c65fccaa3374620430ea476301a5e0dd63340e7a27a68bc627518471f22e4a2
- *             type: StatusList2021Revocation
- *             validFrom: 2023-06-26T11:45:19.349Z
- *           metadata:
- *             type: StatusList2021Revocation
- *             encoding: base64url
- *             encrypted: true
- *             encryptedSymmetricKey: b11182dc524b8181f9a6aef4c4ad0a1c14e40033b9112dffd8d1bcf6cc3b85abc07ded2205ee94068a99f4202502cb0855f322583fa6ce1534d3a05bf36891766ea2c5f90a982b3040680762977d404d758a2370224a239c8279aa7d21e980931c42055b17ca4c7dbffa4782480a8b6279cf989b2f166d5fdb4b2c1b5a63927200000000000000203018dcaba26df45a415bb599218b27ca853a70289d7a3ed3ed0e3730452e8f8d9af91b6e71312565d2c069341f6660ab
- *             paymentConditions:
- *               - feePaymentAddress: cheqd12248whff96tpfyqm2vyvf9k4wda9h2dhdkf2e4
- *                 feePaymentAmount: 19990000000ncheq
- *                 intervalInSeconds: 600
- *                 type: timelockPayment
- *         resourceMetadata:
- *           checksum: 909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2
- *           created: 2023-06-26T11:45:20Z
- *           mediaType: application/json
- *           nextVersionId: null
- *           previousVersionId: 22511a0f-67ac-428a-9a9f-514b9896da29
- *           resourceCollectionId: 7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
- *           resourceId: 5945233a-a4b5-422b-b893-eaed5cedd2dc
- *           resourceName: cheqd-revocation-encrypted-1
- *           resourceType: StatusList2021Revocation
- *           resourceURI: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc
- *           resourceVersion: 2023-06-26T11:45:19.349Z
- *         encrypted: true
- *         symmetricKey: dfe204ee95ae74ea5d74b94c3d8ff782273905b07fbc9f8c3d961c3b43849f18
+ *               example: true
+ *         - oneOf:
+ *           - $ref: '#/components/schemas/RevocationResult'
+ *           - $ref: '#/components/schemas/SuspensionResult'
+ *           - $ref: '#/components/schemas/UnsuspensionResult'
+ *         - $ref: '#/components/schemas/CredentialStatusEncryptedResult'
  *     CredentialStatusCheckRequest:
  *       type: object
  *       required:
