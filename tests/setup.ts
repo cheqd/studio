@@ -5,18 +5,17 @@ import type { FullConfig, Browser } from '@playwright/test';
 dotenv.config();
 
 async function globalSetup(config: FullConfig) {
-    const { baseURL, storageState } = config.projects[0].use;
+    const { storageState } = config.projects[0].use;
 
     const chromiumBrowser = await chromium.launch();
-    await setupPage(chromiumBrowser, baseURL!, storageState as string)
+    await setupPage(chromiumBrowser, storageState as string)
 }
 
-async function setupPage(browser: Browser, baseURL: string, storageState: string) {
+async function setupPage(browser: Browser, storageState: string) {
     const page = await browser.newPage();
-    await page.goto('http://localhost:8787/logto/sign-in');
-    await page.waitForURL(`https://service-auth-staging.cheqd.net/sign-in`, {
+    await page.goto(`${process.env.APPLICATION_BASE_URL}/logto/sign-in`);
+    await page.waitForURL(`${process.env.LOGTO_ENDPOINT}/sign-in`, {
 		waitUntil: 'domcontentloaded',
-		timeout: 60000,
 	});
 
     await page.getByPlaceholder('Email / Username').fill(process.env.TEST_USER_EMAIL);
@@ -24,10 +23,10 @@ async function setupPage(browser: Browser, baseURL: string, storageState: string
     await page.getByPlaceholder('Password').fill(process.env.TEST_USER_PASSWORD);
     await page.getByRole('button', { name: 'Continue' }).click();
 
-    await page.waitForURL('https://service-auth-staging.cheqd.net/sign-in/consent',  {
+    await page.waitForURL(`${process.env.LOGTO_ENDPOINT}/sign-in/consent`,  {
         waitUntil: 'domcontentloaded',
     });
-    await page.waitForURL(`http://localhost:8787/swagger/`, {
+    await page.waitForURL(`${process.env.APPLICATION_BASE_URL}/swagger/`, {
         waitUntil: 'domcontentloaded',
     });
 
