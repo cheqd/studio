@@ -350,45 +350,48 @@
  *               properties:
  *                 encodedList:
  *                   type: string
+ *                   example: H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA
  *                 type:
  *                   type: string
+ *                   example: StatusList2021Revocation
  *                 validFrom:
  *                   type: string
  *                   format: date-time
+ *                   example: 2023-06-26T11:45:19.349Z
  *             metadata:
  *               type: object
  *               properties:
  *                 type:
  *                   type: string
+ *                   example: StatusList2021Revocation
  *                 encoding:
  *                   type: string
+ *                   example: base64url
  *                 encrypted:
  *                   type: boolean
+ *                   example: false
  *         resourceMetadata:
  *           type: object
- *       example:
- *         resource:
- *           StatusList2021:
- *             encodedList: H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA
- *             type: StatusList2021Revocation
- *             validFrom: 2023-06-26T11:45:19.349Z
- *           metadata:
- *             type: StatusList2021Revocation
- *             encoding: base64url
- *             encrypted: false
- *         resourceMetadata:
- *           resourceURI: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc
- *           resourceCollectionId: 7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
- *           resourceId: 5945233a-a4b5-422b-b893-eaed5cedd2dc
- *           resourceName: cheqd-employee-credentials
- *           resourceType: StatusList2021Revocation
- *           resourceVersion: 2023-06-26T11:45:19.349Z
- *           mediaType: application/json
- *           created: 2023-06-26T11:45:20Z
- *           checksum: 909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2
- *           previousVersionId: null
- *           nextVersionId: null
+ *           example:
+ *             resourceURI: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc
+ *             resourceCollectionId: 7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *             resourceId: 5945233a-a4b5-422b-b893-eaed5cedd2dc
+ *             resourceName: cheqd-employee-credentials
+ *             resourceType: StatusList2021Revocation
+ *             mediaType: application/json
+ *             resourceVersion: 1.0.0
+ *             created: 2023-06-26T11:45:20Z
+ *             checksum: 909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2
+ *             previousVersionId: null
+ *             nextVersionId: null
  *     CredentialStatusCreateUnencryptedResult:
+ *       allOf:
+ *         - type: object
+ *           properties:
+ *             created:
+ *               type: boolean
+ *               example: true
+ *         - $ref: '#/components/schemas/CredentialStatusUnencryptedResult'
  *     CredentialStatusEncryptedPaymentConditionsBody:
  *       type: object
  *       properties:
