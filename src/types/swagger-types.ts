@@ -350,20 +350,28 @@
  *               properties:
  *                 encodedList:
  *                   type: string
+ *                   example: H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA
  *                 type:
  *                   type: string
+ *                   example: StatusList2021Revocation
  *                 validFrom:
  *                   type: string
  *                   format: date-time
+ *                   example: 2023-06-26T11:45:19.349Z
  *             metadata:
  *               type: object
  *               properties:
  *                 type:
  *                   type: string
+ *                   example: StatusList2021Revocation
  *                 encoding:
  *                   type: string
+ *                   example: base64url
  *                 encrypted:
  *                   type: boolean
+ *                   example: false
+ *         resourceMetadata:
+ *           type: object
  *       example:
  *         created: true
  *         resource:
