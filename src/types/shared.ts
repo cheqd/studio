@@ -154,7 +154,6 @@ export type UpdateEncryptedStatusListSuccessfulResponseBody = {
 			| BulkRevocationResult['statusList']
 			| BulkSuspensionResult['statusList']
 			| BulkUnsuspensionResult['statusList'];
-		encrypted: true;
 	};
 
 export type UpdateEncryptedStatusListUnsuccessfulResponseBody = UpdateUnencryptedStatusListUnsuccessfulResponseBody;
