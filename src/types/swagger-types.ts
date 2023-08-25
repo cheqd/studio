@@ -212,18 +212,17 @@
  *       properties:
  *         revoked:
  *           type: boolean
+ *           example: true
  *     SuspensionResult:
  *       properties:
  *         suspended:
  *           type: boolean
- *         statusList:
- *           type: string
+ *           example: true
  *     UnsuspensionResult:
  *       properties:
  *         unsuspended:
  *           type: boolean
- *         statusList:
- *           type: string
+ *           example: true
  *     CredentialVerifyRequest:
  *       type: object
  *       properties:
@@ -554,6 +553,18 @@
  *           - 3199
  *           - 12109
  *           - 130999
+ *     CredentialStatusUpdateUnencryptedResult:
+ *       allOf:
+ *         - type: object
+ *           properties:
+ *             updated:
+ *               type: boolean
+ *               example: true
+ *         - oneOf:
+ *           - $ref: '#/components/schemas/RevocationResult'
+ *           - $ref: '#/components/schemas/SuspensionResult'
+ *           - $ref: '#/components/schemas/UnsuspensionResult'
+ *         - $ref: '#/components/schemas/CredentialStatusUnencryptedResult'
  *     CredentialStatusUpdateEncryptedFormRequest:
  *       allOf:
  *         - $ref: '#/components/schemas/CredentialStatusUpdateBody'
@@ -585,63 +596,6 @@
  *           - 12109
  *           - 130999
  *         symmetricKey: dfe204ee95ae74ea5d74b94c3d8ff782273905b07fbc9f8c3d961c3b43849f18
- *     CredentialStatusUpdateUnencryptedResult:
- *       type: object
- *       properties:
- *         success:
- *           type: object
- *           properties:
- *             updated:
- *               type: boolean
- *             resourceMetadata:
- *               type: object
- *             resource:
- *               type: object
- *               properties:
- *                StatusList2021:
- *                  type: object
- *                  properties:
- *                    encodedList:
- *                      type: string
- *                    type:
- *                      type: string
- *                    validFrom:
- *                      type: string
- *                metadata:
- *                  type: object
- *                  properties:
- *                    type:
- *                      type: string
- *                    encoding:
- *                      type: string
- *                    encrypted:
- *                      type: boolean
- *             encrypted:
- *               type: boolean
- *       example:
- *         updated: true
- *         resource:
- *           StatusList2021:
- *             encodedList: H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA
- *             type: StatusList2021Revocation
- *             validFrom: 2023-06-26T11:45:19.349Z
- *           metadata:
- *             type: StatusList2021Revocation
- *             encoding: base64url
- *             encrypted: false
- *         resourceMetadata:
- *           checksum: 909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2
- *           created: 2023-06-26T11:45:20Z
- *           mediaType: application/json
- *           nextVersionId: null
- *           previousVersionId: 1036d66c-2d80-4e61-a8a7-62d2d5b8efd7
- *           resourceCollectionId: 7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
- *           resourceId: 5945233a-a4b5-422b-b893-eaed5cedd2dc
- *           resourceName: cheqd-revocation-unencrypted-1
- *           resourceType: StatusList2021Revocation
- *           resourceURI: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc
- *           resourceVersion: 2023-06-26T11:45:19.349Z
- *         encrypted: false
  *     CredentialStatusUpdateEncryptedResult:
  *       type: object
  *       properties:
