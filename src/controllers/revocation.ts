@@ -592,7 +592,7 @@ export class RevocationController {
 			}
 
 			// return result
-			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined});
+			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined });
 		} catch (error) {
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -700,7 +700,7 @@ export class RevocationController {
 			}
 
 			// return result
-			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined});
+			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined });
 		} catch (error) {
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -1024,7 +1024,7 @@ export class RevocationController {
 				unsuspended: (result as BulkUnsuspensionResult)?.unsuspended || undefined,
 				resource: result.statusList,
 				resourceMetadata: result.resourceMetadata,
-				symmetricKey: result.symmetricKey
+				symmetricKey: result.symmetricKey,
 			} satisfies UpdateEncryptedStatusListSuccessfulResponseBody;
 
 			return response.status(StatusCodes.OK).json(formatted);
