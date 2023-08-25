@@ -339,6 +339,55 @@
  *         statusListName: cheqd-employee-credentials
  *         length: 140000
  *         encoding: base64url
+ *     CredentialStatusUnencryptedResult:
+ *       type: object
+ *       properties:
+ *         resource:
+ *           type: object
+ *           properties:
+ *             StatusList2021:
+ *               type: object
+ *               properties:
+ *                 encodedList:
+ *                   type: string
+ *                 type:
+ *                   type: string
+ *                 validFrom:
+ *                   type: string
+ *                   format: date-time
+ *             metadata:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                 encoding:
+ *                   type: string
+ *                 encrypted:
+ *                   type: boolean
+ *       example:
+ *         created: true
+ *         resource:
+ *           StatusList2021:
+ *             encodedList: H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA
+ *             type: StatusList2021Revocation
+ *             validFrom: 2023-06-26T11:45:19.349Z
+ *           metadata:
+ *             type: StatusList2021Revocation
+ *             encoding: base64url
+ *             encrypted: false
+ *         resourceMetadata:
+ *           checksum: 909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2
+ *           created: 2023-06-26T11:45:20Z
+ *           mediaType: application/json
+ *           nextVersionId: null
+ *           previousVersionId: null
+ *           resourceCollectionId: 7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *           resourceId: 5945233a-a4b5-422b-b893-eaed5cedd2dc
+ *           resourceName: cheqd-revocation-unencrypted-1
+ *           resourceType: StatusList2021Revocation
+ *           resourceURI: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc
+ *           resourceVersion: 2023-06-26T11:45:19.349Z
+ *     CredentialStatusCreateUnencryptedResult:
  *     CredentialStatusEncryptedPaymentConditionsBody:
  *       type: object
  *       properties:
@@ -387,62 +436,6 @@
  *           - feePaymentAddress: cheqd1qs0nhyk868c246defezhz5eymlt0dmajna2csg
  *             feePaymentAmount: 20
  *             feePaymentWindow: 10
- *     CredentialStatusCreateUnencryptedResult:
- *       type: object
- *       properties:
- *         success:
- *           type: object
- *           properties:
- *             created:
- *               type: boolean
- *             resourceMetadata:
- *               type: object
- *             resource:
- *               type: object
- *               properties:
- *                StatusList2021:
- *                  type: object
- *                  properties:
- *                    encodedList:
- *                      type: string
- *                    type:
- *                      type: string
- *                    validFrom:
- *                      type: string
- *                metadata:
- *                  type: object
- *                  properties:
- *                    type:
- *                      type: string
- *                    encoding:
- *                      type: string
- *                    encrypted:
- *                      type: boolean
- *             encrypted:
- *               type: boolean
- *       example:
- *         created: true
- *         resource:
- *           StatusList2021:
- *             encodedList: H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA
- *             type: StatusList2021Revocation
- *             validFrom: 2023-06-26T11:45:19.349Z
- *           metadata:
- *             type: StatusList2021Revocation
- *             encoding: base64url
- *             encrypted: false
- *         resourceMetadata:
- *           checksum: 909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2
- *           created: 2023-06-26T11:45:20Z
- *           mediaType: application/json
- *           nextVersionId: null
- *           previousVersionId: null
- *           resourceCollectionId: 7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
- *           resourceId: 5945233a-a4b5-422b-b893-eaed5cedd2dc
- *           resourceName: cheqd-revocation-unencrypted-1
- *           resourceType: StatusList2021Revocation
- *           resourceURI: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc
- *           resourceVersion: 2023-06-26T11:45:19.349Z
  *     CredentialStatusCreateEncryptedResult:
  *       type: object
  *       properties:
