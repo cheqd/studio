@@ -592,7 +592,7 @@ export class RevocationController {
 			}
 
 			// return result
-			return response.status(StatusCodes.OK).json(result);
+			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined});
 		} catch (error) {
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -700,7 +700,7 @@ export class RevocationController {
 			}
 
 			// return result
-			return response.status(StatusCodes.OK).json(result);
+			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined});
 		} catch (error) {
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
