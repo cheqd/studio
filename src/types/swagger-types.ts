@@ -557,7 +557,6 @@
  *           - 3199
  *           - 12109
  *           - 130999
- *         statusListVersion: 1.0.0
  *     CredentialStatusUpdateEncryptedFormRequest:
  *       allOf:
  *         - $ref: '#/components/schemas/CredentialStatusUpdateBody'
@@ -569,6 +568,17 @@
  *               description: The symmetric key used to encrypt the StatusList2021 DID-Linked Resource.
  *               type: string
  *         - $ref: '#/components/schemas/CredentialStatusEncryptedPaymentConditionsBody'
+ *     CredentialStatusUpdateEncryptedJsonRequest:
+ *       allOf:
+ *         - $ref: '#/components/schemas/CredentialStatusUpdateBody'
+ *         - type: object
+ *           required:
+ *             - symmetricKey
+ *           properties:
+ *             symmetricKey:
+ *               description: The symmetric key used to encrypt the StatusList2021 DID-Linked Resource.
+ *               type: string
+ *         - $ref: '#/components/schemas/CredentialStatusEncryptedPaymentConditionsJson'
  *       example:
  *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
  *         statusListName: cheqd-employee-credentials-encrypted
@@ -578,57 +588,6 @@
  *           - 12109
  *           - 130999
  *         symmetricKey: dfe204ee95ae74ea5d74b94c3d8ff782273905b07fbc9f8c3d961c3b43849f18
- *         statusListVersion: 1.0.0
- *     CredentialStatusUpdateEncryptedJsonRequest:
- *       type: object
- *       required:
- *         - did
- *         - statusListName
- *         - indices
- *         - symmetricKey
- *       properties:
- *         did:
- *           description: DID of the StatusList2021 publisher.
- *           type: string
- *         statusListName:
- *           description: The name of the StatusList2021 DID-Linked Resource to be updated.
- *           type: string
- *         indices:
- *           description: List of credential status indices to be updated. The indices must be in the range of the status list.
- *           type: array
- *           items:
- *             type: number
- *         symmetricKey:
- *           description: The symmetric key used to encrypt the StatusList2021 DID-Linked Resource.
- *           type: string
- *         paymentConditions:
- *           description: The payment conditions for the StatusList2021 DID-Linked Resource to be updated.
- *           type: array
- *           items:
- *             type: object
- *             properties:
- *               feePaymentAddress:
- *                 description: The payment address for the StatusList2021 DID-Linked Resource to be updated.
- *                 type: string
- *               feePaymentAmount:
- *                 description: The payment amount for the StatusList2021 DID-Linked Resource to be updated.
- *                 type: number
- *               feePaymentWindow:
- *                 description: The payment window for the StatusList2021 DID-Linked Resource to be updated.
- *                 type: number
- *         statusListVersion:
- *           description: Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.
- *           type: string
- *       example:
- *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
- *         statusListName: cheqd-employee-credentials
- *         indices:
- *           - 10
- *           - 3199
- *           - 12109
- *           - 130999
- *         symmetricKey: dfe204ee95ae74ea5d74b94c3d8ff782273905b07fbc9f8c3d961c3b43849f18
- *         statusListVersion: 1.0.0
  *     CredentialStatusUpdateUnencryptedResult:
  *       type: object
  *       properties:
