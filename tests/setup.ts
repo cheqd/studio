@@ -1,5 +1,8 @@
+import * as dotenv from 'dotenv';
 import { chromium } from '@playwright/test';
 import type { FullConfig, Browser } from '@playwright/test';
+
+dotenv.config();
 
 async function globalSetup(config: FullConfig) {
     const { baseURL, storageState } = config.projects[0].use;
@@ -16,9 +19,9 @@ async function setupPage(browser: Browser, baseURL: string, storageState: string
 		timeout: 60000,
 	});
 
-    await page.getByPlaceholder('Email / Username').fill('your-email-or-username');
+    await page.getByPlaceholder('Email / Username').fill(process.env.TEST_USER_EMAIL);
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await page.getByPlaceholder('Password').fill('your-password');
+    await page.getByPlaceholder('Password').fill(process.env.TEST_USER_PASSWORD);
     await page.getByRole('button', { name: 'Continue' }).click();
 
     await page.waitForURL('https://service-auth-staging.cheqd.net/sign-in/consent',  {
