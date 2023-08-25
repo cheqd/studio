@@ -341,10 +341,6 @@
  *         encoding: base64url
  *     CredentialStatusEncryptedPaymentConditionsBody:
  *       type: object
- *       required:
- *         - feePaymentAddress
- *         - feePaymentAmount
- *         - feePaymentWindow
  *       properties:
  *         feePaymentAddress:
  *           description: The cheqd/Cosmos payment address where payments to unlock the encrypted StatusList2021 DID-Linked Resource need to be sent.
@@ -364,8 +360,6 @@
  *           default: 10
  *     CredentialStatusEncryptedPaymentConditionsJson:
  *       type: object
- *       required:
- *         - paymentConditions
  *       properties:
  *         paymentConditions:
  *           allOf:
@@ -374,10 +368,18 @@
  *       allOf:
  *         - $ref: '#/components/schemas/CredentialStatusCreateBody'
  *         - $ref: '#/components/schemas/CredentialStatusEncryptedPaymentConditionsBody'
+ *         - type: object
+ *           required:
+ *             - feePaymentAddress
+ *             - feePaymentAmount
+ *             - feePaymentWindow
  *     CredentialStatusCreateEncryptedJsonRequest:
  *       allOf:
  *         - $ref: '#/components/schemas/CredentialStatusCreateBody'
  *         - $ref: '#/components/schemas/CredentialStatusEncryptedPaymentConditionsJson'
+ *         - type: object
+ *           required:
+ *             - paymentConditions
  *       example:
  *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
  *         statusListName: cheqd-employee-credentials-encrypted
@@ -557,42 +559,19 @@
  *           - 130999
  *         statusListVersion: 1.0.0
  *     CredentialStatusUpdateEncryptedFormRequest:
- *       type: object
- *       required:
- *         - did
- *         - statusListName
- *         - indices
- *         - symmetricKey
- *       properties:
- *         did:
- *           description: DID of the StatusList2021 publisher.
- *           type: string
- *         statusListName:
- *           description: The name of the StatusList2021 DID-Linked Resource to be updated.
- *           type: string
- *         indices:
- *           description: List of credential status indices to be updated. The indices must be in the range of the status list.
- *           type: array
- *           items:
- *             type: number
- *         symmetricKey:
- *           description: The symmetric key used to encrypt the StatusList2021 DID-Linked Resource.
- *           type: string
- *         feePaymentAddress:
- *           description: The payment address for the StatusList2021 DID-Linked Resource to be updated. Use this field to update the payment address, effective for the immediately following published updated StatusList2021 DID-Linked Resource.
- *           type: string
- *         feePaymentAmount:
- *           description: The payment amount for the StatusList2021 DID-Linked Resource to be updated. Use this field to update the payment amount, effective for the immediately following published updated StatusList2021 DID-Linked Resource.
- *           type: number
- *         feePaymentWindow:
- *           description: The payment window for the StatusList2021 DID-Linked Resource to be updated. Use this field to update the payment window, effective for the immediately following published updated StatusList2021 DID-Linked Resource.
- *           type: number
- *         statusListVersion:
- *           description: Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.
- *           type: string
+ *       allOf:
+ *         - $ref: '#/components/schemas/CredentialStatusUpdateBody'
+ *         - type: object
+ *           required:
+ *             - symmetricKey
+ *           properties:
+ *             symmetricKey:
+ *               description: The symmetric key used to encrypt the StatusList2021 DID-Linked Resource.
+ *               type: string
+ *         - $ref: '#/components/schemas/CredentialStatusEncryptedPaymentConditionsBody'
  *       example:
  *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
- *         statusListName: cheqd-employee-credentials
+ *         statusListName: cheqd-employee-credentials-encrypted
  *         indices:
  *           - 10
  *           - 3199
