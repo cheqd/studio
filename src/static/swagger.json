@@ -2331,7 +2331,14 @@
             }
           },
           {
-            "$ref": "#/components/schemas/CredentialStatusUnencryptedResult"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CredentialStatusUnencryptedResult"
+              },
+              {
+                "$ref": "#/components/schemas/CredentialStatusEncryptedResult"
+              }
+            ]
           }
         ]
       },

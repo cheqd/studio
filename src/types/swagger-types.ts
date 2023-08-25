@@ -657,7 +657,9 @@
  *             found:
  *               type: boolean
  *               example: true
- *         - $ref: '#/components/schemas/CredentialStatusUnencryptedResult'
+ *         - oneOf:
+ *           - $ref: '#/components/schemas/CredentialStatusUnencryptedResult'
+ *           - $ref: '#/components/schemas/CredentialStatusEncryptedResult'
  *     KeyResult:
  *       type: object
  *       properties:
