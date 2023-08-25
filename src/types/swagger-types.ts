@@ -540,7 +540,7 @@
  *           description: List of credential status indices to be updated. The indices must be in the range of the status list.
  *           type: array
  *           items:
- *             type: number
+ *             type: integer
  *             minimum: 0
  *             exclusiveMinimum: false
  *         statusListVersion:
@@ -748,15 +748,19 @@
  *         did:
  *           description: DID of the StatusList2021 publisher.
  *           type: string
+ *           format: uri
  *         statusListName:
  *           description: The name of the StatusList2021 DID-Linked Resource to be checked.
  *           type: string
  *         index:
  *           description: Credential status index to be checked for revocation or suspension.
- *           type: number
+ *           type: integer
+ *           minimum: 0
+ *           exclusiveMinimum: false
  *         makeFeePayment:
- *           description: Optional field to make a fee payment for the credential status check.
+ *           description: Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 DID-Linked Resource.
  *           type: boolean
+ *           default: true
  *     CredentialStatusCheckResult:
  *       oneOf:
  *       - $ref: '#/components/schemas/CredentialStatusCheckRevocationResult'
@@ -766,15 +770,19 @@
  *       properties:
  *         checked:
  *           type: boolean
+ *           example: true
  *         revoked:
  *           type: boolean
+ *           example: false
  *     CredentialStatusCheckSuspensionResult:
  *       type: object
  *       properties:
  *         checked:
  *           type: boolean
+ *           example: true
  *         suspended:
  *           type: boolean
+ *           example: false
  *     CredentialStatusListSearchResult:
  *       type: object
  *       properties:
