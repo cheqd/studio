@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
 import { StatusCodes } from 'http-status-codes';
 import stringify from 'json-stringify-safe';
-import { cheqdDidRegex } from '../../types/shared.js';
+import { DefaultDidUrlPattern } from '../../types/shared.js';
 import { MethodToScope, IAuthResourceHandler, Namespaces, IAuthResponse } from '../../types/authentication.js';
 import { LogToHelper } from './logto.js';
 
@@ -40,7 +40,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 		// Reset all variables
 		this.reset();
 		// setting up namespace. It should be testnet or mainnet
-        this.namespace = AbstractAuthHandler.getNamespaceFromRequest(request)
+		this.namespace = AbstractAuthHandler.getNamespaceFromRequest(request);
 		// Firstly - try to find the rule for the request
 		const rule = this.findRule(request.path, request.method, this.getNamespace());
 
@@ -154,10 +154,10 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 	}
 
 	public static getNamespaceFromRequest(req: Request): Namespaces {
-		if (AbstractAuthHandler.doesMatchMainnet(stringify(req.body).match(cheqdDidRegex))) {
+		if (AbstractAuthHandler.doesMatchMainnet(stringify(req.body).match(DefaultDidUrlPattern))) {
 			return Namespaces.Mainnet;
 		}
-		if (AbstractAuthHandler.doesMatchMainnet(req.path.match(cheqdDidRegex))) {
+		if (AbstractAuthHandler.doesMatchMainnet(req.path.match(DefaultDidUrlPattern))) {
 			return Namespaces.Mainnet;
 		}
 		return Namespaces.Testnet;
