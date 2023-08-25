@@ -735,78 +735,13 @@
  *           type: boolean
  *           example: false
  *     CredentialStatusListSearchResult:
- *       type: object
- *       properties:
- *         success:
- *           type: object
+ *       allOf:
+ *         - type: object
  *           properties:
  *             found:
  *               type: boolean
- *             resourceMetadata:
- *               type: object
- *             resource:
- *               type: object
- *               properties:
- *                 StatusList2021:
- *                   type: object
- *                   properties:
- *                     encodedList:
- *                       type: string
- *                     type:
- *                       type: string
- *                     validFrom:
- *                       type: string
- *                 metadata:
- *                   type: object
- *                   properties:
- *                     type:
- *                       type: string
- *                     encoding:
- *                       type: string
- *                     encrypted:
- *                       type: boolean
- *                     encryptedSymmetricKey:
- *                       type: string
- *                     paymentConditions:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           feePaymentAddress:
- *                             type: string
- *                           feePaymentAmount:
- *                             type: string
- *                           intervalInSeconds:
- *                             type: number
- *       example:
- *         found: true
- *         resource:
- *           StatusList2021:
- *             encodedList: 496fdfbeb745b4db03fcdb40566f9c4c4a1c0f184b31255e641b6e7bdfb9b6946c12be87ca3763be0393c00b67ac1e8737c106b32f46ef59c765754415b5e8cc7c65fccaa3374620430ea476301a5e0dd63340e7a27a68bc627518471f22e4a2
- *             statusPurpose: revocation
- *             validFrom: 2023-08-21T15:11:15.365Z
- *           metadata:
- *             type: StatusList2021Revocation
- *             encoding: base64url
- *             encrypted: true
- *             encryptedSymmetricKey: b11182dc524b8181f9a6aef4c4ad0a1c14e40033b9112dffd8d1bcf6cc3b85abc07ded2205ee94068a99f4202502cb0855f322583fa6ce1534d3a05bf36891766ea2c5f90a982b3040680762977d404d758a2370224a239c8279aa7d21e980931c42055b17ca4c7dbffa4782480a8b6279cf989b2f166d5fdb4b2c1b5a63927200000000000000203018dcaba26df45a415bb599218b27ca853a70289d7a3ed3ed0e3730452e8f8d9af91b6e71312565d2c069341f6660ab
- *             paymentConditions:
- *               - feePaymentAddress: cheqd12248whff96tpfyqm2vyvf9k4wda9h2dhdkf2e4
- *                 feePaymentAmount: 19990000000ncheq
- *                 intervalInSeconds: 600
- *                 type: timelockPayment
- *         resourceMetadata:
- *           resourceURI: did:cheqd:testnet:09b20561-7339-40ea-a377-05ea35a0e82a/resources/cac847e8-a099-4f8f-99b2-f1f764e5953b
- *           resourceCollectionId: 09b20561-7339-40ea-a377-05ea35a0e82a
- *           resourceId: cac847e8-a099-4f8f-99b2-f1f764e5953b
- *           resourceName: sandbox-encrypted-beta
- *           resourceType: StatusList2021Revocation
- *           mediaType: application/json
- *           resourceVersion: 2023-08-21T15:11:15.365Z
- *           created: 2023-08-21T15:11:16Z
- *           checksum: 8a28a3b44db99aab1ec31af3011ca037268c47e5c12677ceb3bd4eec2761e271
- *           previousVersionId: 1c83c1f7-cc4b-4e28-98e7-4552186d06cc
- *           nextVersionId: null
+ *               example: true
+ *         - $ref: '#/components/schemas/CredentialStatusUnencryptedResult'
  *     KeyResult:
  *       type: object
  *       properties:
