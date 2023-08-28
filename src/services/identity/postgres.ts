@@ -75,6 +75,9 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			throw new Error('Customer not found')
 		}
 		const customer = await CustomerService.instance.get(agentId) as CustomerEntity
+		if (!customer) {
+			throw new Error('Customer not found')
+		}
 		const dbConnection = Connection.instance.dbConnection
 
 		const privateKey = (await this.getPrivateKey(customer.account)).privateKeyHex
@@ -291,7 +294,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
             throw new Error('Customer not found')
         }
 
-        for(let credential of credentials) {
+        for(const credential of credentials) {
             const decodedCredential = typeof credential === 'string'
             ? await Cheqd.decodeCredentialJWT(credential)
             : credential

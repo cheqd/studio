@@ -76,6 +76,7 @@ const ID_CHAR = `(?:[a-zA-Z0-9]{21,22}|${UUID})`;
 const NETWORK = '(testnet|mainnet)';
 const METHOD_ID = `((?:${ID_CHAR}*:)*(${ID_CHAR}+))`;
 export const cheqdDidRegex = new RegExp(`^did:cheqd:${NETWORK}:${METHOD_ID}$`);
+export const networkCheqdDIDRegexp = new RegExp(`did:cheqd:${NETWORK}:.*`);
 
 export enum DefaultRPCUrl {
 	Mainnet = 'https://rpc.cheqd.net',
