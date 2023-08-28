@@ -15,11 +15,14 @@ window.addEventListener('load', function () {
 		window.location.href = base_url + '/logto/sign-out';
 	};
 	const auth_pan = document.createElement('div');
-	auth_pan.classList.add('auth-wrapper');
+	auth_pan.classList.add('auth-wrapper', 'wrapper');
 	auth_pan.appendChild(login_button);
 
-	const scheme_pan = document.getElementsByClassName('scheme-container')[0];
-	scheme_pan.children[0].appendChild(auth_pan);
+	const auth_div = document.getElementsByClassName('swagger-ui')[1].children[1];
+	if (auth_div) {
+		const child = auth_div.children[1];
+		child.insertAdjacentElement('beforebegin', auth_pan);
+	}
 
 	isAuthenticated().then(function (value) {
 		if (value) {
