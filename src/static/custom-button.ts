@@ -18,10 +18,9 @@ window.addEventListener('load', function () {
 	auth_pan.classList.add('auth-wrapper', 'wrapper');
 	auth_pan.appendChild(login_button);
 
-	const auth_div = document.getElementsByClassName('swagger-ui')[1].children[1];
-	if (auth_div) {
-		const child = auth_div.children[1];
-		child.insertAdjacentElement('beforebegin', auth_pan);
+	const info_div = document.getElementsByClassName('information-container')[0];
+	if (info_div) {
+		info_div.insertAdjacentElement('afterend', auth_pan);
 	}
 
 	isAuthenticated().then(function (value) {
