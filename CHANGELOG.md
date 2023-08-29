@@ -1,5 +1,7 @@
 # Changelog
 
+## [2.9.0-develop.6](https://github.com/cheqd/credential-service/compare/2.9.0-develop.5...2.9.0-develop.6) (2023-08-29)
+
 ## [2.9.0-develop.5](https://github.com/cheqd/credential-service/compare/2.9.0-develop.4...2.9.0-develop.5) (2023-08-29)
 
 
