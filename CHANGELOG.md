@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.0-develop.5](https://github.com/cheqd/credential-service/compare/2.9.0-develop.4...2.9.0-develop.5) (2023-08-29)
+
+
+### Bug Fixes
+
+* Credential Service Staging - Resolve issue with page not loading and broken login [DEV-3162] ([#358](https://github.com/cheqd/credential-service/issues/358)) ([419d2ec](https://github.com/cheqd/credential-service/commit/419d2ecb65bb9b365bf9aae5bc8e39e9a08d79ea))
+
 ## [2.9.0-develop.4](https://github.com/cheqd/credential-service/compare/2.9.0-develop.3...2.9.0-develop.4) (2023-08-25)
 
 
