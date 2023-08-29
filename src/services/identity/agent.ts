@@ -20,7 +20,6 @@ import { KeyManager } from '@veramo/key-manager';
 import { DIDStore, KeyStore } from '@veramo/data-store';
 import { DIDManager } from '@veramo/did-manager';
 import { DIDResolverPlugin, getUniversalResolver as UniversalResolver } from '@veramo/did-resolver';
-import { getResolver as VeridaResolver } from '@verida/vda-did-resolver';
 import { CredentialPlugin } from '@veramo/credential-w3c';
 import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld';
 import {
@@ -51,7 +50,6 @@ import {
 import type { CheqdNetwork } from '@cheqd/sdk';
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key';
 import { Resolver, ResolverRegistry } from 'did-resolver';
-
 import {
 	BroadcastStatusListOptions,
 	CheckStatusListOptions,
@@ -73,6 +71,11 @@ import {
 } from '../../types/shared.js';
 import { MINIMAL_DENOM, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js';
 import { toCoin, toDefaultDkg, toMinimalDenom } from '../../helpers/helpers.js';
+
+// dynamic import to avoid circular dependency
+const VeridaResolver = process.env.ENABLE_VERIDA_CONNECTOR === 'true'
+	? (await import('@verida/vda-did-resolver')).getResolver
+	: undefined;
 
 export class Veramo {
 	static instance = new Veramo();
@@ -115,14 +118,24 @@ export class Veramo {
 		}
 
 		if (enableResolver) {
+			// construct resolver map
+			const resolvers = {
+				...(CheqdDidResolver({ url: process.env.RESOLVER_URL }) as ResolverRegistry),
+				...KeyDidResolver(),
+				...UniversalResolver(),
+			}
+
+			// handle optional dependencies
+			if (VeridaResolver) {
+				const veridaResolver = VeridaResolver();
+
+				// add verida resolver to resolver map
+				Object.assign(resolvers, veridaResolver);
+			}
+
 			plugins.push(
 				new DIDResolverPlugin({
-					resolver: new Resolver({
-						...(CheqdDidResolver({ url: process.env.RESOLVER_URL }) as ResolverRegistry),
-						...KeyDidResolver(),
-						...VeridaResolver(),
-						...UniversalResolver(),
-					}),
+					resolver: new Resolver(resolvers),
 				})
 			);
 		}
