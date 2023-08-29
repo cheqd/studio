@@ -182,7 +182,7 @@ export class CredentialController {
 		}
 
 		const { credential, policies } = request.body;
-		const verifyStatus = request.query.verifyStatus === 'true' ? true : false;
+		const verifyStatus = request.query.verifyStatus === 'true';
 		try {
 			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.verifyCredential(
 				credential,
