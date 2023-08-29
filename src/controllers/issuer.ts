@@ -9,6 +9,7 @@ import { StatusCodes } from 'http-status-codes';
 
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { generateDidDoc, getQueryParams, validateSpecCompliantPayload } from '../helpers/helpers.js';
+import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
 
 export class IssuerController {
 	public static createValidator = [
@@ -455,6 +456,10 @@ export class IssuerController {
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/ResourceMetadata'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -500,8 +505,14 @@ export class IssuerController {
 				response.locals.customerId
 			);
 			if (result) {
+				const url = new URL(
+					`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?` + 
+					`resourceId=${resourcePayload.id}&resourceMetadata=true`,
+				);
+				const didDereferencing = (await (await fetch(url)).json()) as DIDMetadataDereferencingResult;
+
 				return response.status(StatusCodes.CREATED).json({
-					resource: resourcePayload,
+					resource: didDereferencing.contentStream.linkedResourceMetadata[0],
 				});
 			} else {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

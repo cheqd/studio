@@ -720,7 +720,14 @@
         },
         "responses": {
           "200": {
-            "description": "The request was successful."
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceMetadata"
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/schemas/InvalidRequest"
