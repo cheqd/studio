@@ -913,6 +913,18 @@
  *            $ref: '#/components/schemas/DidDocument'
  *          didDocumentMetadata:
  *            $ref: '#/components/schemas/DidDocumentMetadata'
+ *     DeactivatedDidResolution:
+ *       type: object
+ *       properties:
+ *          '@context':
+ *            type: string
+ *            example: https://w3id.org/did-resolution/v1
+ *          didDidResolutionMetadata:
+ *            $ref: '#/components/schemas/DidResolutionMetadata'
+ *          didDocument:
+ *            $ref: '#/components/schemas/DidDocument'
+ *          didDocumentMetadata:
+ *            $ref: '#/components/schemas/DeactivatedDidDocumentMetadata'
  *     DidDocumentMetadata:
  *       type: object
  *       properties:
@@ -922,6 +934,25 @@
  *         deactivated:
  *           type: boolean
  *           example: false
+ *         updated:
+ *           type: string
+ *           example: "2021-09-10T12:00:00Z"
+ *         versionId:
+ *           type: string
+ *           example: 3ccde6ba-6ba5-56f2-9f4f-8825561a9860
+ *         linkedResourceMetadata:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/ResourceMetadata'
+ *     DeactivatedDidDocumentMetadata:
+ *       type: object
+ *       properties:
+ *         created:
+ *           type: string
+ *           example: "2021-09-01T12:00:00Z"
+ *         deactivated:
+ *           type: boolean
+ *           example: true
  *         updated:
  *           type: string
  *           example: "2021-09-10T12:00:00Z"
