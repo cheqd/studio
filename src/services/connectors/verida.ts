@@ -82,7 +82,7 @@ export class VeridaService {
             )
         }
 
-        const messagingClient = await this.context!.getMessaging()
+        const messagingClient = await this.context?.getMessaging()
 
         const messageType = 'inbox/type/dataSend' // There are different types of message, here we are sending some data.
         const messageData = {
@@ -93,7 +93,7 @@ export class VeridaService {
           did: recipientDid,
         }
 
-        await messagingClient.send(
+        await messagingClient?.send(
           recipientDid,
           messageType,
           messageData,

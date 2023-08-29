@@ -70,6 +70,10 @@ export const JSONStringify = (obj: Record<string, any> | null) => {
 		return tempArr.join('');
 	};
 
+	const escape = (str: string) => {
+		return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+	};
+
 	if (ignoreDataTypes(obj)) {
 		return undefined;
 	}
@@ -88,7 +92,7 @@ export const JSONStringify = (obj: Record<string, any> | null) => {
 
 	if (restOfDataTypes(obj)) {
 		const passQuotes = isString(obj) ? `"` : '';
-		return `${passQuotes}${obj}${passQuotes}`;
+		return `${passQuotes}${isString(obj) ? escape(obj as unknown as string) : obj}${passQuotes}`;
 	}
 
 	if (isArray(obj)) {
