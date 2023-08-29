@@ -13,7 +13,7 @@ export class CredentialAuthHandler extends AbstractAuthHandler {
 		this.registerRoute('/credential/suspend', 'POST', 'suspend:credential:mainnet');
 		this.registerRoute('/credential/reinstate', 'POST', 'reinstate:credential:testnet');
 		this.registerRoute('/credential/reinstate', 'POST', 'reinstate:credential:mainnet');
-		// true means allowUnauthorized
+		// Unauthorized routes
 		this.registerRoute('/credential/verify', 'POST', '', { allowUnauthorized: true, skipNamespace: true });
 	}
 

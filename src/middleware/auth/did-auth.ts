@@ -13,7 +13,7 @@ export class DidAuthHandler extends AbstractAuthHandler {
 		this.registerRoute('/did/update', 'POST', 'update:did:mainnet');
 		this.registerRoute('/did/deactivate', 'POST', 'deactivate:did:testnet');
 		this.registerRoute('/did/deactivate', 'POST', 'deactivate:did:mainnet');
-		// true means allowUnauthorized
+		// Unauthorized routes
 		this.registerRoute('/did/search/(.*)', 'GET', '', { allowUnauthorized: true, skipNamespace: true });
 	}
 
