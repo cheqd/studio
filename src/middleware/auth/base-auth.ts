@@ -4,7 +4,7 @@ import jwt_decode from 'jwt-decode';
 import * as dotenv from 'dotenv';
 import { StatusCodes } from 'http-status-codes';
 import stringify from 'json-stringify-safe';
-import { networkCheqdDIDRegexp } from '../../types/shared.js';
+import { DefaultNetworkPattern } from '../../types/shared.js';
 import { MethodToScope, IAuthResourceHandler, Namespaces, IAuthResponse } from '../../types/authentication.js';
 import { LogToHelper } from './logto.js';
 
@@ -164,7 +164,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 	}
 
 	private findNetworkInBody(body: string): string | null {
-		const matches = body.match(networkCheqdDIDRegexp);
+		const matches = body.match(DefaultNetworkPattern);
 		if (matches && matches.length > 0) {
 			return matches[1];
 		}

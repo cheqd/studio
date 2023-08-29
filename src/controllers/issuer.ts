@@ -7,7 +7,7 @@ import { MethodSpecificIdAlgo, VerificationMethods, CheqdNetwork } from '@cheqd/
 import type { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js';
 import { StatusCodes } from 'http-status-codes';
 
-import { IdentityStrategySetup } from '../services/identity/index.js';
+import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { generateDidDoc, getQueryParams, validateSpecCompliantPayload } from '../helpers/helpers.js';
 
 export class IssuerController {
@@ -107,7 +107,7 @@ export class IssuerController {
 	 */
 	public async createKey(request: Request, response: Response) {
 		try {
-			const key = await new IdentityStrategySetup(response.locals.customerId).agent.createKey(
+			const key = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createKey(
 				'Ed25519',
 				response.locals.customerId
 			);
@@ -162,7 +162,7 @@ export class IssuerController {
 	 */
 	public async getKey(request: Request, response: Response) {
 		try {
-			const key = await new IdentityStrategySetup(response.locals.customerId).agent.getKey(
+			const key = await new IdentityServiceStrategySetup(response.locals.customerId).agent.getKey(
 				request.params.kid,
 				response.locals.customerId
 			);
@@ -236,7 +236,7 @@ export class IssuerController {
 			if (request.body.didDocument) {
 				didDocument = request.body.didDocument;
 			} else if (verificationMethodType) {
-				const key = await new IdentityStrategySetup(response.locals.customerId).agent.createKey(
+				const key = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createKey(
 					'Ed25519',
 					response.locals.customerId
 				);
@@ -267,7 +267,7 @@ export class IssuerController {
 				});
 			}
 
-			const did = await new IdentityStrategySetup(response.locals.customerId).agent.createDid(
+			const did = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createDid(
 				network || didDocument.id.split(':')[2],
 				didDocument,
 				response.locals.customerId
@@ -329,7 +329,9 @@ export class IssuerController {
 			if (request.body.didDocument) {
 				updatedDocument = request.body.didDocument;
 			} else if (did && (service || verificationMethod || authentication)) {
-				const resolvedResult = await new IdentityStrategySetup(response.locals.customerId).agent.resolveDid(did);
+				const resolvedResult = await new IdentityServiceStrategySetup(
+					response.locals.customerId
+				).agent.resolveDid(did);
 				if (!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
 					return response.status(StatusCodes.BAD_REQUEST).send({
 						error: `${did} is either Deactivated or Not found`,
@@ -355,7 +357,7 @@ export class IssuerController {
 				});
 			}
 
-			const result = await new IdentityStrategySetup(response.locals.customerId).agent.updateDid(
+			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.updateDid(
 				updatedDocument,
 				response.locals.customerId
 			);
@@ -405,7 +407,7 @@ export class IssuerController {
 		}
 
 		try {
-			const did = await new IdentityStrategySetup(response.locals.customerId).agent.deactivateDid(
+			const did = await new IdentityServiceStrategySetup(response.locals.customerId).agent.deactivateDid(
 				request.params.did,
 				response.locals.customerId
 			);
@@ -464,7 +466,7 @@ export class IssuerController {
 		let resourcePayload: Partial<MsgCreateResourcePayload> = {};
 		try {
 			// check if did is registered on the ledger
-			const { didDocument, didDocumentMetadata } = await new IdentityStrategySetup(
+			const { didDocument, didDocumentMetadata } = await new IdentityServiceStrategySetup(
 				response.locals.customerId
 			).agent.resolveDid(did);
 			if (!didDocument || !didDocumentMetadata || didDocumentMetadata.deactivated) {
@@ -482,7 +484,7 @@ export class IssuerController {
 				version,
 				alsoKnownAs,
 			};
-			const result = await new IdentityStrategySetup(response.locals.customerId).agent.createResource(
+			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createResource(
 				network || did.split(':')[2],
 				resourcePayload,
 				response.locals.customerId
@@ -580,14 +582,14 @@ export class IssuerController {
 		try {
 			let res: globalThis.Response;
 			if (request.params.did) {
-				res = await new IdentityStrategySetup(response.locals.customerId).agent.resolve(
+				res = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(
 					request.params.did + getQueryParams(request.query)
 				);
 
-				const contentType = res.headers.get('Content-Type');
+				const contentType = res.headers.get('Content-Type') || 'application/octet-stream';
 				const body = new TextDecoder().decode(await res.arrayBuffer());
 
-				return response.setHeader('Content-Type', contentType!).status(res.status).send(body);
+				return response.setHeader('Content-Type', contentType).status(res.status).send(body);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'The DID parameter is empty.',
@@ -627,8 +629,12 @@ export class IssuerController {
 	public async getDids(request: Request, response: Response) {
 		try {
 			const did = request.params.did
-				? await new IdentityStrategySetup(response.locals.customerId).agent.resolveDid(request.params.did)
-				: await new IdentityStrategySetup(response.locals.customerId).agent.listDids(response.locals.customerId);
+				? await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolveDid(
+						request.params.did
+				  )
+				: await new IdentityServiceStrategySetup(response.locals.customerId).agent.listDids(
+						response.locals.customerId
+				  );
 
 			return response.status(StatusCodes.OK).json(did);
 		} catch (error) {
@@ -712,14 +718,14 @@ export class IssuerController {
 		try {
 			let res: globalThis.Response;
 			if (request.params.did) {
-				res = await new IdentityStrategySetup(response.locals.customerId).agent.resolve(
+				res = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(
 					request.params.did + getQueryParams(request.query)
 				);
 
-				const contentType = res.headers.get('Content-Type');
+				const contentType = res.headers.get('Content-Type') || 'application/octet-stream';
 				const body = new TextDecoder().decode(await res.arrayBuffer());
 
-				return response.setHeader('Content-Type', contentType!).status(res.status).send(body);
+				return response.setHeader('Content-Type', contentType).status(res.status).send(body);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'The DIDUrl parameter is empty.',

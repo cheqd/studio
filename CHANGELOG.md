@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.0-develop.4](https://github.com/cheqd/credential-service/compare/2.9.0-develop.3...2.9.0-develop.4) (2023-08-25)
+
+
+### Features
+
+* Added encrypted StatusList APIs + enhanced type safety ([#350](https://github.com/cheqd/credential-service/issues/350)) ([951e2b4](https://github.com/cheqd/credential-service/commit/951e2b45af6299b09e16d6037baa9c5eaf595068))
+
 ## [2.9.0-develop.3](https://github.com/cheqd/credential-service/compare/2.9.0-develop.2...2.9.0-develop.3) (2023-08-23)
 
 

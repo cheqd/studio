@@ -1,9 +1,62 @@
 import type { DIDDocument } from 'did-resolver';
-import type { MethodSpecificIdAlgo, CheqdNetwork, TVerificationKey, TVerificationKeyPrefix } from '@cheqd/sdk';
+import { MethodSpecificIdAlgo, CheqdNetwork, TVerificationKey, TVerificationKeyPrefix } from '@cheqd/sdk';
 import { VerificationMethods, createVerificationKeys, createDidVerificationMethod, createDidPayload } from '@cheqd/sdk';
-import type { SpecValidationResult } from '../types/shared.js';
 import { createHmac } from 'node:crypto';
-import type QueryString from 'qs';
+import type { ParsedQs } from 'qs';
+import type { SpecValidationResult } from '../types/shared.js';
+import { DEFAULT_DENOM_EXPONENT, MINIMAL_DENOM } from '../types/constants.js';
+import { LitCompatibleCosmosChains, type DkgOptions, LitNetworks } from '@cheqd/did-provider-cheqd';
+import type { Coin } from '@cosmjs/amino';
+
+export interface IDidDocOptions {
+	verificationMethod: VerificationMethods;
+	verificationMethodId: TVerificationKey<TVerificationKeyPrefix, number>;
+	methodSpecificIdAlgo: MethodSpecificIdAlgo;
+	network: CheqdNetwork;
+	publicKey: string;
+}
+
+export function toMinimalDenom(amount: number): number {
+	return amount * 10 ** DEFAULT_DENOM_EXPONENT;
+}
+
+export function toCoin(amount: string): Coin {
+	return {
+		amount: amount.replace(/\D+.*/, ''),
+		denom: MINIMAL_DENOM,
+	};
+}
+
+export function toNetwork(did: string): CheqdNetwork {
+	// switch on namespace
+	switch (did.split(':')[2]) {
+		case CheqdNetwork.Mainnet:
+			return CheqdNetwork.Mainnet;
+		case CheqdNetwork.Testnet:
+		default:
+			return CheqdNetwork.Testnet;
+	}
+}
+
+export function toDefaultDkg(did: string): DkgOptions {
+	// define network
+	const network = toNetwork(did);
+
+	// switch on namespace
+	switch (network) {
+		case CheqdNetwork.Mainnet:
+			return {
+				chain: LitCompatibleCosmosChains.cheqdMainnet,
+				network: LitNetworks.serrano,
+			};
+		case CheqdNetwork.Testnet:
+		default:
+			return {
+				chain: LitCompatibleCosmosChains.cheqdTestnet,
+				network: LitNetworks.serrano,
+			};
+	}
+}
 
 export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecValidationResult {
 	// id is required, validated on both compile and runtime
@@ -70,19 +123,11 @@ export function verifyHookSignature(signingKey: string, rawBody: string, expecte
 	return signature === expectedSignature;
 }
 
-export function getQueryParams(queryParams: QueryString.ParsedQs) {
+export function getQueryParams(queryParams: ParsedQs) {
 	// Convert the query parameters object to a single string in text format
 	const queryParamsText = Object.keys(queryParams)
 		.map((key) => `${key}=${queryParams[key]}`)
 		.join('&');
 
 	return queryParamsText.length == 0 ? queryParamsText : '?' + queryParamsText;
-}
-
-export interface IDidDocOptions {
-	verificationMethod: VerificationMethods;
-	verificationMethodId: TVerificationKey<TVerificationKeyPrefix, number>;
-	methodSpecificIdAlgo: MethodSpecificIdAlgo;
-	network: CheqdNetwork;
-	publicKey: string;
 }
