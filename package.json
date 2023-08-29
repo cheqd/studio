@@ -45,12 +45,6 @@
 		"package.json",
 		"README.md"
 	],
-	"optionalDependencies": {
-		"@verida/account-node": "^2.3.7",
-		"@verida/client-ts": "^2.3.7",
-		"@verida/types": "^2.3.1",
-		"@verida/vda-did-resolver": "^2.3.7"
-	},
 	"dependencies": {
 		"@cheqd/did-provider-cheqd": "^3.6.6",
 		"@cheqd/sdk": "^3.6.1",
@@ -66,6 +60,10 @@
 		"@veramo/did-resolver": "^5.4.1",
 		"@veramo/key-manager": "^5.4.1",
 		"@veramo/kms-local": "^5.4.1",
+		"@verida/account-node": "^2.3.7",
+		"@verida/client-ts": "^2.3.7",
+		"@verida/types": "^2.3.1",
+		"@verida/vda-did-resolver": "^2.3.7",
 		"cookie-parser": "^1.4.6",
 		"copyfiles": "^2.4.1",
 		"cors": "^2.8.5",
