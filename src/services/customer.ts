@@ -3,7 +3,7 @@ import { ArrayContains, Repository } from 'typeorm';
 import { Connection } from '../database/connection/connection.js';
 import { CustomerEntity } from '../database/entities/customer.entity.js';
 import { getCosmosAccount } from '@cheqd/sdk';
-import { Identity } from './identity/index.js';
+import { IdentityServiceStrategySetup } from './identity/index.js';
 
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -19,9 +19,9 @@ export class CustomerService {
 
 	public async create(customerId: string) {
 		if (await this.find(customerId, {})) {
-			throw new Error('Customer exists');
+			throw new Error('Cannot create a new customer since the user is already associated with a Customer ID');
 		}
-		const kid = (await new Identity(customerId).agent.createKey('Secp256k1', customerId)).kid;
+		const kid = (await new IdentityServiceStrategySetup(customerId).agent.createKey('Secp256k1', customerId)).kid;
 		const address = getCosmosAccount(kid);
 		const customer = new CustomerEntity(customerId, kid, getCosmosAccount(kid));
 		const customerEntity = (await this.customerRepository.insert(customer)).identifiers[0];
@@ -63,7 +63,7 @@ export class CustomerService {
 		customerId: string,
 		{ kid, did, claimId, presentationId }: { kid?: string; did?: string; claimId?: string; presentationId?: string }
 	) {
-		const where: any = {
+		const where: Record<string, unknown> = {
 			customerId,
 		};
 
@@ -90,7 +90,7 @@ export class CustomerService {
 		}
 	}
 
-	private concatenate(array: any[], items: any[]): any {
+	private concatenate<T>(array: T[], items: T[]): T[] {
 		return array ? array.concat(items) : items;
 	}
 }

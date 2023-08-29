@@ -1,20 +1,18 @@
 import type {
 	CredentialPayload,
 	DIDDocument,
-	IDIDManager,
 	IIdentifier,
-	IKeyManager,
-	IResolver,
 	IVerifyResult,
 	ManagedKeyInfo,
-	TAgent,
 	VerifiableCredential,
 	VerifiablePresentation,
 } from '@veramo/core';
 import type { AbstractPrivateKeyStore } from '@veramo/key-manager';
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local';
 import { PrivateKeyStore } from '@veramo/data-store';
+import { CheqdNetwork } from '@cheqd/sdk'
 import {
+	Cheqd,
 	CheqdDIDProvider,
 	type ResourcePayload,
 	type BulkRevocationResult,
@@ -22,40 +20,42 @@ import {
 	type BulkUnsuspensionResult,
 	type CreateStatusList2021Result,
 	type StatusCheckResult,
+	DefaultRPCUrls,
+	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
-import { CheqdNetwork } from '@cheqd/sdk';
 import {
-	BroadCastStatusListOptions,
+	BroadcastStatusListOptions,
 	CheckStatusListOptions,
-	cheqdDidRegex,
-	CreateStatusListOptions,
+	DefaultDidUrlPattern,
+	CreateUnencryptedStatusListOptions,
 	CredentialRequest,
-	DefaultRPCUrl,
 	StatusOptions,
-	UpdateStatusListOptions,
+	UpdateUnencryptedStatusListOptions,
 	VeramoAgent,
 	VerificationOptions,
+	CreateEncryptedStatusListOptions,
+	FeePaymentOptions,
 } from '../../types/shared.js';
 import { Connection } from '../../database/connection/connection.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { CustomerService } from '../customer.js';
 import { Veramo } from './agent.js';
-import type { IIdentity } from './index.js';
+import { DefaultIdentityService } from './default.js';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
 const { MAINNET_RPC_URL, TESTNET_RPC_URL, EXTERNAL_DB_ENCRYPTION_KEY } = process.env;
 
-export class PostgresIdentity implements IIdentity {
-	agent: TAgent<IKeyManager & IDIDManager & IResolver>;
+export class PostgresIdentityService extends DefaultIdentityService {
 	privateStore?: AbstractPrivateKeyStore;
 
 	constructor() {
+		super();
 		this.agent = this.initAgent();
 	}
 
-	initAgent(): TAgent<IKeyManager & IDIDManager & IResolver> {
+	initAgent() {
 		if (this.agent) return this.agent;
 		const dbConnection = Connection.instance.dbConnection;
 		this.privateStore = new PrivateKeyStore(dbConnection, new SecretBox(EXTERNAL_DB_ENCRYPTION_KEY));
@@ -79,7 +79,8 @@ export class PostgresIdentity implements IIdentity {
 		const customer = (await CustomerService.instance.get(agentId)) as CustomerEntity;
 		const dbConnection = Connection.instance.dbConnection;
 
-		const privateKey = (await this.getPrivateKey(customer.account)).privateKeyHex;
+		const privateKey = (await this.getPrivateKey(customer.account))?.privateKeyHex;
+
 		if (!privateKey || !this.privateStore) {
 			throw new Error(`No keys is initialized`);
 		}
@@ -88,13 +89,13 @@ export class PostgresIdentity implements IIdentity {
 			defaultKms: 'postgres',
 			cosmosPayerSeed: privateKey,
 			networkType: CheqdNetwork.Mainnet,
-			rpcUrl: MAINNET_RPC_URL || DefaultRPCUrl.Mainnet,
+			rpcUrl: MAINNET_RPC_URL || DefaultRPCUrls.mainnet,
 		});
 		const testnetProvider = new CheqdDIDProvider({
 			defaultKms: 'postgres',
 			cosmosPayerSeed: privateKey,
 			networkType: CheqdNetwork.Testnet,
-			rpcUrl: TESTNET_RPC_URL || DefaultRPCUrl.Testnet,
+			rpcUrl: TESTNET_RPC_URL || DefaultRPCUrls.testnet,
 		});
 
 		return Veramo.instance.createVeramoAgent({
@@ -116,7 +117,8 @@ export class PostgresIdentity implements IIdentity {
 		if (!agentId) {
 			throw new Error('Customer not found');
 		}
-		const key = await Veramo.instance.createKey(this.agent, type);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const key = await Veramo.instance.createKey(this.agent!, type);
 		if (await CustomerService.instance.find(agentId, {}))
 			await CustomerService.instance.update(agentId, { kids: [key.kid] });
 		return key;
@@ -125,13 +127,14 @@ export class PostgresIdentity implements IIdentity {
 	async getKey(kid: string, agentId: string) {
 		const isOwner = await CustomerService.instance.find(agentId, { kid });
 		if (!isOwner) {
-			throw new Error(`Customer not found`);
+            throw new Error(`${kid} not found in wallet`)
 		}
-		return await Veramo.instance.getKey(this.agent, kid);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return await Veramo.instance.getKey(this.agent!, kid);
 	}
 
 	private async getPrivateKey(kid: string) {
-		return await this.privateStore!.getKey({ alias: kid });
+		return await this.privateStore?.getKey({ alias: kid });
 	}
 
 	async createDid(network: string, didDocument: DIDDocument, agentId: string): Promise<IIdentifier> {
@@ -166,8 +169,11 @@ export class PostgresIdentity implements IIdentity {
 			throw new Error('Customer not found');
 		}
 		try {
-			const agent = await this.createAgent(agentId);
-			return await Veramo.instance.deactivateDid(agent, did);
+			const agent = await this.createAgent(agentId)
+            if (!await CustomerService.instance.find(agentId, { did })) {
+				throw new Error(`${did} not found in wallet`)
+			}
+			return await Veramo.instance.deactivateDid(agent, did)
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
@@ -181,28 +187,30 @@ export class PostgresIdentity implements IIdentity {
 		return customer?.dids || [];
 	}
 
-	async resolveDid(did: string) {
-		return await Veramo.instance.resolveDid(this.agent, did);
-	}
-
 	async getDid(did: string) {
-		return await Veramo.instance.getDid(this.agent, did);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return await Veramo.instance.getDid(this.agent!, did);
 	}
 
 	async importDid(did: string, privateKeyHex: string, publicKeyHex: string, agentId: string): Promise<IIdentifier> {
-		if (!did.match(cheqdDidRegex)) {
+		if (!did.match(DefaultDidUrlPattern)) {
 			throw new Error('Invalid DID');
 		}
 
-		const identifier: IIdentifier = await Veramo.instance.importDid(this.agent, did, privateKeyHex, publicKeyHex);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const identifier: IIdentifier = await Veramo.instance.importDid(this.agent!, did, privateKeyHex, publicKeyHex);
 		await CustomerService.instance.update(agentId, { dids: [identifier.did] });
 		return identifier;
 	}
 
 	async createResource(network: string, payload: ResourcePayload, agentId: string) {
 		try {
-			const agent = await this.createAgent(agentId);
-			return await Veramo.instance.createResource(agent, network, payload);
+			const agent = await this.createAgent(agentId)
+            const did = `did:cheqd:${network}:${payload.collectionId}`
+            if (!await CustomerService.instance.find(agentId, { did })) {
+				throw new Error(`${did} not found in wallet`)
+			}
+			return await Veramo.instance.createResource(agent, network, payload)
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
@@ -244,24 +252,54 @@ export class PostgresIdentity implements IIdentity {
 		return await Veramo.instance.verifyPresentation(agent, presentation, verificationOptions);
 	}
 
-	async createStatusList2021(
+	async createUnencryptedStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
-		statusOptions: CreateStatusListOptions,
+		statusOptions: CreateUnencryptedStatusListOptions,
 		agentId: string
 	): Promise<CreateStatusList2021Result> {
 		const agent = await this.createAgent(agentId);
-		return await Veramo.instance.createStatusList2021(agent, did, resourceOptions, statusOptions);
+		if (!await CustomerService.instance.find(agentId, { did })) {
+            throw new Error(`${did} not found in wallet`)
+        }
+		return await Veramo.instance.createUnencryptedStatusList2021(agent, did, resourceOptions, statusOptions);
 	}
 
-	async updateStatusList2021(
+	async createEncryptedStatusList2021(
 		did: string,
-		statusOptions: UpdateStatusListOptions,
-		publish: boolean,
+		resourceOptions: ResourcePayload,
+		statusOptions: CreateEncryptedStatusListOptions,
+		agentId: string
+	): Promise<CreateStatusList2021Result> {
+		const agent = await this.createAgent(agentId);
+		if (!await CustomerService.instance.find(agentId, { did })) {
+            throw new Error(`${did} not found in wallet`)
+        }
+		return await Veramo.instance.createEncryptedStatusList2021(agent, did, resourceOptions, statusOptions);
+	}
+
+	async updateUnencryptedStatusList2021(
+		did: string,
+		statusOptions: UpdateUnencryptedStatusListOptions,
 		agentId: string
 	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
 		const agent = await this.createAgent(agentId);
-		return await Veramo.instance.updateStatusList2021(agent, did, statusOptions, publish);
+		if (!await CustomerService.instance.find(agentId, { did })) {
+            throw new Error(`${did} not found in wallet`)
+        }
+		return await Veramo.instance.updateUnencryptedStatusList2021(agent, did, statusOptions);
+	}
+
+	async updateEncryptedStatusList2021(
+		did: string,
+		statusOptions: UpdateUnencryptedStatusListOptions,
+		agentId: string
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
+		const agent = await this.createAgent(agentId);
+		if (!await CustomerService.instance.find(agentId, { did })) {
+            throw new Error(`${did} not found in wallet`)
+        }
+		return await Veramo.instance.updateUnencryptedStatusList2021(agent, did, statusOptions);
 	}
 
 	async checkStatusList2021(
@@ -270,17 +308,28 @@ export class PostgresIdentity implements IIdentity {
 		agentId: string
 	): Promise<StatusCheckResult> {
 		const agent = await this.createAgent(agentId);
+		if (!await CustomerService.instance.find(agentId, { did })) {
+            throw new Error(`${did} not found in wallet`)
+        }
 		return await Veramo.instance.checkStatusList2021(agent, did, statusOptions);
 	}
 
 	async broadcastStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
-		statusOptions: BroadCastStatusListOptions,
+		statusOptions: BroadcastStatusListOptions,
 		agentId: string
 	): Promise<boolean> {
 		const agent = await this.createAgent(agentId);
+		if (!await CustomerService.instance.find(agentId, { did })) {
+            throw new Error(`${did} not found in wallet`)
+        }
 		return await Veramo.instance.broadcastStatusList2021(agent, did, resourceOptions, statusOptions);
+	}
+
+	async remunerateStatusList2021(feePaymentOptions: FeePaymentOptions, agentId: string): Promise<TransactionResult> {
+		const agent = await this.createAgent(agentId);
+		return await Veramo.instance.remunerateStatusList2021(agent, feePaymentOptions);
 	}
 
 	async revokeCredentials(
@@ -289,6 +338,7 @@ export class PostgresIdentity implements IIdentity {
 		agentId: string
 	) {
 		const agent = await this.createAgent(agentId);
+		await this.validateCredentialAccess(credentials, agentId)
 		return await Veramo.instance.revokeCredentials(agent, credentials, publish);
 	}
 
@@ -298,6 +348,7 @@ export class PostgresIdentity implements IIdentity {
 		agentId: string
 	) {
 		const agent = await this.createAgent(agentId);
+		await this.validateCredentialAccess(credentials, agentId)
 		return await Veramo.instance.suspendCredentials(agent, credentials, publish);
 	}
 
@@ -307,6 +358,31 @@ export class PostgresIdentity implements IIdentity {
 		agentId: string
 	) {
 		const agent = await this.createAgent(agentId);
+		await this.validateCredentialAccess(credentials, agentId)
 		return await Veramo.instance.unsuspendCredentials(agent, credentials, publish);
 	}
+
+    private async validateCredentialAccess(credentials: VerifiableCredential | VerifiableCredential[], agentId: string) {
+        credentials = Array.isArray(credentials) ? credentials : [credentials]
+        const customer = await CustomerService.instance.get(agentId) as CustomerEntity | null
+        if(!customer) {
+            throw new Error('Customer not found')
+        }
+
+        for(const credential of credentials) {
+            const decodedCredential = typeof credential === 'string'
+            ? await Cheqd.decodeCredentialJWT(credential)
+            : credential
+    
+            const issuerId = typeof decodedCredential.issuer === 'string'
+                ? decodedCredential.issuer
+                : decodedCredential.issuer.id
+            
+            const existsInWallet = customer.dids.find((did) => did === issuerId)
+        
+            if (!existsInWallet) {
+                throw new Error(`${issuerId} not found in wallet`)
+            }
+        }
+    }
 }

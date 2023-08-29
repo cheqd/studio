@@ -1,5 +1,33 @@
 # Changelog
 
+## [2.9.0-develop.4](https://github.com/cheqd/credential-service/compare/2.9.0-develop.3...2.9.0-develop.4) (2023-08-25)
+
+
+### Features
+
+* Added encrypted StatusList APIs + enhanced type safety ([#350](https://github.com/cheqd/credential-service/issues/350)) ([951e2b4](https://github.com/cheqd/credential-service/commit/951e2b45af6299b09e16d6037baa9c5eaf595068))
+
+## [2.9.0-develop.3](https://github.com/cheqd/credential-service/compare/2.9.0-develop.2...2.9.0-develop.3) (2023-08-23)
+
+
+### Bug Fixes
+
+* Validate did access on operation ([#351](https://github.com/cheqd/credential-service/issues/351)) ([8bbfce1](https://github.com/cheqd/credential-service/commit/8bbfce19a462e78004f7a8f884929ee89d8fcc40))
+
+## [2.9.0-develop.2](https://github.com/cheqd/credential-service/compare/2.9.0-develop.1...2.9.0-develop.2) (2023-08-21)
+
+
+### Bug Fixes
+
+* Fix problem with agent initialize [DEV-3146] ([#346](https://github.com/cheqd/credential-service/issues/346)) ([45e1074](https://github.com/cheqd/credential-service/commit/45e1074925c6262d8034df1a0e3a5311987d36c2))
+
+## [2.9.0-develop.1](https://github.com/cheqd/credential-service/compare/2.8.0...2.9.0-develop.1) (2023-08-18)
+
+
+### Features
+
+* Change from `did/:did` to `did/search/:didUrl` endpoint and support query parameters for DID endpoint in Credential Service [DEV-3097] ([#331](https://github.com/cheqd/credential-service/issues/331)) ([4e34b76](https://github.com/cheqd/credential-service/commit/4e34b76f1a9695cf48ae8551feb24840e4c0d4d6))
+
 ## [2.8.0](https://github.com/cheqd/credential-service/compare/2.7.1...2.8.0) (2023-08-15)
 
 

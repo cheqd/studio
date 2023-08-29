@@ -25,10 +25,5 @@
 	"externalDocs": {
 		"description": "Credential Service API Documentation",
 		"url": "https://docs.cheqd.io/identity"
-	},
-	"servers": [
-		{
-			"url": "/"
-		}
-	]
+	}
 }

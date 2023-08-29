@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as dotenv from 'dotenv';
-import { LocalIdentity } from './local.js';
-import { PostgresIdentity } from './postgres.js';
+import { LocalIdentityService } from './local.js';
+import { PostgresIdentityService } from './postgres.js';
 import { Unauthorized } from './unauthorized.js';
+
 import type {
 	CredentialPayload,
 	DIDDocument,
@@ -13,7 +15,6 @@ import type {
 	VerifiableCredential,
 	VerifiablePresentation,
 } from '@veramo/core';
-import type { AbstractPrivateKeyStore } from '@veramo/key-manager';
 import type {
 	ResourcePayload,
 	BulkRevocationResult,
@@ -24,23 +25,28 @@ import type {
 	StatusCheckResult,
 	SuspensionResult,
 	UnsuspensionResult,
+	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
 import type {
-	BroadCastStatusListOptions,
+	BroadcastStatusListOptions,
 	CheckStatusListOptions,
-	CreateStatusListOptions,
+	CreateEncryptedStatusListOptions,
+	CreateUnencryptedStatusListOptions,
 	CredentialRequest,
+	FeePaymentOptions,
+	SearchStatusListResult,
 	StatusOptions,
-	UpdateStatusListOptions,
+	UpdateEncryptedStatusListOptions,
+	UpdateUnencryptedStatusListOptions,
 	VeramoAgent,
 	VerificationOptions,
 } from '../../types/shared';
 
 dotenv.config();
 
-export interface IIdentity {
-	agent?: TAgent<any>;
-	privateStore?: AbstractPrivateKeyStore;
+export interface IIdentityService {
+	agent?: VeramoAgent;
+
 	initAgent(): TAgent<any>;
 	createAgent?(agentId: string): Promise<VeramoAgent>;
 	createKey(type: 'Ed25519' | 'Secp256k1', agentId?: string): Promise<ManagedKeyInfo>;
@@ -49,7 +55,8 @@ export interface IIdentity {
 	updateDid(didDocument: DIDDocument, agentId?: string): Promise<IIdentifier>;
 	deactivateDid(did: string, agentId?: string): Promise<boolean>;
 	listDids(agentId?: string): Promise<string[]>;
-	resolveDid(did: string): Promise<DIDResolutionResult>;
+	resolveDid(did: string, agentId?: string): Promise<DIDResolutionResult>;
+	resolve(didUrl: string): Promise<Response>;
 	getDid(did: string, agentId?: string): Promise<any>;
 	importDid(did: string, privateKeyHex: string, publicKeyHex: string, agentId?: string): Promise<IIdentifier>;
 	createResource(network: string, payload: ResourcePayload, agentId?: string): Promise<any>;
@@ -69,29 +76,46 @@ export interface IIdentity {
 		verificationOptions: VerificationOptions,
 		agentId?: string
 	): Promise<IVerifyResult>;
-	createStatusList2021(
+	createUnencryptedStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
-		statusOptions: CreateStatusListOptions,
+		statusOptions: CreateUnencryptedStatusListOptions,
 		agentId: string
 	): Promise<CreateStatusList2021Result>;
-	updateStatusList2021(
-		did: string,
-		statusOptions: UpdateStatusListOptions,
-		publish?: boolean,
-		agentId?: string
-	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult>;
-	broadcastStatusList2021(
+	createEncryptedStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
-		statusOptions: BroadCastStatusListOptions,
+		statusOptions: CreateEncryptedStatusListOptions,
+		agentId: string
+	): Promise<CreateStatusList2021Result>;
+	updateUnencryptedStatusList2021(
+		did: string,
+		statusOptions: UpdateUnencryptedStatusListOptions,
 		agentId?: string
-	): Promise<boolean>;
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult>;
+	updateEncryptedStatusList2021(
+		did: string,
+		statusOptions: UpdateEncryptedStatusListOptions,
+		agentId?: string
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult>;
 	checkStatusList2021(
 		did: string,
 		statusOptions: CheckStatusListOptions,
 		agentId?: string
 	): Promise<StatusCheckResult>;
+	searchStatusList2021(
+		did: string,
+		statusListName: string,
+		statusPurpose: 'revocation' | 'suspension',
+		agentId?: string
+	): Promise<SearchStatusListResult>;
+	broadcastStatusList2021(
+		did: string,
+		resourceOptions: ResourcePayload,
+		statusOptions: BroadcastStatusListOptions,
+		agentId?: string
+	): Promise<boolean>;
+	remunerateStatusList2021(feePaymentOptions: FeePaymentOptions, agentId?: string): Promise<TransactionResult>;
 	revokeCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
@@ -109,16 +133,16 @@ export interface IIdentity {
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult>;
 }
 
-export class Identity {
-	agent: IIdentity;
+export class IdentityServiceStrategySetup {
+	agent: IIdentityService;
 	static unauthorized = new Unauthorized();
 
 	constructor(agentId?: string) {
-		this.agent = Identity.unauthorized;
+		this.agent = IdentityServiceStrategySetup.unauthorized;
 		this.setupIdentityStrategy(agentId);
 	}
 
-	private setStrategy(strategy: IIdentity) {
+	private setStrategy(strategy: IIdentityService) {
 		// If is already set up - skip
 		if (this.agent === strategy) return;
 		this.agent = strategy;
@@ -127,10 +151,10 @@ export class Identity {
 	public setupIdentityStrategy(agentId?: string) {
 		if (process.env.ENABLE_EXTERNAL_DB === 'true') {
 			if (agentId) {
-				this.setStrategy(new PostgresIdentity());
+				this.setStrategy(new PostgresIdentityService());
 			}
 		} else {
-			this.setStrategy(new LocalIdentity());
+			this.setStrategy(new LocalIdentityService());
 		}
 	}
 }

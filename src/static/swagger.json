@@ -26,11 +26,6 @@
     "description": "Credential Service API Documentation",
     "url": "https://docs.cheqd.io/identity"
   },
-  "servers": [
-    {
-      "url": "/"
-    }
-  ],
   "paths": {
     "/credential/issue": {
       "post": {
@@ -302,7 +297,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UnSuspensionResult"
+                  "$ref": "#/components/schemas/UnsuspensionResult"
                 }
               }
             }
@@ -750,6 +745,112 @@
         }
       }
     },
+    "/resource/search/{did}": {
+      "get": {
+        "tags": [
+          "Resource"
+        ],
+        "summary": "Get a DID-Linked Resource.",
+        "description": "This endpoint returns the DID-Linked Resource for a given DID identifier and resource identifier.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "did",
+            "description": "DID identifier",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "example": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+          },
+          {
+            "in": "query",
+            "name": "resourceId",
+            "description": "Fetch a DID-Linked Resource by Resource ID unique identifier. Since this is a unique identifier, other Resource query parameters are not required. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "3ccde6ba-6ba5-56f2-9f4f-8825561a9860"
+          },
+          {
+            "in": "query",
+            "name": "resourceName",
+            "description": "Filter a DID-Linked Resource query by Resource Name. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "cheqd-issuer-logo"
+          },
+          {
+            "in": "query",
+            "name": "resourceType",
+            "description": "Filter a DID-Linked Resource query by Resource Type. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "CredentialArtwork"
+          },
+          {
+            "in": "query",
+            "name": "resourceVersion",
+            "description": "Filter a DID-Linked Resource query by Resource Version, which is an optional free-text field used by issuers (e.g., \"v1\", \"Final Version\", \"1st January 1970\" etc). See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "v1"
+          },
+          {
+            "in": "query",
+            "name": "resourceVersionTime",
+            "description": "Filter a DID-Linked Resource query which returns the closest version of the Resource *at* or *before* specified time. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "1970-01-01T00:00:00Z"
+          },
+          {
+            "in": "query",
+            "name": "checksum",
+            "description": "Request integrity check against a given DID-Linked Resource by providing a SHA-256 checksum hash. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "dc64474d062ed750a66bad58cb609928de55ed0d81defd231a4a4bf97358e9ed"
+          },
+          {
+            "in": "query",
+            "name": "resourceMetadata",
+            "description": "Return only metadata of DID-Linked Resource instead of actual DID-Linked Resource. Mutually exclusive with some of the other parameters.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "any": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
     "/did/list": {
       "get": {
         "tags": [
@@ -783,13 +884,13 @@
         }
       }
     },
-    "/did/{did}": {
+    "/did/search/{did}": {
       "get": {
         "tags": [
           "DID"
         ],
         "summary": "Resolve a DID Document.",
-        "description": "This endpoint resolves the latest DID Document for a given DID identifier.",
+        "description": "Resolve a DID Document by DID identifier. Also supports DID Resolution Queries as defined in the <a href=\"https://w3c-ccg.github.io/did-resolution/\">W3C DID Resolution specification</a>.",
         "parameters": [
           {
             "in": "path",
@@ -798,7 +899,67 @@
             "schema": {
               "type": "string"
             },
-            "required": true
+            "required": true,
+            "example": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+          },
+          {
+            "in": "query",
+            "name": "metadata",
+            "description": "Return only metadata of DID Document instead of actual DID Document.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "versionId",
+            "description": "Unique UUID version identifier of DID Document. Allows for fetching a specific version of the DID Document. See <a href=\"https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#did-document-metadata\">cheqd DID Method Specification</a> for more details.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "3ccde6ba-6ba5-56f2-9f4f-8825561a9860"
+          },
+          {
+            "in": "query",
+            "name": "versionTime",
+            "description": "Returns the closest version of the DID Document *at* or *before* specified time. See <a href=\"https://docs.cheqd.io/identity/architecture/adr-list/adr-005-did-resolution-and-did-url-dereferencing\">DID Resolution handling for `did:cheqd`</a> for more details.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "1970-01-01T00:00:00Z"
+          },
+          {
+            "in": "query",
+            "name": "transformKeys",
+            "description": "This directive transforms the Verification Method key format from the version in the DID Document to the specified format chosen below.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Ed25519VerificationKey2018",
+                "Ed25519VerificationKey2020",
+                "JsonWebKey2020"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "service",
+            "description": "Query DID Document for a specific Service Endpoint by Service ID (e.g., `service-1` in `did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1`). This will typically redirect to the Service Endpoint based on <a href=\"https://w3c-ccg.github.io/did-resolution/#dereferencing\">DID Resolution specification</a> algorithm.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "service-1"
+          },
+          {
+            "in": "query",
+            "name": "relativeRef",
+            "description": "Relative reference is a query fragment appended to the Service Endpoint URL. **Must** be used along with the `service` query property above. See <a href=\"https://w3c-ccg.github.io/did-resolution/#dereferencing\">DID Resolution specification</a> algorithm for more details.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "/path/to/file"
           }
         ],
         "responses": {
@@ -807,7 +968,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DidDocument"
+                  "$ref": "#/components/schemas/DidResolution"
                 }
               }
             }
@@ -824,13 +985,13 @@
         }
       }
     },
-    "/credential-status/create": {
+    "/credential-status/create/unencrypted": {
       "post": {
         "tags": [
           "Credential Status"
         ],
-        "summary": "Create a StatusList2021 credential status list.",
-        "description": "This endpoint creates a StatusList2021 credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.",
+        "summary": "Create an unencrypted StatusList2021 credential status list.",
+        "description": "This endpoint creates an unencrypted StatusList2021 credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.",
         "parameters": [
           {
             "in": "query",
@@ -844,28 +1005,18 @@
                 "suspension"
               ]
             }
-          },
-          {
-            "in": "query",
-            "name": "encrypted",
-            "description": "Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied.",
-            "required": true,
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
           }
         ],
         "requestBody": {
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/CredentialStatusCreateRequest"
+                "$ref": "#/components/schemas/CredentialStatusCreateUnencryptedRequest"
               }
             },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CredentialStatusCreateRequest"
+                "$ref": "#/components/schemas/CredentialStatusCreateUnencryptedRequest"
               }
             }
           }
@@ -876,7 +1027,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CredentialStatusResult"
+                  "$ref": "#/components/schemas/CredentialStatusCreateUnencryptedResult"
                 }
               }
             }
@@ -893,13 +1044,13 @@
         }
       }
     },
-    "/credential-status/publish": {
+    "/credential-status/create/encrypted": {
       "post": {
         "tags": [
           "Credential Status"
         ],
-        "summary": "Publish a StatusList2021 credential status list.",
-        "description": "Published a pre-assembled StatusList2021 as a DID-Linked Resource. As input, it needs to be provided the `encodedList` property, along with the associated DID-Linked Resource properties in the original status list (if already created previously).",
+        "summary": "Create an encrypted StatusList2021 credential status list.",
+        "description": "This endpoint creates an encrypted StatusList2021 credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.",
         "parameters": [
           {
             "in": "query",
@@ -913,28 +1064,18 @@
                 "suspension"
               ]
             }
-          },
-          {
-            "in": "query",
-            "name": "encrypted",
-            "description": "Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied. When publishing a new version, this should match the original property.",
-            "required": true,
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
           }
         ],
         "requestBody": {
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/CredentialStatusPublishRequest"
+                "$ref": "#/components/schemas/CredentialStatusCreateEncryptedFormRequest"
               }
             },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CredentialStatusPublishRequest"
+                "$ref": "#/components/schemas/CredentialStatusCreateEncryptedJsonRequest"
               }
             }
           }
@@ -945,7 +1086,184 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CredentialStatusResult"
+                  "$ref": "#/components/schemas/CredentialStatusCreateEncryptedResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/update/unencrypted": {
+      "post": {
+        "tags": [
+          "Credential Status"
+        ],
+        "summary": "Update an existing unencrypted StatusList2021 credential status list.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "statusAction",
+            "description": "The update action to be performed on the unencrypted status list, can be revoke, suspend or reinstate",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "revoke",
+                "suspend",
+                "reinstate"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusUpdateUnencryptedRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusUpdateUnencryptedRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialStatusUpdateUnencryptedResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/update/encrypted": {
+      "post": {
+        "tags": [
+          "Credential Status"
+        ],
+        "summary": "Update an existing encrypted StatusList2021 credential status list.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "statusAction",
+            "description": "The update action to be performed on the encrypted status list, can be revoke, suspend or reinstate",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "revoke",
+                "suspend",
+                "reinstate"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusUpdateEncryptedFormRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusUpdateEncryptedJsonRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialStatusUpdateEncryptedResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/check": {
+      "post": {
+        "tags": [
+          "Credential Status"
+        ],
+        "summary": "Check a StatusList2021 index for a given Verifiable Credential.",
+        "description": "This endpoint checks a StatusList2021 index for a given Verifiable Credential and reports whether it is revoked or suspended. It offers a standalone method for checking an index without passing the entire Verifiable Credential or Verifiable Presentation.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "statusPurpose",
+            "description": "The purpose of the status list. Can be either revocation or suspension.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "revocation",
+                "suspension"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusCheckRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusCheckRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialStatusCheckResult"
                 }
               }
             }
@@ -1005,181 +1323,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "statusListName": {
-                        "type": "string"
-                      },
-                      "statusListVersion": {
-                        "type": "string"
-                      },
-                      "statusListId": {
-                        "type": "string"
-                      },
-                      "statusListNextVersion": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/credential-status/update": {
-      "post": {
-        "tags": [
-          "Credential Status"
-        ],
-        "summary": "Update an existing StatusList2021 credential status list.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "statusAction",
-            "description": "The update action to be performed on the statuslist, can be revoke, suspend or reinstate",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "revoke",
-                "suspend",
-                "reinstate"
-              ]
-            }
-          },
-          {
-            "in": "query",
-            "name": "publish",
-            "description": "Publish the status list to the DID network. The default is `false`, which means the status list is not published to the DID network.",
-            "required": true,
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          },
-          {
-            "in": "query",
-            "name": "encrypted",
-            "description": "Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied. When publishing a new version, this should match the original property.",
-            "required": true,
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialStatusUpdateRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialStatusUpdateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CredentialStatusResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/credential-status/check": {
-      "post": {
-        "tags": [
-          "Credential Status"
-        ],
-        "summary": "Check a StatusList2021 index for a given Verifiable Credential.",
-        "description": "This endpoint checks a StatusList2021 index for a given Verifiable Credential and reports whether it is revoked or suspended. It offers a standalone method for checking an index without passing the entire Verifiable Credential or Verifiable Presentation.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "statusPurpose",
-            "description": "The purpose of the status list. Can be either revocation or suspension.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "revocation",
-                "suspension"
-              ]
-            }
-          },
-          {
-            "in": "query",
-            "name": "encrypted",
-            "description": "Define whether the status list is encrypted. The default is `false`, which means the DID-Linked Resource can be fetched and parsed publicly. Encrypted status lists can only be fetched if the payment conditions are satisfied.",
-            "required": true,
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialStatusCheckRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialStatusCheckRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "revoked": {
-                      "type": "boolean"
-                    },
-                    "suspended": {
-                      "type": "boolean",
-                      "example": false
-                    }
-                  }
+                  "$ref": "#/components/schemas/CredentialStatusListSearchResult"
                 }
               }
             }
@@ -1199,6 +1343,29 @@
   },
   "components": {
     "schemas": {
+      "AlsoKnownAs": {
+        "type": "object",
+        "properties": {
+          "alsoKnownAs": {
+            "type": "array",
+            "description": "Optional field to assign a set of alternative URIs where the DID-Linked Resource can be fetched from.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "uri": {
+                  "type": "string",
+                  "format": "uri",
+                  "description": "URI where the DID-Linked Resource can be fetched from. Can be any type of URI (e.g., DID, HTTPS, IPFS, etc.)"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Optional description of the URI."
+                }
+              }
+            }
+          }
+        }
+      },
       "CredentialRequest": {
         "description": "Input fields for the creating a Verifiable Credential.",
         "type": "object",
@@ -1206,33 +1373,48 @@
         "properties": {
           "issuerDid": {
             "description": "DID of the Verifiable Credential issuer. This needs to be a `did:cheqd` DID.",
-            "type": "string"
+            "type": "string",
+            "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
           },
           "subjectDid": {
             "description": "DID of the Verifiable Credential holder/subject. This needs to be a `did:key` DID.",
-            "type": "string"
+            "type": "string",
+            "example": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
           },
           "attributes": {
             "description": "JSON object containing the attributes to be included in the credential.",
-            "type": "object"
+            "type": "object",
+            "example": {
+              "name": "Bob",
+              "gender": "male"
+            }
           },
           "@context": {
             "description": "Optional properties to be included in the `@context` property of the credential.",
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "example": [
+              "https://schema.org/schema.jsonld",
+              "https://veramo.io/contexts/profile/v1"
+            ]
           },
           "type": {
             "description": "Optional properties to be included in the `type` property of the credential.",
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "example": [
+              "Person"
+            ]
           },
           "expirationDate": {
             "description": "Optional expiration date according to the <a href=https://www.w3.org/TR/vc-data-model/#expiration> VC Data Model specification</a>.",
-            "type": "string"
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-06-08T13:49:28.000Z"
           },
           "format": {
             "description": "Format of the Verifiable Credential. Defaults to VC-JWT.",
@@ -1240,7 +1422,8 @@
             "enum": [
               "jwt",
               "lds"
-            ]
+            ],
+            "example": "jwt"
           },
           "credentialStatus": {
             "description": "Optional `credentialStatus` properties for VC revocation or suspension. Takes `statusListName` and `statusListPurpose` as inputs.",
@@ -1264,7 +1447,8 @@
                 "type": "number"
               },
               "statusListVersion": {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               "statusListRangeStart": {
                 "type": "number"
@@ -1317,22 +1501,35 @@
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "example": [
+              "https://www.w3.org/2018/credentials/v1",
+              "https://schema.org",
+              "https://veramo.io/contexts/profile/v1"
+            ]
           },
           "type": {
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "example": [
+              "VerifiableCredential",
+              "Person"
+            ]
           },
           "expirationDate": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-06-08T13:49:28.000Z"
           },
           "issuer": {
             "type": "object",
             "properties": {
               "id": {
-                "type": "string"
+                "type": "string",
+                "format": "DID",
+                "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
               }
             }
           },
@@ -1340,7 +1537,9 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "string"
+                "type": "string",
+                "format": "DID",
+                "example": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
               }
             }
           },
@@ -1348,17 +1547,20 @@
             "type": "object",
             "properties": {
               "id": {
-                "type": "string"
+                "type": "string",
+                "example": "https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-suspension-1&resourceType=StatusList2021Suspension#20"
               },
               "statusListIndex": {
-                "type": "string"
+                "type": "number",
+                "example": 20
               },
               "statusPurpose": {
                 "type": "string",
                 "enum": [
                   "revocation",
                   "suspension"
-                ]
+                ],
+                "example": "suspension"
               },
               "type": {
                 "type": "string",
@@ -1369,7 +1571,9 @@
             }
           },
           "issuanceDate": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-06-08T13:49:28.000Z"
           },
           "proof": {
             "type": "object",
@@ -1380,6 +1584,10 @@
               "jwt": {
                 "type": "string"
               }
+            },
+            "example": {
+              "type": "JwtProof2020",
+              "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo3YmY4MWEyMC02MzNjLTRjYzctYmM0YS01YTQ1ODAxMDA1ZTAiLCJuYmYiOjE2ODYyMzIxNjgsInN1YiI6ImRpZDprZXk6ejZNa2hhWGdCWkR2b3REa0w1MjU3ZmFpenRpR2lDMlF0S0xHcGJubkVHdGEyZG9LIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3NjaGVtYS5vcmciLCJodHRwczovL3ZlcmFtby5pby9jb250ZXh0cy9wcm9maWxlL3YxIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImdlbmRlciI6Im1hbGUiLCJuYW1lIjoiQm9iIn0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJQZXJzb24iXX19.wMfdR6RtyAZA4eoWya5Aw97wwER2Cm5Guk780Xw8H9fA3sfudIJeLRLboqixpTchqSbYeA7KbuCTAnLgXTD_Cg"
             }
           }
         },
@@ -1433,27 +1641,24 @@
       "RevocationResult": {
         "properties": {
           "revoked": {
-            "type": "boolean"
+            "type": "boolean",
+            "example": true
           }
         }
       },
       "SuspensionResult": {
         "properties": {
           "suspended": {
-            "type": "boolean"
-          },
-          "statusList": {
-            "type": "string"
+            "type": "boolean",
+            "example": true
           }
         }
       },
-      "UnSuspensionResult": {
+      "UnsuspensionResult": {
         "properties": {
           "unsuspended": {
-            "type": "boolean"
-          },
-          "statusList": {
-            "type": "string"
+            "type": "boolean",
+            "example": true
           }
         }
       },
@@ -1571,7 +1776,7 @@
           }
         }
       },
-      "CredentialStatusCreateRequest": {
+      "CredentialStatusCreateBody": {
         "allOf": [
           {
             "type": "object",
@@ -1582,14 +1787,19 @@
             "properties": {
               "did": {
                 "description": "DID of the StatusList2021 publisher.",
-                "type": "string"
+                "type": "string",
+                "format": "uri"
               },
               "statusListName": {
                 "description": "The name of the StatusList2021 DID-Linked Resource to be created.",
                 "type": "string"
               },
               "length": {
-                "description": "The length of the status list to be created. The default and minimum length is 140000 which is 16kb."
+                "description": "The length of the status list to be created. The default and minimum length is 140000 which is 16kb.",
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": true,
+                "default": 140000
               },
               "encoding": {
                 "description": "The encoding format of the StatusList2021 DiD-Linked Resource to be created.",
@@ -1604,162 +1814,295 @@
               "statusListVersion": {
                 "description": "Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.",
                 "type": "string"
-              },
-              "alsoKnownAs": {
-                "description": "Optional field to assign a set of alternative URIs where the StatusList2021 DID-Linked Resource can be fetched from.",
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "uri": {
-                      "type": "string"
-                    },
-                    "description": {
-                      "type": "string"
-                    }
-                  }
-                }
               }
-            }
-          }
-        ],
-        "example": {
-          "did": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
-          "statusListName": "cheqd-employee-credentials"
-        }
-      },
-      "CredentialStatusResult": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "object",
-            "properties": {
-              "created": {
-                "type": "boolean"
-              },
-              "resourceMetadata": {
-                "type": "object"
-              },
-              "statusList2021": {
-                "type": "object",
-                "properties": {
-                  "statusList2021": {
-                    "type": "object",
-                    "properties": {
-                      "encodedList": {
-                        "type": "string"
-                      },
-                      "type": {
-                        "type": "string"
-                      },
-                      "validFrom": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                }
-              },
-              "metadata": {
-                "type": "string",
-                "properties": {
-                  "encoding": {
-                    "type": "string"
-                  },
-                  "encrypted": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "example": {
-          "created": true,
-          "resource": {
-            "StatusList2021": {
-              "encodedList": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
-              "type": "StatusList2021Revocation",
-              "validFrom": "2023-06-26T11:45:19.349Z"
-            },
-            "metadata": {
-              "encoding": "base64url",
-              "encrypted": false
             }
           },
-          "resourceMetadata": {
-            "checksum": "909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2",
-            "created": "2023-06-26T11:45:20Z",
-            "mediaType": "application/json",
-            "nextVersionId": null,
-            "previousVersionId": null,
-            "resourceCollectionId": "7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
-            "resourceId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
-            "resourceName": "cheqd-revocation-1",
-            "resourceType": "StatusList2021Revocation",
-            "resourceURI": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc",
-            "resourceVersion": "2023-06-26T11:45:19.349Z"
+          {
+            "$ref": "#/components/schemas/AlsoKnownAs"
           }
-        }
+        ]
       },
-      "CredentialStatusPublishRequest": {
+      "CredentialStatusCreateUnencryptedRequest": {
         "allOf": [
           {
-            "type": "object",
-            "required": [
-              "did",
-              "encodedList",
-              "statusListName",
-              "encoding"
-            ],
-            "properties": {
-              "did": {
-                "description": "DID of the StatusList2021 publisher.",
-                "type": "string"
-              },
-              "statusListName": {
-                "description": "The name of the StatusList2021 DID-Linked Resource to be published.",
-                "type": "string"
-              },
-              "encodedList": {
-                "description": "The encoding format of the StatusList2021 DiD-Linked Resource to be published.",
-                "type": "string",
-                "enum": [
-                  "base64url",
-                  "base64",
-                  "hex"
-                ]
-              },
-              "statusListVersion": {
-                "description": "Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.",
-                "type": "string"
-              },
-              "alsoKnownAs": {
-                "description": "Optional field to assign a set of alternative URIs where the StatusList2021 DID-Linked Resource can be fetched from.",
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "uri": {
-                      "type": "string"
-                    },
-                    "description": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/schemas/CredentialStatusCreateBody"
           }
         ],
         "example": {
           "did": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
           "statusListName": "cheqd-employee-credentials",
-          "statusListVersion": "2023",
-          "data": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
+          "length": 140000,
           "encoding": "base64url"
         }
       },
-      "CredentialStatusUpdateRequest": {
+      "CredentialStatusUnencryptedResult": {
+        "type": "object",
+        "properties": {
+          "resource": {
+            "type": "object",
+            "properties": {
+              "StatusList2021": {
+                "type": "object",
+                "properties": {
+                  "encodedList": {
+                    "type": "string",
+                    "example": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA"
+                  },
+                  "type": {
+                    "type": "string",
+                    "example": "StatusList2021Revocation"
+                  },
+                  "validFrom": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2023-06-26T11:45:19.349Z"
+                  }
+                }
+              },
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "example": "StatusList2021Revocation"
+                  },
+                  "encoding": {
+                    "type": "string",
+                    "example": "base64url"
+                  },
+                  "encrypted": {
+                    "type": "boolean",
+                    "example": false
+                  }
+                }
+              }
+            }
+          },
+          "resourceMetadata": {
+            "type": "object",
+            "example": {
+              "resourceURI": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc",
+              "resourceCollectionId": "7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+              "resourceId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
+              "resourceName": "cheqd-employee-credentials",
+              "resourceType": "StatusList2021Revocation",
+              "mediaType": "application/json",
+              "resourceVersion": "1.0.0",
+              "created": "2023-06-26T11:45:20Z",
+              "checksum": "909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2",
+              "previousVersionId": null,
+              "nextVersionId": null
+            }
+          }
+        }
+      },
+      "CredentialStatusCreateUnencryptedResult": {
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/CredentialStatusUnencryptedResult"
+          }
+        ]
+      },
+      "CredentialStatusEncryptedPaymentConditionsBody": {
+        "type": "object",
+        "properties": {
+          "feePaymentAddress": {
+            "description": "The cheqd/Cosmos payment address where payments to unlock the encrypted StatusList2021 DID-Linked Resource need to be sent.",
+            "type": "string",
+            "example": "cheqd1qs0nhyk868c246defezhz5eymlt0dmajna2csg"
+          },
+          "feePaymentAmount": {
+            "description": "Amount in CHEQ tokens to unlocked the encrypted StatusList2021 DID-Linked Resource.",
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "default": 20
+          },
+          "feePaymentWindow": {
+            "description": "Time window (in minutes) within which the payment to unlock the encrypted StatusList2021 DID-Linked Resource is considered valid.",
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "default": 10
+          }
+        }
+      },
+      "CredentialStatusEncryptedPaymentConditionsJson": {
+        "type": "object",
+        "properties": {
+          "paymentConditions": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CredentialStatusEncryptedPaymentConditionsBody"
+              }
+            ]
+          }
+        }
+      },
+      "CredentialStatusCreateEncryptedFormRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CredentialStatusCreateBody"
+          },
+          {
+            "$ref": "#/components/schemas/CredentialStatusEncryptedPaymentConditionsBody"
+          },
+          {
+            "type": "object",
+            "required": [
+              "feePaymentAddress",
+              "feePaymentAmount",
+              "feePaymentWindow"
+            ]
+          }
+        ]
+      },
+      "CredentialStatusCreateEncryptedJsonRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CredentialStatusCreateBody"
+          },
+          {
+            "$ref": "#/components/schemas/CredentialStatusEncryptedPaymentConditionsJson"
+          },
+          {
+            "type": "object",
+            "required": [
+              "paymentConditions"
+            ]
+          }
+        ],
+        "example": {
+          "did": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+          "statusListName": "cheqd-employee-credentials-encrypted",
+          "paymentConditions": [
+            {
+              "feePaymentAddress": "cheqd1qs0nhyk868c246defezhz5eymlt0dmajna2csg",
+              "feePaymentAmount": 20,
+              "feePaymentWindow": 10
+            }
+          ]
+        }
+      },
+      "CredentialStatusEncryptedResult": {
+        "type": "object",
+        "properties": {
+          "resource": {
+            "type": "object",
+            "properties": {
+              "StatusList2021": {
+                "type": "object",
+                "properties": {
+                  "encodedList": {
+                    "type": "string",
+                    "example": "496fdfbeb745b4db03fcdb40566f9c4c4a1c0f184b31255e641b6e7bdfb9b6946c12be87ca3763be0393c00b67ac1e8737c106b32f46ef59c765754415b5e8cc7c65fccaa3374620430ea476301a5e0dd63340e7a27a68bc627518471f22e4a2"
+                  },
+                  "type": {
+                    "type": "string",
+                    "example": "StatusList2021Revocation"
+                  },
+                  "validFrom": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2023-06-26T11:45:19.349Z"
+                  }
+                }
+              },
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "example": "StatusList2021Revocation"
+                  },
+                  "encoding": {
+                    "type": "string",
+                    "example": "base64url"
+                  },
+                  "encrypted": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "encryptedSymmetricKey": {
+                    "type": "string",
+                    "example": "b11182dc524b8181f9a6aef4c4ad0a1c14e40033b9112dffd8d1bcf6cc3b85abc07ded2205ee94068a99f4202502cb0855f322583fa6ce1534d3a05bf36891766ea2c5f90a982b3040680762977d404d758a2370224a239c8279aa7d21e980931c42055b17ca4c7dbffa4782480a8b6279cf989b2f166d5fdb4b2c1b5a63927200000000000000203018dcaba26df45a415bb599218b27ca853a70289d7a3ed3ed0e3730452e8f8d9af91b6e71312565d2c069341f6660ab"
+                  },
+                  "paymentConditions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "feePaymentAddress": {
+                          "type": "string",
+                          "example": "cheqd1qs0nhyk868c246defezhz5eymlt0dmajna2csg"
+                        },
+                        "feePaymentAmount": {
+                          "type": "string",
+                          "example": "20000000000ncheq"
+                        },
+                        "intervalInSeconds": {
+                          "type": "number",
+                          "example": 600
+                        },
+                        "type": {
+                          "type": "string",
+                          "example": "timelockPayment"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "resourceMetadata": {
+                "type": "object",
+                "example": {
+                  "resourceURI": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc",
+                  "resourceCollectionId": "7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+                  "resourceId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
+                  "resourceName": "cheqd-revocation-encrypted-1",
+                  "resourceType": "StatusList2021Revocation",
+                  "mediaType": "application/json",
+                  "resourceVersion": "2023-06-26T11:45:19.349Z",
+                  "created": "2023-06-26T11:45:20Z",
+                  "checksum": "909e22e371a41afbb96c330a97752cf7c8856088f1f937f87decbef06cbe9ca2",
+                  "previousVersionId": null,
+                  "nextVersionId": null
+                }
+              },
+              "symmetricKey": {
+                "type": "string",
+                "example": "dfe204ee95ae74ea5d74b94c3d8ff782273905b07fbc9f8c3d961c3b43849f18"
+              }
+            }
+          }
+        }
+      },
+      "CredentialStatusCreateEncryptedResult": {
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/CredentialStatusEncryptedResult"
+          }
+        ]
+      },
+      "CredentialStatusUpdateBody": {
         "type": "object",
         "required": [
           "did",
@@ -1769,7 +2112,8 @@
         "properties": {
           "did": {
             "description": "DID of the StatusList2021 publisher.",
-            "type": "string"
+            "type": "string",
+            "format": "uri"
           },
           "statusListName": {
             "description": "The name of the StatusList2021 DID-Linked Resource to be updated.",
@@ -1779,7 +2123,9 @@
             "description": "List of credential status indices to be updated. The indices must be in the range of the status list.",
             "type": "array",
             "items": {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": false
             }
           },
           "statusListVersion": {
@@ -1788,12 +2134,148 @@
           }
         }
       },
+      "CredentialStatusUpdateUnencryptedRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CredentialStatusUpdateBody"
+          }
+        ],
+        "example": {
+          "did": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+          "statusListName": "cheqd-employee-credentials",
+          "indices": [
+            10,
+            3199,
+            12109,
+            130999
+          ]
+        }
+      },
+      "CredentialStatusUpdateUnencryptedResult": {
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "updated": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          },
+          {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RevocationResult"
+              },
+              {
+                "$ref": "#/components/schemas/SuspensionResult"
+              },
+              {
+                "$ref": "#/components/schemas/UnsuspensionResult"
+              }
+            ]
+          },
+          {
+            "$ref": "#/components/schemas/CredentialStatusUnencryptedResult"
+          }
+        ]
+      },
+      "CredentialStatusUpdateEncryptedFormRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CredentialStatusUpdateBody"
+          },
+          {
+            "type": "object",
+            "required": [
+              "symmetricKey"
+            ],
+            "properties": {
+              "symmetricKey": {
+                "description": "The symmetric key used to encrypt the StatusList2021 DID-Linked Resource.",
+                "type": "string"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/CredentialStatusEncryptedPaymentConditionsBody"
+          }
+        ]
+      },
+      "CredentialStatusUpdateEncryptedJsonRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CredentialStatusUpdateBody"
+          },
+          {
+            "type": "object",
+            "required": [
+              "symmetricKey"
+            ],
+            "properties": {
+              "symmetricKey": {
+                "description": "The symmetric key used to encrypt the StatusList2021 DID-Linked Resource.",
+                "type": "string"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/CredentialStatusEncryptedPaymentConditionsJson"
+          }
+        ],
+        "example": {
+          "did": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+          "statusListName": "cheqd-employee-credentials-encrypted",
+          "indices": [
+            10,
+            3199,
+            12109,
+            130999
+          ],
+          "symmetricKey": "dfe204ee95ae74ea5d74b94c3d8ff782273905b07fbc9f8c3d961c3b43849f18"
+        }
+      },
+      "CredentialStatusUpdateEncryptedResult": {
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "updated": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          },
+          {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RevocationResult"
+              },
+              {
+                "$ref": "#/components/schemas/SuspensionResult"
+              },
+              {
+                "$ref": "#/components/schemas/UnsuspensionResult"
+              }
+            ]
+          },
+          {
+            "$ref": "#/components/schemas/CredentialStatusEncryptedResult"
+          }
+        ]
+      },
       "CredentialStatusCheckRequest": {
         "type": "object",
+        "required": [
+          "did",
+          "statusListName",
+          "index"
+        ],
         "properties": {
           "did": {
             "description": "DID of the StatusList2021 publisher.",
-            "type": "string"
+            "type": "string",
+            "format": "uri"
           },
           "statusListName": {
             "description": "The name of the StatusList2021 DID-Linked Resource to be checked.",
@@ -1801,9 +2283,75 @@
           },
           "index": {
             "description": "Credential status index to be checked for revocation or suspension.",
-            "type": "number"
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false
+          },
+          "makeFeePayment": {
+            "description": "Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 DID-Linked Resource.",
+            "type": "boolean",
+            "default": true
           }
         }
+      },
+      "CredentialStatusCheckResult": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/CredentialStatusCheckRevocationResult"
+          },
+          {
+            "$ref": "#/components/schemas/CredentialStatusCheckSuspensionResult"
+          }
+        ]
+      },
+      "CredentialStatusCheckRevocationResult": {
+        "type": "object",
+        "properties": {
+          "checked": {
+            "type": "boolean",
+            "example": true
+          },
+          "revoked": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "CredentialStatusCheckSuspensionResult": {
+        "type": "object",
+        "properties": {
+          "checked": {
+            "type": "boolean",
+            "example": true
+          },
+          "suspended": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "CredentialStatusListSearchResult": {
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "found": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          },
+          {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CredentialStatusUnencryptedResult"
+              },
+              {
+                "$ref": "#/components/schemas/CredentialStatusEncryptedResult"
+              }
+            ]
+          }
+        ]
       },
       "KeyResult": {
         "type": "object",
@@ -1842,6 +2390,18 @@
               "type": "string"
             }
           },
+          "verificationMethod": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VerificationMethod"
+            }
+          },
+          "service": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Service"
+            }
+          },
           "authentication": {
             "type": "array",
             "items": {
@@ -1871,21 +2431,12 @@
             "items": {
               "type": "string"
             }
-          },
-          "verificationMethod": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/VerificationMethod"
-            }
-          },
-          "service": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Service"
-            }
           }
         },
         "example": {
+          "@context": [
+            "https://www.w3.org/ns/did/v1"
+          ],
           "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
           "controller": [
             "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
@@ -1895,11 +2446,20 @@
               "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
               "type": "Ed25519VerificationKey2018",
               "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-              "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt"
+              "publicKeyBase58": "z6MkkVbyHJLLjdjU5B62DaJ4mkdMdUkttf9UqySSkA9bVTeZ"
             }
           ],
           "authentication": [
             "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1"
+          ],
+          "service": [
+            {
+              "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1",
+              "type": "LinkedDomains",
+              "serviceEndpoint": [
+                "https://example.com"
+              ]
+            }
           ]
         }
       },
@@ -1907,6 +2467,7 @@
         "type": "object",
         "properties": {
           "network": {
+            "description": "Network to create the DID on (testnet or mainnet)",
             "type": "string",
             "enum": [
               "testnet",
@@ -1914,6 +2475,7 @@
             ]
           },
           "methodSpecificIdAlgo": {
+            "description": "Algorithm to use for generating the method-specific ID. The two styles supported are UUIDs and Indy-style Base58. See <a href=\"https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#cheqd-did-method-did-cheqd\">cheqd DID method documentation</a> for more details.",
             "type": "string",
             "enum": [
               "uuid",
@@ -1921,6 +2483,7 @@
             ]
           },
           "verificationMethodType": {
+            "description": "Type of verification method to use for the DID. See <a href=\"https://www.w3.org/TR/did-core/#verification-methods\">DID Core specification</a> for more details. Only the types listed below are supported.",
             "type": "string",
             "enum": [
               "Ed25519VerificationKey2018",
@@ -1928,11 +2491,8 @@
               "Ed25519VerificationKey2020"
             ]
           },
-          "serviceEndpoint": {
-            "type": "string"
-          },
           "assertionMethod": {
-            "description": "An assertion method is required to issue JSON-LD credentials.",
+            "description": "Usually a reference to a Verification Method. An Assertion Method is required to issue JSON-LD credentials. See <a href=\"https://w3c.github.io/did-core/#assertion\">DID Core specification</a> for more details.",
             "type": "boolean",
             "default": true
           },
@@ -1997,18 +2557,21 @@
         "type": "object",
         "properties": {
           "id": {
+            "description": "DID appended with Service fragment ID (e.g., `#service-1` in `did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1`)",
             "type": "string",
-            "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#rand"
+            "example": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1"
           },
           "type": {
+            "description": "Service type as defined in <a href=\"https://www.w3.org/TR/did-spec-registries/#service-types\">DID Specification Registries</a>.",
             "type": "string",
-            "example": "rand"
+            "example": "LinkedDomains"
           },
           "serviceEndpoint": {
+            "description": "Service endpoint as defined in <a href=\"https://www.w3.org/TR/did-core/#services\">DID Core Specification</a>.",
             "type": "array",
             "items": {
               "type": "string",
-              "example": "https://rand.in"
+              "example": "https://example.com"
             }
           }
         }
@@ -2017,7 +2580,9 @@
         "type": "object",
         "properties": {
           "did": {
-            "type": "string"
+            "description": "DID identifier to be updated.",
+            "type": "string",
+            "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
           },
           "service": {
             "type": "array",
@@ -2104,14 +2669,190 @@
           "type": "TextDocument"
         }
       },
+      "ResourceList": {
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "string",
+            "example": "https://w3id.org/did-resolution/v1"
+          },
+          "contentMetadata": {
+            "type": "object"
+          },
+          "contentStream": {
+            "type": "object"
+          },
+          "dereferencingMetadata": {
+            "$ref": "#/components/schemas/DereferencingMetadata"
+          }
+        }
+      },
+      "DereferencingMetadata": {
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "type": "string",
+            "example": "application/did+ld+json"
+          },
+          "did": {
+            "$ref": "#/components/schemas/DidProperties"
+          },
+          "retrieved": {
+            "type": "string",
+            "example": "2021-09-01T12:00:00Z"
+          }
+        }
+      },
+      "DidResolution": {
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "string",
+            "example": "https://w3id.org/did-resolution/v1"
+          },
+          "didDidResolutionMetadata": {
+            "$ref": "#/components/schemas/DidResolutionMetadata"
+          },
+          "didDocument": {
+            "$ref": "#/components/schemas/DidDocument"
+          },
+          "didDocumentMetadata": {
+            "$ref": "#/components/schemas/DidDocumentMetadata"
+          }
+        }
+      },
+      "DidDocumentMetadata": {
+        "type": "object",
+        "properties": {
+          "created": {
+            "type": "string",
+            "example": "2021-09-01T12:00:00Z"
+          },
+          "deactivated": {
+            "type": "boolean",
+            "example": false
+          },
+          "updated": {
+            "type": "string",
+            "example": "2021-09-10T12:00:00Z"
+          },
+          "versionId": {
+            "type": "string",
+            "example": "3ccde6ba-6ba5-56f2-9f4f-8825561a9860"
+          },
+          "linkedResourceMetadata": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceMetadata"
+            }
+          }
+        }
+      },
+      "ResourceMetadata": {
+        "type": "object",
+        "properties": {
+          "resourceURI": {
+            "type": "string",
+            "example": "did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47/resources/398cee0a-efac-4643-9f4c-74c48c72a14b"
+          },
+          "resourceCollectionId": {
+            "type": "string",
+            "example": "55dbc8bf-fba3-4117-855c-1e0dc1d3bb47"
+          },
+          "resourceId": {
+            "type": "string",
+            "example": "398cee0a-efac-4643-9f4c-74c48c72a14b"
+          },
+          "resourceName": {
+            "type": "string",
+            "example": "cheqd-issuer-logo"
+          },
+          "resourceType": {
+            "type": "string",
+            "example": "CredentialArtwork"
+          },
+          "mediaType": {
+            "type": "string",
+            "example": "image/png"
+          },
+          "resourceVersion": {
+            "type": "string",
+            "example": "1.0"
+          },
+          "checksum": {
+            "type": "string",
+            "example": "a95380f460e63ad939541a57aecbfd795fcd37c6d78ee86c885340e33a91b559"
+          },
+          "created": {
+            "type": "string",
+            "example": "2021-09-01T12:00:00Z"
+          },
+          "nextVersionId": {
+            "type": "string",
+            "example": "d4829ac7-4566-478c-a408-b44767eddadc"
+          },
+          "previousVersionId": {
+            "type": "string",
+            "example": "ad7a8442-3531-46eb-a024-53953ec6e4ff"
+          }
+        }
+      },
+      "DidResolutionMetadata": {
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContentType"
+              }
+            ],
+            "example": "application/did+ld+json"
+          },
+          "retrieved": {
+            "type": "string",
+            "example": "2021-09-01T12:00:00Z"
+          },
+          "did": {
+            "$ref": "#/components/schemas/DidProperties"
+          }
+        }
+      },
+      "ContentType": {
+        "type": "string",
+        "enum": [
+          "application/did+json",
+          "application/did+ld+json",
+          "application/ld+json",
+          "application/json"
+        ]
+      },
+      "DidProperties": {
+        "type": "object",
+        "properties": {
+          "didString": {
+            "type": "string",
+            "example": "did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47"
+          },
+          "method": {
+            "type": "string",
+            "example": "cheqd"
+          },
+          "methodSpecificId": {
+            "type": "string",
+            "example": "55dbc8bf-fba3-4117-855c-1e0dc1d3bb47"
+          }
+        }
+      },
       "Customer": {
         "type": "object",
         "properties": {
           "customerId": {
-            "type": "string"
+            "type": "string",
+            "example": "6w5drpiiwhhs"
           },
           "address": {
-            "type": "string"
+            "type": "string",
+            "example": "cheqd1wgsvqwlkmdp60f4dek26ak0sjw6au3ytd3pz7f"
           }
         }
       },

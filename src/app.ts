@@ -16,9 +16,26 @@ import { RevocationController } from './controllers/revocation.js';
 import { CORS_ALLOWED_ORIGINS, CORS_ERROR_MSG, configLogToExpress } from './types/constants.js';
 import { LogToWebHook } from './middleware/hook.js';
 import { Middleware } from './middleware/middleware.js';
+// import { JSONStringify } from './monkey-patch.js';
 
 import * as dotenv from 'dotenv';
 dotenv.config();
+
+// monkey patch JSON.stringify to use native-like implementation
+// TODO: remove this when @verida/encryption-utils,
+// TODO: switches json.sortify to its own implementation
+// TODO: e.g. replace JSON.stringify = require('json.sortify')
+// TODO: with JSON.sortify = require('json.sortify')
+// see: https://github.com/verida/verida-js/blob/c94b95de687c64cc776652602665bb45a327dfb6/packages/encryption-utils/src/index.ts#L10
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// JSON.stringify = function (value, _replacer, _space) {
+// 	return (
+// 		JSONStringify(value) ||
+// 		(function () {
+// 			throw new Error('JSON.stringify failed');
+// 		})()
+// 	);
+// };
 
 // Define Swagger file
 import swaggerDocument from './static/swagger.json' assert { type: 'json' };
@@ -116,31 +133,34 @@ class App {
 
 		// revocation
 		app.post(
-			'/credential-status/create',
-			RevocationController.commonValidator,
-			RevocationController.createValidator,
-			new RevocationController().createStatusList
+			'/credential-status/create/unencrypted',
+			RevocationController.createUnencryptedValidator,
+			new RevocationController().createUnencryptedStatusList
 		);
 		app.post(
-			'/credential-status/update',
-			RevocationController.updateValidator,
-			new RevocationController().updateStatusList
+			'/credential-status/create/encrypted',
+			RevocationController.createEncryptedValidator,
+			new RevocationController().createEncryptedStatusList
 		);
 		app.post(
-			'/credential-status/publish',
-			RevocationController.commonValidator,
-			new RevocationController().publishStatusList
+			'/credential-status/update/unencrypted',
+			RevocationController.updateUnencryptedValidator,
+			new RevocationController().updateUnencryptedStatusList
+		);
+		app.post(
+			'/credential-status/update/encrypted',
+			RevocationController.updateEncryptedValidator,
+			new RevocationController().updateEncryptedStatusList
 		);
 		app.post(
 			'/credential-status/check',
-			RevocationController.commonValidator,
 			RevocationController.checkValidator,
 			new RevocationController().checkStatusList
 		);
 		app.get(
 			'/credential-status/search',
-			RevocationController.commonValidator,
-			new RevocationController().fetchStatusList
+			RevocationController.searchValidator,
+			new RevocationController().searchStatusList
 		);
 
 		// Keys API
@@ -152,10 +172,11 @@ class App {
 		app.post('/did/update', IssuerController.updateValidator, new IssuerController().updateDid);
 		app.post('/did/deactivate/:did', IssuerController.deactivateValidator, new IssuerController().deactivateDid);
 		app.get('/did/list', new IssuerController().getDids);
-		app.get('/did/:did', new IssuerController().getDid);
+		app.get('/did/search/:did', new IssuerController().resolveDidUrl);
 
 		// Resource API
 		app.post('/resource/create/:did', IssuerController.resourceValidator, new IssuerController().createResource);
+		app.get('/resource/search/:did', new IssuerController().getResource);
 
 		// Account API
 		app.post('/account', new AccountController().create);

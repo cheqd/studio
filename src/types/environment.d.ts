@@ -1,5 +1,4 @@
 import { EnvironmentType } from '@verida/types';
-import { Network } from '@verida/client-ts';
 
 declare global {
 	namespace NodeJS {
@@ -37,7 +36,7 @@ declare global {
 
 			// Verida
 			ENABLE_VERIDA_CONNECTOR: string | 'false';
-			VERIDA_NETWORK: NetworkType;
+			VERIDA_NETWORK: EnvironmentType;
 			POLYGON_RPC_URL: string;
 			VERIDA_PRIVATE_KEY: string;
 			POLYGON_PRIVATE_KEY: string;
