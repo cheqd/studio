@@ -110,7 +110,7 @@ export class CredentialController {
 
 		const allowDeactivated = request.query.allowDeactivated === "true";
 		if (!allowDeactivated) {
-			const resolvedResult = await new Identity(response.locals.customerId).agent.resolveDid(request.body.issuerDid);
+			const resolvedResult = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolveDid(request.body.issuerDid);
 			if (!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
 					error: `${request.body.issuerDid} is either Deactivated or Not found`,
