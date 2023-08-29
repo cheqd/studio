@@ -73,9 +73,8 @@ import { MINIMAL_DENOM, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../..
 import { toCoin, toDefaultDkg, toMinimalDenom } from '../../helpers/helpers.js';
 
 // dynamic import to avoid circular dependency
-const VeridaResolver = process.env.ENABLE_VERIDA_CONNECTOR === 'true'
-	? (await import('@verida/vda-did-resolver')).getResolver
-	: undefined;
+const VeridaResolver =
+	process.env.ENABLE_VERIDA_CONNECTOR === 'true' ? (await import('@verida/vda-did-resolver')).getResolver : undefined;
 
 export class Veramo {
 	static instance = new Veramo();
@@ -123,7 +122,7 @@ export class Veramo {
 				...(CheqdDidResolver({ url: process.env.RESOLVER_URL }) as ResolverRegistry),
 				...KeyDidResolver(),
 				...UniversalResolver(),
-			}
+			};
 
 			// handle optional dependencies
 			if (VeridaResolver) {

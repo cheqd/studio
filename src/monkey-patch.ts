@@ -92,7 +92,7 @@ export const JSONStringify = (obj: Record<string, any> | null) => {
 
 	if (restOfDataTypes(obj)) {
 		const passQuotes = isString(obj) ? `"` : '';
-		return `${passQuotes}${isString(obj) ? escape(obj as unknown as string) : obj }${passQuotes}`;
+		return `${passQuotes}${isString(obj) ? escape(obj as unknown as string) : obj}${passQuotes}`;
 	}
 
 	if (isArray(obj)) {
