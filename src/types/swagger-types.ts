@@ -399,7 +399,7 @@
  *           type: string
  *           example: cheqd1qs0nhyk868c246defezhz5eymlt0dmajna2csg
  *         feePaymentAmount:
- *           description: Amount in CHEQ tokens to unlocked the encrypted StatusList2021 DID-Linked Resource.
+ *           description: Amount in CHEQ tokens to unlock the encrypted StatusList2021 DID-Linked Resource.
  *           type: number
  *           minimum: 0
  *           exclusiveMinimum: true
