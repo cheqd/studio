@@ -51,6 +51,10 @@ declare global {
 			ENABLE_ACCOUNT_TOPUP: string | 'false';
 			FAUCET_URI: string;
 			TESTNET_MINIMUM_BALANCE: number;
+
+			// Test user
+			TEST_USER_EMAIL: string;
+			TEST_USER_PASSWORD: string;
 		}
 	}
 
