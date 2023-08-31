@@ -476,7 +476,7 @@ export class CredentialController {
 		}
 
 		const { presentation, verifierDid, policies } = request.body;
-		const verifyStatus = request.query.verifyStatus === 'true' ? true : false;
+		const verifyStatus = request.query.verifyStatus === 'true';
 		try {
 			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.verifyPresentation(
 				presentation,
