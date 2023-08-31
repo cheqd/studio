@@ -6,6 +6,8 @@ import { check, query, validationResult } from 'express-validator';
 
 import { Credentials } from '../services/credentials.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
+import InvalidTokenError from "jwt-decode";
+import jwt_decode from 'jwt-decode';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -153,6 +155,12 @@ export class CredentialController {
 	 *         schema:
 	 *           type: boolean
 	 *           default: false
+	 *       - in: query
+	 *         name: allowDeactivatedDid
+	 *         description: If set to `true` allow to verify credential which based on deactivated DID.
+	 *         schema:
+	 *           type: boolean
+	 *           default: false
 	 *     requestBody:
 	 *       content:
 	 *         application/x-www-form-urlencoded:
@@ -183,6 +191,34 @@ export class CredentialController {
 
 		const { credential, policies } = request.body;
 		const verifyStatus = request.query.verifyStatus === 'true';
+		const allowDeactivatedDid = request.query.allowDeactivatedDid === "true";
+
+		let issuerDid = "";
+		let decoded: any;
+
+		if (credential.issuer?.id) {
+			issuerDid = credential.issuer.id;
+		} else {
+			try {
+				decoded = jwt_decode(credential);
+				issuerDid = decoded.iss;
+			} catch (e) {
+				// If it's not a JWT - just skip it
+				if (!(e instanceof InvalidTokenError)) {
+					throw e;
+				}
+			}
+		}
+
+		if (!allowDeactivatedDid) {
+			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolveDid(issuerDid);
+			if (!result?.didDocument || result.didDocumentMetadata.deactivated) {
+				return response.status(StatusCodes.BAD_REQUEST).send({
+					error: `${issuerDid} is either Deactivated or Not found`,
+				});
+			}
+		}
+
 		try {
 			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.verifyCredential(
 				credential,

@@ -108,6 +108,15 @@
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "in": "query",
+            "name": "allowDeactivatedDid",
+            "description": "If set to `true` allow to verify credential which based on deactivated DID.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "requestBody": {
