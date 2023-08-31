@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.1-develop.1](https://github.com/cheqd/credential-service/compare/2.9.0...2.9.1-develop.1) (2023-08-31)
+
+
+### Bug Fixes
+
+* Fix namespace lookup [DEV-3150] ([#360](https://github.com/cheqd/credential-service/issues/360)) ([53cc021](https://github.com/cheqd/credential-service/commit/53cc0213ac00bad3a7a4dacc75c2aefab2c212e4))
+
 ## [2.9.0](https://github.com/cheqd/credential-service/compare/2.8.0...2.9.0) (2023-08-29)
 
 
