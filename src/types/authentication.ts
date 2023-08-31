@@ -28,23 +28,28 @@ export class MethodToScope {
 		return this.scope === scope;
 	}
 
-	public isRuleMatches(route: string, method: string, namespace = Namespaces.Testnet): boolean {
-		// If route is exactly the same - check method and scope
+	public doesRuleMatches(route: string, method: string, namespace = Namespaces.Testnet): boolean {
+		// If route and method are exactly the same - check scope
 		if (this.route === route && this.method === method) {
-			if (this.scope === '' || this.isSkipNamespace()) {
-				return true;
-			}
-			return this.scope.includes(namespace);
+			return this.checkScope(namespace);
 		}
 		// If route is not exactly the same - check if it matches as an regexp
 		const matches = route.match(this.route);
 		if (matches && matches.length > 0 && this.method === method) {
-			if (this.scope === '' || this.isSkipNamespace()) {
-				return true;
-			}
-			return this.scope.includes(namespace);
+			return this.checkScope(namespace);
 		}
 		return false;
+	}
+
+	private checkScope(namespace: string): boolean {
+		if (this.scope === '' || this.isSkipNamespace()) {
+			return true;
+		}
+		// If namespace is required and it's not provided - return false
+		if (!namespace) {
+			return false;
+		}
+		return this.scope.includes(namespace);
 	}
 
 	public getScope(): string {

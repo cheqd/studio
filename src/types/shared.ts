@@ -39,6 +39,8 @@ const DefaultNamespacePattern = `(${CheqdNetwork.Mainnet}|${CheqdNetwork.Testnet
 export const DefaultDidUrlPattern = new RegExp(
 	`^did:cheqd:${DefaultNamespacePattern}:${DefaultMethodSpecificIdPattern}$`
 );
+export const DefaultNetworkPattern = new RegExp(
+	`did:cheqd:${DefaultNamespacePattern}:.*`);
 
 export const DefaultStatusActions = {
 	revoke: 'revoke',

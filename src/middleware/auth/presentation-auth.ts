@@ -5,7 +5,7 @@ import type { IAuthResponse } from '../../types/authentication.js';
 export class PresentationAuthHandler extends AbstractAuthHandler {
 	constructor() {
 		super();
-		// true means allowUnauthorized
+		// Unauthorized routes
 		this.registerRoute('/presentation/verify', 'POST', '', { allowUnauthorized: true, skipNamespace: true });
 	}
 	public async handle(request: Request, response: Response): Promise<IAuthResponse> {
