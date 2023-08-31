@@ -7,7 +7,7 @@ export class ResourceAuthHandler extends AbstractAuthHandler {
 		super();
 		this.registerRoute('/resource/create', 'POST', 'create:resource:testnet');
 		this.registerRoute('/resource/create', 'POST', 'create:resource:mainnet');
-		// true means allowUnauthorized
+		// Unauthorized routes
 		this.registerRoute('/resource/search/(.*)', 'GET', '', { allowUnauthorized: true, skipNamespace: true });
 	}
 	public async handle(request: Request, response: Response): Promise<IAuthResponse> {

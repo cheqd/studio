@@ -5,7 +5,7 @@ import { StatusCodes } from 'http-status-codes';
 import { check, query, validationResult } from 'express-validator';
 
 import { Credentials } from '../services/credentials.js';
-import { IdentityStrategySetup } from '../services/identity/index.js';
+import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -167,7 +167,7 @@ export class CredentialController {
 		const { credential, policies } = request.body;
 		const verifyStatus = request.query.verifyStatus === 'true' ? true : false;
 		try {
-			const result = await new IdentityStrategySetup(response.locals.customerId).agent.verifyCredential(
+			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.verifyCredential(
 				credential,
 				{
 					verifyStatus,
@@ -239,7 +239,7 @@ export class CredentialController {
 			return response
 				.status(StatusCodes.OK)
 				.json(
-					await new IdentityStrategySetup(response.locals.customerId).agent.revokeCredentials(
+					await new IdentityServiceStrategySetup(response.locals.customerId).agent.revokeCredentials(
 						request.body.credential,
 						publish,
 						response.locals.customerId
@@ -299,7 +299,7 @@ export class CredentialController {
 			return response
 				.status(StatusCodes.OK)
 				.json(
-					await new IdentityStrategySetup(response.locals.customerId).agent.suspendCredentials(
+					await new IdentityServiceStrategySetup(response.locals.customerId).agent.suspendCredentials(
 						request.body.credential,
 						request.body.publish,
 						response.locals.customerId
@@ -341,7 +341,7 @@ export class CredentialController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/UnSuspensionResult'
+	 *               $ref: '#/components/schemas/UnsuspensionResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -359,7 +359,7 @@ export class CredentialController {
 			return response
 				.status(StatusCodes.OK)
 				.json(
-					await new IdentityStrategySetup(response.locals.customerId).agent.reinstateCredentials(
+					await new IdentityServiceStrategySetup(response.locals.customerId).agent.reinstateCredentials(
 						request.body.credential,
 						request.body.publish,
 						response.locals.customerId
@@ -425,7 +425,7 @@ export class CredentialController {
 		const { presentation, verifierDid, policies } = request.body;
 		const verifyStatus = request.query.verifyStatus === 'true' ? true : false;
 		try {
-			const result = await new IdentityStrategySetup(response.locals.customerId).agent.verifyPresentation(
+			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.verifyPresentation(
 				presentation,
 				{
 					verifyStatus,

@@ -15,11 +15,13 @@ window.addEventListener('load', function () {
 		window.location.href = base_url + '/logto/sign-out';
 	};
 	const auth_pan = document.createElement('div');
-	auth_pan.classList.add('auth-wrapper');
+	auth_pan.classList.add('auth-wrapper', 'wrapper');
 	auth_pan.appendChild(login_button);
 
-	const scheme_pan = document.getElementsByClassName('scheme-container')[0];
-	scheme_pan.children[0].appendChild(auth_pan);
+	const info_div = document.getElementsByClassName('information-container')[0];
+	if (info_div) {
+		info_div.insertAdjacentElement('afterend', auth_pan);
+	}
 
 	isAuthenticated().then(function (value) {
 		if (value) {
