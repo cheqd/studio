@@ -22,12 +22,9 @@ async function setupPage(browser: Browser, storageState: string) {
     await page.getByRole('button', { name: 'Sign in' }).click();
     await page.getByPlaceholder('Password').fill(process.env.TEST_USER_PASSWORD);
     await page.getByRole('button', { name: 'Continue' }).click();
-
-    await page.waitForURL(`${process.env.LOGTO_ENDPOINT}/sign-in/consent`,  {
-        waitUntil: 'domcontentloaded',
-    });
     await page.waitForURL(`${process.env.APPLICATION_BASE_URL}/swagger/`, {
         waitUntil: 'domcontentloaded',
+        timeout: 60000,
     });
 
     // End of authentication steps.
