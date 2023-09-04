@@ -846,14 +846,21 @@ export class RevocationController {
 				} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 			}
 
+			// get status list
+			const unencrypted = await identityServiceStrategySetup.agent.searchStatusList2021(
+				did,
+				statusListName,
+				DefaultStatusActionPurposeMap[statusAction]
+			);
+
 			// construct formatted response
 			const formatted = {
 				updated: true,
 				revoked: (result as BulkRevocationResult)?.revoked || undefined,
 				suspended: (result as BulkSuspensionResult)?.suspended || undefined,
 				unsuspended: (result as BulkUnsuspensionResult)?.unsuspended || undefined,
-				resource: result.statusList,
-				resourceMetadata: result.resourceMetadata,
+				resource: unencrypted.resource,
+				resourceMetadata: unencrypted.resourceMetadata,
 			} satisfies UpdateUnencryptedStatusListSuccessfulResponseBody;
 
 			return response.status(StatusCodes.OK).json(formatted);
