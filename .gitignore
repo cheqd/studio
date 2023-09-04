@@ -455,9 +455,6 @@ cython_debug/
 cred.json
 _wrangler.toml
 
-# verida
-v[0-9,a-z]*
-
 # sqlite
 *.sqlite
 

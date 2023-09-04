@@ -1,0 +1,13 @@
+{
+    "issuer": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+    "policies": {
+        "credentialStatus": false
+    },
+    "signer": {
+        "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+        "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
+        "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
+        "type": "Ed25519VerificationKey2018"
+    },
+    "verified": true
+}
