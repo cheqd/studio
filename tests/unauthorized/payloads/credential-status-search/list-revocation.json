@@ -1,0 +1,28 @@
+{
+    "found": true,
+    "resource": {
+        "StatusList2021": {
+            "encodedList": "H4sIAAAAAAAAA-3BIQEAAAACIKf4f6UzLEAaAAAAAAAAAAAAAAAAAAAA4Gxr76utAEAAAA",
+            "statusPurpose": "revocation",
+            "validFrom": "2023-08-23T05:42:26.395Z"
+        },
+        "metadata": {
+            "encoding": "base64url",
+            "encrypted": false,
+            "type": "StatusList2021Revocation"
+        }
+    },
+    "resourceMetadata": {
+        "resourceURI": "did:cheqd:testnet:5ad93129-0d5c-48da-8ea6-29f21379bc8e/resources/f7c2a500-487f-46f4-99fd-f1a4eef9167a",
+        "resourceCollectionId": "5ad93129-0d5c-48da-8ea6-29f21379bc8e",
+        "resourceId": "f7c2a500-487f-46f4-99fd-f1a4eef9167a",
+        "resourceName": "employee-credentials",
+        "resourceType": "StatusList2021Revocation",
+        "mediaType": "application/json",
+        "resourceVersion": "2023-08-23T08:56:21.649Z",
+        "created": "2023-08-23T08:56:24Z",
+        "checksum": "2701f1666fab3b6ecc3070a9717fe8522e8b31ba5f6c843f092336b5f4a14a11",
+        "previousVersionId": "1a79b0c1-ec90-4d91-b385-f2930bdbc932",
+        "nextVersionId": null
+    }
+}

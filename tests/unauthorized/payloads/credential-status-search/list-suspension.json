@@ -1,0 +1,28 @@
+{
+    "found": true,
+    "resource": {
+        "StatusList2021": {
+            "encodedList": "H4sIAAAAAAAAA-3BIQEAAAACIKf4f6UzLEAaAAAAAAAAAAAAAAAAAAAA4Gxr76utAEAAAA",
+            "statusPurpose": "suspension",
+            "validFrom": "2023-08-23T05:22:53.164Z"
+        },
+        "metadata": {
+            "encoding": "base64url",
+            "encrypted": false,
+            "type": "StatusList2021Suspension"
+        }
+    },
+    "resourceMetadata": {
+        "resourceURI": "did:cheqd:testnet:5ad93129-0d5c-48da-8ea6-29f21379bc8e/resources/87f2392b-1b86-46b9-b0d0-f4ff592ed072",
+        "resourceCollectionId": "5ad93129-0d5c-48da-8ea6-29f21379bc8e",
+        "resourceId": "87f2392b-1b86-46b9-b0d0-f4ff592ed072",
+        "resourceName": "employee-credentials",
+        "resourceType": "StatusList2021Suspension",
+        "mediaType": "application/json",
+        "resourceVersion": "2023-08-23T06:09:36.180Z",
+        "created": "2023-08-23T06:09:38Z",
+        "checksum": "88ce472148d743cebde11f0997c0fbcab01911cc6cc10f84bb468b259d1cdddf",
+        "previousVersionId": "d2a5ee2b-23c9-4873-a25a-1a5188a3421c",
+        "nextVersionId": null
+    }
+}
