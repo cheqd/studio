@@ -1176,6 +1176,17 @@ export class RevocationController {
 					}`,
 				} satisfies CheckStatusListUnsuccessfulResponseBody);
 
+			// handle incorrect access control conditions
+			if (errorRef?.errorCode === 'incorrect_access_control_conditions')
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					checked: false,
+					error: `check: error: ${
+						errorRef?.message
+							? 'incorrect access control conditions'
+							: (error as Record<string, unknown>).toString()
+					}`,
+				} satisfies CheckStatusListUnsuccessfulResponseBody);
+
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				checked: false,

@@ -1,8 +1,10 @@
 import type { Request, Response } from 'express';
+import InvalidTokenError from "jwt-decode";
+import jwt_decode from 'jwt-decode';
 import * as dotenv from 'dotenv';
 import { StatusCodes } from 'http-status-codes';
 import stringify from 'json-stringify-safe';
-import { DefaultDidUrlPattern } from '../../types/shared.js';
+import { DefaultNetworkPattern } from '../../types/shared.js';
 import { MethodToScope, IAuthResourceHandler, Namespaces, IAuthResponse } from '../../types/authentication.js';
 import { LogToHelper } from './logto.js';
 
@@ -39,8 +41,15 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 	public async commonPermissionCheck(request: Request): Promise<IAuthResponse> {
 		// Reset all variables
 		this.reset();
-		// setting up namespace. It should be testnet or mainnet
-		this.namespace = AbstractAuthHandler.getNamespaceFromRequest(request);
+
+		// Setup the namespace
+		// Here we just trying to get the network value from the request
+		// The validation depends on the rule for the request
+		const namespace = this.getNamespaceFromRequest(request);
+		if (namespace) {
+			this.namespace = namespace;
+		}
+
 		// Firstly - try to find the rule for the request
 		const rule = this.findRule(request.path, request.method, this.getNamespace());
 
@@ -55,6 +64,14 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 				`Internal error: Issue with finding the rule for the path ${request.path}`
 			);
 		} else {
+			// Namespace should be testnet or mainnet or '' if isSkipNamespace is true
+			// Otherwise - raise an error.
+			if (!this.namespace && !rule?.isSkipNamespace()) {
+				return this.returnError(
+					StatusCodes.INTERNAL_SERVER_ERROR,
+					'Seems like there is no information about the network in the request.'
+				);
+			}
 			// If the user is not authenticated - return error
 			if (!request.user.isAuthenticated) {
 				return this.returnError(
@@ -81,7 +98,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 			}
 			// Checks if the list of scopes from user enough to make an action
 			if (!this.areValidScopes(rule, this.getScopes())) {
-				this.returnError(
+				return this.returnError(
 					StatusCodes.FORBIDDEN,
 					`Unauthorized error: Current LogTo account does not have the required scopes. You need ${this.getScopeForRoute(
 						request.path,
@@ -146,21 +163,77 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 		this.logToHelper = logToHelper;
 	}
 
-	private static doesMatchMainnet(matches: string[] | null): boolean {
+	private findNetworkInBody(body: string): string | null {
+		const matches = body.match(DefaultNetworkPattern);
 		if (matches && matches.length > 0) {
-			return Namespaces.Mainnet === matches[0];
+			return matches[1];
 		}
-		return false;
+		return null;
 	}
 
-	public static getNamespaceFromRequest(req: Request): Namespaces {
-		if (AbstractAuthHandler.doesMatchMainnet(stringify(req.body).match(DefaultDidUrlPattern))) {
-			return Namespaces.Mainnet;
+	private switchNetwork(network: string): Namespaces | null {
+		switch (network) {
+			case 'testnet': {
+				return Namespaces.Testnet;
+			}
+			case 'mainnet': {
+				return Namespaces.Mainnet;
+			}
+			default: {
+				return null;
+			}
 		}
-		if (AbstractAuthHandler.doesMatchMainnet(req.path.match(DefaultDidUrlPattern))) {
-			return Namespaces.Mainnet;
+	}
+
+	public getNamespaceFromRequest(req: Request): Namespaces | null {
+		let network: string | null = '';
+
+		if (req && req.body && req.body.credential) {
+			const { credential } = req.body;
+			let decoded = '';
+			let issuerDid = "";
+			// Try to get issuer DID
+			if (credential && credential.issuer) {
+				issuerDid = credential.issuer.id;
+			}
+			network = this.findNetworkInBody(issuerDid);
+			if (network) {
+				return this.switchNetwork(network);
+			}
+			try {
+				decoded = jwt_decode(req.body.credential);
+			} catch (e) {
+				// If it's not a JWT - just skip it
+				if (!(e instanceof InvalidTokenError)) {
+					throw e;
+				}
+			}
+			// if not - try to search for decoded credential
+			network = this.findNetworkInBody(stringify(decoded));
+			if (network) {
+				return this.switchNetwork(network);
+			}
 		}
-		return Namespaces.Testnet;
+		// Try to search in request body
+		if (req && req.body) {
+			network = this.findNetworkInBody(stringify(req.body));
+			if (network) {
+				return this.switchNetwork(network);
+			}
+		}
+		// Try to search in request path
+		if (req && req.path) {
+			network = this.findNetworkInBody(decodeURIComponent(req.path));
+			if (network) {
+				return this.switchNetwork(network);
+			}
+		}
+		// For DID create we specify it as a separate parameter in body
+		if (req.body && req.body.network ) {
+			return this.switchNetwork(req.body.network);
+		}
+		
+		return null;
 	}
 
 	// Getters
@@ -205,7 +278,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 
 	public findRule(route: string, method: string, namespace = Namespaces.Testnet): MethodToScope | null {
 		for (const rule of this.routeToScoupe) {
-			if (rule.isRuleMatches(route, method, namespace)) {
+			if (rule.doesRuleMatches(route, method, namespace)) {
 				return rule;
 			}
 		}

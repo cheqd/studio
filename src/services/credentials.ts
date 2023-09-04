@@ -3,7 +3,6 @@ import type { CredentialPayload, VerifiableCredential } from '@veramo/core';
 import { VC_CONTEXT, VC_TYPE } from '../types/constants.js';
 import type { CredentialRequest } from '../types/shared.js';
 import { IdentityServiceStrategySetup } from './identity/index.js';
-import { VeridaService } from '../services/connectors/verida.js';
 import { v4 } from 'uuid';
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -41,6 +40,10 @@ export class Credentials {
 
 		if (ENABLE_VERIDA_CONNECTOR === 'true' && request.subjectDid.startsWith('did:vda')) {
 			if (!request.credentialSchema) throw new Error('Credential schema is required');
+
+			// dynamic import to avoid circular dependency
+			const { VeridaService } = await import('./connectors/verida.js');
+
 			await VeridaService.instance.sendCredential(
 				request.subjectDid,
 				'New Verifiable Credential',

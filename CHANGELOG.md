@@ -1,5 +1,38 @@
 # Changelog
 
+## [2.9.1-develop.1](https://github.com/cheqd/credential-service/compare/2.9.0...2.9.1-develop.1) (2023-08-31)
+
+
+### Bug Fixes
+
+* Fix namespace lookup [DEV-3150] ([#360](https://github.com/cheqd/credential-service/issues/360)) ([53cc021](https://github.com/cheqd/credential-service/commit/53cc0213ac00bad3a7a4dacc75c2aefab2c212e4))
+
+## [2.9.0](https://github.com/cheqd/credential-service/compare/2.8.0...2.9.0) (2023-08-29)
+
+
+### Features
+
+* Added encrypted StatusList APIs + enhanced type safety ([#350](https://github.com/cheqd/credential-service/issues/350)) ([951e2b4](https://github.com/cheqd/credential-service/commit/951e2b45af6299b09e16d6037baa9c5eaf595068))
+* Change from `did/:did` to `did/search/:didUrl` endpoint and support query parameters for DID endpoint in Credential Service [DEV-3097] ([#331](https://github.com/cheqd/credential-service/issues/331)) ([4e34b76](https://github.com/cheqd/credential-service/commit/4e34b76f1a9695cf48ae8551feb24840e4c0d4d6))
+
+
+### Bug Fixes
+
+* Credential Service Staging - Resolve issue with page not loading and broken login [DEV-3162] ([#358](https://github.com/cheqd/credential-service/issues/358)) ([419d2ec](https://github.com/cheqd/credential-service/commit/419d2ecb65bb9b365bf9aae5bc8e39e9a08d79ea))
+* Fix problem with agent initialize [DEV-3146] ([#346](https://github.com/cheqd/credential-service/issues/346)) ([45e1074](https://github.com/cheqd/credential-service/commit/45e1074925c6262d8034df1a0e3a5311987d36c2))
+* Validate did access on operation ([#351](https://github.com/cheqd/credential-service/issues/351)) ([8bbfce1](https://github.com/cheqd/credential-service/commit/8bbfce19a462e78004f7a8f884929ee89d8fcc40))
+
+## [2.9.0-develop.7](https://github.com/cheqd/credential-service/compare/2.9.0-develop.6...2.9.0-develop.7) (2023-08-29)
+
+## [2.9.0-develop.6](https://github.com/cheqd/credential-service/compare/2.9.0-develop.5...2.9.0-develop.6) (2023-08-29)
+
+## [2.9.0-develop.5](https://github.com/cheqd/credential-service/compare/2.9.0-develop.4...2.9.0-develop.5) (2023-08-29)
+
+
+### Bug Fixes
+
+* Credential Service Staging - Resolve issue with page not loading and broken login [DEV-3162] ([#358](https://github.com/cheqd/credential-service/issues/358)) ([419d2ec](https://github.com/cheqd/credential-service/commit/419d2ecb65bb9b365bf9aae5bc8e39e9a08d79ea))
+
 ## [2.9.0-develop.4](https://github.com/cheqd/credential-service/compare/2.9.0-develop.3...2.9.0-develop.4) (2023-08-25)
 
 
