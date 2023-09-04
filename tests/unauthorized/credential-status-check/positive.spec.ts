@@ -1,6 +1,9 @@
 import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
-import { TESTNET_DID_WITH_CREDENTIAL_STATUS_LIST, TESTNET_DID_WITH_ENCRYPTED_STATUS_LIST } from '../constants';
+import { 
+    TESTNET_DID_WITH_CREDENTIAL_STATUS_LIST, 
+    // TESTNET_DID_WITH_ENCRYPTED_STATUS_LIST 
+} from '../constants';
 
 test('/credential-status/check with statusPurpose=revocation', async ({ request }) => {
     const response = await request.post('/credential-status/check?statusPurpose=revocation&encrypted=false', {
