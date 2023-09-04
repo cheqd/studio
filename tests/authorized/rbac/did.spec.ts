@@ -80,4 +80,3 @@ test('Deactivate DID for user with testnet role but network is mainnet', async (
     expect(response.status()).toBe(StatusCodes.FORBIDDEN);
     expect(await response.text()).toEqual(expect.stringContaining(DEFAULT_DOES_NOT_HAVE_PERMISSIONS));
 });
-
