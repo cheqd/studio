@@ -15,9 +15,14 @@ jobs:
         uses: ./.github/workflows/build.yml
         secrets: inherit
 
+    call-tests:
+        name: E2E tests
+        uses: ./.github/workflows/tests.yml
+        secrets: inherit
+
     call-staging:
         name: 'Staging'
-        needs: [call-lint, call-build]
+        needs: [call-lint, call-build, call-tests]
         if: ${{ github.ref_name == 'develop' }}
         uses: ./.github/workflows/staging.yml
         secrets: inherit

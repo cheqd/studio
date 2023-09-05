@@ -5,6 +5,7 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    environment: Playwright
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
@@ -12,10 +13,16 @@ jobs:
         node-version: 18
     - name: Install dependencies
       run: npm ci
+
+    - name: Build and start the server
+      run: npm run start:local
+
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
+
     - name: Run Playwright tests
       run: npx playwright test -c playwright.config.ts
+
     - uses: actions/upload-artifact@v3
       if: always()
       with:
