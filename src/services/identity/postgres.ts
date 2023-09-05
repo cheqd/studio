@@ -35,6 +35,7 @@ import {
 	VerificationOptions,
 	CreateEncryptedStatusListOptions,
 	FeePaymentOptions,
+	UpdateEncryptedStatusListOptions,
 } from '../../types/shared.js';
 import { Connection } from '../../database/connection/connection.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
@@ -295,14 +296,14 @@ export class PostgresIdentityService extends DefaultIdentityService {
 
 	async updateEncryptedStatusList2021(
 		did: string,
-		statusOptions: UpdateUnencryptedStatusListOptions,
+		statusOptions: UpdateEncryptedStatusListOptions,
 		agentId: string
 	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
 		const agent = await this.createAgent(agentId);
 		if (!(await CustomerService.instance.find(agentId, { did }))) {
 			throw new Error(`${did} not found in wallet`);
 		}
-		return await Veramo.instance.updateUnencryptedStatusList2021(agent, did, statusOptions);
+		return await Veramo.instance.updateEncryptedStatusList2021(agent, did, statusOptions);
 	}
 
 	async checkStatusList2021(
