@@ -42,7 +42,7 @@ jobs:
       run: npm ci
 
     - name: Build and start the server
-      run: npm run build && npm run start
+      run: npm run build && npm run start &
 
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
