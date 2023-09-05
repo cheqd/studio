@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.9.1-develop.3](https://github.com/cheqd/credential-service/compare/2.9.1-develop.2...2.9.1-develop.3) (2023-09-05)
+
+
+### Bug Fixes
+
+* Fix problem with `/status-list/update/encrypted` API - it doesn't work [DEV-3182] ([#366](https://github.com/cheqd/credential-service/issues/366)) ([fbb7af4](https://github.com/cheqd/credential-service/commit/fbb7af433dfad2d34dc1a8e4e5e96acf116e7a2c))
+
+## [2.9.1-develop.2](https://github.com/cheqd/credential-service/compare/2.9.1-develop.1...2.9.1-develop.2) (2023-09-04)
+
+
+### Bug Fixes
+
+* Revert monkey-patch (seems like a bad merge) [DEV-3181] ([#365](https://github.com/cheqd/credential-service/issues/365)) ([e2cc72c](https://github.com/cheqd/credential-service/commit/e2cc72c8e8701aeba954853445e5d5600adb35f9))
+
 ## [2.9.1-develop.1](https://github.com/cheqd/credential-service/compare/2.9.0...2.9.1-develop.1) (2023-08-31)
 
 
