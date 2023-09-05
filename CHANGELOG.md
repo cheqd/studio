@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.1-develop.4](https://github.com/cheqd/credential-service/compare/2.9.1-develop.3...2.9.1-develop.4) (2023-09-05)
+
+
+### Bug Fixes
+
+* Fix problem with 'verifyStatus=true' parameter in '/credential/verify' API [DEV-3170] ([#368](https://github.com/cheqd/credential-service/issues/368)) ([309e980](https://github.com/cheqd/credential-service/commit/309e980af50361e93d815aa9e9c1bec82838eb6f))
+
 ## [2.9.1-develop.3](https://github.com/cheqd/credential-service/compare/2.9.1-develop.2...2.9.1-develop.3) (2023-09-05)
 
 
