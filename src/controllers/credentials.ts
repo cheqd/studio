@@ -103,10 +103,15 @@ export class CredentialController {
 			request.body['@context'] = [request.body['@context']];
 		}
 
-		const resolvedResult = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolveDid(request.body.issuerDid);
-		if (!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
+		const resolvedResult = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(request.body.issuerDid);
+		const body = await resolvedResult.json();
+		if (!body?.didDocument) {
+			return response.status(resolvedResult.status).send({ body });
+		}
+
+		if (body.didDocumentMetadata.deactivated) {
 			return response.status(StatusCodes.BAD_REQUEST).send({
-				error: `${request.body.issuerDid} is either Deactivated or Not found`,
+				error: `${request.body.issuerDid} is deactivated`,
 			});
 		}
 
@@ -498,10 +503,15 @@ export class CredentialController {
 		}
 
 		if (!allowDeactivatedDid) {
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolveDid(issuerDid);
-			if (!result?.didDocument || result.didDocumentMetadata.deactivated) {
+			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(issuerDid);
+			const body = await result.json();
+			if (!body?.didDocument) {
+				return response.status(result.status).send({ body });
+			}
+
+			if (body.didDocumentMetadata.deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `${issuerDid} is either Deactivated or Not found`,
+					error: `${issuerDid} is deactivated`,
 				});
 			}
 		}
