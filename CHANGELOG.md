@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.1-develop.5](https://github.com/cheqd/credential-service/compare/2.9.1-develop.4...2.9.1-develop.5) (2023-09-06)
+
+
+### Bug Fixes
+
+* Bump to original patch release + remove intermittent patch ([#369](https://github.com/cheqd/credential-service/issues/369)) ([8ec1705](https://github.com/cheqd/credential-service/commit/8ec17058ba2e54e2b39452cbcd2d81d99cac603f))
+
 ## [2.9.1-develop.4](https://github.com/cheqd/credential-service/compare/2.9.1-develop.3...2.9.1-develop.4) (2023-09-05)
 
 
