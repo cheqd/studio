@@ -201,10 +201,15 @@ export class CredentialController {
 		}
 
 		if (!allowDeactivatedDid) {
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolveDid(issuerDid);
-			if (!result?.didDocument || result.didDocumentMetadata.deactivated) {
+			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(issuerDid);
+			const body = await result.json();
+			if (!body?.didDocument) {
+				return response.status(result.status).send({ body });
+			}
+
+			if (body.didDocumentMetadata.deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `${issuerDid} is either Deactivated or Not found`,
+					error: `${issuerDid} is deactivated`,
 				});
 			}
 		}
