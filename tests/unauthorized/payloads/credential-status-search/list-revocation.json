@@ -2,27 +2,27 @@
     "found": true,
     "resource": {
         "StatusList2021": {
-            "encodedList": "H4sIAAAAAAAAA-3BIQEAAAACIKf4f6UzLEAaAAAAAAAAAAAAAAAAAAAA4Gxr76utAEAAAA",
             "statusPurpose": "revocation",
-            "validFrom": "2023-08-23T05:42:26.395Z"
+            "encodedList": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
+            "validFrom": "2023-09-07T11:01:49.440Z"
         },
         "metadata": {
-            "encoding": "base64url",
+            "type": "StatusList2021Revocation",
             "encrypted": false,
-            "type": "StatusList2021Revocation"
+            "encoding": "base64url"
         }
     },
     "resourceMetadata": {
-        "resourceURI": "did:cheqd:testnet:5ad93129-0d5c-48da-8ea6-29f21379bc8e/resources/f7c2a500-487f-46f4-99fd-f1a4eef9167a",
-        "resourceCollectionId": "5ad93129-0d5c-48da-8ea6-29f21379bc8e",
-        "resourceId": "f7c2a500-487f-46f4-99fd-f1a4eef9167a",
-        "resourceName": "employee-credentials",
+        "resourceURI": "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90/resources/a5dd2c2e-f884-44af-af68-ac0b8a9b4c16",
+        "resourceCollectionId": "d4a13003-0bc5-4608-b23a-54ea90fe9f90",
+        "resourceId": "a5dd2c2e-f884-44af-af68-ac0b8a9b4c16",
+        "resourceName": "cheqd-employee-credentials",
         "resourceType": "StatusList2021Revocation",
         "mediaType": "application/json",
-        "resourceVersion": "2023-08-23T08:56:21.649Z",
-        "created": "2023-08-23T08:56:24Z",
-        "checksum": "2701f1666fab3b6ecc3070a9717fe8522e8b31ba5f6c843f092336b5f4a14a11",
-        "previousVersionId": "1a79b0c1-ec90-4d91-b385-f2930bdbc932",
+        "resourceVersion": "2023-09-07T11:01:49.443Z",
+        "created": "2023-09-07T11:01:47Z",
+        "checksum": "32ffe033eb9d6c5c0d0c84dca06a9fc0b07980e1dfc3e1bc733dc6366ca781f0",
+        "previousVersionId": "dafbe3d2-85a8-4fba-b726-a21cd4b5e381",
         "nextVersionId": null
     }
 }

@@ -1,13 +1,13 @@
 {
-    "issuer": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+    "verified": true,
+    "issuer": "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90",
+    "signer": {
+        "id": "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90#key-1",
+        "type": "Ed25519VerificationKey2018",
+        "controller": "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90",
+        "publicKeyBase58": "D4cDp3GH3zHhTJR92RpMhPkmrKgMvJXTHzhF3EWKjR8C"
+    },
     "policies": {
         "credentialStatus": false
-    },
-    "signer": {
-        "controller": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-        "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
-        "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
-        "type": "Ed25519VerificationKey2018"
-    },
-    "verified": true
+    }
 }

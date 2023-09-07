@@ -2,63 +2,118 @@
     "@context": "https://w3id.org/did-resolution/v1",
     "didResolutionMetadata": {
         "contentType": "application/did+ld+json",
-        "retrieved": "2023-08-24T06:12:07Z",
+        "retrieved": "2023-09-07T11:12:08Z",
         "did": {
-            "didString": "did:cheqd:testnet:c1685ca0-1f5b-439c-8eb8-5c0e85ab7cd0",
-            "methodSpecificId": "c1685ca0-1f5b-439c-8eb8-5c0e85ab7cd0",
+            "didString": "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90",
+            "methodSpecificId": "d4a13003-0bc5-4608-b23a-54ea90fe9f90",
             "method": "cheqd"
         }
     },
     "didDocument": {
         "@context": [
             "https://www.w3.org/ns/did/v1",
-            "https://w3id.org/security/suites/ed25519-2020/v1"
+            "https://w3id.org/security/suites/ed25519-2018/v1"
         ],
-        "id": "did:cheqd:testnet:c1685ca0-1f5b-439c-8eb8-5c0e85ab7cd0",
+        "id": "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90",
         "controller": [
-            "did:cheqd:testnet:c1685ca0-1f5b-439c-8eb8-5c0e85ab7cd0"
+            "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90"
         ],
         "verificationMethod": [
             {
-                "id": "did:cheqd:testnet:c1685ca0-1f5b-439c-8eb8-5c0e85ab7cd0#key-1",
-                "type": "Ed25519VerificationKey2020",
-                "controller": "did:cheqd:testnet:c1685ca0-1f5b-439c-8eb8-5c0e85ab7cd0",
-                "publicKeyMultibase": "z6Mkjhidm3FJxUo4FekqyhXGMqrDLnrw9NtuzfmGQ61UXW1e"
+                "id": "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90#key-1",
+                "type": "Ed25519VerificationKey2018",
+                "controller": "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90",
+                "publicKeyBase58": "D4cDp3GH3zHhTJR92RpMhPkmrKgMvJXTHzhF3EWKjR8C"
             }
         ],
         "authentication": [
-            "did:cheqd:testnet:c1685ca0-1f5b-439c-8eb8-5c0e85ab7cd0#key-1"
+            "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90#key-1"
+        ],
+        "assertionMethod": [
+            "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90#key-1"
         ]
     },
     "didDocumentMetadata": {
-        "created": "2023-01-25T11:58:10Z",
-        "versionId": "e5615fc2-6f13-42b1-989c-49576a574cef",
+        "created": "2023-09-07T10:22:40Z",
+        "versionId": "5aa634bb-cdf3-4fb9-9399-9b170c55a188",
         "linkedResourceMetadata": [
             {
-                "resourceURI": "did:cheqd:testnet:c1685ca0-1f5b-439c-8eb8-5c0e85ab7cd0/resources/9ba3922e-d5f5-4f53-b265-fc0d4e988c77",
-                "resourceCollectionId": "c1685ca0-1f5b-439c-8eb8-5c0e85ab7cd0",
-                "resourceId": "9ba3922e-d5f5-4f53-b265-fc0d4e988c77",
-                "resourceName": "Demo Resource",
-                "resourceType": "String",
+                "resourceURI": "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90/resources/0839fdaf-d629-49dd-9e84-a7a74ca32d69",
+                "resourceCollectionId": "d4a13003-0bc5-4608-b23a-54ea90fe9f90",
+                "resourceId": "0839fdaf-d629-49dd-9e84-a7a74ca32d69",
+                "resourceName": "cheqd-employee-credentials-encrypted",
+                "resourceType": "StatusList2021Suspension",
                 "mediaType": "application/json",
-                "resourceVersion": "",
-                "created": "2023-01-25T12:08:39Z",
-                "checksum": "e1dbc03b50bdb995961dc8843df6539b79d03bf49787ed6462189ee97d27eaf3",
+                "resourceVersion": "2023-09-07T11:07:28.935Z",
+                "created": "2023-09-07T11:07:26Z",
+                "checksum": "17d0b75f129c07c51e87219cd0ea19c81229b7647eadb3d6db730ac55e4702d0",
                 "previousVersionId": null,
                 "nextVersionId": null
             },
             {
-                "resourceURI": "did:cheqd:testnet:c1685ca0-1f5b-439c-8eb8-5c0e85ab7cd0/resources/e733ebb7-c8dd-41ed-9d42-33bceea70952",
-                "resourceCollectionId": "c1685ca0-1f5b-439c-8eb8-5c0e85ab7cd0",
-                "resourceId": "e733ebb7-c8dd-41ed-9d42-33bceea70952",
-                "resourceName": "ResourceName",
-                "resourceType": "String",
-                "mediaType": "text/plain; charset=utf-8",
-                "resourceVersion": "",
-                "created": "2023-01-25T12:04:52Z",
-                "checksum": "cffd829b06797f85407be9353056db722ca3eca0c05ab0462a42d30f19cdef09",
+                "resourceURI": "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90/resources/a5dd2c2e-f884-44af-af68-ac0b8a9b4c16",
+                "resourceCollectionId": "d4a13003-0bc5-4608-b23a-54ea90fe9f90",
+                "resourceId": "a5dd2c2e-f884-44af-af68-ac0b8a9b4c16",
+                "resourceName": "cheqd-employee-credentials",
+                "resourceType": "StatusList2021Revocation",
+                "mediaType": "application/json",
+                "resourceVersion": "2023-09-07T11:01:49.443Z",
+                "created": "2023-09-07T11:01:47Z",
+                "checksum": "32ffe033eb9d6c5c0d0c84dca06a9fc0b07980e1dfc3e1bc733dc6366ca781f0",
+                "previousVersionId": "dafbe3d2-85a8-4fba-b726-a21cd4b5e381",
+                "nextVersionId": null
+            },
+            {
+                "resourceURI": "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90/resources/ae34faea-83e7-49fc-94cd-08ac55184694",
+                "resourceCollectionId": "d4a13003-0bc5-4608-b23a-54ea90fe9f90",
+                "resourceId": "ae34faea-83e7-49fc-94cd-08ac55184694",
+                "resourceName": "cheqd-employee-credentials",
+                "resourceType": "StatusList2021Suspension",
+                "mediaType": "application/json",
+                "resourceVersion": "2023-09-07T11:03:20.878Z",
+                "created": "2023-09-07T11:03:23Z",
+                "checksum": "f49820c04e418f7c224fe43e7e153e7efcd8112a056b208283fd84f45d84ae01",
                 "previousVersionId": null,
                 "nextVersionId": null
+            },
+            {
+                "resourceURI": "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90/resources/cc0a6502-03bf-422d-9a91-ad0a3755f302",
+                "resourceCollectionId": "d4a13003-0bc5-4608-b23a-54ea90fe9f90",
+                "resourceId": "cc0a6502-03bf-422d-9a91-ad0a3755f302",
+                "resourceName": "ResourceName",
+                "resourceType": "TextDocument",
+                "mediaType": "text/plain; charset=utf-8",
+                "resourceVersion": "",
+                "created": "2023-09-07T10:25:51Z",
+                "checksum": "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",
+                "previousVersionId": null,
+                "nextVersionId": null
+            },
+            {
+                "resourceURI": "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90/resources/d62c818c-c9e3-4645-9353-48c8f25dde08",
+                "resourceCollectionId": "d4a13003-0bc5-4608-b23a-54ea90fe9f90",
+                "resourceId": "d62c818c-c9e3-4645-9353-48c8f25dde08",
+                "resourceName": "cheqd-employee-credentials-encrypted",
+                "resourceType": "StatusList2021Revocation",
+                "mediaType": "application/json",
+                "resourceVersion": "2023-09-07T10:24:25.707Z",
+                "created": "2023-09-07T10:24:28Z",
+                "checksum": "7f24c326690b48996723c073a2c223fddc9d17fca1ecddf17a256fc1ab2f469e",
+                "previousVersionId": null,
+                "nextVersionId": null
+            },
+            {
+                "resourceURI": "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90/resources/dafbe3d2-85a8-4fba-b726-a21cd4b5e381",
+                "resourceCollectionId": "d4a13003-0bc5-4608-b23a-54ea90fe9f90",
+                "resourceId": "dafbe3d2-85a8-4fba-b726-a21cd4b5e381",
+                "resourceName": "cheqd-employee-credentials",
+                "resourceType": "StatusList2021Revocation",
+                "mediaType": "application/json",
+                "resourceVersion": "2023-09-07T10:23:48.492Z",
+                "created": "2023-09-07T10:23:45Z",
+                "checksum": "c5e7fd7f2a4dd7777bab97d1090dc0c6dceecc64c897e543e4dac77f24dc8f54",
+                "previousVersionId": null,
+                "nextVersionId": "a5dd2c2e-f884-44af-af68-ac0b8a9b4c16"
             }
         ]
     }

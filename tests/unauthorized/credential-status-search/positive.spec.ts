@@ -1,13 +1,13 @@
 import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
-import { TESTNET_DID_WITH_CREDENTIAL_STATUS_LIST } from '../constants';
+import { TESTNET_DID } from '../constants';
 
 test('/credential-status/search with statusPurpose=revocation', async ({ request }) => {
     const response = await request.get(
         '/credential-status/search?' +
-        `did=${TESTNET_DID_WITH_CREDENTIAL_STATUS_LIST}&` +
+        `did=${TESTNET_DID}&` +
         'statusPurpose=revocation&' + 
-        'statusListName=employee-credentials',
+        'statusListName=cheqd-employee-credentials',
     );
     expect(response.ok()).toBeTruthy();
 
@@ -20,9 +20,9 @@ test('/credential-status/search with statusPurpose=revocation', async ({ request
 test('/credential-status/search statusPurpose=revocation', async ({ request }) => {
     const response = await request.get(
         '/credential-status/search?' +
-        `did=${TESTNET_DID_WITH_CREDENTIAL_STATUS_LIST}&` +
+        `did=${TESTNET_DID}&` +
         'statusPurpose=suspension&' + 
-        'statusListName=employee-credentials',
+        'statusListName=cheqd-employee-credentials',
     );
     expect(response.ok()).toBeTruthy();
 

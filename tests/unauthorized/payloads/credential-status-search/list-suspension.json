@@ -2,27 +2,27 @@
     "found": true,
     "resource": {
         "StatusList2021": {
-            "encodedList": "H4sIAAAAAAAAA-3BIQEAAAACIKf4f6UzLEAaAAAAAAAAAAAAAAAAAAAA4Gxr76utAEAAAA",
             "statusPurpose": "suspension",
-            "validFrom": "2023-08-23T05:22:53.164Z"
+            "encodedList": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
+            "validFrom": "2023-09-07T11:03:20.877Z"
         },
         "metadata": {
-            "encoding": "base64url",
+            "type": "StatusList2021Suspension",
             "encrypted": false,
-            "type": "StatusList2021Suspension"
+            "encoding": "base64url"
         }
     },
     "resourceMetadata": {
-        "resourceURI": "did:cheqd:testnet:5ad93129-0d5c-48da-8ea6-29f21379bc8e/resources/87f2392b-1b86-46b9-b0d0-f4ff592ed072",
-        "resourceCollectionId": "5ad93129-0d5c-48da-8ea6-29f21379bc8e",
-        "resourceId": "87f2392b-1b86-46b9-b0d0-f4ff592ed072",
-        "resourceName": "employee-credentials",
+        "resourceURI": "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90/resources/ae34faea-83e7-49fc-94cd-08ac55184694",
+        "resourceCollectionId": "d4a13003-0bc5-4608-b23a-54ea90fe9f90",
+        "resourceId": "ae34faea-83e7-49fc-94cd-08ac55184694",
+        "resourceName": "cheqd-employee-credentials",
         "resourceType": "StatusList2021Suspension",
         "mediaType": "application/json",
-        "resourceVersion": "2023-08-23T06:09:36.180Z",
-        "created": "2023-08-23T06:09:38Z",
-        "checksum": "88ce472148d743cebde11f0997c0fbcab01911cc6cc10f84bb468b259d1cdddf",
-        "previousVersionId": "d2a5ee2b-23c9-4873-a25a-1a5188a3421c",
+        "resourceVersion": "2023-09-07T11:03:20.878Z",
+        "created": "2023-09-07T11:03:23Z",
+        "checksum": "f49820c04e418f7c224fe43e7e153e7efcd8112a056b208283fd84f45d84ae01",
+        "previousVersionId": null,
         "nextVersionId": null
     }
 }
