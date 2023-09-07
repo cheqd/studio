@@ -1,10 +1,8 @@
 import * as fs from 'fs';
+import { TESTNET_DID } from '../constants';
 import { test, expect } from '@playwright/test';
-import { 
-    TESTNET_DID,
-} from '../constants';
 
-test('/credential-status/check with statusPurpose=revocation', async ({ request }) => {
+test('[Positive] It can check an existent body and statusPurpose=revocation&encrypted=false parameters', async ({ request }) => {
     const response = await request.post('/credential-status/check?statusPurpose=revocation&encrypted=false', {
         data: {
             did: TESTNET_DID,
@@ -15,12 +13,14 @@ test('/credential-status/check with statusPurpose=revocation', async ({ request 
     expect(response.ok()).toBeTruthy();
 
     const body = await response.json();
-    const expected = JSON.parse(fs.readFileSync('./tests/unauthorized/payloads/credential-status-check/status-revocation.json', 'utf-8'));
+    const expected = JSON.parse(fs.readFileSync(
+        './tests/unauthorized/payloads/credential-status-check/status-revocation.json', 'utf-8')
+    );
 
     expect(body).toStrictEqual(expected);
 });
 
-test('/credential-status/check with statusPurpose=suspension', async ({ request }) => {
+test('Positive] It can check an existent body and statusPurpose=suspension&encrypted=false parameters', async ({ request }) => {
     const response = await request.post('/credential-status/check?statusPurpose=suspension&encrypted=false', {
         data: {
             did: TESTNET_DID,
@@ -31,13 +31,15 @@ test('/credential-status/check with statusPurpose=suspension', async ({ request 
     expect(response.ok()).toBeTruthy();
 
     const body = await response.json();
-    const expected = JSON.parse(fs.readFileSync('./tests/unauthorized/payloads/credential-status-check/status-suspension.json', 'utf-8'));
+    const expected = JSON.parse(fs.readFileSync(
+        './tests/unauthorized/payloads/credential-status-check/status-suspension.json', 'utf-8')
+    );
 
     expect(body).toStrictEqual(expected);
 });
 
 // TODO: FIX ME
-// test('/credential-status/check with statusPurpose=revocation&encrypted=true', async ({ request }) => {
+// test('[Positive] It can check an existent body and statusPurpose=revocation&encrypted=true parameters', async ({ request }) => {
 //     const response = await request.post('/credential-status/check?statusPurpose=revocation&encrypted=true', {
 //         data: {
 //             did: TESTNET_DID,
@@ -48,14 +50,16 @@ test('/credential-status/check with statusPurpose=suspension', async ({ request 
 //     expect(response.ok()).toBeTruthy();
 
 //     const body = await response.json();
-//     const expected = JSON.parse(fs.readFileSync('./tests/unauthorized/payloads/credential-status-check/status-suspension.json', 'utf-8'));
+//     const expected = JSON.parse(
+//         fs.readFileSync('./tests/unauthorized/payloads/credential-status-check/status-suspension.json', 'utf-8')
+//     );
 
 //     expect(body).toStrictEqual(expected);
 // });
 
 
 // TODO: FIX ME
-// test('/credential-status/check with statusPurpose=suspension&encrypted=true', async ({ request }) => {
+// test('[Positive] It can check an existent body and statusPurpose=suspension&encrypted=true parameters', async ({ request }) => {
 //     const response = await request.post('/credential-status/check?statusPurpose=suspension&encrypted=true', {
 //         data: {
 //             did: TESTNET_DID,
@@ -66,7 +70,9 @@ test('/credential-status/check with statusPurpose=suspension', async ({ request 
 //     expect(response.ok()).toBeTruthy();
 
 //     const body = await response.json();
-//     const expected = JSON.parse(fs.readFileSync('./tests/unauthorized/payloads/credential-status-check/status-suspension.json', 'utf-8'));
+//     const expected = JSON.parse(
+//         fs.readFileSync('./tests/unauthorized/payloads/credential-status-check/status-suspension.json', 'utf-8')
+//     );
 
 //     expect(body).toStrictEqual(expected);
 // });

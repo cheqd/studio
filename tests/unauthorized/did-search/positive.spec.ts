@@ -2,12 +2,14 @@ import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { TESTNET_DID, TESTNET_DID_FRAGMENT } from '../constants';
 
-test('/did/search/{did} endpoint', async ({ request }) => {
+test('[Positive] It can search an existent DID', async ({ request }) => {
     const response = await request.get(`/did/search/${TESTNET_DID}`);
     expect(response.ok()).toBeTruthy();
     
     const body = await response.json();
-    const expected = JSON.parse(fs.readFileSync('./tests/unauthorized/payloads/did-search/resolve-did.json', 'utf-8'));
+    const expected = JSON.parse(
+        fs.readFileSync('./tests/unauthorized/payloads/did-search/resolve-did.json', 'utf-8')
+    );
 
     expect(body['@context']).toStrictEqual(expected['@context']);
     expect(body.didResolutionMetadata.did).toStrictEqual(expected.didResolutionMetadata.did);
@@ -15,12 +17,14 @@ test('/did/search/{did} endpoint', async ({ request }) => {
     expect(body.didDocumentMetadata).toStrictEqual(expected.didDocumentMetadata);
 });
 
-test('/did/search/{did} with metadata query parameter', async ({ request }) => {
+test('[Positive] It can search an existent DID and metadata=true query parameter', async ({ request }) => {
     const response = await request.get(`/did/search/${TESTNET_DID}?metadata=true`);
     expect(response.ok()).toBeTruthy();
     
     const body = await response.json();
-    const expected = JSON.parse(fs.readFileSync('./tests/unauthorized/payloads/did-search/did-metadata.json', 'utf-8'));
+    const expected = JSON.parse(
+        fs.readFileSync('./tests/unauthorized/payloads/did-search/did-metadata.json', 'utf-8')
+    );
 
     expect(body['@context']).toStrictEqual(expected['@context']);
     expect(body.dereferencingMetadata.did).toStrictEqual(expected.dereferencingMetadata.did);
@@ -28,7 +32,7 @@ test('/did/search/{did} with metadata query parameter', async ({ request }) => {
     expect(body.contentMetadata).toStrictEqual(expected.contentMetadata);
 });
 
-test('/did/search/{did#fragment-id}', async ({ request }) => {
+test('[Positive] It can search existent DID and fragment', async ({ request }) => {
     // change hashTag value
     const hashTag = '%2523';
     const url = `/did/search/${TESTNET_DID}${hashTag}${TESTNET_DID_FRAGMENT}`;
@@ -36,7 +40,9 @@ test('/did/search/{did#fragment-id}', async ({ request }) => {
     expect(response.ok()).toBeTruthy();
 
     const body = await response.json();
-    const expected = JSON.parse(fs.readFileSync('./tests/unauthorized/payloads/did-search/did-fragment.json', 'utf-8'));
+    const expected = JSON.parse(
+        fs.readFileSync('./tests/unauthorized/payloads/did-search/did-fragment.json', 'utf-8')
+    );
 
     expect(body['@context']).toStrictEqual(expected['@context']);
     expect(body.dereferencingMetadata.did).toStrictEqual(expected.dereferencingMetadata.did);

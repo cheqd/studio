@@ -1,102 +1,118 @@
-import { test, expect } from '@playwright/test';
 import * as fs from 'fs';
+import { test, expect } from '@playwright/test';
 import { VALID_CREDENTIAL, VALID_JWT_TOKEN } from '../constants';
 
-test('/credential/verify with JWT', async ({ request }) => {
+test('[Positive] It can verify a valid JWT body', async ({ request }) => {
     const response = await request.post('/credential/verify', {
         data: { credential: VALID_JWT_TOKEN }
     });
     expect(response.ok()).toBeTruthy();
 
     const body = await response.json();
-    const expected = JSON.parse(fs.readFileSync('./tests/unauthorized/payloads/credential-verify/verify-jwt.json', 'utf-8'));
+    const expected = JSON.parse(
+        fs.readFileSync('./tests/unauthorized/payloads/credential-verify/verify-jwt.json', 'utf-8')
+    );
 
     expect(body).toStrictEqual(expected);
 });
 
-test('/credential/verify with credential', async ({ request }) => {
+test('[Positive] It can verify a valid credential body', async ({ request }) => {
     const response = await request.post('/credential/verify', {
         data: { credential: VALID_CREDENTIAL }
     });
     expect(response.ok()).toBeTruthy();
 
     const body = await response.json();
-    const expected = JSON.parse(fs.readFileSync('./tests/unauthorized/payloads/credential-verify/verify-credential.json', 'utf-8'));
+    const expected = JSON.parse(
+        fs.readFileSync('./tests/unauthorized/payloads/credential-verify/verify-credential.json', 'utf-8')
+    );
 
     expect(body).toStrictEqual(expected);
 });
 
 
-test('/credential/verify with JWT and verifyStatus=true', async ({ request }) => {
+test('[Positive] It can verify a valid JWT body and verifyStatus=true query parameter', async ({ request }) => {
     const response = await request.post('/credential/verify?verifyStatus=true', {
         data: { credential: VALID_JWT_TOKEN }
     });
     expect(response.ok()).toBeTruthy();
 
     const body = await response.json();
-    const expected = JSON.parse(fs.readFileSync('./tests/unauthorized/payloads/credential-verify/verify-jwt-status.json', 'utf-8'));
+    const expected = JSON.parse(fs.readFileSync(
+        './tests/unauthorized/payloads/credential-verify/verify-jwt-status.json', 'utf-8')
+    );
 
     expect(body).toStrictEqual(expected);
 });
 
-test('/credential/verify with credential and verifyStatus=true', async ({ request }) => {
+test('[Positive] It can verify a valid credential body and verifyStatus=true query parameter', async ({ request }) => {
     const response = await request.post('/credential/verify?verifyStatus=true', {
         data: { credential: VALID_CREDENTIAL }
     });
     expect(response.ok()).toBeTruthy();
 
     const body = await response.json();
-    const expected = JSON.parse(fs.readFileSync('./tests/unauthorized/payloads/credential-verify/verify-credential-status.json', 'utf-8'));
+    const expected = JSON.parse(
+        fs.readFileSync('./tests/unauthorized/payloads/credential-verify/verify-credential-status.json', 'utf-8')
+    );
 
     expect(body).toStrictEqual(expected);
 });
 
 
-test('/credential/verify with JWT & fetchRemoteContexts=true', async ({ request }) => {
+test('[Positive] It can verify a valid JWT body and fetchRemoteContexts=true query parameter', async ({ request }) => {
     const response = await request.post('/credential/verify?fetchRemoteContexts=true', {
         data: { credential: VALID_JWT_TOKEN }
     });
     expect(response.ok()).toBeTruthy();
 
     const body = await response.json();
-    const expected = JSON.parse(fs.readFileSync('./tests/unauthorized/payloads/credential-verify/verify-jwt.json', 'utf-8'));
+    const expected = JSON.parse(
+        fs.readFileSync('./tests/unauthorized/payloads/credential-verify/verify-jwt.json', 'utf-8')
+    );
 
     expect(body).toStrictEqual(expected);
 });
 
-test('/credential/verify with credential & fetchRemoteContexts=true', async ({ request }) => {
+test('[Positive] It can verify a valid credential body and fetchRemoteContexts=true query parameter', async ({ request }) => {
     const response = await request.post('/credential/verify?fetchRemoteContexts=true', {
         data: { credential: VALID_CREDENTIAL }
     });
     expect(response.ok()).toBeTruthy();
 
     const body = await response.json();
-    const expected = JSON.parse(fs.readFileSync('./tests/unauthorized/payloads/credential-verify/verify-credential.json', 'utf-8'));
+    const expected = JSON.parse(
+        fs.readFileSync('./tests/unauthorized/payloads/credential-verify/verify-credential.json', 'utf-8')
+    );
 
     expect(body).toStrictEqual(expected);
 });
 
-test('/credential/verify with JWT & verifyStatus=true & fetchRemoteContexts=true', async ({ request }) => {
+test('[Positive] It can verify a valid JWT body, verifyStatus=true, and fetchRemoteContexts=true query parameter', async ({ request }) => {
     const response = await request.post('/credential/verify?verifyStatus=true&fetchRemoteContexts=true', {
         data: { credential: VALID_JWT_TOKEN }
     });
     expect(response.ok()).toBeTruthy();
 
     const body = await response.json();
-    const expected = JSON.parse(fs.readFileSync('./tests/unauthorized/payloads/credential-verify/verify-jwt-status.json', 'utf-8'));
+    const expected = JSON.parse(fs.readFileSync(
+        './tests/unauthorized/payloads/credential-verify/verify-jwt-status.json', 'utf-8')
+    );
 
     expect(body).toStrictEqual(expected);
 });
 
 
-test('/credential/verify with credential & verifyStatus=true & fetchRemoteContexts=true', async ({ request }) => {
+test('[Positive] It can verify a valid credential body, verifyStatus=true, and fetchRemoteContexts=true query parameter', async ({ request }) => {
     const response = await request.post('/credential/verify?verifyStatus=true&fetchRemoteContexts=true', {
         data: { credential: VALID_CREDENTIAL }
     });
     expect(response.ok()).toBeTruthy();
 
     const body = await response.json();
-    const expected = JSON.parse(fs.readFileSync('./tests/unauthorized/payloads/credential-verify/verify-credential-status.json', 'utf-8'));
+    const expected = JSON.parse(
+        fs.readFileSync('./tests/unauthorized/payloads/credential-verify/verify-credential-status.json', 'utf-8')
+    );
 
     expect(body).toStrictEqual(expected);
 });
