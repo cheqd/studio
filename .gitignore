@@ -8,6 +8,7 @@ tmp
 # Playwright reports
 /test-results/
 /playwright-report/
+/playwright/.auth/
 /playwright/.cache/
 /.state.json
 
