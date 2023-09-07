@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.2-develop.1](https://github.com/cheqd/credential-service/compare/2.9.1...2.9.2-develop.1) (2023-09-07)
+
+
+### Bug Fixes
+
+* Enable updated state explicitly ([c3d9170](https://github.com/cheqd/credential-service/commit/c3d9170e7c1d305e1a46422002b3a217279e7514))
+
 ## [2.9.1](https://github.com/cheqd/credential-service/compare/2.9.0...2.9.1) (2023-09-06)
 
 
