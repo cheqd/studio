@@ -100,11 +100,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 			if (!this.areValidScopes(rule, this.getScopes())) {
 				return this.returnError(
 					StatusCodes.FORBIDDEN,
-					`Unauthorized error: Current LogTo account does not have the required scopes. You need ${this.getScopeForRoute(
-						request.path,
-						request.method,
-						this.getNamespace()
-					)} scope(s).`
+					`Unauthorized error: Your account is not authorized to carry out this action.`
 				);
 			}
 			return this.returnOk();
@@ -281,14 +277,6 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 			if (rule.doesRuleMatches(route, method, namespace)) {
 				return rule;
 			}
-		}
-		return null;
-	}
-
-	public getScopeForRoute(route: string, method: string, namespace = Namespaces.Testnet): string | null {
-		const rule = this.findRule(route, method, namespace);
-		if (rule) {
-			return rule.getScope();
 		}
 		return null;
 	}

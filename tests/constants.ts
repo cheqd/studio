@@ -12,4 +12,4 @@ export const DEFAULT_STATUS_LIST_INDICIES = [10, 3199, 12109, 130999];
 export const DEFAULT_SUBJECT_DID = DEFAULT_TESTNET_DID;
 
 // Messages
-export const DEFAULT_DOES_NOT_HAVE_PERMISSIONS = "Current LogTo account does not have the required scopes"
+export const DEFAULT_DOES_NOT_HAVE_PERMISSIONS = "Unauthorized error: Your account is not authorized to carry out this action."
