@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.2-develop.2](https://github.com/cheqd/credential-service/compare/2.9.2-develop.1...2.9.2-develop.2) (2023-09-07)
+
+
+### Bug Fixes
+
+* Check API responses are provided correctly in Swagger document [DEV-3133] ([#359](https://github.com/cheqd/credential-service/issues/359)) ([5b13ffa](https://github.com/cheqd/credential-service/commit/5b13ffa012624f9fc1d64f4bb1ba2a3789aed93c))
+
 ## [2.9.2-develop.1](https://github.com/cheqd/credential-service/compare/2.9.1...2.9.2-develop.1) (2023-09-07)
 
 
