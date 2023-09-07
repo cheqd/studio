@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
 import * as fs from 'fs';
+import { test, expect } from '@playwright/test';
 import { TESTNET_DID, TESTNET_DID_RESOURCE_ID } from '../constants';
 
 test('/resource/search/{did} with resourceId query parameter', async ({ request }) => {
