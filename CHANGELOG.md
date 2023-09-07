@@ -1,5 +1,37 @@
 # Changelog
 
+## [2.9.2-develop.2](https://github.com/cheqd/credential-service/compare/2.9.2-develop.1...2.9.2-develop.2) (2023-09-07)
+
+
+### Bug Fixes
+
+* Check API responses are provided correctly in Swagger document [DEV-3133] ([#359](https://github.com/cheqd/credential-service/issues/359)) ([5b13ffa](https://github.com/cheqd/credential-service/commit/5b13ffa012624f9fc1d64f4bb1ba2a3789aed93c))
+
+## [2.9.2-develop.1](https://github.com/cheqd/credential-service/compare/2.9.1...2.9.2-develop.1) (2023-09-07)
+
+
+### Bug Fixes
+
+* Enable updated state explicitly ([c3d9170](https://github.com/cheqd/credential-service/commit/c3d9170e7c1d305e1a46422002b3a217279e7514))
+
+## [2.9.1](https://github.com/cheqd/credential-service/compare/2.9.0...2.9.1) (2023-09-06)
+
+
+### Bug Fixes
+
+* Bump to original patch release + remove intermittent patch ([#369](https://github.com/cheqd/credential-service/issues/369)) ([8ec1705](https://github.com/cheqd/credential-service/commit/8ec17058ba2e54e2b39452cbcd2d81d99cac603f))
+* Fix namespace lookup [DEV-3150] ([#360](https://github.com/cheqd/credential-service/issues/360)) ([53cc021](https://github.com/cheqd/credential-service/commit/53cc0213ac00bad3a7a4dacc75c2aefab2c212e4))
+* Fix problem with 'verifyStatus=true' parameter in '/credential/verify' API [DEV-3170] ([#368](https://github.com/cheqd/credential-service/issues/368)) ([309e980](https://github.com/cheqd/credential-service/commit/309e980af50361e93d815aa9e9c1bec82838eb6f))
+* Fix problem with `/status-list/update/encrypted` API - it doesn't work [DEV-3182] ([#366](https://github.com/cheqd/credential-service/issues/366)) ([fbb7af4](https://github.com/cheqd/credential-service/commit/fbb7af433dfad2d34dc1a8e4e5e96acf116e7a2c))
+* Revert monkey-patch (seems like a bad merge) [DEV-3181] ([#365](https://github.com/cheqd/credential-service/issues/365)) ([e2cc72c](https://github.com/cheqd/credential-service/commit/e2cc72c8e8701aeba954853445e5d5600adb35f9))
+
+## [2.9.1-develop.5](https://github.com/cheqd/credential-service/compare/2.9.1-develop.4...2.9.1-develop.5) (2023-09-06)
+
+
+### Bug Fixes
+
+* Bump to original patch release + remove intermittent patch ([#369](https://github.com/cheqd/credential-service/issues/369)) ([8ec1705](https://github.com/cheqd/credential-service/commit/8ec17058ba2e54e2b39452cbcd2d81d99cac603f))
+
 ## [2.9.1-develop.4](https://github.com/cheqd/credential-service/compare/2.9.1-develop.3...2.9.1-develop.4) (2023-09-05)
 
 
