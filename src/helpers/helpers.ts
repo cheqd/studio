@@ -7,6 +7,8 @@ import type { SpecValidationResult } from '../types/shared.js';
 import { DEFAULT_DENOM_EXPONENT, MINIMAL_DENOM } from '../types/constants.js';
 import { LitCompatibleCosmosChains, type DkgOptions, LitNetworks } from '@cheqd/did-provider-cheqd';
 import type { Coin } from '@cosmjs/amino';
+import InvalidTokenError from "jwt-decode";
+import jwt_decode from 'jwt-decode';
 
 export interface IDidDocOptions {
 	verificationMethod: VerificationMethods;
@@ -130,4 +132,18 @@ export function getQueryParams(queryParams: ParsedQs) {
 		.join('&');
 
 	return queryParamsText.length == 0 ? queryParamsText : '?' + queryParamsText;
+}
+
+export function JWTDecode(token: string) {
+	let decoded: any;
+	try {
+		decoded = jwt_decode(token);
+	} catch (e) {
+		// If it's not a JWT - just skip it
+		if (!(e instanceof InvalidTokenError)) {
+			throw e;
+		}
+	}
+
+	return decoded;
 }

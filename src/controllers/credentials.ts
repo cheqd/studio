@@ -6,8 +6,7 @@ import { check, query, validationResult } from 'express-validator';
 
 import { Credentials } from '../services/credentials.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import InvalidTokenError from "jwt-decode";
-import jwt_decode from 'jwt-decode';
+import { JWTDecode } from '../helpers/helpers.js';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -189,20 +188,10 @@ export class CredentialController {
 		const allowDeactivatedDid = request.query.allowDeactivatedDid === "true";
 
 		let issuerDid = "";
-		let decoded: any;
-
 		if (credential.issuer?.id) {
 			issuerDid = credential.issuer.id;
 		} else {
-			try {
-				decoded = jwt_decode(credential);
-				issuerDid = decoded.iss;
-			} catch (e) {
-				// If it's not a JWT - just skip it
-				if (!(e instanceof InvalidTokenError)) {
-					throw e;
-				}
-			}
+			issuerDid = JWTDecode(credential).iss;
 		}
 
 		if (!allowDeactivatedDid) {
@@ -486,20 +475,10 @@ export class CredentialController {
 		const allowDeactivatedDid = request.query.allowDeactivatedDid === "true";
 
 		let issuerDid = "";
-		let decoded: any;
-
 		if (presentation.issuer?.id) {
 			issuerDid = presentation.issuer.id;
 		} else {
-			try {
-				decoded = jwt_decode(presentation);
-				issuerDid = decoded.iss;
-			} catch (e) {
-				// If it's not a JWT - just skip it
-				if (!(e instanceof InvalidTokenError)) {
-					throw e;
-				}
-			}
+			issuerDid = JWTDecode(presentation).iss;
 		}
 
 		if (!allowDeactivatedDid) {

@@ -1,12 +1,11 @@
 import type { Request, Response } from 'express';
-import InvalidTokenError from "jwt-decode";
-import jwt_decode from 'jwt-decode';
 import * as dotenv from 'dotenv';
 import { StatusCodes } from 'http-status-codes';
 import stringify from 'json-stringify-safe';
 import { DefaultNetworkPattern } from '../../types/shared.js';
 import { MethodToScope, IAuthResourceHandler, Namespaces, IAuthResponse } from '../../types/authentication.js';
 import { LogToHelper } from './logto.js';
+import { JWTDecode } from '../../helpers/helpers.js';
 
 dotenv.config();
 
@@ -200,14 +199,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 			if (network) {
 				return this.switchNetwork(network);
 			}
-			try {
-				decoded = jwt_decode(req.body.credential);
-			} catch (e) {
-				// If it's not a JWT - just skip it
-				if (!(e instanceof InvalidTokenError)) {
-					throw e;
-				}
-			}
+			decoded = JWTDecode(req.body.credential);
 			// if not - try to search for decoded credential
 			network = this.findNetworkInBody(stringify(decoded));
 			if (network) {
