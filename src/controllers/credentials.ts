@@ -6,7 +6,7 @@ import { check, query, validationResult } from 'express-validator';
 
 import { Credentials } from '../services/credentials.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import { JWTDecode } from '../helpers/helpers.js';
+import jwt_decode from 'jwt-decode';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -36,7 +36,18 @@ export class CredentialController {
 				}
 				return false;
 			})
-			.withMessage('Entry must be a jwt string or an credential'),
+			.withMessage('Entry must be a jwt string or an credential')
+			.custom((value) => {
+				if (typeof value === 'string') {
+					try {
+						jwt_decode(value);
+					} catch (e) {
+						return false;
+					}
+				}
+				return true;
+			})
+			.withMessage('An invalid jwt string'),
 		check('policies').optional().isObject().withMessage('Verification policies should be an object'),
 		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value'),
 		query('publish').optional().isBoolean().withMessage('publish should be a boolean value'),
@@ -188,10 +199,11 @@ export class CredentialController {
 		const allowDeactivatedDid = request.query.allowDeactivatedDid === "true";
 
 		let issuerDid = "";
-		if (credential.issuer?.id) {
+		if (typeof credential === 'object' && credential?.issuer?.id) {
 			issuerDid = credential.issuer.id;
 		} else {
-			issuerDid = JWTDecode(credential).iss;
+			const decoded: any = jwt_decode(credential);
+			issuerDid = decoded.iss;
 		}
 
 		if (!allowDeactivatedDid) {
@@ -475,10 +487,11 @@ export class CredentialController {
 		const allowDeactivatedDid = request.query.allowDeactivatedDid === "true";
 
 		let issuerDid = "";
-		if (presentation.issuer?.id) {
+		if (typeof presentation === 'object' && presentation?.issuer?.id) {
 			issuerDid = presentation.issuer.id;
 		} else {
-			issuerDid = JWTDecode(presentation).iss;
+			const decoded: any = jwt_decode(presentation);
+			issuerDid = decoded.iss;
 		}
 
 		if (!allowDeactivatedDid) {
