@@ -1,7 +1,7 @@
-import { test } from '../../fixtures';
+import { test } from '../../fixtures.js';
 import { expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
-import { DEFAULT_DOES_NOT_HAVE_PERMISSIONS, DEFAULT_MAINNET_DID } from '../../constants';
+import { DEFAULT_DOES_NOT_HAVE_PERMISSIONS, DEFAULT_MAINNET_DID } from '../../constants.js';
 import * as fs from 'fs';
 
 const PAYLOADS_BASE_PATH="./tests/authorized/payloads/rbac/did";
