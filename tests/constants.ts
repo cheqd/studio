@@ -9,7 +9,7 @@ export const DEFAULT_SYMMETRIC_KEY = "dfe204ee95ae74ea5d74b94c3d8ff782273905b07f
 export const DEFAULT_STATUS_LIST_INDICIES = [10, 3199, 12109, 130999];
 
 // Credential names
-export const DEFAULT_SUBJECT_DID = DEFAULT_TESTNET_DID;
+export const DEFAULT_SUBJECT_DID = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
 
 // Messages
 export const DEFAULT_DOES_NOT_HAVE_PERMISSIONS = "Current LogTo account does not have the required scopes"

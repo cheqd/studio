@@ -31,7 +31,8 @@
 		"test": "jest --config jestconfig.json --verbose",
 		"typeorm": "typeorm-ts-node-esm  -d ./dist/database/ormconfig.js",
 		"migration": "npm run typeorm migration:generate . && npm run typeorm migration:run",
-		"test:e2e": "npx playwright test -c playwright.config.ts"
+		"pretest": "tsc --incremental -p tests/tsconfig.json",
+		"test:e2e": "npx playwright test -c dist-tests"
 	},
 	"eslintConfig": {
 		"root": true,

@@ -465,4 +465,5 @@ v[0-9,a-z]*
 /test-results/
 /playwright-report/
 /playwright/.cache/
+/playwright/.auth
 /.state.json
