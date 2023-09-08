@@ -228,25 +228,23 @@
  *       properties:
  *         credential:
  *           description: Verifiable Credential to be verified as a VC-JWT string or a JSON object.
- *           allOf:
- *             - type: object
- *             - type: string
+ *           type: object
  *         policies:
  *           description: Custom verification policies to execute when verifying credential.
  *           type: object
  *           properties:
- *             now:
- *               description: Policy to verify current time during the verification check (provided as Unix/epoch time).
- *               type: number
  *             issuanceDate:
  *               description: Policy to skip the `issuanceDate` (`nbf`) timestamp check when set to `false`.
  *               type: boolean
+ *               default: true
  *             expirationDate:
  *               description: Policy to skip the `expirationDate` (`exp`) timestamp check when set to `false`.
  *               type: boolean
+ *               default: true
  *             audience:
  *               description: Policy to skip the audience check when set to `false`.
  *               type: boolean
+ *               default: false
  *     IVerifyResult:
  *       type: object
  *       properties:

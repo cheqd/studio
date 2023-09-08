@@ -36,7 +36,7 @@ export class CredentialController {
 				}
 				return false;
 			})
-			.withMessage('Entry must be a JWT or a credential/presentation body with JWT proof')
+			.withMessage('Entry must be a JWT or a credential body with JWT proof')
 			.custom((value) => {
 				if (typeof value === 'string') {
 					try {
@@ -63,7 +63,18 @@ export class CredentialController {
 				}
 				return false;
 			})
-			.withMessage('Entry must be a jwt string or a presentation'),
+			.withMessage('Entry must be a JWT or a presentation body with JWT proof')
+			.custom((value) => {
+				if (typeof value === 'string') {
+					try {
+						jwt_decode(value);
+					} catch (e) {
+						return false;
+					}
+				}
+				return true;
+			})
+			.withMessage('An invalid JWT string'),
 		check('verifierDid').optional().isString().withMessage('Invalid verifier DID'),
 		check('policies').optional().isObject().withMessage('Verification policies should be an object'),
 		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value'),
