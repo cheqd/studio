@@ -28,7 +28,11 @@ jobs:
     test-node:
         name: 'Playwright tests'
         runs-on: ubuntu-latest
+        # Only execute tests if not on main branch
+        if: ${{ github.ref_name != 'main' }}
         needs: build-node
+        env:
+            CI: true
     
         steps:
             - uses: actions/checkout@v3
