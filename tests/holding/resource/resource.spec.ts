@@ -1,7 +1,7 @@
-import { test } from '../../fixtures.js';
+import { test } from '../fixtures.js';
 import { expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
-import { DEFAULT_DOES_NOT_HAVE_PERMISSIONS, DEFAULT_MAINNET_DID } from '../../constants.js';
+import { DEFAULT_DOES_NOT_HAVE_PERMISSIONS, DEFAULT_MAINNET_DID } from '../constants.js';
 import * as fs from 'fs';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
