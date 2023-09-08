@@ -845,7 +845,6 @@ export class RevocationController {
 					error: result.error?.message || result.error.toString(),
 				} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 			}
-
 			// construct formatted response
 			const formatted = {
 				updated: true,
