@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import { TESTNET_DID } from '../constants';
 import { test, expect } from '@playwright/test';
+import { StatusCodes } from 'http-status-codes';
 
 test('[Positive] It can check an unencrypted status-list with an existent body and statusPurpose=revocation parameter', async ({ request }) => {
     const response = await request.post('/credential-status/check?statusPurpose=revocation', {
@@ -10,7 +11,7 @@ test('[Positive] It can check an unencrypted status-list with an existent body a
             statusListName: "cheqd-employee-credentials",
         }
     });
-    expect(response.ok()).toBeTruthy();
+    expect(response.status()).toBe(StatusCodes.OK);
 
     const body = await response.json();
     const expected = JSON.parse(fs.readFileSync(
@@ -28,7 +29,7 @@ test('Positive] It can check an unencrypted status-list with an existent body an
             statusListName: "cheqd-employee-credentials",
         }
     });
-    expect(response.ok()).toBeTruthy();
+    expect(response.status()).toBe(StatusCodes.OK);
 
     const body = await response.json();
     const expected = JSON.parse(fs.readFileSync(
@@ -47,7 +48,7 @@ test('Positive] It can check an unencrypted status-list with an existent body an
 //             statusListName: "cheqd-employee-credentials-encrypted",
 //         }
 //     });
-//     expect(response.ok()).toBeTruthy();
+//     expect(response.status()).toBe(StatusCodes.OK);
 
 //     const body = await response.json();
 //     const expected = JSON.parse(
@@ -67,7 +68,7 @@ test('Positive] It can check an unencrypted status-list with an existent body an
 //             statusListName: "cheqd-employee-credentials-encrypted",
 //         }
 //     });
-//     expect(response.ok()).toBeTruthy();
+//     expect(response.status()).toBe(StatusCodes.OK);
 
 //     const body = await response.json();
 //     const expected = JSON.parse(

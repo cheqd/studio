@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 import { INVALID_CREDENTIAL, INVALID_JWT_TOKEN, NOT_MATCHED_CREDENTIAL_AND_JWT } from '../constants';
 
-test('[Negative] It cannot verify an invalid credential body where credential and JWT are different', async ({ request }) => {
+test('[Negative] It cannot verify credential with an invalid credential body where credential and JWT are different', async ({ request }) => {
     const response = await request.post('/credential/verify', {
         data: { credential: NOT_MATCHED_CREDENTIAL_AND_JWT }
     });
@@ -17,7 +17,7 @@ test('[Negative] It cannot verify an invalid credential body where credential an
     expect(body).toStrictEqual(expected);
 });
 
-test('[Negative] It cannot verify an invalid JWT body', async ({ request }) => {
+test('[Negative] It cannot verify credential with an invalid JWT body', async ({ request }) => {
     const response = await request.post('/credential/verify', {
         data: { credential: INVALID_JWT_TOKEN }
     });
@@ -33,7 +33,7 @@ test('[Negative] It cannot verify an invalid JWT body', async ({ request }) => {
     expect(body).toStrictEqual(expected);
 });
 
-test('[Negative] It cannot verify an invalid credential body', async ({ request }) => {
+test('[Negative] It cannot verify credential with an invalid credential body', async ({ request }) => {
     const response = await request.post('/credential/verify', {
         data: { credential: INVALID_CREDENTIAL }
     });

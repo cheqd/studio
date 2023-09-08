@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { NOT_EXISTENT_STATUS_LIST_NAME, NOT_EXISTENT_TESTNET_DID, TESTNET_DID } from '../constants';
 import { StatusCodes } from 'http-status-codes';
+import { NOT_EXISTENT_STATUS_LIST_NAME, NOT_EXISTENT_TESTNET_DID, TESTNET_DID } from '../constants';
 
 test('[Negative] It cannot check credential-status with not existent DID', async ({ request }) => {
     const response = await request.post('/credential-status/check?statusPurpose=revocation', {
