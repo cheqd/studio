@@ -5,7 +5,7 @@ import {
     TESTNET_DID_IDENTIFIER,
     TESTNET_DID_RESOURCE_ID,
     TESTNET_RESOURCE
-} from '../constants';
+} from '../../constants';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 

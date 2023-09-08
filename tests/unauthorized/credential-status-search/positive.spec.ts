@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { TESTNET_DID } from '../constants';
+import { TESTNET_DID } from '../../constants';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 

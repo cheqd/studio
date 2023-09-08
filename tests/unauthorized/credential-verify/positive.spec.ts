@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
-import { VALID_CREDENTIAL, VALID_JWT_TOKEN } from '../constants';
+import { VALID_CREDENTIAL, VALID_JWT_TOKEN } from '../../constants';
 import { StatusCodes } from 'http-status-codes';
 
 test('[Positive] It can verify credential with a valid JWT body', async ({ request }) => {

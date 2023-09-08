@@ -4,7 +4,7 @@ import {
     NOT_EXISTENT_RESOURCE_ID,
     NOT_EXISTENT_TESTNET_DID,
     NOT_EXISTENT_TESTNET_DID_IDENTIFIER
-} from '../constants';
+} from '../../constants';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 

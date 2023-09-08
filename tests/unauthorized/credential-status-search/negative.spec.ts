@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
-import { INVALID_DID, NOT_EXISTENT_STATUS_LIST_NAME, NOT_EXISTENT_TESTNET_DID, TESTNET_DID } from '../constants';
+import { INVALID_DID, NOT_EXISTENT_STATUS_LIST_NAME, NOT_EXISTENT_TESTNET_DID, TESTNET_DID } from '../../constants';
 
 test('[Negative] It cannot search credential-status with not existent DID', async ({ request }) => {
     const response = await request.get(

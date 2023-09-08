@@ -3,7 +3,7 @@ import {
     APPLICATION_DID_LD_JSON,
     NOT_EXISTENT_TESTNET_DID,
     NOT_EXISTENT_TESTNET_DID_IDENTIFIER,
-} from '../constants';
+} from '../../constants';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 
