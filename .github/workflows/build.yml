@@ -24,18 +24,21 @@ jobs:
             - name: 'Run npm build'
               run: npm run build
 
+            - name: Build e2e tests
+              run: npm run build:test:e2e
+
             - name: Install Playwright Browsers
               run: npx playwright install --with-deps
 
             - name: Run Playwright tests
-              run: npx playwright test -c playwright.config.ts
+              run: npm run test:e2e
 
             - uses: actions/upload-artifact@v3
               if: always()
               with:
                 name: playwright-report
                 path: playwright-report/
-                retention-days: 30
+                retention-days: 14
 
     build-docker:
         name: 'Build Docker image'

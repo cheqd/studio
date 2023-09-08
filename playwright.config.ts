@@ -11,10 +11,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
 
-  // Global setup file for all tests
-	globalSetup: './tests/setup',
-
-  testDir: './tests',
+  testDir: './dist-tests',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -39,11 +36,14 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
+    { name: 'setup', testMatch: /.*\.setup\.js/ },
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'],
-    },
-      
+       // Use prepared auth state.
+       storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup'],
     },
 
     // {
@@ -78,16 +78,16 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://127.0.0.1:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
+  webServer: {
+    command: 'npm run start',
+    url: 'http://127.0.0.1:8787',
+    reuseExistingServer: !process.env.CI,
+  },
 
   // Timeout for each test in milliseconds
 	// 120,000ms = 2 minutes
 	// Docs: https://playwright.dev/docs/test-timeouts
-	timeout: 240 * 1000,
+	timeout: 60 * 1000,
 
 	// Timeout for each expect/assertion in milliseconds
 	// 20,000ms = 20 seconds

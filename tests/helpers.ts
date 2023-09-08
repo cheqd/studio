@@ -1,4 +1,4 @@
-import { DEFAULT_STATUS_LIST_ENCRYPTED_NAME, DEFAULT_STATUS_LIST_INDICIES, DEFAULT_STATUS_LIST_PAYMENT_ADDRESS, DEFAULT_SUBJECT_DID, DEFAULT_SYMMETRIC_KEY, DEFAULT_TESTNET_DID } from "./constants";
+import { DEFAULT_STATUS_LIST_ENCRYPTED_NAME, DEFAULT_STATUS_LIST_INDICIES, DEFAULT_STATUS_LIST_PAYMENT_ADDRESS, DEFAULT_SUBJECT_DID, DEFAULT_TESTNET_DID } from "./constants";
 
 export const buildSimpleCreateDID = (network="testnet") => {
     return {
@@ -106,7 +106,7 @@ export const buildSimpleUnencryptedUpdateCredentialStatus2021 = (
 export const buildSimpleEncryptedUpdateCredentialStatus2021 = (
     did: string,
     statusListName=DEFAULT_STATUS_LIST_ENCRYPTED_NAME,
-    symmetricKey=DEFAULT_SYMMETRIC_KEY) => {
+    symmetricKey=process.env.DEFAULT_SYMMETRIC_KEY) => {
     return {
         ...buildSimpleUnencryptedUpdateCredentialStatus2021(did, statusListName),
         symmetricKey: symmetricKey,

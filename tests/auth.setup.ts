@@ -1,19 +1,14 @@
+import { test as setup, expect } from '@playwright/test';
 import * as dotenv from 'dotenv';
-import { chromium } from '@playwright/test';
-import type { FullConfig, Browser } from '@playwright/test';
+
+const userFile = 'playwright/.auth/user.json';
 
 dotenv.config();
 
-async function globalSetup(config: FullConfig) {
-    const { storageState } = config.projects[0].use;
-
-    const chromiumBrowser = await chromium.launch();
-    await setupPage(chromiumBrowser, storageState as string)
-}
-
-async function setupPage(browser: Browser, storageState: string) {
-    const page = await browser.newPage();
-    await page.goto(`${process.env.APPLICATION_BASE_URL}/logto/sign-in`);
+setup('authenticate as user', async ({ page }) => {
+    // Perform authentication steps. Replace these actions with your own.
+    await page.goto(`${process.env.APPLICATION_BASE_URL}/swagger`);
+    await page.getByRole('button', { name: 'Log in' }).click();
     await page.waitForURL(`${process.env.LOGTO_ENDPOINT}/sign-in`, {
 		waitUntil: 'domcontentloaded',
 	});
@@ -26,9 +21,9 @@ async function setupPage(browser: Browser, storageState: string) {
         waitUntil: 'domcontentloaded',
         timeout: 60000,
     });
-
+    await expect(page.getByRole('button', { name: 'Log out' })).toBeVisible();
+  
     // End of authentication steps.
-	await page.context().storageState({ path: storageState });
-}
-
-export default globalSetup;
+  
+    await page.context().storageState({ path: userFile });
+  });

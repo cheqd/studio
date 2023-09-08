@@ -4,6 +4,8 @@ import { StatusCodes } from 'http-status-codes';
 import { DEFAULT_DOES_NOT_HAVE_PERMISSIONS} from '../../constants.js';
 import * as fs from 'fs';
 
+test.use({ storageState: 'playwright/.auth/user.json' });
+
 const PAYLOADS_BASE_PATH="./tests/authorized/payloads/rbac/credential";
 
 test(' Issue credential for user with testnet role but network is mainnet', async ({ request }) => {
@@ -15,7 +17,7 @@ test(' Issue credential for user with testnet role but network is mainnet', asyn
                 "Content-Type": "application/json",
             },
         });
-    expect(response.ok()).toBeFalsy();
+    expect(response).not.toBeOK();
     expect(response.status()).toBe(StatusCodes.FORBIDDEN);
     expect(await response.text()).toEqual(expect.stringContaining(DEFAULT_DOES_NOT_HAVE_PERMISSIONS));
 });
@@ -29,7 +31,7 @@ test(' Revoke credential for user with testnet role but network is mainnet', asy
                 "Content-Type": "application/json",
             },
         });
-    expect(response.ok()).toBeFalsy();
+    expect(response).not.toBeOK();
     expect(response.status()).toBe(StatusCodes.FORBIDDEN);
     expect(await response.text()).toEqual(expect.stringContaining(DEFAULT_DOES_NOT_HAVE_PERMISSIONS));
 });
@@ -43,7 +45,7 @@ test(' Suspend credential for user with testnet role but network is mainnet', as
                 "Content-Type": "application/json",
             },
         });
-    expect(response.ok()).toBeFalsy();
+    expect(response).not.toBeOK();
     expect(response.status()).toBe(StatusCodes.FORBIDDEN);
     expect(await response.text()).toEqual(expect.stringContaining(DEFAULT_DOES_NOT_HAVE_PERMISSIONS));
 });
@@ -57,7 +59,7 @@ test(' Reinstate credential for user with testnet role but network is mainnet', 
                 "Content-Type": "application/json",
             },
         });
-    expect(response.ok()).toBeFalsy();
+    expect(response).not.toBeOK();
     expect(response.status()).toBe(StatusCodes.FORBIDDEN);
     expect(await response.text()).toEqual(expect.stringContaining(DEFAULT_DOES_NOT_HAVE_PERMISSIONS));
 });

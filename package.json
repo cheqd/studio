@@ -24,15 +24,15 @@
 		"build": "npm run build:app && npm run build:swagger",
 		"build:app": "tsc",
 		"build:swagger": "swagger-jsdoc --definition src/static/swagger-options.json -o src/static/swagger.json ./src/controllers/*.ts ./src/types/swagger-types.ts",
-		"start": "node dist/src/index.js",
+		"start": "node dist/index.js",
 		"start:local": "npm run build:app && npm run start",
 		"format": "prettier --write src/**/*.{js,ts,cjs,mjs}",
 		"lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
 		"test": "jest --config jestconfig.json --verbose",
 		"typeorm": "typeorm-ts-node-esm  -d ./dist/database/ormconfig.js",
 		"migration": "npm run typeorm migration:generate . && npm run typeorm migration:run",
-		"pretest": "tsc --incremental -p tests/tsconfig.json",
-		"test:e2e": "npx playwright test -c dist-tests"
+		"build:test:e2e": "tsc --incremental -p tests/tsconfig.json",
+		"test:e2e": "npx playwright test -c "
 	},
 	"eslintConfig": {
 		"root": true,
