@@ -1,6 +1,14 @@
 import type { DIDDocument } from 'did-resolver';
-import { MethodSpecificIdAlgo, CheqdNetwork, TVerificationKey, TVerificationKeyPrefix } from '@cheqd/sdk';
-import { VerificationMethods, createVerificationKeys, createDidVerificationMethod, createDidPayload } from '@cheqd/sdk';
+import {
+	MethodSpecificIdAlgo,
+	CheqdNetwork,
+	TVerificationKey,
+	TVerificationKeyPrefix,
+	VerificationMethods,
+	createVerificationKeys,
+	createDidVerificationMethod,
+	createDidPayload,
+} from '@cheqd/sdk';
 import { createHmac } from 'node:crypto';
 import type { ParsedQs } from 'qs';
 import type { SpecValidationResult } from '../types/shared.js';

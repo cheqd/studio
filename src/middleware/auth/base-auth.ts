@@ -1,12 +1,13 @@
 import type { Request, Response } from 'express';
-import InvalidTokenError from "jwt-decode";
-import jwt_decode from 'jwt-decode';
 import * as dotenv from 'dotenv';
 import { StatusCodes } from 'http-status-codes';
 import stringify from 'json-stringify-safe';
 import { DefaultNetworkPattern } from '../../types/shared.js';
 import { MethodToScope, IAuthResourceHandler, Namespaces, IAuthResponse } from '../../types/authentication.js';
 import { LogToHelper } from './logto.js';
+import InvalidTokenError from "jwt-decode";
+import jwt_decode from 'jwt-decode';
+
 
 dotenv.config();
 
@@ -100,11 +101,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 			if (!this.areValidScopes(rule, this.getScopes())) {
 				return this.returnError(
 					StatusCodes.FORBIDDEN,
-					`Unauthorized error: Current LogTo account does not have the required scopes. You need ${this.getScopeForRoute(
-						request.path,
-						request.method,
-						this.getNamespace()
-					)} scope(s).`
+					`Unauthorized error: Your account is not authorized to carry out this action.`
 				);
 			}
 			return this.returnOk();
@@ -281,14 +278,6 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 			if (rule.doesRuleMatches(route, method, namespace)) {
 				return rule;
 			}
-		}
-		return null;
-	}
-
-	public getScopeForRoute(route: string, method: string, namespace = Namespaces.Testnet): string | null {
-		const rule = this.findRule(route, method, namespace);
-		if (rule) {
-			return rule.getScope();
 		}
 		return null;
 	}

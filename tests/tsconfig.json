@@ -7,5 +7,9 @@
 		"types": ["@types/node"],
         "rootDir": ".",
         "outDir": "../dist-tests",
-    }
+    },
+    "baseUrl": ".", // This must be specified if "paths" is.
+    "paths": {
+    "dotenv/*": ["node_modules/dotenv/*"] // This mapping is relative to "baseUrl".
+    },
 }

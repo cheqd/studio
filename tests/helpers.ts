@@ -1,4 +1,4 @@
-import { DEFAULT_STATUS_LIST_ENCRYPTED_NAME, DEFAULT_STATUS_LIST_INDICIES, DEFAULT_STATUS_LIST_PAYMENT_ADDRESS, DEFAULT_SUBJECT_DID, DEFAULT_TESTNET_DID } from "./constants";
+import { DEFAULT_STATUS_LIST_ENCRYPTED_NAME, DEFAULT_STATUS_LIST_INDICES, DEFAULT_STATUS_LIST_PAYMENT_ADDRESS, DEFAULT_SUBJECT_DID, DEFAULT_TESTNET_DID } from "./constants";
 
 export const buildSimpleCreateDID = (network="testnet") => {
     return {
@@ -95,7 +95,7 @@ export const buildSimpleUnencryptedCreateCredentialStatus2021 = (
 export const buildSimpleUnencryptedUpdateCredentialStatus2021 = (
     did: string, 
     statusListName=DEFAULT_STATUS_LIST_ENCRYPTED_NAME,
-    indicies=DEFAULT_STATUS_LIST_INDICIES) => {
+    indicies=DEFAULT_STATUS_LIST_INDICES) => {
     return {
         did: did,
         statusListName: statusListName,
