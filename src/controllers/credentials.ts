@@ -6,6 +6,7 @@ import { check, query, validationResult } from 'express-validator';
 
 import { Credentials } from '../services/credentials.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
+import jwt_decode from 'jwt-decode';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -35,7 +36,18 @@ export class CredentialController {
 				}
 				return false;
 			})
-			.withMessage('Entry must be a jwt string or an credential'),
+			.withMessage('Entry must be a JWT or a credential body with JWT proof')
+			.custom((value) => {
+				if (typeof value === 'string') {
+					try {
+						jwt_decode(value);
+					} catch (e) {
+						return false;
+					}
+				}
+				return true;
+			})
+			.withMessage('An invalid JWT string'),
 		check('policies').optional().isObject().withMessage('Verification policies should be an object'),
 		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value'),
 		query('publish').optional().isBoolean().withMessage('publish should be a boolean value'),
@@ -51,7 +63,18 @@ export class CredentialController {
 				}
 				return false;
 			})
-			.withMessage('Entry must be a jwt string or a presentation'),
+			.withMessage('Entry must be a JWT or a presentation body with JWT proof')
+			.custom((value) => {
+				if (typeof value === 'string') {
+					try {
+						jwt_decode(value);
+					} catch (e) {
+						return false;
+					}
+				}
+				return true;
+			})
+			.withMessage('An invalid JWT string'),
 		check('verifierDid').optional().isString().withMessage('Invalid verifier DID'),
 		check('policies').optional().isObject().withMessage('Verification policies should be an object'),
 		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value'),
@@ -101,6 +124,20 @@ export class CredentialController {
 			request.body['@context'] = [request.body['@context']];
 		}
 
+		const resolvedResult = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(
+			request.body.issuerDid
+		);
+		const body = await resolvedResult.json();
+		if (!body?.didDocument) {
+			return response.status(resolvedResult.status).send({ body });
+		}
+
+		if (body.didDocumentMetadata.deactivated) {
+			return response.status(StatusCodes.BAD_REQUEST).send({
+				error: `${request.body.issuerDid} is deactivated`,
+			});
+		}
+
 		try {
 			const credential: VerifiableCredential = await Credentials.instance.issue_credential(
 				request.body,
@@ -136,6 +173,12 @@ export class CredentialController {
 	 *         schema:
 	 *           type: boolean
 	 *           default: false
+	 *       - in: query
+	 *         name: allowDeactivatedDid
+	 *         description: If set to `true` allow to verify credential which based on deactivated DID.
+	 *         schema:
+	 *           type: boolean
+	 *           default: false
 	 *     requestBody:
 	 *       content:
 	 *         application/x-www-form-urlencoded:
@@ -165,7 +208,31 @@ export class CredentialController {
 		}
 
 		const { credential, policies } = request.body;
-		const verifyStatus = request.query.verifyStatus === 'true' ? true : false;
+		const verifyStatus = request.query.verifyStatus === 'true';
+		const allowDeactivatedDid = request.query.allowDeactivatedDid === 'true';
+
+		let issuerDid = '';
+		if (typeof credential === 'object' && credential?.issuer?.id) {
+			issuerDid = credential.issuer.id;
+		} else {
+			const decoded: any = jwt_decode(credential);
+			issuerDid = decoded.iss;
+		}
+
+		if (!allowDeactivatedDid) {
+			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(issuerDid);
+			const body = await result.json();
+			if (!body?.didDocument) {
+				return response.status(result.status).send({ body });
+			}
+
+			if (body.didDocumentMetadata.deactivated) {
+				return response.status(StatusCodes.BAD_REQUEST).send({
+					error: `${issuerDid} is deactivated`,
+				});
+			}
+		}
+
 		try {
 			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.verifyCredential(
 				credential,
@@ -394,14 +461,20 @@ export class CredentialController {
 	 *         schema:
 	 *           type: boolean
 	 *           default: false
+	 *       - in: query
+	 *         name: allowDeactivatedDid
+	 *         description: If set to `true` allow to verify credential which based on deactivated DID.
+	 *         schema:
+	 *           type: boolean
+	 *           default: false
 	 *     requestBody:
 	 *       content:
 	 *         application/x-www-form-urlencoded:
 	 *           schema:
-	 *             $ref: '#/components/schemas/PresentationRequest'
+	 *             $ref: '#/components/schemas/PresentationVerifyRequest'
 	 *         application/json:
 	 *           schema:
-	 *             $ref: '#/components/schemas/PresentationRequest'
+	 *             $ref: '#/components/schemas/PresentationVerifyRequest'
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -423,7 +496,31 @@ export class CredentialController {
 		}
 
 		const { presentation, verifierDid, policies } = request.body;
-		const verifyStatus = request.query.verifyStatus === 'true' ? true : false;
+		const verifyStatus = request.query.verifyStatus === 'true';
+		const allowDeactivatedDid = request.query.allowDeactivatedDid === 'true';
+
+		let issuerDid = '';
+		if (typeof presentation === 'object' && presentation?.issuer?.id) {
+			issuerDid = presentation.issuer.id;
+		} else {
+			const decoded: any = jwt_decode(presentation);
+			issuerDid = decoded.iss;
+		}
+
+		if (!allowDeactivatedDid) {
+			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(issuerDid);
+			const body = await result.json();
+			if (!body?.didDocument) {
+				return response.status(result.status).send({ body });
+			}
+
+			if (body.didDocumentMetadata.deactivated) {
+				return response.status(StatusCodes.BAD_REQUEST).send({
+					error: `${issuerDid} is deactivated`,
+				});
+			}
+		}
+
 		try {
 			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.verifyPresentation(
 				presentation,
