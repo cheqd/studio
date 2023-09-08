@@ -269,16 +269,14 @@
  *           id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1
  *           publicKeyBase58: BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt
  *           type: Ed25519VerificationKey2018
- *     PresentationRequest:
+ *     PresentationVerifyRequest:
  *       type: object
  *       required:
  *         - presentation
  *       properties:
  *         presentation:
  *           description: Verifiable Presentation to be verified as a VP-JWT string or a JSON object.
- *           allOf:
- *             - type: string
- *             - type: object
+ *           type: object
  *         verifiedDid:
  *           description: Provide an optional verifier DID (also known as 'domain' parameter), if the verifier DID in the presentation is not managed in the wallet.
  *           type: string
@@ -286,18 +284,18 @@
  *           description: Custom verification policies to execute when verifying presentation.
  *           type: object
  *           properties:
- *             now:
- *               description: Policy to verify current time during the verification check (provided as Unix/epoch time).
- *               type: number
  *             issuanceDate:
  *               description: Policy to skip the `issuanceDate` (`nbf`) timestamp check when set to `false`.
  *               type: boolean
+ *               default: true
  *             expirationDate:
  *               description: Policy to skip the `expirationDate` (`exp`) timestamp check when set to `false`.
  *               type: boolean
+ *               default: true
  *             audience:
  *               description: Policy to skip the audience check when set to `false`.
  *               type: boolean
+ *               default: false
  *     CredentialStatusCreateBody:
  *       allOf:
  *         - type: object

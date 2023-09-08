@@ -36,7 +36,7 @@ export class CredentialController {
 				}
 				return false;
 			})
-			.withMessage('Entry must be a jwt string or an credential')
+			.withMessage('Entry must be a JWT or a credential/presentation body with JWT proof')
 			.custom((value) => {
 				if (typeof value === 'string') {
 					try {
@@ -47,7 +47,7 @@ export class CredentialController {
 				}
 				return true;
 			})
-			.withMessage('An invalid jwt string'),
+			.withMessage('An invalid JWT string'),
 		check('policies').optional().isObject().withMessage('Verification policies should be an object'),
 		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value'),
 		query('publish').optional().isBoolean().withMessage('publish should be a boolean value'),
@@ -113,7 +113,9 @@ export class CredentialController {
 			request.body['@context'] = [request.body['@context']];
 		}
 
-		const resolvedResult = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(request.body.issuerDid);
+		const resolvedResult = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(
+			request.body.issuerDid
+		);
 		const body = await resolvedResult.json();
 		if (!body?.didDocument) {
 			return response.status(resolvedResult.status).send({ body });
@@ -196,9 +198,9 @@ export class CredentialController {
 
 		const { credential, policies } = request.body;
 		const verifyStatus = request.query.verifyStatus === 'true';
-		const allowDeactivatedDid = request.query.allowDeactivatedDid === "true";
+		const allowDeactivatedDid = request.query.allowDeactivatedDid === 'true';
 
-		let issuerDid = "";
+		let issuerDid = '';
 		if (typeof credential === 'object' && credential?.issuer?.id) {
 			issuerDid = credential.issuer.id;
 		} else {
@@ -458,10 +460,10 @@ export class CredentialController {
 	 *       content:
 	 *         application/x-www-form-urlencoded:
 	 *           schema:
-	 *             $ref: '#/components/schemas/PresentationRequest'
+	 *             $ref: '#/components/schemas/PresentationVerifyRequest'
 	 *         application/json:
 	 *           schema:
-	 *             $ref: '#/components/schemas/PresentationRequest'
+	 *             $ref: '#/components/schemas/PresentationVerifyRequest'
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -484,9 +486,9 @@ export class CredentialController {
 
 		const { presentation, verifierDid, policies } = request.body;
 		const verifyStatus = request.query.verifyStatus === 'true';
-		const allowDeactivatedDid = request.query.allowDeactivatedDid === "true";
+		const allowDeactivatedDid = request.query.allowDeactivatedDid === 'true';
 
-		let issuerDid = "";
+		let issuerDid = '';
 		if (typeof presentation === 'object' && presentation?.issuer?.id) {
 			issuerDid = presentation.issuer.id;
 		} else {
