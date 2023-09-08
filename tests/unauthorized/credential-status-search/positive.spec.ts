@@ -7,7 +7,7 @@ test('[Positive] It can search an existent DID, statusListName, and statusPurpos
         '/credential-status/search?' +
         `did=${TESTNET_DID}&` +
         'statusPurpose=revocation&' + 
-        'statusListName=cheqd-employee-credentials',
+        'statusListName=cheqd-employee-credentials'
     );
     expect(response.ok()).toBeTruthy();
 
