@@ -2,8 +2,8 @@ import * as fs from 'fs';
 import { TESTNET_DID } from '../constants';
 import { test, expect } from '@playwright/test';
 
-test('[Positive] It can check an existent body and statusPurpose=revocation&encrypted=false parameters', async ({ request }) => {
-    const response = await request.post('/credential-status/check?statusPurpose=revocation&encrypted=false', {
+test('[Positive] It can check an unencrypted status-list with an existent body and statusPurpose=revocation parameter', async ({ request }) => {
+    const response = await request.post('/credential-status/check?statusPurpose=revocation', {
         data: {
             did: TESTNET_DID,
             index: 10,
@@ -20,8 +20,8 @@ test('[Positive] It can check an existent body and statusPurpose=revocation&encr
     expect(body).toStrictEqual(expected);
 });
 
-test('Positive] It can check an existent body and statusPurpose=suspension&encrypted=false parameters', async ({ request }) => {
-    const response = await request.post('/credential-status/check?statusPurpose=suspension&encrypted=false', {
+test('Positive] It can check an unencrypted status-list with an existent body and statusPurpose=suspension parameter', async ({ request }) => {
+    const response = await request.post('/credential-status/check?statusPurpose=suspension', {
         data: {
             did: TESTNET_DID,
             index: 10,
@@ -39,8 +39,8 @@ test('Positive] It can check an existent body and statusPurpose=suspension&encry
 });
 
 // TODO: FIX ME
-// test('[Positive] It can check an existent body and statusPurpose=revocation&encrypted=true parameters', async ({ request }) => {
-//     const response = await request.post('/credential-status/check?statusPurpose=revocation&encrypted=true', {
+// test('[Positive] It can check an encrypted status-list with an existent body and statusPurpose=revocation parameter', async ({ request }) => {
+//     const response = await request.post('/credential-status/check?statusPurpose=revocation', {
 //         data: {
 //             did: TESTNET_DID,
 //             index: 10,
@@ -59,8 +59,8 @@ test('Positive] It can check an existent body and statusPurpose=suspension&encry
 
 
 // TODO: FIX ME
-// test('[Positive] It can check an existent body and statusPurpose=suspension&encrypted=true parameters', async ({ request }) => {
-//     const response = await request.post('/credential-status/check?statusPurpose=suspension&encrypted=true', {
+// test('[Positive] It can check an encrypted status-list with an existent body and statusPurpose=suspension parameter', async ({ request }) => {
+//     const response = await request.post('/credential-status/check?statusPurpose=suspension', {
 //         data: {
 //             did: TESTNET_DID,
 //             index: 10,
