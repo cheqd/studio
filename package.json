@@ -28,11 +28,9 @@
 		"start:local": "npm run build:app && npm run start",
 		"format": "prettier --write src/**/*.{js,ts,cjs,mjs}",
 		"lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
-		"test": "jest --config jestconfig.json --verbose",
+		"test": "npx playwright test -c playwright.config.ts",
 		"typeorm": "typeorm-ts-node-esm  -d ./dist/database/ormconfig.js",
-		"migration": "npm run typeorm migration:generate . && npm run typeorm migration:run",
-		"test:e2e:authorized": "npx playwright test -c playwright.config.ts",
-		"test:e2e:unauthorized": "npx playwright test -c playwright-ct.config.ts"
+		"migration": "npm run typeorm migration:generate . && npm run typeorm migration:run"
 	},
 	"eslintConfig": {
 		"root": true,
