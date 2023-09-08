@@ -414,13 +414,13 @@ export class IssuerController {
 			);
 
 			if (!deactivated) {
-				return response.status(StatusCodes.BAD_REQUEST).json({deactivated: false});
+				return response.status(StatusCodes.BAD_REQUEST).json({ deactivated: false });
 			}
 
 			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolveDid(
 				request.params.did,
 				response.locals.customerId
-			)
+			);
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
@@ -506,8 +506,8 @@ export class IssuerController {
 			);
 			if (result) {
 				const url = new URL(
-					`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?` + 
-					`resourceId=${resourcePayload.id}&resourceMetadata=true`,
+					`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?` +
+						`resourceId=${resourcePayload.id}&resourceMetadata=true`
 				);
 				const didDereferencing = (await (await fetch(url)).json()) as DIDMetadataDereferencingResult;
 

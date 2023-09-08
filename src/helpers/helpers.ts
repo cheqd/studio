@@ -7,7 +7,7 @@ import {
 	VerificationMethods,
 	createVerificationKeys,
 	createDidVerificationMethod,
-	createDidPayload
+	createDidPayload,
 } from '@cheqd/sdk';
 import { createHmac } from 'node:crypto';
 import type { ParsedQs } from 'qs';
@@ -92,8 +92,8 @@ export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecVali
 export function isValidService(didDocument: DIDDocument): boolean {
 	return didDocument.service
 		? didDocument?.service?.every((s) => {
-			return s?.serviceEndpoint && s?.id && s?.type;
-		})
+				return s?.serviceEndpoint && s?.id && s?.type;
+		  })
 		: true;
 }
 
