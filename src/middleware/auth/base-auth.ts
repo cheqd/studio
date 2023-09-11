@@ -5,9 +5,8 @@ import stringify from 'json-stringify-safe';
 import { DefaultNetworkPattern } from '../../types/shared.js';
 import { MethodToScope, IAuthResourceHandler, Namespaces, IAuthResponse } from '../../types/authentication.js';
 import { LogToHelper } from './logto.js';
-import InvalidTokenError from "jwt-decode";
+import InvalidTokenError from 'jwt-decode';
 import jwt_decode from 'jwt-decode';
-
 
 dotenv.config();
 
@@ -188,7 +187,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 		if (req && req.body && req.body.credential) {
 			const { credential } = req.body;
 			let decoded = '';
-			let issuerDid = "";
+			let issuerDid = '';
 			// Try to get issuer DID
 			if (credential && credential.issuer) {
 				issuerDid = credential.issuer.id;
@@ -226,10 +225,10 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 			}
 		}
 		// For DID create we specify it as a separate parameter in body
-		if (req.body && req.body.network ) {
+		if (req.body && req.body.network) {
 			return this.switchNetwork(req.body.network);
 		}
-		
+
 		return null;
 	}
 
