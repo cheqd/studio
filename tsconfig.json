@@ -71,6 +71,9 @@
 		"forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */
 	},
 	"exclude": [
+		"node_modules",
+		"dist",
+		"playwright",
 		"tests",
 		"playwright.config.ts",
 	]
