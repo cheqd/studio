@@ -79,20 +79,17 @@ export default defineConfig({
   ],
 
   // Timeout for each test in milliseconds
-	// 120,000ms = 2 minutes
 	// Docs: https://playwright.dev/docs/test-timeouts
 	timeout: 60 * 1000,
 
 	// Timeout for each expect/assertion in milliseconds
-	// 20,000ms = 20 seconds
 	// Docs: https://playwright.dev/docs/test-timeouts
 	expect: {
-		timeout: 20 * 1000,
+		timeout: 10 * 1000,
 	},
 
 	// Global timeout for overall test run in milliseconds
 	// By default, Playwright has no global timeout but suggests a "sensible limit" can be set if needed
-	// 1,500,000ms = 25 minutes
 	// Docs: https://playwright.dev/docs/test-timeouts#global-timeout
-	globalTimeout: 25 * 60 * 1000,
+	globalTimeout: 15 * 60 * 1000,
 });

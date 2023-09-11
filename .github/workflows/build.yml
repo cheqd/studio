@@ -25,7 +25,8 @@ jobs:
               run: npm run build
 
             - name: Install Playwright Browsers
-              run: npx playwright install --with-deps
+              # We only care about Chromium in this repo, drop the word "chromium" to install all browsers
+              run: npx playwright install --with-deps chromium
 
             - name: Run Playwright tests
               # Don't run tests on main branch

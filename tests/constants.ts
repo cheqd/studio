@@ -1,4 +1,4 @@
-export const DEFAULT_MAINNET_DID = "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0";
+export const DEFAULT_MAINNET_DID = "did:cheqd:mainnet:7c950b5d-dbbb-4a12-9d79-6b553ca0c271";
 export const DEFAULT_TESTNET_DID = "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0";
 
 // Credential status list names
