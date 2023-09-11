@@ -62,7 +62,7 @@ export default defineConfig({
 
   // Limit the numbers of failures to set a fail-fast strategy on CI
   // Docs: https://playwright.dev/docs/api/class-testconfig#test-config-max-failures
-  maxFailures: process.env.CI ? 10 : undefined,
+  maxFailures: process.env.CI ? 5 : undefined,
 
   // Configure project specific settings
   // Docs: https://playwright.dev/docs/test-projects
