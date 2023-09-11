@@ -24,7 +24,6 @@
 		"build": "npm run build:swagger && npm run build:app",
 		"build:app": "tsc",
 		"build:swagger": "swagger-jsdoc --definition src/static/swagger-options.json -o src/static/swagger.json ./src/controllers/*.ts ./src/types/swagger-types.ts",
-		"build:tests": "tsc --incremental -p tests/tsconfig.json",
 		"start": "node dist/index.js",
 		"start:local": "npm run build:app && npm run start",
 		"format": "prettier --write src/**/*.{js,ts,cjs,mjs}",
