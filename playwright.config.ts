@@ -20,10 +20,6 @@ export default defineConfig({
     // Base URL to use in actions like `await page.goto('/')`
     baseURL: 'http://localhost:3000',
 
-    // Storage state to use for the context
-    // Docs: https://playwright.dev/docs/api/class-testoptions#test-options-storage-state
-		storageState: '.state.json',
-
     // Set whether to record traces
 		// Docs: https://playwright.dev/docs/api/class-testoptions#test-options-trace
 		trace: 'retain-on-failure',
