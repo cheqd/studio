@@ -105,7 +105,11 @@ class App {
 		app.post(`/credential/verify`, CredentialController.credentialValidator, new CredentialController().verify);
 		app.post(`/credential/revoke`, CredentialController.credentialValidator, new CredentialController().revoke);
 		app.post('/credential/suspend', CredentialController.credentialValidator, new CredentialController().suspend);
-		app.post('/credential/reinstate', CredentialController.credentialValidator, new CredentialController().reinstate);
+		app.post(
+			'/credential/reinstate',
+			CredentialController.credentialValidator,
+			new CredentialController().reinstate
+		);
 
 		// presentation
 		app.post(

@@ -1,0 +1,52 @@
+{
+  "did": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+  "service": [
+    {
+      "id": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1",
+      "type": "LinkedDomains",
+      "serviceEndpoint": [
+        "https://example.com"
+      ]
+    }
+  ],
+  "verificationMethod": [
+    {
+      "controller": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+      "id": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
+      "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
+      "type": "Ed25519VerificationKey2018"
+    }
+  ],
+  "authentication": [
+    "string"
+  ],
+  "didDocument": {
+    "@context": [
+      "https://www.w3.org/ns/did/v1"
+    ],
+    "id": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+    "controller": [
+      "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+    ],
+    "verificationMethod": [
+      {
+        "id": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
+        "type": "Ed25519VerificationKey2018",
+        "controller": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+        "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt"
+      }
+    ],
+    "authentication": [
+      "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1"
+    ],
+    "service": [
+      {
+        "id": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1",
+        "type": "LinkedDomains",
+        "serviceEndpoint": [
+          "https://example.com"
+        ]
+      }
+    ]
+  }
+}
