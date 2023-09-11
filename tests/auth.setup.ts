@@ -5,7 +5,7 @@ const userFile = 'playwright/.auth/user.json';
 
 dotenv.config();
 
-setup('authenticate as user', async ({ page }) => {
+setup('Authenticate as user', async ({ page }) => {
     // Perform authentication steps. Replace these actions with your own.
     await page.goto(`${process.env.APPLICATION_BASE_URL}/swagger`);
     await page.getByRole('button', { name: 'Log in' }).click();
@@ -26,4 +26,4 @@ setup('authenticate as user', async ({ page }) => {
     // End of authentication steps.
   
     await page.context().storageState({ path: userFile });
-  });
+});
