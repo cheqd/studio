@@ -70,5 +70,11 @@
 		"skipLibCheck": true /* Skip type checking of declaration files. */,
 		"forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */
 	},
-	"exclude": ["tests/**/*", "playwright.config.ts"]
+	"exclude": [
+		"node_modules",
+		"dist",
+		"playwright",
+		"tests",
+		"playwright.config.ts",
+	]
 }
