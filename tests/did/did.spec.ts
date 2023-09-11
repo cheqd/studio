@@ -1,12 +1,11 @@
-import { test } from '../fixtures.js';
-import { expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
-import { DEFAULT_DOES_NOT_HAVE_PERMISSIONS, DEFAULT_MAINNET_DID } from '../constants.js';
+import { DEFAULT_DOES_NOT_HAVE_PERMISSIONS, DEFAULT_MAINNET_DID } from '../constants';
 import * as fs from 'fs';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
-const PAYLOADS_BASE_PATH="./tests/holding/payloads/did";
+const PAYLOADS_BASE_PATH="./tests/payloads/did";
 
 // Negative tests. All of this tests should return 403 Forbidden 
 // cause here the user tries to make mainnet operations with testnet role

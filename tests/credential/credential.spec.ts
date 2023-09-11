@@ -1,12 +1,11 @@
-import { test } from '../fixtures.js';
-import { expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
-import { DEFAULT_DOES_NOT_HAVE_PERMISSIONS} from '../constants.js';
+import { DEFAULT_DOES_NOT_HAVE_PERMISSIONS} from '../constants';
 import * as fs from 'fs';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
-const PAYLOADS_BASE_PATH="./tests/holding/payloads/credential";
+const PAYLOADS_BASE_PATH="./tests/payloads/credential";
 
 test(' Issue credential for user with testnet role but network is mainnet', async ({ request }) => {
     const response = await request.post(
