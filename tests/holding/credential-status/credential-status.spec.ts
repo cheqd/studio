@@ -6,7 +6,7 @@ import * as fs from 'fs';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
-const PAYLOADS_BASE_PATH="./tests/authorized/payloads/rbac/credential-status";
+const PAYLOADS_BASE_PATH="./tests/holding/payloads/credential-status";
 
 test('Create encrypted StatusList2021 for user with testnet role but network is mainnet', async ({ request }) => {
     const response = await request.post(

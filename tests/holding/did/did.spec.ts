@@ -6,7 +6,7 @@ import * as fs from 'fs';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
-const PAYLOADS_BASE_PATH="./tests/authorized/payloads/rbac/did";
+const PAYLOADS_BASE_PATH="./tests/holding/payloads/did";
 
 // Negative tests. All of this tests should return 403 Forbidden 
 // cause here the user tries to make mainnet operations with testnet role
