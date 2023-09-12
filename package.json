@@ -1,6 +1,6 @@
 {
 	"name": "@cheqd/credential-service",
-	"version": "2.9.3-develop.1",
+	"version": "2.9.3",
 	"description": "cheqd Credential Service Backend",
 	"source": "src/index.ts",
 	"main": "dist/index.js",
