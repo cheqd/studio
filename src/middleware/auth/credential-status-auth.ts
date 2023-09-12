@@ -7,14 +7,30 @@ export class CredentialStatusAuthHandler extends AbstractAuthHandler {
 		super();
 		this.registerRoute('/credential-status/create/encrypted', 'POST', 'create-encrypted:credential-status:testnet');
 		this.registerRoute('/credential-status/create/encrypted', 'POST', 'create-encrypted:credential-status:mainnet');
-		this.registerRoute('/credential-status/create/unencrypted', 'POST', 'create-unencrypted:credential-status:testnet');
-		this.registerRoute('/credential-status/create/unencrypted', 'POST', 'create-unencrypted:credential-status:mainnet');
+		this.registerRoute(
+			'/credential-status/create/unencrypted',
+			'POST',
+			'create-unencrypted:credential-status:testnet'
+		);
+		this.registerRoute(
+			'/credential-status/create/unencrypted',
+			'POST',
+			'create-unencrypted:credential-status:mainnet'
+		);
 		this.registerRoute('/credential-status/publish', 'POST', 'publish:credential-status:testnet');
 		this.registerRoute('/credential-status/publish', 'POST', 'publish:credential-status:mainnet');
 		this.registerRoute('/credential-status/update/encrypted', 'POST', 'update-encrypted:credential-status:testnet');
 		this.registerRoute('/credential-status/update/encrypted', 'POST', 'update-encrypted:credential-status:mainnet');
-		this.registerRoute('/credential-status/update/unencrypted', 'POST', 'update-unencrypted:credential-status:testnet');
-		this.registerRoute('/credential-status/update/unencrypted', 'POST', 'update-unencrypted:credential-status:mainnet');
+		this.registerRoute(
+			'/credential-status/update/unencrypted',
+			'POST',
+			'update-unencrypted:credential-status:testnet'
+		);
+		this.registerRoute(
+			'/credential-status/update/unencrypted',
+			'POST',
+			'update-unencrypted:credential-status:mainnet'
+		);
 		// Unauthorized routes
 		this.registerRoute('/credential-status/search', 'GET', '', { allowUnauthorized: true, skipNamespace: true });
 		this.registerRoute('/credential-status/check', 'POST', '', { allowUnauthorized: true, skipNamespace: true });

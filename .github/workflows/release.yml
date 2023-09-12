@@ -16,7 +16,7 @@ jobs:
             RELEASE_VERSION: ${{ steps.set-version.outputs.RELEASE_VERSION }}
 
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   fetch-depth: 0
                   persist-credentials: false
@@ -63,7 +63,7 @@ jobs:
             url: https://credential-service.cheqd.net
 
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   persist-credentials: false
 

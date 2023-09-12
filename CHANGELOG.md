@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.2-develop.3](https://github.com/cheqd/credential-service/compare/2.9.2-develop.2...2.9.2-develop.3) (2023-09-08)
+
+
+### Bug Fixes
+
+* Add DID deactivation check for credential issuing [DEV-3136] ([#345](https://github.com/cheqd/credential-service/issues/345)) ([023bba1](https://github.com/cheqd/credential-service/commit/023bba186b61009fec22cc8af5f817cae6fed2bd))
+
 ## [2.9.2-develop.2](https://github.com/cheqd/credential-service/compare/2.9.2-develop.1...2.9.2-develop.2) (2023-09-07)
 
 

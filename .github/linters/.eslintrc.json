@@ -6,7 +6,7 @@
 	"extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:prettier/recommended"],
 	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
-		"ecmaVersion": 2018,
+		"ecmaVersion": "ESNext",
 		"sourceType": "module"
 	},
 	"plugins": ["@typescript-eslint", "jest"],

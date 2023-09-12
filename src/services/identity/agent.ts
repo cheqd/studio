@@ -567,7 +567,7 @@ export class Veramo {
 					publish: true,
 					publishEncrypted: false,
 					returnUpdatedStatusList: true,
-					returnStatusListMetadata: true
+					returnStatusListMetadata: true,
 				} satisfies ICheqdRevokeBulkCredentialsWithStatusList2021Args);
 			case DefaultStatusActions.suspend:
 				return await agent.cheqdSuspendCredentials({
@@ -581,7 +581,7 @@ export class Veramo {
 					publish: true,
 					publishEncrypted: false,
 					returnUpdatedStatusList: true,
-					returnStatusListMetadata: true
+					returnStatusListMetadata: true,
 				} satisfies ICheqdSuspendBulkCredentialsWithStatusList2021Args);
 			case DefaultStatusActions.reinstate:
 				return await agent.cheqdUnsuspendCredentials({
@@ -595,7 +595,7 @@ export class Veramo {
 					publish: true,
 					publishEncrypted: false,
 					returnUpdatedStatusList: true,
-					returnStatusListMetadata: true
+					returnStatusListMetadata: true,
 				} satisfies ICheqdUnsuspendBulkCredentialsWithStatusList2021Args);
 		}
 	}
