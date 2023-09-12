@@ -65,11 +65,11 @@ export default defineConfig({
   // Docs: https://playwright.dev/docs/test-projects
   projects: [
     { 
-      name: 'setup',
+      name: 'Setup',
       testMatch: /.*\.setup\.ts/
     },
     {
-      name: 'auth-tests',
+      name: 'Logged In User Tests',
       use: {
         ...devices['Desktop Chrome'],
         // Use prepared auth state.
@@ -78,7 +78,7 @@ export default defineConfig({
       dependencies: ['setup'],
     },
     {
-      name: 'no-auth-tests',
+      name: 'Non-Logged In User Tests',
       testMatch: /.*\.no-auth.spec.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
