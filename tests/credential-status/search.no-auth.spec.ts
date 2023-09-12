@@ -1,6 +1,47 @@
+import * as fs from 'fs';
+import {
+    TESTNET_DID,
+    INVALID_DID,
+    NOT_EXISTENT_TESTNET_DID,
+    NOT_EXISTENT_STATUS_LIST_NAME,
+    PAYLOADS_PATH
+} from '../constants';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
-import { INVALID_DID, NOT_EXISTENT_STATUS_LIST_NAME, NOT_EXISTENT_TESTNET_DID, TESTNET_DID } from '../../constants';
+
+test('[Positive] It can search credential-status with existent DID, statusListName, and statusPurpose=revocation', async ({ request }) => {
+    const response = await request.get(
+        '/credential-status/search?' +
+        `did=${TESTNET_DID}&` +
+        'statusPurpose=revocation&' +
+        'statusListName=cheqd-employee-credentials'
+    );
+    expect(response.status()).toBe(StatusCodes.OK);
+
+    const body = await response.json();
+    const expected = JSON.parse(
+        fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL_STATUS}/search-list-revocation.json`, 'utf-8')
+    );
+
+    expect(body).toStrictEqual(expected);
+});
+
+test('[Positive] It can search credential-status with existent DID, statusListName, and statusPurpose=suspension', async ({ request }) => {
+    const response = await request.get(
+        '/credential-status/search?' +
+        `did=${TESTNET_DID}&` +
+        'statusPurpose=suspension&' +
+        'statusListName=cheqd-employee-credentials',
+    );
+    expect(response.status()).toBe(StatusCodes.OK);
+
+    const body = await response.json();
+    const expected = JSON.parse(
+        fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL_STATUS}/search-list-suspension.json`, 'utf-8')
+    );
+
+    expect(body).toStrictEqual(expected);
+});
 
 test('[Negative] It cannot search credential-status with not existent DID', async ({ request }) => {
     const response = await request.get(
