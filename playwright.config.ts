@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { STORAGE_STATE_FILE_PATH } from './tests/constants';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -72,7 +73,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         // Use prepared auth state.
-        storageState: 'playwright/.auth/user.json',
+        storageState: STORAGE_STATE_FILE_PATH,
       },
       dependencies: ['setup'],
     },

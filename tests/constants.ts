@@ -123,6 +123,8 @@ export const INVALID_CREDENTIAL = {
 	}
 };
 
+export const STORAGE_STATE_FILE_PATH = "playwright/.auth/user.json";
+
 const PAYLOAD_BASE_PATH = "./tests/payloads";
 export enum PAYLOADS_PATH {
 	DID = `${PAYLOAD_BASE_PATH}/did`,

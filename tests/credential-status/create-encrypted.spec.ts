@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
-import { DEFAULT_DOES_NOT_HAVE_PERMISSIONS, PAYLOADS_PATH } from '../constants';
+import { DEFAULT_DOES_NOT_HAVE_PERMISSIONS, PAYLOADS_PATH, STORAGE_STATE_FILE_PATH } from '../constants';
 
-test.use({ storageState: 'playwright/.auth/user.json' });
+test.use({ storageState: STORAGE_STATE_FILE_PATH });
 
 test('[Negative] It cannot create an encrypted statusList2021 in mainnet network for user with testnet role', async ({ request }) => {
 	const response = await request.post(`/credential-status/create/encrypted`, {

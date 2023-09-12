@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
-import { DEFAULT_DOES_NOT_HAVE_PERMISSIONS, PAYLOADS_PATH } from '../constants';
+import { DEFAULT_DOES_NOT_HAVE_PERMISSIONS, PAYLOADS_PATH, STORAGE_STATE_FILE_PATH } from '../constants';
 
-test.use({ storageState: 'playwright/.auth/user.json' });
+test.use({ storageState: STORAGE_STATE_FILE_PATH });
 
 // Negative tests. All of this tests should return 403 Forbidden
 // cause here the user tries to make mainnet operations with testnet role

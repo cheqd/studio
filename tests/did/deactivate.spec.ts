@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
-import { DEFAULT_DOES_NOT_HAVE_PERMISSIONS, DEFAULT_MAINNET_DID } from '../constants';
+import { DEFAULT_DOES_NOT_HAVE_PERMISSIONS, DEFAULT_MAINNET_DID, STORAGE_STATE_FILE_PATH } from '../constants';
 
-test.use({ storageState: 'playwright/.auth/user.json' });
+test.use({ storageState: STORAGE_STATE_FILE_PATH });
 
 test('[Negative] It cannot deactivated DID in mainnet network for user with testnet role', async ({ request }) => {
 	const response = await request.post(`/did/deactivate/${DEFAULT_MAINNET_DID}`);

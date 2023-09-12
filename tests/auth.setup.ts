@@ -1,7 +1,6 @@
-import { test as setup, expect } from '@playwright/test';
 import * as dotenv from 'dotenv';
-
-const userFile = 'playwright/.auth/user.json';
+import { STORAGE_STATE_FILE_PATH } from './constants';
+import { test as setup, expect } from '@playwright/test';
 
 dotenv.config();
 
@@ -25,5 +24,5 @@ setup('Authenticate as user', async ({ page }) => {
 
 	// End of authentication steps.
 
-	await page.context().storageState({ path: userFile });
+	await page.context().storageState({ path: STORAGE_STATE_FILE_PATH });
 });
