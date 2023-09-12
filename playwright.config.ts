@@ -75,7 +75,7 @@ export default defineConfig({
         // Use prepared auth state.
         storageState: STORAGE_STATE_FILE_PATH,
       },
-      dependencies: ['setup'],
+      dependencies: ['Setup'],
     },
     {
       name: 'Non-Logged In User Tests',
