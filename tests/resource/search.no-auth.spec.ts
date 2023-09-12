@@ -75,4 +75,3 @@ test('[Negative] It cannot search not existent {did} and {resourceId}', async ({
     expect(body.contentStream).toBe(expected.contentStream);
     expect(body.contentMetadata).toStrictEqual(expected.contentMetadata);
 });
-

@@ -1,8 +1,9 @@
 import {
     TESTNET_DID,
+    CONTENT_TYPE,
+    PAYLOADS_PATH,
     NOT_EXISTENT_TESTNET_DID,
-    NOT_EXISTENT_STATUS_LIST_NAME,
-    PAYLOADS_PATH
+    NOT_EXISTENT_STATUS_LIST_NAME
 } from '../constants';
 import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
@@ -14,7 +15,8 @@ test('[Positive] It can check an unencrypted status-list with an existent body a
             did: TESTNET_DID,
             index: 10,
             statusListName: "cheqd-employee-credentials",
-        }
+        },
+        headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
     expect(response.status()).toBe(StatusCodes.OK);
 
@@ -26,13 +28,14 @@ test('[Positive] It can check an unencrypted status-list with an existent body a
     expect(body).toStrictEqual(expected);
 });
 
-test('Positive] It can check an unencrypted status-list with an existent body and statusPurpose=suspension parameter', async ({ request }) => {
+test('[Positive] It can check an unencrypted status-list with an existent body and statusPurpose=suspension parameter', async ({ request }) => {
     const response = await request.post('/credential-status/check?statusPurpose=suspension', {
         data: {
             did: TESTNET_DID,
             index: 10,
             statusListName: "cheqd-employee-credentials",
-        }
+        },
+        headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
     expect(response.status()).toBe(StatusCodes.OK);
 
@@ -51,7 +54,8 @@ test('Positive] It can check an unencrypted status-list with an existent body an
 //             did: TESTNET_DID,
 //             index: 10,
 //             statusListName: "cheqd-employee-credentials-encrypted",
-//         }
+//         },
+//         headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
 //     });
 //     expect(response.status()).toBe(StatusCodes.OK);
 
@@ -71,7 +75,8 @@ test('Positive] It can check an unencrypted status-list with an existent body an
 //             did: TESTNET_DID,
 //             index: 10,
 //             statusListName: "cheqd-employee-credentials-encrypted",
-//         }
+//         },
+//         headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
 //     });
 //     expect(response.status()).toBe(StatusCodes.OK);
 
@@ -89,7 +94,8 @@ test('[Negative] It cannot check credential-status with not existent DID', async
             did: NOT_EXISTENT_TESTNET_DID,
             index: 10,
             statusListName: "cheqd-employee-credentials",
-        }
+        },
+        headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
     expect(response.status()).toBe(StatusCodes.NOT_FOUND);
 
@@ -108,7 +114,8 @@ test('[Negative] It cannot check credential-status with an existent DID and not 
             did: TESTNET_DID,
             index: 10,
             statusListName: NOT_EXISTENT_STATUS_LIST_NAME,
-        }
+        },
+        headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
     expect(response.status()).toBe(StatusCodes.NOT_FOUND);
 

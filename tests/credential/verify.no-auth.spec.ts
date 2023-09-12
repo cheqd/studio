@@ -1,6 +1,7 @@
 import {
-    VALID_CREDENTIAL,
+    CONTENT_TYPE,
     VALID_JWT_TOKEN,
+    VALID_CREDENTIAL,
     INVALID_JWT_TOKEN,
     // INVALID_CREDENTIAL,
     NOT_MATCHED_CREDENTIAL_AND_JWT,
@@ -13,7 +14,8 @@ import { StatusCodes } from 'http-status-codes';
 
 test('[Positive] It can verify credential with a valid JWT body', async ({ request }) => {
     const response = await request.post('/credential/verify', {
-        data: { credential: VALID_JWT_TOKEN }
+        data: { credential: VALID_JWT_TOKEN },
+        headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
     expect(response.status()).toBe(StatusCodes.OK);
 
@@ -25,7 +27,8 @@ test('[Positive] It can verify credential with a valid JWT body', async ({ reque
 
 test('[Positive] It can verify credential with a valid credential body', async ({ request }) => {
     const response = await request.post('/credential/verify', {
-        data: { credential: VALID_CREDENTIAL }
+        data: { credential: VALID_CREDENTIAL },
+        headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
     expect(response.status()).toBe(StatusCodes.OK);
 
@@ -38,7 +41,8 @@ test('[Positive] It can verify credential with a valid credential body', async (
 
 test('[Positive] It can verify credential with a valid JWT body and verifyStatus=true query parameter', async ({ request }) => {
     const response = await request.post('/credential/verify?verifyStatus=true', {
-        data: { credential: VALID_JWT_TOKEN }
+        data: { credential: VALID_JWT_TOKEN },
+        headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
     expect(response.status()).toBe(StatusCodes.OK);
 
@@ -50,7 +54,8 @@ test('[Positive] It can verify credential with a valid JWT body and verifyStatus
 
 test('[Positive] It can verify credential with a valid credential body and verifyStatus=true query parameter', async ({ request }) => {
     const response = await request.post('/credential/verify?verifyStatus=true', {
-        data: { credential: VALID_CREDENTIAL }
+        data: { credential: VALID_CREDENTIAL },
+        headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
     expect(response.status()).toBe(StatusCodes.OK);
 
@@ -63,7 +68,8 @@ test('[Positive] It can verify credential with a valid credential body and verif
 
 test('[Positive] It can verify credential with a valid JWT body and fetchRemoteContexts=true query parameter', async ({ request }) => {
     const response = await request.post('/credential/verify?fetchRemoteContexts=true', {
-        data: { credential: VALID_JWT_TOKEN }
+        data: { credential: VALID_JWT_TOKEN },
+        headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
     expect(response.status()).toBe(StatusCodes.OK);
 
@@ -75,7 +81,8 @@ test('[Positive] It can verify credential with a valid JWT body and fetchRemoteC
 
 test('[Positive] It can verify credential with a valid credential body and fetchRemoteContexts=true query parameter', async ({ request }) => {
     const response = await request.post('/credential/verify?fetchRemoteContexts=true', {
-        data: { credential: VALID_CREDENTIAL }
+        data: { credential: VALID_CREDENTIAL },
+        headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
     expect(response.status()).toBe(StatusCodes.OK);
 
@@ -87,7 +94,8 @@ test('[Positive] It can verify credential with a valid credential body and fetch
 
 test('[Positive] It can verify credential with a valid JWT body, verifyStatus=true, and fetchRemoteContexts=true query parameter', async ({ request }) => {
     const response = await request.post('/credential/verify?verifyStatus=true&fetchRemoteContexts=true', {
-        data: { credential: VALID_JWT_TOKEN }
+        data: { credential: VALID_JWT_TOKEN },
+        headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
     expect(response.status()).toBe(StatusCodes.OK);
 
@@ -100,7 +108,8 @@ test('[Positive] It can verify credential with a valid JWT body, verifyStatus=tr
 
 test('[Positive] It can verify credential with a valid credential body, verifyStatus=true, and fetchRemoteContexts=true query parameter', async ({ request }) => {
     const response = await request.post('/credential/verify?verifyStatus=true&fetchRemoteContexts=true', {
-        data: { credential: VALID_CREDENTIAL }
+        data: { credential: VALID_CREDENTIAL },
+        headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
     expect(response.status()).toBe(StatusCodes.OK);
 
@@ -112,7 +121,8 @@ test('[Positive] It can verify credential with a valid credential body, verifySt
 
 test('[Negative] It cannot verify credential with an invalid credential body where credential and JWT are different', async ({ request }) => {
     const response = await request.post('/credential/verify', {
-        data: { credential: NOT_MATCHED_CREDENTIAL_AND_JWT }
+        data: { credential: NOT_MATCHED_CREDENTIAL_AND_JWT },
+        headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
     expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
 
@@ -127,7 +137,8 @@ test('[Negative] It cannot verify credential with an invalid credential body whe
 
 test('[Negative] It cannot verify credential with an invalid JWT body', async ({ request }) => {
     const response = await request.post('/credential/verify', {
-        data: { credential: INVALID_JWT_TOKEN }
+        data: { credential: INVALID_JWT_TOKEN },
+        headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
     expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
 
@@ -145,7 +156,8 @@ test('[Negative] It cannot verify credential with an invalid JWT body', async ({
 // This test returns 400 when user is authenticated, but in case of when user is not authenticated it returns 500
 // test('[Negative] It cannot verify credential with an invalid credential body', async ({ request }) => {
 //     const response = await request.post('/credential/verify', {
-//         data: { credential: INVALID_CREDENTIAL }
+//         data: { credential: INVALID_CREDENTIAL },
+//         headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
 //     });
 //     expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
 
@@ -158,4 +170,3 @@ test('[Negative] It cannot verify credential with an invalid JWT body', async ({
 
 //     expect(body).toStrictEqual(expected);
 // });
-

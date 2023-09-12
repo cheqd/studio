@@ -2,9 +2,9 @@ import * as fs from 'fs';
 import {
     TESTNET_DID,
     INVALID_DID,
+    PAYLOADS_PATH,
     NOT_EXISTENT_TESTNET_DID,
-    NOT_EXISTENT_STATUS_LIST_NAME,
-    PAYLOADS_PATH
+    NOT_EXISTENT_STATUS_LIST_NAME
 } from '../constants';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';

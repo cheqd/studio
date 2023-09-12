@@ -1,4 +1,3 @@
-
 import {
 	CONTENT_TYPE,
 	PAYLOADS_PATH,

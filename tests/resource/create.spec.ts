@@ -20,4 +20,3 @@ test('[Negative] It cannot create resource in mainnet network for user with test
 	expect(response.status()).toBe(StatusCodes.FORBIDDEN);
 	expect(await response.text()).toEqual(expect.stringContaining(DEFAULT_DOES_NOT_HAVE_PERMISSIONS));
 });
-

@@ -1,20 +1,22 @@
-export const DEFAULT_MAINNET_DID = 'did:cheqd:mainnet:7c950b5d-dbbb-4a12-9d79-6b553ca0c271';
-export const DEFAULT_TESTNET_DID = 'did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0';
+export const STORAGE_STATE_FILE_PATH = "playwright/.auth/user.json";
 
-// Credential status list names
-export const DEFAULT_STATUS_LIST_ENCRYPTED_NAME = 'cheqd-employee-credentials-encrypted';
-export const DEFAULT_STATUS_LIST_UNENCRYPTED_NAME = 'cheqd-employee-credentials-unencrypted';
-export const DEFAULT_STATUS_LIST_PAYMENT_ADDRESS = 'cheqd1qs0nhyk868c246defezhz5eymlt0dmajna2csg';
-export const DEFAULT_STATUS_LIST_INDICES = [10, 3199, 12109, 130999];
+const PAYLOAD_BASE_PATH = "./tests/payloads";
+export enum PAYLOADS_PATH {
+	DID = `${PAYLOAD_BASE_PATH}/did`,
+	RESOURCE = `${PAYLOAD_BASE_PATH}/resource`,
+	CREDENTIAL = `${PAYLOAD_BASE_PATH}/credential`,
+	CREDENTIAL_STATUS = `${PAYLOAD_BASE_PATH}/credential-status`
+};
 
-// Credential names
-export const DEFAULT_SUBJECT_DID = 'did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK';
-
-// Messages
-export const DEFAULT_DOES_NOT_HAVE_PERMISSIONS =
-	'Unauthorized error: Your account is not authorized to carry out this action.';
+export enum CONTENT_TYPE {
+	APPLICATION_JSON = "application/json",
+	APPLICATION_DID_LD_JSON = "application/did+ld+json"
+};
 
 export const DID_METHOD = "cheqd";
+
+export const DEFAULT_MAINNET_DID = 'did:cheqd:mainnet:7c950b5d-dbbb-4a12-9d79-6b553ca0c271';
+export const DEFAULT_TESTNET_DID = 'did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0';
 
 export const TESTNET_DID = "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90";
 export const TESTNET_DID_FRAGMENT = "key-1";
@@ -29,6 +31,19 @@ export const NOT_EXISTENT_STATUS_LIST_NAME = "not-exist-status-list-name";
 export const NOT_EXISTENT_TESTNET_DID_IDENTIFIER = "d4a13003-0bc5-4608-b23a-54ea90fe9f91";
 
 export const INVALID_DID = "invalid_did";
+
+// Credential status list names
+export const DEFAULT_STATUS_LIST_ENCRYPTED_NAME = 'cheqd-employee-credentials-encrypted';
+export const DEFAULT_STATUS_LIST_UNENCRYPTED_NAME = 'cheqd-employee-credentials-unencrypted';
+export const DEFAULT_STATUS_LIST_PAYMENT_ADDRESS = 'cheqd1qs0nhyk868c246defezhz5eymlt0dmajna2csg';
+export const DEFAULT_STATUS_LIST_INDICES = [10, 3199, 12109, 130999];
+
+// Credential names
+export const DEFAULT_SUBJECT_DID = 'did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK';
+
+// Messages
+export const DEFAULT_DOES_NOT_HAVE_PERMISSIONS =
+	'Unauthorized error: Your account is not authorized to carry out this action.';
 
 export const VALID_JWT_TOKEN = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vc2NoZW1hLm9yZyIsImh0dHBzOi8vdmVyYW1vLmlvL2NvbnRleHRzL3Byb2ZpbGUvdjEiLCJodHRwczovL3czaWQub3JnL3ZjLXN0YXR1cy1saXN0LTIwMjEvdjEiXSwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIlBlcnNvbiJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJnZW5kZXIiOiJtYWxlIiwibmFtZSI6IkJvYiJ9LCJjcmVkZW50aWFsU3RhdHVzIjp7ImlkIjoiaHR0cHM6Ly9yZXNvbHZlci5jaGVxZC5uZXQvMS4wL2lkZW50aWZpZXJzL2RpZDpjaGVxZDp0ZXN0bmV0OmQ0YTEzMDAzLTBiYzUtNDYwOC1iMjNhLTU0ZWE5MGZlOWY5MD9yZXNvdXJjZU5hbWU9Y2hlcWQtZW1wbG95ZWUtY3JlZGVudGlhbHMmcmVzb3VyY2VUeXBlPVN0YXR1c0xpc3QyMDIxUmV2b2NhdGlvbiMxMCIsInR5cGUiOiJTdGF0dXNMaXN0MjAyMUVudHJ5Iiwic3RhdHVzUHVycG9zZSI6InJldm9jYXRpb24iLCJzdGF0dXNMaXN0SW5kZXgiOiIxMCJ9fSwic3ViIjoiZGlkOmtleTp6Nk1raGFYZ0JaRHZvdERrTDUyNTdmYWl6dGlHaUMyUXRLTEdwYm5uRUd0YTJkb0siLCJuYmYiOjE2OTQwODIyMDEsImlzcyI6ImRpZDpjaGVxZDp0ZXN0bmV0OmQ0YTEzMDAzLTBiYzUtNDYwOC1iMjNhLTU0ZWE5MGZlOWY5MCJ9.AsW39Jej_Qae2FbpVdzyUhhuTi9gVWTx9w5NEyUfJYM6gQuCSAigiwcmaZZrcBWjOm53NXi-jRP561BpdVuSBw";
 export const VALID_CREDENTIAL = {
@@ -120,19 +135,4 @@ export const INVALID_CREDENTIAL = {
 		type: "JwtProof2020",
 		jwt: "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vc2NoZW1hLm9yZyIsImh0dHBzOi8vdmVyYW1vLmlvL2NvbnRleHRzL3Byb2ZpbGUvdjEiLCJodHRwczovL3czaWQub3JnL3ZjLXN0YXR1cy1saXN0LTIwMjEvdjEiXSwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIlBlcnNvbiJdLCJjcmVkZW50aWFsU3ViamVjdCI6eyJnZW5kZXIiOiJtYWxlIiwibmFtZSI6IkJvYiJ9LCJjcmVkZW50aWFsU3RhdHVzIjp7ImlkIjoiaHR0cHM6Ly9yZXNvbHZlci5jaGVxZC5uZXQvMS4wL2lkZW50aWZpZXJzL2RpZDpjaGVxZDp0ZXN0bmV0OmQ0YTEzMDAzLTBiYzUtNDYwOC1iMjNhLTU0ZWE5MGZlOWY5MD9yZXNvdXJjZU5hbWU9Y2hlcWQtZW1wbG95ZWUtY3JlZGVudGlhbHMmcmVzb3VyY2VUeXBlPVN0YXR1c0xpc3QyMDIxUmV2b2NhdGlvbiMxMCIsInR5cGUiOiJTdGF0dXNMaXN0MjAyMUVudHJ5Iiwic3RhdHVzUHVycG9zZSI6InJldm9jYXRpb24iLCJzdGF0dXNMaXN0SW5kZXgiOiIxMCJ9fSwic3ViIjoiZGlkOmtleTp6Nk1raGFYZ0JaRHZvdERrTDUyNTdmYWl6dGlHaUMyUXRLTEdwYm5uRUd0YTJkb0siLCJuYmYiOjE2OTQwODIyMDEsImlzcyI6ImRpZDpjaGVxZDp0ZXN0bmV0OmQ0YTEzMDAzLTBiYzUtNDYwOC1iMjNhLTU0ZWE5MGZlOWY5MCJ9.AsW39Jej_Qae2FbpVdzyUhhuTi9gVWTx9w5NEyUfJYM6gQuCSAigiwcmaZZrcBWjOm53NXi-jRP561BpdVuSBw"
 	}
-};
-
-export const STORAGE_STATE_FILE_PATH = "playwright/.auth/user.json";
-
-const PAYLOAD_BASE_PATH = "./tests/payloads";
-export enum PAYLOADS_PATH {
-	DID = `${PAYLOAD_BASE_PATH}/did`,
-	RESOURCE = `${PAYLOAD_BASE_PATH}/resource`,
-	CREDENTIAL = `${PAYLOAD_BASE_PATH}/credential`,
-	CREDENTIAL_STATUS = `${PAYLOAD_BASE_PATH}/credential-status`
-};
-
-export enum CONTENT_TYPE {
-	APPLICATION_JSON = "application/json",
-	APPLICATION_DID_LD_JSON = "application/did+ld+json"
 };

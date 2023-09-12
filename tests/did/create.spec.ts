@@ -10,8 +10,6 @@ import { StatusCodes } from 'http-status-codes';
 
 test.use({ storageState: STORAGE_STATE_FILE_PATH });
 
-// Negative tests. All of this tests should return 403 Forbidden
-// cause here the user tries to make mainnet operations with testnet role
 test('[Negative] It cannot create DID in mainnet network for user with testnet role', async ({ request }) => {
 	const response = await request.post(`/did/create`, {
 		data: JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.DID}/did-create-without-permissions.json`, 'utf-8')),
