@@ -1,9 +1,9 @@
 import {
     DID_METHOD,
     TESTNET_DID,
+    CONTENT_TYPE,
     TESTNET_DID_FRAGMENT,
     TESTNET_DID_IDENTIFIER,
-    APPLICATION_DID_LD_JSON,
     TESTNET_DID_CREATED_TIME,
     NOT_EXISTENT_TESTNET_DID,
     NOT_EXISTENT_TESTNET_DID_IDENTIFIER
@@ -18,7 +18,7 @@ test('[Positive] It can search with an existent DID', async ({ request }) => {
     const body = await response.json();
     const expected = {
         didResolutionMetadata: {
-            contentType: APPLICATION_DID_LD_JSON,
+            contentType: CONTENT_TYPE.APPLICATION_DID_LD_JSON,
             did: {
                 didString: TESTNET_DID,
                 methodSpecificId: TESTNET_DID_IDENTIFIER,
@@ -43,7 +43,7 @@ test('[Positive] It can search with an existent DID and metadata=true query para
     const body = await response.json();
     const expected = {
         dereferencingMetadata: {
-            contentType: APPLICATION_DID_LD_JSON,
+            contentType: CONTENT_TYPE.APPLICATION_DID_LD_JSON,
             did: {
                 didString: TESTNET_DID,
                 methodSpecificId: TESTNET_DID_IDENTIFIER,
@@ -71,7 +71,7 @@ test('[Positive] It can search with an existent DID and fragment', async ({ requ
     const body = await response.json();
     const expected = {
         dereferencingMetadata: {
-            contentType: APPLICATION_DID_LD_JSON,
+            contentType: CONTENT_TYPE.APPLICATION_DID_LD_JSON,
             did: {
                 didString: TESTNET_DID,
                 methodSpecificId: TESTNET_DID_IDENTIFIER,
@@ -99,7 +99,7 @@ test('[Negative] It cannot search not existent DID', async ({ request }) => {
     const body = await response.json();
     const expected = {
         didResolutionMetadata: {
-            contentType: APPLICATION_DID_LD_JSON,
+            contentType: CONTENT_TYPE.APPLICATION_DID_LD_JSON,
             error: "notFound",
             did: {
                 didString: NOT_EXISTENT_TESTNET_DID,

@@ -15,7 +15,6 @@ export const DEFAULT_DOES_NOT_HAVE_PERMISSIONS =
 	'Unauthorized error: Your account is not authorized to carry out this action.';
 
 export const DID_METHOD = "cheqd";
-export const APPLICATION_DID_LD_JSON = "application/did+ld+json";
 
 export const TESTNET_DID = "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f90";
 export const TESTNET_DID_FRAGMENT = "key-1";
@@ -131,4 +130,9 @@ export enum PAYLOADS_PATH {
 	RESOURCE = `${PAYLOAD_BASE_PATH}/resource`,
 	CREDENTIAL = `${PAYLOAD_BASE_PATH}/credential`,
 	CREDENTIAL_STATUS = `${PAYLOAD_BASE_PATH}/credential-status`
+};
+
+export enum CONTENT_TYPE {
+	APPLICATION_JSON = "application/json",
+	APPLICATION_DID_LD_JSON = "application/did+ld+json"
 };

@@ -1,9 +1,9 @@
 import {
+    CONTENT_TYPE,
     TESTNET_RESOURCE,
     TESTNET_DID_IDENTIFIER,
     TESTNET_DID_RESOURCE_ID,
     DID_METHOD, TESTNET_DID,
-    APPLICATION_DID_LD_JSON,
     TESTNET_DID_CREATED_TIME,
     NOT_EXISTENT_TESTNET_DID,
     NOT_EXISTENT_RESOURCE_ID,
@@ -28,7 +28,7 @@ test('[Positive] It can search resource with an existent DID and resourceMetadat
     const body = await response.json();
     const expected = {
         dereferencingMetadata: {
-            contentType: APPLICATION_DID_LD_JSON,
+            contentType: CONTENT_TYPE.APPLICATION_DID_LD_JSON,
             did: {
                 didString: TESTNET_DID,
                 methodSpecificId: TESTNET_DID_IDENTIFIER,
@@ -57,7 +57,7 @@ test('[Negative] It cannot search not existent {did} and {resourceId}', async ({
     const body = await response.json();
     const expected = {
         dereferencingMetadata: {
-            contentType: APPLICATION_DID_LD_JSON,
+            contentType: CONTENT_TYPE.APPLICATION_DID_LD_JSON,
             error: "notFound",
             did: {
                 didString: NOT_EXISTENT_TESTNET_DID,

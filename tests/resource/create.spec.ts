@@ -1,4 +1,5 @@
 import {
+	CONTENT_TYPE,
 	PAYLOADS_PATH,
 	DEFAULT_MAINNET_DID,
 	STORAGE_STATE_FILE_PATH,
@@ -13,7 +14,7 @@ test.use({ storageState: STORAGE_STATE_FILE_PATH });
 test('[Negative] It cannot create resource in mainnet network for user with testnet role', async ({ request }) => {
 	const response = await request.post(`/resource/create/${DEFAULT_MAINNET_DID}`, {
 		data: JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.RESOURCE}/create-without-permissions.json`, 'utf-8')),
-		headers: { 'Content-Type': 'application/json' }
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
 	});
 	expect(response).not.toBeOK();
 	expect(response.status()).toBe(StatusCodes.FORBIDDEN);
