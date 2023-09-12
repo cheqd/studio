@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.9.2](https://github.com/cheqd/credential-service/compare/2.9.1...2.9.2) (2023-09-12)
+
+
+### Bug Fixes
+
+* Add DID deactivation check for credential issuing [DEV-3136] ([#345](https://github.com/cheqd/credential-service/issues/345)) ([023bba1](https://github.com/cheqd/credential-service/commit/023bba186b61009fec22cc8af5f817cae6fed2bd))
+* Check API responses are provided correctly in Swagger document [DEV-3133] ([#359](https://github.com/cheqd/credential-service/issues/359)) ([5b13ffa](https://github.com/cheqd/credential-service/commit/5b13ffa012624f9fc1d64f4bb1ba2a3789aed93c))
+* Enable updated state explicitly ([c3d9170](https://github.com/cheqd/credential-service/commit/c3d9170e7c1d305e1a46422002b3a217279e7514))
+
 ## [2.9.2-develop.3](https://github.com/cheqd/credential-service/compare/2.9.2-develop.2...2.9.2-develop.3) (2023-09-08)
 
 
