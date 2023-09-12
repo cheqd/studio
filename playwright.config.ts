@@ -68,13 +68,18 @@ export default defineConfig({
       testMatch: /.*\.setup\.ts/
     },
     {
-      name: 'chromium',
+      name: 'auth-tests',
       use: {
         ...devices['Desktop Chrome'],
         // Use prepared auth state.
         storageState: 'playwright/.auth/user.json',
       },
       dependencies: ['setup'],
+    },
+    {
+      name: 'no-auth-tests',
+      testMatch: /.*\.no-auth.spec.ts/,
+      use: { ...devices['Desktop Chrome'] },
     },
   ],
 
