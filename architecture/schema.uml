@@ -1,0 +1,132 @@
+@startuml
+
+!theme plain
+top to bottom direction
+skinparam linetype ortho
+
+class claim {
+   issuanceDate: timestamp
+   expirationDate: timestamp
+   context: text
+   credentialType: text
+   value: text
+   type: varchar
+   isObj: boolean
+   issuerDid: varchar
+   subjectDid: varchar
+   credentialHash: varchar
+   hash: varchar
+}
+class credential {
+   raw: text
+   id: varchar
+   issuanceDate: timestamp
+   expirationDate: timestamp
+   context: text
+   type: text
+   issuerDid: varchar
+   subjectDid: varchar
+   hash: varchar
+}
+class customers {
+   account: text
+   address: text
+   kids: text[]
+   dids: text[]
+   claimIds: text[]
+   presentationIds: text[]
+   customerId: varchar
+}
+class identifier {
+   provider: varchar
+   alias: varchar
+   saveDate: timestamp
+   updateDate: timestamp
+   controllerKeyId: varchar
+   did: varchar
+}
+class key {
+   kms: varchar
+   type: varchar
+   publicKeyHex: varchar
+   meta: text
+   identifierDid: varchar
+   kid: varchar
+}
+class message {
+   saveDate: timestamp
+   updateDate: timestamp
+   createdAt: timestamp
+   expiresAt: timestamp
+   threadId: varchar
+   type: varchar
+   raw: varchar
+   data: text
+   replyTo: text
+   replyUrl: varchar
+   metaData: text
+   fromDid: varchar
+   toDid: varchar
+   id: varchar
+}
+class message_credentials_credential {
+   messageId: varchar
+   credentialHash: varchar
+}
+class message_presentations_presentation {
+   messageId: varchar
+   presentationHash: varchar
+}
+class migrations {
+   timestamp: bigint
+   name: varchar
+   id: integer
+}
+class presentation {
+   raw: text
+   id: varchar
+   issuanceDate: timestamp
+   expirationDate: timestamp
+   context: text
+   type: text
+   holderDid: varchar
+   hash: varchar
+}
+class presentation_credentials_credential {
+   presentationHash: varchar
+   credentialHash: varchar
+}
+class presentation_verifier_identifier {
+   presentationHash: varchar
+   identifierDid: varchar
+}
+class node13 as "private-key" {
+   type: varchar
+   privateKeyHex: varchar
+   alias: varchar
+}
+class service {
+   type: varchar
+   serviceEndpoint: varchar
+   description: varchar
+   identifierDid: varchar
+   id: varchar
+}
+
+claim                                -[#595959,plain]-^  credential                          : "credentialHash:hash"
+claim                                -[#595959,plain]-^  identifier                          : "subjectDid:did"
+claim                                -[#595959,plain]-^  identifier                          : "issuerDid:did"
+credential                           -[#595959,plain]-^  identifier                          : "subjectDid:did"
+credential                           -[#595959,plain]-^  identifier                          : "issuerDid:did"
+message                              -[#595959,plain]-^  identifier                          : "fromDid:did"
+message                              -[#595959,plain]-^  identifier                          : "toDid:did"
+message_credentials_credential       -[#595959,plain]-^  credential                          : "credentialHash:hash"
+message_credentials_credential       -[#595959,plain]-^  message                             : "messageId:id"
+message_presentations_presentation   -[#595959,plain]-^  message                             : "messageId:id"
+message_presentations_presentation   -[#595959,plain]-^  presentation                        : "presentationHash:hash"
+presentation                         -[#595959,plain]-^  identifier                          : "holderDid:did"
+presentation_credentials_credential  -[#595959,plain]-^  credential                          : "credentialHash:hash"
+presentation_credentials_credential  -[#595959,plain]-^  presentation                        : "presentationHash:hash"
+presentation_verifier_identifier     -[#595959,plain]-^  identifier                          : "identifierDid:did"
+presentation_verifier_identifier     -[#595959,plain]-^  presentation                        : "presentationHash:hash"
+@enduml
