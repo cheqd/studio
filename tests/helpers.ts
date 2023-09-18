@@ -8,7 +8,7 @@ import {
 
 export const buildSimpleCreateDID = (network = 'testnet') => {
 	return {
-		methodSpecificIdAlgo: 'uuid',
+		identifierFormatType: 'uuid',
 		verificationMethodType: 'Ed25519VerificationKey2018',
 		assertionMethod: true,
 		network: network,

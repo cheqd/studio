@@ -26,11 +26,11 @@ export class IssuerController {
 			.isString()
 			.isIn([VerificationMethods.Ed255192020, VerificationMethods.Ed255192018, VerificationMethods.JWK])
 			.withMessage('Invalid verificationMethod'),
-		check('methodSpecificIdAlgo')
+		check('identifierFormatType')
 			.optional()
 			.isString()
 			.isIn([MethodSpecificIdAlgo.Base58, MethodSpecificIdAlgo.Uuid])
-			.withMessage('Invalid methodSpecificIdAlgo'),
+			.withMessage('Invalid identifierFormatType'),
 		check('network')
 			.optional()
 			.isString()
@@ -226,7 +226,7 @@ export class IssuerController {
 		}
 
 		const {
-			methodSpecificIdAlgo,
+			identifierFormatType,
 			network,
 			verificationMethodType,
 			assertionMethod = true,
@@ -244,7 +244,7 @@ export class IssuerController {
 				didDocument = generateDidDoc({
 					verificationMethod: verificationMethodType || VerificationMethods.Ed255192018,
 					verificationMethodId: 'key-1',
-					methodSpecificIdAlgo: (methodSpecificIdAlgo as MethodSpecificIdAlgo) || MethodSpecificIdAlgo.Uuid,
+					methodSpecificIdAlgo: (identifierFormatType as MethodSpecificIdAlgo) || MethodSpecificIdAlgo.Uuid,
 					network,
 					publicKey: key.publicKeyHex,
 				});

@@ -735,7 +735,7 @@
  *           enum:
  *             - testnet
  *             - mainnet
- *         methodSpecificIdAlgo:
+ *         identifierFormatType:
  *           description: Algorithm to use for generating the method-specific ID. The two styles supported are UUIDs and Indy-style Base58. See <a href="https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#cheqd-did-method-did-cheqd">cheqd DID method documentation</a> for more details.
  *           type: string
  *           enum:
@@ -757,7 +757,7 @@
  *           enum:
  *             - testnet
  *             - mainnet
- *         methodSpecificIdAlgo:
+ *         identifierFormatType:
  *           description: Algorithm to use for generating the method-specific ID. The two styles supported are UUIDs and Indy-style Base58. See <a href="https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#cheqd-did-method-did-cheqd">cheqd DID method documentation</a> for more details.
  *           type: string
  *           enum:
