@@ -748,8 +748,6 @@
  *             - Ed25519VerificationKey2018
  *             - JsonWebKey2020
  *             - Ed25519VerificationKey2020
- *         didDocument:
- *           $ref: '#/components/schemas/DidDocument'
  *     DidCreateRequest:
  *       type: object
  *       properties:

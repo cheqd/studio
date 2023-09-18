@@ -2503,9 +2503,6 @@
               "JsonWebKey2020",
               "Ed25519VerificationKey2020"
             ]
-          },
-          "didDocument": {
-            "$ref": "#/components/schemas/DidDocument"
           }
         }
       },
