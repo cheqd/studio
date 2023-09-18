@@ -187,7 +187,7 @@ export class IssuerController {
 	 *       content:
 	 *         application/x-www-form-urlencoded:
 	 *           schema:
-	 *             $ref: '#/components/schemas/DidCreateRequest'
+	 *             $ref: '#/components/schemas/DidCreateRequestFormBased'
 	 *         application/json:
 	 *           schema:
 	 *             $ref: '#/components/schemas/DidCreateRequest'

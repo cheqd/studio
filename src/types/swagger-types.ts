@@ -726,6 +726,30 @@
  *             type: LinkedDomains
  *             serviceEndpoint:
  *               - https://example.com
+ *     DidCreateRequestFormBased:
+ *       type: object
+ *       properties:
+ *         network:
+ *           description: Network to create the DID on (testnet or mainnet)
+ *           type: string
+ *           enum:
+ *             - testnet
+ *             - mainnet
+ *         methodSpecificIdAlgo:
+ *           description: Algorithm to use for generating the method-specific ID. The two styles supported are UUIDs and Indy-style Base58. See <a href="https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#cheqd-did-method-did-cheqd">cheqd DID method documentation</a> for more details.
+ *           type: string
+ *           enum:
+ *             - uuid
+ *             - base58btc
+ *         verificationMethodType:
+ *           description: Type of verification method to use for the DID. See <a href="https://www.w3.org/TR/did-core/#verification-methods">DID Core specification</a> for more details. Only the types listed below are supported.
+ *           type: string
+ *           enum:
+ *             - Ed25519VerificationKey2018
+ *             - JsonWebKey2020
+ *             - Ed25519VerificationKey2020
+ *         didDocument:
+ *           $ref: '#/components/schemas/DidDocument'
  *     DidCreateRequest:
  *       type: object
  *       properties:
