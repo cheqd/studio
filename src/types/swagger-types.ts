@@ -748,6 +748,18 @@
  *             - Ed25519VerificationKey2018
  *             - JsonWebKey2020
  *             - Ed25519VerificationKey2020
+ *         service:
+ *           description: Communicating or interacting with the DID subject or associated entities via one or more service endpoints. See <a href="https://www.w3.org/TR/did-core/#services">DID Core specification</a> for more details.
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *               serviceEndpoint:
+ *                 type: string
  *     DidCreateRequest:
  *       allOf:
  *         - type: object

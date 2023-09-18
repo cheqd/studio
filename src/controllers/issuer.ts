@@ -229,7 +229,7 @@ export class IssuerController {
 			identifierFormatType,
 			network,
 			verificationMethodType,
-			serviceEndpoint,
+			service,
 		} = request.body;
 		let didDocument: DIDDocument;
 		try {
@@ -248,14 +248,8 @@ export class IssuerController {
 					publicKey: key.publicKeyHex,
 				});
 
-				if (serviceEndpoint) {
-					didDocument.service = [
-						{
-							id: `${didDocument.id}#service-1`,
-							type: 'service-1',
-							serviceEndpoint: [serviceEndpoint],
-						},
-					];
+				if (service) {
+					didDocument.service = service;
 				}
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
