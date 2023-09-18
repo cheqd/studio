@@ -229,7 +229,6 @@ export class IssuerController {
 			identifierFormatType,
 			network,
 			verificationMethodType,
-			assertionMethod = true,
 			serviceEndpoint,
 		} = request.body;
 		let didDocument: DIDDocument;
@@ -248,10 +247,6 @@ export class IssuerController {
 					network,
 					publicKey: key.publicKeyHex,
 				});
-
-				if (assertionMethod) {
-					didDocument.assertionMethod = didDocument.authentication;
-				}
 
 				if (serviceEndpoint) {
 					didDocument.service = [
