@@ -249,7 +249,13 @@ export class IssuerController {
 				});
 
 				if (service) {
-					didDocument.service = service;
+					didDocument.service = [
+						{
+							id: `${didDocument.id}#${service.idFragment}`,
+							type: service.type,
+							serviceEndpoint: service.serviceEndpoint,
+						},
+					];
 				}
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({

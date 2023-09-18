@@ -754,23 +754,46 @@
  *           items:
  *             type: object
  *             properties:
- *               id:
+ *               idFragment:
  *                 type: string
+ *                 example: service-1
  *               type:
  *                 type: string
+ *                 example: LinkedDomains
  *               serviceEndpoint:
- *                 type: string
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   example: https://example.com
+ *
  *     DidCreateRequest:
- *       allOf:
- *         - type: object
- *           properties:
- *             assertionMethod:
- *               description: Usually a reference to a Verification Method. An Assertion Method is required to issue JSON-LD credentials. See <a href="https://w3c.github.io/did-core/#assertion">DID Core specification</a> for more details.
- *               type: boolean
- *               default: true
- *             didDocument:
- *               $ref: '#/components/schemas/DidDocument'
- *         - $ref: '#/components/schemas/DidCreateRequestFormBased'
+ *       type: object
+ *       properties:
+ *         network:
+ *           description: Network to create the DID on (testnet or mainnet)
+ *           type: string
+ *           enum:
+ *             - testnet
+ *             - mainnet
+ *         methodSpecificIdAlgo:
+ *           description: Algorithm to use for generating the method-specific ID. The two styles supported are UUIDs and Indy-style Base58. See <a href="https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#cheqd-did-method-did-cheqd">cheqd DID method documentation</a> for more details.
+ *           type: string
+ *           enum:
+ *             - uuid
+ *             - base58btc
+ *         verificationMethodType:
+ *           description: Type of verification method to use for the DID. See <a href="https://www.w3.org/TR/did-core/#verification-methods">DID Core specification</a> for more details. Only the types listed below are supported.
+ *           type: string
+ *           enum:
+ *             - Ed25519VerificationKey2018
+ *             - JsonWebKey2020
+ *             - Ed25519VerificationKey2020
+ *         assertionMethod:
+ *           description: Usually a reference to a Verification Method. An Assertion Method is required to issue JSON-LD credentials. See <a href="https://w3c.github.io/did-core/#assertion">DID Core specification</a> for more details.
+ *           type: boolean
+ *           default: true
+ *         didDocument:
+ *           $ref: '#/components/schemas/DidDocument'
  *     DidResult:
  *       type: object
  *       properties:
@@ -807,6 +830,7 @@
  *         publicKeyBase58: BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt
  *         type: Ed25519VerificationKey2018
  *     Service:
+ *       description: Communicating or interacting with the DID subject or associated entities via one or more service endpoints. See <a href="https://www.w3.org/TR/did-core/#services">DID Core specification</a> for more details.
  *       type: object
  *       properties:
  *         id:
