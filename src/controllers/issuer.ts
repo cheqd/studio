@@ -230,22 +230,23 @@ export class IssuerController {
 			network,
 			verificationMethodType,
 			service,
+			key,
 		} = request.body;
 		let didDocument: DIDDocument;
 		try {
 			if (request.body.didDocument) {
 				didDocument = request.body.didDocument;
 			} else if (verificationMethodType) {
-				const key = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createKey(
+				const publicKeyHex = key ? key : (await new IdentityServiceStrategySetup(response.locals.customerId).agent.createKey(
 					'Ed25519',
 					response.locals.customerId
-				);
+				)).publicKeyHex;
 				didDocument = generateDidDoc({
 					verificationMethod: verificationMethodType || VerificationMethods.Ed255192018,
 					verificationMethodId: 'key-1',
 					methodSpecificIdAlgo: (identifierFormatType as MethodSpecificIdAlgo) || MethodSpecificIdAlgo.Uuid,
 					network,
-					publicKey: key.publicKeyHex,
+					publicKey: publicKeyHex,
 				});
 
 				if (service) {
@@ -502,7 +503,7 @@ export class IssuerController {
 			if (result) {
 				const url = new URL(
 					`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?` +
-						`resourceId=${resourcePayload.id}&resourceMetadata=true`
+					`resourceId=${resourcePayload.id}&resourceMetadata=true`
 				);
 				const didDereferencing = (await (await fetch(url)).json()) as DIDMetadataDereferencingResult;
 
@@ -646,11 +647,11 @@ export class IssuerController {
 		try {
 			const did = request.params.did
 				? await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolveDid(
-						request.params.did
-				  )
+					request.params.did
+				)
 				: await new IdentityServiceStrategySetup(response.locals.customerId).agent.listDids(
-						response.locals.customerId
-				  );
+					response.locals.customerId
+				);
 
 			return response.status(StatusCodes.OK).json(did);
 		} catch (error) {

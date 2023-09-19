@@ -765,6 +765,9 @@
  *                 items:
  *                   type: string
  *                   example: https://example.com
+ *         key:
+ *           description: The unique identifier in hexadecimal public key format used in the verification method to create the DID.
+ *           type: string
  *
  *     DidCreateRequest:
  *       type: object
