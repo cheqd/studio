@@ -256,7 +256,7 @@ export class IssuerController {
 					response.locals.customerId
 				)).publicKeyHex;
 				didDocument = generateDidDoc({
-					verificationMethod: verificationMethodType || VerificationMethods.Ed255192018,
+					verificationMethod: verificationMethodType,
 					verificationMethodId: 'key-1',
 					methodSpecificIdAlgo: (identifierFormatType as MethodSpecificIdAlgo) || MethodSpecificIdAlgo.Uuid,
 					network,
