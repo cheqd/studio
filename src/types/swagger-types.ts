@@ -818,6 +818,12 @@
  *         key:
  *           description: The unique identifier in hexadecimal public key format used in the verification method to create the DID.
  *           type: string
+ *         '@context':
+ *           type: array
+ *           items:
+ *             type: string
+ *           example:
+ *             - https://www.w3.org/ns/did/v1
  *
  *     DidCreateRequest:
  *       type: object

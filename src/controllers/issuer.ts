@@ -263,6 +263,10 @@ export class IssuerController {
 					publicKey: publicKeyHex,
 				});
 
+				if (typeof request.body['@context'] === 'string') {
+					didDocument['@context'] = [request.body['@context']] ;
+				}
+
 				if (service) {
 					didDocument.service = [
 						{
