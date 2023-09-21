@@ -2553,19 +2553,27 @@
               "base58btc"
             ]
           },
-          "verificationMethodType": {
-            "description": "Type of verification method to use for the DID. See <a href=\"https://www.w3.org/TR/did-core/#verification-methods\">DID Core specification</a> for more details. Only the types listed below are supported.",
-            "type": "string",
-            "enum": [
-              "Ed25519VerificationKey2018",
-              "JsonWebKey2020",
-              "Ed25519VerificationKey2020"
-            ]
-          },
           "assertionMethod": {
             "description": "Usually a reference to a Verification Method. An Assertion Method is required to issue JSON-LD credentials. See <a href=\"https://w3c.github.io/did-core/#assertion\">DID Core specification</a> for more details.",
             "type": "boolean",
             "default": true
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "verificationMethodType": {
+                "description": "Type of verification method to use for the DID. See <a href=\"https://www.w3.org/TR/did-core/#verification-methods\">DID Core specification</a> for more details. Only the types listed below are supported.",
+                "type": "string",
+                "enum": [
+                  "Ed25519VerificationKey2018",
+                  "JsonWebKey2020",
+                  "Ed25519VerificationKey2020"
+                ]
+              }
+            }
           },
           "didDocument": {
             "$ref": "#/components/schemas/DidDocument"

@@ -3,12 +3,11 @@ import { check, param, validationResult } from 'express-validator';
 import { fromString } from 'uint8arrays';
 import type { DIDDocument, Service, VerificationMethod } from 'did-resolver';
 import { v4 } from 'uuid';
-import { MethodSpecificIdAlgo, VerificationMethods, CheqdNetwork } from '@cheqd/sdk';
+import { CheqdNetwork, MethodSpecificIdAlgo, VerificationMethods } from '@cheqd/sdk';
 import type { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js';
 import { StatusCodes } from 'http-status-codes';
-
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import { generateDidDoc, getQueryParams, validateSpecCompliantPayload } from '../helpers/helpers.js';
+import { generateDidDoc, generateVerificationMethod, getQueryParams, validateDidCreatePayload, validateSpecCompliantPayload } from '../helpers/helpers.js';
 import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
 
 export class IssuerController {
@@ -17,7 +16,7 @@ export class IssuerController {
 			.optional()
 			.isObject()
 			.custom((value) => {
-				const { valid } = validateSpecCompliantPayload(value);
+				const { valid } = validateDidCreatePayload(value);
 				return valid;
 			})
 			.withMessage('Invalid didDocument'),
@@ -231,13 +230,28 @@ export class IssuerController {
 			verificationMethodType,
 			service,
 			key,
+			options,
 		} = request.body;
 		let didDocument: DIDDocument;
 		try {
 			if (request.body.didDocument) {
 				didDocument = request.body.didDocument;
+				if (options) {
+					const publicKeyHex = options.key || (await new IdentityServiceStrategySetup(response.locals.customerId).agent.createKey(
+						'Ed25519',
+						response.locals.customerId
+					)).publicKeyHex;
+
+					didDocument.verificationMethod = [
+						generateVerificationMethod(didDocument.id, publicKeyHex, options.verificationMethodType)
+					];
+				} else {
+					return response.status(StatusCodes.BAD_REQUEST).json({
+						error: 'Provide options section to create a DID',
+					});
+				}
 			} else if (verificationMethodType) {
-				const publicKeyHex = key ? key : (await new IdentityServiceStrategySetup(response.locals.customerId).agent.createKey(
+				const publicKeyHex = key || (await new IdentityServiceStrategySetup(response.locals.customerId).agent.createKey(
 					'Ed25519',
 					response.locals.customerId
 				)).publicKeyHex;

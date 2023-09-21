@@ -1,4 +1,4 @@
-import type { DIDDocument } from 'did-resolver';
+import type { DIDDocument, VerificationMethod } from 'did-resolver';
 import {
 	MethodSpecificIdAlgo,
 	CheqdNetwork,
@@ -8,6 +8,7 @@ import {
 	createVerificationKeys,
 	createDidVerificationMethod,
 	createDidPayload,
+	toMultibaseRaw,
 } from '@cheqd/sdk';
 import { createHmac } from 'node:crypto';
 import type { ParsedQs } from 'qs';
@@ -15,6 +16,9 @@ import type { SpecValidationResult } from '../types/shared.js';
 import { DEFAULT_DENOM_EXPONENT, MINIMAL_DENOM } from '../types/constants.js';
 import { LitCompatibleCosmosChains, type DkgOptions, LitNetworks } from '@cheqd/did-provider-cheqd';
 import type { Coin } from '@cosmjs/amino';
+import { fromString, toString } from 'uint8arrays';
+import { bases } from "multiformats/basics";
+import { base64ToBytes } from "did-jwt";
 
 export interface IDidDocOptions {
 	verificationMethod: VerificationMethods;
@@ -66,6 +70,14 @@ export function toDefaultDkg(did: string): DkgOptions {
 	}
 }
 
+export function validateDidCreatePayload(didDocument: DIDDocument): SpecValidationResult {
+	// id is required, validated on both compile and runtime
+	if (!didDocument.id && !didDocument.id.startsWith('did:cheqd:')) return { valid: false, error: 'id is required' };
+
+	if (!isValidService(didDocument)) return { valid: false, error: 'Service is Invalid' };
+	return { valid: true } as SpecValidationResult;
+}
+
 export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecValidationResult {
 	// id is required, validated on both compile and runtime
 	if (!didDocument.id && !didDocument.id.startsWith('did:cheqd:')) return { valid: false, error: 'id is required' };
@@ -92,8 +104,8 @@ export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecVali
 export function isValidService(didDocument: DIDDocument): boolean {
 	return didDocument.service
 		? didDocument?.service?.every((s) => {
-				return s?.serviceEndpoint && s?.id && s?.type;
-		  })
+			return s?.serviceEndpoint && s?.id && s?.type;
+		})
 		: true;
 }
 
@@ -122,6 +134,53 @@ export function generateDidDoc(options: IDidDocOptions) {
 	const verificationMethods = createDidVerificationMethod([verificationMethod], [verificationKeys]);
 
 	return createDidPayload(verificationMethods, [verificationKeys]);
+}
+
+export function generateVerificationMethod(
+	did: string, 
+	publicKeyHex: string,
+	verificationMethodType: VerificationMethods
+): VerificationMethod {
+	const pkBase64 = publicKeyHex.length == 43 ? publicKeyHex : toString(fromString(publicKeyHex, 'hex'), 'base64');
+	switch (verificationMethodType) {
+		case VerificationMethods.Ed255192018:
+			return generateVerificationMethodEd255192018(did, pkBase64);
+		case VerificationMethods.Ed255192020:
+			return generateVerificationMethodEd255192020(did, pkBase64);
+		case VerificationMethods.JWK:
+			return generateVerificationMethodJWK(did, pkBase64);
+	};
+}
+
+function generateVerificationMethodEd255192018(did: string, pkBase64: string) {
+	return {
+		id: `${did}#key-1`,
+		type: VerificationMethods.Ed255192018,
+		controller: did,
+		publicKeyBase58: bases['base58btc'].encode(base64ToBytes(pkBase64)).slice(1)
+	};
+}
+
+function generateVerificationMethodEd255192020(did: string, pkBase64: string) {
+	return {
+		id: `${did}#key-1`,
+		type: VerificationMethods.Ed255192020,
+		controller: did,
+		publicKeyMultibase: toMultibaseRaw(base64ToBytes(pkBase64))
+	};
+}
+
+function generateVerificationMethodJWK(did: string, pkBase64: string) {
+	return {
+		id: `${did}#key-1`,
+		type: VerificationMethods.JWK,
+		controller: did,
+		publicKeyJwk: {
+			crv: 'Ed25519',
+			kty: 'OKP',
+			x: toString(fromString(pkBase64, 'base64pad'), 'base64url')
+		}
+	};
 }
 
 export function verifyHookSignature(signingKey: string, rawBody: string, expectedSignature: string): boolean {
