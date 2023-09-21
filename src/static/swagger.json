@@ -2640,7 +2640,8 @@
             "type": "object",
             "properties": {
               "key": {
-                "type": "string"
+                "type": "string",
+                "example": "8255ddadd75695e01f3d98fcec8ccc7861a030b317d4326b0e48a4d579ddc43a"
               },
               "verificationMethodType": {
                 "description": "Type of verification method to use for the DID. See <a href=\"https://www.w3.org/TR/did-core/#verification-methods\">DID Core specification</a> for more details. Only the types listed below are supported.",
