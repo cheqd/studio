@@ -727,7 +727,6 @@
  *             serviceEndpoint:
  *               - https://example.com
   *     DidDocumentWithoutVerificationMethod:
- *       description: This input field contains either a complete DID document, or an incremental change (diff) to a DID document. See <a href="https://identity.foundation/did-registration/#diddocument">Universal DID Registrar specification</a>.
  *       type: object
  *       properties:
  *         '@context':
