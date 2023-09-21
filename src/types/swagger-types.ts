@@ -726,6 +726,57 @@
  *             type: LinkedDomains
  *             serviceEndpoint:
  *               - https://example.com
+  *     DidDocumentWithoutVerificationMethod:
+ *       description: This input field contains either a complete DID document, or an incremental change (diff) to a DID document. See <a href="https://identity.foundation/did-registration/#diddocument">Universal DID Registrar specification</a>.
+ *       type: object
+ *       properties:
+ *         '@context':
+ *           type: array
+ *           items:
+ *             type: string
+ *         id:
+ *          type: string
+ *         controllers:
+ *           type: array
+ *           items:
+ *             type: string
+ *         service:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Service'
+ *         authentication:
+ *           type: array
+ *           items:
+ *             type: string
+ *         assertionMethod:
+ *           type: array
+ *           items:
+ *             type: string
+ *         capabilityInvocation:
+ *           type: array
+ *           items:
+ *             type: string
+ *         capabilityDelegation:
+ *           type: array
+ *           items:
+ *             type: string
+ *         keyAgreement:
+ *           type: array
+ *           items:
+ *             type: string
+ *       example:
+ *         '@context':
+ *           - https://www.w3.org/ns/did/v1
+ *         id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
+ *         controller:
+ *           - did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
+ *         authentication:
+ *           - did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1
+ *         service:
+ *           - id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1
+ *             type: LinkedDomains
+ *             serviceEndpoint:
+ *               - https://example.com
  *     DidCreateRequestFormBased:
  *       type: object
  *       properties:
@@ -801,7 +852,7 @@
  *                 - JsonWebKey2020
  *                 - Ed25519VerificationKey2020
  *         didDocument:
- *           $ref: '#/components/schemas/DidDocument'
+ *           $ref: '#/components/schemas/DidDocumentWithoutVerificationMethod'
  *     DidResult:
  *       type: object
  *       properties:
