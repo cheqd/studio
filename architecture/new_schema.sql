@@ -455,9 +455,10 @@ CREATE TABLE public."symmetricKey" (
     "customerId" uuid NOT NULL,
     "identifierDid" character varying NOT NULL,
     "resourceId" uuid NOT NULL,
-    "resourceName" character varying,
-    "resourceType" character varying,
-    "symmetricKey" character varying NOT NULL
+    "resourceName" character varying NOT NULL,
+    "resourceType" character varying NOT NULL,
+    "symmetricKey" character varying NOT NULL,
+    "createdAt" date NOT NULL
 );
 
 
