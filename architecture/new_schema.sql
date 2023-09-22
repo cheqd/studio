@@ -17,17 +17,19 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
+-- Name: public; Type: SCHEMA; Schema: -; Owner: pg_database_owner
 --
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+CREATE SCHEMA public;
 
+
+ALTER SCHEMA public OWNER TO pg_database_owner;
 
 --
--- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: pg_database_owner
 --
 
-COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+COMMENT ON SCHEMA public IS 'standard public schema';
 
 
 --
@@ -159,7 +161,8 @@ ALTER TABLE public.credential OWNER TO veramo;
 CREATE TABLE public.customer (
     "customerId" uuid NOT NULL,
     name character varying,
-    "createdAt" date NOT NULL
+    "createdAt" date NOT NULL,
+    "updatedAt" date
 );
 
 
@@ -193,9 +196,10 @@ CREATE TABLE public.key (
     "publicKeyHex" character varying NOT NULL,
     meta text,
     "identifierDid" character varying,
-    alias character varying,
+    "publicKeyAlias" character varying,
     "customerId" uuid,
-    "createdAt" date
+    "createdAt" date,
+    "updatedAt" date
 );
 
 
@@ -290,10 +294,12 @@ ALTER SEQUENCE public.migrations_id_seq OWNED BY public.migrations.id;
 
 CREATE TABLE public.operation (
     "operationId" uuid NOT NULL,
-    category public.categoryenum,
-    "operationName" character varying,
-    "defaultFee" integer,
-    deprecated boolean DEFAULT false NOT NULL
+    category public.categoryenum NOT NULL,
+    "operationName" character varying NOT NULL,
+    "defaultFee" bigint,
+    deprecated boolean DEFAULT false NOT NULL,
+    "createdAt" date NOT NULL,
+    "updatedAt" date
 );
 
 
@@ -307,12 +313,12 @@ CREATE TABLE public.payment (
     "txHash" character varying NOT NULL,
     "customerId" uuid NOT NULL,
     direction public.paymentdirectionenum NOT NULL,
-    amount integer,
-    "timestamp" integer NOT NULL,
+    fee bigint,
     "identifierDid" character varying,
-    "resourceId" character varying,
-    "paymentAccountId" uuid NOT NULL,
-    "operationId" uuid NOT NULL
+    "resourceId" uuid,
+    "paymentAddress" character varying NOT NULL,
+    "operationId" uuid NOT NULL,
+    "timestamp" date
 );
 
 
@@ -325,10 +331,11 @@ ALTER TABLE public.payment OWNER TO veramo;
 CREATE TABLE public."paymentAccount" (
     namespace public.namespaceenum DEFAULT 'testnet'::public.namespaceenum NOT NULL,
     "customerId" uuid NOT NULL,
-    "keyId" character varying NOT NULL,
+    kid character varying NOT NULL,
     "createdAt" date NOT NULL,
     address character varying NOT NULL,
-    id uuid NOT NULL
+    "isDefault" boolean DEFAULT false NOT NULL,
+    "updatedAt" date
 );
 
 
@@ -395,16 +402,17 @@ ALTER TABLE public."private-key" OWNER TO veramo;
 --
 
 CREATE TABLE public.resource (
-    "resourceId" character varying NOT NULL,
-    "resourceCollectionId" character varying NOT NULL,
-    "resourceKey" character varying NOT NULL,
-    "resourceName" character varying,
+    "resourceId" uuid NOT NULL,
+    "identifierDid" character varying NOT NULL,
+    kid character varying NOT NULL,
+    "resourceName" character varying NOT NULL,
     "resourceType" character varying,
-    "mediaType" character varying,
-    "previousVersionId" character varying,
+    "mediaType" character varying NOT NULL,
+    "previousVersionId" uuid,
     "createdAt" date NOT NULL,
-    "nextVersionId" character varying,
-    "customerId" uuid NOT NULL
+    "nextVersionId" uuid,
+    "customerId" uuid NOT NULL,
+    "updatedAt" date
 );
 
 
@@ -415,9 +423,9 @@ ALTER TABLE public.resource OWNER TO veramo;
 --
 
 CREATE TABLE public.role (
-    "roleTypeId" character varying NOT NULL,
-    name character varying,
-    "LogToRoleIds" character varying[]
+    "roleTypeId" uuid NOT NULL,
+    name character varying NOT NULL,
+    "LogToRoleIds" character varying[] NOT NULL
 );
 
 
@@ -439,15 +447,32 @@ CREATE TABLE public.service (
 ALTER TABLE public.service OWNER TO veramo;
 
 --
+-- Name: symmetricKey; Type: TABLE; Schema: public; Owner: veramo
+--
+
+CREATE TABLE public."symmetricKey" (
+    id uuid NOT NULL,
+    "customerId" uuid NOT NULL,
+    "identifierDid" character varying NOT NULL,
+    "resourceId" uuid NOT NULL,
+    "resourceName" character varying,
+    "resourceType" character varying,
+    "symmetricKey" character varying NOT NULL
+);
+
+
+ALTER TABLE public."symmetricKey" OWNER TO veramo;
+
+--
 -- Name: user; Type: TABLE; Schema: public; Owner: veramo
 --
 
 CREATE TABLE public."user" (
     "logtoId" character varying NOT NULL,
     "customerId" uuid NOT NULL,
-    "isPrimaryAdmin" boolean DEFAULT false NOT NULL,
     "createdAt" date NOT NULL,
-    role character varying
+    "roleTypeId" uuid,
+    "updatedAt" date
 );
 
 
@@ -476,7 +501,7 @@ ALTER TABLE ONLY public.migrations ALTER COLUMN id SET DEFAULT nextval('public.m
 -- Data for Name: customer; Type: TABLE DATA; Schema: public; Owner: veramo
 --
 
-INSERT INTO public.customer ("customerId", name, "createdAt") VALUES ('dffb307f-2e61-4e4b-ac64-167ed993800c', 'Sergey', '2023-09-13');
+INSERT INTO public.customer ("customerId", name, "createdAt", "updatedAt") VALUES ('dffb307f-2e61-4e4b-ac64-167ed993800c', 'Sergey', '2023-09-13', NULL);
 
 
 --
@@ -489,7 +514,7 @@ INSERT INTO public.customer ("customerId", name, "createdAt") VALUES ('dffb307f-
 -- Data for Name: key; Type: TABLE DATA; Schema: public; Owner: veramo
 --
 
-INSERT INTO public.key (kid, kms, type, "publicKeyHex", meta, "identifierDid", alias, "customerId", "createdAt") VALUES ('05a0b0b2df2278ec5910042f6bf5fe7ee9009102b9c6dab5d43745e96a14f5f66ff96b9a654793cb95895eef700f0903f030966802b48247294abe3c583dd221b0', 'postgres', 'Ed25519', '05a0b0b2df2278ec5910042f6bf5fe7ee9009102b9c6dab5d43745e96a14f5f66ff96b9a654793cb95895eef700f0903f030966802b48247294abe3c583dd221b0', '{"algorithms":["ES256K","ES256K-R","eth_signTransaction","eth_signTypedData","eth_signMessage","eth_rawSign"]}', NULL, 'SergeyKey', 'dffb307f-2e61-4e4b-ac64-167ed993800c', '2023-09-13');
+INSERT INTO public.key (kid, kms, type, "publicKeyHex", meta, "identifierDid", "publicKeyAlias", "customerId", "createdAt", "updatedAt") VALUES ('05a0b0b2df2278ec5910042f6bf5fe7ee9009102b9c6dab5d43745e96a14f5f66ff96b9a654793cb95895eef700f0903f030966802b48247294abe3c583dd221b0', 'postgres', 'Ed25519', '05a0b0b2df2278ec5910042f6bf5fe7ee9009102b9c6dab5d43745e96a14f5f66ff96b9a654793cb95895eef700f0903f030966802b48247294abe3c583dd221b0', '{"algorithms":["ES256K","ES256K-R","eth_signTransaction","eth_signTypedData","eth_signMessage","eth_rawSign"]}', NULL, 'SergeyKey', 'dffb307f-2e61-4e4b-ac64-167ed993800c', '2023-09-13', NULL);
 
 
 --
@@ -572,6 +597,12 @@ INSERT INTO public.key (kid, kms, type, "publicKeyHex", meta, "identifierDid", a
 
 --
 -- Data for Name: service; Type: TABLE DATA; Schema: public; Owner: veramo
+--
+
+
+
+--
+-- Data for Name: symmetricKey; Type: TABLE DATA; Schema: public; Owner: veramo
 --
 
 
@@ -714,7 +745,7 @@ ALTER TABLE ONLY public.operation
 --
 
 ALTER TABLE ONLY public."paymentAccount"
-    ADD CONSTRAINT "paymentAccount_pk" PRIMARY KEY (id);
+    ADD CONSTRAINT "paymentAccount_pk" PRIMARY KEY (address);
 
 
 --
@@ -739,6 +770,14 @@ ALTER TABLE ONLY public.resource
 
 ALTER TABLE ONLY public.role
     ADD CONSTRAINT role_pk PRIMARY KEY ("roleTypeId");
+
+
+--
+-- Name: symmetricKey symmetricKey_pk; Type: CONSTRAINT; Schema: public; Owner: veramo
+--
+
+ALTER TABLE ONLY public."symmetricKey"
+    ADD CONSTRAINT "symmetricKey_pk" PRIMARY KEY (id);
 
 
 --
@@ -782,14 +821,6 @@ CREATE INDEX "IDX_9dc4cc025ec7163ec5ca919d14" ON public.message_presentations_pr
 --
 
 CREATE INDEX "IDX_c3b760612b992bc75511d74f6a" ON public.presentation_verifier_identifier USING btree ("presentationHash", "identifierDid");
-
-
---
--- Name: resource FKCollectionId; Type: FK CONSTRAINT; Schema: public; Owner: veramo
---
-
-ALTER TABLE ONLY public.resource
-    ADD CONSTRAINT "FKCollectionId" FOREIGN KEY ("resourceCollectionId") REFERENCES public.identifier(did);
 
 
 --
@@ -857,6 +888,14 @@ ALTER TABLE ONLY public.payment
 
 
 --
+-- Name: symmetricKey FKCustomerId; Type: FK CONSTRAINT; Schema: public; Owner: veramo
+--
+
+ALTER TABLE ONLY public."symmetricKey"
+    ADD CONSTRAINT "FKCustomerId" FOREIGN KEY ("customerId") REFERENCES public.customer("customerId");
+
+
+--
 -- Name: payment FKIdentifier; Type: FK CONSTRAINT; Schema: public; Owner: veramo
 --
 
@@ -865,11 +904,19 @@ ALTER TABLE ONLY public.payment
 
 
 --
--- Name: paymentAccount FKKeyId; Type: FK CONSTRAINT; Schema: public; Owner: veramo
+-- Name: resource FKIdentifierDid; Type: FK CONSTRAINT; Schema: public; Owner: veramo
 --
 
-ALTER TABLE ONLY public."paymentAccount"
-    ADD CONSTRAINT "FKKeyId" FOREIGN KEY ("keyId") REFERENCES public.key(kid) ON DELETE CASCADE;
+ALTER TABLE ONLY public.resource
+    ADD CONSTRAINT "FKIdentifierDid" FOREIGN KEY ("identifierDid") REFERENCES public.identifier(did);
+
+
+--
+-- Name: symmetricKey FKIdentifierDid; Type: FK CONSTRAINT; Schema: public; Owner: veramo
+--
+
+ALTER TABLE ONLY public."symmetricKey"
+    ADD CONSTRAINT "FKIdentifierDid" FOREIGN KEY ("identifierDid") REFERENCES public.identifier(did);
 
 
 --
@@ -877,7 +924,15 @@ ALTER TABLE ONLY public."paymentAccount"
 --
 
 ALTER TABLE ONLY public.resource
-    ADD CONSTRAINT "FKKeyId" FOREIGN KEY ("resourceKey") REFERENCES public.key(kid);
+    ADD CONSTRAINT "FKKeyId" FOREIGN KEY (kid) REFERENCES public.key(kid);
+
+
+--
+-- Name: paymentAccount FKKid; Type: FK CONSTRAINT; Schema: public; Owner: veramo
+--
+
+ALTER TABLE ONLY public."paymentAccount"
+    ADD CONSTRAINT "FKKid" FOREIGN KEY (kid) REFERENCES public.key(kid);
 
 
 --
@@ -893,15 +948,31 @@ ALTER TABLE ONLY public.payment
 --
 
 ALTER TABLE ONLY public.payment
-    ADD CONSTRAINT "FKPaymentAccount" FOREIGN KEY ("paymentAccountId") REFERENCES public."paymentAccount"(id);
+    ADD CONSTRAINT "FKPaymentAccount" FOREIGN KEY ("paymentAddress") REFERENCES public."paymentAccount"(address);
 
 
 --
--- Name: payment FKResource; Type: FK CONSTRAINT; Schema: public; Owner: veramo
+-- Name: symmetricKey FKPrivateKey; Type: FK CONSTRAINT; Schema: public; Owner: veramo
+--
+
+ALTER TABLE ONLY public."symmetricKey"
+    ADD CONSTRAINT "FKPrivateKey" FOREIGN KEY ("symmetricKey") REFERENCES public."private-key"(alias);
+
+
+--
+-- Name: payment FKResourceId; Type: FK CONSTRAINT; Schema: public; Owner: veramo
 --
 
 ALTER TABLE ONLY public.payment
-    ADD CONSTRAINT "FKResource" FOREIGN KEY ("resourceId") REFERENCES public.resource("resourceId");
+    ADD CONSTRAINT "FKResourceId" FOREIGN KEY ("resourceId") REFERENCES public.resource("resourceId");
+
+
+--
+-- Name: symmetricKey FKResourceId; Type: FK CONSTRAINT; Schema: public; Owner: veramo
+--
+
+ALTER TABLE ONLY public."symmetricKey"
+    ADD CONSTRAINT "FKResourceId" FOREIGN KEY ("resourceId") REFERENCES public.resource("resourceId");
 
 
 --
@@ -909,7 +980,7 @@ ALTER TABLE ONLY public.payment
 --
 
 ALTER TABLE ONLY public."user"
-    ADD CONSTRAINT "FKRoleTypeId" FOREIGN KEY (role) REFERENCES public.role("roleTypeId");
+    ADD CONSTRAINT "FKRoleTypeId" FOREIGN KEY ("roleTypeId") REFERENCES public.role("roleTypeId");
 
 
 --
