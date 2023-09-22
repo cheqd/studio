@@ -1,14 +1,14 @@
 import {
 	CONTENT_TYPE,
 	PAYLOADS_PATH,
-	STORAGE_STATE_FILE_PATH,
+	STORAGE_STATE_AUTHENTICATED,
 	DEFAULT_DOES_NOT_HAVE_PERMISSIONS
 } from '../constants';
 import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 
-test.use({ storageState: STORAGE_STATE_FILE_PATH });
+test.use({ storageState: STORAGE_STATE_AUTHENTICATED });
 
 test('[Negative] It cannot update DID in mainnet network for user with testnet role', async ({ request }) => {
 	const response = await request.post(`/did/update`, {

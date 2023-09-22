@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-import { STORAGE_STATE_FILE_PATH } from './tests/constants';
+import { STORAGE_STATE_AUTHENTICATED, STORAGE_STATE_UNAUTHENTICATED } from './tests/constants';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -65,22 +65,30 @@ export default defineConfig({
   // Docs: https://playwright.dev/docs/test-projects
   projects: [
     { 
-      name: 'Setup',
-      testMatch: /.*\.setup\.ts/
+      name: 'Setup unauthenticated user',
+      testMatch: /no-auth\.setup\.ts/
+    },
+    { 
+      name: 'Setup authenticated user',
+      testMatch: /auth\.setup\.ts/
     },
     {
       name: 'Logged In User Tests',
       use: {
         ...devices['Desktop Chrome'],
         // Use prepared auth state.
-        storageState: STORAGE_STATE_FILE_PATH,
+        storageState: STORAGE_STATE_AUTHENTICATED,
       },
-      dependencies: ['Setup'],
+      dependencies: ['Setup authenticated user'],
     },
     {
       name: 'Non-Logged In User Tests',
       testMatch: /.*\.no-auth.spec.ts/,
-      use: { ...devices['Desktop Chrome'] },
+      use: { 
+        ...devices['Desktop Chrome'],
+        storageState: STORAGE_STATE_UNAUTHENTICATED,
+      },
+      dependencies: ['Setup unauthenticated user'],
     },
   ],
 

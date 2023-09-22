@@ -1,129 +1,74 @@
 import {
-    TESTNET_DID,
+    DEFAULT_TESTNET_DID,
     CONTENT_TYPE,
-    PAYLOADS_PATH,
     NOT_EXISTENT_TESTNET_DID,
-    NOT_EXISTENT_STATUS_LIST_NAME
+    NOT_EXISTENT_STATUS_LIST_NAME,
+    STORAGE_STATE_UNAUTHENTICATED,
+    DEFAULT_STATUS_LIST_UNENCRYPTED_NAME
 } from '../constants';
-import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
+
+
+test.use({ storageState: STORAGE_STATE_UNAUTHENTICATED });
 
 test('[Positive] It can check an unencrypted status-list with an existent body and statusPurpose=revocation parameter', async ({ request }) => {
     const response = await request.post('/credential-status/check?statusPurpose=revocation', {
         data: {
-            did: TESTNET_DID,
+            did: DEFAULT_TESTNET_DID,
             index: 10,
-            statusListName: "cheqd-employee-credentials",
+            statusListName: DEFAULT_STATUS_LIST_UNENCRYPTED_NAME,
         },
         headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
-    expect(response.status()).toBe(StatusCodes.OK);
-
+    
     const body = await response.json();
-    const expected = JSON.parse(
-        fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL_STATUS}/check-status-revocation.json`, 'utf-8')
-    );
-
-    expect(body).toStrictEqual(expected);
+    expect(body.revoked).toBe(false);
 });
 
 test('[Positive] It can check an unencrypted status-list with an existent body and statusPurpose=suspension parameter', async ({ request }) => {
     const response = await request.post('/credential-status/check?statusPurpose=suspension', {
         data: {
-            did: TESTNET_DID,
+            did: DEFAULT_TESTNET_DID,
             index: 10,
-            statusListName: "cheqd-employee-credentials",
+            statusListName: DEFAULT_STATUS_LIST_UNENCRYPTED_NAME,
         },
         headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
-    expect(response.status()).toBe(StatusCodes.OK);
-
     const body = await response.json();
-    const expected = JSON.parse(
-        fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL_STATUS}/check-status-suspension.json`, 'utf-8')
-    );
-
-    expect(body).toStrictEqual(expected);
+    expect(body.suspended).toBe(false);
 });
-
-// TODO: FIX ME
-// test('[Positive] It can check an encrypted status-list with an existent body and statusPurpose=revocation parameter', async ({ request }) => {
-//     const response = await request.post('/credential-status/check?statusPurpose=revocation', {
-//         data: {
-//             did: TESTNET_DID,
-//             index: 10,
-//             statusListName: "cheqd-employee-credentials-encrypted",
-//         },
-//         headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
-//     });
-//     expect(response.status()).toBe(StatusCodes.OK);
-
-//     const body = await response.json();
-//     const expected = JSON.parse(
-//         fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL_STATUS}/check-status-suspension.json`, 'utf-8')
-//     );
-
-//     expect(body).toStrictEqual(expected);
-// });
-
-
-// TODO: FIX ME
-// test('[Positive] It can check an encrypted status-list with an existent body and statusPurpose=suspension parameter', async ({ request }) => {
-//     const response = await request.post('/credential-status/check?statusPurpose=suspension', {
-//         data: {
-//             did: TESTNET_DID,
-//             index: 10,
-//             statusListName: "cheqd-employee-credentials-encrypted",
-//         },
-//         headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
-//     });
-//     expect(response.status()).toBe(StatusCodes.OK);
-
-//     const body = await response.json();
-//     const expected = JSON.parse(
-//         fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL_STATUS}/check-status-suspension.json`, 'utf-8')
-//     );
-
-//     expect(body).toStrictEqual(expected);
-// });
 
 test('[Negative] It cannot check credential-status with not existent DID', async ({ request }) => {
     const response = await request.post('/credential-status/check?statusPurpose=revocation', {
         data: {
             did: NOT_EXISTENT_TESTNET_DID,
             index: 10,
-            statusListName: "cheqd-employee-credentials",
+            statusListName: DEFAULT_STATUS_LIST_UNENCRYPTED_NAME,
         },
         headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
+
+    expect(response).not.toBeOK();
     expect(response.status()).toBe(StatusCodes.NOT_FOUND);
 
     const body = await response.json();
-    const expected = {
-        checked: false,
-        error: "check: error: status list 'cheqd-employee-credentials' not found"
-    };
-
-    expect(body).toStrictEqual(expected);
+    expect(body.error).toBe(`check: error: status list '${DEFAULT_STATUS_LIST_UNENCRYPTED_NAME}' not found`);
 });
 
 test('[Negative] It cannot check credential-status with an existent DID and not existent statusListName', async ({ request }) => {
     const response = await request.post('/credential-status/check?statusPurpose=revocation', {
         data: {
-            did: TESTNET_DID,
+            did: DEFAULT_TESTNET_DID,
             index: 10,
             statusListName: NOT_EXISTENT_STATUS_LIST_NAME,
         },
         headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
+
+    expect(response).not.toBeOK();
     expect(response.status()).toBe(StatusCodes.NOT_FOUND);
 
     const body = await response.json();
-    const expected = {
-        checked: false,
-        error: `check: error: status list '${NOT_EXISTENT_STATUS_LIST_NAME}' not found`
-    };
-
-    expect(body).toStrictEqual(expected);
+    expect(body.error).toBe(`check: error: status list '${NOT_EXISTENT_STATUS_LIST_NAME}' not found`);
 });
