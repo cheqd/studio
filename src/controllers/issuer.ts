@@ -1,14 +1,16 @@
 import type { Request, Response } from 'express';
 import { check, param, validationResult } from 'express-validator';
-import { fromString } from 'uint8arrays';
+import { fromString, toString } from 'uint8arrays';
 import type { DIDDocument, Service, VerificationMethod } from 'did-resolver';
 import { v4 } from 'uuid';
-import { CheqdNetwork, MethodSpecificIdAlgo, VerificationMethods } from '@cheqd/sdk';
+import { CheqdNetwork, MethodSpecificIdAlgo, VerificationMethods, createDidVerificationMethod } from '@cheqd/sdk';
 import type { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import { generateDidDoc, generateVerificationMethod, getQueryParams, validateDidCreatePayload, validateSpecCompliantPayload } from '../helpers/helpers.js';
+import { generateDidDoc, getQueryParams, validateDidCreatePayload, validateSpecCompliantPayload } from '../helpers/helpers.js';
 import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
+import { bases } from "multiformats/basics";
+import { base64ToBytes } from "did-jwt";
 
 export class IssuerController {
 	public static createValidator = [
@@ -241,10 +243,14 @@ export class IssuerController {
 						'Ed25519',
 						response.locals.customerId
 					)).publicKeyHex;
+					const pkBase64 = publicKeyHex.length == 43 ? publicKeyHex : toString(fromString(publicKeyHex, 'hex'), 'base64');
 
-					didDocument.verificationMethod = [
-						generateVerificationMethod(didDocument.id, publicKeyHex, options.verificationMethodType)
-					];
+					didDocument.verificationMethod = createDidVerificationMethod([options.verificationMethodType], [{
+						methodSpecificId: bases['base58btc'].encode(base64ToBytes(pkBase64)),
+						didUrl: didDocument.id,
+						keyId: `${didDocument.id}#key-1`,
+						publicKey: pkBase64
+					}]);
 				} else {
 					return response.status(StatusCodes.BAD_REQUEST).json({
 						error: 'Provide options section to create a DID',
