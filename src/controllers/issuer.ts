@@ -11,6 +11,7 @@ import { generateDidDoc, getQueryParams, validateDidCreatePayload, validateSpecC
 import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
 import { bases } from "multiformats/basics";
 import { base64ToBytes } from "did-jwt";
+import type { CreateDidRequestBody } from '../types/shared.js';
 
 export class IssuerController {
 	public static createValidator = [
@@ -233,7 +234,7 @@ export class IssuerController {
 			service,
 			key,
 			options,
-		} = request.body;
+		} = request.body satisfies CreateDidRequestBody;
 		let didDocument: DIDDocument;
 		try {
 			if (request.body.didDocument) {
