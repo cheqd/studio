@@ -17,19 +17,17 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: pg_database_owner
+-- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
 --
 
-CREATE SCHEMA public;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 
-
-ALTER SCHEMA public OWNER TO pg_database_owner;
 
 --
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: pg_database_owner
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
 --
 
-COMMENT ON SCHEMA public IS 'standard public schema';
+COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
 
 
 --
@@ -412,11 +410,19 @@ CREATE TABLE public.resource (
     "createdAt" date NOT NULL,
     "nextVersionId" uuid,
     "customerId" uuid NOT NULL,
-    "updatedAt" date
+    "updatedAt" date,
+    "symmetricKey" character varying
 );
 
 
 ALTER TABLE public.resource OWNER TO veramo;
+
+--
+-- Name: COLUMN resource."symmetricKey"; Type: COMMENT; Schema: public; Owner: veramo
+--
+
+COMMENT ON COLUMN public.resource."symmetricKey" IS 'Should be encrypted in the same manner as private-key';
+
 
 --
 -- Name: role; Type: TABLE; Schema: public; Owner: veramo
@@ -445,24 +451,6 @@ CREATE TABLE public.service (
 
 
 ALTER TABLE public.service OWNER TO veramo;
-
---
--- Name: symmetricKey; Type: TABLE; Schema: public; Owner: veramo
---
-
-CREATE TABLE public."symmetricKey" (
-    id uuid NOT NULL,
-    "customerId" uuid NOT NULL,
-    "identifierDid" character varying NOT NULL,
-    "resourceId" uuid NOT NULL,
-    "resourceName" character varying NOT NULL,
-    "resourceType" character varying NOT NULL,
-    "symmetricKey" character varying NOT NULL,
-    "createdAt" date NOT NULL
-);
-
-
-ALTER TABLE public."symmetricKey" OWNER TO veramo;
 
 --
 -- Name: user; Type: TABLE; Schema: public; Owner: veramo
@@ -598,12 +586,6 @@ INSERT INTO public.key (kid, kms, type, "publicKeyHex", meta, "identifierDid", "
 
 --
 -- Data for Name: service; Type: TABLE DATA; Schema: public; Owner: veramo
---
-
-
-
---
--- Data for Name: symmetricKey; Type: TABLE DATA; Schema: public; Owner: veramo
 --
 
 
@@ -774,14 +756,6 @@ ALTER TABLE ONLY public.role
 
 
 --
--- Name: symmetricKey symmetricKey_pk; Type: CONSTRAINT; Schema: public; Owner: veramo
---
-
-ALTER TABLE ONLY public."symmetricKey"
-    ADD CONSTRAINT "symmetricKey_pk" PRIMARY KEY (id);
-
-
---
 -- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: veramo
 --
 
@@ -889,14 +863,6 @@ ALTER TABLE ONLY public.payment
 
 
 --
--- Name: symmetricKey FKCustomerId; Type: FK CONSTRAINT; Schema: public; Owner: veramo
---
-
-ALTER TABLE ONLY public."symmetricKey"
-    ADD CONSTRAINT "FKCustomerId" FOREIGN KEY ("customerId") REFERENCES public.customer("customerId");
-
-
---
 -- Name: payment FKIdentifier; Type: FK CONSTRAINT; Schema: public; Owner: veramo
 --
 
@@ -909,14 +875,6 @@ ALTER TABLE ONLY public.payment
 --
 
 ALTER TABLE ONLY public.resource
-    ADD CONSTRAINT "FKIdentifierDid" FOREIGN KEY ("identifierDid") REFERENCES public.identifier(did);
-
-
---
--- Name: symmetricKey FKIdentifierDid; Type: FK CONSTRAINT; Schema: public; Owner: veramo
---
-
-ALTER TABLE ONLY public."symmetricKey"
     ADD CONSTRAINT "FKIdentifierDid" FOREIGN KEY ("identifierDid") REFERENCES public.identifier(did);
 
 
@@ -953,26 +911,10 @@ ALTER TABLE ONLY public.payment
 
 
 --
--- Name: symmetricKey FKPrivateKey; Type: FK CONSTRAINT; Schema: public; Owner: veramo
---
-
-ALTER TABLE ONLY public."symmetricKey"
-    ADD CONSTRAINT "FKPrivateKey" FOREIGN KEY ("symmetricKey") REFERENCES public."private-key"(alias);
-
-
---
 -- Name: payment FKResourceId; Type: FK CONSTRAINT; Schema: public; Owner: veramo
 --
 
 ALTER TABLE ONLY public.payment
-    ADD CONSTRAINT "FKResourceId" FOREIGN KEY ("resourceId") REFERENCES public.resource("resourceId");
-
-
---
--- Name: symmetricKey FKResourceId; Type: FK CONSTRAINT; Schema: public; Owner: veramo
---
-
-ALTER TABLE ONLY public."symmetricKey"
     ADD CONSTRAINT "FKResourceId" FOREIGN KEY ("resourceId") REFERENCES public.resource("resourceId");
 
 
