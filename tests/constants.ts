@@ -13,3 +13,21 @@ export const DEFAULT_SUBJECT_DID = 'did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLG
 // Messages
 export const DEFAULT_DOES_NOT_HAVE_PERMISSIONS =
 	'Unauthorized error: Your account is not authorized to carry out this action.';
+
+export const DEFAULT_CONTEXT="https://www.w3.org/ns/did/v1"
+
+export enum NETWORK {
+	MAINNET = "mainnet",
+	TESTNET = "testnet"
+};
+
+export enum ID_TYPE {
+	UUID = "uuid",
+	BASE58BTC = "base58btc"
+};
+
+export enum VERIFICATION_METHOD_TYPES {
+	Ed25519VerificationKey2018 = "Ed25519VerificationKey2018",
+	Ed25519VerificationKey2020 = "Ed25519VerificationKey2020",
+	JsonWebKey2020 = "JsonWebKey2020"
+};

@@ -137,3 +137,16 @@ export const buildSimpleIssueCredentialRequest = (
 		},
 	};
 };
+
+export const buildSimpleService = (
+	idFragment = "service-1",
+	type = "LinkedDomains",
+	serviceEndpoint = ["https://example.com"]
+) => {
+	return {
+		idFragment: idFragment,
+		type: type,
+		serviceEndpoint: serviceEndpoint
+	};
+};
+
