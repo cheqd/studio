@@ -1,9 +1,8 @@
 import type { Request, Response } from 'express';
 import { check, param, validationResult } from 'express-validator';
 import { fromString, toString } from 'uint8arrays';
-import type { DIDDocument, Service, VerificationMethod } from 'did-resolver';
 import { v4 } from 'uuid';
-import { CheqdNetwork, MethodSpecificIdAlgo, VerificationMethods, createDidVerificationMethod } from '@cheqd/sdk';
+import { CheqdNetwork, DIDDocument, MethodSpecificIdAlgo, Service, VerificationMethod, VerificationMethods, createDidVerificationMethod } from '@cheqd/sdk';
 import type { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
