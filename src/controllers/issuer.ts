@@ -271,17 +271,27 @@ export class IssuerController {
 				});
 
 				if (typeof request.body['@context'] === 'string') {
-					didDocument['@context'] = [request.body['@context']] ;
+					didDocument['@context'] = [request.body['@context']];
 				}
 
 				if (service) {
-					didDocument.service = [
-						{
+					if (Array.isArray(service)) {
+						const services = JSON.parse(`[${service.toString()}]`);
+						didDocument.service = [];
+						for (const service of services) {
+							didDocument.service.push({
+								id: `${didDocument.id}#${service.idFragment}`,
+								type: service.type,
+								serviceEndpoint: service.serviceEndpoint,
+							})
+						}
+					} else {
+						didDocument.service = [{
 							id: `${didDocument.id}#${service.idFragment}`,
 							type: service.type,
 							serviceEndpoint: service.serviceEndpoint,
-						},
-					];
+						}];
+					}
 				}
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
