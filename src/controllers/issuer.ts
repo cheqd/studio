@@ -264,7 +264,7 @@ export class IssuerController {
 				didDocument = generateDidDoc({
 					verificationMethod: verificationMethodType,
 					verificationMethodId: 'key-1',
-					methodSpecificIdAlgo: (identifierFormatType as MethodSpecificIdAlgo) || MethodSpecificIdAlgo.Uuid,
+					methodSpecificIdAlgo: identifierFormatType || MethodSpecificIdAlgo.Uuid,
 					network,
 					publicKey: publicKeyHex,
 				});
