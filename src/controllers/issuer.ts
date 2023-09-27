@@ -270,8 +270,11 @@ export class IssuerController {
 					publicKey: publicKeyHex,
 				});
 
+				if (Array.isArray(request.body['@context'])) {
+					didDocument['@context'] = request.body['@context'];
+				}
 				if (typeof request.body['@context'] === 'string') {
-					didDocument['@context'] = [request.body['@context']];
+					didDocument['@context'] = [request.body['@context']] ;
 				}
 
 				if (service) {
