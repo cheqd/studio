@@ -4,7 +4,6 @@ import {
     INVALID_ID,
     INVALID_DID,
     NOT_EXISTENT_KEY,
-    DEFAULT_MAINNET_DID,
     VERIFICATION_METHOD_TYPES,
     DEFAULT_DOES_NOT_HAVE_PERMISSIONS,
     NOT_SUPPORTED_VERIFICATION_METHOD_TYPE
@@ -20,7 +19,7 @@ test.use({ storageState: 'playwright/.auth/user.json' });
 
 test('[Negative] It cannot create DID with missed verificationMethodType field in request body (Form based)', async ({ request }) => {
     const response = await request.post(`/did/create`, {
-        data: `network=${NETWORK.TESTNET}&identifierFormatType=${ID_TYPE.BASE58BTC}&]`,
+        data: `network=${NETWORK.TESTNET}&identifierFormatType=${ID_TYPE.BASE58BTC}`,
         headers: { "Content-Type": "application/x-www-form-urlencoded" }
     });
     expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
@@ -181,34 +180,13 @@ test('[Negative] It cannot create DID without DidDocument in request body (JSON 
     expect(await response.text()).toEqual(expect.stringContaining("Provide a DID Document or the network type to create a DID"));
 });
 
-// Negative tests. All of this tests should return 403 Forbidden
-// cause here the user tries to make mainnet operations with testnet role
-test('Create DID for user with testnet role but network is mainnet', async ({ request }) => {
+test('[Negative] It cannot create DID in mainnet network for user with testnet role', async ({ request }) => {
     const response = await request.post(`/did/create`, {
         data: JSON.parse(fs.readFileSync(`${PAYLOADS_BASE_PATH}/did-create-without-permissions.json`, 'utf-8')),
         headers: {
             'Content-Type': 'application/json',
         },
     });
-    expect(response).not.toBeOK();
-    expect(response.status()).toBe(StatusCodes.FORBIDDEN);
-    expect(await response.text()).toEqual(expect.stringContaining(DEFAULT_DOES_NOT_HAVE_PERMISSIONS));
-});
-
-test('Update DID for user with testnet role but network is mainnet', async ({ request }) => {
-    const response = await request.post(`/did/update`, {
-        data: JSON.parse(fs.readFileSync(`${PAYLOADS_BASE_PATH}/did-update-without-permissions.json`, 'utf-8')),
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    });
-    expect(response).not.toBeOK();
-    expect(response.status()).toBe(StatusCodes.FORBIDDEN);
-    expect(await response.text()).toEqual(expect.stringContaining(DEFAULT_DOES_NOT_HAVE_PERMISSIONS));
-});
-
-test('Deactivate DID for user with testnet role but network is mainnet', async ({ request }) => {
-    const response = await request.post(`/did/deactivate/${DEFAULT_MAINNET_DID}`, {});
     expect(response).not.toBeOK();
     expect(response.status()).toBe(StatusCodes.FORBIDDEN);
     expect(await response.text()).toEqual(expect.stringContaining(DEFAULT_DOES_NOT_HAVE_PERMISSIONS));
