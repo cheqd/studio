@@ -1,8 +1,13 @@
-import { test, expect } from '@playwright/test';
-import { DEFAULT_CONTEXT, ID_TYPE, NETWORK, VERIFICATION_METHOD_TYPES } from '../constants';
-import { StatusCodes } from 'http-status-codes';
-import { buildSimpleService } from 'helpers';
+import {
+    ID_TYPE,
+    NETWORK,
+    DEFAULT_CONTEXT,
+    VERIFICATION_METHOD_TYPES
+} from '../constants';
 import { v4 } from 'uuid';
+import { buildSimpleService } from 'helpers';
+import { test, expect } from '@playwright/test';
+import { StatusCodes } from 'http-status-codes';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
