@@ -8,6 +8,7 @@ import { v4 } from 'uuid';
 import { buildSimpleService } from 'helpers';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
+import { MethodSpecificIdAlgo, createVerificationKeys } from '@cheqd/sdk';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
@@ -75,38 +76,46 @@ test('[Positive] It can create DID with mandatory and optional properties (Form 
 });
 
 test('[Positive] It can create  DID with mandatory properties (JSON based + Indy style)', async ({ request }) => {
+    // send request to create key
+    let response = await request.post('/key/create', {
+        headers: { "Content-Type": "application/json" }
+    });
+    expect(response.status()).toBe(StatusCodes.OK);
+
+    const did = createVerificationKeys((await response.json()).kid, MethodSpecificIdAlgo.Base58, "key-1").didUrl;
+
     // send request to create DID
-    // let response = await request.post('/did/create', {
-    //     data: {
-    //         options: {
-    //             verificationMethodType: VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020
-    //         },
-    //         didDocument: {
-    //             id: "", // how to generate Indy style identifier?
-    //             controller: [
-    //                 // your did
-    //             ],
-    //             authentication: [
-    //                 // your did+#key-1
-    //             ]
-    //         }
-    //     },
-    //     headers: { "Content-Type": "application/json" }
-    // });
-    // expect(response.status()).toBe(StatusCodes.OK);
+    response = await request.post('/did/create', {
+        data: {
+            options: {
+                verificationMethodType: VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020
+            },
+            didDocument: {
+                id: did,
+                controller: [
+                    did
+                ],
+                authentication: [
+                    `${did}#key-1`
+                ]
+            }
+        },
+        headers: { "Content-Type": "application/json" }
+    });
+    expect(response.status()).toBe(StatusCodes.OK);
 
-    // // resolve a created DID
-    // response = await request.get(`/did/search/${(await response.json()).did}`, {
-    //     headers: { 'Content-Type': 'application/json' }
-    // });
-    // expect(response.status()).toBe(StatusCodes.OK);
+    // resolve a created DID
+    response = await request.get(`/did/search/${(await response.json()).did}`, {
+        headers: { 'Content-Type': 'application/json' }
+    });
+    expect(response.status()).toBe(StatusCodes.OK);
 
-    // const didDocument = (await response.json()).didDocument;
+    const didDocument = (await response.json()).didDocument;
 
-    // // Check mandatory properties
-    // expect(didDocument.id.split(":")[2]).toBe(NETWORK.TESTNET);
-    // // TODO: Add check for checking ID is Indy Style identifier
-    // expect(didDocument.verificationMethod[0].type).toBe(VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020);
+    // Check mandatory properties
+    expect(didDocument.id.split(":")[2]).toBe(NETWORK.TESTNET);
+    // TODO: Add check for checking ID is Indy Style identifier
+    expect(didDocument.verificationMethod[0].type).toBe(VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020);
 });
 
 test('[Positive] It can create DID with mandatory and optional properties (JSON based + UUID style)', async ({ request }) => {
