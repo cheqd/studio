@@ -16,6 +16,12 @@ export const DEFAULT_DOES_NOT_HAVE_PERMISSIONS =
 
 export const DEFAULT_CONTEXT="https://www.w3.org/ns/did/v1"
 
+export const NOT_EXISTENT_KEY = "88888888888895e01f3d98fcec8ccc7861a030b317d4326b0e48a88888888888"
+export const NOT_SUPPORTED_VERIFICATION_METHOD_TYPE = "not_supported_vm_type"
+
+export const INVALID_ID = "invalid_id";
+export const INVALID_DID = "invalid_did";
+
 export enum NETWORK {
 	MAINNET = "mainnet",
 	TESTNET = "testnet"
