@@ -78,19 +78,17 @@ test('[Positive] It can create  DID with mandatory properties (JSON based + Indy
     // send request to create DID
     // let response = await request.post('/did/create', {
     //     data: {
-    //         network: NETWORK.TESTNET,
-    //         identifierFormatType: ID_TYPE.BASE58BTC,
     //         options: {
     //             verificationMethodType: VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020
     //         },
     //         didDocument: {
     //             id: "", // how to generate Indy style identifier?
-    //             controller: [{
+    //             controller: [
     //                 // your did
-    //             }],
-    //             authentication: [{
+    //             ],
+    //             authentication: [
     //                 // your did+#key-1
-    //             }]
+    //             ]
     //         }
     //     },
     //     headers: { "Content-Type": "application/json" }
