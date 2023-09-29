@@ -19,12 +19,14 @@ test('[Positive] It can create DID with mandatory properties (Form based + Indy 
             `verificationMethodType=${VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020}`,
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
+    expect(response).toBeOK();
     expect(response.status()).toBe(StatusCodes.OK);
 
     // resolve a created DID
     response = await request.get(`/did/search/${(await response.json()).did}`, {
         headers: { 'Content-Type': 'application/json' }
     });
+    expect(response).toBeOK();
     expect(response.status()).toBe(StatusCodes.OK);
 
     const didDocument = (await response.json()).didDocument;
@@ -39,6 +41,7 @@ test('[Positive] It can create DID with mandatory and optional properties (Form 
     let response = await request.post('/key/create', {
         headers: { "Content-Type": "application/json" }
     });
+    expect(response).toBeOK();
     expect(response.status()).toBe(StatusCodes.OK);
 
     const kid = (await response.json()).kid;
@@ -50,6 +53,7 @@ test('[Positive] It can create DID with mandatory and optional properties (Form 
             `service=${JSON.stringify(buildSimpleService())}&key=${kid}&@context=${DEFAULT_CONTEXT}`,
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
+    expect(response).toBeOK();
     expect(response.status()).toBe(StatusCodes.OK);
 
     const body = await response.json();
@@ -62,6 +66,7 @@ test('[Positive] It can create DID with mandatory and optional properties (Form 
     response = await request.get(`/did/search/${body.did}`, {
         headers: { 'Content-Type': 'application/json' }
     });
+    expect(response).toBeOK();
     expect(response.status()).toBe(StatusCodes.OK);
 
     const didDocument = (await response.json()).didDocument;
@@ -78,6 +83,7 @@ test('[Positive] It can create  DID with mandatory properties (JSON based + Indy
     let response = await request.post('/key/create', {
         headers: { "Content-Type": "application/json" }
     });
+    expect(response).toBeOK();
     expect(response.status()).toBe(StatusCodes.OK);
 
     const did = createVerificationKeys((await response.json()).kid, MethodSpecificIdAlgo.Base58, "key-1").didUrl;
@@ -100,12 +106,14 @@ test('[Positive] It can create  DID with mandatory properties (JSON based + Indy
         },
         headers: { "Content-Type": "application/json" }
     });
+    expect(response).toBeOK();
     expect(response.status()).toBe(StatusCodes.OK);
 
     // resolve a created DID
     response = await request.get(`/did/search/${(await response.json()).did}`, {
         headers: { 'Content-Type': 'application/json' }
     });
+    expect(response).toBeOK();
     expect(response.status()).toBe(StatusCodes.OK);
 
     const didDocument = (await response.json()).didDocument;
@@ -120,6 +128,7 @@ test('[Positive] It can create DID with mandatory and optional properties (JSON 
     let response = await request.post('/key/create', {
         headers: { "Content-Type": "application/json" }
     });
+    expect(response).toBeOK();
     expect(response.status()).toBe(StatusCodes.OK);
 
     const kid = (await response.json()).kid;
@@ -156,12 +165,14 @@ test('[Positive] It can create DID with mandatory and optional properties (JSON 
         },
         headers: { "Content-Type": "application/json" }
     });
+    expect(response).toBeOK();
     expect(response.status()).toBe(StatusCodes.OK);
 
     // resolve a created DID
     response = await request.get(`/did/search/${(did)}`, {
         headers: { 'Content-Type': 'application/json' }
     });
+    expect(response).toBeOK();
     expect(response.status()).toBe(StatusCodes.OK);
 
     const didDocument = (await response.json()).didDocument;
