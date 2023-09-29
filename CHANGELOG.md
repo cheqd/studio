@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.4-develop.3](https://github.com/cheqd/credential-service/compare/2.9.4-develop.2...2.9.4-develop.3) (2023-09-29)
+
+
+### Bug Fixes
+
+* Investigate frequent logouts on Credential Service [DEV-3251] ([#395](https://github.com/cheqd/credential-service/issues/395)) ([14693c3](https://github.com/cheqd/credential-service/commit/14693c34d4875314dbdc175f99bfe704b0b7a797))
+
 ## [2.9.4-develop.2](https://github.com/cheqd/credential-service/compare/2.9.4-develop.1...2.9.4-develop.2) (2023-09-20)
 
 ## [2.9.4-develop.1](https://github.com/cheqd/credential-service/compare/2.9.3...2.9.4-develop.1) (2023-09-20)
