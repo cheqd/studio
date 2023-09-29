@@ -191,7 +191,7 @@ export class IssuerController {
 	 *             $ref: '#/components/schemas/DidCreateRequestFormBased'
 	 *         application/json:
 	 *           schema:
-	 *             $ref: '#/components/schemas/DidCreateRequest'
+	 *             $ref: '#/components/schemas/DidCreateRequestJson'
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.

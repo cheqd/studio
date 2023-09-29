@@ -825,7 +825,7 @@
  *           example:
  *             - https://www.w3.org/ns/did/v1
  *
- *     DidCreateRequest:
+ *     DidCreateRequestJson:
  *       type: object
  *       properties:
  *         network:

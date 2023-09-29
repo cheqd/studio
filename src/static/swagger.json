@@ -586,7 +586,7 @@
             },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DidCreateRequest"
+                "$ref": "#/components/schemas/DidCreateRequestJson"
               }
             }
           }
@@ -2620,7 +2620,7 @@
           }
         }
       },
-      "DidCreateRequest": {
+      "DidCreateRequestJson": {
         "type": "object",
         "properties": {
           "network": {
