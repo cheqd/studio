@@ -68,7 +68,7 @@ export function toDefaultDkg(did: string): DkgOptions {
 
 export function validateDidCreatePayload(didDocument: DIDDocument): SpecValidationResult {
 	// id is required, validated on both compile and runtime
-	if (!didDocument.id || !didDocument.id.startsWith('did:cheqd:')) return { valid: false, error: 'id is required' };
+	if (!didDocument.id && !didDocument.id.startsWith('did:cheqd:')) return { valid: false, error: 'id is required' };
 
 	if (!isValidService(didDocument)) return { valid: false, error: 'Service is Invalid' };
 	return { valid: true } as SpecValidationResult;
@@ -76,7 +76,7 @@ export function validateDidCreatePayload(didDocument: DIDDocument): SpecValidati
 
 export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecValidationResult {
 	// id is required, validated on both compile and runtime
-	if (!didDocument.id || !didDocument.id.startsWith('did:cheqd:')) return { valid: false, error: 'id is required' };
+	if (!didDocument.id && !didDocument.id.startsWith('did:cheqd:')) return { valid: false, error: 'id is required' };
 
 	// verificationMethod is required
 	if (!didDocument.verificationMethod) return { valid: false, error: 'verificationMethod is required' };
