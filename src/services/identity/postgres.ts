@@ -10,18 +10,19 @@ import type {
 import type { AbstractPrivateKeyStore } from '@veramo/key-manager';
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local';
 import { PrivateKeyStore } from '@veramo/data-store';
-import { CheqdNetwork } from '@cheqd/sdk';
-import {
-	Cheqd,
-	CheqdDIDProvider,
-	type ResourcePayload,
-	type BulkRevocationResult,
-	type BulkSuspensionResult,
-	type BulkUnsuspensionResult,
-	type CreateStatusList2021Result,
-	type StatusCheckResult,
-	DefaultRPCUrls,
-	TransactionResult,
+// import { CheqdNetwork } from '@cheqd/sdk';
+// import { CheqdNetwork } from '@cheqd/sdk';
+import type {
+	// Cheqd,
+	// CheqdDIDProvider,
+	ResourcePayload,
+	BulkRevocationResult,
+	BulkSuspensionResult,
+	BulkUnsuspensionResult,
+	CreateStatusList2021Result,
+	StatusCheckResult,
+	// DefaultRPCUrls,
+	TransactionResult
 } from '@cheqd/did-provider-cheqd';
 import {
 	BroadcastStatusListOptions,
@@ -43,10 +44,12 @@ import { CustomerService } from '../customer.js';
 import { Veramo } from './agent.js';
 import { DefaultIdentityService } from './default.js';
 import * as dotenv from 'dotenv';
+import { KeyService } from '../key.js';
+import type { KeyEntity } from '../../database/entities/key.entity.js';
 
 dotenv.config();
 
-const { MAINNET_RPC_URL, TESTNET_RPC_URL, EXTERNAL_DB_ENCRYPTION_KEY } = process.env;
+const { EXTERNAL_DB_ENCRYPTION_KEY } = process.env;
 
 export class PostgresIdentityService extends DefaultIdentityService {
 	privateStore?: AbstractPrivateKeyStore;
@@ -83,58 +86,60 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		const dbConnection = Connection.instance.dbConnection;
 
+		const publicKey = await KeyService.instance.find(undefined, agentId, 'default');
+
 		const privateKey = (await this.getPrivateKey(customer.account))?.privateKeyHex;
 
-		if (!privateKey || !this.privateStore) {
-			throw new Error(`No keys is initialized`);
-		}
+		// if (!privateKey || !this.privateStore) {
+		// 	throw new Error(`No keys is initialized`);
+		// }
 
-		const mainnetProvider = new CheqdDIDProvider({
-			defaultKms: 'postgres',
-			cosmosPayerSeed: privateKey,
-			networkType: CheqdNetwork.Mainnet,
-			rpcUrl: MAINNET_RPC_URL || DefaultRPCUrls.mainnet,
-		});
-		const testnetProvider = new CheqdDIDProvider({
-			defaultKms: 'postgres',
-			cosmosPayerSeed: privateKey,
-			networkType: CheqdNetwork.Testnet,
-			rpcUrl: TESTNET_RPC_URL || DefaultRPCUrls.testnet,
-		});
+		// const mainnetProvider = new CheqdDIDProvider({
+		// 	defaultKms: 'postgres',
+		// 	cosmosPayerSeed: privateKey,
+		// 	networkType: CheqdNetwork.Mainnet,
+		// 	rpcUrl: MAINNET_RPC_URL || DefaultRPCUrls.mainnet,
+		// });
+		// const testnetProvider = new CheqdDIDProvider({
+		// 	defaultKms: 'postgres',
+		// 	cosmosPayerSeed: privateKey,
+		// 	networkType: CheqdNetwork.Testnet,
+		// 	rpcUrl: TESTNET_RPC_URL || DefaultRPCUrls.testnet,
+		// });
 
 		return Veramo.instance.createVeramoAgent({
 			dbConnection,
-			kms: {
-				postgres: new KeyManagementSystem(this.privateStore),
-			},
-			providers: {
-				'did:cheqd:mainnet': mainnetProvider,
-				'did:cheqd:testnet': testnetProvider,
-			},
-			cheqdProviders: [mainnetProvider, testnetProvider],
+			// kms: {
+			// 	postgres: new KeyManagementSystem(this.privateStore),
+			// },
+			// providers: {
+			// 	'did:cheqd:mainnet': mainnetProvider,
+			// 	'did:cheqd:testnet': testnetProvider,
+			// },
+			// cheqdProviders: [mainnetProvider, testnetProvider],
 			enableCredential: true,
 			enableResolver: true,
 		});
 	}
 
-	async createKey(type: 'Ed25519' | 'Secp256k1' = 'Ed25519', agentId: string): Promise<ManagedKeyInfo> {
-		if (!agentId) {
-			throw new Error('Customer not found');
-		}
+	async createKey(type: 'Ed25519' | 'Secp256k1' = 'Ed25519', customerId?: string, keyAlias?: string): Promise<KeyEntity> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const key = await Veramo.instance.createKey(this.agent!, type);
-		if (await CustomerService.instance.find(agentId, {}))
-			await CustomerService.instance.update(agentId, { kids: [key.kid] });
-		return key;
+		return await Veramo.instance.createKey(this.agent!, type, customerId, keyAlias);
 	}
 
-	async getKey(kid: string, agentId: string) {
-		const isOwner = await CustomerService.instance.find(agentId, { kid });
+	async getKey(kid: string, agentId: string): Promise<KeyEntity> {
+		const key = await KeyService.instance.get(kid);
+
+		if (!key) {
+			throw new Error(`${kid} not found`);
+		}
+
+		const isOwner = key.customerId === agentId;
 		if (!isOwner) {
-			throw new Error(`${kid} not found in wallet`);
+			throw new Error(`${kid} does not belong to the customer with id ${agentId}`);
 		}
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return await Veramo.instance.getKey(this.agent!, kid);
+		return key;
 	}
 
 	private async getPrivateKey(kid: string) {
@@ -187,8 +192,9 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!agentId) {
 			throw new Error('Customer not found');
 		}
-		const customer = (await CustomerService.instance.get(agentId)) as CustomerEntity;
-		return customer?.dids || [];
+		// const customer = (await CustomerService.instance.get(agentId)) as CustomerEntity;
+		return [];
+		// return customer?.dids || [];
 	}
 
 	async getDid(did: string) {
@@ -376,18 +382,18 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			throw new Error('Customer not found');
 		}
 
-		for (const credential of credentials) {
-			const decodedCredential =
-				typeof credential === 'string' ? await Cheqd.decodeCredentialJWT(credential) : credential;
+		// for (const credential of credentials) {
+		// 	const decodedCredential =
+		// 		typeof credential === 'string' ? await Cheqd.decodeCredentialJWT(credential) : credential;
 
-			const issuerId =
-				typeof decodedCredential.issuer === 'string' ? decodedCredential.issuer : decodedCredential.issuer.id;
+		// 	const issuerId =
+		// 		typeof decodedCredential.issuer === 'string' ? decodedCredential.issuer : decodedCredential.issuer.id;
 
-			const existsInWallet = customer.dids.find((did) => did === issuerId);
+		// 	const existsInWallet = customer.dids.find((did) => did === issuerId);
 
-			if (!existsInWallet) {
-				throw new Error(`${issuerId} not found in wallet`);
-			}
-		}
+		// 	if (!existsInWallet) {
+		// 		throw new Error(`${issuerId} not found in wallet`);
+		// 	}
+		// }
 	}
 }

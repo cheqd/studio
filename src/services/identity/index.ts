@@ -49,7 +49,7 @@ export interface IIdentityService {
 
 	initAgent(): TAgent<any>;
 	createAgent?(agentId: string): Promise<VeramoAgent>;
-	createKey(type: 'Ed25519' | 'Secp256k1', agentId?: string): Promise<ManagedKeyInfo>;
+	createKey(type: 'Ed25519' | 'Secp256k1', customerId?: string, keyAlias?: string): Promise<ManagedKeyInfo>;
 	getKey(kid: string, agentId?: string): Promise<ManagedKeyInfo>;
 	createDid(network: string, didDocument: DIDDocument, agentId?: string): Promise<IIdentifier>;
 	updateDid(didDocument: DIDDocument, agentId?: string): Promise<IIdentifier>;

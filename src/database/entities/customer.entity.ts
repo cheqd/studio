@@ -1,75 +1,42 @@
-import { Column, Entity, PrimaryGeneratedColumn, ValueTransformer } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-const { ENABLE_EXTERNAL_DB } = process.env;
-
-const arrayToJsonTransformer = (shouldTransform: string): ValueTransformer => {
-	return {
-		to: (array: any[]) => {
-			if (shouldTransform == 'false') {
-				// Convert the array to a JSON string
-				return JSON.stringify(array);
-			}
-			return array;
-		},
-		from: (jsonString: string) => {
-			if (shouldTransform == 'false') {
-				// Parse the JSON string and return the array
-				return JSON.parse(jsonString);
-			}
-			return jsonString;
-		},
-	};
-};
-
-@Entity('customers')
+@Entity('customer')
 export class CustomerEntity {
 	@PrimaryGeneratedColumn('uuid')
 	customerId!: string;
 
-	@Column('text')
-	account!: string;
-
-	@Column('text')
-	address!: string;
+	@Column({
+		type: 'text', 
+		nullable: false
+	})
+	name!: string;
 
 	@Column({
-		type: 'text',
-		transformer: arrayToJsonTransformer(ENABLE_EXTERNAL_DB),
-		array: true,
-		nullable: true,
+		type: 'date',
+		nullable: false,
 	})
-	kids!: string[];
+	createdAt!: Date;
 
 	@Column({
-		type: 'text',
-		transformer: arrayToJsonTransformer(ENABLE_EXTERNAL_DB),
-		array: true,
+		type: 'date',
 		nullable: true,
 	})
-	dids!: string[];
+	updatedAt!: Date;
 
-	@Column({
-		type: 'text',
-		transformer: arrayToJsonTransformer(ENABLE_EXTERNAL_DB),
-		array: true,
-		nullable: true,
-	})
-	claimIds!: string[];
+	@BeforeInsert()
+	setCreatedAt() {
+	  this.createdAt = new Date()
+	}
 
-	@Column({
-		type: 'text',
-		transformer: arrayToJsonTransformer(ENABLE_EXTERNAL_DB),
-		array: true,
-		nullable: true,
-	})
-	presentationIds!: string[];
+	@BeforeUpdate()
+	setUpdateAt() {
+	  this.updatedAt = new Date()
+	}
 
-	constructor(customerId: string, account: string, address: string) {
-		this.customerId = customerId;
-		this.account = account;
-		this.address = address;
+	constructor(name: string) {
+		this.name = name;
 	}
 }

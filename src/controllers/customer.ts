@@ -31,25 +31,31 @@ export class AccountController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async create(request: Request, response: Response) {
+		const name = request.body.name;
+		if (!name) {
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: 'Missing required parameter: name',
+			});
+		}
 		try {
-			const customer = await CustomerService.instance.create(response.locals.customerId);
+			const customer = await CustomerService.instance.create(name);
 			if (!customer) {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 					error: `Internal server error. Please try again later.`,
 				});
 			}
-			// Send some tokens for testnet
-			if (process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
-				const resp = await FaucetHelper.delegateTokens(customer.address);
-				if (resp.status !== StatusCodes.OK) {
-					return response.status(resp.status).json({
-						error: resp.error,
-					});
-				}
-			}
+			// // Send some tokens for testnet
+			// if (process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
+			// 	const resp = await FaucetHelper.delegateTokens(customer.address);
+			// 	if (resp.status !== StatusCodes.OK) {
+			// 		return response.status(resp.status).json({
+			// 			error: resp.error,
+			// 		});
+			// 	}
+			// }
 			return response.status(StatusCodes.OK).json({
 				customerId: customer.customerId,
-				address: customer.address,
+				name: customer.name,
 			});
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -86,7 +92,7 @@ export class AccountController {
 			if (result && !Array.isArray(result)) {
 				return response.status(StatusCodes.OK).json({
 					customerId: result.customerId,
-					address: result.address,
+					// address: result.address,
 				});
 			}
 
