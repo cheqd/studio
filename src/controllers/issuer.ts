@@ -239,13 +239,6 @@ export class IssuerController {
 			if (request.body.didDocument) {
 				didDocument = request.body.didDocument;
 				if (options) {
-					if (options.key) {
-						if (!(await new IdentityServiceStrategySetup(response.locals.customerId).agent.getKey(key))) {
-							return response.status(StatusCodes.NOT_FOUND).json({
-								error: 'Provide an existing key'
-							});
-						}
-					}
 					const publicKeyHex = options.key || (await new IdentityServiceStrategySetup(response.locals.customerId).agent.createKey(
 						'Ed25519',
 						response.locals.customerId

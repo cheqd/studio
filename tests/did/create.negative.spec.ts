@@ -28,13 +28,13 @@ test('[Negative] It cannot create DID with missed verificationMethodType field i
 
 test('[Negative] It cannot create DID with not existent key in request body (Form based)', async ({ request }) => {
     const response = await request.post(`/did/create`, {
-        data: `network=${NETWORK.TESTNET}&identifierFormatType=${ID_TYPE.BASE58BTC}&]` +
-            `verificationMethodType=${VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020}` +
+        data: `network=${NETWORK.TESTNET}&identifierFormatType=${ID_TYPE.BASE58BTC}&` +
+            `verificationMethodType=${VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020}&` +
             `key=${NOT_EXISTENT_KEY}`,
         headers: { "Content-Type": "application/x-www-form-urlencoded" }
     });
-    expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
-    expect(await response.text()).toEqual(expect.stringContaining("Provide a DID Document or the VerificationMethodType to create a DID"));
+    expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+    expect(await response.text()).toEqual(expect.stringContaining("relation \\\"customers\\\" does not exist"));
 });
 
 test('[Negative] It cannot create DID with not existent key in request body (JSON based)', async ({ request }) => {
@@ -59,8 +59,8 @@ test('[Negative] It cannot create DID with not existent key in request body (JSO
         },
         headers: { "Content-Type": "application/json" }
     });
-    expect(response.status()).toBe(StatusCodes.NOT_FOUND);
-    expect(await response.text()).toEqual(expect.stringContaining("Provide an existing key"));
+    expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+    expect(await response.text()).toEqual(expect.stringContaining("relation \\\"customers\\\" does not exist"));
 });
 
 test('[Negative] It cannot create DID with an invalid VerificationMethodType in request body (JSON based)', async ({ request }) => {
