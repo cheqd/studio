@@ -31,7 +31,6 @@ test('[Positive] It can create DID with mandatory properties (Form based + Indy 
 
     // Check mandatory properties
     expect(didDocument.id.split(":")[2]).toBe(NETWORK.TESTNET);
-    // TODO: Add check for checking ID is Indy Style identifier
     expect(didDocument.verificationMethod[0].type).toBe(VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020);
 });
 
@@ -57,7 +56,6 @@ test('[Positive] It can create DID with mandatory and optional properties (Form 
 
     // Check mandatory properties
     expect(body.did.split(":")[2]).toBe(NETWORK.TESTNET);
-    // TODO: Add check for checking ID is UUID identifier
     expect(body.controllerKeyId).toBe(kid);
 
     // resolve a created DID
@@ -114,7 +112,6 @@ test('[Positive] It can create  DID with mandatory properties (JSON based + Indy
 
     // Check mandatory properties
     expect(didDocument.id.split(":")[2]).toBe(NETWORK.TESTNET);
-    // TODO: Add check for checking ID is Indy Style identifier
     expect(didDocument.verificationMethod[0].type).toBe(VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020);
 });
 

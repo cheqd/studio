@@ -170,7 +170,7 @@ test('[Negative] It cannot create DID without DidDocument in request body (JSON 
         headers: { "Content-Type": "application/json" }
     });
     expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
-    expect(await response.text()).toEqual(expect.stringContaining("Provide a DID Document or the network type to create a DID"));
+    expect(await response.text()).toEqual(expect.stringContaining("Provide a DID Document or the VerificationMethodType to create a DID"));
 });
 
 test('[Negative] It cannot create DID in mainnet network for user with testnet role', async ({ request }) => {
