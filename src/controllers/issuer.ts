@@ -239,6 +239,13 @@ export class IssuerController {
 			if (request.body.didDocument) {
 				didDocument = request.body.didDocument;
 				if (options) {
+					if (options.key) {
+						if (!(await new IdentityServiceStrategySetup(response.locals.customerId).agent.getKey(key))) {
+							return response.status(StatusCodes.NOT_FOUND).json({
+								error: 'Provide an existing key'
+							});
+						}
+					}
 					const publicKeyHex = options.key || (await new IdentityServiceStrategySetup(response.locals.customerId).agent.createKey(
 						'Ed25519',
 						response.locals.customerId
@@ -273,20 +280,26 @@ export class IssuerController {
 					didDocument['@context'] = request.body['@context'];
 				}
 				if (typeof request.body['@context'] === 'string') {
-					didDocument['@context'] = [request.body['@context']] ;
+					didDocument['@context'] = [request.body['@context']];
 				}
 
 				if (service) {
 					if (Array.isArray(service)) {
-						const services = JSON.parse(`[${service.toString()}]`);
-						didDocument.service = [];
-						for (const service of services) {
-							didDocument.service.push({
-								id: `${didDocument.id}#${service.idFragment}`,
-								type: service.type,
-								serviceEndpoint: service.serviceEndpoint,
-							})
-						}
+						try {
+							const services = JSON.parse(`[${service.toString()}]`);
+							didDocument.service = [];
+							for (const service of services) {
+								didDocument.service.push({
+									id: `${didDocument.id}#${service.idFragment}`,
+									type: service.type,
+									serviceEndpoint: service.serviceEndpoint,
+								})
+							}
+						} catch (e) {
+							return response.status(StatusCodes.BAD_REQUEST).json({
+								error: 'Provide the correct service section to create a DID',
+							});
+						};
 					} else {
 						didDocument.service = [{
 							id: `${didDocument.id}#${service.idFragment}`,
@@ -297,7 +310,7 @@ export class IssuerController {
 				}
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'Provide a DID Document or the network type to create a DID',
+					error: 'Provide a DID Document or the VerificationMethodType to create a DID',
 				});
 			}
 

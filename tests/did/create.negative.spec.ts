@@ -23,8 +23,7 @@ test('[Negative] It cannot create DID with missed verificationMethodType field i
         headers: { "Content-Type": "application/x-www-form-urlencoded" }
     });
     expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
-    // TODO: change error message
-    expect(await response.text()).toEqual(expect.stringContaining("Provide a DID Document or the network type to create a DID"));
+    expect(await response.text()).toEqual(expect.stringContaining("Provide a DID Document or the VerificationMethodType to create a DID"));
 });
 
 test('[Negative] It cannot create DID with not existent key in request body (Form based)', async ({ request }) => {
@@ -35,8 +34,7 @@ test('[Negative] It cannot create DID with not existent key in request body (For
         headers: { "Content-Type": "application/x-www-form-urlencoded" }
     });
     expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
-    // TODO: change error message
-    expect(await response.text()).toEqual(expect.stringContaining("Provide a DID Document or the network type to create a DID"));
+    expect(await response.text()).toEqual(expect.stringContaining("Provide a DID Document or the VerificationMethodType to create a DID"));
 });
 
 test('[Negative] It cannot create DID with not existent key in request body (JSON based)', async ({ request }) => {
@@ -61,9 +59,8 @@ test('[Negative] It cannot create DID with not existent key in request body (JSO
         },
         headers: { "Content-Type": "application/json" }
     });
-    // TODO: change status code to 404
-    expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
-    expect(await response.text()).toEqual(expect.stringContaining("Key not found"));
+    expect(response.status()).toBe(StatusCodes.NOT_FOUND);
+    expect(await response.text()).toEqual(expect.stringContaining("Provide an existing key"));
 });
 
 test('[Negative] It cannot create DID with an invalid VerificationMethodType in request body (JSON based)', async ({ request }) => {
@@ -87,7 +84,6 @@ test('[Negative] It cannot create DID with an invalid VerificationMethodType in 
         },
         headers: { "Content-Type": "application/json" }
     });
-    // TODO: change status code
     expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
     expect(await response.text()).toEqual(expect.stringContaining("Unsupported verificationMethod type"));
 });
@@ -113,7 +109,6 @@ test('[Negative] It cannot create DID with an invalid length of id in DIDDocumen
         },
         headers: { "Content-Type": "application/json" }
     });
-    // change status code
     expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
     expect(await response.text()).toEqual(expect.stringContaining("unique id should be one of: 16 bytes of decoded base58 string or UUID"));
 });
@@ -138,7 +133,6 @@ test('[Negative] It cannot create DID with an invalid id format in DIDDocument i
         },
         headers: { "Content-Type": "application/json" }
     });
-    // TODO: change status code
     expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
     expect(await response.text()).toEqual(expect.stringContaining("unable to split did into method, namespace and id"));
 });
@@ -161,7 +155,6 @@ test('[Negative] It cannot create DID without VerificationMethodType in request 
         headers: { "Content-Type": "application/json" }
     });
     expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
-    // TODO: Change error message
     expect(await response.text()).toEqual(expect.stringContaining("Provide options section to create a DID"));
 });
 
