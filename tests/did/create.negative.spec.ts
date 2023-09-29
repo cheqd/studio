@@ -34,7 +34,7 @@ test('[Negative] It cannot create DID with not existent key in request body (For
         headers: { "Content-Type": "application/x-www-form-urlencoded" }
     });
     expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
-    expect(await response.text()).toEqual(expect.stringContaining("Customer not found"));
+    expect(await response.text()).toEqual(expect.stringContaining("Key not found"));
 });
 
 test('[Negative] It cannot create DID with not existent key in request body (JSON based)', async ({ request }) => {
@@ -60,7 +60,7 @@ test('[Negative] It cannot create DID with not existent key in request body (JSO
         headers: { "Content-Type": "application/json" }
     });
     expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
-    expect(await response.text()).toEqual(expect.stringContaining("Customer not found"));
+    expect(await response.text()).toEqual(expect.stringContaining("Key not found"));
 });
 
 test('[Negative] It cannot create DID with an invalid VerificationMethodType in request body (JSON based)', async ({ request }) => {
