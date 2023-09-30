@@ -133,8 +133,8 @@ test('[Negative] It cannot create DID with an invalid id format in DIDDocument i
         },
         headers: { "Content-Type": "application/json" }
     });
-    expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
-    expect(await response.text()).toEqual(expect.stringContaining("unable to split did into method, namespace and id"));
+    expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
+    expect(await response.text()).toEqual(expect.stringContaining("Invalid didDocument"));
 });
 
 test('[Negative] It cannot create DID without VerificationMethodType in request body (JSON based)', async ({ request }) => {
@@ -155,7 +155,7 @@ test('[Negative] It cannot create DID without VerificationMethodType in request 
         headers: { "Content-Type": "application/json" }
     });
     expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
-    expect(await response.text()).toEqual(expect.stringContaining("Provide options section to create a DID"));
+    expect(await response.text()).toEqual(expect.stringContaining("Invalid didDocument"));
 });
 
 test('[Negative] It cannot create DID without DidDocument in request body (JSON based)', async ({ request }) => {
