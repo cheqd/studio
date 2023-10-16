@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.10.0-develop.1](https://github.com/cheqd/credential-service/compare/2.9.4-develop.3...2.10.0-develop.1) (2023-10-16)
+
+
+### Features
+
+* Improve /did/create API [DEV-3197] ([#388](https://github.com/cheqd/credential-service/issues/388)) ([9791dc6](https://github.com/cheqd/credential-service/commit/9791dc606e7afdf37ad1b78af68b3c6e45d9883f))
+
+## [2.9.4-develop.3](https://github.com/cheqd/credential-service/compare/2.9.4-develop.2...2.9.4-develop.3) (2023-09-29)
+
+
+### Bug Fixes
+
+* Investigate frequent logouts on Credential Service [DEV-3251] ([#395](https://github.com/cheqd/credential-service/issues/395)) ([14693c3](https://github.com/cheqd/credential-service/commit/14693c34d4875314dbdc175f99bfe704b0b7a797))
+
 ## [2.9.4-develop.2](https://github.com/cheqd/credential-service/compare/2.9.4-develop.1...2.9.4-develop.2) (2023-09-20)
 
 ## [2.9.4-develop.1](https://github.com/cheqd/credential-service/compare/2.9.3...2.9.4-develop.1) (2023-09-20)

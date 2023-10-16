@@ -66,6 +66,16 @@ export function toDefaultDkg(did: string): DkgOptions {
 	}
 }
 
+export function validateDidCreatePayload(didDocument: DIDDocument): SpecValidationResult {
+	if (!didDocument) return { valid: true };
+
+	// id is required, validated on both compile and runtime
+	if (!didDocument.id || !didDocument.id.startsWith('did:cheqd:')) return { valid: false, error: 'id is required' };
+
+	if (!isValidService(didDocument)) return { valid: false, error: 'Service is Invalid' };
+	return { valid: true } as SpecValidationResult;
+}
+
 export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecValidationResult {
 	// id is required, validated on both compile and runtime
 	if (!didDocument.id && !didDocument.id.startsWith('did:cheqd:')) return { valid: false, error: 'id is required' };
@@ -92,8 +102,8 @@ export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecVali
 export function isValidService(didDocument: DIDDocument): boolean {
 	return didDocument.service
 		? didDocument?.service?.every((s) => {
-				return s?.serviceEndpoint && s?.id && s?.type;
-		  })
+			return s?.serviceEndpoint && s?.id && s?.type;
+		})
 		: true;
 }
 

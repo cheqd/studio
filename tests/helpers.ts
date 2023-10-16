@@ -8,7 +8,7 @@ import {
 
 export const buildSimpleCreateDID = (network = 'testnet') => {
 	return {
-		methodSpecificIdAlgo: 'uuid',
+		identifierFormatType: 'uuid',
 		verificationMethodType: 'Ed25519VerificationKey2018',
 		assertionMethod: true,
 		network: network,
@@ -137,3 +137,16 @@ export const buildSimpleIssueCredentialRequest = (
 		},
 	};
 };
+
+export const buildSimpleService = (
+	idFragment = "service-1",
+	type = "LinkedDomains",
+	serviceEndpoint = ["https://example.com"]
+) => {
+	return {
+		idFragment: idFragment,
+		type: type,
+		serviceEndpoint: serviceEndpoint
+	};
+};
+

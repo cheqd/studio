@@ -726,7 +726,57 @@
  *             type: LinkedDomains
  *             serviceEndpoint:
  *               - https://example.com
- *     DidCreateRequest:
+  *     DidDocumentWithoutVerificationMethod:
+ *       type: object
+ *       properties:
+ *         '@context':
+ *           type: array
+ *           items:
+ *             type: string
+ *         id:
+ *          type: string
+ *         controllers:
+ *           type: array
+ *           items:
+ *             type: string
+ *         service:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Service'
+ *         authentication:
+ *           type: array
+ *           items:
+ *             type: string
+ *         assertionMethod:
+ *           type: array
+ *           items:
+ *             type: string
+ *         capabilityInvocation:
+ *           type: array
+ *           items:
+ *             type: string
+ *         capabilityDelegation:
+ *           type: array
+ *           items:
+ *             type: string
+ *         keyAgreement:
+ *           type: array
+ *           items:
+ *             type: string
+ *       example:
+ *         '@context':
+ *           - https://www.w3.org/ns/did/v1
+ *         id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
+ *         controller:
+ *           - did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
+ *         authentication:
+ *           - did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1
+ *         service:
+ *           - id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1
+ *             type: LinkedDomains
+ *             serviceEndpoint:
+ *               - https://example.com
+ *     DidCreateRequestFormBased:
  *       type: object
  *       properties:
  *         network:
@@ -735,7 +785,7 @@
  *           enum:
  *             - testnet
  *             - mainnet
- *         methodSpecificIdAlgo:
+ *         identifierFormatType:
  *           description: Algorithm to use for generating the method-specific ID. The two styles supported are UUIDs and Indy-style Base58. See <a href="https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#cheqd-did-method-did-cheqd">cheqd DID method documentation</a> for more details.
  *           type: string
  *           enum:
@@ -748,12 +798,67 @@
  *             - Ed25519VerificationKey2018
  *             - JsonWebKey2020
  *             - Ed25519VerificationKey2020
+ *         service:
+ *           description: Communicating or interacting with the DID subject or associated entities via one or more service endpoints. See <a href="https://www.w3.org/TR/did-core/#services">DID Core specification</a> for more details.
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               idFragment:
+ *                 type: string
+ *                 example: service-1
+ *               type:
+ *                 type: string
+ *                 example: LinkedDomains
+ *               serviceEndpoint:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   example: https://example.com
+ *         key:
+ *           description: The unique identifier in hexadecimal public key format used in the verification method to create the DID.
+ *           type: string
+ *         '@context':
+ *           type: array
+ *           items:
+ *             type: string
+ *           example:
+ *             - https://www.w3.org/ns/did/v1
+ *
+ *     DidCreateRequestJson:
+ *       type: object
+ *       properties:
+ *         network:
+ *           description: Network to create the DID on (testnet or mainnet)
+ *           type: string
+ *           enum:
+ *             - testnet
+ *             - mainnet
+ *         identifierFormatType:
+ *           description: Algorithm to use for generating the method-specific ID. The two styles supported are UUIDs and Indy-style Base58. See <a href="https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#cheqd-did-method-did-cheqd">cheqd DID method documentation</a> for more details.
+ *           type: string
+ *           enum:
+ *             - uuid
+ *             - base58btc
  *         assertionMethod:
  *           description: Usually a reference to a Verification Method. An Assertion Method is required to issue JSON-LD credentials. See <a href="https://w3c.github.io/did-core/#assertion">DID Core specification</a> for more details.
  *           type: boolean
  *           default: true
+ *         options:
+ *           type: object
+ *           properties:
+ *             key:
+ *               type: string
+ *               example: 8255ddadd75695e01f3d98fcec8ccc7861a030b317d4326b0e48a4d579ddc43a
+ *             verificationMethodType:
+ *               description: Type of verification method to use for the DID. See <a href="https://www.w3.org/TR/did-core/#verification-methods">DID Core specification</a> for more details. Only the types listed below are supported.
+ *               type: string
+ *               enum:
+ *                 - Ed25519VerificationKey2018
+ *                 - JsonWebKey2020
+ *                 - Ed25519VerificationKey2020
  *         didDocument:
- *           $ref: '#/components/schemas/DidDocument'
+ *           $ref: '#/components/schemas/DidDocumentWithoutVerificationMethod'
  *     DidResult:
  *       type: object
  *       properties:
@@ -790,6 +895,7 @@
  *         publicKeyBase58: BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt
  *         type: Ed25519VerificationKey2018
  *     Service:
+ *       description: Communicating or interacting with the DID subject or associated entities via one or more service endpoints. See <a href="https://www.w3.org/TR/did-core/#services">DID Core specification</a> for more details.
  *       type: object
  *       properties:
  *         id:
