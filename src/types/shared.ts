@@ -29,8 +29,9 @@ import type { ICredentialIssuerLD } from '@veramo/credential-ld';
 import type { AbstractIdentifierProvider } from '@veramo/did-manager';
 import type { AbstractKeyManagementSystem } from '@veramo/key-manager';
 import type { DataSource } from 'typeorm';
-import { CheqdNetwork } from '@cheqd/sdk';
+import { CheqdNetwork, MethodSpecificIdAlgo, Service, VerificationMethods } from '@cheqd/sdk';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2';
+import type { DIDDocument } from 'did-resolver';
 
 const DefaultUuidPattern = '([a-zA-Z0-9-]{36})';
 const DefaultMethodSpecificIdPattern = `(?:[a-zA-Z0-9]{21,22}|${DefaultUuidPattern})`;
@@ -59,6 +60,20 @@ export type MinimalPaymentCondition = {
 	feePaymentAddress: string;
 	feePaymentAmount: number; // in CHEQ, decimals are allowed, strictly up to 2 decimal points, e.g. 1.5 CHEQ, 1.55 CHEQ
 	feePaymentWindow: number; // in minutes, strictly integer, e.g. 5 minutes, 10 minutes
+};
+
+export type CreateDidRequestBody = {
+	didDocument?: DIDDocument
+	identifierFormatType: MethodSpecificIdAlgo;
+	network: CheqdNetwork;
+	verificationMethodType?: VerificationMethods;
+	service?: Service | Service[];
+	'@context'?: string | string[];
+	key?: string;
+	options?: {
+		verificationMethodType: VerificationMethods;
+		key: string;
+	};
 };
 
 export type CreateUnencryptedStatusListRequestBody = {
