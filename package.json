@@ -1,6 +1,6 @@
 {
 	"name": "@cheqd/credential-service",
-	"version": "2.9.4-develop.2",
+	"version": "2.10.0-develop.1",
 	"description": "cheqd Credential Service Backend",
 	"source": "src/index.ts",
 	"main": "dist/index.js",
@@ -49,7 +49,7 @@
 	],
 	"dependencies": {
 		"@cheqd/did-provider-cheqd": "^3.6.8",
-		"@cheqd/sdk": "^3.7.0",
+		"@cheqd/sdk": "^3.7.1",
 		"@cheqd/ts-proto": "^3.3.1",
 		"@cosmjs/amino": "^0.31.1",
 		"@cosmjs/encoding": "^0.31.1",
@@ -96,7 +96,7 @@
 		"@semantic-release/git": "^10.0.1",
 		"@semantic-release/github": "^9.0.6",
 		"@semantic-release/npm": "^11.0.0",
-		"@semantic-release/release-notes-generator": "^11.0.7",
+		"@semantic-release/release-notes-generator": "^12.0.0",
 		"@types/cookie-parser": "^1.4.4",
 		"@types/cors": "^2.8.14",
 		"@types/debug": "^4.1.8",
