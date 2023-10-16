@@ -44,18 +44,6 @@ CREATE TYPE public.categoryenum AS ENUM (
 ALTER TYPE public.categoryenum OWNER TO veramo;
 
 --
--- Name: namespace; Type: TYPE; Schema: public; Owner: veramo
---
-
-CREATE TYPE public.namespace AS ENUM (
-    'testnet',
-    'mainnet'
-);
-
-
-ALTER TYPE public.namespace OWNER TO veramo;
-
---
 -- Name: namespaceenum; Type: TYPE; Schema: public; Owner: veramo
 --
 
@@ -66,34 +54,6 @@ CREATE TYPE public.namespaceenum AS ENUM (
 
 
 ALTER TYPE public.namespaceenum OWNER TO veramo;
-
---
--- Name: networkenum; Type: TYPE; Schema: public; Owner: veramo
---
-
-CREATE TYPE public.networkenum AS ENUM (
-    'testnet',
-    'mainnet'
-);
-
-
-ALTER TYPE public.networkenum OWNER TO veramo;
-
---
--- Name: operationenum; Type: TYPE; Schema: public; Owner: veramo
---
-
-CREATE TYPE public.operationenum AS ENUM (
-    'create',
-    'update',
-    'revoke',
-    'suspend',
-    'deactivate',
-    'reinstate'
-);
-
-
-ALTER TYPE public.operationenum OWNER TO veramo;
 
 --
 -- Name: paymentdirectionenum; Type: TYPE; Schema: public; Owner: veramo
@@ -159,8 +119,8 @@ ALTER TABLE public.credential OWNER TO veramo;
 CREATE TABLE public.customer (
     "customerId" uuid NOT NULL,
     name character varying,
-    "createdAt" date NOT NULL,
-    "updatedAt" date
+    "createdAt" timestamp with time zone NOT NULL,
+    "updatedAt" timestamp with time zone
 );
 
 
@@ -174,7 +134,7 @@ CREATE TABLE public.identifier (
     did character varying NOT NULL,
     provider character varying,
     alias character varying,
-    "saveDate" timestamp without time zone NOT NULL,
+    "saveDate" timestamp with time zone NOT NULL,
     "updateDate" timestamp without time zone NOT NULL,
     "controllerKeyId" character varying,
     "customerId" uuid
@@ -196,8 +156,8 @@ CREATE TABLE public.key (
     "identifierDid" character varying,
     "publicKeyAlias" character varying,
     "customerId" uuid,
-    "createdAt" date,
-    "updatedAt" date
+    "createdAt" timestamp with time zone,
+    "updatedAt" timestamp with time zone
 );
 
 
@@ -296,8 +256,8 @@ CREATE TABLE public.operation (
     "operationName" character varying NOT NULL,
     "defaultFee" bigint,
     deprecated boolean DEFAULT false NOT NULL,
-    "createdAt" date NOT NULL,
-    "updatedAt" date
+    "createdAt" timestamp with time zone NOT NULL,
+    "updatedAt" timestamp with time zone
 );
 
 
@@ -316,7 +276,7 @@ CREATE TABLE public.payment (
     "resourceId" uuid,
     "paymentAddress" character varying NOT NULL,
     "operationId" uuid NOT NULL,
-    "timestamp" date
+    "timestamp" timestamp with time zone
 );
 
 
@@ -330,10 +290,10 @@ CREATE TABLE public."paymentAccount" (
     namespace public.namespaceenum DEFAULT 'testnet'::public.namespaceenum NOT NULL,
     "customerId" uuid NOT NULL,
     kid character varying NOT NULL,
-    "createdAt" date NOT NULL,
+    "createdAt" timestamp with time zone NOT NULL,
     address character varying NOT NULL,
     "isDefault" boolean DEFAULT false NOT NULL,
-    "updatedAt" date
+    "updatedAt" timestamp with time zone
 );
 
 
@@ -407,11 +367,12 @@ CREATE TABLE public.resource (
     "resourceType" character varying,
     "mediaType" character varying NOT NULL,
     "previousVersionId" uuid,
-    "createdAt" date NOT NULL,
+    "createdAt" timestamp with time zone NOT NULL,
     "nextVersionId" uuid,
     "customerId" uuid NOT NULL,
-    "updatedAt" date,
-    "symmetricKey" character varying
+    "updatedAt" timestamp with time zone,
+    "symmetricKey" character varying,
+    encrypted boolean DEFAULT false NOT NULL
 );
 
 
@@ -459,9 +420,9 @@ ALTER TABLE public.service OWNER TO veramo;
 CREATE TABLE public."user" (
     "logtoId" character varying NOT NULL,
     "customerId" uuid NOT NULL,
-    "createdAt" date NOT NULL,
+    "createdAt" timestamp with time zone NOT NULL,
     "roleTypeId" uuid,
-    "updatedAt" date
+    "updatedAt" timestamp with time zone
 );
 
 
@@ -490,7 +451,6 @@ ALTER TABLE ONLY public.migrations ALTER COLUMN id SET DEFAULT nextval('public.m
 -- Data for Name: customer; Type: TABLE DATA; Schema: public; Owner: veramo
 --
 
-INSERT INTO public.customer ("customerId", name, "createdAt", "updatedAt") VALUES ('dffb307f-2e61-4e4b-ac64-167ed993800c', 'Sergey', '2023-09-13', NULL);
 
 
 --
@@ -503,7 +463,6 @@ INSERT INTO public.customer ("customerId", name, "createdAt", "updatedAt") VALUE
 -- Data for Name: key; Type: TABLE DATA; Schema: public; Owner: veramo
 --
 
-INSERT INTO public.key (kid, kms, type, "publicKeyHex", meta, "identifierDid", "publicKeyAlias", "customerId", "createdAt", "updatedAt") VALUES ('05a0b0b2df2278ec5910042f6bf5fe7ee9009102b9c6dab5d43745e96a14f5f66ff96b9a654793cb95895eef700f0903f030966802b48247294abe3c583dd221b0', 'postgres', 'Ed25519', '05a0b0b2df2278ec5910042f6bf5fe7ee9009102b9c6dab5d43745e96a14f5f66ff96b9a654793cb95895eef700f0903f030966802b48247294abe3c583dd221b0', '{"algorithms":["ES256K","ES256K-R","eth_signTransaction","eth_signTypedData","eth_signMessage","eth_rawSign"]}', NULL, 'SergeyKey', 'dffb307f-2e61-4e4b-ac64-167ed993800c', '2023-09-13', NULL);
 
 
 --
