@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.10.0-develop.1](https://github.com/cheqd/credential-service/compare/2.9.4-develop.3...2.10.0-develop.1) (2023-10-16)
+
+
+### Features
+
+* Improve /did/create API [DEV-3197] ([#388](https://github.com/cheqd/credential-service/issues/388)) ([9791dc6](https://github.com/cheqd/credential-service/commit/9791dc606e7afdf37ad1b78af68b3c6e45d9883f))
+
 ## [2.9.4-develop.3](https://github.com/cheqd/credential-service/compare/2.9.4-develop.2...2.9.4-develop.3) (2023-09-29)
 
 
