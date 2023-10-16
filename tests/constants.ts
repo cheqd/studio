@@ -13,3 +13,27 @@ export const DEFAULT_SUBJECT_DID = 'did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLG
 // Messages
 export const DEFAULT_DOES_NOT_HAVE_PERMISSIONS =
 	'Unauthorized error: Your account is not authorized to carry out this action.';
+
+export const DEFAULT_CONTEXT="https://www.w3.org/ns/did/v1"
+
+export const NOT_EXISTENT_KEY = "88888888888895e01f3d98fcec8ccc7861a030b317d4326b0e48a88888888888"
+export const NOT_SUPPORTED_VERIFICATION_METHOD_TYPE = "not_supported_vm_type"
+
+export const INVALID_ID = "invalid_id";
+export const INVALID_DID = "invalid_did";
+
+export enum NETWORK {
+	MAINNET = "mainnet",
+	TESTNET = "testnet"
+};
+
+export enum ID_TYPE {
+	UUID = "uuid",
+	BASE58BTC = "base58btc"
+};
+
+export enum VERIFICATION_METHOD_TYPES {
+	Ed25519VerificationKey2018 = "Ed25519VerificationKey2018",
+	Ed25519VerificationKey2020 = "Ed25519VerificationKey2020",
+	JsonWebKey2020 = "JsonWebKey2020"
+};
