@@ -1,22 +1,17 @@
-import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
+import { Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import * as dotenv from 'dotenv';
 import { Identifier } from '@veramo/data-store';
+import { CustomerEntity } from './customer.entity.js';
 
 dotenv.config();
 
 @Entity('identifier')
 export class IdentifierEntity extends Identifier {
 
-    @RelationId((key: IdentifierEntity) => key.customer)
-    @Column({
-        type: 'uuid',
-        nullable: false,
-    })
-    customerId!: string;
-
-    @ManyToOne(() => IdentifierEntity, customer => customer.customerId, { onDelete: 'CASCADE' })
-    customer!: IdentifierEntity;
+    @ManyToOne(() => CustomerEntity, customer => customer.customerId, { onDelete: 'CASCADE' })
+    @JoinColumn({name: "customerId"})
+    customer!: CustomerEntity;
 	
 	constructor() {
 		super();

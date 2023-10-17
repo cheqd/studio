@@ -1,28 +1,16 @@
-import { BeforeInsert, Column, Entity, ManyToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm';
+import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import * as dotenv from 'dotenv';
 import { Identifier, Key } from '@veramo/data-store';
 import { CustomerEntity } from './customer.entity.js';
+import type { IdentifierEntity } from './identifier.entity.js';
+import type { KeyEntity } from './key.entity.js';
 dotenv.config();
 
 @Entity('resource')
 export class ResourceEntity {
 	@PrimaryGeneratedColumn('uuid')
 	resourceId!: string;
-
-    @RelationId((resource: ResourceEntity) => resource.identifier)
-	@Column({
-        type: 'text',
-        nullable: false,
-    })
-    identifierDid!: string;
-
-    @RelationId((resource: ResourceEntity) => resource.key)
-    @Column({
-        type: 'text',
-        nullable: false,
-    })
-    kid!: string;
 
     @Column({
         type: 'text',
@@ -54,13 +42,6 @@ export class ResourceEntity {
     })
     nextVersionId!: string;
 
-    @RelationId((resource: ResourceEntity) => resource.customer)
-    @Column({
-        type: 'uuid',
-        nullable: false,
-    })
-    customerId!: string;
-
     @Column({
         type: 'bool',
         default: false,
@@ -87,20 +68,23 @@ export class ResourceEntity {
 	}
 
     @ManyToOne(() => Identifier, identifier => identifier.did, { onDelete: 'CASCADE' })
+    @JoinColumn({name: "identifierDid"})
     identifier!: Identifier;
 
     @ManyToOne(() => Key, key => key.kid, { onDelete: 'CASCADE' })
+    @JoinColumn({name: "kid"})
     key!: Key;
 
     @ManyToOne(() => CustomerEntity, customer => customer.customerId, { onDelete: 'CASCADE' })
+    @JoinColumn({name: "customerId"})
     customer!: CustomerEntity;
 
-	constructor(identifierDid: string, kid: string, resourceName: string, resourceType: string, mediaType: string, customerId: string) {
-        this.identifierDid = identifierDid;
-        this.kid = kid;
+	constructor(identifier: IdentifierEntity, key: KeyEntity, resourceName: string, resourceType: string, mediaType: string, customer: CustomerEntity) {
+        this.identifier = identifier;
+        this.key = key;
         this.resourceName = resourceName;
         this.resourceType = resourceType;
         this.mediaType = mediaType;
-        this.customerId = customerId;
+        this.customer = customer;
     }
 }

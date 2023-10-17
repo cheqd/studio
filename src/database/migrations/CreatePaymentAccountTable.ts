@@ -1,4 +1,5 @@
 import { MigrationInterface, QueryRunner, Table, TableForeignKey } from 'typeorm';
+import { namespaceEnum } from '../types/enum.js';
 
 export class CreatePaymentAccountTable1695740345977 implements MigrationInterface {
 	public async up(queryRunner: QueryRunner): Promise<void> {
@@ -6,7 +7,7 @@ export class CreatePaymentAccountTable1695740345977 implements MigrationInterfac
             name: 'paymentAccount',
             columns: [
                 {name: "address", type: "text", "isNullable": false, isPrimary: true},
-                {name: "namespace", type: "text", "isNullable": false},
+                {name: "namespace", type: "enum", "isNullable": false, enum: namespaceEnum.toStringList()},
                 {name: "isDefault", type: "bool", "isNullable": false, default: false},
                 {name: "customerId", type: "uuid", "isNullable": false},
                 {name: "kid", type: "text", "isNullable": false},
