@@ -61,6 +61,13 @@ export class ResourceEntity {
     })
     customerId!: string;
 
+    @Column({
+        type: 'bool',
+        default: false,
+        nullable: false,
+    })
+    encrypted!: boolean;
+
     // Should be encrypted in the same way as the privateKeyHex in the private-key table
     @Column({
         type: 'text',

@@ -3,11 +3,11 @@ import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, RelationId } fro
 import * as dotenv from 'dotenv';
 import { Key } from '@veramo/data-store';
 import { CustomerEntity } from './customer.entity.js';
+import type { TKeyType } from '@veramo/core';
 dotenv.config();
 
 @Entity('key')
 export class KeyEntity extends Key {
-
     @RelationId((key: KeyEntity) => key.customer)
     @Column({
         type: 'uuid',
@@ -46,8 +46,11 @@ export class KeyEntity extends Key {
     @ManyToOne(() => CustomerEntity, customer => customer.customerId, { onDelete: 'CASCADE' })
     customer!: CustomerEntity;
 	
-	constructor(kid: string, type: string, publicKeyHex: string,) {
-		super();
+	constructor(kid: string, type: TKeyType, publicKeyHex: string,) {
+        super();
+		this.kid = kid;
+        this.type = type;
+        this.publicKeyHex = publicKeyHex;
         this.publicKeyAlias = '';
 	}
 }

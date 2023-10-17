@@ -15,7 +15,7 @@ export class CreatePaymentTable1695740345977 implements MigrationInterface {
                 {name: "identifierDid", type: "text", "isNullable": false},
                 {name: "resourceId", type: "uuid", "isNullable": false},
                 {name: "paymentAddress", type: "text", "isNullable": false},
-                {name: "createdAt", type: "date", "isNullable": false},
+                {name: "createdAt", type: "timestamptz", "isNullable": false},
             ],
         });
 		await queryRunner.createTable(

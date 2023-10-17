@@ -14,9 +14,11 @@ export class CreateResourceTable1695740345977 implements MigrationInterface {
                 {name: "previousVersionId", type: "text", "isNullable": false},
                 {name: "nextVersionId", type: "text", "isNullable": false},
                 {name: "customerId", type: "uuid", "isNullable": false},
+                {name: "encrypted", type: "bool", "isNullable": false, default: false},
                 {name: "symmetricKey", type: "text", "isNullable": true},
 
-                {name: "createdAt", type: "date", "isNullable": false},
+                {name: "createdAt", type: "timestamptz", "isNullable": false},
+                {name: "updatedAt", type: "timestamptz", "isNullable": false},
 
 
             ],

@@ -8,8 +8,8 @@ export class CreateCustomerTable1695740345977 implements MigrationInterface {
 				columns: [
 					{ name: 'customerId', type: 'uuid', isPrimary: true, generationStrategy: 'uuid', isGenerated: true },
                     { name: 'name', type: 'text', isNullable: false },
-					{ name: 'createdAt', type: 'date', isNullable: false },
-                    { name: 'updatedAt', type: 'date', isNullable: true },
+					{ name: 'createdAt', type: 'timestamptz', isNullable: false },
+                    { name: 'updatedAt', type: 'timestamptz', isNullable: true },
 				],
 			}),
 			true

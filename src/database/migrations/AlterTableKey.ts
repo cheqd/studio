@@ -16,7 +16,7 @@ export class AlterTableKey1695740345977 implements MigrationInterface {
             table_name,
             new TableColumn({
                 name: 'createdAt',
-                type: 'date',
+                type: 'timestamptz',
                 "isNullable": true,
             })
         );
@@ -25,7 +25,7 @@ export class AlterTableKey1695740345977 implements MigrationInterface {
             table_name,
             new TableColumn({
                 name: 'updatedAt',
-                type: 'date',
+                type: 'timestamptz',
                 "isNullable": true,
             })
         );

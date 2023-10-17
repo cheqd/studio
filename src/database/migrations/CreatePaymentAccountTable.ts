@@ -10,8 +10,8 @@ export class CreatePaymentAccountTable1695740345977 implements MigrationInterfac
                 {name: "isDefault", type: "bool", "isNullable": false, default: false},
                 {name: "customerId", type: "uuid", "isNullable": false},
                 {name: "kid", type: "text", "isNullable": false},
-                {name: "createdAt", type: "date", "isNullable": false},
-                {name: "updatedAt", type: "date", "isNullable": true},
+                {name: "createdAt", type: "timestamptz", "isNullable": false},
+                {name: "updatedAt", type: "timestamptz", "isNullable": true},
 
             ],
         });

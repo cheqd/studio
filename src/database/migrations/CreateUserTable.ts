@@ -8,8 +8,8 @@ export class CreateUserTable1695740345977 implements MigrationInterface {
                 {name: "logToId", type: "text", "isNullable": false, isPrimary: true},
                 {name: "customerId", type: "uuid", "isNullable": false},
                 {name: "roleTypeId", type: "uuid", "isNullable": false},
-                {name: "createdAt", type: "date", "isNullable": false},
-                {name: "updatedAt", type: "date", "isNullable": true},
+                {name: "createdAt", type: "timestamptz", "isNullable": false},
+                {name: "updatedAt", type: "timestamptz", "isNullable": true},
             ],
         });
 		await queryRunner.createTable(

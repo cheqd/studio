@@ -36,7 +36,8 @@ export class CustomerEntity {
 	  this.updatedAt = new Date()
 	}
 
-	constructor(name: string) {
+	constructor(customerId: string, name: string) {
+		this.customerId = customerId;
 		this.name = name;
 	}
 }

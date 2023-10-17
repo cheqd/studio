@@ -12,8 +12,8 @@ export class CreateOperationTable1695740345977 implements MigrationInterface {
                     {name: "operationName", type: "text", "isNullable": false},
                     {name: "defaultFee", type: "bigint", "isNullable": false},
                     {name: "deprecated", type: "bool", "isNullable": false, default: false},
-                    {name: "createdAt", type: "date", "isNullable": false},
-                    {name: "updatedAt", type: "date", "isNullable": true},
+                    {name: "createdAt", type: "timestamptz", "isNullable": false},
+                    {name: "updatedAt", type: "timestamptz", "isNullable": true},
                 ]
             }))
 	}
