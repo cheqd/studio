@@ -33,7 +33,7 @@ export class PaymentEntity {
     fee!: number;
 
     @Column({
-        type: 'date',
+        type: 'timestamptz',
         nullable: false,
     })
     timestamp!: Date;

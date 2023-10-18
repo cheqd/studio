@@ -57,7 +57,7 @@ export class ResourceEntity {
     symmetricKey!: string;
 
 	@Column({
-		type: 'date',
+		type: 'timestamptz',
 		nullable: false,
 	})
 	createdAt!: Date;

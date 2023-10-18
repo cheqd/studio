@@ -37,13 +37,13 @@ export class OperationEntity {
     deprecated!: boolean;
 
 	@Column({
-		type: 'date',
+		type: 'timestamptz',
 		nullable: false,
 	})
 	createdAt!: Date;
 
 	@Column({
-		type: 'date',
+		type: 'timestamptz',
 		nullable: true,
 	})
 	updatedAt!: Date;

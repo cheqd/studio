@@ -15,13 +15,13 @@ export class KeyEntity extends Key {
     publicKeyAlias: string;
 
     @Column({
-		type: 'date',
+		type: 'timestamptz',
 		nullable: false,
 	})
 	createdAt!: Date;
 
 	@Column({
-		type: 'date',
+		type: 'timestamptz',
 		nullable: true,
 	})
 	updatedAt!: Date;

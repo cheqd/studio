@@ -11,7 +11,7 @@ export class CreatePaymentTable1695740345977 implements MigrationInterface {
                 {name: "operationId", type: "uuid", "isNullable": false},
                 {name: "direction", type: "enum", enum: directionEnum.toStringList(), "isNullable": false},
                 {name: "fee", type: "bigint", "isNullable": false},
-                {name: "timestamp", type: "date", "isNullable": false},
+                {name: "timestamp", type: "timestamptz", "isNullable": false},
                 {name: "identifierDid", type: "text", "isNullable": false},
                 {name: "resourceId", type: "uuid", "isNullable": false},
                 {name: "paymentAddress", type: "text", "isNullable": false},
