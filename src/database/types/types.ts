@@ -23,6 +23,8 @@ import { CreateCustomerTable1695740345977 } from '../migrations/CreateCustomerTa
 import { AlterTableClaim1695740345977 } from '../migrations/AlterTableClaim.js';
 import { AlterTableIdentifier1695740345977 } from '../migrations/AlterTableIdentifier.js';
 import { AlterTableKey1695740345977 } from '../migrations/AlterTableKey.js';
+import { KeyEntity } from '../entities/key.entity.js';
+import { IdentifierEntity } from '../entities/identifier.entity.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -79,7 +81,7 @@ export class Postgres implements AbstractDatabase {
 				AlterTableClaim1695740345977,
 				AlterTableIdentifier1695740345977,
 				AlterTableKey1695740345977],
-			entities: [...Entities, CustomerEntity, UserEntity, RoleEntity, OperationEntity, PaymentEntity, PaymentAccountEntity, ResourceEntity],
+			entities: [...Entities, CustomerEntity, UserEntity, RoleEntity, OperationEntity, PaymentEntity, PaymentAccountEntity, ResourceEntity, KeyEntity, IdentifierEntity],
 			logging: ['error', 'info', 'warn'],
 		});
 	}

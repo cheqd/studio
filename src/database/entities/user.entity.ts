@@ -1,4 +1,4 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import * as dotenv from 'dotenv';
 import { CustomerEntity } from './customer.entity.js';
@@ -18,14 +18,8 @@ export class UserEntity {
 	@JoinColumn({name: "customerId"})
     customer!: CustomerEntity;
 
-	@RelationId((user: UserEntity) => user.role)
-    @Column({
-        type: 'uuid',
-        nullable: false,
-    })
-	roleTypeId!: string;
-
     @ManyToOne(() => RoleEntity, role => role.roleTypeId, { onDelete: 'CASCADE' })
+	@JoinColumn({name: "roleTypeId"})
     role!: RoleEntity;
 
 	@Column({
@@ -50,8 +44,9 @@ export class UserEntity {
 	  this.updatedAt = new Date()
 	}
 
-	constructor(logToId: string, customer: CustomerEntity) {
+	constructor(logToId: string, customer: CustomerEntity, role: RoleEntity) {
 		this.logToId = logToId;
 		this.customer = customer;
+		this.role = role;
 	}
 }

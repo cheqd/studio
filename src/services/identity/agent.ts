@@ -70,8 +70,6 @@ import {
 } from '../../types/shared.js';
 import { MINIMAL_DENOM, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js';
 import { toCoin, toDefaultDkg, toMinimalDenom } from '../../helpers/helpers.js';
-import { KeyService } from '../key.js';
-import type { KeyEntity } from '../../database/entities/key.entity.js';
 
 // dynamic import to avoid circular dependency
 const VeridaResolver =
@@ -152,17 +150,16 @@ export class Veramo {
 		return createAgent({ plugins });
 	}
 
-	async createKey(agent: TAgent<IKeyManager>, type: 'Ed25519' | 'Secp256k1' = 'Ed25519', customerId?: string, keyAlias?: string): Promise<KeyEntity> {
+	async createKey(agent: TAgent<IKeyManager>, type: 'Ed25519' | 'Secp256k1' = 'Ed25519') {
 		const [kms] = await agent.keyManagerGetKeyManagementSystems();
-		const key = await agent.keyManagerCreate({
+		return await agent.keyManagerCreate({
 			type: type || 'Ed25519',
 			kms,
 		});
-		return  await KeyService.instance.update(key.kid, customerId, keyAlias);
 	}
 
-	async getKey(agent: TAgent<IKeyManager>, kid: string): Promise<KeyEntity | null> {
-		return await KeyService.instance.get(kid);
+	async getKey(agent: TAgent<IKeyManager>, kid: string) {
+		return await agent.keyManagerGet({ kid });
 	}
 
 	async createDid(agent: TAgent<IDIDManager>, network: string, didDocument: DIDDocument): Promise<IIdentifier> {

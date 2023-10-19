@@ -124,7 +124,7 @@ export class CredentialController {
 			request.body['@context'] = [request.body['@context']];
 		}
 
-		const resolvedResult = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(
+		const resolvedResult = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolve(
 			request.body.issuerDid
 		);
 		const body = await resolvedResult.json();
@@ -141,7 +141,7 @@ export class CredentialController {
 		try {
 			const credential: VerifiableCredential = await Credentials.instance.issue_credential(
 				request.body,
-				response.locals.customerId
+				response.locals.customer
 			);
 			return response.status(StatusCodes.OK).json(credential);
 		} catch (error) {
@@ -220,7 +220,7 @@ export class CredentialController {
 		}
 
 		if (!allowDeactivatedDid) {
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(issuerDid);
+			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolve(issuerDid);
 			const body = await result.json();
 			if (!body?.didDocument) {
 				return response.status(result.status).send({ body });
@@ -234,13 +234,13 @@ export class CredentialController {
 		}
 
 		try {
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.verifyCredential(
+			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.verifyCredential(
 				credential,
 				{
 					verifyStatus,
 					policies,
 				},
-				response.locals.customerId
+				response.locals.customer.customerId
 			);
 			if (result.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
@@ -306,10 +306,10 @@ export class CredentialController {
 			return response
 				.status(StatusCodes.OK)
 				.json(
-					await new IdentityServiceStrategySetup(response.locals.customerId).agent.revokeCredentials(
+					await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.revokeCredentials(
 						request.body.credential,
 						publish,
-						response.locals.customerId
+						response.locals.customer.customerId
 					)
 				);
 		} catch (error) {
@@ -366,10 +366,10 @@ export class CredentialController {
 			return response
 				.status(StatusCodes.OK)
 				.json(
-					await new IdentityServiceStrategySetup(response.locals.customerId).agent.suspendCredentials(
+					await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.suspendCredentials(
 						request.body.credential,
 						request.body.publish,
-						response.locals.customerId
+						response.locals.customer.customerId
 					)
 				);
 		} catch (error) {
@@ -426,10 +426,10 @@ export class CredentialController {
 			return response
 				.status(StatusCodes.OK)
 				.json(
-					await new IdentityServiceStrategySetup(response.locals.customerId).agent.reinstateCredentials(
+					await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.reinstateCredentials(
 						request.body.credential,
 						request.body.publish,
-						response.locals.customerId
+						response.locals.customer.customerId
 					)
 				);
 		} catch (error) {
@@ -508,7 +508,7 @@ export class CredentialController {
 		}
 
 		if (!allowDeactivatedDid) {
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(issuerDid);
+			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolve(issuerDid);
 			const body = await result.json();
 			if (!body?.didDocument) {
 				return response.status(result.status).send({ body });
@@ -522,14 +522,14 @@ export class CredentialController {
 		}
 
 		try {
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.verifyPresentation(
+			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.verifyPresentation(
 				presentation,
 				{
 					verifyStatus,
 					policies,
 					domain: verifierDid,
 				},
-				response.locals.customerId
+				response.locals.customer.customerId
 			);
 			if (result.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({

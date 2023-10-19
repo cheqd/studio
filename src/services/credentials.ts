@@ -5,6 +5,7 @@ import type { CredentialRequest } from '../types/shared.js';
 import { IdentityServiceStrategySetup } from './identity/index.js';
 import { v4 } from 'uuid';
 import * as dotenv from 'dotenv';
+import type { CustomerEntity } from '../database/entities/customer.entity.js';
 dotenv.config();
 
 const { ENABLE_VERIDA_CONNECTOR } = process.env;
@@ -12,7 +13,7 @@ const { ENABLE_VERIDA_CONNECTOR } = process.env;
 export class Credentials {
 	public static instance = new Credentials();
 
-	async issue_credential(request: CredentialRequest, agentId: string): Promise<VerifiableCredential> {
+	async issue_credential(request: CredentialRequest, customer: CustomerEntity): Promise<VerifiableCredential> {
 		const credential: CredentialPayload = {
 			'@context': [...(request['@context'] || []), ...VC_CONTEXT],
 			type: [...(request.type || []), VC_TYPE],
@@ -31,11 +32,11 @@ export class Credentials {
 
 		const statusOptions = request.credentialStatus || null;
 
-		const verifiable_credential = await new IdentityServiceStrategySetup(agentId).agent.createCredential(
+		const verifiable_credential = await new IdentityServiceStrategySetup(customer.customerId).agent.createCredential(
 			credential,
 			request.format,
 			statusOptions,
-			agentId
+			customer
 		);
 
 		if (ENABLE_VERIDA_CONNECTOR === 'true' && request.subjectDid.startsWith('did:vda')) {

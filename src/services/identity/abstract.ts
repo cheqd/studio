@@ -36,6 +36,8 @@ import type {
 	VerificationOptions,
 } from '../../types/shared';
 import type { IIdentityService } from './index.js';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import type { KeyEntity } from '../../database/entities/key.entity.js';
 
 export abstract class AbstractIdentityService implements IIdentityService {
 	agent?: VeramoAgent;
@@ -44,27 +46,27 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 
-	createKey(type: 'Ed25519' | 'Secp256k1', agentId?: string): Promise<ManagedKeyInfo> {
+	createKey(type: 'Ed25519' | 'Secp256k1', customer?: CustomerEntity, keyAlias?: string): Promise<KeyEntity> {
 		throw new Error(`Not supported`);
 	}
 
-	createDid(network: string, didDocument: DIDDocument, agentId?: string): Promise<IIdentifier> {
+	createDid(network: string, didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier> {
 		throw new Error(`Not supported`);
 	}
 
-	updateDid(didDocument: DIDDocument, agentId?: string): Promise<IIdentifier> {
+	updateDid(didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier> {
 		throw new Error(`Not supported`);
 	}
 
-	deactivateDid(did: string, agentId?: string): Promise<boolean> {
+	deactivateDid(did: string, customer: CustomerEntity): Promise<boolean> {
 		throw new Error(`Not supported`);
 	}
 
-	importDid(did: string, privateKeyHex: string, publicKeyHex: string, agentId: string): Promise<IIdentifier> {
+	importDid(did: string, privateKeyHex: string, publicKeyHex: string, customer: CustomerEntity): Promise<IIdentifier> {
 		throw new Error(`Not supported`);
 	}
 
-	createResource(network: string, payload: ResourcePayload, agentId?: string): Promise<any> {
+	createResource(network: string, payload: ResourcePayload, customer: CustomerEntity): Promise<any> {
 		throw new Error(`Not supported`);
 	}
 
@@ -72,7 +74,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		credential: CredentialPayload,
 		format: CredentialRequest['format'],
 		statusOptions: StatusOptions | null,
-		agentId?: string
+		customer: CustomerEntity
 	): Promise<VerifiableCredential> {
 		throw new Error(`Not supported`);
 	}
@@ -80,7 +82,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		did: string,
 		resourceOptions: ResourcePayload,
 		statusOptions: CreateUnencryptedStatusListOptions,
-		agentId: string
+		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result> {
 		throw new Error(`Not supported`);
 	}
@@ -88,28 +90,28 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		did: string,
 		resourceOptions: ResourcePayload,
 		statusOptions: CreateEncryptedStatusListOptions,
-		agentId: string
+		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result> {
 		throw new Error(`Not supported`);
 	}
 	updateUnencryptedStatusList2021(
 		did: string,
 		statusOptions: UpdateUnencryptedStatusListOptions,
-		agentId?: string
+		customer: CustomerEntity
 	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
 		throw new Error(`Not supported`);
 	}
 	updateEncryptedStatusList2021(
 		did: string,
 		statusOptions: UpdateEncryptedStatusListOptions,
-		agentId?: string
+		customer: CustomerEntity
 	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
 		throw new Error(`Not supported`);
 	}
 	checkStatusList2021(
 		did: string,
 		statusOptions: CheckStatusListOptions,
-		agentId?: string
+		customer: CustomerEntity
 	): Promise<StatusCheckResult> {
 		throw new Error(`Not supported`);
 	}
@@ -117,52 +119,55 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		did: string,
 		statusListName: string,
 		statusPurpose: 'revocation' | 'suspension',
-		agentId?: string
+		customer?: CustomerEntity
 	): Promise<any> {
 		throw new Error(`Not supported`);
 	}
-	remunerateStatusList2021(feePaymentOptions: FeePaymentOptions): Promise<TransactionResult> {
+	remunerateStatusList2021(
+		feePaymentOptions: FeePaymentOptions, 
+		customer?: CustomerEntity
+	): Promise<TransactionResult> {
 		throw new Error(`Not supported`);
 	}
 	broadcastStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
 		statusOptions: BroadcastStatusListOptions,
-		agentId?: string
+		customer: CustomerEntity
 	): Promise<boolean> {
 		throw new Error(`Not supported`);
 	}
 	revokeCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		agentId?: string
+		customer: CustomerEntity
 	): Promise<RevocationResult | BulkRevocationResult> {
 		throw new Error(`Not supported`);
 	}
 	suspendCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		agentId?: string
+		customer: CustomerEntity
 	): Promise<SuspensionResult | BulkSuspensionResult> {
 		throw new Error(`Not supported`);
 	}
 	reinstateCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		agentId?: string
+		customer: CustomerEntity
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult> {
 		throw new Error(`Not supported`);
 	}
-	getKey(kid: string, agentId: string): Promise<ManagedKeyInfo> {
+	getKey(kid: string, customer: CustomerEntity): Promise<ManagedKeyInfo> {
 		throw new Error(`Not supported`);
 	}
-	listDids(agentId: string): Promise<string[]> {
+	listDids(customer: CustomerEntity): Promise<string[]> {
 		throw new Error(`Not supported`);
 	}
 	getDid(did: string): Promise<any> {
 		throw new Error(`Not supported`);
 	}
-	resolveDid(did: string, agentId?: string): Promise<DIDResolutionResult> {
+	resolveDid(did: string): Promise<DIDResolutionResult> {
 		throw new Error(`Not supported`);
 	}
 	resolve(didUrl: string): Promise<Response> {
@@ -171,14 +176,14 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	verifyCredential(
 		credential: VerifiableCredential | string,
 		verificationOptions: VerificationOptions,
-		agentId?: string
+		customer: CustomerEntity
 	): Promise<IVerifyResult> {
 		throw new Error(`Not supported`);
 	}
 	verifyPresentation(
 		presentation: VerifiablePresentation | string,
 		verificationOptions: VerificationOptions,
-		agentId?: string
+		customer: CustomerEntity
 	): Promise<IVerifyResult> {
 		throw new Error(`Not supported`);
 	}

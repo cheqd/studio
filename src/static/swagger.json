@@ -408,6 +408,20 @@
         ],
         "summary": "Create a new custodian-mode client.",
         "description": "This endpoint creates a new custodian-mode client and creates issuer DIDs and Cosmos/cheqd accounts for the client.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "The request was successful.",
@@ -436,6 +450,18 @@
         ],
         "summary": "Fetch custodian-mode client details.",
         "description": "This endpoint returns the custodian-mode client details for authenticated users.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "name",
+            "description": "Name of a customer",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "example": "Cheqd"
+          }
+        ],
         "responses": {
           "200": {
             "description": "The request was successful.",
@@ -443,6 +469,53 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/account/assign": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Assign logTo user with Customer",
+        "description": "This endpoint allows to assign logTo users with CredentialService customer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "logToId": {
+                    "type": "string"
+                  },
+                  "customerName": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignResponse"
                 }
               }
             }
@@ -2911,6 +2984,19 @@
           "address": {
             "type": "string",
             "example": "cheqd1wgsvqwlkmdp60f4dek26ak0sjw6au3ytd3pz7f"
+          }
+        }
+      },
+      "AssignResponse": {
+        "type": "object",
+        "properties": {
+          "customerName": {
+            "type": "string",
+            "example": "Cheqd"
+          },
+          "logToId": {
+            "type": "string",
+            "example": "w6au3ytd3pz7f"
           }
         }
       },

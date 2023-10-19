@@ -6,6 +6,8 @@ import { LogToHelper } from '../middleware/auth/logto.js';
 import { FaucetHelper } from '../helpers/faucet.js';
 import { StatusCodes } from 'http-status-codes';
 import { LogToWebHook } from '../middleware/hook.js';
+import { UserService } from '../services/user.js';
+import { RoleService } from '../services/role.js';
 
 export class AccountController {
 	/**
@@ -16,6 +18,14 @@ export class AccountController {
 	 *     tags: [Account]
 	 *     summary: Create a new custodian-mode client.
 	 *     description: This endpoint creates a new custodian-mode client and creates issuer DIDs and Cosmos/cheqd accounts for the client.
+	 *     requestBody:
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+ 	 *             properties:
+	 *               name:
+	 *                 type: string
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -31,7 +41,7 @@ export class AccountController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async create(request: Request, response: Response) {
-		const name = request.body.name;
+		const name = (request.body.name as string).toLowerCase();
 		if (!name) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: 'Missing required parameter: name',
@@ -44,15 +54,6 @@ export class AccountController {
 					error: `Internal server error. Please try again later.`,
 				});
 			}
-			// // Send some tokens for testnet
-			// if (process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
-			// 	const resp = await FaucetHelper.delegateTokens(customer.address);
-			// 	if (resp.status !== StatusCodes.OK) {
-			// 		return response.status(resp.status).json({
-			// 			error: resp.error,
-			// 		});
-			// 	}
-			// }
 			return response.status(StatusCodes.OK).json({
 				customerId: customer.customerId,
 				name: customer.name,
@@ -72,6 +73,14 @@ export class AccountController {
 	 *     tags: [Account]
 	 *     summary: Fetch custodian-mode client details.
 	 *     description: This endpoint returns the custodian-mode client details for authenticated users.
+	 *     parameters:
+	 *       - in: query
+	 *         name: name
+	 *         description: Name of a customer
+	 *         schema:
+	 *           type: string
+	 *         required: true
+	 *         example: Cheqd
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -88,8 +97,9 @@ export class AccountController {
 	 */
 	public async get(request: Request, response: Response) {
 		try {
-			const result = await CustomerService.instance.get(response.locals.customerId);
-			if (result && !Array.isArray(result)) {
+			const name = (request.query.name as string).toLowerCase();
+			const result = await CustomerService.instance.findOne(name);
+			if (result) {
 				return response.status(StatusCodes.OK).json({
 					customerId: result.customerId,
 					// address: result.address,
@@ -99,6 +109,82 @@ export class AccountController {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: 'Customer not found',
 			});
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `${error}`,
+			});
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /account/assign:
+	 *   post:
+	 *     tags: [Account]
+	 *     summary: Assign logTo user with Customer
+	 *     description: This endpoint allows to assign logTo users with CredentialService customer
+	 *     requestBody:
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+ 	 *             properties:
+	 *               logToId:
+	 *                 type: string
+	 *               customerName:
+	 *                 type: string
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/AssignResponse'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async assign(request: Request, response: Response) {
+		try {
+			const userId = request.body.logToId;
+			const customerName = (request.body.customerName as string).toLowerCase();
+			const customer = await CustomerService.instance.findOne(customerName);
+			const user = await UserService.instance.findOne({ logToId: userId});
+			if (!customer) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: 'Customer not found',
+				});
+			}
+			// If there is no user with such userId - let's create it.
+			if (!user) {
+				const defaultRole = await RoleService.instance.findOne({ name: 'default' });
+				if (!defaultRole) {
+					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+						error: `Default role not found`,
+					});
+				}
+				const res = await UserService.instance.create(userId, customer, defaultRole);
+				if (!res) {
+					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+						error: `User with id: ${userId} record could not be created with the customer ${customer.name}`,
+					});
+				}
+			}
+			const result = await UserService.instance.update(userId, customer);
+			if (!result) {
+				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+					error: `User record could not be updated with the customer`,
+				});
+			}
+			return response.status(StatusCodes.OK).json({
+				customerId: result.customer.customerId,
+				name: result.customer.name,
+			});
+
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
@@ -134,7 +220,7 @@ export class AccountController {
 		// 2.2 Create custom_data and update the userInfo (send it to the LogTo)
 		// 3. Check the token balance for Testnet account
 		// 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
-		const customerId: string = response.locals.customerId || LogToWebHook.getCustomerId(request);
+		const customerId: string = response.locals.customer.customerId || LogToWebHook.getCustomerId(request);
 		const logToHelper = new LogToHelper();
 		const _r = await logToHelper.setup();
 		if (_r.status !== StatusCodes.OK) {

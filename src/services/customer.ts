@@ -5,11 +5,15 @@ import { CustomerEntity } from '../database/entities/customer.entity.js';
 import { IdentityServiceStrategySetup } from './identity/index.js';
 
 import * as dotenv from 'dotenv';
+import { PaymentAccountService } from './payment_account.js';
+import { CheqdNetwork } from '@cheqd/sdk';
+import {v4 as uuidv4} from 'uuid';
 dotenv.config();
 
 export class CustomerService {
 	public customerRepository: Repository<CustomerEntity>;
 
+	// Get rid of such code and move it to the builder
 	public static instance = new CustomerService();
 
 	constructor() {
@@ -17,14 +21,21 @@ export class CustomerService {
 	}
 
 	public async create(name: string) {
-		if (await this.find(name)) {
+		// The sequence for creating a customer is supposed to be:
+		// 1. Create a new customer entity in the database;
+		// 2. Create new cosmos keypair
+		// 3. Get the cosmos address from the keypair
+		// 4. Create a new payment account entity in the database
+
+		if (await this.isExist({ name: name })) {
 			throw new Error(`Cannot create a new customer since the customer with same name ${name} already exists`);
 		}
-		const customer = new CustomerEntity(name);
-		const customerEntity = (await this.customerRepository.insert(customer)).identifiers[0];
+		const customerEntity = new CustomerEntity(uuidv4(), name);
+		await this.customerRepository.insert(customerEntity);
 
 		// Create a new Cosmos account for the customer and make a link with customer entity;
-		await new IdentityServiceStrategySetup(name).agent.createKey('Secp256k1', customerEntity.customerId)
+		const key = await new IdentityServiceStrategySetup(name).agent.createKey('Secp256k1', customerEntity);
+		await PaymentAccountService.instance.create(CheqdNetwork.Testnet, true, customerEntity, key);
 		return {
 			customerId: customerEntity.customerId,
 			name: customerEntity.name,
@@ -45,20 +56,17 @@ export class CustomerService {
 	}
 
 	public async get(customerId?: string) {
-		return customerId
-			? await this.customerRepository.findOneBy({ customerId })
-			: await this.customerRepository.find();
+		return this.customerRepository.findOneBy({ customerId })
 	}
 
-	public async find(
-		customerId: string,
-		name?: string) {
-		const where: Record<string, unknown> = {
-			customerId,
-		};
-		if (name) {
-			where.name = name;
-		}
+	public async findOne(name: string) {
+		return await this.customerRepository.findOne({
+			where: { name }
+		});
+	}
+
+	public async isExist(
+		where: Record<string, unknown>) {
 		try {
 			return (await this.customerRepository.findOne({ where })) ? true : false;
 		} catch {

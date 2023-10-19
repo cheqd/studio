@@ -68,7 +68,7 @@ export class MethodToScope {
 export interface IAuthResponse {
 	status: number;
 	data: {
-		customerId: string;
+		logToId: string;
 		scopes: string[];
 		namespace: Namespaces;
 	};
@@ -89,6 +89,6 @@ export interface IAuthResourceHandler {
 	// Getters
 	getNamespace(): string;
 	getScopes(): string[] | unknown;
-	getCustomerId(): string;
+	getLogToId(): string;
 	getToken(): string;
 }

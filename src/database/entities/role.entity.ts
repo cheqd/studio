@@ -43,7 +43,7 @@ export class RoleEntity {
     })
     logToRoleIds: string[]
 
-	constructor(roleTypeId: string, name: string, logToRoleIds=[]) {
+	constructor(roleTypeId: string, name: string, logToRoleIds=[] as string[]) {
 		this.roleTypeId = roleTypeId;
 		this.name = name;
         this.logToRoleIds = logToRoleIds;

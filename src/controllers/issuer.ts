@@ -10,8 +10,10 @@ import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { generateDidDoc, getQueryParams, validateSpecCompliantPayload } from '../helpers/helpers.js';
 import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
+// import { CustomerService } from '../services/customer.js';
 
 export class IssuerController {
+	// ToDo: improve validation in a "bail" fashion
 	public static createValidator = [
 		check('didDocument')
 			.optional()
@@ -108,9 +110,9 @@ export class IssuerController {
 	 */
 	public async createKey(request: Request, response: Response) {
 		try {
-			const key = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createKey(
+			const key = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createKey(
 				'Ed25519',
-				response.locals.customerId
+				response.locals.customer,
 			);
 			return response.status(StatusCodes.OK).json(key);
 		} catch (error) {
@@ -163,9 +165,9 @@ export class IssuerController {
 	 */
 	public async getKey(request: Request, response: Response) {
 		try {
-			const key = await new IdentityServiceStrategySetup(response.locals.customerId).agent.getKey(
+			const key = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.getKey(
 				request.params.kid,
-				response.locals.customerId
+				response.locals.customer.customerId
 			);
 			return response.status(StatusCodes.OK).json(key);
 		} catch (error) {
@@ -237,9 +239,9 @@ export class IssuerController {
 			if (request.body.didDocument) {
 				didDocument = request.body.didDocument;
 			} else if (verificationMethodType) {
-				const key = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createKey(
+				const key = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createKey(
 					'Ed25519',
-					response.locals.customerId
+					response.locals.customer
 				);
 				didDocument = generateDidDoc({
 					verificationMethod: verificationMethodType || VerificationMethods.Ed255192018,
@@ -268,10 +270,10 @@ export class IssuerController {
 				});
 			}
 
-			const did = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createDid(
+			const did = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createDid(
 				network || didDocument.id.split(':')[2],
 				didDocument,
-				response.locals.customerId
+				response.locals.customer
 			);
 			return response.status(StatusCodes.OK).json(did);
 		} catch (error) {
@@ -331,7 +333,7 @@ export class IssuerController {
 				updatedDocument = request.body.didDocument;
 			} else if (did && (service || verificationMethod || authentication)) {
 				const resolvedResult = await new IdentityServiceStrategySetup(
-					response.locals.customerId
+					response.locals.customer.customerId
 				).agent.resolveDid(did);
 				if (!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
 					return response.status(StatusCodes.BAD_REQUEST).send({
@@ -358,9 +360,9 @@ export class IssuerController {
 				});
 			}
 
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.updateDid(
+			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.updateDid(
 				updatedDocument,
-				response.locals.customerId
+				response.locals.customer.customerId
 			);
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
@@ -408,18 +410,17 @@ export class IssuerController {
 		}
 
 		try {
-			const deactivated = await new IdentityServiceStrategySetup(response.locals.customerId).agent.deactivateDid(
+			const deactivated = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.deactivateDid(
 				request.params.did,
-				response.locals.customerId
+				response.locals.customer.customerId
 			);
 
 			if (!deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).json({ deactivated: false });
 			}
 
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolveDid(
-				request.params.did,
-				response.locals.customerId
+			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolveDid(
+				request.params.did
 			);
 
 			return response.status(StatusCodes.OK).json(result);
@@ -482,7 +483,7 @@ export class IssuerController {
 		try {
 			// check if did is registered on the ledger
 			const { didDocument, didDocumentMetadata } = await new IdentityServiceStrategySetup(
-				response.locals.customerId
+				response.locals.customer.customerId
 			).agent.resolveDid(did);
 			if (!didDocument || !didDocumentMetadata || didDocumentMetadata.deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
@@ -499,10 +500,10 @@ export class IssuerController {
 				version,
 				alsoKnownAs,
 			};
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createResource(
+			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createResource(
 				network || did.split(':')[2],
 				resourcePayload,
-				response.locals.customerId
+				response.locals.customer.customerId
 			);
 			if (result) {
 				const url = new URL(
@@ -603,7 +604,7 @@ export class IssuerController {
 		try {
 			let res: globalThis.Response;
 			if (request.params.did) {
-				res = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(
+				res = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolve(
 					request.params.did + getQueryParams(request.query)
 				);
 
@@ -650,11 +651,11 @@ export class IssuerController {
 	public async getDids(request: Request, response: Response) {
 		try {
 			const did = request.params.did
-				? await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolveDid(
+				? await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolveDid(
 						request.params.did
 				  )
-				: await new IdentityServiceStrategySetup(response.locals.customerId).agent.listDids(
-						response.locals.customerId
+				: await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.listDids(
+						response.locals.customer
 				  );
 
 			return response.status(StatusCodes.OK).json(did);
@@ -739,7 +740,7 @@ export class IssuerController {
 		try {
 			let res: globalThis.Response;
 			if (request.params.did) {
-				res = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(
+				res = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolve(
 					request.params.did + getQueryParams(request.query)
 				);
 

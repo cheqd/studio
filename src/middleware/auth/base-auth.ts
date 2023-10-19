@@ -17,17 +17,17 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 	private scopes: string[];
 	private logToHelper: LogToHelper;
 
-	public customerId: string;
+	public logToId: string;
 
 	private routeToScoupe: MethodToScope[] = [];
-	private static pathSkip = ['/swagger', '/static', '/logto', '/account/bootstrap', '/auth/user-info'];
+	private static pathSkip = ['/swagger', '/static', '/logto', '/account/bootstrap', '/auth/user-info', '/account', '/account/assign'];
 
 	constructor() {
 		this.nextHandler = {} as IAuthResourceHandler;
 		this.namespace = '' as Namespaces;
 		this.token = '' as string;
 		this.scopes = [];
-		this.customerId = '' as string;
+		this.logToId = '' as string;
 		this.logToHelper = new LogToHelper();
 	}
 
@@ -35,7 +35,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 		this.namespace = '' as Namespaces;
 		this.token = '' as string;
 		this.scopes = [];
-		this.customerId = '' as string;
+		this.logToId = '' as string;
 	}
 
 	public async commonPermissionCheck(request: Request): Promise<IAuthResponse> {
@@ -81,7 +81,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 			}
 			// Tries to get customerId from the logTo user structure
 			if (request.user && request.user.claims) {
-				this.customerId = request.user.claims.sub;
+				this.logToId = request.user.claims.sub;
 			} else {
 				return this.returnError(
 					StatusCodes.BAD_GATEWAY,
@@ -89,7 +89,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 				);
 			}
 			// Tries to get scopes for current user and check that required scopes are present
-			const _resp = await this.logToHelper.getUserScopes(this.getCustomerId());
+			const _resp = await this.logToHelper.getUserScopes(this.getLogToId());
 			if (_resp.status !== 200) {
 				return _resp;
 			}
@@ -112,7 +112,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 			status: StatusCodes.OK,
 			error: '',
 			data: {
-				customerId: this.getCustomerId(),
+				logToId: this.getLogToId(),
 				scopes: this.getScopes() as string[],
 				namespace: this.getNamespace(),
 			},
@@ -124,7 +124,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 			status: status,
 			error: error,
 			data: {
-				customerId: '',
+				logToId: '',
 				scopes: [],
 				namespace: this.getNamespace(),
 			},
@@ -245,8 +245,8 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 		return this.scopes;
 	}
 
-	public getCustomerId(): string {
-		return this.customerId;
+	public getLogToId(): string {
+		return this.logToId;
 	}
 
 	public getAllLogToScopes(): string[] | void {

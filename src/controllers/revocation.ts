@@ -555,19 +555,19 @@ export class RevocationController {
 			// broadcast, if applicable
 			if (data) {
 				const result = await new IdentityServiceStrategySetup(
-					response.locals.customerId
+					response.locals.customer.customerId
 				).agent.broadcastStatusList2021(
 					did,
 					{ data, name: statusListName, alsoKnownAs, version: statusListVersion },
 					{ encoding, statusPurpose },
-					response.locals.customerId
+					response.locals.customer.customerId
 				);
 				return response.status(StatusCodes.OK).json(result);
 			}
 
 			// create unencrypted status list
 			const result = (await new IdentityServiceStrategySetup(
-				response.locals.customerId
+				response.locals.customer.customerId
 			).agent.createUnencryptedStatusList2021(
 				did,
 				{
@@ -580,7 +580,7 @@ export class RevocationController {
 					encoding,
 					statusPurpose,
 				},
-				response.locals.customerId
+				response.locals.customer.customerId
 			)) as CreateUnencryptedStatusListSuccessfulResponseBody;
 
 			// handle error
@@ -671,7 +671,7 @@ export class RevocationController {
 		try {
 			// create encrypted status list
 			const result = (await new IdentityServiceStrategySetup(
-				response.locals.customerId
+				response.locals.customer.customerId
 			).agent.createEncryptedStatusList2021(
 				did,
 				{
@@ -688,7 +688,7 @@ export class RevocationController {
 					feePaymentAmount,
 					feePaymentWindow,
 				},
-				response.locals.customerId
+				response.locals.customer.customerId
 			)) as CreateEncryptedStatusListSuccessfulResponseBody;
 
 			// handle error
@@ -767,7 +767,7 @@ export class RevocationController {
 		const { statusAction } = request.query as UpdateUnencryptedStatusListRequestQuery;
 
 		// define identity service strategy setup
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customerId);
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		// ensure unencrypted status list
 		const unencrypted = await identityServiceStrategySetup.agent.searchStatusList2021(
@@ -809,7 +809,7 @@ export class RevocationController {
 					statusListVersion,
 					statusAction,
 				},
-				response.locals.customerId
+				response.locals.customer.customerId
 			)) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult) & { updated?: boolean };
 
 			// enhance result
@@ -931,7 +931,7 @@ export class RevocationController {
 		const { statusAction } = request.query as { statusAction: DefaultStatusAction };
 
 		// define identity service strategy setup
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customerId);
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		// ensure encrypted status list
 		const encrypted = await identityServiceStrategySetup.agent.searchStatusList2021(
@@ -979,7 +979,7 @@ export class RevocationController {
 					feePaymentAmount,
 					feePaymentWindow,
 				},
-				response.locals.customerId
+				response.locals.customer.customerId
 			)) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult) & { updated: boolean };
 
 			// enhance result
@@ -1092,7 +1092,7 @@ export class RevocationController {
 		const { statusPurpose } = request.query as CheckStatusListRequestQuery;
 
 		// define identity service strategy setup
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customerId);
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		// ensure status list
 		const statusList = await identityServiceStrategySetup.agent.searchStatusList2021(
@@ -1143,14 +1143,14 @@ export class RevocationController {
 
 		try {
 			// check status list
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.checkStatusList2021(
+			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.checkStatusList2021(
 				did,
 				{
 					statusListIndex: index,
 					statusListName,
 					statusPurpose,
 				},
-				response.locals.customerId
+				response.locals.customer.customerId
 			);
 
 			// handle error
@@ -1250,7 +1250,7 @@ export class RevocationController {
 		try {
 			// search status list
 			const result = await new IdentityServiceStrategySetup(
-				response.locals.customerId
+				response.locals.customer.customerId
 			).agent.searchStatusList2021(did, statusListName, statusPurpose);
 
 			// handle error

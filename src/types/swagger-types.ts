@@ -1035,6 +1035,15 @@
  *         address:
  *           type: string
  *           example: cheqd1wgsvqwlkmdp60f4dek26ak0sjw6au3ytd3pz7f
+ *     AssignResponse:
+ *       type: object
+ *       properties:
+ *         customerName:
+ *           type: string
+ *           example: Cheqd
+ *         logToId:
+ *           type: string
+ *           example: w6au3ytd3pz7f
  *     InvalidRequest:
  *       description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
  *       type: object

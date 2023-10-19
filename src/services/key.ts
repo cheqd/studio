@@ -5,6 +5,7 @@ import { Connection } from '../database/connection/connection.js';
 import * as dotenv from 'dotenv';
 import { KeyEntity } from '../database/entities/key.entity.js';
 import type { Key } from '@veramo/data-store';
+import type { CustomerEntity } from '../database/entities/customer.entity.js';
 dotenv.config();
 
 export class KeyService {
@@ -16,13 +17,13 @@ export class KeyService {
 		this.keyRepository = Connection.instance.dbConnection.getRepository(KeyEntity);
 	}
 
-	public async update(kid: string, customerId?: string, keyAlias?: string) {
+	public async update(kid: string, customer?: CustomerEntity, keyAlias?: string) {
 		const existingKey = await this.keyRepository.findOneBy({ kid });
 		if (!existingKey) {
 			throw new Error(`kid not found`);
 		}
-        if (customerId) {
-            existingKey.customerId = customerId;
+        if (customer) {
+            existingKey.customer = customer;
         }
         if (keyAlias) {
 		    existingKey.publicKeyAlias = keyAlias;
@@ -31,7 +32,11 @@ export class KeyService {
 	}
 
 	public async get(kid: string) {
-		return await this.keyRepository.findOneBy({ kid })
+		return await this.keyRepository.findOne(
+            {
+                where: { kid },
+                relations: ['customer']
+            });
 	}
 
     public async find(
@@ -51,7 +56,11 @@ export class KeyService {
             where.publicKeyAlias = keyAlias;
         }
 
-        return await this.keyRepository.find(where);
+        return await this.keyRepository.find(
+            {
+                where: where,
+                relations: ['customer']
+            });
     }
 
     public fromVeramoKey(key: Key) {
