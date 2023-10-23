@@ -17,6 +17,10 @@ updates:
       directory: '/'
       schedule:
           interval: 'weekly'
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-patch
 
     # Maintain dependencies for Docker
     - package-ecosystem: 'docker'
