@@ -560,7 +560,7 @@ export class RevocationController {
 					did,
 					{ data, name: statusListName, alsoKnownAs, version: statusListVersion },
 					{ encoding, statusPurpose },
-					response.locals.customer.customerId
+					response.locals.customer
 				);
 				return response.status(StatusCodes.OK).json(result);
 			}
@@ -580,7 +580,7 @@ export class RevocationController {
 					encoding,
 					statusPurpose,
 				},
-				response.locals.customer.customerId
+				response.locals.customer
 			)) as CreateUnencryptedStatusListSuccessfulResponseBody;
 
 			// handle error
@@ -688,7 +688,7 @@ export class RevocationController {
 					feePaymentAmount,
 					feePaymentWindow,
 				},
-				response.locals.customer.customerId
+				response.locals.customer
 			)) as CreateEncryptedStatusListSuccessfulResponseBody;
 
 			// handle error
@@ -809,7 +809,7 @@ export class RevocationController {
 					statusListVersion,
 					statusAction,
 				},
-				response.locals.customer.customerId
+				response.locals.customer
 			)) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult) & { updated?: boolean };
 
 			// enhance result
@@ -979,7 +979,7 @@ export class RevocationController {
 					feePaymentAmount,
 					feePaymentWindow,
 				},
-				response.locals.customer.customerId
+				response.locals.customer
 			)) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult) & { updated: boolean };
 
 			// enhance result
@@ -1124,11 +1124,12 @@ export class RevocationController {
 			const feePaymentResult = await Promise.all(
 				statusList?.resource?.metadata?.paymentConditions?.map(async (condition) => {
 					return await identityServiceStrategySetup.agent.remunerateStatusList2021({
-						feePaymentAddress: condition.feePaymentAddress,
-						feePaymentAmount: condition.feePaymentAmount,
-						feePaymentNetwork: toNetwork(did),
-						memo: 'Automated status check fee payment, orchestrated by CaaS.',
-					} satisfies FeePaymentOptions);
+							feePaymentAddress: condition.feePaymentAddress,
+							feePaymentAmount: condition.feePaymentAmount,
+							feePaymentNetwork: toNetwork(did),
+							memo: 'Automated status check fee payment, orchestrated by CaaS.',
+						} satisfies FeePaymentOptions,
+						response.locals.customer);
 				}) || []
 			);
 
@@ -1143,14 +1144,14 @@ export class RevocationController {
 
 		try {
 			// check status list
-			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.checkStatusList2021(
+			const result = await identityServiceStrategySetup.agent.checkStatusList2021(
 				did,
 				{
 					statusListIndex: index,
 					statusListName,
 					statusPurpose,
 				},
-				response.locals.customer.customerId
+				response.locals.customer
 			);
 
 			// handle error
@@ -1249,9 +1250,7 @@ export class RevocationController {
 
 		try {
 			// search status list
-			const result = await new IdentityServiceStrategySetup(
-				response.locals.customer.customerId
-			).agent.searchStatusList2021(did, statusListName, statusPurpose);
+			const result = await new IdentityServiceStrategySetup().agent.searchStatusList2021(did, statusListName, statusPurpose);
 
 			// handle error
 			if (result.error) {

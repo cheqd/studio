@@ -33,7 +33,7 @@ export class CredentialStatusAuthHandler extends AbstractAuthHandler {
 		);
 		// Unauthorized routes
 		this.registerRoute('/credential-status/search', 'GET', '', { allowUnauthorized: true, skipNamespace: true });
-		this.registerRoute('/credential-status/check', 'POST', '', { allowUnauthorized: true, skipNamespace: true });
+		this.registerRoute('/credential-status/check', 'POST', '', { skipNamespace: true });
 	}
 	public async handle(request: Request, response: Response): Promise<IAuthResponse> {
 		if (!request.path.includes('/credential-status/')) {

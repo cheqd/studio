@@ -40,4 +40,12 @@ export class CustomerEntity {
 		this.customerId = customerId;
 		this.name = name;
 	}
+
+	public isEqual(customer: CustomerEntity): boolean {
+		return this.customerId === customer.customerId &&
+			this.name === customer.name &&
+			this.createdAt.toISOString() === customer.createdAt.toISOString() &&
+			(!this.updatedAt && !customer.updatedAt || this.updatedAt.toISOString() === customer.updatedAt.toISOString());
+	}
+
 }

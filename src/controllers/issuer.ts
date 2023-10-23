@@ -168,9 +168,14 @@ export class IssuerController {
 		try {
 			const key = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.getKey(
 				request.params.kid,
-				response.locals.customer.customerId
+				response.locals.customer
 			);
-			return response.status(StatusCodes.OK).json(key);
+			if (key) {
+				return response.status(StatusCodes.OK).json(key);
+			}
+			return response.status(StatusCodes.NOT_FOUND).json({
+				error: `Key with kid: ${request.params.kid} not found`,
+			});
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
@@ -241,9 +246,9 @@ export class IssuerController {
 			if (request.body.didDocument) {
 				didDocument = request.body.didDocument;
 				if (options) {
-					const publicKeyHex = options.key || (await new IdentityServiceStrategySetup(response.locals.customerId).agent.createKey(
+					const publicKeyHex = options.key || (await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createKey(
 						'Ed25519',
-						response.locals.customerId
+						response.locals.customer
 					)).publicKeyHex;
 					const pkBase64 = publicKeyHex.length == 43 ? publicKeyHex : toString(fromString(publicKeyHex, 'hex'), 'base64');
 
@@ -259,16 +264,16 @@ export class IssuerController {
 					});
 				}
 			} else if (verificationMethodType) {
-				const key = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createKey(
+				const publicKeyHex = key || (await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createKey(
 					'Ed25519',
 					response.locals.customer
-				);
+				)).publicKeyHex;
 				didDocument = generateDidDoc({
 					verificationMethod: verificationMethodType,
 					verificationMethodId: 'key-1',
 					methodSpecificIdAlgo: identifierFormatType || MethodSpecificIdAlgo.Uuid,
 					network,
-					publicKey: key.publicKeyHex,
+					publicKey: publicKeyHex,
 				});
 
 				if (Array.isArray(request.body['@context'])) {
@@ -401,7 +406,7 @@ export class IssuerController {
 
 			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.updateDid(
 				updatedDocument,
-				response.locals.customer.customerId
+				response.locals.customer
 			);
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
@@ -451,7 +456,7 @@ export class IssuerController {
 		try {
 			const deactivated = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.deactivateDid(
 				request.params.did,
-				response.locals.customer.customerId
+				response.locals.customer
 			);
 
 			if (!deactivated) {
@@ -542,7 +547,7 @@ export class IssuerController {
 			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createResource(
 				network || did.split(':')[2],
 				resourcePayload,
-				response.locals.customer.customerId
+				response.locals.customer
 			);
 			if (result) {
 				const url = new URL(
@@ -643,7 +648,7 @@ export class IssuerController {
 		try {
 			let res: globalThis.Response;
 			if (request.params.did) {
-				res = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolve(
+				res = await IdentityServiceStrategySetup.unauthorized.resolve(
 					request.params.did + getQueryParams(request.query)
 				);
 
@@ -779,7 +784,7 @@ export class IssuerController {
 		try {
 			let res: globalThis.Response;
 			if (request.params.did) {
-				res = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolve(
+				res = await IdentityServiceStrategySetup.unauthorized.resolve(
 					request.params.did + getQueryParams(request.query)
 				);
 

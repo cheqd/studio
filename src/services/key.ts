@@ -39,29 +39,17 @@ export class KeyService {
             });
 	}
 
-    public async find(
-        kid?: string,
-        customerId?: string,
-        keyAlias?: string,
-    ) {
-        const where: Record<string, unknown> = {
-        };
-        if (kid) {
-            where.kid = kid;
-        }
-        if (customerId) {
-            where.customerId = customerId;
-        }
-        if (keyAlias) {
-            where.publicKeyAlias = keyAlias;
-        }
-
-        return await this.keyRepository.find(
-            {
-                where: where,
-                relations: ['customer']
-            });
-    }
+    public async find(where: Record<string, unknown>) {
+		try {
+			return await this.keyRepository.find(
+				{
+					where: where,
+					relations: ['customer']
+				});
+		} catch {
+			return [];
+		}
+	}
 
     public fromVeramoKey(key: Key) {
         return new KeyEntity(key.kid, key.type, key.publicKeyHex);

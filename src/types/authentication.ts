@@ -71,6 +71,7 @@ export interface IAuthResponse {
 		logToId: string;
 		scopes: string[];
 		namespace: Namespaces;
+		isAllowedUnauthorized: boolean;
 	};
 	error: string;
 }

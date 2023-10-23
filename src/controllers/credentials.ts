@@ -220,7 +220,7 @@ export class CredentialController {
 		}
 
 		if (!allowDeactivatedDid) {
-			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolve(issuerDid);
+			const result = await new IdentityServiceStrategySetup().agent.resolve(issuerDid);
 			const body = await result.json();
 			if (!body?.didDocument) {
 				return response.status(result.status).send({ body });
@@ -234,13 +234,13 @@ export class CredentialController {
 		}
 
 		try {
-			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.verifyCredential(
+			const result = await new IdentityServiceStrategySetup().agent.verifyCredential(
 				credential,
 				{
 					verifyStatus,
 					policies,
 				},
-				response.locals.customer.customerId
+				response.locals.customer
 			);
 			if (result.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
@@ -309,7 +309,7 @@ export class CredentialController {
 					await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.revokeCredentials(
 						request.body.credential,
 						publish,
-						response.locals.customer.customerId
+						response.locals.customer
 					)
 				);
 		} catch (error) {
@@ -369,7 +369,7 @@ export class CredentialController {
 					await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.suspendCredentials(
 						request.body.credential,
 						request.body.publish,
-						response.locals.customer.customerId
+						response.locals.customer
 					)
 				);
 		} catch (error) {
@@ -429,7 +429,7 @@ export class CredentialController {
 					await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.reinstateCredentials(
 						request.body.credential,
 						request.body.publish,
-						response.locals.customer.customerId
+						response.locals.customer
 					)
 				);
 		} catch (error) {
@@ -508,7 +508,7 @@ export class CredentialController {
 		}
 
 		if (!allowDeactivatedDid) {
-			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolve(issuerDid);
+			const result = await new IdentityServiceStrategySetup().agent.resolve(issuerDid);
 			const body = await result.json();
 			if (!body?.didDocument) {
 				return response.status(result.status).send({ body });
@@ -522,14 +522,14 @@ export class CredentialController {
 		}
 
 		try {
-			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.verifyPresentation(
+			const result = await new IdentityServiceStrategySetup().agent.verifyPresentation(
 				presentation,
 				{
 					verifyStatus,
 					policies,
 					domain: verifierDid,
 				},
-				response.locals.customer.customerId
+				response.locals.customer
 			);
 			if (result.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({

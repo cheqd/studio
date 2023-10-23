@@ -56,7 +56,7 @@ export interface IIdentityService {
 	initAgent(): TAgent<any>;
 	createAgent?(customer: CustomerEntity): Promise<VeramoAgent>;
 	createKey(type: 'Ed25519' | 'Secp256k1', customer?: CustomerEntity, keyAlias?: string): Promise<KeyEntity>;
-	getKey(kid: string, customer?: CustomerEntity): Promise<ManagedKeyInfo>;
+	getKey(kid: string, customer?: CustomerEntity): Promise<ManagedKeyInfo | null>;
 	createDid(network: string, didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier>;
 	updateDid(didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier>;
 	deactivateDid(did: string, customer: CustomerEntity): Promise<boolean>;

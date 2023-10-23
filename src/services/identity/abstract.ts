@@ -158,7 +158,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult> {
 		throw new Error(`Not supported`);
 	}
-	getKey(kid: string, customer: CustomerEntity): Promise<ManagedKeyInfo> {
+	getKey(kid: string, customer: CustomerEntity): Promise<ManagedKeyInfo | null> {
 		throw new Error(`Not supported`);
 	}
 	listDids(customer: CustomerEntity): Promise<string[]> {

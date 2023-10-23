@@ -100,18 +100,22 @@ export class Authentication {
 					error: _resp.error,
 				});
 			}
-			const user = await UserService.instance.get(_resp.data.logToId);
-			if (!user) {
-				return response.status(StatusCodes.NOT_FOUND).json({
-					error: `Looks like user with logToId ${_resp.data.logToId} is not found`,
-				});
+			// Only for rules when it's not allowed for unauthorized users
+			// we need to find customer and assign it to the response.locals
+			if (!_resp.data.isAllowedUnauthorized) {
+				const user = await UserService.instance.get(_resp.data.logToId);
+				if (!user) {
+					return response.status(StatusCodes.NOT_FOUND).json({
+						error: `Looks like user with logToId ${_resp.data.logToId} is not found`,
+					});
+				}
+				if (user && !user.customer) {
+					return response.status(StatusCodes.NOT_FOUND).json({
+						error: `Looks like user with logToId ${_resp.data.logToId} is not assigned to any CredentialService customer`,
+					});
+				}
+				response.locals.customer = user.customer;
 			}
-			if (user && !user.customer) {
-				return response.status(StatusCodes.NOT_FOUND).json({
-					error: `Looks like user with logToId ${_resp.data.logToId} is not assigned to any CredentialService customer`,
-				});
-			}
-			response.locals.customer = user.customer;
 			next();
 		} catch (err) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
