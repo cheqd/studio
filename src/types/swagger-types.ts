@@ -726,7 +726,7 @@
  *             type: LinkedDomains
  *             serviceEndpoint:
  *               - https://example.com
-  *     DidDocumentWithoutVerificationMethod:
+ *     DidDocumentWithoutVerificationMethod:
  *       type: object
  *       properties:
  *         '@context':

@@ -102,8 +102,8 @@ export function validateSpecCompliantPayload(didDocument: DIDDocument): SpecVali
 export function isValidService(didDocument: DIDDocument): boolean {
 	return didDocument.service
 		? didDocument?.service?.every((s) => {
-			return s?.serviceEndpoint && s?.id && s?.type;
-		})
+				return s?.serviceEndpoint && s?.id && s?.type;
+		  })
 		: true;
 }
 
