@@ -2,8 +2,6 @@ import type { ICommonErrorResponse } from '../../types/authentication';
 import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
-import { RoleService } from '../../services/role.js';
-import { v4 } from 'uuid';
 dotenv.config();
 
 export class LogToHelper {
@@ -34,10 +32,6 @@ export class LogToHelper {
 			return _r;
 		}
 		_r = await this.setAllResourcesWithNames();
-		if (_r.status !== StatusCodes.OK) {
-			return _r;
-		}
-		_r = await this.setDefaultRoleInDb();
 		if (_r.status !== StatusCodes.OK) {
 			return _r;
 		}
@@ -337,14 +331,6 @@ export class LogToHelper {
 		}
 		for (const resource of allResources.data) {
 			this.allResourceWithNames.push(resource.indicator);
-		}
-		return this.returnOk({});
-	}
-
-	private async setDefaultRoleInDb(): Promise<ICommonErrorResponse> {
-		const defaultRole = await RoleService.instance.findOne({ name: 'default' });
-		if (!defaultRole) {
-			await RoleService.instance.create(v4(), 'default', [process.env.LOGTO_DEFAULT_ROLE_ID]);
 		}
 		return this.returnOk({});
 	}

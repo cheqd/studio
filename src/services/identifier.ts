@@ -25,7 +25,7 @@ export class IdentifierService {
             throw new Error(`Did not found`);
         }
         existing.customer = customer;
-        await this.identifierRepository.save(existing);
+        return await this.identifierRepository.save(existing);
 	}
 
 	public async get(did?: string) {
