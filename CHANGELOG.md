@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.10.1-develop.1](https://github.com/cheqd/credential-service/compare/2.10.0...2.10.1-develop.1) (2023-10-31)
+
+
+### Bug Fixes
+
+* Make releaserc, prettier and linters the same as in other projects ([#417](https://github.com/cheqd/credential-service/issues/417)) ([c05c404](https://github.com/cheqd/credential-service/commit/c05c404e840e1dc35561042e16a28ad7a2305503))
+
 ## [2.10.0](https://github.com/cheqd/credential-service/compare/2.9.3...2.10.0) (2023-10-24)
 
 
