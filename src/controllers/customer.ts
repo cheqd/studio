@@ -131,7 +131,7 @@ export class AccountController {
 		if (!user) {
 			// 2.1. If no - create customer first
 			// Cause for now we assume only 1-1 connection between user and customer
-			// We think here that if now user row - no customer also, cause customer should be created before user
+			// We think here that if no user row - no customer also, cause customer should be created before user
 			// Even if customer was created before for such user but the process was interruted somehow - we need to create it again
 			// Cause we don't know the state of the customer in this case
 			// 2.1.1. Create customer

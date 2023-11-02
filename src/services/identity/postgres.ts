@@ -9,22 +9,17 @@ import type {
 import type { AbstractPrivateKeyStore } from '@veramo/key-manager';
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local';
 import { PrivateKeyStore } from '@veramo/data-store';
-// import { CheqdNetwork } from '@cheqd/sdk';
-// import { CheqdNetwork } from '@cheqd/sdk';
 import {
-	// Cheqd,
-	// CheqdDIDProvider,
+	Cheqd,
+	CheqdDIDProvider,
 	type ResourcePayload,
 	type BulkRevocationResult,
 	type BulkSuspensionResult,
 	type BulkUnsuspensionResult,
 	type CreateStatusList2021Result,
 	type StatusCheckResult,
-	// DefaultRPCUrls,
-	type TransactionResult,
-	CheqdDIDProvider,
 	DefaultRPCUrls,
-	Cheqd,
+	type TransactionResult
 } from '@cheqd/did-provider-cheqd';
 import {
 	BroadcastStatusListOptions,
