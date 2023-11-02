@@ -166,7 +166,6 @@ class App {
 		app.get('/resource/search/:did', new IssuerController().getResource);
 
 		// Account API
-		app.post('/account', new AccountController().create);
 		app.get('/account', new AccountController().get);
 
 		// LogTo webhooks

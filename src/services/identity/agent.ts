@@ -9,7 +9,6 @@ import {
 	IKeyManager,
 	IResolver,
 	IVerifyResult,
-	ManagedKeyInfo,
 	MinimalImportableIdentifier,
 	MinimalImportableKey,
 	TAgent,
@@ -151,13 +150,12 @@ export class Veramo {
 		return createAgent({ plugins });
 	}
 
-	async createKey(agent: TAgent<IKeyManager>, type: 'Ed25519' | 'Secp256k1' = 'Ed25519'): Promise<ManagedKeyInfo> {
+	async createKey(agent: TAgent<IKeyManager>, type: 'Ed25519' | 'Secp256k1' = 'Ed25519') {
 		const [kms] = await agent.keyManagerGetKeyManagementSystems();
-		const key = await agent.keyManagerCreate({
+		return await agent.keyManagerCreate({
 			type: type || 'Ed25519',
 			kms,
 		});
-		return key;
 	}
 
 	async getKey(agent: TAgent<IKeyManager>, kid: string) {

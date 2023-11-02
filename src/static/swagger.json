@@ -402,34 +402,6 @@
       }
     },
     "/account": {
-      "post": {
-        "tags": [
-          "Account"
-        ],
-        "summary": "Create a new custodian-mode client.",
-        "description": "This endpoint creates a new custodian-mode client and creates issuer DIDs and Cosmos/cheqd accounts for the client.",
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Customer"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      },
       "get": {
         "tags": [
           "Account"

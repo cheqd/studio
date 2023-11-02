@@ -11,6 +11,7 @@ import { ResourceAuthHandler } from './auth/resource-auth.js';
 import type { AbstractAuthHandler } from './auth/base-auth.js';
 import { LogToHelper } from './auth/logto.js';
 import { PresentationAuthHandler } from './auth/presentation-auth.js';
+import { UserService } from '../services/user.js';
 
 dotenv.config();
 
@@ -99,7 +100,23 @@ export class Authentication {
 					error: _resp.error,
 				});
 			}
-			response.locals.customerId = _resp.data.customerId;
+			// Only for rules when it's not allowed for unauthorized users
+			// we need to find customer and assign it to the response.locals
+			if (!_resp.data.isAllowedUnauthorized) {
+				const user = await UserService.instance.get(_resp.data.logToId);
+				if (!user) {
+					return response.status(StatusCodes.NOT_FOUND).json({
+						error: `Looks like user with logToId ${_resp.data.logToId} is not found`,
+					});
+				}
+				if (user && !user.customer) {
+					return response.status(StatusCodes.NOT_FOUND).json({
+						error: `Looks like user with logToId ${_resp.data.logToId} is not assigned to any CredentialService customer`,
+					});
+				}
+				response.locals.customer = user.customer;
+				response.locals.user = user;
+			}
 			next();
 		} catch (err) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).send({

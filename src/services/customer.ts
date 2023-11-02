@@ -1,96 +1,72 @@
-import { ArrayContains, Repository } from 'typeorm';
+import type { Repository } from 'typeorm';
 
 import { Connection } from '../database/connection/connection.js';
 import { CustomerEntity } from '../database/entities/customer.entity.js';
-import { getCosmosAccount } from '@cheqd/sdk';
 import { IdentityServiceStrategySetup } from './identity/index.js';
 
 import * as dotenv from 'dotenv';
+import { PaymentAccountService } from './payment_account.js';
+import { CheqdNetwork } from '@cheqd/sdk';
+import { v4 as uuidv4 } from 'uuid';
 dotenv.config();
 
 export class CustomerService {
 	public customerRepository: Repository<CustomerEntity>;
 
+	// Get rid of such code and move it to the builder
 	public static instance = new CustomerService();
 
 	constructor() {
 		this.customerRepository = Connection.instance.dbConnection.getRepository(CustomerEntity);
 	}
 
-	public async create(customerId: string) {
-		if (await this.find(customerId, {})) {
-			throw new Error('Cannot create a new customer since the user is already associated with a Customer ID');
+	public async create(name: string) {
+		// The sequence for creating a customer is supposed to be:
+		// 1. Create a new customer entity in the database;
+		// 2. Create new cosmos keypair
+		// 3. Get the cosmos address from the keypair
+		// 4. Create a new payment account entity in the database
+
+		if (await this.isExist({ name: name })) {
+			throw new Error(`Cannot create a new customer since the customer with same name ${name} already exists`);
 		}
-		const kid = (await new IdentityServiceStrategySetup(customerId).agent.createKey('Secp256k1', customerId)).kid;
-		const address = getCosmosAccount(kid);
-		const customer = new CustomerEntity(customerId, kid, getCosmosAccount(kid));
-		const customerEntity = (await this.customerRepository.insert(customer)).identifiers[0];
+		const customerEntity = new CustomerEntity(uuidv4(), name);
+		await this.customerRepository.insert(customerEntity);
+
+		// Create a new Cosmos account for the customer and make a link with customer entity;
+		const key = await new IdentityServiceStrategySetup(name).agent.createKey('Secp256k1', customerEntity);
+		await PaymentAccountService.instance.create(CheqdNetwork.Testnet, true, customerEntity, key);
 		return {
 			customerId: customerEntity.customerId,
-			address: address,
+			name: customerEntity.name,
 		};
 	}
 
-	public async update(
-		customerId: string,
-		{
-			kids = [],
-			dids = [],
-			claimIds = [],
-			presentationIds = [],
-		}: { kids?: string[]; dids?: string[]; claimIds?: string[]; presentationIds?: string[] }
-	) {
+	public async update(customerId: string, name: string) {
 		const existingCustomer = await this.customerRepository.findOneBy({ customerId });
 		if (!existingCustomer) {
 			throw new Error(`CustomerId not found`);
 		}
 
-		existingCustomer.kids = this.concatenate(existingCustomer.kids, kids);
-		existingCustomer.dids = this.concatenate(existingCustomer.dids, dids);
-		existingCustomer.claimIds = this.concatenate(existingCustomer.claimIds, claimIds);
-		existingCustomer.presentationIds = this.concatenate(existingCustomer.presentationIds, presentationIds);
-
+		existingCustomer.name = name;
 		return await this.customerRepository.save(existingCustomer);
 	}
 
 	public async get(customerId?: string) {
-		return customerId
-			? await this.customerRepository.findOneBy({ customerId })
-			: await this.customerRepository.find();
+		return this.customerRepository.findOneBy({ customerId });
 	}
 
-	public async find(
-		customerId: string,
-		{ kid, did, claimId, presentationId }: { kid?: string; did?: string; claimId?: string; presentationId?: string }
-	) {
-		const where: Record<string, unknown> = {
-			customerId,
-		};
+	public async findOne(name: string) {
+		return await this.customerRepository.findOne({
+			where: { name },
+		});
+	}
 
-		if (kid) {
-			where.kids = ArrayContains([kid]);
-		}
-
-		if (did) {
-			where.dids = ArrayContains([did]);
-		}
-
-		if (claimId) {
-			where.claimIds = ArrayContains([claimId]);
-		}
-
-		if (presentationId) {
-			where.presentationIds = ArrayContains([presentationId]);
-		}
-
+	public async isExist(where: Record<string, unknown>) {
 		try {
 			return (await this.customerRepository.findOne({ where })) ? true : false;
 		} catch {
 			return false;
 		}
-	}
-
-	private concatenate<T>(array: T[], items: T[]): T[] {
-		return array ? array.concat(items) : items;
 	}
 }
