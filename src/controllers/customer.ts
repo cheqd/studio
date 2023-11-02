@@ -24,14 +24,6 @@ export class AccountController {
 	 *     tags: [Account]
 	 *     summary: Fetch custodian-mode client details.
 	 *     description: This endpoint returns the custodian-mode client details for authenticated users.
-	 *     parameters:
-	 *       - in: query
-	 *         name: name
-	 *         description: Name of a customer
-	 *         schema:
-	 *           type: string
-	 *         required: true
-	 *         example: Cheqd
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
