@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.11.0-develop.1](https://github.com/cheqd/credential-service/compare/2.10.1-develop.1...2.11.0-develop.1) (2023-11-02)
+
+
+### Features
+
+* Implement new customer relationships due to the new db structure [DEV-3217] ([#406](https://github.com/cheqd/credential-service/issues/406)) ([a8d9590](https://github.com/cheqd/credential-service/commit/a8d95906fb8c1f689ce8a31e2551bbd7c39e48b5))
+
 ## [2.10.1-develop.1](https://github.com/cheqd/credential-service/compare/2.10.0...2.10.1-develop.1) (2023-10-31)
 
 
