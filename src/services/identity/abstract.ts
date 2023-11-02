@@ -62,7 +62,12 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 
-	importDid(did: string, privateKeyHex: string, publicKeyHex: string, customer: CustomerEntity): Promise<IIdentifier> {
+	importDid(
+		did: string,
+		privateKeyHex: string,
+		publicKeyHex: string,
+		customer: CustomerEntity
+	): Promise<IIdentifier> {
 		throw new Error(`Not supported`);
 	}
 
@@ -124,7 +129,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 	remunerateStatusList2021(
-		feePaymentOptions: FeePaymentOptions, 
+		feePaymentOptions: FeePaymentOptions,
 		customer?: CustomerEntity
 	): Promise<TransactionResult> {
 		throw new Error(`Not supported`);

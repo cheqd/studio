@@ -15,7 +15,6 @@ import type { PaymentAccountEntity } from '../database/entities/payment.account.
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 
 export class AccountController {
-
 	/**
 	 * @openapi
 	 *
@@ -44,10 +43,10 @@ export class AccountController {
 				// It's not ok, seems like there no any customer assigned to the user yet
 				// But it's not an expectede behaviour cause it should be done on bootstrap phase of after migration
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-					error: "Bad state cause there is no customer assigned to the user yet. Please contact administrator."
+					error: 'Bad state cause there is no customer assigned to the user yet. Please contact administrator.',
 				});
 			}
-			const paymentAccount = await PaymentAccountService.instance.find({customer: response.locals.customer});
+			const paymentAccount = await PaymentAccountService.instance.find({ customer: response.locals.customer });
 			const result = {
 				customer: {
 					customerId: response.locals.customer.customerId,
@@ -56,11 +55,9 @@ export class AccountController {
 				paymentAccount: {
 					address: paymentAccount[0].address,
 				},
-				
 			};
-				
-			return response.status(StatusCodes.OK).json(result);
 
+			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
@@ -138,7 +135,7 @@ export class AccountController {
 			// Even if customer was created before for such user but the process was interruted somehow - we need to create it again
 			// Cause we don't know the state of the customer in this case
 			// 2.1.1. Create customer
-			customer = await CustomerService.instance.create(logToUserEmail) as CustomerEntity;
+			customer = (await CustomerService.instance.create(logToUserEmail)) as CustomerEntity;
 			if (!customer) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'User is not found in db: Customer was not created',
@@ -156,7 +153,7 @@ export class AccountController {
 		if (!user.customer) {
 			// 3.1. If no:
 			// 3.1.1. Create customer
-			customer = await CustomerService.instance.create(logToUserEmail) as CustomerEntity;
+			customer = (await CustomerService.instance.create(logToUserEmail)) as CustomerEntity;
 			if (!customer) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'User exists in db: Customer was not created',
@@ -170,15 +167,23 @@ export class AccountController {
 		}
 
 		// 4. Check is paymentAccount exists for the customer
-		const accounts = await PaymentAccountService.instance.find({customer});
+		const accounts = await PaymentAccountService.instance.find({ customer });
 		if (accounts.length === 0) {
-			const key = await new IdentityServiceStrategySetup(customer.customerId).agent.createKey('Secp256k1', customer);
+			const key = await new IdentityServiceStrategySetup(customer.customerId).agent.createKey(
+				'Secp256k1',
+				customer
+			);
 			if (!key) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'PaymentAccount is not found in db: Key was not created',
 				});
 			}
-			paymentAccount = await PaymentAccountService.instance.create(CheqdNetwork.Testnet, true, customer, key) as PaymentAccountEntity;
+			paymentAccount = (await PaymentAccountService.instance.create(
+				CheqdNetwork.Testnet,
+				true,
+				customer,
+				key
+			)) as PaymentAccountEntity;
 			if (!paymentAccount) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'PaymentAccount is not found in db: Payment account was not created',
@@ -187,7 +192,6 @@ export class AccountController {
 		} else {
 			paymentAccount = accounts[0];
 		}
-
 
 		const logToHelper = new LogToHelper();
 		const _r = await logToHelper.setup();
@@ -226,7 +230,7 @@ export class AccountController {
 				},
 				paymentAccount: {
 					address: paymentAccount.address,
-				}
+				},
 			};
 			const _r = await logToHelper.updateCustomData(user.logToId, customData);
 			if (_r.status !== 200) {

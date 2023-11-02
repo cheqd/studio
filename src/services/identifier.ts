@@ -16,33 +16,28 @@ export class IdentifierService {
 		this.identifierRepository = Connection.instance.dbConnection.getRepository(IdentifierEntity);
 	}
 
-	public async update(
-        did: string,
-		customer: CustomerEntity,
-	) {
+	public async update(did: string, customer: CustomerEntity) {
 		const existing = await this.identifierRepository.findOneBy({ did });
-        if (!existing) {
-            throw new Error(`Did not found`);
-        }
-        existing.customer = customer;
-        return await this.identifierRepository.save(existing);
+		if (!existing) {
+			throw new Error(`Did not found`);
+		}
+		existing.customer = customer;
+		return await this.identifierRepository.save(existing);
 	}
 
 	public async get(did?: string) {
-		return await this.identifierRepository.findOne(
-			{
-				where: { did },
-				relations: ['customer']
-			});
+		return await this.identifierRepository.findOne({
+			where: { did },
+			relations: ['customer'],
+		});
 	}
 
 	public async find(where: Record<string, unknown>) {
 		try {
-			return await this.identifierRepository.find(
-				{
-					where: where,
-					relations: ['customer']
-				});
+			return await this.identifierRepository.find({
+				where: where,
+				relations: ['customer'],
+			});
 		} catch {
 			return [];
 		}

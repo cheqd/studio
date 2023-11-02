@@ -8,19 +8,19 @@ dotenv.config();
 @Entity('user')
 export class UserEntity {
 	@Column({
-        type: 'text',
-        nullable: false,
-        primary: true,
-    })
+		type: 'text',
+		nullable: false,
+		primary: true,
+	})
 	logToId!: string;
 
-    @ManyToOne(() => CustomerEntity, customer => customer.customerId, { onDelete: 'CASCADE' })
-	@JoinColumn({name: "customerId"})
-    customer!: CustomerEntity;
+	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'customerId' })
+	customer!: CustomerEntity;
 
-    @ManyToOne(() => RoleEntity, role => role.roleTypeId, { onDelete: 'CASCADE' })
-	@JoinColumn({name: "roleTypeId"})
-    role!: RoleEntity;
+	@ManyToOne(() => RoleEntity, (role) => role.roleTypeId, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'roleTypeId' })
+	role!: RoleEntity;
 
 	@Column({
 		type: 'timestamptz',
@@ -36,12 +36,12 @@ export class UserEntity {
 
 	@BeforeInsert()
 	setCreatedAt() {
-	  this.createdAt = new Date()
+		this.createdAt = new Date();
 	}
 
 	@BeforeUpdate()
 	setUpdateAt() {
-	  this.updatedAt = new Date()
+		this.updatedAt = new Date();
 	}
 
 	constructor(logToId: string, customer: CustomerEntity, role: RoleEntity) {

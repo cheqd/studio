@@ -10,25 +10,25 @@ dotenv.config();
 @Entity('paymentAccount')
 export class PaymentAccountEntity {
 	@Column({
-        type: 'text',
-        nullable: false,
-        primary: true,
-    })
+		type: 'text',
+		nullable: false,
+		primary: true,
+	})
 	address!: string;
 
 	@Column({
-		type: 'enum', 
-        enum: namespaceEnum,
-		nullable: false
+		type: 'enum',
+		enum: namespaceEnum,
+		nullable: false,
 	})
 	namespace!: string;
 
-    @Column({
-        type: 'bool',
-        nullable: false,
-        default: false,
-    })
-    isDefault!: boolean;
+	@Column({
+		type: 'bool',
+		nullable: false,
+		default: false,
+	})
+	isDefault!: boolean;
 
 	@Column({
 		type: 'timestamptz',
@@ -42,29 +42,29 @@ export class PaymentAccountEntity {
 	})
 	updatedAt!: Date;
 
-    @ManyToOne(() => CustomerEntity, customer => customer.customerId, { onDelete: 'CASCADE' })
-    @JoinColumn({name: "customerId"})
-    customer!: CustomerEntity;
+	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'customerId' })
+	customer!: CustomerEntity;
 
-    @ManyToOne(() => Key, key => key.kid, { onDelete: 'CASCADE' })
-    @JoinColumn({name: "kid"})
-    key!: Key;
+	@ManyToOne(() => Key, (key) => key.kid, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'kid' })
+	key!: Key;
 
 	@BeforeInsert()
 	setCreatedAt() {
-	  this.createdAt = new Date()
+		this.createdAt = new Date();
 	}
 
 	@BeforeUpdate()
 	setUpdateAt() {
-	  this.updatedAt = new Date()
+		this.updatedAt = new Date();
 	}
 
 	constructor(address: string, namespace: string, isDefault: boolean, customer: CustomerEntity, key: KeyEntity) {
-        this.address = address;
-        this.namespace = namespace;
-        this.isDefault = isDefault;
-        this.customer = customer;
-        this.key = key;
+		this.address = address;
+		this.namespace = namespace;
+		this.isDefault = isDefault;
+		this.customer = customer;
+		this.key = key;
 	}
 }

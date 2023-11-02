@@ -32,12 +32,9 @@ export class Credentials {
 
 		const statusOptions = request.credentialStatus || null;
 
-		const verifiable_credential = await new IdentityServiceStrategySetup(customer.customerId).agent.createCredential(
-			credential,
-			request.format,
-			statusOptions,
-			customer
-		);
+		const verifiable_credential = await new IdentityServiceStrategySetup(
+			customer.customerId
+		).agent.createCredential(credential, request.format, statusOptions, customer);
 
 		if (ENABLE_VERIDA_CONNECTOR === 'true' && request.subjectDid.startsWith('did:vda')) {
 			if (!request.credentialSchema) throw new Error('Credential schema is required');

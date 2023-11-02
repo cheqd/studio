@@ -21,8 +21,8 @@ import {
 	validateSpecCompliantPayload,
 } from '../helpers/helpers.js';
 import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
-import { bases } from "multiformats/basics";
-import { base64ToBytes } from "did-jwt";
+import { bases } from 'multiformats/basics';
+import { base64ToBytes } from 'did-jwt';
 import type { CreateDidRequestBody } from '../types/shared.js';
 
 export class IssuerController {
@@ -125,7 +125,7 @@ export class IssuerController {
 		try {
 			const key = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createKey(
 				'Ed25519',
-				response.locals.customer,
+				response.locals.customer
 			);
 			return response.status(StatusCodes.OK).json(key);
 		} catch (error) {
@@ -252,11 +252,16 @@ export class IssuerController {
 			if (request.body.didDocument) {
 				didDocument = request.body.didDocument;
 				if (options) {
-					const publicKeyHex = options.key || (await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createKey(
-						'Ed25519',
-						response.locals.customer
-					)).publicKeyHex;
-					const pkBase64 = publicKeyHex.length == 43 ? publicKeyHex : toString(fromString(publicKeyHex, 'hex'), 'base64');
+					const publicKeyHex =
+						options.key ||
+						(
+							await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createKey(
+								'Ed25519',
+								response.locals.customer
+							)
+						).publicKeyHex;
+					const pkBase64 =
+						publicKeyHex.length == 43 ? publicKeyHex : toString(fromString(publicKeyHex, 'hex'), 'base64');
 
 					didDocument.verificationMethod = createDidVerificationMethod(
 						[options.verificationMethodType],
@@ -275,10 +280,14 @@ export class IssuerController {
 					});
 				}
 			} else if (verificationMethodType) {
-				const publicKeyHex = key || (await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createKey(
-					'Ed25519',
-					response.locals.customer
-				)).publicKeyHex;
+				const publicKeyHex =
+					key ||
+					(
+						await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createKey(
+							'Ed25519',
+							response.locals.customer
+						)
+					).publicKeyHex;
 				didDocument = generateDidDoc({
 					verificationMethod: verificationMethodType,
 					verificationMethodId: 'key-1',
@@ -467,10 +476,9 @@ export class IssuerController {
 		}
 
 		try {
-			const deactivated = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.deactivateDid(
-				request.params.did,
-				response.locals.customer
-			);
+			const deactivated = await new IdentityServiceStrategySetup(
+				response.locals.customer.customerId
+			).agent.deactivateDid(request.params.did, response.locals.customer);
 
 			if (!deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).json({ deactivated: false });
@@ -557,11 +565,9 @@ export class IssuerController {
 				version,
 				alsoKnownAs,
 			};
-			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createResource(
-				network || did.split(':')[2],
-				resourcePayload,
-				response.locals.customer
-			);
+			const result = await new IdentityServiceStrategySetup(
+				response.locals.customer.customerId
+			).agent.createResource(network || did.split(':')[2], resourcePayload, response.locals.customer);
 			if (result) {
 				const url = new URL(
 					`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?` +

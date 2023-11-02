@@ -24,7 +24,7 @@ import {
 	type TransactionResult,
 	CheqdDIDProvider,
 	DefaultRPCUrls,
-	Cheqd
+	Cheqd,
 } from '@cheqd/did-provider-cheqd';
 import {
 	BroadcastStatusListOptions,
@@ -81,21 +81,20 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async createProvider(customer: CustomerEntity, namespace: CheqdNetwork): Promise<CheqdDIDProvider | undefined> {
-		let rpcUrl = "";
+		let rpcUrl = '';
 		if (namespace === CheqdNetwork.Mainnet) {
 			rpcUrl = MAINNET_RPC_URL || DefaultRPCUrls.mainnet;
 		} else {
 			rpcUrl = TESTNET_RPC_URL || DefaultRPCUrls.testnet;
 		}
-		const paymentAccount = await PaymentAccountService.instance.find(
-			{
-				namespace: namespace,
-				customer: customer
-			});
+		const paymentAccount = await PaymentAccountService.instance.find({
+			namespace: namespace,
+			customer: customer,
+		});
 		if (paymentAccount.length > 1) {
 			throw new Error(`More than one payment account for ${namespace} found`);
 		}
-		if (paymentAccount.length === 1 ) {
+		if (paymentAccount.length === 1) {
 			const privateKey = (await this.getPrivateKey(paymentAccount[0].key.kid))?.privateKeyHex;
 
 			if (!privateKey) {
@@ -156,7 +155,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async getKey(kid: string, customer: CustomerEntity) {
-		const keys = await KeyService.instance.find({kid: kid, customer: customer});
+		const keys = await KeyService.instance.find({ kid: kid, customer: customer });
 		if (!keys || keys.length == 0) {
 			return null;
 		}
@@ -167,11 +166,17 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return keys[0];
 	}
 
-	async createPaymentAccount(namespace: string, customer: CustomerEntity, key: KeyEntity, isDefault=false) {
+	async createPaymentAccount(namespace: string, customer: CustomerEntity, key: KeyEntity, isDefault = false) {
 		return await PaymentAccountService.instance.create(namespace, isDefault, customer, key);
 	}
 
-	async updatePaymentAccount(address: string, namespace?: string, isDefault?: boolean, customer?: CustomerEntity, key?: KeyEntity) {
+	async updatePaymentAccount(
+		address: string,
+		namespace?: string,
+		isDefault?: boolean,
+		customer?: CustomerEntity,
+		key?: KeyEntity
+	) {
 		return await PaymentAccountService.instance.update(address, namespace, isDefault, customer, key);
 	}
 
@@ -211,7 +216,9 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			throw new Error(`Identifier ${didDocument.id} not found`);
 		}
 		if (!identifier.customer.isEqual(customer)) {
-			throw new Error(`Identifier ${didDocument.id} does not belong to the customer with id ${customer.customerId}`);
+			throw new Error(
+				`Identifier ${didDocument.id} does not belong to the customer with id ${customer.customerId}`
+			);
 		}
 		try {
 			const agent = await this.createAgent(customer);
@@ -222,10 +229,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async deactivateDid(
-		did: string, 
-		customer: CustomerEntity
-	): Promise<boolean> {
+	async deactivateDid(did: string, customer: CustomerEntity): Promise<boolean> {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
@@ -248,7 +252,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		const entities = await IdentifierService.instance.find({customer: customer});
+		const entities = await IdentifierService.instance.find({ customer: customer });
 		return entities.map((entity) => entity.did);
 	}
 
@@ -258,9 +262,9 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async importDid(
-		did: string, 
-		privateKeyHex: string, 
-		publicKeyHex: string, 
+		did: string,
+		privateKeyHex: string,
+		publicKeyHex: string,
 		customer: CustomerEntity
 	): Promise<IIdentifier> {
 		if (!did.match(DefaultDidUrlPattern)) {
@@ -273,14 +277,11 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return identifier;
 	}
 
-	async createResource(
-		network: string, 
-		payload: ResourcePayload, 
-		customer: CustomerEntity) {
+	async createResource(network: string, payload: ResourcePayload, customer: CustomerEntity) {
 		try {
 			const agent = await this.createAgent(customer);
 			const did = `did:cheqd:${network}:${payload.collectionId}`;
-			if (!(await IdentifierService.instance.find({did: did, customer: customer}))) {
+			if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
 				throw new Error(`${did} not found in wallet`);
 			}
 			return await Veramo.instance.createResource(agent, network, payload);
@@ -297,7 +298,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	): Promise<VerifiableCredential> {
 		try {
 			const did = typeof credential.issuer == 'string' ? credential.issuer : credential.issuer.id;
-			if (!(await IdentifierService.instance.find({did: did, customer: customer}))) {
+			if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
 				throw new Error(`${did} not found in wallet`);
 			}
 			const agent = await this.createAgent(customer);
@@ -332,7 +333,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({did: did, customer: customer}))) {
+		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
 			throw new Error(`${did} not found in wallet`);
 		}
 		return await Veramo.instance.createUnencryptedStatusList2021(agent, did, resourceOptions, statusOptions);
@@ -345,7 +346,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({did: did, customer: customer}))) {
+		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
 			throw new Error(`${did} not found in wallet`);
 		}
 		return await Veramo.instance.createEncryptedStatusList2021(agent, did, resourceOptions, statusOptions);
@@ -357,7 +358,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({did: did, customer: customer}))) {
+		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
 			throw new Error(`${did} not found in wallet`);
 		}
 		return await Veramo.instance.updateUnencryptedStatusList2021(agent, did, statusOptions);
@@ -369,7 +370,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({did: did, customer: customer}))) {
+		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
 			throw new Error(`${did} not found in wallet`);
 		}
 		return await Veramo.instance.updateEncryptedStatusList2021(agent, did, statusOptions);
@@ -382,7 +383,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	): Promise<StatusCheckResult> {
 		const agent = await this.createAgent(customer);
 		// ToDo: Should we try to get did from our storage? What if DID is placed on ledger but we don't have it in our own db?
-		if (!(await IdentifierService.instance.find({did: did, customer: customer}))) {
+		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
 			throw new Error(`${did} not found in wallet`);
 		}
 		return await Veramo.instance.checkStatusList2021(agent, did, statusOptions);
@@ -395,14 +396,14 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<boolean> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({did: did, customer: customer}))) {
+		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
 			throw new Error(`${did} not found in wallet`);
 		}
 		return await Veramo.instance.broadcastStatusList2021(agent, did, resourceOptions, statusOptions);
 	}
 
 	async remunerateStatusList2021(
-		feePaymentOptions: FeePaymentOptions, 
+		feePaymentOptions: FeePaymentOptions,
 		customer: CustomerEntity
 	): Promise<TransactionResult> {
 		const agent = await this.createAgent(customer);
@@ -455,7 +456,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			const issuerId =
 				typeof decodedCredential.issuer === 'string' ? decodedCredential.issuer : decodedCredential.issuer.id;
 
-			const existsInWallet = await IdentifierService.instance.find({did: issuerId, customer: customer});
+			const existsInWallet = await IdentifierService.instance.find({ did: issuerId, customer: customer });
 
 			if (!existsInWallet) {
 				throw new Error(`${issuerId} not found in wallet`);

@@ -13,70 +13,70 @@ dotenv.config();
 @Entity('payment')
 export class PaymentEntity {
 	@Column({
-        type: 'text',
-        nullable: false,
-        primary: true,
-    })
+		type: 'text',
+		nullable: false,
+		primary: true,
+	})
 	txHash!: string;
 
-    @Column({
-        type: 'enum',
-        enum: directionEnum,
-        nullable: false
-    })
-    direction!: string;
+	@Column({
+		type: 'enum',
+		enum: directionEnum,
+		nullable: false,
+	})
+	direction!: string;
 
-    @Column({
-        type: 'bigint',
-        nullable: false,
-    })
-    fee!: number;
+	@Column({
+		type: 'bigint',
+		nullable: false,
+	})
+	fee!: number;
 
-    @Column({
-        type: 'timestamptz',
-        nullable: false,
-    })
-    timestamp!: Date;
+	@Column({
+		type: 'timestamptz',
+		nullable: false,
+	})
+	timestamp!: Date;
 
+	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'customerId' })
+	customer!: CustomerEntity;
 
-    @ManyToOne(() => CustomerEntity, customer => customer.customerId, { onDelete: 'CASCADE' })
-    @JoinColumn({name: "customerId"})
-    customer!: CustomerEntity;
+	@ManyToOne(() => ResourceEntity, (resource) => resource.resourceId, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'resourceId' })
+	resource!: ResourceEntity;
 
-    @ManyToOne(() => ResourceEntity, resource => resource.resourceId, { onDelete: 'CASCADE' })
-    @JoinColumn({name: "resourceId"})
-    resource!: ResourceEntity;
+	@ManyToOne(() => Identifier, (identifier) => identifier.did, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'identifierDid' })
+	identifier!: Identifier;
 
-    @ManyToOne(() => Identifier, identifier => identifier.did, { onDelete: 'CASCADE' })
-    @JoinColumn({name: "identifierDid"})
-    identifier!: Identifier;
+	@ManyToOne(() => OperationEntity, (operation) => operation.operationId, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'operationId' })
+	operation!: OperationEntity;
 
-    @ManyToOne(() => OperationEntity, operation => operation.operationId, { onDelete: 'CASCADE' })
-    @JoinColumn({name: "operationId"})
-    operation!: OperationEntity;
-
-    @ManyToOne(() => PaymentAccountEntity, paymentAccount => paymentAccount.address, { onDelete: 'CASCADE' })
-    @JoinColumn({name: "paymentAddress"})
-    paymentAccount!: PaymentAccountEntity;
+	@ManyToOne(() => PaymentAccountEntity, (paymentAccount) => paymentAccount.address, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'paymentAddress' })
+	paymentAccount!: PaymentAccountEntity;
 
 	constructor(
-        txHash: string, 
-        customer: CustomerEntity, 
-        operation: OperationEntity, 
-        direction: string, 
-        fee: number, 
-        timestamp: Date, 
-        identifierDid: IdentifierEntity, 
-        resource: ResourceEntity, 
-        paymentAddress: PaymentAccountEntity) {
-        this.txHash = txHash;
-        this.customer = customer;
-        this.operation = operation;
-        this.direction = direction;
-        this.fee = fee;
-        this.timestamp = timestamp;
-        this.identifier = identifierDid;
-        this.resource = resource;
-        this.paymentAccount = paymentAddress;
+		txHash: string,
+		customer: CustomerEntity,
+		operation: OperationEntity,
+		direction: string,
+		fee: number,
+		timestamp: Date,
+		identifierDid: IdentifierEntity,
+		resource: ResourceEntity,
+		paymentAddress: PaymentAccountEntity
+	) {
+		this.txHash = txHash;
+		this.customer = customer;
+		this.operation = operation;
+		this.direction = direction;
+		this.fee = fee;
+		this.timestamp = timestamp;
+		this.identifier = identifierDid;
+		this.resource = resource;
+		this.paymentAccount = paymentAddress;
 	}
 }

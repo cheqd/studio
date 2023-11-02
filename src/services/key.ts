@@ -22,37 +22,34 @@ export class KeyService {
 		if (!existingKey) {
 			throw new Error(`kid not found`);
 		}
-        if (customer) {
-            existingKey.customer = customer;
-        }
-        if (keyAlias) {
-		    existingKey.publicKeyAlias = keyAlias;
-        }
+		if (customer) {
+			existingKey.customer = customer;
+		}
+		if (keyAlias) {
+			existingKey.publicKeyAlias = keyAlias;
+		}
 		return await this.keyRepository.save(existingKey);
 	}
 
 	public async get(kid: string) {
-		return await this.keyRepository.findOne(
-            {
-                where: { kid },
-                relations: ['customer']
-            });
+		return await this.keyRepository.findOne({
+			where: { kid },
+			relations: ['customer'],
+		});
 	}
 
-    public async find(where: Record<string, unknown>) {
+	public async find(where: Record<string, unknown>) {
 		try {
-			return await this.keyRepository.find(
-				{
-					where: where,
-					relations: ['customer']
-				});
+			return await this.keyRepository.find({
+				where: where,
+				relations: ['customer'],
+			});
 		} catch {
 			return [];
 		}
 	}
 
-    public fromVeramoKey(key: Key) {
-        return new KeyEntity(key.kid, key.type, key.publicKeyHex);
-    }
-
+	public fromVeramoKey(key: Key) {
+		return new KeyEntity(key.kid, key.type, key.publicKeyHex);
+	}
 }

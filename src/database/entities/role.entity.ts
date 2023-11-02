@@ -1,4 +1,4 @@
-import {Column, Entity, PrimaryGeneratedColumn, ValueTransformer } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, ValueTransformer } from 'typeorm';
 
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -26,26 +26,26 @@ const arrayToJsonTransformer = (shouldTransform: string): ValueTransformer => {
 
 @Entity('role')
 export class RoleEntity {
-    @PrimaryGeneratedColumn('uuid')
+	@PrimaryGeneratedColumn('uuid')
 	roleTypeId!: string;
 
-    @Column({
+	@Column({
 		type: 'text',
-		nullable: false
+		nullable: false,
 	})
 	name!: string;
 
-    @Column({
-        type: 'text',
-        transformer: arrayToJsonTransformer(ENABLE_EXTERNAL_DB),
-        array: true,
-        nullable: true,
-    })
-    logToRoleIds: string[]
+	@Column({
+		type: 'text',
+		transformer: arrayToJsonTransformer(ENABLE_EXTERNAL_DB),
+		array: true,
+		nullable: true,
+	})
+	logToRoleIds: string[];
 
-	constructor(roleTypeId: string, name: string, logToRoleIds=[] as string[]) {
+	constructor(roleTypeId: string, name: string, logToRoleIds = [] as string[]) {
 		this.roleTypeId = roleTypeId;
 		this.name = name;
-        this.logToRoleIds = logToRoleIds;
+		this.logToRoleIds = logToRoleIds;
 	}
 }

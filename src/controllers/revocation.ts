@@ -1123,13 +1123,15 @@ export class RevocationController {
 			// make fee payment
 			const feePaymentResult = await Promise.all(
 				statusList?.resource?.metadata?.paymentConditions?.map(async (condition) => {
-					return await identityServiceStrategySetup.agent.remunerateStatusList2021({
+					return await identityServiceStrategySetup.agent.remunerateStatusList2021(
+						{
 							feePaymentAddress: condition.feePaymentAddress,
 							feePaymentAmount: condition.feePaymentAmount,
 							feePaymentNetwork: toNetwork(did),
 							memo: 'Automated status check fee payment, orchestrated by CaaS.',
 						} satisfies FeePaymentOptions,
-						response.locals.customer);
+						response.locals.customer
+					);
 				}) || []
 			);
 
@@ -1250,7 +1252,11 @@ export class RevocationController {
 
 		try {
 			// search status list
-			const result = await new IdentityServiceStrategySetup().agent.searchStatusList2021(did, statusListName, statusPurpose);
+			const result = await new IdentityServiceStrategySetup().agent.searchStatusList2021(
+				did,
+				statusListName,
+				statusPurpose
+			);
 
 			// handle error
 			if (result.error) {

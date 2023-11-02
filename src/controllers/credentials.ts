@@ -124,9 +124,9 @@ export class CredentialController {
 			request.body['@context'] = [request.body['@context']];
 		}
 
-		const resolvedResult = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolve(
-			request.body.issuerDid
-		);
+		const resolvedResult = await new IdentityServiceStrategySetup(
+			response.locals.customer.customerId
+		).agent.resolve(request.body.issuerDid);
 		const body = await resolvedResult.json();
 		if (!body?.didDocument) {
 			return response.status(resolvedResult.status).send({ body });
@@ -366,11 +366,9 @@ export class CredentialController {
 			return response
 				.status(StatusCodes.OK)
 				.json(
-					await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.suspendCredentials(
-						request.body.credential,
-						request.body.publish,
-						response.locals.customer
-					)
+					await new IdentityServiceStrategySetup(
+						response.locals.customer.customerId
+					).agent.suspendCredentials(request.body.credential, request.body.publish, response.locals.customer)
 				);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -426,7 +424,9 @@ export class CredentialController {
 			return response
 				.status(StatusCodes.OK)
 				.json(
-					await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.reinstateCredentials(
+					await new IdentityServiceStrategySetup(
+						response.locals.customer.customerId
+					).agent.reinstateCredentials(
 						request.body.credential,
 						request.body.publish,
 						response.locals.customer

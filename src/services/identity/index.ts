@@ -46,7 +46,6 @@ import type { KeyEntity } from '../../database/entities/key.entity.js';
 
 dotenv.config();
 
-
 // ToDo: get rid of this interface
 // Move it to the abstract factory
 
@@ -122,7 +121,7 @@ export interface IIdentityService {
 		customer: CustomerEntity
 	): Promise<boolean>;
 	remunerateStatusList2021(
-		feePaymentOptions: FeePaymentOptions, 
+		feePaymentOptions: FeePaymentOptions,
 		customer?: CustomerEntity
 	): Promise<TransactionResult>;
 	revokeCredentials(

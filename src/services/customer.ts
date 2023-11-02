@@ -7,7 +7,7 @@ import { IdentityServiceStrategySetup } from './identity/index.js';
 import * as dotenv from 'dotenv';
 import { PaymentAccountService } from './payment_account.js';
 import { CheqdNetwork } from '@cheqd/sdk';
-import {v4 as uuidv4} from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 dotenv.config();
 
 export class CustomerService {
@@ -42,10 +42,7 @@ export class CustomerService {
 		};
 	}
 
-	public async update(
-		customerId: string,
-		name: string,
-	) {
+	public async update(customerId: string, name: string) {
 		const existingCustomer = await this.customerRepository.findOneBy({ customerId });
 		if (!existingCustomer) {
 			throw new Error(`CustomerId not found`);
@@ -56,17 +53,16 @@ export class CustomerService {
 	}
 
 	public async get(customerId?: string) {
-		return this.customerRepository.findOneBy({ customerId })
+		return this.customerRepository.findOneBy({ customerId });
 	}
 
 	public async findOne(name: string) {
 		return await this.customerRepository.findOne({
-			where: { name }
+			where: { name },
 		});
 	}
 
-	public async isExist(
-		where: Record<string, unknown>) {
+	public async isExist(where: Record<string, unknown>) {
 		try {
 			return (await this.customerRepository.findOne({ where })) ? true : false;
 		} catch {

@@ -22,44 +22,37 @@ export class UserService {
 		if (await this.isExist({ logToId: logToId })) {
 			throw new Error(`Cannot create a new user since the user with same logToId ${logToId} already exists`);
 		}
-        const userEntity = new UserEntity(logToId, customer, role);
-        const res = await this.userRepository.insert(userEntity);
-        if (!res) throw new Error(`Cannot create a new user`);
-        return userEntity;
+		const userEntity = new UserEntity(logToId, customer, role);
+		const res = await this.userRepository.insert(userEntity);
+		if (!res) throw new Error(`Cannot create a new user`);
+		return userEntity;
 	}
 
-	public async update(
-        logToId: string,
-		customer?: CustomerEntity,
-		role?: RoleEntity,
-	) {
+	public async update(logToId: string, customer?: CustomerEntity, role?: RoleEntity) {
 		const existing = await this.userRepository.findOneBy({ logToId });
 		if (!existing) {
 			throw new Error(`logToId not found`);
 		}
-        if (customer) existing.customer = customer;
-        if (role) existing.role = role;
+		if (customer) existing.customer = customer;
+		if (role) existing.role = role;
 		return await this.userRepository.save(existing);
 	}
 
 	public async get(logToId?: string): Promise<UserEntity | null> {
-		return await this.userRepository.findOne(
-            {
-                where: { logToId },
-                relations: ['customer', 'role']
-            })
+		return await this.userRepository.findOne({
+			where: { logToId },
+			relations: ['customer', 'role'],
+		});
 	}
 
 	public async findOne(where: Record<string, unknown>) {
-		return await this.userRepository.findOne(
-            {
-                where: where, 
-                relations: ['customer', 'role']
-            })
+		return await this.userRepository.findOne({
+			where: where,
+			relations: ['customer', 'role'],
+		});
 	}
 
-	public async isExist(
-		where: Record<string, unknown>) {
+	public async isExist(where: Record<string, unknown>) {
 		try {
 			return (await this.userRepository.findOne({ where })) ? true : false;
 		} catch {

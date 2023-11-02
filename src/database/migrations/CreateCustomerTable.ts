@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table} from 'typeorm';
+import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
 export class CreateCustomerTable1695740345977 implements MigrationInterface {
 	public async up(queryRunner: QueryRunner): Promise<void> {
@@ -6,10 +6,16 @@ export class CreateCustomerTable1695740345977 implements MigrationInterface {
 			new Table({
 				name: 'customer',
 				columns: [
-					{ name: 'customerId', type: 'uuid', isPrimary: true, generationStrategy: 'uuid', isGenerated: true },
-                    { name: 'name', type: 'text', isNullable: false },
+					{
+						name: 'customerId',
+						type: 'uuid',
+						isPrimary: true,
+						generationStrategy: 'uuid',
+						isGenerated: true,
+					},
+					{ name: 'name', type: 'text', isNullable: false },
 					{ name: 'createdAt', type: 'timestamptz', isNullable: false },
-                    { name: 'updatedAt', type: 'timestamptz', isNullable: true },
+					{ name: 'updatedAt', type: 'timestamptz', isNullable: true },
 				],
 			}),
 			true

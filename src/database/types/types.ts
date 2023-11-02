@@ -68,7 +68,8 @@ export class Postgres implements AbstractDatabase {
 						ca: EXTERNAL_DB_CERT,
 				  }
 				: false,
-			migrations: [...migrations,
+			migrations: [
+				...migrations,
 				// Old migration
 				CreateCustomersTable1683723285946,
 				// New ones
@@ -82,8 +83,20 @@ export class Postgres implements AbstractDatabase {
 				AlterTableClaim1695740345977,
 				AlterTableIdentifier1695740345977,
 				AlterTableKey1695740345977,
-				MigrateData1695740345977],
-			entities: [...Entities, CustomerEntity, UserEntity, RoleEntity, OperationEntity, PaymentEntity, PaymentAccountEntity, ResourceEntity, KeyEntity, IdentifierEntity],
+				MigrateData1695740345977,
+			],
+			entities: [
+				...Entities,
+				CustomerEntity,
+				UserEntity,
+				RoleEntity,
+				OperationEntity,
+				PaymentEntity,
+				PaymentAccountEntity,
+				ResourceEntity,
+				KeyEntity,
+				IdentifierEntity,
+			],
 			logging: ['error', 'info', 'warn'],
 		});
 	}

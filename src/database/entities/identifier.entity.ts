@@ -8,11 +8,10 @@ dotenv.config();
 
 @Entity('identifier')
 export class IdentifierEntity extends Identifier {
+	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'customerId' })
+	customer!: CustomerEntity;
 
-    @ManyToOne(() => CustomerEntity, customer => customer.customerId, { onDelete: 'CASCADE' })
-    @JoinColumn({name: "customerId"})
-    customer!: CustomerEntity;
-	
 	constructor() {
 		super();
 	}
