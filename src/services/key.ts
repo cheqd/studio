@@ -17,7 +17,7 @@ export class KeyService {
 		this.keyRepository = Connection.instance.dbConnection.getRepository(KeyEntity);
 	}
 
-	public async update(kid: string, customer?: CustomerEntity, keyAlias?: string) {
+	public async update(kid: string, customer?: CustomerEntity, keyAlias?: string, createdAt? : Date) {
 		const existingKey = await this.keyRepository.findOneBy({ kid });
 		if (!existingKey) {
 			throw new Error(`kid not found`);
@@ -27,6 +27,10 @@ export class KeyService {
 		}
 		if (keyAlias) {
 			existingKey.publicKeyAlias = keyAlias;
+		}
+		if (createdAt) {
+			// It's a workaround cause Veramo creates key inside without createdAt field
+			existingKey.createdAt = createdAt;
 		}
 		return await this.keyRepository.save(existingKey);
 	}

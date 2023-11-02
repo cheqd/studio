@@ -151,7 +151,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const key = await Veramo.instance.createKey(this.agent!, type);
 		// Update our specific key columns
-		return await KeyService.instance.update(key.kid, customer, keyAlias);
+		return await KeyService.instance.update(key.kid, customer, keyAlias, new Date());
 	}
 
 	async getKey(kid: string, customer: CustomerEntity) {
