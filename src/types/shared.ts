@@ -63,7 +63,7 @@ export type MinimalPaymentCondition = {
 };
 
 export type CreateDidRequestBody = {
-	didDocument?: DIDDocument
+	didDocument?: DIDDocument;
 	identifierFormatType: MethodSpecificIdAlgo;
 	network: CheqdNetwork;
 	verificationMethodType?: VerificationMethods;

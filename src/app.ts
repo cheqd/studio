@@ -76,7 +76,7 @@ class App {
 						(function () {
 							throw new Error('COOKIE_SECRET is not defined');
 						})(),
-					cookie: { maxAge: 24 * 60 * 60 * 1000 }, // 24 hours 
+					cookie: { maxAge: 24 * 60 * 60 * 1000 }, // 24 hours
 				})
 			);
 			// Authentication functions/methods

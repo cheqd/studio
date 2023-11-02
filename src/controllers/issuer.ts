@@ -2,13 +2,25 @@ import type { Request, Response } from 'express';
 import { check, param, validationResult } from 'express-validator';
 import { fromString, toString } from 'uint8arrays';
 import { v4 } from 'uuid';
-import { CheqdNetwork, DIDDocument, MethodSpecificIdAlgo, Service, VerificationMethod, VerificationMethods, createDidVerificationMethod } from '@cheqd/sdk';
+import {
+	CheqdNetwork,
+	DIDDocument,
+	MethodSpecificIdAlgo,
+	Service,
+	VerificationMethod,
+	VerificationMethods,
+	createDidVerificationMethod,
+} from '@cheqd/sdk';
 import type { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import { generateDidDoc, getQueryParams, validateDidCreatePayload, validateSpecCompliantPayload } from '../helpers/helpers.js';
+import {
+	generateDidDoc,
+	getQueryParams,
+	validateDidCreatePayload,
+	validateSpecCompliantPayload,
+} from '../helpers/helpers.js';
 import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
-// import { CustomerService } from '../services/customer.js';
 import { bases } from "multiformats/basics";
 import { base64ToBytes } from "did-jwt";
 import type { CreateDidRequestBody } from '../types/shared.js';
@@ -233,14 +245,8 @@ export class IssuerController {
 			});
 		}
 
-		const {
-			identifierFormatType,
-			network,
-			verificationMethodType,
-			service,
-			key,
-			options,
-		} = request.body satisfies CreateDidRequestBody;
+		const { identifierFormatType, network, verificationMethodType, service, key, options } =
+			request.body satisfies CreateDidRequestBody;
 		let didDocument: DIDDocument;
 		try {
 			if (request.body.didDocument) {
@@ -252,12 +258,17 @@ export class IssuerController {
 					)).publicKeyHex;
 					const pkBase64 = publicKeyHex.length == 43 ? publicKeyHex : toString(fromString(publicKeyHex, 'hex'), 'base64');
 
-					didDocument.verificationMethod = createDidVerificationMethod([options.verificationMethodType], [{
-						methodSpecificId: bases['base58btc'].encode(base64ToBytes(pkBase64)),
-						didUrl: didDocument.id,
-						keyId: `${didDocument.id}#key-1`,
-						publicKey: pkBase64
-					}]);
+					didDocument.verificationMethod = createDidVerificationMethod(
+						[options.verificationMethodType],
+						[
+							{
+								methodSpecificId: bases['base58btc'].encode(base64ToBytes(pkBase64)),
+								didUrl: didDocument.id,
+								keyId: `${didDocument.id}#key-1`,
+								publicKey: pkBase64,
+							},
+						]
+					);
 				} else {
 					return response.status(StatusCodes.BAD_REQUEST).json({
 						error: 'Provide options section to create a DID',
@@ -293,19 +304,21 @@ export class IssuerController {
 									id: `${didDocument.id}#${service.idFragment}`,
 									type: service.type,
 									serviceEndpoint: service.serviceEndpoint,
-								})
+								});
 							}
 						} catch (e) {
 							return response.status(StatusCodes.BAD_REQUEST).json({
 								error: 'Provide the correct service section to create a DID',
 							});
-						};
+						}
 					} else {
-						didDocument.service = [{
-							id: `${didDocument.id}#${service.idFragment}`,
-							type: service.type,
-							serviceEndpoint: service.serviceEndpoint,
-						}];
+						didDocument.service = [
+							{
+								id: `${didDocument.id}#${service.idFragment}`,
+								type: service.type,
+								serviceEndpoint: service.serviceEndpoint,
+							},
+						];
 					}
 				}
 			} else {
@@ -552,7 +565,7 @@ export class IssuerController {
 			if (result) {
 				const url = new URL(
 					`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?` +
-					`resourceId=${resourcePayload.id}&resourceMetadata=true`
+						`resourceId=${resourcePayload.id}&resourceMetadata=true`
 				);
 				const didDereferencing = (await (await fetch(url)).json()) as DIDMetadataDereferencingResult;
 
