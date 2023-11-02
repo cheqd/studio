@@ -115,6 +115,7 @@ export class Authentication {
 					});
 				}
 				response.locals.customer = user.customer;
+				response.locals.user = user;
 			}
 			next();
 		} catch (err) {

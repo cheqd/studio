@@ -166,9 +166,7 @@ class App {
 		app.get('/resource/search/:did', new IssuerController().getResource);
 
 		// Account API
-		app.post('/account', new AccountController().create);
 		app.get('/account', new AccountController().get);
-		app.post('/account/assign', new AccountController().assign);
 
 		// LogTo webhooks
 		app.post('/account/bootstrap', LogToWebHook.verifyHookSignature, new AccountController().bootstrap);

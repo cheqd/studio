@@ -402,48 +402,6 @@
       }
     },
     "/account": {
-      "post": {
-        "tags": [
-          "Account"
-        ],
-        "summary": "Create a new custodian-mode client.",
-        "description": "This endpoint creates a new custodian-mode client and creates issuer DIDs and Cosmos/cheqd accounts for the client.",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Customer"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      },
       "get": {
         "tags": [
           "Account"
@@ -469,53 +427,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Customer"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/account/assign": {
-      "post": {
-        "tags": [
-          "Account"
-        ],
-        "summary": "Assign logTo user with Customer",
-        "description": "This endpoint allows to assign logTo users with CredentialService customer",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "logToId": {
-                    "type": "string"
-                  },
-                  "customerName": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AssignResponse"
                 }
               }
             }
@@ -3138,19 +3049,6 @@
           "address": {
             "type": "string",
             "example": "cheqd1wgsvqwlkmdp60f4dek26ak0sjw6au3ytd3pz7f"
-          }
-        }
-      },
-      "AssignResponse": {
-        "type": "object",
-        "properties": {
-          "customerName": {
-            "type": "string",
-            "example": "Cheqd"
-          },
-          "logToId": {
-            "type": "string",
-            "example": "w6au3ytd3pz7f"
           }
         }
       },

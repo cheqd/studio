@@ -18,7 +18,7 @@ export class PaymentAccountService {
 		this.paymentAccountRepository = Connection.instance.dbConnection.getRepository(PaymentAccountEntity);
 	}
 
-    public async create(namespace: string, isDefault: boolean, customer: CustomerEntity, key: KeyEntity) {
+    public async create(namespace: string, isDefault: boolean, customer: CustomerEntity, key: KeyEntity): Promise<PaymentAccountEntity> {
         const address = getCosmosAccount(key.kid);
         const existing = await this.find({address: address});
         if (!address) {
@@ -38,14 +38,9 @@ export class PaymentAccountService {
 		}
         const paymentAccount = new PaymentAccountEntity(address, namespace, isDefault, customer, key);
         const paymentAccountEntity = (await this.paymentAccountRepository.insert(paymentAccount)).identifiers[0];
+        if (!paymentAccountEntity) throw new Error(`Cannot create a new payment account`);
 
-        return {
-            address: paymentAccountEntity.address,
-            namespace: paymentAccountEntity.namespace,
-            isDefault: paymentAccountEntity.isDefault,
-            customerId: paymentAccountEntity.customerId,
-            kid: paymentAccountEntity.kid,
-        };
+        return paymentAccount;
     }
 
 	public async update(address: string, namespace?: string, isDefault?: boolean, customer?: CustomerEntity, key?: KeyEntity) {

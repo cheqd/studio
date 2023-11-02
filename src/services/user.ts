@@ -18,7 +18,7 @@ export class UserService {
 		this.userRepository = Connection.instance.dbConnection.getRepository(UserEntity);
 	}
 
-	public async create(logToId: string, customer: CustomerEntity, role: RoleEntity) {
+	public async create(logToId: string, customer: CustomerEntity, role: RoleEntity): Promise<UserEntity> {
 		if (await this.isExist({ logToId: logToId })) {
 			throw new Error(`Cannot create a new user since the user with same logToId ${logToId} already exists`);
 		}

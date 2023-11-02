@@ -21,7 +21,7 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 	public logToId: string;
 
 	private routeToScoupe: MethodToScope[] = [];
-	private static pathSkip = ['/swagger', '/static', '/logto', '/account/bootstrap', '/auth/user-info', '/account', '/account/assign'];
+	private static pathSkip = ['/swagger', '/static', '/logto', '/account/bootstrap', '/auth/user-info'];
 
 	constructor() {
 		this.nextHandler = {} as IAuthResourceHandler;

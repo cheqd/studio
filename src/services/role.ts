@@ -16,7 +16,7 @@ export class RoleService {
 		this.roleRepository = Connection.instance.dbConnection.getRepository(RoleEntity);
 	}
 
-	public async create(roleTypeId: string, name: string, logToRoleIds: string[]) {
+	public async create(roleTypeId: string, name: string, logToRoleIds: string[]): Promise<RoleEntity> {
 		if (await this.isExist({ roleTypeId: roleTypeId })) {
 			throw new Error(`Cannot create a new role since the role with same roleTypeId ${roleTypeId} already exists`);
 		}
@@ -58,5 +58,9 @@ export class RoleService {
 		} catch {
 			return false;
 		}
+	}
+
+	public getDefaultRole() {
+		return this.roleRepository.findOneBy({ name: "default" });
 	}
 }
