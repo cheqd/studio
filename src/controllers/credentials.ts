@@ -363,12 +363,13 @@ export class CredentialController {
 		}
 
 		try {
+			const publish = request.query.publish === 'false' ? false : true;
 			return response
 				.status(StatusCodes.OK)
 				.json(
 					await new IdentityServiceStrategySetup(
 						response.locals.customer.customerId
-					).agent.suspendCredentials(request.body.credential, request.body.publish, response.locals.customer)
+					).agent.suspendCredentials(request.body.credential, publish, response.locals.customer)
 				);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -421,6 +422,7 @@ export class CredentialController {
 		}
 
 		try {
+			const publish = request.query.publish === 'false' ? false : true;
 			return response
 				.status(StatusCodes.OK)
 				.json(
@@ -428,7 +430,7 @@ export class CredentialController {
 						response.locals.customer.customerId
 					).agent.reinstateCredentials(
 						request.body.credential,
-						request.body.publish,
+						publish,
 						response.locals.customer
 					)
 				);
