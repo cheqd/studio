@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.11.0-develop.2](https://github.com/cheqd/credential-service/compare/2.11.0-develop.1...2.11.0-develop.2) (2023-11-08)
+
+
+### Features
+
+* Add resource tracking [DEV-3395] ([#423](https://github.com/cheqd/credential-service/issues/423)) ([9b49b40](https://github.com/cheqd/credential-service/commit/9b49b40576e793511dee96962c045fed76356cd6))
+
 ## [2.11.0-develop.1](https://github.com/cheqd/credential-service/compare/2.10.1-develop.1...2.11.0-develop.1) (2023-11-02)
 
 
