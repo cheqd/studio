@@ -310,22 +310,28 @@ export class CredentialController {
 			// Get strategy e.g. psotgres or local
 			const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 			const result = await identityServiceStrategySetup.agent.revokeCredentials(
-				request.body.credential, 
-				publish, 
-				response.locals.customer, 
-				symmetricKey);
+				request.body.credential,
+				publish,
+				response.locals.customer,
+				symmetricKey
+			);
 			// Track operation if revocation was successful and publish is true
-			// Otherwise the StatusList2021 publisher should manually publish the resource 
+			// Otherwise the StatusList2021 publisher should manually publish the resource
 			// and it will be tracked there
 			if (!result.error && result.resourceMetadata && publish) {
 				// decode credential for getting issuer did
-				const credential = typeof request.body.credential === 'string' ? await Cheqd.decodeCredentialJWT(request.body.credential) : request.body.credential;
+				const credential =
+					typeof request.body.credential === 'string'
+						? await Cheqd.decodeCredentialJWT(request.body.credential)
+						: request.body.credential;
 				// get issuer did
-				const issuerDid = 
-					typeof credential.issuer === 'string' ? credential.issuer : (credential.issuer as { id: string }).id;
+				const issuerDid =
+					typeof credential.issuer === 'string'
+						? credential.issuer
+						: (credential.issuer as { id: string }).id;
 				const trackInfo = {
 					category: OPERATION_CATEGORY_NAME_CREDENTIAL,
-					operation: "revoke",
+					operation: 'revoke',
 					customer: response.locals.customer,
 					user: response.locals.user,
 					did: issuerDid,
@@ -334,22 +340,18 @@ export class CredentialController {
 						resource: result.resourceMetadata,
 						symmetricKey: '',
 					},
-
 				} as ITrackOperation;
 
 				// Track operation
 				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
 				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-						{
-							error: trackResult.error
-						});
+					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+						error: trackResult.error,
+					});
 				}
 			}
 			// Return Ok response
-			return response
-				.status(StatusCodes.OK)
-				.json(result);
+			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
@@ -408,23 +410,29 @@ export class CredentialController {
 			const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 			const result = await identityServiceStrategySetup.agent.suspendCredentials(
-				request.body.credential, 
-				publish, 
-				response.locals.customer, 
-				symmetricKey);
+				request.body.credential,
+				publish,
+				response.locals.customer,
+				symmetricKey
+			);
 
 			// Track operation if suspension was successful and publish is true
-			// Otherwise the StatusList2021 publisher should manually publish the resource 
+			// Otherwise the StatusList2021 publisher should manually publish the resource
 			// and it will be tracked there
 			if (!result.error && result.resourceMetadata && publish) {
 				// decode credential for getting issuer did
-				const credential = typeof request.body.credential === 'string' ? await Cheqd.decodeCredentialJWT(request.body.credential) : request.body.credential;
+				const credential =
+					typeof request.body.credential === 'string'
+						? await Cheqd.decodeCredentialJWT(request.body.credential)
+						: request.body.credential;
 				// get issuer did
-				const issuerDid = 
-					typeof credential.issuer === 'string' ? credential.issuer : (credential.issuer as { id: string }).id;
+				const issuerDid =
+					typeof credential.issuer === 'string'
+						? credential.issuer
+						: (credential.issuer as { id: string }).id;
 				const trackInfo = {
 					category: OPERATION_CATEGORY_NAME_CREDENTIAL,
-					operation: "suspend",
+					operation: 'suspend',
 					customer: response.locals.customer,
 					user: response.locals.user,
 					did: issuerDid,
@@ -433,22 +441,18 @@ export class CredentialController {
 						resource: result.resourceMetadata,
 						symmetricKey: '',
 					},
-
 				} as ITrackOperation;
 
 				// Track operation
 				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
 				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-						{
-							error: trackResult.error
-						});
+					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+						error: trackResult.error,
+					});
 				}
 			}
 
-			return response
-				.status(StatusCodes.OK)
-				.json(result);
+			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
@@ -506,22 +510,28 @@ export class CredentialController {
 			// Get strategy e.g. psotgres or local
 			const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 			const result = await identityServiceStrategySetup.agent.reinstateCredentials(
-				request.body.credential, 
-				publish, 
-				response.locals.customer, 
-				symmetricKey);
+				request.body.credential,
+				publish,
+				response.locals.customer,
+				symmetricKey
+			);
 			// Track operation if the process of reinstantiating was successful and publish is true
-			// Otherwise the StatusList2021 publisher should manually publish the resource 
+			// Otherwise the StatusList2021 publisher should manually publish the resource
 			// and it will be tracked there
 			if (!result.error && result.resourceMetadata && publish) {
 				// decode credential for getting issuer did
-				const credential = typeof request.body.credential === 'string' ? await Cheqd.decodeCredentialJWT(request.body.credential) : request.body.credential;
+				const credential =
+					typeof request.body.credential === 'string'
+						? await Cheqd.decodeCredentialJWT(request.body.credential)
+						: request.body.credential;
 				// get issuer did
-				const issuerDid = 
-					typeof credential.issuer === 'string' ? credential.issuer : (credential.issuer as { id: string }).id;
+				const issuerDid =
+					typeof credential.issuer === 'string'
+						? credential.issuer
+						: (credential.issuer as { id: string }).id;
 				const trackInfo = {
 					category: OPERATION_CATEGORY_NAME_CREDENTIAL,
-					operation: "reinstate",
+					operation: 'reinstate',
 					customer: response.locals.customer,
 					user: response.locals.user,
 					did: issuerDid,
@@ -530,22 +540,18 @@ export class CredentialController {
 						resource: result.resourceMetadata,
 						symmetricKey: '',
 					},
-
 				} as ITrackOperation;
 
 				// Track operation
 				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
 				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-						{
-							error: trackResult.error
-						});
+					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+						error: trackResult.error,
+					});
 				}
 			}
 			// Return Ok response
-			return response
-				.status(StatusCodes.OK)
-				.json(result);
+			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,

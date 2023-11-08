@@ -19,7 +19,7 @@ import {
 	type CreateStatusList2021Result,
 	type StatusCheckResult,
 	DefaultRPCUrls,
-	type TransactionResult
+	type TransactionResult,
 } from '@cheqd/did-provider-cheqd';
 import {
 	BroadcastStatusListOptions,
@@ -48,7 +48,11 @@ import { CheqdNetwork } from '@cheqd/sdk';
 import { IdentifierService } from '../identifier.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
 import { ResourceService } from '../resource.js';
-import { OPERATION_CATEGORY_NAME_CREDENTIAL, OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS, OPERATION_CATEGORY_NAME_RESOURCE } from '../../types/constants.js';
+import {
+	OPERATION_CATEGORY_NAME_CREDENTIAL,
+	OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
+	OPERATION_CATEGORY_NAME_RESOURCE,
+} from '../../types/constants.js';
 
 dotenv.config();
 
@@ -466,25 +470,25 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async trackOperation(
-		trackOperation: ITrackOperation): Promise<TrackResult> {
-			// For now it tracks only resource-related operations but in future we will track all other actions
-			switch (trackOperation.category) {
-				case OPERATION_CATEGORY_NAME_RESOURCE : return await this.trackResourceOperation(trackOperation);
-				case OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS: return await this.trackResourceOperation(trackOperation);
-				case OPERATION_CATEGORY_NAME_CREDENTIAL: return await this.trackResourceOperation(trackOperation);
-				default: {
-					return {
-						created: false,
-						error: `Operation ${trackOperation.operation} is not supported`
-					}
-				}
+	async trackOperation(trackOperation: ITrackOperation): Promise<TrackResult> {
+		// For now it tracks only resource-related operations but in future we will track all other actions
+		switch (trackOperation.category) {
+			case OPERATION_CATEGORY_NAME_RESOURCE:
+				return await this.trackResourceOperation(trackOperation);
+			case OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS:
+				return await this.trackResourceOperation(trackOperation);
+			case OPERATION_CATEGORY_NAME_CREDENTIAL:
+				return await this.trackResourceOperation(trackOperation);
+			default: {
+				return {
+					created: false,
+					error: `Operation ${trackOperation.operation} is not supported`,
+				};
 			}
 		}
+	}
 
-	async trackResourceOperation(
-		trackOperation: ITrackOperation): Promise<TrackResult> {
-
+	async trackResourceOperation(trackOperation: ITrackOperation): Promise<TrackResult> {
 		const customer = trackOperation.customer;
 		const did = trackOperation.did;
 		const resource = trackOperation.data.resource;
@@ -509,16 +513,17 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			key,
 			identifier,
 			encrypted,
-			symmetricKey);
+			symmetricKey
+		);
 		if (!resourceEntity) {
 			return {
 				created: false,
-				error: `Resource for ${did} was not tracked`
-			}
+				error: `Resource for ${did} was not tracked`,
+			};
 		}
 		return {
 			created: true,
-			error: ''
-		}
+			error: '',
+		};
 	}
 }

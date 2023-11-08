@@ -143,7 +143,9 @@ export class MigrateData1695740345977 implements MigrationInterface {
 			for (const kid of oldCustomer.kids) {
 				console.info(`Updating key with kid ${kid}`);
 				const _key = await queryRunner.query(
-					`UPDATE "key" SET "customerId" = '${customerEntity.customerId}', "createdAt" = '${customerEntity.createdAt.toISOString()}' WHERE kid = '${kid}'`
+					`UPDATE "key" SET "customerId" = '${
+						customerEntity.customerId
+					}', "createdAt" = '${customerEntity.createdAt.toISOString()}' WHERE kid = '${kid}'`
 				);
 				if (!_key) {
 					throw new Error(`Failed to update key with kid ${kid}`);

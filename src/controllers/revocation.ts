@@ -594,9 +594,9 @@ export class RevocationController {
 			}
 
 			// Keep track of resources
-			const trackResourceInfo= {
+			const trackResourceInfo = {
 				category: OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
-				operation: "createUnencryptedStatusList",
+				operation: 'createUnencryptedStatusList',
 				customer: response.locals.customer,
 				user: response.locals.user,
 				did,
@@ -604,13 +604,14 @@ export class RevocationController {
 					resource: result.resourceMetadata,
 					encrypted: result.resource?.metadata?.encrypted,
 					symmetricKey: '',
-				}
+				},
 			} as ITrackOperation;
-			
-			const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo)
+
+			const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
 			if (trackResult.error) {
-				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-					trackResult as CreateEncryptedStatusListUnsuccessfulResponseBody);
+				return response
+					.status(StatusCodes.INTERNAL_SERVER_ERROR)
+					.json(trackResult as CreateEncryptedStatusListUnsuccessfulResponseBody);
 			}
 
 			// return result
@@ -722,8 +723,8 @@ export class RevocationController {
 			// Keep track of resources
 			// For now we decided not to store symmetricKey yet
 
-			const trackResourceInfo= {
-				operation: "createEncryptedStatusList",
+			const trackResourceInfo = {
+				operation: 'createEncryptedStatusList',
 				category: OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
 				customer: response.locals.customer,
 				user: response.locals.user,
@@ -742,8 +743,9 @@ export class RevocationController {
 			const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
 
 			if (trackResult.error) {
-				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-					trackResult as CreateEncryptedStatusListUnsuccessfulResponseBody);
+				return response
+					.status(StatusCodes.INTERNAL_SERVER_ERROR)
+					.json(trackResult as CreateEncryptedStatusListUnsuccessfulResponseBody);
 			}
 
 			// return result
@@ -904,9 +906,9 @@ export class RevocationController {
 
 			// track resource creation
 			if (result.resourceMetadata) {
-				const trackResourceInfo= {
+				const trackResourceInfo = {
 					category: OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
-					operation: "updateUnencryptedStatusList",
+					operation: 'updateUnencryptedStatusList',
 					customer: response.locals.customer,
 					user: response.locals.user,
 					did,
@@ -914,15 +916,14 @@ export class RevocationController {
 						resource: result.resourceMetadata,
 						encrypted: false,
 						symmetricKey: '',
-					}
+					},
 				} as ITrackOperation;
-				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo)
+				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
 				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-						{
-							updated: false, 
-							error: trackResult.error
-						} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
+					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+						updated: false,
+						error: trackResult.error,
+					} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 				}
 			}
 
@@ -1099,9 +1100,9 @@ export class RevocationController {
 
 			// track resource creation
 			if (result.resourceMetadata) {
-				const trackResourceInfo= {
+				const trackResourceInfo = {
 					category: OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
-					operation: "updateEncryptedStatusList",
+					operation: 'updateEncryptedStatusList',
 					customer: response.locals.customer,
 					user: response.locals.user,
 					did,
@@ -1116,13 +1117,12 @@ export class RevocationController {
 						feePaymentNetwork: CheqdNetwork.Testnet,
 					},
 				} as ITrackOperation;
-				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo)
+				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
 				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-						{
-							updated: false, 
-							error: trackResult.error
-						} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
+					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+						updated: false,
+						error: trackResult.error,
+					} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 				}
 			}
 

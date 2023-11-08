@@ -566,8 +566,11 @@ export class IssuerController {
 				alsoKnownAs,
 			};
 			const result = await identityServiceStrategySetup.agent.createResource(
-				network || did.split(':')[2], resourcePayload, response.locals.customer);
-			
+				network || did.split(':')[2],
+				resourcePayload,
+				response.locals.customer
+			);
+
 			if (result) {
 				const url = new URL(
 					`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?` +
@@ -577,27 +580,27 @@ export class IssuerController {
 				const resource = didDereferencing.contentStream.linkedResourceMetadata[0];
 
 				// track resource creation
-				const trackResourceInfo= {
-						category: OPERATION_CATEGORY_NAME_RESOURCE,
-						operation: "createResource",
-						customer: response.locals.customer,
-						did,
-						data: {
-							resource: resource,
-							encrypted: false,
-							symmetricKey: '',
-						}
-					} as ITrackOperation;
+				const trackResourceInfo = {
+					category: OPERATION_CATEGORY_NAME_RESOURCE,
+					operation: 'createResource',
+					customer: response.locals.customer,
+					did,
+					data: {
+						resource: resource,
+						encrypted: false,
+						symmetricKey: '',
+					},
+				} as ITrackOperation;
 
-				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo)
+				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
 				if (trackResult.error) {
 					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 						error: `${trackResult.error}`,
-					})
+					});
 				}
 
 				return response.status(StatusCodes.CREATED).json({
-					resource
+					resource,
 				});
 			} else {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

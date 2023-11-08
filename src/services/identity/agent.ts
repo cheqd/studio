@@ -525,11 +525,11 @@ export class Veramo {
 				fetchList: true,
 				publish: true,
 			} satisfies ICheqdRevokeBulkCredentialsWithStatusList2021Args);
-		return await agent.cheqdRevokeCredential({ 
-			credential: credentials, 
-			fetchList: true, 
-			publish, 
-			symmetricKey, 
+		return await agent.cheqdRevokeCredential({
+			credential: credentials,
+			fetchList: true,
+			publish,
+			symmetricKey,
 			returnStatusListMetadata: true,
 			returnUpdatedStatusList: true,
 		});
@@ -543,11 +543,11 @@ export class Veramo {
 	) {
 		if (Array.isArray(credentials))
 			return await agent.cheqdSuspendCredentials({ credentials, fetchList: true, publish });
-		return await agent.cheqdSuspendCredential({ 
-			credential: credentials, 
-			fetchList: true, 
-			publish, 
-			symmetricKey, 
+		return await agent.cheqdSuspendCredential({
+			credential: credentials,
+			fetchList: true,
+			publish,
+			symmetricKey,
 			returnStatusListMetadata: true,
 			returnUpdatedStatusList: true,
 		});
@@ -561,11 +561,11 @@ export class Veramo {
 	) {
 		if (Array.isArray(credentials))
 			return await agent.cheqdUnsuspendCredentials({ credentials, fetchList: true, publish });
-		return await agent.cheqdUnsuspendCredential({ 
-			credential: credentials, 
-			fetchList: true, 
-			publish, 
-			symmetricKey, 
+		return await agent.cheqdUnsuspendCredential({
+			credential: credentials,
+			fetchList: true,
+			publish,
+			symmetricKey,
 			returnStatusListMetadata: true,
 			returnUpdatedStatusList: true,
 		});

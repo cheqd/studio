@@ -19,65 +19,65 @@ export class ResourceService {
 		this.resourceRepository = Connection.instance.dbConnection.getRepository(ResourceEntity);
 	}
 
-	public async create(	
-        resourceId: string,
+	public async create(
+		resourceId: string,
 		resourceName: string,
 		resourceType: string,
 		mediaType: string,
 		previousVersionId: string,
 		nextVersionId: string,
 		customer: CustomerEntity,
-        identifier: IdentifierEntity,
+		identifier: IdentifierEntity,
 		key: KeyEntity,
 		encrypted: boolean,
 		symmetricKey: string
 	): Promise<ResourceEntity> {
 		const resourceEntity = new ResourceEntity(
-            resourceId,
-            resourceName,
-            resourceType,
-            mediaType,
-            previousVersionId,
-            nextVersionId,
-            customer,
-            identifier,
-            key,
-            encrypted,
-            symmetricKey
-        );
-        const resource = (await this.resourceRepository.insert(resourceEntity)).identifiers[0];
-        if (!resource) throw new Error(`Cannot create a new resource`);
-        return resourceEntity;
+			resourceId,
+			resourceName,
+			resourceType,
+			mediaType,
+			previousVersionId,
+			nextVersionId,
+			customer,
+			identifier,
+			key,
+			encrypted,
+			symmetricKey
+		);
+		const resource = (await this.resourceRepository.insert(resourceEntity)).identifiers[0];
+		if (!resource) throw new Error(`Cannot create a new resource`);
+		return resourceEntity;
 	}
 
 	public async update(
-        resourceId: string,
-        identifier?: IdentifierEntity,
-        key?: KeyEntity,
-        resourceName?: string,
-        resourceType?: string,
-        mediaType?: string,
-        previousVersionId?: string,
-        nextVersionId?: string,
-        customer?: CustomerEntity,
-        encrypted?: boolean,
-        symmetricKey?: string
+		resourceId: string,
+		identifier?: IdentifierEntity,
+		key?: KeyEntity,
+		resourceName?: string,
+		resourceType?: string,
+		mediaType?: string,
+		previousVersionId?: string,
+		nextVersionId?: string,
+		customer?: CustomerEntity,
+		encrypted?: boolean,
+		symmetricKey?: string
 	) {
-		const existingResource = await this.resourceRepository.findOneBy({resourceId});
+		const existingResource = await this.resourceRepository.findOneBy({ resourceId });
 		if (!existingResource) {
 			throw new Error(`Resource with id: ${resourceId} not found`);
 		}
-        if (identifier) existingResource.identifier = identifier;
-        if (key) existingResource.key = key;
-        if (resourceName) existingResource.resourceName = resourceName;
-        if (resourceType) existingResource.resourceType = resourceType;
-        if (mediaType) existingResource.mediaType = mediaType;
-        if (previousVersionId) existingResource.previousVersionId = previousVersionId;
-        if (nextVersionId) existingResource.nextVersionId = nextVersionId;
-        if (customer) existingResource.customer = customer;
-        if (encrypted) existingResource.encrypted = encrypted;
-        if (symmetricKey) existingResource.symmetricKey = symmetricKey;
-        return await this.resourceRepository.save(existingResource);
+		if (identifier) existingResource.identifier = identifier;
+		if (key) existingResource.key = key;
+		if (resourceName) existingResource.resourceName = resourceName;
+		if (resourceType) existingResource.resourceType = resourceType;
+		if (mediaType) existingResource.mediaType = mediaType;
+		if (previousVersionId) existingResource.previousVersionId = previousVersionId;
+		if (nextVersionId) existingResource.nextVersionId = nextVersionId;
+		if (customer) existingResource.customer = customer;
+		if (encrypted) existingResource.encrypted = encrypted;
+		if (symmetricKey) existingResource.symmetricKey = symmetricKey;
+		return await this.resourceRepository.save(existingResource);
 	}
 
 	public async get(resourceId: string) {
@@ -94,29 +94,29 @@ export class ResourceService {
 		});
 	}
 
-    public async createFromLinkedResource(
-        resource: LinkedResourceMetadataResolutionResult, 
-        customer: CustomerEntity, 
-        key: KeyEntity, 
-        identifier: IdentifierEntity,
-        encrypted: boolean,
-        symmetricKey: string) {
-
-        const resourceEntity = new ResourceEntity(
-            resource.resourceId,
-            resource.resourceName,
-            resource.resourceType,
-            resource.mediaType,
-            resource.previousVersionId,
-            resource.nextVersionId,
-            customer,
-            identifier,
-            key,
-            encrypted,
-            symmetricKey
-        );
-        const result = (await this.resourceRepository.insert(resourceEntity)).identifiers[0];
-        if (!result) throw new Error(`Cannot create a new resource`);
-        return resourceEntity;
-    }
+	public async createFromLinkedResource(
+		resource: LinkedResourceMetadataResolutionResult,
+		customer: CustomerEntity,
+		key: KeyEntity,
+		identifier: IdentifierEntity,
+		encrypted: boolean,
+		symmetricKey: string
+	) {
+		const resourceEntity = new ResourceEntity(
+			resource.resourceId,
+			resource.resourceName,
+			resource.resourceType,
+			resource.mediaType,
+			resource.previousVersionId,
+			resource.nextVersionId,
+			customer,
+			identifier,
+			key,
+			encrypted,
+			symmetricKey
+		);
+		const result = (await this.resourceRepository.insert(resourceEntity)).identifiers[0];
+		if (!result) throw new Error(`Cannot create a new resource`);
+		return resourceEntity;
+	}
 }

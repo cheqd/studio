@@ -356,35 +356,35 @@ export interface VerificationOptions {
 	verifyStatus?: boolean;
 }
 
-export type TrackData = IResourceTrack ;
+export type TrackData = IResourceTrack;
 
 export interface ITrackOperation {
 	// function name, e.g. createDid, issueCredential, etc.
-	operation: string,
+	operation: string;
 	// category of the operation, e.g. did, resource, credential, credential-status
-	category: string,
+	category: string;
 	// data of the operation, e.g. did, resource, credentialStatus
-	data: TrackData,
+	data: TrackData;
 	// customer who initiated the operation (like organistation)
-	customer: CustomerEntity,
+	customer: CustomerEntity;
 	// user who initiated the operation
-	user?: UserEntity,
+	user?: UserEntity;
 	// identifier
-	did?: string,
+	did?: string;
 	// controller's key
-	key? : string,
+	key?: string;
 	// fee payment options
 	feePaymentOptions?: {
 		feePaymentAddress: string;
 		feePaymentAmount: number;
 		feePaymentNetwork: CheqdNetwork;
-	},
+	};
 }
 
 export interface IResourceTrack {
-	resource: LinkedResourceMetadataResolutionResult,
-	encrypted: boolean,
-	symmetricKey: string
+	resource: LinkedResourceMetadataResolutionResult;
+	encrypted: boolean;
+	symmetricKey: string;
 }
 
 export interface TrackResult {

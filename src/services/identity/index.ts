@@ -25,7 +25,7 @@ import type {
 	StatusCheckResult,
 	SuspensionResult,
 	UnsuspensionResult,
-	TransactionResult
+	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
 import type {
 	BroadcastStatusListOptions,
@@ -95,9 +95,7 @@ export interface IIdentityService {
 		statusOptions: CreateEncryptedStatusListOptions,
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result>;
-	trackOperation(
-		trackOperation: ITrackOperation
-	): Promise<TrackResult>
+	trackOperation(trackOperation: ITrackOperation): Promise<TrackResult>;
 	updateUnencryptedStatusList2021(
 		did: string,
 		statusOptions: UpdateUnencryptedStatusListOptions,

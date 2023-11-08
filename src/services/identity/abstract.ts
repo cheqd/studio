@@ -144,9 +144,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<boolean> {
 		throw new Error(`Not supported`);
 	}
-	trackOperation(
-		trackOperation: ITrackOperation
-	): Promise<TrackResult> {
+	trackOperation(trackOperation: ITrackOperation): Promise<TrackResult> {
 		throw new Error(`Not supported`);
 	}
 	revokeCredentials(
