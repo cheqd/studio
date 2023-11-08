@@ -18,7 +18,7 @@ export class CreateResourceTable1695740345977 implements MigrationInterface {
 				{ name: 'symmetricKey', type: 'text', isNullable: true },
 
 				{ name: 'createdAt', type: 'timestamptz', isNullable: false },
-				{ name: 'updatedAt', type: 'timestamptz', isNullable: false },
+				{ name: 'updatedAt', type: 'timestamptz', isNullable: true },
 			],
 		});
 		await queryRunner.createTable(table, true);

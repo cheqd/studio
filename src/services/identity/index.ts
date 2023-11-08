@@ -25,7 +25,7 @@ import type {
 	StatusCheckResult,
 	SuspensionResult,
 	UnsuspensionResult,
-	TransactionResult,
+	TransactionResult
 } from '@cheqd/did-provider-cheqd';
 import type {
 	BroadcastStatusListOptions,
@@ -34,8 +34,10 @@ import type {
 	CreateUnencryptedStatusListOptions,
 	CredentialRequest,
 	FeePaymentOptions,
+	IResourceTrack,
 	SearchStatusListResult,
 	StatusOptions,
+	TrackResult,
 	UpdateEncryptedStatusListOptions,
 	UpdateUnencryptedStatusListOptions,
 	VeramoAgent,
@@ -93,6 +95,9 @@ export interface IIdentityService {
 		statusOptions: CreateEncryptedStatusListOptions,
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result>;
+	trackResourceCreation(
+		trackResource: IResourceTrack
+	): Promise<TrackResult>
 	updateUnencryptedStatusList2021(
 		did: string,
 		statusOptions: UpdateUnencryptedStatusListOptions,
@@ -127,17 +132,20 @@ export interface IIdentityService {
 	revokeCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		symmetricKey: string
 	): Promise<RevocationResult | BulkRevocationResult>;
 	suspendCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		symmetricKey: string
 	): Promise<SuspensionResult | BulkSuspensionResult>;
 	reinstateCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		symmetricKey: string
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult>;
 }
 

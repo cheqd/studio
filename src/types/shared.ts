@@ -32,6 +32,7 @@ import type { DataSource } from 'typeorm';
 import { CheqdNetwork, MethodSpecificIdAlgo, Service, VerificationMethods } from '@cheqd/sdk';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2';
 import type { DIDDocument } from 'did-resolver';
+import type { CustomerEntity } from '../database/entities/customer.entity';
 
 const DefaultUuidPattern = '([a-zA-Z0-9-]{36})';
 const DefaultMethodSpecificIdPattern = `(?:[a-zA-Z0-9]{21,22}|${DefaultUuidPattern})`;
@@ -345,19 +346,6 @@ export type FeePaymentOptions = {
 	memo?: string;
 };
 
-export interface ResourceMetadata {
-	collectionId: string;
-	resourceId: string;
-	resourceName: string;
-	resourceVersion: string;
-	resourceType: string;
-	mediaType: string;
-	created?: Date;
-	checksum: string;
-	previousVersionId: string;
-	nextVersionId: string;
-}
-
 export type CheckStatusListOptions = Omit<ICheqdCheckCredentialWithStatusList2021StatusOptions, 'issuerDid'>;
 
 export interface VerificationOptions {
@@ -365,4 +353,17 @@ export interface VerificationOptions {
 	policies?: VerificationPolicies;
 	domain?: string;
 	verifyStatus?: boolean;
+}
+
+export interface IResourceTrack {
+	customer: CustomerEntity,
+	did: string,
+	resource: LinkedResourceMetadataResolutionResult,
+	encrypted: boolean,
+	symmetricKey: string
+}
+
+export interface TrackResult {
+	created: boolean;
+	error?: string;
 }

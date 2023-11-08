@@ -34,6 +34,8 @@ import {
 	CreateEncryptedStatusListOptions,
 	FeePaymentOptions,
 	UpdateEncryptedStatusListOptions,
+	TrackResult,
+	IResourceTrack,
 } from '../../types/shared.js';
 import { Connection } from '../../database/connection/connection.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
@@ -45,6 +47,7 @@ import { PaymentAccountService } from '../payment_account.js';
 import { CheqdNetwork } from '@cheqd/sdk';
 import { IdentifierService } from '../identifier.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
+import { ResourceService } from '../resource.js';
 
 dotenv.config();
 
@@ -408,31 +411,34 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	async revokeCredentials(
 		credentials: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		symmetricKey: string
 	) {
 		const agent = await this.createAgent(customer);
 		await this.validateCredentialAccess(credentials, customer);
-		return await Veramo.instance.revokeCredentials(agent, credentials, publish);
+		return await Veramo.instance.revokeCredentials(agent, credentials, publish, symmetricKey);
 	}
 
 	async suspendCredentials(
 		credentials: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		symmetricKey: string
 	) {
 		const agent = await this.createAgent(customer);
 		await this.validateCredentialAccess(credentials, customer);
-		return await Veramo.instance.suspendCredentials(agent, credentials, publish);
+		return await Veramo.instance.suspendCredentials(agent, credentials, publish, symmetricKey);
 	}
 
 	async reinstateCredentials(
 		credentials: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		symmetricKey: string
 	) {
 		const agent = await this.createAgent(customer);
 		await this.validateCredentialAccess(credentials, customer);
-		return await Veramo.instance.unsuspendCredentials(agent, credentials, publish);
+		return await Veramo.instance.unsuspendCredentials(agent, credentials, publish, symmetricKey);
 	}
 
 	private async validateCredentialAccess(
@@ -456,6 +462,42 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			if (!existsInWallet) {
 				throw new Error(`${issuerId} not found in wallet`);
 			}
+		}
+	}
+
+	async trackResourceCreation(
+		trackResource: IResourceTrack): Promise<TrackResult> {
+
+		const {customer, did, resource, encrypted, symmetricKey} = trackResource;
+
+		const identifier = await IdentifierService.instance.get(did);
+		if (!identifier) {
+			throw new Error(`Identifier ${did} not found`);
+		}
+		if (!identifier.controllerKeyId) {
+			throw new Error(`Identifier ${did} does not have link to the controller key...`);
+		}
+		const key = await KeyService.instance.get(identifier.controllerKeyId);
+		if (!key) {
+			throw new Error(`Key for ${did} not found`);
+		}
+
+		const resourceEntity = await ResourceService.instance.createFromLinkedResource(
+			resource,
+			customer,
+			key,
+			identifier,
+			encrypted,
+			symmetricKey);
+		if (!resourceEntity) {
+			return {
+				created: false,
+				error: `Resource for ${did} was not tracked`
+			}
+		}
+		return {
+			created: true,
+			error: ''
 		}
 	}
 }

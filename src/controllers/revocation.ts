@@ -551,12 +551,13 @@ export class RevocationController {
 		// define broadcast mode
 		const data = encodedList ? fromString(encodedList, encoding) : undefined;
 
+		// create agent
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+
 		try {
 			// broadcast, if applicable
 			if (data) {
-				const result = await new IdentityServiceStrategySetup(
-					response.locals.customer.customerId
-				).agent.broadcastStatusList2021(
+				const result = await identityServiceStrategySetup.agent.broadcastStatusList2021(
 					did,
 					{ data, name: statusListName, alsoKnownAs, version: statusListVersion },
 					{ encoding, statusPurpose },
@@ -566,9 +567,7 @@ export class RevocationController {
 			}
 
 			// create unencrypted status list
-			const result = (await new IdentityServiceStrategySetup(
-				response.locals.customer.customerId
-			).agent.createUnencryptedStatusList2021(
+			const result = (await identityServiceStrategySetup.agent.createUnencryptedStatusList2021(
 				did,
 				{
 					name: statusListName,
@@ -589,6 +588,20 @@ export class RevocationController {
 					...result,
 					error: result.error?.message || result.error.toString(),
 				} as CreateUnencryptedStatusListUnsuccessfulResponseBody);
+			}
+
+			// Keep track of resources
+			const trackResourceInfo= {
+				customer: response.locals.customer,
+				did,
+				resource: result.resourceMetadata,
+				encrypted: result.resource?.metadata?.encrypted,
+				symmetricKey: '',
+			}
+			const trackResult = await identityServiceStrategySetup.agent.trackResourceCreation(trackResourceInfo)
+			if (trackResult.error) {
+				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+					trackResult as CreateEncryptedStatusListUnsuccessfulResponseBody);
 			}
 
 			// return result
@@ -667,12 +680,11 @@ export class RevocationController {
 
 		// collect request parameters - case: query
 		const { statusPurpose } = request.query as CreateEncryptedStatusListRequestQuery;
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
 			// create encrypted status list
-			const result = (await new IdentityServiceStrategySetup(
-				response.locals.customer.customerId
-			).agent.createEncryptedStatusList2021(
+			const result = (await identityServiceStrategySetup.agent.createEncryptedStatusList2021(
 				did,
 				{
 					name: statusListName,
@@ -697,6 +709,20 @@ export class RevocationController {
 					...result,
 					error: result.error?.message || result.error.toString(),
 				} as CreateEncryptedStatusListUnsuccessfulResponseBody);
+			}
+			// Keep track of resources
+			// For now we decided not to store symmetricKey yet
+			const trackResourceInfo= {
+				customer: response.locals.customer,
+				did,
+				resource: result.resourceMetadata,
+				encrypted: result.resource?.metadata?.encrypted,
+				symmetricKey: '',
+			}
+			const trackResult = await identityServiceStrategySetup.agent.trackResourceCreation(trackResourceInfo)
+			if (trackResult.error) {
+				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+					trackResult as CreateEncryptedStatusListUnsuccessfulResponseBody);
 			}
 
 			// return result
@@ -854,6 +880,25 @@ export class RevocationController {
 				resource: result.statusList,
 				resourceMetadata: result.resourceMetadata,
 			} satisfies UpdateUnencryptedStatusListSuccessfulResponseBody;
+
+			// track resource creation
+			if (result.resourceMetadata) {
+				const trackResourceInfo= {
+					customer: response.locals.customer,
+					did,
+					resource: result.resourceMetadata,
+					encrypted: false,
+					symmetricKey: '',
+				}
+				const trackResult = await identityServiceStrategySetup.agent.trackResourceCreation(trackResourceInfo)
+				if (trackResult.error) {
+					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+						{
+							updated: false, 
+							error: trackResult.error
+						} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
+				}
+			}
 
 			return response.status(StatusCodes.OK).json(formatted);
 		} catch (error) {
@@ -1025,6 +1070,25 @@ export class RevocationController {
 				resourceMetadata: result.resourceMetadata,
 				symmetricKey: result.symmetricKey,
 			} satisfies UpdateEncryptedStatusListSuccessfulResponseBody;
+
+			// track resource creation
+			if (result.resourceMetadata) {
+				const trackResourceInfo= {
+					customer: response.locals.customer,
+					did,
+					resource: result.resourceMetadata,
+					encrypted: true,
+					symmetricKey: '',
+				}
+				const trackResult = await identityServiceStrategySetup.agent.trackResourceCreation(trackResourceInfo)
+				if (trackResult.error) {
+					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+						{
+							updated: false, 
+							error: trackResult.error
+						} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
+				}
+			}
 
 			return response.status(StatusCodes.OK).json(formatted);
 		} catch (error) {

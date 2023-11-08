@@ -29,7 +29,9 @@ import type {
 	CreateUnencryptedStatusListOptions,
 	CredentialRequest,
 	FeePaymentOptions,
+	IResourceTrack,
 	StatusOptions,
+	TrackResult,
 	UpdateEncryptedStatusListOptions,
 	UpdateUnencryptedStatusListOptions,
 	VeramoAgent,
@@ -142,24 +144,32 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<boolean> {
 		throw new Error(`Not supported`);
 	}
+	trackResourceCreation(
+		trackResource: IResourceTrack
+	): Promise<TrackResult> {
+		throw new Error(`Not supported`);
+	}
 	revokeCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		symmetricKey: string
 	): Promise<RevocationResult | BulkRevocationResult> {
 		throw new Error(`Not supported`);
 	}
 	suspendCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		symmetricKey: string
 	): Promise<SuspensionResult | BulkSuspensionResult> {
 		throw new Error(`Not supported`);
 	}
 	reinstateCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		symmetricKey: string
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult> {
 		throw new Error(`Not supported`);
 	}

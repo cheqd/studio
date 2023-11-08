@@ -245,7 +245,7 @@ export class CredentialController {
 			if (result.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					verified: result.verified,
-					error: result.error,
+					error: result.error.message,
 				});
 			}
 			return response.status(StatusCodes.OK).json(result);
@@ -302,6 +302,7 @@ export class CredentialController {
 		}
 
 		const publish = request.query.publish === 'false' ? false : true;
+		const symmetricKey = request.body.symmetricKey as string;
 		try {
 			return response
 				.status(StatusCodes.OK)
@@ -309,7 +310,8 @@ export class CredentialController {
 					await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.revokeCredentials(
 						request.body.credential,
 						publish,
-						response.locals.customer
+						response.locals.customer,
+						symmetricKey
 					)
 				);
 		} catch (error) {
@@ -364,12 +366,13 @@ export class CredentialController {
 
 		try {
 			const publish = request.query.publish === 'false' ? false : true;
+			const symmetricKey = request.body.symmetricKey as string;
 			return response
 				.status(StatusCodes.OK)
 				.json(
 					await new IdentityServiceStrategySetup(
 						response.locals.customer.customerId
-					).agent.suspendCredentials(request.body.credential, publish, response.locals.customer)
+					).agent.suspendCredentials(request.body.credential, publish, response.locals.customer, symmetricKey)
 				);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -423,6 +426,7 @@ export class CredentialController {
 
 		try {
 			const publish = request.query.publish === 'false' ? false : true;
+			const symmetricKey = request.body.symmetricKey as string;
 			return response
 				.status(StatusCodes.OK)
 				.json(
@@ -431,7 +435,8 @@ export class CredentialController {
 					).agent.reinstateCredentials(
 						request.body.credential,
 						publish,
-						response.locals.customer
+						response.locals.customer,
+						symmetricKey
 					)
 				);
 		} catch (error) {

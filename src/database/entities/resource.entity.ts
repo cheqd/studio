@@ -1,4 +1,4 @@
-import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
 import * as dotenv from 'dotenv';
 import { Identifier, Key } from '@veramo/data-store';
@@ -9,7 +9,10 @@ dotenv.config();
 
 @Entity('resource')
 export class ResourceEntity {
-	@PrimaryGeneratedColumn('uuid')
+	@PrimaryColumn({
+		type: 'uuid',
+		nullable: false,
+	})
 	resourceId!: string;
 
 	@Column({
@@ -80,18 +83,28 @@ export class ResourceEntity {
 	customer!: CustomerEntity;
 
 	constructor(
-		identifier: IdentifierEntity,
-		key: KeyEntity,
+		resourceId: string,
 		resourceName: string,
 		resourceType: string,
 		mediaType: string,
-		customer: CustomerEntity
+		previousVersionId: string | null,
+		nextVersionId: string | null,
+		customer: CustomerEntity,
+		identifier: IdentifierEntity,
+		key: KeyEntity,
+		encrypted: boolean,
+		symmetricKey: string
 	) {
-		this.identifier = identifier;
-		this.key = key;
+		this.resourceId = resourceId;
 		this.resourceName = resourceName;
 		this.resourceType = resourceType;
 		this.mediaType = mediaType;
+		this.previousVersionId = previousVersionId || '';
+		this.nextVersionId = nextVersionId || '';
 		this.customer = customer;
+		this.identifier = identifier;
+		this.key = key;
+		this.encrypted = encrypted;
+		this.symmetricKey = symmetricKey;
 	}
 }
