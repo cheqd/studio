@@ -208,6 +208,9 @@
  *           oneOf:
  *             - type: object
  *             - type: string
+ *         symmetricKey:
+ *           description: The symmetric key used to encrypt the StatusList2021 DID-Linked Resource. Required if the StatusList2021 DID-Linked Resource is encrypted.
+ *           type: string
  *     RevocationResult:
  *       properties:
  *         revoked:

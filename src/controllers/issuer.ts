@@ -23,7 +23,8 @@ import {
 import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
 import { bases } from 'multiformats/basics';
 import { base64ToBytes } from 'did-jwt';
-import type { CreateDidRequestBody } from '../types/shared.js';
+import type { CreateDidRequestBody, ITrackOperation } from '../types/shared.js';
+import { OPERATION_CATEGORY_NAME_RESOURCE } from '../types/constants.js';
 
 export class IssuerController {
 	// ToDo: improve validation in a "bail" fashion
@@ -543,13 +544,12 @@ export class IssuerController {
 
 		const { did } = request.params;
 		const { data, encoding, name, type, alsoKnownAs, version, network } = request.body;
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		let resourcePayload: Partial<MsgCreateResourcePayload> = {};
 		try {
 			// check if did is registered on the ledger
-			const { didDocument, didDocumentMetadata } = await new IdentityServiceStrategySetup(
-				response.locals.customer.customerId
-			).agent.resolveDid(did);
+			const { didDocument, didDocumentMetadata } = await identityServiceStrategySetup.agent.resolveDid(did);
 			if (!didDocument || !didDocumentMetadata || didDocumentMetadata.deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
 					error: `${did} is a either Deactivated or Not found`,
@@ -565,18 +565,42 @@ export class IssuerController {
 				version,
 				alsoKnownAs,
 			};
-			const result = await new IdentityServiceStrategySetup(
-				response.locals.customer.customerId
-			).agent.createResource(network || did.split(':')[2], resourcePayload, response.locals.customer);
+			const result = await identityServiceStrategySetup.agent.createResource(
+				network || did.split(':')[2],
+				resourcePayload,
+				response.locals.customer
+			);
+
 			if (result) {
 				const url = new URL(
 					`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?` +
 						`resourceId=${resourcePayload.id}&resourceMetadata=true`
 				);
 				const didDereferencing = (await (await fetch(url)).json()) as DIDMetadataDereferencingResult;
+				const resource = didDereferencing.contentStream.linkedResourceMetadata[0];
+
+				// track resource creation
+				const trackResourceInfo = {
+					category: OPERATION_CATEGORY_NAME_RESOURCE,
+					operation: 'createResource',
+					customer: response.locals.customer,
+					did,
+					data: {
+						resource: resource,
+						encrypted: false,
+						symmetricKey: '',
+					},
+				} as ITrackOperation;
+
+				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
+				if (trackResult.error) {
+					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+						error: `${trackResult.error}`,
+					});
+				}
 
 				return response.status(StatusCodes.CREATED).json({
-					resource: didDereferencing.contentStream.linkedResourceMetadata[0],
+					resource,
 				});
 			} else {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

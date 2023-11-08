@@ -17,7 +17,7 @@ export class KeyService {
 		this.keyRepository = Connection.instance.dbConnection.getRepository(KeyEntity);
 	}
 
-	public async update(kid: string, customer?: CustomerEntity, keyAlias?: string, createdAt? : Date) {
+	public async update(kid: string, customer?: CustomerEntity, keyAlias?: string, createdAt?: Date) {
 		const existingKey = await this.keyRepository.findOneBy({ kid });
 		if (!existingKey) {
 			throw new Error(`kid not found`);

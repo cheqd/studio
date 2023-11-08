@@ -19,7 +19,7 @@ import {
 	type CreateStatusList2021Result,
 	type StatusCheckResult,
 	DefaultRPCUrls,
-	type TransactionResult
+	type TransactionResult,
 } from '@cheqd/did-provider-cheqd';
 import {
 	BroadcastStatusListOptions,
@@ -34,6 +34,8 @@ import {
 	CreateEncryptedStatusListOptions,
 	FeePaymentOptions,
 	UpdateEncryptedStatusListOptions,
+	TrackResult,
+	ITrackOperation,
 } from '../../types/shared.js';
 import { Connection } from '../../database/connection/connection.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
@@ -45,6 +47,12 @@ import { PaymentAccountService } from '../payment_account.js';
 import { CheqdNetwork } from '@cheqd/sdk';
 import { IdentifierService } from '../identifier.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
+import { ResourceService } from '../resource.js';
+import {
+	OPERATION_CATEGORY_NAME_CREDENTIAL,
+	OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
+	OPERATION_CATEGORY_NAME_RESOURCE,
+} from '../../types/constants.js';
 
 dotenv.config();
 
@@ -408,31 +416,34 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	async revokeCredentials(
 		credentials: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		symmetricKey: string
 	) {
 		const agent = await this.createAgent(customer);
 		await this.validateCredentialAccess(credentials, customer);
-		return await Veramo.instance.revokeCredentials(agent, credentials, publish);
+		return await Veramo.instance.revokeCredentials(agent, credentials, publish, symmetricKey);
 	}
 
 	async suspendCredentials(
 		credentials: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		symmetricKey: string
 	) {
 		const agent = await this.createAgent(customer);
 		await this.validateCredentialAccess(credentials, customer);
-		return await Veramo.instance.suspendCredentials(agent, credentials, publish);
+		return await Veramo.instance.suspendCredentials(agent, credentials, publish, symmetricKey);
 	}
 
 	async reinstateCredentials(
 		credentials: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		symmetricKey: string
 	) {
 		const agent = await this.createAgent(customer);
 		await this.validateCredentialAccess(credentials, customer);
-		return await Veramo.instance.unsuspendCredentials(agent, credentials, publish);
+		return await Veramo.instance.unsuspendCredentials(agent, credentials, publish, symmetricKey);
 	}
 
 	private async validateCredentialAccess(
@@ -457,5 +468,62 @@ export class PostgresIdentityService extends DefaultIdentityService {
 				throw new Error(`${issuerId} not found in wallet`);
 			}
 		}
+	}
+
+	async trackOperation(trackOperation: ITrackOperation): Promise<TrackResult> {
+		// For now it tracks only resource-related operations but in future we will track all other actions
+		switch (trackOperation.category) {
+			case OPERATION_CATEGORY_NAME_RESOURCE:
+				return await this.trackResourceOperation(trackOperation);
+			case OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS:
+				return await this.trackResourceOperation(trackOperation);
+			case OPERATION_CATEGORY_NAME_CREDENTIAL:
+				return await this.trackResourceOperation(trackOperation);
+			default: {
+				return {
+					created: false,
+					error: `Category ${trackOperation.category} is not supported`,
+				};
+			}
+		}
+	}
+
+	async trackResourceOperation(trackOperation: ITrackOperation): Promise<TrackResult> {
+		const customer = trackOperation.customer;
+		const did = trackOperation.did;
+		const resource = trackOperation.data.resource;
+		const encrypted = trackOperation.data.encrypted;
+		const symmetricKey = trackOperation.data.symmetricKey;
+
+		const identifier = await IdentifierService.instance.get(did);
+		if (!identifier) {
+			throw new Error(`Identifier ${did} not found`);
+		}
+		if (!identifier.controllerKeyId) {
+			throw new Error(`Identifier ${did} does not have link to the controller key...`);
+		}
+		const key = await KeyService.instance.get(identifier.controllerKeyId);
+		if (!key) {
+			throw new Error(`Key for ${did} not found`);
+		}
+
+		const resourceEntity = await ResourceService.instance.createFromLinkedResource(
+			resource,
+			customer,
+			key,
+			identifier,
+			encrypted,
+			symmetricKey
+		);
+		if (!resourceEntity) {
+			return {
+				created: false,
+				error: `Resource for ${did} was not tracked`,
+			};
+		}
+		return {
+			created: true,
+			error: '',
+		};
 	}
 }

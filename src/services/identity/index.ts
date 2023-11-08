@@ -34,8 +34,10 @@ import type {
 	CreateUnencryptedStatusListOptions,
 	CredentialRequest,
 	FeePaymentOptions,
+	ITrackOperation,
 	SearchStatusListResult,
 	StatusOptions,
+	TrackResult,
 	UpdateEncryptedStatusListOptions,
 	UpdateUnencryptedStatusListOptions,
 	VeramoAgent,
@@ -93,6 +95,7 @@ export interface IIdentityService {
 		statusOptions: CreateEncryptedStatusListOptions,
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result>;
+	trackOperation(trackOperation: ITrackOperation): Promise<TrackResult>;
 	updateUnencryptedStatusList2021(
 		did: string,
 		statusOptions: UpdateUnencryptedStatusListOptions,
@@ -127,17 +130,20 @@ export interface IIdentityService {
 	revokeCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		symmetricKey: string
 	): Promise<RevocationResult | BulkRevocationResult>;
 	suspendCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		symmetricKey: string
 	): Promise<SuspensionResult | BulkSuspensionResult>;
 	reinstateCredentials(
 		credential: VerifiableCredential | VerifiableCredential[],
 		publish: boolean,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		symmetricKey: string
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult>;
 }
 
