@@ -20,6 +20,7 @@ import {
 	DefaultStatusActionPurposeMap,
 	DefaultStatusActions,
 	FeePaymentOptions,
+	ITrackOperation,
 	MinimalPaymentCondition,
 	SearchStatusListQuery,
 	SearchStatusListSuccessfulResponseBody,
@@ -41,6 +42,8 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
 import { toNetwork } from '../helpers/helpers.js';
+import { OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS } from '../types/constants.js';
+import { CheqdNetwork } from '@cheqd/sdk';
 
 export class RevocationController {
 	static createUnencryptedValidator = [
@@ -592,13 +595,19 @@ export class RevocationController {
 
 			// Keep track of resources
 			const trackResourceInfo= {
+				category: OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
+				operation: "createUnencryptedStatusList",
 				customer: response.locals.customer,
+				user: response.locals.user,
 				did,
-				resource: result.resourceMetadata,
-				encrypted: result.resource?.metadata?.encrypted,
-				symmetricKey: '',
-			}
-			const trackResult = await identityServiceStrategySetup.agent.trackResourceCreation(trackResourceInfo)
+				data: {
+					resource: result.resourceMetadata,
+					encrypted: result.resource?.metadata?.encrypted,
+					symmetricKey: '',
+				}
+			} as ITrackOperation;
+			
+			const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo)
 			if (trackResult.error) {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
 					trackResult as CreateEncryptedStatusListUnsuccessfulResponseBody);
@@ -712,14 +721,26 @@ export class RevocationController {
 			}
 			// Keep track of resources
 			// For now we decided not to store symmetricKey yet
+
 			const trackResourceInfo= {
+				operation: "createEncryptedStatusList",
+				category: OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
 				customer: response.locals.customer,
-				did,
-				resource: result.resourceMetadata,
-				encrypted: result.resource?.metadata?.encrypted,
-				symmetricKey: '',
-			}
-			const trackResult = await identityServiceStrategySetup.agent.trackResourceCreation(trackResourceInfo)
+				user: response.locals.user,
+				did: did,
+				data: {
+					resource: result.resourceMetadata,
+					encrypted: true,
+					symmetricKey: '',
+				},
+				feePaymentOptions: {
+					feePaymentAddress: feePaymentAddress,
+					feePaymentAmount: feePaymentAmount,
+					feePaymentNetwork: CheqdNetwork.Testnet,
+				},
+			} as ITrackOperation;
+			const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
+
 			if (trackResult.error) {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
 					trackResult as CreateEncryptedStatusListUnsuccessfulResponseBody);
@@ -884,13 +905,18 @@ export class RevocationController {
 			// track resource creation
 			if (result.resourceMetadata) {
 				const trackResourceInfo= {
+					category: OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
+					operation: "updateUnencryptedStatusList",
 					customer: response.locals.customer,
+					user: response.locals.user,
 					did,
-					resource: result.resourceMetadata,
-					encrypted: false,
-					symmetricKey: '',
-				}
-				const trackResult = await identityServiceStrategySetup.agent.trackResourceCreation(trackResourceInfo)
+					data: {
+						resource: result.resourceMetadata,
+						encrypted: false,
+						symmetricKey: '',
+					}
+				} as ITrackOperation;
+				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo)
 				if (trackResult.error) {
 					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
 						{
@@ -1074,13 +1100,23 @@ export class RevocationController {
 			// track resource creation
 			if (result.resourceMetadata) {
 				const trackResourceInfo= {
+					category: OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
+					operation: "updateEncryptedStatusList",
 					customer: response.locals.customer,
+					user: response.locals.user,
 					did,
-					resource: result.resourceMetadata,
-					encrypted: true,
-					symmetricKey: '',
-				}
-				const trackResult = await identityServiceStrategySetup.agent.trackResourceCreation(trackResourceInfo)
+					data: {
+						resource: result.resourceMetadata,
+						encrypted: true,
+						symmetricKey: '',
+					},
+					feePaymentOptions: {
+						feePaymentAddress: feePaymentAddress,
+						feePaymentAmount: feePaymentAmount,
+						feePaymentNetwork: CheqdNetwork.Testnet,
+					},
+				} as ITrackOperation;
+				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo)
 				if (trackResult.error) {
 					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
 						{

@@ -29,7 +29,7 @@ import type {
 	CreateUnencryptedStatusListOptions,
 	CredentialRequest,
 	FeePaymentOptions,
-	IResourceTrack,
+	ITrackOperation,
 	StatusOptions,
 	TrackResult,
 	UpdateEncryptedStatusListOptions,
@@ -144,8 +144,8 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<boolean> {
 		throw new Error(`Not supported`);
 	}
-	trackResourceCreation(
-		trackResource: IResourceTrack
+	trackOperation(
+		trackOperation: ITrackOperation
 	): Promise<TrackResult> {
 		throw new Error(`Not supported`);
 	}

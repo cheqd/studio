@@ -23,7 +23,8 @@ import {
 import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
 import { bases } from 'multiformats/basics';
 import { base64ToBytes } from 'did-jwt';
-import type { CreateDidRequestBody } from '../types/shared.js';
+import type { CreateDidRequestBody, ITrackOperation } from '../types/shared.js';
+import { OPERATION_CATEGORY_NAME_RESOURCE } from '../types/constants.js';
 
 export class IssuerController {
 	// ToDo: improve validation in a "bail" fashion
@@ -577,13 +578,18 @@ export class IssuerController {
 
 				// track resource creation
 				const trackResourceInfo= {
+						category: OPERATION_CATEGORY_NAME_RESOURCE,
+						operation: "createResource",
 						customer: response.locals.customer,
 						did,
-						resource: resource,
-						encrypted: false,
-						symmetricKey: '',
-					}
-				const trackResult = await identityServiceStrategySetup.agent.trackResourceCreation(trackResourceInfo)
+						data: {
+							resource: resource,
+							encrypted: false,
+							symmetricKey: '',
+						}
+					} as ITrackOperation;
+
+				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo)
 				if (trackResult.error) {
 					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 						error: `${trackResult.error}`,

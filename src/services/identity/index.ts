@@ -34,7 +34,7 @@ import type {
 	CreateUnencryptedStatusListOptions,
 	CredentialRequest,
 	FeePaymentOptions,
-	IResourceTrack,
+	ITrackOperation,
 	SearchStatusListResult,
 	StatusOptions,
 	TrackResult,
@@ -95,8 +95,8 @@ export interface IIdentityService {
 		statusOptions: CreateEncryptedStatusListOptions,
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result>;
-	trackResourceCreation(
-		trackResource: IResourceTrack
+	trackOperation(
+		trackOperation: ITrackOperation
 	): Promise<TrackResult>
 	updateUnencryptedStatusList2021(
 		did: string,

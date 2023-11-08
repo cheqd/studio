@@ -35,7 +35,7 @@ import {
 	FeePaymentOptions,
 	UpdateEncryptedStatusListOptions,
 	TrackResult,
-	IResourceTrack,
+	ITrackOperation,
 } from '../../types/shared.js';
 import { Connection } from '../../database/connection/connection.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
@@ -48,6 +48,7 @@ import { CheqdNetwork } from '@cheqd/sdk';
 import { IdentifierService } from '../identifier.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
 import { ResourceService } from '../resource.js';
+import { OPERATION_CATEGORY_NAME_CREDENTIAL, OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS, OPERATION_CATEGORY_NAME_RESOURCE } from '../../types/constants.js';
 
 dotenv.config();
 
@@ -465,10 +466,30 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async trackResourceCreation(
-		trackResource: IResourceTrack): Promise<TrackResult> {
+	async trackOperation(
+		trackOperation: ITrackOperation): Promise<TrackResult> {
+			// For now it tracks only resource-related operations but in future we will track all other actions
+			switch (trackOperation.category) {
+				case OPERATION_CATEGORY_NAME_RESOURCE : return await this.trackResourceOperation(trackOperation);
+				case OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS: return await this.trackResourceOperation(trackOperation);
+				case OPERATION_CATEGORY_NAME_CREDENTIAL: return await this.trackResourceOperation(trackOperation);
+				default: {
+					return {
+						created: false,
+						error: `Operation ${trackOperation.operation} is not supported`
+					}
+				}
+			}
+		}
 
-		const {customer, did, resource, encrypted, symmetricKey} = trackResource;
+	async trackResourceOperation(
+		trackOperation: ITrackOperation): Promise<TrackResult> {
+
+		const customer = trackOperation.customer;
+		const did = trackOperation.did;
+		const resource = trackOperation.data.resource;
+		const encrypted = trackOperation.data.encrypted;
+		const symmetricKey = trackOperation.data.symmetricKey;
 
 		const identifier = await IdentifierService.instance.get(did);
 		if (!identifier) {

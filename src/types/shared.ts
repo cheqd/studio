@@ -33,6 +33,7 @@ import { CheqdNetwork, MethodSpecificIdAlgo, Service, VerificationMethods } from
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2';
 import type { DIDDocument } from 'did-resolver';
 import type { CustomerEntity } from '../database/entities/customer.entity';
+import type { UserEntity } from '../database/entities/user.entity';
 
 const DefaultUuidPattern = '([a-zA-Z0-9-]{36})';
 const DefaultMethodSpecificIdPattern = `(?:[a-zA-Z0-9]{21,22}|${DefaultUuidPattern})`;
@@ -355,9 +356,32 @@ export interface VerificationOptions {
 	verifyStatus?: boolean;
 }
 
-export interface IResourceTrack {
+export type TrackData = IResourceTrack ;
+
+export interface ITrackOperation {
+	// function name, e.g. createDid, issueCredential, etc.
+	operation: string,
+	// category of the operation, e.g. did, resource, credential, credential-status
+	category: string,
+	// data of the operation, e.g. did, resource, credentialStatus
+	data: TrackData,
+	// customer who initiated the operation (like organistation)
 	customer: CustomerEntity,
-	did: string,
+	// user who initiated the operation
+	user?: UserEntity,
+	// identifier
+	did?: string,
+	// controller's key
+	key? : string,
+	// fee payment options
+	feePaymentOptions?: {
+		feePaymentAddress: string;
+		feePaymentAmount: number;
+		feePaymentNetwork: CheqdNetwork;
+	},
+}
+
+export interface IResourceTrack {
 	resource: LinkedResourceMetadataResolutionResult,
 	encrypted: boolean,
 	symmetricKey: string
