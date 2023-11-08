@@ -482,7 +482,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			default: {
 				return {
 					created: false,
-					error: `Operation ${trackOperation.operation} is not supported`,
+					error: `Category ${trackOperation.category} is not supported`,
 				};
 			}
 		}
