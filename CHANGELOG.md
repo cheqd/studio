@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.11.0](https://github.com/cheqd/credential-service/compare/2.10.0...2.11.0) (2023-11-10)
+
+
+### Features
+
+* Add resource tracking [DEV-3395] ([#423](https://github.com/cheqd/credential-service/issues/423)) ([9b49b40](https://github.com/cheqd/credential-service/commit/9b49b40576e793511dee96962c045fed76356cd6))
+* Implement new customer relationships due to the new db structure [DEV-3217] ([#406](https://github.com/cheqd/credential-service/issues/406)) ([a8d9590](https://github.com/cheqd/credential-service/commit/a8d95906fb8c1f689ce8a31e2551bbd7c39e48b5))
+
+
+### Bug Fixes
+
+* Make releaserc, prettier and linters the same as in other projects ([#417](https://github.com/cheqd/credential-service/issues/417)) ([c05c404](https://github.com/cheqd/credential-service/commit/c05c404e840e1dc35561042e16a28ad7a2305503))
+
 ## [2.11.0-develop.3](https://github.com/cheqd/credential-service/compare/2.11.0-develop.2...2.11.0-develop.3) (2023-11-09)
 
 ## [2.11.0-develop.2](https://github.com/cheqd/credential-service/compare/2.11.0-develop.1...2.11.0-develop.2) (2023-11-08)
