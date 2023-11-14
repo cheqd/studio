@@ -30,7 +30,7 @@ export class APITokenUserInfoFetcher extends AuthReturn implements IUserInfoFetc
 					// expected issuer of the token, should be issued by the Logto server
 					issuer: oauthProvider.endpoint_issuer,
 					// expected audience token, should be the resource indicator of the current API
-					audience: '4ozwp2i06xy5sp3ttozts',
+					audience: process.env.LOGTO_APP_ID,
 				}
 			);
 			// Setup the scopes from the token
