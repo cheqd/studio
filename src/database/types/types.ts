@@ -27,7 +27,7 @@ import { KeyEntity } from '../entities/key.entity.js';
 import { IdentifierEntity } from '../entities/identifier.entity.js';
 import { MigrateData1695740345977 } from '../migrations/MigrateData.js';
 import { APIKeyEntity } from '../entities/api.key.entity.js';
-import { CreateAPIKeyTable1695740345977 } from '../migrations/CreateAPIKeyMigration.js';
+import { CreateAPIKeyTable1695740345977 } from '../migrations/CreateApiKeyMigration.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
