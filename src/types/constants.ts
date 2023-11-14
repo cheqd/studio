@@ -62,3 +62,7 @@ export const POLYGON_RPC_URL = 'https://rpc-mumbai.maticvigil.com';
 export const VERIDA_APP_NAME = 'Cheqd Verida Connector';
 // Schema to store a Verifiable Credential on the Verida Network.
 export const VERIDA_CREDENTIAL_RECORD_SCHEMA = 'https://common.schemas.verida.io/credential/base/v0.2.0/schema.json';
+
+export const OPERATION_CATEGORY_NAME_RESOURCE = 'resource';
+export const OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS = 'credential-status';
+export const OPERATION_CATEGORY_NAME_CREDENTIAL = 'credential';

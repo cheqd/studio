@@ -1,5 +1,55 @@
 # Changelog
 
+## [2.11.0](https://github.com/cheqd/credential-service/compare/2.10.0...2.11.0) (2023-11-10)
+
+
+### Features
+
+* Add resource tracking [DEV-3395] ([#423](https://github.com/cheqd/credential-service/issues/423)) ([9b49b40](https://github.com/cheqd/credential-service/commit/9b49b40576e793511dee96962c045fed76356cd6))
+* Implement new customer relationships due to the new db structure [DEV-3217] ([#406](https://github.com/cheqd/credential-service/issues/406)) ([a8d9590](https://github.com/cheqd/credential-service/commit/a8d95906fb8c1f689ce8a31e2551bbd7c39e48b5))
+
+
+### Bug Fixes
+
+* Make releaserc, prettier and linters the same as in other projects ([#417](https://github.com/cheqd/credential-service/issues/417)) ([c05c404](https://github.com/cheqd/credential-service/commit/c05c404e840e1dc35561042e16a28ad7a2305503))
+
+## [2.11.0-develop.3](https://github.com/cheqd/credential-service/compare/2.11.0-develop.2...2.11.0-develop.3) (2023-11-09)
+
+## [2.11.0-develop.2](https://github.com/cheqd/credential-service/compare/2.11.0-develop.1...2.11.0-develop.2) (2023-11-08)
+
+
+### Features
+
+* Add resource tracking [DEV-3395] ([#423](https://github.com/cheqd/credential-service/issues/423)) ([9b49b40](https://github.com/cheqd/credential-service/commit/9b49b40576e793511dee96962c045fed76356cd6))
+
+## [2.11.0-develop.1](https://github.com/cheqd/credential-service/compare/2.10.1-develop.1...2.11.0-develop.1) (2023-11-02)
+
+
+### Features
+
+* Implement new customer relationships due to the new db structure [DEV-3217] ([#406](https://github.com/cheqd/credential-service/issues/406)) ([a8d9590](https://github.com/cheqd/credential-service/commit/a8d95906fb8c1f689ce8a31e2551bbd7c39e48b5))
+
+## [2.10.1-develop.1](https://github.com/cheqd/credential-service/compare/2.10.0...2.10.1-develop.1) (2023-10-31)
+
+
+### Bug Fixes
+
+* Make releaserc, prettier and linters the same as in other projects ([#417](https://github.com/cheqd/credential-service/issues/417)) ([c05c404](https://github.com/cheqd/credential-service/commit/c05c404e840e1dc35561042e16a28ad7a2305503))
+
+## [2.10.0](https://github.com/cheqd/credential-service/compare/2.9.3...2.10.0) (2023-10-24)
+
+
+### Features
+
+* Improve /did/create API [DEV-3197] ([#388](https://github.com/cheqd/credential-service/issues/388)) ([9791dc6](https://github.com/cheqd/credential-service/commit/9791dc606e7afdf37ad1b78af68b3c6e45d9883f))
+
+
+### Bug Fixes
+
+* Investigate frequent logouts on Credential Service [DEV-3251] ([#395](https://github.com/cheqd/credential-service/issues/395)) ([14693c3](https://github.com/cheqd/credential-service/commit/14693c34d4875314dbdc175f99bfe704b0b7a797))
+
+## [2.10.0-develop.2](https://github.com/cheqd/credential-service/compare/2.10.0-develop.1...2.10.0-develop.2) (2023-10-23)
+
 ## [2.10.0-develop.1](https://github.com/cheqd/credential-service/compare/2.9.4-develop.3...2.10.0-develop.1) (2023-10-16)
 
 

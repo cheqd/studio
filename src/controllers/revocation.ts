@@ -20,6 +20,7 @@ import {
 	DefaultStatusActionPurposeMap,
 	DefaultStatusActions,
 	FeePaymentOptions,
+	ITrackOperation,
 	MinimalPaymentCondition,
 	SearchStatusListQuery,
 	SearchStatusListSuccessfulResponseBody,
@@ -41,6 +42,8 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
 import { toNetwork } from '../helpers/helpers.js';
+import { OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS } from '../types/constants.js';
+import { CheqdNetwork } from '@cheqd/sdk';
 
 export class RevocationController {
 	static createUnencryptedValidator = [
@@ -551,24 +554,23 @@ export class RevocationController {
 		// define broadcast mode
 		const data = encodedList ? fromString(encodedList, encoding) : undefined;
 
+		// create agent
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+
 		try {
 			// broadcast, if applicable
 			if (data) {
-				const result = await new IdentityServiceStrategySetup(
-					response.locals.customerId
-				).agent.broadcastStatusList2021(
+				const result = await identityServiceStrategySetup.agent.broadcastStatusList2021(
 					did,
 					{ data, name: statusListName, alsoKnownAs, version: statusListVersion },
 					{ encoding, statusPurpose },
-					response.locals.customerId
+					response.locals.customer
 				);
 				return response.status(StatusCodes.OK).json(result);
 			}
 
 			// create unencrypted status list
-			const result = (await new IdentityServiceStrategySetup(
-				response.locals.customerId
-			).agent.createUnencryptedStatusList2021(
+			const result = (await identityServiceStrategySetup.agent.createUnencryptedStatusList2021(
 				did,
 				{
 					name: statusListName,
@@ -580,7 +582,7 @@ export class RevocationController {
 					encoding,
 					statusPurpose,
 				},
-				response.locals.customerId
+				response.locals.customer
 			)) as CreateUnencryptedStatusListSuccessfulResponseBody;
 
 			// handle error
@@ -589,6 +591,27 @@ export class RevocationController {
 					...result,
 					error: result.error?.message || result.error.toString(),
 				} as CreateUnencryptedStatusListUnsuccessfulResponseBody);
+			}
+
+			// Keep track of resources
+			const trackResourceInfo = {
+				category: OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
+				operation: 'createUnencryptedStatusList',
+				customer: response.locals.customer,
+				user: response.locals.user,
+				did,
+				data: {
+					resource: result.resourceMetadata,
+					encrypted: result.resource?.metadata?.encrypted,
+					symmetricKey: '',
+				},
+			} as ITrackOperation;
+
+			const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
+			if (trackResult.error) {
+				return response
+					.status(StatusCodes.INTERNAL_SERVER_ERROR)
+					.json(trackResult as CreateEncryptedStatusListUnsuccessfulResponseBody);
 			}
 
 			// return result
@@ -667,12 +690,11 @@ export class RevocationController {
 
 		// collect request parameters - case: query
 		const { statusPurpose } = request.query as CreateEncryptedStatusListRequestQuery;
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
 			// create encrypted status list
-			const result = (await new IdentityServiceStrategySetup(
-				response.locals.customerId
-			).agent.createEncryptedStatusList2021(
+			const result = (await identityServiceStrategySetup.agent.createEncryptedStatusList2021(
 				did,
 				{
 					name: statusListName,
@@ -688,7 +710,7 @@ export class RevocationController {
 					feePaymentAmount,
 					feePaymentWindow,
 				},
-				response.locals.customerId
+				response.locals.customer
 			)) as CreateEncryptedStatusListSuccessfulResponseBody;
 
 			// handle error
@@ -697,6 +719,33 @@ export class RevocationController {
 					...result,
 					error: result.error?.message || result.error.toString(),
 				} as CreateEncryptedStatusListUnsuccessfulResponseBody);
+			}
+			// Keep track of resources
+			// For now we decided not to store symmetricKey yet
+
+			const trackResourceInfo = {
+				operation: 'createEncryptedStatusList',
+				category: OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
+				customer: response.locals.customer,
+				user: response.locals.user,
+				did: did,
+				data: {
+					resource: result.resourceMetadata,
+					encrypted: true,
+					symmetricKey: '',
+				},
+				feePaymentOptions: {
+					feePaymentAddress: feePaymentAddress,
+					feePaymentAmount: feePaymentAmount,
+					feePaymentNetwork: CheqdNetwork.Testnet,
+				},
+			} as ITrackOperation;
+			const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
+
+			if (trackResult.error) {
+				return response
+					.status(StatusCodes.INTERNAL_SERVER_ERROR)
+					.json(trackResult as CreateEncryptedStatusListUnsuccessfulResponseBody);
 			}
 
 			// return result
@@ -767,7 +816,7 @@ export class RevocationController {
 		const { statusAction } = request.query as UpdateUnencryptedStatusListRequestQuery;
 
 		// define identity service strategy setup
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customerId);
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		// ensure unencrypted status list
 		const unencrypted = await identityServiceStrategySetup.agent.searchStatusList2021(
@@ -809,7 +858,7 @@ export class RevocationController {
 					statusListVersion,
 					statusAction,
 				},
-				response.locals.customerId
+				response.locals.customer
 			)) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult) & { updated?: boolean };
 
 			// enhance result
@@ -854,6 +903,29 @@ export class RevocationController {
 				resource: result.statusList,
 				resourceMetadata: result.resourceMetadata,
 			} satisfies UpdateUnencryptedStatusListSuccessfulResponseBody;
+
+			// track resource creation
+			if (result.resourceMetadata) {
+				const trackResourceInfo = {
+					category: OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
+					operation: 'updateUnencryptedStatusList',
+					customer: response.locals.customer,
+					user: response.locals.user,
+					did,
+					data: {
+						resource: result.resourceMetadata,
+						encrypted: false,
+						symmetricKey: '',
+					},
+				} as ITrackOperation;
+				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
+				if (trackResult.error) {
+					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+						updated: false,
+						error: trackResult.error,
+					} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
+				}
+			}
 
 			return response.status(StatusCodes.OK).json(formatted);
 		} catch (error) {
@@ -931,7 +1003,7 @@ export class RevocationController {
 		const { statusAction } = request.query as { statusAction: DefaultStatusAction };
 
 		// define identity service strategy setup
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customerId);
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		// ensure encrypted status list
 		const encrypted = await identityServiceStrategySetup.agent.searchStatusList2021(
@@ -979,7 +1051,7 @@ export class RevocationController {
 					feePaymentAmount,
 					feePaymentWindow,
 				},
-				response.locals.customerId
+				response.locals.customer
 			)) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult) & { updated: boolean };
 
 			// enhance result
@@ -1025,6 +1097,34 @@ export class RevocationController {
 				resourceMetadata: result.resourceMetadata,
 				symmetricKey: result.symmetricKey,
 			} satisfies UpdateEncryptedStatusListSuccessfulResponseBody;
+
+			// track resource creation
+			if (result.resourceMetadata) {
+				const trackResourceInfo = {
+					category: OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
+					operation: 'updateEncryptedStatusList',
+					customer: response.locals.customer,
+					user: response.locals.user,
+					did,
+					data: {
+						resource: result.resourceMetadata,
+						encrypted: true,
+						symmetricKey: '',
+					},
+					feePaymentOptions: {
+						feePaymentAddress: feePaymentAddress,
+						feePaymentAmount: feePaymentAmount,
+						feePaymentNetwork: CheqdNetwork.Testnet,
+					},
+				} as ITrackOperation;
+				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
+				if (trackResult.error) {
+					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+						updated: false,
+						error: trackResult.error,
+					} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
+				}
+			}
 
 			return response.status(StatusCodes.OK).json(formatted);
 		} catch (error) {
@@ -1092,7 +1192,7 @@ export class RevocationController {
 		const { statusPurpose } = request.query as CheckStatusListRequestQuery;
 
 		// define identity service strategy setup
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customerId);
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		// ensure status list
 		const statusList = await identityServiceStrategySetup.agent.searchStatusList2021(
@@ -1123,12 +1223,15 @@ export class RevocationController {
 			// make fee payment
 			const feePaymentResult = await Promise.all(
 				statusList?.resource?.metadata?.paymentConditions?.map(async (condition) => {
-					return await identityServiceStrategySetup.agent.remunerateStatusList2021({
-						feePaymentAddress: condition.feePaymentAddress,
-						feePaymentAmount: condition.feePaymentAmount,
-						feePaymentNetwork: toNetwork(did),
-						memo: 'Automated status check fee payment, orchestrated by CaaS.',
-					} satisfies FeePaymentOptions);
+					return await identityServiceStrategySetup.agent.remunerateStatusList2021(
+						{
+							feePaymentAddress: condition.feePaymentAddress,
+							feePaymentAmount: condition.feePaymentAmount,
+							feePaymentNetwork: toNetwork(did),
+							memo: 'Automated status check fee payment, orchestrated by CaaS.',
+						} satisfies FeePaymentOptions,
+						response.locals.customer
+					);
 				}) || []
 			);
 
@@ -1143,14 +1246,14 @@ export class RevocationController {
 
 		try {
 			// check status list
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.checkStatusList2021(
+			const result = await identityServiceStrategySetup.agent.checkStatusList2021(
 				did,
 				{
 					statusListIndex: index,
 					statusListName,
 					statusPurpose,
 				},
-				response.locals.customerId
+				response.locals.customer
 			);
 
 			// handle error
@@ -1249,9 +1352,11 @@ export class RevocationController {
 
 		try {
 			// search status list
-			const result = await new IdentityServiceStrategySetup(
-				response.locals.customerId
-			).agent.searchStatusList2021(did, statusListName, statusPurpose);
+			const result = await new IdentityServiceStrategySetup().agent.searchStatusList2021(
+				did,
+				statusListName,
+				statusPurpose
+			);
 
 			// handle error
 			if (result.error) {

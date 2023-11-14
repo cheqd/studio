@@ -13,11 +13,12 @@ dotenv.config();
 export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 	private nextHandler: IAuthResourceHandler;
 	private namespace: Namespaces;
+	private isAllowedUnauthorized: boolean;
 	private token: string;
 	private scopes: string[];
 	private logToHelper: LogToHelper;
 
-	public customerId: string;
+	public logToId: string;
 
 	private routeToScoupe: MethodToScope[] = [];
 	private static pathSkip = ['/swagger', '/static', '/logto', '/account/bootstrap', '/auth/user-info'];
@@ -26,8 +27,9 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 		this.nextHandler = {} as IAuthResourceHandler;
 		this.namespace = '' as Namespaces;
 		this.token = '' as string;
+		this.isAllowedUnauthorized = false;
 		this.scopes = [];
-		this.customerId = '' as string;
+		this.logToId = '' as string;
 		this.logToHelper = new LogToHelper();
 	}
 
@@ -35,7 +37,8 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 		this.namespace = '' as Namespaces;
 		this.token = '' as string;
 		this.scopes = [];
-		this.customerId = '' as string;
+		this.logToId = '' as string;
+		this.isAllowedUnauthorized = false;
 	}
 
 	public async commonPermissionCheck(request: Request): Promise<IAuthResponse> {
@@ -53,58 +56,59 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 		// Firstly - try to find the rule for the request
 		const rule = this.findRule(request.path, request.method, this.getNamespace());
 
-		if (rule && rule.isAllowedUnauthorized()) {
-			return this.returnOk();
-		}
-
-		// If there is no rule for the request - return error
-		if (rule === null) {
+		if (!rule) {
 			return this.returnError(
 				StatusCodes.INTERNAL_SERVER_ERROR,
 				`Internal error: Issue with finding the rule for the path ${request.path}`
 			);
-		} else {
-			// Namespace should be testnet or mainnet or '' if isSkipNamespace is true
-			// Otherwise - raise an error.
-			if (!this.namespace && !rule?.isSkipNamespace()) {
-				return this.returnError(
-					StatusCodes.INTERNAL_SERVER_ERROR,
-					'Seems like there is no information about the network in the request.'
-				);
-			}
-			// If the user is not authenticated - return error
-			if (!request.user.isAuthenticated) {
-				return this.returnError(
-					StatusCodes.UNAUTHORIZED,
-					"Unauthorized error: Seems like you are not authenticated. Please follow the authentication process using 'LogIn' button"
-				);
-			}
-			// Tries to get customerId from the logTo user structure
-			if (request.user && request.user.claims) {
-				this.customerId = request.user.claims.sub;
-			} else {
-				return this.returnError(
-					StatusCodes.BAD_GATEWAY,
-					'Internal error: Seems like authentication process was corrupted and there are problems with getting customerId'
-				);
-			}
-			// Tries to get scopes for current user and check that required scopes are present
-			const _resp = await this.logToHelper.getUserScopes(this.getCustomerId());
-			if (_resp.status !== 200) {
-				return _resp;
-			}
-			if (_resp.data) {
-				this.scopes = _resp.data;
-			}
-			// Checks if the list of scopes from user enough to make an action
-			if (!this.areValidScopes(rule, this.getScopes())) {
-				return this.returnError(
-					StatusCodes.FORBIDDEN,
-					`Unauthorized error: Your account is not authorized to carry out this action.`
-				);
-			}
+		}
+
+		// If the rule is found and it allows unauthorized - return ok
+		this.isAllowedUnauthorized = rule.isAllowedUnauthorized();
+
+		if (rule.isAllowedUnauthorized()) {
 			return this.returnOk();
 		}
+		// Namespace should be testnet or mainnet or '' if isSkipNamespace is true
+		// Otherwise - raise an error.
+		if (!this.namespace && !rule?.isSkipNamespace()) {
+			return this.returnError(
+				StatusCodes.INTERNAL_SERVER_ERROR,
+				'Seems like there is no information about the network in the request.'
+			);
+		}
+		// If the user is not authenticated - return error
+		if (!request.user.isAuthenticated) {
+			return this.returnError(
+				StatusCodes.UNAUTHORIZED,
+				"Unauthorized error: Seems like you are not authenticated. Please follow the authentication process using 'LogIn' button"
+			);
+		}
+		// Tries to get customerId from the logTo user structure
+		if (request.user && request.user.claims) {
+			this.logToId = request.user.claims.sub;
+		} else {
+			return this.returnError(
+				StatusCodes.BAD_GATEWAY,
+				'Internal error: Seems like authentication process was corrupted and there are problems with getting customerId'
+			);
+		}
+		// Tries to get scopes for current user and check that required scopes are present
+		const _resp = await this.logToHelper.getUserScopes(this.getLogToId());
+		if (_resp.status !== 200) {
+			return _resp;
+		}
+		if (_resp.data) {
+			this.scopes = _resp.data;
+		}
+		// Checks if the list of scopes from user enough to make an action
+		if (!this.areValidScopes(rule, this.getScopes())) {
+			return this.returnError(
+				StatusCodes.FORBIDDEN,
+				`Unauthorized error: Your account is not authorized to carry out this action.`
+			);
+		}
+		return this.returnOk();
 	}
 
 	private returnOk(): IAuthResponse {
@@ -112,9 +116,10 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 			status: StatusCodes.OK,
 			error: '',
 			data: {
-				customerId: this.getCustomerId(),
+				logToId: this.getLogToId(),
 				scopes: this.getScopes() as string[],
 				namespace: this.getNamespace(),
+				isAllowedUnauthorized: this.getIsAllowedUnauthorized(),
 			},
 		};
 	}
@@ -124,9 +129,10 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 			status: status,
 			error: error,
 			data: {
-				customerId: '',
+				logToId: '',
 				scopes: [],
 				namespace: this.getNamespace(),
+				isAllowedUnauthorized: this.getIsAllowedUnauthorized(),
 			},
 		};
 	}
@@ -245,8 +251,12 @@ export abstract class AbstractAuthHandler implements IAuthResourceHandler {
 		return this.scopes;
 	}
 
-	public getCustomerId(): string {
-		return this.customerId;
+	public getLogToId(): string {
+		return this.logToId;
+	}
+
+	public getIsAllowedUnauthorized(): boolean {
+		return this.isAllowedUnauthorized;
 	}
 
 	public getAllLogToScopes(): string[] | void {

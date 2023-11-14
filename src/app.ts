@@ -76,7 +76,7 @@ class App {
 						(function () {
 							throw new Error('COOKIE_SECRET is not defined');
 						})(),
-					cookie: { maxAge: 24 * 60 * 60 * 1000 }, // 24 hours 
+					cookie: { maxAge: 24 * 60 * 60 * 1000 }, // 24 hours
 				})
 			);
 			// Authentication functions/methods
@@ -166,7 +166,6 @@ class App {
 		app.get('/resource/search/:did', new IssuerController().getResource);
 
 		// Account API
-		app.post('/account', new AccountController().create);
 		app.get('/account', new AccountController().get);
 
 		// LogTo webhooks

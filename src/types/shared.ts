@@ -32,6 +32,8 @@ import type { DataSource } from 'typeorm';
 import { CheqdNetwork, MethodSpecificIdAlgo, Service, VerificationMethods } from '@cheqd/sdk';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2';
 import type { DIDDocument } from 'did-resolver';
+import type { CustomerEntity } from '../database/entities/customer.entity';
+import type { UserEntity } from '../database/entities/user.entity';
 
 const DefaultUuidPattern = '([a-zA-Z0-9-]{36})';
 const DefaultMethodSpecificIdPattern = `(?:[a-zA-Z0-9]{21,22}|${DefaultUuidPattern})`;
@@ -63,7 +65,7 @@ export type MinimalPaymentCondition = {
 };
 
 export type CreateDidRequestBody = {
-	didDocument?: DIDDocument
+	didDocument?: DIDDocument;
 	identifierFormatType: MethodSpecificIdAlgo;
 	network: CheqdNetwork;
 	verificationMethodType?: VerificationMethods;
@@ -345,19 +347,6 @@ export type FeePaymentOptions = {
 	memo?: string;
 };
 
-export interface ResourceMetadata {
-	collectionId: string;
-	resourceId: string;
-	resourceName: string;
-	resourceVersion: string;
-	resourceType: string;
-	mediaType: string;
-	created?: Date;
-	checksum: string;
-	previousVersionId: string;
-	nextVersionId: string;
-}
-
 export type CheckStatusListOptions = Omit<ICheqdCheckCredentialWithStatusList2021StatusOptions, 'issuerDid'>;
 
 export interface VerificationOptions {
@@ -365,4 +354,40 @@ export interface VerificationOptions {
 	policies?: VerificationPolicies;
 	domain?: string;
 	verifyStatus?: boolean;
+}
+
+export type TrackData = IResourceTrack;
+
+export interface ITrackOperation {
+	// function name, e.g. createDid, issueCredential, etc.
+	operation: string;
+	// category of the operation, e.g. did, resource, credential, credential-status
+	category: string;
+	// data of the operation, e.g. did, resource, credentialStatus
+	data: TrackData;
+	// customer who initiated the operation (like organistation)
+	customer: CustomerEntity;
+	// user who initiated the operation
+	user?: UserEntity;
+	// identifier
+	did?: string;
+	// controller's key
+	key?: string;
+	// fee payment options
+	feePaymentOptions?: {
+		feePaymentAddress: string;
+		feePaymentAmount: number;
+		feePaymentNetwork: CheqdNetwork;
+	};
+}
+
+export interface IResourceTrack {
+	resource: LinkedResourceMetadataResolutionResult;
+	encrypted: boolean;
+	symmetricKey: string;
+}
+
+export interface TrackResult {
+	created: boolean;
+	error?: string;
 }

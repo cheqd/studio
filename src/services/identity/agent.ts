@@ -9,7 +9,6 @@ import {
 	IKeyManager,
 	IResolver,
 	IVerifyResult,
-	ManagedKeyInfo,
 	MinimalImportableIdentifier,
 	MinimalImportableKey,
 	TAgent,
@@ -151,13 +150,12 @@ export class Veramo {
 		return createAgent({ plugins });
 	}
 
-	async createKey(agent: TAgent<IKeyManager>, type: 'Ed25519' | 'Secp256k1' = 'Ed25519'): Promise<ManagedKeyInfo> {
+	async createKey(agent: TAgent<IKeyManager>, type: 'Ed25519' | 'Secp256k1' = 'Ed25519') {
 		const [kms] = await agent.keyManagerGetKeyManagementSystems();
-		const key = await agent.keyManagerCreate({
+		return await agent.keyManagerCreate({
 			type: type || 'Ed25519',
 			kms,
 		});
-		return key;
 	}
 
 	async getKey(agent: TAgent<IKeyManager>, kid: string) {
@@ -518,7 +516,8 @@ export class Veramo {
 	async revokeCredentials(
 		agent: VeramoAgent,
 		credentials: VerifiableCredential | VerifiableCredential[],
-		publish = true
+		publish = true,
+		symmetricKey = ''
 	) {
 		if (Array.isArray(credentials))
 			return await agent.cheqdRevokeCredentials({
@@ -526,27 +525,50 @@ export class Veramo {
 				fetchList: true,
 				publish: true,
 			} satisfies ICheqdRevokeBulkCredentialsWithStatusList2021Args);
-		return await agent.cheqdRevokeCredential({ credential: credentials, fetchList: true, publish });
+		return await agent.cheqdRevokeCredential({
+			credential: credentials,
+			fetchList: true,
+			publish,
+			symmetricKey,
+			returnStatusListMetadata: true,
+			returnUpdatedStatusList: true,
+		});
 	}
 
 	async suspendCredentials(
 		agent: VeramoAgent,
 		credentials: VerifiableCredential | VerifiableCredential[],
-		publish = true
+		publish = true,
+		symmetricKey = ''
 	) {
 		if (Array.isArray(credentials))
 			return await agent.cheqdSuspendCredentials({ credentials, fetchList: true, publish });
-		return await agent.cheqdSuspendCredential({ credential: credentials, fetchList: true, publish });
+		return await agent.cheqdSuspendCredential({
+			credential: credentials,
+			fetchList: true,
+			publish,
+			symmetricKey,
+			returnStatusListMetadata: true,
+			returnUpdatedStatusList: true,
+		});
 	}
 
 	async unsuspendCredentials(
 		agent: VeramoAgent,
 		credentials: VerifiableCredential | VerifiableCredential[],
-		publish = true
+		publish = true,
+		symmetricKey = ''
 	) {
 		if (Array.isArray(credentials))
 			return await agent.cheqdUnsuspendCredentials({ credentials, fetchList: true, publish });
-		return await agent.cheqdUnsuspendCredential({ credential: credentials, fetchList: true, publish });
+		return await agent.cheqdUnsuspendCredential({
+			credential: credentials,
+			fetchList: true,
+			publish,
+			symmetricKey,
+			returnStatusListMetadata: true,
+			returnUpdatedStatusList: true,
+		});
 	}
 
 	async updateUnencryptedStatusList2021(
