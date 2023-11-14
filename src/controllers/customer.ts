@@ -65,7 +65,7 @@ export class AccountController {
 		}
 	}
 
-    /**
+	/**
 	 * @openapi
 	 *
 	 * /account/idtoken:
@@ -98,7 +98,11 @@ export class AccountController {
 		let apiKey = await identityStrategySetup.agent.getAPIKey(response.locals.customer, response.locals.user);
 		// If there is no API key for the customer - create it
 		if (!apiKey) {
-			apiKey = await identityStrategySetup.agent.setAPIKey(request.session.idToken, response.locals.customer, response.locals.user);
+			apiKey = await identityStrategySetup.agent.setAPIKey(
+				request.session.idToken,
+				response.locals.customer,
+				response.locals.user
+			);
 		} else if (apiKey.isExpired()) {
 			// If API key is expired - update it
 			apiKey = await identityStrategySetup.agent.updateAPIKey(apiKey, request.session.idToken);

@@ -1,6 +1,6 @@
-import type { ICommonErrorResponse } from "../../../types/authentication.js";
-import { LogToHelper } from "../logto-helper.js";
-import { IOAuthProvider, OAuthProvider } from "./base.js";
+import type { ICommonErrorResponse } from '../../../types/authentication.js';
+import { LogToHelper } from '../logto-helper.js';
+import { IOAuthProvider, OAuthProvider } from './base.js';
 
 export class LogToProvider extends OAuthProvider implements IOAuthProvider {
 	private logToHelper: LogToHelper;
@@ -9,11 +9,11 @@ export class LogToProvider extends OAuthProvider implements IOAuthProvider {
 		super();
 		this.logToHelper = new LogToHelper();
 	}
-	
+
 	public setHelper(logToHelper: LogToHelper): void {
 		this.logToHelper = logToHelper;
 	}
-	
+
 	public getAllScopes(): string[] | void {
 		if (this.logToHelper) {
 			return this.logToHelper.getAllScopes();

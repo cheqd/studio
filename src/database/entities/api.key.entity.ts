@@ -16,7 +16,7 @@ export class APIKeyEntity {
 	})
 	apiKey!: string;
 
-    @Column({
+	@Column({
 		type: 'timestamptz',
 		nullable: false,
 	})
@@ -34,11 +34,11 @@ export class APIKeyEntity {
 	})
 	updatedAt!: Date;
 
-    @ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { onDelete: 'CASCADE' })
+	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'customerId' })
 	customer!: CustomerEntity;
 
-    @ManyToOne(() => UserEntity, (user) => user.logToId, { onDelete: 'CASCADE' })
+	@ManyToOne(() => UserEntity, (user) => user.logToId, { onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'userId' })
 	user!: UserEntity;
 
@@ -52,15 +52,15 @@ export class APIKeyEntity {
 		this.updatedAt = new Date();
 	}
 
-    public isExpired(): boolean {
-        return this.expiresAt < new Date();
-    }
+	public isExpired(): boolean {
+		return this.expiresAt < new Date();
+	}
 
-    constructor (apiKeyId: string, apiKey: string, expiresAt: Date, customer: CustomerEntity, user: UserEntity) {
-        this.apiKeyId = apiKeyId;
-        this.apiKey = apiKey;
-        this.expiresAt = expiresAt;
-        this.customer = customer;
-        this.user = user;
-    }
+	constructor(apiKeyId: string, apiKey: string, expiresAt: Date, customer: CustomerEntity, user: UserEntity) {
+		this.apiKeyId = apiKeyId;
+		this.apiKey = apiKey;
+		this.expiresAt = expiresAt;
+		this.customer = customer;
+		this.user = user;
+	}
 }

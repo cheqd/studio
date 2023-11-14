@@ -2,19 +2,18 @@ import type { ICommonErrorResponse } from '../../types/authentication';
 import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
-import type { IOAuthProvider} from './oauth/base.js';
+import type { IOAuthProvider } from './oauth/base.js';
 import { OAuthProvider } from './oauth/base.js';
 dotenv.config();
 
 export class LogToHelper extends OAuthProvider implements IOAuthProvider {
-	
 	private m2mToken: string;
 	private allScopes: string[];
 	private allResourceWithNames: string[];
 	public defaultScopes: string[];
 
 	constructor() {
-		super()
+		super();
 		this.m2mToken = '';
 		this.allScopes = [];
 		this.defaultScopes = [];
@@ -270,17 +269,17 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		try {
 			const metadata = await this.getToLogto(uri, 'GET');
 			if (metadata && metadata.status !== StatusCodes.OK) {
-				return this.returnError(
-					StatusCodes.BAD_GATEWAY,
-					`getRoleIdByName: Error while getting the all roles`
-				);
+				return this.returnError(StatusCodes.BAD_GATEWAY, `getRoleIdByName: Error while getting the all roles`);
 			}
 			for (const role of metadata.data) {
 				if (role.name === roleName) {
 					return this.returnOk(role.id);
 				}
 			}
-			return this.returnError(StatusCodes.BAD_GATEWAY, `getRoleIdByName: Could not find role with name ${roleName}`);
+			return this.returnError(
+				StatusCodes.BAD_GATEWAY,
+				`getRoleIdByName: Could not find role with name ${roleName}`
+			);
 		} catch (err) {
 			return this.returnError(StatusCodes.BAD_GATEWAY, `getRoleIdByName ${err}`);
 		}

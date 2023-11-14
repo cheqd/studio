@@ -5,7 +5,7 @@ import type { IAuthResponse } from '../../../types/authentication.js';
 export class AuthInfoHandler extends BaseAuthHandler {
 	constructor() {
 		super();
-		this.registerRoute('/auth/user-info', 'GET', '', { skipNamespace: true, allowUnauthorized: true,});
+		this.registerRoute('/auth/user-info', 'GET', '', { skipNamespace: true, allowUnauthorized: true });
 	}
 	public async handle(request: Request, response: Response): Promise<IAuthResponse> {
 		if (!request.path.includes('/auth/user-info')) {

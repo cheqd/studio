@@ -1,20 +1,18 @@
-import type { ICommonErrorResponse } from "../../../types/authentication.js";
+import type { ICommonErrorResponse } from '../../../types/authentication.js';
 
-const {
-    LOGTO_ENDPOINT
-} = process.env
+const { LOGTO_ENDPOINT } = process.env;
 
 export interface IOAuthProvider {
-	endpoint_issuer: string,
-	endpoint_jwks: string,
+	endpoint_issuer: string;
+	endpoint_jwks: string;
 	getAllScopes(): string[] | void;
 	getDefaultScopes(): string[] | void;
 	getAllResourcesWithNames(): string[] | void;
 	getUserScopes(userId: string): Promise<ICommonErrorResponse>;
-    getScopesForRoles(rolesList: string[]): Promise<string[] | void>;
+	getScopesForRoles(rolesList: string[]): Promise<string[] | void>;
 }
 
-export abstract class OAuthProvider implements IOAuthProvider{
+export abstract class OAuthProvider implements IOAuthProvider {
 	endpoint_issuer: string = LOGTO_ENDPOINT + '/oidc';
 	endpoint_jwks: string = LOGTO_ENDPOINT + '/oidc/jwks';
 
@@ -30,7 +28,7 @@ export abstract class OAuthProvider implements IOAuthProvider{
 	getUserScopes(userId: string): Promise<ICommonErrorResponse> {
 		throw new Error('Method not implemented.');
 	}
-    getScopesForRoles(rolesList: string[]): Promise<string[] | void> {
-        throw new Error('Method not implemented.');
-    }
+	getScopesForRoles(rolesList: string[]): Promise<string[] | void> {
+		throw new Error('Method not implemented.');
+	}
 }

@@ -147,16 +147,9 @@ export interface IIdentityService {
 		customer: CustomerEntity,
 		symmetricKey: string
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult>;
-	setAPIKey(
-		apiKey: string,
-		customer: CustomerEntity,
-		user: UserEntity): Promise<APIKeyEntity>;
-	updateAPIKey(
-		apiKey: APIKeyEntity, 
-		newApiKey: string): Promise<APIKeyEntity>;
-	getAPIKey(
-		customer: CustomerEntity,
-		user: UserEntity): Promise<APIKeyEntity | undefined>;
+	setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity>;
+	updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity>;
+	getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | undefined>;
 }
 
 export class IdentityServiceStrategySetup {

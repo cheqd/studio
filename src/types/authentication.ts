@@ -63,12 +63,12 @@ export class MethodToScopeRule {
 		return this.options.skipNamespace;
 	}
 
-	public isEmpty(): boolean{
+	public isEmpty(): boolean {
 		return this.route === '' && this.method === '' && this.scope === '';
 	}
 }
 
-export interface IAuthResponse extends ICommonErrorResponse{
+export interface IAuthResponse extends ICommonErrorResponse {
 	status: number;
 	data: {
 		userId: string;
@@ -84,4 +84,3 @@ export interface ICommonErrorResponse {
 	error: string;
 	data: any;
 }
-

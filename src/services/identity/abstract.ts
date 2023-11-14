@@ -202,20 +202,13 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<IVerifyResult> {
 		throw new Error(`Not supported`);
 	}
-	setAPIKey(
-		apiKey: string,
-		customer: CustomerEntity,
-		user: UserEntity): Promise<APIKeyEntity> {
+	setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity> {
 		throw new Error(`Not supported`);
-		}
-	updateAPIKey(
-		apiKey: APIKeyEntity, 
-		newApiKey: string): Promise<APIKeyEntity> {
-			throw new Error(`Not supported`);
-		}
-	getAPIKey(
-		customer: CustomerEntity,
-		user: UserEntity): Promise<APIKeyEntity | undefined> {
-			throw new Error(`Not supported`);
-		}
+	}
+	updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity> {
+		throw new Error(`Not supported`);
+	}
+	getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | undefined> {
+		throw new Error(`Not supported`);
+	}
 }

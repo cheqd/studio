@@ -48,7 +48,7 @@ export class AuthParams implements IAuthParams {
 		this.rule = {} as MethodToScopeRule;
 		this.routeToScoupeList = [];
 	}
-	
+
 	// Getters
 	public getUserId(): string {
 		return this.userId;
@@ -142,7 +142,6 @@ export interface IAuthHandler extends IAPIGuard, IReturn, IAuthParams {
 }
 
 export class RuleRoutine extends AuthReturn implements IReturn {
-
 	protected getNamespaceFromRequest(req: Request): Namespaces | null {
 		let network: string | null = '';
 

@@ -17,9 +17,9 @@ export class OperationService {
 	}
 
 	public async create(
-		category: string, 
-		operationName: string, 
-		defaultFee: number, 
+		category: string,
+		operationName: string,
+		defaultFee: number,
 		deprecated = false
 	): Promise<OperationEntity> {
 		if (!category) {
@@ -34,7 +34,7 @@ export class OperationService {
 		if (!deprecated) {
 			throw new Error('Operation deprecated is not specified');
 		}
-		const operationId = v4()
+		const operationId = v4();
 		const operationEntity = new OperationEntity(operationId, category, operationName, defaultFee, deprecated);
 		const operation = (await this.operationRepository.insert(operationEntity)).identifiers[0];
 		if (!operation) throw new Error(`Cannot create a new operation`);
@@ -44,9 +44,9 @@ export class OperationService {
 
 	public async update(
 		operationId: string,
-		category: string, 
-		operationName: string, 
-		defaultFee: number, 
+		category: string,
+		operationName: string,
+		defaultFee: number,
 		deprecated = false
 	) {
 		const existingOperation = await this.get(operationId);

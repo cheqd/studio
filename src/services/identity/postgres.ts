@@ -529,43 +529,44 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			error: '',
 		};
 	}
-	async setAPIKey(
-		apiKey: string,
-		customer: CustomerEntity,
-		user: UserEntity): Promise<APIKeyEntity> {
-			const keys = await APIKeyService.instance.find({customer: customer, user: user});
-			if (keys.length > 0) {
-				throw new Error(`API key for customer ${customer.customerId} and user ${user.logToId} already exists`);
-			}
-			const apiKeyEntity = await APIKeyService.instance.create(apiKey, customer, user);
-			if (!apiKeyEntity) {
-				throw new Error(`Cannot create API key for customer ${customer.customerId} and user ${user.logToId}`);
-			}
-			return apiKeyEntity;
+	async setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity> {
+		const keys = await APIKeyService.instance.find({ customer: customer, user: user });
+		if (keys.length > 0) {
+			throw new Error(`API key for customer ${customer.customerId} and user ${user.logToId} already exists`);
 		}
+		const apiKeyEntity = await APIKeyService.instance.create(apiKey, customer, user);
+		if (!apiKeyEntity) {
+			throw new Error(`Cannot create API key for customer ${customer.customerId} and user ${user.logToId}`);
+		}
+		return apiKeyEntity;
+	}
 
 	async updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity> {
 		const key = await APIKeyService.instance.get(apiKey.apiKeyId);
 		if (!key) {
 			throw new Error(`API key with id ${apiKey.apiKeyId} not found`);
 		}
-		const apiKeyEntity = await APIKeyService.instance.update(key.apiKeyId, newApiKey, await APIKeyService.instance.getExpiryDate(newApiKey));
+		const apiKeyEntity = await APIKeyService.instance.update(
+			key.apiKeyId,
+			newApiKey,
+			await APIKeyService.instance.getExpiryDate(newApiKey)
+		);
 		if (!apiKeyEntity) {
 			throw new Error(`Cannot update API key with id ${apiKey.apiKeyId}`);
 		}
 		return apiKeyEntity;
 	}
 
-	async getAPIKey(
-		customer: CustomerEntity,
-		user: UserEntity): Promise<APIKeyEntity | undefined> {
-			const keys = await APIKeyService.instance.find({customer: customer, user: user});
-			if (keys.length > 1) {
-				throw new Error(`For the customer with customer id ${customer.customerId} and user with logToId ${user.logToId} there more then 1 API key`);
-			}
-			if (keys.length == 0) {
-				return undefined;
-			}
-			return keys[0]
+	async getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | undefined> {
+		const keys = await APIKeyService.instance.find({ customer: customer, user: user });
+		if (keys.length > 1) {
+			throw new Error(
+				`For the customer with customer id ${customer.customerId} and user with logToId ${user.logToId} there more then 1 API key`
+			);
 		}
+		if (keys.length == 0) {
+			return undefined;
+		}
+		return keys[0];
+	}
 }

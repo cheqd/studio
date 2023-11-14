@@ -37,8 +37,8 @@ export class Authentication {
 			const _r = await this.logToHelper.setup();
 			if (_r.status !== StatusCodes.OK) {
 				return response.status(StatusCodes.BAD_GATEWAY).json({
-                    error: _r.error,
-                });
+					error: _r.error,
+				});
 			}
 			const oauthProvider = new LogToProvider();
 			oauthProvider.setHelper(this.logToHelper);
@@ -100,26 +100,26 @@ export class Authentication {
 	}
 
 	public async wrapperHandleAuthRoutes(request: Request, response: Response, next: NextFunction) {
-		const resources = await this.logToHelper.getAllResourcesWithNames()
-        return handleAuthRoutes(
-            {...configLogToExpress, 
-            scopes: ["roles"],
-            resources: resources as string[]})(request, response, next)
-    }
+		const resources = await this.logToHelper.getAllResourcesWithNames();
+		return handleAuthRoutes({ ...configLogToExpress, scopes: ['roles'], resources: resources as string[] })(
+			request,
+			response,
+			next
+		);
+	}
 
 	public async withLogtoWrapper(request: Request, response: Response, next: NextFunction) {
-		if (this.authHandler.skipPath(request.path)) 
-            return next()
-        try {
-            return withLogto({...configLogToExpress, scopes: ["roles"]})(request, response, next)
+		if (this.authHandler.skipPath(request.path)) return next();
+		try {
+			return withLogto({ ...configLogToExpress, scopes: ['roles'] })(request, response, next);
 		} catch (err) {
 			return response.status(500).send({
-                authenticated: false,
-                error: `${err}`,
-                customerId: null,
-            })
+				authenticated: false,
+				error: `${err}`,
+				customerId: null,
+			});
 		}
-    }
+	}
 
 	public async guard(request: Request, response: Response, next: NextFunction) {
 		const { provider } = request.body as { claim: string; provider: string };

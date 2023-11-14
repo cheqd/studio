@@ -33,7 +33,7 @@ export class BaseAPIGuard extends RuleRoutine implements IAPIGuard {
 		}
 		// Set userId. Usually it will be the LogTo userId
 		// Here we could get UserId from API Key or from user's token
-		_res  = await this.userInfoFetcher.fetchUserInfo(request, oauthProvider);
+		_res = await this.userInfoFetcher.fetchUserInfo(request, oauthProvider);
 		if (_res.error) {
 			return _res;
 		}
@@ -98,10 +98,9 @@ export class BaseAPIGuard extends RuleRoutine implements IAPIGuard {
 }
 
 export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
-		
 	private nextHandler: IAuthHandler;
 	oauthProvider: IOAuthProvider;
-	private bearerTokenIdentifier = 'Bearer'
+	private bearerTokenIdentifier = 'Bearer';
 	private pathSkip = ['/swagger', '/static', '/logto', '/account/bootstrap'];
 
 	constructor() {
@@ -113,14 +112,14 @@ export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 	}
 
 	public extractBearerTokenFromHeaders({ authorization }: IncomingHttpHeaders): string | unknown {
-        if (authorization && authorization.startsWith(this.bearerTokenIdentifier)) {
-            return authorization.slice(this.bearerTokenIdentifier.length + 1)
-        }
-        return undefined
-    }
+		if (authorization && authorization.startsWith(this.bearerTokenIdentifier)) {
+			return authorization.slice(this.bearerTokenIdentifier.length + 1);
+		}
+		return undefined;
+	}
 
 	private chooseUserFetcherStrategy(request: Request): void {
-		const token = this.extractBearerTokenFromHeaders(request.headers) as string
+		const token = this.extractBearerTokenFromHeaders(request.headers) as string;
 		if (token) {
 			this.setUserInfoStrategy(new APITokenUserInfoFetcher(token));
 		} else {
