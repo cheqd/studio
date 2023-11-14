@@ -2,23 +2,26 @@ import { Request, Response, NextFunction, response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
 import * as dotenv from 'dotenv';
-import { AccountAuthHandler } from './auth/account-auth.js';
-import { CredentialAuthHandler } from './auth/credential-auth.js';
-import { DidAuthHandler } from './auth/did-auth.js';
-import { KeyAuthHandler } from './auth/key-auth.js';
-import { CredentialStatusAuthHandler } from './auth/credential-status-auth.js';
-import { ResourceAuthHandler } from './auth/resource-auth.js';
-import type { AbstractAuthHandler } from './auth/base-auth.js';
-import { LogToHelper } from './auth/logto.js';
-import { PresentationAuthHandler } from './auth/presentation-auth.js';
+import { AccountAuthHandler } from './auth/routes/account-auth.js';
+import { CredentialAuthHandler } from './auth/routes/credential-auth.js';
+import { DidAuthHandler } from './auth/routes/did-auth.js';
+import { KeyAuthHandler } from './auth/routes/key-auth.js';
+import { CredentialStatusAuthHandler } from './auth/routes/credential-status-auth.js';
+import { ResourceAuthHandler } from './auth/routes/resource-auth.js';
+import type { BaseAuthHandler } from './auth/base-auth-handler.js';
+import { LogToHelper } from './auth/logto-helper.js';
+import { PresentationAuthHandler } from './auth/routes/presentation-auth.js';
 import { UserService } from '../services/user.js';
+import { configLogToExpress } from '../types/constants.js';
+import { handleAuthRoutes, withLogto } from '@logto/express';
+import { LogToProvider } from './auth/oauth/logto-provider.js';
 
 dotenv.config();
 
 const { ENABLE_EXTERNAL_DB } = process.env;
 
 export class Authentication {
-	private authHandler: AbstractAuthHandler;
+	private authHandler: BaseAuthHandler;
 	private isSetup = false;
 	private logToHelper: LogToHelper;
 
@@ -32,8 +35,12 @@ export class Authentication {
 		if (!this.isSetup) {
 			const _r = await this.logToHelper.setup();
 			if (_r.status !== StatusCodes.OK) {
-				return response.status(StatusCodes.BAD_GATEWAY).json(_r.error);
+				return response.status(StatusCodes.BAD_GATEWAY).json({
+                    error: _r.error,
+                });
 			}
+			const oauthProvider = new LogToProvider();
+			oauthProvider.setHelper(this.logToHelper);
 
 			const didAuthHandler = new DidAuthHandler();
 			const keyAuthHandler = new KeyAuthHandler();
@@ -44,13 +51,13 @@ export class Authentication {
 
 			// Set logToHelper. We do it for avoiding re-asking LogToHelper.setup() in each auth handler
 			// cause it does a lot of requests to LogTo
-			this.authHandler.setLogToHelper(this.logToHelper);
-			didAuthHandler.setLogToHelper(this.logToHelper);
-			keyAuthHandler.setLogToHelper(this.logToHelper);
-			credentialAuthHandler.setLogToHelper(this.logToHelper);
-			credentialStatusAuthHandler.setLogToHelper(this.logToHelper);
-			resourceAuthHandler.setLogToHelper(this.logToHelper);
-			presentationAuthHandler.setLogToHelper(this.logToHelper);
+			this.authHandler.setOAuthProvider(oauthProvider);
+			didAuthHandler.setOAuthProvider(oauthProvider);
+			keyAuthHandler.setOAuthProvider(oauthProvider);
+			credentialAuthHandler.setOAuthProvider(oauthProvider);
+			credentialStatusAuthHandler.setOAuthProvider(oauthProvider);
+			resourceAuthHandler.setOAuthProvider(oauthProvider);
+			presentationAuthHandler.setOAuthProvider(oauthProvider);
 
 			// Set chain of responsibility
 			this.authHandler
@@ -88,6 +95,28 @@ export class Authentication {
 		next();
 	}
 
+	public async wrapperHandleAuthRoutes(request: Request, response: Response, next: NextFunction) {
+		const resources = await this.logToHelper.getAllResourcesWithNames()
+        return handleAuthRoutes(
+            {...configLogToExpress, 
+            scopes: ["roles"],
+            resources: resources as string[]})(request, response, next)
+    }
+
+	public async withLogtoWrapper(request: Request, response: Response, next: NextFunction) {
+		if (this.authHandler.skipPath(request.path)) 
+            return next()
+        try {
+            return withLogto({...configLogToExpress, scopes: ["roles"]})(request, response, next)
+		} catch (err) {
+			return response.status(500).send({
+                authenticated: false,
+                error: `${err}`,
+                customerId: null,
+            })
+		}
+    }
+
 	public async guard(request: Request, response: Response, next: NextFunction) {
 		const { provider } = request.body as { claim: string; provider: string };
 		if (this.authHandler.skipPath(request.path)) return next();
@@ -103,15 +132,15 @@ export class Authentication {
 			// Only for rules when it's not allowed for unauthorized users
 			// we need to find customer and assign it to the response.locals
 			if (!_resp.data.isAllowedUnauthorized) {
-				const user = await UserService.instance.get(_resp.data.logToId);
+				const user = await UserService.instance.get(_resp.data.userId);
 				if (!user) {
 					return response.status(StatusCodes.NOT_FOUND).json({
-						error: `Looks like user with logToId ${_resp.data.logToId} is not found`,
+						error: `Looks like user with logToId ${_resp.data.userId} is not found`,
 					});
 				}
 				if (user && !user.customer) {
 					return response.status(StatusCodes.NOT_FOUND).json({
-						error: `Looks like user with logToId ${_resp.data.logToId} is not assigned to any CredentialService customer`,
+						error: `Looks like user with logToId ${_resp.data.userId} is not assigned to any CredentialService customer`,
 					});
 				}
 				response.locals.customer = user.customer;

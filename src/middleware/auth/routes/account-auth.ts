@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
-import { AbstractAuthHandler } from './base-auth.js';
-import type { IAuthResponse } from '../../types/authentication.js';
+import { BaseAuthHandler } from '../base-auth-handler.js';
+import type { IAuthResponse } from '../../../types/authentication.js';
 
-export class AccountAuthHandler extends AbstractAuthHandler {
+export class AccountAuthHandler extends BaseAuthHandler {
 	constructor() {
 		super();
 		this.registerRoute('/account', 'GET', 'read:account', { skipNamespace: true });
@@ -11,6 +11,6 @@ export class AccountAuthHandler extends AbstractAuthHandler {
 		if (!request.path.includes('/account')) {
 			return super.handle(request, response);
 		}
-		return this.commonPermissionCheck(request);
+		return this.guardAPI(request);
 	}
 }

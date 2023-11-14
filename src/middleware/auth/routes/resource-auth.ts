@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
-import { AbstractAuthHandler } from './base-auth.js';
-import type { IAuthResponse } from '../../types/authentication.js';
+import { BaseAuthHandler } from '../base-auth-handler.js';
+import type { IAuthResponse } from '../../../types/authentication.js';
 
-export class ResourceAuthHandler extends AbstractAuthHandler {
+export class ResourceAuthHandler extends BaseAuthHandler {
 	constructor() {
 		super();
 		this.registerRoute('/resource/create', 'POST', 'create:resource:testnet');
@@ -14,6 +14,6 @@ export class ResourceAuthHandler extends AbstractAuthHandler {
 		if (!request.path.includes('/resource/')) {
 			return super.handle(request, response);
 		}
-		return this.commonPermissionCheck(request);
+		return this.guardAPI(request);
 	}
 }

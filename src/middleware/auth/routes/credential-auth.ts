@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
-import { AbstractAuthHandler } from './base-auth.js';
-import type { IAuthResponse } from '../../types/authentication.js';
+import { BaseAuthHandler } from '../base-auth-handler.js';
+import type { IAuthResponse } from '../../../types/authentication.js';
 
-export class CredentialAuthHandler extends AbstractAuthHandler {
+export class CredentialAuthHandler extends BaseAuthHandler {
 	constructor() {
 		super();
 		this.registerRoute('/credential/issue', 'POST', 'issue:credential:testnet');
@@ -21,6 +21,6 @@ export class CredentialAuthHandler extends AbstractAuthHandler {
 		if (!request.path.includes('/credential/')) {
 			return super.handle(request, response);
 		}
-		return this.commonPermissionCheck(request);
+		return this.guardAPI(request);
 	}
 }

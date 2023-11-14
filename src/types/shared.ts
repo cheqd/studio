@@ -387,7 +387,7 @@ export interface IResourceTrack {
 	symmetricKey: string;
 }
 
-export interface TrackResult {
+export interface ITrackResult {
 	created: boolean;
 	error?: string;
 }

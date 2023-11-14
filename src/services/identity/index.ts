@@ -37,7 +37,7 @@ import type {
 	ITrackOperation,
 	SearchStatusListResult,
 	StatusOptions,
-	TrackResult,
+	ITrackResult,
 	UpdateEncryptedStatusListOptions,
 	UpdateUnencryptedStatusListOptions,
 	VeramoAgent,
@@ -45,6 +45,8 @@ import type {
 } from '../../types/shared';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
+import type { UserEntity } from '../../database/entities/user.entity.js';
+import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 
 dotenv.config();
 
@@ -95,7 +97,7 @@ export interface IIdentityService {
 		statusOptions: CreateEncryptedStatusListOptions,
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result>;
-	trackOperation(trackOperation: ITrackOperation): Promise<TrackResult>;
+	trackOperation(trackOperation: ITrackOperation): Promise<ITrackResult>;
 	updateUnencryptedStatusList2021(
 		did: string,
 		statusOptions: UpdateUnencryptedStatusListOptions,
@@ -145,6 +147,13 @@ export interface IIdentityService {
 		customer: CustomerEntity,
 		symmetricKey: string
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult>;
+	setAPIKey(
+		apiKey: string,
+		customer: CustomerEntity,
+		user: UserEntity): Promise<APIKeyEntity>;
+	getAPIKey(
+		customer: CustomerEntity,
+		user: UserEntity): Promise<string>;
 }
 
 export class IdentityServiceStrategySetup {
