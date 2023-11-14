@@ -151,9 +151,12 @@ export interface IIdentityService {
 		apiKey: string,
 		customer: CustomerEntity,
 		user: UserEntity): Promise<APIKeyEntity>;
+	updateAPIKey(
+		apiKey: APIKeyEntity, 
+		newApiKey: string): Promise<APIKeyEntity>;
 	getAPIKey(
 		customer: CustomerEntity,
-		user: UserEntity): Promise<string>;
+		user: UserEntity): Promise<APIKeyEntity | undefined>;
 }
 
 export class IdentityServiceStrategySetup {

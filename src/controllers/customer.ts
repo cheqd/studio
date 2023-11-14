@@ -87,14 +87,24 @@ export class AccountController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
-	public getIdToken(request: Request, response: Response) {
-		if (request.user) {
-			return response.status(StatusCodes.OK).json({
-				idToken: request.session.idToken,
+	public async getIdToken(request: Request, response: Response) {
+		if (!request.user || !request.session.idToken) {
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: 'Seems like authorisation process was corrupted. Please contact administrator.',
 			});
 		}
-		return response.status(StatusCodes.BAD_REQUEST).json({
-			error: 'Seems like authorisation process was corrupted. Please contact administrator.',
+
+		const identityStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+		let apiKey = await identityStrategySetup.agent.getAPIKey(response.locals.customer, response.locals.user);
+		// If there is no API key for the customer - create it
+		if (!apiKey) {
+			apiKey = await identityStrategySetup.agent.setAPIKey(request.session.idToken, response.locals.customer, response.locals.user);
+		} else if (apiKey.isExpired()) {
+			// If API key is expired - update it
+			apiKey = await identityStrategySetup.agent.updateAPIKey(apiKey, request.session.idToken);
+		}
+		return response.status(StatusCodes.OK).json({
+			idToken: apiKey?.apiKey,
 		});
 	}
 

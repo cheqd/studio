@@ -102,7 +102,7 @@ export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 	private nextHandler: IAuthHandler;
 	oauthProvider: IOAuthProvider;
 	private bearerTokenIdentifier = 'Bearer'
-	private pathSkip = ['/swagger', '/static', '/logto', '/account/bootstrap', '/auth/user-info'];
+	private pathSkip = ['/swagger', '/static', '/logto', '/account/bootstrap'];
 
 	constructor() {
 		super();

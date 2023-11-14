@@ -544,13 +544,28 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			return apiKeyEntity;
 		}
 
+	async updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity> {
+		const key = await APIKeyService.instance.get(apiKey.apiKeyId);
+		if (!key) {
+			throw new Error(`API key with id ${apiKey.apiKeyId} not found`);
+		}
+		const apiKeyEntity = await APIKeyService.instance.update(key.apiKeyId, newApiKey, await APIKeyService.instance.getExpiryDate(newApiKey));
+		if (!apiKeyEntity) {
+			throw new Error(`Cannot update API key with id ${apiKey.apiKeyId}`);
+		}
+		return apiKeyEntity;
+	}
+
 	async getAPIKey(
 		customer: CustomerEntity,
-		user: UserEntity): Promise<string> {
+		user: UserEntity): Promise<APIKeyEntity | undefined> {
 			const keys = await APIKeyService.instance.find({customer: customer, user: user});
-			if (keys.length != 1) {
+			if (keys.length > 1) {
 				throw new Error(`For the customer with customer id ${customer.customerId} and user with logToId ${user.logToId} there more then 1 API key`);
 			}
-			return keys[0].apiKey
+			if (keys.length == 0) {
+				return undefined;
+			}
+			return keys[0]
 		}
 }

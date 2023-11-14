@@ -5,7 +5,7 @@ import { CustomerEntity } from './customer.entity.js';
 import { UserEntity } from './user.entity.js';
 dotenv.config();
 
-@Entity('operation')
+@Entity('apiKey')
 export class APIKeyEntity {
 	@PrimaryGeneratedColumn('uuid')
 	apiKeyId!: string;
@@ -51,6 +51,10 @@ export class APIKeyEntity {
 	setUpdateAt() {
 		this.updatedAt = new Date();
 	}
+
+    public isExpired(): boolean {
+        return this.expiresAt < new Date();
+    }
 
     constructor (apiKeyId: string, apiKey: string, expiresAt: Date, customer: CustomerEntity, user: UserEntity) {
         this.apiKeyId = apiKeyId;

@@ -15,6 +15,7 @@ import { UserService } from '../services/user.js';
 import { configLogToExpress } from '../types/constants.js';
 import { handleAuthRoutes, withLogto } from '@logto/express';
 import { LogToProvider } from './auth/oauth/logto-provider.js';
+import { AuthInfoHandler } from './auth/routes/auth-user-info.js';
 
 dotenv.config();
 
@@ -48,6 +49,7 @@ export class Authentication {
 			const credentialStatusAuthHandler = new CredentialStatusAuthHandler();
 			const resourceAuthHandler = new ResourceAuthHandler();
 			const presentationAuthHandler = new PresentationAuthHandler();
+			const authInfoHandler = new AuthInfoHandler();
 
 			// Set logToHelper. We do it for avoiding re-asking LogToHelper.setup() in each auth handler
 			// cause it does a lot of requests to LogTo
@@ -58,6 +60,7 @@ export class Authentication {
 			credentialStatusAuthHandler.setOAuthProvider(oauthProvider);
 			resourceAuthHandler.setOAuthProvider(oauthProvider);
 			presentationAuthHandler.setOAuthProvider(oauthProvider);
+			authInfoHandler.setOAuthProvider(oauthProvider);
 
 			// Set chain of responsibility
 			this.authHandler
@@ -66,7 +69,8 @@ export class Authentication {
 				.setNext(credentialAuthHandler)
 				.setNext(credentialStatusAuthHandler)
 				.setNext(resourceAuthHandler)
-				.setNext(presentationAuthHandler);
+				.setNext(presentationAuthHandler)
+				.setNext(authInfoHandler);
 
 			this.isSetup = true;
 		}

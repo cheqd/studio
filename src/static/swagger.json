@@ -436,8 +436,8 @@
         "tags": [
           "Account"
         ],
-        "summary": "Fetch idToken for using it as Baerer token.",
-        "description": "This endpoint return IdToken with list of user roles inside",
+        "summary": "Fetch IdToken.",
+        "description": "This endpoint returns IdToken as JWT with list of user roles inside",
         "responses": {
           "200": {
             "description": "The request was successful.",

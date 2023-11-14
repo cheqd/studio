@@ -1,5 +1,5 @@
 import type { Repository } from 'typeorm';
-
+import { decodeJWT } from 'did-jwt';
 import { Connection } from '../database/connection/connection.js';
 
 import * as dotenv from 'dotenv';
@@ -7,7 +7,6 @@ import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import { APIKeyEntity } from '../database/entities/api.key.entity.js';
 import type { UserEntity } from '../database/entities/user.entity.js';
 import { v4 } from 'uuid';
-import { Cheqd } from '@cheqd/did-provider-cheqd';
 dotenv.config();
 
 export class APIKeyService {
@@ -46,10 +45,10 @@ export class APIKeyService {
 
 	public async update(
         apiKeyId: string,
-        apiKey: string, 
-        expiresAt: Date, 
-        customer: CustomerEntity, 
-        user: UserEntity
+        apiKey?: string, 
+        expiresAt?: Date, 
+        customer?: CustomerEntity, 
+        user?: UserEntity
 	) {
 		const existingAPIKey = await this.apiKeyRepository.findOneBy({ apiKeyId });
 		if (!existingAPIKey) {
@@ -79,18 +78,19 @@ export class APIKeyService {
 	}
 
 	public async find(where: Record<string, unknown>) {
-		return await this.apiKeyRepository.find({
-			where: where,
-			relations: ['customer', 'user'],
-		});
+        try {
+            return await this.apiKeyRepository.find({
+                where: where,
+                relations: ['customer', 'user'],
+            });
+
+        } catch {
+            return [];
+		}
 	}
 
     public async getExpiryDate(apiKey: string): Promise<Date> {
-        const decrypted = await Cheqd.decodeCredentialJWT(apiKey);
-        return new Date(decrypted.exp);
-    }
-
-    public isExpired(apiKey: APIKeyEntity): boolean {
-        return apiKey.expiresAt < new Date();
+        const decrypted = await decodeJWT(apiKey);
+        return new Date(decrypted.payload.exp ? decrypted.payload.exp * 1000 : 0);
     }
 }
