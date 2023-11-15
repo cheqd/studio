@@ -45,7 +45,7 @@ export class APITokenUserInfoFetcher extends AuthReturn implements IUserInfoFetc
 			this.setUserId(payload.sub as string);
 			return this.returnOk();
 		} catch (error) {
-			return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: ${error}`);
+			return this.returnError(StatusCodes.INTERNAL_SERVER_ERROR, `Unexpected error: ${error}`);
 		}
 	}
 }
