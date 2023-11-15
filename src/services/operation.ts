@@ -3,91 +3,81 @@ import type { Repository } from 'typeorm';
 import { Connection } from '../database/connection/connection.js';
 
 import * as dotenv from 'dotenv';
-import { PaymentAccountEntity } from '../database/entities/payment.account.entity.js';
-import type { CustomerEntity } from '../database/entities/customer.entity.js';
-import type { KeyEntity } from '../database/entities/key.entity.js';
-import { getCosmosAccount } from '@cheqd/sdk';
+import { OperationEntity } from '../database/entities/operation.entity.js';
+import { v4 } from 'uuid';
 dotenv.config();
 
-export class PaymentAccountService {
-	public paymentAccountRepository: Repository<PaymentAccountEntity>;
+export class OperationService {
+	public operationRepository: Repository<OperationEntity>;
 
-	public static instance = new PaymentAccountService();
+	public static instance = new OperationService();
 
 	constructor() {
-		this.paymentAccountRepository = Connection.instance.dbConnection.getRepository(PaymentAccountEntity);
+		this.operationRepository = Connection.instance.dbConnection.getRepository(OperationEntity);
 	}
 
 	public async create(
-		namespace: string,
-		isDefault: boolean,
-		customer: CustomerEntity,
-		key: KeyEntity
-	): Promise<PaymentAccountEntity> {
-		const address = getCosmosAccount(key.kid);
-		const existing = await this.find({ address: address });
-		if (!address) {
-			throw new Error('Account address is not specified');
+		category: string,
+		operationName: string,
+		defaultFee: number,
+		deprecated = false
+	): Promise<OperationEntity> {
+		if (!category) {
+			throw new Error('Operation category is not specified');
 		}
-		if (existing.length > 0) {
-			throw new Error(
-				`Cannot create a new payment account since the payment account with same address ${address} already exists`
-			);
+		if (!operationName) {
+			throw new Error('Operation name is not specified');
 		}
-		if (!namespace) {
-			throw new Error('Account namespace is not specified');
+		if (!defaultFee) {
+			throw new Error('Operation default fee is not specified');
 		}
-		if (!customer) {
-			throw new Error('Customer id is not specified');
+		if (!deprecated) {
+			throw new Error('Operation deprecated is not specified');
 		}
-		if (!key) {
-			throw new Error('Key id is not specified');
-		}
-		const paymentAccount = new PaymentAccountEntity(address, namespace, isDefault, customer, key);
-		const paymentAccountEntity = (await this.paymentAccountRepository.insert(paymentAccount)).identifiers[0];
-		if (!paymentAccountEntity) throw new Error(`Cannot create a new payment account`);
+		const operationId = v4();
+		const operationEntity = new OperationEntity(operationId, category, operationName, defaultFee, deprecated);
+		const operation = (await this.operationRepository.insert(operationEntity)).identifiers[0];
+		if (!operation) throw new Error(`Cannot create a new operation`);
 
-		return paymentAccount;
+		return operationEntity;
 	}
 
 	public async update(
-		address: string,
-		namespace?: string,
-		isDefault?: boolean,
-		customer?: CustomerEntity,
-		key?: KeyEntity
+		operationId: string,
+		category: string,
+		operationName: string,
+		defaultFee: number,
+		deprecated = false
 	) {
-		const existingPaymentAccount = await this.paymentAccountRepository.findOneBy({ address });
-		if (!existingPaymentAccount) {
-			throw new Error(`address not found`);
+		const existingOperation = await this.get(operationId);
+		if (!existingOperation) {
+			throw new Error(`Operation with id ${operationId} does not exist`);
 		}
-		if (customer) {
-			existingPaymentAccount.customer = customer;
+		if (category) {
+			existingOperation.category = category;
 		}
-		if (namespace) {
-			existingPaymentAccount.namespace = namespace;
+		if (operationName) {
+			existingOperation.operationName = operationName;
 		}
-		if (key) {
-			existingPaymentAccount.key = key;
+		if (defaultFee) {
+			existingOperation.defaultFee = defaultFee;
 		}
-		if (isDefault) {
-			existingPaymentAccount.isDefault = isDefault;
+		if (deprecated) {
+			existingOperation.deprecated = deprecated;
 		}
 
-		return await this.paymentAccountRepository.save(existingPaymentAccount);
+		return await this.operationRepository.save(existingOperation);
 	}
 
-	public async get(address: string) {
-		return await this.paymentAccountRepository.findOne({
-			where: { address },
-			relations: ['customer', 'key'],
+	public async get(operationId: string) {
+		return await this.operationRepository.findOne({
+			where: { operationId },
 		});
 	}
 
 	public async find(where: Record<string, unknown>) {
-		return await this.paymentAccountRepository.find({
+		return await this.operationRepository.find({
 			where: where,
-			relations: ['customer', 'key'],
 		});
 	}
 }

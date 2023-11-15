@@ -31,7 +31,7 @@ import type {
 	FeePaymentOptions,
 	ITrackOperation,
 	StatusOptions,
-	TrackResult,
+	ITrackResult,
 	UpdateEncryptedStatusListOptions,
 	UpdateUnencryptedStatusListOptions,
 	VeramoAgent,
@@ -40,6 +40,8 @@ import type {
 import type { IIdentityService } from './index.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
+import type { UserEntity } from '../../database/entities/user.entity';
+import type { APIKeyEntity } from '../../database/entities/api.key.entity';
 
 export abstract class AbstractIdentityService implements IIdentityService {
 	agent?: VeramoAgent;
@@ -144,7 +146,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<boolean> {
 		throw new Error(`Not supported`);
 	}
-	trackOperation(trackOperation: ITrackOperation): Promise<TrackResult> {
+	trackOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
 		throw new Error(`Not supported`);
 	}
 	revokeCredentials(
@@ -198,6 +200,15 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		verificationOptions: VerificationOptions,
 		customer: CustomerEntity
 	): Promise<IVerifyResult> {
+		throw new Error(`Not supported`);
+	}
+	setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity> {
+		throw new Error(`Not supported`);
+	}
+	updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity> {
+		throw new Error(`Not supported`);
+	}
+	getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | undefined> {
 		throw new Error(`Not supported`);
 	}
 }

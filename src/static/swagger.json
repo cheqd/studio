@@ -431,6 +431,36 @@
         }
       }
     },
+    "/account/idtoken": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Fetch IdToken.",
+        "description": "This endpoint returns IdToken as JWT with list of user roles inside",
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "idToken": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
     "/key/create": {
       "post": {
         "tags": [

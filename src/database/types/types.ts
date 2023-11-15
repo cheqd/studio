@@ -26,6 +26,8 @@ import { AlterTableKey1695740345977 } from '../migrations/AlterTableKey.js';
 import { KeyEntity } from '../entities/key.entity.js';
 import { IdentifierEntity } from '../entities/identifier.entity.js';
 import { MigrateData1695740345977 } from '../migrations/MigrateData.js';
+import { APIKeyEntity } from '../entities/api.key.entity.js';
+import { CreateAPIKeyTable1695740345977 } from '../migrations/CreateApiKeyMigration.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -84,6 +86,7 @@ export class Postgres implements AbstractDatabase {
 				AlterTableIdentifier1695740345977,
 				AlterTableKey1695740345977,
 				MigrateData1695740345977,
+				CreateAPIKeyTable1695740345977,
 			],
 			entities: [
 				...Entities,
@@ -96,6 +99,7 @@ export class Postgres implements AbstractDatabase {
 				ResourceEntity,
 				KeyEntity,
 				IdentifierEntity,
+				APIKeyEntity,
 			],
 			logging: ['error', 'info', 'warn'],
 		});

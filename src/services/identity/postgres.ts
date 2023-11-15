@@ -34,7 +34,7 @@ import {
 	CreateEncryptedStatusListOptions,
 	FeePaymentOptions,
 	UpdateEncryptedStatusListOptions,
-	TrackResult,
+	ITrackResult,
 	ITrackOperation,
 } from '../../types/shared.js';
 import { Connection } from '../../database/connection/connection.js';
@@ -53,6 +53,9 @@ import {
 	OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
 	OPERATION_CATEGORY_NAME_RESOURCE,
 } from '../../types/constants.js';
+import type { UserEntity } from '../../database/entities/user.entity.js';
+import { APIKeyService } from '../api_key.js';
+import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 
 dotenv.config();
 
@@ -470,7 +473,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async trackOperation(trackOperation: ITrackOperation): Promise<TrackResult> {
+	async trackOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
 		// For now it tracks only resource-related operations but in future we will track all other actions
 		switch (trackOperation.category) {
 			case OPERATION_CATEGORY_NAME_RESOURCE:
@@ -488,7 +491,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async trackResourceOperation(trackOperation: ITrackOperation): Promise<TrackResult> {
+	async trackResourceOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
 		const customer = trackOperation.customer;
 		const did = trackOperation.did;
 		const resource = trackOperation.data.resource;
@@ -525,5 +528,45 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			created: true,
 			error: '',
 		};
+	}
+	async setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity> {
+		const keys = await APIKeyService.instance.find({ customer: customer, user: user });
+		if (keys.length > 0) {
+			throw new Error(`API key for customer ${customer.customerId} and user ${user.logToId} already exists`);
+		}
+		const apiKeyEntity = await APIKeyService.instance.create(apiKey, customer, user);
+		if (!apiKeyEntity) {
+			throw new Error(`Cannot create API key for customer ${customer.customerId} and user ${user.logToId}`);
+		}
+		return apiKeyEntity;
+	}
+
+	async updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity> {
+		const key = await APIKeyService.instance.get(apiKey.apiKeyId);
+		if (!key) {
+			throw new Error(`API key with id ${apiKey.apiKeyId} not found`);
+		}
+		const apiKeyEntity = await APIKeyService.instance.update(
+			key.apiKeyId,
+			newApiKey,
+			await APIKeyService.instance.getExpiryDate(newApiKey)
+		);
+		if (!apiKeyEntity) {
+			throw new Error(`Cannot update API key with id ${apiKey.apiKeyId}`);
+		}
+		return apiKeyEntity;
+	}
+
+	async getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | undefined> {
+		const keys = await APIKeyService.instance.find({ customer: customer, user: user });
+		if (keys.length > 1) {
+			throw new Error(
+				`For the customer with customer id ${customer.customerId} and user with logToId ${user.logToId} there more then 1 API key`
+			);
+		}
+		if (keys.length == 0) {
+			return undefined;
+		}
+		return keys[0];
 	}
 }

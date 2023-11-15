@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { CheqdNetwork, checkBalance } from '@cheqd/sdk';
 import { TESTNET_MINIMUM_BALANCE, DEFAULT_DENOM_EXPONENT } from '../types/constants.js';
 import { CustomerService } from '../services/customer.js';
-import { LogToHelper } from '../middleware/auth/logto.js';
+import { LogToHelper } from '../middleware/auth/logto-helper.js';
 import { FaucetHelper } from '../helpers/faucet.js';
 import { StatusCodes } from 'http-status-codes';
 import { LogToWebHook } from '../middleware/hook.js';
@@ -63,6 +63,53 @@ export class AccountController {
 				error: `${error}`,
 			});
 		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /account/idtoken:
+	 *   get:
+	 *     tags: [Account]
+	 *     summary: Fetch IdToken.
+	 *     description: This endpoint returns IdToken as JWT with list of user roles inside
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             idToken:
+	 *                type: string
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async getIdToken(request: Request, response: Response) {
+		if (!request.user || !request.session.idToken) {
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: 'Seems like authorisation process was corrupted. Please contact administrator.',
+			});
+		}
+
+		const identityStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+		let apiKey = await identityStrategySetup.agent.getAPIKey(response.locals.customer, response.locals.user);
+		// If there is no API key for the customer - create it
+		if (!apiKey) {
+			apiKey = await identityStrategySetup.agent.setAPIKey(
+				request.session.idToken,
+				response.locals.customer,
+				response.locals.user
+			);
+		} else if (apiKey.isExpired()) {
+			// If API key is expired - update it
+			apiKey = await identityStrategySetup.agent.updateAPIKey(apiKey, request.session.idToken);
+		}
+		return response.status(StatusCodes.OK).json({
+			idToken: apiKey?.apiKey,
+		});
 	}
 
 	public async setupDefaultRole(request: Request, response: Response) {

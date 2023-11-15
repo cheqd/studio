@@ -40,7 +40,7 @@ export const configLogToExpress = {
 		(function () {
 			throw new Error('APPLICATION_BASE_URL is not defined');
 		})(),
-	getAccessToken: true,
+	getAccessToken: false,
 	fetchUserInfo: true,
 };
 

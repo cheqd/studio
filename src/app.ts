@@ -13,7 +13,7 @@ import { AccountController } from './controllers/customer.js';
 import { Authentication } from './middleware/authentication.js';
 import { Connection } from './database/connection/connection.js';
 import { RevocationController } from './controllers/revocation.js';
-import { CORS_ALLOWED_ORIGINS, CORS_ERROR_MSG, configLogToExpress } from './types/constants.js';
+import { CORS_ALLOWED_ORIGINS, CORS_ERROR_MSG } from './types/constants.js';
 import { LogToWebHook } from './middleware/hook.js';
 import { Middleware } from './middleware/middleware.js';
 
@@ -22,7 +22,6 @@ dotenv.config();
 
 // Define Swagger file
 import swaggerDocument from './static/swagger.json' assert { type: 'json' };
-import { handleAuthRoutes, withLogto } from '@logto/express';
 
 let swaggerOptions = {};
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -81,8 +80,8 @@ class App {
 			);
 			// Authentication functions/methods
 			this.express.use(async (_req, _res, next) => await auth.setup(next));
-			this.express.use(handleAuthRoutes(configLogToExpress));
-			this.express.use(withLogto(configLogToExpress));
+			this.express.use(async (_req, _res, next) => await auth.wrapperHandleAuthRoutes(_req, _res, next));
+			this.express.use(async (_req, _res, next) => await auth.withLogtoWrapper(_req, _res, next));
 			if (process.env.ENABLE_EXTERNAL_DB === 'true') {
 				this.express.use(async (req, res, next) => await auth.guard(req, res, next));
 			}
@@ -167,6 +166,7 @@ class App {
 
 		// Account API
 		app.get('/account', new AccountController().get);
+		app.get('/account/idtoken', new AccountController().getIdToken);
 
 		// LogTo webhooks
 		app.post('/account/bootstrap', LogToWebHook.verifyHookSignature, new AccountController().bootstrap);
