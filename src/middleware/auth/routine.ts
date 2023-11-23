@@ -5,7 +5,7 @@ import stringify from 'json-stringify-safe';
 import { DefaultNetworkPattern } from '../../types/shared.js';
 import { MethodToScopeRule, Namespaces, IAuthResponse, ICommonErrorResponse } from '../../types/authentication.js';
 import InvalidTokenError from 'jwt-decode';
-import jwt_decode from 'jwt-decode';
+import jwtDecode from 'jwt-decode';
 import type { IOAuthProvider } from './oauth/base.js';
 import type { IUserInfoFetcher } from './user-info-fetcher/base.js';
 dotenv.config();
@@ -158,7 +158,7 @@ export class RuleRoutine extends AuthReturn implements IReturn {
 				return this.switchNetwork(network);
 			}
 			try {
-				decoded = jwt_decode(req.body.credential);
+				decoded = jwtDecode(req.body.credential);
 			} catch (e) {
 				// If it's not a JWT - just skip it
 				if (!(e instanceof InvalidTokenError)) {
