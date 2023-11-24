@@ -7,33 +7,32 @@ import { jwtDecode } from 'jwt-decode';
 import { CheqdW3CVerifiablePresentation } from '../types/presentation.js';
 
 export class PresentationController {
-
-    public static presentationCreateValidator = [
-        check('credential')
-            .exists()
-            .withMessage('W3c verifiable credential was not provided')
-            .custom((value) => {
-                if (typeof value === 'string' || typeof value === 'object') {
-                    return true;
-                }
-                return false;
-            })
-            .withMessage('Entry must be a JWT or a credential body with JWT proof')
-            .custom((value) => {
-                if (typeof value === 'string') {
-                    try {
-                        jwtDecode(value);
-                    } catch (e) {
-                        return false;
-                    }
-                }
-                return true;
-            })
-            .withMessage('An invalid JWT string'),
-        check('holderDid').optional().isString().withMessage('Invalid holder DID'),
-        check('verifierDid').optional().isString().withMessage('Invalid verifier DID'),
-        check('policies').optional().isObject().withMessage('Verification policies should be an object'),
-    ];
+	public static presentationCreateValidator = [
+		check('credential')
+			.exists()
+			.withMessage('W3c verifiable credential was not provided')
+			.custom((value) => {
+				if (typeof value === 'string' || typeof value === 'object') {
+					return true;
+				}
+				return false;
+			})
+			.withMessage('Entry must be a JWT or a credential body with JWT proof')
+			.custom((value) => {
+				if (typeof value === 'string') {
+					try {
+						jwtDecode(value);
+					} catch (e) {
+						return false;
+					}
+				}
+				return true;
+			})
+			.withMessage('An invalid JWT string'),
+		check('holderDid').optional().isString().withMessage('Invalid holder DID'),
+		check('verifierDid').optional().isString().withMessage('Invalid verifier DID'),
+		check('policies').optional().isObject().withMessage('Verification policies should be an object'),
+	];
 
 	public static presentationVerifyValidator = [
 		check('presentation')
@@ -59,75 +58,75 @@ export class PresentationController {
 			.withMessage('An invalid JWT string'),
 		check('verifierDid').optional().isString().withMessage('Invalid verifier DID'),
 		check('policies').optional().isObject().withMessage('Verification policies should be an object'),
-        check('makeFeePayment').optional().isBoolean().withMessage('makeFeePayment: should be a boolean').bail(),
+		check('makeFeePayment').optional().isBoolean().withMessage('makeFeePayment: should be a boolean').bail(),
 		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value'),
 	];
 
-    /**
-     * @openapi
-     *
-     * /presentation/create:
-     *   post:
-     *     tags: [ Presentation ]
-     *     summary: Create a Verifiable Presentation from credential(s).
-     *     description: This endpoint creates a Verifiable Presentation from credential(s). As input, it can take the credential(s) as a string or the entire credential(s) itself.
-     *     requestBody:
-     *       content:
-     *         application/x-www-form-urlencoded:
-     *           schema:
-     *             $ref: '#/components/schemas/PresentationCreateRequest'
-     *         application/json:
-     *           schema:
-     *             $ref: '#/components/schemas/PresentationCreateRequest'
-     *     responses:
-     *       200:
-     *         description: The request was successful.
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/PresentationCreateResult'
-     *       400:
-     *         $ref: '#/components/schemas/InvalidRequest'
-     *       401:
-     *         $ref: '#/components/schemas/UnauthorizedError'
-     *       500:
-     *         $ref: '#/components/schemas/InternalError'
-     */
+	/**
+	 * @openapi
+	 *
+	 * /presentation/create:
+	 *   post:
+	 *     tags: [ Presentation ]
+	 *     summary: Create a Verifiable Presentation from credential(s).
+	 *     description: This endpoint creates a Verifiable Presentation from credential(s). As input, it can take the credential(s) as a string or the entire credential(s) itself.
+	 *     requestBody:
+	 *       content:
+	 *         application/x-www-form-urlencoded:
+	 *           schema:
+	 *             $ref: '#/components/schemas/PresentationCreateRequest'
+	 *         application/json:
+	 *           schema:
+	 *             $ref: '#/components/schemas/PresentationCreateRequest'
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PresentationCreateResult'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
 
-    public async createPresentation(request: Request, response: Response) {
-        const result = validationResult(request);
-        if (!result.isEmpty()) {
-            return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
-        }
+	public async createPresentation(request: Request, response: Response) {
+		const result = validationResult(request);
+		if (!result.isEmpty()) {
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
+		}
 
-        const { credential, holderDid, verifierDid } = request.body;
+		const { credential, holderDid, verifierDid } = request.body;
 
-        try {
-            const result = await new IdentityServiceStrategySetup(
-                response.locals.customer.customerId
-            ).agent.createPresentation(
-                {
-                    verifiableCredential: [credential],
-                    holder: holderDid,
-                },
-                {
-                    domain: verifierDid
-                },
-                response.locals.customer
-            );
-            if (result.error) {
-                return response.status(StatusCodes.BAD_REQUEST).json({
-                    presentation: result.presentation,
-                    error: result.error,
-                });
-            }
-            return response.status(StatusCodes.OK).json(result);
-        } catch (error) {
-            return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-                error: `${error}`,
-            });
-        }
-    }
+		try {
+			const result = await new IdentityServiceStrategySetup(
+				response.locals.customer.customerId
+			).agent.createPresentation(
+				{
+					verifiableCredential: [credential],
+					holder: holderDid,
+				},
+				{
+					domain: verifierDid,
+				},
+				response.locals.customer
+			);
+			if (result.error) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					presentation: result.presentation,
+					error: result.error,
+				});
+			}
+			return response.status(StatusCodes.OK).json(result);
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `${error}`,
+			});
+		}
+	}
 
 	/**
 	 * @openapi
@@ -188,13 +187,12 @@ export class PresentationController {
 		const verifyStatus = request.query.verifyStatus === 'true';
 		const allowDeactivatedDid = request.query.allowDeactivatedDid === 'true';
 
-
-        // define identity service strategy setup
+		// define identity service strategy setup
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
-        // create cheqd presentation from w3c presentation
-        const cheqdPresentation = new CheqdW3CVerifiablePresentation(presentation);
-        // get holder did
-        const holderDid = cheqdPresentation.holder;
+		// create cheqd presentation from w3c presentation
+		const cheqdPresentation = new CheqdW3CVerifiablePresentation(presentation);
+		// get holder did
+		const holderDid = cheqdPresentation.holder;
 
 		if (!allowDeactivatedDid) {
 			const result = await new IdentityServiceStrategySetup().agent.resolve(holderDid);
@@ -210,15 +208,18 @@ export class PresentationController {
 			}
 		}
 
-        if (makeFeePayment) {
-            const feePaymentResult = await cheqdPresentation.makeFeePayment(identityServiceStrategySetup.agent, response.locals.customer);
-            if (feePaymentResult.error) {
-                return response.status(StatusCodes.BAD_REQUEST).json({
-                    checked: false,
-                    error: `verify: payment: error: ${feePaymentResult.error}`,
-                });
-            }
-        }
+		if (makeFeePayment) {
+			const feePaymentResult = await cheqdPresentation.makeFeePayment(
+				identityServiceStrategySetup.agent,
+				response.locals.customer
+			);
+			if (feePaymentResult.error) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					checked: false,
+					error: `verify: payment: error: ${feePaymentResult.error}`,
+				});
+			}
+		}
 
 		try {
 			const result = await identityServiceStrategySetup.agent.verifyPresentation(

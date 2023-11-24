@@ -880,7 +880,7 @@
  *                 - Ed25519VerificationKey2020
  *         didDocument:
  *           $ref: '#/components/schemas/DidDocumentWithoutVerificationMethod'
- *     PresentationCreateResult: 
+ *     PresentationCreateResult:
  *       type: object
  *       properties:
  *           vp:

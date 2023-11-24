@@ -89,7 +89,10 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return this.agent;
 	}
 
-	async createCheqdProvider(customer: CustomerEntity, namespace: CheqdNetwork): Promise<CheqdDIDProvider | undefined> {
+	async createCheqdProvider(
+		customer: CustomerEntity,
+		namespace: CheqdNetwork
+	): Promise<CheqdDIDProvider | undefined> {
 		let rpcUrl = '';
 		if (namespace === CheqdNetwork.Mainnet) {
 			rpcUrl = MAINNET_RPC_URL || DefaultRPCUrls.mainnet;
@@ -137,7 +140,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		// One customer may / may not have one Testnet paymentAccount
 		const providerTestnet = await this.createCheqdProvider(customer, CheqdNetwork.Testnet);
 		// did:key provider
-		providers['did:key'] = new KeyDIDProvider({defaultKms: 'postgres'});
+		providers['did:key'] = new KeyDIDProvider({ defaultKms: 'postgres' });
 		if (providerMainnet) {
 			providers['did:cheqd:mainnet'] = providerMainnet;
 			cheqdProviders.push(providerMainnet);

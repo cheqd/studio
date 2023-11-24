@@ -353,7 +353,6 @@ export class Veramo {
 		presentation: PresentationPayload,
 		verificationOptions: VerificationOptions = {}
 	): Promise<VerifiablePresentation> {
-
 		const presentationOptions: ICreateVerifiablePresentationArgs = {
 			save: false,
 			presentation,
@@ -362,7 +361,6 @@ export class Veramo {
 			domain: verificationOptions.domain,
 		};
 		const result = await agent.createVerifiablePresentation(presentationOptions);
-
 
 		return result;
 	}
@@ -375,17 +373,17 @@ export class Veramo {
 		let result: IVerifyResult;
 		// Decode presentation if it is a string
 		if (typeof presentation === 'string') {
-			presentation = jwtDecode(presentation) as VerifiablePresentation
+			presentation = jwtDecode(presentation) as VerifiablePresentation;
 		}
 
 		// decode credentials if they are JWTs
 		if (presentation.verifiableCredential) {
 			presentation.verifiableCredential = presentation.verifiableCredential.map((credential) => {
 				if (typeof credential === 'object') {
-					return credential
+					return credential;
 				}
-				return jwtDecode(credential) as VerifiableCredential
-			})
+				return jwtDecode(credential) as VerifiableCredential;
+			});
 		}
 		if (verificationOptions.verifyStatus) {
 			result = await agent.cheqdVerifyPresentation({

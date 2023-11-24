@@ -85,7 +85,7 @@ export interface IIdentityService {
 		presentation: PresentationPayload,
 		verificationOptions: VerificationOptions,
 		customer: CustomerEntity
-	): Promise<VerifiablePresentation>
+	): Promise<VerifiablePresentation>;
 	verifyPresentation(
 		presentation: VerifiablePresentation | string,
 		verificationOptions: VerificationOptions,
