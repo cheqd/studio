@@ -893,7 +893,9 @@
  *              type: string
  *              description: DID of the issuer of the Verifiable Presentation. (Here it's supposed to be a holder DID)
  *           aud:
- *              type: string
+ *              type: array
+ *              items:
+ *                 type: string
  *              description: DID of the verifier of the Verifiable Presentation.
  *       example:
  *          vp:
