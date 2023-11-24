@@ -22,6 +22,7 @@ dotenv.config();
 
 // Define Swagger file
 import swaggerDocument from './static/swagger.json' assert { type: 'json' };
+import { PresentationController } from './controllers/presentation.js';
 
 let swaggerOptions = {};
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -113,8 +114,13 @@ class App {
 		// presentation
 		app.post(
 			`/presentation/verify`,
-			CredentialController.presentationValidator,
-			new CredentialController().verifyPresentation
+			PresentationController.presentationVerifyValidator,
+			new PresentationController().verifyPresentation
+		);
+		app.post(
+			`/presentation/create`,
+			PresentationController.presentationCreateValidator,
+			new PresentationController().createPresentation
 		);
 
 		// revocation

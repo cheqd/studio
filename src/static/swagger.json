@@ -327,80 +327,6 @@
         }
       }
     },
-    "/presentation/verify": {
-      "post": {
-        "tags": [
-          "Presentation"
-        ],
-        "summary": "Verify a Verifiable Presentation generated from credential(s).",
-        "description": "This endpoint verifies the Verifiable Presentation generated from credential(s). As input, it can take the Verifiable Presentation JWT as a string or the entire Verifiable Presentation itself.",
-        "operationId": "presentation",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "verifyStatus",
-            "description": "If set to `true` the verification will also check the status of the presentation. Requires the VP to have a `credentialStatus` property.",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          },
-          {
-            "in": "query",
-            "name": "fetchRemoteContexts",
-            "description": "When dealing with JSON-LD you also MUST provide the proper contexts. * Set this to `true` ONLY if you want the `@context` URLs to be fetched in case they are a custom context.",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          },
-          {
-            "in": "query",
-            "name": "allowDeactivatedDid",
-            "description": "If set to `true` allow to verify credential which based on deactivated DID.",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/PresentationVerifyRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PresentationVerifyRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IVerifyResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
     "/account": {
       "get": {
         "tags": [
@@ -1000,6 +926,123 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DidResolution"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/presentation/create": {
+      "post": {
+        "tags": [
+          "Presentation"
+        ],
+        "summary": "Create a Verifiable Presentation from credential(s).",
+        "description": "This endpoint creates a Verifiable Presentation from credential(s). As input, it can take the credential(s) as a string or the entire credential(s) itself.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PresentationCreateRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresentationCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresentationCreateResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/presentation/verify": {
+      "post": {
+        "tags": [
+          "Presentation"
+        ],
+        "summary": "Verify a Verifiable Presentation generated from credential(s).",
+        "description": "This endpoint verifies the Verifiable Presentation generated from credential(s). As input, it can take the Verifiable Presentation JWT as a string or the entire Verifiable Presentation itself.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "verifyStatus",
+            "description": "If set to `true` the verification will also check the status of the presentation. Requires the VP to have a `credentialStatus` property.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "in": "query",
+            "name": "fetchRemoteContexts",
+            "description": "When dealing with JSON-LD you also MUST provide the proper contexts. * Set this to `true` ONLY if you want the `@context` URLs to be fetched in case they are a custom context.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "in": "query",
+            "name": "allowDeactivatedDid",
+            "description": "If set to `true` allow to verify credential which based on deactivated DID.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PresentationVerifyRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresentationVerifyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IVerifyResult"
                 }
               }
             }
@@ -1758,6 +1801,26 @@
           }
         }
       },
+      "PresentationCreateRequest": {
+        "type": "object",
+        "required": [
+          "credential"
+        ],
+        "properties": {
+          "credential": {
+            "description": "Verifiable Credential to be usedfor VP-JWT creation as a VP-JWT string or a JSON object.",
+            "type": "object"
+          },
+          "holderDid": {
+            "description": "DID of holder",
+            "type": "string"
+          },
+          "verifierDid": {
+            "description": "DID of verifier",
+            "type": "string"
+          }
+        }
+      },
       "PresentationVerifyRequest": {
         "type": "object",
         "required": [
@@ -1768,9 +1831,14 @@
             "description": "Verifiable Presentation to be verified as a VP-JWT string or a JSON object.",
             "type": "object"
           },
-          "verifiedDid": {
+          "verifierDid": {
             "description": "Provide an optional verifier DID (also known as 'domain' parameter), if the verifier DID in the presentation is not managed in the wallet.",
             "type": "string"
+          },
+          "makeFeePayment": {
+            "description": "Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 DID-Linked Resource.",
+            "type": "boolean",
+            "default": false
           },
           "policies": {
             "description": "Custom verification policies to execute when verifying presentation.",
@@ -2671,6 +2739,45 @@
           "didDocument": {
             "$ref": "#/components/schemas/DidDocumentWithoutVerificationMethod"
           }
+        }
+      },
+      "PresentationCreateResult": {
+        "type": "object",
+        "properties": {
+          "vp": {
+            "type": "object",
+            "description": "Verifiable Presentation which could be provided to the verifier."
+          },
+          "nbf": {
+            "type": "integer",
+            "description": "Unix timestamp of the earliest time that the Verifiable Presentation is valid."
+          },
+          "iss": {
+            "type": "string",
+            "description": "DID of the issuer of the Verifiable Presentation. (Here it's supposed to be a holder DID)"
+          },
+          "aud": {
+            "type": "string",
+            "description": "DID of the verifier of the Verifiable Presentation."
+          }
+        },
+        "example": {
+          "vp": {
+            "@context": [
+              "https://www.w3.org/2018/credentials/v1"
+            ],
+            "type": [
+              "VerifiablePresentation"
+            ],
+            "verifiableCredential": [
+              "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vc2NoZW1hLm9yZy9zY2hlbWEuanNvbmxkIiwiaHR0cHM6Ly92ZXJhbW8uaW8vY29udGV4dHMvcHJvZmlsZS92MSIsImh0dHBzOi8vdzNpZC5vcmcvdmMtc3RhdHVzLWxpc3QtMjAyMS92MSJdLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiUGVyc29uIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7Im5hbWUiOiJCb2IiLCJnZW5kZXIiOiJtYWxlIn0sImNyZWRlbnRpYWxTdGF0dXMiOnsiaWQiOiJodHRwczovL3Jlc29sdmVyLmNoZXFkLm5ldC8xLjAvaWRlbnRpZmllcnMvZGlkOmNoZXFkOnRlc3RuZXQ6OTBkNWMxNDEtNzI0Zi00N2FkLTlhZTctYTdjMzNhOWU1NjQzP3Jlc291cmNlTmFtZT1zdXNwZW5zaW9uRW4mcmVzb3VyY2VUeXBlPVN0YXR1c0xpc3QyMDIxU3VzcGVuc2lvbiMxMzMzOCIsInR5cGUiOiJTdGF0dXNMaXN0MjAyMUVudHJ5Iiwic3RhdHVzUHVycG9zZSI6InN1c3BlbnNpb24iLCJzdGF0dXNMaXN0SW5kZXgiOiIxMzMzOCJ9fSwic3ViIjoiZGlkOmtleTp6Nk1raGFYZ0JaRHZvdERrTDUyNTdmYWl6dGlHaUMyUXRLTEdwYm5uRUd0YTJkb0siLCJuYmYiOjE3MDA0NzM0MTYsImlzcyI6ImRpZDpjaGVxZDp0ZXN0bmV0OjkwZDVjMTQxLTcyNGYtNDdhZC05YWU3LWE3YzMzYTllNTY0MyJ9.-14Ril1pZEy2HEEo48gTJr2yOtGxBhUGTFmzVdjAtyhFRsW5zZg9onHt6V9JQ8BaiYBlTkP9GzTnJ-O6hdiyCw"
+            ]
+          },
+          "nbf": 1700744275,
+          "iss": "did:cheqd:testnet:4b846d0f-2f6c-4ab6-9fe2-5b8db301c83c",
+          "aud": [
+            "did:cheqd:testnet:8c71e9b6-c5a3-4250-8c58-fa591533cd22"
+          ]
         }
       },
       "DidResult": {

@@ -5,7 +5,6 @@ import type {
 	IResolver,
 	ICredentialIssuer,
 	ICredentialVerifier,
-	W3CVerifiableCredential,
 	TAgent,
 	VerificationPolicies,
 } from '@veramo/core';
@@ -224,23 +223,7 @@ export interface IHash {
 	[details: string]: string;
 }
 
-export type CompactJWT = string;
-
 export type DateType = string | Date;
-
-export interface PresentationPayload {
-	holder: string;
-	verifiableCredential?: W3CVerifiableCredential[];
-	type?: string[];
-	'@context'?: string[];
-	verifier?: string[];
-	issuanceDate?: DateType;
-	expirationDate?: DateType;
-	id?: string;
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	[x: string]: any;
-}
 
 export type GenericAuthResponse = {
 	authenticated: boolean;
