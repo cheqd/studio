@@ -31,7 +31,7 @@ describe('Presentation from JWT to object', () => {
     })
     it('should have issuanceDate', () => {
         expect(presentation.issuanceDate).toBeDefined();
-        expect(presentation.issuanceDate).toEqual('2023-11-27T21:45:17.000Z');
+        expect(presentation.issuanceDate).toEqual('2023-11-28T12:27:02.000Z');
     })
     it('should have verifiableCredential', () => {
         expect(presentation.verifiableCredential).toBeDefined();

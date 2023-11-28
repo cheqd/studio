@@ -2,7 +2,7 @@ import { describe, it } from "@jest/globals";
 import { CheqdW3CVerifiableCredential } from "../../types/credential.js";
 import { expect } from "@playwright/test";
 import { JWT_PROOF_TYPE } from "../../types/constants.js";
-import { CREDENTIAL_JWT, CREDENTIAL_OBJECT, CREDENTIAL_SUBJECT_ID, ISSUIER_DID } from "../constants.js";
+import { CREDENTIAL_JWT, CREDENTIAL_OBJECT, CREDENTIAL_STATUS_ID, CREDENTIAL_SUBJECT_ID, ISSUIER_DID } from "../constants.js";
 
 describe('Credential from JWT to object', () => {
     const credential = new CheqdW3CVerifiableCredential(CREDENTIAL_JWT);
@@ -29,13 +29,24 @@ describe('Credential from JWT to object', () => {
             id: CREDENTIAL_SUBJECT_ID
           });
     })
+    it('should have a credentialStatus', () => {
+        expect(credential.credentialStatus).toBeDefined();
+        expect(credential.credentialStatus).toEqual(
+            {
+                id: CREDENTIAL_STATUS_ID,
+                statusPurpose: "suspension",
+                statusListIndex: "13338",
+                type: 'StatusList2021Entry'
+              }
+        );
+    })
     it('should have an issuer', () => {
         expect(credential.issuer).toBeDefined();
         expect(credential.issuer).toEqual(ISSUIER_DID);
     })
     it('should have an issuanceDate', () => {
         expect(credential.issuanceDate).toBeDefined();
-        expect(credential.issuanceDate).toEqual('2023-06-08T13:49:28.000Z');
+        expect(credential.issuanceDate).toEqual('2023-11-20T09:43:36.000Z');
     })
 })
 
@@ -63,6 +74,17 @@ describe('Credential from object ', () => {
             name: "Bob",
             id: CREDENTIAL_SUBJECT_ID
           });
+    })
+    it('should have a credentialStatus', () => {
+        expect(credential.credentialStatus).toBeDefined();
+        expect(credential.credentialStatus).toEqual(
+            {
+                id: CREDENTIAL_STATUS_ID,
+                statusPurpose: "suspension",
+                statusListIndex: "13338",
+                type: 'StatusList2021Entry'
+              }
+        );
     })
     it('should have an issuer', () => {
         expect(credential.issuer).toBeDefined();

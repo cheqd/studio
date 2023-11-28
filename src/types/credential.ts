@@ -77,6 +77,7 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 			id: decoded.iss as string,
 		};
 		credential.issuanceDate = new Date((decoded.nbf as number) * 1000).toISOString();
+		credential.credentialStatus = decoded.vc.credentialStatus;
 		credential.credentialSubject.id = decoded.sub as string;
 		credential.proof = {
 			type: JWT_PROOF_TYPE,
