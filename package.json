@@ -51,7 +51,7 @@
 		"@cheqd/did-provider-cheqd": "^3.6.13",
 		"@cheqd/sdk": "^3.7.4",
 		"@cheqd/ts-proto": "^3.3.7",
-		"@cosmjs/amino": "^0.31.3",
+		"@cosmjs/amino": "^0.32.0",
 		"@cosmjs/encoding": "^0.31.3",
 		"@logto/express": "^2.2.0",
 		"@veramo/core": "^5.5.3",
