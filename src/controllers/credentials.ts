@@ -6,7 +6,7 @@ import { check, query, validationResult } from 'express-validator';
 
 import { Credentials } from '../services/credentials.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import jwt_decode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import type { ITrackOperation } from '../types/shared.js';
 import { Cheqd } from '@cheqd/did-provider-cheqd';
 import { OPERATION_CATEGORY_NAME_CREDENTIAL } from '../types/constants.js';
@@ -43,7 +43,7 @@ export class CredentialController {
 			.custom((value) => {
 				if (typeof value === 'string') {
 					try {
-						jwt_decode(value);
+						jwtDecode(value);
 					} catch (e) {
 						return false;
 					}
@@ -70,7 +70,7 @@ export class CredentialController {
 			.custom((value) => {
 				if (typeof value === 'string') {
 					try {
-						jwt_decode(value);
+						jwtDecode(value);
 					} catch (e) {
 						return false;
 					}
@@ -218,7 +218,7 @@ export class CredentialController {
 		if (typeof credential === 'object' && credential?.issuer?.id) {
 			issuerDid = credential.issuer.id;
 		} else {
-			const decoded: any = jwt_decode(credential);
+			const decoded: any = jwtDecode(credential);
 			issuerDid = decoded.iss;
 		}
 
@@ -623,7 +623,7 @@ export class CredentialController {
 		if (typeof presentation === 'object' && presentation?.issuer?.id) {
 			issuerDid = presentation.issuer.id;
 		} else {
-			const decoded: any = jwt_decode(presentation);
+			const decoded: any = jwtDecode(presentation);
 			issuerDid = decoded.iss;
 		}
 
