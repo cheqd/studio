@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
-import { AbstractAuthHandler } from './base-auth.js';
-import type { IAuthResponse } from '../../types/authentication.js';
+import { BaseAuthHandler } from '../base-auth-handler.js';
+import type { IAuthResponse } from '../../../types/authentication.js';
 
-export class PresentationAuthHandler extends AbstractAuthHandler {
+export class PresentationAuthHandler extends BaseAuthHandler {
 	constructor() {
 		super();
 		// Unauthorized routes
@@ -12,6 +12,6 @@ export class PresentationAuthHandler extends AbstractAuthHandler {
 		if (!request.path.includes('/presentation/')) {
 			return super.handle(request, response);
 		}
-		return this.commonPermissionCheck(request);
+		return this.guardAPI(request);
 	}
 }

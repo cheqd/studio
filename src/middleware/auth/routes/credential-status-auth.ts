@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
-import { AbstractAuthHandler } from './base-auth.js';
-import type { IAuthResponse } from '../../types/authentication.js';
+import { BaseAuthHandler } from '../base-auth-handler.js';
+import type { IAuthResponse } from '../../../types/authentication.js';
 
-export class CredentialStatusAuthHandler extends AbstractAuthHandler {
+export class CredentialStatusAuthHandler extends BaseAuthHandler {
 	constructor() {
 		super();
 		this.registerRoute('/credential-status/create/encrypted', 'POST', 'create-encrypted:credential-status:testnet');
@@ -33,12 +33,12 @@ export class CredentialStatusAuthHandler extends AbstractAuthHandler {
 		);
 		// Unauthorized routes
 		this.registerRoute('/credential-status/search', 'GET', '', { allowUnauthorized: true, skipNamespace: true });
-		this.registerRoute('/credential-status/check', 'POST', '', { allowUnauthorized: true, skipNamespace: true });
+		this.registerRoute('/credential-status/check', 'POST', 'check:credential-status', { skipNamespace: true });
 	}
 	public async handle(request: Request, response: Response): Promise<IAuthResponse> {
 		if (!request.path.includes('/credential-status/')) {
 			return super.handle(request, response);
 		}
-		return this.commonPermissionCheck(request);
+		return this.guardAPI(request);
 	}
 }

@@ -10,9 +10,10 @@ import type {
 } from '../../types/shared';
 import type { StatusCheckResult, TransactionResult } from '@cheqd/did-provider-cheqd';
 import { Veramo } from './agent.js';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 
 export class DefaultIdentityService extends AbstractIdentityService {
-	async resolveDid(did: string, agentId?: string): Promise<DIDResolutionResult> {
+	async resolveDid(did: string): Promise<DIDResolutionResult> {
 		return Veramo.instance.resolveDid(this.initAgent(), did);
 	}
 
@@ -23,7 +24,7 @@ export class DefaultIdentityService extends AbstractIdentityService {
 	verifyCredential(
 		credential: VerifiableCredential | string,
 		verificationOptions: VerificationOptions,
-		agentId?: string
+		customer: CustomerEntity
 	): Promise<IVerifyResult> {
 		return Veramo.instance.verifyCredential(this.initAgent(), credential, verificationOptions);
 	}
@@ -31,7 +32,7 @@ export class DefaultIdentityService extends AbstractIdentityService {
 	verifyPresentation(
 		presentation: VerifiablePresentation | string,
 		verificationOptions: VerificationOptions,
-		agentId?: string
+		customer: CustomerEntity
 	): Promise<IVerifyResult> {
 		return Veramo.instance.verifyPresentation(this.initAgent(), presentation, verificationOptions);
 	}
@@ -39,7 +40,7 @@ export class DefaultIdentityService extends AbstractIdentityService {
 	checkStatusList2021(
 		did: string,
 		statusOptions: CheckStatusListOptions,
-		agentId?: string
+		customer: CustomerEntity
 	): Promise<StatusCheckResult> {
 		return Veramo.instance.checkStatusList2021(this.initAgent(), did, statusOptions);
 	}
@@ -48,12 +49,15 @@ export class DefaultIdentityService extends AbstractIdentityService {
 		did: string,
 		statusListName: string,
 		statusPurpose: 'revocation' | 'suspension',
-		agentId?: string
+		customer: CustomerEntity
 	): Promise<SearchStatusListResult> {
 		return Veramo.instance.searchStatusList2021(did, statusListName, statusPurpose);
 	}
 
-	remunerateStatusList2021(feePaymentOptions: FeePaymentOptions, agentId?: string): Promise<TransactionResult> {
+	remunerateStatusList2021(
+		feePaymentOptions: FeePaymentOptions,
+		customer: CustomerEntity
+	): Promise<TransactionResult> {
 		return Veramo.instance.remunerateStatusList2021(this.initAgent(), feePaymentOptions);
 	}
 }

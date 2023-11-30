@@ -14,7 +14,6 @@
 		[
 			"@semantic-release/commit-analyzer",
 			{
-				"parserOpts": "./.github/linters/.commitlint.rules.js",
 				"releaseRules": [
 					{ "breaking": true, "release": "major" },
 					{ "type": "feat", "release": "minor" },

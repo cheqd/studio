@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
-import { AbstractAuthHandler } from './base-auth.js';
-import type { IAuthResponse } from '../../types/authentication.js';
+import { BaseAuthHandler } from '../base-auth-handler.js';
+import type { IAuthResponse } from '../../../types/authentication.js';
 
-export class DidAuthHandler extends AbstractAuthHandler {
+export class DidAuthHandler extends BaseAuthHandler {
 	constructor() {
 		super();
 		this.registerRoute('/did/create', 'POST', 'create:did:testnet');
@@ -21,6 +21,6 @@ export class DidAuthHandler extends AbstractAuthHandler {
 		if (!request.path.includes('/did/')) {
 			return super.handle(request, response);
 		}
-		return this.commonPermissionCheck(request);
+		return this.guardAPI(request);
 	}
 }

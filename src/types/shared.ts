@@ -29,8 +29,11 @@ import type { ICredentialIssuerLD } from '@veramo/credential-ld';
 import type { AbstractIdentifierProvider } from '@veramo/did-manager';
 import type { AbstractKeyManagementSystem } from '@veramo/key-manager';
 import type { DataSource } from 'typeorm';
-import { CheqdNetwork } from '@cheqd/sdk';
+import { CheqdNetwork, MethodSpecificIdAlgo, Service, VerificationMethods } from '@cheqd/sdk';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2';
+import type { DIDDocument } from 'did-resolver';
+import type { CustomerEntity } from '../database/entities/customer.entity';
+import type { UserEntity } from '../database/entities/user.entity';
 
 const DefaultUuidPattern = '([a-zA-Z0-9-]{36})';
 const DefaultMethodSpecificIdPattern = `(?:[a-zA-Z0-9]{21,22}|${DefaultUuidPattern})`;
@@ -59,6 +62,20 @@ export type MinimalPaymentCondition = {
 	feePaymentAddress: string;
 	feePaymentAmount: number; // in CHEQ, decimals are allowed, strictly up to 2 decimal points, e.g. 1.5 CHEQ, 1.55 CHEQ
 	feePaymentWindow: number; // in minutes, strictly integer, e.g. 5 minutes, 10 minutes
+};
+
+export type CreateDidRequestBody = {
+	didDocument?: DIDDocument;
+	identifierFormatType: MethodSpecificIdAlgo;
+	network: CheqdNetwork;
+	verificationMethodType?: VerificationMethods;
+	service?: Service | Service[];
+	'@context'?: string | string[];
+	key?: string;
+	options?: {
+		verificationMethodType: VerificationMethods;
+		key: string;
+	};
 };
 
 export type CreateUnencryptedStatusListRequestBody = {
@@ -330,19 +347,6 @@ export type FeePaymentOptions = {
 	memo?: string;
 };
 
-export interface ResourceMetadata {
-	collectionId: string;
-	resourceId: string;
-	resourceName: string;
-	resourceVersion: string;
-	resourceType: string;
-	mediaType: string;
-	created?: Date;
-	checksum: string;
-	previousVersionId: string;
-	nextVersionId: string;
-}
-
 export type CheckStatusListOptions = Omit<ICheqdCheckCredentialWithStatusList2021StatusOptions, 'issuerDid'>;
 
 export interface VerificationOptions {
@@ -350,4 +354,40 @@ export interface VerificationOptions {
 	policies?: VerificationPolicies;
 	domain?: string;
 	verifyStatus?: boolean;
+}
+
+export type TrackData = IResourceTrack;
+
+export interface ITrackOperation {
+	// function name, e.g. createDid, issueCredential, etc.
+	operation: string;
+	// category of the operation, e.g. did, resource, credential, credential-status
+	category: string;
+	// data of the operation, e.g. did, resource, credentialStatus
+	data: TrackData;
+	// customer who initiated the operation (like organistation)
+	customer: CustomerEntity;
+	// user who initiated the operation
+	user?: UserEntity;
+	// identifier
+	did?: string;
+	// controller's key
+	key?: string;
+	// fee payment options
+	feePaymentOptions?: {
+		feePaymentAddress: string;
+		feePaymentAmount: number;
+		feePaymentNetwork: CheqdNetwork;
+	};
+}
+
+export interface IResourceTrack {
+	resource: LinkedResourceMetadataResolutionResult;
+	encrypted: boolean;
+	symmetricKey: string;
+}
+
+export interface ITrackResult {
+	created: boolean;
+	error?: string;
 }

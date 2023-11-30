@@ -1,23 +1,39 @@
 import type { Request, Response } from 'express';
 import { check, param, validationResult } from 'express-validator';
-import { fromString } from 'uint8arrays';
-import type { DIDDocument, Service, VerificationMethod } from 'did-resolver';
+import { fromString, toString } from 'uint8arrays';
 import { v4 } from 'uuid';
-import { MethodSpecificIdAlgo, VerificationMethods, CheqdNetwork } from '@cheqd/sdk';
+import {
+	CheqdNetwork,
+	DIDDocument,
+	MethodSpecificIdAlgo,
+	Service,
+	VerificationMethod,
+	VerificationMethods,
+	createDidVerificationMethod,
+} from '@cheqd/sdk';
 import type { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js';
 import { StatusCodes } from 'http-status-codes';
-
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import { generateDidDoc, getQueryParams, validateSpecCompliantPayload } from '../helpers/helpers.js';
+import {
+	generateDidDoc,
+	getQueryParams,
+	validateDidCreatePayload,
+	validateSpecCompliantPayload,
+} from '../helpers/helpers.js';
 import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
+import { bases } from 'multiformats/basics';
+import { base64ToBytes } from 'did-jwt';
+import type { CreateDidRequestBody, ITrackOperation } from '../types/shared.js';
+import { OPERATION_CATEGORY_NAME_RESOURCE } from '../types/constants.js';
 
 export class IssuerController {
+	// ToDo: improve validation in a "bail" fashion
 	public static createValidator = [
 		check('didDocument')
 			.optional()
 			.isObject()
 			.custom((value) => {
-				const { valid } = validateSpecCompliantPayload(value);
+				const { valid } = validateDidCreatePayload(value);
 				return valid;
 			})
 			.withMessage('Invalid didDocument'),
@@ -26,11 +42,11 @@ export class IssuerController {
 			.isString()
 			.isIn([VerificationMethods.Ed255192020, VerificationMethods.Ed255192018, VerificationMethods.JWK])
 			.withMessage('Invalid verificationMethod'),
-		check('methodSpecificIdAlgo')
+		check('identifierFormatType')
 			.optional()
 			.isString()
 			.isIn([MethodSpecificIdAlgo.Base58, MethodSpecificIdAlgo.Uuid])
-			.withMessage('Invalid methodSpecificIdAlgo'),
+			.withMessage('Invalid identifierFormatType'),
 		check('network')
 			.optional()
 			.isString()
@@ -108,9 +124,9 @@ export class IssuerController {
 	 */
 	public async createKey(request: Request, response: Response) {
 		try {
-			const key = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createKey(
+			const key = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createKey(
 				'Ed25519',
-				response.locals.customerId
+				response.locals.customer
 			);
 			return response.status(StatusCodes.OK).json(key);
 		} catch (error) {
@@ -163,11 +179,16 @@ export class IssuerController {
 	 */
 	public async getKey(request: Request, response: Response) {
 		try {
-			const key = await new IdentityServiceStrategySetup(response.locals.customerId).agent.getKey(
+			const key = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.getKey(
 				request.params.kid,
-				response.locals.customerId
+				response.locals.customer
 			);
-			return response.status(StatusCodes.OK).json(key);
+			if (key) {
+				return response.status(StatusCodes.OK).json(key);
+			}
+			return response.status(StatusCodes.NOT_FOUND).json({
+				error: `Key with kid: ${request.params.kid} not found`,
+			});
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
@@ -187,10 +208,10 @@ export class IssuerController {
 	 *       content:
 	 *         application/x-www-form-urlencoded:
 	 *           schema:
-	 *             $ref: '#/components/schemas/DidCreateRequest'
+	 *             $ref: '#/components/schemas/DidCreateRequestFormBased'
 	 *         application/json:
 	 *           schema:
-	 *             $ref: '#/components/schemas/DidCreateRequest'
+	 *             $ref: '#/components/schemas/DidCreateRequestJson'
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -225,53 +246,101 @@ export class IssuerController {
 			});
 		}
 
-		const {
-			methodSpecificIdAlgo,
-			network,
-			verificationMethodType,
-			assertionMethod = true,
-			serviceEndpoint,
-		} = request.body;
+		const { identifierFormatType, network, verificationMethodType, service, key, options } =
+			request.body satisfies CreateDidRequestBody;
 		let didDocument: DIDDocument;
 		try {
 			if (request.body.didDocument) {
 				didDocument = request.body.didDocument;
+				if (options) {
+					const publicKeyHex =
+						options.key ||
+						(
+							await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createKey(
+								'Ed25519',
+								response.locals.customer
+							)
+						).publicKeyHex;
+					const pkBase64 =
+						publicKeyHex.length == 43 ? publicKeyHex : toString(fromString(publicKeyHex, 'hex'), 'base64');
+
+					didDocument.verificationMethod = createDidVerificationMethod(
+						[options.verificationMethodType],
+						[
+							{
+								methodSpecificId: bases['base58btc'].encode(base64ToBytes(pkBase64)),
+								didUrl: didDocument.id,
+								keyId: `${didDocument.id}#key-1`,
+								publicKey: pkBase64,
+							},
+						]
+					);
+				} else {
+					return response.status(StatusCodes.BAD_REQUEST).json({
+						error: 'Provide options section to create a DID',
+					});
+				}
 			} else if (verificationMethodType) {
-				const key = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createKey(
-					'Ed25519',
-					response.locals.customerId
-				);
+				const publicKeyHex =
+					key ||
+					(
+						await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createKey(
+							'Ed25519',
+							response.locals.customer
+						)
+					).publicKeyHex;
 				didDocument = generateDidDoc({
-					verificationMethod: verificationMethodType || VerificationMethods.Ed255192018,
+					verificationMethod: verificationMethodType,
 					verificationMethodId: 'key-1',
-					methodSpecificIdAlgo: (methodSpecificIdAlgo as MethodSpecificIdAlgo) || MethodSpecificIdAlgo.Uuid,
+					methodSpecificIdAlgo: identifierFormatType || MethodSpecificIdAlgo.Uuid,
 					network,
-					publicKey: key.publicKeyHex,
+					publicKey: publicKeyHex,
 				});
 
-				if (assertionMethod) {
-					didDocument.assertionMethod = didDocument.authentication;
+				if (Array.isArray(request.body['@context'])) {
+					didDocument['@context'] = request.body['@context'];
+				}
+				if (typeof request.body['@context'] === 'string') {
+					didDocument['@context'] = [request.body['@context']];
 				}
 
-				if (serviceEndpoint) {
-					didDocument.service = [
-						{
-							id: `${didDocument.id}#service-1`,
-							type: 'service-1',
-							serviceEndpoint: [serviceEndpoint],
-						},
-					];
+				if (service) {
+					if (Array.isArray(service)) {
+						try {
+							const services = JSON.parse(`[${service.toString()}]`);
+							didDocument.service = [];
+							for (const service of services) {
+								didDocument.service.push({
+									id: `${didDocument.id}#${service.idFragment}`,
+									type: service.type,
+									serviceEndpoint: service.serviceEndpoint,
+								});
+							}
+						} catch (e) {
+							return response.status(StatusCodes.BAD_REQUEST).json({
+								error: 'Provide the correct service section to create a DID',
+							});
+						}
+					} else {
+						didDocument.service = [
+							{
+								id: `${didDocument.id}#${service.idFragment}`,
+								type: service.type,
+								serviceEndpoint: service.serviceEndpoint,
+							},
+						];
+					}
 				}
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'Provide a DID Document or the network type to create a DID',
+					error: 'Provide a DID Document or the VerificationMethodType to create a DID',
 				});
 			}
 
-			const did = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createDid(
+			const did = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createDid(
 				network || didDocument.id.split(':')[2],
 				didDocument,
-				response.locals.customerId
+				response.locals.customer
 			);
 			return response.status(StatusCodes.OK).json(did);
 		} catch (error) {
@@ -331,7 +400,7 @@ export class IssuerController {
 				updatedDocument = request.body.didDocument;
 			} else if (did && (service || verificationMethod || authentication)) {
 				const resolvedResult = await new IdentityServiceStrategySetup(
-					response.locals.customerId
+					response.locals.customer.customerId
 				).agent.resolveDid(did);
 				if (!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
 					return response.status(StatusCodes.BAD_REQUEST).send({
@@ -358,9 +427,9 @@ export class IssuerController {
 				});
 			}
 
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.updateDid(
+			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.updateDid(
 				updatedDocument,
-				response.locals.customerId
+				response.locals.customer
 			);
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
@@ -408,18 +477,16 @@ export class IssuerController {
 		}
 
 		try {
-			const deactivated = await new IdentityServiceStrategySetup(response.locals.customerId).agent.deactivateDid(
-				request.params.did,
-				response.locals.customerId
-			);
+			const deactivated = await new IdentityServiceStrategySetup(
+				response.locals.customer.customerId
+			).agent.deactivateDid(request.params.did, response.locals.customer);
 
 			if (!deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).json({ deactivated: false });
 			}
 
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolveDid(
-				request.params.did,
-				response.locals.customerId
+			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolveDid(
+				request.params.did
 			);
 
 			return response.status(StatusCodes.OK).json(result);
@@ -477,13 +544,12 @@ export class IssuerController {
 
 		const { did } = request.params;
 		const { data, encoding, name, type, alsoKnownAs, version, network } = request.body;
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		let resourcePayload: Partial<MsgCreateResourcePayload> = {};
 		try {
 			// check if did is registered on the ledger
-			const { didDocument, didDocumentMetadata } = await new IdentityServiceStrategySetup(
-				response.locals.customerId
-			).agent.resolveDid(did);
+			const { didDocument, didDocumentMetadata } = await identityServiceStrategySetup.agent.resolveDid(did);
 			if (!didDocument || !didDocumentMetadata || didDocumentMetadata.deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
 					error: `${did} is a either Deactivated or Not found`,
@@ -499,20 +565,42 @@ export class IssuerController {
 				version,
 				alsoKnownAs,
 			};
-			const result = await new IdentityServiceStrategySetup(response.locals.customerId).agent.createResource(
+			const result = await identityServiceStrategySetup.agent.createResource(
 				network || did.split(':')[2],
 				resourcePayload,
-				response.locals.customerId
+				response.locals.customer
 			);
+
 			if (result) {
 				const url = new URL(
 					`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?` +
 						`resourceId=${resourcePayload.id}&resourceMetadata=true`
 				);
 				const didDereferencing = (await (await fetch(url)).json()) as DIDMetadataDereferencingResult;
+				const resource = didDereferencing.contentStream.linkedResourceMetadata[0];
+
+				// track resource creation
+				const trackResourceInfo = {
+					category: OPERATION_CATEGORY_NAME_RESOURCE,
+					operation: 'createResource',
+					customer: response.locals.customer,
+					did,
+					data: {
+						resource: resource,
+						encrypted: false,
+						symmetricKey: '',
+					},
+				} as ITrackOperation;
+
+				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
+				if (trackResult.error) {
+					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+						error: `${trackResult.error}`,
+					});
+				}
 
 				return response.status(StatusCodes.CREATED).json({
-					resource: didDereferencing.contentStream.linkedResourceMetadata[0],
+					resource,
 				});
 			} else {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -603,7 +691,7 @@ export class IssuerController {
 		try {
 			let res: globalThis.Response;
 			if (request.params.did) {
-				res = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(
+				res = await IdentityServiceStrategySetup.unauthorized.resolve(
 					request.params.did + getQueryParams(request.query)
 				);
 
@@ -650,11 +738,11 @@ export class IssuerController {
 	public async getDids(request: Request, response: Response) {
 		try {
 			const did = request.params.did
-				? await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolveDid(
+				? await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolveDid(
 						request.params.did
 				  )
-				: await new IdentityServiceStrategySetup(response.locals.customerId).agent.listDids(
-						response.locals.customerId
+				: await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.listDids(
+						response.locals.customer
 				  );
 
 			return response.status(StatusCodes.OK).json(did);
@@ -739,7 +827,7 @@ export class IssuerController {
 		try {
 			let res: globalThis.Response;
 			if (request.params.did) {
-				res = await new IdentityServiceStrategySetup(response.locals.customerId).agent.resolve(
+				res = await IdentityServiceStrategySetup.unauthorized.resolve(
 					request.params.did + getQueryParams(request.query)
 				);
 

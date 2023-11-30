@@ -1,75 +1,53 @@
-import { Column, Entity, PrimaryGeneratedColumn, ValueTransformer } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-const { ENABLE_EXTERNAL_DB } = process.env;
-
-const arrayToJsonTransformer = (shouldTransform: string): ValueTransformer => {
-	return {
-		to: (array: any[]) => {
-			if (shouldTransform == 'false') {
-				// Convert the array to a JSON string
-				return JSON.stringify(array);
-			}
-			return array;
-		},
-		from: (jsonString: string) => {
-			if (shouldTransform == 'false') {
-				// Parse the JSON string and return the array
-				return JSON.parse(jsonString);
-			}
-			return jsonString;
-		},
-	};
-};
-
-@Entity('customers')
+@Entity('customer')
 export class CustomerEntity {
 	@PrimaryGeneratedColumn('uuid')
 	customerId!: string;
 
-	@Column('text')
-	account!: string;
-
-	@Column('text')
-	address!: string;
-
 	@Column({
 		type: 'text',
-		transformer: arrayToJsonTransformer(ENABLE_EXTERNAL_DB),
-		array: true,
-		nullable: true,
+		nullable: false,
 	})
-	kids!: string[];
+	name!: string;
 
 	@Column({
-		type: 'text',
-		transformer: arrayToJsonTransformer(ENABLE_EXTERNAL_DB),
-		array: true,
-		nullable: true,
+		type: 'timestamptz',
+		nullable: false,
 	})
-	dids!: string[];
+	createdAt!: Date;
 
 	@Column({
-		type: 'text',
-		transformer: arrayToJsonTransformer(ENABLE_EXTERNAL_DB),
-		array: true,
+		type: 'timestamptz',
 		nullable: true,
 	})
-	claimIds!: string[];
+	updatedAt!: Date;
 
-	@Column({
-		type: 'text',
-		transformer: arrayToJsonTransformer(ENABLE_EXTERNAL_DB),
-		array: true,
-		nullable: true,
-	})
-	presentationIds!: string[];
+	@BeforeInsert()
+	setCreatedAt() {
+		this.createdAt = new Date();
+	}
 
-	constructor(customerId: string, account: string, address: string) {
+	@BeforeUpdate()
+	setUpdateAt() {
+		this.updatedAt = new Date();
+	}
+
+	constructor(customerId: string, name: string) {
 		this.customerId = customerId;
-		this.account = account;
-		this.address = address;
+		this.name = name;
+	}
+
+	public isEqual(customer: CustomerEntity): boolean {
+		return (
+			this.customerId === customer.customerId &&
+			this.name === customer.name &&
+			this.createdAt.toISOString() === customer.createdAt.toISOString() &&
+			((!this.updatedAt && !customer.updatedAt) ||
+				this.updatedAt.toISOString() === customer.updatedAt.toISOString())
+		);
 	}
 }

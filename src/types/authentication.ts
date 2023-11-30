@@ -1,11 +1,9 @@
-import type { Request, Response } from 'express';
-
 export enum Namespaces {
 	Testnet = 'testnet',
 	Mainnet = 'mainnet',
 }
 
-export class MethodToScope {
+export class MethodToScopeRule {
 	private route: string;
 	private method: string;
 	private scope: string;
@@ -42,6 +40,7 @@ export class MethodToScope {
 	}
 
 	private checkScope(namespace: string): boolean {
+		// If scope is empty or namespace is not needed - return true
 		if (this.scope === '' || this.isSkipNamespace()) {
 			return true;
 		}
@@ -63,14 +62,19 @@ export class MethodToScope {
 	public isSkipNamespace(): boolean {
 		return this.options.skipNamespace;
 	}
+
+	public isEmpty(): boolean {
+		return this.route === '' && this.method === '' && this.scope === '';
+	}
 }
 
-export interface IAuthResponse {
+export interface IAuthResponse extends ICommonErrorResponse {
 	status: number;
 	data: {
-		customerId: string;
+		userId: string;
 		scopes: string[];
 		namespace: Namespaces;
+		isAllowedUnauthorized: boolean;
 	};
 	error: string;
 }
@@ -79,16 +83,4 @@ export interface ICommonErrorResponse {
 	status: number;
 	error: string;
 	data: any;
-}
-
-export interface IAuthResourceHandler {
-	setNext(handler: IAuthResourceHandler): IAuthResourceHandler;
-	handle(request: Request, response: Response): Promise<IAuthResponse>;
-	skipPath(path: string): boolean;
-
-	// Getters
-	getNamespace(): string;
-	getScopes(): string[] | unknown;
-	getCustomerId(): string;
-	getToken(): string;
 }

@@ -2,15 +2,18 @@ import type { ICommonErrorResponse } from '../../types/authentication';
 import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
+import type { IOAuthProvider } from './oauth/base.js';
+import { OAuthProvider } from './oauth/base.js';
 dotenv.config();
 
-export class LogToHelper {
+export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 	private m2mToken: string;
 	private allScopes: string[];
 	private allResourceWithNames: string[];
 	public defaultScopes: string[];
 
 	constructor() {
+		super();
 		this.m2mToken = '';
 		this.allScopes = [];
 		this.defaultScopes = [];
@@ -51,7 +54,6 @@ export class LogToHelper {
 		};
 		return Date.now() >= exp * 1000;
 	}
-
 	public getAllScopes(): string[] {
 		return this.allScopes;
 	}
@@ -96,6 +98,7 @@ export class LogToHelper {
 		};
 	}
 
+	// Scopes
 	public async getUserScopes(userId: string): Promise<ICommonErrorResponse> {
 		const scopes = [] as string[];
 		const roles = await this.getRolesForUser(userId);
@@ -104,14 +107,131 @@ export class LogToHelper {
 		}
 		// Check that default role is set
 		for (const role of roles.data) {
-			const _s = await this.askRoleForScopes(role.id);
+			const _s = await this.getScopesForRole(role.id);
 			if (_s.status === StatusCodes.OK) {
 				scopes.push(..._s.data);
 			}
 		}
 		return this.returnOk(scopes);
 	}
+	private async setDefaultScopes(): Promise<ICommonErrorResponse> {
+		const _r = await this.getAllResources();
+		if (_r.status !== StatusCodes.OK) {
+			return this.returnError(
+				StatusCodes.BAD_GATEWAY,
+				`Looks like ${process.env.LOGTO_DEFAULT_RESOURCE_URL} is not setup on LogTo side`
+			);
+		}
+		for (const r of _r.data) {
+			if (r.indicator === process.env.LOGTO_DEFAULT_RESOURCE_URL) {
+				const _rr = await this.getScopesForResource(r.id);
+				if (_rr.status === StatusCodes.OK) {
+					this.defaultScopes = _rr.data;
+					return this.returnOk({});
+				} else {
+					return _rr;
+				}
+			}
+		}
+		return this.returnError(
+			StatusCodes.BAD_GATEWAY,
+			`Looks like resource with id ${process.env.LOGTO_DEFAULT_RESOURCE_URL} is not placed on LogTo`
+		);
+	}
+	private async setAllScopes(): Promise<ICommonErrorResponse> {
+		const allResources = await this.getAllResources();
+		if (allResources.status !== StatusCodes.OK) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, `setAllScopes: Error while getting all resources`);
+		}
+		for (const resource of allResources.data) {
+			if (resource.id !== 'management-api') {
+				const scopes = await this.getScopesForResource(resource.id);
+				if (scopes.status !== StatusCodes.OK) {
+					return this.returnError(
+						StatusCodes.BAD_GATEWAY,
+						`setAllScopes: Error while getting the scopes for ${resource.id}`
+					);
+				}
+				this.allScopes = this.allScopes.concat(scopes.data);
+			}
+		}
+		return this.returnOk({});
+	}
+	private async getScopesForRole(roleId: string): Promise<ICommonErrorResponse> {
+		const uri = new URL(`/api/roles/${roleId}/scopes`, process.env.LOGTO_ENDPOINT);
+		const scopes = [];
 
+		try {
+			const metadata = await this.getToLogto(uri, 'GET');
+			if (metadata && metadata.status !== StatusCodes.OK) {
+				return this.returnError(
+					StatusCodes.BAD_GATEWAY,
+					`askRoleForScopes: Error while getting the all scopes for the role ${roleId}`
+				);
+			}
+			for (const sc of metadata.data) {
+				scopes.push(sc.name);
+			}
+			return this.returnOk(scopes);
+		} catch (err) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, `askRoleForScopes ${err}`);
+		}
+	}
+	private async getScopesForResource(resourceId: string): Promise<ICommonErrorResponse> {
+		const uri = new URL(`/api/resources/${resourceId}/scopes`, process.env.LOGTO_ENDPOINT);
+		const scopes = [];
+
+		try {
+			const metadata = await this.getToLogto(uri, 'GET');
+			if (metadata && metadata.status !== StatusCodes.OK) {
+				return this.returnError(
+					StatusCodes.BAD_GATEWAY,
+					`askResourceForScopes: Error while getting the all scopes for the resource ${resourceId}`
+				);
+			}
+			for (const sc of metadata.data) {
+				scopes.push(sc.name);
+			}
+			return this.returnOk(scopes);
+		} catch (err) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, `askResourceForScopes ${err}`);
+		}
+	}
+	public async getScopesForRolesList(roles: string[]): Promise<ICommonErrorResponse> {
+		const scopes = [];
+		for (const role of roles) {
+			const roleId = await this.getRoleIdByName(role);
+			if (roleId.status !== StatusCodes.OK) {
+				return this.returnError(StatusCodes.BAD_GATEWAY, roleId.error);
+			}
+			const _r = await this.getScopesForRole(roleId.data);
+			if (_r.status !== StatusCodes.OK) {
+				return _r;
+			}
+			scopes.push(..._r.data);
+		}
+		return this.returnOk(scopes);
+	}
+
+	// Roles
+	public async getRolesForUser(userId: string): Promise<ICommonErrorResponse> {
+		const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
+		try {
+			// Note: By default, the API returns first 20 roles.
+			// If our roles per user grows to more than 20, we need to implement pagination
+			return await this.getToLogto(uri, 'GET');
+		} catch (err) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, `getRolesForUser ${err}`);
+		}
+	}
+	private async getRoleInfo(roleId: string): Promise<ICommonErrorResponse> {
+		const uri = new URL(`/api/roles/${roleId}`, process.env.LOGTO_ENDPOINT);
+		try {
+			return await this.getToLogto(uri, 'GET');
+		} catch (err) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, `getRoleInfo ${err}`);
+		}
+	}
 	private async assignDefaultRoleForUser(userId: string, roleId: string): Promise<ICommonErrorResponse> {
 		const userInfo = await this.getUserInfo(userId);
 		const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
@@ -144,18 +264,28 @@ export class LogToHelper {
 			return this.returnError(StatusCodes.BAD_GATEWAY, `getRolesForUser ${err}`);
 		}
 	}
-
-	public async getRolesForUser(userId: string): Promise<ICommonErrorResponse> {
-		const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
+	private async getRoleIdByName(roleName: string): Promise<ICommonErrorResponse> {
+		const uri = new URL(`/api/roles`, process.env.LOGTO_ENDPOINT);
 		try {
-			// Note: By default, the API returns first 20 roles.
-			// If our roles per user grows to more than 20, we need to implement pagination
-			return await this.getToLogto(uri, 'GET');
+			const metadata = await this.getToLogto(uri, 'GET');
+			if (metadata && metadata.status !== StatusCodes.OK) {
+				return this.returnError(StatusCodes.BAD_GATEWAY, `getRoleIdByName: Error while getting the all roles`);
+			}
+			for (const role of metadata.data) {
+				if (role.name === roleName) {
+					return this.returnOk(role.id);
+				}
+			}
+			return this.returnError(
+				StatusCodes.BAD_GATEWAY,
+				`getRoleIdByName: Could not find role with name ${roleName}`
+			);
 		} catch (err) {
-			return this.returnError(StatusCodes.BAD_GATEWAY, `getRolesForUser ${err}`);
+			return this.returnError(StatusCodes.BAD_GATEWAY, `getRoleIdByName ${err}`);
 		}
 	}
 
+	// Users
 	public async updateCustomData(userId: string, customData: any): Promise<ICommonErrorResponse> {
 		const uri = new URL(`/api/users/${userId}/custom-data`, process.env.LOGTO_ENDPOINT);
 		try {
@@ -167,7 +297,48 @@ export class LogToHelper {
 			return this.returnError(500, `updateCustomData ${err}`);
 		}
 	}
+	private async getUserInfo(userId: string): Promise<ICommonErrorResponse> {
+		const uri = new URL(`/api/users/${userId}`, process.env.LOGTO_ENDPOINT);
+		try {
+			return await this.getToLogto(uri, 'GET');
+		} catch (err) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, `getUserInfo ${err}`);
+		}
+	}
+	public async getCustomData(userId: string): Promise<ICommonErrorResponse> {
+		const uri = new URL(`/api/users/${userId}/custom-data`, process.env.LOGTO_ENDPOINT);
+		try {
+			return await this.getToLogto(uri, 'GET');
+		} catch (err) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, `getCustomData ${err}`);
+		}
+	}
 
+	// Resources
+	private async setAllResourcesWithNames(): Promise<ICommonErrorResponse> {
+		const allResources = await this.getAllResources();
+		if (allResources.status !== StatusCodes.OK) {
+			return this.returnError(
+				StatusCodes.BAD_GATEWAY,
+				`setAllResourcesWithNames: Error while getting all resources`
+			);
+		}
+		for (const resource of allResources.data) {
+			this.allResourceWithNames.push(resource.indicator);
+		}
+		return this.returnOk({});
+	}
+	public async getAllResources(): Promise<ICommonErrorResponse> {
+		const uri = new URL(`/api/resources`, process.env.LOGTO_ENDPOINT);
+
+		try {
+			return await this.getToLogto(uri, 'GET');
+		} catch (err) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, `getAllResources ${err}`);
+		}
+	}
+
+	// Utils
 	private async patchToLogto(uri: URL, body: any, headers: any = {}): Promise<ICommonErrorResponse> {
 		const response = await fetch(uri, {
 			headers: {
@@ -183,7 +354,6 @@ export class LogToHelper {
 		}
 		return this.returnOk({});
 	}
-
 	private async postToLogto(uri: URL, body: any, headers: any = {}): Promise<ICommonErrorResponse> {
 		const response = await fetch(uri, {
 			headers: {
@@ -199,7 +369,6 @@ export class LogToHelper {
 		}
 		return this.returnOk({});
 	}
-
 	private async getToLogto(uri: URL, headers: any = {}): Promise<ICommonErrorResponse> {
 		const response = await fetch(uri, {
 			headers: {
@@ -215,59 +384,6 @@ export class LogToHelper {
 		const metadata = await response.json();
 		return this.returnOk(metadata);
 	}
-
-	private async getUserInfo(userId: string): Promise<ICommonErrorResponse> {
-		const uri = new URL(`/api/users/${userId}`, process.env.LOGTO_ENDPOINT);
-		try {
-			return await this.getToLogto(uri, 'GET');
-		} catch (err) {
-			return this.returnError(StatusCodes.BAD_GATEWAY, `getUserInfo ${err}`);
-		}
-	}
-
-	public async getCustomData(userId: string): Promise<ICommonErrorResponse> {
-		const uri = new URL(`/api/users/${userId}/custom-data`, process.env.LOGTO_ENDPOINT);
-		try {
-			return await this.getToLogto(uri, 'GET');
-		} catch (err) {
-			return this.returnError(StatusCodes.BAD_GATEWAY, `getCustomData ${err}`);
-		}
-	}
-
-	private async getRoleInfo(roleId: string): Promise<ICommonErrorResponse> {
-		const uri = new URL(`/api/roles/${roleId}`, process.env.LOGTO_ENDPOINT);
-		try {
-			return await this.getToLogto(uri, 'GET');
-		} catch (err) {
-			return this.returnError(StatusCodes.BAD_GATEWAY, `getRoleInfo ${err}`);
-		}
-	}
-
-	private async setDefaultScopes(): Promise<ICommonErrorResponse> {
-		const _r = await this.getAllResources();
-		if (_r.status !== StatusCodes.OK) {
-			return this.returnError(
-				StatusCodes.BAD_GATEWAY,
-				`Looks like ${process.env.LOGTO_DEFAULT_RESOURCE_URL} is not setup on LogTo side`
-			);
-		}
-		for (const r of _r.data) {
-			if (r.indicator === process.env.LOGTO_DEFAULT_RESOURCE_URL) {
-				const _rr = await this.askResourceForScopes(r.id);
-				if (_rr.status === StatusCodes.OK) {
-					this.defaultScopes = _rr.data;
-					return this.returnOk({});
-				} else {
-					return _rr;
-				}
-			}
-		}
-		return this.returnError(
-			StatusCodes.BAD_GATEWAY,
-			`Looks like resource with id ${process.env.LOGTO_DEFAULT_RESOURCE_URL} is not placed on LogTo`
-		);
-	}
-
 	private async setM2MToken(): Promise<ICommonErrorResponse> {
 		const searchParams = new URLSearchParams({
 			grant_type: 'client_credentials',
@@ -298,92 +414,6 @@ export class LogToHelper {
 			return this.returnOk({});
 		} catch (err) {
 			return this.returnError(StatusCodes.BAD_GATEWAY, 'Error while communicating with authority server');
-		}
-	}
-
-	private async setAllScopes(): Promise<ICommonErrorResponse> {
-		const allResources = await this.getAllResources();
-		if (allResources.status !== StatusCodes.OK) {
-			return this.returnError(StatusCodes.BAD_GATEWAY, `setAllScopes: Error while getting all resources`);
-		}
-		for (const resource of allResources.data) {
-			if (resource.id !== 'management-api') {
-				const scopes = await this.askResourceForScopes(resource.id);
-				if (scopes.status !== StatusCodes.OK) {
-					return this.returnError(
-						StatusCodes.BAD_GATEWAY,
-						`setAllScopes: Error while getting the scopes for ${resource.id}`
-					);
-				}
-				this.allScopes = this.allScopes.concat(scopes.data);
-			}
-		}
-		return this.returnOk({});
-	}
-
-	private async setAllResourcesWithNames(): Promise<ICommonErrorResponse> {
-		const allResources = await this.getAllResources();
-		if (allResources.status !== StatusCodes.OK) {
-			return this.returnError(
-				StatusCodes.BAD_GATEWAY,
-				`setAllResourcesWithNames: Error while getting all resources`
-			);
-		}
-		for (const resource of allResources.data) {
-			this.allResourceWithNames.push(resource.indicator);
-		}
-		return this.returnOk({});
-	}
-
-	private async askRoleForScopes(roleId: string): Promise<ICommonErrorResponse> {
-		const uri = new URL(`/api/roles/${roleId}/scopes`, process.env.LOGTO_ENDPOINT);
-		const scopes = [];
-
-		try {
-			const metadata = await this.getToLogto(uri, 'GET');
-			if (metadata && metadata.status !== StatusCodes.OK) {
-				return this.returnError(
-					StatusCodes.BAD_GATEWAY,
-					`askRoleForScopes: Error while getting the all scopes for the role ${roleId}`
-				);
-			}
-			for (const sc of metadata.data) {
-				scopes.push(sc.name);
-			}
-			return this.returnOk(scopes);
-		} catch (err) {
-			return this.returnError(StatusCodes.BAD_GATEWAY, `askRoleForScopes ${err}`);
-		}
-	}
-
-	private async askResourceForScopes(resourceId: string): Promise<ICommonErrorResponse> {
-		const uri = new URL(`/api/resources/${resourceId}/scopes`, process.env.LOGTO_ENDPOINT);
-		const scopes = [];
-
-		try {
-			const metadata = await this.getToLogto(uri, 'GET');
-			if (metadata && metadata.status !== StatusCodes.OK) {
-				return this.returnError(
-					StatusCodes.BAD_GATEWAY,
-					`askResourceForScopes: Error while getting the all scopes for the resource ${resourceId}`
-				);
-			}
-			for (const sc of metadata.data) {
-				scopes.push(sc.name);
-			}
-			return this.returnOk(scopes);
-		} catch (err) {
-			return this.returnError(StatusCodes.BAD_GATEWAY, `askResourceForScopes ${err}`);
-		}
-	}
-
-	private async getAllResources(): Promise<ICommonErrorResponse> {
-		const uri = new URL(`/api/resources`, process.env.LOGTO_ENDPOINT);
-
-		try {
-			return await this.getToLogto(uri, 'GET');
-		} catch (err) {
-			return this.returnError(StatusCodes.BAD_GATEWAY, `getAllResources ${err}`);
 		}
 	}
 }
