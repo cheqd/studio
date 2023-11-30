@@ -1,9 +1,9 @@
-import { ID_TYPE, NETWORK, DEFAULT_CONTEXT, VERIFICATION_METHOD_TYPES } from '../constants';
+import { ID_TYPE, DEFAULT_CONTEXT, VERIFICATION_METHOD_TYPES } from '../constants';
 import { v4 } from 'uuid';
 import { buildSimpleService } from 'helpers';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
-import { MethodSpecificIdAlgo, createVerificationKeys } from '@cheqd/sdk';
+import { CheqdNetwork, MethodSpecificIdAlgo, createVerificationKeys } from '@cheqd/sdk';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
@@ -11,7 +11,7 @@ test('[Positive] It can create DID with mandatory properties (Form based + Indy 
 	// send request to create DID
 	let response = await request.post(`/did/create`, {
 		data:
-			`network=${NETWORK.TESTNET}&identifierFormatType=${ID_TYPE.BASE58BTC}&` +
+			`network=${CheqdNetwork.Testnet}&identifierFormatType=${ID_TYPE.BASE58BTC}&` +
 			`verificationMethodType=${VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020}`,
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 	});
@@ -28,7 +28,7 @@ test('[Positive] It can create DID with mandatory properties (Form based + Indy 
 	const didDocument = (await response.json()).didDocument;
 
 	// Check mandatory properties
-	expect(didDocument.id.split(':')[2]).toBe(NETWORK.TESTNET);
+	expect(didDocument.id.split(':')[2]).toBe(CheqdNetwork.Testnet);
 	expect(didDocument.verificationMethod[0].type).toBe(VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020);
 });
 
@@ -47,7 +47,7 @@ test('[Positive] It can create DID with mandatory and optional properties (Form 
 	// send request to create DID
 	response = await request.post(`/did/create`, {
 		data:
-			`network=${NETWORK.TESTNET}&identifierFormatType=${ID_TYPE.BASE58BTC}&` +
+			`network=${CheqdNetwork.Testnet}&identifierFormatType=${ID_TYPE.BASE58BTC}&` +
 			`verificationMethodType=${VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020}&` +
 			`service=${JSON.stringify(buildSimpleService())}&key=${kid}&@context=${DEFAULT_CONTEXT}`,
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -58,7 +58,7 @@ test('[Positive] It can create DID with mandatory and optional properties (Form 
 	const body = await response.json();
 
 	// Check mandatory properties
-	expect(body.did.split(':')[2]).toBe(NETWORK.TESTNET);
+	expect(body.did.split(':')[2]).toBe(CheqdNetwork.Testnet);
 	expect(body.controllerKeyId).toBe(kid);
 
 	// resolve a created DID
@@ -114,7 +114,7 @@ test('[Positive] It can create  DID with mandatory properties (JSON based + Indy
 	const didDocument = (await response.json()).didDocument;
 
 	// Check mandatory properties
-	expect(didDocument.id.split(':')[2]).toBe(NETWORK.TESTNET);
+	expect(didDocument.id.split(':')[2]).toBe(CheqdNetwork.Testnet);
 	expect(didDocument.verificationMethod[0].type).toBe(VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020);
 });
 
@@ -133,7 +133,7 @@ test('[Positive] It can create DID with mandatory and optional properties (JSON 
 	const did = `did:cheqd:testnet:${v4()}`;
 	response = await request.post('/did/create', {
 		data: {
-			network: NETWORK.TESTNET,
+			network: CheqdNetwork.Testnet,
 			identifierFormatType: ID_TYPE.UUID,
 			assertionMethod: true,
 			options: {
