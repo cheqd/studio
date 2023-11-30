@@ -1,6 +1,6 @@
 
 import { StatusCodes } from 'http-status-codes';
-import type { ICommonErrorResponse } from './authentication.js';
+import type { ICommonErrorResponse } from '../types/authentication.js';
 import type {
 	CompactJWT,
 	ContextType,
@@ -11,11 +11,11 @@ import type {
 	W3CVerifiableCredential,
 } from '@veramo/core';
 import { JwtPayload, jwtDecode } from 'jwt-decode';
-import type { IIdentityService } from '../services/identity/index.js';
+import type { IIdentityService } from './identity/index.js';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import { toNetwork } from '../helpers/helpers.js';
-import { CommonReturn, type FeePaymentOptions } from './shared.js';
-import { JWT_PROOF_TYPE } from './constants.js';
+import { CommonReturn, type FeePaymentOptions } from '../types/shared.js';
+import { JWT_PROOF_TYPE } from '../types/constants.js';
 
 
 export interface ICheqdCredential extends UnsignedCredential {

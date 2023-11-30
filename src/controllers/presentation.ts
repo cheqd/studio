@@ -4,7 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 import { check, query, validationResult } from 'express-validator';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { jwtDecode } from 'jwt-decode';
-import { CheqdW3CVerifiablePresentation } from '../types/presentation.js';
+import { CheqdW3CVerifiablePresentation } from '../services/w3c_presentation.js';
 
 export class PresentationController {
 	public static presentationCreateValidator = [
@@ -99,14 +99,14 @@ export class PresentationController {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
 		}
 
-		const { credential, holderDid, verifierDid } = request.body;
+		const { credentials, holderDid, verifierDid } = request.body;
 
 		try {
 			const result = await new IdentityServiceStrategySetup(
 				response.locals.customer.customerId
 			).agent.createPresentation(
 				{
-					verifiableCredential: [credential],
+					verifiableCredential: credentials,
 					holder: holderDid,
 				},
 				{
@@ -123,7 +123,7 @@ export class PresentationController {
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `${error}`,
+				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
 		}
 	}
@@ -240,7 +240,7 @@ export class PresentationController {
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `${JSON.stringify(error)}`,
+				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
 		}
 	}

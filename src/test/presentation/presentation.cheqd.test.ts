@@ -1,8 +1,8 @@
 import { describe, it } from "@jest/globals";
-import { CheqdW3CVerifiableCredential } from "../../types/credential.js";
+import { CheqdW3CVerifiableCredential } from "../../services/w3c_credential.js";
 import { expect } from "@playwright/test";
 import { JWT_PROOF_TYPE } from "../../types/constants.js";
-import { CheqdW3CVerifiablePresentation } from "../../types/presentation.js";
+import { CheqdW3CVerifiablePresentation } from "../../services/w3c_presentation.js";
 import type { W3CVerifiablePresentation } from "@veramo/core";
 import { CREDENTIAL_JWT, HOLDER_DID, PRESENTATION_JWT, PRESENTATION_OBJECT_CREDENTIAL_JWT, VERIFIER_DID, PRESENTATION_OBJECT_CREDENTIAL_OBJECT, CREDENTIAL_OBJECT } from "../constants.js";
 

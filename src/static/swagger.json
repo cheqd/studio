@@ -1804,12 +1804,15 @@
       "PresentationCreateRequest": {
         "type": "object",
         "required": [
-          "credential"
+          "credentials"
         ],
         "properties": {
-          "credential": {
-            "description": "Verifiable Credential to be usedfor VP-JWT creation as a VP-JWT string or a JSON object.",
-            "type": "object"
+          "credentials": {
+            "description": "Verifiable Credentials to be used for VP-JWT creation as a VP-JWT strings or a JSON objectsf.",
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
           },
           "holderDid": {
             "description": "DID of holder",

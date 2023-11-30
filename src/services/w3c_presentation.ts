@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import type { ICommonErrorResponse } from './authentication.js';
+import type { ICommonErrorResponse } from '../types/authentication.js';
 import type {
 	CompactJWT,
 	ContextType,
@@ -8,11 +8,11 @@ import type {
 	W3CVerifiablePresentation,
 } from '@veramo/core';
 import { jwtDecode, type JwtPayload } from 'jwt-decode';
-import type { IIdentityService } from '../services/identity/index.js';
+import type { IIdentityService } from './identity/index.js';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
-import { CheqdW3CVerifiableCredential } from './credential.js';
-import { CommonReturn } from './shared.js';
-import { JWT_PROOF_TYPE } from './constants.js';
+import { CheqdW3CVerifiableCredential } from './w3c_credential.js';
+import { CommonReturn } from '../types/shared.js';
+import { JWT_PROOF_TYPE } from '../types/constants.js';
 
 export interface ICheqdPresentation extends UnsignedPresentation {
 	proof: {
