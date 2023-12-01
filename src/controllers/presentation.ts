@@ -195,13 +195,9 @@ export class PresentationController {
 		const holderDid = cheqdPresentation.holder;
 
 		if (!allowDeactivatedDid) {
-			const result = await new IdentityServiceStrategySetup().agent.resolve(holderDid);
-			const body = await result.json();
-			if (!body?.didDocument) {
-				return response.status(result.status).send({ body });
-			}
+			const resolutionResult = await new IdentityServiceStrategySetup().agent.resolveDid(holderDid);
 
-			if (body.didDocumentMetadata.deactivated) {
+			if (resolutionResult.didDocumentMetadata.deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
 					error: `${holderDid} is deactivated`,
 				});
