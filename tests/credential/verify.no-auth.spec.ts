@@ -121,11 +121,8 @@ test('[Negative] It cannot verify credential with an invalid JWT body', async ({
         headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
 
-    expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+    expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
 
     const body = await response.json();
-
-    expect(body.authenticated).toBe(false);
-    expect(body.error).toBe("InvalidTokenError: Invalid token specified: Cannot read properties of undefined (reading 'replace')");
+    expect(body.error).toBe("An invalid JWT string");
 });
-

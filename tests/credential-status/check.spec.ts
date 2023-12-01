@@ -3,14 +3,14 @@ import {
     CONTENT_TYPE,
     NOT_EXISTENT_TESTNET_DID,
     NOT_EXISTENT_STATUS_LIST_NAME,
-    STORAGE_STATE_UNAUTHENTICATED,
-    DEFAULT_STATUS_LIST_UNENCRYPTED_NAME
+    DEFAULT_STATUS_LIST_UNENCRYPTED_NAME,
+    STORAGE_STATE_AUTHENTICATED
 } from '../constants';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 
 
-test.use({ storageState: STORAGE_STATE_UNAUTHENTICATED });
+test.use({ storageState: STORAGE_STATE_AUTHENTICATED });
 
 test('[Positive] It can check an unencrypted status-list with an existent body and statusPurpose=revocation parameter', async ({ request }) => {
     const response = await request.post('/credential-status/check?statusPurpose=revocation', {
@@ -21,6 +21,8 @@ test('[Positive] It can check an unencrypted status-list with an existent body a
         },
         headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
+
+    expect(response).toBeOK();
     
     const body = await response.json();
     expect(body.revoked).toBe(false);
@@ -35,6 +37,9 @@ test('[Positive] It can check an unencrypted status-list with an existent body a
         },
         headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
     });
+
+    expect(response).toBeOK();
+    
     const body = await response.json();
     expect(body.suspended).toBe(false);
 });

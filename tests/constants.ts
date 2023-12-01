@@ -25,13 +25,16 @@ export const DID_NOT_FOUND_ERROR = "notFound";
 export const DEFAULT_MAINNET_DID = 'did:cheqd:mainnet:7c950b5d-dbbb-4a12-9d79-6b553ca0c271';
 export const DEFAULT_TESTNET_DID = 'did:cheqd:testnet:0c3581f0-011f-4263-b1ca-15ad70d54ede';
 export const DEFAULT_TESTNET_DID_IDENTIFIER = "0c3581f0-011f-4263-b1ca-15ad70d54ede";
-export const DEFAULT_TESTNET_DID_RESOURCE_ID = "15e4bf65-8163-4936-91c6-c7ca81266162";
+export const DEFAULT_TESTNET_DID_RESOURCE_ID = "1a79a313-8fc3-421c-af3d-34730fa046d1";
+
+export const TESTNET_DID_WITH_JSON_RESOURCE = "did:cheqd:testnet:c69d7867-be90-4dea-8bbf-f4419d3599d8";
+export const TESTNET_DID_WITH_JSON_RESOURCE_ID = "3194b5a6-1b73-44a0-8ccf-27dc01509eb2";
 
 export const TESTNET_DID_WITH_IMAGE_RESOURCE = "did:cheqd:testnet:55dbc8bf-fba3-4117-855c-1e0dc1d3bb47";
 export const TESTNET_DID_WITH_IMAGE_RESOURCE_ID = "3a84b9fc-2c2b-4065-86d6-58bc462284d8";
 
 export const TESTNET_DID_FRAGMENT = "key-1";
-export const TESTNET_RESOURCE = "Hello World";
+export const TESTNET_RESOURCE_JSON = '{"data": "Hello World"}';
 
 export const NOT_EXISTENT_TESTNET_DID = "did:cheqd:testnet:d4a13003-0bc5-4608-b23a-54ea90fe9f91";
 export const NOT_EXISTENT_RESOURCE_ID = "ff0a6502-03bf-422d-9a91-ad0a3755f3ff";

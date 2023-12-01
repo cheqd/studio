@@ -1,29 +1,32 @@
 import {
     CONTENT_TYPE,
-    TESTNET_RESOURCE,
+    TESTNET_RESOURCE_JSON,
     DEFAULT_TESTNET_DID_IDENTIFIER,
-    DEFAULT_TESTNET_DID_RESOURCE_ID,
     DID_METHOD, DEFAULT_TESTNET_DID,
     NOT_EXISTENT_TESTNET_DID,
     NOT_EXISTENT_RESOURCE_ID,
     NOT_EXISTENT_TESTNET_DID_IDENTIFIER,
     DID_NOT_FOUND_ERROR,
     TESTNET_DID_WITH_IMAGE_RESOURCE,
-    TESTNET_DID_WITH_IMAGE_RESOURCE_ID
+    TESTNET_DID_WITH_IMAGE_RESOURCE_ID,
+    TESTNET_DID_WITH_JSON_RESOURCE_ID,
+    TESTNET_DID_WITH_JSON_RESOURCE
 } from '../constants';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 
-test('[Positive] It can search resource with an existent DID and resourceId', async ({ request }) => {
-    const response = await request.get(`/resource/search/${DEFAULT_TESTNET_DID}?resourceId=${DEFAULT_TESTNET_DID_RESOURCE_ID}`);
+test('[Positive] It can search resource with an existent DID and resourceId. Resource: JSON', async ({ request }) => {
+    const response = await request.get(`/resource/search/${TESTNET_DID_WITH_JSON_RESOURCE}?resourceId=${TESTNET_DID_WITH_JSON_RESOURCE_ID}`);
     expect(response.status()).toBe(StatusCodes.OK);
 
     const body = (await response.body()).toString();
 
-    expect(body).toEqual(TESTNET_RESOURCE);
+    expect(body).toEqual(TESTNET_RESOURCE_JSON);
+    const headers = response.headers();
+    expect(headers['content-type']).toBe('application/json; charset=utf-8');
 });
 
-test('[Positive] It can search resource with an existent DID and resourceId and MIME type image', async ({ request }) => {
+test('[Positive] It can search resource with an existent DID and resourceId.Resource is image and MIME type image', async ({ request }) => {
     const response = await request.get(`/resource/search/${TESTNET_DID_WITH_IMAGE_RESOURCE}?resourceId=${TESTNET_DID_WITH_IMAGE_RESOURCE_ID}`);
     expect(response.status()).toBe(StatusCodes.OK);
 
