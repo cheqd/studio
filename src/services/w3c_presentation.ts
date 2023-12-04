@@ -55,7 +55,7 @@ export class CheqdW3CVerifiablePresentation extends CommonReturn implements IChe
 		);
 		this.holder = presentation.holder;
 		this.verifier = presentation.verifier;
-        this.issuanceDate = presentation.issuanceDate;
+		this.issuanceDate = presentation.issuanceDate;
 		this.proof = (presentation as ICheqdPresentation).proof;
 	}
 
@@ -74,8 +74,8 @@ export class CheqdW3CVerifiablePresentation extends CommonReturn implements IChe
 		} else if (Array.isArray(decoded.aud)) {
 			presentation.verifier = decoded.aud as string[];
 		}
-        // nbf - issuanceDate
-        presentation.issuanceDate = new Date((decoded.nbf as number) * 1000).toISOString();
+		// nbf - issuanceDate
+		presentation.issuanceDate = new Date((decoded.nbf as number) * 1000).toISOString();
 		presentation.proof = {
 			type: JWT_PROOF_TYPE,
 			jwt: jwt,
@@ -92,9 +92,9 @@ export class CheqdW3CVerifiablePresentation extends CommonReturn implements IChe
 		}
 
 		const feePaymentResults = await Promise.all(
-			this.verifiableCredential.map(async (credential) => {
-				return await credential.makeFeePayment(agent, customer);
-			})
+			this.verifiableCredential
+				.filter((credential) => credential.credentialStatus)
+				.map(async (credential) => await credential.makeFeePayment(agent, customer))
 		);
 
 		// handle error
