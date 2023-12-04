@@ -85,10 +85,13 @@ export class PresentationController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async verifyPresentation(request: Request, response: Response) {
-		const result = validationResult(request);
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
-		}
+        // validate request
+        const result = validationResult(request);
+
+        // handle error
+        if (!result.isEmpty()) {
+            return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+        }
 
 		const { presentation, verifierDid, policies } = request.body;
 		const verifyStatus = request.query.verifyStatus === 'true';

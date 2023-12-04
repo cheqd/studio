@@ -111,12 +111,13 @@ export class DIDController {
 	 *               error: Internal Error
 	 */
 	public async createDid(request: Request, response: Response) {
-		const result = validationResult(request);
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array()[0].msg,
-			});
-		}
+        // validate request
+        const result = validationResult(request);
+
+        // handle error
+        if (!result.isEmpty()) {
+            return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+        }
 
 		const { identifierFormatType, network, verificationMethodType, service, key, options } =
 			request.body satisfies CreateDidRequestBody;
@@ -253,12 +254,13 @@ export class DIDController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async updateDid(request: Request, response: Response) {
-		const result = validationResult(request);
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array()[0].msg,
-			});
-		}
+        // validate request
+        const result = validationResult(request);
+
+        // handle error
+        if (!result.isEmpty()) {
+            return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+        }
 
 		try {
 			const { did, service, verificationMethod, authentication } = request.body as {
@@ -341,12 +343,13 @@ export class DIDController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async deactivateDid(request: Request, response: Response) {
-		const result = validationResult(request);
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array()[0].msg,
-			});
-		}
+        // validate request
+        const result = validationResult(request);
+
+        // handle error
+        if (!result.isEmpty()) {
+            return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+        }
 
 		try {
 			const deactivated = await new IdentityServiceStrategySetup(

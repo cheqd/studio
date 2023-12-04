@@ -114,9 +114,12 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async issue(request: Request, response: Response) {
+		// validate request
 		const result = validationResult(request);
+
+		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
 
 		// Handles string input instead of an array
@@ -205,9 +208,12 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async verify(request: Request, response: Response) {
+		// validate request
 		const result = validationResult(request);
+
+		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
 
 		const { credential, policies } = request.body;
@@ -299,10 +305,14 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async revoke(request: Request, response: Response) {
+		// validate request
 		const result = validationResult(request);
+
+		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
+
 		try {
 			const publish = request.query.publish === 'false' ? false : true;
 			// Get symmetric key
@@ -397,9 +407,12 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async suspend(request: Request, response: Response) {
+		// validate request
 		const result = validationResult(request);
+
+		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
 
 		try {
@@ -498,9 +511,12 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async reinstate(request: Request, response: Response) {
+		// validate request
 		const result = validationResult(request);
+
+		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
 
 		try {

@@ -133,7 +133,7 @@ export class AccountController {
 	}
 
 	public async bootstrap(request: Request, response: Response) {
-		// For now we keep temporary 1-1 relatioin between user and customer
+		// For now we keep temporary 1-1 relation between user and customer
 		// So the flow is:
 		// 1. Get LogTo user id from request body
 		// 2. Check if such row exists in the DB

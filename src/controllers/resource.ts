@@ -68,12 +68,13 @@ export class ResourceController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async createResource(request: Request, response: Response) {
-		const result = validationResult(request);
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array()[0].msg,
-			});
-		}
+        // validate request
+        const result = validationResult(request);
+
+        // handle error
+        if (!result.isEmpty()) {
+            return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+        }
 
 		const { did } = request.params;
 		const { data, encoding, name, type, alsoKnownAs, version, network } = request.body;
