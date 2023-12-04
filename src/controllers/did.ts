@@ -119,9 +119,12 @@ export class DIDController {
             return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
         }
 
+        // handle request params
 		const { identifierFormatType, network, verificationMethodType, service, key, options } =
 			request.body satisfies CreateDidRequestBody;
 		let didDocument: DIDDocument;
+        // Get strategy e.g. postgres or local
+        const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
 			if (request.body.didDocument) {
 				didDocument = request.body.didDocument;
@@ -129,7 +132,7 @@ export class DIDController {
 					const publicKeyHex =
 						options.key ||
 						(
-							await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createKey(
+							await identityServiceStrategySetup.agent.createKey(
 								'Ed25519',
 								response.locals.customer
 							)
@@ -157,7 +160,7 @@ export class DIDController {
 				const publicKeyHex =
 					key ||
 					(
-						await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createKey(
+						await identityServiceStrategySetup.agent.createKey(
 							'Ed25519',
 							response.locals.customer
 						)
@@ -262,25 +265,32 @@ export class DIDController {
             return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
         }
 
+        // handle request params
+        const { did, service, verificationMethod, authentication } = request.body as {
+            did: string;
+            service: Service[];
+            verificationMethod: VerificationMethod[];
+            authentication: string[];
+        };
+        let updatedDocument: DIDDocument;
+        // Get strategy e.g. postgres or local
+        const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+
 		try {
-			const { did, service, verificationMethod, authentication } = request.body as {
-				did: string;
-				service: Service[];
-				verificationMethod: VerificationMethod[];
-				authentication: string[];
-			};
-			let updatedDocument: DIDDocument;
+			
 			if (request.body.didDocument) {
+                // Just pass the didDocument from the user as is
 				updatedDocument = request.body.didDocument;
 			} else if (did && (service || verificationMethod || authentication)) {
-				const resolvedResult = await new IdentityServiceStrategySetup(
-					response.locals.customer.customerId
-				).agent.resolveDid(did);
+                // Resolve DID
+				const resolvedResult = await identityServiceStrategySetup.agent.resolveDid(did);
+                // Check output that DID is not deactivated or exist
 				if (!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
 					return response.status(StatusCodes.BAD_REQUEST).send({
 						error: `${did} is either Deactivated or Not found`,
 					});
 				}
+                // Fill up the DID Document with updated sections
 				const resolvedDocument = resolvedResult.didDocument;
 				if (service) {
 					resolvedDocument.service = Array.isArray(service) ? service : [service];
@@ -301,7 +311,7 @@ export class DIDController {
 				});
 			}
 
-			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.updateDid(
+			const result = await identityServiceStrategySetup.agent.updateDid(
 				updatedDocument,
 				response.locals.customer
 			);
@@ -351,16 +361,18 @@ export class DIDController {
             return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
         }
 
+        // Get strategy e.g. postgres or local
+        const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+
 		try {
-			const deactivated = await new IdentityServiceStrategySetup(
-				response.locals.customer.customerId
-			).agent.deactivateDid(request.params.did, response.locals.customer);
+            // Deactivate DID
+			const deactivated = await identityServiceStrategySetup.agent.deactivateDid(request.params.did, response.locals.customer);
 
 			if (!deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).json({ deactivated: false });
 			}
-
-			const result = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolveDid(
+            // Send the deactivated DID as result
+			const result = await identityServiceStrategySetup.agent.resolveDid(
 				request.params.did
 			);
 
@@ -397,12 +409,14 @@ export class DIDController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async getDids(request: Request, response: Response) {
+        // Get strategy e.g. postgres or local
+        const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
 			const did = request.params.did
-				? await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolveDid(
+				? await identityServiceStrategySetup.agent.resolveDid(
 						request.params.did
 				  )
-				: await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.listDids(
+				: await identityServiceStrategySetup.agent.listDids(
 						response.locals.customer
 				  );
 
@@ -485,10 +499,12 @@ export class DIDController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async resolveDidUrl(request: Request, response: Response) {
+        // Get strategy e.g. postgres or local
+        const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
 			let res: globalThis.Response;
 			if (request.params.did) {
-				res = await IdentityServiceStrategySetup.unauthorized.resolve(
+				res = await identityServiceStrategySetup.agent.resolve(
 					request.params.did + getQueryParams(request.query)
 				);
 

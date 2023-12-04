@@ -93,34 +93,21 @@ export class PresentationController {
             return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
         }
 
+        // Get request parameters
 		const { presentation, verifierDid, policies } = request.body;
 		const verifyStatus = request.query.verifyStatus === 'true';
 		const allowDeactivatedDid = request.query.allowDeactivatedDid === 'true';
 
-		let issuerDid = '';
-		if (typeof presentation === 'object' && presentation?.issuer?.id) {
-			issuerDid = presentation.issuer.id;
-		} else {
-			const decoded: any = jwtDecode(presentation);
-			issuerDid = decoded.iss;
-		}
-
-		if (!allowDeactivatedDid) {
-			const result = await new IdentityServiceStrategySetup().agent.resolve(issuerDid);
-			const body = await result.json();
-			if (!body?.didDocument) {
-				return response.status(result.status).send({ body });
-			}
-
-			if (body.didDocumentMetadata.deactivated) {
-				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `${issuerDid} is deactivated`,
-				});
-			}
-		}
+        // Get strategy e.g. postgres or local
+        const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 
 		try {
-			const result = await new IdentityServiceStrategySetup().agent.verifyPresentation(
+            if (!allowDeactivatedDid && await this.isIssuerDidDeactivated(presentation)) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: `Credential issuer DID is deactivated`,
+				});
+			}
+			const result = await identityServiceStrategySetup.agent.verifyPresentation(
 				presentation,
 				{
 					verifyStatus,
@@ -141,5 +128,23 @@ export class PresentationController {
 				error: `${error}`,
 			});
 		}
+	}
+
+    // ToDo: move it to helpers
+	private async isIssuerDidDeactivated(presentation: any) {
+		let issuerDid = '';
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
+
+		if (typeof presentation === 'object' && presentation?.issuer?.id) {
+			issuerDid = presentation.issuer.id;
+		} else {
+			const decoded: any = jwtDecode(presentation);
+			issuerDid = decoded.iss;
+		}
+		
+		const resolutionResult = await identityServiceStrategySetup.agent.resolve(issuerDid);
+		const body = await resolutionResult.json();
+
+		return body.didDocumentMetadata.deactivated
 	}
 }

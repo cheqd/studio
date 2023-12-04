@@ -222,10 +222,12 @@ export class ResourceController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async getResource(request: Request, response: Response) {
+        // Get strategy e.g. postgres or local
+        const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 		try {
 			let res: globalThis.Response;
 			if (request.params.did) {
-				res = await IdentityServiceStrategySetup.unauthorized.resolve(
+				res = await identityServiceStrategySetup.agent.resolve(
 					request.params.did + getQueryParams(request.query)
 				);
 

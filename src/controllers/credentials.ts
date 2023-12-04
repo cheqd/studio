@@ -116,7 +116,6 @@ export class CredentialController {
 	public async issue(request: Request, response: Response) {
 		// validate request
 		const result = validationResult(request);
-
 		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
@@ -130,21 +129,23 @@ export class CredentialController {
 			request.body['@context'] = [request.body['@context']];
 		}
 
-		const resolvedResult = await new IdentityServiceStrategySetup(
-			response.locals.customer.customerId
-		).agent.resolve(request.body.issuerDid);
-		const body = await resolvedResult.json();
-		if (!body?.didDocument) {
-			return response.status(resolvedResult.status).send({ body });
-		}
-
-		if (body.didDocumentMetadata.deactivated) {
-			return response.status(StatusCodes.BAD_REQUEST).send({
-				error: `${request.body.issuerDid} is deactivated`,
-			});
-		}
+		// Get strategy e.g. postgres or local
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
+			// resolve issuer DID-Document
+			const resolvedResult = await identityServiceStrategySetup.agent.resolve(request.body.issuerDid);
+			// check if DID-Document is resolved
+			const body = await resolvedResult.json();
+			if (!body?.didDocument) {
+				return response.status(resolvedResult.status).send({ body });
+			}
+			if (body.didDocumentMetadata.deactivated) {
+				return response.status(StatusCodes.BAD_REQUEST).send({
+					error: `${request.body.issuerDid} is deactivated`,
+				});
+			}
+			// issue credential
 			const credential: VerifiableCredential = await Credentials.instance.issue_credential(
 				request.body,
 				response.locals.customer
@@ -210,40 +211,25 @@ export class CredentialController {
 	public async verify(request: Request, response: Response) {
 		// validate request
 		const result = validationResult(request);
-
 		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
-
+		// Get params from request
 		const { credential, policies } = request.body;
 		const verifyStatus = request.query.verifyStatus === 'true';
 		const allowDeactivatedDid = request.query.allowDeactivatedDid === 'true';
-
-		let issuerDid = '';
-		if (typeof credential === 'object' && credential?.issuer?.id) {
-			issuerDid = credential.issuer.id;
-		} else {
-			const decoded: any = jwtDecode(credential);
-			issuerDid = decoded.iss;
-		}
-
-		if (!allowDeactivatedDid) {
-			const result = await new IdentityServiceStrategySetup().agent.resolve(issuerDid);
-			const body = await result.json();
-			if (!body?.didDocument) {
-				return response.status(result.status).send({ body });
-			}
-
-			if (body.didDocumentMetadata.deactivated) {
-				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `${issuerDid} is deactivated`,
-				});
-			}
-		}
+		// Get strategy e.g. postgres or local
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 
 		try {
-			const result = await new IdentityServiceStrategySetup().agent.verifyCredential(
+			if (!allowDeactivatedDid && await this.isIssuerDidDeactivated(credential)) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: `Credential issuer DID is deactivated`,
+				});
+			}
+
+			const verifyResult = await identityServiceStrategySetup.agent.verifyCredential(
 				credential,
 				{
 					verifyStatus,
@@ -251,18 +237,36 @@ export class CredentialController {
 				},
 				response.locals.customer
 			);
-			if (result.error) {
+			if (verifyResult.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					verified: result.verified,
-					error: result.error.message,
+					verified: verifyResult.verified,
+					error: verifyResult.error.message,
 				});
 			}
-			return response.status(StatusCodes.OK).json(result);
+			return response.status(StatusCodes.OK).json(verifyResult);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
 			});
 		}
+	}
+
+	// ToDo: move it to helpers
+	private async isIssuerDidDeactivated(credential: any) {
+		let issuerDid = '';
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
+
+		if (typeof credential === 'object' && credential?.issuer?.id) {
+			issuerDid = credential.issuer.id;
+		} else {
+			const decoded: any = jwtDecode(credential);
+			issuerDid = decoded.iss;
+		}
+		
+		const resolutionResult = await identityServiceStrategySetup.agent.resolve(issuerDid);
+		const body = await resolutionResult.json();
+
+		return body.didDocumentMetadata.deactivated
 	}
 
 	/**
@@ -307,18 +311,18 @@ export class CredentialController {
 	public async revoke(request: Request, response: Response) {
 		// validate request
 		const result = validationResult(request);
-
 		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
+		// Get publish flag
+		const publish = request.query.publish === 'false' ? false : true;
+		// Get symmetric key
+		const symmetricKey = request.body.symmetricKey as string;
+		// Get strategy e.g. postgres or local
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const publish = request.query.publish === 'false' ? false : true;
-			// Get symmetric key
-			const symmetricKey = request.body.symmetricKey as string;
-			// Get strategy e.g. psotgres or local
-			const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 			const result = await identityServiceStrategySetup.agent.revokeCredentials(
 				request.body.credential,
 				publish,
@@ -409,18 +413,19 @@ export class CredentialController {
 	public async suspend(request: Request, response: Response) {
 		// validate request
 		const result = validationResult(request);
-
 		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
 
+		// Get publish flag
+		const publish = request.query.publish === 'false' ? false : true;
+		// Get symmetric key
+		const symmetricKey = request.body.symmetricKey as string;
+		// Get strategy e.g. postgres or local
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+
 		try {
-			const publish = request.query.publish === 'false' ? false : true;
-			// Get symmetric key
-			const symmetricKey = request.body.symmetricKey as string;
-			// Get strategy e.g. psotgres or local
-			const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 			const result = await identityServiceStrategySetup.agent.suspendCredentials(
 				request.body.credential,
@@ -513,18 +518,18 @@ export class CredentialController {
 	public async reinstate(request: Request, response: Response) {
 		// validate request
 		const result = validationResult(request);
-
 		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
+		// Get publish flag
+		const publish = request.query.publish === 'false' ? false : true;
+		// Get symmetric key
+		const symmetricKey = request.body.symmetricKey as string;
+		// Get strategy e.g. postgres or local
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const publish = request.query.publish === 'false' ? false : true;
-			// Get symmetric key
-			const symmetricKey = request.body.symmetricKey as string;
-			// Get strategy e.g. psotgres or local
-			const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 			const result = await identityServiceStrategySetup.agent.reinstateCredentials(
 				request.body.credential,
 				publish,

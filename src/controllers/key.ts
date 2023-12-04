@@ -39,8 +39,10 @@ export class KeyController {
 	 *               error: Internal Error
 	 */
 	public async createKey(request: Request, response: Response) {
+        // Get strategy e.g. postgres or local
+        const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
-			const key = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createKey(
+			const key = await identityServiceStrategySetup.agent.createKey(
 				'Ed25519',
 				response.locals.customer
 			);
@@ -94,8 +96,10 @@ export class KeyController {
 	 *               error: Internal Error
 	 */
 	public async getKey(request: Request, response: Response) {
+        // Get strategy e.g. postgres or local
+        const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
-			const key = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.getKey(
+			const key = await identityServiceStrategySetup.agent.getKey(
 				request.params.kid,
 				response.locals.customer
 			);
