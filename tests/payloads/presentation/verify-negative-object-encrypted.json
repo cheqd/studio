@@ -1,0 +1,59 @@
+{
+    "presentation": {
+      "verifiableCredential": [
+        {
+          "credentialSubject": {
+            "name": "Bob",
+            "gender": "male",
+            "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+          },
+          "issuer": {
+            "id": "did:cheqd:testnet:4b846d0f-2f6c-4ab6-9fe2-5b8db301c83c"
+          },
+          "type": [
+            "VerifiableCredential",
+            "Person"
+          ],
+          "credentialStatus": {
+            "id": "https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:4b846d0f-2f6c-4ab6-9fe2-5b8db301c83c?resourceName=suspensionEn&resourceType=StatusList2021Suspension#71879",
+            "type": "StatusList2021Entry",
+            "statusPurpose": "suspension",
+            "statusListIndex": "71879"
+          },
+          "@context": [
+            "https://www.w3.org/2018/credentials/v1",
+            "https://schema.org/schema.jsonld",
+            "https://veramo.io/contexts/profile/v1",
+            "https://w3id.org/vc-status-list-2021/v1"
+          ],
+          "issuanceDate": "2023-11-28T17:02:40.000Z",
+          "proof": {
+            "type": "JwtProof2020",
+            "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vc2NoZW1hLm9yZy9zY2hlbWEuanNvbmxkIiwiaHR0cHM6Ly92ZXJhbW8uaW8vY29udGV4dHMvcHJvZmlsZS92MSIsImh0dHBzOi8vdzNpZC5vcmcvdmMtc3RhdHVzLWxpc3QtMjAyMS92MSJdLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiUGVyc29uIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7Im5hbWUiOiJCb2IiLCJnZW5kZXIiOiJtYWxlIn0sImNyZWRlbnRpYWxTdGF0dXMiOnsiaWQiOiJodHRwczovL3Jlc29sdmVyLmNoZXFkLm5ldC8xLjAvaWRlbnRpZmllcnMvZGlkOmNoZXFkOnRlc3RuZXQ6NGI4NDZkMGYtMmY2Yy00YWI2LTlmZTItNWI4ZGIzMDFjODNjP3Jlc291cmNlTmFtZT1zdXNwZW5zaW9uRW4mcmVzb3VyY2VUeXBlPVN0YXR1c0xpc3QyMDIxU3VzcGVuc2lvbiM3MTg3OSIsInR5cGUiOiJTdGF0dXNMaXN0MjAyMUVudHJ5Iiwic3RhdHVzUHVycG9zZSI6InN1c3BlbnNpb24iLCJzdGF0dXNMaXN0SW5kZXgiOiI3MTg3OSJ9fSwic3ViIjoiZGlkOmtleTp6Nk1raGFYZ0JaRHZvdERrTDUyNTdmYWl6dGlHaUMyUXRLTEdwYm5uRUd0YTJkb0siLCJuYmYiOjE3MDExOTA5NjAsImlzcyI6ImRpZDpjaGVxZDp0ZXN0bmV0OjRiODQ2ZDBmLTJmNmMtNGFiNi05ZmUyLTViOGRiMzAxYzgzYyJ9.FfCpT04Q7h2zGbXuBKYotpf9FhXW3q9oDTa7t1vwx3wr_WhzewDESydd2zqhKsvs_1AxFNYbLSZIvUxIDvr6Ag"
+          }
+        }
+      ],
+      "holder": "did:cheqd:testnet:8ibW9qSKZJ51QXptN13TNJ",
+      "verifier": [
+        "did:cheqd:testnet:6a8YFfEtE3h3ueV99inucg"
+      ],
+      "type": [
+        "VerifiablePresentation"
+      ],
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1"
+      ],
+      "issuanceDate": "2023-11-28T17:03:17.000Z",
+      "proof": {
+        "type": "JwtProof2020",
+        "jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2cCI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSJdLCJ0eXBlIjpbIlZlcmlmaWFibGVQcmVzZW50YXRpb24iXSwidmVyaWZpYWJsZUNyZWRlbnRpYWwiOlsiZXlKaGJHY2lPaUpGWkVSVFFTSXNJblI1Y0NJNklrcFhWQ0o5LmV5SjJZeUk2ZXlKQVkyOXVkR1Y0ZENJNld5Sm9kSFJ3Y3pvdkwzZDNkeTUzTXk1dmNtY3ZNakF4T0M5amNtVmtaVzUwYVdGc2N5OTJNU0lzSW1oMGRIQnpPaTh2YzJOb1pXMWhMbTl5Wnk5elkyaGxiV0V1YW5OdmJteGtJaXdpYUhSMGNITTZMeTkyWlhKaGJXOHVhVzh2WTI5dWRHVjRkSE12Y0hKdlptbHNaUzkyTVNJc0ltaDBkSEJ6T2k4dmR6TnBaQzV2Y21jdmRtTXRjM1JoZEhWekxXeHBjM1F0TWpBeU1TOTJNU0pkTENKMGVYQmxJanBiSWxabGNtbG1hV0ZpYkdWRGNtVmtaVzUwYVdGc0lpd2lVR1Z5YzI5dUlsMHNJbU55WldSbGJuUnBZV3hUZFdKcVpXTjBJanA3SW01aGJXVWlPaUpDYjJJaUxDSm5aVzVrWlhJaU9pSnRZV3hsSW4wc0ltTnlaV1JsYm5ScFlXeFRkR0YwZFhNaU9uc2lhV1FpT2lKb2RIUndjem92TDNKbGMyOXNkbVZ5TG1Ob1pYRmtMbTVsZEM4eExqQXZhV1JsYm5ScFptbGxjbk12Wkdsa09tTm9aWEZrT25SbGMzUnVaWFE2TkdJNE5EWmtNR1l0TW1ZMll5MDBZV0kyTFRsbVpUSXROV0k0WkdJek1ERmpPRE5qUDNKbGMyOTFjbU5sVG1GdFpUMXpkWE53Wlc1emFXOXVSVzRtY21WemIzVnlZMlZVZVhCbFBWTjBZWFIxYzB4cGMzUXlNREl4VTNWemNHVnVjMmx2YmlNM01UZzNPU0lzSW5SNWNHVWlPaUpUZEdGMGRYTk1hWE4wTWpBeU1VVnVkSEo1SWl3aWMzUmhkSFZ6VUhWeWNHOXpaU0k2SW5OMWMzQmxibk5wYjI0aUxDSnpkR0YwZFhOTWFYTjBTVzVrWlhnaU9pSTNNVGczT1NKOWZTd2ljM1ZpSWpvaVpHbGtPbXRsZVRwNk5rMXJhR0ZZWjBKYVJIWnZkRVJyVERVeU5UZG1ZV2w2ZEdsSGFVTXlVWFJMVEVkd1ltNXVSVWQwWVRKa2Iwc2lMQ0p1WW1ZaU9qRTNNREV4T1RBNU5qQXNJbWx6Y3lJNkltUnBaRHBqYUdWeFpEcDBaWE4wYm1WME9qUmlPRFEyWkRCbUxUSm1ObU10TkdGaU5pMDVabVV5TFRWaU9HUmlNekF4WXpnell5SjkuRmZDcFQwNFE3aDJ6R2JYdUJLWW90cGY5RmhYVzNxOW9EVGE3dDF2d3gzd3JfV2h6ZXdERVN5ZGQyenFoS3N2c18xQXhGTlliTFNaSXZVeElEdnI2QWciXX0sIm5iZiI6MTcwMTE5MDk5NywiaXNzIjoiZGlkOmNoZXFkOnRlc3RuZXQ6OGliVzlxU0taSjUxUVhwdE4xM1ROSiIsImF1ZCI6WyJkaWQ6Y2hlcWQ6dGVzdG5ldDo2YThZRmZFdEUzaDN1ZVY5OWludWNnIl19.5X3YXG_P85PfA5djNlbPKv8V8iNIT1lJA4rZd3kxnL8euwXdSc5R4T3ElyETuAO95pnmNV_uGqLSJ6E5a-tGCg"
+      }
+    },
+    "verifierDid": "did:cheqd:testnet:6a8YFfEtE3h3ueV99inucg",
+    "makeFeePayment": false,
+    "policies": {
+      "issuanceDate": true,
+      "expirationDate": true,
+      "audience": false
+    }
+  }
