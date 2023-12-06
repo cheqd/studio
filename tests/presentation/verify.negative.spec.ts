@@ -7,7 +7,7 @@ test.use({ storageState: 'playwright/.auth/user.json' });
 
 for (const presentationType of ['jwt', 'object']) {
     for (const verifyStatus of [true]) {
-        test(`[Positive] It should return verify: True. 
+        test(`[Negative] It should return verify: False. 
         Presenation format is ${presentationType}. 
         Encrypted statusList2021. 
         VerifyStatus: ${verifyStatus}, 
@@ -23,9 +23,7 @@ for (const presentationType of ['jwt', 'object']) {
             expect(response).not.toBeOK();
             expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
             const body = await response.json();
-            const error = JSON.parse(body.error);
-            expect(error.status).toBe(StatusCodes.UNAUTHORIZED);
-            expect(error.errorCode).toBe("NodeAccessControlConditionsReturnedNotAuthorized");
+            expect(body.error).toContain("The access control condition check returned that you are not permitted to access this content");
         });
     }
 }
