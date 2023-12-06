@@ -59,9 +59,13 @@ class App {
 			cors({
 				origin: function (origin, callback) {
 					if (!origin) return callback(null, true);
-					if (CORS_ALLOWED_ORIGINS?.indexOf(origin) === -1) {
+					// Split CORS_ALLOWED_ORIGINS into an array of allowed origins
+					const allowedOrigins = CORS_ALLOWED_ORIGINS ? CORS_ALLOWED_ORIGINS.split(',') : [];
+
+					if (allowedOrigins.length === 0 || allowedOrigins.indexOf(origin) === -1) {
 						return callback(new Error(CORS_ERROR_MSG), false);
 					}
+
 					return callback(null, true);
 				},
 			})

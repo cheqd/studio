@@ -31,7 +31,7 @@ export class PresentationController {
 			.withMessage('An invalid JWT string'),
 		check('holderDid').optional().isString().withMessage('Invalid holder DID'),
 		check('verifierDid').optional().isString().withMessage('Invalid verifier DID'),
-		check('policies').optional().isObject().withMessage('Verification policies should be an object'),
+		check('policies').optional().isObject().withMessage('Verification policies should be an Object'),
 	];
 
 	public static presentationVerifyValidator = [
@@ -49,15 +49,17 @@ export class PresentationController {
 				if (typeof value === 'string') {
 					try {
 						jwtDecode(value);
+						return true;
 					} catch (e) {
 						return false;
 					}
+				} else {
+					return value.isJSON();
 				}
-				return true;
 			})
-			.withMessage('An invalid JWT string'),
+			.withMessage('Presentation is invalid provide a valid JWT string or JSON'),
 		check('verifierDid').optional().isString().withMessage('Invalid verifier DID'),
-		check('policies').optional().isObject().withMessage('Verification policies should be an object'),
+		check('policies').optional().isObject().withMessage('Verification policies should be an Object'),
 		check('makeFeePayment').optional().isBoolean().withMessage('makeFeePayment: should be a boolean').bail(),
 		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value'),
 	];

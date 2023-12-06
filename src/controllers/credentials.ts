@@ -44,11 +44,13 @@ export class CredentialController {
 				if (typeof value === 'string') {
 					try {
 						jwtDecode(value);
+						return true;
 					} catch (e) {
 						return false;
 					}
+				} else {
+					return value.isJSON();
 				}
-				return true;
 			})
 			.withMessage('An invalid JWT string'),
 		check('policies').optional().isObject().withMessage('Verification policies should be an object'),
