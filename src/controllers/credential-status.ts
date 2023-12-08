@@ -45,7 +45,7 @@ import { toNetwork } from '../helpers/helpers.js';
 import { OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS } from '../types/constants.js';
 import { CheqdNetwork } from '@cheqd/sdk';
 
-export class RevocationController {
+export class CredentialStatusController {
 	static createUnencryptedValidator = [
 		check('did')
 			.exists()
@@ -133,7 +133,7 @@ export class RevocationController {
 	];
 
 	static createEncryptedValidator = [
-		...RevocationController.createUnencryptedValidator,
+		...CredentialStatusController.createUnencryptedValidator,
 		// define validation chain - case: content-type is application/json
 		check('paymentConditions')
 			.if((_value, { req }) => req?.headers?.['content-type'] === 'application/json')
@@ -281,7 +281,7 @@ export class RevocationController {
 	];
 
 	static updateEncryptedValidator = [
-		...RevocationController.updateUnencryptedValidator,
+		...CredentialStatusController.updateUnencryptedValidator,
 		check('symmetricKey')
 			.exists()
 			.withMessage('symmetricKey: required')

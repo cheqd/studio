@@ -11,7 +11,7 @@ import { CredentialController } from './controllers/credentials.js';
 import { AccountController } from './controllers/account.js';
 import { Authentication } from './middleware/authentication.js';
 import { Connection } from './database/connection/connection.js';
-import { RevocationController } from './controllers/credential-status.js';
+import { CredentialStatusController } from './controllers/credential-status.js';
 import { CORS_ALLOWED_ORIGINS, CORS_ERROR_MSG } from './types/constants.js';
 import { LogToWebHook } from './middleware/hook.js';
 import { Middleware } from './middleware/middleware.js';
@@ -128,33 +128,33 @@ class App {
 		// revocation
 		app.post(
 			'/credential-status/create/unencrypted',
-			RevocationController.createUnencryptedValidator,
-			new RevocationController().createUnencryptedStatusList
+			CredentialStatusController.createUnencryptedValidator,
+			new CredentialStatusController().createUnencryptedStatusList
 		);
 		app.post(
 			'/credential-status/create/encrypted',
-			RevocationController.createEncryptedValidator,
-			new RevocationController().createEncryptedStatusList
+			CredentialStatusController.createEncryptedValidator,
+			new CredentialStatusController().createEncryptedStatusList
 		);
 		app.post(
 			'/credential-status/update/unencrypted',
-			RevocationController.updateUnencryptedValidator,
-			new RevocationController().updateUnencryptedStatusList
+			CredentialStatusController.updateUnencryptedValidator,
+			new CredentialStatusController().updateUnencryptedStatusList
 		);
 		app.post(
 			'/credential-status/update/encrypted',
-			RevocationController.updateEncryptedValidator,
-			new RevocationController().updateEncryptedStatusList
+			CredentialStatusController.updateEncryptedValidator,
+			new CredentialStatusController().updateEncryptedStatusList
 		);
 		app.post(
 			'/credential-status/check',
-			RevocationController.checkValidator,
-			new RevocationController().checkStatusList
+			CredentialStatusController.checkValidator,
+			new CredentialStatusController().checkStatusList
 		);
 		app.get(
 			'/credential-status/search',
-			RevocationController.searchValidator,
-			new RevocationController().searchStatusList
+			CredentialStatusController.searchValidator,
+			new CredentialStatusController().searchStatusList
 		);
 
 		// Keys API
