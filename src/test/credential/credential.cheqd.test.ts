@@ -2,7 +2,7 @@ import { describe, it } from "@jest/globals";
 import { CheqdW3CVerifiableCredential } from "../../services/w3c_credential.js";
 import { expect } from "@playwright/test";
 import { JWT_PROOF_TYPE } from "../../types/constants.js";
-import { CREDENTIAL_JWT, CREDENTIAL_OBJECT, CREDENTIAL_STATUS_ID, CREDENTIAL_SUBJECT_ID, ISSUIER_DID } from "../constants.js";
+import { CREDENTIAL_JWT, CREDENTIAL_OBJECT, CREDENTIAL_STATUS_ID, CREDENTIAL_SUBJECT_ID, ISSUER_DID } from "../constants.js";
 
 describe('Credential from JWT to object', () => {
     const credential = new CheqdW3CVerifiableCredential(CREDENTIAL_JWT);
@@ -42,7 +42,7 @@ describe('Credential from JWT to object', () => {
     })
     it('should have an issuer', () => {
         expect(credential.issuer).toBeDefined();
-        expect(credential.issuer).toEqual(ISSUIER_DID);
+        expect(credential.issuer).toEqual(ISSUER_DID);
     })
     it('should have an issuanceDate', () => {
         expect(credential.issuanceDate).toBeDefined();
@@ -88,7 +88,7 @@ describe('Credential from object ', () => {
     })
     it('should have an issuer', () => {
         expect(credential.issuer).toBeDefined();
-        expect(credential.issuer).toEqual(ISSUIER_DID);
+        expect(credential.issuer).toEqual(ISSUER_DID);
     })
     it('should have an issuanceDate', () => {
         expect(credential.issuanceDate).toBeDefined();

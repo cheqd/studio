@@ -16,6 +16,7 @@ import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import { toNetwork } from '../helpers/helpers.js';
 import { CommonReturn, type FeePaymentOptions } from '../types/shared.js';
 import { JWT_PROOF_TYPE } from '../types/constants.js';
+import type { StatusList2021Revocation, StatusList2021Suspension } from '@cheqd/did-provider-cheqd';
 
 
 export interface ICheqdCredential extends UnsignedCredential {
@@ -43,6 +44,7 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 		type: string;
 		jwt: string;
 	};
+	statusList?: StatusList2021Revocation | StatusList2021Suspension;
 
 	constructor(w3Credential: W3CVerifiableCredential) {
 		super();
@@ -86,11 +88,11 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 		return credential as VerifiableCredential;
 	}
 
-	public async makeFeePayment(agent: IIdentityService, customer: CustomerEntity): Promise<ICommonErrorResponse> {
+	public async trySetStatusList2021(agent: IIdentityService): Promise<ICommonErrorResponse> {
 		if (!this.credentialStatus) {
 			return this.returnError(
 				StatusCodes.BAD_REQUEST,
-				'Credential status is not placed in credential. Cannot make fee payment.'
+				'Credential status is not placed in credential. Cannot search for statusList'
 			);
 		}
 		const url = new URL(this.credentialStatus.id);
@@ -101,34 +103,50 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 		if (!statusListName) {
 			return this.returnError(
 				StatusCodes.BAD_REQUEST,
-				'Cannot get statusList name from the credential. Cannot make fee payment.'
+				'Cannot get statusList name from the credential. Cannot search for statusList'
 			);
 		}
 		if (!statusPurpose) {
 			return this.returnError(
 				StatusCodes.BAD_REQUEST,
-				'Cannot get status purpose from the credential. Cannot make fee payment.'
+				'Cannot get status purpose from the credential. Cannot search for statusList.'
 			);
 		}
 
 		// ensure status list
 		const statusList = await agent.searchStatusList2021(did, statusListName, statusPurpose);
-		//if no such statusList - error
-		if (!statusList) {
+		// if no such statusList - error
+		if (statusList.error) {
 			return this.returnError(
 				StatusCodes.BAD_REQUEST,
-				'Cannot get status list from the ledger. Cannot make fee payment.'
+				`Cannot get status list from the ledger. Cannot search for statusList. Error: ${statusList.error}`
 			);
 		}
-
-		// No fee payment required
-		if (!statusList?.resource?.metadata?.encrypted) {
-			return this.returnOk();
+		// if status list is empty - error
+		if (!statusList.resource) {
+			return this.returnError(
+				StatusCodes.BAD_GATEWAY,
+				`Cannot get status list from the ledger. Cannot search for statusList. Error: ${statusList.error}`
+			);
 		}
+		this.statusList = statusList.resource;
+		return this.returnOk();
+	}
+
+	public isPaymentNeeded(): boolean {
+		if (!this.statusList) {
+			return false
+		}
+		return this.statusList.metadata.encrypted
+	}
+
+	public async makeFeePayment(agent: IIdentityService, customer: CustomerEntity): Promise<ICommonErrorResponse> {
+		const did = this.issuer;
+		const statusList = this.statusList;
 
 		// make fee payment
 		const feePaymentResult = await Promise.all(
-			statusList?.resource?.metadata?.paymentConditions?.map(async (condition) => {
+			statusList?.metadata?.paymentConditions?.map(async (condition) => {
 				return await agent.remunerateStatusList2021(
 					{
 						feePaymentAddress: condition.feePaymentAddress,
@@ -140,7 +158,6 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 				);
 			}) || []
 		);
-
 		// handle error
 		if (feePaymentResult.some((result) => result.error)) {
 			return this.returnError(
@@ -148,7 +165,6 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 				`payment: error: ${feePaymentResult.find((result) => result.error)?.error}`
 			);
 		}
-
 		return this.returnOk();
 	}
 }

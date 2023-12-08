@@ -83,7 +83,37 @@ export class CheqdW3CVerifiablePresentation extends CommonReturn implements IChe
 		return presentation as VerifiablePresentation;
 	}
 
+	public isPaymentNeeded(): boolean {
+		if (this.verifiableCredential) {
+			return this.verifiableCredential
+				.filter((credential) => credential.credentialStatus)
+				.some(async (credential) => await credential.isPaymentNeeded())
+		}
+		return false
+	}
+
+	public async trySetStatusList2021(agent: IIdentityService): Promise<ICommonErrorResponse>{
+		// It returns an error only if there is logical errors inside
+		if (this.verifiableCredential) {
+			const setResults = await Promise.all(
+				this.verifiableCredential
+					.filter((credential) => credential.credentialStatus)
+					.map(async (credential) => await credential.trySetStatusList2021(agent) satisfies ICommonErrorResponse)
+			);
+			if (setResults.some(setResult => setResult.error)) {
+				return this.returnError(
+					StatusCodes.BAD_REQUEST,
+					`Errors while setting statusList2021: ${
+						setResults.filter((setResult) => setResult.error)
+					}`
+				)
+			}
+		}
+		return this.returnOk()
+	}
+
 	public async makeFeePayment(agent: IIdentityService, customer: CustomerEntity): Promise<ICommonErrorResponse> {
+		// If no credentials in presentation we cannot make payments
 		if (!this.verifiableCredential) {
 			return this.returnError(
 				StatusCodes.BAD_REQUEST,
@@ -97,14 +127,14 @@ export class CheqdW3CVerifiablePresentation extends CommonReturn implements IChe
 				.map(async (credential) => await credential.makeFeePayment(agent, customer))
 		);
 
-		// handle error
 		if (feePaymentResults.some((result) => result.error)) {
 			return this.returnError(
 				StatusCodes.BAD_REQUEST,
-				`payment: error: ${feePaymentResults.find((result) => result.error)?.error}`
-			);
+				`Errors while making payment for the presentation: ${
+					feePaymentResults.filter((result) => result.error)
+				}`
+			)
 		}
-
 		return this.returnOk();
 	}
 }

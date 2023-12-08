@@ -6,12 +6,12 @@ import { JWT_PROOF_TYPE } from "../types/constants";
 
 export const CREDENTIAL_JWT = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vc2NoZW1hLm9yZy9zY2hlbWEuanNvbmxkIiwiaHR0cHM6Ly92ZXJhbW8uaW8vY29udGV4dHMvcHJvZmlsZS92MSIsImh0dHBzOi8vdzNpZC5vcmcvdmMtc3RhdHVzLWxpc3QtMjAyMS92MSJdLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiUGVyc29uIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7Im5hbWUiOiJCb2IiLCJnZW5kZXIiOiJtYWxlIn0sImNyZWRlbnRpYWxTdGF0dXMiOnsiaWQiOiJodHRwczovL3Jlc29sdmVyLmNoZXFkLm5ldC8xLjAvaWRlbnRpZmllcnMvZGlkOmNoZXFkOnRlc3RuZXQ6OTBkNWMxNDEtNzI0Zi00N2FkLTlhZTctYTdjMzNhOWU1NjQzP3Jlc291cmNlTmFtZT1zdXNwZW5zaW9uRW4mcmVzb3VyY2VUeXBlPVN0YXR1c0xpc3QyMDIxU3VzcGVuc2lvbiMxMzMzOCIsInR5cGUiOiJTdGF0dXNMaXN0MjAyMUVudHJ5Iiwic3RhdHVzUHVycG9zZSI6InN1c3BlbnNpb24iLCJzdGF0dXNMaXN0SW5kZXgiOiIxMzMzOCJ9fSwic3ViIjoiZGlkOmtleTp6Nk1raGFYZ0JaRHZvdERrTDUyNTdmYWl6dGlHaUMyUXRLTEdwYm5uRUd0YTJkb0siLCJuYmYiOjE3MDA0NzM0MTYsImlzcyI6ImRpZDpjaGVxZDp0ZXN0bmV0OjkwZDVjMTQxLTcyNGYtNDdhZC05YWU3LWE3YzMzYTllNTY0MyJ9.-14Ril1pZEy2HEEo48gTJr2yOtGxBhUGTFmzVdjAtyhFRsW5zZg9onHt6V9JQ8BaiYBlTkP9GzTnJ-O6hdiyCw';
 export const CREDENTIAL_SUBJECT_ID = 'did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK';
-export const ISSUIER_DID = 'did:cheqd:testnet:90d5c141-724f-47ad-9ae7-a7c33a9e5643';
+export const ISSUER_DID = 'did:cheqd:testnet:90d5c141-724f-47ad-9ae7-a7c33a9e5643';
 export const CREDENTIAL_STATUS_ID = 'https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:90d5c141-724f-47ad-9ae7-a7c33a9e5643?resourceName=suspensionEn&resourceType=StatusList2021Suspension#13338';
 
 export const CREDENTIAL_OBJECT = {
     issuer: {
-        id: ISSUIER_DID
+        id: ISSUER_DID
     },
     credentialSubject: {
         gender: "male",

@@ -248,7 +248,7 @@
  *               description: Policy to skip the audience check when set to `false`.
  *               type: boolean
  *               default: false
- *     IVerifyResult:
+ *     VerifyPresentationResult:
  *       type: object
  *       properties:
  *         verified:

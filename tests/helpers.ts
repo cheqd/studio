@@ -5,13 +5,13 @@ import {
 	DEFAULT_STATUS_LIST_PAYMENT_ADDRESS,
 	DEFAULT_SUBJECT_DID,
 	DEFAULT_TESTNET_DID,
-	VERIFICATION_METHOD_TYPES,
 } from './constants';
+import { VerificationMethods } from '@cheqd/sdk';
 
 export const buildSimpleCreateDID = (network = 'testnet') => {
 	return {
 		identifierFormatType: 'uuid',
-		verificationMethodType: 'Ed25519VerificationKey2018',
+		verificationMethodType: 'Ed255192018',
 		assertionMethod: true,
 		network: network,
 	};
@@ -35,7 +35,7 @@ export const buildUpdateSimpleDID = (
 				controller: did,
 				id: `${did}#key-1`,
 				publicKeyBase58: pubkey,
-				type: VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2018,
+				type: VerificationMethods.Ed255192018,
 			},
 		],
 		authentication: ['string'],
@@ -46,7 +46,7 @@ export const buildUpdateSimpleDID = (
 			verificationMethod: [
 				{
 					id: `${did}#key-1`,
-					type: VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2018,
+					type: VerificationMethods.Ed255192018,
 					controller: did,
 					publicKeyBase58: pubkey,
 				},

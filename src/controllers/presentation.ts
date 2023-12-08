@@ -5,6 +5,7 @@ import { check, query, validationResult } from 'express-validator';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { jwtDecode } from 'jwt-decode';
 import { CheqdW3CVerifiablePresentation } from '../services/w3c_presentation.js';
+import type { VerifyPresentationResponseBody } from '../types/shared.js';
 
 export class PresentationController {
 	public static presentationCreateValidator = [
@@ -169,7 +170,7 @@ export class PresentationController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/IVerifyResult'
+	 *               $ref: '#/components/schemas/VerifyPresentationResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -195,7 +196,7 @@ export class PresentationController {
 		const holderDid = cheqdPresentation.holder;
 
 		if (!allowDeactivatedDid) {
-			const resolutionResult = await new IdentityServiceStrategySetup().agent.resolveDid(holderDid);
+			const resolutionResult = await identityServiceStrategySetup.agent.resolveDid(holderDid);
 
 			if (resolutionResult.didDocumentMetadata.deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
@@ -205,15 +206,23 @@ export class PresentationController {
 		}
 
 		if (makeFeePayment) {
-			const feePaymentResult = await cheqdPresentation.makeFeePayment(
-				identityServiceStrategySetup.agent,
-				response.locals.customer
-			);
-			if (feePaymentResult.error) {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					checked: false,
-					error: `verify: payment: error: ${feePaymentResult.error}`,
-				});
+			const setResult = await cheqdPresentation.trySetStatusList2021(identityServiceStrategySetup.agent)
+			if (setResult.error) {
+				return response.status(setResult.status).send({
+					error: setResult.error
+				})
+			}
+			if (cheqdPresentation.isPaymentNeeded()) {
+				const feePaymentResult = await cheqdPresentation.makeFeePayment(
+					identityServiceStrategySetup.agent,
+					response.locals.customer
+				);
+				if (feePaymentResult.error) {
+					return response.status(StatusCodes.BAD_REQUEST).json({
+						checked: false,
+						error: `verify: payment: error: ${feePaymentResult.error}`,
+					});
+				}
 			}
 		}
 
@@ -235,6 +244,29 @@ export class PresentationController {
 			}
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			// define error
+			const errorRef = error as Record<string, unknown>;
+			// handle doesn't meet condition
+			if (errorRef?.errorCode === 'NodeAccessControlConditionsReturnedNotAuthorized')
+				return response.status(StatusCodes.UNAUTHORIZED).json({
+					verified: false,
+					error: `check: error: ${
+						errorRef?.message
+							? 'unauthorised: decryption conditions are not met'
+							: (error as Record<string, unknown>).toString()
+					}`,
+				} satisfies VerifyPresentationResponseBody);
+			// handle incorrect access control conditions
+			if (errorRef?.errorCode === 'incorrect_access_control_conditions')
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					verified: false,
+					error: `check: error: ${
+						errorRef?.message
+							? 'incorrect access control conditions'
+							: (error as Record<string, unknown>).toString()
+					}`,
+				} satisfies VerifyPresentationResponseBody);
+			// catch all other unhandled errors
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});

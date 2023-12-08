@@ -21,9 +21,9 @@ for (const presentationType of ['jwt', 'object']) {
                 headers: { 'Content-Type': 'application/json' },
             });
             expect(response).not.toBeOK();
-            expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+            expect(response.status()).toBe(StatusCodes.UNAUTHORIZED);
             const body = await response.json();
-            expect(body.error).toContain("The access control condition check returned that you are not permitted to access this content");
+            expect(body.error).toContain("check: error: unauthorised: decryption conditions are not met");
         });
     }
 }

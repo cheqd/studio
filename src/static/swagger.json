@@ -1042,7 +1042,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IVerifyResult"
+                  "$ref": "#/components/schemas/VerifyPresentationResult"
                 }
               }
             }
@@ -1770,7 +1770,7 @@
           }
         }
       },
-      "IVerifyResult": {
+      "VerifyPresentationResult": {
         "type": "object",
         "properties": {
           "verified": {

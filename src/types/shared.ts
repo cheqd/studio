@@ -198,6 +198,11 @@ export type CheckStatusListUnsuccessfulResponseBody = {
 	error: string;
 };
 
+export type VerifyPresentationResponseBody = {
+	verified: false;
+	error: string;
+}
+
 export type SearchStatusListQuery = {
 	did: string;
 	statusListName: string;
