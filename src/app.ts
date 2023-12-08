@@ -119,6 +119,11 @@ class App {
 			PresentationController.presentationVerifyValidator,
 			new PresentationController().verifyPresentation
 		);
+		app.post(
+			`/presentation/create`,
+			PresentationController.presentationCreateValidator,
+			new PresentationController().createPresentation
+		);
 
 		// revocation
 		app.post(

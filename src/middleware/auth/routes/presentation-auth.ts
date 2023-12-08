@@ -6,7 +6,8 @@ export class PresentationAuthHandler extends BaseAuthHandler {
 	constructor() {
 		super();
 		// Unauthorized routes
-		this.registerRoute('/presentation/verify', 'POST', '', { allowUnauthorized: true, skipNamespace: true });
+		this.registerRoute('/presentation/verify', 'POST', 'verify:presentation', { skipNamespace: true });
+		this.registerRoute('/presentation/create', 'POST', 'create:presentation', { skipNamespace: true });
 	}
 	public async handle(request: Request, response: Response): Promise<IAuthResponse> {
 		if (!request.path.includes('/presentation/')) {

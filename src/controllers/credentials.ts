@@ -56,33 +56,6 @@ export class CredentialController {
 		query('publish').optional().isBoolean().withMessage('publish should be a boolean value'),
 	];
 
-	public static presentationValidator = [
-		check('presentation')
-			.exists()
-			.withMessage('W3c verifiable presentation was not provided')
-			.custom((value) => {
-				if (typeof value === 'string' || typeof value === 'object') {
-					return true;
-				}
-				return false;
-			})
-			.withMessage('Entry must be a JWT or a presentation body with JWT proof')
-			.custom((value) => {
-				if (typeof value === 'string') {
-					try {
-						jwtDecode(value);
-					} catch (e) {
-						return false;
-					}
-				}
-				return true;
-			})
-			.withMessage('An invalid JWT string'),
-		check('verifierDid').optional().isString().withMessage('Invalid verifier DID'),
-		check('policies').optional().isObject().withMessage('Verification policies should be an object'),
-		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value'),
-	];
-
 	/**
 	 * @openapi
 	 *
@@ -153,7 +126,7 @@ export class CredentialController {
 			return response.status(StatusCodes.OK).json(credential);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `${error}`,
+				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
 		}
 	}
@@ -200,7 +173,7 @@ export class CredentialController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/IVerifyResult'
+	 *               $ref: '#/components/schemas/VerifyCredentialResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -246,7 +219,7 @@ export class CredentialController {
 			return response.status(StatusCodes.OK).json(verifyResult);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `${error}`,
+				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
 		}
 	}
@@ -368,7 +341,7 @@ export class CredentialController {
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `${error}`,
+				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
 		}
 	}
@@ -473,7 +446,7 @@ export class CredentialController {
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `${error}`,
+				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
 		}
 	}
@@ -575,7 +548,7 @@ export class CredentialController {
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `${error}`,
+				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
 		}
 	}

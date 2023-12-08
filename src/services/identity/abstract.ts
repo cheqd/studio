@@ -7,6 +7,7 @@ import type {
 	IIdentifier,
 	IVerifyResult,
 	ManagedKeyInfo,
+	PresentationPayload,
 	VerifiableCredential,
 	VerifiablePresentation,
 } from '@veramo/core';
@@ -186,6 +187,13 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 	resolve(didUrl: string): Promise<Response> {
+		throw new Error(`Not supported`);
+	}
+	createPresentation(
+		presentation: PresentationPayload,
+		verificationOptions: VerificationOptions,
+		customer: CustomerEntity
+	): Promise<VerifiablePresentation> {
 		throw new Error(`Not supported`);
 	}
 	verifyCredential(

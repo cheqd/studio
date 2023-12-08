@@ -5,7 +5,6 @@ import type {
 	IResolver,
 	ICredentialIssuer,
 	ICredentialVerifier,
-	W3CVerifiableCredential,
 	TAgent,
 	VerificationPolicies,
 } from '@veramo/core';
@@ -34,6 +33,9 @@ import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2';
 import type { DIDDocument } from 'did-resolver';
 import type { CustomerEntity } from '../database/entities/customer.entity';
 import type { UserEntity } from '../database/entities/user.entity';
+import type { IReturn } from '../middleware/auth/routine.js';
+import type { ICommonErrorResponse } from './authentication.js';
+import { StatusCodes } from 'http-status-codes';
 
 const DefaultUuidPattern = '([a-zA-Z0-9-]{36})';
 const DefaultMethodSpecificIdPattern = `(?:[a-zA-Z0-9]{21,22}|${DefaultUuidPattern})`;
@@ -196,6 +198,11 @@ export type CheckStatusListUnsuccessfulResponseBody = {
 	error: string;
 };
 
+export type VerifyPresentationResponseBody = {
+	verified: false;
+	error: string;
+}
+
 export type SearchStatusListQuery = {
 	did: string;
 	statusListName: string;
@@ -224,23 +231,7 @@ export interface IHash {
 	[details: string]: string;
 }
 
-export type CompactJWT = string;
-
 export type DateType = string | Date;
-
-export interface PresentationPayload {
-	holder: string;
-	verifiableCredential?: W3CVerifiableCredential[];
-	type?: string[];
-	'@context'?: string[];
-	verifier?: string[];
-	issuanceDate?: DateType;
-	expirationDate?: DateType;
-	id?: string;
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	[x: string]: any;
-}
 
 export type GenericAuthResponse = {
 	authenticated: boolean;
@@ -390,4 +381,27 @@ export interface IResourceTrack {
 export interface ITrackResult {
 	created: boolean;
 	error?: string;
+}
+
+export interface IErrorResponse {
+	errorCode: string;
+	message: string;
+}
+
+export class CommonReturn implements IReturn {
+	returnOk(data = {}): ICommonErrorResponse {
+		return {
+			status: StatusCodes.OK,
+			error: '',
+			data: data,
+		};
+	}
+
+	returnError(status: number, error: string, data = {}): ICommonErrorResponse {
+		return {
+			status: status,
+			error: error,
+			data: data,
+		};
+	}
 }

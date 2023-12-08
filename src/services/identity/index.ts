@@ -11,6 +11,7 @@ import type {
 	IIdentifier,
 	IVerifyResult,
 	ManagedKeyInfo,
+	PresentationPayload,
 	TAgent,
 	VerifiableCredential,
 	VerifiablePresentation,
@@ -80,6 +81,11 @@ export interface IIdentityService {
 		verificationOptions: VerificationOptions,
 		customer: CustomerEntity
 	): Promise<IVerifyResult>;
+	createPresentation(
+		presentation: PresentationPayload,
+		verificationOptions: VerificationOptions,
+		customer: CustomerEntity
+	): Promise<VerifiablePresentation>;
 	verifyPresentation(
 		presentation: VerifiablePresentation | string,
 		verificationOptions: VerificationOptions,

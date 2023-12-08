@@ -22,18 +22,7 @@ export const NOT_SUPPORTED_VERIFICATION_METHOD_TYPE = 'not_supported_vm_type';
 export const INVALID_ID = 'invalid_id';
 export const INVALID_DID = 'invalid_did';
 
-export enum NETWORK {
-	MAINNET = 'mainnet',
-	TESTNET = 'testnet',
-}
-
 export enum ID_TYPE {
 	UUID = 'uuid',
 	BASE58BTC = 'base58btc',
-}
-
-export enum VERIFICATION_METHOD_TYPES {
-	Ed25519VerificationKey2018 = 'Ed25519VerificationKey2018',
-	Ed25519VerificationKey2020 = 'Ed25519VerificationKey2020',
-	JsonWebKey2020 = 'JsonWebKey2020',
 }
