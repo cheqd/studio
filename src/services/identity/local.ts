@@ -148,7 +148,7 @@ export class LocalIdentityService extends DefaultIdentityService {
 	): Promise<VerifiableCredential> {
 		try {
 			await this.importDid();
-			return await Veramo.instance.createCredential(this.initAgent(), credential, format, statusListOptions);
+			return await Veramo.instance.issueCredential(this.initAgent(), credential, format, statusListOptions);
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
