@@ -9,7 +9,7 @@ import type { VerifyPresentationResponseBody } from '../types/shared.js';
 
 export class PresentationController {
 	public static presentationCreateValidator = [
-		check('credential')
+		check('credentials')
 			.exists()
 			.withMessage('W3c verifiable credential was not provided')
 			.custom((value) => {

@@ -56,3 +56,26 @@ for (const presentationType of ['jwt', 'object']) {
         }
     }
 }
+
+for (const presentationType of ['jwt', 'object']) {
+    for (const verifyStatus of [true, false]) {
+        test(`[Positive] It should return verify: True. 
+        Presenation format is ${presentationType}. 
+        Encrypted and Unencrypted statusList2021. 
+        VerifyStatus: ${verifyStatus}}`, async ({
+            request
+        }) => {
+            const verifyRequest = JSON.parse(fs.readFileSync(`${PAYLOADS_BASE_PATH}/verify-positive-${presentationType}-un-and-encrypted.json`, 'utf-8'));
+            const response = await request.post(`/presentation/verify?verifyStatus=${verifyStatus}&fetchRemoteContexts=false&allowDeactivatedDid=false`, {
+                data: verifyRequest,
+                headers: { 'Content-Type': 'application/json' },
+            });
+            expect(response).toBeOK();
+            expect(await response.json()).toEqual(
+                expect.objectContaining({
+                    verified: true,
+                })
+            );
+        });
+    }
+}

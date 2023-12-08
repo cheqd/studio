@@ -169,7 +169,7 @@ export class CredentialController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/IVerifyResult'
+	 *               $ref: '#/components/schemas/VerifyCredentialResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:

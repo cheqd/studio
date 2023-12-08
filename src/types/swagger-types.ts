@@ -261,6 +261,19 @@
  *           type: string
  *         verifiableCredential:
  *           type: object
+ *     VerifyCredentialResult:
+ *       type: object
+ *       properties:
+ *         verified:
+ *           type: boolean
+ *         issuer:
+ *           type: string
+ *         signer:
+ *           type: object
+ *         jwt:
+ *           type: string
+ *         verifiableCredential:
+ *           type: object
  *       example:
  *         verified: true
  *         polices: {}
