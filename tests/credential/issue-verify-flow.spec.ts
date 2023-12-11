@@ -21,13 +21,14 @@ test(' Issue a jwt credential', async ({ request }) => {
 		},
 	});
 	const credential = await response.json();
+	console.log(credential);
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 	expect(credential.proof.type).toBe('JwtProof2020');
 });
 
 test(' Issue a jsonLD credential', async ({ request }) => {
-	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_BASE_PATH}/credential-issue-jwt.json`, 'utf-8'));
+	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_BASE_PATH}/credential-issue-jsonld.json`, 'utf-8'));
 	credentialData.issuerDid = issuerDid;
 	const response = await request.post(`/credential/issue`, {
 		data: JSON.stringify(credentialData),
@@ -36,6 +37,7 @@ test(' Issue a jsonLD credential', async ({ request }) => {
 		},
 	});
 	const credential = await response.json();
+	console.log(credential);
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 	expect(credential.proof.type).toBe('Ed25519Signature2018');
