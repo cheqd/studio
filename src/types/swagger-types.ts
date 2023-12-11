@@ -61,7 +61,7 @@
  *           type: string
  *           enum:
  *             - jwt
- *             - lds
+ *             - jsonld
  *           example: jwt
  *         credentialStatus:
  *           description: Optional `credentialStatus` properties for VC revocation or suspension. Takes `statusListName` and `statusListPurpose` as inputs.

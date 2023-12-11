@@ -8,20 +8,6 @@ const PAYLOADS_BASE_PATH = './tests/payloads/credential';
 
 let issuerDid: string;
 
-// test('Create issuer Did', async ({ request }) => {
-// 	// send request to create DID
-// 	let response = await request.post(`/did/create`, {
-// 		data:
-// 			`network=${CheqdNetwork.Testnet}&identifierFormatType=${ID_TYPE.BASE58BTC}&` +
-// 			`verificationMethodType=${VerificationMethods.Ed255192018}`,
-// 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-// 	});
-// 	issuerDid = (await response.json()).did;
-// 	console.log(`issuerDid: ${issuerDid}`);
-// 	expect(response).toBeOK();
-// 	expect(response.status()).toBe(StatusCodes.OK);
-// });
-
 test(' Issue a jwt credential', async ({ request }) => {
 	const dids = (await (await request.get(`/did/list`)).json()) as string[];
 	issuerDid = dids.find((did) => did.startsWith('did:cheqd:testnet'));
@@ -34,9 +20,10 @@ test(' Issue a jwt credential', async ({ request }) => {
 			'Content-Type': 'application/json',
 		},
 	});
-	console.log(await response.json());
+	const credential = await response.json();
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
+	expect(credential.proof.type).toBe('JwtProof2020');
 });
 
 test(' Issue a jsonLD credential', async ({ request }) => {
@@ -48,7 +35,8 @@ test(' Issue a jsonLD credential', async ({ request }) => {
 			'Content-Type': 'application/json',
 		},
 	});
-	console.log(await response.json());
+	const credential = await response.json();
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
+	expect(credential.proof.type).toBe('Ed25519Signature2018');
 });
