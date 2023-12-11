@@ -19,6 +19,7 @@ test('Create issuer Did', async ({ request }) => {
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 	});
 	issuerDid = (await response.json()).did;
+	console.log(`issuerDid: ${issuerDid}`);
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 });
@@ -32,6 +33,7 @@ test(' Issue a jwt credential', async ({ request }) => {
 			'Content-Type': 'application/json',
 		},
 	});
+	console.log(await response.json());
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 });
@@ -45,6 +47,7 @@ test(' Issue a jsonLD credential', async ({ request }) => {
 			'Content-Type': 'application/json',
 		},
 	});
+	console.log(await response.json());
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 });
