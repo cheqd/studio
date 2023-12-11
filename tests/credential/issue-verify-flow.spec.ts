@@ -43,7 +43,7 @@ test(' Issue a jsonLD credential', async ({ request }) => {
 	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_BASE_PATH}/credential-issue-jwt.json`, 'utf-8'));
 	credentialData.issuerDid = issuerDid;
 	const response = await request.post(`/credential/issue`, {
-		data: JSON.parse(fs.readFileSync(`${PAYLOADS_BASE_PATH}/credential-issue-jsonld.json`, 'utf-8')),
+		data: JSON.stringify(credentialData),
 		headers: {
 			'Content-Type': 'application/json',
 		},
