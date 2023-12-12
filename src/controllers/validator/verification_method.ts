@@ -1,5 +1,4 @@
 import { VerificationMethods } from '@cheqd/sdk';
-import { DIDValidator } from './did.js';
 import type { IValidationResult, IValidator } from './validator.js';
 import type { VerificationMethod } from 'did-resolver';
 import { base58btc } from 'multiformats/bases/base58';
@@ -7,17 +6,18 @@ import bs58 from 'bs58';
 import { ValidateEd25519PubKey } from './utils.js';
 import { Helpers, IHelpers } from './helpers.js';
 import { DIDDocumentIDValudator } from './did_document_id.js';
+import { CheqdControllerValidator } from './controller.js';
 
 export class VerificationMethodValidator implements IValidator {
 	protected verificationMethodValidators: IValidator[];
 	protected didDocumentIDValidator: IValidator;
-	protected didValidator: IValidator;
+	protected controllerValidator: IValidator;
 
 	helpers: Helpers;
 
 	constructor(
 		verificationMethodValidators?: IValidator[],
-		didValidator?: IValidator,
+		controllerValidator?: IValidator,
 		didDocumentIDValidator?: IValidator,
 		helpers?: IHelpers
 	) {
@@ -28,8 +28,8 @@ export class VerificationMethodValidator implements IValidator {
 				new JsonWebKey2020Validator(),
 			];
 		}
-		if (!didValidator) {
-			didValidator = new DIDValidator();
+		if (!controllerValidator) {
+			controllerValidator = new CheqdControllerValidator();
 		}
 		if (!didDocumentIDValidator) {
 			didDocumentIDValidator = new DIDDocumentIDValudator();
@@ -38,7 +38,7 @@ export class VerificationMethodValidator implements IValidator {
 			helpers = new Helpers();
 		}
 		this.verificationMethodValidators = verificationMethodValidators;
-		this.didValidator = didValidator;
+		this.controllerValidator = controllerValidator;
 		this.didDocumentIDValidator = didDocumentIDValidator;
 		this.helpers = helpers;
 	}
@@ -62,9 +62,20 @@ export class VerificationMethodValidator implements IValidator {
 		if (!_v.valid) {
 			return {
 				valid: false,
-				error: ` Verification Method id has validation error: ${_v.error}`,
+				error: `Verification Method id has validation error: ${_v.error}`,
 			};
 		}
+
+        // Check controller
+        if (verificationMethod.controller) {
+            _v = this.controllerValidator.validate([verificationMethod.controller]);
+            if (!_v.valid) {
+                return {
+                    valid: false,
+                    error: `Controller has validation error: ${_v.error}`,
+                };
+            }
+        }
 
 		const validatorVM = this.verificationMethodValidators.find((v) => v.subject === verificationMethod.type);
 		if (!validatorVM) {
