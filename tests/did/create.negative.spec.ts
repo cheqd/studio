@@ -59,6 +59,7 @@ test('[Negative] It cannot create DID with not existent key in request body (JSO
 		},
 		headers: { 'Content-Type': 'application/json' },
 	});
+	console.log(await response.text());
 	expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
 	expect(await response.text()).toEqual(expect.stringContaining('Key not found'));
 });

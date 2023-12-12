@@ -174,5 +174,3 @@ export class DIDValidator implements IValidator {
 		return { valid: true };
 	}
 }
-
-export class CheqdControllerValidator extends CheqdDIDValidator {}

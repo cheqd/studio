@@ -1,7 +1,8 @@
-import { DIDDocument, validateSpecCompliantPayload } from '@cheqd/sdk';
-import { CheqdControllerValidator, DIDValidator } from './did.js';
+import type { DIDDocument } from '@cheqd/sdk';
+import { DIDValidator } from './did.js';
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
 import { VerificationMethodValidator } from './verification_method.js';
+import { CheqdControllerValidator } from './controller.js';
 
 export class DIDDocumentValidator implements IValidator {
 	protected didValidator: IValidator;
@@ -27,13 +28,12 @@ export class DIDDocumentValidator implements IValidator {
 	validate(didDocument: Validatable): IValidationResult {
 		didDocument = didDocument as DIDDocument;
 		// Check spec compliance
-		const _spec = validateSpecCompliantPayload(didDocument);
-		if (!_spec.valid) {
-			return {
-				valid: false,
-				error: _spec.error,
-			};
-		}
+			// id is required, validated on both compile and runtime
+        if (!didDocument?.id) return { valid: false, error: 'id for DIDDocument is required' };
+
+        // verificationMethod must be an array
+        if (didDocument.verificationMethod && !Array.isArray(didDocument?.verificationMethod)) return { valid: false, error: 'verificationMethod must be an array' };
+
 		// Check id (id of DIDDocument must be valid DID)
 		let _v = this.didValidator?.validate(didDocument.id);
 		if (!_v?.valid) {
