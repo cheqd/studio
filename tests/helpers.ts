@@ -152,8 +152,7 @@ export const buildSimpleService = (
 	};
 };
 
-
-export async function createDID( request: APIRequestContext, payload): Promise<string> {
+export async function createDID(request: APIRequestContext, payload): Promise<string> {
 	const response = await request.post('/did/create', {
 		data: payload,
 		headers: { 'Content-Type': 'application/json' },

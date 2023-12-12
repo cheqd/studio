@@ -3,7 +3,6 @@ import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 
 export class KeyController {
-
 	/**
 	 * @openapi
 	 *
@@ -39,13 +38,10 @@ export class KeyController {
 	 *               error: Internal Error
 	 */
 	public async createKey(request: Request, response: Response) {
-        // Get strategy e.g. postgres or local
-        const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+		// Get strategy e.g. postgres or local
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
-			const key = await identityServiceStrategySetup.agent.createKey(
-				'Ed25519',
-				response.locals.customer
-			);
+			const key = await identityServiceStrategySetup.agent.createKey('Ed25519', response.locals.customer);
 			return response.status(StatusCodes.OK).json(key);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -96,13 +92,10 @@ export class KeyController {
 	 *               error: Internal Error
 	 */
 	public async getKey(request: Request, response: Response) {
-        // Get strategy e.g. postgres or local
-        const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+		// Get strategy e.g. postgres or local
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
-			const key = await identityServiceStrategySetup.agent.getKey(
-				request.params.kid,
-				response.locals.customer
-			);
+			const key = await identityServiceStrategySetup.agent.getKey(request.params.kid, response.locals.customer);
 			if (key) {
 				return response.status(StatusCodes.OK).json(key);
 			}

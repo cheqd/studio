@@ -5,15 +5,12 @@ import { v4 } from 'uuid';
 import type { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import {
-	getQueryParams,
-} from '../helpers/helpers.js';
+import { getQueryParams } from '../helpers/helpers.js';
 import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
 import type { ITrackOperation } from '../types/shared.js';
 import { OPERATION_CATEGORY_NAME_RESOURCE } from '../types/constants.js';
 
 export class ResourceController {
-
 	public static resourceValidator = [
 		param('did').exists().isString().contains('did:cheqd').withMessage('Invalid DID'),
 		check('name').exists().withMessage('name is required').isString().withMessage('Invalid name'),
@@ -68,13 +65,13 @@ export class ResourceController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async createResource(request: Request, response: Response) {
-        // validate request
-        const result = validationResult(request);
+		// validate request
+		const result = validationResult(request);
 
-        // handle error
-        if (!result.isEmpty()) {
-            return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
-        }
+		// handle error
+		if (!result.isEmpty()) {
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+		}
 
 		const { did } = request.params;
 		const { data, encoding, name, type, alsoKnownAs, version, network } = request.body;
@@ -222,8 +219,8 @@ export class ResourceController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async getResource(request: Request, response: Response) {
-        // Get strategy e.g. postgres or local
-        const identityServiceStrategySetup = new IdentityServiceStrategySetup();
+		// Get strategy e.g. postgres or local
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 		try {
 			let res: globalThis.Response;
 			if (request.params.did) {

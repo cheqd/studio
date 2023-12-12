@@ -169,7 +169,11 @@ class App {
 		app.get('/did/search/:did', new DIDController().resolveDidUrl);
 
 		// Resource API
-		app.post('/resource/create/:did', ResourceController.resourceValidator, new ResourceController().createResource);
+		app.post(
+			'/resource/create/:did',
+			ResourceController.resourceValidator,
+			new ResourceController().createResource
+		);
 		app.get('/resource/search/:did', new ResourceController().getResource);
 
 		// Account API

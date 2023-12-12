@@ -196,7 +196,7 @@ export class CredentialController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 
 		try {
-			if (!allowDeactivatedDid && await this.isIssuerDidDeactivated(credential)) {
+			if (!allowDeactivatedDid && (await this.isIssuerDidDeactivated(credential))) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: `Credential issuer DID is deactivated`,
 				});
@@ -235,11 +235,11 @@ export class CredentialController {
 			const decoded: any = jwtDecode(credential);
 			issuerDid = decoded.iss;
 		}
-		
+
 		const resolutionResult = await identityServiceStrategySetup.agent.resolve(issuerDid);
 		const body = await resolutionResult.json();
 
-		return body.didDocumentMetadata.deactivated
+		return body.didDocumentMetadata.deactivated;
 	}
 
 	/**
@@ -399,7 +399,6 @@ export class CredentialController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-
 			const result = await identityServiceStrategySetup.agent.suspendCredentials(
 				request.body.credential,
 				publish,

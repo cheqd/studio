@@ -194,11 +194,11 @@ export class PresentationController {
 		const cheqdPresentation = new CheqdW3CVerifiablePresentation(presentation);
 
 		if (makeFeePayment) {
-			const setResult = await cheqdPresentation.trySetStatusList2021(identityServiceStrategySetup.agent)
+			const setResult = await cheqdPresentation.trySetStatusList2021(identityServiceStrategySetup.agent);
 			if (setResult.error) {
 				return response.status(setResult.status).send({
-					error: setResult.error
-				})
+					error: setResult.error,
+				});
 			}
 			if (cheqdPresentation.isPaymentNeeded()) {
 				const feePaymentResult = await cheqdPresentation.makeFeePayment(
@@ -215,7 +215,7 @@ export class PresentationController {
 		}
 
 		try {
-			if (!allowDeactivatedDid && await this.isIssuerDidDeactivated(presentation)) {
+			if (!allowDeactivatedDid && (await this.isIssuerDidDeactivated(presentation))) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: `Credential issuer DID is deactivated`,
 				});
@@ -277,10 +277,10 @@ export class PresentationController {
 			const decoded: any = jwtDecode(presentation);
 			issuerDid = decoded.iss;
 		}
-		
+
 		const resolutionResult = await identityServiceStrategySetup.agent.resolve(issuerDid);
 		const body = await resolutionResult.json();
 
-		return body.didDocumentMetadata.deactivated
+		return body.didDocumentMetadata.deactivated;
 	}
 }
