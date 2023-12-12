@@ -16,7 +16,6 @@ test('[Positive] It can create DID with mandatory properties (Form based + Indy 
 			`verificationMethodType=${VerificationMethods.Ed255192018}`,
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 	});
-	console.log(await response.json());
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 

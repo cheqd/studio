@@ -29,7 +29,7 @@ tsconfig.tsbuildinfo
 **/postgres-local.env
 
 # Verida
-v[0-9,a-z]*
+# v[0-9,a-z]*
 
 
 ### GENERAL EXCLUSIONS ###

@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { check, param, validationResult } from 'express-validator';
+// import { check, param } from 'express-validator';
 import { fromString, toString } from 'uint8arrays';
 import {
 	CheqdNetwork,
@@ -21,6 +21,8 @@ import {
 import { bases } from 'multiformats/basics';
 import { base64ToBytes } from 'did-jwt';
 import type { CreateDidRequestBody } from '../types/shared.js';
+
+import { check, validationResult } from './validator/index.js';
 
 export class DIDController {
 	// ToDo: improve validation in a "bail" fashion
@@ -64,9 +66,9 @@ export class DIDController {
 			.withMessage('Provide a valid DIDDocument or a DID and atleast one field to update'),
 	];
 
-	public static deactivateDIDValidator = [
-		param('did').exists().isString().contains('did:cheqd').withMessage('Invalid DID'),
-	];
+	// public static deactivateDIDValidator = [
+	// 	param('did').exists().isString().contains('did:cheqd').withMessage('Invalid DID'),
+	// ];
 
 	/**
 	 * @openapi
