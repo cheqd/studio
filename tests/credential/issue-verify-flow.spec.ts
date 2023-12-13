@@ -76,7 +76,6 @@ test(' Verify a jsonld credential', async ({ request }) => {
 		},
 	});
 	const result = await response.json();
-	console.log(result);
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 	expect(result.verified).toBe(true);
