@@ -56,6 +56,7 @@ test(' Verify a credential status after suspension', async ({ request }) => {
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 	expect(result.suspended).toBe(true);
+	expect(result.published).toBe(true);
 
 	const verificationResponse = await request.post(`/credential/verify?verifyStatus=true`, {
 		data: JSON.stringify({
@@ -65,11 +66,11 @@ test(' Verify a credential status after suspension', async ({ request }) => {
 			'Content-Type': 'application/json',
 		},
 	});
-	const verificationResult = await response.json();
+	const verificationResult = await verificationResponse.json();
 	expect(verificationResponse).toBeOK();
 	expect(verificationResponse.status()).toBe(StatusCodes.OK);
 	expect(verificationResult.verified).toBe(true);
-	expect(result.suspended).toBe(true);
+	expect(verificationResult.suspended).toBe(true);
 });
 
 test(' Verify a credential status after reinstating', async ({ request }) => {
@@ -84,7 +85,7 @@ test(' Verify a credential status after reinstating', async ({ request }) => {
 	const result = await response.json();
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
-	expect(result.suspended).toBe(false);
+	expect(result.unsuspended).toBe(true);
 
 	const verificationResponse = await request.post(`/credential/verify?verifyStatus=true`, {
 		data: JSON.stringify({
@@ -94,9 +95,9 @@ test(' Verify a credential status after reinstating', async ({ request }) => {
 			'Content-Type': 'application/json',
 		},
 	});
-	const verificationResult = await response.json();
+	const verificationResult = await verificationResponse.json();
 	expect(verificationResponse).toBeOK();
 	expect(verificationResponse.status()).toBe(StatusCodes.OK);
 	expect(verificationResult.verified).toBe(true);
-	expect(result.suspended).toBe(false);
+	expect(verificationResult.suspended).toBe(false);
 });

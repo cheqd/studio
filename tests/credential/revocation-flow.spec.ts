@@ -55,6 +55,7 @@ test(' Verify a credential status after revocation', async ({ request }) => {
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 	expect(result.revoked).toBe(true);
+	expect(result.published).toBe(true);
 
 	const verificationResponse = await request.post(`/credential/verify?verifyStatus=true`, {
 		data: JSON.stringify({
@@ -64,9 +65,9 @@ test(' Verify a credential status after revocation', async ({ request }) => {
 			'Content-Type': 'application/json',
 		},
 	});
-	const verificationResult = await response.json();
+	const verificationResult = await verificationResponse.json();
 	expect(verificationResponse).toBeOK();
 	expect(verificationResponse.status()).toBe(StatusCodes.OK);
 	expect(verificationResult.verified).toBe(true);
-	expect(result.revoked).toBe(true);
+	expect(verificationResult.revoked).toBe(true);
 });
