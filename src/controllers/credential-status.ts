@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { check, query, validationResult } from 'express-validator';
+import { check, validationResult, query } from './validator/index.js';
 import { fromString } from 'uint8arrays';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
@@ -51,15 +51,7 @@ export class CredentialStatusController {
 			.exists()
 			.withMessage('did: required')
 			.bail()
-			.isString()
-			.withMessage('did: should be a string')
-			.bail()
-			.notEmpty()
-			.withMessage('did: should be a non-empty string')
-			.bail()
-			.matches(DefaultDidUrlPattern)
-			.withMessage('did: invalid format, should be did:cheqd:<namespace>:<method_specific_identifier>')
-			.bail(),
+			.isDID(),
 		check('statusPurpose')
 			.exists()
 			.withMessage('statusPurpose: required')
@@ -235,14 +227,7 @@ export class CredentialStatusController {
 			.exists()
 			.withMessage('did: required')
 			.bail()
-			.isString()
-			.withMessage('did: should be a string')
-			.bail()
-			.notEmpty()
-			.withMessage('did: should be a non-empty string')
-			.bail()
-			.matches(DefaultDidUrlPattern)
-			.withMessage('did: invalid format, should be did:cheqd:<namespace>:<method_specific_identifier>')
+			.isDID()
 			.bail(),
 		check('statusAction')
 			.exists()
@@ -399,15 +384,7 @@ export class CredentialStatusController {
 		check('did')
 			.exists()
 			.withMessage('did: required')
-			.bail()
-			.isString()
-			.withMessage('did: should be a string')
-			.bail()
-			.notEmpty()
-			.withMessage('did: should be a non-empty string')
-			.bail()
-			.matches(DefaultDidUrlPattern)
-			.withMessage('did: invalid format, should be did:cheqd:<namespace>:<method_specific_identifier>')
+			.isDID()
 			.bail(),
 		check('statusListName')
 			.exists()
@@ -456,15 +433,7 @@ export class CredentialStatusController {
 		query('did')
 			.exists()
 			.withMessage('did: required')
-			.bail()
-			.isString()
-			.withMessage('did: should be a string')
-			.bail()
-			.notEmpty()
-			.withMessage('did: should be a non-empty string')
-			.bail()
-			.matches(DefaultDidUrlPattern)
-			.withMessage('did: invalid format, should be did:cheqd:<namespace>:<method_specific_identifier>')
+			.isDID()
 			.bail(),
 		query('statusListName')
 			.exists()

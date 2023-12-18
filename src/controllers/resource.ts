@@ -1,5 +1,4 @@
 import type { Request, Response } from 'express';
-import { check, param, validationResult } from 'express-validator';
 import { fromString } from 'uint8arrays';
 import { v4 } from 'uuid';
 import type { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js';
@@ -9,22 +8,110 @@ import { getQueryParams } from '../helpers/helpers.js';
 import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
 import type { ITrackOperation } from '../types/shared.js';
 import { OPERATION_CATEGORY_NAME_RESOURCE } from '../types/constants.js';
+import { check, validationResult, param, query } from './validator/index.js';
 
 export class ResourceController {
-	public static resourceValidator = [
-		param('did').exists().isString().contains('did:cheqd').withMessage('Invalid DID'),
-		check('name').exists().withMessage('name is required').isString().withMessage('Invalid name'),
-		check('type').exists().withMessage('type is required').isString().withMessage('Invalid type'),
-		check('data').exists().withMessage('data is required').isString().withMessage('Invalid data'),
+	public static createResourceValidator = [
+		param('did')
+			.exists()
+			.withMessage('did is required')
+			.bail()
+			.isDID()
+			.bail(),
+		check('name')
+			.exists()
+			.withMessage('name is required')
+			.isString()
+			.withMessage('Name should has string type')
+			.bail(),
+		check('type')
+			.exists()
+			.withMessage('type is required')
+			.bail()
+			.isString()
+			.withMessage('Invalid type')
+			.bail(),
+		check('data')
+			.exists()
+			.withMessage('data is required')
+			.bail()
+			.isString()
+			.withMessage('Data is supposed to have type of String')
+			.bail(),
 		check('encoding')
 			.exists()
 			.withMessage('encoding is required')
+			.bail()
 			.isString()
+			.withMessage('encoding is supposed to have type of String')
 			.isIn(['hex', 'base64', 'base64url'])
-			.withMessage('Invalid encoding'),
-		check('alsoKnownAs').optional().isArray().withMessage('Invalid alsoKnownAs'),
-		check('alsoKnownAs.*.uri').isString().withMessage('Invalid uri'),
-		check('alsoKnownAs.*.description').isString().withMessage('Invalid description'),
+			.withMessage('Invalid encoding value, should be one of hex, base64, base64url')
+			.bail(),
+		check('alsoKnownAs')
+			.optional()
+			.isArray()
+			.withMessage('alsoKnownAs is supposed to be an array')
+			.bail()
+			.isAlsoKnownAs()
+			.bail(),
+		check('version')
+			.optional()
+			.isString()
+			.withMessage('version is supposed to have type of String')
+			.bail(),
+	];
+
+	public static searchResourceValidator = [
+		param('did')
+			.exists()
+			.withMessage('did is required')
+			.bail()
+			.isDID()
+			.bail(),
+		query('resourceId')
+			.optional()
+			.isString()
+			.withMessage('resourceId is supposed to have type of String')
+			.bail()
+			.isUUID()
+			.withMessage('Invalid resourceId value, should be UUID')
+			.bail(),
+		query('resourceName')
+			.optional()
+			.isString()
+			.withMessage('resourceName is supposed to have type of String')
+			.bail(),
+		query('resourceType')
+			.optional()
+			.isString()
+			.withMessage('resourceType is supposed to have type of String')
+			.bail(),
+		query('resourceVersion')
+			.optional()
+			.isString()
+			.withMessage('resourceVersion is supposed to have type of String')
+			.bail(),
+		query('resourceVersionTime')
+			.optional()
+			.isString()
+			.withMessage('resourceVersionTime is supposed to have type of String')
+			.bail()
+			.isISO8601()
+			.withMessage('Invalid resourceVersionTime value, should be ISO8601')
+			.bail(),
+		query('checksum')
+			.optional()
+			.isString()
+			.withMessage('checksum is supposed to have type of String')
+			.bail()
+			.isHexadecimal()
+			.withMessage('Invalid checksum value, should be Hexadecimal')
+			.bail(),
+		query('resourceMetadata')
+			.optional()
+			.isBoolean()
+			.withMessage('resourceMetadata is supposed to have type of Boolean')
+			.bail(),
 	];
 
 	/**
@@ -218,7 +305,7 @@ export class ResourceController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
-	public async getResource(request: Request, response: Response) {
+	public async searchResource(request: Request, response: Response) {
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 		try {

@@ -36,25 +36,25 @@ describe('isDid. Negative.', () => {
 		const res = didValidator.validate('notdid:cheqd:testnet:90d5c141-724f-47ad-9ae7-a7c33a9e5643');
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('DID should start with did:');
+		expect(res.error).toContain('Invalid format of DID. Expected to start with did:<method>');
 	})
 	it('should return false for invalid cheqd did. Invalid UUID id', () => {
 		const res = didValidator.validate('did:cheqd:testnet:123');
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Cheqd Identifier is not valid UUID');
+		expect(res.error).toContain('Identifier is not valid UUID');
 	});
 	it('should return false for invalid cheqd did. Invalid indy-style id. Not base58 symbol', () => {
 		const res = didValidator.validate('did:cheqd:testnet:OI');
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Cheqd Identifier is not a valid base58 string');
+		expect(res.error).toContain('IndyStyle Identifier is not a valid base58 string');
 	});
 	it('should return false for invalid cheqd did. Invalid indy-style id. Wrong length', () => {
 		const res = didValidator.validate('did:cheqd:testnet:abcdef');
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Cheqd Identifier does not have 16 bytes length');
+		expect(res.error).toContain('IndyStyle Identifier does not have 16 bytes length');
 	});
 	it('should return false for invalid cheqd did. Invalid namespace', () => {
 		const res = didValidator.validate('did:cheqd:somenetwork:90d5c141-724f-47ad-9ae7-a7c33a9e5643');

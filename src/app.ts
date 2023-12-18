@@ -173,10 +173,13 @@ class App {
 		// Resource API
 		app.post(
 			'/resource/create/:did',
-			ResourceController.resourceValidator,
+			ResourceController.createResourceValidator,
 			new ResourceController().createResource
 		);
-		app.get('/resource/search/:did', new ResourceController().getResource);
+		app.get('/resource/search/:did',
+			ResourceController.searchResourceValidator,
+			new ResourceController().searchResource
+		);
 
 		// Account API
 		app.get('/account', new AccountController().get);

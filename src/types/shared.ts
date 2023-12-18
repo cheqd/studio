@@ -260,6 +260,11 @@ export type CreateDIDService =  {
 	serviceEndpoint: string[];
 }
 
+export type AlsoKnownAs = {
+	uri: string;
+	description: string;
+}
+
 export type GenericAuthUser = Record<string, unknown> | null | undefined;
 
 export type SpecValidationResult = {

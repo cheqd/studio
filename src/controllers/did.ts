@@ -16,7 +16,7 @@ import { bases } from 'multiformats/basics';
 import { base64ToBytes } from 'did-jwt';
 import type { CreateDidRequestBody } from '../types/shared.js';
 
-import { check, validationResult } from './validator/index.js';
+import { check, validationResult, param } from './validator/index.js';
 
 export class DIDController {
 	// ToDo: improve validation in a "bail" fashion
@@ -26,24 +26,73 @@ export class DIDController {
 			.optional()
 			.isString()
 			.isIn([VerificationMethods.Ed255192020, VerificationMethods.Ed255192018, VerificationMethods.JWK])
-			.withMessage('Invalid verificationMethod'),
+			.withMessage('Invalid verificationMethod')
+			.bail(),
 		check('identifierFormatType')
 			.optional()
 			.isString()
 			.isIn([MethodSpecificIdAlgo.Base58, MethodSpecificIdAlgo.Uuid])
-			.withMessage('Invalid identifierFormatType'),
+			.withMessage('Invalid identifierFormatType')
+			.bail(),
 		check('network')
 			.optional()
 			.isString()
 			.isIn([CheqdNetwork.Mainnet, CheqdNetwork.Testnet])
-			.withMessage('Invalid network'),
-		check('assertionMethod').optional().isBoolean().withMessage('Invalid assertionMethod'),
-		check('service').optional().isArray().withMessage('Service should be an array of objects for creating DID-Service').bail().isCreateDIDDocumentService(),
+			.withMessage('Invalid network')
+			.bail(),
+		check('assertionMethod')
+			.optional()
+			.isBoolean()
+			.withMessage('Invalid assertionMethod')
+			.bail(),
+		check('service')
+			.optional()
+			.isArray()
+			.withMessage('Service should be an array of objects for creating DID-Service')
+			.bail()
+			.isCreateDIDDocumentService()
+			.bail(),
 	];
 
-	public static updateDIDValidator = [check('didDocument').isDIDDocument()];
+	public static updateDIDValidator = [
+		check('didDocument')
+			.optional()
+			.isDIDDocument()
+			.bail(),
+		check('did')
+			.optional()
+			.isDID()
+			.bail(),
+		check('service')
+			.optional()
+			.isArray()
+			.withMessage('Service should be an array of objects for updating DID-Service')
+			.bail()
+			.isService()
+			.bail(),
+		check('verificationMethod')
+			.optional()
+			.isArray()
+			.withMessage('VerificationMethod should be an array of objects for updating DID-VerificationMethod')
+			.bail()
+			.isVerificationMethod()
+			.bail(),
+		check('authentication')
+			.optional()
+			.isArray()
+			.withMessage('Authentication should be an array of strings for updating DID-Authentication')
+			.bail()
+			.isDIDArray()
+			.bail(),
+	];
 
-	public static deactivateDIDValidator = [check('did').exists().isString().isDID()];
+	public static deactivateDIDValidator = [
+		param('did')
+			.exists()
+			.isString()
+			.isDID()
+			.bail()
+	];
 
 	/**
 	 * @openapi

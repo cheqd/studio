@@ -1,10 +1,11 @@
 import { describe, it, expect } from '@jest/globals';
 import { ServiceValidator } from '../../controllers/validator/service';
+import { VALID_CHEQD_DID_INDY } from '../constants';
 
 const serviceValidator = new ServiceValidator();
 
 const VALID_SERVICE = {
-    id: `service-1`,
+    id: `${VALID_CHEQD_DID_INDY}#service-1`,
     type: 'LinkedDomains',
     serviceEndpoint: ['https://example.com/'],
 };
