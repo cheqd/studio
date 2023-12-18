@@ -9,7 +9,7 @@ export class IndyStyleIdentifierValidator implements IValidator {
 		if (typeof id !== 'string') {
 			return {
 				valid: false,
-				error: 'Cheqd Identifier should be a string',
+				error: 'IndyStyle Identifier should be a string',
 			};
 		}
 		id = id as string;
@@ -19,13 +19,13 @@ export class IndyStyleIdentifierValidator implements IValidator {
 			if (decoded.length !== IndyStyleIdentifierValidator.ID_LENGTH) {
 				return {
 					valid: false,
-					error: `Cheqd Identifier does not have ${IndyStyleIdentifierValidator.ID_LENGTH} bytes length`,
+					error: `IndyStyle Identifier does not have ${IndyStyleIdentifierValidator.ID_LENGTH} bytes length`,
 				};
 			}
 		} catch (e) {
 			return {
 				valid: false,
-				error: 'Cheqd Identifier is not a valid base58 string',
+				error: 'IndyStyle Identifier is not a valid base58 string',
 			};
 		}
 		return { valid: true };
@@ -37,14 +37,14 @@ export class UUIDIdentifierValidator implements IValidator {
 		if (typeof id !== 'string') {
 			return {
 				valid: false,
-				error: 'Cheqd Identifier should be a string',
+				error: 'UUID Identifier should be a string',
 			};
 		}
 		id = id as string;
 		if (!validator.isUUID(id)) {
 			return {
 				valid: false,
-				error: 'Cheqd Identifier is not valid UUID',
+				error: 'Identifier is not valid UUID',
 			};
 		}
 		return { valid: true };
@@ -56,10 +56,6 @@ export class CheqdIdentifierValidator implements IValidator {
 
 	constructor(validators = [new UUIDIdentifierValidator(), new IndyStyleIdentifierValidator()]) {
 		this.validators = validators;
-	}
-
-	printable(): string {
-		return 'CheqdIdentifierValidator';
 	}
 
 	validate(id: Validatable): IValidationResult {

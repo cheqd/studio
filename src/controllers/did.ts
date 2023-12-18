@@ -38,7 +38,7 @@ export class DIDController {
 			.isIn([CheqdNetwork.Mainnet, CheqdNetwork.Testnet])
 			.withMessage('Invalid network'),
 		check('assertionMethod').optional().isBoolean().withMessage('Invalid assertionMethod'),
-		check('service').optional().isArray().withMessage('Service should be array').bail().isService(),
+		check('service').optional().isArray().withMessage('Service should be an array of objects for creating DID-Service').bail().isCreateDIDDocumentService(),
 	];
 
 	public static updateDIDValidator = [check('didDocument').isDIDDocument()];
@@ -152,7 +152,7 @@ export class DIDController {
 				if (service) {
 					if (Array.isArray(service)) {
 						try {
-							const services = JSON.parse(`[${service.toString()}]`);
+							const services = service as Service[];
 							didDocument.service = [];
 							for (const service of services) {
 								didDocument.service.push({
@@ -465,7 +465,7 @@ export class DIDController {
 	 */
 	public async resolveDidUrl(request: Request, response: Response) {
 		// Get strategy e.g. postgres or local
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 		try {
 			let res: globalThis.Response;
 			if (request.params.did) {

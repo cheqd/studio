@@ -835,22 +835,26 @@
  *             - JsonWebKey2020
  *             - Ed25519VerificationKey2020
  *         service:
- *           description: Communicating or interacting with the DID subject or associated entities via one or more service endpoints. See <a href="https://www.w3.org/TR/did-core/#services">DID Core specification</a> for more details.
+ *           description: It's a list of special objects which are designed to build the actual service. It's almost the same as in <a href="https://www.w3.org/TR/did-core/#services">DID Core specification</a>, but instead of `id` it utilises `idFragment` field for making the right `id` for each service. !!! WARN. Cause swagger-ui does not handle x-ww-form based arrays correctly, please frame all your services in brackets while using swagger UI. !!!
  *           type: array
  *           items:
  *             type: object
  *             properties:
  *               idFragment:
  *                 type: string
- *                 example: service-1
  *               type:
  *                 type: string
- *                 example: LinkedDomains
  *               serviceEndpoint:
  *                 type: array
  *                 items:
  *                   type: string
- *                   example: https://example.com
+ *           example: 
+ *             - idFragment: service-1
+ *               type: LinkedDomains
+ *               serviceEndpoint: [
+ *                 https://example.com
+ *               ]
+ *                
  *         key:
  *           description: The unique identifier in hexadecimal public key format used in the verification method to create the DID.
  *           type: string

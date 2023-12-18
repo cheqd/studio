@@ -254,6 +254,12 @@ export interface CredentialRequest {
 	credentialSummary?: string;
 }
 
+export type CreateDIDService =  {
+	idFragment: string;
+	type: string;
+	serviceEndpoint: string[];
+}
+
 export type GenericAuthUser = Record<string, unknown> | null | undefined;
 
 export type SpecValidationResult = {

@@ -1,6 +1,7 @@
 import type { W3CVerifiableCredential, W3CVerifiablePresentation } from '@veramo/core';
 import type { DIDDocument, VerificationMethod, Service } from 'did-resolver';
-import type { IHelpers } from './helpers';
+import type { IHelpers } from './helpers.js';
+import type { CreateDIDService } from '../../types/shared.js'
 
 export type Validatable =
 	| string
@@ -10,7 +11,8 @@ export type Validatable =
 	| W3CVerifiablePresentation
 	| VerificationMethod
 	| VerificationMethod[]
-	| Service[];
+	| Service[]
+    | CreateDIDService []
 
 export interface IValidator {
 	// in case of failure - raise an error, it's totally fine

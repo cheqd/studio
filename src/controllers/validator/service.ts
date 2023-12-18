@@ -1,5 +1,5 @@
 import type { Service } from 'did-resolver';
-import type { IValidationResult, IValidator } from './validator.js';
+import type { IValidationResult, IValidator, Validatable } from './validator.js';
 import { DIDDocumentIDValudator } from './did_document_id.js';
 import { Helpers, type IHelpers } from './helpers.js';
 
@@ -37,6 +37,12 @@ export class ServiceValidator implements IValidator {
 				error: 'Service serviceEndpoint is required',
 			};
 		}
+        if (!Array.isArray(service.serviceEndpoint)) {
+            return {
+                valid: false,
+                error: 'Service serviceEndpoint should be an array',
+            };
+        }
 		const id = service.id;
 		const _v = this.didDocumentIDValidator.validate(id);
 		if (!_v.valid) {
@@ -49,9 +55,16 @@ export class ServiceValidator implements IValidator {
 		return { valid: true };
 	}
 
-	validate(services: Service[]): IValidationResult {
+	validate(services: Validatable): IValidationResult {
+        services = services as Service[];
+        if (!Array.isArray(services)) {
+            return {
+                valid: false,
+                error: 'Services should be an array',
+            };
+        }
 		const ids = services.map((s) => s.id);
-		if (this.helpers.isUnique(ids)) {
+		if (!this.helpers.isUnique(ids)) {
 			return {
 				valid: false,
 				error: 'Service ids are not unique',

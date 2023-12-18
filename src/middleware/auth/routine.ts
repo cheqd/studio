@@ -212,14 +212,15 @@ export class RuleRoutine extends AuthReturn implements IReturn {
 			}
 		}
 	}
-	protected findRule(route: string, method: string, namespace = Namespaces.Testnet): MethodToScopeRule {
+	protected findRule(route: string, method: string, namespace = Namespaces.Testnet): MethodToScopeRule | undefined {
 		for (const rule of this.getRouteToScopeList()) {
 			if (rule.doesRuleMatches(route, method, namespace)) {
 				return rule;
 			}
 		}
-		return {} as MethodToScopeRule;
+		return undefined;	
 	}
+	
 	protected registerRoute(route: string, method: string, scope: string, options = {}): void {
 		this.pushToRuleList(new MethodToScopeRule(route, method, scope, options));
 	}

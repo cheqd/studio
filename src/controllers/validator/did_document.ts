@@ -3,13 +3,15 @@ import { DIDValidator } from './did.js';
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
 import { VerificationMethodValidator } from './verification_method.js';
 import { CheqdControllerValidator } from './controller.js';
+import { ServiceValidator } from './service.js';
 
 export class DIDDocumentValidator implements IValidator {
 	protected didValidator: IValidator;
 	protected controllerValidator: IValidator;
 	protected verificationMethodValidator: IValidator;
+    protected serviceValidator: IValidator;
 
-	constructor(didValidator?: IValidator, controllerValidator?: IValidator, verificationMethodValidator?: IValidator) {
+	constructor(didValidator?: IValidator, controllerValidator?: IValidator, verificationMethodValidator?: IValidator, serviceValidator?: IValidator) {
 		if (!didValidator) {
 			didValidator = new DIDValidator();
 		}
@@ -20,9 +22,15 @@ export class DIDDocumentValidator implements IValidator {
 		if (!verificationMethodValidator) {
 			verificationMethodValidator = new VerificationMethodValidator();
 		}
+            
+        if (!serviceValidator) {
+            serviceValidator = new ServiceValidator();
+        }
+
 		this.didValidator = didValidator;
 		this.controllerValidator = controllerValidator;
 		this.verificationMethodValidator = verificationMethodValidator;
+        this.serviceValidator = serviceValidator;
 	}
 
 	validate(didDocument: Validatable): IValidationResult {
@@ -62,6 +70,19 @@ export class DIDDocumentValidator implements IValidator {
 				};
 			}
 		}
+
+        // Check service
+        // It should be an array
+        // if (didDocument.service && !Array.isArray(didDocument?.service)) return { valid: false, error: 'service must be an array' };
+        if (didDocument.service) {
+            _v = this.serviceValidator.validate(didDocument.service);
+            if (!_v?.valid) {
+                return {
+                    valid: false,
+                    error: _v?.error,
+                };
+            }
+        }
 		return { valid: true };
 	}
 }

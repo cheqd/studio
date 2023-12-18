@@ -59,7 +59,6 @@ test('[Negative] It cannot create DID with not existent key in request body (JSO
 		},
 		headers: { 'Content-Type': 'application/json' },
 	});
-	console.log(await response.text());
 	expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
 	expect(await response.text()).toEqual(expect.stringContaining('Key not found'));
 });
@@ -106,9 +105,9 @@ test('[Negative] It cannot create DID with an invalid length of id in DIDDocumen
 		},
 		headers: { 'Content-Type': 'application/json' },
 	});
-	expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+	expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
 	expect(await response.text()).toEqual(
-		expect.stringContaining('unique id should be one of: 16 bytes of decoded base58 string or UUID')
+		expect.stringContaining('Cheqd Identifier is not valid')
 	);
 });
 
@@ -131,7 +130,7 @@ test('[Negative] It cannot create DID with an invalid id format in DIDDocument i
 		headers: { 'Content-Type': 'application/json' },
 	});
 	expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
-	expect(await response.text()).toEqual(expect.stringContaining('Invalid didDocument'));
+	expect(await response.text()).toEqual(expect.stringContaining('Invalid format of DID. Expected to start with did:<method>'));
 });
 
 test('[Negative] It cannot create DID without VerificationMethodType in request body (JSON based)', async ({
@@ -150,7 +149,7 @@ test('[Negative] It cannot create DID without VerificationMethodType in request 
 		headers: { 'Content-Type': 'application/json' },
 	});
 	expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
-	expect(await response.text()).toEqual(expect.stringContaining('Invalid didDocument'));
+	expect(await response.text()).toEqual(expect.stringContaining('Invalid format of DID. Expected to start with did:<method>'));
 });
 
 test('[Negative] It cannot create DID without DidDocument in request body (JSON based)', async ({ request }) => {
