@@ -19,6 +19,30 @@ describe('isService. Positive.', () => {
 })
 
 describe('isService. Negative.', () => {
+    it('should return false for invalid service. id not placed in structure', () => {
+        const res = serviceValidator.validate([{ ...VALID_SERVICE, id: undefined }] as any);
+        expect(res.valid).toBeFalsy();
+        expect(res.error).toBeDefined();
+        expect(res.error).toContain('Service id is required');
+    });
+    it('should return false for invalid service. type not placed in structure', () => {
+        const res = serviceValidator.validate([{ ...VALID_SERVICE, type: undefined }] as any);
+        expect(res.valid).toBeFalsy();
+        expect(res.error).toBeDefined();
+        expect(res.error).toContain('Service type is required');
+    });
+    it('should return false for invalid service. serviceEndpoint not placed in structure', () => {
+        const res = serviceValidator.validate([{ ...VALID_SERVICE, serviceEndpoint: undefined }] as any);
+        expect(res.valid).toBeFalsy();
+        expect(res.error).toBeDefined();
+        expect(res.error).toContain('Service serviceEndpoint is required');
+    });
+    it('should return false for invalid service. Not array', () => {
+        const res = serviceValidator.validate(VALID_SERVICE as any);
+        expect(res.valid).toBeFalsy();
+        expect(res.error).toBeDefined();
+        expect(res.error).toContain('Service should be an array');
+    });
     it('should return false for invalid service. Invalid id', () => {
         const res = serviceValidator.validate([{ ...VALID_SERVICE, id: 'invalid' }]);
         expect(res.valid).toBeFalsy();

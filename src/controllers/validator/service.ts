@@ -60,7 +60,7 @@ export class ServiceValidator implements IValidator {
         if (!Array.isArray(services)) {
             return {
                 valid: false,
-                error: 'Services should be an array',
+                error: 'Service should be an array',
             };
         }
 		const ids = services.map((s) => s.id);

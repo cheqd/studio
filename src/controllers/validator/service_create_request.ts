@@ -23,13 +23,13 @@ export class CreateDIDDocumentServiceValidator implements IValidator {
 		if (!service.type) {
 			return {
 				valid: false,
-				error: `Service object ${service} is invalid. Type is required`,
+				error: `Service object ${service} is invalid. type is required`,
 			};
 		}
 		if (!service.serviceEndpoint) {
 			return {
 				valid: false,
-				error: `Service object ${service} is invalid. ServiceEndpoint is required`,
+				error: `Service object ${service} is invalid. serviceEndpoint is required`,
 			};
 		}
         if (!Array.isArray(service.serviceEndpoint)) {

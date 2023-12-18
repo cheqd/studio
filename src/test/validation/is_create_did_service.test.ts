@@ -18,6 +18,24 @@ describe('isCreateDidService. Positive.', () => {
 })
 
 describe('isCreateDidService. Negative.', () => {
+    it('should return false for invalid service. idFragment not placed in structure', () => {
+        const res = createDIDDocumentServiceValidator.validate([{ ...VALID_CREATE_DID_SERVICE, idFragment: undefined }] as any);
+        expect(res.valid).toBeFalsy();
+        expect(res.error).toBeDefined();
+        expect(res.error).toContain('idFragment is required');
+    });
+    it('should return false for invalid service. type not placed in structure', () => {
+        const res = createDIDDocumentServiceValidator.validate([{ ...VALID_CREATE_DID_SERVICE, type: undefined }] as any);
+        expect(res.valid).toBeFalsy();
+        expect(res.error).toBeDefined();
+        expect(res.error).toContain('type is required');
+    });
+    it('should return false for invalid service. serviceEndpoint not placed in structure', () => {
+        const res = createDIDDocumentServiceValidator.validate([{ ...VALID_CREATE_DID_SERVICE, serviceEndpoint: undefined }] as any);
+        expect(res.valid).toBeFalsy();
+        expect(res.error).toBeDefined();
+        expect(res.error).toContain('serviceEndpoint is required');
+    });
     it('should return false for invalid service. Not unique ids', () => {
         const res = createDIDDocumentServiceValidator.validate([VALID_CREATE_DID_SERVICE, VALID_CREATE_DID_SERVICE]);
         expect(res.valid).toBeFalsy();
