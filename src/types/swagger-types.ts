@@ -848,13 +848,13 @@
  *                 type: array
  *                 items:
  *                   type: string
- *           example: 
+ *           example:
  *             - idFragment: service-1
  *               type: LinkedDomains
  *               serviceEndpoint: [
  *                 https://example.com
  *               ]
- *                
+ *
  *         key:
  *           description: The unique identifier in hexadecimal public key format used in the verification method to create the DID.
  *           type: string

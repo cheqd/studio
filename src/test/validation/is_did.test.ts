@@ -32,12 +32,12 @@ describe('isDid. Negative.', () => {
 		expect(res.error).toBeDefined();
 		expect(res.error).toContain('DID should be a string');
 	});
-	it('should return false cause DID is not started with did:'	, () => {
+	it('should return false cause DID is not started with did:', () => {
 		const res = didValidator.validate('notdid:cheqd:testnet:90d5c141-724f-47ad-9ae7-a7c33a9e5643');
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
 		expect(res.error).toContain('Invalid format of DID. Expected to start with did:<method>');
-	})
+	});
 	it('should return false for invalid cheqd did. Invalid UUID id', () => {
 		const res = didValidator.validate('did:cheqd:testnet:123');
 		expect(res.valid).toBeFalsy();

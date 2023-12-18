@@ -40,11 +40,7 @@ export class DIDController {
 			.isIn([CheqdNetwork.Mainnet, CheqdNetwork.Testnet])
 			.withMessage('Invalid network')
 			.bail(),
-		check('assertionMethod')
-			.optional()
-			.isBoolean()
-			.withMessage('Invalid assertionMethod')
-			.bail(),
+		check('assertionMethod').optional().isBoolean().withMessage('Invalid assertionMethod').bail(),
 		check('service')
 			.optional()
 			.isArray()
@@ -55,14 +51,8 @@ export class DIDController {
 	];
 
 	public static updateDIDValidator = [
-		check('didDocument')
-			.optional()
-			.isDIDDocument()
-			.bail(),
-		check('did')
-			.optional()
-			.isDID()
-			.bail(),
+		check('didDocument').optional().isDIDDocument().bail(),
+		check('did').optional().isDID().bail(),
 		check('service')
 			.optional()
 			.isArray()
@@ -86,13 +76,7 @@ export class DIDController {
 			.bail(),
 	];
 
-	public static deactivateDIDValidator = [
-		param('did')
-			.exists()
-			.isString()
-			.isDID()
-			.bail()
-	];
+	public static deactivateDIDValidator = [param('did').exists().isString().isDID().bail()];
 
 	/**
 	 * @openapi

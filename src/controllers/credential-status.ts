@@ -15,7 +15,6 @@ import {
 	CreateUnencryptedStatusListRequestQuery,
 	CreateUnencryptedStatusListSuccessfulResponseBody,
 	CreateUnencryptedStatusListUnsuccessfulResponseBody,
-	DefaultDidUrlPattern,
 	DefaultStatusAction,
 	DefaultStatusActionPurposeMap,
 	DefaultStatusActions,
@@ -47,11 +46,7 @@ import { CheqdNetwork } from '@cheqd/sdk';
 
 export class CredentialStatusController {
 	static createUnencryptedValidator = [
-		check('did')
-			.exists()
-			.withMessage('did: required')
-			.bail()
-			.isDID(),
+		check('did').exists().withMessage('did: required').bail().isDID(),
 		check('statusPurpose')
 			.exists()
 			.withMessage('statusPurpose: required')
@@ -223,12 +218,7 @@ export class CredentialStatusController {
 	];
 
 	static updateUnencryptedValidator = [
-		check('did')
-			.exists()
-			.withMessage('did: required')
-			.bail()
-			.isDID()
-			.bail(),
+		check('did').exists().withMessage('did: required').bail().isDID().bail(),
 		check('statusAction')
 			.exists()
 			.withMessage('statusAction: required')
@@ -381,11 +371,7 @@ export class CredentialStatusController {
 	];
 
 	static checkValidator = [
-		check('did')
-			.exists()
-			.withMessage('did: required')
-			.isDID()
-			.bail(),
+		check('did').exists().withMessage('did: required').isDID().bail(),
 		check('statusListName')
 			.exists()
 			.withMessage('statusListName: required')
@@ -430,11 +416,7 @@ export class CredentialStatusController {
 	];
 
 	static searchValidator = [
-		query('did')
-			.exists()
-			.withMessage('did: required')
-			.isDID()
-			.bail(),
+		query('did').exists().withMessage('did: required').isDID().bail(),
 		query('statusListName')
 			.exists()
 			.withMessage('statusListName: required')

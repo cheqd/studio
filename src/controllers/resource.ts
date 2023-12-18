@@ -12,25 +12,14 @@ import { check, validationResult, param, query } from './validator/index.js';
 
 export class ResourceController {
 	public static createResourceValidator = [
-		param('did')
-			.exists()
-			.withMessage('did is required')
-			.bail()
-			.isDID()
-			.bail(),
+		param('did').exists().withMessage('did is required').bail().isDID().bail(),
 		check('name')
 			.exists()
 			.withMessage('name is required')
 			.isString()
 			.withMessage('Name should has string type')
 			.bail(),
-		check('type')
-			.exists()
-			.withMessage('type is required')
-			.bail()
-			.isString()
-			.withMessage('Invalid type')
-			.bail(),
+		check('type').exists().withMessage('type is required').bail().isString().withMessage('Invalid type').bail(),
 		check('data')
 			.exists()
 			.withMessage('data is required')
@@ -54,20 +43,11 @@ export class ResourceController {
 			.bail()
 			.isAlsoKnownAs()
 			.bail(),
-		check('version')
-			.optional()
-			.isString()
-			.withMessage('version is supposed to have type of String')
-			.bail(),
+		check('version').optional().isString().withMessage('version is supposed to have type of String').bail(),
 	];
 
 	public static searchResourceValidator = [
-		param('did')
-			.exists()
-			.withMessage('did is required')
-			.bail()
-			.isDID()
-			.bail(),
+		param('did').exists().withMessage('did is required').bail().isDID().bail(),
 		query('resourceId')
 			.optional()
 			.isString()

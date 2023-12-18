@@ -254,16 +254,16 @@ export interface CredentialRequest {
 	credentialSummary?: string;
 }
 
-export type CreateDIDService =  {
+export type CreateDIDService = {
 	idFragment: string;
 	type: string;
 	serviceEndpoint: string[];
-}
+};
 
 export type AlsoKnownAs = {
 	uri: string;
 	description: string;
-}
+};
 
 export type GenericAuthUser = Record<string, unknown> | null | undefined;
 

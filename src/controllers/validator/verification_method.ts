@@ -66,16 +66,16 @@ export class VerificationMethodValidator implements IValidator {
 			};
 		}
 
-        // Check controller
-        if (verificationMethod.controller) {
-            _v = this.controllerValidator.validate([verificationMethod.controller]);
-            if (!_v.valid) {
-                return {
-                    valid: false,
-                    error: `Controller has validation error: ${_v.error}`,
-                };
-            }
-        }
+		// Check controller
+		if (verificationMethod.controller) {
+			_v = this.controllerValidator.validate([verificationMethod.controller]);
+			if (!_v.valid) {
+				return {
+					valid: false,
+					error: `Controller has validation error: ${_v.error}`,
+				};
+			}
+		}
 
 		const validatorVM = this.verificationMethodValidators.find((v) => v.subject === verificationMethod.type);
 		if (!validatorVM) {

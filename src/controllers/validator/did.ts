@@ -158,12 +158,12 @@ export class DIDValidator implements IValidator {
 				error: 'DID should be a string',
 			};
 		}
-        if (!did.startsWith('did:')) {
-            return {
-                valid: false,
-                error: 'Invalid format of DID. Expected to start with did:<method>',
-            };
-        }
+		if (!did.startsWith('did:')) {
+			return {
+				valid: false,
+				error: 'Invalid format of DID. Expected to start with did:<method>',
+			};
+		}
 		did = did as string;
 		const method = did.split(':')[1];
 		const validator = this.didValidators.find((v) => v.subject === method);

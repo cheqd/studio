@@ -18,7 +18,7 @@ export const { check, validationResult, query, param } = new ExpressValidator({
 		}
 		return true;
 	},
-	isDIDArray : (value: Validatable) => {
+	isDIDArray: (value: Validatable) => {
 		const res = new DIDArrayValidator().validate(value);
 		if (!res.valid) {
 			throw new Error(res.error);
@@ -60,7 +60,6 @@ export const { check, validationResult, query, param } = new ExpressValidator({
 		}
 		return true;
 	},
-
 
 	// isW3CCredential: (value) => {
 	//     const res = new W3CCredentialValidator(value).validate();

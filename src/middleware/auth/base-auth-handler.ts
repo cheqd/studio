@@ -24,7 +24,7 @@ export class BaseAPIGuard extends RuleRoutine implements IAPIGuard {
 			return this.returnError(
 				StatusCodes.INTERNAL_SERVER_ERROR,
 				`Internal error. There is no auth rule for such request. Please contact administrator`
-			)
+			);
 		}
 		// If the rule is not found - skip the auth check
 		if (!rule.isEmpty()) {

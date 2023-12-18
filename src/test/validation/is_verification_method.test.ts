@@ -22,7 +22,7 @@ const verificationMethodSamples = [
 	},
 	{
 		type: VerificationMethods.JWK,
-		publicKeyJwk: PUBLIC_KEY_JWK
+		publicKeyJwk: PUBLIC_KEY_JWK,
 	},
 ];
 
@@ -63,7 +63,7 @@ describe('isVerificationMethod. Negative.', () => {
 		]);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('id does not have right format');	
+		expect(res.error).toContain('id does not have right format');
 	});
 
 	it(`should return false because type is wrong

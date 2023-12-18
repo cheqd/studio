@@ -218,9 +218,9 @@ export class RuleRoutine extends AuthReturn implements IReturn {
 				return rule;
 			}
 		}
-		return undefined;	
+		return undefined;
 	}
-	
+
 	protected registerRoute(route: string, method: string, scope: string, options = {}): void {
 		this.pushToRuleList(new MethodToScopeRule(route, method, scope, options));
 	}

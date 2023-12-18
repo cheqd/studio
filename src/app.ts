@@ -176,7 +176,8 @@ class App {
 			ResourceController.createResourceValidator,
 			new ResourceController().createResource
 		);
-		app.get('/resource/search/:did',
+		app.get(
+			'/resource/search/:did',
 			ResourceController.searchResourceValidator,
 			new ResourceController().searchResource
 		);

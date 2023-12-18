@@ -50,7 +50,7 @@ test('[Positive] It can create DID with mandatory and optional properties (Form 
 		data:
 			`network=${CheqdNetwork.Testnet}&identifierFormatType=${ID_TYPE.BASE58BTC}&` +
 			`verificationMethodType=${VerificationMethods.Ed255192018}&` +
-			`service=[${JSON.stringify(buildSimpleService())}]` + 
+			`service=[${JSON.stringify(buildSimpleService())}]` +
 			`&key=${kid}&@context=${DEFAULT_CONTEXT}`,
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 	});

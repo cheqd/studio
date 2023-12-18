@@ -37,12 +37,12 @@ export class ServiceValidator implements IValidator {
 				error: 'Service serviceEndpoint is required',
 			};
 		}
-        if (!Array.isArray(service.serviceEndpoint)) {
-            return {
-                valid: false,
-                error: 'Service serviceEndpoint should be an array',
-            };
-        }
+		if (!Array.isArray(service.serviceEndpoint)) {
+			return {
+				valid: false,
+				error: 'Service serviceEndpoint should be an array',
+			};
+		}
 		const id = service.id;
 		const _v = this.didDocumentIDValidator.validate(id);
 		if (!_v.valid) {
@@ -56,13 +56,13 @@ export class ServiceValidator implements IValidator {
 	}
 
 	validate(services: Validatable): IValidationResult {
-        services = services as Service[];
-        if (!Array.isArray(services)) {
-            return {
-                valid: false,
-                error: 'Service should be an array',
-            };
-        }
+		services = services as Service[];
+		if (!Array.isArray(services)) {
+			return {
+				valid: false,
+				error: 'Service should be an array',
+			};
+		}
 		const ids = services.map((s) => s.id);
 		if (!this.helpers.isUnique(ids)) {
 			return {
