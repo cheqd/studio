@@ -2,11 +2,10 @@ import type { Request, Response } from 'express';
 import type { VerifiableCredential } from '@veramo/core';
 import { StatusCodes } from 'http-status-codes';
 
-import { check, query, validationResult } from 'express-validator';
+import { check, validationResult, query } from './validator/index.js';
 
 import { Credentials } from '../services/credentials.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import { jwtDecode } from 'jwt-decode';
 import type { ITrackOperation } from '../types/shared.js';
 import { Cheqd } from '@cheqd/did-provider-cheqd';
 import { OPERATION_CATEGORY_NAME_CREDENTIAL } from '../types/constants.js';
@@ -18,44 +17,83 @@ export class CredentialController {
 		check(['subjectDid', 'issuerDid'])
 			.exists()
 			.withMessage('DID is required')
-			.isString()
-			.withMessage('DID should be a string')
-			.contains('did:')
-			.withMessage('Invalid DID'),
+			.bail()
+			.isDID()
+			.bail(),
 		check('attributes')
 			.exists()
 			.withMessage('attributes are required')
+			.bail()
 			.isObject()
-			.withMessage('attributes should be an object'),
-		check('expirationDate').optional().isDate().withMessage('Invalid expiration date'),
-		check('format').optional().isString().withMessage('Invalid credential format'),
+			.withMessage('attributes should be an object')
+			.bail(),
+		check('expirationDate')
+		    .optional()
+			.isDate()
+			.withMessage('Invalid expiration date')
+			.bail()
+			.isISO8601()
+			.withMessage('Expect to see ISO8601 date format')
+			.bail(),
+		check('format')
+		    .optional()
+			.isString()
+			.withMessage('Invalid credential format')
+			.bail(),
 	];
-
-	public static credentialValidator = [
+	public static verifyValidator = [
 		check('credential')
 			.exists()
 			.withMessage('W3c verifiable credential was not provided')
-			.custom((value) => {
-				if (typeof value === 'string' || typeof value === 'object') {
-					return true;
-				}
-				return false;
-			})
-			.withMessage('Entry must be a JWT or a credential body with JWT proof')
-			.custom((value) => {
-				if (typeof value === 'string') {
-					try {
-						jwtDecode(value);
-					} catch (e) {
-						return false;
-					}
-				}
-				return true;
-			})
-			.withMessage('An invalid JWT string'),
-		check('policies').optional().isObject().withMessage('Verification policies should be an object'),
-		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value'),
-		query('publish').optional().isBoolean().withMessage('publish should be a boolean value'),
+			.isW3CCheqdCredential()
+			.bail(),
+		query('verifyStatus')
+			.optional()
+			.isBoolean()
+			.withMessage('verifyStatus should be a boolean value')
+			.bail(),
+		query('policies')
+			.optional()
+			.isObject()
+			.withMessage('Verification policies should be an object')
+			.bail(),
+	];
+	public static revokeValidator = [
+		check('credential')
+			.exists()
+			.withMessage('W3c verifiable credential was not provided')
+			.isW3CCheqdCredential()
+			.bail(),
+		query('publish')
+			.optional()
+			.isBoolean()
+			.withMessage('publish should be a boolean value')
+			.bail(),
+	];
+	public static suspendValidator = [
+		check('credential')
+			.exists()
+			.withMessage('W3c verifiable credential was not provided')
+			.isW3CCheqdCredential()
+			.bail(),
+		query('publish')
+			.optional()
+			.isBoolean()
+			.withMessage('publish should be a boolean value')
+			.bail(),
+	];
+
+	public static reinstateValidator = [
+		check('credential')
+			.exists()
+			.withMessage('W3c verifiable credential was not provided')
+			.isW3CCheqdCredential()
+			.bail(),
+		query('publish')
+			.optional()
+			.isBoolean()
+			.withMessage('publish should be a boolean value')
+			.bail(),
 	];
 
 	/**

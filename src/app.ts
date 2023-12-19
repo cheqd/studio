@@ -106,16 +106,16 @@ class App {
 
 		// Credential API
 		app.post(`/credential/issue`, CredentialController.issueValidator, new CredentialController().issue);
-		app.post(`/credential/verify`, CredentialController.credentialValidator, new CredentialController().verify);
-		app.post(`/credential/revoke`, CredentialController.credentialValidator, new CredentialController().revoke);
-		app.post('/credential/suspend', CredentialController.credentialValidator, new CredentialController().suspend);
+		app.post(`/credential/verify`, CredentialController.verifyValidator, new CredentialController().verify);
+		app.post(`/credential/revoke`, CredentialController.revokeValidator, new CredentialController().revoke);
+		app.post('/credential/suspend', CredentialController.suspendValidator, new CredentialController().suspend);
 		app.post(
 			'/credential/reinstate',
-			CredentialController.credentialValidator,
+			CredentialController.reinstateValidator,
 			new CredentialController().reinstate
 		);
 
-		// presentation
+		// Presentation API
 		app.post(
 			`/presentation/verify`,
 			PresentationController.presentationVerifyValidator,
@@ -127,7 +127,7 @@ class App {
 			new PresentationController().createPresentation
 		);
 
-		// revocation
+		// Credential status API
 		app.post(
 			'/credential-status/create/unencrypted',
 			CredentialStatusController.createUnencryptedValidator,
