@@ -79,7 +79,6 @@ export class DIDDocumentValidator implements IValidator {
 
 		// Check service
 		// It should be an array
-		// if (didDocument.service && !Array.isArray(didDocument?.service)) return { valid: false, error: 'service must be an array' };
 		if (didDocument.service) {
 			_v = this.serviceValidator.validate(didDocument.service);
 			if (!_v?.valid) {

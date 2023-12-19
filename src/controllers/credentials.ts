@@ -10,6 +10,7 @@ import { jwtDecode } from 'jwt-decode';
 import type { ITrackOperation } from '../types/shared.js';
 import { Cheqd } from '@cheqd/did-provider-cheqd';
 import { OPERATION_CATEGORY_NAME_CREDENTIAL } from '../types/constants.js';
+import { CheqdW3CVerifiableCredential } from '../services/w3c_credential.js';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -192,11 +193,12 @@ export class CredentialController {
 		const { credential, policies } = request.body;
 		const verifyStatus = request.query.verifyStatus === 'true';
 		const allowDeactivatedDid = request.query.allowDeactivatedDid === 'true';
+		const cheqdCredential = new CheqdW3CVerifiableCredential(credential);
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 
 		try {
-			if (!allowDeactivatedDid && (await this.isIssuerDidDeactivated(credential))) {
+			if (!allowDeactivatedDid && (await this.isIssuerDidDeactivated(cheqdCredential))) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: `Credential issuer DID is deactivated`,
 				});
@@ -225,16 +227,10 @@ export class CredentialController {
 	}
 
 	// ToDo: move it to helpers
-	private async isIssuerDidDeactivated(credential: any) {
-		let issuerDid = '';
+	private async isIssuerDidDeactivated(credential: CheqdW3CVerifiableCredential): Promise<boolean> {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
-
-		if (typeof credential === 'object' && credential?.issuer?.id) {
-			issuerDid = credential.issuer.id;
-		} else {
-			const decoded: any = jwtDecode(credential);
-			issuerDid = decoded.iss;
-		}
+		credential = new CheqdW3CVerifiableCredential(credential)
+		const issuerDid = credential.issuer;
 
 		const resolutionResult = await identityServiceStrategySetup.agent.resolve(issuerDid);
 		const body = await resolutionResult.json();

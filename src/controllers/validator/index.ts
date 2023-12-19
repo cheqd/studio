@@ -1,5 +1,5 @@
 import { ExpressValidator } from 'express-validator';
-import { DIDValidator } from './did.js';
+import { DIDValidator, KeyDIDValidator } from './did.js';
 import { DIDDocumentValidator } from './did_document.js';
 import type { Validatable } from './validator.js';
 import type { Service, VerificationMethod } from 'did-resolver';
@@ -60,6 +60,13 @@ export const { check, validationResult, query, param } = new ExpressValidator({
 		}
 		return true;
 	},
+	isKeyDID: (value: Validatable) => {
+		const res = new KeyDIDValidator().validate(value);
+		if (!res.valid) {
+			throw new Error(res.error);
+		}
+		return true;
+	}
 
 	// isW3CCredential: (value) => {
 	//     const res = new W3CCredentialValidator(value).validate();

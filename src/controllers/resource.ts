@@ -286,6 +286,13 @@ export class ResourceController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async searchResource(request: Request, response: Response) {
+		// validate request
+		const result = validationResult(request);
+
+		// handle error
+		if (!result.isEmpty()) {
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+		}
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 		try {

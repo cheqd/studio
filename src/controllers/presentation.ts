@@ -6,6 +6,8 @@ import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { jwtDecode } from 'jwt-decode';
 import { CheqdW3CVerifiablePresentation } from '../services/w3c_presentation.js';
 import type { VerifyPresentationResponseBody } from '../types/shared.js';
+import type { W } from 'typeorm';
+import type { CheqdW3CVerifiableCredential } from '../services/w3c_credential.js';
 
 export class PresentationController {
 	public static presentationCreateValidator = [
@@ -215,7 +217,7 @@ export class PresentationController {
 		}
 
 		try {
-			if (!allowDeactivatedDid && (await this.isIssuerDidDeactivated(presentation))) {
+			if (!allowDeactivatedDid && (await this.isIssuerDidDeactivated(cheqdPresentation))) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: `Credential issuer DID is deactivated`,
 				});
@@ -266,21 +268,25 @@ export class PresentationController {
 		}
 	}
 
+
 	// ToDo: move it to helpers
-	private async isIssuerDidDeactivated(presentation: any) {
-		let issuerDid = '';
+	private async isCredentialIssuerDidDeactivated(credential: CheqdW3CVerifiableCredential): Promise<boolean>  {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 
-		if (typeof presentation === 'object' && presentation?.issuer?.id) {
-			issuerDid = presentation.issuer.id;
-		} else {
-			const decoded: any = jwtDecode(presentation);
-			issuerDid = decoded.iss;
-		}
-
-		const resolutionResult = await identityServiceStrategySetup.agent.resolve(issuerDid);
+		const resolutionResult = await identityServiceStrategySetup.agent.resolve(credential.issuer);
 		const body = await resolutionResult.json();
 
 		return body.didDocumentMetadata.deactivated;
+	}
+
+	private async isIssuerDidDeactivated(presentation: CheqdW3CVerifiablePresentation): Promise<boolean> {
+		const credentials = presentation.verifiableCredential || [];
+		for (const credential of credentials) {
+			const result = await this.isCredentialIssuerDidDeactivated(credential);
+			if (result) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

@@ -11,14 +11,11 @@ import { jwtDecode, type JwtPayload } from 'jwt-decode';
 import type { IIdentityService } from './identity/index.js';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import { CheqdW3CVerifiableCredential } from './w3c_credential.js';
-import { CommonReturn } from '../types/shared.js';
+import { CommonReturn, JwtProof2020 } from '../types/shared.js';
 import { JWT_PROOF_TYPE } from '../types/constants.js';
 
 export interface ICheqdPresentation extends UnsignedPresentation {
-	proof: {
-		type: string;
-		jwt: string;
-	};
+	proof: JwtProof2020;
 }
 
 export interface IJWTPayloadVP extends JwtPayload {
@@ -35,10 +32,7 @@ export class CheqdW3CVerifiablePresentation extends CommonReturn implements IChe
 	issuanceDate?: string;
 	expirationDate?: string;
 	id?: string;
-	proof: {
-		type: string;
-		jwt: string;
-	};
+	proof: JwtProof2020;
 
 	constructor(w3Presentation: W3CVerifiablePresentation) {
 		super();
