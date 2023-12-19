@@ -66,7 +66,7 @@ export const { check, validationResult, query, param } = new ExpressValidator({
 			throw new Error(res.error);
 		}
 		return true;
-	}
+	},
 
 	// isW3CCredential: (value) => {
 	//     const res = new W3CCredentialValidator(value).validate();

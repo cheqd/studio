@@ -15,6 +15,9 @@ import type { SpecValidationResult } from '../types/shared.js';
 import { DEFAULT_DENOM_EXPONENT, MINIMAL_DENOM } from '../types/constants.js';
 import { LitCompatibleCosmosChains, type DkgOptions, LitNetworks } from '@cheqd/did-provider-cheqd';
 import type { Coin } from '@cosmjs/amino';
+import type { CheqdW3CVerifiableCredential } from '../services/w3c_credential.js';
+import { IdentityServiceStrategySetup } from '../services/identity/index.js';
+import type { CheqdW3CVerifiablePresentation } from '../services/w3c_presentation.js';
 
 export interface IDidDocOptions {
 	verificationMethod: VerificationMethods;
@@ -148,4 +151,25 @@ export function getQueryParams(queryParams: ParsedQs) {
 		.join('&');
 
 	return queryParamsText.length == 0 ? queryParamsText : '?' + queryParamsText;
+}
+
+
+export async function isCredentialIssuerDidDeactivated(credential: CheqdW3CVerifiableCredential): Promise<boolean> {
+	const identityServiceStrategySetup = new IdentityServiceStrategySetup();
+
+	const resolutionResult = await identityServiceStrategySetup.agent.resolve(credential.issuer);
+	const body = await resolutionResult.json();
+
+	return body.didDocumentMetadata.deactivated;
+}
+
+export async function isIssuerDidDeactivated(presentation: CheqdW3CVerifiablePresentation): Promise<boolean> {
+	const credentials = presentation.verifiableCredential || [];
+	for (const credential of credentials) {
+		const result = await isCredentialIssuerDidDeactivated(credential);
+		if (result) {
+			return true;
+		}
+	}
+	return false;
 }

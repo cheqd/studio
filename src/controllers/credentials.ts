@@ -11,6 +11,7 @@ import type { ITrackOperation } from '../types/shared.js';
 import { Cheqd } from '@cheqd/did-provider-cheqd';
 import { OPERATION_CATEGORY_NAME_CREDENTIAL } from '../types/constants.js';
 import { CheqdW3CVerifiableCredential } from '../services/w3c_credential.js';
+import { isCredentialIssuerDidDeactivated } from '../helpers/helpers.js';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -198,7 +199,7 @@ export class CredentialController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 
 		try {
-			if (!allowDeactivatedDid && (await this.isIssuerDidDeactivated(cheqdCredential))) {
+			if (!allowDeactivatedDid && (await isCredentialIssuerDidDeactivated(cheqdCredential))) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: `Credential issuer DID is deactivated`,
 				});
@@ -224,18 +225,6 @@ export class CredentialController {
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
 		}
-	}
-
-	// ToDo: move it to helpers
-	private async isIssuerDidDeactivated(credential: CheqdW3CVerifiableCredential): Promise<boolean> {
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
-		credential = new CheqdW3CVerifiableCredential(credential)
-		const issuerDid = credential.issuer;
-
-		const resolutionResult = await identityServiceStrategySetup.agent.resolve(issuerDid);
-		const body = await resolutionResult.json();
-
-		return body.didDocumentMetadata.deactivated;
 	}
 
 	/**

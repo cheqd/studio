@@ -273,8 +273,8 @@ export type JwtProof2020 = {
 export type CheqdCredentialStatus = {
 	id: string;
 	type: string;
-	statusPurpose: string,
-	statusListIndex: string,
+	statusPurpose: string;
+	statusListIndex: string;
 };
 
 export type GenericAuthUser = Record<string, unknown> | null | undefined;

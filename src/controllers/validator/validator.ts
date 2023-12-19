@@ -16,7 +16,7 @@ export type Validatable =
 	| Service[]
 	| CreateDIDService[]
 	| AlsoKnownAs[]
-	| ICheqdCredential 
+	| ICheqdCredential
 	| ICheqdPresentation
 	| JwtProof2020
 	| CheqdCredentialStatus;
