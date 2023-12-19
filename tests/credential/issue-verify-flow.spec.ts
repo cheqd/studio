@@ -22,6 +22,15 @@ test(' Issue a jwt credential', async ({ request }) => {
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 	expect(jwtCredential.proof.type).toBe('JwtProof2020');
+	expect(jwtCredential.proof).toHaveProperty('jwt');
+	expect(typeof jwtCredential.issuer === 'string' ? jwtCredential.issuer : jwtCredential.issuer.id).toBe(
+		credentialData.issuerDid
+	);
+	expect(jwtCredential.type).toContain('VerifiableCredential');
+	expect(jwtCredential.credentialSubject).toMatchObject({
+		...credentialData.attributes,
+		id: credentialData.subjectDid,
+	});
 });
 
 test(' Verify a jwt credential', async ({ request }) => {
@@ -63,6 +72,15 @@ test(' Issue a jsonLD credential', async ({ request }) => {
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 	expect(jsonldCredential.proof.type).toBe('Ed25519Signature2018');
+	expect(jsonldCredential.proof).toHaveProperty('jws');
+	expect(typeof jwtCredential.issuer === 'string' ? jwtCredential.issuer : jwtCredential.issuer.id).toBe(
+		credentialData.issuerDid
+	);
+	expect(jwtCredential.type).toContain('VerifiableCredential');
+	expect(jwtCredential.credentialSubject).toMatchObject({
+		...credentialData.attributes,
+		id: credentialData.subjectDid,
+	});
 });
 
 test(' Verify a jsonld credential', async ({ request }) => {

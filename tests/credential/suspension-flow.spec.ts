@@ -25,6 +25,21 @@ test(' Issue a jwt credential with suspension statuslist', async ({ request }) =
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 	expect(jwtCredential.proof.type).toBe('JwtProof2020');
+	expect(jwtCredential.proof).toHaveProperty('jwt');
+	expect(typeof jwtCredential.issuer === 'string' ? jwtCredential.issuer : jwtCredential.issuer.id).toBe(
+		credentialData.issuerDid
+	);
+	expect(jwtCredential.type).toContain('VerifiableCredential');
+	expect(jwtCredential.credentialSubject).toMatchObject({
+		...credentialData.attributes,
+		id: credentialData.subjectDid,
+	});
+	expect(jwtCredential.credentialStatus).toMatchObject({
+		type: 'StatusList2021Entry',
+		statusPurpose: 'suspension',
+	});
+	expect(jwtCredential.credentialStatus).toHaveProperty('statusListIndex');
+	expect(jwtCredential.credentialStatus).toHaveProperty('id');
 });
 
 test(" Verify a credential's suspension status", async ({ request }) => {
