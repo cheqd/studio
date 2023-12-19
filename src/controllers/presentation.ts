@@ -6,7 +6,6 @@ import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { jwtDecode } from 'jwt-decode';
 import { CheqdW3CVerifiablePresentation } from '../services/w3c_presentation.js';
 import type { VerifyPresentationResponseBody } from '../types/shared.js';
-import type { W } from 'typeorm';
 import type { CheqdW3CVerifiableCredential } from '../services/w3c_credential.js';
 
 export class PresentationController {

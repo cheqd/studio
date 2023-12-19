@@ -2,8 +2,8 @@ import type { W3CVerifiableCredential, W3CVerifiablePresentation } from '@veramo
 import type { DIDDocument, VerificationMethod, Service } from 'did-resolver';
 import type { IHelpers } from './helpers.js';
 import type { CreateDIDService, AlsoKnownAs, JwtProof2020, CheqdCredentialStatus } from '../../types/shared.js';
-import type { CheqdW3CVerifiableCredential, ICheqdCredential } from '../../services/w3c_credential.js';
-import type { CheqdW3CVerifiablePresentation, ICheqdPresentation } from '../../services/w3c_presentation.js';
+import type { ICheqdCredential } from '../../services/w3c_credential.js';
+import type { ICheqdPresentation } from '../../services/w3c_presentation.js';
 
 export type Validatable =
 	| string
