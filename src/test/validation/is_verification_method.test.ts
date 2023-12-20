@@ -1,6 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
-import { VerificationMethodValidator } from '../../controllers/validator/verification_method.js';
-import { VALID_CHEQD_DID_INDY, VALID_CHEQD_DID_UUID } from '../constants.js';
+import { VerificationMethodValidator } from '../../controllers/validator/verification_method';
+import { VALID_CHEQD_DID_INDY, VALID_CHEQD_DID_UUID } from '../constants';
 import { VerificationMethods } from '@cheqd/sdk';
 
 const PUBLIC_KEY_BASE_58 = 'EFTJb1qVRoj2rHwHMz4rnmqXGejUBsmpcfMdVN99KJSD';
