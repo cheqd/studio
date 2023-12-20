@@ -15,7 +15,7 @@ test('[Negative] It cannot revoke credential in mainnet network for user with te
 		data: JSON.parse(
 			fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/revoke-credential-without-permissions.json`, 'utf-8')
 		),
-		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON }
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
 	expect(response).not.toBeOK();
 	expect(response.status()).toBe(StatusCodes.FORBIDDEN);

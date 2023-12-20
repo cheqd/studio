@@ -206,11 +206,11 @@ export class PresentationController {
 		}
 
 		if (makeFeePayment) {
-			const setResult = await cheqdPresentation.trySetStatusList2021(identityServiceStrategySetup.agent)
+			const setResult = await cheqdPresentation.trySetStatusList2021(identityServiceStrategySetup.agent);
 			if (setResult.error) {
 				return response.status(setResult.status).send({
-					error: setResult.error
-				})
+					error: setResult.error,
+				});
 			}
 			if (cheqdPresentation.isPaymentNeeded()) {
 				const feePaymentResult = await cheqdPresentation.makeFeePayment(

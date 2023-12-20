@@ -740,10 +740,10 @@ export class IssuerController {
 			const did = request.params.did
 				? await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.resolveDid(
 						request.params.did
-				  )
+					)
 				: await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.listDids(
 						response.locals.customer
-				  );
+					);
 
 			return response.status(StatusCodes.OK).json(did);
 		} catch (error) {
