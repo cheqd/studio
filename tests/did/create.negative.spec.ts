@@ -3,7 +3,6 @@ import {
 	INVALID_ID,
 	INVALID_DID,
 	NOT_EXISTENT_KEY,
-	VERIFICATION_METHOD_TYPES,
 	DEFAULT_DOES_NOT_HAVE_PERMISSIONS,
 	NOT_SUPPORTED_VERIFICATION_METHOD_TYPE,
 } from '../constants';
@@ -11,7 +10,7 @@ import * as fs from 'fs';
 import { v4 } from 'uuid';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
-import { CheqdNetwork } from '@cheqd/sdk';
+import { CheqdNetwork, VerificationMethods } from '@cheqd/sdk';
 
 const PAYLOADS_BASE_PATH = './tests/payloads/did';
 
@@ -34,7 +33,7 @@ test('[Negative] It cannot create DID with not existent key in request body (For
 	const response = await request.post(`/did/create`, {
 		data:
 			`network=${CheqdNetwork.Testnet}&identifierFormatType=${ID_TYPE.BASE58BTC}&` +
-			`verificationMethodType=${VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020}&` +
+			`verificationMethodType=${VerificationMethods.Ed255192020}&` +
 			`key=${NOT_EXISTENT_KEY}`,
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 	});
@@ -49,7 +48,7 @@ test('[Negative] It cannot create DID with not existent key in request body (JSO
 			network: CheqdNetwork.Testnet,
 			identifierFormatType: ID_TYPE.UUID,
 			options: {
-				verificationMethodType: VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020,
+				verificationMethodType: VerificationMethods.Ed255192020,
 				key: NOT_EXISTENT_KEY,
 			},
 			didDocument: {
@@ -96,7 +95,7 @@ test('[Negative] It cannot create DID with an invalid length of id in DIDDocumen
 			network: CheqdNetwork.Testnet,
 			identifierFormatType: ID_TYPE.UUID,
 			options: {
-				verificationMethodType: VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2018,
+				verificationMethodType: VerificationMethods.Ed255192018,
 			},
 			didDocument: {
 				id: invalidDidLength,
@@ -120,7 +119,7 @@ test('[Negative] It cannot create DID with an invalid id format in DIDDocument i
 			network: CheqdNetwork.Testnet,
 			identifierFormatType: ID_TYPE.UUID,
 			options: {
-				verificationMethodType: VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2018,
+				verificationMethodType: VerificationMethods.Ed255192018,
 			},
 			didDocument: {
 				id: INVALID_DID,
@@ -159,7 +158,7 @@ test('[Negative] It cannot create DID without DidDocument in request body (JSON 
 			network: CheqdNetwork.Testnet,
 			identifierFormatType: ID_TYPE.UUID,
 			options: {
-				verificationMethodType: VERIFICATION_METHOD_TYPES.Ed25519VerificationKey2020,
+				verificationMethodType: VerificationMethods.Ed255192020,
 			},
 		},
 		headers: { 'Content-Type': 'application/json' },

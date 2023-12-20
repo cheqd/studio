@@ -4,6 +4,7 @@ import {
 	DIDDocument,
 	IAgentPlugin,
 	ICreateVerifiableCredentialArgs,
+	ICreateVerifiablePresentationArgs,
 	IDIDManager,
 	IIdentifier,
 	IKeyManager,
@@ -11,6 +12,7 @@ import {
 	IVerifyResult,
 	MinimalImportableIdentifier,
 	MinimalImportableKey,
+	PresentationPayload,
 	TAgent,
 	VerifiableCredential,
 	VerifiablePresentation,
@@ -70,6 +72,7 @@ import {
 } from '../../types/shared.js';
 import { MINIMAL_DENOM, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js';
 import { toCoin, toDefaultDkg, toMinimalDenom } from '../../helpers/helpers.js';
+import { jwtDecode } from 'jwt-decode';
 
 // dynamic import to avoid circular dependency
 const VeridaResolver =
@@ -267,7 +270,7 @@ export class Veramo {
 		}
 	}
 
-	async createCredential(
+	async issueCredential(
 		agent: VeramoAgent,
 		credential: CredentialPayload,
 		format: CredentialRequest['format'],
@@ -345,12 +348,43 @@ export class Veramo {
 		return result;
 	}
 
+	async createPresentation(
+		agent: VeramoAgent,
+		presentation: PresentationPayload,
+		verificationOptions: VerificationOptions = {}
+	): Promise<VerifiablePresentation> {
+		const presentationOptions: ICreateVerifiablePresentationArgs = {
+			save: false,
+			presentation,
+			proofFormat: VC_PROOF_FORMAT,
+			removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS,
+			domain: verificationOptions.domain,
+		};
+		const result = await agent.createVerifiablePresentation(presentationOptions);
+
+		return result;
+	}
+
 	async verifyPresentation(
 		agent: VeramoAgent,
 		presentation: VerifiablePresentation | string,
 		verificationOptions: VerificationOptions = {}
 	): Promise<IVerifyResult> {
 		let result: IVerifyResult;
+		// Decode presentation if it is a string
+		if (typeof presentation === 'string') {
+			presentation = jwtDecode(presentation) as VerifiablePresentation;
+		}
+
+		// decode credentials if they are JWTs
+		if (presentation.verifiableCredential) {
+			presentation.verifiableCredential = presentation.verifiableCredential.map((credential) => {
+				if (typeof credential === 'object') {
+					return credential;
+				}
+				return jwtDecode(credential) as VerifiableCredential;
+			});
+		}
 		if (verificationOptions.verifyStatus) {
 			result = await agent.cheqdVerifyPresentation({
 				presentation: presentation as VerifiablePresentation,
@@ -365,7 +399,7 @@ export class Veramo {
 				...verificationOptions,
 				policies: {
 					...verificationOptions.policies,
-					credentialStatus: false,
+					credentialStatus: true,
 				},
 			});
 		}

@@ -3,6 +3,7 @@ import type {
 	DIDDocument,
 	IIdentifier,
 	IVerifyResult,
+	PresentationPayload,
 	VerifiableCredential,
 	VerifiablePresentation,
 } from '@veramo/core';
@@ -56,6 +57,8 @@ import {
 import type { UserEntity } from '../../database/entities/user.entity.js';
 import { APIKeyService } from '../api_key.js';
 import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
+import { KeyDIDProvider } from '@veramo/did-provider-key';
+import type { AbstractIdentifierProvider } from '@veramo/did-manager';
 
 dotenv.config();
 
@@ -86,7 +89,10 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return this.agent;
 	}
 
-	async createProvider(customer: CustomerEntity, namespace: CheqdNetwork): Promise<CheqdDIDProvider | undefined> {
+	async createCheqdProvider(
+		customer: CustomerEntity,
+		namespace: CheqdNetwork
+	): Promise<CheqdDIDProvider | undefined> {
 		let rpcUrl = '';
 		if (namespace === CheqdNetwork.Mainnet) {
 			rpcUrl = MAINNET_RPC_URL || DefaultRPCUrls.mainnet;
@@ -118,7 +124,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async createAgent(customer: CustomerEntity): Promise<VeramoAgent> {
-		const providers: Record<string, CheqdDIDProvider> = {};
+		const providers: Record<string, AbstractIdentifierProvider> = {};
 		const cheqdProviders: CheqdDIDProvider[] = [];
 
 		if (!this.privateStore) {
@@ -130,9 +136,11 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		const dbConnection = Connection.instance.dbConnection;
 
 		// One customer may / may not have one Mainnet paymentAccount
-		const providerMainnet = await this.createProvider(customer, CheqdNetwork.Mainnet);
+		const providerMainnet = await this.createCheqdProvider(customer, CheqdNetwork.Mainnet);
 		// One customer may / may not have one Testnet paymentAccount
-		const providerTestnet = await this.createProvider(customer, CheqdNetwork.Testnet);
+		const providerTestnet = await this.createCheqdProvider(customer, CheqdNetwork.Testnet);
+		// did:key provider
+		providers['did:key'] = new KeyDIDProvider({ defaultKms: 'postgres' });
 		if (providerMainnet) {
 			providers['did:cheqd:mainnet'] = providerMainnet;
 			cheqdProviders.push(providerMainnet);
@@ -308,7 +316,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 				throw new Error(`${did} not found in wallet`);
 			}
 			const agent = await this.createAgent(customer);
-			return await Veramo.instance.createCredential(agent, credential, format, statusOptions);
+			return await Veramo.instance.issueCredential(agent, credential, format, statusOptions);
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
@@ -321,6 +329,15 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	): Promise<IVerifyResult> {
 		const agent = await this.createAgent(customer);
 		return await Veramo.instance.verifyCredential(agent, credential, verificationOptions);
+	}
+
+	async createPresentation(
+		presentation: PresentationPayload,
+		verificationOptions: VerificationOptions,
+		customer: CustomerEntity
+	): Promise<VerifiablePresentation> {
+		const agent = await this.createAgent(customer);
+		return await Veramo.instance.createPresentation(agent, presentation, verificationOptions);
 	}
 
 	async verifyPresentation(

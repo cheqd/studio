@@ -1,3 +1,4 @@
+import { APIRequestContext, expect } from '@playwright/test';
 import {
 	DEFAULT_STATUS_LIST_ENCRYPTED_NAME,
 	DEFAULT_STATUS_LIST_INDICES,
@@ -5,11 +6,12 @@ import {
 	DEFAULT_SUBJECT_DID,
 	DEFAULT_TESTNET_DID,
 } from './constants';
+import { VerificationMethods } from '@cheqd/sdk';
 
 export const buildSimpleCreateDID = (network = 'testnet') => {
 	return {
 		identifierFormatType: 'uuid',
-		verificationMethodType: 'Ed25519VerificationKey2018',
+		verificationMethodType: 'Ed255192018',
 		assertionMethod: true,
 		network: network,
 	};
@@ -33,7 +35,7 @@ export const buildUpdateSimpleDID = (
 				controller: did,
 				id: `${did}#key-1`,
 				publicKeyBase58: pubkey,
-				type: `Ed25519VerificationKey2018`,
+				type: VerificationMethods.Ed255192018,
 			},
 		],
 		authentication: ['string'],
@@ -44,7 +46,7 @@ export const buildUpdateSimpleDID = (
 			verificationMethod: [
 				{
 					id: `${did}#key-1`,
-					type: 'Ed25519VerificationKey2018',
+					type: VerificationMethods.Ed255192018,
 					controller: did,
 					publicKeyBase58: pubkey,
 				},
@@ -149,3 +151,15 @@ export const buildSimpleService = (
 		serviceEndpoint: serviceEndpoint,
 	};
 };
+
+
+export async function createDID( request: APIRequestContext, payload): Promise<string> {
+	const response = await request.post('/did/create', {
+		data: payload,
+		headers: { 'Content-Type': 'application/json' },
+	});
+
+	expect(response).toBeOK();
+	const reponseJson = await response.json();
+	return reponseJson.did as string;
+}

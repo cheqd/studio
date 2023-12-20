@@ -66,3 +66,5 @@ export const VERIDA_CREDENTIAL_RECORD_SCHEMA = 'https://common.schemas.verida.io
 export const OPERATION_CATEGORY_NAME_RESOURCE = 'resource';
 export const OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS = 'credential-status';
 export const OPERATION_CATEGORY_NAME_CREDENTIAL = 'credential';
+
+export const JWT_PROOF_TYPE = 'JwtProof2020';

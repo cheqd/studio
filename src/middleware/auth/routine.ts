@@ -5,7 +5,7 @@ import stringify from 'json-stringify-safe';
 import { DefaultNetworkPattern } from '../../types/shared.js';
 import { MethodToScopeRule, Namespaces, IAuthResponse, ICommonErrorResponse } from '../../types/authentication.js';
 import { InvalidTokenError } from 'jwt-decode';
-import { jwtDecode }  from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import type { IOAuthProvider } from './oauth/base.js';
 import type { IUserInfoFetcher } from './user-info-fetcher/base.js';
 dotenv.config();
