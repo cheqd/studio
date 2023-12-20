@@ -69,9 +69,3 @@ export enum ID_TYPE {
 	UUID = 'uuid',
 	BASE58BTC = 'base58btc',
 }
-
-export enum VERIFICATION_METHOD_TYPES {
-	Ed25519VerificationKey2018 = 'Ed25519VerificationKey2018',
-	Ed25519VerificationKey2020 = 'Ed25519VerificationKey2020',
-	JsonWebKey2020 = 'JsonWebKey2020',
-}

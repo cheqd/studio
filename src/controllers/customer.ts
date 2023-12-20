@@ -60,7 +60,7 @@ export class AccountController {
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `${error}`,
+				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
 		}
 	}

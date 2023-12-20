@@ -248,7 +248,20 @@
  *               description: Policy to skip the audience check when set to `false`.
  *               type: boolean
  *               default: false
- *     IVerifyResult:
+ *     VerifyPresentationResult:
+ *       type: object
+ *       properties:
+ *         verified:
+ *           type: boolean
+ *         issuer:
+ *           type: string
+ *         signer:
+ *           type: object
+ *         jwt:
+ *           type: string
+ *         verifiableCredential:
+ *           type: object
+ *     VerifyCredentialResult:
  *       type: object
  *       properties:
  *         verified:
@@ -270,6 +283,22 @@
  *           id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1
  *           publicKeyBase58: BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt
  *           type: Ed25519VerificationKey2018
+ *     PresentationCreateRequest:
+ *       type: object
+ *       required:
+ *         - credentials
+ *       properties:
+ *         credentials:
+ *           description: Verifiable Credentials to be used for VP-JWT creation as a VP-JWT strings or a JSON objectsf.
+ *           type: array
+ *           items:
+ *             type: object
+ *         holderDid:
+ *           description: DID of holder
+ *           type: string
+ *         verifierDid:
+ *           description: DID of verifier
+ *           type: string
  *     PresentationVerifyRequest:
  *       type: object
  *       required:
@@ -278,9 +307,13 @@
  *         presentation:
  *           description: Verifiable Presentation to be verified as a VP-JWT string or a JSON object.
  *           type: object
- *         verifiedDid:
+ *         verifierDid:
  *           description: Provide an optional verifier DID (also known as 'domain' parameter), if the verifier DID in the presentation is not managed in the wallet.
  *           type: string
+ *         makeFeePayment:
+ *           description: Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 DID-Linked Resource.
+ *           type: boolean
+ *           default: false
  *         policies:
  *           description: Custom verification policies to execute when verifying presentation.
  *           type: object
@@ -862,6 +895,35 @@
  *                 - Ed25519VerificationKey2020
  *         didDocument:
  *           $ref: '#/components/schemas/DidDocumentWithoutVerificationMethod'
+ *     PresentationCreateResult:
+ *       type: object
+ *       properties:
+ *           vp:
+ *              type: object
+ *              description: Verifiable Presentation which could be provided to the verifier.
+ *           nbf:
+ *              type: integer
+ *              description: Unix timestamp of the earliest time that the Verifiable Presentation is valid.
+ *           iss:
+ *              type: string
+ *              description: DID of the issuer of the Verifiable Presentation. (Here it's supposed to be a holder DID)
+ *           aud:
+ *              type: array
+ *              items:
+ *                 type: string
+ *              description: DID of the verifier of the Verifiable Presentation.
+ *       example:
+ *          vp:
+ *              '@context':
+ *                 - https://www.w3.org/2018/credentials/v1
+ *              type:
+ *                 - VerifiablePresentation
+ *              verifiableCredential:
+ *                 - eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vc2NoZW1hLm9yZy9zY2hlbWEuanNvbmxkIiwiaHR0cHM6Ly92ZXJhbW8uaW8vY29udGV4dHMvcHJvZmlsZS92MSIsImh0dHBzOi8vdzNpZC5vcmcvdmMtc3RhdHVzLWxpc3QtMjAyMS92MSJdLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiUGVyc29uIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7Im5hbWUiOiJCb2IiLCJnZW5kZXIiOiJtYWxlIn0sImNyZWRlbnRpYWxTdGF0dXMiOnsiaWQiOiJodHRwczovL3Jlc29sdmVyLmNoZXFkLm5ldC8xLjAvaWRlbnRpZmllcnMvZGlkOmNoZXFkOnRlc3RuZXQ6OTBkNWMxNDEtNzI0Zi00N2FkLTlhZTctYTdjMzNhOWU1NjQzP3Jlc291cmNlTmFtZT1zdXNwZW5zaW9uRW4mcmVzb3VyY2VUeXBlPVN0YXR1c0xpc3QyMDIxU3VzcGVuc2lvbiMxMzMzOCIsInR5cGUiOiJTdGF0dXNMaXN0MjAyMUVudHJ5Iiwic3RhdHVzUHVycG9zZSI6InN1c3BlbnNpb24iLCJzdGF0dXNMaXN0SW5kZXgiOiIxMzMzOCJ9fSwic3ViIjoiZGlkOmtleTp6Nk1raGFYZ0JaRHZvdERrTDUyNTdmYWl6dGlHaUMyUXRLTEdwYm5uRUd0YTJkb0siLCJuYmYiOjE3MDA0NzM0MTYsImlzcyI6ImRpZDpjaGVxZDp0ZXN0bmV0OjkwZDVjMTQxLTcyNGYtNDdhZC05YWU3LWE3YzMzYTllNTY0MyJ9.-14Ril1pZEy2HEEo48gTJr2yOtGxBhUGTFmzVdjAtyhFRsW5zZg9onHt6V9JQ8BaiYBlTkP9GzTnJ-O6hdiyCw
+ *          nbf: 1700744275
+ *          iss: did:cheqd:testnet:4b846d0f-2f6c-4ab6-9fe2-5b8db301c83c
+ *          aud:
+ *            - did:cheqd:testnet:8c71e9b6-c5a3-4250-8c58-fa591533cd22
  *     DidResult:
  *       type: object
  *       properties:
