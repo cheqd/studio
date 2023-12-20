@@ -1,7 +1,6 @@
-import { test as setup, expect } from '@playwright/test';
 import * as dotenv from 'dotenv';
-
-const userFile = 'playwright/.auth/user.json';
+import { STORAGE_STATE_AUTHENTICATED } from './constants';
+import { test as setup, expect } from '@playwright/test';
 
 dotenv.config();
 
@@ -23,7 +22,10 @@ setup('Authenticate as user', async ({ page }) => {
 	});
 	await expect(page.getByRole('button', { name: 'Log out' })).toBeVisible();
 
+	const response = await page.goto(`${process.env.APPLICATION_BASE_URL}/account`);
+	expect(response.ok()).toBe(true);
+
 	// End of authentication steps.
 
-	await page.context().storageState({ path: userFile });
+	await page.context().storageState({ path: STORAGE_STATE_AUTHENTICATED });
 });

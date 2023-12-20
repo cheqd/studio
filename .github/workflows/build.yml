@@ -60,7 +60,7 @@ jobs:
                 VERIDA_NETWORK: ${{ vars.VERIDA_NETWORK }}
                 VERIDA_PRIVATE_KEY: ${{ secrets.VERIDA_PRIVATE_KEY }}
 
-            - uses: actions/upload-artifact@v3
+            - uses: actions/upload-artifact@v4
               if: always()
               with:
                 name: playwright-report
@@ -112,7 +112,7 @@ jobs:
                   cache-to: type=gha,mode=min
 
             - name: Upload build image as artifact
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: credential-service-staging
                   path: credential-service-staging.tar
