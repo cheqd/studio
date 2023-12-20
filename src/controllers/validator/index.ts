@@ -70,11 +70,11 @@ export const { check, validationResult, query, param } = new ExpressValidator({
 	},
 
 	isW3CCheqdCredential: (value: Validatable) => {
-	    const res = new CheqdW3CVerifiableCredentialValidator().validate(value);
-	    if (!res.valid) {
-	        throw new Error(res.error);
-	    }
-	    return true;
+		const res = new CheqdW3CVerifiableCredentialValidator().validate(value);
+		if (!res.valid) {
+			throw new Error(res.error);
+		}
+		return true;
 	},
 
 	isW3CCheqdPresentation: (value: Validatable) => {
@@ -82,5 +82,5 @@ export const { check, validationResult, query, param } = new ExpressValidator({
 		if (!res.valid) {
 			throw new Error(res.error);
 		}
-	}
+	},
 });

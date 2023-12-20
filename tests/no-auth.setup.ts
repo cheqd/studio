@@ -6,14 +6,14 @@ import { StatusCodes } from 'http-status-codes';
 dotenv.config();
 
 setup('Unauthenticated user', async ({ page }) => {
-    // Check that current user is really unauthenticated
+	// Check that current user is really unauthenticated
 
 	await page.goto(`${process.env.APPLICATION_BASE_URL}/swagger`);
 	await expect(page.getByRole('button', { name: 'Log in' })).toBeVisible();
 
 	const response = await page.goto(`${process.env.APPLICATION_BASE_URL}/account`);
 	expect(response.ok()).not.toBe(true);
-    expect(response.status()).toBe(StatusCodes.UNAUTHORIZED);
+	expect(response.status()).toBe(StatusCodes.UNAUTHORIZED);
 
 	// End of authentication steps.
 

@@ -290,11 +290,11 @@ export class Veramo {
 						? await agent.cheqdIssueRevocableCredentialWithStatusList2021({
 								issuanceOptions,
 								statusOptions: statusListOptions as RevocationStatusOptions,
-						  })
+							})
 						: await agent.cheqdIssueSuspendableCredentialWithStatusList2021({
 								issuanceOptions,
 								statusOptions: statusListOptions as SuspensionStatusOptions,
-						  });
+							});
 			} else {
 				verifiable_credential = await agent.createVerifiableCredential(issuanceOptions);
 			}
@@ -468,7 +468,7 @@ export class Veramo {
 							feePaymentAmount: `${toMinimalDenom(condition.feePaymentAmount)}${MINIMAL_DENOM}`,
 							intervalInSeconds: condition.feePaymentWindow * 60,
 						};
-				  })
+					})
 				: (function () {
 						// validate relevant components - case: feePaymentAddress
 						if (!statusOptions.feePaymentAddress)
@@ -490,7 +490,7 @@ export class Veramo {
 								intervalInSeconds: statusOptions.feePaymentWindow * 60,
 							},
 						];
-				  })()
+					})()
 		) satisfies PaymentCondition[];
 
 		return await agent.cheqdCreateStatusList2021({
@@ -671,7 +671,7 @@ export class Veramo {
 							intervalInSeconds: condition.feePaymentWindow * 60,
 							type: 'timelockPayment',
 						};
-				  })
+					})
 				: (function () {
 						// validate relevant components
 						if (
@@ -701,7 +701,7 @@ export class Veramo {
 								type: 'timelockPayment',
 							},
 						];
-				  })()
+					})()
 		) satisfies PaymentCondition[] | undefined;
 
 		switch (statusOptions.statusAction) {
