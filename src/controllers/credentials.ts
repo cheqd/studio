@@ -14,12 +14,7 @@ import { isCredentialIssuerDidDeactivated } from '../services/helpers.js';
 
 export class CredentialController {
 	public static issueValidator = [
-		check(['subjectDid', 'issuerDid'])
-			.exists()
-			.withMessage('DID is required')
-			.bail()
-			.isDID()
-			.bail(),
+		check(['subjectDid', 'issuerDid']).exists().withMessage('DID is required').bail().isDID().bail(),
 		check('attributes')
 			.exists()
 			.withMessage('attributes are required')
@@ -28,18 +23,14 @@ export class CredentialController {
 			.withMessage('attributes should be an object')
 			.bail(),
 		check('expirationDate')
-		    .optional()
+			.optional()
 			.isDate()
 			.withMessage('Invalid expiration date')
 			.bail()
 			.isISO8601()
 			.withMessage('Expect to see ISO8601 date format')
 			.bail(),
-		check('format')
-		    .optional()
-			.isString()
-			.withMessage('Invalid credential format')
-			.bail(),
+		check('format').optional().isString().withMessage('Invalid credential format').bail(),
 	];
 	public static verifyValidator = [
 		check('credential')
@@ -47,16 +38,8 @@ export class CredentialController {
 			.withMessage('W3c verifiable credential was not provided')
 			.isW3CCheqdCredential()
 			.bail(),
-		query('verifyStatus')
-			.optional()
-			.isBoolean()
-			.withMessage('verifyStatus should be a boolean value')
-			.bail(),
-		query('policies')
-			.optional()
-			.isObject()
-			.withMessage('Verification policies should be an object')
-			.bail(),
+		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value').bail(),
+		query('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
 	];
 	public static revokeValidator = [
 		check('credential')
@@ -64,11 +47,7 @@ export class CredentialController {
 			.withMessage('W3c verifiable credential was not provided')
 			.isW3CCheqdCredential()
 			.bail(),
-		query('publish')
-			.optional()
-			.isBoolean()
-			.withMessage('publish should be a boolean value')
-			.bail(),
+		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').bail(),
 	];
 	public static suspendValidator = [
 		check('credential')
@@ -76,11 +55,7 @@ export class CredentialController {
 			.withMessage('W3c verifiable credential was not provided')
 			.isW3CCheqdCredential()
 			.bail(),
-		query('publish')
-			.optional()
-			.isBoolean()
-			.withMessage('publish should be a boolean value')
-			.bail(),
+		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').bail(),
 	];
 
 	public static reinstateValidator = [
@@ -89,11 +64,7 @@ export class CredentialController {
 			.withMessage('W3c verifiable credential was not provided')
 			.isW3CCheqdCredential()
 			.bail(),
-		query('publish')
-			.optional()
-			.isBoolean()
-			.withMessage('publish should be a boolean value')
-			.bail(),
+		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').bail(),
 	];
 
 	/**

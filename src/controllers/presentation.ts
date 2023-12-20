@@ -14,19 +14,9 @@ export class PresentationController {
 			.withMessage('W3c verifiable credential was not provided')
 			.isW3CCheqdCredential()
 			.bail(),
-		check('holderDid')
-			.optional()
-			.isDID()
-			.bail(),
-		check('verifierDid')
-			.optional()
-			.isDID()
-			.bail(),
-		check('policies')
-			.optional()
-			.isObject()
-			.withMessage('Verification policies should be an object')
-			.bail(),
+		check('holderDid').optional().isDID().bail(),
+		check('verifierDid').optional().isDID().bail(),
+		check('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
 	];
 
 	public static presentationVerifyValidator = [
@@ -35,25 +25,10 @@ export class PresentationController {
 			.withMessage('W3c verifiable presentation was not provided')
 			.isW3CCheqdPresentation()
 			.bail(),
-		check('verifierDid')
-			.optional()
-			.isDID()
-			.bail(),
-		check('policies')
-			.optional()
-			.isObject()
-			.withMessage('Verification policies should be an object')
-			.bail(),
-		check('makeFeePayment')
-			.optional()
-			.isBoolean()
-			.withMessage('makeFeePayment: should be a boolean')
-			.bail(),
-		query('verifyStatus')
-			.optional()
-			.isBoolean()
-			.withMessage('verifyStatus should be a boolean value')
-			.bail(),
+		check('verifierDid').optional().isDID().bail(),
+		check('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
+		check('makeFeePayment').optional().isBoolean().withMessage('makeFeePayment: should be a boolean').bail(),
+		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value').bail(),
 	];
 
 	/**
