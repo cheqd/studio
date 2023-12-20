@@ -10,6 +10,7 @@ import { ServiceValidator } from './service.js';
 import { DIDArrayValidator } from './did_array.js';
 import { AlsoKnownAsValidator } from './also_known_as.js';
 import { CheqdW3CVerifiableCredentialValidator } from './cheqd_credential.js';
+import { CheqdW3CVerifiablePresentationValidator } from './presentation.js';
 
 export const { check, validationResult, query, param } = new ExpressValidator({
 	isDID: (value: Validatable) => {
@@ -78,9 +79,10 @@ export const { check, validationResult, query, param } = new ExpressValidator({
 	},
 
 	isW3CCheqdPresentation: (value: Validatable) => {
-		const res = new CheqdW3CVerifiableCredentialValidator().validate(value);
+		const res = new CheqdW3CVerifiablePresentationValidator().validate(value);
 		if (!res.valid) {
 			throw new Error(res.error);
 		}
+		return true;
 	},
 });
