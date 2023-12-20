@@ -1,9 +1,9 @@
 import { describe, it } from '@jest/globals';
-import { CheqdW3CVerifiableCredential } from '../../services/w3c_credential.js';
-import { expect } from '@playwright/test';
-import { JWT_PROOF_TYPE } from '../../types/constants.js';
-import { CheqdW3CVerifiablePresentation } from '../../services/w3c_presentation.js';
 import type { W3CVerifiablePresentation } from '@veramo/core';
+import { expect } from '@playwright/test';
+import { CheqdW3CVerifiableCredential } from '../../services/w3c_credential';
+import { JWT_PROOF_TYPE } from '../../types/constants';
+import { CheqdW3CVerifiablePresentation } from '../../services/w3c_presentation';
 import {
 	CREDENTIAL_JWT,
 	HOLDER_DID,

@@ -10,7 +10,7 @@ import type { ITrackOperation } from '../types/shared.js';
 import { Cheqd } from '@cheqd/did-provider-cheqd';
 import { OPERATION_CATEGORY_NAME_CREDENTIAL } from '../types/constants.js';
 import { CheqdW3CVerifiableCredential } from '../services/w3c_credential.js';
-import { isCredentialIssuerDidDeactivated } from '../helpers/helpers.js';
+import { isCredentialIssuerDidDeactivated } from '../services/helpers.js';
 
 export class CredentialController {
 	public static issueValidator = [
