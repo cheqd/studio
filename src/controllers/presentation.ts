@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
-import { check, query, validationResult } from 'express-validator';
+import { check, validationResult, query } from './validator/index.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { jwtDecode } from 'jwt-decode';
 import { CheqdW3CVerifiablePresentation } from '../services/w3c_presentation.js';
@@ -13,55 +13,48 @@ export class PresentationController {
 		check('credentials')
 			.exists()
 			.withMessage('W3c verifiable credential was not provided')
-			.custom((value) => {
-				if (typeof value === 'string' || typeof value === 'object') {
-					return true;
-				}
-				return false;
-			})
-			.withMessage('Entry must be a JWT or a credential body with JWT proof')
-			.custom((value) => {
-				if (typeof value === 'string') {
-					try {
-						jwtDecode(value);
-					} catch (e) {
-						return false;
-					}
-				}
-				return true;
-			})
-			.withMessage('An invalid JWT string'),
-		check('holderDid').optional().isString().withMessage('Invalid holder DID'),
-		check('verifierDid').optional().isString().withMessage('Invalid verifier DID'),
-		check('policies').optional().isObject().withMessage('Verification policies should be an object'),
+			.isW3CCheqdCredential()
+			.bail(),
+		check('holderDid')
+			.optional()
+			.isDID()
+			.bail(),
+		check('verifierDid')
+			.optional()
+			.isDID()
+			.bail(),
+		check('policies')
+			.optional()
+			.isObject()
+			.withMessage('Verification policies should be an object')
+			.bail(),
 	];
 
 	public static presentationVerifyValidator = [
 		check('presentation')
 			.exists()
 			.withMessage('W3c verifiable presentation was not provided')
-			.custom((value) => {
-				if (typeof value === 'string' || typeof value === 'object') {
-					return true;
-				}
-				return false;
-			})
-			.withMessage('Entry must be a JWT or a presentation body with JWT proof')
-			.custom((value) => {
-				if (typeof value === 'string') {
-					try {
-						jwtDecode(value);
-					} catch (e) {
-						return false;
-					}
-				}
-				return true;
-			})
-			.withMessage('An invalid JWT string'),
-		check('verifierDid').optional().isString().withMessage('Invalid verifier DID'),
-		check('policies').optional().isObject().withMessage('Verification policies should be an object'),
-		check('makeFeePayment').optional().isBoolean().withMessage('makeFeePayment: should be a boolean').bail(),
-		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value'),
+			.isW3CCheqdPresentation()
+			.bail(),
+		check('verifierDid')
+			.optional()
+			.isDID()
+			.bail(),
+		check('policies')
+			.optional()
+			.isObject()
+			.withMessage('Verification policies should be an object')
+			.bail(),
+		check('makeFeePayment')
+			.optional()
+			.isBoolean()
+			.withMessage('makeFeePayment: should be a boolean')
+			.bail(),
+		query('verifyStatus')
+			.optional()
+			.isBoolean()
+			.withMessage('verifyStatus should be a boolean value')
+			.bail(),
 	];
 
 	/**
