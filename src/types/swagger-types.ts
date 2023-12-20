@@ -692,6 +692,21 @@
  *         - oneOf:
  *           - $ref: '#/components/schemas/CredentialStatusUnencryptedResult'
  *           - $ref: '#/components/schemas/CredentialStatusEncryptedResult'
+ *     KeyImportRequest:
+ *       type: object
+ *       properties:
+ *         kid:
+ *           type: string
+ *         type:
+ *           type: string
+ *           enum: [ Ed25519, Secp256k1 ]
+ *         privateKeyHex:
+ *           type: string
+ *         ivHex:
+ *           type: string
+ *           required: false
+ *         encrypted:
+ *           type: boolean
  *     KeyResult:
  *       type: object
  *       properties:

@@ -1,4 +1,7 @@
 import type { DIDDocument } from 'did-resolver';
+import type { ParsedQs } from 'qs';
+import type { SpecValidationResult } from '../types/shared.js';
+import type { Coin } from '@cosmjs/amino';
 import {
 	MethodSpecificIdAlgo,
 	CheqdNetwork,
@@ -10,11 +13,13 @@ import {
 	createDidPayload,
 } from '@cheqd/sdk';
 import { createHmac } from 'node:crypto';
-import type { ParsedQs } from 'qs';
-import type { SpecValidationResult } from '../types/shared.js';
 import { DEFAULT_DENOM_EXPONENT, MINIMAL_DENOM } from '../types/constants.js';
 import { LitCompatibleCosmosChains, type DkgOptions, LitNetworks } from '@cheqd/did-provider-cheqd';
-import type { Coin } from '@cosmjs/amino';
+import { fromString } from 'uint8arrays';
+
+import { config } from 'dotenv';
+
+config();
 
 export interface IDidDocOptions {
 	verificationMethod: VerificationMethods;
@@ -148,4 +153,87 @@ export function getQueryParams(queryParams: ParsedQs) {
 		.join('&');
 
 	return queryParamsText.length == 0 ? queryParamsText : '?' + queryParamsText;
+}
+
+export async function generateSaltFromConstantInput(userId: string): Promise<Uint8Array> {
+	const derivedSource = await crypto.subtle.importKey(
+		'raw',
+		Buffer.from(userId),
+		{ name: 'PBKDF2', hash: 'SHA-256' },
+		false,
+		['deriveBits', 'deriveKey']
+	);
+
+	const salt = await crypto.subtle.deriveBits(
+		{
+			name: 'PBKDF2',
+			salt: Buffer.from(userId),
+			iterations: 100_000,
+			hash: 'SHA-256',
+		},
+		derivedSource,
+		256
+	);
+
+	return new Uint8Array(salt);
+}
+
+export async function deriveSymmetricKeyFromSecret(
+	customerId: string,
+	encryptionKey: string,
+	iterations = 100_000
+): Promise<CryptoKey> {
+	// generate salt from constant input
+	const salt = await generateSaltFromConstantInput(customerId);
+
+	// import as key
+	const key = await crypto.subtle.importKey('raw', fromString(encryptionKey), { name: 'PBKDF2' }, false, [
+		'deriveBits',
+		'deriveKey',
+	]);
+
+	// derive key from encryption secret
+	const derivedKey = await crypto.subtle.deriveKey(
+		{
+			name: 'PBKDF2',
+			salt,
+			iterations, // 10x iterations since outcome is exposed in client storage, around 1s
+			hash: 'SHA-256',
+		},
+		key,
+		{
+			name: 'AES-GCM',
+			length: 256,
+		},
+		false,
+		['encrypt', 'decrypt']
+	);
+
+	return derivedKey;
+}
+
+export async function decryptPrivateKey(encryptedPrivateKeyHex: string, ivHex: string, customerId: string) {
+	if (!process.env.ENCRYPTION_SECRET) {
+		throw new Error('Missing encryption secret');
+	}
+	// derive key from passphrase
+	const derivedKey = await deriveSymmetricKeyFromSecret(customerId, process.env.ENCRYPTION_SECRET);
+
+	// unwrap encrypted key with iv
+	const encryptedKey = Buffer.from(encryptedPrivateKeyHex, 'hex');
+	const iv = Buffer.from(ivHex, 'hex');
+
+	// decrypt private key with derived key
+	const decrypted = await crypto.subtle.decrypt(
+		{
+			name: 'AES-GCM',
+			iv,
+		},
+		derivedKey,
+		encryptedKey
+	);
+
+	const secretKey = new Uint8Array(decrypted);
+
+	return secretKey;
 }

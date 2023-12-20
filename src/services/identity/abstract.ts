@@ -55,6 +55,15 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 
+	importKey(
+		type: 'Ed25519' | 'Secp256k1',
+		privateKeyHex: string,
+		customer?: CustomerEntity,
+		keyAlias?: string
+	): Promise<KeyEntity> {
+		throw new Error(`Not supported`);
+	}
+
 	createDid(network: string, didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier> {
 		throw new Error(`Not supported`);
 	}

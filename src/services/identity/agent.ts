@@ -161,6 +161,15 @@ export class Veramo {
 		});
 	}
 
+	async importKey(agent: TAgent<IKeyManager>, type: 'Ed25519' | 'Secp256k1' = 'Ed25519', privateKeyHex: string) {
+		const [kms] = await agent.keyManagerGetKeyManagementSystems();
+		return await agent.keyManagerImport({
+			type: type || 'Ed25519',
+			kms,
+			privateKeyHex,
+		});
+	}
+
 	async getKey(agent: TAgent<IKeyManager>, kid: string) {
 		return await agent.keyManagerGet({ kid });
 	}

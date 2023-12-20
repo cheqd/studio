@@ -168,6 +168,18 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return await KeyService.instance.update(key.kid, customer, keyAlias, new Date());
 	}
 
+	async importKey(
+		type: 'Ed25519' | 'Secp256k1' = 'Ed25519',
+		privateKeyHex: string,
+		customer?: CustomerEntity,
+		keyAlias?: string
+	) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const key = await Veramo.instance.importKey(this.agent!, type, privateKeyHex);
+		// Update our specific key columns
+		return await KeyService.instance.update(key.kid, customer, keyAlias, new Date());
+	}
+
 	async getKey(kid: string, customer: CustomerEntity) {
 		const keys = await KeyService.instance.find({ kid: kid, customer: customer });
 		if (!keys || keys.length == 0) {
