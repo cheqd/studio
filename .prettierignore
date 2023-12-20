@@ -1,6 +1,10 @@
+# Ignore folders
 .DS_Store
+.github
 node_modules
-/dist
+dist
+playwright
+playwright-report
 
 # Ignore files for PNPM, NPM and YARN
 pnpm-lock.yaml
