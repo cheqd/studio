@@ -157,6 +157,7 @@ class App {
 
 		// Keys API
 		app.post('/key/create', new IssuerController().createKey);
+		app.post('/key/import', new IssuerController().importKey);
 		app.get('/key/read/:kid', new IssuerController().getKey);
 
 		// DIDs API
