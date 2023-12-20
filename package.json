@@ -28,7 +28,7 @@
 		"start:local": "npm run build:app && npm run start",
 		"format": "prettier --write 'src/**/*.{js,ts,cjs,mjs}' 'tests/**/*.{js,ts,cjs,mjs}'",
 		"lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js}' 'src/**/*.{js,ts}' 'test/**/*.{js,ts}'",
-		"test": "npm run test:e2e",
+		"test": "npm run test:unit && npm run test:e2e",
 		"test:unit": "jest --config jestconfig.json --verbose",
 		"test:e2e": "npx playwright test -c playwright.config.ts",
 		"typeorm": "typeorm-ts-node-esm  -d ./dist/database/ormconfig.js",
