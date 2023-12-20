@@ -1,5 +1,5 @@
 import { DIDValidator } from './did.js';
-import type { IValidationResult, IValidator, Validatable } from './validator';
+import type { IValidationResult, IValidator, Validatable } from './validator.js';
 
 export class CheqdControllerValidator implements IValidator {
 	protected didValidator: IValidator;

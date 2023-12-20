@@ -1,7 +1,7 @@
 import { InvalidTokenError, jwtDecode } from 'jwt-decode';
-import { JWT_PROOF_TYPE } from '../../types/constants';
-import type { JwtProof2020 } from '../../types/shared';
-import type { IValidationResult, IValidator, Validatable } from './validator';
+import { JWT_PROOF_TYPE } from '../../types/constants.js';
+import type { JwtProof2020 } from '../../types/shared.js';
+import type { IValidationResult, IValidator, Validatable } from './validator.js';
 
 export class JWTProofValidator implements IValidator {
 	validate(proof: Validatable): IValidationResult {
