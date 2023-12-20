@@ -443,7 +443,7 @@
           "Key"
         ],
         "summary": "Import an identity key pair.",
-        "description": "This endpoint creates an identity key pair associated with the user's account for custodian-mode clients.",
+        "description": "This endpoint imports an identity key pair associated with the user's account for custodian-mode clients.",
         "requestBody": {
           "content": {
             "application/x-www-form-urlencoded": {
