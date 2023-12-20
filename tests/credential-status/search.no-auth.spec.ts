@@ -74,7 +74,7 @@ test('[Negative] It cannot search credential-status with an invalid DID', async 
     expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
     const body = await response.json();
 
-    expect(body.error).toBe("did: invalid format, should be did:cheqd:<namespace>:<method_specific_identifier>");
+    expect(body.error).toBe("Invalid format of DID. Expected to start with did:<method>");
 });
 
 test('[Negative] It cannot search credential-status with an existent DID an not existed statusListName', async ({ request }) => {

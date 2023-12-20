@@ -124,5 +124,5 @@ test('[Negative] It cannot verify credential with an invalid JWT body', async ({
     expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
 
     const body = await response.json();
-    expect(body.error).toBe("An invalid JWT string");
+    expect(body.error).toBe("Credential is not a valid JWT string");
 });
