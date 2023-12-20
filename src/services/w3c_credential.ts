@@ -1,4 +1,3 @@
-
 import { StatusCodes } from 'http-status-codes';
 import type { ICommonErrorResponse } from '../types/authentication.js';
 import type {
@@ -17,7 +16,6 @@ import { toNetwork } from '../helpers/helpers.js';
 import { CommonReturn, type FeePaymentOptions } from '../types/shared.js';
 import { JWT_PROOF_TYPE } from '../types/constants.js';
 import type { StatusList2021Revocation, StatusList2021Suspension } from '@cheqd/did-provider-cheqd';
-
 
 export interface ICheqdCredential extends UnsignedCredential {
 	proof: {
@@ -135,9 +133,9 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 
 	public isPaymentNeeded(): boolean {
 		if (!this.statusList) {
-			return false
+			return false;
 		}
-		return this.statusList.metadata.encrypted
+		return this.statusList.metadata.encrypted;
 	}
 
 	public async makeFeePayment(agent: IIdentityService, customer: CustomerEntity): Promise<ICommonErrorResponse> {

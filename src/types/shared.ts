@@ -201,7 +201,7 @@ export type CheckStatusListUnsuccessfulResponseBody = {
 export type VerifyPresentationResponseBody = {
 	verified: false;
 	error: string;
-}
+};
 
 export type SearchStatusListQuery = {
 	did: string;

@@ -87,29 +87,30 @@ export class CheqdW3CVerifiablePresentation extends CommonReturn implements IChe
 		if (this.verifiableCredential) {
 			return this.verifiableCredential
 				.filter((credential) => credential.credentialStatus)
-				.some(async (credential) => await credential.isPaymentNeeded())
+				.some(async (credential) => await credential.isPaymentNeeded());
 		}
-		return false
+		return false;
 	}
 
-	public async trySetStatusList2021(agent: IIdentityService): Promise<ICommonErrorResponse>{
+	public async trySetStatusList2021(agent: IIdentityService): Promise<ICommonErrorResponse> {
 		// It returns an error only if there is logical errors inside
 		if (this.verifiableCredential) {
 			const setResults = await Promise.all(
 				this.verifiableCredential
 					.filter((credential) => credential.credentialStatus)
-					.map(async (credential) => await credential.trySetStatusList2021(agent) satisfies ICommonErrorResponse)
+					.map(
+						async (credential) =>
+							(await credential.trySetStatusList2021(agent)) satisfies ICommonErrorResponse
+					)
 			);
-			if (setResults.some(setResult => setResult.error)) {
+			if (setResults.some((setResult) => setResult.error)) {
 				return this.returnError(
 					StatusCodes.BAD_REQUEST,
-					`Errors while setting statusList2021: ${
-						setResults.filter((setResult) => setResult.error)
-					}`
-				)
+					`Errors while setting statusList2021: ${setResults.filter((setResult) => setResult.error)}`
+				);
 			}
 		}
-		return this.returnOk()
+		return this.returnOk();
 	}
 
 	public async makeFeePayment(agent: IIdentityService, customer: CustomerEntity): Promise<ICommonErrorResponse> {
@@ -130,10 +131,10 @@ export class CheqdW3CVerifiablePresentation extends CommonReturn implements IChe
 		if (feePaymentResults.some((result) => result.error)) {
 			return this.returnError(
 				StatusCodes.BAD_REQUEST,
-				`Errors while making payment for the presentation: ${
-					feePaymentResults.filter((result) => result.error)
-				}`
-			)
+				`Errors while making payment for the presentation: ${feePaymentResults.filter(
+					(result) => result.error
+				)}`
+			);
 		}
 		return this.returnOk();
 	}
