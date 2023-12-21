@@ -2530,7 +2530,7 @@
       "KeyImportRequest": {
         "type": "object",
         "properties": {
-          "kid": {
+          "alias": {
             "type": "string"
           },
           "type": {
@@ -2546,6 +2546,9 @@
           "ivHex": {
             "type": "string",
             "required": false
+          },
+          "salt": {
+            "type": "string"
           },
           "encrypted": {
             "type": "boolean"

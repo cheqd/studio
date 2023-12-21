@@ -155,10 +155,10 @@ export function getQueryParams(queryParams: ParsedQs) {
 	return queryParamsText.length == 0 ? queryParamsText : '?' + queryParamsText;
 }
 
-export async function generateSaltFromConstantInput(userId: string): Promise<Uint8Array> {
+export async function generateSaltFromConstantInput(constant: string): Promise<Uint8Array> {
 	const derivedSource = await crypto.subtle.importKey(
 		'raw',
-		Buffer.from(userId),
+		Buffer.from(constant),
 		{ name: 'PBKDF2', hash: 'SHA-256' },
 		false,
 		['deriveBits', 'deriveKey']
@@ -167,7 +167,7 @@ export async function generateSaltFromConstantInput(userId: string): Promise<Uin
 	const salt = await crypto.subtle.deriveBits(
 		{
 			name: 'PBKDF2',
-			salt: Buffer.from(userId),
+			salt: Buffer.from(constant),
 			iterations: 100_000,
 			hash: 'SHA-256',
 		},
@@ -179,12 +179,12 @@ export async function generateSaltFromConstantInput(userId: string): Promise<Uin
 }
 
 export async function deriveSymmetricKeyFromSecret(
-	customerId: string,
 	encryptionKey: string,
+	constant: string,
 	iterations = 100_000
 ): Promise<CryptoKey> {
 	// generate salt from constant input
-	const salt = await generateSaltFromConstantInput(customerId);
+	const salt = await generateSaltFromConstantInput(constant);
 
 	// import as key
 	const key = await crypto.subtle.importKey('raw', fromString(encryptionKey), { name: 'PBKDF2' }, false, [
@@ -212,12 +212,12 @@ export async function deriveSymmetricKeyFromSecret(
 	return derivedKey;
 }
 
-export async function decryptPrivateKey(encryptedPrivateKeyHex: string, ivHex: string, customerId: string) {
+export async function decryptPrivateKey(encryptedPrivateKeyHex: string, ivHex: string, salt: string) {
 	if (!process.env.ENCRYPTION_SECRET) {
 		throw new Error('Missing encryption secret');
 	}
 	// derive key from passphrase
-	const derivedKey = await deriveSymmetricKeyFromSecret(customerId, process.env.ENCRYPTION_SECRET);
+	const derivedKey = await deriveSymmetricKeyFromSecret(salt, process.env.ENCRYPTION_SECRET);
 
 	// unwrap encrypted key with iv
 	const encryptedKey = Buffer.from(encryptedPrivateKeyHex, 'hex');

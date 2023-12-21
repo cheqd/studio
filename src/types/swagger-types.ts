@@ -695,7 +695,7 @@
  *     KeyImportRequest:
  *       type: object
  *       properties:
- *         kid:
+ *         alias:
  *           type: string
  *         type:
  *           type: string
@@ -705,6 +705,8 @@
  *         ivHex:
  *           type: string
  *           required: false
+ *         salt:
+ *           type: string
  *         encrypted:
  *           type: boolean
  *     KeyResult:

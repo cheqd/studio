@@ -181,21 +181,22 @@ export class IssuerController {
 	 */
 	public async importKey(request: Request, response: Response) {
 		try {
-			const { type, encrypted, ivHex } = request.body;
+			const { type, encrypted, ivHex, salt, alias } = request.body;
 			let { privateKeyHex } = request.body;
 			if (encrypted) {
-				if (ivHex) {
-					privateKeyHex = decryptPrivateKey(privateKeyHex, ivHex, response.locals.customer);
+				if (ivHex && salt) {
+					privateKeyHex = toString(await decryptPrivateKey(privateKeyHex, ivHex, salt), 'hex');
 				} else {
 					return response.status(StatusCodes.BAD_REQUEST).json({
-						error: `Invalid request: Property ivHex is required when encrypted is set to true`,
+						error: `Invalid request: Property ivHex, salt is required when encrypted is set to true`,
 					});
 				}
 			}
 			const key = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.importKey(
 				type || 'Ed25519',
 				privateKeyHex,
-				response.locals.customer
+				response.locals.customer,
+				alias
 			);
 			return response.status(StatusCodes.OK).json(key);
 		} catch (error) {
