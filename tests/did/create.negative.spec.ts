@@ -106,7 +106,7 @@ test('[Negative] It cannot create DID with an invalid length of id in DIDDocumen
 		headers: { 'Content-Type': 'application/json' },
 	});
 	expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
-	expect(await response.text()).toEqual(expect.stringContaining('Cheqd Identifier is not valid'));
+	expect(await response.text()).toEqual(expect.stringContaining('Cheqd DID identifier is not valid'));
 });
 
 test('[Negative] It cannot create DID with an invalid id format in DIDDocument in request body (JSON based)', async ({
