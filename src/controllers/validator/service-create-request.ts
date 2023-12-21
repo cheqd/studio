@@ -61,7 +61,8 @@ export class CreateDIDDocumentServiceValidator implements IValidator {
 		if (results.some((r) => !r.valid)) {
 			return {
 				valid: false,
-				error: 'Service for Create DID Request has validation errors: ' + results.map((r) => r.error).join(', '),
+				error:
+					'Service for Create DID Request has validation errors: ' + results.map((r) => r.error).join(', '),
 			};
 		}
 		return { valid: true };

@@ -6,27 +6,27 @@ export class AlsoKnownAsValidator implements IValidator {
 		if (!alsoKnownAs.uri) {
 			return {
 				valid: false,
-				error: "alsoKnownAs.uri field is required",
+				error: 'alsoKnownAs.uri field is required',
 			};
 		}
 
 		if (typeof alsoKnownAs.uri !== 'string') {
 			return {
 				valid: false,
-				error: "alsoKnownAs.uri field must be a string",
+				error: 'alsoKnownAs.uri field must be a string',
 			};
 		}
 
 		if (!alsoKnownAs.description) {
 			return {
 				valid: false,
-				error: "alsoKnownAs.description field is required",
+				error: 'alsoKnownAs.description field is required',
 			};
 		}
 		if (typeof alsoKnownAs.description !== 'string') {
 			return {
 				valid: false,
-				error: "alsoKnownAs.description field must be a string",
+				error: 'alsoKnownAs.description field must be a string',
 			};
 		}
 		return { valid: true };
