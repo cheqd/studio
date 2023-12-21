@@ -23,19 +23,19 @@ describe('isService. Negative.', () => {
 		const res = serviceValidator.validate([{ ...VALID_SERVICE, id: undefined }] as any);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Service id is required');
+		expect(res.error).toContain('Service has validation errors: service.id is required');
 	});
 	it('should return false for invalid service. type not placed in structure', () => {
 		const res = serviceValidator.validate([{ ...VALID_SERVICE, type: undefined }] as any);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Service type is required');
+		expect(res.error).toContain('Service has validation errors: service.type is required');
 	});
 	it('should return false for invalid service. serviceEndpoint not placed in structure', () => {
 		const res = serviceValidator.validate([{ ...VALID_SERVICE, serviceEndpoint: undefined }] as any);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Service serviceEndpoint is required');
+		expect(res.error).toContain('Service has validation errors: service.serviceEndpoint is required');
 	});
 	it('should return false for invalid service. Not array', () => {
 		const res = serviceValidator.validate(VALID_SERVICE as any);
@@ -53,12 +53,12 @@ describe('isService. Negative.', () => {
 		const res = serviceValidator.validate([VALID_SERVICE, VALID_SERVICE]);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Service ids are not unique');
+		expect(res.error).toContain('service.id entries are not unique');
 	});
 	it('should return false for invalid service. serviceEndpoint is not array', () => {
 		const res = serviceValidator.validate([{ ...VALID_SERVICE, serviceEndpoint: 'invalid' }]);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Service serviceEndpoint should be an array');
+		expect(res.error).toContain('Service has validation errors: service.serviceEndpoint should be an array');
 	});
 });

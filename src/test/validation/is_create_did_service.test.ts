@@ -24,7 +24,7 @@ describe('isCreateDidService. Negative.', () => {
 		] as any);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('idFragment is required');
+		expect(res.error).toContain('Service for Create DID Request has validation errors: service.id is required in object');
 	});
 	it('should return false for invalid service. type not placed in structure', () => {
 		const res = createDIDDocumentServiceValidator.validate([
@@ -46,7 +46,7 @@ describe('isCreateDidService. Negative.', () => {
 		const res = createDIDDocumentServiceValidator.validate([VALID_CREATE_DID_SERVICE, VALID_CREATE_DID_SERVICE]);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Service for CreateDID Request has not unique ids');
+		expect(res.error).toContain('Service for Create DID Request does not have unique service.');
 	});
 	it('should return false for invalid service. serviceEndpoint is not array', () => {
 		const res = createDIDDocumentServiceValidator.validate([
@@ -54,15 +54,6 @@ describe('isCreateDidService. Negative.', () => {
 		] as any);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('ServiceEndpoint should be an array');
-	});
-
-	it('should return false for invalid service. idFragment is not defined', () => {
-		const res = createDIDDocumentServiceValidator.validate([
-			{ ...VALID_CREATE_DID_SERVICE, idFragment: undefined },
-		] as any);
-		expect(res.valid).toBeFalsy();
-		expect(res.error).toBeDefined();
-		expect(res.error).toContain('idFragment is required');
+		expect(res.error).toContain('Service for Create DID Request has validation errors: service.serviceEndpoint should be an array in object');
 	});
 });

@@ -16,36 +16,36 @@ describe('isAlsoKnownAs. Negative.', () => {
 		const res = alsoKnownAsValidator.validate({ uri: 'example.com', description: 'example' } as any);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Also known as must be an array.');
+		expect(res.error).toContain('alsoKnownAs must be an array.');
 	});
 	it('should return false for invalid alsoKnownAs. It is empty', () => {
 		const res = alsoKnownAsValidator.validate([]);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Also known as must not be empty');
+		expect(res.error).toContain('alsoKnownAs must have at least one entry.');
 	});
 	it('should return false for invalid alsoKnownAs. uri is not a string', () => {
 		const res = alsoKnownAsValidator.validate([{ uri: 1, description: 'example' }] as any);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain("AlsoKnownAs's uri field must be a string");
+		expect(res.error).toContain("alsoKnownAs has validation errors: alsoKnownAs.uri field must be a string");
 	});
 	it('should return false for invalid alsoKnownAs. uri is not defined', () => {
 		const res = alsoKnownAsValidator.validate([{ description: 'example' }] as any);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain("AlsoKnownAs's uri field is required");
+		expect(res.error).toContain("alsoKnownAs has validation errors: alsoKnownAs.uri field is required");
 	});
 	it('should return false for invalid alsoKnownAs. description is not a string', () => {
 		const res = alsoKnownAsValidator.validate([{ uri: 'example.com', description: 1 }] as any);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain("AlsoKnownAs's description field must be a string");
+		expect(res.error).toContain("alsoKnownAs has validation errors: alsoKnownAs.description field must be a string");
 	});
 	it('should return false for invalid alsoKnownAs. description is not defined', () => {
 		const res = alsoKnownAsValidator.validate([{ uri: 'example.com' }] as any);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain("AlsoKnownAs's description field is required");
+		expect(res.error).toContain("alsoKnownAs has validation errors: alsoKnownAs.description field is required");
 	});
 });

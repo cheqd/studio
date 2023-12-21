@@ -66,6 +66,6 @@ describe('isCredentialStatusValidator. Negative.', () => {
 		} as any);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Credential status statusPurpose must be either revocation or suspension');
+		expect(res.error).toContain('credentialStatus.statusPurpose must be "revocation" or "suspension"');
 	});
 });

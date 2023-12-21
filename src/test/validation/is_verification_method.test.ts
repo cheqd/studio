@@ -80,7 +80,7 @@ describe('isVerificationMethod. Negative.', () => {
 		]);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Verification method unknownVerificationMethodType is not supported');
+		expect(res.error).toContain('verificationMethod.type unknownVerificationMethodType is not supported');
 	});
 
 	it(`should return false because for ED25519VerificationKey2018 type publicKeyBase58 is required
@@ -148,7 +148,7 @@ describe('isVerificationMethod. Negative.', () => {
 		]);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Controller has validation error: DID method unknown is not supported');
+		expect(res.error).toContain('verificationMethod.controller has validation error: DID method unknown is not supported');
 	});
 
 	it(`should return false because verififcationMethod ids are not unique
@@ -171,6 +171,6 @@ describe('isVerificationMethod. Negative.', () => {
 		]);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Verification methods IDs are not unique');
+		expect(res.error).toContain('verificationMethod.id values are not unique');
 	});
 });
