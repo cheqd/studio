@@ -15,14 +15,14 @@ export class CheqdControllerValidator implements IValidator {
 		if (!Array.isArray(controller)) {
 			return {
 				valid: false,
-				error: 'Controller should be an array',
+				error: 'didDocument.controller should be an array',
 			};
 		}
 		controller = controller as string[];
 		if (controller.length === 0) {
 			return {
 				valid: false,
-				error: 'Controller should not be empty',
+				error: 'didDocument.controller should not be empty',
 			};
 		}
 		const results = controller.map((did) => this.didValidator.validate(did));

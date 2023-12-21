@@ -9,7 +9,7 @@ export class IndyStyleIdentifierValidator implements IValidator {
 		if (typeof id !== 'string') {
 			return {
 				valid: false,
-				error: 'IndyStyle Identifier should be a string',
+				error: 'Indy-style DID identifier should be a string',
 			};
 		}
 		id = id as string;
@@ -19,13 +19,13 @@ export class IndyStyleIdentifierValidator implements IValidator {
 			if (decoded.length !== IndyStyleIdentifierValidator.ID_LENGTH) {
 				return {
 					valid: false,
-					error: `IndyStyle Identifier does not have ${IndyStyleIdentifierValidator.ID_LENGTH} bytes length`,
+					error: `Indy-style DID identifier does not have ${IndyStyleIdentifierValidator.ID_LENGTH} bytes length`,
 				};
 			}
 		} catch (e) {
 			return {
 				valid: false,
-				error: 'IndyStyle Identifier is not a valid base58 string',
+				error: 'Indy-style DID identifier is not a valid Base58 string',
 			};
 		}
 		return { valid: true };
@@ -37,7 +37,7 @@ export class UUIDIdentifierValidator implements IValidator {
 		if (typeof id !== 'string') {
 			return {
 				valid: false,
-				error: 'UUID Identifier should be a string',
+				error: 'UUID-style DID Identifier should be a string',
 			};
 		}
 		id = id as string;
@@ -62,7 +62,7 @@ export class CheqdIdentifierValidator implements IValidator {
 		if (typeof id !== 'string') {
 			return {
 				valid: false,
-				error: 'Cheqd Identifier should be a string',
+				error: 'Cheqd DID identifier should be a string',
 			};
 		}
 		id = id as string;
@@ -71,7 +71,7 @@ export class CheqdIdentifierValidator implements IValidator {
 			return {
 				valid: false,
 				error:
-					'Cheqd Identifier is not valid. Failed identifier checks: ' +
+					'Cheqd DID identifier is not valid. Failed identifier checks: ' +
 					results.map((v) => v.error).join(', '),
 			};
 		}
@@ -84,7 +84,7 @@ export class KeyIdentifierValidator implements IValidator {
 		if (typeof id !== 'string') {
 			return {
 				valid: false,
-				error: 'Key Identifier should be a string',
+				error: 'Key DID identifier should be a string',
 			};
 		}
 		id = id as string;

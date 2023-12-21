@@ -53,7 +53,7 @@ export class CheqdW3CVerifiablePresentationValidator implements IValidator {
 		if (!cheqdPresentation.proof) {
 			return {
 				valid: false,
-				error: 'Credential proof is required',
+				error: 'Presentation proof is required',
 			};
 		}
 		const proof = cheqdPresentation.proof as Validatable;
@@ -61,7 +61,7 @@ export class CheqdW3CVerifiablePresentationValidator implements IValidator {
 		if (results.some((r) => !r.valid)) {
 			return {
 				valid: false,
-				error: `Credential proof has validation errors: ${results.map((r) => r.error).join(', ')}`,
+				error: `Presentation proof has validation errors: ${results.map((r) => r.error).join(', ')}`,
 			};
 		}
 

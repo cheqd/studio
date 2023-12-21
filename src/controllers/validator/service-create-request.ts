@@ -17,25 +17,25 @@ export class CreateDIDDocumentServiceValidator implements IValidator {
 		if (!service.idFragment) {
 			return {
 				valid: false,
-				error: `Service object ${service} is invalid. idFragment is required`,
+				error: `service.id is required in object ${service}`,
 			};
 		}
 		if (!service.type) {
 			return {
 				valid: false,
-				error: `Service object ${service} is invalid. type is required`,
+				error: `service.type is required in object ${service}`,
 			};
 		}
 		if (!service.serviceEndpoint) {
 			return {
 				valid: false,
-				error: `Service object ${service} is invalid. serviceEndpoint is required`,
+				error: `service.serviceEndpoint is required in object ${service}`,
 			};
 		}
 		if (!Array.isArray(service.serviceEndpoint)) {
 			return {
 				valid: false,
-				error: `Service object ${service} is invalid. ServiceEndpoint should be an array`,
+				error: `service.serviceEndpoint should be an array in object ${service}`,
 			};
 		}
 		return { valid: true };
@@ -46,14 +46,14 @@ export class CreateDIDDocumentServiceValidator implements IValidator {
 		if (!Array.isArray(services)) {
 			return {
 				valid: false,
-				error: 'Service value for CreateDID Request should be an array',
+				error: 'Service value for Create DID Request should be an array',
 			};
 		}
 		const ids = services.map((s) => s.idFragment);
 		if (!this.helpers.isUnique(ids)) {
 			return {
 				valid: false,
-				error: 'Service for CreateDID Request has not unique ids',
+				error: 'Service for Create DID Request does not have unique service.',
 			};
 		}
 
@@ -61,7 +61,7 @@ export class CreateDIDDocumentServiceValidator implements IValidator {
 		if (results.some((r) => !r.valid)) {
 			return {
 				valid: false,
-				error: 'Service for CreateDID Request has validation errors: ' + results.map((r) => r.error).join(', '),
+				error: 'Service for Create DID Request has validation errors: ' + results.map((r) => r.error).join(', '),
 			};
 		}
 		return { valid: true };

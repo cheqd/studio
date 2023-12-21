@@ -5,7 +5,7 @@ import { base58btc } from 'multiformats/bases/base58';
 import bs58 from 'bs58';
 import { ValidateEd25519PubKey } from './utils.js';
 import { Helpers, IHelpers } from './helpers.js';
-import { DIDDocumentIDValudator } from './did-document-id.js';
+import { DIDDocumentIDValidator } from './did-document-id.js';
 import { CheqdControllerValidator } from './controller.js';
 
 export class VerificationMethodValidator implements IValidator {
@@ -32,7 +32,7 @@ export class VerificationMethodValidator implements IValidator {
 			controllerValidator = new CheqdControllerValidator();
 		}
 		if (!didDocumentIDValidator) {
-			didDocumentIDValidator = new DIDDocumentIDValudator();
+			didDocumentIDValidator = new DIDDocumentIDValidator();
 		}
 		if (!helpers) {
 			helpers = new Helpers();
@@ -48,13 +48,13 @@ export class VerificationMethodValidator implements IValidator {
 		if (!verificationMethod.id) {
 			return {
 				valid: false,
-				error: 'Verification method id is required',
+				error: 'verificationMethod.id is required',
 			};
 		}
 		if (!verificationMethod.type) {
 			return {
 				valid: false,
-				error: 'Verification method type is required',
+				error: 'verificationMethod.type is required',
 			};
 		}
 		const id = verificationMethod.id;
@@ -62,7 +62,7 @@ export class VerificationMethodValidator implements IValidator {
 		if (!_v.valid) {
 			return {
 				valid: false,
-				error: `Verification Method id has validation error: ${_v.error}`,
+				error: `verificationMethod.id has validation error: ${_v.error}`,
 			};
 		}
 
@@ -72,7 +72,7 @@ export class VerificationMethodValidator implements IValidator {
 			if (!_v.valid) {
 				return {
 					valid: false,
-					error: `Controller has validation error: ${_v.error}`,
+					error: `verificationMethod.controller has validation error: ${_v.error}`,
 				};
 			}
 		}
@@ -81,7 +81,7 @@ export class VerificationMethodValidator implements IValidator {
 		if (!validatorVM) {
 			return {
 				valid: false,
-				error: `Verification method ${verificationMethod.type} is not supported`,
+				error: `verificationMethod.type ${verificationMethod.type} is not supported`,
 			};
 		}
 		_v = validatorVM.validate(verificationMethod);
@@ -106,7 +106,7 @@ export class VerificationMethodValidator implements IValidator {
 		if (!this.isUnique(ids)) {
 			return {
 				valid: false,
-				error: 'Verification methods IDs are not unique',
+				error: 'verificationMethod.id values are not unique',
 			};
 		}
 		// Check that all verification methods are valid
@@ -115,7 +115,7 @@ export class VerificationMethodValidator implements IValidator {
 			return {
 				valid: false,
 				error:
-					'Verification methods are not valid. Failed verification method checks: ' +
+					'verificationMethod entries are not valid. Failed verification method checks: ' +
 					results.map((v) => v.error).join(', '),
 			};
 		}
@@ -183,7 +183,7 @@ export class Ed25519VerificationKey2018Validator implements IValidator {
 		if (!_v.valid) {
 			return {
 				valid: false,
-				error: 'publicKeyBase58 is not valid Ed25519VerificationKey2018. ${_v.error}',
+				error: `publicKeyBase58 is not valid Ed25519VerificationKey2018. ${_v.error}`,
 			};
 		}
 		return { valid: true };

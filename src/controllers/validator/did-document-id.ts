@@ -1,7 +1,7 @@
 import { DIDValidator } from './did.js';
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
 
-export class DIDDocumentIDValudator implements IValidator {
+export class DIDDocumentIDValidator implements IValidator {
 	protected didValidator: IValidator;
 
 	constructor(didValidator?: IValidator) {
@@ -15,7 +15,7 @@ export class DIDDocumentIDValudator implements IValidator {
 		if (typeof DIDId !== 'string') {
 			return {
 				valid: false,
-				error: 'id should be a string',
+				error: 'didDocument.id should be a string',
 			};
 		}
 		const id = DIDId as string;
@@ -25,7 +25,7 @@ export class DIDDocumentIDValudator implements IValidator {
 		if (!did || !keyId) {
 			return {
 				valid: false,
-				error: 'id does not have right format. Expected DID#keyId',
+				error: 'didDocument.id does not have right format. Expected DID#keyId',
 			};
 		}
 		// Check that it's valid DID

@@ -6,38 +6,38 @@ export class CredentialStatusValidator implements IValidator {
 		if (!credentialStatus) {
 			return {
 				valid: false,
-				error: 'Credential status is required',
+				error: 'credentialStatus is required',
 			};
 		}
 
 		if (!credentialStatus.id) {
 			return {
 				valid: false,
-				error: 'Credential status id is required',
+				error: 'credentialStatus.id is required',
 			};
 		}
 		if (!credentialStatus.type) {
 			return {
 				valid: false,
-				error: 'Credential status type is required',
+				error: 'credentialStatus.type is required',
 			};
 		}
 		if (!credentialStatus.statusPurpose) {
 			return {
 				valid: false,
-				error: 'Credential status statusPurpose is required',
+				error: 'credentialStatus.statusPurpose is required',
 			};
 		}
 		if (!credentialStatus.statusListIndex) {
 			return {
 				valid: false,
-				error: 'Credential status statusListIndex is required',
+				error: 'credentialStatus.statusListIndex is required',
 			};
 		}
 		if (credentialStatus.statusPurpose !== 'revocation' && credentialStatus.statusPurpose !== 'suspension') {
 			return {
 				valid: false,
-				error: 'Credential status statusPurpose must be either revocation or suspension',
+				error: 'credentialStatus.statusPurpose must be "revocation" or "suspension"',
 			};
 		}
 		return { valid: true };

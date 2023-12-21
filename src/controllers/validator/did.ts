@@ -50,7 +50,7 @@ export class CheqdDIDValidator extends BaseDidValidator implements IValidator {
 		if (method != this.subject) {
 			return {
 				valid: false,
-				error: 'Cheqd DID should has "cheqd" method name',
+				error: 'Cheqd DID should start with "did:cheqd:" prefix',
 			};
 		}
 		// Check namepsace
@@ -58,7 +58,7 @@ export class CheqdDIDValidator extends BaseDidValidator implements IValidator {
 		if (!namespace) {
 			return {
 				valid: false,
-				error: 'Cheqd DID namespace is required',
+				error: 'Cheqd DID namespace is required ("did:cheqd:mainnet:..." or "did:cheqd:testnet:...")',
 			};
 		}
 		// Check if namespace is valid
@@ -73,7 +73,7 @@ export class CheqdDIDValidator extends BaseDidValidator implements IValidator {
 		if (!id) {
 			return {
 				valid: false,
-				error: 'Cheqd DID identifier is required',
+				error: 'Identifier is required after "did:cheqd:<namespace>:" prefix',
 			};
 		}
 		// Check that identifier is valid
@@ -106,7 +106,7 @@ export class KeyDIDValidator extends BaseDidValidator implements IValidator {
 	}
 
 	validate(did: Validatable): IValidationResult {
-		// Call base validatioin
+		// Call base validation
 		let _v = super.validate(did);
 		if (!_v.valid) {
 			return _v;
@@ -117,7 +117,7 @@ export class KeyDIDValidator extends BaseDidValidator implements IValidator {
 		if (method != this.subject) {
 			return {
 				valid: false,
-				error: `Key DID should has ${this.subject} method name`,
+				error: 'DID Key should have "did:key:" prefix',
 			};
 		}
 		// Check identifier
@@ -125,7 +125,7 @@ export class KeyDIDValidator extends BaseDidValidator implements IValidator {
 		if (!id) {
 			return {
 				valid: false,
-				error: 'Key DID identifier is required',
+				error: 'Identifier is required after "did:key:" prefix',
 			};
 		}
 		// Check that identifier is valid

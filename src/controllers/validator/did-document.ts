@@ -42,11 +42,11 @@ export class DIDDocumentValidator implements IValidator {
 		didDocument = didDocument as DIDDocument;
 		// Check spec compliance
 		// id is required, validated on both compile and runtime
-		if (!didDocument?.id) return { valid: false, error: 'id for DIDDocument is required' };
+		if (!didDocument?.id) return { valid: false, error: 'didDocument.id is required' };
 
 		// verificationMethod must be an array
 		if (didDocument.verificationMethod && !Array.isArray(didDocument?.verificationMethod))
-			return { valid: false, error: 'verificationMethod must be an array' };
+			return { valid: false, error: 'didDocument.verificationMethod must be an array' };
 
 		// Check id (id of DIDDocument must be valid DID)
 		let _v = this.didValidator?.validate(didDocument.id);

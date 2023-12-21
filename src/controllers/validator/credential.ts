@@ -55,26 +55,26 @@ export class CheqdW3CVerifiableCredentialValidator implements IValidator {
 		if (!cheqdCredential.issuer) {
 			return {
 				valid: false,
-				error: 'Credential issuer is required',
+				error: 'credential.issuer is required',
 			};
 		}
 		if (!cheqdCredential.issuanceDate) {
 			return {
 				valid: false,
-				error: 'Credential issuanceDate is required',
+				error: 'credential.issuanceDate is required',
 			};
 		}
 		if (!cheqdCredential.credentialSubject) {
 			return {
 				valid: false,
-				error: 'Credential credentialSubject is required',
+				error: 'credential.credentialSubject is required',
 			};
 		}
 		// Validate proof
 		if (!cheqdCredential.proof) {
 			return {
 				valid: false,
-				error: 'Credential proof is required',
+				error: 'credential.proof is required',
 			};
 		}
 		const proof = cheqdCredential.proof as Validatable;
@@ -82,7 +82,7 @@ export class CheqdW3CVerifiableCredentialValidator implements IValidator {
 		if (results.some((r) => !r.valid)) {
 			return {
 				valid: false,
-				error: `Credential proof has validation errors: ${results.map((r) => r.error).join(', ')}`,
+				error: `credential.proof has validation errors: ${results.map((r) => r.error).join(', ')}`,
 			};
 		}
 
@@ -92,7 +92,7 @@ export class CheqdW3CVerifiableCredentialValidator implements IValidator {
 		if (issuerResult.every((r) => !r.valid)) {
 			return {
 				valid: false,
-				error: `Credential issuer has validation errors: ${issuerResult.map((r) => r.error).join(', ')}`,
+				error: `credential.issuer has validation errors: ${issuerResult.map((r) => r.error).join(', ')}`,
 			};
 		}
 
@@ -103,7 +103,7 @@ export class CheqdW3CVerifiableCredentialValidator implements IValidator {
 			if (!credentialStatusResult.valid) {
 				return {
 					valid: false,
-					error: `Credential credentialStatus has validation error: ${credentialStatusResult.error}`,
+					error: `credential.credentialStatus has validation error: ${credentialStatusResult.error}`,
 				};
 			}
 		}

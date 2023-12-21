@@ -1,6 +1,6 @@
 import type { Service } from 'did-resolver';
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
-import { DIDDocumentIDValudator } from './did-document-id.js';
+import { DIDDocumentIDValidator } from './did-document-id.js';
 import { Helpers, type IHelpers } from './helpers.js';
 
 export class ServiceValidator implements IValidator {
@@ -9,7 +9,7 @@ export class ServiceValidator implements IValidator {
 
 	constructor(didDocumentIDValidator?: IValidator, helpers?: IHelpers) {
 		if (!didDocumentIDValidator) {
-			didDocumentIDValidator = new DIDDocumentIDValudator();
+			didDocumentIDValidator = new DIDDocumentIDValidator();
 		}
 		if (!helpers) {
 			helpers = new Helpers();
@@ -22,25 +22,25 @@ export class ServiceValidator implements IValidator {
 		if (!service.id) {
 			return {
 				valid: false,
-				error: 'Service id is required',
+				error: 'service.id is required',
 			};
 		}
 		if (!service.type) {
 			return {
 				valid: false,
-				error: 'Service type is required',
+				error: 'service.type is required',
 			};
 		}
 		if (!service.serviceEndpoint) {
 			return {
 				valid: false,
-				error: 'Service serviceEndpoint is required',
+				error: 'service.serviceEndpoint is required',
 			};
 		}
 		if (!Array.isArray(service.serviceEndpoint)) {
 			return {
 				valid: false,
-				error: 'Service serviceEndpoint should be an array',
+				error: 'service.serviceEndpoint should be an array',
 			};
 		}
 		const id = service.id;
@@ -48,7 +48,7 @@ export class ServiceValidator implements IValidator {
 		if (!_v.valid) {
 			return {
 				valid: false,
-				error: ` Service id has validation error: ${_v.error}`,
+				error: `service.id has validation error: ${_v.error}`,
 			};
 		}
 
@@ -67,7 +67,7 @@ export class ServiceValidator implements IValidator {
 		if (!this.helpers.isUnique(ids)) {
 			return {
 				valid: false,
-				error: 'Service ids are not unique',
+				error: 'service.id entries are not unique',
 			};
 		}
 
