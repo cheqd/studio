@@ -6,27 +6,27 @@ export class AlsoKnownAsValidator implements IValidator {
 		if (!alsoKnownAs.uri) {
 			return {
 				valid: false,
-				error: "AlsoKnownAs's uri field is required.",
+				error: "URI field is required for AlsoKnownAs",
 			};
 		}
 
 		if (typeof alsoKnownAs.uri !== 'string') {
 			return {
 				valid: false,
-				error: "AlsoKnownAs's uri field must be a string.",
+				error: "URI field in AlsoKnownAs must be a string",
 			};
 		}
 
 		if (!alsoKnownAs.description) {
 			return {
 				valid: false,
-				error: "AlsoKnownAs's description field is required.",
+				error: "Description field is required for AlsoKnownAs",
 			};
 		}
 		if (typeof alsoKnownAs.description !== 'string') {
 			return {
 				valid: false,
-				error: "AlsoKnownAs's description field must be a string.",
+				error: "Description field in AlsoKnownAs must be a string",
 			};
 		}
 		return { valid: true };
@@ -37,14 +37,14 @@ export class AlsoKnownAsValidator implements IValidator {
 		if (!Array.isArray(alsoKnownAs)) {
 			return {
 				valid: false,
-				error: 'Also known as must be an array.',
+				error: 'AlsoKnownAs must be an array.',
 			};
 		}
 
 		if (alsoKnownAs.length === 0) {
 			return {
 				valid: false,
-				error: 'Also known as must not be empty.',
+				error: 'AlsoKnownAs must have at least one entry.',
 			};
 		}
 
