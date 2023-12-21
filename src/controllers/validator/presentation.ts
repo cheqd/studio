@@ -1,7 +1,7 @@
 import { CheqdW3CVerifiablePresentation } from '../../services/w3c_presentation.js';
-import { CheqdW3CVerifiableCredentialValidator } from './cheqd_credential.js';
+import { CheqdW3CVerifiableCredentialValidator } from './credential.js';
 import { DIDValidator } from './did.js';
-import { JWTProofValidator } from './jwt_proof.js';
+import { JWTProofValidator } from './jwt-proof.js';
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
 import { InvalidTokenError, jwtDecode } from 'jwt-decode';
 

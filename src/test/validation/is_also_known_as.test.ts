@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { AlsoKnownAsValidator } from '../../controllers/validator/also_known_as';
+import { AlsoKnownAsValidator } from '../../controllers/validator/also-known-as';
 
 const alsoKnownAsValidator = new AlsoKnownAsValidator();
 

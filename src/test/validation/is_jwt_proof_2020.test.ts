@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { JWTProofValidator } from '../../controllers/validator/jwt_proof';
+import { JWTProofValidator } from '../../controllers/validator/jwt-proof';
 import { CREDENTIAL_JWT } from '../constants';
 import { JWT_PROOF_TYPE } from '../../types/constants';
 

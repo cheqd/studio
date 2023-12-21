@@ -1,6 +1,6 @@
 import type { Service } from 'did-resolver';
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
-import { DIDDocumentIDValudator } from './did_document_id.js';
+import { DIDDocumentIDValudator } from './did-document-id.js';
 import { Helpers, type IHelpers } from './helpers.js';
 
 export class ServiceValidator implements IValidator {

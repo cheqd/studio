@@ -1,8 +1,8 @@
 import { CheqdW3CVerifiableCredential, ICheqdCredential } from '../../services/w3c_credential.js';
 import type { CheqdCredentialStatus } from '../../types/shared.js';
-import { CredentialStatusValidator } from './credential_status.js';
+import { CredentialStatusValidator } from './credential-status.js';
 import { CheqdDIDValidator, KeyDIDValidator } from './did.js';
-import { JWTProofValidator } from './jwt_proof.js';
+import { JWTProofValidator } from './jwt-proof.js';
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
 import { InvalidTokenError, jwtDecode } from 'jwt-decode';
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { CredentialStatusValidator } from '../../controllers/validator/credential_status';
+import { CredentialStatusValidator } from '../../controllers/validator/credential-status';
 
 const credentialStatusValidator = new CredentialStatusValidator();
 

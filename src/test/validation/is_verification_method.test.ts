@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { VerificationMethodValidator } from '../../controllers/validator/verification_method';
+import { VerificationMethodValidator } from '../../controllers/validator/verification-method';
 import { VALID_CHEQD_DID_INDY, VALID_CHEQD_DID_UUID } from '../constants';
 import { VerificationMethods } from '@cheqd/sdk';
 

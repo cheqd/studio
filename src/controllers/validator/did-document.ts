@@ -1,7 +1,7 @@
 import type { DIDDocument } from '@cheqd/sdk';
 import { DIDValidator } from './did.js';
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
-import { VerificationMethodValidator } from './verification_method.js';
+import { VerificationMethodValidator } from './verification-method.js';
 import { CheqdControllerValidator } from './controller.js';
 import { ServiceValidator } from './service.js';
 

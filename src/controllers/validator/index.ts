@@ -1,15 +1,15 @@
 import { ExpressValidator } from 'express-validator';
 import { DIDValidator, KeyDIDValidator } from './did.js';
-import { DIDDocumentValidator } from './did_document.js';
+import { DIDDocumentValidator } from './did-document.js';
 import type { Validatable } from './validator.js';
 import type { Service, VerificationMethod } from 'did-resolver';
-import { VerificationMethodValidator } from './verification_method.js';
-import { CreateDIDDocumentServiceValidator } from './service_create_request.js';
+import { VerificationMethodValidator } from './verification-method.js';
+import { CreateDIDDocumentServiceValidator } from './service-create-request.js';
 import type { CreateDIDService } from '../../types/shared.js';
 import { ServiceValidator } from './service.js';
-import { DIDArrayValidator } from './did_array.js';
-import { AlsoKnownAsValidator } from './also_known_as.js';
-import { CheqdW3CVerifiableCredentialValidator } from './cheqd_credential.js';
+import { DIDArrayValidator } from './did-array.js';
+import { AlsoKnownAsValidator } from './also-known-as.js';
+import { CheqdW3CVerifiableCredentialValidator } from './credential.js';
 import { CheqdW3CVerifiablePresentationValidator } from './presentation.js';
 
 export const { check, validationResult, query, param } = new ExpressValidator({
