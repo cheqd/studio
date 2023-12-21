@@ -6,6 +6,7 @@ export class KeyAuthHandler extends BaseAuthHandler {
 	constructor() {
 		super();
 		this.registerRoute('/key/create', 'POST', 'create:key', { skipNamespace: true });
+		this.registerRoute('/key/import', 'POST', 'import:key', { skipNamespace: true });
 		this.registerRoute('/key/read/(.*)', 'GET', 'read:key', { skipNamespace: true });
 		this.registerRoute('/key/list', 'GET', 'list:key', { skipNamespace: true });
 	}
