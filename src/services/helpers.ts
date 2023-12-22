@@ -1,6 +1,6 @@
 import { IdentityServiceStrategySetup } from './identity/index.js';
-import type { CheqdW3CVerifiableCredential } from './w3c_credential.js';
-import type { CheqdW3CVerifiablePresentation } from './w3c_presentation.js';
+import type { CheqdW3CVerifiableCredential } from './w3c-credential.js';
+import type { CheqdW3CVerifiablePresentation } from './w3c-presentation.js';
 
 export async function isCredentialIssuerDidDeactivated(credential: CheqdW3CVerifiableCredential): Promise<boolean> {
 	const identityServiceStrategySetup = new IdentityServiceStrategySetup();

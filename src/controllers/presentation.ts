@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 
 import { check, validationResult, query } from './validator/index.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import { CheqdW3CVerifiablePresentation } from '../services/w3c_presentation.js';
+import { CheqdW3CVerifiablePresentation } from '../services/w3c-presentation.js';
 import type { VerifyPresentationResponseBody } from '../types/shared.js';
 import { isIssuerDidDeactivated } from '../services/helpers.js';
 

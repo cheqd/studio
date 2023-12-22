@@ -8,7 +8,7 @@ import { StatusCodes } from 'http-status-codes';
 import { LogToWebHook } from '../middleware/hook.js';
 import { UserService } from '../services/user.js';
 import { RoleService } from '../services/role.js';
-import { PaymentAccountService } from '../services/payment_account.js';
+import { PaymentAccountService } from '../services/payment-account.js';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import type { UserEntity } from '../database/entities/user.entity.js';
 import type { PaymentAccountEntity } from '../database/entities/payment.account.entity.js';

@@ -1,9 +1,9 @@
 import { describe, it } from '@jest/globals';
 import type { W3CVerifiablePresentation } from '@veramo/core';
 import { expect } from '@playwright/test';
-import { CheqdW3CVerifiableCredential } from '../../services/w3c_credential';
+import { CheqdW3CVerifiableCredential } from '../../services/w3c-credential';
 import { JWT_PROOF_TYPE } from '../../types/constants';
-import { CheqdW3CVerifiablePresentation } from '../../services/w3c_presentation';
+import { CheqdW3CVerifiablePresentation } from '../../services/w3c-presentation';
 import {
 	CREDENTIAL_JWT,
 	HOLDER_DID,

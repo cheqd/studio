@@ -10,7 +10,7 @@ import type {
 import { jwtDecode, type JwtPayload } from 'jwt-decode';
 import type { IIdentityService } from './identity/index.js';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
-import { CheqdW3CVerifiableCredential } from './w3c_credential.js';
+import { CheqdW3CVerifiableCredential } from './w3c-credential.js';
 import { CommonReturn, JwtProof2020 } from '../types/shared.js';
 import { JWT_PROOF_TYPE } from '../types/constants.js';
 
