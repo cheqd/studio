@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
-import { PAYLOADS_PATH } from '../constants';
+import { CONTENT_TYPE, PAYLOADS_PATH } from '../constants';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
@@ -19,7 +19,7 @@ for (const presentationType of ['jwt', 'object']) {
 				`/presentation/verify?verifyStatus=${verifyStatus}&fetchRemoteContexts=false&allowDeactivatedDid=false`,
 				{
 					data: verifyRequest,
-					headers: { 'Content-Type': 'application/json' },
+					headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 				}
 			);
 			expect(response).toBeOK();
@@ -51,7 +51,7 @@ for (const presentationType of ['jwt', 'object']) {
 					`/presentation/verify?verifyStatus=${verifyStatus}&fetchRemoteContexts=false&allowDeactivatedDid=false`,
 					{
 						data: verifyRequest,
-						headers: { 'Content-Type': 'application/json' },
+						headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 					}
 				);
 				expect(response).toBeOK();
@@ -81,7 +81,7 @@ for (const presentationType of ['jwt', 'object']) {
 				`/presentation/verify?verifyStatus=${verifyStatus}&fetchRemoteContexts=false&allowDeactivatedDid=false`,
 				{
 					data: verifyRequest,
-					headers: { 'Content-Type': 'application/json' },
+					headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 				}
 			);
 			expect(response).toBeOK();
