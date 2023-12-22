@@ -8,7 +8,7 @@ import { CreateDIDDocumentServiceValidator } from './service-create-request.js';
 import type { CreateDIDService } from '../../types/shared.js';
 import { ServiceValidator } from './service.js';
 import { DIDArrayValidator } from './did-array.js';
-import { CheqdDidLinkedAlsoKnownAsValidator } from './cheqd-did-linked-also-known-as.js';
+import { CheqdDidLinkedAlsoKnownAsValidator } from './resource-also-known-as.js';
 import { CheqdW3CVerifiableCredentialValidator } from './cheqd-credential.js';
 import { CheqdW3CVerifiablePresentationValidator } from './presentation.js';
 
