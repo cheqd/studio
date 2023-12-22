@@ -9,7 +9,7 @@ import type { CreateDIDService } from '../../types/shared.js';
 import { ServiceValidator } from './service.js';
 import { DIDArrayValidator } from './did-array.js';
 import { CheqdDidLinkedAlsoKnownAsValidator } from './resource-also-known-as.js';
-import { CheqdW3CVerifiableCredentialValidator } from './cheqd-credential.js';
+import { CheqdW3CVerifiableCredentialValidator } from './credential.js';
 import { CheqdW3CVerifiablePresentationValidator } from './presentation.js';
 
 export const { check, validationResult, query, param } = new ExpressValidator({
