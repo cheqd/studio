@@ -92,7 +92,7 @@
 		"sqlite3": "^5.1.6",
 		"swagger-ui-express": "^5.0.0",
 		"typeorm": "^0.3.17",
-		"uint8arrays": "^4.0.10",
+		"uint8arrays": "^5.0.0",
 		"uri-js": "^4.4.1"
 	},
 	"devDependencies": {
@@ -133,7 +133,7 @@
 		"ts-loader": "^9.5.1",
 		"ts-node": "^10.9.2",
 		"typescript": "^5.3.3",
-		"uint8arrays": "^4.0.10"
+		"uint8arrays": "^5.0.0"
 	},
 	"publishConfig": {
 		"registry": "https://registry.npmjs.org/",
