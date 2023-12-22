@@ -4,7 +4,7 @@ import type { IValidationResult, IValidator, Validatable } from './validator.js'
 import { VerificationMethodValidator } from './verification-method.js';
 import { CheqdControllerValidator } from './controller.js';
 import { ServiceValidator } from './service.js';
-import { AlsoKnownAsValidator } from './also_known_as.js';
+import { AlsoKnownAsValidator } from './did-also-known-as.js';
 
 export class DIDDocumentValidator implements IValidator {
 	protected didValidator: IValidator;
