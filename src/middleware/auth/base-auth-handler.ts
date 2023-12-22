@@ -19,6 +19,13 @@ export class BaseAPIGuard extends RuleRoutine implements IAPIGuard {
 		this.preps(request);
 		// Firstly - try to find the rule for the request
 		const rule = this.findRule(request.path, request.method, this.getNamespace());
+
+		if (!rule) {
+			return this.returnError(
+				StatusCodes.INTERNAL_SERVER_ERROR,
+				`Internal error. There is no auth rule for such request. Please contact administrator`
+			);
+		}
 		// If the rule is not found - skip the auth check
 		if (!rule.isEmpty()) {
 			this.setRule(rule);
