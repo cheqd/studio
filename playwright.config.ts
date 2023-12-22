@@ -1,12 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
-import { STORAGE_STATE_AUTHENTICATED, STORAGE_STATE_UNAUTHENTICATED } from './tests/playwright/constants';
+import { STORAGE_STATE_AUTHENTICATED, STORAGE_STATE_UNAUTHENTICATED } from './tests/e2e/constants';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
 	// Directory where all tests are located
-	testDir: './tests/playwright',
+	testDir: './tests/e2e',
 
 	// Start local dev server before starting the tests
 	webServer: {
