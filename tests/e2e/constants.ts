@@ -8,7 +8,7 @@ export enum PAYLOADS_PATH {
 	CREDENTIAL = `${PAYLOAD_BASE_PATH}/credential`,
 	CREDENTIAL_STATUS = `${PAYLOAD_BASE_PATH}/credential-status`,
 	PRESENTATION = `${PAYLOAD_BASE_PATH}/presentation`,
-	
+
 }
 
 const GENERATED_BASE_PATH = './tests/e2e/generated';
@@ -19,6 +19,7 @@ export enum GENERATED_PATH {
 export enum CONTENT_TYPE {
 	APPLICATION_JSON = 'application/json',
 	APPLICATION_DID_LD_JSON = 'application/did+ld+json',
+	APPLICATION_X_WWW_FORM_URLENCODED = 'application/x-www-form-urlencoded',
 }
 
 export const DID_METHOD = 'cheqd';

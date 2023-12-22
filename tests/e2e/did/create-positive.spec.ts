@@ -1,4 +1,4 @@
-import { ID_TYPE, DEFAULT_CONTEXT } from '../constants';
+import { ID_TYPE, DEFAULT_CONTEXT, CONTENT_TYPE } from '../constants';
 import { v4 } from 'uuid';
 import { buildSimpleService } from 'helpers';
 import { test, expect } from '@playwright/test';
@@ -14,14 +14,14 @@ test('[Positive] It can create DID with mandatory properties (Form based + Indy 
 		data:
 			`network=${CheqdNetwork.Testnet}&identifierFormatType=${ID_TYPE.BASE58BTC}&` +
 			`verificationMethodType=${VerificationMethods.Ed255192018}`,
-		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_X_WWW_FORM_URLENCODED },
 	});
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 
 	// resolve a created DID
 	response = await request.get(`/did/search/${(await response.json()).did}`, {
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
@@ -38,7 +38,7 @@ test('[Positive] It can create DID with mandatory and optional properties (Form 
 }) => {
 	// send request to create key
 	let response = await request.post('/key/create', {
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
@@ -52,7 +52,7 @@ test('[Positive] It can create DID with mandatory and optional properties (Form 
 			`verificationMethodType=${VerificationMethods.Ed255192018}&` +
 			`service=[${JSON.stringify(buildSimpleService())}]` +
 			`&key=${kid}&@context=${DEFAULT_CONTEXT}`,
-		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_X_WWW_FORM_URLENCODED },
 	});
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
@@ -65,7 +65,7 @@ test('[Positive] It can create DID with mandatory and optional properties (Form 
 
 	// resolve a created DID
 	response = await request.get(`/did/search/${body.did}`, {
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
@@ -82,7 +82,7 @@ test('[Positive] It can create DID with mandatory and optional properties (Form 
 test('[Positive] It can create  DID with mandatory properties (JSON based + Indy style)', async ({ request }) => {
 	// send request to create key
 	let response = await request.post('/key/create', {
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
@@ -101,14 +101,14 @@ test('[Positive] It can create  DID with mandatory properties (JSON based + Indy
 				authentication: [`${did}#key-1`],
 			},
 		},
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 
 	// resolve a created DID
 	response = await request.get(`/did/search/${(await response.json()).did}`, {
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
@@ -125,7 +125,7 @@ test('[Positive] It can create DID with mandatory and optional properties (JSON 
 }) => {
 	// send request to create key
 	let response = await request.post('/key/create', {
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
@@ -156,14 +156,14 @@ test('[Positive] It can create DID with mandatory and optional properties (JSON 
 				],
 			},
 		},
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 
 	// resolve a created DID
 	response = await request.get(`/did/search/${did}`, {
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
