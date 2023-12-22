@@ -148,7 +148,9 @@ describe('isVerificationMethod. Negative.', () => {
 		]);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('verificationMethod.controller has validation error: DID method unknown is not supported');
+		expect(res.error).toContain(
+			'verificationMethod.controller has validation error: DID method unknown is not supported'
+		);
 	});
 
 	it(`should return false because verififcationMethod ids are not unique

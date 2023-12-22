@@ -5,7 +5,7 @@ import { base58btc } from 'multiformats/bases/base58';
 import bs58 from 'bs58';
 import { ValidateEd25519PubKey } from './utils.js';
 import { Helpers, IHelpers } from './helpers.js';
-import { DIDDocumentIDValidator } from './did-document-id.js';
+import { DIDDocumentSectionIDValidator } from './did-document-section-id.js';
 import { CheqdControllerValidator } from './controller.js';
 
 export class VerificationMethodValidator implements IValidator {
@@ -32,7 +32,7 @@ export class VerificationMethodValidator implements IValidator {
 			controllerValidator = new CheqdControllerValidator();
 		}
 		if (!didDocumentIDValidator) {
-			didDocumentIDValidator = new DIDDocumentIDValidator();
+			didDocumentIDValidator = new DIDDocumentSectionIDValidator();
 		}
 		if (!helpers) {
 			helpers = new Helpers();

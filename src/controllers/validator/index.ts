@@ -8,8 +8,8 @@ import { CreateDIDDocumentServiceValidator } from './service-create-request.js';
 import type { CreateDIDService } from '../../types/shared.js';
 import { ServiceValidator } from './service.js';
 import { DIDArrayValidator } from './did-array.js';
-import { AlsoKnownAsValidator } from './also-known-as.js';
-import { CheqdW3CVerifiableCredentialValidator } from './credential.js';
+import { CheqdDidLinkedAlsoKnownAsValidator } from './cheqd-did-linked-also-known-as.js';
+import { CheqdW3CVerifiableCredentialValidator } from './cheqd-credential.js';
 import { CheqdW3CVerifiablePresentationValidator } from './presentation.js';
 
 export const { check, validationResult, query, param } = new ExpressValidator({
@@ -55,8 +55,8 @@ export const { check, validationResult, query, param } = new ExpressValidator({
 		}
 		return true;
 	},
-	isAlsoKnownAs: (value: Validatable) => {
-		const res = new AlsoKnownAsValidator().validate(value);
+	isCheqdDidLinkedAlsoKnownAs: (value: Validatable) => {
+		const res = new CheqdDidLinkedAlsoKnownAsValidator().validate(value);
 		if (!res.valid) {
 			throw new Error(res.error);
 		}

@@ -1,7 +1,7 @@
 import { DIDValidator } from './did.js';
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
 
-export class DIDDocumentIDValidator implements IValidator {
+export class DIDDocumentSectionIDValidator implements IValidator {
 	protected didValidator: IValidator;
 
 	constructor(didValidator?: IValidator) {
@@ -15,7 +15,7 @@ export class DIDDocumentIDValidator implements IValidator {
 		if (typeof DIDId !== 'string') {
 			return {
 				valid: false,
-				error: 'didDocument.id should be a string',
+				error: 'didDocument.<section>.id should be a string',
 			};
 		}
 		const id = DIDId as string;
@@ -25,7 +25,13 @@ export class DIDDocumentIDValidator implements IValidator {
 		if (!did || !keyId) {
 			return {
 				valid: false,
-				error: 'didDocument.id does not have right format. Expected DID#keyId',
+				error: 'didDocument.<section>.id does not have right format. Expected DID#keyId',
+			};
+		}
+		if (id.split('#').length > 2) {
+			return {
+				valid: false,
+				error: 'didDocument.<section>.id does not have right format. Expected DID#keyId',
 			};
 		}
 		// Check that it's valid DID
@@ -33,7 +39,7 @@ export class DIDDocumentIDValidator implements IValidator {
 		if (!_v.valid) {
 			return {
 				valid: false,
-				error: _v.error,
+				error: `Invalid format of DID Document Section ID. DID has unexpected format: ${_v.error}`,
 			};
 		}
 		return { valid: true };

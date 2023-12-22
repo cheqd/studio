@@ -3,13 +3,6 @@ import type { IValidationResult, IValidator } from './validator.js';
 
 export class CredentialStatusValidator implements IValidator {
 	validate(credentialStatus: CheqdCredentialStatus): IValidationResult {
-		if (!credentialStatus) {
-			return {
-				valid: false,
-				error: 'credentialStatus is required',
-			};
-		}
-
 		if (!credentialStatus.id) {
 			return {
 				valid: false,

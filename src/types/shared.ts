@@ -260,11 +260,6 @@ export type CreateDIDService = {
 	serviceEndpoint: string[];
 };
 
-export type AlsoKnownAs = {
-	uri: string;
-	description: string;
-};
-
 export type JwtProof2020 = {
 	type: string;
 	jwt: string;

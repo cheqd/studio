@@ -24,7 +24,9 @@ describe('isCreateDidService. Negative.', () => {
 		] as any);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Service for Create DID Request has validation errors: service.id is required in object');
+		expect(res.error).toContain(
+			'Service for Create DID Request has validation errors: service.id is required in object'
+		);
 	});
 	it('should return false for invalid service. type not placed in structure', () => {
 		const res = createDIDDocumentServiceValidator.validate([
@@ -54,6 +56,8 @@ describe('isCreateDidService. Negative.', () => {
 		] as any);
 		expect(res.valid).toBeFalsy();
 		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Service for Create DID Request has validation errors: service.serviceEndpoint should be an array in object');
+		expect(res.error).toContain(
+			'Service for Create DID Request has validation errors: service.serviceEndpoint should be an array in object'
+		);
 	});
 });

@@ -12,19 +12,18 @@ export class CheqdControllerValidator implements IValidator {
 	}
 
 	validate(controller: Validatable): IValidationResult {
-		if (!Array.isArray(controller)) {
+		if (!Array.isArray(controller) && typeof controller !== 'string') {
 			return {
 				valid: false,
-				error: 'didDocument.controller should be an array',
+				error: 'didDocument.controller should be an array or just string',
 			};
 		}
+
+		if (typeof controller === 'string') {
+			controller = [controller];
+		}
+
 		controller = controller as string[];
-		if (controller.length === 0) {
-			return {
-				valid: false,
-				error: 'didDocument.controller should not be empty',
-			};
-		}
 		const results = controller.map((did) => this.didValidator.validate(did));
 		if (results.some((r) => !r.valid)) {
 			return {

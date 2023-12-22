@@ -1,4 +1,4 @@
-import { CheqdW3CVerifiableCredentialValidator } from '../../controllers/validator/credential';
+import { CheqdW3CVerifiableCredentialValidator } from '../../controllers/validator/cheqd-credential';
 import { CREDENTIAL_OBJECT } from '../constants';
 import { describe, it, expect } from '@jest/globals';
 
@@ -7,7 +7,6 @@ const credentialValidator = new CheqdW3CVerifiableCredentialValidator();
 describe('isCheqdW3CCredential. Positive.', () => {
 	it('should return true for valid credential', () => {
 		const res = credentialValidator.validate(CREDENTIAL_OBJECT);
-		console.log(res);
 		expect(res.valid).toBeTruthy();
 		expect(res.error).toBeUndefined();
 	});

@@ -1,8 +1,8 @@
-import type { AlsoKnownAs } from '../../types/shared.js';
+import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
 
-export class AlsoKnownAsValidator implements IValidator {
-	validateEach(alsoKnownAs: AlsoKnownAs): IValidationResult {
+export class CheqdDidLinkedAlsoKnownAsValidator implements IValidator {
+	validateEach(alsoKnownAs: AlternativeUri): IValidationResult {
 		if (!alsoKnownAs.uri) {
 			return {
 				valid: false,
@@ -33,18 +33,11 @@ export class AlsoKnownAsValidator implements IValidator {
 	}
 
 	validate(alsoKnownAs: Validatable): IValidationResult {
-		alsoKnownAs = alsoKnownAs as AlsoKnownAs[];
+		alsoKnownAs = alsoKnownAs as AlternativeUri[];
 		if (!Array.isArray(alsoKnownAs)) {
 			return {
 				valid: false,
 				error: 'alsoKnownAs must be an array.',
-			};
-		}
-
-		if (alsoKnownAs.length === 0) {
-			return {
-				valid: false,
-				error: 'alsoKnownAs must have at least one entry.',
 			};
 		}
 

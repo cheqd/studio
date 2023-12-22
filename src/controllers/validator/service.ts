@@ -1,6 +1,6 @@
 import type { Service } from 'did-resolver';
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
-import { DIDDocumentIDValidator } from './did-document-id.js';
+import { DIDDocumentSectionIDValidator } from './did-document-section-id.js';
 import { Helpers, type IHelpers } from './helpers.js';
 
 export class ServiceValidator implements IValidator {
@@ -9,7 +9,7 @@ export class ServiceValidator implements IValidator {
 
 	constructor(didDocumentIDValidator?: IValidator, helpers?: IHelpers) {
 		if (!didDocumentIDValidator) {
-			didDocumentIDValidator = new DIDDocumentIDValidator();
+			didDocumentIDValidator = new DIDDocumentSectionIDValidator();
 		}
 		if (!helpers) {
 			helpers = new Helpers();

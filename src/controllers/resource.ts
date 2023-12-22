@@ -41,7 +41,7 @@ export class ResourceController {
 			.isArray()
 			.withMessage('alsoKnownAs is supposed to be an array')
 			.bail()
-			.isAlsoKnownAs()
+			.isCheqdDidLinkedAlsoKnownAs()
 			.bail(),
 		check('version').optional().isString().withMessage('version is supposed to have type of String').bail(),
 	];
