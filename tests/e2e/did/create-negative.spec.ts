@@ -6,6 +6,7 @@ import {
 	DEFAULT_DOES_NOT_HAVE_PERMISSIONS,
 	NOT_SUPPORTED_VERIFICATION_METHOD_TYPE,
 	PAYLOADS_PATH,
+	CONTENT_TYPE,
 } from '../constants';
 import * as fs from 'fs';
 import { v4 } from 'uuid';
@@ -57,7 +58,7 @@ test('[Negative] It cannot create DID with not existent key in request body (JSO
 				authentication: [`${did}#key-1`],
 			},
 		},
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
 	expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
 	expect(await response.text()).toEqual(expect.stringContaining('Key not found'));
@@ -80,7 +81,7 @@ test('[Negative] It cannot create DID with an invalid VerificationMethodType in 
 				authentication: [`${did}#key-1`],
 			},
 		},
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
 	expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
 	expect(await response.text()).toEqual(expect.stringContaining('Unsupported verificationMethod type'));
@@ -103,7 +104,7 @@ test('[Negative] It cannot create DID with an invalid length of id in DIDDocumen
 				authentication: [`${invalidDidLength}#key-1`],
 			},
 		},
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
 	expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
 	expect(await response.text()).toEqual(expect.stringContaining('Cheqd DID identifier is not valid'));
@@ -125,7 +126,7 @@ test('[Negative] It cannot create DID with an invalid id format in DIDDocument i
 				authentication: [`${INVALID_DID}#key-1`],
 			},
 		},
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
 	expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
 	expect(await response.text()).toEqual(
@@ -146,7 +147,7 @@ test('[Negative] It cannot create DID without VerificationMethodType in request 
 				authentication: [`${INVALID_DID}#key-1`],
 			},
 		},
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
 	expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
 	expect(await response.text()).toEqual(
@@ -163,7 +164,7 @@ test('[Negative] It cannot create DID without DidDocument in request body (JSON 
 				verificationMethodType: VerificationMethods.Ed255192020,
 			},
 		},
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
 	expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
 	expect(await response.text()).toEqual(
@@ -175,7 +176,7 @@ test('[Negative] It cannot create DID in mainnet network for user with testnet r
 	const response = await request.post(`/did/create`, {
 		data: JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.DID}/did-create-without-permissions.json`, 'utf-8')),
 		headers: {
-			'Content-Type': 'application/json',
+			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
 		},
 	});
 	expect(response).not.toBeOK();
