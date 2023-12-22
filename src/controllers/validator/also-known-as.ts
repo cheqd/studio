@@ -20,7 +20,7 @@ export class AlsoKnownAsValidator implements IValidator {
 		if (!Array.isArray(alsoKnownAs)) {
 			return {
 				valid: false,
-				error: 'AlsoKnownAs must be an array.',
+				error: 'alsoKnownAs must be an array.',
 			};
 		}
 
@@ -28,7 +28,7 @@ export class AlsoKnownAsValidator implements IValidator {
 		if (results.some((result) => !result.valid)) {
 			return {
 				valid: false,
-				error: 'AlsoKnownAs has validation errors: ' + results.map((r) => r.error).join(', '),
+				error: 'alsoKnownAs has validation errors: ' + results.map((r) => r.error).join(', '),
 			};
 		}
 
