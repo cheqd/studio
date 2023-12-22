@@ -12,7 +12,7 @@ module.exports = {
 			},
 		],
 	},
-	testRegex: '/test/.*\\.test\\.ts$',
+	testRegex: '/tests/unit/.*\\.test\\.ts$',
 	collectCoverageFrom: ['src/**/*.{ts,js}'],
 	moduleDirectories: ['node_modules', 'src'],
 	testEnvironment: 'node',
