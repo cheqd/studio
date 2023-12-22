@@ -53,7 +53,7 @@
 		"@cheqd/sdk": "^3.7.4",
 		"@cheqd/ts-proto": "^3.3.7",
 		"@cosmjs/amino": "^0.31.3",
-		"@cosmjs/encoding": "^0.31.3",
+		"@cosmjs/encoding": "^0.32.2",
 		"@logto/express": "^2.2.0",
 		"@stablelib/ed25519": "^1.0.3",
 		"@veramo/core": "^5.5.3",
