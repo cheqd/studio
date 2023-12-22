@@ -1,15 +1,17 @@
 export const STORAGE_STATE_AUTHENTICATED = 'playwright/.auth/user.json';
 export const STORAGE_STATE_UNAUTHENTICATED = 'playwright/.auth/stranger.json';
 
-const PAYLOAD_BASE_PATH = './tests/payloads';
+const PAYLOAD_BASE_PATH = './tests/e2e/payloads';
 export enum PAYLOADS_PATH {
 	DID = `${PAYLOAD_BASE_PATH}/did`,
 	RESOURCE = `${PAYLOAD_BASE_PATH}/resource`,
 	CREDENTIAL = `${PAYLOAD_BASE_PATH}/credential`,
 	CREDENTIAL_STATUS = `${PAYLOAD_BASE_PATH}/credential-status`,
+	PRESENTATION = `${PAYLOAD_BASE_PATH}/presentation`,
+	
 }
 
-const GENERATED_BASE_PATH = './tests/generated';
+const GENERATED_BASE_PATH = './tests/e2e/generated';
 export enum GENERATED_PATH {
 	CREDENTIAL = `${GENERATED_BASE_PATH}/credential`,
 }

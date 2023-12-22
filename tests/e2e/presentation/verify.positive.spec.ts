@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
+import { PAYLOADS_PATH } from '../constants';
 
-const PAYLOADS_BASE_PATH = './tests/payloads/presentation';
 test.use({ storageState: 'playwright/.auth/user.json' });
 
 for (const presentationType of ['jwt', 'object']) {
@@ -12,7 +12,7 @@ for (const presentationType of ['jwt', 'object']) {
         VerifyStatus: ${verifyStatus}, 
         makeFeePayments: true`, async ({ request }) => {
 			const verifyRequest = JSON.parse(
-				fs.readFileSync(`${PAYLOADS_BASE_PATH}/verify-positive-${presentationType}-encrypted.json`, 'utf-8')
+				fs.readFileSync(`${PAYLOADS_PATH.PRESENTATION}/verify-positive-${presentationType}-encrypted.json`, 'utf-8')
 			);
 			verifyRequest.makeFeePayment = true;
 			const response = await request.post(
@@ -42,7 +42,7 @@ for (const presentationType of ['jwt', 'object']) {
             makeFeePayments: ${makeFeePayments}`, async ({ request }) => {
 				const verifyRequest = JSON.parse(
 					fs.readFileSync(
-						`${PAYLOADS_BASE_PATH}/verify-positive-${presentationType}-unencrypted.json`,
+						`${PAYLOADS_PATH.PRESENTATION}/verify-positive-${presentationType}-unencrypted.json`,
 						'utf-8'
 					)
 				);
@@ -73,7 +73,7 @@ for (const presentationType of ['jwt', 'object']) {
         VerifyStatus: ${verifyStatus}}`, async ({ request }) => {
 			const verifyRequest = JSON.parse(
 				fs.readFileSync(
-					`${PAYLOADS_BASE_PATH}/verify-positive-${presentationType}-un-and-encrypted.json`,
+					`${PAYLOADS_PATH.PRESENTATION}/verify-positive-${presentationType}-un-and-encrypted.json`,
 					'utf-8'
 				)
 			);

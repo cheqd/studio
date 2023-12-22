@@ -5,6 +5,7 @@ import {
 	NOT_EXISTENT_KEY,
 	DEFAULT_DOES_NOT_HAVE_PERMISSIONS,
 	NOT_SUPPORTED_VERIFICATION_METHOD_TYPE,
+	PAYLOADS_PATH,
 } from '../constants';
 import * as fs from 'fs';
 import { v4 } from 'uuid';
@@ -12,7 +13,6 @@ import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 import { CheqdNetwork, VerificationMethods } from '@cheqd/sdk';
 
-const PAYLOADS_BASE_PATH = './tests/payloads/did';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
@@ -173,7 +173,7 @@ test('[Negative] It cannot create DID without DidDocument in request body (JSON 
 
 test('[Negative] It cannot create DID in mainnet network for user with testnet role', async ({ request }) => {
 	const response = await request.post(`/did/create`, {
-		data: JSON.parse(fs.readFileSync(`${PAYLOADS_BASE_PATH}/did-create-without-permissions.json`, 'utf-8')),
+		data: JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.DID}/did-create-without-permissions.json`, 'utf-8')),
 		headers: {
 			'Content-Type': 'application/json',
 		},
