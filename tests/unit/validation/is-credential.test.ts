@@ -1,4 +1,4 @@
-import { CheqdW3CVerifiableCredentialValidator } from '../../controllers/validator/credential';
+import { CheqdW3CVerifiableCredentialValidator } from '../../../src/controllers/validator/credential';
 import { CREDENTIAL_OBJECT } from '../constants';
 import { describe, it, expect } from '@jest/globals';
 

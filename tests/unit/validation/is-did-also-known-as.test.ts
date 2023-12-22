@@ -1,4 +1,4 @@
-import { AlsoKnownAsValidator } from '../../controllers/validator/also_known_as';
+import { AlsoKnownAsValidator } from '../../../src/controllers/validator/did-also-known-as';
 import { describe, it, expect } from '@jest/globals';
 
 const alsoKnownAsValidator = new AlsoKnownAsValidator();

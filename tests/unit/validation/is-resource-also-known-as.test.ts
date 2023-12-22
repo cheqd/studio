@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { CheqdDidLinkedAlsoKnownAsValidator } from '../../controllers/validator/resource-also-known-as';
+import { CheqdDidLinkedAlsoKnownAsValidator } from '../../../src/controllers/validator/resource-also-known-as';
 
 const сheqdDidLinkedAlsoKnownAsValidator = new CheqdDidLinkedAlsoKnownAsValidator();
 

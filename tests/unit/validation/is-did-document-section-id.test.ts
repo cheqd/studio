@@ -1,4 +1,4 @@
-import { DIDDocumentSectionIDValidator } from '../../controllers/validator/did-document-section-id';
+import { DIDDocumentSectionIDValidator } from '../../../src/controllers/validator/did-document-section-id';
 import { describe, it, expect } from '@jest/globals';
 import { VALID_CHEQD_DID_INDY } from '../constants';
 

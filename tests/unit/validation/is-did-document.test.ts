@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { DIDDocumentValidator } from '../../controllers/validator/did-document';
+import { DIDDocumentValidator } from '../../../src/controllers/validator/did-document';
 import type { DIDDocument } from 'did-resolver';
 import { VALID_CHEQD_DID_INDY, VALID_CHEQD_DID_UUID } from '../constants';
 import { VerificationMethods } from '@cheqd/sdk';

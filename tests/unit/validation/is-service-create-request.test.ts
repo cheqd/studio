@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { CreateDIDDocumentServiceValidator } from '../../controllers/validator/service-create-request';
+import { CreateDIDDocumentServiceValidator } from '../../../src/controllers/validator/service-create-request';
 
 const createDIDDocumentServiceValidator = new CreateDIDDocumentServiceValidator();
 

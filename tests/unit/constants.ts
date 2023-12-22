@@ -1,4 +1,4 @@
-import { JWT_PROOF_TYPE } from '../types/constants';
+import { JWT_PROOF_TYPE } from '../../src/types/constants';
 
 // ------------------
 // CREDENTIAL

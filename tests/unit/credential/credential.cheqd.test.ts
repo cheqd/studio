@@ -1,7 +1,7 @@
 import { describe, it } from '@jest/globals';
 import { expect } from '@playwright/test';
-import { CheqdW3CVerifiableCredential } from '../../services/w3c-credential';
-import { JWT_PROOF_TYPE } from '../../types/constants';
+import { CheqdW3CVerifiableCredential } from '../../../src/services/w3c-credential';
+import { JWT_PROOF_TYPE } from '../../../src/types/constants';
 import {
 	CREDENTIAL_JWT,
 	CREDENTIAL_OBJECT,

@@ -1,4 +1,4 @@
-import { DIDURIValidator } from '../../controllers/validator/did-uri';
+import { DIDURIValidator } from '../../../src/controllers/validator/did-uri';
 import { describe, it, expect } from '@jest/globals';
 
 const didURIValidator = new DIDURIValidator();

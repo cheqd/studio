@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { ServiceValidator } from '../../controllers/validator/service';
+import { ServiceValidator } from '../../../src/controllers/validator/service';
 import { VALID_CHEQD_DID_INDY } from '../constants';
 
 const serviceValidator = new ServiceValidator();

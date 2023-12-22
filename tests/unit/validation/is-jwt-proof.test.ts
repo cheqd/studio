@@ -1,7 +1,7 @@
 import { describe, it, expect } from '@jest/globals';
-import { JWTProofValidator } from '../../controllers/validator/jwt-proof';
+import { JWTProofValidator } from '../../../src/controllers/validator/jwt-proof';
 import { CREDENTIAL_JWT } from '../constants';
-import { JWT_PROOF_TYPE } from '../../types/constants';
+import { JWT_PROOF_TYPE } from '../../../src/types/constants';
 
 const jwtPRoofValidator = new JWTProofValidator();
 describe('isJwtProof2020. Positive.', () => {
