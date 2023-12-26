@@ -1,21 +1,6 @@
 # Changelog
 
-## [2.14.0-develop.1](https://github.com/cheqd/credential-service/compare/2.13.0...2.14.0-develop.1) (2023-12-26)
-
-
-### Features
-
-* Add key/import api [DEV-3486] ([#448](https://github.com/cheqd/credential-service/issues/448)) ([524cebb](https://github.com/cheqd/credential-service/commit/524cebb5542b8a0d639decf7820929d52dacd05a))
-
-## [2.13.0](https://github.com/cheqd/credential-service/compare/2.12.0...2.13.0) (2023-12-22)
-
-
-### Features
-
-* Add more validation for user requests [DEV-3453] ([#443](https://github.com/cheqd/credential-service/issues/443)) ([109c518](https://github.com/cheqd/credential-service/commit/109c518355392e54ee7228a5b94b539b64ed9469)), closes [#19](https://github.com/cheqd/credential-service/issues/19)
-
-## [2.13.0-develop.1](https://github.com/cheqd/credential-service/compare/2.12.0...2.13.0-develop.1) (2023-12-22)
-
+## [2.12.0](https://github.com/cheqd/credential-service/compare/2.11.0...2.12.0) (2023-12-20)
 
 ### Features
 
