@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.13.0-develop.1](https://github.com/cheqd/credential-service/compare/2.12.0...2.13.0-develop.1) (2023-12-26)
+
+
+### Features
+
+* Add key/import api [DEV-3486] ([#448](https://github.com/cheqd/credential-service/issues/448)) ([e6fcece](https://github.com/cheqd/credential-service/commit/e6fceced31dc1f752b9ebde9aa00a4bde8b07d9f))
+* Add more validation for user requests [DEV-3453] ([#443](https://github.com/cheqd/credential-service/issues/443)) ([109c518](https://github.com/cheqd/credential-service/commit/109c518355392e54ee7228a5b94b539b64ed9469)), closes [#19](https://github.com/cheqd/credential-service/issues/19)
+
+
+### Bug Fixes
+
+* Move payloads to e2e folder ([#452](https://github.com/cheqd/credential-service/issues/452)) ([a20e80d](https://github.com/cheqd/credential-service/commit/a20e80d118cc9478d633a601a64f8e77b726aa37))
+
 ## [2.12.0](https://github.com/cheqd/credential-service/compare/2.11.0...2.12.0) (2023-12-20)
 
 
