@@ -2,12 +2,6 @@
 
 ## [2.12.0](https://github.com/cheqd/credential-service/compare/2.11.0...2.12.0) (2023-12-20)
 
-### Features
-
-* Add more validation for user requests [DEV-3453] ([#443](https://github.com/cheqd/credential-service/issues/443)) ([109c518](https://github.com/cheqd/credential-service/commit/109c518355392e54ee7228a5b94b539b64ed9469)), closes [#19](https://github.com/cheqd/credential-service/issues/19)
-
-## [2.12.0](https://github.com/cheqd/credential-service/compare/2.11.0...2.12.0) (2023-12-20)
-
 
 ### Features
 
