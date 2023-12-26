@@ -3,7 +3,6 @@ import { StatusCodes } from 'http-status-codes';
 import { test, expect } from '@playwright/test';
 import { CONTENT_TYPE, PAYLOADS_PATH } from '../constants';
 
-
 test.use({ storageState: 'playwright/.auth/user.json' });
 
 for (const presentationType of ['jwt', 'object']) {
@@ -14,7 +13,10 @@ for (const presentationType of ['jwt', 'object']) {
         VerifyStatus: ${verifyStatus}, 
         makeFeePayments: false`, async ({ request }) => {
 			const verifyRequest = JSON.parse(
-				fs.readFileSync(`${PAYLOADS_PATH.PRESENTATION}/verify-negative-${presentationType}-encrypted.json`, 'utf-8')
+				fs.readFileSync(
+					`${PAYLOADS_PATH.PRESENTATION}/verify-negative-${presentationType}-encrypted.json`,
+					'utf-8'
+				)
 			);
 			verifyRequest.makeFeePayment = false;
 			const response = await request.post(

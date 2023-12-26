@@ -14,7 +14,6 @@ import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 import { CheqdNetwork, VerificationMethods } from '@cheqd/sdk';
 
-
 test.use({ storageState: 'playwright/.auth/user.json' });
 
 test('[Negative] It cannot create DID with missed verificationMethodType field in request body (Form based)', async ({

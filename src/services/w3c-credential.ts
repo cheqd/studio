@@ -5,6 +5,7 @@ import type {
 	ContextType,
 	CredentialStatusReference,
 	CredentialSubject,
+	ProofType,
 	UnsignedCredential,
 	VerifiableCredential,
 	W3CVerifiableCredential,
@@ -13,12 +14,12 @@ import { JwtPayload, jwtDecode } from 'jwt-decode';
 import type { IIdentityService } from './identity/index.js';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import { toNetwork } from '../helpers/helpers.js';
-import { CommonReturn, JwtProof2020, type FeePaymentOptions } from '../types/shared.js';
+import { CommonReturn, type FeePaymentOptions } from '../types/shared.js';
 import { JWT_PROOF_TYPE } from '../types/constants.js';
 import type { StatusList2021Revocation, StatusList2021Suspension } from '@cheqd/did-provider-cheqd';
 
 export interface ICheqdCredential extends UnsignedCredential {
-	proof: JwtProof2020;
+	proof: ProofType;
 }
 
 export interface IJWTPayloadVC extends JwtPayload {
@@ -35,7 +36,7 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 	expirationDate?: string;
 	credentialStatus?: CredentialStatusReference;
 	id?: string;
-	proof: JwtProof2020;
+	proof: ProofType;
 	statusList?: StatusList2021Revocation | StatusList2021Suspension;
 
 	constructor(w3Credential: W3CVerifiableCredential) {
