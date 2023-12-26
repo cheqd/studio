@@ -68,7 +68,7 @@ export class Postgres implements AbstractDatabase {
 			ssl: config.ssl
 				? {
 						ca: EXTERNAL_DB_CERT,
-				  }
+					}
 				: false,
 			migrations: [
 				...migrations,

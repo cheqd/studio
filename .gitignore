@@ -28,9 +28,6 @@ tsconfig.tsbuildinfo
 **/logto-local.env
 **/postgres-local.env
 
-# Verida
-v[0-9,a-z]*
-
 
 ### GENERAL EXCLUSIONS ###
 

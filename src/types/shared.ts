@@ -201,7 +201,7 @@ export type CheckStatusListUnsuccessfulResponseBody = {
 export type VerifyPresentationResponseBody = {
 	verified: false;
 	error: string;
-}
+};
 
 export type SearchStatusListQuery = {
 	did: string;
@@ -253,6 +253,24 @@ export interface CredentialRequest {
 	credentialName?: string;
 	credentialSummary?: string;
 }
+
+export type CreateDIDService = {
+	idFragment: string;
+	type: string;
+	serviceEndpoint: string[];
+};
+
+export type JwtProof2020 = {
+	type: string;
+	jwt: string;
+};
+
+export type CheqdCredentialStatus = {
+	id: string;
+	type: string;
+	statusPurpose: string;
+	statusListIndex: string;
+};
 
 export type GenericAuthUser = Record<string, unknown> | null | undefined;
 

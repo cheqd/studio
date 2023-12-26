@@ -1,66 +1,34 @@
 import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
-import { check, query, validationResult } from 'express-validator';
+import { check, validationResult, query } from './validator/index.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import { jwtDecode } from 'jwt-decode';
-import { CheqdW3CVerifiablePresentation } from '../services/w3c_presentation.js';
+import { CheqdW3CVerifiablePresentation } from '../services/w3c-presentation.js';
 import type { VerifyPresentationResponseBody } from '../types/shared.js';
+import { isIssuerDidDeactivated } from '../services/helpers.js';
 
 export class PresentationController {
 	public static presentationCreateValidator = [
 		check('credentials')
 			.exists()
 			.withMessage('W3c verifiable credential was not provided')
-			.custom((value) => {
-				if (typeof value === 'string' || typeof value === 'object') {
-					return true;
-				}
-				return false;
-			})
-			.withMessage('Entry must be a JWT or a credential body with JWT proof')
-			.custom((value) => {
-				if (typeof value === 'string') {
-					try {
-						jwtDecode(value);
-					} catch (e) {
-						return false;
-					}
-				}
-				return true;
-			})
-			.withMessage('An invalid JWT string'),
-		check('holderDid').optional().isString().withMessage('Invalid holder DID'),
-		check('verifierDid').optional().isString().withMessage('Invalid verifier DID'),
-		check('policies').optional().isObject().withMessage('Verification policies should be an object'),
+			.isW3CCheqdCredential()
+			.bail(),
+		check('holderDid').optional().isDID().bail(),
+		check('verifierDid').optional().isDID().bail(),
+		check('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
 	];
 
 	public static presentationVerifyValidator = [
 		check('presentation')
 			.exists()
 			.withMessage('W3c verifiable presentation was not provided')
-			.custom((value) => {
-				if (typeof value === 'string' || typeof value === 'object') {
-					return true;
-				}
-				return false;
-			})
-			.withMessage('Entry must be a JWT or a presentation body with JWT proof')
-			.custom((value) => {
-				if (typeof value === 'string') {
-					try {
-						jwtDecode(value);
-					} catch (e) {
-						return false;
-					}
-				}
-				return true;
-			})
-			.withMessage('An invalid JWT string'),
-		check('verifierDid').optional().isString().withMessage('Invalid verifier DID'),
-		check('policies').optional().isObject().withMessage('Verification policies should be an object'),
+			.isW3CCheqdPresentation()
+			.bail(),
+		check('verifierDid').optional().isDID().bail(),
+		check('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
 		check('makeFeePayment').optional().isBoolean().withMessage('makeFeePayment: should be a boolean').bail(),
-		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value'),
+		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value').bail(),
 	];
 
 	/**
@@ -188,29 +156,17 @@ export class PresentationController {
 		const verifyStatus = request.query.verifyStatus === 'true';
 		const allowDeactivatedDid = request.query.allowDeactivatedDid === 'true';
 
-		// define identity service strategy setup
+		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		// create cheqd presentation from w3c presentation
 		const cheqdPresentation = new CheqdW3CVerifiablePresentation(presentation);
-		// get holder did
-		const holderDid = cheqdPresentation.holder;
-
-		if (!allowDeactivatedDid) {
-			const resolutionResult = await identityServiceStrategySetup.agent.resolveDid(holderDid);
-
-			if (resolutionResult.didDocumentMetadata.deactivated) {
-				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `${holderDid} is deactivated`,
-				});
-			}
-		}
 
 		if (makeFeePayment) {
-			const setResult = await cheqdPresentation.trySetStatusList2021(identityServiceStrategySetup.agent)
+			const setResult = await cheqdPresentation.trySetStatusList2021(identityServiceStrategySetup.agent);
 			if (setResult.error) {
 				return response.status(setResult.status).send({
-					error: setResult.error
-				})
+					error: setResult.error,
+				});
 			}
 			if (cheqdPresentation.isPaymentNeeded()) {
 				const feePaymentResult = await cheqdPresentation.makeFeePayment(
@@ -227,6 +183,11 @@ export class PresentationController {
 		}
 
 		try {
+			if (!allowDeactivatedDid && (await isIssuerDidDeactivated(cheqdPresentation))) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: `Credential issuer DID is deactivated`,
+				});
+			}
 			const result = await identityServiceStrategySetup.agent.verifyPresentation(
 				cheqdPresentation,
 				{

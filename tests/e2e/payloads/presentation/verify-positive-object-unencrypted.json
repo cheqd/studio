@@ -1,0 +1,50 @@
+{
+	"presentation": {
+		"verifiableCredential": [
+			{
+				"credentialSubject": {
+					"name": "Bob",
+					"gender": "male",
+					"id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+				},
+				"issuer": {
+					"id": "did:cheqd:testnet:b06256ce-8820-4c8b-b2b2-d8e8d0526080"
+				},
+				"type": ["VerifiableCredential", "Person"],
+				"credentialStatus": {
+					"id": "https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:b06256ce-8820-4c8b-b2b2-d8e8d0526080?resourceName=suspensionUn&resourceType=StatusList2021Suspension#66225",
+					"type": "StatusList2021Entry",
+					"statusPurpose": "suspension",
+					"statusListIndex": "66225"
+				},
+				"@context": [
+					"https://www.w3.org/2018/credentials/v1",
+					"https://schema.org/schema.jsonld",
+					"https://veramo.io/contexts/profile/v1",
+					"https://w3id.org/vc-status-list-2021/v1"
+				],
+				"issuanceDate": "2023-11-28T16:47:29.000Z",
+				"proof": {
+					"type": "JwtProof2020",
+					"jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vc2NoZW1hLm9yZy9zY2hlbWEuanNvbmxkIiwiaHR0cHM6Ly92ZXJhbW8uaW8vY29udGV4dHMvcHJvZmlsZS92MSIsImh0dHBzOi8vdzNpZC5vcmcvdmMtc3RhdHVzLWxpc3QtMjAyMS92MSJdLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiUGVyc29uIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7Im5hbWUiOiJCb2IiLCJnZW5kZXIiOiJtYWxlIn0sImNyZWRlbnRpYWxTdGF0dXMiOnsiaWQiOiJodHRwczovL3Jlc29sdmVyLmNoZXFkLm5ldC8xLjAvaWRlbnRpZmllcnMvZGlkOmNoZXFkOnRlc3RuZXQ6YjA2MjU2Y2UtODgyMC00YzhiLWIyYjItZDhlOGQwNTI2MDgwP3Jlc291cmNlTmFtZT1zdXNwZW5zaW9uVW4mcmVzb3VyY2VUeXBlPVN0YXR1c0xpc3QyMDIxU3VzcGVuc2lvbiM2NjIyNSIsInR5cGUiOiJTdGF0dXNMaXN0MjAyMUVudHJ5Iiwic3RhdHVzUHVycG9zZSI6InN1c3BlbnNpb24iLCJzdGF0dXNMaXN0SW5kZXgiOiI2NjIyNSJ9fSwic3ViIjoiZGlkOmtleTp6Nk1raGFYZ0JaRHZvdERrTDUyNTdmYWl6dGlHaUMyUXRLTEdwYm5uRUd0YTJkb0siLCJuYmYiOjE3MDExOTAwNDksImlzcyI6ImRpZDpjaGVxZDp0ZXN0bmV0OmIwNjI1NmNlLTg4MjAtNGM4Yi1iMmIyLWQ4ZThkMDUyNjA4MCJ9.-vDZJv7aofi-vKBnPhAvwEds412fzPD-_WuP8D6oTowXhFieV0pYcuL914j7G-KUpq8ofj4e_1wnt-a7Y6f9AQ"
+				}
+			}
+		],
+		"holder": "did:cheqd:testnet:8ibW9qSKZJ51QXptN13TNJ",
+		"verifier": ["did:cheqd:testnet:6a8YFfEtE3h3ueV99inucg"],
+		"type": ["VerifiablePresentation"],
+		"@context": ["https://www.w3.org/2018/credentials/v1"],
+		"issuanceDate": "2023-11-28T16:48:44.000Z",
+		"proof": {
+			"type": "JwtProof2020",
+			"jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2cCI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSJdLCJ0eXBlIjpbIlZlcmlmaWFibGVQcmVzZW50YXRpb24iXSwidmVyaWZpYWJsZUNyZWRlbnRpYWwiOlsiZXlKaGJHY2lPaUpGWkVSVFFTSXNJblI1Y0NJNklrcFhWQ0o5LmV5SjJZeUk2ZXlKQVkyOXVkR1Y0ZENJNld5Sm9kSFJ3Y3pvdkwzZDNkeTUzTXk1dmNtY3ZNakF4T0M5amNtVmtaVzUwYVdGc2N5OTJNU0lzSW1oMGRIQnpPaTh2YzJOb1pXMWhMbTl5Wnk5elkyaGxiV0V1YW5OdmJteGtJaXdpYUhSMGNITTZMeTkyWlhKaGJXOHVhVzh2WTI5dWRHVjRkSE12Y0hKdlptbHNaUzkyTVNJc0ltaDBkSEJ6T2k4dmR6TnBaQzV2Y21jdmRtTXRjM1JoZEhWekxXeHBjM1F0TWpBeU1TOTJNU0pkTENKMGVYQmxJanBiSWxabGNtbG1hV0ZpYkdWRGNtVmtaVzUwYVdGc0lpd2lVR1Z5YzI5dUlsMHNJbU55WldSbGJuUnBZV3hUZFdKcVpXTjBJanA3SW01aGJXVWlPaUpDYjJJaUxDSm5aVzVrWlhJaU9pSnRZV3hsSW4wc0ltTnlaV1JsYm5ScFlXeFRkR0YwZFhNaU9uc2lhV1FpT2lKb2RIUndjem92TDNKbGMyOXNkbVZ5TG1Ob1pYRmtMbTVsZEM4eExqQXZhV1JsYm5ScFptbGxjbk12Wkdsa09tTm9aWEZrT25SbGMzUnVaWFE2WWpBMk1qVTJZMlV0T0RneU1DMDBZemhpTFdJeVlqSXRaRGhsT0dRd05USTJNRGd3UDNKbGMyOTFjbU5sVG1GdFpUMXpkWE53Wlc1emFXOXVWVzRtY21WemIzVnlZMlZVZVhCbFBWTjBZWFIxYzB4cGMzUXlNREl4VTNWemNHVnVjMmx2YmlNMk5qSXlOU0lzSW5SNWNHVWlPaUpUZEdGMGRYTk1hWE4wTWpBeU1VVnVkSEo1SWl3aWMzUmhkSFZ6VUhWeWNHOXpaU0k2SW5OMWMzQmxibk5wYjI0aUxDSnpkR0YwZFhOTWFYTjBTVzVrWlhnaU9pSTJOakl5TlNKOWZTd2ljM1ZpSWpvaVpHbGtPbXRsZVRwNk5rMXJhR0ZZWjBKYVJIWnZkRVJyVERVeU5UZG1ZV2w2ZEdsSGFVTXlVWFJMVEVkd1ltNXVSVWQwWVRKa2Iwc2lMQ0p1WW1ZaU9qRTNNREV4T1RBd05Ea3NJbWx6Y3lJNkltUnBaRHBqYUdWeFpEcDBaWE4wYm1WME9tSXdOakkxTm1ObExUZzRNakF0TkdNNFlpMWlNbUl5TFdRNFpUaGtNRFV5TmpBNE1DSjkuLXZEWkp2N2FvZmktdktCblBoQXZ3RWRzNDEyZnpQRC1fV3VQOEQ2b1Rvd1hoRmllVjBwWWN1TDkxNGo3Ry1LVXBxOG9majRlXzF3bnQtYTdZNmY5QVEiXX0sIm5iZiI6MTcwMTE5MDEyNCwiaXNzIjoiZGlkOmNoZXFkOnRlc3RuZXQ6OGliVzlxU0taSjUxUVhwdE4xM1ROSiIsImF1ZCI6WyJkaWQ6Y2hlcWQ6dGVzdG5ldDo2YThZRmZFdEUzaDN1ZVY5OWludWNnIl19.bWviNj6nGvi3Rvm5p1IaNFjF828egbwbWbZdMsK8ll297-8cD-NMYXRupQUmmuAOBMbNrVzl-G2oBsU8dj9xAg"
+		}
+	},
+	"verifierDid": "did:cheqd:testnet:6a8YFfEtE3h3ueV99inucg",
+	"makeFeePayment": false,
+	"policies": {
+		"issuanceDate": true,
+		"expirationDate": true,
+		"audience": false
+	}
+}

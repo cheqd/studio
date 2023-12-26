@@ -8,11 +8,10 @@ import swaggerUi from 'swagger-ui-express';
 import { StatusCodes } from 'http-status-codes';
 
 import { CredentialController } from './controllers/credentials.js';
-import { IssuerController } from './controllers/issuer.js';
-import { AccountController } from './controllers/customer.js';
+import { AccountController } from './controllers/account.js';
 import { Authentication } from './middleware/authentication.js';
 import { Connection } from './database/connection/connection.js';
-import { RevocationController } from './controllers/revocation.js';
+import { CredentialStatusController } from './controllers/credential-status.js';
 import { CORS_ALLOWED_ORIGINS, CORS_ERROR_MSG } from './types/constants.js';
 import { LogToWebHook } from './middleware/hook.js';
 import { Middleware } from './middleware/middleware.js';
@@ -23,6 +22,9 @@ dotenv.config();
 // Define Swagger file
 import swaggerDocument from './static/swagger.json' assert { type: 'json' };
 import { PresentationController } from './controllers/presentation.js';
+import { KeyController } from './controllers/key.js';
+import { DIDController } from './controllers/did.js';
+import { ResourceController } from './controllers/resource.js';
 
 let swaggerOptions = {};
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -77,6 +79,8 @@ class App {
 							throw new Error('COOKIE_SECRET is not defined');
 						})(),
 					cookie: { maxAge: 24 * 60 * 60 * 1000 }, // 24 hours
+					resave: false,
+					saveUninitialized: false,
 				})
 			);
 			// Authentication functions/methods
@@ -102,16 +106,16 @@ class App {
 
 		// Credential API
 		app.post(`/credential/issue`, CredentialController.issueValidator, new CredentialController().issue);
-		app.post(`/credential/verify`, CredentialController.credentialValidator, new CredentialController().verify);
-		app.post(`/credential/revoke`, CredentialController.credentialValidator, new CredentialController().revoke);
-		app.post('/credential/suspend', CredentialController.credentialValidator, new CredentialController().suspend);
+		app.post(`/credential/verify`, CredentialController.verifyValidator, new CredentialController().verify);
+		app.post(`/credential/revoke`, CredentialController.revokeValidator, new CredentialController().revoke);
+		app.post('/credential/suspend', CredentialController.suspendValidator, new CredentialController().suspend);
 		app.post(
 			'/credential/reinstate',
-			CredentialController.credentialValidator,
+			CredentialController.reinstateValidator,
 			new CredentialController().reinstate
 		);
 
-		// presentation
+		// Presentation API
 		app.post(
 			`/presentation/verify`,
 			PresentationController.presentationVerifyValidator,
@@ -123,53 +127,61 @@ class App {
 			new PresentationController().createPresentation
 		);
 
-		// revocation
+		// Credential status API
 		app.post(
 			'/credential-status/create/unencrypted',
-			RevocationController.createUnencryptedValidator,
-			new RevocationController().createUnencryptedStatusList
+			CredentialStatusController.createUnencryptedValidator,
+			new CredentialStatusController().createUnencryptedStatusList
 		);
 		app.post(
 			'/credential-status/create/encrypted',
-			RevocationController.createEncryptedValidator,
-			new RevocationController().createEncryptedStatusList
+			CredentialStatusController.createEncryptedValidator,
+			new CredentialStatusController().createEncryptedStatusList
 		);
 		app.post(
 			'/credential-status/update/unencrypted',
-			RevocationController.updateUnencryptedValidator,
-			new RevocationController().updateUnencryptedStatusList
+			CredentialStatusController.updateUnencryptedValidator,
+			new CredentialStatusController().updateUnencryptedStatusList
 		);
 		app.post(
 			'/credential-status/update/encrypted',
-			RevocationController.updateEncryptedValidator,
-			new RevocationController().updateEncryptedStatusList
+			CredentialStatusController.updateEncryptedValidator,
+			new CredentialStatusController().updateEncryptedStatusList
 		);
 		app.post(
 			'/credential-status/check',
-			RevocationController.checkValidator,
-			new RevocationController().checkStatusList
+			CredentialStatusController.checkValidator,
+			new CredentialStatusController().checkStatusList
 		);
 		app.get(
 			'/credential-status/search',
-			RevocationController.searchValidator,
-			new RevocationController().searchStatusList
+			CredentialStatusController.searchValidator,
+			new CredentialStatusController().searchStatusList
 		);
 
 		// Keys API
-		app.post('/key/create', new IssuerController().createKey);
-		app.post('/key/import', new IssuerController().importKey);
-		app.get('/key/read/:kid', new IssuerController().getKey);
+		app.post('/key/create', new KeyController().createKey);
+		app.post('/key/import', new KeyController().importKey);
+		app.get('/key/read/:kid', new KeyController().getKey);
 
 		// DIDs API
-		app.post('/did/create', IssuerController.createValidator, new IssuerController().createDid);
-		app.post('/did/update', IssuerController.updateValidator, new IssuerController().updateDid);
-		app.post('/did/deactivate/:did', IssuerController.deactivateValidator, new IssuerController().deactivateDid);
-		app.get('/did/list', new IssuerController().getDids);
-		app.get('/did/search/:did', new IssuerController().resolveDidUrl);
+		app.post('/did/create', DIDController.createDIDValidator, new DIDController().createDid);
+		app.post('/did/update', DIDController.updateDIDValidator, new DIDController().updateDid);
+		app.post('/did/deactivate/:did', DIDController.deactivateDIDValidator, new DIDController().deactivateDid);
+		app.get('/did/list', new DIDController().getDids);
+		app.get('/did/search/:did', new DIDController().resolveDidUrl);
 
 		// Resource API
-		app.post('/resource/create/:did', IssuerController.resourceValidator, new IssuerController().createResource);
-		app.get('/resource/search/:did', new IssuerController().getResource);
+		app.post(
+			'/resource/create/:did',
+			ResourceController.createResourceValidator,
+			new ResourceController().createResource
+		);
+		app.get(
+			'/resource/search/:did',
+			ResourceController.searchResourceValidator,
+			new ResourceController().searchResource
+		);
 
 		// Account API
 		app.get('/account', new AccountController().get);

@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.13.0](https://github.com/cheqd/credential-service/compare/2.12.0...2.13.0) (2023-12-22)
+
+
+### Features
+
+* Add more validation for user requests [DEV-3453] ([#443](https://github.com/cheqd/credential-service/issues/443)) ([109c518](https://github.com/cheqd/credential-service/commit/109c518355392e54ee7228a5b94b539b64ed9469)), closes [#19](https://github.com/cheqd/credential-service/issues/19)
+
+## [2.13.0-develop.1](https://github.com/cheqd/credential-service/compare/2.12.0...2.13.0-develop.1) (2023-12-22)
+
+
+### Features
+
+* Add more validation for user requests [DEV-3453] ([#443](https://github.com/cheqd/credential-service/issues/443)) ([109c518](https://github.com/cheqd/credential-service/commit/109c518355392e54ee7228a5b94b539b64ed9469)), closes [#19](https://github.com/cheqd/credential-service/issues/19)
+
+## [2.12.0](https://github.com/cheqd/credential-service/compare/2.11.0...2.12.0) (2023-12-20)
+
+
+### Features
+
+* Add makeFeePayment for /presentation/verify [DEV-3400] ([#429](https://github.com/cheqd/credential-service/issues/429)) ([940f9fa](https://github.com/cheqd/credential-service/commit/940f9fa995334ddb27b29ddb3beee296031cf2da)), closes [#435](https://github.com/cheqd/credential-service/issues/435)
+
 ## [2.12.0-develop.1](https://github.com/cheqd/credential-service/compare/2.11.0...2.12.0-develop.1) (2023-12-08)
 
 

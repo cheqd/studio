@@ -5,7 +5,7 @@ import { CustomerEntity } from '../database/entities/customer.entity.js';
 import { IdentityServiceStrategySetup } from './identity/index.js';
 
 import * as dotenv from 'dotenv';
-import { PaymentAccountService } from './payment_account.js';
+import { PaymentAccountService } from './payment-account.js';
 import { CheqdNetwork } from '@cheqd/sdk';
 import { v4 as uuidv4 } from 'uuid';
 dotenv.config();
