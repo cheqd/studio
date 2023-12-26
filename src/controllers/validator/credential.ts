@@ -2,6 +2,7 @@ import { CheqdW3CVerifiableCredential, ICheqdCredential } from '../../services/w
 import type { CheqdCredentialStatus } from '../../types/shared.js';
 import { CredentialStatusValidator } from './credential-status.js';
 import { CheqdDIDValidator, KeyDIDValidator } from './did.js';
+import { JsonLDProofValidator } from './jsonld-proof.js';
 import { JWTProofValidator } from './jwt-proof.js';
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
 import { InvalidTokenError, jwtDecode } from 'jwt-decode';
@@ -17,7 +18,7 @@ export class CheqdW3CVerifiableCredentialValidator implements IValidator {
 		credentialStatusValidator?: IValidator
 	) {
 		if (!proofValidators) {
-			proofValidators = [new JWTProofValidator()];
+			proofValidators = [new JWTProofValidator(), new JsonLDProofValidator()];
 		}
 		if (!issuerValidators) {
 			issuerValidators = [new KeyDIDValidator(), new CheqdDIDValidator()];
@@ -79,7 +80,7 @@ export class CheqdW3CVerifiableCredentialValidator implements IValidator {
 		}
 		const proof = cheqdCredential.proof as Validatable;
 		const results = this.proofValidators.map((v) => v.validate(proof));
-		if (results.some((r) => !r.valid)) {
+		if (results.every((r) => !r.valid)) {
 			return {
 				valid: false,
 				error: `credential.proof has validation errors: ${results.map((r) => r.error).join(', ')}`,

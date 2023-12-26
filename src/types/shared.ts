@@ -265,6 +265,14 @@ export type JwtProof2020 = {
 	jwt: string;
 };
 
+export type JSONLDProofType = {
+	type: string;
+	created: string;
+	verificationMethod: string;
+	proofPurpose: string;
+	jws: string;
+};
+
 export type CheqdCredentialStatus = {
 	id: string;
 	type: string;

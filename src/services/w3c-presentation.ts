@@ -3,6 +3,7 @@ import type { ICommonErrorResponse } from '../types/authentication.js';
 import type {
 	CompactJWT,
 	ContextType,
+	ProofType,
 	UnsignedPresentation,
 	VerifiablePresentation,
 	W3CVerifiablePresentation,
@@ -11,11 +12,11 @@ import { jwtDecode, type JwtPayload } from 'jwt-decode';
 import type { IIdentityService } from './identity/index.js';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import { CheqdW3CVerifiableCredential } from './w3c-credential.js';
-import { CommonReturn, JwtProof2020 } from '../types/shared.js';
+import { CommonReturn } from '../types/shared.js';
 import { JWT_PROOF_TYPE } from '../types/constants.js';
 
 export interface ICheqdPresentation extends UnsignedPresentation {
-	proof: JwtProof2020;
+	proof: ProofType;
 }
 
 export interface IJWTPayloadVP extends JwtPayload {
@@ -32,7 +33,7 @@ export class CheqdW3CVerifiablePresentation extends CommonReturn implements IChe
 	issuanceDate?: string;
 	expirationDate?: string;
 	id?: string;
-	proof: JwtProof2020;
+	proof: ProofType;
 
 	constructor(w3Presentation: W3CVerifiablePresentation) {
 		super();

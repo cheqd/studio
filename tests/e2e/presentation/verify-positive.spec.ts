@@ -12,7 +12,10 @@ for (const presentationType of ['jwt', 'object']) {
         VerifyStatus: ${verifyStatus}, 
         makeFeePayments: true`, async ({ request }) => {
 			const verifyRequest = JSON.parse(
-				fs.readFileSync(`${PAYLOADS_PATH.PRESENTATION}/verify-positive-${presentationType}-encrypted.json`, 'utf-8')
+				fs.readFileSync(
+					`${PAYLOADS_PATH.PRESENTATION}/verify-positive-${presentationType}-encrypted.json`,
+					'utf-8'
+				)
 			);
 			verifyRequest.makeFeePayment = true;
 			const response = await request.post(

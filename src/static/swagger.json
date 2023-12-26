@@ -1075,6 +1075,70 @@
         }
       }
     },
+    "/key/import": {
+      "post": {
+        "tags": [
+          "Key"
+        ],
+        "summary": "Import an identity key pair.",
+        "description": "This endpoint imports an identity key pair associated with the user's account for custodian-mode clients.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/KeyImportRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KeyImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KeyResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "InvalidRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "Internal Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/key/read/{kid}": {
       "get": {
         "tags": [
@@ -2462,6 +2526,34 @@
             ]
           }
         ]
+      },
+      "KeyImportRequest": {
+        "type": "object",
+        "properties": {
+          "alias": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "Ed25519",
+              "Secp256k1"
+            ]
+          },
+          "privateKeyHex": {
+            "type": "string"
+          },
+          "ivHex": {
+            "type": "string",
+            "required": false
+          },
+          "salt": {
+            "type": "string"
+          },
+          "encrypted": {
+            "type": "boolean"
+          }
+        }
       },
       "KeyResult": {
         "type": "object",
