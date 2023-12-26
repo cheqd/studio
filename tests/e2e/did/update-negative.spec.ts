@@ -9,7 +9,7 @@ test('[Negative] It cannot update DID in mainnet network for user with testnet r
 	const response = await request.post(`/did/update`, {
 		data: JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.DID}/did-update-without-permissions.json`, 'utf-8')),
 		headers: {
-			'Content-Type': CONTENT_TYPE.APPLICATION_JSON
+			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
 		},
 	});
 	expect(response).not.toBeOK();

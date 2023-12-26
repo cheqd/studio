@@ -53,6 +53,7 @@ export class CredentialController {
 		check('credential')
 			.exists()
 			.withMessage('W3c verifiable credential was not provided')
+			.bail()
 			.isW3CCheqdCredential()
 			.bail(),
 		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').bail(),

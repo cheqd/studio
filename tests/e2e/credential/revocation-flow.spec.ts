@@ -3,17 +3,15 @@ import type { VerifiableCredential } from '@veramo/core';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 import * as fs from 'fs';
-import { CONTENT_TYPE } from '../constants';
+import { CONTENT_TYPE, PAYLOADS_PATH } from '../constants';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
-
-const PAYLOADS_BASE_PATH = './tests/payloads/credential';
 
 let jwtCredential: VerifiableCredential;
 
 test(' Issue a jwt credential with revocation statuslist', async ({ request }) => {
 	const credentialData = JSON.parse(
-		fs.readFileSync(`${PAYLOADS_BASE_PATH}/credential-issue-jwt-revocation.json`, 'utf-8')
+		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jwt-revocation.json`, 'utf-8')
 	);
 	const response = await request.post(`/credential/issue`, {
 		data: JSON.stringify(credentialData),
