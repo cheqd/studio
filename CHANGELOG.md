@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.14.0-develop.1](https://github.com/cheqd/credential-service/compare/2.13.0...2.14.0-develop.1) (2023-12-26)
+
+
+### Features
+
+* Add key/import api [DEV-3486] ([#448](https://github.com/cheqd/credential-service/issues/448)) ([524cebb](https://github.com/cheqd/credential-service/commit/524cebb5542b8a0d639decf7820929d52dacd05a))
+
 ## [2.13.0](https://github.com/cheqd/credential-service/compare/2.12.0...2.13.0) (2023-12-22)
 
 
