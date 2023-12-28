@@ -14,7 +14,8 @@ import { JwtPayload, jwtDecode } from 'jwt-decode';
 import type { IIdentityService } from './identity/index.js';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import { toNetwork } from '../helpers/helpers.js';
-import { CommonReturn, type FeePaymentOptions } from '../types/shared.js';
+import { CommonReturn } from '../types/shared.js';
+import type { FeePaymentOptions } from '../types/credential-status.js';
 import { JWT_PROOF_TYPE } from '../types/constants.js';
 import type { StatusList2021Revocation, StatusList2021Suspension } from '@cheqd/did-provider-cheqd';
 

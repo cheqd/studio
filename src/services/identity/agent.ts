@@ -52,24 +52,24 @@ import type { CheqdNetwork } from '@cheqd/sdk';
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key';
 import { Resolver, ResolverRegistry } from 'did-resolver';
 import {
-	BroadcastStatusListOptions,
-	CheckStatusListOptions,
 	DefaultDidUrlPattern,
 	CreateAgentRequest,
-	CreateUnencryptedStatusListOptions,
-	CredentialRequest,
+	VeramoAgent,
+} from '../../types/shared.js';
+import { VerificationOptions } from '../../types/credential.js';
+import { FeePaymentOptions } from '../../types/credential-status.js';
+import { CredentialRequest } from '../../types/credential.js';
+import { DefaultStatusActions } from '../../types/credential-status.js';
+import { CheckStatusListOptions } from '../../types/credential-status.js';
+import {
 	RevocationStatusOptions,
 	StatusOptions,
-	SuspensionStatusOptions,
-	UpdateUnencryptedStatusListOptions,
-	VeramoAgent,
-	VerificationOptions,
-	CreateEncryptedStatusListOptions,
-	DefaultStatusActions,
-	UpdateEncryptedStatusListOptions,
-	SearchStatusListResult,
-	FeePaymentOptions,
-} from '../../types/shared.js';
+	SuspensionStatusOptions
+} from '../../types/credential-status.js';
+import {
+	BroadcastStatusListOptions, CreateUnencryptedStatusListOptions, UpdateUnencryptedStatusListOptions, CreateEncryptedStatusListOptions, UpdateEncryptedStatusListOptions,
+	SearchStatusListResult
+} from '../../types/credential-status.js';
 import { MINIMAL_DENOM, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js';
 import { toCoin, toDefaultDkg, toMinimalDenom } from '../../helpers/helpers.js';
 import { jwtDecode } from 'jwt-decode';

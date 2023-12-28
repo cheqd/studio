@@ -1,4 +1,4 @@
-import type { CheqdCredentialStatus } from '../../types/shared.js';
+import type { CheqdCredentialStatus } from '../../types/validation.js';
 import type { IValidationResult, IValidator } from './validator.js';
 
 export class CredentialStatusValidator implements IValidator {

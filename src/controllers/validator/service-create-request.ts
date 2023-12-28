@@ -1,6 +1,6 @@
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
 import { Helpers, type IHelpers } from './helpers.js';
-import type { CreateDIDService } from '../../types/shared.js';
+import type { CreateDIDService } from '../../types/validation.js';
 
 // It's a special validator for the service create request. It's not a part of the DID Document
 export class CreateDIDDocumentServiceValidator implements IValidator {

@@ -16,18 +16,16 @@ import {
 	LitNetworks,
 } from '@cheqd/did-provider-cheqd';
 import { CheqdNetwork } from '@cheqd/sdk';
+import type { VerificationOptions } from '../../types/credential.js';
+import type { FeePaymentOptions } from '../../types/credential-status.js';
+import type { CredentialRequest } from '../../types/credential.js';
+import type { CheckStatusListOptions } from '../../types/credential-status.js';
+import type { StatusOptions } from '../../types/credential-status.js';
 import type {
-	BroadcastStatusListOptions,
-	CheckStatusListOptions,
-	CreateEncryptedStatusListOptions,
-	CreateUnencryptedStatusListOptions,
-	CredentialRequest,
-	FeePaymentOptions,
-	StatusOptions,
-	UpdateEncryptedStatusListOptions,
-	UpdateUnencryptedStatusListOptions,
-	VerificationOptions,
-} from '../../types/shared.js';
+	BroadcastStatusListOptions, CreateEncryptedStatusListOptions,
+	CreateUnencryptedStatusListOptions, UpdateEncryptedStatusListOptions,
+	UpdateUnencryptedStatusListOptions
+} from '../../types/credential-status.js';
 import { DefaultIdentityService } from './default.js';
 import { Connection } from '../../database/connection/connection.js';
 import { Veramo } from './agent.js';

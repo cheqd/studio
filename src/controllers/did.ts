@@ -14,7 +14,7 @@ import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { generateDidDoc, getQueryParams } from '../helpers/helpers.js';
 import { bases } from 'multiformats/basics';
 import { base64ToBytes } from 'did-jwt';
-import type { CreateDidRequestBody } from '../types/shared.js';
+import type { CreateDidRequestBody } from '../types/did.js';
 
 import { check, validationResult, param } from './validator/index.js';
 

@@ -2,12 +2,10 @@
 import type { DIDResolutionResult } from 'did-resolver';
 import { AbstractIdentityService } from './abstract.js';
 import type { IVerifyResult, VerifiableCredential, VerifiablePresentation } from '@veramo/core';
-import type {
-	CheckStatusListOptions,
-	FeePaymentOptions,
-	SearchStatusListResult,
-	VerificationOptions,
-} from '../../types/shared';
+import type { VerificationOptions } from '../../types/credential.js';
+import type { FeePaymentOptions } from '../../types/credential-status.js';
+import type { CheckStatusListOptions } from '../../types/credential-status.js';
+import type { SearchStatusListResult } from '../../types/credential-status.js';
 import type { StatusCheckResult, TransactionResult } from '@cheqd/did-provider-cheqd';
 import { Veramo } from './agent.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';

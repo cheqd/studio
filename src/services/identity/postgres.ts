@@ -23,21 +23,17 @@ import {
 	type TransactionResult,
 } from '@cheqd/did-provider-cheqd';
 import {
-	BroadcastStatusListOptions,
-	CheckStatusListOptions,
 	DefaultDidUrlPattern,
-	CreateUnencryptedStatusListOptions,
-	CredentialRequest,
-	StatusOptions,
-	UpdateUnencryptedStatusListOptions,
 	VeramoAgent,
-	VerificationOptions,
-	CreateEncryptedStatusListOptions,
-	FeePaymentOptions,
-	UpdateEncryptedStatusListOptions,
 	ITrackResult,
 	ITrackOperation,
 } from '../../types/shared.js';
+import type { VerificationOptions } from '../../types/credential.js';
+import type { FeePaymentOptions } from '../../types/credential-status.js';
+import type { CredentialRequest } from '../../types/credential.js';
+import type { CheckStatusListOptions } from '../../types/credential-status.js';
+import type { StatusOptions } from '../../types/credential-status.js';
+import type { BroadcastStatusListOptions, CreateUnencryptedStatusListOptions, UpdateUnencryptedStatusListOptions, CreateEncryptedStatusListOptions, UpdateEncryptedStatusListOptions } from '../../types/credential-status.js';
 import { Connection } from '../../database/connection/connection.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { Veramo } from './agent.js';
