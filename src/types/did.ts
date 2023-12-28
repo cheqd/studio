@@ -1,4 +1,4 @@
-import { CheqdNetwork, MethodSpecificIdAlgo, Service, VerificationMethods } from '@cheqd/sdk';
+import type { CheqdNetwork, MethodSpecificIdAlgo, Service, VerificationMethods } from '@cheqd/sdk';
 import type { DIDDocument } from 'did-resolver';
 
 

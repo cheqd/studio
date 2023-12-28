@@ -56,17 +56,17 @@ import {
 	CreateAgentRequest,
 	VeramoAgent,
 } from '../../types/shared.js';
-import { VerificationOptions } from '../../types/credential.js';
-import { FeePaymentOptions } from '../../types/credential-status.js';
-import { CredentialRequest } from '../../types/credential.js';
+import type { VerificationOptions } from '../../types/credential.js';
+import type { FeePaymentOptions } from '../../types/credential-status.js';
+import type { CredentialRequest } from '../../types/credential.js';
 import { DefaultStatusActions } from '../../types/credential-status.js';
-import { CheckStatusListOptions } from '../../types/credential-status.js';
-import {
+import type { CheckStatusListOptions } from '../../types/credential-status.js';
+import type {
 	RevocationStatusOptions,
 	StatusOptions,
 	SuspensionStatusOptions
 } from '../../types/credential-status.js';
-import {
+import type {
 	BroadcastStatusListOptions, CreateUnencryptedStatusListOptions, UpdateUnencryptedStatusListOptions, CreateEncryptedStatusListOptions, UpdateEncryptedStatusListOptions,
 	SearchStatusListResult
 } from '../../types/credential-status.js';
