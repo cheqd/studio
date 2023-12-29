@@ -255,9 +255,7 @@ export class CredentialController {
 					error: `verify: ${verifyResult.error.message}`,
 				} satisfies UnsuccesfulVerifyCredentialResponseBody);
 			}
-			return response.status(StatusCodes.OK).json({
-				verified,
-			} satisfies VerifyCredentialResponseBody);
+			return response.status(StatusCodes.OK).json(verifyResult satisfies VerifyCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -372,9 +370,7 @@ export class CredentialController {
 				}
 			}
 			// Return Ok response
-			return response.status(StatusCodes.OK).json({
-				revoked,
-			} satisfies RevokeCredentialResponseBody);
+			return response.status(StatusCodes.OK).json(result satisfies RevokeCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,

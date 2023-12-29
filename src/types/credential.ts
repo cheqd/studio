@@ -1,6 +1,7 @@
-import type { VerifiableCredential, VerificationPolicies } from '@veramo/core';
+import type { IVerifyResult, VerifiableCredential, VerificationPolicies } from '@veramo/core';
 import type { StatusOptions } from './credential-status.js';
 import type { UnsuccessfulResponseBody } from './shared.js';
+import type { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, RevocationResult, SuspensionResult, UnsuspensionResult } from '@cheqd/did-provider-cheqd';
 
 export interface CredentialRequest {
 	subjectDid: string;
@@ -28,13 +29,13 @@ export type DateType = string | Date;
 
 export type IssueCredentialResponseBody = VerifiableCredential;
 
-export type VerifyCredentialResponseBody = { verified: boolean };
+export type VerifyCredentialResponseBody = IVerifyResult;
 
-export type RevokeCredentialResponseBody = { revoked: boolean };
+export type RevokeCredentialResponseBody = RevocationResult | BulkRevocationResult;
 
-export type SuspendCredentialResponseBody = { suspended: boolean };
+export type SuspendCredentialResponseBody = SuspensionResult | BulkSuspensionResult;
 
-export type UnsuspendCredentialResponseBody = { unsuspended: boolean };
+export type UnsuspendCredentialResponseBody = UnsuspensionResult | BulkUnsuspensionResult;
 
 // Negative
 
@@ -46,8 +47,8 @@ export type UnsuccesfulReinstateCredentialResponseBody = UnsuccessfulResponseBod
 
 export type UnsuccesfulVerifyCredentialResponseBody = VerifyCredentialResponseBody & UnsuccessfulResponseBody;
 
-export type UnsuccesfulRevokeCredentialResponseBody = RevokeCredentialResponseBody & UnsuccessfulResponseBody;
+export type UnsuccesfulRevokeCredentialResponseBody = { revoked: boolean } & UnsuccessfulResponseBody;
 
-export type UnsuccesfulSuspendCredentialResponseBody = SuspendCredentialResponseBody & UnsuccessfulResponseBody;
+export type UnsuccesfulSuspendCredentialResponseBody = { suspended: boolean } & UnsuccessfulResponseBody;
 
-export type UnsuccesfulUnsuspendCredentialResponseBody = UnsuspendCredentialResponseBody & UnsuccessfulResponseBody;
+export type UnsuccesfulUnsuspendCredentialResponseBody = { unsuspended: boolean } & UnsuccessfulResponseBody;

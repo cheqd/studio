@@ -221,9 +221,7 @@ export class PresentationController {
 					error: `verify: ${result.error.message}`,
 				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			}
-			return response.status(StatusCodes.OK).json({
-				verified,
-			} satisfies VerifyPresentationResponseBody);
+			return response.status(StatusCodes.OK).json(result satisfies VerifyPresentationResponseBody);
 		} catch (error) {
 			// define error
 			const errorRef = error as Record<string, unknown>;

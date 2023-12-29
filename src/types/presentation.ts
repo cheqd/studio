@@ -1,9 +1,9 @@
-import type { VerifiablePresentation } from '@veramo/core';
+import type { IVerifyResult, VerifiablePresentation } from '@veramo/core';
 import type { UnsuccessfulResponseBody } from './shared.js';
 
 // Positive
 
-export type VerifyPresentationResponseBody = { verified: boolean };
+export type VerifyPresentationResponseBody = IVerifyResult;
 
 export type CreatePresentationResponseBody = VerifiablePresentation;
 
