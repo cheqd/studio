@@ -1,5 +1,5 @@
-import type { LinkedResourceMetadataResolutionResult } from "@cheqd/did-provider-cheqd/build/types";
-import type { UnsuccessfulQueryResponseBody, UnsuccessfulResponseBody } from "./shared.js";
+import type { LinkedResourceMetadataResolutionResult } from '@cheqd/did-provider-cheqd/build/types';
+import type { UnsuccessfulQueryResponseBody, UnsuccessfulResponseBody } from './shared.js';
 
 // Positive
 

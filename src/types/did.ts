@@ -3,7 +3,6 @@ import type { DIDDocument, DIDResolutionResult } from 'did-resolver';
 import type { UnsuccessfulQueryResponseBody, UnsuccessfulResponseBody } from './shared.js';
 import type { IIdentifier } from '@veramo/core';
 
-
 export type CreateDidRequestBody = {
 	didDocument?: DIDDocument;
 	identifierFormatType: MethodSpecificIdAlgo;

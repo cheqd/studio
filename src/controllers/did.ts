@@ -14,7 +14,20 @@ import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { generateDidDoc, getQueryParams } from '../helpers/helpers.js';
 import { bases } from 'multiformats/basics';
 import { base64ToBytes } from 'did-jwt';
-import type { CreateDidRequestBody, CreateDidResponseBody, DeactivateDidResponseBody, ListDidsResponseBody, QueryDidResponseBody, ResolveDidResponseBody, UnsuccessfulCreateDidResponseBody, UnsuccessfulDeactivateDidResponseBody, UnsuccessfulGetDidResponseBody, UnsuccessfulResolveDidResponseBody, UnsuccessfulUpdateDidResponseBody, UpdateDidResponseBody } from '../types/did.js';
+import type {
+	CreateDidRequestBody,
+	CreateDidResponseBody,
+	DeactivateDidResponseBody,
+	ListDidsResponseBody,
+	QueryDidResponseBody,
+	ResolveDidResponseBody,
+	UnsuccessfulCreateDidResponseBody,
+	UnsuccessfulDeactivateDidResponseBody,
+	UnsuccessfulGetDidResponseBody,
+	UnsuccessfulResolveDidResponseBody,
+	UnsuccessfulUpdateDidResponseBody,
+	UpdateDidResponseBody,
+} from '../types/did.js';
 
 import { check, validationResult, param } from './validator/index.js';
 
@@ -125,8 +138,8 @@ export class DIDController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ 
-				error: result.array().pop()?.msg
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg,
 			} satisfies UnsuccessfulCreateDidResponseBody);
 		}
 
@@ -161,7 +174,7 @@ export class DIDController {
 				} else {
 					return response.status(StatusCodes.BAD_REQUEST).json({
 						error: 'Provide options section to create a DID',
-					} satisfies UnsuccessfulCreateDidResponseBody );
+					} satisfies UnsuccessfulCreateDidResponseBody);
 				}
 			} else if (verificationMethodType) {
 				const publicKeyHex =
@@ -265,8 +278,8 @@ export class DIDController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ 
-				error: result.array().pop()?.msg
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg,
 			} satisfies UnsuccessfulUpdateDidResponseBody);
 		}
 
@@ -366,7 +379,7 @@ export class DIDController {
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				deactivated,
-				error: result.array().pop()?.msg
+				error: result.array().pop()?.msg,
 			} satisfies UnsuccessfulDeactivateDidResponseBody);
 		}
 
@@ -382,9 +395,7 @@ export class DIDController {
 			// Send the deactivated DID as result
 			const result = await identityServiceStrategySetup.agent.resolveDid(request.params.did);
 
-			return response.status(StatusCodes.OK).json(
-				result satisfies DeactivateDidResponseBody
-			);
+			return response.status(StatusCodes.OK).json(result satisfies DeactivateDidResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				deactivated,
@@ -425,8 +436,7 @@ export class DIDController {
 				? await identityServiceStrategySetup.agent.resolveDid(request.params.did)
 				: await identityServiceStrategySetup.agent.listDids(response.locals.customer);
 
-			return response.status(StatusCodes.OK).json(
-				did satisfies ListDidsResponseBody | QueryDidResponseBody);
+			return response.status(StatusCodes.OK).json(did satisfies ListDidsResponseBody | QueryDidResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -517,8 +527,10 @@ export class DIDController {
 				const contentType = res.headers.get('Content-Type') || 'application/octet-stream';
 				const body = new TextDecoder().decode(await res.arrayBuffer());
 
-				return response.setHeader('Content-Type', contentType).status(res.status).send(
-					body satisfies ResolveDidResponseBody);
+				return response
+					.setHeader('Content-Type', contentType)
+					.status(res.status)
+					.send(body satisfies ResolveDidResponseBody);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'The DIDUrl parameter is empty.',

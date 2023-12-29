@@ -9,7 +9,12 @@ import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-p
 import type { ITrackOperation } from '../types/shared.js';
 import { OPERATION_CATEGORY_NAME_RESOURCE } from '../types/constants.js';
 import { check, validationResult, param, query } from './validator/index.js';
-import type { CreateResourceResponseBody, QueryResourceResponseBody, UnsuccessfulCreateResourceResponseBody, UnsuccessfulQueryResourceResponseBody } from '../types/resource.js';
+import type {
+	CreateResourceResponseBody,
+	QueryResourceResponseBody,
+	UnsuccessfulCreateResourceResponseBody,
+	UnsuccessfulQueryResourceResponseBody,
+} from '../types/resource.js';
 
 export class ResourceController {
 	public static createResourceValidator = [
@@ -139,7 +144,7 @@ export class ResourceController {
 		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg
+				error: result.array().pop()?.msg,
 			} satisfies UnsuccessfulCreateResourceResponseBody);
 		}
 
@@ -295,7 +300,7 @@ export class ResourceController {
 		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg 
+				error: result.array().pop()?.msg,
 			} satisfies UnsuccessfulQueryResourceResponseBody);
 		}
 		// Get strategy e.g. postgres or local
@@ -310,8 +315,10 @@ export class ResourceController {
 				const contentType = res.headers.get('Content-Type') || 'application/octet-stream';
 				const body = new TextDecoder().decode(await res.arrayBuffer());
 
-				return response.setHeader('Content-Type', contentType).status(res.status).send(
-					body satisfies QueryResourceResponseBody);
+				return response
+					.setHeader('Content-Type', contentType)
+					.status(res.status)
+					.send(body satisfies QueryResourceResponseBody);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'The DID parameter is empty.',

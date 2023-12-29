@@ -13,7 +13,12 @@ import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import type { UserEntity } from '../database/entities/user.entity.js';
 import type { PaymentAccountEntity } from '../database/entities/payment.account.entity.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import type { QueryCustomerResponseBody, QueryIdTokenResponseBody, UnsuccessfulQueryCustomerResponseBody, UnsuccessfulQueryIdTokenResponseBody } from '../types/customer.js';
+import type {
+	QueryCustomerResponseBody,
+	QueryIdTokenResponseBody,
+	UnsuccessfulQueryCustomerResponseBody,
+	UnsuccessfulQueryIdTokenResponseBody,
+} from '../types/customer.js';
 import type { UnsuccessfulResponseBody } from '../types/shared.js';
 
 export class AccountController {
@@ -63,7 +68,7 @@ export class AccountController {
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			} satisfies UnsuccessfulQueryCustomerResponseBody );
+			} satisfies UnsuccessfulQueryCustomerResponseBody);
 		}
 	}
 
@@ -115,7 +120,6 @@ export class AccountController {
 			return response.status(StatusCodes.OK).json({
 				idToken: apiKey?.apiKey,
 			} satisfies QueryIdTokenResponseBody);
-
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -161,7 +165,7 @@ export class AccountController {
 		if (!defaultRole) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: 'Default role is not set on Credential Service side',
-			} satisfies UnsuccessfulResponseBody );
+			} satisfies UnsuccessfulResponseBody);
 		}
 
 		// 2. Check if such row exists in the DB
@@ -195,7 +199,7 @@ export class AccountController {
 			if (!customer) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'User exists in db: Customer was not created',
-				} satisfies UnsuccessfulResponseBody );
+				} satisfies UnsuccessfulResponseBody);
 			}
 			// 3.1.2. Assign customer to the user
 			user.customer = customer;
@@ -244,7 +248,7 @@ export class AccountController {
 		if (roles.status !== StatusCodes.OK) {
 			return response.status(StatusCodes.BAD_GATEWAY).json({
 				error: roles.error,
-			} satisfies UnsuccessfulResponseBody );
+			} satisfies UnsuccessfulResponseBody);
 		}
 
 		// 5.2 If list of roles is empty and the user is not suspended - assign default role

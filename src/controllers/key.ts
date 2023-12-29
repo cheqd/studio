@@ -3,7 +3,14 @@ import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { decryptPrivateKey } from '../helpers/helpers.js';
 import { toString } from 'uint8arrays';
-import type { CreateKeyResponseBody, ImportKeyResponseBody, QueryKeyResponseBody, UnsuccessfulCreateKeyResponseBody, UnsuccessfulImportKeyResponseBody, UnsuccessfulQueryKeyResponseBody } from '../types/key.js';
+import type {
+	CreateKeyResponseBody,
+	ImportKeyResponseBody,
+	QueryKeyResponseBody,
+	UnsuccessfulCreateKeyResponseBody,
+	UnsuccessfulImportKeyResponseBody,
+	UnsuccessfulQueryKeyResponseBody,
+} from '../types/key.js';
 import { check } from './validator/index.js';
 
 // ToDo: Make the format of /key/create and /key/read the same
@@ -61,8 +68,7 @@ export class KeyController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
 			const key = await identityServiceStrategySetup.agent.createKey('Ed25519', response.locals.customer);
-			return response.status(StatusCodes.OK).json(
-				key satisfies CreateKeyResponseBody);
+			return response.status(StatusCodes.OK).json(key satisfies CreateKeyResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
@@ -113,7 +119,6 @@ export class KeyController {
 	 *               error: Internal Error
 	 */
 	public async importKey(request: Request, response: Response) {
-		
 		// Get parameters requeired for key importing
 		const { type, encrypted, ivHex, salt, alias } = request.body;
 		// Get strategy e.g. postgres or local
@@ -136,8 +141,7 @@ export class KeyController {
 				response.locals.customer,
 				alias
 			);
-			return response.status(StatusCodes.OK).json(
-				key satisfies ImportKeyResponseBody);
+			return response.status(StatusCodes.OK).json(key satisfies ImportKeyResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,

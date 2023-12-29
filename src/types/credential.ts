@@ -2,7 +2,6 @@ import type { VerifiableCredential, VerificationPolicies } from '@veramo/core';
 import type { StatusOptions } from './credential-status.js';
 import type { UnsuccessfulResponseBody } from './shared.js';
 
-
 export interface CredentialRequest {
 	subjectDid: string;
 	attributes: Record<string, unknown>;
@@ -15,7 +14,8 @@ export interface CredentialRequest {
 	credentialSchema?: string;
 	credentialName?: string;
 	credentialSummary?: string;
-}export interface VerificationOptions {
+}
+export interface VerificationOptions {
 	fetchRemoteContexts?: boolean;
 	policies?: VerificationPolicies;
 	domain?: string;
@@ -51,4 +51,3 @@ export type UnsuccesfulRevokeCredentialResponseBody = RevokeCredentialResponseBo
 export type UnsuccesfulSuspendCredentialResponseBody = SuspendCredentialResponseBody & UnsuccessfulResponseBody;
 
 export type UnsuccesfulUnsuspendCredentialResponseBody = UnsuspendCredentialResponseBody & UnsuccessfulResponseBody;
-

@@ -1,5 +1,5 @@
-import type { VerifiablePresentation } from "@veramo/core";
-import type { UnsuccessfulResponseBody } from "./shared.js";
+import type { VerifiablePresentation } from '@veramo/core';
+import type { UnsuccessfulResponseBody } from './shared.js';
 
 // Positive
 

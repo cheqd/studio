@@ -4,7 +4,12 @@ import { StatusCodes } from 'http-status-codes';
 import { check, validationResult, query } from './validator/index.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { CheqdW3CVerifiablePresentation } from '../services/w3c-presentation.js';
-import type { CreatePresentationResponseBody, UnsuccessfulCreatePresentationResponseBody, UnsuccessfulVerifyCredentialResponseBody, VerifyPresentationResponseBody } from '../types/presentation.js';
+import type {
+	CreatePresentationResponseBody,
+	UnsuccessfulCreatePresentationResponseBody,
+	UnsuccessfulVerifyCredentialResponseBody,
+	VerifyPresentationResponseBody,
+} from '../types/presentation.js';
 import { isIssuerDidDeactivated } from '../services/helpers.js';
 
 export class PresentationController {
@@ -66,7 +71,7 @@ export class PresentationController {
 		const result = validationResult(request);
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array()[0].msg
+				error: result.array()[0].msg,
 			} satisfies UnsuccessfulCreatePresentationResponseBody);
 		}
 
@@ -90,8 +95,7 @@ export class PresentationController {
 					error: result.error,
 				} satisfies UnsuccessfulCreatePresentationResponseBody);
 			}
-			return response.status(StatusCodes.OK).json(
-				result satisfies CreatePresentationResponseBody);
+			return response.status(StatusCodes.OK).json(result satisfies CreatePresentationResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -156,7 +160,7 @@ export class PresentationController {
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: result.array()[0].msg,
-				verified
+				verified,
 			} satisfies UnsuccessfulVerifyCredentialResponseBody);
 		}
 
@@ -218,7 +222,7 @@ export class PresentationController {
 				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			}
 			return response.status(StatusCodes.OK).json({
-				verified
+				verified,
 			} satisfies VerifyPresentationResponseBody);
 		} catch (error) {
 			// define error

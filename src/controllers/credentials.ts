@@ -11,7 +11,18 @@ import { Cheqd } from '@cheqd/did-provider-cheqd';
 import { OPERATION_CATEGORY_NAME_CREDENTIAL } from '../types/constants.js';
 import { CheqdW3CVerifiableCredential } from '../services/w3c-credential.js';
 import { isCredentialIssuerDidDeactivated } from '../services/helpers.js';
-import type { IssueCredentialResponseBody, RevokeCredentialResponseBody, SuspendCredentialResponseBody, UnsuccesfulIssueCredentialResponseBody, UnsuccesfulRevokeCredentialResponseBody, UnsuccesfulSuspendCredentialResponseBody, UnsuccesfulUnsuspendCredentialResponseBody, UnsuccesfulVerifyCredentialResponseBody, UnsuspendCredentialResponseBody, VerifyCredentialResponseBody } from '../types/credential.js';
+import type {
+	IssueCredentialResponseBody,
+	RevokeCredentialResponseBody,
+	SuspendCredentialResponseBody,
+	UnsuccesfulIssueCredentialResponseBody,
+	UnsuccesfulRevokeCredentialResponseBody,
+	UnsuccesfulSuspendCredentialResponseBody,
+	UnsuccesfulUnsuspendCredentialResponseBody,
+	UnsuccesfulVerifyCredentialResponseBody,
+	UnsuspendCredentialResponseBody,
+	VerifyCredentialResponseBody,
+} from '../types/credential.js';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -104,8 +115,8 @@ export class CredentialController {
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ 
-				error: result.array().pop()?.msg 
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg,
 			} satisfies UnsuccesfulIssueCredentialResponseBody);
 		}
 
@@ -133,7 +144,7 @@ export class CredentialController {
 			if (body.didDocumentMetadata.deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
 					error: `${request.body.issuerDid} is deactivated`,
-				} satisfies UnsuccesfulIssueCredentialResponseBody );
+				} satisfies UnsuccesfulIssueCredentialResponseBody);
 			}
 			// issue credential
 			const credential: VerifiableCredential = await Credentials.instance.issue_credential(
@@ -207,8 +218,8 @@ export class CredentialController {
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				verified,
-				error: result.array().pop()?.msg 
-			 } satisfies UnsuccesfulVerifyCredentialResponseBody);
+				error: result.array().pop()?.msg,
+			} satisfies UnsuccesfulVerifyCredentialResponseBody);
 		}
 		// Get params from request
 		const { credential, policies } = request.body;
@@ -223,7 +234,7 @@ export class CredentialController {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					verified,
 					error: `Credential issuer DID is deactivated`,
-				} satisfies UnsuccesfulVerifyCredentialResponseBody );
+				} satisfies UnsuccesfulVerifyCredentialResponseBody);
 			}
 
 			const verifyResult = await identityServiceStrategySetup.agent.verifyCredential(
@@ -301,9 +312,9 @@ export class CredentialController {
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ 
+			return response.status(StatusCodes.BAD_REQUEST).json({
 				revoked,
-				error: result.array().pop()?.msg
+				error: result.array().pop()?.msg,
 			} satisfies UnsuccesfulRevokeCredentialResponseBody);
 		}
 		// Get publish flag
@@ -416,7 +427,7 @@ export class CredentialController {
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ 
+			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: result.array().pop()?.msg,
 				suspended,
 			} satisfies UnsuccesfulSuspendCredentialResponseBody);
@@ -533,7 +544,7 @@ export class CredentialController {
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				unsuspended,
-				error: result.array().pop()?.msg 
+				error: result.array().pop()?.msg,
 			} satisfies UnsuccesfulUnsuspendCredentialResponseBody);
 		}
 		// Get publish flag

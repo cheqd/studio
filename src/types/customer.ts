@@ -1,20 +1,20 @@
-import type { UnsuccessfulQueryResponseBody } from "./shared.js";
+import type { UnsuccessfulQueryResponseBody } from './shared.js';
 
 // Positive
 
 export type QueryCustomerResponseBody = {
-    customer: {
-        customerId: string,
-        name: string,
-    },
-    paymentAccount: {
-        address: string,
-    },
-}
+	customer: {
+		customerId: string;
+		name: string;
+	};
+	paymentAccount: {
+		address: string;
+	};
+};
 
 export type QueryIdTokenResponseBody = {
-    idToken: string,
-}
+	idToken: string;
+};
 
 //Negative
 

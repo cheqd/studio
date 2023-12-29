@@ -161,11 +161,7 @@ class App {
 
 		// Keys API
 		app.post('/key/create', new KeyController().createKey);
-		app.post(
-			'/key/import',
-		 	KeyController.keyImportValidator, 
-			new KeyController().importKey
-		);
+		app.post('/key/import', KeyController.keyImportValidator, new KeyController().importKey);
 		app.get('/key/read/:kid', new KeyController().getKey);
 
 		// DIDs API

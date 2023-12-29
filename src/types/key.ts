@@ -1,6 +1,6 @@
-import type { ManagedKeyInfo } from "@veramo/core";
-import type { KeyEntity } from "../database/entities/key.entity.js";
-import type { UnsuccessfulQueryResponseBody, UnsuccessfulResponseBody } from "./shared.js";
+import type { ManagedKeyInfo } from '@veramo/core';
+import type { KeyEntity } from '../database/entities/key.entity.js';
+import type { UnsuccessfulQueryResponseBody, UnsuccessfulResponseBody } from './shared.js';
 
 // Positive
 

@@ -23,20 +23,18 @@ import type {
 	UnsuspensionResult,
 	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
-import type {
-	ITrackOperation,
-	ITrackResult,
-	VeramoAgent,
-} from '../../types/shared';
+import type { ITrackOperation, ITrackResult, VeramoAgent } from '../../types/shared';
 import type { VerificationOptions } from '../../types/credential';
 import type { FeePaymentOptions } from '../../types/credential-status';
 import type { CredentialRequest } from '../../types/credential';
 import type { CheckStatusListOptions } from '../../types/credential-status';
 import type { StatusOptions } from '../../types/credential-status';
 import type {
-	BroadcastStatusListOptions, CreateEncryptedStatusListOptions,
-	CreateUnencryptedStatusListOptions, UpdateEncryptedStatusListOptions,
-	UpdateUnencryptedStatusListOptions
+	BroadcastStatusListOptions,
+	CreateEncryptedStatusListOptions,
+	CreateUnencryptedStatusListOptions,
+	UpdateEncryptedStatusListOptions,
+	UpdateUnencryptedStatusListOptions,
 } from '../../types/credential-status';
 import type { IIdentityService } from './index.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
