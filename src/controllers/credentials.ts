@@ -483,9 +483,7 @@ export class CredentialController {
 				}
 			}
 
-			return response.status(StatusCodes.OK).json({
-				suspended,
-			} satisfies SuspendCredentialResponseBody);
+			return response.status(StatusCodes.OK).json(result satisfies SuspendCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				suspended,
@@ -597,9 +595,7 @@ export class CredentialController {
 				}
 			}
 			// Return Ok response
-			return response.status(StatusCodes.OK).json({
-				unsuspended,
-			} satisfies UnsuspendCredentialResponseBody);
+			return response.status(StatusCodes.OK).json(result satisfies UnsuspendCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				unsuspended,
