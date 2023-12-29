@@ -4,7 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 import { check, validationResult, query } from './validator/index.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { CheqdW3CVerifiablePresentation } from '../services/w3c-presentation.js';
-import type { VerifyPresentationResponseBody } from '../types/presentation.js';
+import type { CreatePresentationResponseBody, UnsuccessfulCreatePresentationResponseBody, UnsuccessfulVerifyCredentialResponseBody, VerifyPresentationResponseBody } from '../types/presentation.js';
 import { isIssuerDidDeactivated } from '../services/helpers.js';
 
 export class PresentationController {
@@ -65,7 +65,9 @@ export class PresentationController {
 	public async createPresentation(request: Request, response: Response) {
 		const result = validationResult(request);
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array()[0].msg
+			} satisfies UnsuccessfulCreatePresentationResponseBody);
 		}
 
 		const { credentials, holderDid, verifierDid } = request.body;
@@ -85,15 +87,15 @@ export class PresentationController {
 			);
 			if (result.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					presentation: result.presentation,
 					error: result.error,
-				});
+				} satisfies UnsuccessfulCreatePresentationResponseBody);
 			}
-			return response.status(StatusCodes.OK).json(result);
+			return response.status(StatusCodes.OK).json(
+				result satisfies CreatePresentationResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccessfulCreatePresentationResponseBody);
 		}
 	}
 
@@ -147,9 +149,15 @@ export class PresentationController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async verifyPresentation(request: Request, response: Response) {
+		// Assume that the presentation is not verified
+		let verified = false;
+
 		const result = validationResult(request);
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array()[0].msg,
+				verified
+			} satisfies UnsuccessfulVerifyCredentialResponseBody);
 		}
 
 		const { presentation, verifierDid, policies, makeFeePayment } = request.body;
@@ -166,7 +174,8 @@ export class PresentationController {
 			if (setResult.error) {
 				return response.status(setResult.status).send({
 					error: setResult.error,
-				});
+					verified,
+				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			}
 			if (cheqdPresentation.isPaymentNeeded()) {
 				const feePaymentResult = await cheqdPresentation.makeFeePayment(
@@ -175,9 +184,9 @@ export class PresentationController {
 				);
 				if (feePaymentResult.error) {
 					return response.status(StatusCodes.BAD_REQUEST).json({
-						checked: false,
+						verified,
 						error: `verify: payment: error: ${feePaymentResult.error}`,
-					});
+					} satisfies UnsuccessfulVerifyCredentialResponseBody);
 				}
 			}
 		}
@@ -186,8 +195,10 @@ export class PresentationController {
 			if (!allowDeactivatedDid && (await isIssuerDidDeactivated(cheqdPresentation))) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: `Credential issuer DID is deactivated`,
-				});
+					verified,
+				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			}
+			// verify presentation
 			const result = await identityServiceStrategySetup.agent.verifyPresentation(
 				cheqdPresentation,
 				{
@@ -197,40 +208,46 @@ export class PresentationController {
 				},
 				response.locals.customer
 			);
+			// set verified
+			verified = result.verified;
+			// handle errors
 			if (result.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					verified: result.verified,
-					error: result.error.message,
-				});
+					verified,
+					error: `verify: ${result.error.message}`,
+				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			}
-			return response.status(StatusCodes.OK).json(result);
+			return response.status(StatusCodes.OK).json({
+				verified
+			} satisfies VerifyPresentationResponseBody);
 		} catch (error) {
 			// define error
 			const errorRef = error as Record<string, unknown>;
 			// handle doesn't meet condition
 			if (errorRef?.errorCode === 'NodeAccessControlConditionsReturnedNotAuthorized')
 				return response.status(StatusCodes.UNAUTHORIZED).json({
-					verified: false,
+					verified,
 					error: `check: error: ${
 						errorRef?.message
 							? 'unauthorised: decryption conditions are not met'
 							: (error as Record<string, unknown>).toString()
 					}`,
-				} satisfies VerifyPresentationResponseBody);
+				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			// handle incorrect access control conditions
 			if (errorRef?.errorCode === 'incorrect_access_control_conditions')
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					verified: false,
+					verified,
 					error: `check: error: ${
 						errorRef?.message
 							? 'incorrect access control conditions'
 							: (error as Record<string, unknown>).toString()
 					}`,
-				} satisfies VerifyPresentationResponseBody);
+				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			// catch all other unhandled errors
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				verified,
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccessfulVerifyCredentialResponseBody);
 		}
 	}
 }

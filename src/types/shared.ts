@@ -98,9 +98,11 @@ export interface IErrorResponse {
 	message: string;
 }
 
-export type UnsuccessfulQueryResponseBody = {
+export type UnsuccessfulResponseBody = {
 	error: string;
 }
+
+export type UnsuccessfulQueryResponseBody = UnsuccessfulResponseBody
 
 export class CommonReturn implements IReturn {
 	returnOk(data = {}): ICommonErrorResponse {

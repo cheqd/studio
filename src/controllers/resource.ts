@@ -9,6 +9,7 @@ import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-p
 import type { ITrackOperation } from '../types/shared.js';
 import { OPERATION_CATEGORY_NAME_RESOURCE } from '../types/constants.js';
 import { check, validationResult, param, query } from './validator/index.js';
+import type { CreateResourceResponseBody, QueryResourceResponseBody, UnsuccessfulCreateResourceResponseBody, UnsuccessfulQueryResourceResponseBody } from '../types/resource.js';
 
 export class ResourceController {
 	public static createResourceValidator = [
@@ -137,7 +138,9 @@ export class ResourceController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg
+			} satisfies UnsuccessfulCreateResourceResponseBody);
 		}
 
 		const { did } = request.params;
@@ -151,7 +154,7 @@ export class ResourceController {
 			if (!didDocument || !didDocumentMetadata || didDocumentMetadata.deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
 					error: `${did} is a either Deactivated or Not found`,
-				});
+				} satisfies UnsuccessfulCreateResourceResponseBody);
 			}
 
 			resourcePayload = {
@@ -194,21 +197,21 @@ export class ResourceController {
 				if (trackResult.error) {
 					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 						error: `${trackResult.error}`,
-					});
+					} satisfies UnsuccessfulCreateResourceResponseBody);
 				}
 
 				return response.status(StatusCodes.CREATED).json({
 					resource,
-				});
+				} satisfies CreateResourceResponseBody);
 			} else {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 					error: 'Error creating resource',
-				});
+				} satisfies UnsuccessfulCreateResourceResponseBody);
 			}
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
-			});
+			} satisfies UnsuccessfulCreateResourceResponseBody);
 		}
 	}
 
@@ -291,7 +294,9 @@ export class ResourceController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg 
+			} satisfies UnsuccessfulQueryResourceResponseBody);
 		}
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
@@ -305,16 +310,17 @@ export class ResourceController {
 				const contentType = res.headers.get('Content-Type') || 'application/octet-stream';
 				const body = new TextDecoder().decode(await res.arrayBuffer());
 
-				return response.setHeader('Content-Type', contentType).status(res.status).send(body);
+				return response.setHeader('Content-Type', contentType).status(res.status).send(
+					body satisfies QueryResourceResponseBody);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'The DID parameter is empty.',
-				});
+				} satisfies UnsuccessfulQueryResourceResponseBody);
 			}
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
-			});
+			} satisfies UnsuccessfulQueryResourceResponseBody);
 		}
 	}
 }

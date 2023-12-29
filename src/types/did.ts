@@ -1,5 +1,7 @@
 import type { CheqdNetwork, MethodSpecificIdAlgo, Service, VerificationMethods } from '@cheqd/sdk';
-import type { DIDDocument } from 'did-resolver';
+import type { DIDDocument, DIDResolutionResult } from 'did-resolver';
+import type { UnsuccessfulQueryResponseBody, UnsuccessfulResponseBody } from './shared.js';
+import type { IIdentifier } from '@veramo/core';
 
 
 export type CreateDidRequestBody = {
@@ -15,3 +17,29 @@ export type CreateDidRequestBody = {
 		key: string;
 	};
 };
+
+//Positive
+
+export type CreateDidResponseBody = IIdentifier;
+
+export type UpdateDidResponseBody = IIdentifier;
+
+export type DeactivateDidResponseBody = DIDResolutionResult;
+
+export type ListDidsResponseBody = string[];
+
+export type QueryDidResponseBody = DIDResolutionResult;
+
+export type ResolveDidResponseBody = any;
+
+// Negative
+
+export type UnsuccessfulCreateDidResponseBody = UnsuccessfulResponseBody;
+
+export type UnsuccessfulUpdateDidResponseBody = UnsuccessfulResponseBody;
+
+export type UnsuccessfulDeactivateDidResponseBody = UnsuccessfulResponseBody & { deactivated: boolean };
+
+export type UnsuccessfulGetDidResponseBody = UnsuccessfulQueryResponseBody;
+
+export type UnsuccessfulResolveDidResponseBody = UnsuccessfulQueryResponseBody;

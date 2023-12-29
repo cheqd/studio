@@ -208,11 +208,19 @@ export class Veramo {
 	async deactivateDid(agent: VeramoAgent, did: string): Promise<boolean> {
 		try {
 			const [kms] = await agent.keyManagerGetKeyManagementSystems();
-			const didDocument = (await this.resolveDid(agent, did)).didDocument;
+			const didResolutionResult = await this.resolveDid(agent, did);
+			const didDocument = didResolutionResult.didDocument;
+			const didMetadata = didResolutionResult.didDocumentMetadata;
 
 			if (!didDocument) {
 				throw new Error('DID document not found');
 			}
+
+			// check if DID is already deactivated. If yes - just return true
+			if (didMetadata.deactivated) {
+				return true;
+			}
+
 			const result = await agent.cheqdDeactivateIdentifier({
 				kms,
 				document: didDocument,

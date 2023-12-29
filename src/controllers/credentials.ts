@@ -11,6 +11,7 @@ import { Cheqd } from '@cheqd/did-provider-cheqd';
 import { OPERATION_CATEGORY_NAME_CREDENTIAL } from '../types/constants.js';
 import { CheqdW3CVerifiableCredential } from '../services/w3c-credential.js';
 import { isCredentialIssuerDidDeactivated } from '../services/helpers.js';
+import type { IssueCredentialResponseBody, RevokeCredentialResponseBody, SuspendCredentialResponseBody, UnsuccesfulIssueCredentialResponseBody, UnsuccesfulRevokeCredentialResponseBody, UnsuccesfulSuspendCredentialResponseBody, UnsuccesfulUnsuspendCredentialResponseBody, UnsuccesfulVerifyCredentialResponseBody, UnsuspendCredentialResponseBody, VerifyCredentialResponseBody } from '../types/credential.js';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -103,7 +104,9 @@ export class CredentialController {
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({ 
+				error: result.array().pop()?.msg 
+			} satisfies UnsuccesfulIssueCredentialResponseBody);
 		}
 
 		// Handles string input instead of an array
@@ -123,23 +126,25 @@ export class CredentialController {
 			// check if DID-Document is resolved
 			const body = await resolvedResult.json();
 			if (!body?.didDocument) {
-				return response.status(resolvedResult.status).send({ body });
+				return response.status(StatusCodes.BAD_REQUEST).send({
+					error: `DID ${request.body.issuerDid} is not resolved because of error from resolver: ${body.didResolutionMetadata.error}.`,
+				} satisfies UnsuccesfulIssueCredentialResponseBody);
 			}
 			if (body.didDocumentMetadata.deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
 					error: `${request.body.issuerDid} is deactivated`,
-				});
+				} satisfies UnsuccesfulIssueCredentialResponseBody );
 			}
 			// issue credential
 			const credential: VerifiableCredential = await Credentials.instance.issue_credential(
 				request.body,
 				response.locals.customer
 			);
-			return response.status(StatusCodes.OK).json(credential);
+			return response.status(StatusCodes.OK).json(credential satisfies IssueCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccesfulIssueCredentialResponseBody);
 		}
 	}
 
@@ -194,11 +199,16 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async verify(request: Request, response: Response) {
+		// Assume credential was not verified
+		let verified = false;
 		// validate request
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				verified,
+				error: result.array().pop()?.msg 
+			 } satisfies UnsuccesfulVerifyCredentialResponseBody);
 		}
 		// Get params from request
 		const { credential, policies } = request.body;
@@ -211,8 +221,9 @@ export class CredentialController {
 		try {
 			if (!allowDeactivatedDid && (await isCredentialIssuerDidDeactivated(cheqdCredential))) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
+					verified,
 					error: `Credential issuer DID is deactivated`,
-				});
+				} satisfies UnsuccesfulVerifyCredentialResponseBody );
 			}
 
 			const verifyResult = await identityServiceStrategySetup.agent.verifyCredential(
@@ -223,17 +234,24 @@ export class CredentialController {
 				},
 				response.locals.customer
 			);
+
+			// Setup verified flag
+			verified = verifyResult.verified;
+
 			if (verifyResult.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					verified: verifyResult.verified,
-					error: verifyResult.error.message,
-				});
+					verified,
+					error: `verify: ${verifyResult.error.message}`,
+				} satisfies UnsuccesfulVerifyCredentialResponseBody);
 			}
-			return response.status(StatusCodes.OK).json(verifyResult);
+			return response.status(StatusCodes.OK).json({
+				verified,
+			} satisfies VerifyCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+				verified,
+			} satisfies UnsuccesfulVerifyCredentialResponseBody);
 		}
 	}
 
@@ -277,11 +295,16 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async revoke(request: Request, response: Response) {
+		// Assume that the credential was not revoked
+		let revoked = false;
 		// validate request
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({ 
+				revoked,
+				error: result.array().pop()?.msg
+			} satisfies UnsuccesfulRevokeCredentialResponseBody);
 		}
 		// Get publish flag
 		const publish = request.query.publish === 'false' ? false : true;
@@ -297,6 +320,9 @@ export class CredentialController {
 				response.locals.customer,
 				symmetricKey
 			);
+			// Get revoked flag
+			revoked = Array.isArray(result.revoked) ? result.revoked[0] : result.revoked;
+
 			// Track operation if revocation was successful and publish is true
 			// Otherwise the StatusList2021 publisher should manually publish the resource
 			// and it will be tracked there
@@ -326,18 +352,23 @@ export class CredentialController {
 
 				// Track operation
 				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
+				// ToDo: Do we need to raise INTERNAL_SERVER_ERROR if tracking failed?
 				if (trackResult.error) {
 					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-						error: trackResult.error,
-					});
+						error: `Revocation operation was successfull, but an error occured while tracking the operation: ${trackResult.error}`,
+						revoked,
+					} satisfies UnsuccesfulRevokeCredentialResponseBody);
 				}
 			}
 			// Return Ok response
-			return response.status(StatusCodes.OK).json(result);
+			return response.status(StatusCodes.OK).json({
+				revoked,
+			} satisfies RevokeCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+				revoked,
+			} satisfies UnsuccesfulRevokeCredentialResponseBody);
 		}
 	}
 
@@ -379,11 +410,16 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async suspend(request: Request, response: Response) {
+		// Assume that the credential was not suspended
+		let suspended = false;
 		// validate request
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({ 
+				error: result.array().pop()?.msg,
+				suspended,
+			} satisfies UnsuccesfulSuspendCredentialResponseBody);
 		}
 
 		// Get publish flag
@@ -400,6 +436,8 @@ export class CredentialController {
 				response.locals.customer,
 				symmetricKey
 			);
+
+			suspended = Array.isArray(result.suspended) ? result.suspended[0] : result.suspended;
 
 			// Track operation if suspension was successful and publish is true
 			// Otherwise the StatusList2021 publisher should manually publish the resource
@@ -432,16 +470,20 @@ export class CredentialController {
 				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
 				if (trackResult.error) {
 					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-						error: trackResult.error,
-					});
+						suspended,
+						error: `The suspension operation was successfull, but an error occured while tracking the operation: ${trackResult.error}`,
+					} satisfies UnsuccesfulSuspendCredentialResponseBody);
 				}
 			}
 
-			return response.status(StatusCodes.OK).json(result);
+			return response.status(StatusCodes.OK).json({
+				suspended,
+			} satisfies SuspendCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				suspended,
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccesfulSuspendCredentialResponseBody);
 		}
 	}
 
@@ -483,11 +525,16 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async reinstate(request: Request, response: Response) {
+		// Assume that the credential was not unsuspended
+		let unsuspended = false;
 		// validate request
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				unsuspended,
+				error: result.array().pop()?.msg 
+			} satisfies UnsuccesfulUnsuspendCredentialResponseBody);
 		}
 		// Get publish flag
 		const publish = request.query.publish === 'false' ? false : true;
@@ -503,6 +550,9 @@ export class CredentialController {
 				response.locals.customer,
 				symmetricKey
 			);
+
+			unsuspended = Array.isArray(result.unsuspended) ? result.unsuspended[0] : result.unsuspended;
+
 			// Track operation if the process of reinstantiating was successful and publish is true
 			// Otherwise the StatusList2021 publisher should manually publish the resource
 			// and it will be tracked there
@@ -534,16 +584,20 @@ export class CredentialController {
 				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
 				if (trackResult.error) {
 					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-						error: trackResult.error,
-					});
+						unsuspended,
+						error: `The unsuspension operation was successfull, but an error occured while tracking the operation: ${trackResult.error}`,
+					} satisfies UnsuccesfulUnsuspendCredentialResponseBody);
 				}
 			}
 			// Return Ok response
-			return response.status(StatusCodes.OK).json(result);
+			return response.status(StatusCodes.OK).json({
+				unsuspended,
+			} satisfies UnsuspendCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				unsuspended,
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccesfulUnsuspendCredentialResponseBody);
 		}
 	}
 }

@@ -14,12 +14,11 @@ import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { generateDidDoc, getQueryParams } from '../helpers/helpers.js';
 import { bases } from 'multiformats/basics';
 import { base64ToBytes } from 'did-jwt';
-import type { CreateDidRequestBody } from '../types/did.js';
+import type { CreateDidRequestBody, CreateDidResponseBody, DeactivateDidResponseBody, ListDidsResponseBody, QueryDidResponseBody, ResolveDidResponseBody, UnsuccessfulCreateDidResponseBody, UnsuccessfulDeactivateDidResponseBody, UnsuccessfulGetDidResponseBody, UnsuccessfulResolveDidResponseBody, UnsuccessfulUpdateDidResponseBody, UpdateDidResponseBody } from '../types/did.js';
 
 import { check, validationResult, param } from './validator/index.js';
 
 export class DIDController {
-	// ToDo: improve validation in a "bail" fashion
 	public static createDIDValidator = [
 		check('didDocument').optional().isObject().withMessage('Should be JSON object').bail().isDIDDocument(),
 		check('verificationMethodType')
@@ -126,7 +125,9 @@ export class DIDController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({ 
+				error: result.array().pop()?.msg
+			} satisfies UnsuccessfulCreateDidResponseBody);
 		}
 
 		// handle request params
@@ -160,7 +161,7 @@ export class DIDController {
 				} else {
 					return response.status(StatusCodes.BAD_REQUEST).json({
 						error: 'Provide options section to create a DID',
-					});
+					} satisfies UnsuccessfulCreateDidResponseBody );
 				}
 			} else if (verificationMethodType) {
 				const publicKeyHex =
@@ -197,7 +198,7 @@ export class DIDController {
 						} catch (e) {
 							return response.status(StatusCodes.BAD_REQUEST).json({
 								error: 'Provide the correct service section to create a DID',
-							});
+							} satisfies UnsuccessfulCreateDidResponseBody);
 						}
 					} else {
 						didDocument.service = [
@@ -212,7 +213,7 @@ export class DIDController {
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'Provide a DID Document or the VerificationMethodType to create a DID',
-				});
+				} satisfies UnsuccessfulCreateDidResponseBody);
 			}
 
 			const did = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createDid(
@@ -220,11 +221,11 @@ export class DIDController {
 				didDocument,
 				response.locals.customer
 			);
-			return response.status(StatusCodes.OK).json(did);
+			return response.status(StatusCodes.OK).json(did satisfies CreateDidResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccessfulCreateDidResponseBody);
 		}
 	}
 
@@ -264,7 +265,9 @@ export class DIDController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({ 
+				error: result.array().pop()?.msg
+			} satisfies UnsuccessfulUpdateDidResponseBody);
 		}
 
 		// handle request params
@@ -289,7 +292,7 @@ export class DIDController {
 				if (!resolvedResult?.didDocument || resolvedResult.didDocumentMetadata.deactivated) {
 					return response.status(StatusCodes.BAD_REQUEST).send({
 						error: `${did} is either Deactivated or Not found`,
-					});
+					} satisfies UnsuccessfulUpdateDidResponseBody);
 				}
 				// Fill up the DID Document with updated sections
 				const resolvedDocument = resolvedResult.didDocument;
@@ -309,18 +312,18 @@ export class DIDController {
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'Provide a DID Document or atleast one field to update',
-				});
+				} satisfies UnsuccessfulUpdateDidResponseBody);
 			}
 
 			const result = await identityServiceStrategySetup.agent.updateDid(
 				updatedDocument,
 				response.locals.customer
 			);
-			return response.status(StatusCodes.OK).json(result);
+			return response.status(StatusCodes.OK).json(result satisfies UpdateDidResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccessfulUpdateDidResponseBody);
 		}
 	}
 
@@ -354,12 +357,17 @@ export class DIDController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async deactivateDid(request: Request, response: Response) {
+		// Assume that did was not deactivated
+		let deactivated = false;
 		// validate request
 		const result = validationResult(request);
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				deactivated,
+				error: result.array().pop()?.msg
+			} satisfies UnsuccessfulDeactivateDidResponseBody);
 		}
 
 		// Get strategy e.g. postgres or local
@@ -367,22 +375,21 @@ export class DIDController {
 
 		try {
 			// Deactivate DID
-			const deactivated = await identityServiceStrategySetup.agent.deactivateDid(
+			deactivated = await identityServiceStrategySetup.agent.deactivateDid(
 				request.params.did,
 				response.locals.customer
 			);
-
-			if (!deactivated) {
-				return response.status(StatusCodes.BAD_REQUEST).json({ deactivated: false });
-			}
 			// Send the deactivated DID as result
 			const result = await identityServiceStrategySetup.agent.resolveDid(request.params.did);
 
-			return response.status(StatusCodes.OK).json(result);
+			return response.status(StatusCodes.OK).json(
+				result satisfies DeactivateDidResponseBody
+			);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				deactivated,
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccessfulDeactivateDidResponseBody);
 		}
 	}
 
@@ -418,11 +425,12 @@ export class DIDController {
 				? await identityServiceStrategySetup.agent.resolveDid(request.params.did)
 				: await identityServiceStrategySetup.agent.listDids(response.locals.customer);
 
-			return response.status(StatusCodes.OK).json(did);
+			return response.status(StatusCodes.OK).json(
+				did satisfies ListDidsResponseBody | QueryDidResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccessfulGetDidResponseBody);
 		}
 	}
 
@@ -509,16 +517,17 @@ export class DIDController {
 				const contentType = res.headers.get('Content-Type') || 'application/octet-stream';
 				const body = new TextDecoder().decode(await res.arrayBuffer());
 
-				return response.setHeader('Content-Type', contentType).status(res.status).send(body);
+				return response.setHeader('Content-Type', contentType).status(res.status).send(
+					body satisfies ResolveDidResponseBody);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'The DIDUrl parameter is empty.',
-				});
+				} satisfies UnsuccessfulResolveDidResponseBody);
 			}
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccessfulResolveDidResponseBody);
 		}
 	}
 }
