@@ -9,8 +9,10 @@ import type {
 	DIDDocument,
 	DIDResolutionResult,
 	IIdentifier,
+	IKey,
 	IVerifyResult,
 	ManagedKeyInfo,
+	MinimalImportableKey,
 	PresentationPayload,
 	TAgent,
 	VerifiableCredential,
@@ -74,7 +76,12 @@ export interface IIdentityService {
 	resolveDid(did: string): Promise<DIDResolutionResult>;
 	resolve(didUrl: string): Promise<Response>;
 	getDid(did: string, customer: CustomerEntity): Promise<any>;
-	importDid(did: string, privateKeyHex: string, publicKeyHex: string, customer: CustomerEntity): Promise<IIdentifier>;
+	importDid(
+		did: string,
+		keys: Pick<IKey, 'privateKeyHex' | 'type'>[],
+		controllerKeyId: string,
+		customer: CustomerEntity
+	): Promise<IIdentifier>;
 	createResource(network: string, payload: ResourcePayload, customer: CustomerEntity): Promise<any>;
 	createCredential(
 		credential: CredentialPayload,
