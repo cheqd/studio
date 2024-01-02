@@ -68,3 +68,5 @@ export const OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS = 'credential-status';
 export const OPERATION_CATEGORY_NAME_CREDENTIAL = 'credential';
 
 export const JWT_PROOF_TYPE = 'JwtProof2020';
+export const StatusList2021Entry = 'StatusList2021Entry';
+export const JSONLD_PROOF_TYPES = ['Ed25519Signature2018', 'Ed25519Signature2020'];

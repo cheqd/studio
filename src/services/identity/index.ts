@@ -12,7 +12,6 @@ import type {
 	IKey,
 	IVerifyResult,
 	ManagedKeyInfo,
-	MinimalImportableKey,
 	PresentationPayload,
 	TAgent,
 	VerifiableCredential,

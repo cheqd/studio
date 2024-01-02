@@ -12,7 +12,6 @@ import {
 	IResolver,
 	IVerifyResult,
 	MinimalImportableIdentifier,
-	MinimalImportableKey,
 	PresentationPayload,
 	TAgent,
 	VerifiableCredential,

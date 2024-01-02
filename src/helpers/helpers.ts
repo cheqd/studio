@@ -108,7 +108,7 @@ export function isValidService(didDocument: DIDDocument): boolean {
 	return didDocument.service
 		? didDocument?.service?.every((s) => {
 				return s?.serviceEndpoint && s?.id && s?.type;
-		  })
+			})
 		: true;
 }
 
