@@ -91,7 +91,7 @@
 		"secp256k1": "^5.0.0",
 		"sqlite3": "^5.1.6",
 		"swagger-ui-express": "^5.0.0",
-		"typeorm": "^0.3.17",
+		"typeorm": "^0.3.18",
 		"uint8arrays": "^4.0.10",
 		"uri-js": "^4.4.1"
 	},
