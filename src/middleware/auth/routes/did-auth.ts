@@ -13,6 +13,8 @@ export class DidAuthHandler extends BaseAuthHandler {
 		this.registerRoute('/did/update', 'POST', 'update:did:mainnet');
 		this.registerRoute('/did/deactivate', 'POST', 'deactivate:did:testnet');
 		this.registerRoute('/did/deactivate', 'POST', 'deactivate:did:mainnet');
+		this.registerRoute('/did/import', 'POST', 'import:did:testnet');
+		this.registerRoute('/did/import', 'POST', 'import:did:mainnet');
 		// Unauthorized routes
 		this.registerRoute('/did/search/(.*)', 'GET', '', { allowUnauthorized: true, skipNamespace: true });
 	}

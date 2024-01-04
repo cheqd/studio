@@ -3,8 +3,19 @@ import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { decryptPrivateKey } from '../helpers/helpers.js';
 import { toString } from 'uint8arrays';
+import { check } from 'express-validator';
 
 export class KeyController {
+	public static importKeyValidator = [
+		check('privateKeyHex').isString().withMessage('privateKeyHex is required').bail(),
+		check('encrypted')
+			.isBoolean()
+			.withMessage('encrypted is required')
+			.custom((value, { req }) => (value === true ? req.ivHex && req.salt : true))
+			.withMessage('Property ivHex, salt is required when encrypted is set to true')
+			.bail(),
+	];
+
 	/**
 	 * @openapi
 	 *

@@ -240,6 +240,18 @@ export type GenericAuthResponse = {
 	error?: unknown;
 };
 
+export interface KeyImportRequest {
+	privateKeyHex: string;
+	encrypted: boolean;
+	ivHex: string | undefined;
+	salt: string | undefined;
+}
+
+export interface DidImportRequest {
+	did: string;
+	keys: KeyImportRequest[];
+}
+
 export interface CredentialRequest {
 	subjectDid: string;
 	attributes: Record<string, unknown>;
