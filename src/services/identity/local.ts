@@ -124,7 +124,7 @@ export class LocalIdentityService extends DefaultIdentityService {
 		} catch {
 			const key = {
 				kid: ISSUER_PUBLIC_KEY_HEX,
-				type: 'Ed25519' as TKeyType,
+				type: 'Ed25519' as const,
 				privateKeyHex: ISSUER_PRIVATE_KEY_HEX,
 				publicKeyHex: ISSUER_PUBLIC_KEY_HEX,
 			};
