@@ -78,7 +78,7 @@ export interface IIdentityService {
 	importDid(
 		did: string,
 		keys: Pick<IKey, 'privateKeyHex' | 'type'>[],
-		controllerKeyId: string,
+		controllerKeyId: string | undefined,
 		customer: CustomerEntity
 	): Promise<IIdentifier>;
 	createResource(network: string, payload: ResourcePayload, customer: CustomerEntity): Promise<any>;

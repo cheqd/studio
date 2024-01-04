@@ -14,7 +14,7 @@ import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { decryptPrivateKey, generateDidDoc, getQueryParams } from '../helpers/helpers.js';
 import { bases } from 'multiformats/basics';
 import { base64ToBytes } from 'did-jwt';
-import type { CreateDidRequestBody } from '../types/shared.js';
+import type { CreateDidRequestBody, KeyImportRequest } from '../types/shared.js';
 import { check, validationResult, param } from './validator/index.js';
 import type { IKey, RequireOnly } from '@veramo/core';
 import { extractPublicKeyHex } from '@veramo/utils';
@@ -78,6 +78,26 @@ export class DIDController {
 	];
 
 	public static deactivateDIDValidator = [param('did').exists().isString().isDID().bail()];
+
+	public static importDIDValidator = [
+		check('did').isDID().bail(),
+		check('controllerKeyId').optional().isString().withMessage('controllerKeyId should be a string').bail(),
+		check('keys')
+			.isArray()
+			.withMessage('Keys should be an array of KeyImportRequest objects used in the DID-VerificationMethod')
+			.custom((value) => {
+				return value.every(
+					(item: KeyImportRequest) =>
+						item.privateKeyHex &&
+						typeof item.encrypted === 'boolean' &&
+						(item.encrypted === true ? item.ivHex && item.salt : true)
+				);
+			})
+			.withMessage(
+				'KeyImportRequest object is invalid, privateKeyHex is required, Property ivHex, salt is required when encrypted is set to true'
+			)
+			.bail(),
+	];
 
 	/**
 	 * @openapi
@@ -368,6 +388,14 @@ export class DIDController {
 	 *               error: Internal Error
 	 */
 	public async importDid(request: Request, response: Response) {
+		// validate request
+		const result = validationResult(request);
+
+		// handle error
+		if (!result.isEmpty()) {
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+		}
+
 		try {
 			const { did, controllerKeyId, keys } = request.body;
 			const { didDocument } = await new IdentityServiceStrategySetup().agent.resolveDid(did);

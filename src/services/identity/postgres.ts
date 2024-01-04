@@ -291,7 +291,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	async importDid(
 		did: string,
 		keys: Pick<IKey, 'privateKeyHex' | 'type'>[],
-		controllerKeyId: string,
+		controllerKeyId: string | undefined,
 		customer: CustomerEntity
 	): Promise<IIdentifier> {
 		if (!did.match(DefaultDidUrlPattern)) {
