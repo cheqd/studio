@@ -6,6 +6,7 @@ export class AccountAuthHandler extends BaseAuthHandler {
 	constructor() {
 		super();
 		this.registerRoute('/account', 'GET', 'read:account', { skipNamespace: true });
+		this.registerRoute('/account', 'POST', 'create:account', { skipNamespace: true });
 	}
 	public async handle(request: Request, response: Response): Promise<IAuthResponse> {
 		if (!request.path.includes('/account')) {

@@ -132,6 +132,36 @@ export class AccountController {
 		return response.status(StatusCodes.BAD_REQUEST).json({});
 	}
 
+	/**
+	 * @openapi
+	 *
+	 * /account/create:
+	 *   post:
+	 *     tags: [Account]
+	 *     summary: Create an client for an authenticated user.
+	 *     description: This endpoint creates a client in the custodian-mode for an authenticated user
+	 *     requestBody:
+	 *       content:
+	 *         application/x-www-form-urlencoded:
+	 *           schema:
+	 *             $ref: '#/components/schemas/AccountCreateRequest'
+	 *         application/json:
+	 *           schema:
+	 *             $ref: '#/components/schemas/AccountCreateRequest'
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             idToken:
+	 *                type: string
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
 	public async bootstrap(request: Request, response: Response) {
 		// For now we keep temporary 1-1 relation between user and customer
 		// So the flow is:
