@@ -106,10 +106,8 @@ test(' Verify a jsonld credential', async ({ request }) => {
 
 test(' Issue a jwt credential to a verida DID holder', async ({ request }) => {
 	const credentialData = JSON.parse(
-		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jwt.json`, 'utf-8')
+		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-vda.json`, 'utf-8')
 	);
-	credentialData.subjectDid = 'did:vda:testnet:0xdd5bB6467Cae1513ce253738332faBB3206b9583';
-	console.log(credentialData);
 	const response = await request.post(`/credential/issue`, {
 		data: JSON.stringify(credentialData),
 		headers: {
@@ -117,7 +115,6 @@ test(' Issue a jwt credential to a verida DID holder', async ({ request }) => {
 		},
 	});
 	const credential = await response.json();
-	console.log(credential);
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 	expect(credential.proof.type).toBe('JwtProof2020');

@@ -11,7 +11,7 @@ export class KeyController {
 		check('encrypted')
 			.isBoolean()
 			.withMessage('encrypted is required')
-			.custom((value, { req }) => (value === true ? req.ivHex && req.salt : true))
+			.custom((value, { req }) => (value === true ? req.body.ivHex && req.body.salt : true))
 			.withMessage('Property ivHex, salt is required when encrypted is set to true')
 			.bail(),
 	];
