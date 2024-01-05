@@ -22,9 +22,11 @@ import type { CredentialRequest } from '../../types/credential.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
 import type { StatusOptions } from '../../types/credential-status.js';
 import type {
-	BroadcastStatusListOptions, CreateEncryptedStatusListOptions,
-	CreateUnencryptedStatusListOptions, UpdateEncryptedStatusListOptions,
-	UpdateUnencryptedStatusListOptions
+	BroadcastStatusListOptions,
+	CreateEncryptedStatusListOptions,
+	CreateUnencryptedStatusListOptions,
+	UpdateEncryptedStatusListOptions,
+	UpdateUnencryptedStatusListOptions,
 } from '../../types/credential-status.js';
 import { DefaultIdentityService } from './default.js';
 import { Connection } from '../../database/connection/connection.js';

@@ -1,4 +1,3 @@
-
 export type CreateDIDService = {
 	idFragment: string;
 	type: string;
@@ -23,4 +22,3 @@ export type CheqdCredentialStatus = {
 	statusPurpose: string;
 	statusListIndex: string;
 };
-

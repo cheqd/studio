@@ -3,17 +3,17 @@ import {
 	CreateStatusList2021Result,
 	BulkRevocationResult,
 	BulkSuspensionResult,
-	BulkUnsuspensionResult, DefaultStatusList2021StatusPurposeType,
+	BulkUnsuspensionResult,
+	DefaultStatusList2021StatusPurposeType,
 	StatusCheckResult,
 	LinkedResourceMetadataResolutionResult,
 	StatusList2021Revocation,
 	StatusList2021Suspension,
 	ICheqdCheckCredentialWithStatusList2021StatusOptions,
-	DefaultStatusList2021StatusPurposeTypes
+	DefaultStatusList2021StatusPurposeTypes,
 } from '@cheqd/did-provider-cheqd';
 import type { CheqdNetwork } from '@cheqd/sdk';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2';
-
 
 export type CreateUnencryptedStatusListRequestBody = {
 	did: string;
@@ -30,7 +30,8 @@ export type CreateUnencryptedStatusListRequestQuery = {
 };
 
 export type CreateUnencryptedStatusListSuccessfulResponseBody = Pick<
-	CreateStatusList2021Result, 'created' | 'error' | 'resource' | 'resourceMetadata'
+	CreateStatusList2021Result,
+	'created' | 'error' | 'resource' | 'resourceMetadata'
 >;
 
 export type CreateUnencryptedStatusListUnsuccessfulResponseBody = {
@@ -48,7 +49,8 @@ export type CreateEncryptedStatusListRequestBody = CreateUnencryptedStatusListRe
 export type CreateEncryptedStatusListRequestQuery = CreateUnencryptedStatusListRequestQuery;
 
 export type CreateEncryptedStatusListSuccessfulResponseBody = Pick<
-	CreateStatusList2021Result, 'created' | 'error' | 'resource' | 'resourceMetadata' | 'symmetricKey'
+	CreateStatusList2021Result,
+	'created' | 'error' | 'resource' | 'resourceMetadata' | 'symmetricKey'
 >;
 
 export type CreateEncryptedStatusListUnsuccessfulResponseBody = CreateUnencryptedStatusListUnsuccessfulResponseBody;
@@ -67,13 +69,14 @@ export type UpdateUnencryptedStatusListRequestQuery = {
 export type UpdateUnencryptedStatusListSuccessfulResponseBody = {
 	updated: true;
 } & Pick<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult, 'error' | 'resourceMetadata'> & {
-	revoked?: BulkRevocationResult['revoked'];
-	suspended?: BulkSuspensionResult['suspended'];
-	unsuspended?: BulkUnsuspensionResult['unsuspended'];
-	resource?: BulkRevocationResult['statusList'] |
-	BulkSuspensionResult['statusList'] |
-	BulkUnsuspensionResult['statusList'];
-};
+		revoked?: BulkRevocationResult['revoked'];
+		suspended?: BulkSuspensionResult['suspended'];
+		unsuspended?: BulkUnsuspensionResult['unsuspended'];
+		resource?:
+			| BulkRevocationResult['statusList']
+			| BulkSuspensionResult['statusList']
+			| BulkUnsuspensionResult['statusList'];
+	};
 
 export type UpdateUnencryptedStatusListUnsuccessfulResponseBody = {
 	updated: false;
@@ -96,15 +99,17 @@ export type UpdateEncryptedStatusListRequestQuery = UpdateUnencryptedStatusListR
 export type UpdateEncryptedStatusListSuccessfulResponseBody = {
 	updated: true;
 } & Pick<
-	BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult, 'error' | 'resourceMetadata' | 'symmetricKey'
+	BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult,
+	'error' | 'resourceMetadata' | 'symmetricKey'
 > & {
-	revoked?: BulkRevocationResult['revoked'];
-	suspended?: BulkSuspensionResult['suspended'];
-	unsuspended?: BulkUnsuspensionResult['unsuspended'];
-	resource?: BulkRevocationResult['statusList'] |
-	BulkSuspensionResult['statusList'] |
-	BulkUnsuspensionResult['statusList'];
-};
+		revoked?: BulkRevocationResult['revoked'];
+		suspended?: BulkSuspensionResult['suspended'];
+		unsuspended?: BulkUnsuspensionResult['unsuspended'];
+		resource?:
+			| BulkRevocationResult['statusList']
+			| BulkSuspensionResult['statusList']
+			| BulkUnsuspensionResult['statusList'];
+	};
 
 export type UpdateEncryptedStatusListUnsuccessfulResponseBody = UpdateUnencryptedStatusListUnsuccessfulResponseBody;
 
@@ -190,8 +195,8 @@ export type StatusOptions = {
 	indexNotIn?: number[];
 };
 
-export type RevocationStatusOptions = StatusOptions & { statusPurpose: 'revocation'; };
-export type SuspensionStatusOptions = StatusOptions & { statusPurpose: 'suspension'; };
+export type RevocationStatusOptions = StatusOptions & { statusPurpose: 'revocation' };
+export type SuspensionStatusOptions = StatusOptions & { statusPurpose: 'suspension' };
 export type CheckStatusListOptions = Omit<ICheqdCheckCredentialWithStatusList2021StatusOptions, 'issuerDid'>;
 export const DefaultStatusActions = {
 	revoke: 'revoke',
@@ -218,4 +223,3 @@ export type FeePaymentOptions = {
 	feePaymentNetwork: CheqdNetwork;
 	memo?: string;
 };
-

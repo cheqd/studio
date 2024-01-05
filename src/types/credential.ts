@@ -1,7 +1,6 @@
 import type { VerificationPolicies } from '@veramo/core';
 import type { StatusOptions } from './credential-status.js';
 
-
 export interface CredentialRequest {
 	subjectDid: string;
 	attributes: Record<string, unknown>;
@@ -14,11 +13,11 @@ export interface CredentialRequest {
 	credentialSchema?: string;
 	credentialName?: string;
 	credentialSummary?: string;
-}export interface VerificationOptions {
+}
+export interface VerificationOptions {
 	fetchRemoteContexts?: boolean;
 	policies?: VerificationPolicies;
 	domain?: string;
 	verifyStatus?: boolean;
 }
 export type DateType = string | Date;
-
