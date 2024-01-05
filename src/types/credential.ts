@@ -1,7 +1,14 @@
 import type { IVerifyResult, VerifiableCredential, VerificationPolicies } from '@veramo/core';
 import type { StatusOptions } from './credential-status.js';
 import type { UnsuccessfulResponseBody } from './shared.js';
-import type { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, RevocationResult, SuspensionResult, UnsuspensionResult } from '@cheqd/did-provider-cheqd';
+import type {
+	BulkRevocationResult,
+	BulkSuspensionResult,
+	BulkUnsuspensionResult,
+	RevocationResult,
+	SuspensionResult,
+	UnsuspensionResult,
+} from '@cheqd/did-provider-cheqd';
 
 export interface CredentialRequest {
 	subjectDid: string;
