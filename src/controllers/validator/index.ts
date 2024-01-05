@@ -5,7 +5,7 @@ import type { Validatable } from './validator.js';
 import type { Service, VerificationMethod } from 'did-resolver';
 import { VerificationMethodValidator } from './verification-method.js';
 import { CreateDIDDocumentServiceValidator } from './service-create-request.js';
-import type { CreateDIDService } from '../../types/shared.js';
+import type { CreateDIDService } from '../../types/validation.js';
 import { ServiceValidator } from './service.js';
 import { DIDArrayValidator } from './did-array.js';
 import { CheqdDidLinkedAlsoKnownAsValidator } from './resource-also-known-as.js';

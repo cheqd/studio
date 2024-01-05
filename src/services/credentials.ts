@@ -1,7 +1,7 @@
 import type { CredentialPayload, VerifiableCredential } from '@veramo/core';
 
 import { VC_CONTEXT, VC_TYPE } from '../types/constants.js';
-import type { CredentialRequest } from '../types/shared.js';
+import type { CredentialRequest } from '../types/credential.js';
 import { IdentityServiceStrategySetup } from './identity/index.js';
 import { v4 } from 'uuid';
 import * as dotenv from 'dotenv';

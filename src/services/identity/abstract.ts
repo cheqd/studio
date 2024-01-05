@@ -25,20 +25,20 @@ import type {
 	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
 import type {
-	BroadcastStatusListOptions,
-	CheckStatusListOptions,
-	CreateEncryptedStatusListOptions,
-	CreateUnencryptedStatusListOptions,
-	CredentialRequest,
-	FeePaymentOptions,
 	ITrackOperation,
-	StatusOptions,
 	ITrackResult,
-	UpdateEncryptedStatusListOptions,
-	UpdateUnencryptedStatusListOptions,
 	VeramoAgent,
-	VerificationOptions,
 } from '../../types/shared';
+import type { VerificationOptions } from '../../types/credential';
+import type { FeePaymentOptions } from '../../types/credential-status';
+import type { CredentialRequest } from '../../types/credential';
+import type { CheckStatusListOptions } from '../../types/credential-status';
+import type { StatusOptions } from '../../types/credential-status';
+import type {
+	BroadcastStatusListOptions, CreateEncryptedStatusListOptions,
+	CreateUnencryptedStatusListOptions, UpdateEncryptedStatusListOptions,
+	UpdateUnencryptedStatusListOptions
+} from '../../types/credential-status';
 import type { IIdentityService } from './index.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
