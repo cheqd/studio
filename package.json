@@ -93,7 +93,7 @@
 		"sqlite3": "^5.1.7",
 		"swagger-ui-express": "^5.0.0",
 		"typeorm": "^0.3.19",
-		"uint8arrays": "^4.0.10",
+		"uint8arrays": "^5.0.1",
 		"uri-js": "^4.4.1"
 	},
 	"devDependencies": {
