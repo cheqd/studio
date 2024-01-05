@@ -89,7 +89,7 @@
 		"pg": "^8.11.3",
 		"pg-connection-string": "^2.6.2",
 		"secp256k1": "^5.0.0",
-		"sqlite3": "^5.1.6",
+		"sqlite3": "^5.1.7",
 		"swagger-ui-express": "^5.0.0",
 		"typeorm": "^0.3.17",
 		"uint8arrays": "^4.0.10",
