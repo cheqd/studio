@@ -92,3 +92,17 @@ export class KeyIdentifierValidator implements IValidator {
 		return { valid: true };
 	}
 }
+
+export class VeridaIdentifierValidator implements IValidator {
+	validate(id: Validatable): IValidationResult {
+		if (typeof id !== 'string') {
+			return {
+				valid: false,
+				error: 'Verida DID identifier should be a string',
+			};
+		}
+		id = id as string;
+		// ToDo add more checks for did:vda identifier
+		return { valid: true };
+	}
+}
