@@ -3,19 +3,18 @@ import { check, validationResult, query } from './validator/index.js';
 import { fromString } from 'uint8arrays';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import type {
-	ITrackOperation,
-} from '../types/shared.js';
+import type { ITrackOperation } from '../types/shared.js';
 import type { CheckStatusListSuccessfulResponseBody, FeePaymentOptions } from '../types/credential-status.js';
 import {
 	DefaultStatusAction,
 	DefaultStatusActionPurposeMap,
-	DefaultStatusActions, MinimalPaymentCondition
+	DefaultStatusActions,
+	MinimalPaymentCondition,
 } from '../types/credential-status.js';
 import type {
 	SearchStatusListQuery,
 	SearchStatusListSuccessfulResponseBody,
-	SearchStatusListUnsuccessfulResponseBody
+	SearchStatusListUnsuccessfulResponseBody,
 } from '../types/credential-status.js';
 import type {
 	CheckStatusListRequestBody,
@@ -28,13 +27,14 @@ import type {
 	CreateUnencryptedStatusListRequestBody,
 	CreateUnencryptedStatusListRequestQuery,
 	CreateUnencryptedStatusListSuccessfulResponseBody,
-	CreateUnencryptedStatusListUnsuccessfulResponseBody, UpdateEncryptedStatusListRequestBody,
+	CreateUnencryptedStatusListUnsuccessfulResponseBody,
+	UpdateEncryptedStatusListRequestBody,
 	UpdateEncryptedStatusListSuccessfulResponseBody,
 	UpdateEncryptedStatusListUnsuccessfulResponseBody,
 	UpdateUnencryptedStatusListRequestBody,
 	UpdateUnencryptedStatusListRequestQuery,
 	UpdateUnencryptedStatusListSuccessfulResponseBody,
-	UpdateUnencryptedStatusListUnsuccessfulResponseBody
+	UpdateUnencryptedStatusListUnsuccessfulResponseBody,
 } from '../types/credential-status.js';
 import {
 	BulkRevocationResult,
@@ -562,15 +562,9 @@ export class CredentialStatusController {
 				},
 			} as ITrackOperation;
 
-			const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
-			if (trackResult.error) {
-				return response
-					.status(StatusCodes.INTERNAL_SERVER_ERROR)
-					.json(trackResult as CreateEncryptedStatusListUnsuccessfulResponseBody);
-			}
-
+			const trackingStatus = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
 			// return result
-			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined });
+			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined, trackingStatus });
 		} catch (error) {
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -695,16 +689,9 @@ export class CredentialStatusController {
 					feePaymentNetwork: CheqdNetwork.Testnet,
 				},
 			} as ITrackOperation;
-			const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
-
-			if (trackResult.error) {
-				return response
-					.status(StatusCodes.INTERNAL_SERVER_ERROR)
-					.json(trackResult as CreateEncryptedStatusListUnsuccessfulResponseBody);
-			}
-
+			const trackingStatus = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
 			// return result
-			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined });
+			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined, trackingStatus });
 		} catch (error) {
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -873,13 +860,11 @@ export class CredentialStatusController {
 						symmetricKey: '',
 					},
 				} as ITrackOperation;
-				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
-				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-						updated: false,
-						error: trackResult.error,
-					} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
-				}
+				const trackingStatus = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
+				return response.status(StatusCodes.OK).json({
+					...formatted,
+					trackingStatus,
+				});
 			}
 
 			return response.status(StatusCodes.OK).json(formatted);
@@ -1072,13 +1057,8 @@ export class CredentialStatusController {
 						feePaymentNetwork: CheqdNetwork.Testnet,
 					},
 				} as ITrackOperation;
-				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
-				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-						updated: false,
-						error: trackResult.error,
-					} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
-				}
+				const trackingStatus = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
+				return response.status(StatusCodes.OK).json({ ...formatted, trackingStatus });
 			}
 
 			return response.status(StatusCodes.OK).json(formatted);

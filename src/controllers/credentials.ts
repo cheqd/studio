@@ -331,12 +331,11 @@ export class CredentialController {
 				} as ITrackOperation;
 
 				// Track operation
-				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
-				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-						error: trackResult.error,
-					});
-				}
+				const trackingStatus = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
+				return response.status(StatusCodes.OK).json({
+					...result,
+					trackingStatus,
+				});
 			}
 			// Return Ok response
 			return response.status(StatusCodes.OK).json(result);
@@ -435,12 +434,8 @@ export class CredentialController {
 				} as ITrackOperation;
 
 				// Track operation
-				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
-				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-						error: trackResult.error,
-					});
-				}
+				const trackingStatus = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
+				return response.status(StatusCodes.OK).json({ ...result, trackingStatus });
 			}
 
 			return response.status(StatusCodes.OK).json(result);
@@ -537,12 +532,8 @@ export class CredentialController {
 				} as ITrackOperation;
 
 				// Track operation
-				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
-				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-						error: trackResult.error,
-					});
-				}
+				const trackingStatus = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
+				return response.status(StatusCodes.OK).json({ ...result, trackingStatus });
 			}
 			// Return Ok response
 			return response.status(StatusCodes.OK).json(result);
