@@ -161,12 +161,13 @@ class App {
 
 		// Keys API
 		app.post('/key/create', new KeyController().createKey);
-		app.post('/key/import', KeyController.keyImportValidator, new KeyController().importKey);
+		app.post('/key/import', KeyController.importKeyValidator, new KeyController().importKey);
 		app.get('/key/read/:kid', new KeyController().getKey);
 
 		// DIDs API
 		app.post('/did/create', DIDController.createDIDValidator, new DIDController().createDid);
 		app.post('/did/update', DIDController.updateDIDValidator, new DIDController().updateDid);
+		app.post('/did/import', DIDController.importDIDValidator, new DIDController().importDid);
 		app.post('/did/deactivate/:did', DIDController.deactivateDIDValidator, new DIDController().deactivateDid);
 		app.get('/did/list', new DIDController().getDids);
 		app.get('/did/search/:did', new DIDController().resolveDidUrl);

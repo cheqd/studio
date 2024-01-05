@@ -11,19 +11,25 @@ import type {
 	UnsuccessfulImportKeyResponseBody,
 	UnsuccessfulQueryKeyResponseBody,
 } from '../types/key.js';
-import { check } from './validator/index.js';
+import { check } from 'express-validator';
 
 // ToDo: Make the format of /key/create and /key/read the same
 // ToDo: Add valdiation for /key/import
 export class KeyController {
-	public static keyImportValidator = [
+	public static importKeyValidator = [
 		check('privateKeyHex')
 			.exists()
 			.withMessage('Private key was not provided')
 			.isHexadecimal()
 			.withMessage('Private key should be a hexadecimal string')
 			.bail(),
-		check('encrypted').optional().isBoolean().withMessage('encrypted should be a boolean').bail(),
+		check('encrypted')
+			.optional()
+			.isBoolean()
+			.withMessage('encrypted should be a boolean')
+			.custom((value, { req }) => (value === true ? req.body.ivHex && req.body.salt : true))
+			.withMessage('Property ivHex, salt is required when encrypted is set to true')
+			.bail(),
 		check('ivHex').optional().isHexadecimal().withMessage('ivHex should be a hexadecimal string').bail(),
 		check('salt').optional().isHexadecimal().withMessage('salt should be a hexadecimal string').bail(),
 		check('type').optional().isString().withMessage('type should be a string').bail(),

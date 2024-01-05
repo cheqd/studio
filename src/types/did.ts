@@ -17,6 +17,18 @@ export type CreateDidRequestBody = {
 	};
 };
 
+export interface KeyImportRequest {
+	privateKeyHex: string;
+	encrypted: boolean;
+	ivHex: string | undefined;
+	salt: string | undefined;
+}
+
+export interface DidImportRequest {
+	did: string;
+	keys: KeyImportRequest[];
+}
+
 //Positive
 
 export type CreateDidResponseBody = IIdentifier;

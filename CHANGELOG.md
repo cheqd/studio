@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.15.0-develop.1](https://github.com/cheqd/credential-service/compare/2.14.0...2.15.0-develop.1) (2024-01-04)
+
+
+### Features
+
+* Add did import api [DEV-3487] ([#457](https://github.com/cheqd/credential-service/issues/457)) ([75232f0](https://github.com/cheqd/credential-service/commit/75232f0b73db254c77e1ac42f4f7737526831453))
+
+
+### Bug Fixes
+
+* Removed redundant import ([6f10d61](https://github.com/cheqd/credential-service/commit/6f10d612013e4f89db56f50846d8cb24c767e051))
+
 ## [2.14.0](https://github.com/cheqd/credential-service/compare/2.13.0...2.14.0) (2023-12-26)
 
 

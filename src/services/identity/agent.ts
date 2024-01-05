@@ -7,11 +7,11 @@ import {
 	ICreateVerifiablePresentationArgs,
 	IDIDManager,
 	IIdentifier,
+	IKey,
 	IKeyManager,
 	IResolver,
 	IVerifyResult,
 	MinimalImportableIdentifier,
-	MinimalImportableKey,
 	PresentationPayload,
 	TAgent,
 	VerifiableCredential,
@@ -248,8 +248,8 @@ export class Veramo {
 	async importDid(
 		agent: TAgent<IDIDManager>,
 		did: string,
-		privateKeyHex: string,
-		publicKeyHex: string
+		keys: Pick<IKey, 'privateKeyHex' | 'type'>[],
+		controllerKeyId: string | undefined
 	): Promise<IIdentifier> {
 		const [kms] = await agent.keyManagerGetKeyManagementSystems();
 
@@ -257,12 +257,15 @@ export class Veramo {
 			throw new Error('Invalid DID');
 		}
 
-		const key: MinimalImportableKey = { kms: kms, kid: publicKeyHex, type: 'Ed25519', privateKeyHex, publicKeyHex };
-
 		const identifier: IIdentifier = await agent.didManagerImport({
-			keys: [key],
+			keys: keys.map((key) => {
+				return {
+					...key,
+					kms,
+				};
+			}),
 			did,
-			controllerKeyId: key.kid,
+			controllerKeyId,
 		} as MinimalImportableIdentifier);
 
 		return identifier;

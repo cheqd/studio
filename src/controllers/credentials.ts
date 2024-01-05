@@ -23,10 +23,16 @@ import type {
 	UnsuspendCredentialResponseBody,
 	VerifyCredentialResponseBody,
 } from '../types/credential.js';
+import { VeridaDIDValidator } from './validator/did.js';
 
 export class CredentialController {
 	public static issueValidator = [
 		check(['subjectDid', 'issuerDid']).exists().withMessage('DID is required').bail().isDID().bail(),
+		check('subjectDid')
+			.custom((value, { req }) =>
+				new VeridaDIDValidator().validate(value).valid ? !!req.body.credentialSchema : true
+			)
+			.withMessage('credentialSchema is required for a verida DID subject'),
 		check('attributes')
 			.exists()
 			.withMessage('attributes are required')
