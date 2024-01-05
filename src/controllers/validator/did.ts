@@ -164,7 +164,7 @@ export class VeridaDIDValidator extends BaseDidValidator implements IValidator {
 			return _v;
 		}
 		did = did as string;
-		// Check if DID is cheqd
+		// Check if DID is vda
 		const method = did.split(':')[1];
 		if (method != this.subject) {
 			return {
@@ -172,12 +172,29 @@ export class VeridaDIDValidator extends BaseDidValidator implements IValidator {
 				error: 'DID Verida should have "did:vda:" prefix',
 			};
 		}
+
+		// Check namepsace
+		const namespace = did.split(':')[2];
+		if (!namespace) {
+			return {
+				valid: false,
+				error: 'Verida DID namespace is required ("did:vda:mainnet:..." or "did:vda:testnet:...")',
+			};
+		}
+		// Check if namespace is valid
+		if (namespace !== CheqdNetwork.Testnet && namespace !== CheqdNetwork.Mainnet) {
+			return {
+				valid: false,
+				error: `Verida DID namespace must be ${CheqdNetwork.Testnet} or ${CheqdNetwork.Mainnet}`,
+			};
+		}
+
 		// Check identifier
-		const id = did.split(':')[2];
+		const id = did.split(':')[3];
 		if (!id) {
 			return {
 				valid: false,
-				error: 'Identifier is required after "did:vda:" prefix',
+				error: 'Identifier is required after "did:vda:<namespace>:" prefix',
 			};
 		}
 		// Check that identifier is valid
