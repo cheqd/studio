@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.15.0](https://github.com/cheqd/credential-service/compare/2.14.0...2.15.0) (2024-01-05)
+
+
+### Features
+
+* Add did import api [DEV-3487] ([#457](https://github.com/cheqd/credential-service/issues/457)) ([75232f0](https://github.com/cheqd/credential-service/commit/75232f0b73db254c77e1ac42f4f7737526831453))
+
+
+### Bug Fixes
+
+* Removed redundant import ([6f10d61](https://github.com/cheqd/credential-service/commit/6f10d612013e4f89db56f50846d8cb24c767e051))
+* Support did:vda in validator [DEV-3498] ([#459](https://github.com/cheqd/credential-service/issues/459)) ([2176e84](https://github.com/cheqd/credential-service/commit/2176e84fc3abbe4422a555c0b228ff10c712116c))
+
 ## [2.15.0-develop.3](https://github.com/cheqd/credential-service/compare/2.15.0-develop.2...2.15.0-develop.3) (2024-01-05)
 
 ## [2.15.0-develop.2](https://github.com/cheqd/credential-service/compare/2.15.0-develop.1...2.15.0-develop.2) (2024-01-05)
