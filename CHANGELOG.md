@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.15.0-develop.2](https://github.com/cheqd/credential-service/compare/2.15.0-develop.1...2.15.0-develop.2) (2024-01-05)
+
+
+### Bug Fixes
+
+* Support did:vda in validator [DEV-3498] ([#459](https://github.com/cheqd/credential-service/issues/459)) ([2176e84](https://github.com/cheqd/credential-service/commit/2176e84fc3abbe4422a555c0b228ff10c712116c))
+
 ## [2.15.0-develop.1](https://github.com/cheqd/credential-service/compare/2.14.0...2.15.0-develop.1) (2024-01-04)
 
 
