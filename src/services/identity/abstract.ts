@@ -5,6 +5,7 @@ import type {
 	DIDDocument,
 	DIDResolutionResult,
 	IIdentifier,
+	IKey,
 	IVerifyResult,
 	ManagedKeyInfo,
 	PresentationPayload,
@@ -78,8 +79,8 @@ export abstract class AbstractIdentityService implements IIdentityService {
 
 	importDid(
 		did: string,
-		privateKeyHex: string,
-		publicKeyHex: string,
+		keys: Pick<IKey, 'privateKeyHex' | 'type'>[],
+		controllerKeyId: string,
 		customer: CustomerEntity
 	): Promise<IIdentifier> {
 		throw new Error(`Not supported`);

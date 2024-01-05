@@ -217,7 +217,7 @@ export async function decryptPrivateKey(encryptedPrivateKeyHex: string, ivHex: s
 		throw new Error('Missing encryption secret');
 	}
 	// derive key from passphrase
-	const derivedKey = await deriveSymmetricKeyFromSecret(salt, process.env.ENCRYPTION_SECRET);
+	const derivedKey = await deriveSymmetricKeyFromSecret(process.env.ENCRYPTION_SECRET, salt);
 
 	// unwrap encrypted key with iv
 	const encryptedKey = Buffer.from(encryptedPrivateKeyHex, 'hex');

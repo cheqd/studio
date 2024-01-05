@@ -11,12 +11,14 @@ import {
 } from '@cheqd/sdk';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import { generateDidDoc, getQueryParams } from '../helpers/helpers.js';
+import { decryptPrivateKey, generateDidDoc, getQueryParams } from '../helpers/helpers.js';
 import { bases } from 'multiformats/basics';
 import { base64ToBytes } from 'did-jwt';
-import type { CreateDidRequestBody } from '../types/did.js';
+import type { CreateDidRequestBody, KeyImportRequest } from '../types/did.js';
 
 import { check, validationResult, param } from './validator/index.js';
+import type { IKey, RequireOnly } from '@veramo/core';
+import { extractPublicKeyHex } from '@veramo/utils';
 
 export class DIDController {
 	// ToDo: improve validation in a "bail" fashion
@@ -77,6 +79,26 @@ export class DIDController {
 	];
 
 	public static deactivateDIDValidator = [param('did').exists().isString().isDID().bail()];
+
+	public static importDIDValidator = [
+		check('did').isDID().bail(),
+		check('controllerKeyId').optional().isString().withMessage('controllerKeyId should be a string').bail(),
+		check('keys')
+			.isArray()
+			.withMessage('Keys should be an array of KeyImportRequest objects used in the DID-VerificationMethod')
+			.custom((value) => {
+				return value.every(
+					(item: KeyImportRequest) =>
+						item.privateKeyHex &&
+						typeof item.encrypted === 'boolean' &&
+						(item.encrypted === true ? item.ivHex && item.salt : true)
+				);
+			})
+			.withMessage(
+				'KeyImportRequest object is invalid, privateKeyHex is required, Property ivHex, salt is required when encrypted is set to true'
+			)
+			.bail(),
+	];
 
 	/**
 	 * @openapi
@@ -317,6 +339,116 @@ export class DIDController {
 				response.locals.customer
 			);
 			return response.status(StatusCodes.OK).json(result);
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			});
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /did/import:
+	 *   post:
+	 *     tags: [ DID ]
+	 *     summary: Import a DID Document.
+	 *     description: This endpoint imports a decentralized identifier associated with the user's account for custodian-mode clients.
+	 *     requestBody:
+	 *       content:
+	 *         application/x-www-form-urlencoded:
+	 *           schema:
+	 *             $ref: '#/components/schemas/DidImportRequest'
+	 *         application/json:
+	 *           schema:
+	 *             $ref: '#/components/schemas/DidImportRequest'
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/DidResult'
+	 *       400:
+	 *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/InvalidRequest'
+	 *             example:
+	 *               error: InvalidRequest
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/InvalidRequest'
+	 *             example:
+	 *               error: Internal Error
+	 */
+	public async importDid(request: Request, response: Response) {
+		// validate request
+		const result = validationResult(request);
+
+		// handle error
+		if (!result.isEmpty()) {
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+		}
+
+		try {
+			const { did, controllerKeyId, keys } = request.body;
+			const { didDocument } = await new IdentityServiceStrategySetup().agent.resolveDid(did);
+			if (!didDocument || !didDocument.verificationMethod || didDocument.verificationMethod.length === 0) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: `Invalid request: Invalid did document for ${did}`,
+				});
+			}
+			const publicKeyHexs: string[] = [
+				...new Set(
+					didDocument.verificationMethod.map((vm) => extractPublicKeyHex(vm)).filter((pk) => pk) || []
+				),
+			];
+
+			const keysToImport: RequireOnly<IKey, 'privateKeyHex' | 'type'>[] = [];
+			if (keys && keys.length === publicKeyHexs.length) {
+				// import keys
+				keysToImport.push(
+					...(await Promise.all(
+						keys.map(async (key: any) => {
+							const { type, encrypted, ivHex, salt } = key;
+							let { privateKeyHex } = key;
+							if (encrypted) {
+								if (ivHex && salt) {
+									privateKeyHex = toString(
+										await decryptPrivateKey(privateKeyHex, ivHex, salt),
+										'hex'
+									);
+								} else {
+									throw new Error(
+										`Invalid request: Property ivHex, salt is required when encrypted is set to true`
+									);
+								}
+							}
+
+							return {
+								type: type || 'Ed25519',
+								privateKeyHex,
+							};
+						})
+					))
+				);
+			} else if (keys) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: `Invalid request: Provide all the required keys`,
+				});
+			}
+
+			const identifier = await new IdentityServiceStrategySetup(
+				response.locals.customer.customerId
+			).agent.importDid(did, keys, controllerKeyId, response.locals.customer);
+			return response.status(StatusCodes.OK).json(identifier);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,

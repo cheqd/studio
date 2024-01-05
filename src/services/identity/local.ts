@@ -120,11 +120,17 @@ export class LocalIdentityService extends DefaultIdentityService {
 		try {
 			return await this.getDid(ISSUER_DID);
 		} catch {
+			const key = {
+				kid: ISSUER_PUBLIC_KEY_HEX,
+				type: 'Ed25519' as const,
+				privateKeyHex: ISSUER_PRIVATE_KEY_HEX,
+				publicKeyHex: ISSUER_PUBLIC_KEY_HEX,
+			};
 			const identifier: IIdentifier = await Veramo.instance.importDid(
 				this.initAgent(),
 				ISSUER_DID,
-				ISSUER_PRIVATE_KEY_HEX,
-				ISSUER_PUBLIC_KEY_HEX
+				[key],
+				key.kid
 			);
 			return identifier;
 		}
