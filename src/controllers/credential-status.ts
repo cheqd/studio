@@ -3,19 +3,18 @@ import { check, validationResult, query } from './validator/index.js';
 import { fromString } from 'uint8arrays';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import type {
-	ITrackOperation,
-} from '../types/shared.js';
+import type { ITrackOperation } from '../types/shared.js';
 import type { CheckStatusListSuccessfulResponseBody, FeePaymentOptions } from '../types/credential-status.js';
 import {
 	DefaultStatusAction,
 	DefaultStatusActionPurposeMap,
-	DefaultStatusActions, MinimalPaymentCondition
+	DefaultStatusActions,
+	MinimalPaymentCondition,
 } from '../types/credential-status.js';
 import type {
 	SearchStatusListQuery,
 	SearchStatusListSuccessfulResponseBody,
-	SearchStatusListUnsuccessfulResponseBody
+	SearchStatusListUnsuccessfulResponseBody,
 } from '../types/credential-status.js';
 import type {
 	CheckStatusListRequestBody,
@@ -28,13 +27,14 @@ import type {
 	CreateUnencryptedStatusListRequestBody,
 	CreateUnencryptedStatusListRequestQuery,
 	CreateUnencryptedStatusListSuccessfulResponseBody,
-	CreateUnencryptedStatusListUnsuccessfulResponseBody, UpdateEncryptedStatusListRequestBody,
+	CreateUnencryptedStatusListUnsuccessfulResponseBody,
+	UpdateEncryptedStatusListRequestBody,
 	UpdateEncryptedStatusListSuccessfulResponseBody,
 	UpdateEncryptedStatusListUnsuccessfulResponseBody,
 	UpdateUnencryptedStatusListRequestBody,
 	UpdateUnencryptedStatusListRequestQuery,
 	UpdateUnencryptedStatusListSuccessfulResponseBody,
-	UpdateUnencryptedStatusListUnsuccessfulResponseBody
+	UpdateUnencryptedStatusListUnsuccessfulResponseBody,
 } from '../types/credential-status.js';
 import {
 	BulkRevocationResult,
