@@ -18,7 +18,7 @@ export class CredentialController {
 		check(['subjectDid', 'issuerDid']).exists().withMessage('DID is required').bail().isDID().bail(),
 		check('subjectDid')
 			.custom((value, { req }) =>
-				new VeridaDIDValidator().validate(value).valid ? req.body.credentialSchema : true
+				new VeridaDIDValidator().validate(value).valid ? !!req.body.credentialSchema : true
 			)
 			.withMessage('credentialSchema is required for a verida DID subject'),
 		check('attributes')
