@@ -68,7 +68,7 @@
 		"@veramo/utils": "^5.5.3",
 		"@verida/account-node": "^2.3.9",
 		"@verida/client-ts": "^2.3.9",
-		"@verida/encryption-utils": "^2.2.3",
+		"@verida/encryption-utils": "^3.0.0",
 		"@verida/types": "^3.0.0",
 		"@verida/vda-did-resolver": "^2.3.9",
 		"bs58": "^5.0.0",
