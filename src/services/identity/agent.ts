@@ -7,11 +7,11 @@ import {
 	ICreateVerifiablePresentationArgs,
 	IDIDManager,
 	IIdentifier,
+	IKey,
 	IKeyManager,
 	IResolver,
 	IVerifyResult,
 	MinimalImportableIdentifier,
-	MinimalImportableKey,
 	PresentationPayload,
 	TAgent,
 	VerifiableCredential,
@@ -51,25 +51,21 @@ import {
 import type { CheqdNetwork } from '@cheqd/sdk';
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key';
 import { Resolver, ResolverRegistry } from 'did-resolver';
-import {
+import { DefaultDidUrlPattern, CreateAgentRequest, VeramoAgent } from '../../types/shared.js';
+import type { VerificationOptions } from '../../types/credential.js';
+import type { FeePaymentOptions } from '../../types/credential-status.js';
+import type { CredentialRequest } from '../../types/credential.js';
+import { DefaultStatusActions } from '../../types/credential-status.js';
+import type { CheckStatusListOptions } from '../../types/credential-status.js';
+import type { RevocationStatusOptions, StatusOptions, SuspensionStatusOptions } from '../../types/credential-status.js';
+import type {
 	BroadcastStatusListOptions,
-	CheckStatusListOptions,
-	DefaultDidUrlPattern,
-	CreateAgentRequest,
 	CreateUnencryptedStatusListOptions,
-	CredentialRequest,
-	RevocationStatusOptions,
-	StatusOptions,
-	SuspensionStatusOptions,
 	UpdateUnencryptedStatusListOptions,
-	VeramoAgent,
-	VerificationOptions,
 	CreateEncryptedStatusListOptions,
-	DefaultStatusActions,
 	UpdateEncryptedStatusListOptions,
 	SearchStatusListResult,
-	FeePaymentOptions,
-} from '../../types/shared.js';
+} from '../../types/credential-status.js';
 import { MINIMAL_DENOM, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js';
 import { toCoin, toDefaultDkg, toMinimalDenom } from '../../helpers/helpers.js';
 import { jwtDecode } from 'jwt-decode';
@@ -244,8 +240,8 @@ export class Veramo {
 	async importDid(
 		agent: TAgent<IDIDManager>,
 		did: string,
-		privateKeyHex: string,
-		publicKeyHex: string
+		keys: Pick<IKey, 'privateKeyHex' | 'type'>[],
+		controllerKeyId: string | undefined
 	): Promise<IIdentifier> {
 		const [kms] = await agent.keyManagerGetKeyManagementSystems();
 
@@ -253,12 +249,15 @@ export class Veramo {
 			throw new Error('Invalid DID');
 		}
 
-		const key: MinimalImportableKey = { kms: kms, kid: publicKeyHex, type: 'Ed25519', privateKeyHex, publicKeyHex };
-
 		const identifier: IIdentifier = await agent.didManagerImport({
-			keys: [key],
+			keys: keys.map((key) => {
+				return {
+					...key,
+					kms,
+				};
+			}),
 			did,
-			controllerKeyId: key.kid,
+			controllerKeyId,
 		} as MinimalImportableIdentifier);
 
 		return identifier;

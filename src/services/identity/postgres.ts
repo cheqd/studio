@@ -2,6 +2,7 @@ import type {
 	CredentialPayload,
 	DIDDocument,
 	IIdentifier,
+	IKey,
 	IVerifyResult,
 	PresentationPayload,
 	VerifiableCredential,
@@ -22,22 +23,19 @@ import {
 	DefaultRPCUrls,
 	type TransactionResult,
 } from '@cheqd/did-provider-cheqd';
-import {
+import { DefaultDidUrlPattern, VeramoAgent, ITrackResult, ITrackOperation } from '../../types/shared.js';
+import type { VerificationOptions } from '../../types/credential.js';
+import type { FeePaymentOptions } from '../../types/credential-status.js';
+import type { CredentialRequest } from '../../types/credential.js';
+import type { CheckStatusListOptions } from '../../types/credential-status.js';
+import type { StatusOptions } from '../../types/credential-status.js';
+import type {
 	BroadcastStatusListOptions,
-	CheckStatusListOptions,
-	DefaultDidUrlPattern,
 	CreateUnencryptedStatusListOptions,
-	CredentialRequest,
-	StatusOptions,
 	UpdateUnencryptedStatusListOptions,
-	VeramoAgent,
-	VerificationOptions,
 	CreateEncryptedStatusListOptions,
-	FeePaymentOptions,
 	UpdateEncryptedStatusListOptions,
-	ITrackResult,
-	ITrackOperation,
-} from '../../types/shared.js';
+} from '../../types/credential-status.js';
 import { Connection } from '../../database/connection/connection.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { Veramo } from './agent.js';
@@ -289,16 +287,15 @@ export class PostgresIdentityService extends DefaultIdentityService {
 
 	async importDid(
 		did: string,
-		privateKeyHex: string,
-		publicKeyHex: string,
+		keys: Pick<IKey, 'privateKeyHex' | 'type'>[],
+		controllerKeyId: string | undefined,
 		customer: CustomerEntity
 	): Promise<IIdentifier> {
 		if (!did.match(DefaultDidUrlPattern)) {
 			throw new Error('Invalid DID');
 		}
-
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const identifier: IIdentifier = await Veramo.instance.importDid(this.agent!, did, privateKeyHex, publicKeyHex);
+		const identifier: IIdentifier = await Veramo.instance.importDid(this.agent!, did, keys, controllerKeyId);
 		await IdentifierService.instance.update(identifier.did, customer);
 		return identifier;
 	}

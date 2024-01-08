@@ -16,18 +16,18 @@ import {
 	LitNetworks,
 } from '@cheqd/did-provider-cheqd';
 import { CheqdNetwork } from '@cheqd/sdk';
+import type { VerificationOptions } from '../../types/credential.js';
+import type { FeePaymentOptions } from '../../types/credential-status.js';
+import type { CredentialRequest } from '../../types/credential.js';
+import type { CheckStatusListOptions } from '../../types/credential-status.js';
+import type { StatusOptions } from '../../types/credential-status.js';
 import type {
 	BroadcastStatusListOptions,
-	CheckStatusListOptions,
 	CreateEncryptedStatusListOptions,
 	CreateUnencryptedStatusListOptions,
-	CredentialRequest,
-	FeePaymentOptions,
-	StatusOptions,
 	UpdateEncryptedStatusListOptions,
 	UpdateUnencryptedStatusListOptions,
-	VerificationOptions,
-} from '../../types/shared.js';
+} from '../../types/credential-status.js';
 import { DefaultIdentityService } from './default.js';
 import { Connection } from '../../database/connection/connection.js';
 import { Veramo } from './agent.js';
@@ -122,11 +122,17 @@ export class LocalIdentityService extends DefaultIdentityService {
 		try {
 			return await this.getDid(ISSUER_DID);
 		} catch {
+			const key = {
+				kid: ISSUER_PUBLIC_KEY_HEX,
+				type: 'Ed25519' as const,
+				privateKeyHex: ISSUER_PRIVATE_KEY_HEX,
+				publicKeyHex: ISSUER_PUBLIC_KEY_HEX,
+			};
 			const identifier: IIdentifier = await Veramo.instance.importDid(
 				this.initAgent(),
 				ISSUER_DID,
-				ISSUER_PRIVATE_KEY_HEX,
-				ISSUER_PUBLIC_KEY_HEX
+				[key],
+				key.kid
 			);
 			return identifier;
 		}

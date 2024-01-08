@@ -9,6 +9,7 @@ import type {
 	DIDDocument,
 	DIDResolutionResult,
 	IIdentifier,
+	IKey,
 	IVerifyResult,
 	ManagedKeyInfo,
 	PresentationPayload,
@@ -28,22 +29,20 @@ import type {
 	UnsuspensionResult,
 	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
+import type { ITrackOperation, ITrackResult, VeramoAgent } from '../../types/shared.js';
+import type { VerificationOptions } from '../../types/credential.js';
+import type { FeePaymentOptions } from '../../types/credential-status.js';
+import type { CredentialRequest } from '../../types/credential.js';
+import type { CheckStatusListOptions } from '../../types/credential-status.js';
+import type { StatusOptions } from '../../types/credential-status.js';
 import type {
 	BroadcastStatusListOptions,
-	CheckStatusListOptions,
 	CreateEncryptedStatusListOptions,
 	CreateUnencryptedStatusListOptions,
-	CredentialRequest,
-	FeePaymentOptions,
-	ITrackOperation,
 	SearchStatusListResult,
-	StatusOptions,
-	ITrackResult,
 	UpdateEncryptedStatusListOptions,
 	UpdateUnencryptedStatusListOptions,
-	VeramoAgent,
-	VerificationOptions,
-} from '../../types/shared';
+} from '../../types/credential-status.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity.js';
@@ -74,7 +73,12 @@ export interface IIdentityService {
 	resolveDid(did: string): Promise<DIDResolutionResult>;
 	resolve(didUrl: string): Promise<Response>;
 	getDid(did: string, customer: CustomerEntity): Promise<any>;
-	importDid(did: string, privateKeyHex: string, publicKeyHex: string, customer: CustomerEntity): Promise<IIdentifier>;
+	importDid(
+		did: string,
+		keys: Pick<IKey, 'privateKeyHex' | 'type'>[],
+		controllerKeyId: string | undefined,
+		customer: CustomerEntity
+	): Promise<IIdentifier>;
 	createResource(network: string, payload: ResourcePayload, customer: CustomerEntity): Promise<any>;
 	createCredential(
 		credential: CredentialPayload,

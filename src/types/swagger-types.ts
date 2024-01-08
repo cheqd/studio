@@ -916,6 +916,20 @@
  *                 - Ed25519VerificationKey2020
  *         didDocument:
  *           $ref: '#/components/schemas/DidDocumentWithoutVerificationMethod'
+ *     DidImportRequest:
+ *       type: object
+ *       properties:
+ *         did:
+ *           type: string
+ *           description: DID to be imported
+ *           format: uri
+ *           required: true
+ *         keys:
+ *           type: array
+ *           description: List of keys required to import the DID
+ *           required: true
+ *           items:
+ *             $ref: '#/components/schemas/KeyImportRequest'
  *     PresentationCreateResult:
  *       type: object
  *       properties:

@@ -1,5 +1,5 @@
 import { JSONLD_PROOF_TYPES } from '../../types/constants.js';
-import type { JSONLDProofType } from '../../types/shared.js';
+import type { JSONLDProofType } from '../../types/validation.js';
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
 
 export class JsonLDProofValidator implements IValidator {

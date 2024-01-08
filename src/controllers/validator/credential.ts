@@ -1,5 +1,5 @@
 import { CheqdW3CVerifiableCredential, ICheqdCredential } from '../../services/w3c-credential.js';
-import type { CheqdCredentialStatus } from '../../types/shared.js';
+import type { CheqdCredentialStatus } from '../../types/validation.js';
 import { CredentialStatusValidator } from './credential-status.js';
 import { CheqdDIDValidator, KeyDIDValidator } from './did.js';
 import { JsonLDProofValidator } from './jsonld-proof.js';

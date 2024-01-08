@@ -11,10 +11,16 @@ import { Cheqd } from '@cheqd/did-provider-cheqd';
 import { OPERATION_CATEGORY_NAME_CREDENTIAL } from '../types/constants.js';
 import { CheqdW3CVerifiableCredential } from '../services/w3c-credential.js';
 import { isCredentialIssuerDidDeactivated } from '../services/helpers.js';
+import { VeridaDIDValidator } from './validator/did.js';
 
 export class CredentialController {
 	public static issueValidator = [
 		check(['subjectDid', 'issuerDid']).exists().withMessage('DID is required').bail().isDID().bail(),
+		check('subjectDid')
+			.custom((value, { req }) =>
+				new VeridaDIDValidator().validate(value).valid ? !!req.body.credentialSchema : true
+			)
+			.withMessage('credentialSchema is required for a verida DID subject'),
 		check('attributes')
 			.exists()
 			.withMessage('attributes are required')

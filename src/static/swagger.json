@@ -894,6 +894,70 @@
         }
       }
     },
+    "/did/import": {
+      "post": {
+        "tags": [
+          "DID"
+        ],
+        "summary": "Import a DID Document.",
+        "description": "This endpoint imports a decentralized identifier associated with the user's account for custodian-mode clients.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/DidImportRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DidImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DidResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "InvalidRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "Internal Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/did/deactivate/{did}": {
       "post": {
         "tags": [
@@ -2903,6 +2967,25 @@
           },
           "didDocument": {
             "$ref": "#/components/schemas/DidDocumentWithoutVerificationMethod"
+          }
+        }
+      },
+      "DidImportRequest": {
+        "type": "object",
+        "properties": {
+          "did": {
+            "type": "string",
+            "description": "DID to be imported",
+            "format": "uri",
+            "required": true
+          },
+          "keys": {
+            "type": "array",
+            "description": "List of keys required to import the DID",
+            "required": true,
+            "items": {
+              "$ref": "#/components/schemas/KeyImportRequest"
+            }
           }
         }
       },

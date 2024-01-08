@@ -3,7 +3,20 @@ import { check, validationResult, query } from './validator/index.js';
 import { fromString } from 'uint8arrays';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
+import type { ITrackOperation } from '../types/shared.js';
+import type { CheckStatusListSuccessfulResponseBody, FeePaymentOptions } from '../types/credential-status.js';
 import {
+	DefaultStatusAction,
+	DefaultStatusActionPurposeMap,
+	DefaultStatusActions,
+	MinimalPaymentCondition,
+} from '../types/credential-status.js';
+import type {
+	SearchStatusListQuery,
+	SearchStatusListSuccessfulResponseBody,
+	SearchStatusListUnsuccessfulResponseBody,
+} from '../types/credential-status.js';
+import type {
 	CheckStatusListRequestBody,
 	CheckStatusListRequestQuery,
 	CheckStatusListUnsuccessfulResponseBody,
@@ -15,15 +28,6 @@ import {
 	CreateUnencryptedStatusListRequestQuery,
 	CreateUnencryptedStatusListSuccessfulResponseBody,
 	CreateUnencryptedStatusListUnsuccessfulResponseBody,
-	DefaultStatusAction,
-	DefaultStatusActionPurposeMap,
-	DefaultStatusActions,
-	FeePaymentOptions,
-	ITrackOperation,
-	MinimalPaymentCondition,
-	SearchStatusListQuery,
-	SearchStatusListSuccessfulResponseBody,
-	SearchStatusListUnsuccessfulResponseBody,
 	UpdateEncryptedStatusListRequestBody,
 	UpdateEncryptedStatusListSuccessfulResponseBody,
 	UpdateEncryptedStatusListUnsuccessfulResponseBody,
@@ -31,7 +35,7 @@ import {
 	UpdateUnencryptedStatusListRequestQuery,
 	UpdateUnencryptedStatusListSuccessfulResponseBody,
 	UpdateUnencryptedStatusListUnsuccessfulResponseBody,
-} from '../types/shared.js';
+} from '../types/credential-status.js';
 import {
 	BulkRevocationResult,
 	BulkSuspensionResult,
@@ -1209,11 +1213,11 @@ export class CredentialStatusController {
 
 			// handle error
 			if (result.error) {
-				return response.status(StatusCodes.BAD_REQUEST).json(result);
+				return response.status(StatusCodes.BAD_REQUEST).json(result as CheckStatusListUnsuccessfulResponseBody);
 			}
 
 			// return result
-			return response.status(StatusCodes.OK).json(result);
+			return response.status(StatusCodes.OK).json(result as CheckStatusListSuccessfulResponseBody);
 		} catch (error) {
 			// define error
 			const errorRef = error as Record<string, unknown>;

@@ -1,6 +1,6 @@
 import { CheqdNetwork } from '@cheqd/sdk';
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
-import { CheqdIdentifierValidator, KeyIdentifierValidator } from './identifier.js';
+import { CheqdIdentifierValidator, KeyIdentifierValidator, VeridaIdentifierValidator } from './identifier.js';
 
 export class BaseDidValidator implements IValidator {
 	validate(did: Validatable): IValidationResult {
@@ -140,12 +140,81 @@ export class KeyDIDValidator extends BaseDidValidator implements IValidator {
 	}
 }
 
+export class VeridaDIDValidator extends BaseDidValidator implements IValidator {
+	protected identifierValidator: IValidator;
+	subject = 'vda';
+
+	constructor(identifierValidator?: IValidator) {
+		super();
+		// Setup default CheqdIdentifierValidator
+		if (!identifierValidator) {
+			identifierValidator = new VeridaIdentifierValidator();
+		}
+		this.identifierValidator = identifierValidator;
+	}
+
+	public printable(): string {
+		return this.subject;
+	}
+
+	validate(did: Validatable): IValidationResult {
+		// Call base validation
+		let _v = super.validate(did);
+		if (!_v.valid) {
+			return _v;
+		}
+		did = did as string;
+		// Check if DID is vda
+		const method = did.split(':')[1];
+		if (method != this.subject) {
+			return {
+				valid: false,
+				error: 'DID Verida should have "did:vda:" prefix',
+			};
+		}
+
+		// Check namepsace
+		const namespace = did.split(':')[2];
+		if (!namespace) {
+			return {
+				valid: false,
+				error: 'Verida DID namespace is required ("did:vda:mainnet:..." or "did:vda:testnet:...")',
+			};
+		}
+		// Check if namespace is valid
+		if (namespace !== CheqdNetwork.Testnet && namespace !== CheqdNetwork.Mainnet) {
+			return {
+				valid: false,
+				error: `Verida DID namespace must be ${CheqdNetwork.Testnet} or ${CheqdNetwork.Mainnet}`,
+			};
+		}
+
+		// Check identifier
+		const id = did.split(':')[3];
+		if (!id) {
+			return {
+				valid: false,
+				error: 'Identifier is required after "did:vda:<namespace>:" prefix',
+			};
+		}
+		// Check that identifier is valid
+		_v = this.identifierValidator.validate(id);
+		if (!_v.valid) {
+			return {
+				valid: false,
+				error: _v.error,
+			};
+		}
+		return { valid: true };
+	}
+}
+
 export class DIDValidator implements IValidator {
 	protected didValidators: IValidator[];
 
 	constructor(didValidators?: IValidator[]) {
 		if (!didValidators) {
-			didValidators = [new CheqdDIDValidator(), new KeyDIDValidator()];
+			didValidators = [new CheqdDIDValidator(), new KeyDIDValidator(), new VeridaDIDValidator()];
 		}
 
 		this.didValidators = didValidators;
