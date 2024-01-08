@@ -8,6 +8,7 @@ import { APITokenUserInfoFetcher } from './user-info-fetcher/api-token.js';
 import type { IUserInfoFetcher } from './user-info-fetcher/base.js';
 import { IAuthHandler, RuleRoutine, IAPIGuard } from './routine.js';
 import type { IAuthResponse, MethodToScopeRule } from '../../types/authentication.js';
+import { M2MTokenUserInfoFetcher } from './user-info-fetcher/m2m-token.js';
 
 export class BaseAPIGuard extends RuleRoutine implements IAPIGuard {
 	userInfoFetcher: IUserInfoFetcher = {} as IUserInfoFetcher;
@@ -127,7 +128,11 @@ export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 
 	private chooseUserFetcherStrategy(request: Request): void {
 		const token = this.extractBearerTokenFromHeaders(request.headers) as string;
-		if (token) {
+		const userId = request.headers.userId;
+		if (token && userId && typeof userId === 'string') {
+			this.setUserInfoStrategy(new M2MTokenUserInfoFetcher(token));
+			this.setUserId(userId);
+		} else if (token) {
 			this.setUserInfoStrategy(new APITokenUserInfoFetcher(token));
 		} else {
 			this.setUserInfoStrategy(new SwaggerUserInfoFetcher());
