@@ -67,7 +67,7 @@
 		"@veramo/kms-local": "^5.5.3",
 		"@veramo/utils": "^5.5.3",
 		"@verida/account-node": "^2.3.9",
-		"@verida/client-ts": "^2.3.9",
+		"@verida/client-ts": "^3.0.2",
 		"@verida/encryption-utils": "^2.2.3",
 		"@verida/types": "^3.0.0",
 		"@verida/vda-did-resolver": "^2.3.9",
