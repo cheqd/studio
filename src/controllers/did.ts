@@ -16,6 +16,7 @@ import { bases } from 'multiformats/basics';
 import { base64ToBytes } from 'did-jwt';
 import type {
 	CreateDidRequestBody,
+	KeyImportRequest,
 	CreateDidResponseBody,
 	DeactivateDidResponseBody,
 	ListDidsResponseBody,
@@ -26,10 +27,8 @@ import type {
 	UnsuccessfulGetDidResponseBody,
 	UnsuccessfulResolveDidResponseBody,
 	UnsuccessfulUpdateDidResponseBody,
-	UpdateDidResponseBody,
-	KeyImportRequest
+	UpdateDidResponseBody
 } from '../types/did.js';
-
 import { check, validationResult, param } from './validator/index.js';
 import type { IKey, RequireOnly } from '@veramo/core';
 import { extractPublicKeyHex } from '@veramo/utils';

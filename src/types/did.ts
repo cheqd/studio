@@ -17,6 +17,20 @@ export type CreateDidRequestBody = {
 	};
 };
 
+// Interfaces
+
+export interface KeyImportRequest {
+	privateKeyHex: string;
+	encrypted: boolean;
+	ivHex: string | undefined;
+	salt: string | undefined;
+}
+
+export interface DidImportRequest {
+	did: string;
+	keys: KeyImportRequest[];
+}
+
 //Positive
 
 export type CreateDidResponseBody = IIdentifier;
@@ -42,17 +56,3 @@ export type UnsuccessfulDeactivateDidResponseBody = UnsuccessfulResponseBody & {
 export type UnsuccessfulGetDidResponseBody = UnsuccessfulQueryResponseBody;
 
 export type UnsuccessfulResolveDidResponseBody = UnsuccessfulQueryResponseBody;
-
-// Interfaces
-
-export interface KeyImportRequest {
-	privateKeyHex: string;
-	encrypted: boolean;
-	ivHex: string | undefined;
-	salt: string | undefined;
-}
-
-export interface DidImportRequest {
-	did: string;
-	keys: KeyImportRequest[];
-}
