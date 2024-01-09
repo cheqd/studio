@@ -109,7 +109,7 @@ export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 	private nextHandler: IAuthHandler;
 	oauthProvider: IOAuthProvider;
 	private bearerTokenIdentifier = 'Bearer';
-	private pathSkip = ['/swagger', '/static', '/logto', '/account/bootstrap'];
+	private pathSkip = ['/swagger', '/static', '/logto', '/account/bootstrap', '/account/create'];
 
 	constructor() {
 		super();
@@ -128,10 +128,11 @@ export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 
 	private chooseUserFetcherStrategy(request: Request): void {
 		const token = this.extractBearerTokenFromHeaders(request.headers) as string;
-		const userId = request.headers.userId;
-		if (token && userId && typeof userId === 'string') {
+		const { tenantId } = request.body;
+		console.log('REQUEST BODY', request.body);
+		if (token) {
 			this.setUserInfoStrategy(new M2MTokenUserInfoFetcher(token));
-			this.setUserId(userId);
+			this.setUserId(tenantId);
 		} else if (token) {
 			this.setUserInfoStrategy(new APITokenUserInfoFetcher(token));
 		} else {
