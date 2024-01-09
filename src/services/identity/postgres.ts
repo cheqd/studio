@@ -2,6 +2,7 @@ import type {
 	CredentialPayload,
 	DIDDocument,
 	IIdentifier,
+	IKey,
 	IVerifyResult,
 	PresentationPayload,
 	VerifiableCredential,
@@ -286,16 +287,15 @@ export class PostgresIdentityService extends DefaultIdentityService {
 
 	async importDid(
 		did: string,
-		privateKeyHex: string,
-		publicKeyHex: string,
+		keys: Pick<IKey, 'privateKeyHex' | 'type'>[],
+		controllerKeyId: string | undefined,
 		customer: CustomerEntity
 	): Promise<IIdentifier> {
 		if (!did.match(DefaultDidUrlPattern)) {
 			throw new Error('Invalid DID');
 		}
-
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const identifier: IIdentifier = await Veramo.instance.importDid(this.agent!, did, privateKeyHex, publicKeyHex);
+		const identifier: IIdentifier = await Veramo.instance.importDid(this.agent!, did, keys, controllerKeyId);
 		await IdentifierService.instance.update(identifier.did, customer);
 		return identifier;
 	}

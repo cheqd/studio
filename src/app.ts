@@ -167,6 +167,7 @@ class App {
 		// DIDs API
 		app.post('/did/create', DIDController.createDIDValidator, new DIDController().createDid);
 		app.post('/did/update', DIDController.updateDIDValidator, new DIDController().updateDid);
+		app.post('/did/import', DIDController.importDIDValidator, new DIDController().importDid);
 		app.post('/did/deactivate/:did', DIDController.deactivateDIDValidator, new DIDController().deactivateDid);
 		app.get('/did/list', new DIDController().getDids);
 		app.get('/did/search/:did', new DIDController().resolveDidUrl);

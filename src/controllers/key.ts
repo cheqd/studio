@@ -23,7 +23,12 @@ export class KeyController {
 			.isHexadecimal()
 			.withMessage('Private key should be a hexadecimal string')
 			.bail(),
-		check('encrypted').optional().isBoolean().withMessage('encrypted should be a boolean').bail(),
+		check('encrypted')
+			.isBoolean()
+			.withMessage('encrypted is required')
+			.custom((value, { req }) => (value === true ? req.body.ivHex && req.body.salt : true))
+			.withMessage('Property ivHex, salt is required when encrypted is set to true')
+			.bail(),
 		check('ivHex').optional().isHexadecimal().withMessage('ivHex should be a hexadecimal string').bail(),
 		check('salt').optional().isHexadecimal().withMessage('salt should be a hexadecimal string').bail(),
 		check('type').optional().isString().withMessage('type should be a string').bail(),
