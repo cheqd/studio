@@ -23,22 +23,20 @@ export class M2MTokenUserInfoFetcher extends AuthReturn implements IUserInfoFetc
 
 	public async verifyJWTToken(token: string, oauthProvider: IOAuthProvider): Promise<IAuthResponse> {
 		try {
-			console.log(token);
 			const { payload } = await jwtVerify(
 				token, // The raw Bearer Token extracted from the request header
 				createRemoteJWKSet(new URL(oauthProvider.endpoint_jwks)) // generate a jwks using jwks_uri inquired from Logto server
 			);
-			// console.log(payload);
 			// Setup the scopes from the token
 			if (!payload.sub) {
 				return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: No sub found in the token.`);
 			}
 			const { error, data: scopes } = await oauthProvider.getAppScopes(payload.sub);
-			// console.log('Scopes', scopes);
 			if (error) {
 				return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: No scopes found for the roles.`);
 			}
 			this.setScopes(scopes);
+			this.setUserId(payload.sub);
 			return this.returnOk();
 		} catch (error) {
 			console.error(error);
