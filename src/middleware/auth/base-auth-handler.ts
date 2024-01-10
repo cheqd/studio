@@ -48,6 +48,7 @@ export class BaseAPIGuard extends RuleRoutine implements IAPIGuard {
 		}
 		this.setScopes(_res.data.scopes);
 		this.setUserId(_res.data.userId);
+		this.setCustomerId(_res.data.customerId);
 		// Checks if the list of scopes from user enough to make an action
 		if (!this.areValidScopes(this.getRule(), this.getScopes())) {
 			return this.returnError(
@@ -110,7 +111,7 @@ export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 	private nextHandler: IAuthHandler;
 	oauthProvider: IOAuthProvider;
 	private static bearerTokenIdentifier = 'Bearer';
-	private pathSkip = ['/swagger', '/static', '/logto', '/account/bootstrap', '/account/create'];
+	private pathSkip = ['/swagger', '/static', '/logto', '/account/bootstrap'];
 
 	constructor() {
 		super();
@@ -135,6 +136,8 @@ export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 				this.setUserInfoStrategy(new APITokenUserInfoFetcher(token));
 			} else {
 				this.setUserInfoStrategy(new M2MTokenUserInfoFetcher(token));
+				const customerId = request.headers['customer-id'];
+				if (typeof customerId === 'string') this.setCustomerId(customerId);
 			}
 		} else {
 			this.setUserInfoStrategy(new SwaggerUserInfoFetcher());

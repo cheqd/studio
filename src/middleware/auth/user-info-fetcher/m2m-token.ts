@@ -25,7 +25,11 @@ export class M2MTokenUserInfoFetcher extends AuthReturn implements IUserInfoFetc
 		try {
 			const { payload } = await jwtVerify(
 				token, // The raw Bearer Token extracted from the request header
-				createRemoteJWKSet(new URL(oauthProvider.endpoint_jwks)) // generate a jwks using jwks_uri inquired from Logto server
+				createRemoteJWKSet(new URL(oauthProvider.endpoint_jwks)), // generate a jwks using jwks_uri inquired from Logto server
+				{
+					// expected issuer of the token, should be issued by the Logto server
+					issuer: oauthProvider.endpoint_issuer,
+				}
 			);
 			// Setup the scopes from the token
 			if (!payload.sub) {
@@ -36,7 +40,6 @@ export class M2MTokenUserInfoFetcher extends AuthReturn implements IUserInfoFetc
 				return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: No scopes found for the roles.`);
 			}
 			this.setScopes(scopes);
-			this.setUserId(payload.sub);
 			return this.returnOk();
 		} catch (error) {
 			console.error(error);
