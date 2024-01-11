@@ -386,7 +386,8 @@ export class AccountController {
 
 			// 3. Check is paymentAccount exists for the customer
 			const accounts = await PaymentAccountService.instance.find({ customer });
-			if (accounts.length === 0) {
+			paymentAccount = accounts.find((account) => account.namespace === CheqdNetwork.Testnet) || null;
+			if (paymentAccount === null) {
 				const key = await new IdentityServiceStrategySetup(customer.customerId).agent.createKey(
 					'Secp256k1',
 					customer
@@ -407,8 +408,6 @@ export class AccountController {
 						error: 'PaymentAccount is not found in db: Payment account was not created',
 					});
 				}
-			} else {
-				paymentAccount = accounts[0];
 			}
 
 			// 4. Check the token balance for Testnet account
