@@ -366,13 +366,13 @@ export class CredentialController {
 				} as ITrackOperation;
 
 				// Track operation
-				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
-				// ToDo: Do we need to raise INTERNAL_SERVER_ERROR if tracking failed?
+				const trackResult = await identityServiceStrategySetup.agent
+					.trackOperation(trackInfo)
+					.catch((error) => {
+						return { error };
+					});
 				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-						error: `Revocation operation was successfull, but an error occured while tracking the operation: ${trackResult.error}`,
-						revoked,
-					} satisfies UnsuccesfulRevokeCredentialResponseBody);
+					console.error(`Tracking Error: ${trackResult.error}`);
 				}
 			}
 			// Return Ok response
@@ -480,12 +480,13 @@ export class CredentialController {
 				} as ITrackOperation;
 
 				// Track operation
-				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
+				const trackResult = await identityServiceStrategySetup.agent
+					.trackOperation(trackInfo)
+					.catch((error) => {
+						return { error };
+					});
 				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-						suspended,
-						error: `The suspension operation was successfull, but an error occured while tracking the operation: ${trackResult.error}`,
-					} satisfies UnsuccesfulSuspendCredentialResponseBody);
+					console.error(`Tracking Error: ${trackResult.error}`);
 				}
 			}
 
@@ -592,12 +593,13 @@ export class CredentialController {
 				} as ITrackOperation;
 
 				// Track operation
-				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
+				const trackResult = await identityServiceStrategySetup.agent
+					.trackOperation(trackInfo)
+					.catch((error) => {
+						return { error };
+					});
 				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-						unsuspended,
-						error: `The unsuspension operation was successfull, but an error occured while tracking the operation: ${trackResult.error}`,
-					} satisfies UnsuccesfulUnsuspendCredentialResponseBody);
+					console.error(`Tracking Error: ${trackResult.error}`);
 				}
 			}
 			// Return Ok response
