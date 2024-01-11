@@ -1,6 +1,6 @@
 {
 	"name": "@cheqd/credential-service",
-	"version": "2.15.0-develop.2",
+	"version": "2.15.0",
 	"description": "cheqd Credential Service Backend",
 	"source": "src/index.ts",
 	"main": "dist/index.js",
@@ -43,15 +43,16 @@
 		]
 	},
 	"files": [
-		"dist/**/*",
+		"dist",
+		"example.env",
 		"LICENSE",
 		"package.json",
 		"README.md"
 	],
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "^3.6.13",
-		"@cheqd/sdk": "^3.7.4",
-		"@cheqd/ts-proto": "^3.3.7",
+		"@cheqd/did-provider-cheqd": "^3.6.14",
+		"@cheqd/sdk": "^3.7.6",
+		"@cheqd/ts-proto": "^3.3.9",
 		"@cosmjs/amino": "^0.32.2",
 		"@cosmjs/encoding": "^0.32.2",
 		"@logto/express": "^2.2.0",
