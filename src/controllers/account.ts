@@ -411,7 +411,7 @@ export class AccountController {
 					}
 				}
 			}
-			return response.status(StatusCodes.OK).json(customer);
+			return response.status(StatusCodes.CREATED).json(customer);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal Error: ${(error as Error)?.message || error}`,

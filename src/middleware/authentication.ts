@@ -122,6 +122,11 @@ export class Authentication {
 		}
 	}
 
+	// ToDo: refactor it or keep for the moment of setting up the admin panel
+	private isBootstrapping(request: Request) {
+		return ['/account/create'].includes(request.path);
+	}
+
 	public async guard(request: Request, response: Response, next: NextFunction) {
 		const { provider } = request.body as { claim: string; provider: string };
 		if (this.authHandler.skipPath(request.path)) return next();
@@ -161,7 +166,7 @@ export class Authentication {
 						});
 					}
 				}
-				if (!customer && !user) {
+				if (!customer && !user && !this.isBootstrapping(request)) {
 					return response.status(StatusCodes.UNAUTHORIZED).json({
 						error: `Looks like customer and user are not found in the system or they are not registered yet. Please contact administrator.`,
 					})
