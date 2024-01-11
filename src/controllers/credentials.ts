@@ -339,7 +339,6 @@ export class CredentialController {
 				if (trackResult.error) {
 					console.error(`Tracking Error: ${trackResult.error}`);
 				}
-				return response.status(StatusCodes.OK).json(result);
 			}
 			// Return Ok response
 			return response.status(StatusCodes.OK).json(result);
@@ -446,7 +445,6 @@ export class CredentialController {
 				if (trackResult.error) {
 					console.error(`Tracking Error: ${trackResult.error}`);
 				}
-				return response.status(StatusCodes.OK).json(result);
 			}
 
 			return response.status(StatusCodes.OK).json(result);
@@ -551,7 +549,6 @@ export class CredentialController {
 				if (trackResult.error) {
 					console.error(`Tracking Error: ${trackResult.error}`);
 				}
-				return response.status(StatusCodes.OK).json(result);
 			}
 			// Return Ok response
 			return response.status(StatusCodes.OK).json(result);

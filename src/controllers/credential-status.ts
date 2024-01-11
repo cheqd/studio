@@ -882,9 +882,6 @@ export class CredentialStatusController {
 				if (trackResult.error) {
 					console.error(`Tracking Error: ${trackResult.error}`);
 				}
-				return response.status(StatusCodes.OK).json({
-					...formatted,
-				});
 			}
 
 			return response.status(StatusCodes.OK).json(formatted);
@@ -1085,7 +1082,6 @@ export class CredentialStatusController {
 				if (trackResult.error) {
 					console.error(`Tracking Error: ${trackResult.error}`);
 				}
-				return response.status(StatusCodes.OK).json({ ...formatted });
 			}
 
 			return response.status(StatusCodes.OK).json(formatted);
