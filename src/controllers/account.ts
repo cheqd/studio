@@ -111,41 +111,28 @@ export class AccountController {
 		}
 
 		const identityStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
-		let apiKey = await identityStrategySetup.agent.getAPIKey(response.locals.customer, response.locals.user);
-		// If there is no API key for the customer - create it
-		if (!apiKey) {
-			apiKey = await identityStrategySetup.agent.setAPIKey(
-				request.session.idToken,
-				response.locals.customer,
-				response.locals.user
-			);
-		} else if (apiKey.isExpired()) {
-			// If API key is expired - update it
-			apiKey = await identityStrategySetup.agent.updateAPIKey(apiKey, request.session.idToken);
-		}
-		return response.status(StatusCodes.OK).json({
-			idToken: apiKey?.apiKey,
-		});
-	}
-
-	public async setupDefaultRole(request: Request, response: Response) {
-		if (request.body) {
-			const { body } = request;
-			if (!body.user.isSuspended) {
-				const logToHelper = new LogToHelper();
-				const _r = await logToHelper.setup();
-				if (_r.status !== StatusCodes.OK) {
-					return response.status(StatusCodes.BAD_GATEWAY).json({
-						error: _r.error,
-					});
-				}
-				const resp = await logToHelper.setDefaultRoleForUser(body.user.id as string);
-				return response.status(resp.status).json({
-					error: resp.error,
-				});
+		try {
+			// Get the API key for the customer
+			let apiKey = await identityStrategySetup.agent.getAPIKey(response.locals.customer, response.locals.user);
+			// If there is no API key for the customer - create it
+			if (!apiKey) {
+				apiKey = await identityStrategySetup.agent.setAPIKey(
+					request.session.idToken,
+					response.locals.customer,
+					response.locals.user
+				);
+			} else if (apiKey.isExpired()) {
+				// If API key is expired - update it
+				apiKey = await identityStrategySetup.agent.updateAPIKey(apiKey, request.session.idToken);
 			}
+			return response.status(StatusCodes.OK).json({
+				idToken: apiKey?.apiKey,
+			});
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			});
 		}
-		return response.status(StatusCodes.BAD_REQUEST).json({});
 	}
 
 	public async bootstrap(request: Request, response: Response) {
@@ -424,7 +411,7 @@ export class AccountController {
 					}
 				}
 			}
-			return response.status(StatusCodes.OK).json(customer);
+			return response.status(StatusCodes.CREATED).json(customer);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal Error: ${(error as Error)?.message || error}`,

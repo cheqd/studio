@@ -18,6 +18,10 @@ export class M2MTokenUserInfoFetcher extends AuthReturn implements IUserInfoFetc
 	}
 
 	async fetchUserInfo(request: Request, oauthProvider: IOAuthProvider): Promise<IAuthResponse> {
+		// Get customerId from header
+		const customerId = request.headers['customer-id'];
+		if (typeof customerId === 'string') this.setCustomerId(customerId);
+		// Verify M2M token
 		return this.verifyJWTToken(this.token as string, oauthProvider);
 	}
 
