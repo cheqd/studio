@@ -13,8 +13,24 @@ import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import type { UserEntity } from '../database/entities/user.entity.js';
 import type { PaymentAccountEntity } from '../database/entities/payment.account.entity.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
+import { check, validationResult } from 'express-validator';
 
 export class AccountController {
+	public static createValidator = [
+		check('user')
+			.exists()
+			.withMessage('user is required')
+			.isObject()
+			.withMessage('user property should be valid object')
+			.bail(),
+		check('user.primaryEmail')
+			.exists()
+			.withMessage('user.primaryEmail is required')
+			.trim()
+			.isEmail()
+			.withMessage('primaryEmail is not a valid email id')
+			.bail(),
+	];
 	/**
 	 * @openapi
 	 *
@@ -335,7 +351,7 @@ export class AccountController {
 	public async create(request: Request, response: Response) {
 		// For now we keep temporary 1-1 relation between user and customer
 		// So the flow is:
-		// 1. Get LogTo app id from request header
+		// 1. Get LogToPrimaryEmail from request body
 		// 2. Check if the customer exists
 		// 2.1. if no - Create customer
 		// 3. Check is paymentAccount exists for the customer
@@ -345,11 +361,13 @@ export class AccountController {
 		let paymentAccount: PaymentAccountEntity | null;
 
 		// 1. Get logTo UserId from request body
-		if (!request.body.user || !request.body.user.primaryEmail) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: 'User id is not specified or primaryEmail is not set',
-			});
+		// validate request
+		const result = validationResult(request);
+		// handle error
+		if (!result.isEmpty()) {
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
+
 		const logToUserEmail = request.body.user.primaryEmail;
 
 		try {

@@ -1247,8 +1247,6 @@
  *          user:
  *            type: object
  *            properties:
- *              id:
- *                type: string
  *              primaryEmail:
  *                type: string
  *     InvalidRequest:

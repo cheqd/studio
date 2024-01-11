@@ -184,7 +184,7 @@ class App {
 		);
 
 		// Account API
-		app.post('/account/create', new AccountController().create);
+		app.post('/account/create', AccountController.createValidator, new AccountController().create);
 		app.get('/account', new AccountController().get);
 		app.get('/account/idtoken', new AccountController().getIdToken);
 
