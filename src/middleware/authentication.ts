@@ -135,10 +135,12 @@ export class Authentication {
 				});
 			}
 			// Only for rules when it's not allowed for unauthorized users
-			// we need to find customer and assign it to the response.locals
+			// we need to find customer or user and assign them to the response.locals
 			if (!_resp.data.isAllowedUnauthorized) {
+				let customer;
+				let user;
 				if (_resp.data.userId !== '') {
-					const user = await UserService.instance.get(_resp.data.userId);
+					user = await UserService.instance.get(_resp.data.userId);
 					if (!user) {
 						return response.status(StatusCodes.NOT_FOUND).json({
 							error: `Looks like user with logToId ${_resp.data.userId} is not found`,
@@ -149,18 +151,23 @@ export class Authentication {
 							error: `Looks like user with logToId ${_resp.data.userId} is not assigned to any CredentialService customer`,
 						});
 					}
-					response.locals.customer = user.customer;
-					response.locals.user = user;
-				} else if (!(['/account/create'].includes(request.path) && _resp.data.customerId == '')) {
-					// allow bootstrap apis to create a customer if there is not customerId
-					const customer = await CustomerService.instance.get(_resp.data.customerId);
+					customer = user.customer;
+				} 
+				if (_resp.data.customerId !== '' && !customer) {
+					customer = await CustomerService.instance.get(_resp.data.customerId);
 					if (!customer) {
 						return response.status(StatusCodes.NOT_FOUND).json({
-							error: `Looks like user with logToId ${_resp.data.customerId} is not found`,
+							error: `Looks like customer with id ${_resp.data.customerId} is not found`,
 						});
 					}
-					response.locals.customer = customer;
 				}
+				if (!customer && !user) {
+					return response.status(StatusCodes.UNAUTHORIZED).json({
+						error: `Looks like customer and user are not found in the system or they are not registered yet. Please contact administrator.`,
+					})
+				}
+				response.locals.customer = customer;
+				response.locals.user = user;
 			}
 			next();
 		} catch (err) {
