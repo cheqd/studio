@@ -331,11 +331,15 @@ export class CredentialController {
 				} as ITrackOperation;
 
 				// Track operation
-				const trackingStatus = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
-				return response.status(StatusCodes.OK).json({
-					...result,
-					trackingStatus,
-				});
+				const trackResult = await identityServiceStrategySetup.agent
+					.trackOperation(trackInfo)
+					.catch((error) => {
+						return { error };
+					});
+				if (trackResult.error) {
+					console.error(`Tracking Error: ${trackResult.error}`);
+				}
+				return response.status(StatusCodes.OK).json(result);
 			}
 			// Return Ok response
 			return response.status(StatusCodes.OK).json(result);
@@ -434,8 +438,15 @@ export class CredentialController {
 				} as ITrackOperation;
 
 				// Track operation
-				const trackingStatus = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
-				return response.status(StatusCodes.OK).json({ ...result, trackingStatus });
+				const trackResult = await identityServiceStrategySetup.agent
+					.trackOperation(trackInfo)
+					.catch((error) => {
+						return { error };
+					});
+				if (trackResult.error) {
+					console.error(`Tracking Error: ${trackResult.error}`);
+				}
+				return response.status(StatusCodes.OK).json(result);
 			}
 
 			return response.status(StatusCodes.OK).json(result);
@@ -532,8 +543,15 @@ export class CredentialController {
 				} as ITrackOperation;
 
 				// Track operation
-				const trackingStatus = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
-				return response.status(StatusCodes.OK).json({ ...result, trackingStatus });
+				const trackResult = await identityServiceStrategySetup.agent
+					.trackOperation(trackInfo)
+					.catch((error) => {
+						return { error };
+					});
+				if (trackResult.error) {
+					console.error(`Tracking Error: ${trackResult.error}`);
+				}
+				return response.status(StatusCodes.OK).json(result);
 			}
 			// Return Ok response
 			return response.status(StatusCodes.OK).json(result);

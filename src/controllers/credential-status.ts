@@ -562,9 +562,16 @@ export class CredentialStatusController {
 				},
 			} as ITrackOperation;
 
-			const trackingStatus = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
+			const trackResult = await identityServiceStrategySetup.agent
+				.trackOperation(trackResourceInfo)
+				.catch((error) => {
+					return { error };
+				});
+			if (trackResult.error) {
+				console.error(`Tracking Error: ${trackResult.error}`);
+			}
 			// return result
-			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined, trackingStatus });
+			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined });
 		} catch (error) {
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -689,9 +696,16 @@ export class CredentialStatusController {
 					feePaymentNetwork: CheqdNetwork.Testnet,
 				},
 			} as ITrackOperation;
-			const trackingStatus = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
+			const trackResult = await identityServiceStrategySetup.agent
+				.trackOperation(trackResourceInfo)
+				.catch((error) => {
+					return { error };
+				});
+			if (trackResult.error) {
+				console.error(`Tracking Error: ${trackResult.error}`);
+			}
 			// return result
-			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined, trackingStatus });
+			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined });
 		} catch (error) {
 			// return catch-all error
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -860,10 +874,16 @@ export class CredentialStatusController {
 						symmetricKey: '',
 					},
 				} as ITrackOperation;
-				const trackingStatus = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
+				const trackResult = await identityServiceStrategySetup.agent
+					.trackOperation(trackResourceInfo)
+					.catch((error) => {
+						return { error };
+					});
+				if (trackResult.error) {
+					console.error(`Tracking Error: ${trackResult.error}`);
+				}
 				return response.status(StatusCodes.OK).json({
 					...formatted,
-					trackingStatus,
 				});
 			}
 
@@ -1057,8 +1077,15 @@ export class CredentialStatusController {
 						feePaymentNetwork: CheqdNetwork.Testnet,
 					},
 				} as ITrackOperation;
-				const trackingStatus = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
-				return response.status(StatusCodes.OK).json({ ...formatted, trackingStatus });
+				const trackResult = await identityServiceStrategySetup.agent
+					.trackOperation(trackResourceInfo)
+					.catch((error) => {
+						return { error };
+					});
+				if (trackResult.error) {
+					console.error(`Tracking Error: ${trackResult.error}`);
+				}
+				return response.status(StatusCodes.OK).json({ ...formatted });
 			}
 
 			return response.status(StatusCodes.OK).json(formatted);

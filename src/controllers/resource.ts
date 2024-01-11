@@ -190,11 +190,17 @@ export class ResourceController {
 					},
 				} as ITrackOperation;
 
-				const trackingStatus = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
+				const trackResult = await identityServiceStrategySetup.agent
+					.trackOperation(trackResourceInfo)
+					.catch((error) => {
+						return { error };
+					});
+				if (trackResult.error) {
+					console.error(`Tracking Error: ${trackResult.error}`);
+				}
 
 				return response.status(StatusCodes.CREATED).json({
 					resource,
-					trackingStatus,
 				});
 			} else {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
