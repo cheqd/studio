@@ -331,11 +331,13 @@ export class CredentialController {
 				} as ITrackOperation;
 
 				// Track operation
-				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
-				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-						error: trackResult.error,
+				const trackResult = await identityServiceStrategySetup.agent
+					.trackOperation(trackInfo)
+					.catch((error) => {
+						return { error };
 					});
+				if (trackResult.error) {
+					console.error(`Tracking Error: ${trackResult.error}`);
 				}
 			}
 			// Return Ok response
@@ -435,11 +437,13 @@ export class CredentialController {
 				} as ITrackOperation;
 
 				// Track operation
-				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
-				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-						error: trackResult.error,
+				const trackResult = await identityServiceStrategySetup.agent
+					.trackOperation(trackInfo)
+					.catch((error) => {
+						return { error };
 					});
+				if (trackResult.error) {
+					console.error(`Tracking Error: ${trackResult.error}`);
 				}
 			}
 
@@ -537,11 +541,13 @@ export class CredentialController {
 				} as ITrackOperation;
 
 				// Track operation
-				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackInfo);
-				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-						error: trackResult.error,
+				const trackResult = await identityServiceStrategySetup.agent
+					.trackOperation(trackInfo)
+					.catch((error) => {
+						return { error };
 					});
+				if (trackResult.error) {
+					console.error(`Tracking Error: ${trackResult.error}`);
 				}
 			}
 			// Return Ok response

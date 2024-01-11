@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.15.1-develop.1](https://github.com/cheqd/credential-service/compare/2.15.0...2.15.1-develop.1) (2024-01-11)
+
+
+### Bug Fixes
+
+* Fix error handling on tracking operations [DEV-3527] ([#461](https://github.com/cheqd/credential-service/issues/461)) ([53d7dfd](https://github.com/cheqd/credential-service/commit/53d7dfdcc23d90dba85a681f39ebc724b7fbdcc2))
+
 ## [2.15.0](https://github.com/cheqd/credential-service/compare/2.14.0...2.15.0) (2024-01-05)
 
 

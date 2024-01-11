@@ -562,13 +562,14 @@ export class CredentialStatusController {
 				},
 			} as ITrackOperation;
 
-			const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
+			const trackResult = await identityServiceStrategySetup.agent
+				.trackOperation(trackResourceInfo)
+				.catch((error) => {
+					return { error };
+				});
 			if (trackResult.error) {
-				return response
-					.status(StatusCodes.INTERNAL_SERVER_ERROR)
-					.json(trackResult as CreateEncryptedStatusListUnsuccessfulResponseBody);
+				console.error(`Tracking Error: ${trackResult.error}`);
 			}
-
 			// return result
 			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined });
 		} catch (error) {
@@ -695,14 +696,14 @@ export class CredentialStatusController {
 					feePaymentNetwork: CheqdNetwork.Testnet,
 				},
 			} as ITrackOperation;
-			const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
-
+			const trackResult = await identityServiceStrategySetup.agent
+				.trackOperation(trackResourceInfo)
+				.catch((error) => {
+					return { error };
+				});
 			if (trackResult.error) {
-				return response
-					.status(StatusCodes.INTERNAL_SERVER_ERROR)
-					.json(trackResult as CreateEncryptedStatusListUnsuccessfulResponseBody);
+				console.error(`Tracking Error: ${trackResult.error}`);
 			}
-
 			// return result
 			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined });
 		} catch (error) {
@@ -873,12 +874,13 @@ export class CredentialStatusController {
 						symmetricKey: '',
 					},
 				} as ITrackOperation;
-				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
+				const trackResult = await identityServiceStrategySetup.agent
+					.trackOperation(trackResourceInfo)
+					.catch((error) => {
+						return { error };
+					});
 				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-						updated: false,
-						error: trackResult.error,
-					} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
+					console.error(`Tracking Error: ${trackResult.error}`);
 				}
 			}
 
@@ -1072,12 +1074,13 @@ export class CredentialStatusController {
 						feePaymentNetwork: CheqdNetwork.Testnet,
 					},
 				} as ITrackOperation;
-				const trackResult = await identityServiceStrategySetup.agent.trackOperation(trackResourceInfo);
+				const trackResult = await identityServiceStrategySetup.agent
+					.trackOperation(trackResourceInfo)
+					.catch((error) => {
+						return { error };
+					});
 				if (trackResult.error) {
-					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-						updated: false,
-						error: trackResult.error,
-					} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
+					console.error(`Tracking Error: ${trackResult.error}`);
 				}
 			}
 
