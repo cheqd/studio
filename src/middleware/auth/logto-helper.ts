@@ -82,6 +82,22 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		return await this.assignDefaultRoleForUser(userId, process.env.LOGTO_DEFAULT_ROLE_ID);
 	}
 
+	public async setDefaultRoleForApp(appId: string): Promise<ICommonErrorResponse> {
+		const roles = await this.getRolesForUser(appId);
+		if (roles.status !== StatusCodes.OK) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, roles.error);
+		}
+		// Check that default role is set
+		for (const role of roles.data) {
+			if (role.id === process.env.LOGTO_DEFAULT_ROLE_ID) {
+				return this.returnOk(roles.data);
+			}
+		}
+
+		// Assign a default role to a user
+		return await this.assignDefaultRoleForApp(appId, process.env.LOGTO_DEFAULT_ROLE_ID);
+	}
+
 	private returnOk(data: any): ICommonErrorResponse {
 		return {
 			status: StatusCodes.OK,
@@ -114,6 +130,23 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		}
 		return this.returnOk(scopes);
 	}
+
+	public async getAppScopes(appId: string): Promise<ICommonErrorResponse> {
+		const scopes = [] as string[];
+		const roles = await this.getRolesForApp(appId);
+		if (roles.status !== StatusCodes.OK) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, roles.error);
+		}
+		// Check that default role is set
+		for (const role of roles.data) {
+			const _s = await this.getScopesForRole(role.id);
+			if (_s.status === StatusCodes.OK) {
+				scopes.push(..._s.data);
+			}
+		}
+		return this.returnOk(scopes);
+	}
+
 	private async setDefaultScopes(): Promise<ICommonErrorResponse> {
 		const _r = await this.getAllResources();
 		if (_r.status !== StatusCodes.OK) {
@@ -224,6 +257,17 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 			return this.returnError(StatusCodes.BAD_GATEWAY, `getRolesForUser ${err}`);
 		}
 	}
+
+	public async getRolesForApp(appId: string): Promise<ICommonErrorResponse> {
+		const uri = new URL(`/api/applications/${appId}/roles`, process.env.LOGTO_ENDPOINT);
+		try {
+			// Note: By default, the API returns first 20 roles.
+			// If our roles per user grows to more than 20, we need to implement pagination
+			return await this.getToLogto(uri, 'GET');
+		} catch (err) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, `getRolesForUser ${err}`);
+		}
+	}
 	private async getRoleInfo(roleId: string): Promise<ICommonErrorResponse> {
 		const uri = new URL(`/api/roles/${roleId}`, process.env.LOGTO_ENDPOINT);
 		try {
@@ -264,6 +308,20 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 			return this.returnError(StatusCodes.BAD_GATEWAY, `getRolesForUser ${err}`);
 		}
 	}
+
+	private async assignDefaultRoleForApp(appId: string, roleId: string): Promise<ICommonErrorResponse> {
+		const uri = new URL(`/api/applications/${appId}/roles`, process.env.LOGTO_ENDPOINT);
+		// Such role exists
+		try {
+			const body = {
+				roleIds: [roleId],
+			};
+			return await this.postToLogto(uri, body, { 'Content-Type': 'application/json' });
+		} catch (err) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, `getRolesForUser ${err}`);
+		}
+	}
+
 	private async getRoleIdByName(roleName: string): Promise<ICommonErrorResponse> {
 		const uri = new URL(`/api/roles`, process.env.LOGTO_ENDPOINT);
 		try {

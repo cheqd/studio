@@ -8,6 +8,8 @@ import { APITokenUserInfoFetcher } from './user-info-fetcher/api-token.js';
 import type { IUserInfoFetcher } from './user-info-fetcher/base.js';
 import { IAuthHandler, RuleRoutine, IAPIGuard } from './routine.js';
 import type { IAuthResponse, MethodToScopeRule } from '../../types/authentication.js';
+import { M2MTokenUserInfoFetcher } from './user-info-fetcher/m2m-token.js';
+import { decodeJwt } from 'jose';
 
 export class BaseAPIGuard extends RuleRoutine implements IAPIGuard {
 	userInfoFetcher: IUserInfoFetcher = {} as IUserInfoFetcher;
@@ -46,6 +48,7 @@ export class BaseAPIGuard extends RuleRoutine implements IAPIGuard {
 		}
 		this.setScopes(_res.data.scopes);
 		this.setUserId(_res.data.userId);
+		this.setCustomerId(_res.data.customerId);
 		// Checks if the list of scopes from user enough to make an action
 		if (!this.areValidScopes(this.getRule(), this.getScopes())) {
 			return this.returnError(
@@ -107,7 +110,7 @@ export class BaseAPIGuard extends RuleRoutine implements IAPIGuard {
 export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 	private nextHandler: IAuthHandler;
 	oauthProvider: IOAuthProvider;
-	private bearerTokenIdentifier = 'Bearer';
+	private static bearerTokenIdentifier = 'Bearer';
 	private pathSkip = ['/swagger', '/static', '/logto', '/account/bootstrap'];
 
 	constructor() {
@@ -118,7 +121,7 @@ export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 		this.nextHandler = {} as IAuthHandler;
 	}
 
-	public extractBearerTokenFromHeaders({ authorization }: IncomingHttpHeaders): string | unknown {
+	public static extractBearerTokenFromHeaders({ authorization }: IncomingHttpHeaders): string | unknown {
 		if (authorization && authorization.startsWith(this.bearerTokenIdentifier)) {
 			return authorization.slice(this.bearerTokenIdentifier.length + 1);
 		}
@@ -126,9 +129,14 @@ export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 	}
 
 	private chooseUserFetcherStrategy(request: Request): void {
-		const token = this.extractBearerTokenFromHeaders(request.headers) as string;
+		const token = BaseAuthHandler.extractBearerTokenFromHeaders(request.headers) as string;
 		if (token) {
-			this.setUserInfoStrategy(new APITokenUserInfoFetcher(token));
+			const payload = decodeJwt(token);
+			if (payload.aud === process.env.LOGTO_APP_ID) {
+				this.setUserInfoStrategy(new APITokenUserInfoFetcher(token));
+			} else {
+				this.setUserInfoStrategy(new M2MTokenUserInfoFetcher(token));
+			}
 		} else {
 			this.setUserInfoStrategy(new SwaggerUserInfoFetcher());
 		}

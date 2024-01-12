@@ -16,6 +16,7 @@ import { configLogToExpress } from '../types/constants.js';
 import { handleAuthRoutes, withLogto } from '@logto/express';
 import { LogToProvider } from './auth/oauth/logto-provider.js';
 import { AuthInfoHandler } from './auth/routes/auth-user-info.js';
+import { CustomerService } from '../services/customer.js';
 
 dotenv.config();
 
@@ -121,6 +122,11 @@ export class Authentication {
 		}
 	}
 
+	// ToDo: refactor it or keep for the moment of setting up the admin panel
+	private isBootstrapping(request: Request) {
+		return ['/account/create'].includes(request.path);
+	}
+
 	public async guard(request: Request, response: Response, next: NextFunction) {
 		const { provider } = request.body as { claim: string; provider: string };
 		if (this.authHandler.skipPath(request.path)) return next();
@@ -134,20 +140,38 @@ export class Authentication {
 				});
 			}
 			// Only for rules when it's not allowed for unauthorized users
-			// we need to find customer and assign it to the response.locals
+			// we need to find customer or user and assign them to the response.locals
 			if (!_resp.data.isAllowedUnauthorized) {
-				const user = await UserService.instance.get(_resp.data.userId);
-				if (!user) {
-					return response.status(StatusCodes.NOT_FOUND).json({
-						error: `Looks like user with logToId ${_resp.data.userId} is not found`,
-					});
+				let customer;
+				let user;
+				if (_resp.data.userId !== '') {
+					user = await UserService.instance.get(_resp.data.userId);
+					if (!user) {
+						return response.status(StatusCodes.NOT_FOUND).json({
+							error: `Looks like user with logToId ${_resp.data.userId} is not found`,
+						});
+					}
+					if (user && !user.customer) {
+						return response.status(StatusCodes.NOT_FOUND).json({
+							error: `Looks like user with logToId ${_resp.data.userId} is not assigned to any CredentialService customer`,
+						});
+					}
+					customer = user.customer;
+				} 
+				if (_resp.data.customerId !== '' && !customer) {
+					customer = await CustomerService.instance.get(_resp.data.customerId);
+					if (!customer) {
+						return response.status(StatusCodes.NOT_FOUND).json({
+							error: `Looks like customer with id ${_resp.data.customerId} is not found`,
+						});
+					}
 				}
-				if (user && !user.customer) {
-					return response.status(StatusCodes.NOT_FOUND).json({
-						error: `Looks like user with logToId ${_resp.data.userId} is not assigned to any CredentialService customer`,
-					});
+				if (!customer && !user && !this.isBootstrapping(request)) {
+					return response.status(StatusCodes.UNAUTHORIZED).json({
+						error: `Looks like customer and user are not found in the system or they are not registered yet. Please contact administrator.`,
+					})
 				}
-				response.locals.customer = user.customer;
+				response.locals.customer = customer;
 				response.locals.user = user;
 			}
 			next();

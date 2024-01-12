@@ -72,6 +72,7 @@ export interface IAuthResponse extends ICommonErrorResponse {
 	status: number;
 	data: {
 		userId: string;
+		customerId: string;
 		scopes: string[];
 		namespace: Namespaces;
 		isAllowedUnauthorized: boolean;
