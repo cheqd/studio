@@ -12,26 +12,32 @@ import { OPERATION_CATEGORY_NAME_CREDENTIAL } from '../types/constants.js';
 import { CheqdW3CVerifiableCredential } from '../services/w3c-credential.js';
 import { isCredentialIssuerDidDeactivated } from '../services/helpers.js';
 import type {
+	IssueCredentialRequestBody,
 	IssueCredentialResponseBody,
+	RevokeCredentialRequestBody,
+	RevokeCredentialRequestQuery,
 	RevokeCredentialResponseBody,
+	SuspendCredentialRequestBody,
+	SuspendCredentialRequestQuery,
 	SuspendCredentialResponseBody,
 	UnsuccesfulIssueCredentialResponseBody,
 	UnsuccesfulRevokeCredentialResponseBody,
 	UnsuccesfulSuspendCredentialResponseBody,
 	UnsuccesfulUnsuspendCredentialResponseBody,
 	UnsuccesfulVerifyCredentialResponseBody,
+	UnsuspendCredentialRequestBody,
+	UnsuspendCredentialRequestQuery,
 	UnsuspendCredentialResponseBody,
+	VerifyCredentialRequestBody,
+	VerifyCredentialRequestQuery,
 	VerifyCredentialResponseBody,
 } from '../types/credential.js';
-import { VeridaDIDValidator } from './validator/did.js';
 
 export class CredentialController {
 	public static issueValidator = [
 		check(['subjectDid', 'issuerDid']).exists().withMessage('DID is required').bail().isDID().bail(),
 		check('subjectDid')
-			.custom((value, { req }) =>
-				new VeridaDIDValidator().validate(value).valid ? !!req.body.credentialSchema : true
-			)
+			.isVeridaDID()
 			.withMessage('credentialSchema is required for a verida DID subject'),
 		check('attributes')
 			.exists()
@@ -56,7 +62,9 @@ export class CredentialController {
 			.withMessage('W3c verifiable credential was not provided')
 			.isW3CCheqdCredential()
 			.bail(),
-		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value').bail(),
+		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value').toBoolean().bail(),
+		query('fetchRemoteContexts').optional().isBoolean().withMessage('fetchRemoteContexts should be a boolean value').toBoolean().bail(),
+		query('allowDeactivatedDid').optional().isBoolean().withMessage('allowDeactivatedDid should be a boolean value').toBoolean().bail(),
 		query('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
 	];
 	public static revokeValidator = [
@@ -65,7 +73,7 @@ export class CredentialController {
 			.withMessage('W3c verifiable credential was not provided')
 			.isW3CCheqdCredential()
 			.bail(),
-		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').bail(),
+		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').toBoolean().bail(),
 	];
 	public static suspendValidator = [
 		check('credential')
@@ -74,7 +82,7 @@ export class CredentialController {
 			.bail()
 			.isW3CCheqdCredential()
 			.bail(),
-		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').bail(),
+		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').toBoolean().bail(),
 	];
 
 	public static reinstateValidator = [
@@ -83,7 +91,7 @@ export class CredentialController {
 			.withMessage('W3c verifiable credential was not provided')
 			.isW3CCheqdCredential()
 			.bail(),
-		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').bail(),
+		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').toBoolean().bail(),
 	];
 
 	/**
@@ -126,12 +134,15 @@ export class CredentialController {
 			} satisfies ValidationErrorResponseBody);
 		}
 
+		// Get request body
+		const requestBody = request.body as IssueCredentialRequestBody;
+
 		// Handles string input instead of an array
-		if (typeof request.body.type === 'string') {
-			request.body.type = [request.body.type];
+		if (typeof requestBody.type === 'string') {
+			requestBody.type = [requestBody.type];
 		}
-		if (typeof request.body['@context'] === 'string') {
-			request.body['@context'] = [request.body['@context']];
+		if (typeof requestBody['@context'] === 'string') {
+			requestBody['@context'] = [requestBody['@context']];
 		}
 
 		// Get strategy e.g. postgres or local
@@ -139,22 +150,22 @@ export class CredentialController {
 
 		try {
 			// resolve issuer DID-Document
-			const resolvedResult = await identityServiceStrategySetup.agent.resolve(request.body.issuerDid);
+			const resolvedResult = await identityServiceStrategySetup.agent.resolve(requestBody.issuerDid);
 			// check if DID-Document is resolved
 			const body = await resolvedResult.json();
 			if (!body?.didDocument) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `DID ${request.body.issuerDid} is not resolved because of error from resolver: ${body.didResolutionMetadata.error}.`,
+					error: `DID ${requestBody.issuerDid} is not resolved because of error from resolver: ${body.didResolutionMetadata.error}.`,
 				} satisfies UnsuccesfulIssueCredentialResponseBody);
 			}
 			if (body.didDocumentMetadata.deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `${request.body.issuerDid} is deactivated`,
+					error: `${requestBody.issuerDid} is deactivated`,
 				} satisfies UnsuccesfulIssueCredentialResponseBody);
 			}
 			// issue credential
 			const credential: VerifiableCredential = await Credentials.instance.issue_credential(
-				request.body,
+				requestBody,
 				response.locals.customer
 			);
 			return response.status(StatusCodes.OK).json(credential satisfies IssueCredentialResponseBody);
@@ -224,10 +235,12 @@ export class CredentialController {
 				error: result.array().pop()?.msg,
 			} satisfies ValidationErrorResponseBody);
 		}
+
 		// Get params from request
-		const { credential, policies } = request.body;
-		const verifyStatus = request.query.verifyStatus === 'true';
-		const allowDeactivatedDid = request.query.allowDeactivatedDid === 'true';
+		const { credential, policies } = request.body as VerifyCredentialRequestBody;
+		const { verifyStatus, allowDeactivatedDid } = request.query as VerifyCredentialRequestQuery;
+
+		// Create credential object
 		const cheqdCredential = new CheqdW3CVerifiableCredential(credential);
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
@@ -311,18 +324,18 @@ export class CredentialController {
 			} satisfies UnsuccesfulRevokeCredentialResponseBody);
 		}
 		// Get publish flag
-		const publish = request.query.publish === 'false' ? false : true;
+		const { publish } = request.query as RevokeCredentialRequestQuery;
 		// Get symmetric key
-		const symmetricKey = request.body.symmetricKey as string;
+		const { credential, symmetricKey } = request.body as RevokeCredentialRequestBody;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
 			const result = await identityServiceStrategySetup.agent.revokeCredentials(
-				request.body.credential,
-				publish,
+				credential,
+				publish as boolean,
 				response.locals.customer,
-				symmetricKey
+				symmetricKey as string
 			);
 
 			// Track operation if revocation was successful and publish is true
@@ -419,18 +432,19 @@ export class CredentialController {
 		}
 
 		// Get publish flag
-		const publish = request.query.publish === 'false' ? false : true;
+		const { publish } = request.query as SuspendCredentialRequestQuery;
 		// Get symmetric key
-		const symmetricKey = request.body.symmetricKey as string;
+		const { credential, symmetricKey } = request.body as SuspendCredentialRequestBody;
+
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
 			const result = await identityServiceStrategySetup.agent.suspendCredentials(
-				request.body.credential,
-				publish,
+				credential,
+				publish as boolean,
 				response.locals.customer,
-				symmetricKey
+				symmetricKey as string
 			);
 
 			// Track operation if suspension was successful and publish is true
@@ -526,18 +540,18 @@ export class CredentialController {
 			} satisfies UnsuccesfulUnsuspendCredentialResponseBody);
 		}
 		// Get publish flag
-		const publish = request.query.publish === 'false' ? false : true;
+		const { publish } = request.query as UnsuspendCredentialRequestQuery;
 		// Get symmetric key
-		const symmetricKey = request.body.symmetricKey as string;
+		const { credential, symmetricKey } = request.body as UnsuspendCredentialRequestBody;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
 			const result = await identityServiceStrategySetup.agent.reinstateCredentials(
-				request.body.credential,
-				publish,
+				credential,
+				publish as boolean,
 				response.locals.customer,
-				symmetricKey
+				symmetricKey as string
 			);
 
 			// Track operation if the process of reinstantiating was successful and publish is true

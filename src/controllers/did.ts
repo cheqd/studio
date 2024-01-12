@@ -5,7 +5,6 @@ import {
 	DIDDocument,
 	MethodSpecificIdAlgo,
 	Service,
-	VerificationMethod,
 	VerificationMethods,
 	createDidVerificationMethod,
 } from '@cheqd/sdk';
@@ -16,7 +15,6 @@ import { bases } from 'multiformats/basics';
 import { base64ToBytes } from 'did-jwt';
 import type {
 	CreateDidRequestBody,
-	KeyImportRequest,
 	CreateDidResponseBody,
 	DeactivateDidResponseBody,
 	ListDidsResponseBody,
@@ -27,12 +25,18 @@ import type {
 	UnsuccessfulGetDidResponseBody,
 	UnsuccessfulResolveDidResponseBody,
 	UnsuccessfulUpdateDidResponseBody,
-	UpdateDidResponseBody
+	UpdateDidResponseBody,
+	UpdateDidRequestBody,
+	ImportDidRequestBody,
+	DeactivateDIDRequestParams,
+	GetDIDRequestParams,
+	ResolveDIDRequestParams
 } from '../types/did.js';
 import { check, validationResult, param } from './validator/index.js';
 import type { IKey, RequireOnly } from '@veramo/core';
 import { extractPublicKeyHex } from '@veramo/utils';
 import type { ValidationErrorResponseBody } from '../types/shared.js';
+import type { KeyImport } from '../types/key.js';
 
 export class DIDController {
 	public static createDIDValidator = [
@@ -101,14 +105,16 @@ export class DIDController {
 			.withMessage('Keys should be an array of KeyImportRequest objects used in the DID-VerificationMethod')
 			.custom((value) => {
 				return value.every(
-					(item: KeyImportRequest) =>
+					(item: KeyImport) =>
 						item.privateKeyHex &&
 						typeof item.encrypted === 'boolean' &&
-						(item.encrypted === true ? item.ivHex && item.salt : true)
+						(item.encrypted === true ? item.ivHex && item.salt : true) &&
+						typeof item.type === 'string' &&
+						(item.type === 'Ed25519' || item.type === 'Secp256k1')
 				);
 			})
 			.withMessage(
-				'KeyImportRequest object is invalid, privateKeyHex is required, Property ivHex, salt is required when encrypted is set to true'
+				'KeyImportRequest object is invalid, privateKeyHex is required, Property ivHex, salt is required when encrypted is set to true, property type should be Ed25519 or Secp256k1'
 			)
 			.bail(),
 	];
@@ -307,21 +313,14 @@ export class DIDController {
 		}
 
 		// handle request params
-		const { did, service, verificationMethod, authentication } = request.body as {
-			did: string;
-			service: Service[];
-			verificationMethod: VerificationMethod[];
-			authentication: string[];
-		};
-		let updatedDocument: DIDDocument;
+		const { did, service, verificationMethod, authentication } = request.body as UpdateDidRequestBody;
+		// Get the didDocument from the request if it's placed there
+		let updatedDocument: DIDDocument | undefined = request.body.didDocument ;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			if (request.body.didDocument) {
-				// Just pass the didDocument from the user as is
-				updatedDocument = request.body.didDocument;
-			} else if (did && (service || verificationMethod || authentication)) {
+			if (!updatedDocument && (did && (service || verificationMethod || authentication))) {
 				// Resolve DID
 				const resolvedResult = await identityServiceStrategySetup.agent.resolveDid(did);
 				// Check output that DID is not deactivated or exist
@@ -417,8 +416,11 @@ export class DIDController {
 		}
 
 		try {
-			const { did, controllerKeyId, keys } = request.body;
+			// Get the params from body
+			const { did, controllerKeyId, keys } = request.body as ImportDidRequestBody;
+			// Resolve the didDocument from the ledger
 			const { didDocument } = await new IdentityServiceStrategySetup().agent.resolveDid(did);
+			// Check if the didDocument is valid
 			if (!didDocument || !didDocument.verificationMethod || didDocument.verificationMethod.length === 0) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: `Invalid request: Invalid did document for ${did}`,
@@ -435,7 +437,7 @@ export class DIDController {
 				// import keys
 				keysToImport.push(
 					...(await Promise.all(
-						keys.map(async (key: any) => {
+						keys.map(async (key: KeyImport) => {
 							const { type, encrypted, ivHex, salt } = key;
 							let { privateKeyHex } = key;
 							if (encrypted) {
@@ -515,13 +517,16 @@ export class DIDController {
 			} satisfies ValidationErrorResponseBody);
 		}
 
+		// Extract did from request params
+		const { did } = request.params as DeactivateDIDRequestParams;
+
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
 			// Deactivate DID
 			await identityServiceStrategySetup.agent.deactivateDid(
-				request.params.did,
+				did,
 				response.locals.customer
 			);
 			// Send the deactivated DID as result
@@ -560,14 +565,17 @@ export class DIDController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async getDids(request: Request, response: Response) {
+		// Extract did from params
+		const { did } = request.params as GetDIDRequestParams;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+
 		try {
-			const did = request.params.did
+			const didDocument  = did
 				? await identityServiceStrategySetup.agent.resolveDid(request.params.did)
 				: await identityServiceStrategySetup.agent.listDids(response.locals.customer);
 
-			return response.status(StatusCodes.OK).json(did satisfies ListDidsResponseBody | QueryDidResponseBody);
+			return response.status(StatusCodes.OK).json(didDocument satisfies ListDidsResponseBody | QueryDidResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -648,9 +656,11 @@ export class DIDController {
 	public async resolveDidUrl(request: Request, response: Response) {
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
+		// Extract did from params
+		const { did } = request.params as ResolveDIDRequestParams;
 		try {
 			let res: globalThis.Response;
-			if (request.params.did) {
+			if (did) {
 				res = await identityServiceStrategySetup.agent.resolve(
 					request.params.did + getQueryParams(request.query)
 				);

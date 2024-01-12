@@ -5,6 +5,8 @@ import { decryptPrivateKey } from '../helpers/helpers.js';
 import { toString } from 'uint8arrays';
 import type {
 	CreateKeyResponseBody,
+	GetKeyRequestBody,
+	ImportKeyRequestBody,
 	ImportKeyResponseBody,
 	QueryKeyResponseBody,
 	UnsuccessfulCreateKeyResponseBody,
@@ -125,15 +127,15 @@ export class KeyController {
 	 */
 	public async importKey(request: Request, response: Response) {
 		// Get parameters requeired for key importing
-		const { type, encrypted, ivHex, salt, alias } = request.body;
+		const { type, encrypted, ivHex, salt, alias, privateKeyHex } = request.body as ImportKeyRequestBody;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
-		let { privateKeyHex } = request.body;
+		let decryptedPrivateKeyHex = privateKeyHex;
 
 		try {
 			if (encrypted) {
 				if (ivHex && salt) {
-					privateKeyHex = toString(await decryptPrivateKey(privateKeyHex, ivHex, salt), 'hex');
+					decryptedPrivateKeyHex = toString(await decryptPrivateKey(privateKeyHex, ivHex, salt), 'hex');
 				} else {
 					return response.status(StatusCodes.BAD_REQUEST).json({
 						error: `Invalid request: Property ivHex, salt is required when encrypted is set to true`,
@@ -142,7 +144,7 @@ export class KeyController {
 			}
 			const key = await identityServiceStrategySetup.agent.importKey(
 				type || 'Ed25519',
-				privateKeyHex,
+				decryptedPrivateKeyHex,
 				response.locals.customer,
 				alias
 			);
@@ -196,15 +198,16 @@ export class KeyController {
 	 *               error: Internal Error
 	 */
 	public async getKey(request: Request, response: Response) {
+		const { kid } = request.params as GetKeyRequestBody;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
-			const key = await identityServiceStrategySetup.agent.getKey(request.params.kid, response.locals.customer);
+			const key = await identityServiceStrategySetup.agent.getKey(kid, response.locals.customer);
 			if (key) {
 				return response.status(StatusCodes.OK).json(key satisfies QueryKeyResponseBody);
 			}
 			return response.status(StatusCodes.NOT_FOUND).json({
-				error: `Key with kid: ${request.params.kid} not found`,
+				error: `Key with kid: ${kid} not found`,
 			} satisfies UnsuccessfulQueryKeyResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

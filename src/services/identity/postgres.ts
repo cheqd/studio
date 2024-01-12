@@ -7,6 +7,7 @@ import type {
 	PresentationPayload,
 	VerifiableCredential,
 	VerifiablePresentation,
+	W3CVerifiableCredential,
 } from '@veramo/core';
 import type { AbstractPrivateKeyStore } from '@veramo/key-manager';
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local';
@@ -24,7 +25,7 @@ import {
 	type TransactionResult,
 } from '@cheqd/did-provider-cheqd';
 import { DefaultDidUrlPattern, VeramoAgent, ITrackResult, ITrackOperation } from '../../types/shared.js';
-import type { VerificationOptions } from '../../types/credential.js';
+import type { VerificationOptions } from '../../types/shared.js';
 import type { FeePaymentOptions } from '../../types/credential-status.js';
 import type { CredentialRequest } from '../../types/credential.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
@@ -443,7 +444,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async revokeCredentials(
-		credentials: VerifiableCredential | VerifiableCredential[],
+		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
@@ -454,7 +455,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async suspendCredentials(
-		credentials: VerifiableCredential | VerifiableCredential[],
+		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
@@ -465,7 +466,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async reinstateCredentials(
-		credentials: VerifiableCredential | VerifiableCredential[],
+		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
@@ -476,7 +477,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	private async validateCredentialAccess(
-		credentials: VerifiableCredential | VerifiableCredential[],
+		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
 		customer: CustomerEntity
 	) {
 		credentials = Array.isArray(credentials) ? credentials : [credentials];

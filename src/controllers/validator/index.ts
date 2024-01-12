@@ -1,5 +1,5 @@
 import { ExpressValidator } from 'express-validator';
-import { DIDValidator, KeyDIDValidator } from './did.js';
+import { DIDValidator, KeyDIDValidator, VeridaDIDValidator } from './did.js';
 import { DIDDocumentValidator } from './did-document.js';
 import type { Validatable } from './validator.js';
 import type { Service, VerificationMethod } from 'did-resolver';
@@ -85,4 +85,12 @@ export const { check, validationResult, query, param } = new ExpressValidator({
 		}
 		return true;
 	},
+
+	isVeridaDID: (value: Validatable) => {
+		const res = new VeridaDIDValidator().validate(value);
+		if (!res.valid) {
+			throw new Error(res.error);
+		}
+		return true;
+	}
 });

@@ -11,6 +11,7 @@ import type {
 	PresentationPayload,
 	VerifiableCredential,
 	VerifiablePresentation,
+	W3CVerifiableCredential,
 } from '@veramo/core';
 import type {
 	ResourcePayload,
@@ -25,7 +26,7 @@ import type {
 	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
 import type { ITrackOperation, ITrackResult, VeramoAgent } from '../../types/shared';
-import type { VerificationOptions } from '../../types/credential';
+import type { VerificationOptions } from '../../types/shared';
 import type { FeePaymentOptions } from '../../types/credential-status';
 import type { CredentialRequest } from '../../types/credential';
 import type { CheckStatusListOptions } from '../../types/credential-status';
@@ -159,7 +160,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 	revokeCredentials(
-		credential: VerifiableCredential | VerifiableCredential[],
+		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
@@ -167,7 +168,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 	suspendCredentials(
-		credential: VerifiableCredential | VerifiableCredential[],
+		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
@@ -175,7 +176,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 	reinstateCredentials(
-		credential: VerifiableCredential | VerifiableCredential[],
+		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string

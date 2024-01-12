@@ -6,6 +6,7 @@ import type {
 	ICredentialIssuer,
 	ICredentialVerifier,
 	TAgent,
+	VerificationPolicies,
 } from '@veramo/core';
 import type { ICheqd, CheqdDIDProvider, LinkedResourceMetadataResolutionResult } from '@cheqd/did-provider-cheqd';
 import type { ICredentialIssuerLD } from '@veramo/credential-ld';
@@ -119,3 +120,12 @@ export class CommonReturn implements IReturn {
 		};
 	}
 }
+export interface VerificationOptions {
+	fetchRemoteContexts?: boolean;
+	domain?: string;
+	verifyStatus?: boolean;
+	policies?: VerificationPolicies;
+	allowDeactivatedDid?: boolean;
+}
+;
+

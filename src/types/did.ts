@@ -1,7 +1,21 @@
 import type { CheqdNetwork, MethodSpecificIdAlgo, Service, VerificationMethods } from '@cheqd/sdk';
-import type { DIDDocument, DIDResolutionResult } from 'did-resolver';
+import type { DIDDocument, DIDResolutionResult, VerificationMethod } from 'did-resolver';
 import type { UnsuccessfulQueryResponseBody, UnsuccessfulResponseBody } from './shared.js';
 import type { IIdentifier } from '@veramo/core';
+import type { KeyImport } from './key.js';
+
+// Interfaces
+export interface DidImportRequest {
+	did: string;
+	keys: KeyImport[];
+	controllerKeyId?: string;
+}
+
+// Requests
+
+export type DIDRequest = {
+	did: string
+}
 
 export type CreateDidRequestBody = {
 	didDocument?: DIDDocument;
@@ -17,20 +31,23 @@ export type CreateDidRequestBody = {
 	};
 };
 
-// Interfaces
-
-export interface KeyImportRequest {
-	privateKeyHex: string;
-	encrypted: boolean;
-	ivHex: string | undefined;
-	salt: string | undefined;
-}
-
-export interface DidImportRequest {
+export type UpdateDidRequestBody = {
 	did: string;
-	keys: KeyImportRequest[];
+	service: Service[];
+	verificationMethod: VerificationMethod[];
+	authentication: string[];
+	didDocument?: DIDDocument;
 }
 
+export type ImportDidRequestBody = DidImportRequest;
+
+export type DeactivateDIDRequestParams = DIDRequest;
+
+export type GetDIDRequestParams = DIDRequest;
+
+export type ResolveDIDRequestParams = DIDRequest;
+
+// Responses
 //Positive
 
 export type CreateDidResponseBody = IIdentifier;

@@ -5,10 +5,13 @@ import { check, validationResult, query } from './validator/index.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { CheqdW3CVerifiablePresentation } from '../services/w3c-presentation.js';
 import type {
+	CreatePresentationRequestBody,
 	CreatePresentationResponseBody,
 	UnsuccessfulCreatePresentationResponseBody,
 	UnsuccessfulVerifyCredentialResponseBody,
+	VerifyPresentationRequestBody,
 	VerifyPresentationResponseBody,
+	VerifyPresentationResponseQuery,
 } from '../types/presentation.js';
 import { isIssuerDidDeactivated } from '../services/helpers.js';
 import type { ValidationErrorResponseBody } from '../types/shared.js';
@@ -33,8 +36,20 @@ export class PresentationController {
 			.bail(),
 		check('verifierDid').optional().isDID().bail(),
 		check('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
-		check('makeFeePayment').optional().isBoolean().withMessage('makeFeePayment: should be a boolean').bail(),
-		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value').bail(),
+		check('makeFeePayment').optional().isBoolean().withMessage('makeFeePayment: should be a boolean').toBoolean().bail(),
+		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value').toBoolean().bail(),
+		query('allowDeactivatedDid')
+			.optional()
+			.isBoolean()
+			.withMessage('allowDeactivatedDid should be a boolean value')
+			.toBoolean()
+			.bail(),
+		query('fetchRemoteContexts')
+			.optional()
+			.isBoolean()
+			.withMessage('fetchRemoteContexts should be a boolean value')
+			.toBoolean()
+			.bail(),
 	];
 
 	/**
@@ -78,7 +93,7 @@ export class PresentationController {
 			} satisfies ValidationErrorResponseBody);
 		}
 
-		const { credentials, holderDid, verifierDid } = request.body;
+		const { credentials, holderDid, verifierDid } = request.body as CreatePresentationRequestBody;
 
 		try {
 			const result = await new IdentityServiceStrategySetup(
@@ -164,9 +179,10 @@ export class PresentationController {
 			} satisfies UnsuccessfulVerifyCredentialResponseBody);
 		}
 
-		const { presentation, verifierDid, policies, makeFeePayment } = request.body;
-		const verifyStatus = request.query.verifyStatus === 'true';
-		const allowDeactivatedDid = request.query.allowDeactivatedDid === 'true';
+		// Extract request parameters from body
+		const { presentation, verifierDid, policies, makeFeePayment } = request.body as VerifyPresentationRequestBody;
+		// Extract request parameters from query
+		const {verifyStatus, allowDeactivatedDid} = request.query as VerifyPresentationResponseQuery;
 
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);

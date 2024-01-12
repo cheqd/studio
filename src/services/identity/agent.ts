@@ -16,6 +16,7 @@ import {
 	TAgent,
 	VerifiableCredential,
 	VerifiablePresentation,
+	W3CVerifiableCredential,
 } from '@veramo/core';
 import { KeyManager } from '@veramo/key-manager';
 import { DIDStore, KeyStore } from '@veramo/data-store';
@@ -52,7 +53,7 @@ import type { CheqdNetwork } from '@cheqd/sdk';
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key';
 import { Resolver, ResolverRegistry } from 'did-resolver';
 import { DefaultDidUrlPattern, CreateAgentRequest, VeramoAgent } from '../../types/shared.js';
-import type { VerificationOptions } from '../../types/credential.js';
+import type { VerificationOptions } from '../../types/shared.js';
 import type { FeePaymentOptions } from '../../types/credential-status.js';
 import type { CredentialRequest } from '../../types/credential.js';
 import { DefaultStatusActions } from '../../types/credential-status.js';
@@ -565,7 +566,7 @@ export class Veramo {
 
 	async revokeCredentials(
 		agent: VeramoAgent,
-		credentials: VerifiableCredential | VerifiableCredential[],
+		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish = true,
 		symmetricKey = ''
 	) {
@@ -587,7 +588,7 @@ export class Veramo {
 
 	async suspendCredentials(
 		agent: VeramoAgent,
-		credentials: VerifiableCredential | VerifiableCredential[],
+		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish = true,
 		symmetricKey = ''
 	) {
@@ -605,7 +606,7 @@ export class Veramo {
 
 	async unsuspendCredentials(
 		agent: VeramoAgent,
-		credentials: VerifiableCredential | VerifiableCredential[],
+		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish = true,
 		symmetricKey = ''
 	) {

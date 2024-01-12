@@ -10,8 +10,10 @@ import type { ITrackOperation, ValidationErrorResponseBody } from '../types/shar
 import { OPERATION_CATEGORY_NAME_RESOURCE } from '../types/constants.js';
 import { check, validationResult, param, query } from './validator/index.js';
 import type {
+	CreateResourceRequestBody,
 	CreateResourceResponseBody,
 	QueryResourceResponseBody,
+	SearchResourceRequestParams,
 	UnsuccessfulCreateResourceResponseBody,
 	UnsuccessfulQueryResourceResponseBody,
 } from '../types/resource.js';
@@ -148,8 +150,11 @@ export class ResourceController {
 			} satisfies ValidationErrorResponseBody);
 		}
 
+		// Extract the did from the request
 		const { did } = request.params;
-		const { data, encoding, name, type, alsoKnownAs, version, network } = request.body;
+		// Extract the resource parameters from the request
+		const { data, encoding, name, type, alsoKnownAs, version, network } = request.body as CreateResourceRequestBody;
+		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		let resourcePayload: Partial<MsgCreateResourcePayload> = {};
@@ -305,13 +310,14 @@ export class ResourceController {
 				error: result.array().pop()?.msg,
 			} satisfies ValidationErrorResponseBody);
 		}
+		const { did } = request.params as SearchResourceRequestParams;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 		try {
 			let res: globalThis.Response;
-			if (request.params.did) {
+			if (did) {
 				res = await identityServiceStrategySetup.agent.resolve(
-					request.params.did + getQueryParams(request.query)
+					did + getQueryParams(request.query)
 				);
 
 				const contentType = res.headers.get('Content-Type') || 'application/octet-stream';
