@@ -17,19 +17,11 @@ import { check, validationResult } from 'express-validator';
 
 export class AccountController {
 	public static createValidator = [
-		check('user')
+		check('username')
 			.exists()
-			.withMessage('user is required')
-			.isObject()
-			.withMessage('user property should be valid object')
-			.bail(),
-		check('user.primaryEmail')
-			.exists()
-			.withMessage('user.primaryEmail is required')
-			.trim()
-			.isEmail()
-			.withMessage('primaryEmail is not a valid email id')
-			.bail(),
+			.withMessage('username is required')
+			.isString()
+			.withMessage('username should be a unique valid string'),
 	];
 	/**
 	 * @openapi
@@ -338,7 +330,7 @@ export class AccountController {
 	public async create(request: Request, response: Response) {
 		// For now we keep temporary 1-1 relation between user and customer
 		// So the flow is:
-		// 1. Get LogToPrimaryEmail from request body
+		// 1. Get username from request body
 		// 2. Check if the customer exists
 		// 2.1. if no - Create customer
 		// 3. Check is paymentAccount exists for the customer
@@ -355,7 +347,7 @@ export class AccountController {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
 
-		const logToUserEmail = request.body.user.primaryEmail;
+		const username = request.body.username;
 
 		try {
 			// 2. Check if the customer exists
@@ -363,7 +355,7 @@ export class AccountController {
 				customer = response.locals.customer as CustomerEntity;
 			} else {
 				// 2.1 Create customer
-				customer = (await CustomerService.instance.create(logToUserEmail)) as CustomerEntity;
+				customer = (await CustomerService.instance.create(username)) as CustomerEntity;
 				if (!customer) {
 					return response.status(StatusCodes.BAD_REQUEST).json({
 						error: 'Customer creation failed',
