@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.0-develop.2](https://github.com/cheqd/credential-service/compare/2.16.0-develop.1...2.16.0-develop.2) (2024-01-12)
+
+
+### Bug Fixes
+
+* Update email to username in account/create ([#470](https://github.com/cheqd/credential-service/issues/470)) ([b19a353](https://github.com/cheqd/credential-service/commit/b19a353a01b0a10ff705b65f3042b32eebc1e6f0))
+
 ## [2.16.0-develop.1](https://github.com/cheqd/credential-service/compare/2.15.1-develop.1...2.16.0-develop.1) (2024-01-12)
 
 
