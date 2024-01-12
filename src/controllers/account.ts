@@ -48,7 +48,7 @@ export class AccountController {
 		try {
 			if (!response.locals.customer) {
 				// It's not ok, seems like there no any customer assigned to the user yet
-				// But it's not an expectede behaviour cause it should be done on bootstrap phase of after migration
+				// But it's not an expected behaviour cause it should be done on bootstrap phase of after migration
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 					error: 'Bad state cause there is no customer assigned to the user yet. Please contact administrator.',
 				} satisfies UnsuccessfulQueryCustomerResponseBody);

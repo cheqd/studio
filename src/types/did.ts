@@ -51,7 +51,7 @@ export type UnsuccessfulCreateDidResponseBody = UnsuccessfulResponseBody;
 
 export type UnsuccessfulUpdateDidResponseBody = UnsuccessfulResponseBody;
 
-export type UnsuccessfulDeactivateDidResponseBody = UnsuccessfulResponseBody & { deactivated: boolean };
+export type UnsuccessfulDeactivateDidResponseBody = UnsuccessfulResponseBody | { deactivated: boolean };
 
 export type UnsuccessfulGetDidResponseBody = UnsuccessfulQueryResponseBody;
 

@@ -32,6 +32,7 @@ import type {
 import { check, validationResult, param } from './validator/index.js';
 import type { IKey, RequireOnly } from '@veramo/core';
 import { extractPublicKeyHex } from '@veramo/utils';
+import type { ValidationErrorResponseBody } from '../types/shared.js';
 
 export class DIDController {
 	public static createDIDValidator = [
@@ -162,7 +163,7 @@ export class DIDController {
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: result.array().pop()?.msg,
-			} satisfies UnsuccessfulCreateDidResponseBody);
+			} satisfies ValidationErrorResponseBody);
 		}
 
 		// handle request params
@@ -302,7 +303,7 @@ export class DIDController {
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: result.array().pop()?.msg,
-			} satisfies UnsuccessfulUpdateDidResponseBody);
+			} satisfies ValidationErrorResponseBody);
 		}
 
 		// handle request params
@@ -410,7 +411,9 @@ export class DIDController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({ 
+				error: result.array().pop()?.msg 
+			} satisfies ValidationErrorResponseBody);
 		}
 
 		try {
@@ -502,17 +505,14 @@ export class DIDController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async deactivateDid(request: Request, response: Response) {
-		// Assume that did was not deactivated
-		let deactivated = false;
 		// validate request
 		const result = validationResult(request);
 
 		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
-				deactivated,
 				error: result.array().pop()?.msg,
-			} satisfies UnsuccessfulDeactivateDidResponseBody);
+			} satisfies ValidationErrorResponseBody);
 		}
 
 		// Get strategy e.g. postgres or local
@@ -520,7 +520,7 @@ export class DIDController {
 
 		try {
 			// Deactivate DID
-			deactivated = await identityServiceStrategySetup.agent.deactivateDid(
+			await identityServiceStrategySetup.agent.deactivateDid(
 				request.params.did,
 				response.locals.customer
 			);
@@ -530,7 +530,6 @@ export class DIDController {
 			return response.status(StatusCodes.OK).json(result satisfies DeactivateDidResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				deactivated,
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulDeactivateDidResponseBody);
 		}

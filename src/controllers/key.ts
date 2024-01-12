@@ -76,7 +76,7 @@ export class KeyController {
 			return response.status(StatusCodes.OK).json(key satisfies CreateKeyResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `${error}`,
+				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulCreateKeyResponseBody);
 		}
 	}

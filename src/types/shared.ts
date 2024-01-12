@@ -100,6 +100,8 @@ export type UnsuccessfulResponseBody = {
 
 export type UnsuccessfulQueryResponseBody = UnsuccessfulResponseBody;
 
+export type ValidationErrorResponseBody = UnsuccessfulResponseBody;
+
 export class CommonReturn implements IReturn {
 	returnOk(data = {}): ICommonErrorResponse {
 		return {

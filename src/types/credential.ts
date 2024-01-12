@@ -45,10 +45,10 @@ export type UnsuccesfulRevokeredentialResponseBody = UnsuccessfulResponseBody;
 
 export type UnsuccesfulReinstateCredentialResponseBody = UnsuccessfulResponseBody;
 
-export type UnsuccesfulVerifyCredentialResponseBody = VerifyCredentialResponseBody & UnsuccessfulResponseBody;
+export type UnsuccesfulVerifyCredentialResponseBody = UnsuccessfulResponseBody | VerifyCredentialResponseBody;
 
-export type UnsuccesfulRevokeCredentialResponseBody = { revoked: boolean } & UnsuccessfulResponseBody;
+export type UnsuccesfulRevokeCredentialResponseBody = Pick<RevocationResult, 'revoked'> | UnsuccessfulResponseBody;
 
-export type UnsuccesfulSuspendCredentialResponseBody = { suspended: boolean } & UnsuccessfulResponseBody;
+export type UnsuccesfulSuspendCredentialResponseBody = Pick<SuspensionResult, 'suspended'> | UnsuccessfulResponseBody;
 
-export type UnsuccesfulUnsuspendCredentialResponseBody = { unsuspended: boolean } & UnsuccessfulResponseBody;
+export type UnsuccesfulUnsuspendCredentialResponseBody = Pick<UnsuspensionResult, 'unsuspended'> | UnsuccessfulResponseBody;

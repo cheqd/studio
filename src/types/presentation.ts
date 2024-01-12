@@ -9,6 +9,6 @@ export type CreatePresentationResponseBody = VerifiablePresentation;
 
 // Negative
 
-export type UnsuccessfulVerifyCredentialResponseBody = UnsuccessfulResponseBody & VerifyPresentationResponseBody;
+export type UnsuccessfulVerifyCredentialResponseBody = UnsuccessfulResponseBody | VerifyPresentationResponseBody;
 
 export type UnsuccessfulCreatePresentationResponseBody = UnsuccessfulResponseBody;

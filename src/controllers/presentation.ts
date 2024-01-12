@@ -11,6 +11,7 @@ import type {
 	VerifyPresentationResponseBody,
 } from '../types/presentation.js';
 import { isIssuerDidDeactivated } from '../services/helpers.js';
+import type { ValidationErrorResponseBody } from '../types/shared.js';
 
 export class PresentationController {
 	public static presentationCreateValidator = [
@@ -68,11 +69,13 @@ export class PresentationController {
 	 */
 
 	public async createPresentation(request: Request, response: Response) {
+		// Validate request
 		const result = validationResult(request);
+		// Handle validation error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: result.array()[0].msg,
-			} satisfies UnsuccessfulCreatePresentationResponseBody);
+			} satisfies ValidationErrorResponseBody);
 		}
 
 		const { credentials, holderDid, verifierDid } = request.body;
@@ -153,14 +156,11 @@ export class PresentationController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async verifyPresentation(request: Request, response: Response) {
-		// Assume that the presentation is not verified
-		let verified = false;
 
 		const result = validationResult(request);
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: result.array()[0].msg,
-				verified,
 			} satisfies UnsuccessfulVerifyCredentialResponseBody);
 		}
 
@@ -178,7 +178,6 @@ export class PresentationController {
 			if (setResult.error) {
 				return response.status(setResult.status).send({
 					error: setResult.error,
-					verified,
 				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			}
 			if (cheqdPresentation.isPaymentNeeded()) {
@@ -188,7 +187,6 @@ export class PresentationController {
 				);
 				if (feePaymentResult.error) {
 					return response.status(StatusCodes.BAD_REQUEST).json({
-						verified,
 						error: `verify: payment: error: ${feePaymentResult.error}`,
 					} satisfies UnsuccessfulVerifyCredentialResponseBody);
 				}
@@ -199,7 +197,6 @@ export class PresentationController {
 			if (!allowDeactivatedDid && (await isIssuerDidDeactivated(cheqdPresentation))) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: `Credential issuer DID is deactivated`,
-					verified,
 				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			}
 			// verify presentation
@@ -212,12 +209,10 @@ export class PresentationController {
 				},
 				response.locals.customer
 			);
-			// set verified
-			verified = result.verified;
 			// handle errors
 			if (result.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					verified,
+					verified: result.verified,
 					error: `verify: ${result.error.message}`,
 				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			}
@@ -228,7 +223,6 @@ export class PresentationController {
 			// handle doesn't meet condition
 			if (errorRef?.errorCode === 'NodeAccessControlConditionsReturnedNotAuthorized')
 				return response.status(StatusCodes.UNAUTHORIZED).json({
-					verified,
 					error: `check: error: ${
 						errorRef?.message
 							? 'unauthorised: decryption conditions are not met'
@@ -238,7 +232,6 @@ export class PresentationController {
 			// handle incorrect access control conditions
 			if (errorRef?.errorCode === 'incorrect_access_control_conditions')
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					verified,
 					error: `check: error: ${
 						errorRef?.message
 							? 'incorrect access control conditions'
@@ -247,7 +240,6 @@ export class PresentationController {
 				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			// catch all other unhandled errors
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				verified,
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulVerifyCredentialResponseBody);
 		}

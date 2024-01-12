@@ -6,7 +6,7 @@ import { check, validationResult, query } from './validator/index.js';
 
 import { Credentials } from '../services/credentials.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import type { ITrackOperation } from '../types/shared.js';
+import type { ITrackOperation, ValidationErrorResponseBody } from '../types/shared.js';
 import { Cheqd } from '@cheqd/did-provider-cheqd';
 import { OPERATION_CATEGORY_NAME_CREDENTIAL } from '../types/constants.js';
 import { CheqdW3CVerifiableCredential } from '../services/w3c-credential.js';
@@ -123,7 +123,7 @@ export class CredentialController {
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: result.array().pop()?.msg,
-			} satisfies UnsuccesfulIssueCredentialResponseBody);
+			} satisfies ValidationErrorResponseBody);
 		}
 
 		// Handles string input instead of an array
@@ -216,16 +216,13 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async verify(request: Request, response: Response) {
-		// Assume credential was not verified
-		let verified = false;
 		// validate request
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
-				verified,
 				error: result.array().pop()?.msg,
-			} satisfies UnsuccesfulVerifyCredentialResponseBody);
+			} satisfies ValidationErrorResponseBody);
 		}
 		// Get params from request
 		const { credential, policies } = request.body;
@@ -238,7 +235,6 @@ export class CredentialController {
 		try {
 			if (!allowDeactivatedDid && (await isCredentialIssuerDidDeactivated(cheqdCredential))) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					verified,
 					error: `Credential issuer DID is deactivated`,
 				} satisfies UnsuccesfulVerifyCredentialResponseBody);
 			}
@@ -252,12 +248,9 @@ export class CredentialController {
 				response.locals.customer
 			);
 
-			// Setup verified flag
-			verified = verifyResult.verified;
-
 			if (verifyResult.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					verified,
+					verified: verifyResult.verified,
 					error: `verify: ${verifyResult.error.message}`,
 				} satisfies UnsuccesfulVerifyCredentialResponseBody);
 			}
@@ -265,7 +258,6 @@ export class CredentialController {
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-				verified,
 			} satisfies UnsuccesfulVerifyCredentialResponseBody);
 		}
 	}
@@ -310,14 +302,11 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async revoke(request: Request, response: Response) {
-		// Assume that the credential was not revoked
-		let revoked = false;
 		// validate request
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
-				revoked,
 				error: result.array().pop()?.msg,
 			} satisfies UnsuccesfulRevokeCredentialResponseBody);
 		}
@@ -335,8 +324,6 @@ export class CredentialController {
 				response.locals.customer,
 				symmetricKey
 			);
-			// Get revoked flag
-			revoked = Array.isArray(result.revoked) ? result.revoked[0] : result.revoked;
 
 			// Track operation if revocation was successful and publish is true
 			// Otherwise the StatusList2021 publisher should manually publish the resource
@@ -380,7 +367,6 @@ export class CredentialController {
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-				revoked,
 			} satisfies UnsuccesfulRevokeCredentialResponseBody);
 		}
 	}
@@ -423,15 +409,12 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async suspend(request: Request, response: Response) {
-		// Assume that the credential was not suspended
-		let suspended = false;
 		// validate request
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: result.array().pop()?.msg,
-				suspended,
 			} satisfies UnsuccesfulSuspendCredentialResponseBody);
 		}
 
@@ -449,8 +432,6 @@ export class CredentialController {
 				response.locals.customer,
 				symmetricKey
 			);
-
-			suspended = Array.isArray(result.suspended) ? result.suspended[0] : result.suspended;
 
 			// Track operation if suspension was successful and publish is true
 			// Otherwise the StatusList2021 publisher should manually publish the resource
@@ -493,7 +474,6 @@ export class CredentialController {
 			return response.status(StatusCodes.OK).json(result satisfies SuspendCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				suspended,
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccesfulSuspendCredentialResponseBody);
 		}
@@ -537,14 +517,11 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async reinstate(request: Request, response: Response) {
-		// Assume that the credential was not unsuspended
-		let unsuspended = false;
 		// validate request
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
-				unsuspended,
 				error: result.array().pop()?.msg,
 			} satisfies UnsuccesfulUnsuspendCredentialResponseBody);
 		}
@@ -562,8 +539,6 @@ export class CredentialController {
 				response.locals.customer,
 				symmetricKey
 			);
-
-			unsuspended = Array.isArray(result.unsuspended) ? result.unsuspended[0] : result.unsuspended;
 
 			// Track operation if the process of reinstantiating was successful and publish is true
 			// Otherwise the StatusList2021 publisher should manually publish the resource
@@ -606,7 +581,6 @@ export class CredentialController {
 			return response.status(StatusCodes.OK).json(result satisfies UnsuspendCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				unsuspended,
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccesfulUnsuspendCredentialResponseBody);
 		}

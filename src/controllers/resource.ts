@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { getQueryParams } from '../helpers/helpers.js';
 import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
-import type { ITrackOperation } from '../types/shared.js';
+import type { ITrackOperation, ValidationErrorResponseBody } from '../types/shared.js';
 import { OPERATION_CATEGORY_NAME_RESOURCE } from '../types/constants.js';
 import { check, validationResult, param, query } from './validator/index.js';
 import type {
@@ -145,7 +145,7 @@ export class ResourceController {
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: result.array().pop()?.msg,
-			} satisfies UnsuccessfulCreateResourceResponseBody);
+			} satisfies ValidationErrorResponseBody);
 		}
 
 		const { did } = request.params;
@@ -303,7 +303,7 @@ export class ResourceController {
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: result.array().pop()?.msg,
-			} satisfies UnsuccessfulQueryResourceResponseBody);
+			} satisfies ValidationErrorResponseBody);
 		}
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();

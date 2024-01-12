@@ -3,7 +3,7 @@ import { check, validationResult, query } from './validator/index.js';
 import { fromString } from 'uint8arrays';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import type { ITrackOperation } from '../types/shared.js';
+import type { ITrackOperation, ValidationErrorResponseBody } from '../types/shared.js';
 import type { CheckStatusListSuccessfulResponseBody, FeePaymentOptions } from '../types/credential-status.js';
 import {
 	DefaultStatusAction,
@@ -496,7 +496,9 @@ export class CredentialStatusController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({ 
+				error: result.array().pop()?.msg 
+			} satisfies ValidationErrorResponseBody);
 		}
 
 		// collect request parameters - case: body
@@ -627,7 +629,9 @@ export class CredentialStatusController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({ 
+				error: result.array().pop()?.msg 
+			} satisfies ValidationErrorResponseBody);
 		}
 
 		// collect request parameters - case: body
@@ -761,7 +765,9 @@ export class CredentialStatusController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({ 
+				error: result.array().pop()?.msg 
+			} satisfies ValidationErrorResponseBody);
 		}
 
 		// collect request parameters - case: body
@@ -794,7 +800,10 @@ export class CredentialStatusController {
 			// handle generic error
 			return response
 				.status(StatusCodes.BAD_REQUEST)
-				.json({ updated: false, error: `update: error: ${unencrypted.error}` });
+				.json({ 
+					updated: false, 
+					error: `update: error: ${unencrypted.error}` 
+				} satisfies UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 		}
 
 		// validate unencrypted
@@ -940,7 +949,9 @@ export class CredentialStatusController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({ 
+				error: result.array().pop()?.msg 
+			} satisfies ValidationErrorResponseBody);
 		}
 
 		// collect request parameters - case: body
@@ -1140,7 +1151,9 @@ export class CredentialStatusController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array()[0].msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array()[0].msg 
+			} satisfies ValidationErrorResponseBody);
 		}
 
 		// collect request parameters - case: body
@@ -1302,7 +1315,9 @@ export class CredentialStatusController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg 
+			} satisfies ValidationErrorResponseBody);
 		}
 
 		// collect request parameters - case: query
