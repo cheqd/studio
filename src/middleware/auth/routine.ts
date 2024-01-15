@@ -18,6 +18,7 @@ export interface IAuthParams {
 	reset(): void;
 	// Getters
 	getUserId(): string;
+	getCustomerId(): string;
 	getScopes(): string[];
 	getNamespace(): Namespaces;
 	getIsAllowedUnauthorized(): boolean;
@@ -34,6 +35,7 @@ export interface IAuthParams {
 
 export class AuthParams implements IAuthParams {
 	userId: string;
+	customerId: string;
 	scopes: string[];
 	namespace: Namespaces;
 	isAllowedUnauthorized: boolean;
@@ -44,6 +46,7 @@ export class AuthParams implements IAuthParams {
 		this.namespace = '' as Namespaces;
 		this.scopes = [];
 		this.userId = '' as string;
+		this.customerId = '' as string;
 		this.isAllowedUnauthorized = false;
 		this.rule = {} as MethodToScopeRule;
 		this.routeToScoupeList = [];
@@ -52,6 +55,9 @@ export class AuthParams implements IAuthParams {
 	// Getters
 	public getUserId(): string {
 		return this.userId;
+	}
+	public getCustomerId(): string {
+		return this.customerId;
 	}
 	public getScopes(): string[] {
 		return this.scopes;
@@ -72,6 +78,9 @@ export class AuthParams implements IAuthParams {
 	//Setters
 	public setUserId(userId: string): void {
 		this.userId = userId;
+	}
+	public setCustomerId(customerId: string): void {
+		this.customerId = customerId;
 	}
 	public setScopes(scopes: string[]): void {
 		this.scopes = scopes;
@@ -112,6 +121,7 @@ export class AuthReturn extends AuthParams implements IReturn {
 			error: '',
 			data: {
 				userId: this.getUserId(),
+				customerId: this.getCustomerId(),
 				scopes: this.getScopes() as string[],
 				namespace: this.getNamespace(),
 				isAllowedUnauthorized: this.getIsAllowedUnauthorized(),
@@ -125,6 +135,7 @@ export class AuthReturn extends AuthParams implements IReturn {
 			error: error,
 			data: {
 				userId: '',
+				customerId: '',
 				scopes: [],
 				namespace: this.getNamespace(),
 				isAllowedUnauthorized: this.getIsAllowedUnauthorized(),

@@ -1241,6 +1241,14 @@
  *         address:
  *           type: string
  *           example: cheqd1wgsvqwlkmdp60f4dek26ak0sjw6au3ytd3pz7f
+ *     AccountCreateRequest:
+ *       type: object
+ *       properties:
+ *          user:
+ *            type: object
+ *            properties:
+ *              primaryEmail:
+ *                type: string
  *     InvalidRequest:
  *       description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
  *       type: object

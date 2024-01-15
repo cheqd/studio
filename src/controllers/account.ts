@@ -20,8 +20,16 @@ import type {
 	UnsuccessfulQueryIdTokenResponseBody,
 } from '../types/customer.js';
 import type { UnsuccessfulResponseBody } from '../types/shared.js';
+import { check, validationResult } from 'express-validator';
 
 export class AccountController {
+	public static createValidator = [
+		check('username')
+			.exists()
+			.withMessage('username is required')
+			.isString()
+			.withMessage('username should be a unique valid string'),
+	];
 	/**
 	 * @openapi
 	 *
@@ -160,14 +168,12 @@ export class AccountController {
 		}
 		const logToUserId = request.body.user.id;
 		const logToUserEmail = request.body.user.primaryEmail;
-
 		const defaultRole = await RoleService.instance.getDefaultRole();
 		if (!defaultRole) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: 'Default role is not set on Credential Service side',
 			} satisfies UnsuccessfulResponseBody);
 		}
-
 		// 2. Check if such row exists in the DB
 		user = await UserService.instance.get(logToUserId);
 		if (!user) {
@@ -297,5 +303,119 @@ export class AccountController {
 			}
 		}
 		return response.status(StatusCodes.OK).json({});
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /account/create:
+	 *   post:
+	 *     tags: [Account]
+	 *     summary: Create an client for an authenticated user.
+	 *     description: This endpoint creates a client in the custodian-mode for an authenticated user
+	 *     requestBody:
+	 *       content:
+	 *         application/x-www-form-urlencoded:
+	 *           schema:
+	 *             $ref: '#/components/schemas/AccountCreateRequest'
+	 *         application/json:
+	 *           schema:
+	 *             $ref: '#/components/schemas/AccountCreateRequest'
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             idToken:
+	 *                type: string
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async create(request: Request, response: Response) {
+		// For now we keep temporary 1-1 relation between user and customer
+		// So the flow is:
+		// 1. Get username from request body
+		// 2. Check if the customer exists
+		// 2.1. if no - Create customer
+		// 3. Check is paymentAccount exists for the customer
+		// 3.1. If no - create it
+		// 4. Check the token balance for Testnet account
+		let customer: CustomerEntity | null;
+		let paymentAccount: PaymentAccountEntity | null;
+
+		// 1. Get logTo UserId from request body
+		// validate request
+		const result = validationResult(request);
+		// handle error
+		if (!result.isEmpty()) {
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+		}
+
+		const username = request.body.username;
+
+		try {
+			// 2. Check if the customer exists
+			if (response.locals.customer) {
+				customer = response.locals.customer as CustomerEntity;
+			} else {
+				// 2.1 Create customer
+				customer = (await CustomerService.instance.create(username)) as CustomerEntity;
+				if (!customer) {
+					return response.status(StatusCodes.BAD_REQUEST).json({
+						error: 'Customer creation failed',
+					});
+				}
+			}
+
+			// 3. Check is paymentAccount exists for the customer
+			const accounts = await PaymentAccountService.instance.find({ customer });
+			paymentAccount = accounts.find((account) => account.namespace === CheqdNetwork.Testnet) || null;
+			if (paymentAccount === null) {
+				const key = await new IdentityServiceStrategySetup(customer.customerId).agent.createKey(
+					'Secp256k1',
+					customer
+				);
+				if (!key) {
+					return response.status(StatusCodes.BAD_REQUEST).json({
+						error: 'PaymentAccount is not found in db: Key was not created',
+					});
+				}
+				paymentAccount = (await PaymentAccountService.instance.create(
+					CheqdNetwork.Testnet,
+					true,
+					customer,
+					key
+				)) as PaymentAccountEntity;
+				if (!paymentAccount) {
+					return response.status(StatusCodes.BAD_REQUEST).json({
+						error: 'PaymentAccount is not found in db: Payment account was not created',
+					});
+				}
+			}
+
+			// 4. Check the token balance for Testnet account
+			if (paymentAccount.address && process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
+				const balances = await checkBalance(paymentAccount.address, process.env.TESTNET_RPC_URL);
+				const balance = balances[0];
+				if (!balance || +balance.amount < TESTNET_MINIMUM_BALANCE * Math.pow(10, DEFAULT_DENOM_EXPONENT)) {
+					// 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
+					const resp = await FaucetHelper.delegateTokens(paymentAccount.address);
+					if (resp.status !== StatusCodes.OK) {
+						return response.status(StatusCodes.BAD_GATEWAY).json({
+							error: resp.error,
+						});
+					}
+				}
+			}
+			return response.status(StatusCodes.CREATED).json(customer);
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal Error: ${(error as Error)?.message || error}`,
+			});
+		}
 	}
 }

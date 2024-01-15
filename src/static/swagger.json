@@ -102,6 +102,50 @@
         }
       }
     },
+    "/account/create": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Create an client for an authenticated user.",
+        "description": "This endpoint creates a client in the custodian-mode for an authenticated user",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountCreateRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "idToken": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
     "/credential-status/create/unencrypted": {
       "post": {
         "tags": [
@@ -3385,6 +3429,19 @@
           "address": {
             "type": "string",
             "example": "cheqd1wgsvqwlkmdp60f4dek26ak0sjw6au3ytd3pz7f"
+          }
+        }
+      },
+      "AccountCreateRequest": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "primaryEmail": {
+                "type": "string"
+              }
+            }
           }
         }
       },

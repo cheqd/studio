@@ -15,7 +15,6 @@ const validProof = {
 describe('isJSONLDProofValidator. Positive', () => {
 	it('should return true for valid JSONLD proof', () => {
 		const result = jsonldProofValdiator.validate(validProof);
-		console.log(result);
 		expect(result.valid).toBe(true);
 	});
 });

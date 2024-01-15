@@ -44,7 +44,6 @@ class App {
 	}
 
 	private middleware() {
-		const auth = new Authentication();
 		this.express.use(
 			express.json({
 				limit: '50mb',
@@ -68,8 +67,8 @@ class App {
 				},
 			})
 		);
-
 		this.express.use(cookieParser());
+		const auth = new Authentication();
 		if (process.env.ENABLE_AUTHENTICATION === 'true') {
 			this.express.use(
 				session({
@@ -185,6 +184,7 @@ class App {
 		);
 
 		// Account API
+		app.post('/account/create', AccountController.createValidator, new AccountController().create);
 		app.get('/account', new AccountController().get);
 		app.get('/account/idtoken', new AccountController().getIdToken);
 
