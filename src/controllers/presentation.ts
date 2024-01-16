@@ -36,8 +36,18 @@ export class PresentationController {
 			.bail(),
 		check('verifierDid').optional().isDID().bail(),
 		check('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
-		check('makeFeePayment').optional().isBoolean().withMessage('makeFeePayment: should be a boolean').toBoolean().bail(),
-		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value').toBoolean().bail(),
+		check('makeFeePayment')
+			.optional()
+			.isBoolean()
+			.withMessage('makeFeePayment: should be a boolean')
+			.toBoolean()
+			.bail(),
+		query('verifyStatus')
+			.optional()
+			.isBoolean()
+			.withMessage('verifyStatus should be a boolean value')
+			.toBoolean()
+			.bail(),
 		query('allowDeactivatedDid')
 			.optional()
 			.isBoolean()
@@ -171,7 +181,6 @@ export class PresentationController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async verifyPresentation(request: Request, response: Response) {
-
 		const result = validationResult(request);
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
@@ -182,7 +191,7 @@ export class PresentationController {
 		// Extract request parameters from body
 		const { presentation, verifierDid, policies, makeFeePayment } = request.body as VerifyPresentationRequestBody;
 		// Extract request parameters from query
-		const {verifyStatus, allowDeactivatedDid} = request.query as VerifyPresentationResponseQuery;
+		const { verifyStatus, allowDeactivatedDid } = request.query as VerifyPresentationResponseQuery;
 
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);

@@ -17,8 +17,8 @@ export interface KeyImport {
 export type ImportKeyRequestBody = KeyImport;
 
 export type GetKeyRequestBody = {
-    kid: string;
-}
+	kid: string;
+};
 
 // Positive
 

@@ -1,5 +1,11 @@
 import * as dotenv from 'dotenv';
-import type { IIdentifier, CredentialPayload, VerifiableCredential, IVerifyResult, W3CVerifiableCredential } from '@veramo/core';
+import type {
+	IIdentifier,
+	CredentialPayload,
+	VerifiableCredential,
+	IVerifyResult,
+	W3CVerifiableCredential,
+} from '@veramo/core';
 import { MemoryPrivateKeyStore } from '@veramo/key-manager';
 import { KeyManagementSystem } from '@veramo/kms-local';
 import {

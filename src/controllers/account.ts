@@ -110,7 +110,7 @@ export class AccountController {
 		}
 
 		const identityStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
-		
+
 		try {
 			// Get the API key for the customer
 			let apiKey = await identityStrategySetup.agent.getAPIKey(response.locals.customer, response.locals.user);

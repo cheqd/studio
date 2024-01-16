@@ -316,9 +316,7 @@ export class ResourceController {
 		try {
 			let res: globalThis.Response;
 			if (did) {
-				res = await identityServiceStrategySetup.agent.resolve(
-					did + getQueryParams(request.query)
-				);
+				res = await identityServiceStrategySetup.agent.resolve(did + getQueryParams(request.query));
 
 				const contentType = res.headers.get('Content-Type') || 'application/octet-stream';
 				const body = new TextDecoder().decode(await res.arrayBuffer());

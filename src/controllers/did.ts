@@ -30,7 +30,7 @@ import type {
 	ImportDidRequestBody,
 	DeactivateDIDRequestParams,
 	GetDIDRequestParams,
-	ResolveDIDRequestParams
+	ResolveDIDRequestParams,
 } from '../types/did.js';
 import { check, validationResult, param } from './validator/index.js';
 import type { IKey, RequireOnly } from '@veramo/core';
@@ -315,12 +315,12 @@ export class DIDController {
 		// handle request params
 		const { did, service, verificationMethod, authentication } = request.body as UpdateDidRequestBody;
 		// Get the didDocument from the request if it's placed there
-		let updatedDocument: DIDDocument | undefined = request.body.didDocument ;
+		let updatedDocument: DIDDocument | undefined = request.body.didDocument;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			if (!updatedDocument && (did && (service || verificationMethod || authentication))) {
+			if (!updatedDocument && did && (service || verificationMethod || authentication)) {
 				// Resolve DID
 				const resolvedResult = await identityServiceStrategySetup.agent.resolveDid(did);
 				// Check output that DID is not deactivated or exist
@@ -410,8 +410,8 @@ export class DIDController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ 
-				error: result.array().pop()?.msg 
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg,
 			} satisfies ValidationErrorResponseBody);
 		}
 
@@ -525,10 +525,7 @@ export class DIDController {
 
 		try {
 			// Deactivate DID
-			await identityServiceStrategySetup.agent.deactivateDid(
-				did,
-				response.locals.customer
-			);
+			await identityServiceStrategySetup.agent.deactivateDid(did, response.locals.customer);
 			// Send the deactivated DID as result
 			const result = await identityServiceStrategySetup.agent.resolveDid(request.params.did);
 
@@ -571,11 +568,13 @@ export class DIDController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const didDocument  = did
+			const didDocument = did
 				? await identityServiceStrategySetup.agent.resolveDid(request.params.did)
 				: await identityServiceStrategySetup.agent.listDids(response.locals.customer);
 
-			return response.status(StatusCodes.OK).json(didDocument satisfies ListDidsResponseBody | QueryDidResponseBody);
+			return response
+				.status(StatusCodes.OK)
+				.json(didDocument satisfies ListDidsResponseBody | QueryDidResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,

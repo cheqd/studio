@@ -92,5 +92,5 @@ export const { check, validationResult, query, param } = new ExpressValidator({
 			throw new Error(res.error);
 		}
 		return true;
-	}
+	},
 });

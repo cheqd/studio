@@ -14,8 +14,8 @@ export interface DidImportRequest {
 // Requests
 
 export type DIDRequest = {
-	did: string
-}
+	did: string;
+};
 
 export type CreateDidRequestBody = {
 	didDocument?: DIDDocument;
@@ -37,7 +37,7 @@ export type UpdateDidRequestBody = {
 	verificationMethod: VerificationMethod[];
 	authentication: string[];
 	didDocument?: DIDDocument;
-}
+};
 
 export type ImportDidRequestBody = DidImportRequest;
 

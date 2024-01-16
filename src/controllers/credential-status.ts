@@ -496,8 +496,8 @@ export class CredentialStatusController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ 
-				error: result.array().pop()?.msg 
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg,
 			} satisfies ValidationErrorResponseBody);
 		}
 
@@ -629,8 +629,8 @@ export class CredentialStatusController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ 
-				error: result.array().pop()?.msg 
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg,
 			} satisfies ValidationErrorResponseBody);
 		}
 
@@ -765,8 +765,8 @@ export class CredentialStatusController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ 
-				error: result.array().pop()?.msg 
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg,
 			} satisfies ValidationErrorResponseBody);
 		}
 
@@ -798,12 +798,10 @@ export class CredentialStatusController {
 			}
 
 			// handle generic error
-			return response
-				.status(StatusCodes.BAD_REQUEST)
-				.json({ 
-					updated: false, 
-					error: `update: error: ${unencrypted.error}` 
-				} satisfies UpdateUnencryptedStatusListUnsuccessfulResponseBody);
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				updated: false,
+				error: `update: error: ${unencrypted.error}`,
+			} satisfies UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 		}
 
 		// validate unencrypted
@@ -949,8 +947,8 @@ export class CredentialStatusController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ 
-				error: result.array().pop()?.msg 
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg,
 			} satisfies ValidationErrorResponseBody);
 		}
 
@@ -1152,7 +1150,7 @@ export class CredentialStatusController {
 		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array()[0].msg 
+				error: result.array()[0].msg,
 			} satisfies ValidationErrorResponseBody);
 		}
 
@@ -1316,7 +1314,7 @@ export class CredentialStatusController {
 		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg 
+				error: result.array().pop()?.msg,
 			} satisfies ValidationErrorResponseBody);
 		}
 

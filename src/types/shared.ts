@@ -127,5 +127,3 @@ export interface VerificationOptions {
 	policies?: VerificationPolicies;
 	allowDeactivatedDid?: boolean;
 }
-;
-

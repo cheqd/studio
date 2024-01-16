@@ -65,9 +65,24 @@ export class CredentialController {
 			.withMessage('W3c verifiable credential was not provided')
 			.isW3CCheqdCredential()
 			.bail(),
-		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value').toBoolean().bail(),
-		query('fetchRemoteContexts').optional().isBoolean().withMessage('fetchRemoteContexts should be a boolean value').toBoolean().bail(),
-		query('allowDeactivatedDid').optional().isBoolean().withMessage('allowDeactivatedDid should be a boolean value').toBoolean().bail(),
+		query('verifyStatus')
+			.optional()
+			.isBoolean()
+			.withMessage('verifyStatus should be a boolean value')
+			.toBoolean()
+			.bail(),
+		query('fetchRemoteContexts')
+			.optional()
+			.isBoolean()
+			.withMessage('fetchRemoteContexts should be a boolean value')
+			.toBoolean()
+			.bail(),
+		query('allowDeactivatedDid')
+			.optional()
+			.isBoolean()
+			.withMessage('allowDeactivatedDid should be a boolean value')
+			.toBoolean()
+			.bail(),
 		query('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
 	];
 	public static revokeValidator = [

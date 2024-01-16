@@ -1,7 +1,14 @@
 import type { IVerifyResult, VerifiableCredential, VerificationPolicies, W3CVerifiableCredential } from '@veramo/core';
 import type { StatusOptions } from './credential-status.js';
 import type { UnsuccessfulResponseBody } from './shared.js';
-import type { BulkRevocationResult, BulkSuspensionResult, BulkUnsuspensionResult, RevocationResult, SuspensionResult, UnsuspensionResult } from '@cheqd/did-provider-cheqd';
+import type {
+	BulkRevocationResult,
+	BulkSuspensionResult,
+	BulkUnsuspensionResult,
+	RevocationResult,
+	SuspensionResult,
+	UnsuspensionResult,
+} from '@cheqd/did-provider-cheqd';
 import type { VerificationOptions } from './shared.js';
 
 export interface CredentialRequest {
@@ -20,15 +27,15 @@ export interface CredentialRequest {
 
 export type VerificationPoliciesRequest = {
 	policies: VerificationPolicies;
-}
+};
 
 export type PubslishRequest = {
 	publish?: boolean;
-}
+};
 
 export type SymmetricKeyRequest = {
 	symmetricKey?: string;
-}
+};
 
 export type CredentialRequestBody = { credential: W3CVerifiableCredential } & SymmetricKeyRequest;
 
@@ -38,7 +45,7 @@ export type DateType = string | Date;
 
 export type IssueCredentialRequestBody = CredentialRequest;
 
-export type VerifyCredentialRequestBody = { credential: W3CVerifiableCredential} & VerificationPoliciesRequest;
+export type VerifyCredentialRequestBody = { credential: W3CVerifiableCredential } & VerificationPoliciesRequest;
 
 export type VerifyCredentialRequestQuery = VerificationOptions;
 
@@ -81,4 +88,6 @@ export type UnsuccesfulRevokeCredentialResponseBody = Pick<RevocationResult, 're
 
 export type UnsuccesfulSuspendCredentialResponseBody = Pick<SuspensionResult, 'suspended'> | UnsuccessfulResponseBody;
 
-export type UnsuccesfulUnsuspendCredentialResponseBody = Pick<UnsuspensionResult, 'unsuspended'> | UnsuccessfulResponseBody;
+export type UnsuccesfulUnsuspendCredentialResponseBody =
+	| Pick<UnsuspensionResult, 'unsuspended'>
+	| UnsuccessfulResponseBody;

@@ -9,14 +9,14 @@ import type { SupportedEncodings } from 'uint8arrays';
 export type CreateResourceRequestParams = DIDRequest;
 
 export type CreateResourceRequestBody = {
-    data: string,
-    encoding: SupportedEncodings,
-    name: string,
-    type: string,
-    network: CheqdNetwork.Mainnet | CheqdNetwork.Testnet,
-    alsoKnownAs?: AlternativeUri[],
-    version?: string,
-}
+	data: string;
+	encoding: SupportedEncodings;
+	name: string;
+	type: string;
+	network: CheqdNetwork.Mainnet | CheqdNetwork.Testnet;
+	alsoKnownAs?: AlternativeUri[];
+	version?: string;
+};
 
 export type SearchResourceRequestParams = DIDRequest;
 
