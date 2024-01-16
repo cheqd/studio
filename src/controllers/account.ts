@@ -13,6 +13,13 @@ import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import type { UserEntity } from '../database/entities/user.entity.js';
 import type { PaymentAccountEntity } from '../database/entities/payment.account.entity.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
+import type {
+	QueryCustomerResponseBody,
+	QueryIdTokenResponseBody,
+	UnsuccessfulQueryCustomerResponseBody,
+	UnsuccessfulQueryIdTokenResponseBody,
+} from '../types/customer.js';
+import type { UnsuccessfulResponseBody } from '../types/shared.js';
 import { check, validationResult } from 'express-validator';
 
 export class AccountController {
@@ -49,10 +56,10 @@ export class AccountController {
 		try {
 			if (!response.locals.customer) {
 				// It's not ok, seems like there no any customer assigned to the user yet
-				// But it's not an expectede behaviour cause it should be done on bootstrap phase of after migration
+				// But it's not an expected behaviour cause it should be done on bootstrap phase of after migration
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 					error: 'Bad state cause there is no customer assigned to the user yet. Please contact administrator.',
-				});
+				} satisfies UnsuccessfulQueryCustomerResponseBody);
 			}
 			const paymentAccount = await PaymentAccountService.instance.find({ customer: response.locals.customer });
 			const result = {
@@ -63,13 +70,13 @@ export class AccountController {
 				paymentAccount: {
 					address: paymentAccount[0].address,
 				},
-			};
+			} satisfies QueryCustomerResponseBody;
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccessfulQueryCustomerResponseBody);
 		}
 	}
 
@@ -99,10 +106,11 @@ export class AccountController {
 		if (!request.user || !request.session.idToken) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: 'Seems like authorisation process was corrupted. Please contact administrator.',
-			});
+			} satisfies UnsuccessfulQueryIdTokenResponseBody);
 		}
 
 		const identityStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+
 		try {
 			// Get the API key for the customer
 			let apiKey = await identityStrategySetup.agent.getAPIKey(response.locals.customer, response.locals.user);
@@ -119,11 +127,11 @@ export class AccountController {
 			}
 			return response.status(StatusCodes.OK).json({
 				idToken: apiKey?.apiKey,
-			});
+			} satisfies QueryIdTokenResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccessfulQueryIdTokenResponseBody);
 		}
 	}
 
@@ -156,7 +164,7 @@ export class AccountController {
 		if (!request.body.user || !request.body.user.id || !request.body.user.primaryEmail) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: 'User id is not specified or primaryEmail is not set',
-			});
+			} satisfies UnsuccessfulResponseBody);
 		}
 		const logToUserId = request.body.user.id;
 		const logToUserEmail = request.body.user.primaryEmail;
@@ -164,7 +172,7 @@ export class AccountController {
 		if (!defaultRole) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: 'Default role is not set on Credential Service side',
-			});
+			} satisfies UnsuccessfulResponseBody);
 		}
 		// 2. Check if such row exists in the DB
 		user = await UserService.instance.get(logToUserId);
@@ -179,14 +187,14 @@ export class AccountController {
 			if (!customer) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'User is not found in db: Customer was not created',
-				});
+				} satisfies UnsuccessfulResponseBody);
 			}
 			// 2.2. Create user
 			user = await UserService.instance.create(logToUserId, customer, defaultRole);
 			if (!user) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'User is not found in db: User was not created',
-				});
+				} satisfies UnsuccessfulResponseBody);
 			}
 		}
 		// 3. If yes - check that there is customer associated with such user
@@ -197,7 +205,7 @@ export class AccountController {
 			if (!customer) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'User exists in db: Customer was not created',
-				});
+				} satisfies UnsuccessfulResponseBody);
 			}
 			// 3.1.2. Assign customer to the user
 			user.customer = customer;
@@ -216,7 +224,7 @@ export class AccountController {
 			if (!key) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'PaymentAccount is not found in db: Key was not created',
-				});
+				} satisfies UnsuccessfulResponseBody);
 			}
 			paymentAccount = (await PaymentAccountService.instance.create(
 				CheqdNetwork.Testnet,
@@ -227,7 +235,7 @@ export class AccountController {
 			if (!paymentAccount) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'PaymentAccount is not found in db: Payment account was not created',
-				});
+				} satisfies UnsuccessfulResponseBody);
 			}
 		} else {
 			paymentAccount = accounts[0];
@@ -238,7 +246,7 @@ export class AccountController {
 		if (_r.status !== StatusCodes.OK) {
 			return response.status(StatusCodes.BAD_GATEWAY).json({
 				error: _r.error,
-			});
+			} satisfies UnsuccessfulResponseBody);
 		}
 		// 5. Assign default role on LogTo
 		// 5.1 Get user's roles
@@ -246,7 +254,7 @@ export class AccountController {
 		if (roles.status !== StatusCodes.OK) {
 			return response.status(StatusCodes.BAD_GATEWAY).json({
 				error: roles.error,
-			});
+			} satisfies UnsuccessfulResponseBody);
 		}
 
 		// 5.2 If list of roles is empty and the user is not suspended - assign default role
@@ -255,7 +263,7 @@ export class AccountController {
 			if (_r.status !== StatusCodes.OK) {
 				return response.status(StatusCodes.BAD_GATEWAY).json({
 					error: _r.error,
-				});
+				} satisfies UnsuccessfulResponseBody);
 			}
 		}
 
@@ -276,7 +284,7 @@ export class AccountController {
 			if (_r.status !== 200) {
 				return response.status(_r.status).json({
 					error: _r.error,
-				});
+				} satisfies UnsuccessfulResponseBody);
 			}
 		}
 
@@ -290,7 +298,7 @@ export class AccountController {
 				if (resp.status !== StatusCodes.OK) {
 					return response.status(StatusCodes.BAD_GATEWAY).json({
 						error: resp.error,
-					});
+					} satisfies UnsuccessfulResponseBody);
 				}
 			}
 		}

@@ -6,11 +6,32 @@ import { check, validationResult, query } from './validator/index.js';
 
 import { Credentials } from '../services/credentials.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import type { ITrackOperation } from '../types/shared.js';
+import type { ITrackOperation, ValidationErrorResponseBody } from '../types/shared.js';
 import { Cheqd } from '@cheqd/did-provider-cheqd';
 import { OPERATION_CATEGORY_NAME_CREDENTIAL } from '../types/constants.js';
 import { CheqdW3CVerifiableCredential } from '../services/w3c-credential.js';
 import { isCredentialIssuerDidDeactivated } from '../services/helpers.js';
+import type {
+	IssueCredentialRequestBody,
+	IssueCredentialResponseBody,
+	RevokeCredentialRequestBody,
+	RevokeCredentialRequestQuery,
+	RevokeCredentialResponseBody,
+	SuspendCredentialRequestBody,
+	SuspendCredentialRequestQuery,
+	SuspendCredentialResponseBody,
+	UnsuccesfulIssueCredentialResponseBody,
+	UnsuccesfulRevokeCredentialResponseBody,
+	UnsuccesfulSuspendCredentialResponseBody,
+	UnsuccesfulUnsuspendCredentialResponseBody,
+	UnsuccesfulVerifyCredentialResponseBody,
+	UnsuspendCredentialRequestBody,
+	UnsuspendCredentialRequestQuery,
+	UnsuspendCredentialResponseBody,
+	VerifyCredentialRequestBody,
+	VerifyCredentialRequestQuery,
+	VerifyCredentialResponseBody,
+} from '../types/credential.js';
 import { VeridaDIDValidator } from './validator/did.js';
 
 export class CredentialController {
@@ -44,7 +65,24 @@ export class CredentialController {
 			.withMessage('W3c verifiable credential was not provided')
 			.isW3CCheqdCredential()
 			.bail(),
-		query('verifyStatus').optional().isBoolean().withMessage('verifyStatus should be a boolean value').bail(),
+		query('verifyStatus')
+			.optional()
+			.isBoolean()
+			.withMessage('verifyStatus should be a boolean value')
+			.toBoolean()
+			.bail(),
+		query('fetchRemoteContexts')
+			.optional()
+			.isBoolean()
+			.withMessage('fetchRemoteContexts should be a boolean value')
+			.toBoolean()
+			.bail(),
+		query('allowDeactivatedDid')
+			.optional()
+			.isBoolean()
+			.withMessage('allowDeactivatedDid should be a boolean value')
+			.toBoolean()
+			.bail(),
 		query('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
 	];
 	public static revokeValidator = [
@@ -53,7 +91,7 @@ export class CredentialController {
 			.withMessage('W3c verifiable credential was not provided')
 			.isW3CCheqdCredential()
 			.bail(),
-		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').bail(),
+		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').toBoolean().bail(),
 	];
 	public static suspendValidator = [
 		check('credential')
@@ -62,7 +100,7 @@ export class CredentialController {
 			.bail()
 			.isW3CCheqdCredential()
 			.bail(),
-		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').bail(),
+		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').toBoolean().bail(),
 	];
 
 	public static reinstateValidator = [
@@ -71,7 +109,7 @@ export class CredentialController {
 			.withMessage('W3c verifiable credential was not provided')
 			.isW3CCheqdCredential()
 			.bail(),
-		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').bail(),
+		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').toBoolean().bail(),
 	];
 
 	/**
@@ -109,15 +147,20 @@ export class CredentialController {
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg,
+			} satisfies ValidationErrorResponseBody);
 		}
 
+		// Get request body
+		const requestBody = request.body as IssueCredentialRequestBody;
+
 		// Handles string input instead of an array
-		if (typeof request.body.type === 'string') {
-			request.body.type = [request.body.type];
+		if (typeof requestBody.type === 'string') {
+			requestBody.type = [requestBody.type];
 		}
-		if (typeof request.body['@context'] === 'string') {
-			request.body['@context'] = [request.body['@context']];
+		if (typeof requestBody['@context'] === 'string') {
+			requestBody['@context'] = [requestBody['@context']];
 		}
 
 		// Get strategy e.g. postgres or local
@@ -125,27 +168,29 @@ export class CredentialController {
 
 		try {
 			// resolve issuer DID-Document
-			const resolvedResult = await identityServiceStrategySetup.agent.resolve(request.body.issuerDid);
+			const resolvedResult = await identityServiceStrategySetup.agent.resolve(requestBody.issuerDid);
 			// check if DID-Document is resolved
 			const body = await resolvedResult.json();
 			if (!body?.didDocument) {
-				return response.status(resolvedResult.status).send({ body });
+				return response.status(StatusCodes.BAD_REQUEST).send({
+					error: `DID ${requestBody.issuerDid} is not resolved because of error from resolver: ${body.didResolutionMetadata.error}.`,
+				} satisfies UnsuccesfulIssueCredentialResponseBody);
 			}
 			if (body.didDocumentMetadata.deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `${request.body.issuerDid} is deactivated`,
-				});
+					error: `${requestBody.issuerDid} is deactivated`,
+				} satisfies UnsuccesfulIssueCredentialResponseBody);
 			}
 			// issue credential
 			const credential: VerifiableCredential = await Credentials.instance.issue_credential(
-				request.body,
+				requestBody,
 				response.locals.customer
 			);
-			return response.status(StatusCodes.OK).json(credential);
+			return response.status(StatusCodes.OK).json(credential satisfies IssueCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccesfulIssueCredentialResponseBody);
 		}
 	}
 
@@ -204,12 +249,16 @@ export class CredentialController {
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg,
+			} satisfies ValidationErrorResponseBody);
 		}
+
 		// Get params from request
-		const { credential, policies } = request.body;
-		const verifyStatus = request.query.verifyStatus === 'true';
-		const allowDeactivatedDid = request.query.allowDeactivatedDid === 'true';
+		const { credential, policies } = request.body as VerifyCredentialRequestBody;
+		const { verifyStatus, allowDeactivatedDid } = request.query as VerifyCredentialRequestQuery;
+
+		// Create credential object
 		const cheqdCredential = new CheqdW3CVerifiableCredential(credential);
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
@@ -218,7 +267,7 @@ export class CredentialController {
 			if (!allowDeactivatedDid && (await isCredentialIssuerDidDeactivated(cheqdCredential))) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: `Credential issuer DID is deactivated`,
-				});
+				} satisfies UnsuccesfulVerifyCredentialResponseBody);
 			}
 
 			const verifyResult = await identityServiceStrategySetup.agent.verifyCredential(
@@ -229,17 +278,18 @@ export class CredentialController {
 				},
 				response.locals.customer
 			);
+
 			if (verifyResult.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					verified: verifyResult.verified,
-					error: verifyResult.error.message,
-				});
+					error: `verify: ${verifyResult.error.message}`,
+				} satisfies UnsuccesfulVerifyCredentialResponseBody);
 			}
-			return response.status(StatusCodes.OK).json(verifyResult);
+			return response.status(StatusCodes.OK).json(verifyResult satisfies VerifyCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccesfulVerifyCredentialResponseBody);
 		}
 	}
 
@@ -287,22 +337,25 @@ export class CredentialController {
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg,
+			} satisfies UnsuccesfulRevokeCredentialResponseBody);
 		}
 		// Get publish flag
-		const publish = request.query.publish === 'false' ? false : true;
+		const { publish } = request.query as RevokeCredentialRequestQuery;
 		// Get symmetric key
-		const symmetricKey = request.body.symmetricKey as string;
+		const { credential, symmetricKey } = request.body as RevokeCredentialRequestBody;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
 			const result = await identityServiceStrategySetup.agent.revokeCredentials(
-				request.body.credential,
-				publish,
+				credential,
+				publish as boolean,
 				response.locals.customer,
-				symmetricKey
+				symmetricKey as string
 			);
+
 			// Track operation if revocation was successful and publish is true
 			// Otherwise the StatusList2021 publisher should manually publish the resource
 			// and it will be tracked there
@@ -341,11 +394,11 @@ export class CredentialController {
 				}
 			}
 			// Return Ok response
-			return response.status(StatusCodes.OK).json(result);
+			return response.status(StatusCodes.OK).json(result satisfies RevokeCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccesfulRevokeCredentialResponseBody);
 		}
 	}
 
@@ -391,22 +444,25 @@ export class CredentialController {
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg,
+			} satisfies UnsuccesfulSuspendCredentialResponseBody);
 		}
 
 		// Get publish flag
-		const publish = request.query.publish === 'false' ? false : true;
+		const { publish } = request.query as SuspendCredentialRequestQuery;
 		// Get symmetric key
-		const symmetricKey = request.body.symmetricKey as string;
+		const { credential, symmetricKey } = request.body as SuspendCredentialRequestBody;
+
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
 			const result = await identityServiceStrategySetup.agent.suspendCredentials(
-				request.body.credential,
-				publish,
+				credential,
+				publish as boolean,
 				response.locals.customer,
-				symmetricKey
+				symmetricKey as string
 			);
 
 			// Track operation if suspension was successful and publish is true
@@ -447,11 +503,11 @@ export class CredentialController {
 				}
 			}
 
-			return response.status(StatusCodes.OK).json(result);
+			return response.status(StatusCodes.OK).json(result satisfies SuspendCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccesfulSuspendCredentialResponseBody);
 		}
 	}
 
@@ -497,22 +553,25 @@ export class CredentialController {
 		const result = validationResult(request);
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg,
+			} satisfies UnsuccesfulUnsuspendCredentialResponseBody);
 		}
 		// Get publish flag
-		const publish = request.query.publish === 'false' ? false : true;
+		const { publish } = request.query as UnsuspendCredentialRequestQuery;
 		// Get symmetric key
-		const symmetricKey = request.body.symmetricKey as string;
+		const { credential, symmetricKey } = request.body as UnsuspendCredentialRequestBody;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
 			const result = await identityServiceStrategySetup.agent.reinstateCredentials(
-				request.body.credential,
-				publish,
+				credential,
+				publish as boolean,
 				response.locals.customer,
-				symmetricKey
+				symmetricKey as string
 			);
+
 			// Track operation if the process of reinstantiating was successful and publish is true
 			// Otherwise the StatusList2021 publisher should manually publish the resource
 			// and it will be tracked there
@@ -551,11 +610,11 @@ export class CredentialController {
 				}
 			}
 			// Return Ok response
-			return response.status(StatusCodes.OK).json(result);
+			return response.status(StatusCodes.OK).json(result satisfies UnsuspendCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccesfulUnsuspendCredentialResponseBody);
 		}
 	}
 }

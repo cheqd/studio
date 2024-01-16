@@ -16,6 +16,7 @@ import type {
 	TAgent,
 	VerifiableCredential,
 	VerifiablePresentation,
+	W3CVerifiableCredential,
 } from '@veramo/core';
 import type {
 	ResourcePayload,
@@ -30,7 +31,7 @@ import type {
 	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
 import type { ITrackOperation, ITrackResult, VeramoAgent } from '../../types/shared.js';
-import type { VerificationOptions } from '../../types/credential.js';
+import type { VerificationOptions } from '../../types/shared.js';
 import type { FeePaymentOptions } from '../../types/credential-status.js';
 import type { CredentialRequest } from '../../types/credential.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
@@ -146,19 +147,19 @@ export interface IIdentityService {
 		customer?: CustomerEntity
 	): Promise<TransactionResult>;
 	revokeCredentials(
-		credential: VerifiableCredential | VerifiableCredential[],
+		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
 	): Promise<RevocationResult | BulkRevocationResult>;
 	suspendCredentials(
-		credential: VerifiableCredential | VerifiableCredential[],
+		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
 	): Promise<SuspensionResult | BulkSuspensionResult>;
 	reinstateCredentials(
-		credential: VerifiableCredential | VerifiableCredential[],
+		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
