@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.0-develop.3](https://github.com/cheqd/credential-service/compare/2.16.0-develop.2...2.16.0-develop.3) (2024-01-16)
+
+
+### Bug Fixes
+
+* Make all the response bodies in predictable format [DEV-3494] ([#454](https://github.com/cheqd/credential-service/issues/454)) ([b3549d8](https://github.com/cheqd/credential-service/commit/b3549d841de8885e10dfcf6f034dd37dde3b004a))
+
 ## [2.16.0-develop.2](https://github.com/cheqd/credential-service/compare/2.16.0-develop.1...2.16.0-develop.2) (2024-01-12)
 
 

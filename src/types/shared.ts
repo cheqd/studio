@@ -6,6 +6,7 @@ import type {
 	ICredentialIssuer,
 	ICredentialVerifier,
 	TAgent,
+	VerificationPolicies,
 } from '@veramo/core';
 import type { ICheqd, CheqdDIDProvider, LinkedResourceMetadataResolutionResult } from '@cheqd/did-provider-cheqd';
 import type { ICredentialIssuerLD } from '@veramo/credential-ld';
@@ -94,9 +95,13 @@ export interface IErrorResponse {
 	message: string;
 }
 
-export type UnsuccessfulQueryResponseBody = {
+export type UnsuccessfulResponseBody = {
 	error: string;
 };
+
+export type UnsuccessfulQueryResponseBody = UnsuccessfulResponseBody;
+
+export type ValidationErrorResponseBody = UnsuccessfulResponseBody;
 
 export class CommonReturn implements IReturn {
 	returnOk(data = {}): ICommonErrorResponse {
@@ -114,4 +119,11 @@ export class CommonReturn implements IReturn {
 			data: data,
 		};
 	}
+}
+export interface VerificationOptions {
+	fetchRemoteContexts?: boolean;
+	domain?: string;
+	verifyStatus?: boolean;
+	policies?: VerificationPolicies;
+	allowDeactivatedDid?: boolean;
 }

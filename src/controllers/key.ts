@@ -3,19 +3,39 @@ import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { decryptPrivateKey } from '../helpers/helpers.js';
 import { toString } from 'uint8arrays';
-import { check } from 'express-validator';
+import type {
+	CreateKeyResponseBody,
+	GetKeyRequestBody,
+	ImportKeyRequestBody,
+	ImportKeyResponseBody,
+	QueryKeyResponseBody,
+	UnsuccessfulCreateKeyResponseBody,
+	UnsuccessfulImportKeyResponseBody,
+	UnsuccessfulQueryKeyResponseBody,
+} from '../types/key.js';
+import { check } from './validator/index.js';
 
+// ToDo: Make the format of /key/create and /key/read the same
+// ToDo: Add valdiation for /key/import
 export class KeyController {
-	public static importKeyValidator = [
-		check('privateKeyHex').isString().withMessage('privateKeyHex is required').bail(),
+	public static keyImportValidator = [
+		check('privateKeyHex')
+			.exists()
+			.withMessage('Private key was not provided')
+			.isHexadecimal()
+			.withMessage('Private key should be a hexadecimal string')
+			.bail(),
 		check('encrypted')
 			.isBoolean()
 			.withMessage('encrypted is required')
 			.custom((value, { req }) => (value === true ? req.body.ivHex && req.body.salt : true))
 			.withMessage('Property ivHex, salt is required when encrypted is set to true')
 			.bail(),
+		check('ivHex').optional().isHexadecimal().withMessage('ivHex should be a hexadecimal string').bail(),
+		check('salt').optional().isHexadecimal().withMessage('salt should be a hexadecimal string').bail(),
+		check('type').optional().isString().withMessage('type should be a string').bail(),
+		check('alias').optional().isString().withMessage('alias should be a string').bail(),
 	];
-
 	/**
 	 * @openapi
 	 *
@@ -55,11 +75,11 @@ export class KeyController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
 			const key = await identityServiceStrategySetup.agent.createKey('Ed25519', response.locals.customer);
-			return response.status(StatusCodes.OK).json(key);
+			return response.status(StatusCodes.OK).json(key satisfies CreateKeyResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `${error}`,
-			});
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			} satisfies UnsuccessfulCreateKeyResponseBody);
 		}
 	}
 
@@ -106,29 +126,33 @@ export class KeyController {
 	 *               error: Internal Error
 	 */
 	public async importKey(request: Request, response: Response) {
+		// Get parameters requeired for key importing
+		const { type, encrypted, ivHex, salt, alias, privateKeyHex } = request.body as ImportKeyRequestBody;
+		// Get strategy e.g. postgres or local
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+		let decryptedPrivateKeyHex = privateKeyHex;
+
 		try {
-			const { type, encrypted, ivHex, salt, alias } = request.body;
-			let { privateKeyHex } = request.body;
 			if (encrypted) {
 				if (ivHex && salt) {
-					privateKeyHex = toString(await decryptPrivateKey(privateKeyHex, ivHex, salt), 'hex');
+					decryptedPrivateKeyHex = toString(await decryptPrivateKey(privateKeyHex, ivHex, salt), 'hex');
 				} else {
 					return response.status(StatusCodes.BAD_REQUEST).json({
 						error: `Invalid request: Property ivHex, salt is required when encrypted is set to true`,
-					});
+					} satisfies UnsuccessfulImportKeyResponseBody);
 				}
 			}
-			const key = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.importKey(
+			const key = await identityServiceStrategySetup.agent.importKey(
 				type || 'Ed25519',
-				privateKeyHex,
+				decryptedPrivateKeyHex,
 				response.locals.customer,
 				alias
 			);
-			return response.status(StatusCodes.OK).json(key);
+			return response.status(StatusCodes.OK).json(key satisfies ImportKeyResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
+			} satisfies UnsuccessfulImportKeyResponseBody);
 		}
 	}
 
@@ -174,20 +198,21 @@ export class KeyController {
 	 *               error: Internal Error
 	 */
 	public async getKey(request: Request, response: Response) {
+		const { kid } = request.params as GetKeyRequestBody;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
-			const key = await identityServiceStrategySetup.agent.getKey(request.params.kid, response.locals.customer);
+			const key = await identityServiceStrategySetup.agent.getKey(kid, response.locals.customer);
 			if (key) {
-				return response.status(StatusCodes.OK).json(key);
+				return response.status(StatusCodes.OK).json(key satisfies QueryKeyResponseBody);
 			}
 			return response.status(StatusCodes.NOT_FOUND).json({
-				error: `Key with kid: ${request.params.kid} not found`,
-			});
+				error: `Key with kid: ${kid} not found`,
+			} satisfies UnsuccessfulQueryKeyResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
-			});
+			} satisfies UnsuccessfulQueryKeyResponseBody);
 		}
 	}
 }

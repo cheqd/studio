@@ -1,5 +1,11 @@
 import * as dotenv from 'dotenv';
-import type { IIdentifier, CredentialPayload, VerifiableCredential, IVerifyResult } from '@veramo/core';
+import type {
+	IIdentifier,
+	CredentialPayload,
+	VerifiableCredential,
+	IVerifyResult,
+	W3CVerifiableCredential,
+} from '@veramo/core';
 import { MemoryPrivateKeyStore } from '@veramo/key-manager';
 import { KeyManagementSystem } from '@veramo/kms-local';
 import {
@@ -16,7 +22,7 @@ import {
 	LitNetworks,
 } from '@cheqd/did-provider-cheqd';
 import { CheqdNetwork } from '@cheqd/sdk';
-import type { VerificationOptions } from '../../types/credential.js';
+import type { VerificationOptions } from '../../types/shared.js';
 import type { FeePaymentOptions } from '../../types/credential-status.js';
 import type { CredentialRequest } from '../../types/credential.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
@@ -227,15 +233,15 @@ export class LocalIdentityService extends DefaultIdentityService {
 		return await Veramo.instance.remunerateStatusList2021(this.initAgent(), feePaymentOptions);
 	}
 
-	async revokeCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean) {
+	async revokeCredentials(credentials: W3CVerifiableCredential | W3CVerifiableCredential[], publish: boolean) {
 		return await Veramo.instance.revokeCredentials(this.initAgent(), credentials, publish);
 	}
 
-	async suspendCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean) {
+	async suspendCredentials(credentials: W3CVerifiableCredential | W3CVerifiableCredential[], publish: boolean) {
 		return await Veramo.instance.suspendCredentials(this.initAgent(), credentials, publish);
 	}
 
-	async reinstateCredentials(credentials: VerifiableCredential | VerifiableCredential[], publish: boolean) {
+	async reinstateCredentials(credentials: W3CVerifiableCredential | W3CVerifiableCredential[], publish: boolean) {
 		return await Veramo.instance.unsuspendCredentials(this.initAgent(), credentials, publish);
 	}
 }

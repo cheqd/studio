@@ -157,7 +157,7 @@ export class Authentication {
 						});
 					}
 					customer = user.customer;
-				} 
+				}
 				if (_resp.data.customerId !== '' && !customer) {
 					customer = await CustomerService.instance.get(_resp.data.customerId);
 					if (!customer) {
@@ -169,7 +169,7 @@ export class Authentication {
 				if (!customer && !user && !this.isBootstrapping(request)) {
 					return response.status(StatusCodes.UNAUTHORIZED).json({
 						error: `Looks like customer and user are not found in the system or they are not registered yet. Please contact administrator.`,
-					})
+					});
 				}
 				response.locals.customer = customer;
 				response.locals.user = user;

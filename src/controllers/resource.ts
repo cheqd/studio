@@ -6,9 +6,17 @@ import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { getQueryParams } from '../helpers/helpers.js';
 import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
-import type { ITrackOperation } from '../types/shared.js';
+import type { ITrackOperation, ValidationErrorResponseBody } from '../types/shared.js';
 import { OPERATION_CATEGORY_NAME_RESOURCE } from '../types/constants.js';
 import { check, validationResult, param, query } from './validator/index.js';
+import type {
+	CreateResourceRequestBody,
+	CreateResourceResponseBody,
+	QueryResourceResponseBody,
+	SearchResourceRequestParams,
+	UnsuccessfulCreateResourceResponseBody,
+	UnsuccessfulQueryResourceResponseBody,
+} from '../types/resource.js';
 
 export class ResourceController {
 	public static createResourceValidator = [
@@ -137,11 +145,16 @@ export class ResourceController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg,
+			} satisfies ValidationErrorResponseBody);
 		}
 
+		// Extract the did from the request
 		const { did } = request.params;
-		const { data, encoding, name, type, alsoKnownAs, version, network } = request.body;
+		// Extract the resource parameters from the request
+		const { data, encoding, name, type, alsoKnownAs, version, network } = request.body as CreateResourceRequestBody;
+		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		let resourcePayload: Partial<MsgCreateResourcePayload> = {};
@@ -151,7 +164,7 @@ export class ResourceController {
 			if (!didDocument || !didDocumentMetadata || didDocumentMetadata.deactivated) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
 					error: `${did} is a either Deactivated or Not found`,
-				});
+				} satisfies UnsuccessfulCreateResourceResponseBody);
 			}
 
 			resourcePayload = {
@@ -201,16 +214,16 @@ export class ResourceController {
 
 				return response.status(StatusCodes.CREATED).json({
 					resource,
-				});
+				} satisfies CreateResourceResponseBody);
 			} else {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 					error: 'Error creating resource',
-				});
+				} satisfies UnsuccessfulCreateResourceResponseBody);
 			}
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
-			});
+			} satisfies UnsuccessfulCreateResourceResponseBody);
 		}
 	}
 
@@ -293,30 +306,34 @@ export class ResourceController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: result.array().pop()?.msg,
+			} satisfies ValidationErrorResponseBody);
 		}
+		const { did } = request.params as SearchResourceRequestParams;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 		try {
 			let res: globalThis.Response;
-			if (request.params.did) {
-				res = await identityServiceStrategySetup.agent.resolve(
-					request.params.did + getQueryParams(request.query)
-				);
+			if (did) {
+				res = await identityServiceStrategySetup.agent.resolve(did + getQueryParams(request.query));
 
 				const contentType = res.headers.get('Content-Type') || 'application/octet-stream';
 				const body = new TextDecoder().decode(await res.arrayBuffer());
 
-				return response.setHeader('Content-Type', contentType).status(res.status).send(body);
+				return response
+					.setHeader('Content-Type', contentType)
+					.status(res.status)
+					.send(body satisfies QueryResourceResponseBody);
 			} else {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'The DID parameter is empty.',
-				});
+				} satisfies UnsuccessfulQueryResourceResponseBody);
 			}
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
-			});
+			} satisfies UnsuccessfulQueryResourceResponseBody);
 		}
 	}
 }
