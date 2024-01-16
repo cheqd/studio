@@ -315,12 +315,15 @@ export class DIDController {
 		// handle request params
 		const { did, service, verificationMethod, authentication } = request.body as UpdateDidRequestBody;
 		// Get the didDocument from the request if it's placed there
-		let updatedDocument: DIDDocument | undefined = request.body.didDocument;
+		let updatedDocument: DIDDocument
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			if (!updatedDocument && did && (service || verificationMethod || authentication)) {
+			if (request.body.didDocument) {
+				// Just pass the didDocument from the user as is
+				updatedDocument = request.body.didDocument;
+			} else if (did && (service || verificationMethod || authentication)) {
 				// Resolve DID
 				const resolvedResult = await identityServiceStrategySetup.agent.resolveDid(did);
 				// Check output that DID is not deactivated or exist
