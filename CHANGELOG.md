@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.0-develop.4](https://github.com/cheqd/credential-service/compare/2.16.0-develop.3...2.16.0-develop.4) (2024-01-16)
+
+
+### Bug Fixes
+
+* Fix for update did [DEV-3494] ([#472](https://github.com/cheqd/credential-service/issues/472)) ([8a7682e](https://github.com/cheqd/credential-service/commit/8a7682e49960ab14c58f8363f1afd88dae3cb843))
+
 ## [2.16.0-develop.3](https://github.com/cheqd/credential-service/compare/2.16.0-develop.2...2.16.0-develop.3) (2024-01-16)
 
 
