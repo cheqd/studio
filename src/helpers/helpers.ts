@@ -213,11 +213,11 @@ export async function deriveSymmetricKeyFromSecret(
 }
 
 export async function decryptPrivateKey(encryptedPrivateKeyHex: string, ivHex: string, salt: string) {
-	if (!process.env.CREDS_ENCRYPTION_SECRET) {
+	if (!process.env.CREDS_DECRYPTION_SECRET) {
 		throw new Error('Missing encryption secret');
 	}
 	// derive key from passphrase
-	const derivedKey = await deriveSymmetricKeyFromSecret(process.env.CREDS_ENCRYPTION_SECRET, salt);
+	const derivedKey = await deriveSymmetricKeyFromSecret(process.env.CREDS_DECRYPTION_SECRET, salt);
 
 	// unwrap encrypted key with iv
 	const encryptedKey = Buffer.from(encryptedPrivateKeyHex, 'hex');

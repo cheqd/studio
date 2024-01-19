@@ -127,7 +127,7 @@ export class KeyController {
 	 */
 	public async importKey(request: Request, response: Response) {
 		// Get parameters requeired for key importing
-		const { type, encrypted, ivHex, salt, alias, privateKeyHex } = request.body as ImportKeyRequestBody;
+		const { type, encrypted = false, ivHex, salt, alias, privateKeyHex } = request.body as ImportKeyRequestBody;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		let decryptedPrivateKeyHex = privateKeyHex;

@@ -53,7 +53,7 @@ declare global {
 			TESTNET_MINIMUM_BALANCE: number;
 
 			// Creds
-			CREDS_ENCRYPTION_SECRET: string;
+			CREDS_DECRYPTION_SECRET: string;
 		}
 	}
 
