@@ -60,6 +60,7 @@ jobs:
                 TESTNET_RPC_URL: ${{ vars.TESTNET_RPC_URL }}
                 VERIDA_NETWORK: ${{ vars.VERIDA_NETWORK }}
                 VERIDA_PRIVATE_KEY: ${{ secrets.VERIDA_PRIVATE_KEY }}
+                CREDS_ENCRYPTION_SECRET: ${{ secrets.CREDS_ENCRYPTION_SECRET }}
 
             - uses: actions/upload-artifact@v4
               if: always()

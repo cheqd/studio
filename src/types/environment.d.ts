@@ -51,6 +51,9 @@ declare global {
 			ENABLE_ACCOUNT_TOPUP: string | 'false';
 			FAUCET_URI: string;
 			TESTNET_MINIMUM_BALANCE: number;
+
+			// Creds
+			CREDS_ENCRYPTION_SECRET: string;
 		}
 	}
 
