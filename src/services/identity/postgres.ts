@@ -232,7 +232,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async updateDid(didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier> {
+	async updateDid(didDocument: DIDDocument, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<IIdentifier> {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
@@ -247,14 +247,14 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		try {
 			const agent = await this.createAgent(customer);
-			const identifier: IIdentifier = await Veramo.instance.updateDid(agent, didDocument);
+			const identifier: IIdentifier = await Veramo.instance.updateDid(agent, didDocument, publicKeyHexs);
 			return identifier;
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
 	}
 
-	async deactivateDid(did: string, customer: CustomerEntity): Promise<boolean> {
+	async deactivateDid(did: string, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<boolean> {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
@@ -267,7 +267,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		try {
 			const agent = await this.createAgent(customer);
-			return await Veramo.instance.deactivateDid(agent, did);
+			return await Veramo.instance.deactivateDid(agent, did, publicKeyHexs);
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
@@ -301,14 +301,14 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return identifier;
 	}
 
-	async createResource(network: string, payload: ResourcePayload, customer: CustomerEntity) {
+	async createResource(network: string, payload: ResourcePayload, customer: CustomerEntity, publicKeyHexs?: string[]) {
 		try {
 			const agent = await this.createAgent(customer);
 			const did = `did:cheqd:${network}:${payload.collectionId}`;
 			if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
 				throw new Error(`${did} not found in wallet`);
 			}
-			return await Veramo.instance.createResource(agent, network, payload);
+			return await Veramo.instance.createResource(agent, network, payload, publicKeyHexs);
 		} catch (error) {
 			throw new Error(`${error}`);
 		}

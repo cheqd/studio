@@ -68,11 +68,11 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 
-	updateDid(didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier> {
+	updateDid(didDocument: DIDDocument, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<IIdentifier> {
 		throw new Error(`Not supported`);
 	}
 
-	deactivateDid(did: string, customer: CustomerEntity): Promise<boolean> {
+	deactivateDid(did: string, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<boolean> {
 		throw new Error(`Not supported`);
 	}
 
@@ -85,7 +85,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 
-	createResource(network: string, payload: ResourcePayload, customer: CustomerEntity): Promise<any> {
+	createResource(network: string, payload: ResourcePayload, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<any> {
 		throw new Error(`Not supported`);
 	}
 

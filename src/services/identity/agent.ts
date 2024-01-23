@@ -70,6 +70,7 @@ import type {
 import { MINIMAL_DENOM, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js';
 import { toCoin, toDefaultDkg, toMinimalDenom } from '../../helpers/helpers.js';
 import { jwtDecode } from 'jwt-decode';
+import type { ICheqdCreateLinkedResourceArgs } from '@cheqd/did-provider-cheqd';
 
 // dynamic import to avoid circular dependency
 const VeridaResolver =
@@ -188,13 +189,14 @@ export class Veramo {
 		}
 	}
 
-	async updateDid(agent: VeramoAgent, didDocument: DIDDocument): Promise<IIdentifier> {
+	async updateDid(agent: VeramoAgent, didDocument: DIDDocument, publicKeyHexs?: string[]): Promise<IIdentifier> {
 		try {
 			const [kms] = await agent.keyManagerGetKeyManagementSystems();
 
 			const result = await agent.cheqdUpdateIdentifier({
 				kms,
 				document: didDocument,
+				publicKeyHexs
 			} satisfies ICheqdUpdateIdentifierArgs);
 			return { ...result, provider: 'cheqd' };
 		} catch (error) {
@@ -202,7 +204,7 @@ export class Veramo {
 		}
 	}
 
-	async deactivateDid(agent: VeramoAgent, did: string): Promise<boolean> {
+	async deactivateDid(agent: VeramoAgent, did: string, publicKeyHexs?: string[]): Promise<boolean> {
 		try {
 			const [kms] = await agent.keyManagerGetKeyManagementSystems();
 			const didResolutionResult = await this.resolveDid(agent, did);
@@ -221,6 +223,7 @@ export class Veramo {
 			const result = await agent.cheqdDeactivateIdentifier({
 				kms,
 				document: didDocument,
+				publicKeyHexs,
 			} satisfies ICheqdDeactivateIdentifierArgs);
 			return result;
 		} catch (error) {
@@ -272,7 +275,7 @@ export class Veramo {
 		return identifier;
 	}
 
-	async createResource(agent: VeramoAgent, network: string, payload: ResourcePayload) {
+	async createResource(agent: VeramoAgent, network: string, payload: ResourcePayload, publicKeyHexs?: string[]) {
 		try {
 			const [kms] = await agent.keyManagerGetKeyManagementSystems();
 
@@ -280,7 +283,8 @@ export class Veramo {
 				kms,
 				payload,
 				network: network as CheqdNetwork,
-			});
+				publicKeyHexs,
+			} satisfies ICheqdCreateLinkedResourceArgs);
 			return result;
 		} catch (error) {
 			throw new Error(`${error}`);

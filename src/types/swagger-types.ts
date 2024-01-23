@@ -1034,8 +1034,21 @@
  *           type: array
  *           items:
  *             type: string
+ *         publicKeyHexs:
+ *           description: List of key references (publicKeys) which will be used for signing the message. The should be in hexadecimal format and placed in the wallet of current user.
+ *           type: array
+ *           items:
+ *            type: string          
  *         didDocument:
  *           $ref: '#/components/schemas/DidDocument'
+ *     DidDeactivateRequest:
+ *       type: object
+ *       properties:
+ *         publicKeyHexs:
+ *           description: List of key references (publicKeys) which will be used for signing the message. The should be in hexadecimal format and placed in the wallet of current user.
+ *           type: array
+ *           items:
+ *            type: string 
  *     CreateResourceRequest:
  *       description: Input fields for DID-Linked Resource creation.
  *       type: object
@@ -1075,6 +1088,11 @@
  *         version:
  *           description: Optional field to assign a human-readable version in the DID-Linked Resource.
  *           type: string
+ *         publicKeyHexs:
+ *           description: List of key references (publicKeys) which will be used for signing the message. The should be in hexadecimal format and placed in the wallet of current user.
+ *           type: array
+ *           items:
+ *            type: string 
  *       example:
  *         data: SGVsbG8gV29ybGQ=
  *         encoding: base64url

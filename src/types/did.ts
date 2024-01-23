@@ -37,11 +37,13 @@ export type UpdateDidRequestBody = {
 	verificationMethod: VerificationMethod[];
 	authentication: string[];
 	didDocument?: DIDDocument;
-};
+} & { publicKeyHexs?: string[] };;
 
 export type ImportDidRequestBody = DidImportRequest;
 
 export type DeactivateDIDRequestParams = DIDRequest;
+
+export type DeactivateDIDRequestBody = { publicKeyHexs?: string[] };
 
 export type GetDIDRequestParams = DIDRequest;
 

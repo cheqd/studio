@@ -976,6 +976,20 @@
             "required": true
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/DidDeactivateRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DidDeactivateRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "The request was successful.",
@@ -3136,8 +3150,27 @@
               "type": "string"
             }
           },
+          "publicKeyHexs": {
+            "description": "List of key references (publicKeys) which will be used for signing the message. The should be in hexadecimal format and placed in the wallet of current user.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "didDocument": {
             "$ref": "#/components/schemas/DidDocument"
+          }
+        }
+      },
+      "DidDeactivateRequest": {
+        "type": "object",
+        "properties": {
+          "publicKeyHexs": {
+            "description": "List of key references (publicKeys) which will be used for signing the message. The should be in hexadecimal format and placed in the wallet of current user.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -3191,6 +3224,13 @@
           "version": {
             "description": "Optional field to assign a human-readable version in the DID-Linked Resource.",
             "type": "string"
+          },
+          "publicKeyHexs": {
+            "description": "List of key references (publicKeys) which will be used for signing the message. The should be in hexadecimal format and placed in the wallet of current user.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "example": {

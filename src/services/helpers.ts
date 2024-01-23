@@ -1,4 +1,7 @@
+import type { CustomerEntity } from '../database/entities/customer.entity.js';
+import type { IBooleanResponse } from "../types/shared.js";
 import { IdentityServiceStrategySetup } from './identity/index.js';
+import { KeyService } from './key.js';
 import type { CheqdW3CVerifiableCredential } from './w3c-credential.js';
 import type { CheqdW3CVerifiablePresentation } from './w3c-presentation.js';
 
@@ -20,4 +23,23 @@ export async function isIssuerDidDeactivated(presentation: CheqdW3CVerifiablePre
 		}
 	}
 	return false;
+}
+
+export async function arePublicKeyHexsInWallet(publicKeyHexs: string[], customer: CustomerEntity): Promise<IBooleanResponse> {
+	const ownedKeys = await KeyService.instance.find({customer: customer})
+	if (ownedKeys.length === 0) {
+		return {
+			status: false,
+			error: `Customer has no keys in wallet`,
+		} satisfies IBooleanResponse;
+	}
+	const ownedPublicKeysHexs = ownedKeys.map((key) => key.publicKeyHex);
+	const notOwnedPublicKeysHexs = publicKeyHexs.filter((key) => !ownedPublicKeysHexs.includes(key));
+	if (notOwnedPublicKeysHexs.length > 0) {
+		return {
+			status: false,
+			error: `Public keys with hexs: ${notOwnedPublicKeysHexs.join(', ')} are not owned by the customer`,
+		} satisfies IBooleanResponse;
+	}
+	return {status: true} satisfies IBooleanResponse;
 }

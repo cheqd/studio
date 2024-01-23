@@ -31,12 +31,14 @@ import type {
 	DeactivateDIDRequestParams,
 	GetDIDRequestParams,
 	ResolveDIDRequestParams,
+	DeactivateDIDRequestBody,
 } from '../types/did.js';
 import { check, validationResult, param } from './validator/index.js';
 import type { IKey, RequireOnly } from '@veramo/core';
 import { extractPublicKeyHex } from '@veramo/utils';
 import type { ValidationErrorResponseBody } from '../types/shared.js';
 import type { KeyImport } from '../types/key.js';
+import { arePublicKeyHexsInWallet } from '../services/helpers.js';
 
 export class DIDController {
 	public static createDIDValidator = [
@@ -92,6 +94,11 @@ export class DIDController {
 			.withMessage('Authentication should be an array of strings for updating DID-Authentication')
 			.bail()
 			.isDIDArray()
+			.bail(),
+		check('publicKeyHexs')
+			.optional()
+			.isArray()
+			.withMessage('publicKeyHexs should be an array of strings')
 			.bail(),
 	];
 
@@ -313,11 +320,21 @@ export class DIDController {
 		}
 
 		// handle request params
-		const { did, service, verificationMethod, authentication } = request.body as UpdateDidRequestBody;
+		const { did, service, verificationMethod, authentication, publicKeyHexs } = request.body as UpdateDidRequestBody;
 		// Get the didDocument from the request if it's placed there
 		let updatedDocument: DIDDocument
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+
+		// If list of publicKeyHexs is placed - check that publicKeyHexs are owned by the customer
+		if (publicKeyHexs) {
+			const areOwned = await arePublicKeyHexsInWallet(publicKeyHexs, response.locals.customer);
+			if (!areOwned.status) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: areOwned.error as string,
+				} satisfies UnsuccessfulUpdateDidResponseBody);
+			}
+		}
 
 		try {
 			if (request.body.didDocument) {
@@ -355,7 +372,8 @@ export class DIDController {
 
 			const result = await identityServiceStrategySetup.agent.updateDid(
 				updatedDocument,
-				response.locals.customer
+				response.locals.customer,
+				publicKeyHexs
 			);
 			return response.status(StatusCodes.OK).json(result satisfies UpdateDidResponseBody);
 		} catch (error) {
@@ -495,6 +513,14 @@ export class DIDController {
 	 *         schema:
 	 *           type: string
 	 *         required: true
+	 *     requestBody:
+	 *       content:
+	 *         application/x-www-form-urlencoded:
+	 *           schema:
+	 *             $ref: '#/components/schemas/DidDeactivateRequest'
+	 *         application/json:
+	 *           schema:
+	 *             $ref: '#/components/schemas/DidDeactivateRequest'
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -522,13 +548,24 @@ export class DIDController {
 
 		// Extract did from request params
 		const { did } = request.params as DeactivateDIDRequestParams;
+		const { publicKeyHexs } = request.body as DeactivateDIDRequestBody;;
+
+		// If list of publicKeyHexs is placed - check that publicKeyHexs are owned by the customer
+		if (publicKeyHexs) {
+			const areOwned = await arePublicKeyHexsInWallet(publicKeyHexs, response.locals.customer);
+			if (!areOwned.status) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: areOwned.error as string,
+				} satisfies UnsuccessfulDeactivateDidResponseBody);
+			}
+		}
 
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
 			// Deactivate DID
-			await identityServiceStrategySetup.agent.deactivateDid(did, response.locals.customer);
+			await identityServiceStrategySetup.agent.deactivateDid(did, response.locals.customer, publicKeyHexs);
 			// Send the deactivated DID as result
 			const result = await identityServiceStrategySetup.agent.resolveDid(request.params.did);
 

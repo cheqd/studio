@@ -68,8 +68,8 @@ export interface IIdentityService {
 	): Promise<KeyEntity>;
 	getKey(kid: string, customer?: CustomerEntity): Promise<ManagedKeyInfo | null>;
 	createDid(network: string, didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier>;
-	updateDid(didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier>;
-	deactivateDid(did: string, customer: CustomerEntity): Promise<boolean>;
+	updateDid(didDocument: DIDDocument, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<IIdentifier>;
+	deactivateDid(did: string, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<boolean>;
 	listDids(customer: CustomerEntity): Promise<string[]>;
 	resolveDid(did: string): Promise<DIDResolutionResult>;
 	resolve(didUrl: string): Promise<Response>;
@@ -80,7 +80,7 @@ export interface IIdentityService {
 		controllerKeyId: string | undefined,
 		customer: CustomerEntity
 	): Promise<IIdentifier>;
-	createResource(network: string, payload: ResourcePayload, customer: CustomerEntity): Promise<any>;
+	createResource(network: string, payload: ResourcePayload, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<any>;
 	createCredential(
 		credential: CredentialPayload,
 		format: CredentialRequest['format'],
