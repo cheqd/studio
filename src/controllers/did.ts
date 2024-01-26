@@ -39,6 +39,8 @@ import { extractPublicKeyHex } from '@veramo/utils';
 import type { ValidationErrorResponseBody } from '../types/shared.js';
 import type { KeyImport } from '../types/key.js';
 import { arePublicKeyHexsInWallet } from '../services/helpers.js';
+import { CheqdProviderErrorCodes } from '@cheqd/did-provider-cheqd';
+import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
 
 export class DIDController {
 	public static createDIDValidator = [
@@ -377,6 +379,14 @@ export class DIDController {
 			);
 			return response.status(StatusCodes.OK).json(result satisfies UpdateDidResponseBody);
 		} catch (error) {
+			const errorCode = (error as CheqdProviderError).errorCode;
+			// Handle specific cases when DID is deactivated or verificationMethod is empty
+			if (errorCode && (errorCode === CheqdProviderErrorCodes.DeactivatedController || errorCode === CheqdProviderErrorCodes.EmptyVerificationMethod)) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: `updateDID: error: ${(error as CheqdProviderError).message}`,
+				} satisfies UnsuccessfulUpdateDidResponseBody);
+			}
+
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulUpdateDidResponseBody);

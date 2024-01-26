@@ -58,6 +58,8 @@ import { APIKeyService } from '../api-key.js';
 import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import { KeyDIDProvider } from '@veramo/did-provider-key';
 import type { AbstractIdentifierProvider } from '@veramo/did-manager';
+import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
+import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 
 dotenv.config();
 
@@ -247,9 +249,21 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		try {
 			const agent = await this.createAgent(customer);
-			const identifier: IIdentifier = await Veramo.instance.updateDid(agent, didDocument, publicKeyHexs);
+			const publicKeys: TPublicKeyEd25519[] = publicKeyHexs?.map((key) => {
+				return {
+					type: 'Ed25519',
+					publicKeyHex: key,
+					kid: key
+				} satisfies TPublicKeyEd25519;
+			}) || []
+			const identifier: IIdentifier = await Veramo.instance.updateDid(agent, didDocument, publicKeys);
 			return identifier;
 		} catch (error) {
+			const errorCode = (error as CheqdProviderError).errorCode;
+			// Handle specific cases when DID is deactivated or verificationMethod is empty
+			if (errorCode) {
+				throw error;
+			}
 			throw new Error(`${error}`);
 		}
 	}
@@ -267,7 +281,14 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		try {
 			const agent = await this.createAgent(customer);
-			return await Veramo.instance.deactivateDid(agent, did, publicKeyHexs);
+			const publicKeys: TPublicKeyEd25519[] = publicKeyHexs?.map((key) => {
+				return {
+					type: 'Ed25519',
+					publicKeyHex: key,
+					kid: key
+				} satisfies TPublicKeyEd25519;
+			}) || []
+			return await Veramo.instance.deactivateDid(agent, did, publicKeys);
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
@@ -308,7 +329,14 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
 				throw new Error(`${did} not found in wallet`);
 			}
-			return await Veramo.instance.createResource(agent, network, payload, publicKeyHexs);
+			const publicKeys: TPublicKeyEd25519[] = publicKeyHexs?.map((key) => {
+				return {
+					type: 'Ed25519',
+					publicKeyHex: key,
+					kid: key
+				} satisfies TPublicKeyEd25519;
+			}) || []
+			return await Veramo.instance.createResource(agent, network, payload, publicKeys);
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
