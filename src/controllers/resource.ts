@@ -154,7 +154,8 @@ export class ResourceController {
 		// Extract the did from the request
 		const { did } = request.params;
 		// Extract the resource parameters from the request
-		const { data, encoding, name, type, alsoKnownAs, version, network, publicKeyHexs } = request.body as CreateResourceRequestBody;
+		const { data, encoding, name, type, alsoKnownAs, version, network, publicKeyHexs } =
+			request.body as CreateResourceRequestBody;
 		// If list of publicKeyHexs is placed - check that publicKeyHexs are owned by the customer
 		if (publicKeyHexs) {
 			const areOwned = await arePublicKeyHexsInWallet(publicKeyHexs, response.locals.customer);

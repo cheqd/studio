@@ -97,11 +97,7 @@ export class DIDController {
 			.bail()
 			.isDIDArray()
 			.bail(),
-		check('publicKeyHexs')
-			.optional()
-			.isArray()
-			.withMessage('publicKeyHexs should be an array of strings')
-			.bail(),
+		check('publicKeyHexs').optional().isArray().withMessage('publicKeyHexs should be an array of strings').bail(),
 	];
 
 	public static deactivateDIDValidator = [param('did').exists().isString().isDID().bail()];
@@ -322,9 +318,10 @@ export class DIDController {
 		}
 
 		// handle request params
-		const { did, service, verificationMethod, authentication, publicKeyHexs } = request.body as UpdateDidRequestBody;
+		const { did, service, verificationMethod, authentication, publicKeyHexs } =
+			request.body as UpdateDidRequestBody;
 		// Get the didDocument from the request if it's placed there
-		let updatedDocument: DIDDocument
+		let updatedDocument: DIDDocument;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
@@ -381,7 +378,11 @@ export class DIDController {
 		} catch (error) {
 			const errorCode = (error as CheqdProviderError).errorCode;
 			// Handle specific cases when DID is deactivated or verificationMethod is empty
-			if (errorCode && (errorCode === CheqdProviderErrorCodes.DeactivatedController || errorCode === CheqdProviderErrorCodes.EmptyVerificationMethod)) {
+			if (
+				errorCode &&
+				(errorCode === CheqdProviderErrorCodes.DeactivatedController ||
+					errorCode === CheqdProviderErrorCodes.EmptyVerificationMethod)
+			) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: `updateDID: error: ${(error as CheqdProviderError).message}`,
 				} satisfies UnsuccessfulUpdateDidResponseBody);
@@ -558,7 +559,7 @@ export class DIDController {
 
 		// Extract did from request params
 		const { did } = request.params as DeactivateDIDRequestParams;
-		const { publicKeyHexs } = request.body as DeactivateDIDRequestBody;;
+		const { publicKeyHexs } = request.body as DeactivateDIDRequestBody;
 
 		// If list of publicKeyHexs is placed - check that publicKeyHexs are owned by the customer
 		if (publicKeyHexs) {

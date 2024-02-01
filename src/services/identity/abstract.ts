@@ -85,7 +85,12 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 
-	createResource(network: string, payload: ResourcePayload, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<any> {
+	createResource(
+		network: string,
+		payload: ResourcePayload,
+		customer: CustomerEntity,
+		publicKeyHexs?: string[]
+	): Promise<any> {
 		throw new Error(`Not supported`);
 	}
 

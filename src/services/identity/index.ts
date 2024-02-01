@@ -80,7 +80,12 @@ export interface IIdentityService {
 		controllerKeyId: string | undefined,
 		customer: CustomerEntity
 	): Promise<IIdentifier>;
-	createResource(network: string, payload: ResourcePayload, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<any>;
+	createResource(
+		network: string,
+		payload: ResourcePayload,
+		customer: CustomerEntity,
+		publicKeyHexs?: string[]
+	): Promise<any>;
 	createCredential(
 		credential: CredentialPayload,
 		format: CredentialRequest['format'],

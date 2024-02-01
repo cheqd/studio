@@ -190,7 +190,11 @@ export class Veramo {
 		}
 	}
 
-	async updateDid(agent: VeramoAgent, didDocument: DIDDocument, publicKeyHexs?: TPublicKeyEd25519[]): Promise<IIdentifier> {
+	async updateDid(
+		agent: VeramoAgent,
+		didDocument: DIDDocument,
+		publicKeyHexs?: TPublicKeyEd25519[]
+	): Promise<IIdentifier> {
 		const [kms] = await agent.keyManagerGetKeyManagementSystems();
 
 		const result = await agent.cheqdUpdateIdentifier({
@@ -220,7 +224,7 @@ export class Veramo {
 			const result = await agent.cheqdDeactivateIdentifier({
 				kms,
 				document: didDocument,
-				keys: publicKeyHexs
+				keys: publicKeyHexs,
 			} satisfies ICheqdDeactivateIdentifierArgs);
 			return result;
 		} catch (error) {
@@ -272,7 +276,12 @@ export class Veramo {
 		return identifier;
 	}
 
-	async createResource(agent: VeramoAgent, network: string, payload: ResourcePayload, publicKeyHexs?: TPublicKeyEd25519[]) {
+	async createResource(
+		agent: VeramoAgent,
+		network: string,
+		payload: ResourcePayload,
+		publicKeyHexs?: TPublicKeyEd25519[]
+	) {
 		try {
 			const [kms] = await agent.keyManagerGetKeyManagementSystems();
 
@@ -280,7 +289,7 @@ export class Veramo {
 				kms,
 				payload,
 				network: network as CheqdNetwork,
-				signInputs: publicKeyHexs
+				signInputs: publicKeyHexs,
 			} satisfies ICheqdCreateLinkedResourceArgs);
 			return result;
 		} catch (error) {

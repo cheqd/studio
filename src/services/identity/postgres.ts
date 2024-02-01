@@ -234,7 +234,11 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async updateDid(didDocument: DIDDocument, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<IIdentifier> {
+	async updateDid(
+		didDocument: DIDDocument,
+		customer: CustomerEntity,
+		publicKeyHexs?: string[]
+	): Promise<IIdentifier> {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
@@ -249,13 +253,14 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		try {
 			const agent = await this.createAgent(customer);
-			const publicKeys: TPublicKeyEd25519[] = publicKeyHexs?.map((key) => {
-				return {
-					type: 'Ed25519',
-					publicKeyHex: key,
-					kid: key
-				} satisfies TPublicKeyEd25519;
-			}) || []
+			const publicKeys: TPublicKeyEd25519[] =
+				publicKeyHexs?.map((key) => {
+					return {
+						type: 'Ed25519',
+						publicKeyHex: key,
+						kid: key,
+					} satisfies TPublicKeyEd25519;
+				}) || [];
 			const identifier: IIdentifier = await Veramo.instance.updateDid(agent, didDocument, publicKeys);
 			return identifier;
 		} catch (error) {
@@ -281,13 +286,14 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		try {
 			const agent = await this.createAgent(customer);
-			const publicKeys: TPublicKeyEd25519[] = publicKeyHexs?.map((key) => {
-				return {
-					type: 'Ed25519',
-					publicKeyHex: key,
-					kid: key
-				} satisfies TPublicKeyEd25519;
-			}) || []
+			const publicKeys: TPublicKeyEd25519[] =
+				publicKeyHexs?.map((key) => {
+					return {
+						type: 'Ed25519',
+						publicKeyHex: key,
+						kid: key,
+					} satisfies TPublicKeyEd25519;
+				}) || [];
 			return await Veramo.instance.deactivateDid(agent, did, publicKeys);
 		} catch (error) {
 			throw new Error(`${error}`);
@@ -322,20 +328,26 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return identifier;
 	}
 
-	async createResource(network: string, payload: ResourcePayload, customer: CustomerEntity, publicKeyHexs?: string[]) {
+	async createResource(
+		network: string,
+		payload: ResourcePayload,
+		customer: CustomerEntity,
+		publicKeyHexs?: string[]
+	) {
 		try {
 			const agent = await this.createAgent(customer);
 			const did = `did:cheqd:${network}:${payload.collectionId}`;
 			if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
 				throw new Error(`${did} not found in wallet`);
 			}
-			const publicKeys: TPublicKeyEd25519[] = publicKeyHexs?.map((key) => {
-				return {
-					type: 'Ed25519',
-					publicKeyHex: key,
-					kid: key
-				} satisfies TPublicKeyEd25519;
-			}) || []
+			const publicKeys: TPublicKeyEd25519[] =
+				publicKeyHexs?.map((key) => {
+					return {
+						type: 'Ed25519',
+						publicKeyHex: key,
+						kid: key,
+					} satisfies TPublicKeyEd25519;
+				}) || [];
 			return await Veramo.instance.createResource(agent, network, payload, publicKeys);
 		} catch (error) {
 			throw new Error(`${error}`);
