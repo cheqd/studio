@@ -974,6 +974,33 @@
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/Service'
+ *     DidUpdateResponse:
+ *       type: object
+ *       properties:
+ *          did:
+ *            type: string
+ *          controllerKeyId:
+ *            type: string
+ *            description: The default key id of which is the key associated with the first verificationMethod
+ *          keys:
+ *            type: array
+ *            description: The list of keys associated with the list of verificationMethod's of DIDDocument
+ *            items:
+ *              type: object
+ *          services:
+ *            type: array
+ *            items:
+ *              $ref: '#/components/schemas/Service'
+ *          controllerKeyRefs:
+ *            type: array
+ *            description: The list of keyRefs which were used for signing the transaction
+ *            items:
+ *              type: string
+ *          controllerKeys:
+ *            type: array
+ *            description: The list of all possible keys, inlcuding all controller's keys
+ *            items:
+ *              type: string
  *     VerificationMethod:
  *       type: object
  *       properties:

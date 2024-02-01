@@ -50,7 +50,7 @@
 		"README.md"
 	],
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "^3.6.16",
+		"@cheqd/did-provider-cheqd": "^3.7.0",
 		"@cheqd/sdk": "^3.7.9",
 		"@cheqd/ts-proto": "^3.4.0",
 		"@cosmjs/amino": "^0.32.2",
@@ -62,6 +62,7 @@
 		"@veramo/credential-w3c": "^5.5.3",
 		"@veramo/data-store": "^5.5.3",
 		"@veramo/did-manager": "^5.5.3",
+		"@veramo/did-provider-key": "^5.5.3",
 		"@veramo/did-resolver": "^5.5.3",
 		"@veramo/key-manager": "^5.5.3",
 		"@veramo/kms-local": "^5.5.3",

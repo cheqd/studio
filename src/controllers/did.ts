@@ -302,7 +302,7 @@ export class DIDController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/DidResult'
+	 *               $ref: '#/components/schemas/DidUpdateResponse'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
