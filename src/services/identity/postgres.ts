@@ -24,7 +24,7 @@ import {
 	DefaultRPCUrls,
 	type TransactionResult,
 } from '@cheqd/did-provider-cheqd';
-import { DefaultDidUrlPattern, VeramoAgent} from '../../types/shared.js';
+import { DefaultDidUrlPattern, VeramoAgent } from '../../types/shared.js';
 import type { VerificationOptions } from '../../types/shared.js';
 import type { FeePaymentOptions } from '../../types/credential-status.js';
 import type { CredentialRequest } from '../../types/credential.js';

@@ -28,13 +28,16 @@ export interface ITrackOperation {
 	};
 }
 
-
 export function isResourceTrack(data: TrackData): data is IResourceTrack {
 	return Object.keys(data).length === 1 && (data as IResourceTrack).resource !== undefined;
 }
 
 export function isCredentialStatusTrack(data: TrackData): data is ICredentialStatusTrack {
-	return Object.keys(data).length >= 2 && (data as ICredentialStatusTrack).resource !== undefined && (data as ICredentialStatusTrack).encrypted !== undefined;
+	return (
+		Object.keys(data).length >= 2 &&
+		(data as ICredentialStatusTrack).resource !== undefined &&
+		(data as ICredentialStatusTrack).encrypted !== undefined
+	);
 }
 
 export function isCredentialTrack(data: TrackData): data is ICredentialTrack {
@@ -55,7 +58,7 @@ export interface ICredentialStatusTrack {
 	symmetricKey?: string;
 }
 
-export type ICredentialTrack = ICredentialStatusTrack
+export type ICredentialTrack = ICredentialStatusTrack;
 
 export interface IDIDTrack {
 	did: string;

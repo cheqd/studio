@@ -696,7 +696,7 @@ export class CredentialStatusController {
 					feePaymentNetwork: CheqdNetwork.Testnet,
 				},
 			} as ITrackOperation;
-			
+
 			// Track operation
 			eventTracker.getEmitter().emit('track', trackInfo);
 
@@ -872,7 +872,7 @@ export class CredentialStatusController {
 						symmetricKey: '',
 					} satisfies ICredentialStatusTrack,
 				} as ITrackOperation;
-				
+
 				// Track operation
 				eventTracker.getEmitter().emit('track', trackInfo);
 			}
@@ -1069,7 +1069,7 @@ export class CredentialStatusController {
 						feePaymentNetwork: CheqdNetwork.Testnet,
 					},
 				} as ITrackOperation;
-				
+
 				// Track operation
 				eventTracker.getEmitter().emit('track', trackInfo);
 			}

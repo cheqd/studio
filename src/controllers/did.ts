@@ -37,7 +37,6 @@ import type { IKey, RequireOnly } from '@veramo/core';
 import { extractPublicKeyHex } from '@veramo/utils';
 import type { ValidationErrorResponseBody } from '../types/shared.js';
 import type { KeyImport } from '../types/key.js';
-import { EventEmitter } from 'node:stream';
 import { eventTracker } from '../services/track/tracker.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
 import type { IDIDTrack, ITrackOperation } from '../types/track.js';
@@ -267,7 +266,7 @@ export class DIDController {
 				didDocument,
 				response.locals.customer
 			);
-				
+
 			eventTracker.getEmitter().emit('track', {
 				category: OperationCategoryNameEnum.DID,
 				name: OperationNameEnum.DID_CREATE,
@@ -276,7 +275,7 @@ export class DIDController {
 				} satisfies IDIDTrack,
 				did: did.did,
 				customer: response.locals.customer,
-			} satisfies ITrackOperation)
+			} satisfies ITrackOperation);
 
 			return response.status(StatusCodes.OK).json(did satisfies CreateDidResponseBody);
 		} catch (error) {
@@ -379,7 +378,7 @@ export class DIDController {
 				} satisfies IDIDTrack,
 				did: result.did,
 				customer: response.locals.customer,
-			} satisfies ITrackOperation)
+			} satisfies ITrackOperation);
 
 			return response.status(StatusCodes.OK).json(result satisfies UpdateDidResponseBody);
 		} catch (error) {
@@ -506,7 +505,7 @@ export class DIDController {
 				} satisfies IDIDTrack,
 				did: identifier.did,
 				customer: response.locals.customer,
-			} satisfies ITrackOperation)
+			} satisfies ITrackOperation);
 
 			return response.status(StatusCodes.OK).json(identifier);
 		} catch (error) {
@@ -577,7 +576,7 @@ export class DIDController {
 				} satisfies IDIDTrack,
 				did,
 				customer: response.locals.customer,
-			} satisfies ITrackOperation)
+			} satisfies ITrackOperation);
 
 			return response.status(StatusCodes.OK).json(result satisfies DeactivateDidResponseBody);
 		} catch (error) {

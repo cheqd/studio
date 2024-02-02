@@ -1,52 +1,58 @@
-import EventEmitter from "node:events"
-import type { ITrackOperation, ITrackResult } from '../../types/track.js'
-import { LoggerNotifier } from "./notifier.js"
-import { DBOperationObserver, ResourceObserver, CredentialObserver, DIDObserver, CredentialStatusObserver, IObserver } from "./observer.js"
-import type { ITrackType } from './observer.js'
+import EventEmitter from 'node:events';
+import type { ITrackOperation, ITrackResult } from '../../types/track.js';
+import { LoggerNotifier } from './notifier.js';
+import {
+	DBOperationObserver,
+	ResourceObserver,
+	CredentialObserver,
+	DIDObserver,
+	CredentialStatusObserver,
+	IObserver,
+} from './observer.js';
+import type { ITrackType } from './observer.js';
 
 class EventTracker {
-    readonly emitter: EventEmitter
-	readonly tracker: OperationTracker
-	readonly notifier: TrackNotifier
+	readonly emitter: EventEmitter;
+	readonly tracker: OperationTracker;
+	readonly notifier: TrackNotifier;
 
-    constructor (emitter?: EventEmitter, tracker?: OperationTracker, notifier?: TrackNotifier) {
-		this.emitter = emitter || new EventEmitter()
-		this.tracker = tracker || new OperationTracker()
-		this.notifier = notifier || new TrackNotifier()
+	constructor(emitter?: EventEmitter, tracker?: OperationTracker, notifier?: TrackNotifier) {
+		this.emitter = emitter || new EventEmitter();
+		this.tracker = tracker || new OperationTracker();
+		this.notifier = notifier || new TrackNotifier();
 		if (!tracker) {
-			this.setupDefaultTrackers()
+			this.setupDefaultTrackers();
 		}
 		if (!notifier) {
-			this.setupDefaultNotifiers()
+			this.setupDefaultNotifiers();
 		}
-		this.setupBaseEvent()
-    }
+		this.setupBaseEvent();
+	}
 
 	setupDefaultTrackers() {
-        this.tracker.attach(new DBOperationObserver(this.notifier))
-		this.tracker.attach(new ResourceObserver(this.notifier))
-        this.tracker.attach(new CredentialObserver(this.notifier))
-        this.tracker.attach(new DIDObserver(this.notifier))
-        this.tracker.attach(new CredentialStatusObserver(this.notifier))
+		this.tracker.attach(new DBOperationObserver(this.notifier));
+		this.tracker.attach(new ResourceObserver(this.notifier));
+		this.tracker.attach(new CredentialObserver(this.notifier));
+		this.tracker.attach(new DIDObserver(this.notifier));
+		this.tracker.attach(new CredentialStatusObserver(this.notifier));
 	}
 
 	setupDefaultNotifiers() {
-		this.notifier.attach(new LoggerNotifier())
+		this.notifier.attach(new LoggerNotifier());
 	}
 
-    getEmitter(): EventEmitter {
-        return this.emitter
-    }
+	getEmitter(): EventEmitter {
+		return this.emitter;
+	}
 
-    setupBaseEvent() {
-        this.emitter.on('track', this.track.bind(this))
-    }
+	setupBaseEvent() {
+		this.emitter.on('track', this.track.bind(this));
+	}
 
-    async track(trackOperation: ITrackOperation): Promise<void> {
+	async track(trackOperation: ITrackOperation): Promise<void> {
 		await this.tracker.notify(trackOperation);
 	}
 }
-
 
 export class OperationTracker implements ITrackSubject {
 	private observers: IObserver[] = [];
@@ -109,5 +115,4 @@ export interface ITrackSubject {
 	notify(operation: ITrackType): void;
 }
 
-export const eventTracker = new EventTracker()
-
+export const eventTracker = new EventTracker();

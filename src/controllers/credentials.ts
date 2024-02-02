@@ -310,7 +310,7 @@ export class CredentialController {
 				data: {} satisfies ICredentialTrack,
 			} as ITrackOperation;
 			eventTracker.getEmitter().emit('track', trackInfo);
-			
+
 			return response.status(StatusCodes.OK).json(verifyResult satisfies VerifyCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -408,7 +408,7 @@ export class CredentialController {
 						symmetricKey: '',
 					} satisfies ICredentialStatusTrack,
 				} as ITrackOperation;
-				
+
 				// Track operation
 				eventTracker.getEmitter().emit('track', trackInfo);
 			}
@@ -510,7 +510,7 @@ export class CredentialController {
 						symmetricKey: '',
 					},
 				} as ITrackOperation;
-				
+
 				// Track operation
 				eventTracker.getEmitter().emit('track', trackInfo);
 			}
