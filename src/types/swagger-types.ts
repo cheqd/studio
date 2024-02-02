@@ -702,13 +702,6 @@
  *           enum: [ Ed25519, Secp256k1 ]
  *         privateKeyHex:
  *           type: string
- *         ivHex:
- *           type: string
- *           required: false
- *         salt:
- *           type: string
- *         encrypted:
- *           type: boolean
  *     KeyResult:
  *       type: object
  *       properties:
