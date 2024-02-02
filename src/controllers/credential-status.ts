@@ -3,7 +3,7 @@ import { check, validationResult, query } from './validator/index.js';
 import { fromString } from 'uint8arrays';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import type { ITrackOperation, ValidationErrorResponseBody } from '../types/shared.js';
+import type { ValidationErrorResponseBody } from '../types/shared.js';
 import type { CheckStatusListSuccessfulResponseBody, FeePaymentOptions } from '../types/credential-status.js';
 import {
 	DefaultStatusAction,
@@ -45,7 +45,9 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
 import { toNetwork } from '../helpers/helpers.js';
-import { OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS } from '../types/constants.js';
+import { eventTracker } from '../services/track/tracker.js';
+import type { ICredentialStatusTrack, ITrackOperation } from '../types/track.js';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
 import { CheqdNetwork } from '@cheqd/sdk';
 
 export class CredentialStatusController {
@@ -551,9 +553,9 @@ export class CredentialStatusController {
 			}
 
 			// Keep track of resources
-			const trackResourceInfo = {
-				category: OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
-				operation: 'createUnencryptedStatusList',
+			const trackInfo = {
+				category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
+				name: OperationNameEnum.CREDENTIAL_STATUS_CREATE_UNENCRYPTED,
 				customer: response.locals.customer,
 				user: response.locals.user,
 				did,
@@ -561,18 +563,12 @@ export class CredentialStatusController {
 					resource: result.resourceMetadata,
 					encrypted: result.resource?.metadata?.encrypted,
 					symmetricKey: '',
-				},
+				} satisfies ICredentialStatusTrack,
 			} as ITrackOperation;
 
-			const trackResult = await identityServiceStrategySetup.agent
-				.trackOperation(trackResourceInfo)
-				.catch((error) => {
-					return { error };
-				});
-			if (trackResult.error) {
-				console.error(`Tracking Error: ${trackResult.error}`);
-			}
-			// return result
+			// Track operation
+			eventTracker.getEmitter().emit('track', trackInfo);
+
 			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined });
 		} catch (error) {
 			// return catch-all error
@@ -683,9 +679,9 @@ export class CredentialStatusController {
 			// Keep track of resources
 			// For now we decided not to store symmetricKey yet
 
-			const trackResourceInfo = {
-				operation: 'createEncryptedStatusList',
-				category: OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
+			const trackInfo = {
+				name: OperationNameEnum.CREDENTIAL_STATUS_CREATE_ENCRYPTED,
+				category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
 				customer: response.locals.customer,
 				user: response.locals.user,
 				did: did,
@@ -693,22 +689,17 @@ export class CredentialStatusController {
 					resource: result.resourceMetadata,
 					encrypted: true,
 					symmetricKey: '',
-				},
+				} satisfies ICredentialStatusTrack,
 				feePaymentOptions: {
 					feePaymentAddress: feePaymentAddress,
 					feePaymentAmount: feePaymentAmount,
 					feePaymentNetwork: CheqdNetwork.Testnet,
 				},
 			} as ITrackOperation;
-			const trackResult = await identityServiceStrategySetup.agent
-				.trackOperation(trackResourceInfo)
-				.catch((error) => {
-					return { error };
-				});
-			if (trackResult.error) {
-				console.error(`Tracking Error: ${trackResult.error}`);
-			}
-			// return result
+			
+			// Track operation
+			eventTracker.getEmitter().emit('track', trackInfo);
+
 			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined });
 		} catch (error) {
 			// return catch-all error
@@ -869,9 +860,9 @@ export class CredentialStatusController {
 
 			// track resource creation
 			if (result.resourceMetadata) {
-				const trackResourceInfo = {
-					category: OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
-					operation: 'updateUnencryptedStatusList',
+				const trackInfo = {
+					category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
+					name: OperationNameEnum.CREDENTIAL_STATUS_UPDATE_UNENCRYPTED,
 					customer: response.locals.customer,
 					user: response.locals.user,
 					did,
@@ -879,16 +870,11 @@ export class CredentialStatusController {
 						resource: result.resourceMetadata,
 						encrypted: false,
 						symmetricKey: '',
-					},
+					} satisfies ICredentialStatusTrack,
 				} as ITrackOperation;
-				const trackResult = await identityServiceStrategySetup.agent
-					.trackOperation(trackResourceInfo)
-					.catch((error) => {
-						return { error };
-					});
-				if (trackResult.error) {
-					console.error(`Tracking Error: ${trackResult.error}`);
-				}
+				
+				// Track operation
+				eventTracker.getEmitter().emit('track', trackInfo);
 			}
 
 			return response.status(StatusCodes.OK).json(formatted);
@@ -1066,9 +1052,9 @@ export class CredentialStatusController {
 
 			// track resource creation
 			if (result.resourceMetadata) {
-				const trackResourceInfo = {
-					category: OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
-					operation: 'updateEncryptedStatusList',
+				const trackInfo = {
+					category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
+					name: OperationNameEnum.CREDENTIAL_STATUS_UPDATE_ENCRYPTED,
 					customer: response.locals.customer,
 					user: response.locals.user,
 					did,
@@ -1076,21 +1062,16 @@ export class CredentialStatusController {
 						resource: result.resourceMetadata,
 						encrypted: true,
 						symmetricKey: '',
-					},
+					} satisfies ICredentialStatusTrack,
 					feePaymentOptions: {
 						feePaymentAddress: feePaymentAddress,
 						feePaymentAmount: feePaymentAmount,
 						feePaymentNetwork: CheqdNetwork.Testnet,
 					},
 				} as ITrackOperation;
-				const trackResult = await identityServiceStrategySetup.agent
-					.trackOperation(trackResourceInfo)
-					.catch((error) => {
-						return { error };
-					});
-				if (trackResult.error) {
-					console.error(`Tracking Error: ${trackResult.error}`);
-				}
+				
+				// Track operation
+				eventTracker.getEmitter().emit('track', trackInfo);
 			}
 
 			return response.status(StatusCodes.OK).json(formatted);

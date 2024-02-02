@@ -6,9 +6,8 @@ import { check, validationResult, query } from './validator/index.js';
 
 import { Credentials } from '../services/credentials.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import type { ITrackOperation, ValidationErrorResponseBody } from '../types/shared.js';
-import { Cheqd } from '@cheqd/did-provider-cheqd';
-import { OPERATION_CATEGORY_NAME_CREDENTIAL } from '../types/constants.js';
+import type { ValidationErrorResponseBody } from '../types/shared.js';
+// import { Cheqd } from '@cheqd/did-provider-cheqd';
 import { CheqdW3CVerifiableCredential } from '../services/w3c-credential.js';
 import { isCredentialIssuerDidDeactivated } from '../services/helpers.js';
 import type {
@@ -33,6 +32,10 @@ import type {
 	VerifyCredentialResponseBody,
 } from '../types/credential.js';
 import { VeridaDIDValidator } from './validator/did.js';
+import { Cheqd } from '@cheqd/did-provider-cheqd';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
+import { eventTracker } from '../services/track/tracker.js';
+import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '../types/track.js';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -186,6 +189,18 @@ export class CredentialController {
 				requestBody,
 				response.locals.customer
 			);
+
+			// Track operation
+			const trackInfo = {
+				category: OperationCategoryNameEnum.CREDENTIAL,
+				name: OperationNameEnum.CREDENTIAL_ISSUE,
+				customer: response.locals.customer,
+				user: response.locals.user,
+				did: requestBody.issuerDid,
+				data: {} satisfies ICredentialTrack,
+			} as ITrackOperation;
+			eventTracker.getEmitter().emit('track', trackInfo);
+
 			return response.status(StatusCodes.OK).json(credential satisfies IssueCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -285,6 +300,17 @@ export class CredentialController {
 					error: `verify: ${verifyResult.error.message}`,
 				} satisfies UnsuccesfulVerifyCredentialResponseBody);
 			}
+
+			// Track operation
+			const trackInfo = {
+				category: OperationCategoryNameEnum.CREDENTIAL,
+				name: OperationNameEnum.CREDENTIAL_ISSUE,
+				customer: response.locals.customer,
+				user: response.locals.user,
+				data: {} satisfies ICredentialTrack,
+			} as ITrackOperation;
+			eventTracker.getEmitter().emit('track', trackInfo);
+			
 			return response.status(StatusCodes.OK).json(verifyResult satisfies VerifyCredentialResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -371,8 +397,8 @@ export class CredentialController {
 						? credential.issuer
 						: (credential.issuer as { id: string }).id;
 				const trackInfo = {
-					category: OPERATION_CATEGORY_NAME_CREDENTIAL,
-					operation: 'revoke',
+					category: OperationCategoryNameEnum.CREDENTIAL,
+					name: OperationNameEnum.CREDENTIAL_REVOKE,
 					customer: response.locals.customer,
 					user: response.locals.user,
 					did: issuerDid,
@@ -380,18 +406,11 @@ export class CredentialController {
 						encrypted: result.statusList?.metadata?.encrypted,
 						resource: result.resourceMetadata,
 						symmetricKey: '',
-					},
+					} satisfies ICredentialStatusTrack,
 				} as ITrackOperation;
-
+				
 				// Track operation
-				const trackResult = await identityServiceStrategySetup.agent
-					.trackOperation(trackInfo)
-					.catch((error) => {
-						return { error };
-					});
-				if (trackResult.error) {
-					console.error(`Tracking Error: ${trackResult.error}`);
-				}
+				eventTracker.getEmitter().emit('track', trackInfo);
 			}
 			// Return Ok response
 			return response.status(StatusCodes.OK).json(result satisfies RevokeCredentialResponseBody);
@@ -480,8 +499,8 @@ export class CredentialController {
 						? credential.issuer
 						: (credential.issuer as { id: string }).id;
 				const trackInfo = {
-					category: OPERATION_CATEGORY_NAME_CREDENTIAL,
-					operation: 'suspend',
+					category: OperationCategoryNameEnum.CREDENTIAL,
+					name: OperationNameEnum.CREDENTIAL_SUSPEND,
 					customer: response.locals.customer,
 					user: response.locals.user,
 					did: issuerDid,
@@ -491,16 +510,9 @@ export class CredentialController {
 						symmetricKey: '',
 					},
 				} as ITrackOperation;
-
+				
 				// Track operation
-				const trackResult = await identityServiceStrategySetup.agent
-					.trackOperation(trackInfo)
-					.catch((error) => {
-						return { error };
-					});
-				if (trackResult.error) {
-					console.error(`Tracking Error: ${trackResult.error}`);
-				}
+				eventTracker.getEmitter().emit('track', trackInfo);
 			}
 
 			return response.status(StatusCodes.OK).json(result satisfies SuspendCredentialResponseBody);
@@ -587,27 +599,20 @@ export class CredentialController {
 						? credential.issuer
 						: (credential.issuer as { id: string }).id;
 				const trackInfo = {
-					category: OPERATION_CATEGORY_NAME_CREDENTIAL,
-					operation: 'reinstate',
+					category: OperationCategoryNameEnum.CREDENTIAL,
+					name: OperationNameEnum.CREDENTIAL_UNSUSPEND,
 					customer: response.locals.customer,
 					user: response.locals.user,
 					did: issuerDid,
 					data: {
-						encrypted: result.statusList?.metadata?.encrypted,
+						encrypted: result.statusList?.metadata?.encrypted || false,
 						resource: result.resourceMetadata,
 						symmetricKey: '',
-					},
+					} satisfies ICredentialStatusTrack,
 				} as ITrackOperation;
 
 				// Track operation
-				const trackResult = await identityServiceStrategySetup.agent
-					.trackOperation(trackInfo)
-					.catch((error) => {
-						return { error };
-					});
-				if (trackResult.error) {
-					console.error(`Tracking Error: ${trackResult.error}`);
-				}
+				eventTracker.getEmitter().emit('track', trackInfo);
 			}
 			// Return Ok response
 			return response.status(StatusCodes.OK).json(result satisfies UnsuspendCredentialResponseBody);

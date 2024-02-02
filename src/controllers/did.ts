@@ -37,6 +37,10 @@ import type { IKey, RequireOnly } from '@veramo/core';
 import { extractPublicKeyHex } from '@veramo/utils';
 import type { ValidationErrorResponseBody } from '../types/shared.js';
 import type { KeyImport } from '../types/key.js';
+import { EventEmitter } from 'node:stream';
+import { eventTracker } from '../services/track/tracker.js';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
+import type { IDIDTrack, ITrackOperation } from '../types/track.js';
 
 export class DIDController {
 	public static createDIDValidator = [
@@ -263,6 +267,17 @@ export class DIDController {
 				didDocument,
 				response.locals.customer
 			);
+				
+			eventTracker.getEmitter().emit('track', {
+				category: OperationCategoryNameEnum.DID,
+				name: OperationNameEnum.DID_CREATE,
+				data: {
+					did: did.did,
+				} satisfies IDIDTrack,
+				did: did.did,
+				customer: response.locals.customer,
+			} satisfies ITrackOperation)
+
 			return response.status(StatusCodes.OK).json(did satisfies CreateDidResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -354,6 +369,18 @@ export class DIDController {
 				updatedDocument,
 				response.locals.customer
 			);
+
+			// Track the operation
+			eventTracker.getEmitter().emit('track', {
+				category: OperationCategoryNameEnum.DID,
+				name: OperationNameEnum.DID_UPDATE,
+				data: {
+					did: result.did,
+				} satisfies IDIDTrack,
+				did: result.did,
+				customer: response.locals.customer,
+			} satisfies ITrackOperation)
+
 			return response.status(StatusCodes.OK).json(result satisfies UpdateDidResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -469,6 +496,18 @@ export class DIDController {
 			const identifier = await new IdentityServiceStrategySetup(
 				response.locals.customer.customerId
 			).agent.importDid(did, keys, controllerKeyId, response.locals.customer);
+
+			// Track the operation
+			eventTracker.getEmitter().emit('track', {
+				category: OperationCategoryNameEnum.DID,
+				name: OperationNameEnum.DID_IMPORT,
+				data: {
+					did: identifier.did,
+				} satisfies IDIDTrack,
+				did: identifier.did,
+				customer: response.locals.customer,
+			} satisfies ITrackOperation)
+
 			return response.status(StatusCodes.OK).json(identifier);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -528,6 +567,17 @@ export class DIDController {
 			await identityServiceStrategySetup.agent.deactivateDid(did, response.locals.customer);
 			// Send the deactivated DID as result
 			const result = await identityServiceStrategySetup.agent.resolveDid(request.params.did);
+
+			// Track the operation
+			eventTracker.getEmitter().emit('track', {
+				category: OperationCategoryNameEnum.DID,
+				name: OperationNameEnum.DID_DEACTIVATE,
+				data: {
+					did,
+				} satisfies IDIDTrack,
+				did,
+				customer: response.locals.customer,
+			} satisfies ITrackOperation)
 
 			return response.status(StatusCodes.OK).json(result satisfies DeactivateDidResponseBody);
 		} catch (error) {
