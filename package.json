@@ -94,6 +94,7 @@
 		"secp256k1": "^5.0.0",
 		"sqlite3": "^5.1.7",
 		"swagger-ui-express": "^5.0.0",
+		"swagger-ui-dist": "5.10.5",
 		"typeorm": "^0.3.20",
 		"uint8arrays": "^4.0.10",
 		"uri-js": "^4.4.1"
