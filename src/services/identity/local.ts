@@ -37,6 +37,9 @@ import type {
 import { DefaultIdentityService } from './default.js';
 import { Connection } from '../../database/connection/connection.js';
 import { Veramo } from './agent.js';
+import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import { toTPublicKeyEd25519 } from '../helpers.js';
 
 dotenv.config();
 
@@ -107,9 +110,13 @@ export class LocalIdentityService extends DefaultIdentityService {
 		return Veramo.instance.getKey(this.initAgent(), kid);
 	}
 
-	async deactivateDid(did: string): Promise<boolean> {
+	async deactivateDid(did: string, customer: CustomerEntity, publicKeyHexs? : string[]): Promise<boolean> {
 		try {
-			return await Veramo.instance.deactivateDid(this.initAgent(), did);
+			const publicKeys: TPublicKeyEd25519[] =
+				publicKeyHexs?.map((key) => {
+					return toTPublicKeyEd25519(key);
+				}) || [];
+			return await Veramo.instance.deactivateDid(this.initAgent(), did, publicKeys);
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
@@ -144,10 +151,14 @@ export class LocalIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async createResource(network: string, payload: ResourcePayload) {
+	async createResource(network: string, payload: ResourcePayload, customer: CustomerEntity, publicKeyHexs?: string[]) {
 		try {
 			await this.importDid();
-			return await Veramo.instance.createResource(this.initAgent(), network, payload);
+			const publicKeys: TPublicKeyEd25519[] =
+				publicKeyHexs?.map((key) => {
+					return toTPublicKeyEd25519(key);
+				}) || [];
+			return await Veramo.instance.createResource(this.initAgent(), network, payload, publicKeys);
 		} catch (error) {
 			throw new Error(`${error}`);
 		}

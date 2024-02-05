@@ -60,6 +60,7 @@ import { KeyDIDProvider } from '@veramo/did-provider-key';
 import type { AbstractIdentifierProvider } from '@veramo/did-manager';
 import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
+import { toTPublicKeyEd25519 } from '../helpers.js';
 
 dotenv.config();
 
@@ -255,11 +256,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			const agent = await this.createAgent(customer);
 			const publicKeys: TPublicKeyEd25519[] =
 				publicKeyHexs?.map((key) => {
-					return {
-						type: 'Ed25519',
-						publicKeyHex: key,
-						kid: key,
-					} satisfies TPublicKeyEd25519;
+					return toTPublicKeyEd25519(key);
 				}) || [];
 			const identifier: IIdentifier = await Veramo.instance.updateDid(agent, didDocument, publicKeys);
 			return identifier;
@@ -288,11 +285,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			const agent = await this.createAgent(customer);
 			const publicKeys: TPublicKeyEd25519[] =
 				publicKeyHexs?.map((key) => {
-					return {
-						type: 'Ed25519',
-						publicKeyHex: key,
-						kid: key,
-					} satisfies TPublicKeyEd25519;
+					return toTPublicKeyEd25519(key);
 				}) || [];
 			return await Veramo.instance.deactivateDid(agent, did, publicKeys);
 		} catch (error) {
@@ -342,11 +335,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			}
 			const publicKeys: TPublicKeyEd25519[] =
 				publicKeyHexs?.map((key) => {
-					return {
-						type: 'Ed25519',
-						publicKeyHex: key,
-						kid: key,
-					} satisfies TPublicKeyEd25519;
+					return toTPublicKeyEd25519(key);
 				}) || [];
 			return await Veramo.instance.createResource(agent, network, payload, publicKeys);
 		} catch (error) {

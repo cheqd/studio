@@ -1,3 +1,4 @@
+import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import type { IBooleanResponse } from '../types/shared.js';
 import { IdentityServiceStrategySetup } from './identity/index.js';
@@ -46,3 +47,11 @@ export async function arePublicKeyHexsInWallet(
 	}
 	return { status: true } satisfies IBooleanResponse;
 }
+
+export function toTPublicKeyEd25519(publicKeyHex: string): TPublicKeyEd25519 {
+	return {
+		type: 'Ed25519',
+		publicKeyHex: publicKeyHex,
+		kid: publicKeyHex,
+	} satisfies TPublicKeyEd25519;
+}	
