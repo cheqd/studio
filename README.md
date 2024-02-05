@@ -35,6 +35,11 @@ The application allows configuring the following parameters using environment va
 
 ### Core configuration
 
+#### Events tracking
+
+1. `ENABLE_DATADOG`: enables sending information about events to datadog
+2. `LOG_LEVEL`: specifies log level, like 'trace', 'debug', 'info', 'warn' or 'error';
+
 #### Network API endpoints
 
 1. `MAINNET_RPC_URL`: RPC endpoint for cheqd mainnet (Default: `https://rpc.cheqd.net:443`).

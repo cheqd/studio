@@ -196,10 +196,12 @@ export class CredentialController {
 				name: OperationNameEnum.CREDENTIAL_ISSUE,
 				customer: response.locals.customer,
 				user: response.locals.user,
-				did: requestBody.issuerDid,
-				data: {} satisfies ICredentialTrack,
+				data: {
+					did: requestBody.issuerDid,
+				} satisfies ICredentialTrack,
 			} as ITrackOperation;
-			eventTracker.getEmitter().emit('track', trackInfo);
+
+			eventTracker.emit('track', trackInfo);
 
 			return response.status(StatusCodes.OK).json(credential satisfies IssueCredentialResponseBody);
 		} catch (error) {
@@ -304,12 +306,15 @@ export class CredentialController {
 			// Track operation
 			const trackInfo = {
 				category: OperationCategoryNameEnum.CREDENTIAL,
-				name: OperationNameEnum.CREDENTIAL_ISSUE,
+				name: OperationNameEnum.CREDENTIAL_VERIFY,
 				customer: response.locals.customer,
 				user: response.locals.user,
-				data: {} satisfies ICredentialTrack,
+				data: {
+					did: cheqdCredential.issuer,
+				} satisfies ICredentialTrack,
 			} as ITrackOperation;
-			eventTracker.getEmitter().emit('track', trackInfo);
+
+			eventTracker.emit('track', trackInfo);
 
 			return response.status(StatusCodes.OK).json(verifyResult satisfies VerifyCredentialResponseBody);
 		} catch (error) {
@@ -401,8 +406,8 @@ export class CredentialController {
 					name: OperationNameEnum.CREDENTIAL_REVOKE,
 					customer: response.locals.customer,
 					user: response.locals.user,
-					did: issuerDid,
 					data: {
+						did: issuerDid,
 						encrypted: result.statusList?.metadata?.encrypted,
 						resource: result.resourceMetadata,
 						symmetricKey: '',
@@ -410,7 +415,7 @@ export class CredentialController {
 				} as ITrackOperation;
 
 				// Track operation
-				eventTracker.getEmitter().emit('track', trackInfo);
+				eventTracker.emit('track', trackInfo);
 			}
 			// Return Ok response
 			return response.status(StatusCodes.OK).json(result satisfies RevokeCredentialResponseBody);
@@ -503,8 +508,8 @@ export class CredentialController {
 					name: OperationNameEnum.CREDENTIAL_SUSPEND,
 					customer: response.locals.customer,
 					user: response.locals.user,
-					did: issuerDid,
 					data: {
+						did: issuerDid,
 						encrypted: result.statusList?.metadata?.encrypted,
 						resource: result.resourceMetadata,
 						symmetricKey: '',
@@ -512,7 +517,7 @@ export class CredentialController {
 				} as ITrackOperation;
 
 				// Track operation
-				eventTracker.getEmitter().emit('track', trackInfo);
+				eventTracker.emit('track', trackInfo);
 			}
 
 			return response.status(StatusCodes.OK).json(result satisfies SuspendCredentialResponseBody);
@@ -603,8 +608,8 @@ export class CredentialController {
 					name: OperationNameEnum.CREDENTIAL_UNSUSPEND,
 					customer: response.locals.customer,
 					user: response.locals.user,
-					did: issuerDid,
 					data: {
+						did: issuerDid,
 						encrypted: result.statusList?.metadata?.encrypted || false,
 						resource: result.resourceMetadata,
 						symmetricKey: '',
@@ -612,7 +617,7 @@ export class CredentialController {
 				} as ITrackOperation;
 
 				// Track operation
-				eventTracker.getEmitter().emit('track', trackInfo);
+				eventTracker.emit('track', trackInfo);
 			}
 			// Return Ok response
 			return response.status(StatusCodes.OK).json(result satisfies UnsuspendCredentialResponseBody);

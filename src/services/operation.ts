@@ -28,12 +28,6 @@ export class OperationService {
 		if (!operationName) {
 			throw new Error('Operation name is not specified');
 		}
-		if (!defaultFee) {
-			throw new Error('Operation default fee is not specified');
-		}
-		if (!deprecated) {
-			throw new Error('Operation deprecated is not specified');
-		}
 		const operationId = v4();
 		const operationEntity = new OperationEntity(operationId, category, operationName, defaultFee, deprecated);
 		const operation = (await this.operationRepository.insert(operationEntity)).identifiers[0];

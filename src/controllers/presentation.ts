@@ -15,6 +15,9 @@ import type {
 } from '../types/presentation.js';
 import { isIssuerDidDeactivated } from '../services/helpers.js';
 import type { ValidationErrorResponseBody } from '../types/shared.js';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
+import { eventTracker } from '../services/track/tracker.js';
+import type { IPresentationTrack, ITrackOperation } from '../types/track.js';
 
 export class PresentationController {
 	public static presentationCreateValidator = [
@@ -199,6 +202,7 @@ export class PresentationController {
 		const cheqdPresentation = new CheqdW3CVerifiablePresentation(presentation);
 
 		if (makeFeePayment) {
+			// ToDo: Add Payments tracker
 			const setResult = await cheqdPresentation.trySetStatusList2021(identityServiceStrategySetup.agent);
 			if (setResult.error) {
 				return response.status(setResult.status).send({
@@ -215,6 +219,7 @@ export class PresentationController {
 						error: `verify: payment: error: ${feePaymentResult.error}`,
 					} satisfies UnsuccessfulVerifyCredentialResponseBody);
 				}
+
 			}
 		}
 
@@ -241,6 +246,20 @@ export class PresentationController {
 					error: `verify: ${result.error.message}`,
 				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			}
+			// track operation
+			const trackInfo = {
+				name: OperationNameEnum.PRESENTATION_VERIFY,
+				category: OperationCategoryNameEnum.PRESENTATION,
+				data: {
+					holder: cheqdPresentation.holder,
+				} satisfies IPresentationTrack,
+
+				customer: response.locals.customer,
+				user: response.locals.user,
+			} satisfies ITrackOperation;
+
+			eventTracker.emit('track', trackInfo);
+
 			return response.status(StatusCodes.OK).json(result satisfies VerifyPresentationResponseBody);
 		} catch (error) {
 			// define error

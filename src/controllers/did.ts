@@ -267,14 +267,14 @@ export class DIDController {
 				response.locals.customer
 			);
 
-			eventTracker.getEmitter().emit('track', {
+			eventTracker.emit('track', {
 				category: OperationCategoryNameEnum.DID,
 				name: OperationNameEnum.DID_CREATE,
 				data: {
 					did: did.did,
 				} satisfies IDIDTrack,
-				did: did.did,
 				customer: response.locals.customer,
+				user: response.locals.user,
 			} satisfies ITrackOperation);
 
 			return response.status(StatusCodes.OK).json(did satisfies CreateDidResponseBody);
@@ -370,14 +370,14 @@ export class DIDController {
 			);
 
 			// Track the operation
-			eventTracker.getEmitter().emit('track', {
+			eventTracker.emit('track', {
 				category: OperationCategoryNameEnum.DID,
 				name: OperationNameEnum.DID_UPDATE,
 				data: {
 					did: result.did,
 				} satisfies IDIDTrack,
-				did: result.did,
 				customer: response.locals.customer,
+				user: response.locals.user,
 			} satisfies ITrackOperation);
 
 			return response.status(StatusCodes.OK).json(result satisfies UpdateDidResponseBody);
@@ -497,14 +497,14 @@ export class DIDController {
 			).agent.importDid(did, keys, controllerKeyId, response.locals.customer);
 
 			// Track the operation
-			eventTracker.getEmitter().emit('track', {
+			eventTracker.emit('track', {
 				category: OperationCategoryNameEnum.DID,
 				name: OperationNameEnum.DID_IMPORT,
 				data: {
 					did: identifier.did,
 				} satisfies IDIDTrack,
-				did: identifier.did,
 				customer: response.locals.customer,
+				user: response.locals.user,
 			} satisfies ITrackOperation);
 
 			return response.status(StatusCodes.OK).json(identifier);
@@ -568,14 +568,14 @@ export class DIDController {
 			const result = await identityServiceStrategySetup.agent.resolveDid(request.params.did);
 
 			// Track the operation
-			eventTracker.getEmitter().emit('track', {
+			eventTracker.emit('track', {
 				category: OperationCategoryNameEnum.DID,
 				name: OperationNameEnum.DID_DEACTIVATE,
 				data: {
 					did,
 				} satisfies IDIDTrack,
-				did,
 				customer: response.locals.customer,
+				user: response.locals.user,
 			} satisfies ITrackOperation);
 
 			return response.status(StatusCodes.OK).json(result satisfies DeactivateDidResponseBody);

@@ -2,8 +2,9 @@ import type { LinkedResourceMetadataResolutionResult } from '@cheqd/did-provider
 import type { CheqdNetwork } from '@cheqd/sdk';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import type { UserEntity } from '../database/entities/user.entity.js';
+import type { LogLevelDesc } from 'loglevel';
 
-export type TrackData = IResourceTrack | ICredentialStatusTrack | ICredentialTrack | IDIDTrack;
+export type TrackData = IResourceTrack | ICredentialStatusTrack | ICredentialTrack | IDIDTrack | IPresentationTrack | IKeyTrack;
 
 export interface ITrackOperation {
 	// function name, e.g. createDid, issueCredential, etc.
@@ -13,13 +14,9 @@ export interface ITrackOperation {
 	// data of the operation, e.g. did, resource, credentialStatus
 	data: TrackData;
 	// customer who initiated the operation (like organistation)
-	customer: CustomerEntity;
+	customer?: CustomerEntity;
 	// user who initiated the operation
 	user?: UserEntity;
-	// identifier
-	did?: string;
-	// controller's key
-	key?: string;
 	// fee payment options
 	feePaymentOptions?: {
 		feePaymentAddress: string;
@@ -28,31 +25,13 @@ export interface ITrackOperation {
 	};
 }
 
-export function isResourceTrack(data: TrackData): data is IResourceTrack {
-	return Object.keys(data).length === 1 && (data as IResourceTrack).resource !== undefined;
-}
-
-export function isCredentialStatusTrack(data: TrackData): data is ICredentialStatusTrack {
-	return (
-		Object.keys(data).length >= 2 &&
-		(data as ICredentialStatusTrack).resource !== undefined &&
-		(data as ICredentialStatusTrack).encrypted !== undefined
-	);
-}
-
-export function isCredentialTrack(data: TrackData): data is ICredentialTrack {
-	return isCredentialStatusTrack(data);
-}
-
-export function isDIDTrack(data: TrackData): data is IDIDTrack {
-	return Object.keys(data).length === 1 && (data as IDIDTrack).did !== undefined;
-}
-
 export interface IResourceTrack {
 	resource: LinkedResourceMetadataResolutionResult;
+	did: string;
 }
 
 export interface ICredentialStatusTrack {
+	did: string;
 	resource?: LinkedResourceMetadataResolutionResult;
 	encrypted?: boolean;
 	symmetricKey?: string;
@@ -64,9 +43,21 @@ export interface IDIDTrack {
 	did: string;
 }
 
+export interface IPresentationTrack {
+	holder: string;
+}
+
+export interface IKeyTrack {
+	keyRef: string;
+	keyType: string;
+}
+
 export interface ITrackResult {
-	tracked: boolean;
 	operation: ITrackOperation;
-	message?: string;
 	error?: string;
+}
+
+export interface INotifyMessage {
+	message: string;
+	severity?: LogLevelDesc;
 }

@@ -3,6 +3,8 @@ export const categoryEnum = {
 	RESOURCE: 'resource',
 	CREDENTIAL: 'credential',
 	CREDENTIAL_STATUS: 'credential-status',
+	PRESENTATION: 'presentation',
+	KEY: 'key',
 
 	toStringList: function (): string[] {
 		return [this.DID, this.RESOURCE, this.CREDENTIAL, this.CREDENTIAL_STATUS];

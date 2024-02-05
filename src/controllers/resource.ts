@@ -197,14 +197,14 @@ export class ResourceController {
 					category: OperationCategoryNameEnum.RESOURCE,
 					name: OperationNameEnum.RESOURCE_CREATE,
 					customer: response.locals.customer,
-					did,
 					data: {
+						did,
 						resource: resource,
 					} satisfies IResourceTrack,
 				} as ITrackOperation;
 
 				// track resource creation
-				eventTracker.getEmitter().emit('track', trackResourceInfo);
+				eventTracker.emit('track', trackResourceInfo);
 
 				return response.status(StatusCodes.CREATED).json({
 					resource,

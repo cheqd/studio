@@ -558,8 +558,8 @@ export class CredentialStatusController {
 				name: OperationNameEnum.CREDENTIAL_STATUS_CREATE_UNENCRYPTED,
 				customer: response.locals.customer,
 				user: response.locals.user,
-				did,
 				data: {
+					did,
 					resource: result.resourceMetadata,
 					encrypted: result.resource?.metadata?.encrypted,
 					symmetricKey: '',
@@ -567,7 +567,7 @@ export class CredentialStatusController {
 			} as ITrackOperation;
 
 			// Track operation
-			eventTracker.getEmitter().emit('track', trackInfo);
+			eventTracker.emit('track', trackInfo);
 
 			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined });
 		} catch (error) {
@@ -684,8 +684,8 @@ export class CredentialStatusController {
 				category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
 				customer: response.locals.customer,
 				user: response.locals.user,
-				did: did,
 				data: {
+					did,
 					resource: result.resourceMetadata,
 					encrypted: true,
 					symmetricKey: '',
@@ -698,7 +698,7 @@ export class CredentialStatusController {
 			} as ITrackOperation;
 
 			// Track operation
-			eventTracker.getEmitter().emit('track', trackInfo);
+			eventTracker.emit('track', trackInfo);
 
 			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined });
 		} catch (error) {
@@ -865,8 +865,8 @@ export class CredentialStatusController {
 					name: OperationNameEnum.CREDENTIAL_STATUS_UPDATE_UNENCRYPTED,
 					customer: response.locals.customer,
 					user: response.locals.user,
-					did,
 					data: {
+						did,
 						resource: result.resourceMetadata,
 						encrypted: false,
 						symmetricKey: '',
@@ -874,7 +874,7 @@ export class CredentialStatusController {
 				} as ITrackOperation;
 
 				// Track operation
-				eventTracker.getEmitter().emit('track', trackInfo);
+				eventTracker.emit('track', trackInfo);
 			}
 
 			return response.status(StatusCodes.OK).json(formatted);
@@ -1057,8 +1057,8 @@ export class CredentialStatusController {
 					name: OperationNameEnum.CREDENTIAL_STATUS_UPDATE_ENCRYPTED,
 					customer: response.locals.customer,
 					user: response.locals.user,
-					did,
 					data: {
+						did,
 						resource: result.resourceMetadata,
 						encrypted: true,
 						symmetricKey: '',
@@ -1071,7 +1071,7 @@ export class CredentialStatusController {
 				} as ITrackOperation;
 
 				// Track operation
-				eventTracker.getEmitter().emit('track', trackInfo);
+				eventTracker.emit('track', trackInfo);
 			}
 
 			return response.status(StatusCodes.OK).json(formatted);

@@ -10,6 +10,11 @@ export const HEADERS = {
 // Application constants
 export const APPLICATION_BASE_URL = process.env.APPLICATION_BASE_URL || 'http://localhost:3000';
 export const CORS_ALLOWED_ORIGINS = process.env.CORS_ALLOWED_ORIGINS || APPLICATION_BASE_URL;
+// By default we don't send events to datadog
+export const ENABLE_DATADOG = process.env.ENABLE_DATADOG === 'true' ? true : false;
+// Possible cases 'trace' 'debug' 'info' 'warn' 'error';
+export const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
+
 
 // LogTo contants
 const { LOGTO_ENDPOINT, LOGTO_APP_ID, LOGTO_APP_SECRET, ENABLE_AUTHENTICATION } = process.env;
@@ -68,6 +73,8 @@ export enum OperationCategoryNameEnum {
 	RESOURCE = 'resource',
 	CREDENTIAL_STATUS = 'credential-status',
 	CREDENTIAL = 'credential',
+	PRESENTATION = 'presentation',
+	KEY = 'key',
 }
 
 export enum OperationNameEnum {
