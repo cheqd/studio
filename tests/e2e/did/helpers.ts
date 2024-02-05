@@ -6,7 +6,6 @@ import { CreateDidResponseBody, UpdateDidResponseBody } from '@cheqd/credential-
 // Structures
 export type ResponseBody = CreateDidResponseBody | UpdateDidResponseBody;
 
-
 // Helpers
 export async function searchDID(did: string, request: APIRequestContext): Promise<DIDDocument> {
 	const response = await request.get(`/did/search/${did}`);

@@ -1,7 +1,13 @@
 import { CONTENT_TYPE, ID_TYPE } from '../constants';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
-import { searchDID, isDeactivated, mustIncludeKey, mustIncludeKeyControllerRef, mustAllControllerKeysHaveController } from './helpers';
+import {
+	searchDID,
+	isDeactivated,
+	mustIncludeKey,
+	mustIncludeKeyControllerRef,
+	mustAllControllerKeysHaveController,
+} from './helpers';
 import { CheqdNetwork, DIDDocument, VerificationMethods } from '@cheqd/sdk';
 
 import { ResponseBody } from './helpers';
@@ -38,7 +44,7 @@ let DIDDocument_A: DIDDocument;
 let DIDDocument_B: DIDDocument;
 let DIDDocument_C: DIDDocument;
 
-test.describe.serial("Running test sequentially", ()=>{
+test.describe.serial('Running test sequentially', () => {
 	test('1. It checks DID-A', async ({ request }) => {
 		const response = await request.post(`/did/create`, {
 			data:
@@ -379,7 +385,7 @@ test.describe.serial("Running test sequentially", ()=>{
 		DIDDocument_A = await searchDID(DID_A.did, request);
 	});
 
-	test('16. It creates a resource for DID_A. Controllers are [DID_A]', async ({ request}) => {
+	test('16. It creates a resource for DID_A. Controllers are [DID_A]', async ({ request }) => {
 		const response = await request.post(`/resource/create/${DID_A.did}`, {
 			data: {
 				data: 'SGVsbG8gV29ybGQ=',

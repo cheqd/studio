@@ -110,7 +110,7 @@ export class LocalIdentityService extends DefaultIdentityService {
 		return Veramo.instance.getKey(this.initAgent(), kid);
 	}
 
-	async deactivateDid(did: string, customer: CustomerEntity, publicKeyHexs? : string[]): Promise<boolean> {
+	async deactivateDid(did: string, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<boolean> {
 		try {
 			const publicKeys: TPublicKeyEd25519[] =
 				publicKeyHexs?.map((key) => {
@@ -151,7 +151,12 @@ export class LocalIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async createResource(network: string, payload: ResourcePayload, customer: CustomerEntity, publicKeyHexs?: string[]) {
+	async createResource(
+		network: string,
+		payload: ResourcePayload,
+		customer: CustomerEntity,
+		publicKeyHexs?: string[]
+	) {
 		try {
 			await this.importDid();
 			const publicKeys: TPublicKeyEd25519[] =

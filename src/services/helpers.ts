@@ -54,4 +54,4 @@ export function toTPublicKeyEd25519(publicKeyHex: string): TPublicKeyEd25519 {
 		publicKeyHex: publicKeyHex,
 		kid: publicKeyHex,
 	} satisfies TPublicKeyEd25519;
-}	
+}
