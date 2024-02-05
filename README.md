@@ -84,7 +84,7 @@ By default, `ENABLE_AUTHENTICATION` is set to off/`false`. To enable external Ve
     1. `LOGTO_M2M_APP_ID`: Application ID for machine-to-machine application in LogTo. This is used for elevated
        management APIs within LogTo.
     2. `LOGTO_M2M_APP_SECRET`: Application secret
-4. **Default role update using [LogTo webhooks](https://docs.logto.io/next/docs/recipes/webhooks/)**: LogTo supports
+4. **Default role update using [LogTo webhooks](https://docs.logto.io/docs/recipes/webhooks/)**: LogTo supports
    webhooks to fire of requests to an API when it detects certain actions/changes. If you want to automatically assign a
    role to users, a webhook is recommended to be setup for firing off whenever there's a new account created, or a new
    sign-in.
