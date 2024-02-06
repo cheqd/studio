@@ -127,3 +127,7 @@ export interface VerificationOptions {
 	policies?: VerificationPolicies;
 	allowDeactivatedDid?: boolean;
 }
+export interface IBooleanResponse {
+	status: boolean;
+	error?: string;
+}

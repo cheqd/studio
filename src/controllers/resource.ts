@@ -17,6 +17,7 @@ import type {
 	UnsuccessfulCreateResourceResponseBody,
 	UnsuccessfulQueryResourceResponseBody,
 } from '../types/resource.js';
+import { arePublicKeyHexsInWallet } from '../services/helpers.js';
 
 export class ResourceController {
 	public static createResourceValidator = [
@@ -153,7 +154,17 @@ export class ResourceController {
 		// Extract the did from the request
 		const { did } = request.params;
 		// Extract the resource parameters from the request
-		const { data, encoding, name, type, alsoKnownAs, version, network } = request.body as CreateResourceRequestBody;
+		const { data, encoding, name, type, alsoKnownAs, version, network, publicKeyHexs } =
+			request.body as CreateResourceRequestBody;
+		// If list of publicKeyHexs is placed - check that publicKeyHexs are owned by the customer
+		if (publicKeyHexs) {
+			const areOwned = await arePublicKeyHexsInWallet(publicKeyHexs, response.locals.customer);
+			if (!areOwned.status) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: areOwned.error as string,
+				} satisfies UnsuccessfulCreateResourceResponseBody);
+			}
+		}
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
@@ -179,7 +190,8 @@ export class ResourceController {
 			const result = await identityServiceStrategySetup.agent.createResource(
 				network || did.split(':')[2],
 				resourcePayload,
-				response.locals.customer
+				response.locals.customer,
+				publicKeyHexs
 			);
 
 			if (result) {

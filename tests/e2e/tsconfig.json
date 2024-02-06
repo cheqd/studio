@@ -9,7 +9,8 @@
         // "outDir": "../dist-tests",
         "baseUrl": ".",
         "paths": {
-            "dotenv/*": ["node_modules/dotenv/*"] // This mapping is relative to "baseUrl".
+            "dotenv/*": ["node_modules/dotenv/*"], // This mapping is relative to "baseUrl".
+            "@cheqd/credential-service/*": ["../../*"],
         },
     }
 }
