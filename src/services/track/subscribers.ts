@@ -210,7 +210,7 @@ export class CredentialSubscriber extends BaseOperationObserver implements IObse
 	}
 
 	async trackCredentialOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
-		// We don't have specific credential status writes, so we just track credential creation
+		// We don't have specific credential writes, so we just track credential creation
 		return {
 			operation: trackOperation,
 			error: '',
@@ -220,8 +220,6 @@ export class CredentialSubscriber extends BaseOperationObserver implements IObse
 
 export class DIDSubscriber extends BaseOperationObserver implements IObserver {
 	isReactionNeeded(trackOperation: ITrackOperation): boolean {
-		// Credential tracker reacts on CredentialStatusList, Credential operations like revocation
-		// and Resource operations like create, update, delete
 		return trackOperation.category === OperationCategoryNameEnum.DID;
 	}
 

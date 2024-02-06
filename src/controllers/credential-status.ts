@@ -46,7 +46,7 @@ import {
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
 import { toNetwork } from '../helpers/helpers.js';
 import { eventTracker } from '../services/track/tracker.js';
-import type { ICredentialStatusTrack, ITrackOperation } from '../types/track.js';
+import type { ICredentialStatusTrack, INotifyMessage, ITrackOperation } from '../types/track.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
 import { CheqdNetwork } from '@cheqd/sdk';
 
@@ -498,6 +498,12 @@ export class CredentialStatusController {
 
 		// handle error
 		if (!result.isEmpty()) {
+			const message = result.array().pop()?.msg;
+			eventTracker.emit('notify', {
+				message: `createUnencryptedStatusList. Request validation error: ${message}`,
+				severity: 'error',
+			} as INotifyMessage)
+
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: result.array().pop()?.msg,
 			} satisfies ValidationErrorResponseBody);
@@ -546,6 +552,12 @@ export class CredentialStatusController {
 
 			// handle error
 			if (result.error) {
+				const message = result.error?.message || result.error.toString();
+				eventTracker.emit('notify', {
+					message: `createUnencryptedStatusList. Request validation error: ${message}`,
+					severity: 'error',
+				} as INotifyMessage)
+				
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					...result,
 					error: result.error?.message || result.error.toString(),

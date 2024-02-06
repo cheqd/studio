@@ -2,12 +2,12 @@ import type { TrackData, IResourceTrack, ICredentialStatusTrack, ICredentialTrac
 
 
 export function isResourceTrack(data: TrackData): data is IResourceTrack {
-	return Object.keys(data).length === 1 && (data as IResourceTrack).resource !== undefined;
+	return Object.keys(data).length === 2 && (data as IResourceTrack).resource !== undefined;
 }
 
 export function isCredentialStatusTrack(data: TrackData): data is ICredentialStatusTrack {
 	return (
-		Object.keys(data).length >= 2 &&
+		Object.keys(data).length >= 3 &&
 		(data as ICredentialStatusTrack).resource !== undefined &&
 		(data as ICredentialStatusTrack).encrypted !== undefined
 	);

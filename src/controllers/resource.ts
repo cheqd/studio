@@ -1,4 +1,4 @@
-import type { Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { fromString } from 'uint8arrays';
 import { v4 } from 'uuid';
 import type { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js';
