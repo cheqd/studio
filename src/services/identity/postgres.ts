@@ -52,6 +52,9 @@ import { APIKeyService } from '../api-key.js';
 import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import { KeyDIDProvider } from '@veramo/did-provider-key';
 import type { AbstractIdentifierProvider } from '@veramo/did-manager';
+import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
+import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
+import { toTPublicKeyEd25519 } from '../helpers.js';
 
 dotenv.config();
 
@@ -226,7 +229,11 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async updateDid(didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier> {
+	async updateDid(
+		didDocument: DIDDocument,
+		customer: CustomerEntity,
+		publicKeyHexs?: string[]
+	): Promise<IIdentifier> {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
@@ -241,14 +248,23 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		try {
 			const agent = await this.createAgent(customer);
-			const identifier: IIdentifier = await Veramo.instance.updateDid(agent, didDocument);
+			const publicKeys: TPublicKeyEd25519[] =
+				publicKeyHexs?.map((key) => {
+					return toTPublicKeyEd25519(key);
+				}) || [];
+			const identifier: IIdentifier = await Veramo.instance.updateDid(agent, didDocument, publicKeys);
 			return identifier;
 		} catch (error) {
+			const errorCode = (error as CheqdProviderError).errorCode;
+			// Handle specific cases when DID is deactivated or verificationMethod is empty
+			if (errorCode) {
+				throw error;
+			}
 			throw new Error(`${error}`);
 		}
 	}
 
-	async deactivateDid(did: string, customer: CustomerEntity): Promise<boolean> {
+	async deactivateDid(did: string, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<boolean> {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
@@ -261,7 +277,11 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		try {
 			const agent = await this.createAgent(customer);
-			return await Veramo.instance.deactivateDid(agent, did);
+			const publicKeys: TPublicKeyEd25519[] =
+				publicKeyHexs?.map((key) => {
+					return toTPublicKeyEd25519(key);
+				}) || [];
+			return await Veramo.instance.deactivateDid(agent, did, publicKeys);
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
@@ -295,14 +315,23 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return identifier;
 	}
 
-	async createResource(network: string, payload: ResourcePayload, customer: CustomerEntity) {
+	async createResource(
+		network: string,
+		payload: ResourcePayload,
+		customer: CustomerEntity,
+		publicKeyHexs?: string[]
+	) {
 		try {
 			const agent = await this.createAgent(customer);
 			const did = `did:cheqd:${network}:${payload.collectionId}`;
 			if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
 				throw new Error(`${did} not found in wallet`);
 			}
-			return await Veramo.instance.createResource(agent, network, payload);
+			const publicKeys: TPublicKeyEd25519[] =
+				publicKeyHexs?.map((key) => {
+					return toTPublicKeyEd25519(key);
+				}) || [];
+			return await Veramo.instance.createResource(agent, network, payload, publicKeys);
 		} catch (error) {
 			throw new Error(`${error}`);
 		}

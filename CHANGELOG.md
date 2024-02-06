@@ -1,5 +1,36 @@
 # Changelog
 
+## [2.16.1-develop.1](https://github.com/cheqd/credential-service/compare/2.16.0...2.16.1-develop.1) (2024-01-19)
+
+
+### Bug Fixes
+
+* Add creds decryption .env ([#475](https://github.com/cheqd/credential-service/issues/475)) ([d332764](https://github.com/cheqd/credential-service/commit/d332764cb2a808c8dc1516a1652757fea1dc370c))
+
+## [2.16.0](https://github.com/cheqd/credential-service/compare/2.15.0...2.16.0) (2024-01-18)
+
+
+### Features
+
+* Add M2MTokenUserInfoFetcher [DEV-3516] ([#468](https://github.com/cheqd/credential-service/issues/468)) ([279ec36](https://github.com/cheqd/credential-service/commit/279ec363f0d1438cf03014762e564a2ee5b6166b)), closes [#469](https://github.com/cheqd/credential-service/issues/469) [#461](https://github.com/cheqd/credential-service/issues/461)
+
+
+### Bug Fixes
+
+* Fix error handling on tracking operations [DEV-3527] ([#461](https://github.com/cheqd/credential-service/issues/461)) ([53d7dfd](https://github.com/cheqd/credential-service/commit/53d7dfdcc23d90dba85a681f39ebc724b7fbdcc2))
+* Fix for update did [DEV-3494] ([#472](https://github.com/cheqd/credential-service/issues/472)) ([8a7682e](https://github.com/cheqd/credential-service/commit/8a7682e49960ab14c58f8363f1afd88dae3cb843))
+* Make all the response bodies in predictable format [DEV-3494] ([#454](https://github.com/cheqd/credential-service/issues/454)) ([b3549d8](https://github.com/cheqd/credential-service/commit/b3549d841de8885e10dfcf6f034dd37dde3b004a))
+* Update email to username in account/create ([#470](https://github.com/cheqd/credential-service/issues/470)) ([b19a353](https://github.com/cheqd/credential-service/commit/b19a353a01b0a10ff705b65f3042b32eebc1e6f0))
+
+## [2.16.0-develop.5](https://github.com/cheqd/credential-service/compare/2.16.0-develop.4...2.16.0-develop.5) (2024-01-17)
+
+## [2.16.0-develop.4](https://github.com/cheqd/credential-service/compare/2.16.0-develop.3...2.16.0-develop.4) (2024-01-16)
+
+
+### Bug Fixes
+
+* Fix for update did [DEV-3494] ([#472](https://github.com/cheqd/credential-service/issues/472)) ([8a7682e](https://github.com/cheqd/credential-service/commit/8a7682e49960ab14c58f8363f1afd88dae3cb843))
+
 ## [2.16.0-develop.3](https://github.com/cheqd/credential-service/compare/2.16.0-develop.2...2.16.0-develop.3) (2024-01-16)
 
 
