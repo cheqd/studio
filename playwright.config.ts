@@ -9,11 +9,11 @@ export default defineConfig({
 	testDir: './tests/e2e',
 
 	// Start local dev server before starting the tests
-	// webServer: {
-	// 	command: 'npm run start',
-	// 	url: 'http://localhost:3000',
-	// 	reuseExistingServer: !process.env.CI,
-	// },
+	webServer: {
+		command: 'npm run start',
+		url: 'http://localhost:3000',
+		reuseExistingServer: !process.env.CI,
+	},
 
 	// Shared settings for all the projects below.
 	// Docs: https://playwright.dev/docs/api/class-testoptions
