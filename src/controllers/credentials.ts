@@ -7,7 +7,6 @@ import { check, validationResult, query } from './validator/index.js';
 import { Credentials } from '../services/credentials.js';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import type { ValidationErrorResponseBody } from '../types/shared.js';
-// import { Cheqd } from '@cheqd/did-provider-cheqd';
 import { CheqdW3CVerifiableCredential } from '../services/w3c-credential.js';
 import { isCredentialIssuerDidDeactivated } from '../services/helpers.js';
 import type {

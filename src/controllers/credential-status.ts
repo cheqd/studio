@@ -501,7 +501,7 @@ export class CredentialStatusController {
 			const message = result.array().pop()?.msg;
 			eventTracker.emit('notify', {
 				message: `createUnencryptedStatusList. Request validation error: ${message}`,
-				severity: 'error',
+				severity: 'info',
 			} as INotifyMessage)
 
 			return response.status(StatusCodes.BAD_REQUEST).json({
@@ -555,7 +555,7 @@ export class CredentialStatusController {
 				const message = result.error?.message || result.error.toString();
 				eventTracker.emit('notify', {
 					message: `createUnencryptedStatusList. Request validation error: ${message}`,
-					severity: 'error',
+					severity: 'info',
 				} as INotifyMessage)
 				
 				return response.status(StatusCodes.BAD_REQUEST).json({
