@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.1-develop.1](https://github.com/cheqd/credential-service/compare/2.16.0...2.16.1-develop.1) (2024-01-19)
+
+
+### Bug Fixes
+
+* Add creds decryption .env ([#475](https://github.com/cheqd/credential-service/issues/475)) ([d332764](https://github.com/cheqd/credential-service/commit/d332764cb2a808c8dc1516a1652757fea1dc370c))
+
 ## [2.16.0](https://github.com/cheqd/credential-service/compare/2.15.0...2.16.0) (2024-01-18)
 
 
