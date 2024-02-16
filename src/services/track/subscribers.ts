@@ -78,9 +78,9 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 		} satisfies ITrackResult;
 	}
 
-	async getDefaultFee(operation: string, resourceId?: string): Promise<number> {
+	async getDefaultFee(operation: ITrackOperation): Promise<number> {
 		const defaultFee = 0;
-		switch (operation) {
+		switch (operation.name) {
 			case OperationNameEnum.DID_CREATE:
 				return OperationDefaultFeeEnum.DID_CREATE;
 			case OperationNameEnum.DID_UPDATE:
@@ -89,23 +89,20 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 				return OperationDefaultFeeEnum.DID_DEACTIVATE;
 		}
 		if (
-			operation === OperationNameEnum.RESOURCE_CREATE ||
-			operation === OperationNameEnum.CREDENTIAL_STATUS_CREATE_ENCRYPTED ||
-			operation === OperationNameEnum.CREDENTIAL_STATUS_CREATE_UNENCRYPTED ||
-			operation === OperationNameEnum.CREDENTIAL_STATUS_UPDATE_ENCRYPTED ||
-			operation === OperationNameEnum.CREDENTIAL_STATUS_UPDATE_UNENCRYPTED
+			operation.name === OperationNameEnum.RESOURCE_CREATE ||
+			operation.name === OperationNameEnum.CREDENTIAL_STATUS_CREATE_ENCRYPTED ||
+			operation.name === OperationNameEnum.CREDENTIAL_STATUS_CREATE_UNENCRYPTED ||
+			operation.name === OperationNameEnum.CREDENTIAL_STATUS_UPDATE_ENCRYPTED ||
+			operation.name === OperationNameEnum.CREDENTIAL_STATUS_UPDATE_UNENCRYPTED
 		) {
-			if (!resourceId) {
+			const resource = (operation.data as IResourceTrack).resource;
+			if (!resource) {
 				return defaultFee;
 			}
-			const entity = await ResourceService.instance.get(resourceId);
-			if (!entity) {
-				return defaultFee;
-			}
-			if (entity.mediaType === 'application/json') {
+			if (resource.mediaType === 'application/json') {
 				return OperationDefaultFeeEnum.RESOURCE_CREATE_JSON;
 			}
-			if (entity.mediaType.includes('image')) {
+			if (resource.mediaType.includes('image')) {
 				return OperationDefaultFeeEnum.RESOURCE_CREATE_IMAGE;
 			}
 			return OperationDefaultFeeEnum.RESOURCE_CREATE_OTHER;
@@ -115,15 +112,11 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 
 	async trackOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
 		try {
-			let resourceId = undefined;
-			if (trackOperation.data && (trackOperation.data as IResourceTrack).resource) {
-				resourceId = (trackOperation.data as IResourceTrack).resource.resourceId;
-			}
 			// Create operation entity
 			const operationEntity = await OperationService.instance.create(
 				trackOperation.category,
 				trackOperation.name,
-				await this.getDefaultFee(trackOperation.name, resourceId),
+				await this.getDefaultFee(trackOperation),
 				false,
 				trackOperation.successful
 			);

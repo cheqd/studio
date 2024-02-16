@@ -213,7 +213,6 @@ export class PresentationController {
 
 		try {
 			if (makeFeePayment) {
-				// ToDo: Add Payments tracker
 				const setResult = await cheqdPresentation.trySetStatusList2021(identityServiceStrategySetup.agent);
 				if (setResult.error) {
 					return response.status(setResult.status).send({
