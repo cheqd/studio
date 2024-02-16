@@ -1,6 +1,6 @@
 {
 	"name": "@cheqd/credential-service",
-	"version": "2.16.1-develop.1",
+	"version": "2.17.0-develop.1",
 	"description": "cheqd Credential Service Backend",
 	"source": "src/index.ts",
 	"main": "dist/index.js",
@@ -145,6 +145,6 @@
 		"access": "public"
 	},
 	"engines": {
-		"node": ">=18.0.0"
+		"node": ">=20.0.0"
 	}
 }
