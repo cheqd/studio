@@ -65,7 +65,7 @@ export class EventTracker {
 		await this.notifier.notify(notifyMessage);
 	}
 
-	emit(eventName: string | symbol, ...args: ITrackType[]): boolean{
+	emit(eventName: string | symbol, ...args: ITrackType[]): boolean {
 		return this.getEmitter().emit(eventName, ...args);
 	}
 }

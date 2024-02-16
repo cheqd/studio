@@ -17,7 +17,7 @@ import { isIssuerDidDeactivated } from '../services/helpers.js';
 import type { ValidationErrorResponseBody } from '../types/shared.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
 import { eventTracker } from '../services/track/tracker.js';
-import type { IPresentationTrack, ITrackOperation } from '../types/track.js';
+import type { IFeePaymentOptions, IPresentationTrack, ITrackOperation } from '../types/track.js';
 
 export class PresentationController {
 	public static presentationCreateValidator = [
@@ -191,6 +191,16 @@ export class PresentationController {
 			} satisfies UnsuccessfulVerifyCredentialResponseBody);
 		}
 
+		let feePaymentOptions: IFeePaymentOptions[] = [];
+
+		// Make the base body for tracking
+		const trackInfo = {
+			name: OperationNameEnum.PRESENTATION_VERIFY,
+			category: OperationCategoryNameEnum.PRESENTATION,
+			customer: response.locals.customer,
+			user: response.locals.user,
+		} as ITrackOperation;
+
 		// Extract request parameters from body
 		const { presentation, verifierDid, policies, makeFeePayment } = request.body as VerifyPresentationRequestBody;
 		// Extract request parameters from query
@@ -201,29 +211,40 @@ export class PresentationController {
 		// create cheqd presentation from w3c presentation
 		const cheqdPresentation = new CheqdW3CVerifiablePresentation(presentation);
 
-		if (makeFeePayment) {
-			// ToDo: Add Payments tracker
-			const setResult = await cheqdPresentation.trySetStatusList2021(identityServiceStrategySetup.agent);
-			if (setResult.error) {
-				return response.status(setResult.status).send({
-					error: setResult.error,
-				} satisfies UnsuccessfulVerifyCredentialResponseBody);
-			}
-			if (cheqdPresentation.isPaymentNeeded()) {
-				const feePaymentResult = await cheqdPresentation.makeFeePayment(
-					identityServiceStrategySetup.agent,
-					response.locals.customer
-				);
-				if (feePaymentResult.error) {
-					return response.status(StatusCodes.BAD_REQUEST).json({
-						error: `verify: payment: error: ${feePaymentResult.error}`,
+		try {
+			if (makeFeePayment) {
+				// ToDo: Add Payments tracker
+				const setResult = await cheqdPresentation.trySetStatusList2021(identityServiceStrategySetup.agent);
+				if (setResult.error) {
+					return response.status(setResult.status).send({
+						error: setResult.error,
 					} satisfies UnsuccessfulVerifyCredentialResponseBody);
 				}
+				if (cheqdPresentation.isPaymentNeeded()) {
+					const feePaymentResult = await cheqdPresentation.makeFeePayment(
+						identityServiceStrategySetup.agent,
+						response.locals.customer
+					);
+					// Track fee payments
+					feePaymentOptions = feePaymentResult.data;
+					// handle error
+					if (feePaymentResult.error) {
+						// Fill track info
+						trackInfo.feePaymentOptions = feePaymentOptions;
+						trackInfo.data = {
+							holder: cheqdPresentation.holder,
+						} satisfies IPresentationTrack;
+						trackInfo.successful = false;
+						// Track operation
+						eventTracker.emit('track', trackInfo satisfies ITrackOperation);
 
+						// Return error
+						return response.status(StatusCodes.BAD_REQUEST).json({
+							error: `verify: payment: error: ${feePaymentResult.error}`,
+						} satisfies UnsuccessfulVerifyCredentialResponseBody);
+					}
+				}
 			}
-		}
-
-		try {
 			if (!allowDeactivatedDid && (await isIssuerDidDeactivated(cheqdPresentation))) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: `Credential issuer DID is deactivated`,
@@ -247,18 +268,13 @@ export class PresentationController {
 				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			}
 			// track operation
-			const trackInfo = {
-				name: OperationNameEnum.PRESENTATION_VERIFY,
-				category: OperationCategoryNameEnum.PRESENTATION,
-				data: {
-					holder: cheqdPresentation.holder,
-				} satisfies IPresentationTrack,
+			trackInfo.data = {
+				holder: cheqdPresentation.holder,
+			} satisfies IPresentationTrack;
+			trackInfo.feePaymentOptions = feePaymentOptions;
+			trackInfo.successful = true;
 
-				customer: response.locals.customer,
-				user: response.locals.user,
-			} satisfies ITrackOperation;
-
-			eventTracker.emit('track', trackInfo);
+			eventTracker.emit('track', trackInfo satisfies ITrackOperation);
 
 			return response.status(StatusCodes.OK).json(result satisfies VerifyPresentationResponseBody);
 		} catch (error) {

@@ -1,5 +1,10 @@
-import type { TrackData, IResourceTrack, ICredentialStatusTrack, ICredentialTrack, IDIDTrack } from '../../types/track.js';
-
+import type {
+	TrackData,
+	IResourceTrack,
+	ICredentialStatusTrack,
+	ICredentialTrack,
+	IDIDTrack,
+} from '../../types/track.js';
 
 export function isResourceTrack(data: TrackData): data is IResourceTrack {
 	return Object.keys(data).length === 2 && (data as IResourceTrack).resource !== undefined;

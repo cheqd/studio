@@ -46,9 +46,9 @@ import {
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
 import { toNetwork } from '../helpers/helpers.js';
 import { eventTracker } from '../services/track/tracker.js';
-import type { ICredentialStatusTrack, INotifyMessage, ITrackOperation } from '../types/track.js';
+import type { ICredentialStatusTrack, ITrackOperation, IFeePaymentOptions } from '../types/track.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
-import { CheqdNetwork } from '@cheqd/sdk';
+import { FeeAnalyzer } from '../helpers/fee-analyzer.js';
 
 export class CredentialStatusController {
 	static createUnencryptedValidator = [
@@ -498,12 +498,6 @@ export class CredentialStatusController {
 
 		// handle error
 		if (!result.isEmpty()) {
-			const message = result.array().pop()?.msg;
-			eventTracker.emit('notify', {
-				message: `createUnencryptedStatusList. Request validation error: ${message}`,
-				severity: 'info',
-			} as INotifyMessage)
-
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: result.array().pop()?.msg,
 			} satisfies ValidationErrorResponseBody);
@@ -552,12 +546,6 @@ export class CredentialStatusController {
 
 			// handle error
 			if (result.error) {
-				const message = result.error?.message || result.error.toString();
-				eventTracker.emit('notify', {
-					message: `createUnencryptedStatusList. Request validation error: ${message}`,
-					severity: 'info',
-				} as INotifyMessage)
-				
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					...result,
 					error: result.error?.message || result.error.toString(),
@@ -702,11 +690,7 @@ export class CredentialStatusController {
 					encrypted: true,
 					symmetricKey: '',
 				} satisfies ICredentialStatusTrack,
-				feePaymentOptions: {
-					feePaymentAddress: feePaymentAddress,
-					feePaymentAmount: feePaymentAmount,
-					feePaymentNetwork: CheqdNetwork.Testnet,
-				},
+				feePaymentOptions: {},
 			} as ITrackOperation;
 
 			// Track operation
@@ -1075,11 +1059,7 @@ export class CredentialStatusController {
 						encrypted: true,
 						symmetricKey: '',
 					} satisfies ICredentialStatusTrack,
-					feePaymentOptions: {
-						feePaymentAddress: feePaymentAddress,
-						feePaymentAmount: feePaymentAmount,
-						feePaymentNetwork: CheqdNetwork.Testnet,
-					},
+					feePaymentOptions: {},
 				} as ITrackOperation;
 
 				// Track operation
@@ -1147,6 +1127,17 @@ export class CredentialStatusController {
 			} satisfies ValidationErrorResponseBody);
 		}
 
+		const feePaymentOptions: IFeePaymentOptions[] = [];
+
+		// Make the base body for tracking
+		const trackInfo = {
+			name: OperationNameEnum.CREDENTIAL_STATUS_CHECK,
+			category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
+			customer: response.locals.customer,
+			user: response.locals.user,
+			successful: false,
+		} as ITrackOperation;
+
 		// collect request parameters - case: body
 		const { did, statusListName, index, makeFeePayment } = request.body as CheckStatusListRequestBody;
 
@@ -1180,33 +1171,53 @@ export class CredentialStatusController {
 			} satisfies CheckStatusListUnsuccessfulResponseBody);
 		}
 
-		// make fee payment, if defined
-		if (makeFeePayment && statusList?.resource?.metadata?.encrypted) {
-			// make fee payment
-			const feePaymentResult = await Promise.all(
-				statusList?.resource?.metadata?.paymentConditions?.map(async (condition) => {
-					return await identityServiceStrategySetup.agent.remunerateStatusList2021(
-						{
-							feePaymentAddress: condition.feePaymentAddress,
-							feePaymentAmount: condition.feePaymentAmount,
-							feePaymentNetwork: toNetwork(did),
-							memo: 'Automated status check fee payment, orchestrated by CaaS.',
-						} satisfies FeePaymentOptions,
-						response.locals.customer
-					);
-				}) || []
-			);
-
-			// handle error
-			if (feePaymentResult.some((result) => result.error)) {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					checked: false,
-					error: `check: payment: error: ${feePaymentResult.find((result) => result.error)?.error}`,
-				} satisfies CheckStatusListUnsuccessfulResponseBody);
-			}
-		}
-
 		try {
+			// make fee payment, if defined
+			if (makeFeePayment && statusList?.resource?.metadata?.encrypted) {
+				// make fee payment
+				const feePaymentResult = await Promise.all(
+					statusList?.resource?.metadata?.paymentConditions?.map(async (condition) => {
+						return await identityServiceStrategySetup.agent.remunerateStatusList2021(
+							{
+								feePaymentAddress: condition.feePaymentAddress,
+								feePaymentAmount: condition.feePaymentAmount,
+								feePaymentNetwork: toNetwork(did),
+								memo: 'Automated status check fee payment, orchestrated by CaaS.',
+							} satisfies FeePaymentOptions,
+							response.locals.customer
+						);
+					}) || []
+				);
+
+				// Track the operation
+				await Promise.all(
+					feePaymentResult.map(async (result) => {
+						const portion = await FeeAnalyzer.getPaymentTrack(result, toNetwork(did));
+						feePaymentOptions.push(...portion);
+					})
+				);
+
+				// handle error
+				if (feePaymentResult.some((result) => result.error)) {
+					// Track payment information even in case of error
+					trackInfo.data = {
+						did: did,
+						resource: statusList.resourceMetadata,
+						encrypted: statusList.resource?.metadata?.encrypted,
+					} satisfies ICredentialStatusTrack;
+					trackInfo.successful = false;
+					trackInfo.feePaymentOptions = feePaymentOptions;
+
+					// Track operation
+					eventTracker.emit('track', trackInfo satisfies ITrackOperation);
+
+					return response.status(StatusCodes.BAD_REQUEST).json({
+						checked: false,
+						error: `check: payment: error: ${feePaymentResult.find((result) => result.error)?.error}`,
+					} satisfies CheckStatusListUnsuccessfulResponseBody);
+				}
+			}
+
 			// check status list
 			const result = await identityServiceStrategySetup.agent.checkStatusList2021(
 				did,
@@ -1222,6 +1233,17 @@ export class CredentialStatusController {
 			if (result.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json(result as CheckStatusListUnsuccessfulResponseBody);
 			}
+
+			trackInfo.data = {
+				did: did,
+				resource: statusList.resourceMetadata,
+				encrypted: statusList.resource?.metadata?.encrypted,
+			} satisfies ICredentialStatusTrack,
+			trackInfo.successful = true;
+			trackInfo.feePaymentOptions = feePaymentOptions;
+
+			// Track operation
+			eventTracker.emit('track', trackInfo satisfies ITrackOperation);
 
 			// return result
 			return response.status(StatusCodes.OK).json(result as CheckStatusListSuccessfulResponseBody);

@@ -12,15 +12,26 @@ export class BaseNotifier implements IObserver {
 }
 
 export class LoggerNotifier extends BaseNotifier implements IObserver {
-
 	public async update(notification: INotifyMessage): Promise<void> {
 		switch (notification.severity) {
-			case 'info': log.info(notification.message); break;
-			case 'error': log.error(notification.message); break;
-			case 'warn': log.warn(notification.message); break;
-			case 'trace': log.trace(notification.message); break;
-			case 'debug': log.debug(notification.message); break;
-			default: log.debug(notification.message); break;
+			case 'info':
+				log.info(notification.message);
+				break;
+			case 'error':
+				log.error(notification.message);
+				break;
+			case 'warn':
+				log.warn(notification.message);
+				break;
+			case 'trace':
+				log.trace(notification.message);
+				break;
+			case 'debug':
+				log.debug(notification.message);
+				break;
+			default:
+				log.debug(notification.message);
+				break;
 		}
 	}
 }

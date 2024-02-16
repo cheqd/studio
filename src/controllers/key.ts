@@ -78,13 +78,13 @@ export class KeyController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
 			const key = await identityServiceStrategySetup.agent.createKey('Ed25519', response.locals.customer);
-			
+
 			eventTracker.emit('track', {
 				name: OperationNameEnum.KEY_CREATE,
 				category: OperationCategoryNameEnum.KEY,
 				customer: response.locals.customer,
 				user: response.locals.user,
-				data: { 
+				data: {
 					keyRef: key.kid,
 					keyType: key.type,
 				} satisfies IKeyTrack,
@@ -169,7 +169,7 @@ export class KeyController {
 				category: OperationCategoryNameEnum.KEY,
 				customer: response.locals.customer,
 				user: response.locals.user,
-				data: { 
+				data: {
 					keyRef: key.kid,
 					keyType: key.type,
 				} satisfies IKeyTrack,

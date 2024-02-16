@@ -1,20 +1,17 @@
 import type { LinkedResourceMetadataResolutionResult } from '@cheqd/did-provider-cheqd';
-import { OperationNameEnum, OperationCategoryNameEnum } from '../../types/constants.js';
-import type {
-	ICredentialStatusTrack,
-	ICredentialTrack,
-	IPresentationTrack,
-	IResourceTrack,
-	IKeyTrack,
-	ITrackOperation,
-	ITrackResult,
-	IDIDTrack,
-} from '../../types/track.js';
+import { OperationNameEnum, OperationCategoryNameEnum, OperationDefaultFeeEnum } from '../../types/constants.js';
 import {
-	isCredentialStatusTrack,
-	isCredentialTrack,
-	isResourceTrack
-} from './helpers.js';
+	type ICredentialStatusTrack,
+	type ICredentialTrack,
+	type IPresentationTrack,
+	type IResourceTrack,
+	type IKeyTrack,
+	type ITrackOperation,
+	type ITrackResult,
+	type IDIDTrack,
+	TrackOperationWithPayment,
+} from '../../types/track.js';
+import { isCredentialStatusTrack, isCredentialTrack, isResourceTrack } from './helpers.js';
 import { IdentifierService } from '../identifier.js';
 import { KeyService } from '../key.js';
 import { OperationService } from '../operation.js';
@@ -22,32 +19,132 @@ import { ResourceService } from '../resource.js';
 import type { IObserver } from './types.js';
 import { BaseOperationObserver } from './base.js';
 import type { LogLevelDesc } from 'loglevel';
+import type { OperationEntity } from '../../database/entities/operation.entity.js';
+import { PaymentService } from '../payment.js';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 
 export class DBOperationSubscriber extends BaseOperationObserver implements IObserver {
 	protected logSeverity: LogLevelDesc = 'debug';
-	
+
 	async update(trackOperation: ITrackOperation): Promise<void> {
 		// tracking operation in our DB. It handles all the operations
 		const result = await this.trackOperation(trackOperation);
+		const message = result.error
+			? `Error while writing information about operation ${trackOperation.name} to DB: ${result.error}`
+			: `Information about operation ${trackOperation.name} was successfully written to DB`;
 		// notify about the result of tracking, e.g. log or datadog
 		await this.notify({
-			message: `Information about operation ${trackOperation.name} was successfully written to DB`,
+			message: message,
 			severity: result.error ? 'error' : this.logSeverity,
-		})
+		});
+	}
+
+	async trackPayments(
+		operationWithPayment: TrackOperationWithPayment,
+		operationEntity: OperationEntity
+	): Promise<ITrackResult> {
+		const resource = await operationWithPayment.getResourceEntity();
+		if (!resource) {
+			return {
+				operation: operationWithPayment,
+				error: `Resource for operation ${operationWithPayment.name} not found. Customer: ${operationWithPayment.customer.customerId}`,
+			} satisfies ITrackResult;
+		}
+
+		for (const feePayment of operationWithPayment.feePaymentOptions) {
+			const payment = await PaymentService.instance.create(
+				feePayment.txHash as string,
+				operationWithPayment.customer as CustomerEntity,
+				operationEntity,
+				feePayment.fee,
+				feePayment.amount,
+				feePayment.successful,
+				feePayment.network,
+				resource,
+				feePayment.fromAddress,
+				feePayment.toAddress,
+				feePayment.timestamp
+			);
+			if (!payment) {
+				return {
+					operation: operationWithPayment,
+					error: `Payment for operation ${operationWithPayment.name} was not written to DB`,
+				} satisfies ITrackResult;
+			}
+		}
+		return {
+			operation: operationWithPayment,
+			error: '',
+		} satisfies ITrackResult;
+	}
+
+	async getDefaultFee(operation: string, resourceId?: string): Promise<number> {
+		const defaultFee = 0;
+		switch (operation) {
+			case OperationNameEnum.DID_CREATE:
+				return OperationDefaultFeeEnum.DID_CREATE;
+			case OperationNameEnum.DID_UPDATE:
+				return OperationDefaultFeeEnum.DID_UPDATE;
+			case OperationNameEnum.DID_DEACTIVATE:
+				return OperationDefaultFeeEnum.DID_DEACTIVATE;
+		}
+		if (
+			operation === OperationNameEnum.RESOURCE_CREATE ||
+			operation === OperationNameEnum.CREDENTIAL_STATUS_CREATE_ENCRYPTED ||
+			operation === OperationNameEnum.CREDENTIAL_STATUS_CREATE_UNENCRYPTED ||
+			operation === OperationNameEnum.CREDENTIAL_STATUS_UPDATE_ENCRYPTED ||
+			operation === OperationNameEnum.CREDENTIAL_STATUS_UPDATE_UNENCRYPTED
+		) {
+			if (!resourceId) {
+				return defaultFee;
+			}
+			const entity = await ResourceService.instance.get(resourceId);
+			if (!entity) {
+				return defaultFee;
+			}
+			if (entity.mediaType === 'application/json') {
+				return OperationDefaultFeeEnum.RESOURCE_CREATE_JSON;
+			}
+			if (entity.mediaType.includes('image')) {
+				return OperationDefaultFeeEnum.RESOURCE_CREATE_IMAGE;
+			}
+			return OperationDefaultFeeEnum.RESOURCE_CREATE_OTHER;
+		}
+		return defaultFee;
 	}
 
 	async trackOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
 		try {
-			const result = await OperationService.instance.create(
+			let resourceId = undefined;
+			if (trackOperation.data && (trackOperation.data as IResourceTrack).resource) {
+				resourceId = (trackOperation.data as IResourceTrack).resource.resourceId;
+			}
+			// Create operation entity
+			const operationEntity = await OperationService.instance.create(
 				trackOperation.category,
 				trackOperation.name,
-				trackOperation.feePaymentOptions?.feePaymentAmount || 0,
-				false
+				await this.getDefaultFee(trackOperation.name, resourceId),
+				false,
+				trackOperation.successful
 			);
 
-			if (!result) {
+			if (!operationEntity) {
 				throw new Error(`Operation ${trackOperation.name} was not written to DB`);
 			}
+
+			// Track payments
+			if (trackOperation.feePaymentOptions) {
+				const operationWithPayment = new TrackOperationWithPayment(trackOperation);
+				const paymentValidation = operationWithPayment.validate();
+				if (paymentValidation.error) {
+					return {
+						operation: trackOperation,
+						error: `Error while validating payment options: ${paymentValidation.error}`,
+					} satisfies ITrackResult;
+				}
+				return await this.trackPayments(operationWithPayment, operationEntity);
+			}
+
 			return {
 				operation: trackOperation,
 				error: '',
@@ -102,10 +199,10 @@ export class ResourceSubscriber extends BaseOperationObserver implements IObserv
 		// tracking resource creation in DB
 		const result = await this.trackResourceOperation(trackOperation);
 		// notify about the result of tracking, e.g. log or datadog
-		await  this.notify({
+		await this.notify({
 			message: this.compileMessage(result),
 			severity: result.error ? 'error' : 'info',
-		})
+		});
 	}
 
 	async trackResourceOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
@@ -182,7 +279,6 @@ export class ResourceSubscriber extends BaseOperationObserver implements IObserv
 }
 
 export class CredentialSubscriber extends BaseOperationObserver implements IObserver {
-
 	isReactionNeeded(trackOperation: ITrackOperation): boolean {
 		// Credential tracker reacts on CredentialStatusList, Credential operations like revocation
 		// and Resource operations like create, update, delete
@@ -203,10 +299,10 @@ export class CredentialSubscriber extends BaseOperationObserver implements IObse
 		// tracking resource creation in DB
 		const result = await this.trackCredentialOperation(trackOperation);
 		// notify about the result of tracking, e.g. log or datadog
-		await  this.notify({
+		await this.notify({
 			message: this.compileMessage(result),
 			severity: result.error ? 'error' : 'info',
-		})
+		});
 	}
 
 	async trackCredentialOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
@@ -240,7 +336,7 @@ export class DIDSubscriber extends BaseOperationObserver implements IObserver {
 		await this.notify({
 			message: this.compileMessage(result),
 			severity: result.error ? 'error' : 'info',
-		})
+		});
 	}
 
 	async trackDIDOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
@@ -276,7 +372,7 @@ export class CredentialStatusSubscriber extends BaseOperationObserver implements
 		await this.notify({
 			message: this.compileMessage(result),
 			severity: result.error ? 'error' : 'info',
-		})
+		});
 	}
 
 	async trackCredentialStatusOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
@@ -312,7 +408,7 @@ export class PresentationSubscriber extends BaseOperationObserver implements IOb
 		await this.notify({
 			message: this.compileMessage(result),
 			severity: result.error ? 'error' : 'info',
-		})
+		});
 	}
 
 	async trackPresentationOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
@@ -348,7 +444,7 @@ export class KeySubscriber extends BaseOperationObserver implements IObserver {
 		await this.notify({
 			message: this.compileMessage(result),
 			severity: result.error ? 'error' : 'info',
-		})
+		});
 	}
 
 	async trackKeyOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {

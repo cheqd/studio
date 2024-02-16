@@ -7,7 +7,7 @@ import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { StatusCodes } from 'http-status-codes';
 
-import { CredentialController } from './controllers/credentials.js';
+import { CredentialController } from './controllers/credential.js';
 import { AccountController } from './controllers/account.js';
 import { Authentication } from './middleware/authentication.js';
 import { Connection } from './database/connection/connection.js';

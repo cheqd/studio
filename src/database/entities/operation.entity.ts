@@ -37,6 +37,12 @@ export class OperationEntity {
 	deprecated!: boolean;
 
 	@Column({
+		type: 'boolean',
+		nullable: false,
+	})
+	successful!: boolean;
+
+	@Column({
 		type: 'timestamptz',
 		nullable: false,
 	})
@@ -58,11 +64,19 @@ export class OperationEntity {
 		this.updatedAt = new Date();
 	}
 
-	constructor(operationId: string, category: string, operationName: string, defaultFee: number, deprecated: boolean) {
+	constructor(
+		operationId: string,
+		category: string,
+		operationName: string,
+		defaultFee: number,
+		deprecated: boolean,
+		successful: boolean
+	) {
 		this.operationId = operationId;
 		this.category = category;
 		this.operationName = operationName;
 		this.defaultFee = defaultFee;
 		this.deprecated = deprecated;
+		this.successful = successful;
 	}
 }

@@ -14,6 +14,7 @@ import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import { CheqdW3CVerifiableCredential } from './w3c-credential.js';
 import { CommonReturn } from '../types/shared.js';
 import { JWT_PROOF_TYPE } from '../types/constants.js';
+import type { IFeePaymentOptions } from '../types/track.js';
 
 export interface ICheqdPresentation extends UnsignedPresentation {
 	proof: ProofType;
@@ -110,6 +111,8 @@ export class CheqdW3CVerifiablePresentation extends CommonReturn implements IChe
 
 	public async makeFeePayment(agent: IIdentityService, customer: CustomerEntity): Promise<ICommonErrorResponse> {
 		// If no credentials in presentation we cannot make payments
+		let feePaymentOptions: IFeePaymentOptions[] = [];
+
 		if (!this.verifiableCredential) {
 			return this.returnError(
 				StatusCodes.BAD_REQUEST,
@@ -123,14 +126,22 @@ export class CheqdW3CVerifiablePresentation extends CommonReturn implements IChe
 				.map(async (credential) => await credential.makeFeePayment(agent, customer))
 		);
 
+		// Track fee payments
+		// Several payments may be in one txns and several payment conditions for each credential
+		for (const result of feePaymentResults) {
+			feePaymentOptions = feePaymentOptions.concat(result.data);
+		}
+
 		if (feePaymentResults.some((result) => result.error)) {
 			return this.returnError(
 				StatusCodes.BAD_REQUEST,
 				`Errors while making payment for the presentation: ${feePaymentResults.filter(
 					(result) => result.error
-				)}`
+				)}`,
+				feePaymentOptions
 			);
 		}
-		return this.returnOk();
+
+		return this.returnOk(feePaymentOptions);
 	}
 }

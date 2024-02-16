@@ -1,9 +1,9 @@
-import { TableColumn, type MigrationInterface, type QueryRunner } from "typeorm";
-import { categoryEnum } from "../types/enum.js";
+import { TableColumn, type MigrationInterface, type QueryRunner } from 'typeorm';
+import { categoryEnum } from '../types/enum.js';
 
 export class AlterOperationTable1695740345978 implements MigrationInterface {
 	public async up(queryRunner: QueryRunner): Promise<void> {
-        const table_name = 'operation';
+		const table_name = 'operation';
 		// Updated category column because of the new enum values
 		await queryRunner.changeColumn(
 			table_name,
@@ -12,7 +12,17 @@ export class AlterOperationTable1695740345978 implements MigrationInterface {
 				name: 'category',
 				type: 'enum',
 				isNullable: false,
-				enum: categoryEnum.toStringList()
+				enum: categoryEnum.toStringList(),
+			})
+		);
+
+		await queryRunner.addColumn(
+			table_name,
+			new TableColumn({
+				name: 'successful',
+				type: 'boolean',
+				isNullable: false,
+				default: true,
 			})
 		);
 	}

@@ -20,7 +20,8 @@ export class OperationService {
 		category: string,
 		operationName: string,
 		defaultFee: number,
-		deprecated = false
+		deprecated = false,
+		successful = true
 	): Promise<OperationEntity> {
 		if (!category) {
 			throw new Error('Operation category is not specified');
@@ -29,7 +30,14 @@ export class OperationService {
 			throw new Error('Operation name is not specified');
 		}
 		const operationId = v4();
-		const operationEntity = new OperationEntity(operationId, category, operationName, defaultFee, deprecated);
+		const operationEntity = new OperationEntity(
+			operationId,
+			category,
+			operationName,
+			defaultFee,
+			deprecated,
+			successful
+		);
 		const operation = (await this.operationRepository.insert(operationEntity)).identifiers[0];
 		if (!operation) throw new Error(`Cannot create a new operation`);
 
@@ -41,7 +49,8 @@ export class OperationService {
 		category: string,
 		operationName: string,
 		defaultFee: number,
-		deprecated = false
+		deprecated?: false,
+		successful?: boolean
 	) {
 		const existingOperation = await this.get(operationId);
 		if (!existingOperation) {
@@ -58,6 +67,9 @@ export class OperationService {
 		}
 		if (deprecated) {
 			existingOperation.deprecated = deprecated;
+		}
+		if (successful) {
+			existingOperation.successful = successful;
 		}
 
 		return await this.operationRepository.save(existingOperation);
