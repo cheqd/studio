@@ -571,6 +571,7 @@ export class Veramo {
 			amount: toCoin(feePaymentOptions.feePaymentAmount),
 			network: feePaymentOptions.feePaymentNetwork,
 			memo: feePaymentOptions.memo,
+			returnTxResponse: true,
 		});
 	}
 

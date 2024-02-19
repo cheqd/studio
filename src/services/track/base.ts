@@ -1,12 +1,11 @@
 import type { ITrackOperation, INotifyMessage, ITrackResult } from '../../types/track.js';
 import type { IObserver } from './types.js';
 
-
 export class BaseOperationObserver implements IObserver {
 	private emitter: EventEmitter;
 
 	constructor(emitter: EventEmitter) {
-		this.emitter = emitter
+		this.emitter = emitter;
 	}
 
 	async update(trackOperation: ITrackOperation): Promise<void> {
@@ -26,7 +25,7 @@ export class BaseOperationObserver implements IObserver {
 			trackResult.operation.name,
 			trackResult.operation.customer ? `CustomerId: ${trackResult.operation.customer.customerId}` : '',
 			trackResult.operation.user ? `UserId: ${trackResult.operation.user.logToId}` : '',
-            trackResult.error ? 'Error: ' + trackResult.error : 'Success',
+			trackResult.error ? 'Error: ' + trackResult.error : 'Success',
 		];
 		return components.join(' | ');
 	}

@@ -1,6 +1,7 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { categoryEnum } from './../types/enum.js';
+import { CoinEntity } from './coin.entity.js';
 
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -24,17 +25,17 @@ export class OperationEntity {
 	operationName!: string;
 
 	@Column({
-		type: 'bigint',
-		nullable: false,
-	})
-	defaultFee!: number;
-
-	@Column({
 		type: 'bool',
 		nullable: false,
 		default: false,
 	})
 	deprecated!: boolean;
+
+	@Column({
+		type: 'boolean',
+		nullable: false,
+	})
+	successful!: boolean;
 
 	@Column({
 		type: 'timestamptz',
@@ -58,11 +59,23 @@ export class OperationEntity {
 		this.updatedAt = new Date();
 	}
 
-	constructor(operationId: string, category: string, operationName: string, defaultFee: number, deprecated: boolean) {
+	@ManyToOne(() => CoinEntity, (defaultFee) => defaultFee.coinId, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'defaultFee' })
+	defaultFee!: CoinEntity;
+
+	constructor(
+		operationId: string,
+		category: string,
+		operationName: string,
+		defaultFee: CoinEntity,
+		deprecated: boolean,
+		successful: boolean
+	) {
 		this.operationId = operationId;
 		this.category = category;
 		this.operationName = operationName;
 		this.defaultFee = defaultFee;
 		this.deprecated = deprecated;
+		this.successful = successful;
 	}
 }

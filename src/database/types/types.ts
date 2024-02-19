@@ -29,6 +29,9 @@ import { MigrateData1695740345977 } from '../migrations/MigrateData.js';
 import { APIKeyEntity } from '../entities/api.key.entity.js';
 import { CreateAPIKeyTable1695740345977 } from '../migrations/CreateApiKeyMigration.js';
 import { AlterOperationTable1695740345978 } from '../migrations/AlterOperationTable.js';
+import { AlterPaymentTable1695740345979 } from '../migrations/AlterPaymentTable.js';
+import { CreateCoinTable1695740345977 } from '../migrations/CreateCoinTable.js';
+import { CoinEntity } from '../entities/coin.entity.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -88,8 +91,11 @@ export class Postgres implements AbstractDatabase {
 				AlterTableKey1695740345977,
 				MigrateData1695740345977,
 				CreateAPIKeyTable1695740345977,
+				CreateCoinTable1695740345977,
 				// Add new categories
-				AlterOperationTable1695740345978
+				AlterOperationTable1695740345978,
+				// Change payment table structure
+				AlterPaymentTable1695740345979,
 			],
 			entities: [
 				...Entities,
@@ -103,6 +109,7 @@ export class Postgres implements AbstractDatabase {
 				KeyEntity,
 				IdentifierEntity,
 				APIKeyEntity,
+				CoinEntity,
 			],
 			logging: ['error', 'info', 'warn'],
 		});

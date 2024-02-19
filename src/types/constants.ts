@@ -15,7 +15,6 @@ export const ENABLE_DATADOG = process.env.ENABLE_DATADOG === 'true' ? true : fal
 // Possible cases 'trace' 'debug' 'info' 'warn' 'error';
 export const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 
-
 // LogTo contants
 const { LOGTO_ENDPOINT, LOGTO_APP_ID, LOGTO_APP_SECRET, ENABLE_AUTHENTICATION } = process.env;
 
@@ -75,6 +74,15 @@ export enum OperationCategoryNameEnum {
 	CREDENTIAL = 'credential',
 	PRESENTATION = 'presentation',
 	KEY = 'key',
+}
+
+export enum OperationDefaultFeeEnum {
+	DID_UPDATE = 25000000000,
+	DID_CREATE = 50000000000,
+	DID_DEACTIVATE = 10000000000,
+	RESOURCE_CREATE_IMAGE = 10000000000,
+	RESOURCE_CREATE_JSON = 2500000000,
+	RESOURCE_CREATE_OTHER = 5000000000,
 }
 
 export enum OperationNameEnum {

@@ -1,6 +1,5 @@
 import type { ITrackSubject, IObserver, ITrackType } from './types.js';
 
-
 export class Observer implements ITrackSubject {
 	private observers: IObserver[] = [];
 

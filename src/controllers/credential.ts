@@ -310,6 +310,7 @@ export class CredentialController {
 				user: response.locals.user,
 				data: {
 					did: cheqdCredential.issuer,
+					resource: verifyResult.resourceMetadata,
 				} satisfies ICredentialTrack,
 			} as ITrackOperation;
 

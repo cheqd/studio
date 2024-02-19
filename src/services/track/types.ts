@@ -1,6 +1,5 @@
 import type { ITrackOperation, INotifyMessage } from '../../types/track';
 
-
 export type ITrackType = ITrackOperation | INotifyMessage;
 
 export interface IObserver {
