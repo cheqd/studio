@@ -5,6 +5,7 @@ import { Connection } from '../database/connection/connection.js';
 import * as dotenv from 'dotenv';
 import { OperationEntity } from '../database/entities/operation.entity.js';
 import { v4 } from 'uuid';
+import type { CoinEntity } from '../database/entities/coin.entity.js';
 dotenv.config();
 
 export class OperationService {
@@ -19,7 +20,7 @@ export class OperationService {
 	public async create(
 		category: string,
 		operationName: string,
-		defaultFee: number,
+		defaultFee: CoinEntity,
 		deprecated = false,
 		successful = true
 	): Promise<OperationEntity> {
@@ -48,7 +49,7 @@ export class OperationService {
 		operationId: string,
 		category: string,
 		operationName: string,
-		defaultFee: number,
+		defaultFee: CoinEntity,
 		deprecated?: false,
 		successful?: boolean
 	) {
@@ -78,12 +79,14 @@ export class OperationService {
 	public async get(operationId: string) {
 		return await this.operationRepository.findOne({
 			where: { operationId },
+			relations: ['coin'],
 		});
 	}
 
 	public async find(where: Record<string, unknown>) {
 		return await this.operationRepository.find({
 			where: where,
+			relations: ['coin'],
 		});
 	}
 }

@@ -11,7 +11,7 @@ import {
 	type IDIDTrack,
 	TrackOperationWithPayment,
 } from '../../types/track.js';
-import { isCredentialStatusTrack, isCredentialTrack, isResourceTrack } from './helpers.js';
+import { isCredentialStatusTrack, isCredentialTrack, isResourceTrack, toCoin } from './helpers.js';
 import { IdentifierService } from '../identifier.js';
 import { KeyService } from '../key.js';
 import { OperationService } from '../operation.js';
@@ -22,6 +22,8 @@ import type { LogLevelDesc } from 'loglevel';
 import type { OperationEntity } from '../../database/entities/operation.entity.js';
 import { PaymentService } from '../payment.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import type { Coin } from '@cosmjs/amino';
+import { CoinService } from '../coin.js';
 
 export class DBOperationSubscriber extends BaseOperationObserver implements IObserver {
 	protected logSeverity: LogLevelDesc = 'debug';
@@ -52,12 +54,20 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 		}
 
 		for (const feePayment of operationWithPayment.feePaymentOptions) {
+			// Create Fee Coin
+			const feeCoin = await CoinService.instance.create(BigInt(feePayment.fee.amount), feePayment.fee.denom);
+			// Create Amount Coin
+			const amountCoin = await CoinService.instance.create(
+				BigInt(feePayment.amount.amount),
+				feePayment.amount.denom
+			);
+
 			const payment = await PaymentService.instance.create(
 				feePayment.txHash as string,
 				operationWithPayment.customer as CustomerEntity,
 				operationEntity,
-				feePayment.fee,
-				feePayment.amount,
+				feeCoin,
+				amountCoin,
 				feePayment.successful,
 				feePayment.network,
 				resource,
@@ -78,15 +88,15 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 		} satisfies ITrackResult;
 	}
 
-	async getDefaultFee(operation: ITrackOperation): Promise<number> {
+	async getDefaultFeeCoin(operation: ITrackOperation): Promise<Coin> {
 		const defaultFee = 0;
 		switch (operation.name) {
 			case OperationNameEnum.DID_CREATE:
-				return OperationDefaultFeeEnum.DID_CREATE;
+				return toCoin(BigInt(OperationDefaultFeeEnum.DID_CREATE));
 			case OperationNameEnum.DID_UPDATE:
-				return OperationDefaultFeeEnum.DID_UPDATE;
+				return toCoin(BigInt(OperationDefaultFeeEnum.DID_UPDATE));
 			case OperationNameEnum.DID_DEACTIVATE:
-				return OperationDefaultFeeEnum.DID_DEACTIVATE;
+				return toCoin(BigInt(OperationDefaultFeeEnum.DID_DEACTIVATE));
 		}
 		if (
 			operation.name === OperationNameEnum.RESOURCE_CREATE ||
@@ -97,26 +107,29 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 		) {
 			const resource = (operation.data as IResourceTrack).resource;
 			if (!resource) {
-				return defaultFee;
+				return toCoin(BigInt(defaultFee));
 			}
 			if (resource.mediaType === 'application/json') {
-				return OperationDefaultFeeEnum.RESOURCE_CREATE_JSON;
+				return toCoin(BigInt(OperationDefaultFeeEnum.RESOURCE_CREATE_JSON));
 			}
 			if (resource.mediaType.includes('image')) {
-				return OperationDefaultFeeEnum.RESOURCE_CREATE_IMAGE;
+				return toCoin(BigInt(OperationDefaultFeeEnum.RESOURCE_CREATE_IMAGE));
 			}
-			return OperationDefaultFeeEnum.RESOURCE_CREATE_OTHER;
+			return toCoin(BigInt(OperationDefaultFeeEnum.RESOURCE_CREATE_OTHER));
 		}
-		return defaultFee;
+		return toCoin(BigInt(defaultFee));
 	}
 
 	async trackOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
 		try {
+			// Create Default Fee Coin
+			const defaultFeeCoin = await this.getDefaultFeeCoin(trackOperation);
+			const defaultFee = await CoinService.instance.create(BigInt(defaultFeeCoin.amount), defaultFeeCoin.denom);
 			// Create operation entity
 			const operationEntity = await OperationService.instance.create(
 				trackOperation.category,
 				trackOperation.name,
-				await this.getDefaultFee(trackOperation),
+				defaultFee,
 				false,
 				trackOperation.successful
 			);

@@ -2,6 +2,7 @@ import type { TransactionResult } from '@cheqd/did-provider-cheqd';
 import { assert } from 'console';
 import type { IFeePaymentOptions } from '../types/track';
 import { CheqdNetwork } from '@cheqd/sdk';
+import { toCoin } from '../services/track/helpers.js';
 
 // The algo for the fee analyzer is as follows:
 // 1. Get all transfer events from txResponse.events
@@ -21,15 +22,15 @@ export class FeeAnalyzer {
 					return await fetch('https://api.cheqd.net/cosmos/tx/v1beta1/txs/' + txHash);
 				}
 			}
-		})()
-        if (!timestampResponse) {
-            throw new Error('Failed to get block info');
-        }
-        const txResponse = await timestampResponse.json();
-        if (!txResponse || !txResponse.tx_response || !txResponse.tx_response.timestamp) {
-            throw new Error('Unexpected block format');
-        }
-        return new Date(txResponse.tx_response.timestamp);
+		})();
+		if (!timestampResponse) {
+			throw new Error('Failed to get block info');
+		}
+		const txResponse = await timestampResponse.json();
+		if (!txResponse || !txResponse.tx_response || !txResponse.tx_response.timestamp) {
+			throw new Error('Unexpected block format');
+		}
+		return new Date(txResponse.tx_response.timestamp);
 	}
 
 	static async getPaymentTrack(txResponse: TransactionResult, network: CheqdNetwork): Promise<IFeePaymentOptions[]> {
@@ -84,8 +85,8 @@ export class FeeAnalyzer {
 			const paymentEntity = {
 				successful: txResponse.txResponse?.code === 0,
 				txHash: txResponse.transactionHash || '',
-				fee: parseInt(feeEvent.find((attr) => attr.key === 'fee')?.value || '0'),
-				amount: parseInt(transferEvent.find((attr) => attr.key === 'amount')?.value || '0'),
+				fee: toCoin(BigInt(parseInt(feeEvent.find((attr) => attr.key === 'fee')?.value || '0'))),
+				amount: toCoin(BigInt(parseInt(transferEvent.find((attr) => attr.key === 'amount')?.value || '0'))),
 				fromAddress: transferEvent.find((attr) => attr.key === 'recipient')?.value || '',
 				toAddress: transferEvent.find((attr) => attr.key === 'sender')?.value || '',
 				network: network,

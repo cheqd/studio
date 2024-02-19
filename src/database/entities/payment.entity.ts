@@ -6,6 +6,7 @@ import { ResourceEntity } from './resource.entity.js';
 import { OperationEntity } from './operation.entity.js';
 import type { CheqdNetwork } from '@cheqd/sdk';
 import { namespaceEnum } from '../types/enum.js';
+import { CoinEntity } from './coin.entity.js';
 dotenv.config();
 
 @Entity('payment')
@@ -16,18 +17,6 @@ export class PaymentEntity {
 		primary: true,
 	})
 	txHash!: string;
-
-	@Column({
-		type: 'bigint',
-		nullable: false,
-	})
-	fee!: number;
-
-	@Column({
-		type: 'bigint',
-		nullable: false,
-	})
-	amount!: number;
 
 	@Column({
 		type: 'enum',
@@ -66,6 +55,14 @@ export class PaymentEntity {
 	@JoinColumn({ name: 'operationId' })
 	operation!: OperationEntity;
 
+	@ManyToOne(() => CoinEntity, (coin) => coin.coinId, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'fee' })
+	fee!: CoinEntity;
+
+	@ManyToOne(() => CoinEntity, (coin) => coin.coinId, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'amount' })
+	amount!: CoinEntity;
+
 	@Column({
 		type: 'timestamptz',
 		nullable: false,
@@ -76,8 +73,8 @@ export class PaymentEntity {
 		txHash: string,
 		customer: CustomerEntity,
 		operation: OperationEntity,
-		fee: number,
-		amount: number,
+		fee: CoinEntity,
+		amount: CoinEntity,
 		successful: boolean,
 		namespace: CheqdNetwork,
 		resource: ResourceEntity,

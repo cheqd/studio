@@ -5,6 +5,7 @@ import type { UserEntity } from '../database/entities/user.entity.js';
 import type { LogLevelDesc } from 'loglevel';
 import type { ResourceEntity } from '../database/entities/resource.entity.js';
 import { ResourceService } from '../services/resource.js';
+import type { Coin } from '@cosmjs/amino';
 
 export type TrackData =
 	| IResourceTrack
@@ -36,9 +37,9 @@ export interface IFeePaymentOptions {
 	timestamp: Date;
 	fromAddress: string;
 	toAddress: string;
-	amount: number;
+	amount: Coin;
 	network: CheqdNetwork;
-	fee: number;
+	fee: Coin;
 	successful: boolean;
 	resourceId?: string;
 }

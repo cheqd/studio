@@ -1,20 +1,31 @@
-import { TableColumn, type MigrationInterface, type QueryRunner } from 'typeorm';
+import { Table, TableColumn, TableForeignKey, type MigrationInterface, type QueryRunner } from 'typeorm';
 import { namespaceEnum } from '../types/enum.js';
 
 export class AlterPaymentTable1695740345979 implements MigrationInterface {
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		const table_name = 'payment';
+		const table = (await queryRunner.getTable(table_name)) as Table;
 
 		// Drop unused columns
 		await queryRunner.dropColumn(table_name, 'direction');
 		await queryRunner.dropColumn(table_name, 'identifierDid');
+		await queryRunner.dropColumn(table_name, 'fee');
 
 		// Add new columns
 		await queryRunner.addColumn(
 			table_name,
 			new TableColumn({
 				name: 'amount',
-				type: 'bigint',
+				type: 'uuid',
+				isNullable: false,
+			})
+		);
+
+		await queryRunner.addColumn(
+			table_name,
+			new TableColumn({
+				name: 'fee',
+				type: 'uuid',
 				isNullable: false,
 			})
 		);
@@ -56,9 +67,26 @@ export class AlterPaymentTable1695740345979 implements MigrationInterface {
 				isNullable: false,
 			})
 		);
-		// // Add new categories
-		// await queryRunner.query("alter type operation_category_enum add value 'presentation';");
-		// await queryRunner.query("alter type operation_category_enum add value 'key';");
+		// Add foreign keys
+		await queryRunner.createForeignKey(
+			table,
+			new TableForeignKey({
+				columnNames: ['fee'],
+				referencedColumnNames: ['coinId'],
+				referencedTableName: 'coin',
+				onDelete: 'CASCADE',
+			})
+		);
+
+		await queryRunner.createForeignKey(
+			table,
+			new TableForeignKey({
+				columnNames: ['amount'],
+				referencedColumnNames: ['coinId'],
+				referencedTableName: 'coin',
+				onDelete: 'CASCADE',
+			})
+		);
 	}
 
 	public async down(queryRunner: QueryRunner): Promise<void> {

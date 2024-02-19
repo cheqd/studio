@@ -8,6 +8,7 @@ import { PaymentEntity } from '../database/entities/payment.entity.js';
 import type { OperationEntity } from '../database/entities/operation.entity.js';
 import type { ResourceEntity } from '../database/entities/resource.entity.js';
 import type { CheqdNetwork } from '@cheqd/sdk';
+import type { CoinEntity } from '../database/entities/coin.entity.js';
 dotenv.config();
 
 export class PaymentService {
@@ -23,8 +24,8 @@ export class PaymentService {
 		txHash: string,
 		customer: CustomerEntity,
 		operation: OperationEntity,
-		fee: number,
-		amount: number,
+		fee: CoinEntity,
+		amount: CoinEntity,
 		successful: boolean,
 		namespace: CheqdNetwork,
 		resource: ResourceEntity,
@@ -54,8 +55,8 @@ export class PaymentService {
 		txHash: string,
 		customer: CustomerEntity,
 		operation: OperationEntity,
-		fee: number,
-		amount: number,
+		fee: CoinEntity,
+		amount: CoinEntity,
 		successful: boolean,
 		namespace: CheqdNetwork,
 		resource: ResourceEntity,
@@ -104,14 +105,14 @@ export class PaymentService {
 	public async get(txHash: string) {
 		return await this.paymentRepository.findOne({
 			where: { txHash },
-			relations: ['customer', 'operation', 'resource'],
+			relations: ['customer', 'operation', 'resource', 'coin'],
 		});
 	}
 
 	public async find(where: Record<string, unknown>) {
 		return await this.paymentRepository.find({
 			where: where,
-			relations: ['customer', 'operation', 'resource'],
+			relations: ['customer', 'operation', 'resource', 'coin'],
 		});
 	}
 }

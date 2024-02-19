@@ -70,7 +70,7 @@ class App {
 		);
 		this.express.use(cookieParser());
 		const auth = new Authentication();
-		// EventTracking 
+		// EventTracking
 		this.express.use(new FailedResponseTracker().trackJson);
 		// Authentication
 		if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -99,7 +99,6 @@ class App {
 		this.express.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerOptions));
 		this.express.use(auth.handleError);
 		this.express.use(async (req, res, next) => await auth.accessControl(req, res, next));
-
 	}
 
 	private routes() {

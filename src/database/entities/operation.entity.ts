@@ -1,6 +1,7 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { categoryEnum } from './../types/enum.js';
+import { CoinEntity } from './coin.entity.js';
 
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -22,12 +23,6 @@ export class OperationEntity {
 		nullable: false,
 	})
 	operationName!: string;
-
-	@Column({
-		type: 'bigint',
-		nullable: false,
-	})
-	defaultFee!: number;
 
 	@Column({
 		type: 'bool',
@@ -64,11 +59,15 @@ export class OperationEntity {
 		this.updatedAt = new Date();
 	}
 
+	@ManyToOne(() => CoinEntity, (defaultFee) => defaultFee.coinId, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'defaultFee' })
+	defaultFee!: CoinEntity;
+
 	constructor(
 		operationId: string,
 		category: string,
 		operationName: string,
-		defaultFee: number,
+		defaultFee: CoinEntity,
 		deprecated: boolean,
 		successful: boolean
 	) {
