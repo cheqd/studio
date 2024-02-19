@@ -6,8 +6,9 @@ import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../services/identity/index.js';
 import { getQueryParams } from '../helpers/helpers.js';
 import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
-import type { ITrackOperation, ValidationErrorResponseBody } from '../types/shared.js';
-import { OPERATION_CATEGORY_NAME_RESOURCE } from '../types/constants.js';
+import type { ValidationErrorResponseBody } from '../types/shared.js';
+import type { IResourceTrack, ITrackOperation } from '../types/track.js';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
 import { check, validationResult, param, query } from './validator/index.js';
 import type {
 	CreateResourceRequestBody,
@@ -17,6 +18,7 @@ import type {
 	UnsuccessfulCreateResourceResponseBody,
 	UnsuccessfulQueryResourceResponseBody,
 } from '../types/resource.js';
+import { eventTracker } from '../services/track/tracker.js';
 import { arePublicKeyHexsInWallet } from '../services/helpers.js';
 
 export class ResourceController {
@@ -204,25 +206,17 @@ export class ResourceController {
 
 				// track resource creation
 				const trackResourceInfo = {
-					category: OPERATION_CATEGORY_NAME_RESOURCE,
-					operation: 'createResource',
+					category: OperationCategoryNameEnum.RESOURCE,
+					name: OperationNameEnum.RESOURCE_CREATE,
 					customer: response.locals.customer,
-					did,
 					data: {
+						did,
 						resource: resource,
-						encrypted: false,
-						symmetricKey: '',
-					},
+					} satisfies IResourceTrack,
 				} as ITrackOperation;
 
-				const trackResult = await identityServiceStrategySetup.agent
-					.trackOperation(trackResourceInfo)
-					.catch((error) => {
-						return { error };
-					});
-				if (trackResult.error) {
-					console.error(`Tracking Error: ${trackResult.error}`);
-				}
+				// track resource creation
+				eventTracker.emit('track', trackResourceInfo);
 
 				return response.status(StatusCodes.CREATED).json({
 					resource,

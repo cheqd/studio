@@ -38,6 +38,9 @@ import type { IKey, RequireOnly } from '@veramo/core';
 import { extractPublicKeyHex } from '@veramo/utils';
 import type { ValidationErrorResponseBody } from '../types/shared.js';
 import type { KeyImport } from '../types/key.js';
+import { eventTracker } from '../services/track/tracker.js';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
+import type { IDIDTrack, ITrackOperation } from '../types/track.js';
 import { arePublicKeyHexsInWallet } from '../services/helpers.js';
 import { CheqdProviderErrorCodes } from '@cheqd/did-provider-cheqd';
 import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
@@ -268,6 +271,17 @@ export class DIDController {
 				didDocument,
 				response.locals.customer
 			);
+
+			eventTracker.emit('track', {
+				category: OperationCategoryNameEnum.DID,
+				name: OperationNameEnum.DID_CREATE,
+				data: {
+					did: did.did,
+				} satisfies IDIDTrack,
+				customer: response.locals.customer,
+				user: response.locals.user,
+			} satisfies ITrackOperation);
+
 			return response.status(StatusCodes.OK).json(did satisfies CreateDidResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -374,6 +388,18 @@ export class DIDController {
 				response.locals.customer,
 				publicKeyHexs
 			);
+
+			// Track the operation
+			eventTracker.emit('track', {
+				category: OperationCategoryNameEnum.DID,
+				name: OperationNameEnum.DID_UPDATE,
+				data: {
+					did: result.did,
+				} satisfies IDIDTrack,
+				customer: response.locals.customer,
+				user: response.locals.user,
+			} satisfies ITrackOperation);
+
 			return response.status(StatusCodes.OK).json(result satisfies UpdateDidResponseBody);
 		} catch (error) {
 			const errorCode = (error as CheqdProviderError).errorCode;
@@ -501,6 +527,18 @@ export class DIDController {
 			const identifier = await new IdentityServiceStrategySetup(
 				response.locals.customer.customerId
 			).agent.importDid(did, keys, controllerKeyId, response.locals.customer);
+
+			// Track the operation
+			eventTracker.emit('track', {
+				category: OperationCategoryNameEnum.DID,
+				name: OperationNameEnum.DID_IMPORT,
+				data: {
+					did: identifier.did,
+				} satisfies IDIDTrack,
+				customer: response.locals.customer,
+				user: response.locals.user,
+			} satisfies ITrackOperation);
+
 			return response.status(StatusCodes.OK).json(identifier);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -579,6 +617,17 @@ export class DIDController {
 			await identityServiceStrategySetup.agent.deactivateDid(did, response.locals.customer, publicKeyHexs);
 			// Send the deactivated DID as result
 			const result = await identityServiceStrategySetup.agent.resolveDid(request.params.did);
+
+			// Track the operation
+			eventTracker.emit('track', {
+				category: OperationCategoryNameEnum.DID,
+				name: OperationNameEnum.DID_DEACTIVATE,
+				data: {
+					did,
+				} satisfies IDIDTrack,
+				customer: response.locals.customer,
+				user: response.locals.user,
+			} satisfies ITrackOperation);
 
 			return response.status(StatusCodes.OK).json(result satisfies DeactivateDidResponseBody);
 		} catch (error) {

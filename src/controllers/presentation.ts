@@ -15,6 +15,9 @@ import type {
 } from '../types/presentation.js';
 import { isIssuerDidDeactivated } from '../services/helpers.js';
 import type { ValidationErrorResponseBody } from '../types/shared.js';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
+import { eventTracker } from '../services/track/tracker.js';
+import type { IFeePaymentOptions, IPresentationTrack, ITrackOperation } from '../types/track.js';
 
 export class PresentationController {
 	public static presentationCreateValidator = [
@@ -188,6 +191,16 @@ export class PresentationController {
 			} satisfies UnsuccessfulVerifyCredentialResponseBody);
 		}
 
+		let feePaymentOptions: IFeePaymentOptions[] = [];
+
+		// Make the base body for tracking
+		const trackInfo = {
+			name: OperationNameEnum.PRESENTATION_VERIFY,
+			category: OperationCategoryNameEnum.PRESENTATION,
+			customer: response.locals.customer,
+			user: response.locals.user,
+		} as ITrackOperation;
+
 		// Extract request parameters from body
 		const { presentation, verifierDid, policies, makeFeePayment } = request.body as VerifyPresentationRequestBody;
 		// Extract request parameters from query
@@ -198,27 +211,39 @@ export class PresentationController {
 		// create cheqd presentation from w3c presentation
 		const cheqdPresentation = new CheqdW3CVerifiablePresentation(presentation);
 
-		if (makeFeePayment) {
-			const setResult = await cheqdPresentation.trySetStatusList2021(identityServiceStrategySetup.agent);
-			if (setResult.error) {
-				return response.status(setResult.status).send({
-					error: setResult.error,
-				} satisfies UnsuccessfulVerifyCredentialResponseBody);
-			}
-			if (cheqdPresentation.isPaymentNeeded()) {
-				const feePaymentResult = await cheqdPresentation.makeFeePayment(
-					identityServiceStrategySetup.agent,
-					response.locals.customer
-				);
-				if (feePaymentResult.error) {
-					return response.status(StatusCodes.BAD_REQUEST).json({
-						error: `verify: payment: error: ${feePaymentResult.error}`,
+		try {
+			if (makeFeePayment) {
+				const setResult = await cheqdPresentation.trySetStatusList2021(identityServiceStrategySetup.agent);
+				if (setResult.error) {
+					return response.status(setResult.status).send({
+						error: setResult.error,
 					} satisfies UnsuccessfulVerifyCredentialResponseBody);
 				}
-			}
-		}
+				if (cheqdPresentation.isPaymentNeeded()) {
+					const feePaymentResult = await cheqdPresentation.makeFeePayment(
+						identityServiceStrategySetup.agent,
+						response.locals.customer
+					);
+					// Track fee payments
+					feePaymentOptions = feePaymentResult.data;
+					// handle error
+					if (feePaymentResult.error) {
+						// Fill track info
+						trackInfo.feePaymentOptions = feePaymentOptions;
+						trackInfo.data = {
+							holder: cheqdPresentation.holder,
+						} satisfies IPresentationTrack;
+						trackInfo.successful = false;
+						// Track operation
+						eventTracker.emit('track', trackInfo satisfies ITrackOperation);
 
-		try {
+						// Return error
+						return response.status(StatusCodes.BAD_REQUEST).json({
+							error: `verify: payment: error: ${feePaymentResult.error}`,
+						} satisfies UnsuccessfulVerifyCredentialResponseBody);
+					}
+				}
+			}
 			if (!allowDeactivatedDid && (await isIssuerDidDeactivated(cheqdPresentation))) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: `Credential issuer DID is deactivated`,
@@ -241,6 +266,15 @@ export class PresentationController {
 					error: `verify: ${result.error.message}`,
 				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			}
+			// track operation
+			trackInfo.data = {
+				holder: cheqdPresentation.holder,
+			} satisfies IPresentationTrack;
+			trackInfo.feePaymentOptions = feePaymentOptions;
+			trackInfo.successful = true;
+
+			eventTracker.emit('track', trackInfo satisfies ITrackOperation);
+
 			return response.status(StatusCodes.OK).json(result satisfies VerifyPresentationResponseBody);
 		} catch (error) {
 			// define error

@@ -2,12 +2,11 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import * as dotenv from 'dotenv';
 import { CustomerEntity } from './customer.entity.js';
-import { Identifier } from '@veramo/data-store';
-import { directionEnum } from './../types/enum.js';
 import { ResourceEntity } from './resource.entity.js';
 import { OperationEntity } from './operation.entity.js';
-import { PaymentAccountEntity } from './payment.account.entity.js';
-import type { IdentifierEntity } from './identifier.entity.js';
+import type { CheqdNetwork } from '@cheqd/sdk';
+import { namespaceEnum } from '../types/enum.js';
+import { CoinEntity } from './coin.entity.js';
 dotenv.config();
 
 @Entity('payment')
@@ -21,22 +20,28 @@ export class PaymentEntity {
 
 	@Column({
 		type: 'enum',
-		enum: directionEnum,
+		enum: namespaceEnum,
 		nullable: false,
 	})
-	direction!: string;
+	namespace!: CheqdNetwork;
 
 	@Column({
-		type: 'bigint',
+		type: 'text',
 		nullable: false,
 	})
-	fee!: number;
+	fromAccount!: string;
 
 	@Column({
-		type: 'timestamptz',
+		type: 'text',
 		nullable: false,
 	})
-	timestamp!: Date;
+	toAccount!: string;
+
+	@Column({
+		type: 'boolean',
+		nullable: false,
+	})
+	successful!: boolean;
 
 	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'customerId' })
@@ -46,37 +51,47 @@ export class PaymentEntity {
 	@JoinColumn({ name: 'resourceId' })
 	resource!: ResourceEntity;
 
-	@ManyToOne(() => Identifier, (identifier) => identifier.did, { onDelete: 'CASCADE' })
-	@JoinColumn({ name: 'identifierDid' })
-	identifier!: Identifier;
-
 	@ManyToOne(() => OperationEntity, (operation) => operation.operationId, { onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'operationId' })
 	operation!: OperationEntity;
 
-	@ManyToOne(() => PaymentAccountEntity, (paymentAccount) => paymentAccount.address, { onDelete: 'CASCADE' })
-	@JoinColumn({ name: 'paymentAddress' })
-	paymentAccount!: PaymentAccountEntity;
+	@ManyToOne(() => CoinEntity, (coin) => coin.coinId, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'fee' })
+	fee!: CoinEntity;
+
+	@ManyToOne(() => CoinEntity, (coin) => coin.coinId, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'amount' })
+	amount!: CoinEntity;
+
+	@Column({
+		type: 'timestamptz',
+		nullable: false,
+	})
+	timestamp!: Date;
 
 	constructor(
 		txHash: string,
 		customer: CustomerEntity,
 		operation: OperationEntity,
-		direction: string,
-		fee: number,
-		timestamp: Date,
-		identifierDid: IdentifierEntity,
+		fee: CoinEntity,
+		amount: CoinEntity,
+		successful: boolean,
+		namespace: CheqdNetwork,
 		resource: ResourceEntity,
-		paymentAddress: PaymentAccountEntity
+		fromAccount: string,
+		toAccount: string,
+		timestamp: Date
 	) {
 		this.txHash = txHash;
 		this.customer = customer;
 		this.operation = operation;
-		this.direction = direction;
 		this.fee = fee;
-		this.timestamp = timestamp;
-		this.identifier = identifierDid;
+		this.amount = amount;
+		this.successful = successful;
+		this.namespace = namespace;
 		this.resource = resource;
-		this.paymentAccount = paymentAddress;
+		this.fromAccount = fromAccount;
+		this.toAccount = toAccount;
+		this.timestamp = timestamp;
 	}
 }

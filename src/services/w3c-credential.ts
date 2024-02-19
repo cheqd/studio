@@ -18,6 +18,8 @@ import { CommonReturn } from '../types/shared.js';
 import type { FeePaymentOptions } from '../types/credential-status.js';
 import { JWT_PROOF_TYPE } from '../types/constants.js';
 import type { StatusList2021Revocation, StatusList2021Suspension } from '@cheqd/did-provider-cheqd';
+import { FeeAnalyzer } from '../helpers/fee-analyzer.js';
+import type { IFeePaymentOptions } from '../types/track.js';
 
 export interface ICheqdCredential extends UnsignedCredential {
 	proof: ProofType;
@@ -39,6 +41,7 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 	id?: string;
 	proof: ProofType;
 	statusList?: StatusList2021Revocation | StatusList2021Suspension;
+	resourceId?: string;
 
 	constructor(w3Credential: W3CVerifiableCredential) {
 		super();
@@ -124,6 +127,7 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 			);
 		}
 		this.statusList = statusList.resource;
+		this.resourceId = statusList.resourceMetadata?.resourceId;
 		return this.returnOk();
 	}
 
@@ -137,6 +141,7 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 	public async makeFeePayment(agent: IIdentityService, customer: CustomerEntity): Promise<ICommonErrorResponse> {
 		const did = this.issuer;
 		const statusList = this.statusList;
+		const feePaymentOptions: IFeePaymentOptions[] = [];
 
 		// make fee payment
 		const feePaymentResult = await Promise.all(
@@ -152,13 +157,26 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 				);
 			}) || []
 		);
+		// Track fee payments
+		await Promise.all(
+			feePaymentResult.map(async (result) => {
+				// Maybe a lot of transfer in one transaction
+				const portions = await FeeAnalyzer.getPaymentTrack(result, toNetwork(did));
+				for (const portion of portions) {
+					portion.resourceId = this.resourceId;
+					feePaymentOptions.push(portion);
+				}
+			})
+		);
 		// handle error
 		if (feePaymentResult.some((result) => result.error)) {
 			return this.returnError(
 				StatusCodes.BAD_REQUEST,
-				`payment: error: ${feePaymentResult.find((result) => result.error)?.error}`
+				`payment: error: ${feePaymentResult.find((result) => result.error)?.error}`,
+				feePaymentOptions
 			);
 		}
-		return this.returnOk();
+
+		return this.returnOk(feePaymentOptions);
 	}
 }

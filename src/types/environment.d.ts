@@ -7,6 +7,8 @@ declare global {
 			NODE_ENV: EnvironmentType;
 			PORT: string;
 			NPM_CONFIG_LOGLEVEL: string;
+			ENABLE_DATADOG: string | 'false';
+			LOG_LEVEL: string | 'info';
 
 			// Network API endpoints
 			MAINNET_RPC_URL: string;
