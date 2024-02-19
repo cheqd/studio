@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.17.0-develop.1](https://github.com/cheqd/credential-service/compare/2.16.1-develop.1...2.17.0-develop.1) (2024-02-14)
+
+
+### Features
+
+* Allow DID controller switching [DEV-3587] ([#481](https://github.com/cheqd/credential-service/issues/481)) ([2ef5b09](https://github.com/cheqd/credential-service/commit/2ef5b09ca9ba64fd1ef11ba7ba9c3cfbb1f499bd))
+
 ## [2.16.1-develop.1](https://github.com/cheqd/credential-service/compare/2.16.0...2.16.1-develop.1) (2024-01-19)
 
 
