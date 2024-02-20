@@ -1,5 +1,32 @@
 # Changelog
 
+## [2.18.0-develop.1](https://github.com/cheqd/credential-service/compare/2.17.0...2.18.0-develop.1) (2024-02-19)
+
+
+### Features
+
+* Add event tracker  [DEV-3530] ([#486](https://github.com/cheqd/credential-service/issues/486)) ([45f0661](https://github.com/cheqd/credential-service/commit/45f0661ddb9da46e507dd69ca9abead106a948fb)), closes [#490](https://github.com/cheqd/credential-service/issues/490) [#491](https://github.com/cheqd/credential-service/issues/491)
+
+## [2.17.0](https://github.com/cheqd/credential-service/compare/2.16.0...2.17.0) (2024-02-19)
+
+
+### Features
+
+* Allow DID controller switching [DEV-3587] ([#481](https://github.com/cheqd/credential-service/issues/481)) ([2ef5b09](https://github.com/cheqd/credential-service/commit/2ef5b09ca9ba64fd1ef11ba7ba9c3cfbb1f499bd))
+
+
+### Bug Fixes
+
+* Add creds decryption .env ([#475](https://github.com/cheqd/credential-service/issues/475)) ([d332764](https://github.com/cheqd/credential-service/commit/d332764cb2a808c8dc1516a1652757fea1dc370c))
+
+
+## [2.17.0-develop.1](https://github.com/cheqd/credential-service/compare/2.16.1-develop.1...2.17.0-develop.1) (2024-02-14)
+
+
+### Features
+
+* Allow DID controller switching [DEV-3587] ([#481](https://github.com/cheqd/credential-service/issues/481)) ([2ef5b09](https://github.com/cheqd/credential-service/commit/2ef5b09ca9ba64fd1ef11ba7ba9c3cfbb1f499bd))
+
 ## [2.16.1-develop.1](https://github.com/cheqd/credential-service/compare/2.16.0...2.16.1-develop.1) (2024-01-19)
 
 

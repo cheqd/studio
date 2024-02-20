@@ -25,7 +25,7 @@ import type {
 	UnsuspensionResult,
 	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
-import type { ITrackOperation, ITrackResult, VeramoAgent } from '../../types/shared';
+import type { VeramoAgent } from '../../types/shared';
 import type { VerificationOptions } from '../../types/shared';
 import type { FeePaymentOptions } from '../../types/credential-status';
 import type { CredentialRequest } from '../../types/credential';
@@ -159,9 +159,6 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		statusOptions: BroadcastStatusListOptions,
 		customer: CustomerEntity
 	): Promise<boolean> {
-		throw new Error(`Not supported`);
-	}
-	trackOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
 		throw new Error(`Not supported`);
 	}
 	revokeCredentials(

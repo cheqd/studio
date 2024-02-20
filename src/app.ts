@@ -7,7 +7,7 @@ import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { StatusCodes } from 'http-status-codes';
 
-import { CredentialController } from './controllers/credentials.js';
+import { CredentialController } from './controllers/credential.js';
 import { AccountController } from './controllers/account.js';
 import { Authentication } from './middleware/authentication.js';
 import { Connection } from './database/connection/connection.js';
@@ -25,6 +25,7 @@ import { PresentationController } from './controllers/presentation.js';
 import { KeyController } from './controllers/key.js';
 import { DIDController } from './controllers/did.js';
 import { ResourceController } from './controllers/resource.js';
+import { FailedResponseTracker } from './middleware/event-tracker.js';
 
 let swaggerOptions = {};
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -69,6 +70,9 @@ class App {
 		);
 		this.express.use(cookieParser());
 		const auth = new Authentication();
+		// EventTracking
+		this.express.use(new FailedResponseTracker().trackJson);
+		// Authentication
 		if (process.env.ENABLE_AUTHENTICATION === 'true') {
 			this.express.use(
 				session({

@@ -30,7 +30,7 @@ import type {
 	UnsuspensionResult,
 	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
-import type { ITrackOperation, ITrackResult, VeramoAgent } from '../../types/shared.js';
+import type { VeramoAgent } from '../../types/shared.js';
 import type { VerificationOptions } from '../../types/shared.js';
 import type { FeePaymentOptions } from '../../types/credential-status.js';
 import type { CredentialRequest } from '../../types/credential.js';
@@ -119,7 +119,6 @@ export interface IIdentityService {
 		statusOptions: CreateEncryptedStatusListOptions,
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result>;
-	trackOperation(trackOperation: ITrackOperation): Promise<ITrackResult>;
 	updateUnencryptedStatusList2021(
 		did: string,
 		statusOptions: UpdateUnencryptedStatusListOptions,
