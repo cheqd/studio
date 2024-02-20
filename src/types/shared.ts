@@ -8,14 +8,12 @@ import type {
 	TAgent,
 	VerificationPolicies,
 } from '@veramo/core';
-import type { ICheqd, CheqdDIDProvider, LinkedResourceMetadataResolutionResult } from '@cheqd/did-provider-cheqd';
+import type { ICheqd, CheqdDIDProvider } from '@cheqd/did-provider-cheqd';
 import type { ICredentialIssuerLD } from '@veramo/credential-ld';
 import type { AbstractIdentifierProvider } from '@veramo/did-manager';
 import type { AbstractKeyManagementSystem } from '@veramo/key-manager';
 import type { DataSource } from 'typeorm';
 import { CheqdNetwork } from '@cheqd/sdk';
-import type { CustomerEntity } from '../database/entities/customer.entity';
-import type { UserEntity } from '../database/entities/user.entity';
 import type { IReturn } from '../middleware/auth/routine.js';
 import type { ICommonErrorResponse } from './authentication.js';
 import { StatusCodes } from 'http-status-codes';
@@ -54,42 +52,6 @@ export type CreateAgentRequest = {
 	enableCredential?: boolean;
 };
 
-export type TrackData = IResourceTrack;
-
-export interface ITrackOperation {
-	// function name, e.g. createDid, issueCredential, etc.
-	operation: string;
-	// category of the operation, e.g. did, resource, credential, credential-status
-	category: string;
-	// data of the operation, e.g. did, resource, credentialStatus
-	data: TrackData;
-	// customer who initiated the operation (like organistation)
-	customer: CustomerEntity;
-	// user who initiated the operation
-	user?: UserEntity;
-	// identifier
-	did?: string;
-	// controller's key
-	key?: string;
-	// fee payment options
-	feePaymentOptions?: {
-		feePaymentAddress: string;
-		feePaymentAmount: number;
-		feePaymentNetwork: CheqdNetwork;
-	};
-}
-
-export interface IResourceTrack {
-	resource: LinkedResourceMetadataResolutionResult;
-	encrypted: boolean;
-	symmetricKey: string;
-}
-
-export interface ITrackResult {
-	created: boolean;
-	error?: string;
-}
-
 export interface IErrorResponse {
 	errorCode: string;
 	message: string;
@@ -126,4 +88,8 @@ export interface VerificationOptions {
 	verifyStatus?: boolean;
 	policies?: VerificationPolicies;
 	allowDeactivatedDid?: boolean;
+}
+export interface IBooleanResponse {
+	status: boolean;
+	error?: string;
 }

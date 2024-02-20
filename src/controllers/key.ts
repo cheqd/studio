@@ -14,6 +14,9 @@ import type {
 	UnsuccessfulQueryKeyResponseBody,
 } from '../types/key.js';
 import { check } from './validator/index.js';
+import { eventTracker } from '../services/track/tracker.js';
+import type { IKeyTrack, ITrackOperation } from '../types/track.js';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
 
 // ToDo: Make the format of /key/create and /key/read the same
 // ToDo: Add valdiation for /key/import
@@ -75,6 +78,18 @@ export class KeyController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
 			const key = await identityServiceStrategySetup.agent.createKey('Ed25519', response.locals.customer);
+
+			eventTracker.emit('track', {
+				name: OperationNameEnum.KEY_CREATE,
+				category: OperationCategoryNameEnum.KEY,
+				customer: response.locals.customer,
+				user: response.locals.user,
+				data: {
+					keyRef: key.kid,
+					keyType: key.type,
+				} satisfies IKeyTrack,
+			} satisfies ITrackOperation);
+			// Return the response
 			return response.status(StatusCodes.OK).json(key satisfies CreateKeyResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -148,6 +163,18 @@ export class KeyController {
 				response.locals.customer,
 				alias
 			);
+			// Track the operation
+			eventTracker.emit('track', {
+				name: OperationNameEnum.KEY_IMPORT,
+				category: OperationCategoryNameEnum.KEY,
+				customer: response.locals.customer,
+				user: response.locals.user,
+				data: {
+					keyRef: key.kid,
+					keyType: key.type,
+				} satisfies IKeyTrack,
+			} satisfies ITrackOperation);
+			// Return the response
 			return response.status(StatusCodes.OK).json(key satisfies ImportKeyResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

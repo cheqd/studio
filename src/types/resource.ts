@@ -16,7 +16,7 @@ export type CreateResourceRequestBody = {
 	network: CheqdNetwork.Mainnet | CheqdNetwork.Testnet;
 	alsoKnownAs?: AlternativeUri[];
 	version?: string;
-};
+} & { publicKeyHexs?: string[] };
 
 export type SearchResourceRequestParams = DIDRequest;
 
