@@ -24,7 +24,7 @@ import {
 	DefaultRPCUrls,
 	type TransactionResult,
 } from '@cheqd/did-provider-cheqd';
-import { DefaultDidUrlPattern, VeramoAgent, ITrackResult, ITrackOperation } from '../../types/shared.js';
+import { DefaultDidUrlPattern, VeramoAgent } from '../../types/shared.js';
 import type { VerificationOptions } from '../../types/shared.js';
 import type { FeePaymentOptions } from '../../types/credential-status.js';
 import type { CredentialRequest } from '../../types/credential.js';
@@ -47,17 +47,14 @@ import { PaymentAccountService } from '../payment-account.js';
 import { CheqdNetwork } from '@cheqd/sdk';
 import { IdentifierService } from '../identifier.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
-import { ResourceService } from '../resource.js';
-import {
-	OPERATION_CATEGORY_NAME_CREDENTIAL,
-	OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS,
-	OPERATION_CATEGORY_NAME_RESOURCE,
-} from '../../types/constants.js';
 import type { UserEntity } from '../../database/entities/user.entity.js';
 import { APIKeyService } from '../api-key.js';
 import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import { KeyDIDProvider } from '@veramo/did-provider-key';
 import type { AbstractIdentifierProvider } from '@veramo/did-manager';
+import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
+import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
+import { toTPublicKeyEd25519 } from '../helpers.js';
 
 dotenv.config();
 
@@ -232,7 +229,11 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async updateDid(didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier> {
+	async updateDid(
+		didDocument: DIDDocument,
+		customer: CustomerEntity,
+		publicKeyHexs?: string[]
+	): Promise<IIdentifier> {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
@@ -247,14 +248,23 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		try {
 			const agent = await this.createAgent(customer);
-			const identifier: IIdentifier = await Veramo.instance.updateDid(agent, didDocument);
+			const publicKeys: TPublicKeyEd25519[] =
+				publicKeyHexs?.map((key) => {
+					return toTPublicKeyEd25519(key);
+				}) || [];
+			const identifier: IIdentifier = await Veramo.instance.updateDid(agent, didDocument, publicKeys);
 			return identifier;
 		} catch (error) {
+			const errorCode = (error as CheqdProviderError).errorCode;
+			// Handle specific cases when DID is deactivated or verificationMethod is empty
+			if (errorCode) {
+				throw error;
+			}
 			throw new Error(`${error}`);
 		}
 	}
 
-	async deactivateDid(did: string, customer: CustomerEntity): Promise<boolean> {
+	async deactivateDid(did: string, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<boolean> {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
@@ -267,7 +277,11 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		try {
 			const agent = await this.createAgent(customer);
-			return await Veramo.instance.deactivateDid(agent, did);
+			const publicKeys: TPublicKeyEd25519[] =
+				publicKeyHexs?.map((key) => {
+					return toTPublicKeyEd25519(key);
+				}) || [];
+			return await Veramo.instance.deactivateDid(agent, did, publicKeys);
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
@@ -301,14 +315,23 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return identifier;
 	}
 
-	async createResource(network: string, payload: ResourcePayload, customer: CustomerEntity) {
+	async createResource(
+		network: string,
+		payload: ResourcePayload,
+		customer: CustomerEntity,
+		publicKeyHexs?: string[]
+	) {
 		try {
 			const agent = await this.createAgent(customer);
 			const did = `did:cheqd:${network}:${payload.collectionId}`;
 			if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
 				throw new Error(`${did} not found in wallet`);
 			}
-			return await Veramo.instance.createResource(agent, network, payload);
+			const publicKeys: TPublicKeyEd25519[] =
+				publicKeyHexs?.map((key) => {
+					return toTPublicKeyEd25519(key);
+				}) || [];
+			return await Veramo.instance.createResource(agent, network, payload, publicKeys);
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
@@ -500,62 +523,6 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async trackOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
-		// For now it tracks only resource-related operations but in future we will track all other actions
-		switch (trackOperation.category) {
-			case OPERATION_CATEGORY_NAME_RESOURCE:
-				return await this.trackResourceOperation(trackOperation);
-			case OPERATION_CATEGORY_NAME_CREDENTIAL_STATUS:
-				return await this.trackResourceOperation(trackOperation);
-			case OPERATION_CATEGORY_NAME_CREDENTIAL:
-				return await this.trackResourceOperation(trackOperation);
-			default: {
-				return {
-					created: false,
-					error: `Category ${trackOperation.category} is not supported`,
-				};
-			}
-		}
-	}
-
-	async trackResourceOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
-		const customer = trackOperation.customer;
-		const did = trackOperation.did;
-		const resource = trackOperation.data.resource;
-		const encrypted = trackOperation.data.encrypted;
-		const symmetricKey = trackOperation.data.symmetricKey;
-
-		const identifier = await IdentifierService.instance.get(did);
-		if (!identifier) {
-			throw new Error(`Identifier ${did} not found`);
-		}
-		if (!identifier.controllerKeyId) {
-			throw new Error(`Identifier ${did} does not have link to the controller key...`);
-		}
-		const key = await KeyService.instance.get(identifier.controllerKeyId);
-		if (!key) {
-			throw new Error(`Key for ${did} not found`);
-		}
-
-		const resourceEntity = await ResourceService.instance.createFromLinkedResource(
-			resource,
-			customer,
-			key,
-			identifier,
-			encrypted,
-			symmetricKey
-		);
-		if (!resourceEntity) {
-			return {
-				created: false,
-				error: `Resource for ${did} was not tracked`,
-			};
-		}
-		return {
-			created: true,
-			error: '',
-		};
-	}
 	async setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity> {
 		const keys = await APIKeyService.instance.find({ customer: customer, user: user });
 		if (keys.length > 0) {

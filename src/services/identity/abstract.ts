@@ -25,7 +25,7 @@ import type {
 	UnsuspensionResult,
 	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
-import type { ITrackOperation, ITrackResult, VeramoAgent } from '../../types/shared';
+import type { VeramoAgent } from '../../types/shared';
 import type { VerificationOptions } from '../../types/shared';
 import type { FeePaymentOptions } from '../../types/credential-status';
 import type { CredentialRequest } from '../../types/credential';
@@ -68,11 +68,11 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 
-	updateDid(didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier> {
+	updateDid(didDocument: DIDDocument, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<IIdentifier> {
 		throw new Error(`Not supported`);
 	}
 
-	deactivateDid(did: string, customer: CustomerEntity): Promise<boolean> {
+	deactivateDid(did: string, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<boolean> {
 		throw new Error(`Not supported`);
 	}
 
@@ -85,7 +85,12 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 
-	createResource(network: string, payload: ResourcePayload, customer: CustomerEntity): Promise<any> {
+	createResource(
+		network: string,
+		payload: ResourcePayload,
+		customer: CustomerEntity,
+		publicKeyHexs?: string[]
+	): Promise<any> {
 		throw new Error(`Not supported`);
 	}
 
@@ -154,9 +159,6 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		statusOptions: BroadcastStatusListOptions,
 		customer: CustomerEntity
 	): Promise<boolean> {
-		throw new Error(`Not supported`);
-	}
-	trackOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
 		throw new Error(`Not supported`);
 	}
 	revokeCredentials(

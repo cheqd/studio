@@ -5,6 +5,7 @@ import { Connection } from '../database/connection/connection.js';
 import * as dotenv from 'dotenv';
 import { OperationEntity } from '../database/entities/operation.entity.js';
 import { v4 } from 'uuid';
+import type { CoinEntity } from '../database/entities/coin.entity.js';
 dotenv.config();
 
 export class OperationService {
@@ -19,8 +20,9 @@ export class OperationService {
 	public async create(
 		category: string,
 		operationName: string,
-		defaultFee: number,
-		deprecated = false
+		defaultFee: CoinEntity,
+		deprecated = false,
+		successful = true
 	): Promise<OperationEntity> {
 		if (!category) {
 			throw new Error('Operation category is not specified');
@@ -28,14 +30,15 @@ export class OperationService {
 		if (!operationName) {
 			throw new Error('Operation name is not specified');
 		}
-		if (!defaultFee) {
-			throw new Error('Operation default fee is not specified');
-		}
-		if (!deprecated) {
-			throw new Error('Operation deprecated is not specified');
-		}
 		const operationId = v4();
-		const operationEntity = new OperationEntity(operationId, category, operationName, defaultFee, deprecated);
+		const operationEntity = new OperationEntity(
+			operationId,
+			category,
+			operationName,
+			defaultFee,
+			deprecated,
+			successful
+		);
 		const operation = (await this.operationRepository.insert(operationEntity)).identifiers[0];
 		if (!operation) throw new Error(`Cannot create a new operation`);
 
@@ -46,8 +49,9 @@ export class OperationService {
 		operationId: string,
 		category: string,
 		operationName: string,
-		defaultFee: number,
-		deprecated = false
+		defaultFee: CoinEntity,
+		deprecated?: false,
+		successful?: boolean
 	) {
 		const existingOperation = await this.get(operationId);
 		if (!existingOperation) {
@@ -65,6 +69,9 @@ export class OperationService {
 		if (deprecated) {
 			existingOperation.deprecated = deprecated;
 		}
+		if (successful) {
+			existingOperation.successful = successful;
+		}
 
 		return await this.operationRepository.save(existingOperation);
 	}
@@ -72,12 +79,14 @@ export class OperationService {
 	public async get(operationId: string) {
 		return await this.operationRepository.findOne({
 			where: { operationId },
+			relations: ['coin'],
 		});
 	}
 
 	public async find(where: Record<string, unknown>) {
 		return await this.operationRepository.find({
 			where: where,
+			relations: ['coin'],
 		});
 	}
 }

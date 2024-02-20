@@ -967,6 +967,33 @@
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/Service'
+ *     DidUpdateResponse:
+ *       type: object
+ *       properties:
+ *          did:
+ *            type: string
+ *          controllerKeyId:
+ *            type: string
+ *            description: The default key id of which is the key associated with the first verificationMethod
+ *          keys:
+ *            type: array
+ *            description: The list of keys associated with the list of verificationMethod's of DIDDocument
+ *            items:
+ *              type: object
+ *          services:
+ *            type: array
+ *            items:
+ *              $ref: '#/components/schemas/Service'
+ *          controllerKeyRefs:
+ *            type: array
+ *            description: The list of keyRefs which were used for signing the transaction
+ *            items:
+ *              type: string
+ *          controllerKeys:
+ *            type: array
+ *            description: The list of all possible keys, inlcuding all controller's keys
+ *            items:
+ *              type: string
  *     VerificationMethod:
  *       type: object
  *       properties:
@@ -1027,8 +1054,21 @@
  *           type: array
  *           items:
  *             type: string
+ *         publicKeyHexs:
+ *           description: List of key references (publicKeys) which will be used for signing the message. The should be in hexadecimal format and placed in the wallet of current user.
+ *           type: array
+ *           items:
+ *            type: string
  *         didDocument:
  *           $ref: '#/components/schemas/DidDocument'
+ *     DidDeactivateRequest:
+ *       type: object
+ *       properties:
+ *         publicKeyHexs:
+ *           description: List of key references (publicKeys) which will be used for signing the message. The should be in hexadecimal format and placed in the wallet of current user.
+ *           type: array
+ *           items:
+ *            type: string
  *     CreateResourceRequest:
  *       description: Input fields for DID-Linked Resource creation.
  *       type: object
@@ -1068,6 +1108,11 @@
  *         version:
  *           description: Optional field to assign a human-readable version in the DID-Linked Resource.
  *           type: string
+ *         publicKeyHexs:
+ *           description: List of key references (publicKeys) which will be used for signing the message. The should be in hexadecimal format and placed in the wallet of current user.
+ *           type: array
+ *           items:
+ *            type: string
  *       example:
  *         data: SGVsbG8gV29ybGQ=
  *         encoding: base64url

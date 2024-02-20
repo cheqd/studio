@@ -35,6 +35,11 @@ The application allows configuring the following parameters using environment va
 
 ### Core configuration
 
+#### Events tracking
+
+1. `ENABLE_DATADOG`: enables sending information about events to datadog
+2. `LOG_LEVEL`: specifies log level, like 'trace', 'debug', 'info', 'warn' or 'error';
+
 #### Network API endpoints
 
 1. `MAINNET_RPC_URL`: RPC endpoint for cheqd mainnet (Default: `https://rpc.cheqd.net:443`).
@@ -84,7 +89,7 @@ By default, `ENABLE_AUTHENTICATION` is set to off/`false`. To enable external Ve
     1. `LOGTO_M2M_APP_ID`: Application ID for machine-to-machine application in LogTo. This is used for elevated
        management APIs within LogTo.
     2. `LOGTO_M2M_APP_SECRET`: Application secret
-4. **Default role update using [LogTo webhooks](https://docs.logto.io/next/docs/recipes/webhooks/)**: LogTo supports
+4. **Default role update using [LogTo webhooks](https://docs.logto.io/docs/recipes/webhooks/)**: LogTo supports
    webhooks to fire of requests to an API when it detects certain actions/changes. If you want to automatically assign a
    role to users, a webhook is recommended to be setup for firing off whenever there's a new account created, or a new
    sign-in.
