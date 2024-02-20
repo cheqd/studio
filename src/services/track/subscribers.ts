@@ -163,6 +163,7 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 		}
 	}
 }
+
 export class ResourceSubscriber extends BaseOperationObserver implements IObserver {
 	private static acceptedOperations = [
 		OperationNameEnum.RESOURCE_CREATE,
@@ -283,6 +284,7 @@ export class ResourceSubscriber extends BaseOperationObserver implements IObserv
 		};
 	}
 }
+
 export class CredentialSubscriber extends BaseOperationObserver implements IObserver {
 	isReactionNeeded(trackOperation: ITrackOperation): boolean {
 		// Credential tracker reacts on CredentialStatusList, Credential operations like revocation
