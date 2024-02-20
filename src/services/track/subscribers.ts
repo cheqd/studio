@@ -163,7 +163,6 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 		}
 	}
 }
-
 export class ResourceSubscriber extends BaseOperationObserver implements IObserver {
 	private static acceptedOperations = [
 		OperationNameEnum.RESOURCE_CREATE,
@@ -200,10 +199,11 @@ export class ResourceSubscriber extends BaseOperationObserver implements IObserv
 			// Just skip this operation
 			return;
 		}
-		trackOperation.category = OperationCategoryNameEnum.RESOURCE;
-		trackOperation.name = OperationNameEnum.RESOURCE_CREATE;
+		const resourceOperation = {...trackOperation};
+		resourceOperation.category = OperationCategoryNameEnum.RESOURCE;
+		resourceOperation.name = OperationNameEnum.RESOURCE_CREATE;
 		// tracking resource creation in DB
-		const result = await this.trackResourceOperation(trackOperation);
+		const result = await this.trackResourceOperation(resourceOperation);
 		// notify about the result of tracking, e.g. log or datadog
 		await this.notify({
 			message: this.compileMessage(result),
@@ -283,7 +283,6 @@ export class ResourceSubscriber extends BaseOperationObserver implements IObserv
 		};
 	}
 }
-
 export class CredentialSubscriber extends BaseOperationObserver implements IObserver {
 	isReactionNeeded(trackOperation: ITrackOperation): boolean {
 		// Credential tracker reacts on CredentialStatusList, Credential operations like revocation
