@@ -56,6 +56,10 @@ declare global {
 
 			// Creds
 			CREDS_DECRYPTION_SECRET: string;
+
+			// Stripe
+			STRIPE_SECRET_KEY: string;
+			STRIPE_PUBLISHABLE_KEY: string;
 		}
 	}
 

@@ -107,6 +107,13 @@ some tokens on the testnet for making the process simpler.
 2. `FAUCET_URI`: Faucet service API endpoint (Default: `https://faucet-api.cheqd.network/credit`)
 3. `TESTNET_MINIMUM_BALANCE`: Minimum balance on account before it is automatically topped up from the faucet. This value should be expressed as an integer in `CHEQ` tokens, which will then be converted in the background to `ncheq` denomination. Account balance check is carried out on every account creation/login. (Default: 10,000 CHEQ testnet tokens)
 
+#### Stripe integration
+
+The application supports Stripe integration for payment processing.
+
+1. `STRIPE_SECRET_KEY`: Secret key for Stripe API. Please, keep it secret on deploying
+2. `STRIPE_PUBLISHABLE_KEY` - Publishable key for Stripe API.
+
 ### 3rd Party Connectors
 
 The app supports 3rd party connectors for credential storage and delivery.

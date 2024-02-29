@@ -26,6 +26,9 @@ import { KeyController } from './controllers/key.js';
 import { DIDController } from './controllers/did.js';
 import { ResourceController } from './controllers/resource.js';
 import { FailedResponseTracker } from './middleware/event-tracker.js';
+import { ProductController } from './controllers/product.js';
+import { SubscriptionController } from './controllers/subscriptions.js';
+import { PriceController } from './controllers/prices.js';
 
 let swaggerOptions = {};
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -205,6 +208,22 @@ class App {
 			'/static/custom-button.js',
 			express.static(path.join(process.cwd(), '/dist'), { extensions: ['js'], index: false })
 		);
+
+		// Portal
+		// Product
+		app.get('/portal/product/list', ProductController.productListValidator, new ProductController().getListProducts);
+		app.get('/portal/product/:productId', ProductController.productGetValidator, new ProductController().getProduct);
+
+		// Prices
+		app.get('/portal/price/list', PriceController.priceListValidator, new PriceController().getListPrices);
+
+		// Subscription
+		app.post('/portal/subscription/create', SubscriptionController.subscriptionCreateValidator, new SubscriptionController().create);
+		app.post('/portal/subscription/update', SubscriptionController.subscriptionUpdateValidator, new SubscriptionController().update);
+		app.get('/portal/subscription/get/:subscriptionId', SubscriptionController.subscriptionGetValidator, new SubscriptionController().get);
+		app.get('/portal/subscription/list', SubscriptionController.subscriptionListValidator, new SubscriptionController().list);
+		app.delete('/portal/subscription/cancel', SubscriptionController.subscriptionCancelValidator, new SubscriptionController().cancel);
+		app.post('/portal/subscription/resume', SubscriptionController.subscriptionResumeValidator, new SubscriptionController().resume);
 
 		// 404 for all other requests
 		app.all('*', (_req, res) => res.status(StatusCodes.BAD_REQUEST).send('Bad request'));
