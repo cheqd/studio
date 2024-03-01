@@ -1,25 +1,25 @@
 import type { Request, Response } from 'express';
 import { CheqdNetwork, checkBalance } from '@cheqd/sdk';
-import { TESTNET_MINIMUM_BALANCE, DEFAULT_DENOM_EXPONENT } from '../types/constants.js';
-import { CustomerService } from '../services/customer.js';
-import { LogToHelper } from '../middleware/auth/logto-helper.js';
-import { FaucetHelper } from '../helpers/faucet.js';
+import { TESTNET_MINIMUM_BALANCE, DEFAULT_DENOM_EXPONENT } from '../../types/constants.js';
+import { CustomerService } from '../../services/customer.js';
+import { LogToHelper } from '../../middleware/auth/logto-helper.js';
+import { FaucetHelper } from '../../helpers/faucet.js';
 import { StatusCodes } from 'http-status-codes';
-import { LogToWebHook } from '../middleware/hook.js';
-import { UserService } from '../services/user.js';
-import { RoleService } from '../services/role.js';
-import { PaymentAccountService } from '../services/payment-account.js';
-import type { CustomerEntity } from '../database/entities/customer.entity.js';
-import type { UserEntity } from '../database/entities/user.entity.js';
-import type { PaymentAccountEntity } from '../database/entities/payment.account.entity.js';
-import { IdentityServiceStrategySetup } from '../services/identity/index.js';
+import { LogToWebHook } from '../../middleware/hook.js';
+import { UserService } from '../../services/user.js';
+import { RoleService } from '../../services/role.js';
+import { PaymentAccountService } from '../../services/payment-account.js';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import type { UserEntity } from '../../database/entities/user.entity.js';
+import type { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
+import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import type {
 	QueryCustomerResponseBody,
 	QueryIdTokenResponseBody,
 	UnsuccessfulQueryCustomerResponseBody,
 	UnsuccessfulQueryIdTokenResponseBody,
-} from '../types/customer.js';
-import type { UnsuccessfulResponseBody } from '../types/shared.js';
+} from '../../types/customer.js';
+import type { UnsuccessfulResponseBody } from '../../types/shared.js';
 import { check, validationResult } from 'express-validator';
 
 export class AccountController {

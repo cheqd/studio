@@ -3,13 +3,13 @@ import { fromString } from 'uint8arrays';
 import { v4 } from 'uuid';
 import type { MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2/index.js';
 import { StatusCodes } from 'http-status-codes';
-import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import { getQueryParams } from '../helpers/helpers.js';
+import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
+import { getQueryParams } from '../../helpers/helpers.js';
 import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
-import type { ValidationErrorResponseBody } from '../types/shared.js';
-import type { IResourceTrack, ITrackOperation } from '../types/track.js';
-import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
-import { check, validationResult, param, query } from './validator/index.js';
+import type { ValidationErrorResponseBody } from '../../types/shared.js';
+import type { IResourceTrack, ITrackOperation } from '../../types/track.js';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
+import { check, validationResult, param, query } from '../validator/index.js';
 import type {
 	CreateResourceRequestBody,
 	CreateResourceResponseBody,
@@ -17,9 +17,9 @@ import type {
 	SearchResourceRequestParams,
 	UnsuccessfulCreateResourceResponseBody,
 	UnsuccessfulQueryResourceResponseBody,
-} from '../types/resource.js';
-import { eventTracker } from '../services/track/tracker.js';
-import { arePublicKeyHexsInWallet } from '../services/helpers.js';
+} from '../../types/resource.js';
+import { eventTracker } from '../../services/track/tracker.js';
+import { arePublicKeyHexsInWallet } from '../../services/helpers.js';
 
 export class ResourceController {
 	public static createResourceValidator = [

@@ -1,0 +1,31 @@
+{
+	"openapi": "3.0.0",
+	"info": {
+		"title": "Credential Service admin API for cheqd network",
+		"version": "2.0.0",
+		"description": "Admin API which handles users subscriptions and payments",
+		"contact": {
+			"name": "Cheqd Foundation Limited",
+			"url": "https://github.com/cheqd/credential-service",
+			"email": "support-github@cheqd.io"
+		},
+		"license": {
+			"name": "Apache 2.0",
+			"url": "https://github.com/cheqd/credential-service/blob/main/LICENSE"
+		}
+	},
+	"tags": [
+		{
+			"name": "Product"
+		},
+		{
+			"name": "Price"
+		},
+		{
+			"name": "Customer"
+		},
+		{
+			"name": "Subscription"
+		}
+	]
+}

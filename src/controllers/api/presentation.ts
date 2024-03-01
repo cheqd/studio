@@ -1,9 +1,9 @@
 import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
-import { check, validationResult, query } from './validator/index.js';
-import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import { CheqdW3CVerifiablePresentation } from '../services/w3c-presentation.js';
+import { check, validationResult, query } from '../validator/index.js';
+import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
+import { CheqdW3CVerifiablePresentation } from '../../services/w3c-presentation.js';
 import type {
 	CreatePresentationRequestBody,
 	CreatePresentationResponseBody,
@@ -12,12 +12,12 @@ import type {
 	VerifyPresentationRequestBody,
 	VerifyPresentationResponseBody,
 	VerifyPresentationResponseQuery,
-} from '../types/presentation.js';
-import { isIssuerDidDeactivated } from '../services/helpers.js';
-import type { ValidationErrorResponseBody } from '../types/shared.js';
-import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
-import { eventTracker } from '../services/track/tracker.js';
-import type { IFeePaymentOptions, IPresentationTrack, ITrackOperation } from '../types/track.js';
+} from '../../types/presentation.js';
+import { isIssuerDidDeactivated } from '../../services/helpers.js';
+import type { ValidationErrorResponseBody } from '../../types/shared.js';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
+import { eventTracker } from '../../services/track/tracker.js';
+import type { IFeePaymentOptions, IPresentationTrack, ITrackOperation } from '../../types/track.js';
 
 export class PresentationController {
 	public static presentationCreateValidator = [

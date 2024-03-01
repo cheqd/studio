@@ -1,9 +1,9 @@
 import { Stripe } from 'stripe';
 import type { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
-import type { ProductGetResponseBody, ProductGetUnsuccessfulResponseBody, ProductListResponseBody, ProductListUnsuccessfulResponseBody, ProductWithPrices } from '../types/portal.js';
+import type { ProductGetResponseBody, ProductGetUnsuccessfulResponseBody, ProductListResponseBody, ProductListUnsuccessfulResponseBody, ProductWithPrices } from '../../types/portal.js';
 import { StatusCodes } from 'http-status-codes';
-import { validationResult } from './validator/index.js';
+import { validationResult } from '../validator/index.js';
 import { check } from 'express-validator';
 
 dotenv.config();
@@ -32,6 +32,37 @@ export class ProductController {
             .bail(),
     ];
 
+    /**
+     * @openapi
+     * 
+     * /admin/product/list:
+     *  get:
+     *    summary: Get a list of products
+     *    description: Get a list of products which are on a Stripe side
+     *    tags: [Product]
+     *    parameters:
+     *     - in: query
+     *       name: prices
+     *       schema:
+     *         type: boolean
+     *         description: If setup to true - returns the list of products with prices inside. Default - true
+     *         required: false
+     *    responses:
+     *      200:
+     *        description: A list of products
+     *        content:
+     *          application/json:
+     *            schema:
+     *              $ref: '#/components/schemas/ProductListResponseBody'
+     *      400:
+	 *        $ref: '#/components/schemas/InvalidRequest'
+	 *      401:
+	 *        $ref: '#/components/schemas/UnauthorizedError'
+	 *      500:
+	 *        $ref: '#/components/schemas/InternalError'
+     *      404:
+     *        $ref: '#/components/schemas/NotFoundError'
+	 */
     async getListProducts(request: Request, response: Response) {
         const result = validationResult(request);
         // handle error
@@ -75,6 +106,44 @@ export class ProductController {
         }
     }
 
+
+    /**
+     * @openapi
+     * 
+     * /admin/product/{productId}:
+     *  get:
+     *    summary: Get a product
+     *    description: Get a product by id
+     *    tags: [Product]
+     *    parameters:
+     *     - in: path
+     *       name: productId
+     *       schema:
+     *         type: string
+     *         description: The product id which identifies the product in Stripe
+     *         required: true
+     *     - in: query
+     *       name: prices
+     *       schema:
+     *         type: boolean
+     *         description: If setup to true - returns the product with prices inside. Default - true
+     *         required: false
+     *    responses:
+     *      200:
+     *        description: A product
+     *        content:
+     *          application/json:
+     *            schema:
+     *              $ref: '#/components/schemas/ProductGetResponseBody'
+     *      400:
+     *        $ref: '#/components/schemas/InvalidRequest'
+     *      401:
+     *        $ref: '#/components/schemas/UnauthorizedError'
+     *      500:
+     *        $ref: '#/components/schemas/InternalError'
+     *      404:
+     *        $ref: '#/components/schemas/NotFoundError'
+     */
     async getProduct(request: Request, response: Response) {
         const result = validationResult(request);
         // handle error
@@ -91,13 +160,6 @@ export class ProductController {
             // Get the product
             const product = await stripe.products.retrieve(productId) as ProductWithPrices;
 
-            // If no product found return 404
-            if (!product) {
-                return response.status(StatusCodes.NOT_FOUND).json({
-                    error: 'No product found with id: ' + productId
-                } satisfies ProductGetUnsuccessfulResponseBody);
-            }
-
             if (prices) {
                 const prices = await stripe.prices.list({
                         product: product.id,
@@ -112,6 +174,16 @@ export class ProductController {
                 product: product
             } satisfies ProductGetResponseBody);
         } catch (error) {
+
+            // define error
+			const errorRef = error as Record<string, unknown>;
+
+            if (errorRef?.statusCode === 404) {
+                return response.status(StatusCodes.NOT_FOUND).json({
+                    error: `Product with id ${productId} not found`
+                } satisfies ProductGetUnsuccessfulResponseBody);
+            }
+
             return response.status(500).json({
                 error: `Internal error: ${(error as Error)?.message || error}`
             } satisfies ProductGetUnsuccessfulResponseBody);

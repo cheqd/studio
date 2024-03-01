@@ -1,9 +1,9 @@
 import { Stripe } from 'stripe';
 import type { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
-import type { SubscriptionCreateRequestBody, SubscriptionCreateResponseBody, SubscriptionCreateUnsuccessfulResponseBody, SubscriptionCancelResponseBody, SubscriptionCancelUnsuccessfulResponseBody, SubscriptionGetResponseBody, SubscriptionGetUnsuccessfulResponseBody, SubscriptionListResponseBody, SubscriptionListUnsuccessfulResponseBody, SubscriptionUpdateRequestBody, SubscriptionUpdateResponseBody, SubscriptionUpdateUnsuccessfulResponseBody, SubscriptionResumeUnsuccessfulResponseBody, SubscriptionResumeResponseBody, SubscriptionResumeRequestBody, SubscriptionCancelRequestBody } from '../types/portal.js';
+import type { SubscriptionCreateRequestBody, SubscriptionCreateResponseBody, SubscriptionCreateUnsuccessfulResponseBody, SubscriptionCancelResponseBody, SubscriptionCancelUnsuccessfulResponseBody, SubscriptionGetResponseBody, SubscriptionGetUnsuccessfulResponseBody, SubscriptionListResponseBody, SubscriptionListUnsuccessfulResponseBody, SubscriptionUpdateRequestBody, SubscriptionUpdateResponseBody, SubscriptionUpdateUnsuccessfulResponseBody, SubscriptionResumeUnsuccessfulResponseBody, SubscriptionResumeResponseBody, SubscriptionResumeRequestBody, SubscriptionCancelRequestBody } from '../../types/portal.js';
 import { StatusCodes } from 'http-status-codes';
-import { validationResult } from './validator/index.js';
+import { validationResult } from '../validator/index.js';
 import { check } from 'express-validator';
 
 dotenv.config();
@@ -102,6 +102,34 @@ export class SubscriptionController {
             .bail(),
     ];
 
+
+    /**
+     * @openapi
+     * 
+     * /admin/subscription/create:
+     *   post:
+     *     summary: Create a subscription
+     *     description: Creates a new subscription for an existing customer
+     *     tags: [Subscription]
+	 *     requestBody:
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             $ref: '#/components/schemas/SubscriptionCreateRequestBody'
+     *     responses:
+	 *       201:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/SubscriptionCreateResponseBody'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+     */
     async create(request: Request, response: Response) {
         // Validate request
         const result = validationResult(request);
@@ -126,7 +154,7 @@ export class SubscriptionController {
                     error: `Subscription was not created`,
                 } satisfies SubscriptionCreateUnsuccessfulResponseBody);
             }
-            return response.status(StatusCodes.OK).json({
+            return response.status(StatusCodes.CREATED).json({
                 subscription: subscription
             } satisfies SubscriptionCreateResponseBody );
         } catch (error) {
@@ -136,6 +164,33 @@ export class SubscriptionController {
         }
     }
 
+    /**
+     * @openapi
+     * 
+     * /admin/subscription/update:
+     *   post:
+     *     summary: Update a subscription
+     *     description: Updates an existing subscription
+     *     tags: [Subscription]
+     *     requestBody:
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/SubscriptionUpdateRequestBody'
+     *     responses:
+     *       200:
+     *         description: The request was successful.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/SubscriptionUpdateResponseBody'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+     */
     async update(request: Request, response: Response) {
         // Validate request
         const result = validationResult(request);
@@ -170,6 +225,38 @@ export class SubscriptionController {
         }
     }
 
+    /**
+    * @openapi
+    *
+    * /admin/subscription/list:
+    *  get:
+    *    summary: Get a list of subscriptions
+    *    description: Get a list of subscriptions
+    *    tags: [Subscription]
+    *    parameters:
+    *      - in: query
+    *        name: customerId
+    *        schema:
+    *          type: string
+    *          description: The customer id. If passed - returns filtered by this customer list of subscriptions.
+    *          required: false
+    *    responses:
+    *      200:
+    *        description: A list of subscriptions
+    *        content:
+    *          application/json:
+    *            schema:
+    *              $ref: '#/components/schemas/SubscriptionListResponseBody'
+    *      400:
+    *        $ref: '#/components/schemas/InvalidRequest'
+    *      401:
+    *        $ref: '#/components/schemas/UnauthorizedError'
+    *      500:
+    *        $ref: '#/components/schemas/InternalError'
+    *      404:
+    *        $ref: '#/components/schemas/NotFoundError'
+    */
+
     public async list(request: Request, response: Response) {
         // Validate request
         const result = validationResult(request);
@@ -202,6 +289,38 @@ export class SubscriptionController {
         }
     }
 
+
+    /**
+    * @openapi 
+    *
+    * /admin/subscription/get/{subscriptionId}:
+    *   get:
+    *     summary: Get a subscription
+    *     description: Get a subscription
+    *     tags: [Subscription]
+    *     parameters:
+    *       - in: path
+    *         name: subscriptionId
+    *         schema:
+    *           type: string
+    *           description: The subscription id
+    *           required: true
+    *     responses:
+    *       200:
+    *         description: The request was successful.
+    *         content:
+    *           application/json:
+    *             schema:
+    *                $ref: '#/components/schemas/SubscriptionGetResponseBody'
+    *       400:
+    *         $ref: '#/components/schemas/InvalidRequest'
+    *       401:
+    *         $ref: '#/components/schemas/UnauthorizedError'
+    *       500:
+    *         $ref: '#/components/schemas/InternalError'
+    *       404:
+    *         $ref: '#/components/schemas/NotFoundError'
+    */
     async get(request: Request, response: Response) {
         // Validate request
         const result = validationResult(request);
@@ -210,7 +329,7 @@ export class SubscriptionController {
                 error: result.array().pop()?.msg 
             } satisfies SubscriptionGetUnsuccessfulResponseBody);
         }
-        const subscriptionId = request.query.subscriptionId;
+        const subscriptionId = request.params.subscriptionId;
         try {
             // Get the subscription
             const subscription = await stripe.subscriptions.retrieve(subscriptionId as string);
@@ -229,6 +348,35 @@ export class SubscriptionController {
         }
     }
 
+    /**
+    * @openapi
+    *
+    * /admin/subscription/cancel:
+    *  post:
+    *    summary: Cancel a subscription
+    *    description: Cancels an existing subscription
+    *    tags: [Subscription]
+    *    requestBody:
+    *      content:
+    *        application/json:
+    *          schema:
+    *            $ref: '#/components/schemas/SubscriptionCancelRequestBody'
+    *    responses:
+    *      200:
+    *        description: The request was successful.
+    *        content:
+    *          application/json:
+    *            schema:
+    *              $ref: '#/components/schemas/SubscriptionCancelResponseBody'
+    *      400:
+    *        $ref: '#/components/schemas/InvalidRequest'
+    *      401:
+    *        $ref: '#/components/schemas/UnauthorizedError'
+    *      500:
+    *        $ref: '#/components/schemas/InternalError'
+    *      404:
+    *        $ref: '#/components/schemas/NotFoundError'
+    */ 
     async cancel(request: Request, response: Response) {
         // Validate request
         const result = validationResult(request);
@@ -263,6 +411,35 @@ export class SubscriptionController {
         }
     }
 
+    /**
+    * @openapi
+    *
+    * /admin/subscription/resume:
+    * post:
+    *   summary: Resume a subscription
+    *   description: Resumes an existing subscription
+    *   tags: [Subscription]
+    *   requestBody:
+    *     content:
+    *       application/json:
+    *         schema:
+    *           $ref: '#/components/schemas/SubscriptionResumeRequestBody'
+    *   responses:
+    *     200:
+    *       description: The request was successful.
+    *       content:
+    *         application/json:
+    *           schema:
+    *             $ref: '#/components/schemas/SubscriptionResumeResponseBody'
+    *     400:
+    *       $ref: '#/components/schemas/InvalidRequest'
+    *     401:
+    *       $ref: '#/components/schemas/UnauthorizedError'
+    *     500:
+    *       $ref: '#/components/schemas/InternalError'
+    *     404:
+    *       $ref: '#/components/schemas/NotFoundError'
+    */ 
     async resume(request: Request, response: Response) {
         // Validate request
         const result = validationResult(request);

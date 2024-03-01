@@ -1,8 +1,8 @@
 import * as dotenv from 'dotenv';
 import type { Request, Response } from 'express';
 import { check } from 'express-validator';
-import { validationResult } from './validator';
-import type { PortalCustomerGetUnsuccessfulResponseBody } from '../types/portal';
+import { validationResult } from '../validator';
+import type { PortalCustomerGetUnsuccessfulResponseBody } from '../../types/portal.js';
 
 dotenv.config();
 

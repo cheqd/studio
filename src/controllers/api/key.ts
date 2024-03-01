@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import { decryptPrivateKey } from '../helpers/helpers.js';
+import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
+import { decryptPrivateKey } from '../../helpers/helpers.js';
 import { toString } from 'uint8arrays';
 import type {
 	CreateKeyResponseBody,
@@ -12,11 +12,11 @@ import type {
 	UnsuccessfulCreateKeyResponseBody,
 	UnsuccessfulImportKeyResponseBody,
 	UnsuccessfulQueryKeyResponseBody,
-} from '../types/key.js';
-import { check } from './validator/index.js';
-import { eventTracker } from '../services/track/tracker.js';
-import type { IKeyTrack, ITrackOperation } from '../types/track.js';
-import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
+} from '../../types/key.js';
+import { check } from '../validator/index.js';
+import { eventTracker } from '../../services/track/tracker.js';
+import type { IKeyTrack, ITrackOperation } from '../../types/track.js';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
 
 // ToDo: Make the format of /key/create and /key/read the same
 // ToDo: Add valdiation for /key/import

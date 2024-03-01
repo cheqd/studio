@@ -7,11 +7,11 @@ import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { StatusCodes } from 'http-status-codes';
 
-import { CredentialController } from './controllers/credential.js';
-import { AccountController } from './controllers/account.js';
+import { CredentialController } from './controllers/api/credential.js';
+import { AccountController } from './controllers/api/account.js';
 import { Authentication } from './middleware/authentication.js';
 import { Connection } from './database/connection/connection.js';
-import { CredentialStatusController } from './controllers/credential-status.js';
+import { CredentialStatusController } from './controllers/api/credential-status.js';
 import { CORS_ALLOWED_ORIGINS, CORS_ERROR_MSG } from './types/constants.js';
 import { LogToWebHook } from './middleware/hook.js';
 import { Middleware } from './middleware/middleware.js';
@@ -20,15 +20,16 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 // Define Swagger file
-import swaggerDocument from './static/swagger.json' assert { type: 'json' };
-import { PresentationController } from './controllers/presentation.js';
-import { KeyController } from './controllers/key.js';
-import { DIDController } from './controllers/did.js';
-import { ResourceController } from './controllers/resource.js';
+import swaggerAPIDocument from './static/swagger-api.json' assert { type: 'json' };
+import swaggerAdminDocument from './static/swagger-admin.json' assert { type: 'json' };
+import { PresentationController } from './controllers/api/presentation.js';
+import { KeyController } from './controllers/api/key.js';
+import { DIDController } from './controllers/api/did.js';
+import { ResourceController } from './controllers/api/resource.js';
 import { FailedResponseTracker } from './middleware/event-tracker.js';
-import { ProductController } from './controllers/product.js';
-import { SubscriptionController } from './controllers/subscriptions.js';
-import { PriceController } from './controllers/prices.js';
+import { ProductController } from './controllers/admin/product.js';
+import { SubscriptionController } from './controllers/admin/subscriptions.js';
+import { PriceController } from './controllers/admin/prices.js';
 
 let swaggerOptions = {};
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -99,7 +100,8 @@ class App {
 		}
 		this.express.use(express.text());
 
-		this.express.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerOptions));
+		this.express.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerAPIDocument, swaggerOptions));
+		this.express.use('/admin/swagger', swaggerUi.serve, swaggerUi.setup(swaggerAdminDocument))
 		this.express.use(auth.handleError);
 		this.express.use(async (req, res, next) => await auth.accessControl(req, res, next));
 	}
@@ -211,19 +213,19 @@ class App {
 
 		// Portal
 		// Product
-		app.get('/portal/product/list', ProductController.productListValidator, new ProductController().getListProducts);
-		app.get('/portal/product/:productId', ProductController.productGetValidator, new ProductController().getProduct);
+		app.get('/admin/product/list', ProductController.productListValidator, new ProductController().getListProducts);
+		app.get('/admin/product/:productId', ProductController.productGetValidator, new ProductController().getProduct);
 
 		// Prices
-		app.get('/portal/price/list', PriceController.priceListValidator, new PriceController().getListPrices);
+		app.get('/admin/price/list', PriceController.priceListValidator, new PriceController().getListPrices);
 
 		// Subscription
-		app.post('/portal/subscription/create', SubscriptionController.subscriptionCreateValidator, new SubscriptionController().create);
-		app.post('/portal/subscription/update', SubscriptionController.subscriptionUpdateValidator, new SubscriptionController().update);
-		app.get('/portal/subscription/get/:subscriptionId', SubscriptionController.subscriptionGetValidator, new SubscriptionController().get);
-		app.get('/portal/subscription/list', SubscriptionController.subscriptionListValidator, new SubscriptionController().list);
-		app.delete('/portal/subscription/cancel', SubscriptionController.subscriptionCancelValidator, new SubscriptionController().cancel);
-		app.post('/portal/subscription/resume', SubscriptionController.subscriptionResumeValidator, new SubscriptionController().resume);
+		app.post('/admin/subscription/create', SubscriptionController.subscriptionCreateValidator, new SubscriptionController().create);
+		app.post('/admin/subscription/update', SubscriptionController.subscriptionUpdateValidator, new SubscriptionController().update);
+		app.get('/admin/subscription/get/:subscriptionId', SubscriptionController.subscriptionGetValidator, new SubscriptionController().get);
+		app.get('/admin/subscription/list', SubscriptionController.subscriptionListValidator, new SubscriptionController().list);
+		app.delete('/admin/subscription/cancel', SubscriptionController.subscriptionCancelValidator, new SubscriptionController().cancel);
+		app.post('/admin/subscription/resume', SubscriptionController.subscriptionResumeValidator, new SubscriptionController().resume);
 
 		// 404 for all other requests
 		app.all('*', (_req, res) => res.status(StatusCodes.BAD_REQUEST).send('Bad request'));

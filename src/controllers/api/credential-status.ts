@@ -1,21 +1,21 @@
 import type { Request, Response } from 'express';
-import { check, validationResult, query } from './validator/index.js';
+import { check, validationResult, query } from '../validator/index.js';
 import { fromString } from 'uint8arrays';
 import { StatusCodes } from 'http-status-codes';
-import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import type { ValidationErrorResponseBody } from '../types/shared.js';
-import type { CheckStatusListSuccessfulResponseBody, FeePaymentOptions } from '../types/credential-status.js';
+import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
+import type { ValidationErrorResponseBody } from '../../types/shared.js';
+import type { CheckStatusListSuccessfulResponseBody, FeePaymentOptions } from '../../types/credential-status.js';
 import {
 	DefaultStatusAction,
 	DefaultStatusActionPurposeMap,
 	DefaultStatusActions,
 	MinimalPaymentCondition,
-} from '../types/credential-status.js';
+} from '../../types/credential-status.js';
 import type {
 	SearchStatusListQuery,
 	SearchStatusListSuccessfulResponseBody,
 	SearchStatusListUnsuccessfulResponseBody,
-} from '../types/credential-status.js';
+} from '../../types/credential-status.js';
 import type {
 	CheckStatusListRequestBody,
 	CheckStatusListRequestQuery,
@@ -35,7 +35,7 @@ import type {
 	UpdateUnencryptedStatusListRequestQuery,
 	UpdateUnencryptedStatusListSuccessfulResponseBody,
 	UpdateUnencryptedStatusListUnsuccessfulResponseBody,
-} from '../types/credential-status.js';
+} from '../../types/credential-status.js';
 import {
 	BulkRevocationResult,
 	BulkSuspensionResult,
@@ -44,11 +44,11 @@ import {
 	DefaultStatusList2021StatusPurposeTypes,
 } from '@cheqd/did-provider-cheqd';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
-import { toNetwork } from '../helpers/helpers.js';
-import { eventTracker } from '../services/track/tracker.js';
-import type { ICredentialStatusTrack, ITrackOperation, IFeePaymentOptions } from '../types/track.js';
-import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
-import { FeeAnalyzer } from '../helpers/fee-analyzer.js';
+import { toNetwork } from '../../helpers/helpers.js';
+import { eventTracker } from '../../services/track/tracker.js';
+import type { ICredentialStatusTrack, ITrackOperation, IFeePaymentOptions } from '../../types/track.js';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
+import { FeeAnalyzer } from '../../helpers/fee-analyzer.js';
 
 export class CredentialStatusController {
 	static createUnencryptedValidator = [

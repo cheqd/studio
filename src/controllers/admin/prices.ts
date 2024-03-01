@@ -1,9 +1,9 @@
 import { Stripe } from 'stripe';
 import type { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
-import type { PriceListResponseBody, PriceListUnsuccessfulResponseBody } from '../types/portal.js';
+import type { PriceListResponseBody, PriceListUnsuccessfulResponseBody } from '../../types/portal.js';
 import { StatusCodes } from 'http-status-codes';
-import { validationResult } from './validator/index.js';
+import { validationResult } from '../validator/index.js';
 import { check } from 'express-validator';
 
 dotenv.config();
@@ -20,6 +20,37 @@ export class PriceController {
             .bail(),
     ];
 
+    /**
+	 * @openapi
+	 *
+     * /admin/price/list:
+     *  get:
+     *    summary: Get a list of prices
+     *    description: Get a list of prices
+     *    tags: [Price]
+     *    parameters:
+     *     - in: query
+     *       name: productId
+     *       schema:
+     *         type: string
+     *         description: The product id. If passed - returns filtered by this product list of prices.
+     *         required: false
+     *    responses:
+     *      200:
+     *        description: A list of prices
+     *        content:
+     *          application/json:
+     *            schema:
+     *              $ref: '#/components/schemas/PriceListResponseBody'
+     *      400:
+	 *        $ref: '#/components/schemas/InvalidRequest'
+	 *      401:
+	 *        $ref: '#/components/schemas/UnauthorizedError'
+	 *      500:
+	 *        $ref: '#/components/schemas/InternalError'
+     *      404:
+     *        $ref: '#/components/schemas/NotFoundError'
+	 */
     async getListPrices(request: Request, response: Response) {
         const result = validationResult(request);
         // handle error

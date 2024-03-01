@@ -2,13 +2,13 @@ import type { Request, Response } from 'express';
 import type { VerifiableCredential } from '@veramo/core';
 import { StatusCodes } from 'http-status-codes';
 
-import { check, validationResult, query } from './validator/index.js';
+import { check, validationResult, query } from '../validator/index.js';
 
-import { Credentials } from '../services/credentials.js';
-import { IdentityServiceStrategySetup } from '../services/identity/index.js';
-import type { ValidationErrorResponseBody } from '../types/shared.js';
-import { CheqdW3CVerifiableCredential } from '../services/w3c-credential.js';
-import { isCredentialIssuerDidDeactivated } from '../services/helpers.js';
+import { Credentials } from '../../services/credentials.js';
+import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
+import type { ValidationErrorResponseBody } from '../../types/shared.js';
+import { CheqdW3CVerifiableCredential } from '../../services/w3c-credential.js';
+import { isCredentialIssuerDidDeactivated } from '../../services/helpers.js';
 import type {
 	IssueCredentialRequestBody,
 	IssueCredentialResponseBody,
@@ -29,12 +29,12 @@ import type {
 	VerifyCredentialRequestBody,
 	VerifyCredentialRequestQuery,
 	VerifyCredentialResponseBody,
-} from '../types/credential.js';
-import { VeridaDIDValidator } from './validator/did.js';
+} from '../../types/credential.js';
+import { VeridaDIDValidator } from '../validator/did.js';
 import { Cheqd } from '@cheqd/did-provider-cheqd';
-import { OperationCategoryNameEnum, OperationNameEnum } from '../types/constants.js';
-import { eventTracker } from '../services/track/tracker.js';
-import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '../types/track.js';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
+import { eventTracker } from '../../services/track/tracker.js';
+import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '../../types/track.js';
 
 export class CredentialController {
 	public static issueValidator = [
