@@ -665,11 +665,13 @@ export class DIDController {
 		// Extract did from params
 		const { did } = request.params as GetDIDRequestParams;
 		// Get strategy e.g. postgres or local
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+		const identityServiceStrategySetup = response.locals.customer
+			? new IdentityServiceStrategySetup(response.locals.customer.customerId)
+			: new IdentityServiceStrategySetup();
 
 		try {
 			const didDocument = did
-				? await identityServiceStrategySetup.agent.resolveDid(request.params.did)
+				? await identityServiceStrategySetup.agent.resolveDid(did)
 				: await identityServiceStrategySetup.agent.listDids(response.locals.customer);
 
 			return response

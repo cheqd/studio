@@ -24,6 +24,8 @@ export class PortalCustomerController {
             } satisfies PortalCustomerGetUnsuccessfulResponseBody);
         }
 
+        
+
         return response.status(500).json({
             error: "Not implemented yet"
         })

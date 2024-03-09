@@ -1,9 +1,9 @@
 import type { Repository } from 'typeorm';
 
-import { Connection } from '../database/connection/connection.js';
-import { IdentifierEntity } from '../database/entities/identifier.entity.js';
+import { Connection } from '../../database/connection/connection.js';
+import { IdentifierEntity } from '../../database/entities/identifier.entity.js';
 import * as dotenv from 'dotenv';
-import type { CustomerEntity } from '../database/entities/customer.entity.js';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 dotenv.config();
 
 export class IdentifierService {

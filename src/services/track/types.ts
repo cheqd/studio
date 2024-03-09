@@ -1,6 +1,7 @@
 import type { ITrackOperation, INotifyMessage } from '../../types/track';
+import type { ISubmitOperation } from './submitter';
 
-export type ITrackType = ITrackOperation | INotifyMessage;
+export type ITrackType = ITrackOperation | INotifyMessage | ISubmitOperation;
 
 export interface IObserver {
 	update(operation: ITrackType): Promise<void>;

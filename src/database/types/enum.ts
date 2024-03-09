@@ -5,9 +5,10 @@ export const categoryEnum = {
 	CREDENTIAL_STATUS: 'credential-status',
 	PRESENTATION: 'presentation',
 	KEY: 'key',
+	SUBSCRIPTION: 'subscription',
 
 	toStringList: function (): string[] {
-		return [this.DID, this.RESOURCE, this.CREDENTIAL, this.CREDENTIAL_STATUS, this.PRESENTATION, this.KEY];
+		return [this.DID, this.RESOURCE, this.CREDENTIAL, this.CREDENTIAL_STATUS, this.PRESENTATION, this.KEY, this.SUBSCRIPTION];
 	},
 };
 

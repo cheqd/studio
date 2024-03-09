@@ -10,6 +10,7 @@ import { IAuthHandler, RuleRoutine, IAPIGuard } from './routine.js';
 import type { IAuthResponse, MethodToScopeRule } from '../../types/authentication.js';
 import { M2MTokenUserInfoFetcher } from './user-info-fetcher/m2m-token.js';
 import { decodeJwt } from 'jose';
+import { PortalUserInfoFetcher } from './user-info-fetcher/portal-token.js';
 
 export class BaseAPIGuard extends RuleRoutine implements IAPIGuard {
 	userInfoFetcher: IUserInfoFetcher = {} as IUserInfoFetcher;
@@ -111,7 +112,7 @@ export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 	private nextHandler: IAuthHandler;
 	oauthProvider: IOAuthProvider;
 	private static bearerTokenIdentifier = 'Bearer';
-	private pathSkip = ['/swagger', '/static', '/logto', '/account/bootstrap'];
+	private pathSkip = ['/swagger', '/static', '/logto', '/account/bootstrap', '/admin/webhook', '/admin/swagger'];
 
 	constructor() {
 		super();
@@ -130,15 +131,20 @@ export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 
 	private chooseUserFetcherStrategy(request: Request): void {
 		const token = BaseAuthHandler.extractBearerTokenFromHeaders(request.headers) as string;
-		if (token) {
-			const payload = decodeJwt(token);
-			if (payload.aud === process.env.LOGTO_APP_ID) {
-				this.setUserInfoStrategy(new APITokenUserInfoFetcher(token));
-			} else {
-				this.setUserInfoStrategy(new M2MTokenUserInfoFetcher(token));
-			}
+		const headerIdToken = request.headers['id-token'] as string;
+		if (headerIdToken && token) {
+			this.setUserInfoStrategy(new PortalUserInfoFetcher(token, headerIdToken));
 		} else {
-			this.setUserInfoStrategy(new SwaggerUserInfoFetcher());
+			if (token) {
+				const payload = decodeJwt(token);
+				if (payload.aud === process.env.LOGTO_APP_ID) {
+					this.setUserInfoStrategy(new APITokenUserInfoFetcher(token));
+				} else {
+					this.setUserInfoStrategy(new M2MTokenUserInfoFetcher(token));
+				}
+			} else {
+				this.setUserInfoStrategy(new SwaggerUserInfoFetcher());
+			}
 		}
 	}
 

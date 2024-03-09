@@ -1,11 +1,11 @@
 import type { Repository } from 'typeorm';
 
-import { Connection } from '../database/connection/connection.js';
+import { Connection } from '../../database/connection/connection.js';
 
 import * as dotenv from 'dotenv';
-import { KeyEntity } from '../database/entities/key.entity.js';
+import { KeyEntity } from '../../database/entities/key.entity.js';
 import type { Key } from '@veramo/data-store';
-import type { CustomerEntity } from '../database/entities/customer.entity.js';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 dotenv.config();
 
 export class KeyService {

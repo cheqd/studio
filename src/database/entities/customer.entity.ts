@@ -26,6 +26,12 @@ export class CustomerEntity {
 	})
 	updatedAt!: Date;
 
+	@Column({
+		type: 'text',
+		nullable: true,
+	})
+	stripeCustomerId!: string;
+
 	@BeforeInsert()
 	setCreatedAt() {
 		this.createdAt = new Date();

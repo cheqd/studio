@@ -1,11 +1,11 @@
 import type { Repository } from 'typeorm';
 import { decodeJWT } from 'did-jwt';
-import { Connection } from '../database/connection/connection.js';
+import { Connection } from '../../database/connection/connection.js';
 
 import * as dotenv from 'dotenv';
-import type { CustomerEntity } from '../database/entities/customer.entity.js';
-import { APIKeyEntity } from '../database/entities/api.key.entity.js';
-import type { UserEntity } from '../database/entities/user.entity.js';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import { APIKeyEntity } from '../../database/entities/api.key.entity.js';
+import type { UserEntity } from '../../database/entities/user.entity.js';
 import { v4 } from 'uuid';
 dotenv.config();
 

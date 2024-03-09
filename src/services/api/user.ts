@@ -1,11 +1,11 @@
 import type { Repository } from 'typeorm';
 
-import { Connection } from '../database/connection/connection.js';
-import type { CustomerEntity } from '../database/entities/customer.entity.js';
+import { Connection } from '../../database/connection/connection.js';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 
 import * as dotenv from 'dotenv';
-import { UserEntity } from '../database/entities/user.entity.js';
-import type { RoleEntity } from '../database/entities/role.entity.js';
+import { UserEntity } from '../../database/entities/user.entity.js';
+import type { RoleEntity } from '../../database/entities/role.entity.js';
 dotenv.config();
 
 export class UserService {

@@ -178,13 +178,13 @@ export class ProductController {
             // define error
 			const errorRef = error as Record<string, unknown>;
 
-            if (errorRef?.statusCode === 404) {
+            if (errorRef?.statusCode === StatusCodes.NOT_FOUND) {
                 return response.status(StatusCodes.NOT_FOUND).json({
                     error: `Product with id ${productId} not found`
                 } satisfies ProductGetUnsuccessfulResponseBody);
             }
 
-            return response.status(500).json({
+            return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                 error: `Internal error: ${(error as Error)?.message || error}`
             } satisfies ProductGetUnsuccessfulResponseBody);
         }

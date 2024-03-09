@@ -1,12 +1,13 @@
-import { Stripe } from 'stripe';
+import Stripe from 'stripe';
 import type { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
-import type { SubscriptionCreateRequestBody, SubscriptionCreateResponseBody, SubscriptionCreateUnsuccessfulResponseBody, SubscriptionCancelResponseBody, SubscriptionCancelUnsuccessfulResponseBody, SubscriptionGetResponseBody, SubscriptionGetUnsuccessfulResponseBody, SubscriptionListResponseBody, SubscriptionListUnsuccessfulResponseBody, SubscriptionUpdateRequestBody, SubscriptionUpdateResponseBody, SubscriptionUpdateUnsuccessfulResponseBody, SubscriptionResumeUnsuccessfulResponseBody, SubscriptionResumeResponseBody, SubscriptionResumeRequestBody, SubscriptionCancelRequestBody } from '../../types/portal.js';
+import type { SubscriptionCreateRequestBody, SubscriptionCreateResponseBody, SubscriptionCreateUnsuccessfulResponseBody, SubscriptionCancelResponseBody, SubscriptionCancelUnsuccessfulResponseBody, SubscriptionGetResponseBody, SubscriptionGetUnsuccessfulResponseBody, SubscriptionListResponseBody, SubscriptionListUnsuccessfulResponseBody, SubscriptionUpdateRequestBody, SubscriptionUpdateResponseBody, SubscriptionUpdateUnsuccessfulResponseBody, SubscriptionResumeUnsuccessfulResponseBody, SubscriptionResumeResponseBody, SubscriptionResumeRequestBody, SubscriptionCancelRequestBody, PaymentBehavior } from '../../types/portal.js';
 import { StatusCodes } from 'http-status-codes';
 import { validationResult } from '../validator/index.js';
 import { check } from 'express-validator';
 
 dotenv.config();
+
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -145,15 +146,17 @@ export class SubscriptionController {
             const subscription = await stripe.subscriptions.create({
                 customer: customerId,
                 items: items,
+                payment_behavior: "default_incomplete" as PaymentBehavior,
             },
             {
                 idempotencyKey: idempotencyKey,
             });
             if (subscription.lastResponse?.statusCode !== StatusCodes.OK) {
-                return response.status(StatusCodes.NOT_FOUND).json({
+                return response.status(StatusCodes.BAD_GATEWAY).json({
                     error: `Subscription was not created`,
                 } satisfies SubscriptionCreateUnsuccessfulResponseBody);
             }
+
             return response.status(StatusCodes.CREATED).json({
                 subscription: subscription
             } satisfies SubscriptionCreateResponseBody );
@@ -210,7 +213,7 @@ export class SubscriptionController {
                     idempotencyKey: idempotencyKey,
                 });
             if (subscription.lastResponse?.statusCode !== StatusCodes.OK) {
-                return response.status(StatusCodes.NOT_FOUND).json({
+                return response.status(StatusCodes.BAD_GATEWAY).json({
                     error: `Subscription was not updated`,
                 } satisfies SubscriptionUpdateUnsuccessfulResponseBody);
             }
@@ -397,7 +400,7 @@ export class SubscriptionController {
 
             // Check if the subscription was cancelled
             if (subscription.lastResponse?.statusCode !== StatusCodes.OK) {
-                return response.status(StatusCodes.NOT_FOUND).json({
+                return response.status(StatusCodes.BAD_GATEWAY).json({
                     error: `Subscription was not deleted`,
                 } satisfies SubscriptionCancelUnsuccessfulResponseBody);
             }
@@ -459,7 +462,7 @@ export class SubscriptionController {
 
             // Check if the subscription was resumed
             if (subscription.lastResponse?.statusCode !== StatusCodes.OK) {
-                return response.status(StatusCodes.NOT_FOUND).json({
+                return response.status(StatusCodes.BAD_GATEWAY).json({
                     error: `Subscription was not resumed`,
                 } satisfies SubscriptionResumeUnsuccessfulResponseBody);
             }

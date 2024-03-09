@@ -1,11 +1,11 @@
 import type { Repository } from 'typeorm';
 
-import { Connection } from '../database/connection/connection.js';
+import { Connection } from '../../database/connection/connection.js';
 
 import * as dotenv from 'dotenv';
-import { OperationEntity } from '../database/entities/operation.entity.js';
+import { OperationEntity } from '../../database/entities/operation.entity.js';
 import { v4 } from 'uuid';
-import type { CoinEntity } from '../database/entities/coin.entity.js';
+import type { CoinEntity } from '../../database/entities/coin.entity.js';
 dotenv.config();
 
 export class OperationService {

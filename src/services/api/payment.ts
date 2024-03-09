@@ -1,14 +1,14 @@
 import type { Repository } from 'typeorm';
 
-import { Connection } from '../database/connection/connection.js';
+import { Connection } from '../../database/connection/connection.js';
 
 import * as dotenv from 'dotenv';
-import type { CustomerEntity } from '../database/entities/customer.entity.js';
-import { PaymentEntity } from '../database/entities/payment.entity.js';
-import type { OperationEntity } from '../database/entities/operation.entity.js';
-import type { ResourceEntity } from '../database/entities/resource.entity.js';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import { PaymentEntity } from '../../database/entities/payment.entity.js';
+import type { OperationEntity } from '../../database/entities/operation.entity.js';
+import type { ResourceEntity } from '../../database/entities/resource.entity.js';
 import type { CheqdNetwork } from '@cheqd/sdk';
-import type { CoinEntity } from '../database/entities/coin.entity.js';
+import type { CoinEntity } from '../../database/entities/coin.entity.js';
 dotenv.config();
 
 export class PaymentService {

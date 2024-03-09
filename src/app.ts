@@ -21,7 +21,7 @@ dotenv.config();
 
 // Define Swagger file
 import swaggerAPIDocument from './static/swagger-api.json' assert { type: 'json' };
-import swaggerAdminDocument from './static/swagger-admin.json' assert { type: 'json' };
+// import swaggerAdminDocument from './static/swagger-admin.json' assert { type: 'json' };
 import { PresentationController } from './controllers/api/presentation.js';
 import { KeyController } from './controllers/api/key.js';
 import { DIDController } from './controllers/api/did.js';
@@ -30,6 +30,8 @@ import { FailedResponseTracker } from './middleware/event-tracker.js';
 import { ProductController } from './controllers/admin/product.js';
 import { SubscriptionController } from './controllers/admin/subscriptions.js';
 import { PriceController } from './controllers/admin/prices.js';
+import { WebhookController } from './controllers/admin/webhook.js';
+import { CheckoutSessionController } from './controllers/admin/checkout-session.js';
 
 let swaggerOptions = {};
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -100,8 +102,8 @@ class App {
 		}
 		this.express.use(express.text());
 
-		this.express.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerAPIDocument, swaggerOptions));
-		this.express.use('/admin/swagger', swaggerUi.serve, swaggerUi.setup(swaggerAdminDocument))
+		this.express.use('/swagger', swaggerUi.serveFiles(swaggerAPIDocument, swaggerOptions), swaggerUi.setup(swaggerAPIDocument, swaggerOptions));
+		// this.express.use('/admin/swagger', swaggerUi.serveFiles(swaggerAdminDocument), swaggerUi.setup(swaggerAdminDocument))
 		this.express.use(auth.handleError);
 		this.express.use(async (req, res, next) => await auth.accessControl(req, res, next));
 	}
@@ -226,6 +228,12 @@ class App {
 		app.get('/admin/subscription/list', SubscriptionController.subscriptionListValidator, new SubscriptionController().list);
 		app.delete('/admin/subscription/cancel', SubscriptionController.subscriptionCancelValidator, new SubscriptionController().cancel);
 		app.post('/admin/subscription/resume', SubscriptionController.subscriptionResumeValidator, new SubscriptionController().resume);
+
+		// Checkout session
+		app.post('/admin/checkout/session/create', CheckoutSessionController.checkoutSessionCreateValidator, new CheckoutSessionController().create);
+
+		// Webhook
+		app.post('/admin/webhook', new WebhookController().handleWebhook);
 
 		// 404 for all other requests
 		app.all('*', (_req, res) => res.status(StatusCodes.BAD_REQUEST).send('Bad request'));

@@ -1,8 +1,8 @@
 import type { Repository } from 'typeorm';
 
-import { Connection } from '../database/connection/connection.js';
-import { CoinEntity } from '../database/entities/coin.entity.js';
-import { MINIMAL_DENOM } from '../types/constants.js';
+import { Connection } from '../../database/connection/connection.js';
+import { CoinEntity } from '../../database/entities/coin.entity.js';
+import { MINIMAL_DENOM } from '../../types/constants.js';
 import { v4 } from 'uuid';
 
 export class CoinService {

@@ -1,14 +1,14 @@
 import type { Request, Response } from 'express';
 import { CheqdNetwork, checkBalance } from '@cheqd/sdk';
-import { TESTNET_MINIMUM_BALANCE, DEFAULT_DENOM_EXPONENT } from '../../types/constants.js';
-import { CustomerService } from '../../services/customer.js';
+import { TESTNET_MINIMUM_BALANCE, DEFAULT_DENOM_EXPONENT, OperationNameEnum } from '../../types/constants.js';
+import { CustomerService } from '../../services/api/customer.js';
 import { LogToHelper } from '../../middleware/auth/logto-helper.js';
 import { FaucetHelper } from '../../helpers/faucet.js';
 import { StatusCodes } from 'http-status-codes';
 import { LogToWebHook } from '../../middleware/hook.js';
-import { UserService } from '../../services/user.js';
-import { RoleService } from '../../services/role.js';
-import { PaymentAccountService } from '../../services/payment-account.js';
+import { UserService } from '../../services/api/user.js';
+import { RoleService } from '../../services/api/role.js';
+import { PaymentAccountService } from '../../services/api/payment-account.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity.js';
 import type { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
@@ -21,6 +21,8 @@ import type {
 } from '../../types/customer.js';
 import type { UnsuccessfulResponseBody } from '../../types/shared.js';
 import { check, validationResult } from 'express-validator';
+import { eventTracker } from '../../services/track/tracker.js';
+import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../../services/track/submitter.js';
 
 export class AccountController {
 	public static createValidator = [
@@ -302,6 +304,17 @@ export class AccountController {
 				}
 			}
 		}
+		// 8. Add the Stripe account to the Customer
+		if (customer.stripeCustomerId === null) {
+			eventTracker.submit({
+				operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
+				data: {
+					name: customer.name,
+					customerId: customer.customerId,
+				} satisfies ISubmitStripeCustomerCreateData,
+			} satisfies ISubmitOperation)
+		}
+
 		return response.status(StatusCodes.OK).json({});
 	}
 

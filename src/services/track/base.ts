@@ -12,7 +12,7 @@ export class BaseOperationObserver implements IObserver {
 		throw new Error('Method not implemented.');
 	}
 
-	async notify(notifyMessage: INotifyMessage): Promise<void> {
+	notify(notifyMessage: INotifyMessage): void {
 		this.emitter.emit('notify', notifyMessage);
 	}
 

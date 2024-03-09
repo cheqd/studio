@@ -4,7 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 
 import { check, validationResult, query } from '../validator/index.js';
 
-import { Credentials } from '../../services/credentials.js';
+import { Credentials } from '../../services/api/credentials.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import type { ValidationErrorResponseBody } from '../../types/shared.js';
 import { CheqdW3CVerifiableCredential } from '../../services/w3c-credential.js';

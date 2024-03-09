@@ -1,8 +1,8 @@
 import type { Repository } from 'typeorm';
 
-import { Connection } from '../database/connection/connection.js';
-import { CustomerEntity } from '../database/entities/customer.entity.js';
-import { IdentityServiceStrategySetup } from './identity/index.js';
+import { Connection } from '../../database/connection/connection.js';
+import { CustomerEntity } from '../../database/entities/customer.entity.js';
+import { IdentityServiceStrategySetup } from '../identity/index.js';
 
 import * as dotenv from 'dotenv';
 import { PaymentAccountService } from './payment-account.js';
@@ -42,13 +42,18 @@ export class CustomerService {
 		};
 	}
 
-	public async update(customerId: string, name: string) {
+	public async update(customerId: string, name?: string, stripeCustomerId?: string) {
 		const existingCustomer = await this.customerRepository.findOneBy({ customerId });
 		if (!existingCustomer) {
 			throw new Error(`CustomerId not found`);
 		}
+		if (name) {
+			existingCustomer.name = name;
+		}
 
-		existingCustomer.name = name;
+		if (stripeCustomerId) {
+			existingCustomer.stripeCustomerId = stripeCustomerId;
+		}
 		return await this.customerRepository.save(existingCustomer);
 	}
 
@@ -56,10 +61,20 @@ export class CustomerService {
 		return this.customerRepository.findOneBy({ customerId });
 	}
 
-	public async findOne(name: string) {
+	public async findOne(name?: string) {
 		return await this.customerRepository.findOne({
 			where: { name },
 		});
+	}
+
+	public async find(where: Record<string, unknown>) {
+		try {
+			return await this.customerRepository.find({
+				where: where,
+			});
+		} catch {
+			return [];
+		}
 	}
 
 	public async isExist(where: Record<string, unknown>) {

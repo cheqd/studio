@@ -1,11 +1,11 @@
 import type { Repository } from 'typeorm';
 
-import { Connection } from '../database/connection/connection.js';
+import { Connection } from '../../database/connection/connection.js';
 
 import * as dotenv from 'dotenv';
-import { PaymentAccountEntity } from '../database/entities/payment.account.entity.js';
-import type { CustomerEntity } from '../database/entities/customer.entity.js';
-import type { KeyEntity } from '../database/entities/key.entity.js';
+import { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import type { KeyEntity } from '../../database/entities/key.entity.js';
 import { getCosmosAccount } from '@cheqd/sdk';
 dotenv.config();
 

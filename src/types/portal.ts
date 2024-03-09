@@ -98,3 +98,21 @@ export type SubscriptionResumeUnsuccessfulResponseBody = UnsuccessfulResponseBod
 // Get
 
 export type PortalCustomerGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+
+
+// Checkout Session
+export type CheckoutSessionCreateRequestBody = {
+    price: string;
+    successURL: string;
+    cancelURL: string;
+    quantity?: number;
+    idempotencyKey?: string;
+}
+export type CheckoutSessionCreateResponseBody = {
+    clientSecret: Stripe.Checkout.Session['client_secret'];
+}
+
+export type CheckoutSessionCreateUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+// Utils
+
+export type PaymentBehavior = Stripe.SubscriptionCreateParams.PaymentBehavior;

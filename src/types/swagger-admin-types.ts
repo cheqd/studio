@@ -165,6 +165,26 @@
  *         subscription:
  *           type: object
  *           description: A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object]
+ *     CheckoutSessionCreateRequestBody:
+ *       description: The request body for creating a checkout session
+ *       type: object
+ *       properties:
+ *         price:
+ *           type: string
+ *           description: The price id
+ *           example: price_1234567890
+ *         successURL:
+ *           type: string
+ *           description: The URL to redirect to after the customer sucessfully completes the checkout
+ *           example: https://example.com/success
+ *         cancelURL:
+ *           type: string
+ *           description: The URL to redirect to after the customer cancels the checkout
+ *           example: https://example.com/cancel
+ *         idempotencyKey:
+ *           type: string
+ *           description: The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.
+ *           example: 1234567890
  *     NotFoundError:
  *       description: The requested resource could not be found but may be available in the future. Subsequent requests by the client are permissible.
  *       type: object
