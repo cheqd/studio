@@ -27,7 +27,6 @@ export type PriceListUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 // Subscription
 // Create
 export type SubscriptionCreateRequestBody = {
-    customerId: string;
     items: [{ price: string }];
     idempotencyKey?: string;
 }
@@ -58,10 +57,6 @@ export type SubscriptionGetResponseBody = {
 }
 
 // List
-export type SubscriptionListRequestBody = {
-    customerId: string;
-}
-
 export type SubscriptionListResponseBody = {
     subscriptions: Stripe.Response<Stripe.ApiList<Stripe.Subscription>>;
 }

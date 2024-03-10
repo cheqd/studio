@@ -63,7 +63,7 @@ export class ProductController {
      *      404:
      *        $ref: '#/components/schemas/NotFoundError'
 	 */
-    async getListProducts(request: Request, response: Response) {
+    async listProducts(request: Request, response: Response) {
         const result = validationResult(request);
         // handle error
         if (!result.isEmpty()) {
@@ -110,7 +110,7 @@ export class ProductController {
     /**
      * @openapi
      * 
-     * /admin/product/{productId}:
+     * /admin/product/get/{productId}:
      *  get:
      *    summary: Get a product
      *    description: Get a product by id

@@ -5,6 +5,7 @@ import type { SubscriptionCreateRequestBody, SubscriptionCreateResponseBody, Sub
 import { StatusCodes } from 'http-status-codes';
 import { validationResult } from '../validator/index.js';
 import { check } from 'express-validator';
+import { SubscriptionService } from '../../services/admin/subscription.js';
 
 dotenv.config();
 
@@ -140,11 +141,11 @@ export class SubscriptionController {
             } satisfies SubscriptionCreateUnsuccessfulResponseBody);
         }
 
-        const { customerId, items, idempotencyKey } = request.body satisfies SubscriptionCreateRequestBody;
+        const { items, idempotencyKey } = request.body satisfies SubscriptionCreateRequestBody;
         try {
             // Create the subscription
             const subscription = await stripe.subscriptions.create({
-                customer: customerId,
+                customer: response.locals.customer.stripeCustomerId,
                 items: items,
                 payment_behavior: "default_incomplete" as PaymentBehavior,
             },
@@ -236,13 +237,6 @@ export class SubscriptionController {
     *    summary: Get a list of subscriptions
     *    description: Get a list of subscriptions
     *    tags: [Subscription]
-    *    parameters:
-    *      - in: query
-    *        name: customerId
-    *        schema:
-    *          type: string
-    *          description: The customer id. If passed - returns filtered by this customer list of subscriptions.
-    *          required: false
     *    responses:
     *      200:
     *        description: A list of subscriptions
@@ -268,8 +262,10 @@ export class SubscriptionController {
                 error: result.array().pop()?.msg 
             } satisfies SubscriptionListUnsuccessfulResponseBody);
         }
-        const customerId = request.query.customerId;
+        const customerId = response.locals.customer.stripeCustomerId;
         try {
+            // Sync our DB with Stripe
+            await SubscriptionService.instance.stripeSync(response.locals.customer)
             // Get the subscriptions
             const subscriptions = customerId 
             ? await stripe.subscriptions.list({
@@ -334,6 +330,8 @@ export class SubscriptionController {
         }
         const subscriptionId = request.params.subscriptionId;
         try {
+            // Sync our DB with Stripe
+            await SubscriptionService.instance.stripeSync(response.locals.customer)
             // Get the subscription
             const subscription = await stripe.subscriptions.retrieve(subscriptionId as string);
             if (subscription.lastResponse?.statusCode !== StatusCodes.OK) {

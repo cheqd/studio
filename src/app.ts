@@ -21,12 +21,12 @@ dotenv.config();
 
 // Define Swagger file
 import swaggerAPIDocument from './static/swagger-api.json' assert { type: 'json' };
-// import swaggerAdminDocument from './static/swagger-admin.json' assert { type: 'json' };
+import swaggerAdminDocument from './static/swagger-admin.json' assert { type: 'json' };
 import { PresentationController } from './controllers/api/presentation.js';
 import { KeyController } from './controllers/api/key.js';
 import { DIDController } from './controllers/api/did.js';
 import { ResourceController } from './controllers/api/resource.js';
-import { FailedResponseTracker } from './middleware/event-tracker.js';
+import { ResponseTracker } from './middleware/event-tracker.js';
 import { ProductController } from './controllers/admin/product.js';
 import { SubscriptionController } from './controllers/admin/subscriptions.js';
 import { PriceController } from './controllers/admin/prices.js';
@@ -77,7 +77,7 @@ class App {
 		this.express.use(cookieParser());
 		const auth = new Authentication();
 		// EventTracking
-		this.express.use(new FailedResponseTracker().trackJson);
+		this.express.use(new ResponseTracker().trackJson);
 		// Authentication
 		if (process.env.ENABLE_AUTHENTICATION === 'true') {
 			this.express.use(
@@ -103,7 +103,7 @@ class App {
 		this.express.use(express.text());
 
 		this.express.use('/swagger', swaggerUi.serveFiles(swaggerAPIDocument, swaggerOptions), swaggerUi.setup(swaggerAPIDocument, swaggerOptions));
-		// this.express.use('/admin/swagger', swaggerUi.serveFiles(swaggerAdminDocument), swaggerUi.setup(swaggerAdminDocument))
+		this.express.use('/admin/swagger', swaggerUi.serveFiles(swaggerAdminDocument), swaggerUi.setup(swaggerAdminDocument))
 		this.express.use(auth.handleError);
 		this.express.use(async (req, res, next) => await auth.accessControl(req, res, next));
 	}
@@ -215,8 +215,8 @@ class App {
 
 		// Portal
 		// Product
-		app.get('/admin/product/list', ProductController.productListValidator, new ProductController().getListProducts);
-		app.get('/admin/product/:productId', ProductController.productGetValidator, new ProductController().getProduct);
+		app.get('/admin/product/list', ProductController.productListValidator, new ProductController().listProducts);
+		app.get('/admin/product/get/:productId', ProductController.productGetValidator, new ProductController().getProduct);
 
 		// Prices
 		app.get('/admin/price/list', PriceController.priceListValidator, new PriceController().getListPrices);

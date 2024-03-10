@@ -153,7 +153,7 @@
         }
       }
     },
-    "/admin/product/{productId}": {
+    "/admin/product/get/{productId}": {
       "get": {
         "summary": "Get a product",
         "description": "Get a product by id",
@@ -290,17 +290,6 @@
         "description": "Get a list of subscriptions",
         "tags": [
           "Subscription"
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "customerId",
-            "schema": {
-              "type": "string",
-              "description": "The customer id. If passed - returns filtered by this customer list of subscriptions.",
-              "required": false
-            }
-          }
         ],
         "responses": {
           "200": {
@@ -687,11 +676,6 @@
         "description": "The request body for creating a checkout session",
         "type": "object",
         "properties": {
-          "customerId": {
-            "type": "string",
-            "description": "The Stripe customer id",
-            "example": "cus_1234567890"
-          },
           "price": {
             "type": "string",
             "description": "The price id",

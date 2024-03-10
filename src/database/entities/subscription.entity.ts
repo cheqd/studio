@@ -75,15 +75,15 @@ export class SubscriptionEntity {
         status: string,
         currentPeriodStart: Date,
         currentPeriodEnd: Date,
-        trialStart: Date,
-        trialEnd: Date,
+        trialStart?: Date,
+        trialEnd?: Date,
         ){
 		this.subscriptionId = subscriptionId;
         this.customer = customer;
         this.status = status;
         this.currentPeriodStart = currentPeriodStart;
         this.currentPeriodEnd = currentPeriodEnd;
-        this.trialStart = trialStart;
-        this.trialEnd = trialEnd;
+        if (trialStart ) this.trialStart = trialStart;
+        if (trialEnd) this.trialEnd = trialEnd;
 	}
 }

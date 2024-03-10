@@ -77,6 +77,13 @@ export class CustomerService {
 		}
 	}
 
+	public async findbyStripeCustomerId(stripeCustomerId: string) {
+		return await this.customerRepository.findOne({
+			where: { stripeCustomerId },
+		});
+	
+	}
+
 	public async isExist(where: Record<string, unknown>) {
 		try {
 			return (await this.customerRepository.findOne({ where })) ? true : false;
