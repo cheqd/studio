@@ -25,7 +25,7 @@ import { PresentationController } from './controllers/presentation.js';
 import { KeyController } from './controllers/key.js';
 import { DIDController } from './controllers/did.js';
 import { ResourceController } from './controllers/resource.js';
-import { FailedResponseTracker } from './middleware/event-tracker.js';
+import { ResponseTracker } from './middleware/event-tracker.js';
 
 let swaggerOptions = {};
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -71,7 +71,7 @@ class App {
 		this.express.use(cookieParser());
 		const auth = new Authentication();
 		// EventTracking
-		this.express.use(new FailedResponseTracker().trackJson);
+		this.express.use(new ResponseTracker().trackJson);
 		// Authentication
 		if (process.env.ENABLE_AUTHENTICATION === 'true') {
 			this.express.use(
