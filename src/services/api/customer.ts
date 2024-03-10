@@ -81,7 +81,6 @@ export class CustomerService {
 		return await this.customerRepository.findOne({
 			where: { stripeCustomerId },
 		});
-	
 	}
 
 	public async isExist(where: Record<string, unknown>) {

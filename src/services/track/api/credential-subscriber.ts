@@ -1,11 +1,7 @@
 import { OperationCategoryNameEnum } from '../../../types/constants.js';
-import type {
-	ICredentialTrack, ITrackOperation,
-	ITrackResult
-} from '../../../types/track.js';
+import type { ICredentialTrack, ITrackOperation, ITrackResult } from '../../../types/track.js';
 import type { IObserver } from '../types.js';
 import { BaseOperationObserver } from '../base.js';
-
 
 export class CredentialSubscriber extends BaseOperationObserver implements IObserver {
 	isReactionNeeded(trackOperation: ITrackOperation): boolean {

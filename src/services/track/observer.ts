@@ -51,4 +51,3 @@ export class SubmitSubject implements ITrackSubject {
 		}
 	}
 }
-

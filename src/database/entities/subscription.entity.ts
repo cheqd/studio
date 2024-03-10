@@ -6,42 +6,42 @@ dotenv.config();
 
 @Entity('subscription')
 export class SubscriptionEntity {
-    @Column({
-        type: 'text',
-        nullable: false,
-        primary: true,
-    })
+	@Column({
+		type: 'text',
+		nullable: false,
+		primary: true,
+	})
 	subscriptionId!: string;
 
-    @Column({
-        type: 'text',
-        nullable: false,
-    })
-    status!: string;
+	@Column({
+		type: 'text',
+		nullable: false,
+	})
+	status!: string;
 
-    @Column({
-        type: 'timestamptz',
-        nullable: false,
-    })
-    currentPeriodStart!: Date;
+	@Column({
+		type: 'timestamptz',
+		nullable: false,
+	})
+	currentPeriodStart!: Date;
 
-    @Column({
-        type: 'timestamptz',
-        nullable: false,
-    })
-    currentPeriodEnd!: Date;
+	@Column({
+		type: 'timestamptz',
+		nullable: false,
+	})
+	currentPeriodEnd!: Date;
 
-    @Column({
-        type: 'timestamptz',
-        nullable: true,
-    })
-    trialStart!: Date;
+	@Column({
+		type: 'timestamptz',
+		nullable: true,
+	})
+	trialStart!: Date;
 
-    @Column({
-        type: 'timestamptz',
-        nullable: true,
-    })
-    trialEnd!: Date;
+	@Column({
+		type: 'timestamptz',
+		nullable: true,
+	})
+	trialEnd!: Date;
 
 	@Column({
 		type: 'timestamptz',
@@ -65,25 +65,25 @@ export class SubscriptionEntity {
 		this.updatedAt = new Date();
 	}
 
-    @ManyToOne(() => CustomerEntity, (customer) => customer.customerId)
-    @JoinColumn({ name: 'customerId' })
-    customer!: CustomerEntity;
+	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId)
+	@JoinColumn({ name: 'customerId' })
+	customer!: CustomerEntity;
 
 	constructor(
-        subscriptionId: string,
-        customer: CustomerEntity,
-        status: string,
-        currentPeriodStart: Date,
-        currentPeriodEnd: Date,
-        trialStart?: Date,
-        trialEnd?: Date,
-        ){
+		subscriptionId: string,
+		customer: CustomerEntity,
+		status: string,
+		currentPeriodStart: Date,
+		currentPeriodEnd: Date,
+		trialStart?: Date,
+		trialEnd?: Date
+	) {
 		this.subscriptionId = subscriptionId;
-        this.customer = customer;
-        this.status = status;
-        this.currentPeriodStart = currentPeriodStart;
-        this.currentPeriodEnd = currentPeriodEnd;
-        if (trialStart ) this.trialStart = trialStart;
-        if (trialEnd) this.trialEnd = trialEnd;
+		this.customer = customer;
+		this.status = status;
+		this.currentPeriodStart = currentPeriodStart;
+		this.currentPeriodEnd = currentPeriodEnd;
+		if (trialStart) this.trialStart = trialStart;
+		if (trialEnd) this.trialEnd = trialEnd;
 	}
 }

@@ -5,14 +5,14 @@ import type {
 	ICredentialTrack,
 	IResourceTrack,
 	ITrackOperation,
-	ITrackResult} from '../../../types/track.js';
+	ITrackResult,
+} from '../../../types/track.js';
 import { isCredentialStatusTrack, isCredentialTrack, isResourceTrack } from '../helpers.js';
 import { IdentifierService } from '../../api/identifier.js';
 import { KeyService } from '../../api/key.js';
 import { ResourceService } from '../../api/resource.js';
 import type { IObserver } from '../types.js';
 import { BaseOperationObserver } from '../base.js';
-
 
 export class ResourceSubscriber extends BaseOperationObserver implements IObserver {
 	private static acceptedOperations = [
@@ -29,7 +29,8 @@ export class ResourceSubscriber extends BaseOperationObserver implements IObserv
 	isReactionNeeded(trackOperation: ITrackOperation): boolean {
 		// Resource tracker reacts on CredentialStatusList, Credential operations like revocation
 		// and Resource operations like create, update, delete
-		const isCategoryAccepted = trackOperation.category === OperationCategoryNameEnum.RESOURCE ||
+		const isCategoryAccepted =
+			trackOperation.category === OperationCategoryNameEnum.RESOURCE ||
 			trackOperation.category === OperationCategoryNameEnum.CREDENTIAL ||
 			trackOperation.category === OperationCategoryNameEnum.CREDENTIAL_STATUS;
 		const isOperationAccepted = ResourceSubscriber.acceptedOperations.includes(

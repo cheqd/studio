@@ -312,7 +312,7 @@ export class AccountController {
 					name: customer.name,
 					customerId: customer.customerId,
 				} satisfies ISubmitStripeCustomerCreateData,
-			} satisfies ISubmitOperation)
+			} satisfies ISubmitOperation);
 		}
 
 		return response.status(StatusCodes.OK).json({});

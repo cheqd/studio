@@ -1,86 +1,84 @@
-import type Stripe from "stripe";
-import type { UnsuccessfulResponseBody } from "./shared.js";
+import type Stripe from 'stripe';
+import type { UnsuccessfulResponseBody } from './shared.js';
 
 export type ProductWithPrices = Stripe.Product & {
-    prices?: Stripe.Price[];
+	prices?: Stripe.Price[];
 };
 
 export type ProductListUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 export type ProductGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
-
 export type ProductListResponseBody = {
-    products: Stripe.ApiList<ProductWithPrices>;
-}
+	products: Stripe.ApiList<ProductWithPrices>;
+};
 
 export type ProductGetResponseBody = {
-    product: ProductWithPrices;
-}
+	product: ProductWithPrices;
+};
 
 // Prices
 // List
 export type PriceListResponseBody = {
-    prices: Stripe.ApiList<Stripe.Price>;
-}
+	prices: Stripe.ApiList<Stripe.Price>;
+};
 export type PriceListUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
 // Subscription
 // Create
 export type SubscriptionCreateRequestBody = {
-    items: [{ price: string }];
-    idempotencyKey?: string;
-}
+	items: [{ price: string }];
+	idempotencyKey?: string;
+};
 
 export type SubscriptionCreateResponseBody = {
-    subscription: Stripe.Response<Stripe.Subscription>;
-}
+	subscription: Stripe.Response<Stripe.Subscription>;
+};
 
 // Update
 export type SubscriptionUpdateRequestBody = {
-    subscriptionId: string;
-    updateParams: Stripe.SubscriptionUpdateParams;
-    idempotencyKey?: string;
-
-}
+	subscriptionId: string;
+	updateParams: Stripe.SubscriptionUpdateParams;
+	idempotencyKey?: string;
+};
 
 export type SubscriptionUpdateResponseBody = {
-    subscription: Stripe.Response<Stripe.Subscription>;
-}
+	subscription: Stripe.Response<Stripe.Subscription>;
+};
 
 // Get
 export type SubscriptionGetRequestBody = {
-    subscriptionId: string;
-}
+	subscriptionId: string;
+};
 
 export type SubscriptionGetResponseBody = {
-    subscription: Stripe.Response<Stripe.Subscription>;
-}
+	subscription: Stripe.Response<Stripe.Subscription>;
+};
 
 // List
 export type SubscriptionListResponseBody = {
-    subscriptions: Stripe.Response<Stripe.ApiList<Stripe.Subscription>>;
-}
+	subscriptions: Stripe.Response<Stripe.ApiList<Stripe.Subscription>>;
+};
 
 // Delete
 export type SubscriptionCancelRequestBody = {
-    subscriptionId: string;
-}
+	subscriptionId: string;
+};
 
 export type SubscriptionCancelResponseBody = {
-    subscription: Stripe.Subscription;
-    idempotencyKey?: string;
-}
+	subscription: Stripe.Subscription;
+	idempotencyKey?: string;
+};
 
 //Resume
 
 export type SubscriptionResumeRequestBody = {
-    subscriptionId: string;
-    idempotencyKey?: string;
-}
+	subscriptionId: string;
+	idempotencyKey?: string;
+};
 
 export type SubscriptionResumeResponseBody = {
-    subscription: Stripe.Response<Stripe.Subscription>;
-}
+	subscription: Stripe.Response<Stripe.Subscription>;
+};
 
 export type SubscriptionCreateUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 export type SubscriptionListUnsuccessfulResponseBody = UnsuccessfulResponseBody;
@@ -94,18 +92,17 @@ export type SubscriptionResumeUnsuccessfulResponseBody = UnsuccessfulResponseBod
 
 export type PortalCustomerGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
-
 // Checkout Session
 export type CheckoutSessionCreateRequestBody = {
-    price: string;
-    successURL: string;
-    cancelURL: string;
-    quantity?: number;
-    idempotencyKey?: string;
-}
+	price: string;
+	successURL: string;
+	cancelURL: string;
+	quantity?: number;
+	idempotencyKey?: string;
+};
 export type CheckoutSessionCreateResponseBody = {
-    clientSecret: Stripe.Checkout.Session['client_secret'];
-}
+	clientSecret: Stripe.Checkout.Session['client_secret'];
+};
 
 export type CheckoutSessionCreateUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 // Utils

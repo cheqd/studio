@@ -1,11 +1,7 @@
 import { OperationCategoryNameEnum } from '../../../types/constants.js';
-import type {
-	IPresentationTrack, ITrackOperation,
-	ITrackResult
-} from '../../../types/track.js';
+import type { IPresentationTrack, ITrackOperation, ITrackResult } from '../../../types/track.js';
 import type { IObserver } from '../types.js';
 import { BaseOperationObserver } from '../base.js';
-
 
 export class PresentationSubscriber extends BaseOperationObserver implements IObserver {
 	isReactionNeeded(trackOperation: ITrackOperation): boolean {

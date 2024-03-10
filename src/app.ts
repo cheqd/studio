@@ -102,8 +102,16 @@ class App {
 		}
 		this.express.use(express.text());
 
-		this.express.use('/swagger', swaggerUi.serveFiles(swaggerAPIDocument, swaggerOptions), swaggerUi.setup(swaggerAPIDocument, swaggerOptions));
-		this.express.use('/admin/swagger', swaggerUi.serveFiles(swaggerAdminDocument), swaggerUi.setup(swaggerAdminDocument))
+		this.express.use(
+			'/swagger',
+			swaggerUi.serveFiles(swaggerAPIDocument, swaggerOptions),
+			swaggerUi.setup(swaggerAPIDocument, swaggerOptions)
+		);
+		this.express.use(
+			'/admin/swagger',
+			swaggerUi.serveFiles(swaggerAdminDocument),
+			swaggerUi.setup(swaggerAdminDocument)
+		);
 		this.express.use(auth.handleError);
 		this.express.use(async (req, res, next) => await auth.accessControl(req, res, next));
 	}
@@ -216,21 +224,53 @@ class App {
 		// Portal
 		// Product
 		app.get('/admin/product/list', ProductController.productListValidator, new ProductController().listProducts);
-		app.get('/admin/product/get/:productId', ProductController.productGetValidator, new ProductController().getProduct);
+		app.get(
+			'/admin/product/get/:productId',
+			ProductController.productGetValidator,
+			new ProductController().getProduct
+		);
 
 		// Prices
 		app.get('/admin/price/list', PriceController.priceListValidator, new PriceController().getListPrices);
 
 		// Subscription
-		app.post('/admin/subscription/create', SubscriptionController.subscriptionCreateValidator, new SubscriptionController().create);
-		app.post('/admin/subscription/update', SubscriptionController.subscriptionUpdateValidator, new SubscriptionController().update);
-		app.get('/admin/subscription/get/:subscriptionId', SubscriptionController.subscriptionGetValidator, new SubscriptionController().get);
-		app.get('/admin/subscription/list', SubscriptionController.subscriptionListValidator, new SubscriptionController().list);
-		app.delete('/admin/subscription/cancel', SubscriptionController.subscriptionCancelValidator, new SubscriptionController().cancel);
-		app.post('/admin/subscription/resume', SubscriptionController.subscriptionResumeValidator, new SubscriptionController().resume);
+		app.post(
+			'/admin/subscription/create',
+			SubscriptionController.subscriptionCreateValidator,
+			new SubscriptionController().create
+		);
+		app.post(
+			'/admin/subscription/update',
+			SubscriptionController.subscriptionUpdateValidator,
+			new SubscriptionController().update
+		);
+		app.get(
+			'/admin/subscription/get/:subscriptionId',
+			SubscriptionController.subscriptionGetValidator,
+			new SubscriptionController().get
+		);
+		app.get(
+			'/admin/subscription/list',
+			SubscriptionController.subscriptionListValidator,
+			new SubscriptionController().list
+		);
+		app.delete(
+			'/admin/subscription/cancel',
+			SubscriptionController.subscriptionCancelValidator,
+			new SubscriptionController().cancel
+		);
+		app.post(
+			'/admin/subscription/resume',
+			SubscriptionController.subscriptionResumeValidator,
+			new SubscriptionController().resume
+		);
 
 		// Checkout session
-		app.post('/admin/checkout/session/create', CheckoutSessionController.checkoutSessionCreateValidator, new CheckoutSessionController().create);
+		app.post(
+			'/admin/checkout/session/create',
+			CheckoutSessionController.checkoutSessionCreateValidator,
+			new CheckoutSessionController().create
+		);
 
 		// Webhook
 		app.post('/admin/webhook', new WebhookController().handleWebhook);

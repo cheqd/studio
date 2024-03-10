@@ -7,27 +7,21 @@ import type { PortalCustomerGetUnsuccessfulResponseBody } from '../../types/port
 dotenv.config();
 
 export class PortalCustomerController {
-    static portalCustomerGetValidator = [
-        check('logToUserId')
-            .optional()
-            .isString()
-            .withMessage('logToUserId should be a string')
-            .bail(),
-    ];
+	static portalCustomerGetValidator = [
+		check('logToUserId').optional().isString().withMessage('logToUserId should be a string').bail(),
+	];
 
-    async get(request: Request, response: Response) {
-        const result = validationResult(request);
-        // handle error
-        if (!result.isEmpty()) {
-            return response.status(400).json({ 
-                error: result.array().pop()?.msg 
-            } satisfies PortalCustomerGetUnsuccessfulResponseBody);
-        }
+	async get(request: Request, response: Response) {
+		const result = validationResult(request);
+		// handle error
+		if (!result.isEmpty()) {
+			return response.status(400).json({
+				error: result.array().pop()?.msg,
+			} satisfies PortalCustomerGetUnsuccessfulResponseBody);
+		}
 
-        
-
-        return response.status(500).json({
-            error: "Not implemented yet"
-        })
-    }   
+		return response.status(500).json({
+			error: 'Not implemented yet',
+		});
+	}
 }

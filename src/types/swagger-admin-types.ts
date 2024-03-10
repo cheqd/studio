@@ -64,8 +64,8 @@
  *         idempotencyKey:
  *           type: string
  *           description: The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.
- *           example: 1234567890
- * 
+ *           example: abcdefghijklmnopqrstuvwxyz
+ *
  *     SubscriptionCreateResponseBody:
  *       description: The response body for creating a subscription
  *       type: object
@@ -80,14 +80,14 @@
  *         subscriptionId:
  *           type: string
  *           description: The subscription id
- *           example: sub_1234567890      
+ *           example: sub_1234567890
  *         updateParams:
  *           type: object
  *           description: The subscription update parameters. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/update)
  *         idempotencyKey:
  *           type: string
  *           description: The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.
- *           example: 1234567890
+ *           example: abcdefghijklmnopqrstuvwxyz
  *     SubscriptionUpdateResponseBody:
  *       description: The response body for updating a subscription
  *       type: object
@@ -125,7 +125,7 @@
  *         subscriptions:
  *           type: array
  *           items:
- *             type: object 
+ *             type: object
  *             description: A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object]
  *     SubscriptionCancelRequestBody:
  *       description: The request body for canceling a subscription
@@ -145,7 +145,7 @@
  *         idempotencyKey:
  *           type: string
  *           description: The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.
- *           example: 1234567890
+ *           example: abcdefghijklmnopqrstuvwxyz
  *     SubscriptionResumeRequestBody:
  *       description: The request body for resuming a subscription
  *       type: object
@@ -157,7 +157,7 @@
  *         idempotencyKey:
  *            type: string
  *            description: The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.
- *            example: 1234567890
+ *            example: abcdefghijklmnopqrstuvwxyz
  *     SubscriptionResumeResponseBody:
  *       description: The response body for resuming a subscription
  *       type: object
@@ -184,7 +184,7 @@
  *         idempotencyKey:
  *           type: string
  *           description: The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.
- *           example: 1234567890
+ *           example: abcdefghijklmnopqrstuvwxyz
  *     NotFoundError:
  *       description: The requested resource could not be found but may be available in the future. Subsequent requests by the client are permissible.
  *       type: object

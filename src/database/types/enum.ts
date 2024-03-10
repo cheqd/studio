@@ -8,7 +8,15 @@ export const categoryEnum = {
 	SUBSCRIPTION: 'subscription',
 
 	toStringList: function (): string[] {
-		return [this.DID, this.RESOURCE, this.CREDENTIAL, this.CREDENTIAL_STATUS, this.PRESENTATION, this.KEY, this.SUBSCRIPTION];
+		return [
+			this.DID,
+			this.RESOURCE,
+			this.CREDENTIAL,
+			this.CREDENTIAL_STATUS,
+			this.PRESENTATION,
+			this.KEY,
+			this.SUBSCRIPTION,
+		];
 	},
 };
 

@@ -154,4 +154,3 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 		}
 	}
 }
-

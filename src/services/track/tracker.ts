@@ -1,11 +1,8 @@
 import EventEmitter from 'node:events';
 import type { INotifyMessage, ITrackOperation } from '../../types/track.js';
 import { DatadogNotifier, LoggerNotifier } from './notifiers.js';
-import {
-	DBOperationSubscriber,
-} from './operation-subscriber.js';
-import {
-	ResourceSubscriber} from './api/resource-subscriber.js';
+import { DBOperationSubscriber } from './operation-subscriber.js';
+import { ResourceSubscriber } from './api/resource-subscriber.js';
 import { PresentationSubscriber } from './api/presentation-subscriber.js';
 import { CredentialStatusSubscriber } from './api/credential-status-subscriber.js';
 import { DIDSubscriber } from './api/did-subscriber.js';
@@ -14,7 +11,7 @@ import type { ITrackType } from './types.js';
 import { ENABLE_DATADOG } from '../../types/constants.js';
 import { SubmitSubject, TrackSubject } from './observer.js';
 import type { ISubmitOperation } from './submitter.js';
-import { PortalAccountCreateSubmitter } from "./admin/account-submitter.js";
+import { PortalAccountCreateSubmitter } from './admin/account-submitter.js';
 import { SubscriptionSubmitter } from './admin/subscription-submitter.js';
 
 export class EventTracker {
