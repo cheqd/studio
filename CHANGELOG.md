@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.18.1](https://github.com/cheqd/credential-service/compare/2.18.0...2.18.1) (2024-03-12)
+
+
+### Bug Fixes
+
+* Get rid of tracking data corruption ([#496](https://github.com/cheqd/credential-service/issues/496)) ([6b50ee8](https://github.com/cheqd/credential-service/commit/6b50ee81ada4e4d06a73c5db57df38c18855ff63)), closes [#490](https://github.com/cheqd/credential-service/issues/490)
+
 ## [2.18.1-develop.1](https://github.com/cheqd/credential-service/compare/2.18.0...2.18.1-develop.1) (2024-03-08)
 
 
