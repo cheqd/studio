@@ -62,7 +62,7 @@ export const VC_REMOVE_ORIGINAL_FIELDS = true;
 export const CORS_ERROR_MSG = 'The CORS policy for this site does not allow access from the specified Origin.';
 
 // Verida
-export const POLYGON_RPC_URL = 'https://rpc-mumbai.maticvigil.com';
+export const POLYGON_RPC_URL = 'https://rpc.ankr.com/polygon_mumbai';
 export const VERIDA_APP_NAME = 'Cheqd Verida Connector';
 // Schema to store a Verifiable Credential on the Verida Network.
 export const VERIDA_CREDENTIAL_RECORD_SCHEMA = 'https://common.schemas.verida.io/credential/base/v0.2.0/schema.json';
