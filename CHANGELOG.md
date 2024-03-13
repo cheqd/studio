@@ -1,5 +1,7 @@
 # Changelog
 
+## [2.18.3](https://github.com/cheqd/credential-service/compare/2.18.2...2.18.3) (2024-03-13)
+
 ## [2.18.2](https://github.com/cheqd/credential-service/compare/2.18.1...2.18.2) (2024-03-13)
 
 ## [2.18.1](https://github.com/cheqd/credential-service/compare/2.18.0...2.18.1) (2024-03-12)
