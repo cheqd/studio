@@ -200,7 +200,7 @@ export class ResourceSubscriber extends BaseOperationObserver implements IObserv
 			// Just skip this operation
 			return;
 		}
-		const resourceOperation = {...trackOperation};
+		const resourceOperation = { ...trackOperation };
 		resourceOperation.category = OperationCategoryNameEnum.RESOURCE;
 		resourceOperation.name = OperationNameEnum.RESOURCE_CREATE;
 		// tracking resource creation in DB
