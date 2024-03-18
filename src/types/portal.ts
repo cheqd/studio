@@ -26,24 +26,25 @@ export type PriceListUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 // Subscription
 // Create
 export type SubscriptionCreateRequestBody = {
-	items: [{ price: string }];
+	price: string;
+	successURL: string;
+	cancelURL: string;
+	quantity?: number;
 	idempotencyKey?: string;
 };
 
 export type SubscriptionCreateResponseBody = {
-	subscription: Stripe.Response<Stripe.Subscription>;
+	clientSecret: Stripe.Checkout.Session['client_secret'];
+};
+
+export type SubscriptionUpdateResponseBody = {
+	clientSecret: string;
 };
 
 // Update
 export type SubscriptionUpdateRequestBody = {
-	subscriptionId: string;
-	updateParams: Stripe.SubscriptionUpdateParams;
-	idempotencyKey?: string;
-};
-
-export type SubscriptionUpdateResponseBody = {
-	subscription: Stripe.Response<Stripe.Subscription>;
-};
+	returnUrl: string
+}
 
 // Get
 export type SubscriptionGetRequestBody = {
@@ -92,19 +93,6 @@ export type SubscriptionResumeUnsuccessfulResponseBody = UnsuccessfulResponseBod
 
 export type PortalCustomerGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
-// Checkout Session
-export type CheckoutSessionCreateRequestBody = {
-	price: string;
-	successURL: string;
-	cancelURL: string;
-	quantity?: number;
-	idempotencyKey?: string;
-};
-export type CheckoutSessionCreateResponseBody = {
-	clientSecret: Stripe.Checkout.Session['client_secret'];
-};
-
-export type CheckoutSessionCreateUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 // Utils
 
 export type PaymentBehavior = Stripe.SubscriptionCreateParams.PaymentBehavior;

@@ -48,31 +48,33 @@
  *       description: The request body for creating a subscription
  *       type: object
  *       properties:
- *         customerId:
+ *         price:
  *           type: string
- *           description: The Stripe customer id
- *           example: cus_1234567890
- *         items:
- *           type: array
- *           items:
- *             type: object
- *             properties:
- *               price:
- *                 type: string
- *                 description: The price id
- *                 example: price_1234567890
+ *           description: The price id
+ *           example: price_1234567890
+ *         successURL:
+ *           type: string
+ *           description: The URL to redirect to after the customer sucessfully completes the checkout
+ *           example: https://example.com/success
+ *         cancelURL:
+ *           type: string
+ *           description: The URL to redirect to after the customer cancels the checkout
+ *           example: https://example.com/cancel
  *         idempotencyKey:
  *           type: string
  *           description: The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.
  *           example: abcdefghijklmnopqrstuvwxyz
- *
  *     SubscriptionCreateResponseBody:
  *       description: The response body for creating a subscription
  *       type: object
  *       properties:
  *         subscription:
  *           type: object
- *           description: A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object)
+ *           description: An object with link to checkout session. For more information see the [Stripe API documentation](https://docs.stripe.com/api/checkout/sessions/object)
+ *           properties:
+ *             url:
+ *               type: string
+ *               description: URL which user should follow to manage subscription
  *     SubscriptionUpdateRequestBody:
  *       description: The request body for updating a subscription
  *       type: object
@@ -94,7 +96,11 @@
  *       properties:
  *         subscription:
  *           type: object
- *           description: A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object)
+ *           description: Object with redirect url inside
+ *           properties:
+ *             clientSecret:
+ *               type: string
+ *               description: URL with session URL rediect to
  *     SubscriptionGetRequestBody:
  *       description: The request body for getting a subscription
  *       type: object
@@ -165,26 +171,6 @@
  *         subscription:
  *           type: object
  *           description: A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object]
- *     CheckoutSessionCreateRequestBody:
- *       description: The request body for creating a checkout session
- *       type: object
- *       properties:
- *         price:
- *           type: string
- *           description: The price id
- *           example: price_1234567890
- *         successURL:
- *           type: string
- *           description: The URL to redirect to after the customer sucessfully completes the checkout
- *           example: https://example.com/success
- *         cancelURL:
- *           type: string
- *           description: The URL to redirect to after the customer cancels the checkout
- *           example: https://example.com/cancel
- *         idempotencyKey:
- *           type: string
- *           description: The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.
- *           example: abcdefghijklmnopqrstuvwxyz
  *     NotFoundError:
  *       description: The requested resource could not be found but may be available in the future. Subsequent requests by the client are permissible.
  *       type: object

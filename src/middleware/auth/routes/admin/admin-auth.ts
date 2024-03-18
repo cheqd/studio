@@ -5,18 +5,17 @@ import type { IAuthResponse } from '../../../../types/authentication.js';
 export class AdminHandler extends BaseAuthHandler {
 	constructor() {
 		super();
-		// ToDo: define how to get namespace information
-		this.registerRoute('/admin/checkout/session/create', 'POST', 'admin:checkout:session:create:testnet', {
-			skipNamespace: true,
-		});
-		this.registerRoute('/admin/checkout/session/create', 'POST', 'admin:checkout:session:create:mainnet', {
-			skipNamespace: true,
-		});
 		// Subscriptions
 		this.registerRoute('/admin/subscription/list', 'GET', 'admin:subscription:list:testnet', {
 			skipNamespace: true,
 		});
 		this.registerRoute('/admin/subscription/list', 'GET', 'admin:subscription:list:mainnet', {
+			skipNamespace: true,
+		});
+		this.registerRoute('/admin/subscription/update', 'POST', 'admin:subscription:update:testnet', {
+			skipNamespace: true,
+		});
+		this.registerRoute('/admin/subscription/update', 'POST', 'admin:subscription:update:mainnet', {
 			skipNamespace: true,
 		});
 		this.registerRoute('/admin/subscription/get', 'GET', 'admin:subscription:get:testnet', { skipNamespace: true });

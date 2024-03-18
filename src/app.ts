@@ -31,7 +31,6 @@ import { ProductController } from './controllers/admin/product.js';
 import { SubscriptionController } from './controllers/admin/subscriptions.js';
 import { PriceController } from './controllers/admin/prices.js';
 import { WebhookController } from './controllers/admin/webhook.js';
-import { CheckoutSessionController } from './controllers/admin/checkout-session.js';
 
 let swaggerOptions = {};
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -245,8 +244,7 @@ class App {
 			new SubscriptionController().update
 		);
 		app.get(
-			'/admin/subscription/get/:subscriptionId',
-			SubscriptionController.subscriptionGetValidator,
+			'/admin/subscription/get',
 			new SubscriptionController().get
 		);
 		app.get(
@@ -263,13 +261,6 @@ class App {
 			'/admin/subscription/resume',
 			SubscriptionController.subscriptionResumeValidator,
 			new SubscriptionController().resume
-		);
-
-		// Checkout session
-		app.post(
-			'/admin/checkout/session/create',
-			CheckoutSessionController.checkoutSessionCreateValidator,
-			new CheckoutSessionController().create
 		);
 
 		// Webhook

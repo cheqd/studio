@@ -17,8 +17,7 @@ import type {
 	SubscriptionResumeUnsuccessfulResponseBody,
 	SubscriptionResumeResponseBody,
 	SubscriptionResumeRequestBody,
-	SubscriptionCancelRequestBody,
-	PaymentBehavior,
+	SubscriptionCancelRequestBody
 } from '../../types/portal.js';
 import { StatusCodes } from 'http-status-codes';
 import { validationResult } from '../validator/index.js';
@@ -31,38 +30,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export class SubscriptionController {
 	static subscriptionCreateValidator = [
-		check('customerId').exists().withMessage('customerId was not provided').bail(),
-		check('items')
-			.exists()
-			.withMessage('items was not provided')
-			.bail()
-			.isArray()
-			.withMessage('items should be an array')
-			.bail(),
-		check('items.*.price')
-			.exists()
-			.withMessage('price was not provided')
-			.bail()
-			.isString()
-			.withMessage('price should be a string')
-			.bail(),
-		check('idempotencyKey').optional().isString().withMessage('idempotencyKey should be a string').bail(),
+		check('price').exists().withMessage('price was not provided').bail().isString().withMessage('price should be a string').bail(),
+		check('successURL').exists().withMessage('successURL was not provided').bail().isString().withMessage('successURL should be a string').bail(),
+		check('cancelURL').exists().withMessage('cancelURL was not provided').bail().isString().withMessage('cancelURL should be a string').bail(),
+		check('quantity').optional().isInt().withMessage('quantity should be an integer').bail(),
 	];
 
 	static subscriptionUpdateValidator = [
-		check('subscriptionId').exists().withMessage('subscriptionId was not provided').bail(),
-		check('updateParams').exists().withMessage('updateParams was not provided').bail(),
-		check('idempotencyKey').optional().isString().withMessage('idempotencyKey should be a string').bail(),
-	];
-
-	static subscriptionGetValidator = [
-		check('subscriptionId')
-			.exists()
-			.withMessage('subscriptionId was not provided')
-			.bail()
-			.isString()
-			.withMessage('subscriptionId should be a string')
-			.bail(),
+		check('returnUrl').exists().withMessage('returnUrl was not provided').bail().isString().withMessage('returnUrl should be a string').bail(),
 	];
 
 	static subscriptionListValidator = [
@@ -121,33 +96,48 @@ export class SubscriptionController {
 	async create(request: Request, response: Response) {
 		// Validate request
 		const result = validationResult(request);
+		// handle error
 		if (!result.isEmpty()) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: result.array().pop()?.msg,
 			} satisfies SubscriptionCreateUnsuccessfulResponseBody);
 		}
 
-		const { items, idempotencyKey } = request.body satisfies SubscriptionCreateRequestBody;
+		const { price, successURL, cancelURL, quantity, idempotencyKey } =
+			request.body satisfies SubscriptionCreateRequestBody;
 		try {
-			// Create the subscription
-			const subscription = await stripe.subscriptions.create(
+			const session = await stripe.checkout.sessions.create(
 				{
+					mode: 'subscription',
 					customer: response.locals.customer.stripeCustomerId,
-					items: items,
-					payment_behavior: 'default_incomplete' as PaymentBehavior,
+					line_items: [
+						{
+							price: price,
+							quantity: quantity || 1,
+						},
+					],
+					success_url: successURL,
+					cancel_url: cancelURL,
 				},
 				{
-					idempotencyKey: idempotencyKey,
+					idempotencyKey,
 				}
 			);
-			if (subscription.lastResponse?.statusCode !== StatusCodes.OK) {
+
+			if (session.lastResponse?.statusCode !== StatusCodes.OK) {
 				return response.status(StatusCodes.BAD_GATEWAY).json({
-					error: `Subscription was not created`,
+					error: 'Checkout session was not created',
 				} satisfies SubscriptionCreateUnsuccessfulResponseBody);
 			}
 
-			return response.status(StatusCodes.CREATED).json({
-				subscription: subscription,
+			if (!session.url) {
+				return response.status(StatusCodes.BAD_GATEWAY).json({
+					error: 'Checkout session URL was not provided',
+				} satisfies SubscriptionCreateUnsuccessfulResponseBody);
+			}
+
+			return response.json({
+				clientSecret: session.url as string,
 			} satisfies SubscriptionCreateResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -165,10 +155,10 @@ export class SubscriptionController {
 	 *     description: Updates an existing subscription
 	 *     tags: [Subscription]
 	 *     requestBody:
-	 *       content:
-	 *         application/json:
-	 *           schema:
-	 *             $ref: '#/components/schemas/SubscriptionUpdateRequestBody'
+	 *     content:
+	 * 	     application/json:
+	 * 	       schema:
+	 * 	         $ref: '#/components/schemas/SubscriptionUpdateRequestBody'
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -192,20 +182,35 @@ export class SubscriptionController {
 			} satisfies SubscriptionUpdateUnsuccessfulResponseBody);
 		}
 
-		const { subscriptionId, updateParams, idempotencyKey } = request.body satisfies SubscriptionUpdateRequestBody;
+		const { returnUrl } = request.body satisfies SubscriptionUpdateRequestBody;
+
 		try {
-			// Update the subscription
-			const subscription = await stripe.subscriptions.update(subscriptionId, updateParams, {
-				idempotencyKey: idempotencyKey,
+			// Sync with Stripe
+			await SubscriptionService.instance.stripeSync(response.locals.customer);
+
+			// Get the subscription object from the DB
+			const subscription = await SubscriptionService.instance.findOne({customer: response.locals.customer});
+			if (!subscription) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: `Subscription was not found`,
+				} satisfies SubscriptionUpdateUnsuccessfulResponseBody);
+			}
+
+			// Create portal link
+			const session = await stripe.billingPortal.sessions.create({
+				customer: response.locals.customer.stripeCustomerId,
+				return_url: returnUrl,
 			});
-			if (subscription.lastResponse?.statusCode !== StatusCodes.OK) {
+
+			if (session.lastResponse?.statusCode !== StatusCodes.OK) {
 				return response.status(StatusCodes.BAD_GATEWAY).json({
-					error: `Subscription was not updated`,
+					error: 'Billing portal session for upgrading the subscription was not created',
 				} satisfies SubscriptionUpdateUnsuccessfulResponseBody);
 			}
 			return response.status(StatusCodes.OK).json({
-				subscription: subscription,
+				clientSecret: session.url,
 			} satisfies SubscriptionUpdateResponseBody);
+
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -280,13 +285,6 @@ export class SubscriptionController {
 	 *     summary: Get a subscription
 	 *     description: Get a subscription
 	 *     tags: [Subscription]
-	 *     parameters:
-	 *       - in: path
-	 *         name: subscriptionId
-	 *         schema:
-	 *           type: string
-	 *           description: The subscription id
-	 *         required: true
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -311,12 +309,17 @@ export class SubscriptionController {
 				error: result.array().pop()?.msg,
 			} satisfies SubscriptionGetUnsuccessfulResponseBody);
 		}
-		const subscriptionId = request.params.subscriptionId;
 		try {
 			// Sync our DB with Stripe
 			await SubscriptionService.instance.stripeSync(response.locals.customer);
-			// Get the subscription
-			const subscription = await stripe.subscriptions.retrieve(subscriptionId as string);
+			// Get the subscriptionId from the request
+			const _sub = await SubscriptionService.instance.findOne({customer: response.locals.customer});
+			if (!_sub) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: `Subscription was not found`,
+				} satisfies SubscriptionGetUnsuccessfulResponseBody);
+			}
+			const subscription = await stripe.subscriptions.retrieve(_sub.subscriptionId as string);
 			if (subscription.lastResponse?.statusCode !== StatusCodes.OK) {
 				return response.status(StatusCodes.NOT_FOUND).json({
 					error: `Subscription was not found`,
