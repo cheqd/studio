@@ -280,7 +280,7 @@ export class SubscriptionController {
 	/**
 	 * @openapi
 	 *
-	 * /admin/subscription/get/{subscriptionId}:
+	 * /admin/subscription/get:
 	 *   get:
 	 *     summary: Get a subscription
 	 *     description: Get a subscription
