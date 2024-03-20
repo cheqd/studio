@@ -156,9 +156,9 @@ export class SubscriptionController {
 	 *     tags: [Subscription]
 	 *     requestBody:
 	 *     content:
-	 * 	     application/json:
-	 * 	       schema:
-	 * 	         $ref: '#/components/schemas/SubscriptionUpdateRequestBody'
+	 *       application/json:
+	 *         schema:
+	 *           $ref: '#/components/schemas/SubscriptionUpdateRequestBody'
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.

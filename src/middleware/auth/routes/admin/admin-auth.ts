@@ -6,6 +6,12 @@ export class AdminHandler extends BaseAuthHandler {
 	constructor() {
 		super();
 		// Subscriptions
+		this.registerRoute('/admin/subscription/create', 'POST', 'admin:subscription:create:testnet', {
+			skipNamespace: true,
+		});
+		this.registerRoute('/admin/subscription/create', 'POST', 'admin:subscription:create:mainnet', {
+			skipNamespace: true,
+		});
 		this.registerRoute('/admin/subscription/list', 'GET', 'admin:subscription:list:testnet', {
 			skipNamespace: true,
 		});
