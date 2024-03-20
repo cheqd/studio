@@ -243,10 +243,7 @@ class App {
 			SubscriptionController.subscriptionUpdateValidator,
 			new SubscriptionController().update
 		);
-		app.get(
-			'/admin/subscription/get',
-			new SubscriptionController().get
-		);
+		app.get('/admin/subscription/get', new SubscriptionController().get);
 		app.get(
 			'/admin/subscription/list',
 			SubscriptionController.subscriptionListValidator,

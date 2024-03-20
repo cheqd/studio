@@ -92,7 +92,13 @@ export class SubscriptionService {
 			stripeCustomerId = user?.customer.stripeCustomerId as string;
 		}
 
-		const subscriptions = await stripe.subscriptions.list({ customer: stripeCustomerId });
+		// ToDo: add pagination
+
+		const subscriptions = await stripe.subscriptions.list({ 
+			customer: stripeCustomerId,
+			status: 'all',
+			limit: 100,
+		});
 		// Get list of all subscription and sort them by created time to make sure that we are processing them in the correct order
 		for (const subscription of subscriptions.data.sort((a, b) => a.created - b.created)) {
 			const existing = await this.subscriptionRepository.findOne({
@@ -129,6 +135,7 @@ export class SubscriptionService {
 					severity: 'info',
 				});
 			} else {
+				// ToDo: Update only if there are changes
 				const res = await this.update(
 					subscription.id,
 					subscription.status,

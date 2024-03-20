@@ -60,6 +60,10 @@
  *           type: string
  *           description: The URL to redirect to after the customer cancels the checkout
  *           example: https://example.com/cancel
+ *         idempotencyKey:
+ *           type: string
+ *           description: The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.
+ *           example: abcdefghijklmnopqrstuvwxyz
  *     SubscriptionCreateResponseBody:
  *       description: The response body for creating a subscription
  *       type: object
@@ -75,7 +79,7 @@
  *       description: The request body for updating a subscription
  *       type: object
  *       properties:
- *         returnUrl:
+ *         returnURL:
  *           type: string
  *           description: URL which is used to redirect to the page with ability to update the subscription
  *     SubscriptionUpdateResponseBody:

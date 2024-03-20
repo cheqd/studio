@@ -43,8 +43,8 @@ export type SubscriptionUpdateResponseBody = {
 
 // Update
 export type SubscriptionUpdateRequestBody = {
-	returnUrl: string
-}
+	returnUrl: string;
+};
 
 // Get
 export type SubscriptionGetRequestBody = {

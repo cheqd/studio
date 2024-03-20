@@ -17,7 +17,7 @@ import type {
 	SubscriptionResumeUnsuccessfulResponseBody,
 	SubscriptionResumeResponseBody,
 	SubscriptionResumeRequestBody,
-	SubscriptionCancelRequestBody
+	SubscriptionCancelRequestBody,
 } from '../../types/portal.js';
 import { StatusCodes } from 'http-status-codes';
 import { validationResult } from '../validator/index.js';
@@ -30,14 +30,39 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export class SubscriptionController {
 	static subscriptionCreateValidator = [
-		check('price').exists().withMessage('price was not provided').bail().isString().withMessage('price should be a string').bail(),
-		check('successURL').exists().withMessage('successURL was not provided').bail().isString().withMessage('successURL should be a string').bail(),
-		check('cancelURL').exists().withMessage('cancelURL was not provided').bail().isString().withMessage('cancelURL should be a string').bail(),
+		check('price')
+			.exists()
+			.withMessage('price was not provided')
+			.bail()
+			.isString()
+			.withMessage('price should be a string')
+			.bail(),
+		check('successURL')
+			.exists()
+			.withMessage('successURL was not provided')
+			.bail()
+			.isString()
+			.withMessage('successURL should be a string')
+			.bail(),
+		check('cancelURL')
+			.exists()
+			.withMessage('cancelURL was not provided')
+			.bail()
+			.isString()
+			.withMessage('cancelURL should be a string')
+			.bail(),
 		check('quantity').optional().isInt().withMessage('quantity should be an integer').bail(),
+		check('idempotencyKey').optional().isString().withMessage('idempotencyKey should be a string').bail(),
 	];
 
 	static subscriptionUpdateValidator = [
-		check('returnUrl').exists().withMessage('returnUrl was not provided').bail().isString().withMessage('returnUrl should be a string').bail(),
+		check('returnURL')
+			.exists()
+			.withMessage('returnUrl was not provided')
+			.bail()
+			.isString()
+			.withMessage('returnUrl should be a string')
+			.bail(),
 	];
 
 	static subscriptionListValidator = [
@@ -93,6 +118,7 @@ export class SubscriptionController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+
 	async create(request: Request, response: Response) {
 		// Validate request
 		const result = validationResult(request);
@@ -189,7 +215,7 @@ export class SubscriptionController {
 			await SubscriptionService.instance.stripeSync(response.locals.customer);
 
 			// Get the subscription object from the DB
-			const subscription = await SubscriptionService.instance.findOne({customer: response.locals.customer});
+			const subscription = await SubscriptionService.instance.findOne({ customer: response.locals.customer });
 			if (!subscription) {
 				return response.status(StatusCodes.NOT_FOUND).json({
 					error: `Subscription was not found`,
@@ -210,7 +236,6 @@ export class SubscriptionController {
 			return response.status(StatusCodes.OK).json({
 				clientSecret: session.url,
 			} satisfies SubscriptionUpdateResponseBody);
-
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -313,7 +338,10 @@ export class SubscriptionController {
 			// Sync our DB with Stripe
 			await SubscriptionService.instance.stripeSync(response.locals.customer);
 			// Get the subscriptionId from the request
-			const _sub = await SubscriptionService.instance.findOne({customer: response.locals.customer});
+			const _sub = await SubscriptionService.instance.findOne({ 
+				customer: response.locals.customer,
+				status: 'active'
+			});
 			if (!_sub) {
 				return response.status(StatusCodes.NOT_FOUND).json({
 					error: `Subscription was not found`,
