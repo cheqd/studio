@@ -155,10 +155,10 @@ export class SubscriptionController {
 	 *     description: Updates an existing subscription
 	 *     tags: [Subscription]
 	 *     requestBody:
-	 *     content:
-	 *       application/json:
-	 *         schema:
-	 *           $ref: '#/components/schemas/SubscriptionUpdateRequestBody'
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             $ref: '#/components/schemas/SubscriptionUpdateRequestBody'
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.

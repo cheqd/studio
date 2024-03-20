@@ -219,11 +219,12 @@
         "tags": [
           "Subscription"
         ],
-        "requestBody": null,
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SubscriptionUpdateRequestBody"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionUpdateRequestBody"
+              }
             }
           }
         },
