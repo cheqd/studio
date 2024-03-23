@@ -9,7 +9,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-export class M2MTokenUserInfoFetcher extends AuthReturn implements IUserInfoFetcher {
+export class M2MCredsTokenUserInfoFetcher extends AuthReturn implements IUserInfoFetcher {
 	token: string;
 
 	constructor(token: string) {

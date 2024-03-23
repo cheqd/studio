@@ -74,10 +74,7 @@ export class PortalUserInfoFetcher extends AuthReturn implements IUserInfoFetche
 			if (!payload.sub) {
 				return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: No sub found in the token.`);
 			}
-			const { error, data: scopes } = await oauthProvider.getAppScopes(payload.sub);
-			if (error) {
-				return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: No scopes found for the roles.`);
-			}
+			const scopes = payload.scope ? (payload.scope as string).split(' ') : [];
 			this.setScopes(scopes);
 			return this.returnOk();
 		} catch (error) {
