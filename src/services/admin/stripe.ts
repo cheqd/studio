@@ -7,15 +7,25 @@ import type { SubscriptionEntity } from '../../database/entities/subscription.en
 import { builSubmitOperation } from '../track/helpers.js';
 import { OperationNameEnum } from '../../types/constants.js';
 import { SubscriptionSubmitter } from '../track/admin/subscription-submitter.js';
+import type { NextFunction } from 'express';
 
 dotenv.config();
 
 export class StripeService {
 
     submitter: SubscriptionSubmitter;
+    private isFullySynced = false;
 
     constructor() {
         this.submitter = new SubscriptionSubmitter(eventTracker.getEmitter());
+    }
+
+    async syncAll(next: NextFunction): Promise<void> {
+        if (!this.isFullySynced) {
+            await this.syncFull();
+            this.isFullySynced = true;
+        }
+        next()
     }
 
 	async syncFull(): Promise<void> {
@@ -59,6 +69,45 @@ export class StripeService {
 			}
 		}
 	}
+
+    async syncOne(customer: CustomerEntity): Promise<void> {
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        
+        const local = await SubscriptionService.instance.findOne({
+            customer: customer,
+            status: 'active',
+        });
+        if (!local) {
+            eventTracker.notify({
+                message: EventTracker.compileBasicNotification(
+                    `Active subscription not found for customer with id ${customer.customerId}`,
+                    'Subscription syncronization'
+                ),
+                severity: 'debug',
+            });
+            return;
+        }
+        const subscriptionId = local.subscriptionId;
+        const remote = await stripe.subscriptions.retrieve(subscriptionId);
+        if (!remote) {
+            eventTracker.notify({
+                message: EventTracker.compileBasicNotification(
+                    `Subscription with id ${subscriptionId} could not be retrieved from Stripe`,
+                    'Subscription syncronization'
+                ),
+                severity: 'error',
+            });
+            return;
+        }
+        const current = await SubscriptionService.instance.subscriptionRepository.findOne({
+            where: { subscriptionId: remote.id },
+        });
+        if (current) {
+            await this.updateSubscription(remote, current);
+        } else {
+            await this.createSubscription(remote);
+        }
+    }
 
 	async createSubscription(subscription: Stripe.Subscription, customer?: CustomerEntity): Promise<void> {
 		await this.submitter.submitSubscriptionCreate(builSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_CREATE, {customer: customer}));

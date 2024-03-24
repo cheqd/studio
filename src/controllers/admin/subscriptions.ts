@@ -28,7 +28,7 @@ import { validate } from '../validator/decorator.js';
 
 dotenv.config();
 
-export function stripeSync(target: any, key: string, descriptor: PropertyDescriptor | undefined) {
+export function syncCustomer(target: any, key: string, descriptor: PropertyDescriptor | undefined) {
 	// save a reference to the original method this way we keep the values currently in the
 	// descriptor and don't overwrite what another decorator might have done to the descriptor.
 	if (descriptor === undefined) {
@@ -56,6 +56,35 @@ export function stripeSync(target: any, key: string, descriptor: PropertyDescrip
 	return descriptor;
 }
 
+export function syncOne(target: any, key: string, descriptor: PropertyDescriptor | undefined) {
+	// save a reference to the original method this way we keep the values currently in the
+	// descriptor and don't overwrite what another decorator might have done to the descriptor.
+	if (descriptor === undefined) {
+		descriptor = Object.getOwnPropertyDescriptor(target, key) as PropertyDescriptor;
+	}
+
+	const originalMethod = descriptor.value;
+
+	//editing the descriptor/value parameter
+	descriptor.value = async function (...args: any[]) {
+		const response: Response = args[1];
+		if (response.locals.customer) {
+			try {
+				await stripeService.syncOne(response.locals.customer);
+			} catch (error) {
+				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+					error: `Internal error: ${(error as Error)?.message || error}`,
+				} satisfies UnsuccessfulResponseBody);
+			}
+		}
+		return originalMethod.apply(this, args);
+	};
+
+	// return edited descriptor as opposed to overwriting the descriptor
+	return descriptor;
+}
+
+
 export class SubscriptionController {
 	static subscriptionCreateValidator = [
 		check('price')
@@ -80,6 +109,7 @@ export class SubscriptionController {
 			.withMessage('cancelURL should be a string')
 			.bail(),
 		check('quantity').optional().isInt().withMessage('quantity should be an integer').bail(),
+		check('trialPeriodDays').optional().isInt().withMessage('trialPeriodDays should be an integer').bail(),
 		check('idempotencyKey').optional().isString().withMessage('idempotencyKey should be a string').bail(),
 	];
 
@@ -151,7 +181,7 @@ export class SubscriptionController {
 	async create(request: Request, response: Response) {
 		const stripe = response.locals.stripe as Stripe;
 
-		const { price, successURL, cancelURL, quantity, idempotencyKey } =
+		const { price, successURL, cancelURL, quantity, idempotencyKey, trialPeriodDays } =
 			request.body satisfies SubscriptionCreateRequestBody;
 		try {
 			const session = await stripe.checkout.sessions.create(
@@ -166,6 +196,9 @@ export class SubscriptionController {
 					],
 					success_url: successURL,
 					cancel_url: cancelURL,
+					subscription_data: {
+						trial_period_days: trialPeriodDays,
+					}
 				},
 				{
 					idempotencyKey,
@@ -222,7 +255,7 @@ export class SubscriptionController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	@validate
-	@stripeSync
+	@syncOne
 	async update(request: Request, response: Response) {
 		const stripe = response.locals.stripe as Stripe;
 		const { returnUrl } = request.body satisfies SubscriptionUpdateRequestBody;
@@ -288,7 +321,7 @@ export class SubscriptionController {
 	 */
 
 	@validate
-	@stripeSync
+	@syncCustomer
 	public async list(request: Request, response: Response) {
 		const stripe = response.locals.stripe as Stripe;
 		const stripeCustomerId = response.locals.customer.stripeCustomerId;
@@ -340,7 +373,7 @@ export class SubscriptionController {
 	 *         $ref: '#/components/schemas/NotFoundError'
 	 */
 	@validate
-	@stripeSync
+	@syncOne
 	async get(request: Request, response: Response) {
 		const stripe = response.locals.stripe as Stripe;
 		try {
@@ -400,7 +433,7 @@ export class SubscriptionController {
 	 *        $ref: '#/components/schemas/NotFoundError'
 	 */
 	@validate
-	@stripeSync
+	@syncOne
 	async cancel(request: Request, response: Response) {
 		const stripe = response.locals.stripe as Stripe;
 		const { subscriptionId, idempotencyKey } = request.body satisfies SubscriptionCancelRequestBody;
@@ -457,7 +490,7 @@ export class SubscriptionController {
 	 *       $ref: '#/components/schemas/NotFoundError'
 	 */
 	@validate
-	@stripeSync
+	@syncOne
 	async resume(request: Request, response: Response) {
 		const stripe = response.locals.stripe as Stripe;
 		const { subscriptionId, idempotencyKey } = request.body satisfies SubscriptionResumeRequestBody;

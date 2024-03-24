@@ -30,6 +30,7 @@ export type SubscriptionCreateRequestBody = {
 	successURL: string;
 	cancelURL: string;
 	quantity?: number;
+	trialPeriodDays?: number;
 	idempotencyKey?: string;
 };
 

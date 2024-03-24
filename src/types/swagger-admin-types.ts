@@ -60,6 +60,14 @@
  *           type: string
  *           description: The URL to redirect to after the customer cancels the checkout
  *           example: https://example.com/cancel
+ *         quantity:
+ *           type: number
+ *           description: The quantity of the product
+ *           example: 1
+ *         trialPeriodDays:
+ *           type: number
+ *           description: The number of days the customer has to pay for the product
+ *           example: 7
  *         idempotencyKey:
  *           type: string
  *           description: The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.
