@@ -1,4 +1,4 @@
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
 import type { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
 import type {
@@ -20,28 +20,25 @@ import type {
 	SubscriptionCancelRequestBody,
 } from '../../types/portal.js';
 import { StatusCodes } from 'http-status-codes';
-import { check, validationResult } from '../validator/index.js';
+import { check } from '../validator/index.js';
 import { SubscriptionService } from '../../services/admin/subscription.js';
 import { stripeService } from '../../services/admin/stripe.js';
-import { UnsuccessfulResponseBody } from '../../types/shared.js';
+import type { UnsuccessfulResponseBody } from '../../types/shared.js';
 import { validate } from '../validator/decorator.js';
 
 dotenv.config();
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
 export function stripeSync(target: any, key: string, descriptor: PropertyDescriptor | undefined) {
- 
-    // save a reference to the original method this way we keep the values currently in the
-    // descriptor and don't overwrite what another decorator might have done to the descriptor.
-    if(descriptor === undefined) {
-      descriptor = Object.getOwnPropertyDescriptor(target, key) as PropertyDescriptor;
-    }
+	// save a reference to the original method this way we keep the values currently in the
+	// descriptor and don't overwrite what another decorator might have done to the descriptor.
+	if (descriptor === undefined) {
+		descriptor = Object.getOwnPropertyDescriptor(target, key) as PropertyDescriptor;
+	}
 
-    const originalMethod = descriptor.value;
- 
-    //editing the descriptor/value parameter
-    descriptor.value = async function (...args: any[]) {
+	const originalMethod = descriptor.value;
+
+	//editing the descriptor/value parameter
+	descriptor.value = async function (...args: any[]) {
 		const response: Response = args[1];
 		if (response.locals.customer) {
 			try {
@@ -53,10 +50,10 @@ export function stripeSync(target: any, key: string, descriptor: PropertyDescrip
 			}
 		}
 		return originalMethod.apply(this, args);
-    };
- 
-    // return edited descriptor as opposed to overwriting the descriptor
-    return descriptor;
+	};
+
+	// return edited descriptor as opposed to overwriting the descriptor
+	return descriptor;
 }
 
 export class SubscriptionController {
@@ -152,14 +149,7 @@ export class SubscriptionController {
 
 	@validate
 	async create(request: Request, response: Response) {
-		// Validate request
-		const result = validationResult(request);
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies SubscriptionCreateUnsuccessfulResponseBody);
-		}
+		const stripe = response.locals.stripe as Stripe;
 
 		const { price, successURL, cancelURL, quantity, idempotencyKey } =
 			request.body satisfies SubscriptionCreateRequestBody;
@@ -195,7 +185,7 @@ export class SubscriptionController {
 			}
 
 			return response.json({
-				clientSecret: session.url as string,
+				sessionURL: session.url as string,
 			} satisfies SubscriptionCreateResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -234,9 +224,9 @@ export class SubscriptionController {
 	@validate
 	@stripeSync
 	async update(request: Request, response: Response) {
+		const stripe = response.locals.stripe as Stripe;
 		const { returnUrl } = request.body satisfies SubscriptionUpdateRequestBody;
 		try {
-
 			// Get the subscription object from the DB
 			const subscription = await SubscriptionService.instance.findOne({ customer: response.locals.customer });
 			if (!subscription) {
@@ -257,7 +247,7 @@ export class SubscriptionController {
 				} satisfies SubscriptionUpdateUnsuccessfulResponseBody);
 			}
 			return response.status(StatusCodes.OK).json({
-				clientSecret: session.url,
+				sessionURL: session.url,
 			} satisfies SubscriptionUpdateResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -300,6 +290,7 @@ export class SubscriptionController {
 	@validate
 	@stripeSync
 	public async list(request: Request, response: Response) {
+		const stripe = response.locals.stripe as Stripe;
 		const stripeCustomerId = response.locals.customer.stripeCustomerId;
 		try {
 			// Get the subscriptions
@@ -351,11 +342,12 @@ export class SubscriptionController {
 	@validate
 	@stripeSync
 	async get(request: Request, response: Response) {
+		const stripe = response.locals.stripe as Stripe;
 		try {
 			// Get the subscriptionId from the request
-			const _sub = await SubscriptionService.instance.findOne({ 
+			const _sub = await SubscriptionService.instance.findOne({
 				customer: response.locals.customer,
-				status: 'active'
+				status: 'active',
 			});
 			if (!_sub) {
 				return response.status(StatusCodes.NOT_FOUND).json({
@@ -410,6 +402,7 @@ export class SubscriptionController {
 	@validate
 	@stripeSync
 	async cancel(request: Request, response: Response) {
+		const stripe = response.locals.stripe as Stripe;
 		const { subscriptionId, idempotencyKey } = request.body satisfies SubscriptionCancelRequestBody;
 
 		try {
@@ -466,13 +459,7 @@ export class SubscriptionController {
 	@validate
 	@stripeSync
 	async resume(request: Request, response: Response) {
-		// Validate request
-		const result = validationResult(request);
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies SubscriptionResumeUnsuccessfulResponseBody);
-		}
+		const stripe = response.locals.stripe as Stripe;
 		const { subscriptionId, idempotencyKey } = request.body satisfies SubscriptionResumeRequestBody;
 		try {
 			// Resume the subscription

@@ -106,11 +106,14 @@ class App {
 			swaggerUi.serveFiles(swaggerAPIDocument, swaggerOptions),
 			swaggerUi.setup(swaggerAPIDocument, swaggerOptions)
 		);
-		this.express.use(
-			'/admin/swagger',
-			swaggerUi.serveFiles(swaggerAdminDocument),
-			swaggerUi.setup(swaggerAdminDocument)
-		);
+		if (process.env.STRIPE_ENABLED === 'true') {
+			this.express.use(
+				'/admin/swagger',
+				swaggerUi.serveFiles(swaggerAdminDocument),
+				swaggerUi.setup(swaggerAdminDocument)
+			);
+			this.express.use(Middleware.setStripeClient)
+		}
 		this.express.use(auth.handleError);
 		this.express.use(async (req, res, next) => await auth.accessControl(req, res, next));
 	}
@@ -222,46 +225,48 @@ class App {
 
 		// Portal
 		// Product
-		app.get('/admin/product/list', ProductController.productListValidator, new ProductController().listProducts);
-		app.get(
-			'/admin/product/get/:productId',
-			ProductController.productGetValidator,
-			new ProductController().getProduct
-		);
+		if (process.env.STRIPE_ENABLED === 'true') {
+			app.get('/admin/product/list', ProductController.productListValidator, new ProductController().listProducts);
+			app.get(
+				'/admin/product/get/:productId',
+				ProductController.productGetValidator,
+				new ProductController().getProduct
+			);
 
-		// Prices
-		app.get('/admin/price/list', PriceController.priceListValidator, new PriceController().getListPrices);
+			// Prices
+			app.get('/admin/price/list', PriceController.priceListValidator, new PriceController().getListPrices);
 
-		// Subscription
-		app.post(
-			'/admin/subscription/create',
-			SubscriptionController.subscriptionCreateValidator,
-			new SubscriptionController().create
-		);
-		app.post(
-			'/admin/subscription/update',
-			SubscriptionController.subscriptionUpdateValidator,
-			new SubscriptionController().update
-		);
-		app.get('/admin/subscription/get', new SubscriptionController().get);
-		app.get(
-			'/admin/subscription/list',
-			SubscriptionController.subscriptionListValidator,
-			new SubscriptionController().list
-		);
-		app.delete(
-			'/admin/subscription/cancel',
-			SubscriptionController.subscriptionCancelValidator,
-			new SubscriptionController().cancel
-		);
-		app.post(
-			'/admin/subscription/resume',
-			SubscriptionController.subscriptionResumeValidator,
-			new SubscriptionController().resume
-		);
+			// Subscription
+			app.post(
+				'/admin/subscription/create',
+				SubscriptionController.subscriptionCreateValidator,
+				new SubscriptionController().create
+			);
+			app.post(
+				'/admin/subscription/update',
+				SubscriptionController.subscriptionUpdateValidator,
+				new SubscriptionController().update
+			);
+			app.get('/admin/subscription/get', new SubscriptionController().get);
+			app.get(
+				'/admin/subscription/list',
+				SubscriptionController.subscriptionListValidator,
+				new SubscriptionController().list
+			);
+			app.delete(
+				'/admin/subscription/cancel',
+				SubscriptionController.subscriptionCancelValidator,
+				new SubscriptionController().cancel
+			);
+			app.post(
+				'/admin/subscription/resume',
+				SubscriptionController.subscriptionResumeValidator,
+				new SubscriptionController().resume
+			);
 
-		// Webhook
-		app.post('/admin/webhook', new WebhookController().handleWebhook);
+			// Webhook
+			app.post('/admin/webhook', new WebhookController().handleWebhook);
+		}
 
 		// 404 for all other requests
 		app.all('*', (_req, res) => res.status(StatusCodes.BAD_REQUEST).send('Bad request'));

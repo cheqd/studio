@@ -1,4 +1,4 @@
-import { Stripe } from 'stripe';
+import type { Stripe } from 'stripe';
 import type { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
 import type {
@@ -13,8 +13,6 @@ import { check } from '../validator/index.js';
 import { validate } from '../validator/decorator.js';
 
 dotenv.config();
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export class ProductController {
 	static productListValidator = [
@@ -59,6 +57,7 @@ export class ProductController {
 	 */
 	@validate
 	async listProducts(request: Request, response: Response) {
+		const stripe = response.locals.stripe as Stripe;
 		// Get query parameters
 		const prices = request.query.prices === 'false' ? false : true;
 
@@ -133,6 +132,7 @@ export class ProductController {
 	 */
 	@validate
 	async getProduct(request: Request, response: Response) {
+		const stripe = response.locals.stripe as Stripe;
 		// Get query parameters
 		const prices = request.query.prices === 'false' ? false : true;
 		const productId = request.params.productId as string;

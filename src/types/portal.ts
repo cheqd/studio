@@ -34,11 +34,11 @@ export type SubscriptionCreateRequestBody = {
 };
 
 export type SubscriptionCreateResponseBody = {
-	clientSecret: Stripe.Checkout.Session['client_secret'];
+	sessionURL: Stripe.Checkout.Session['client_secret'];
 };
 
 export type SubscriptionUpdateResponseBody = {
-	clientSecret: string;
+	sessionURL: string;
 };
 
 // Update

@@ -1,37 +1,11 @@
+import type { CustomerEntity } from '../../../database/entities/customer.entity.js';
 import { OperationNameEnum } from '../../../types/constants.js';
 import type { INotifyMessage } from '../../../types/track.js';
 import { SubscriptionService } from '../../admin/subscription.js';
 import { CustomerService } from '../../api/customer.js';
 import type { ISubmitOperation, ISubmitSubscriptionData } from '../submitter.js';
-import { EventTracker, eventTracker } from '../tracker.js';
+import { EventTracker } from '../tracker.js';
 import type { IObserver } from '../types.js';
-
-//eslint-disable-next-line
-
-function isPromise(object: any): object is Promise<any> {
-	return object && Promise.resolve(object) === object;
-}
-
-export const eventDecorator = () => {
-	return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
-		const { value } = descriptor;
-		//eslint-disable-next-line
-		descriptor.value = async (...args: any) => {
-			try {
-				const response = value.apply(target, args);
-				return isPromise(response) ? await response : Promise.resolve(response);
-			} catch (error) {
-				eventTracker.notify({
-					message: EventTracker.compileBasicNotification(
-						`Error while calling function: ${propertyKey}: ${(error as Record<string, unknown>)?.message || error}`
-					),
-					severity: 'error',
-				} satisfies INotifyMessage);
-			}
-		};
-		return descriptor;
-	};
-};
 
 export class SubscriptionSubmitter implements IObserver {
 	private emitter: EventEmitter;
@@ -60,26 +34,30 @@ export class SubscriptionSubmitter implements IObserver {
 		}
 	}
 
-	// @eventDecorator()
 	async submitSubscriptionCreate(operation: ISubmitOperation): Promise<void> {
 		const data = operation.data as ISubmitSubscriptionData;
+		let customer: CustomerEntity | undefined = operation.options?.customer;
 		try {
-			const customers = await CustomerService.instance.find({
-				stripeCustomerId: data.stripeCustomerId,
-			});
-
-			if (customers.length !== 1) {
-				this.notify({
-					message: EventTracker.compileBasicNotification(
-						`It should be only 1 Stripe account associated with CaaS customer. Stripe accountId: ${data.stripeCustomerId}.`,
-						operation.operation
-					),
-					severity: 'error',
+			if (!customer) {
+				const customers = await CustomerService.instance.find({
+					stripeCustomerId: data.stripeCustomerId,
 				});
+
+				if (customers.length !== 1) {
+					this.notify({
+						message: EventTracker.compileBasicNotification(
+							`It should be only 1 Stripe account associated with CaaS customer. Stripe accountId: ${data.stripeCustomerId}.`,
+							operation.operation
+						),
+						severity: 'error',
+					});
+				}
+				customer = customers[0];
 			}
+
 			const subscription = await SubscriptionService.instance.create(
 				data.subscriptionId,
-				customers[0],
+				customer,
 				data.status,
 				data.currentPeriodStart,
 				data.currentPeriodEnd,
@@ -114,7 +92,6 @@ export class SubscriptionSubmitter implements IObserver {
 		}
 	}
 
-	// @eventDecorator()
 	async submitSubscriptionUpdate(operation: ISubmitOperation): Promise<void> {
 		const data = operation.data as ISubmitSubscriptionData;
 		try {
@@ -154,7 +131,6 @@ export class SubscriptionSubmitter implements IObserver {
 		}
 	}
 
-	// @eventDecorator()
 	async submitSubscriptionCancel(operation: ISubmitOperation): Promise<void> {
 		const data = operation.data as ISubmitSubscriptionData;
 		try {

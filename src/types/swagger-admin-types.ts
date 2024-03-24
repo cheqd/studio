@@ -72,7 +72,7 @@
  *           type: object
  *           description: An object with link to checkout session. For more information see the [Stripe API documentation](https://docs.stripe.com/api/checkout/sessions/object)
  *           properties:
- *             url:
+ *             sessionURL:
  *               type: string
  *               description: URL which user should follow to manage subscription
  *     SubscriptionUpdateRequestBody:
@@ -90,7 +90,7 @@
  *           type: object
  *           description: Object with redirect url inside
  *           properties:
- *             clientSecret:
+ *             sessionURL:
  *               type: string
  *               description: URL with session URL rediect to
  *     SubscriptionGetRequestBody:

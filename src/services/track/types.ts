@@ -1,3 +1,4 @@
+import type { CustomerEntity } from '../../database/entities/customer.entity';
 import type { ITrackOperation, INotifyMessage } from '../../types/track';
 import type { ISubmitOperation } from './submitter';
 
@@ -16,4 +17,8 @@ export interface ITrackSubject {
 
 	// Notify all observers about an event.
 	notify(operation: ITrackType): void;
+}
+
+export interface ISubmitOptions {
+	customer?: CustomerEntity;
 }

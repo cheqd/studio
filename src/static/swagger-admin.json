@@ -258,6 +258,16 @@
         "tags": [
           "Subscription"
         ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "stripeCustomerId",
+            "schema": {
+              "type": "string",
+              "description": "The customer id. If passed - returns filtered by this customer list of subscriptions."
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "A list of subscriptions",
@@ -496,7 +506,7 @@
             "type": "object",
             "description": "An object with link to checkout session. For more information see the [Stripe API documentation](https://docs.stripe.com/api/checkout/sessions/object)",
             "properties": {
-              "url": {
+              "sessionURL": {
                 "type": "string",
                 "description": "URL which user should follow to manage subscription"
               }
@@ -522,7 +532,7 @@
             "type": "object",
             "description": "Object with redirect url inside",
             "properties": {
-              "clientSecret": {
+              "sessionURL": {
                 "type": "string",
                 "description": "URL with session URL rediect to"
               }

@@ -9,11 +9,9 @@ import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../submi
 
 export class PortalAccountCreateSubmitter implements IObserver {
 	private emitter: EventEmitter;
-	private stripe: Stripe;
 
 	constructor(emitter: EventEmitter) {
 		this.emitter = emitter;
-		this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 	}
 
 	notify(notifyMessage: INotifyMessage): void {
@@ -28,10 +26,11 @@ export class PortalAccountCreateSubmitter implements IObserver {
 
 	async submitStripeAccountCreate(operation: ISubmitOperation): Promise<void> {
 		const data = operation.data as ISubmitStripeCustomerCreateData;
+		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 		try {
 			// Create a new Stripe account
-			const account = await this.stripe.customers.create({
+			const account = await stripe.customers.create({
 				name: data.name,
 				email: data.email,
 			});

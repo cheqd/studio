@@ -58,6 +58,7 @@ declare global {
 			CREDS_DECRYPTION_SECRET: string;
 
 			// Stripe
+			STRIPE_ENABLED: string | 'false';
 			STRIPE_SECRET_KEY: string;
 			STRIPE_PUBLISHABLE_KEY: string;
 			STRIPE_WEBHOOK_SECRET: string;

@@ -82,7 +82,10 @@ export class SubscriptionService {
 		if (!required) return false;
 		// Check trial dates only if they are present in the subscription
 		if (subscription.trial_start) {
-			if (!subscriptionEntity.trialStart || subscriptionEntity.trialStart.getTime() !== subscription.trial_start * 1000)
+			if (
+				!subscriptionEntity.trialStart ||
+				subscriptionEntity.trialStart.getTime() !== subscription.trial_start * 1000
+			)
 				return false;
 		}
 		if (subscription.trial_end) {

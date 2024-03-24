@@ -5,11 +5,9 @@ import { StatusCodes } from 'http-status-codes';
 import { EventTracker, eventTracker } from '../../services/track/tracker.js';
 import type { INotifyMessage } from '../../types/track.js';
 import { OperationNameEnum } from '../../types/constants.js';
-import type { ISubmitOperation, ISubmitData } from '../../services/track/submitter.js';
+import { builSubmitOperation } from '../../services/track/helpers.js';
 
 dotenv.config();
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export class WebhookController {
 	public async handleWebhook(request: Request, response: Response) {
 		// Signature verification and webhook handling is placed in the same method
@@ -17,20 +15,7 @@ export class WebhookController {
 		let event = request.body;
 		let subscription;
 		let status;
-		const builSubmitOperation = function (subscription: Stripe.Subscription, name: string) {
-			return {
-				operation: name,
-				data: {
-					subscriptionId: subscription.id,
-					stripeCustomerId: subscription.customer as string,
-					status: subscription.status,
-					currentPeriodStart: new Date(subscription.current_period_start * 1000),
-					currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-					trialStart: subscription.trial_start ? new Date(subscription.trial_start * 1000) : undefined,
-					trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : undefined,
-				} satisfies ISubmitData,
-			} satisfies ISubmitOperation;
-		};
+		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 		if (!process.env.STRIPE_WEBHOOK_SECRET) {
 			await eventTracker.notify({

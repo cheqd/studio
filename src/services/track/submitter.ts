@@ -1,3 +1,5 @@
+import type { ISubmitOptions } from "./types";
+
 // Type: Interface
 export type ISubmitData = ISubmitStripeCustomerCreateData | ISubmitSubscriptionData;
 
@@ -20,4 +22,5 @@ export interface ISubmitSubscriptionData {
 export interface ISubmitOperation {
 	operation: string;
 	data: ISubmitData;
+	options?: ISubmitOptions;
 }
