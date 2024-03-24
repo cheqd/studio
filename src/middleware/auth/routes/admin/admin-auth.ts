@@ -6,6 +6,7 @@ export class AdminHandler extends BaseAuthHandler {
 	constructor() {
 		super();
 		// Subscriptions
+		// skipNamespace is set to true cause we don't have the information about the namespace in the request
 		this.registerRoute('/admin/subscription/create', 'POST', 'admin:subscription:create:testnet', {
 			skipNamespace: true,
 		});
@@ -22,6 +23,18 @@ export class AdminHandler extends BaseAuthHandler {
 			skipNamespace: true,
 		});
 		this.registerRoute('/admin/subscription/update', 'POST', 'admin:subscription:update:mainnet', {
+			skipNamespace: true,
+		});
+		this.registerRoute('/admin/subscription/cancel', 'POST', 'admin:subscription:cancel:testnet', {
+			skipNamespace: true,
+		});
+		this.registerRoute('/admin/subscription/cancel', 'POST', 'admin:subscription:cancel:mainnet', {
+			skipNamespace: true,
+		});
+		this.registerRoute('/admin/subscription/resume', 'POST', 'admin:subscription:resume:testnet', {
+			skipNamespace: true,
+		});
+		this.registerRoute('/admin/subscription/resume', 'POST', 'admin:subscription:resume:mainnet', {
 			skipNamespace: true,
 		});
 		this.registerRoute('/admin/subscription/get', 'GET', 'admin:subscription:get:testnet', { skipNamespace: true });

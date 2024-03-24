@@ -9,8 +9,8 @@ import type {
 	ProductWithPrices,
 } from '../../types/portal.js';
 import { StatusCodes } from 'http-status-codes';
-import { validationResult } from '../validator/index.js';
-import { check } from 'express-validator';
+import { check } from '../validator/index.js';
+import { validate } from '../validator/decorator.js';
 
 dotenv.config();
 
@@ -57,14 +57,8 @@ export class ProductController {
 	 *      404:
 	 *        $ref: '#/components/schemas/NotFoundError'
 	 */
+	@validate
 	async listProducts(request: Request, response: Response) {
-		const result = validationResult(request);
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies ProductListUnsuccessfulResponseBody);
-		}
 		// Get query parameters
 		const prices = request.query.prices === 'false' ? false : true;
 
@@ -137,14 +131,8 @@ export class ProductController {
 	 *      404:
 	 *        $ref: '#/components/schemas/NotFoundError'
 	 */
+	@validate
 	async getProduct(request: Request, response: Response) {
-		const result = validationResult(request);
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies ProductGetUnsuccessfulResponseBody);
-		}
 		// Get query parameters
 		const prices = request.query.prices === 'false' ? false : true;
 		const productId = request.params.productId as string;

@@ -3,15 +3,7 @@ import type { Repository } from 'typeorm';
 import { Connection } from '../../database/connection/connection.js';
 import { SubscriptionEntity } from '../../database/entities/subscription.entity.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
-import type { UserEntity } from '../../database/entities/user.entity.js';
-import Stripe from 'stripe';
-import * as dotenv from 'dotenv';
-import { CustomerService } from '../api/customer.js';
-import { EventTracker, eventTracker } from '../track/tracker.js';
-
-dotenv.config();
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+import type Stripe from 'stripe';
 
 export class SubscriptionService {
 	public subscriptionRepository: Repository<SubscriptionEntity>;
@@ -81,86 +73,22 @@ export class SubscriptionService {
 		});
 	}
 
-	public async stripeSync(customer?: CustomerEntity, user?: UserEntity): Promise<void> {
-		let stripeCustomerId: string;
-		if (!customer && !user) {
-			throw new Error('StripeSync: customer or user is required');
+	public equals(subscriptionEntity: SubscriptionEntity, subscription: Stripe.Subscription): boolean {
+		const required =
+			subscriptionEntity.subscriptionId === subscription.id &&
+			subscriptionEntity.status === subscription.status &&
+			subscriptionEntity.currentPeriodStart.getTime() === subscription.current_period_start * 1000 &&
+			subscriptionEntity.currentPeriodEnd.getTime() === subscription.current_period_end * 1000;
+		if (!required) return false;
+		// Check trial dates only if they are present in the subscription
+		if (subscription.trial_start) {
+			if (!subscriptionEntity.trialStart || subscriptionEntity.trialStart.getTime() !== subscription.trial_start * 1000)
+				return false;
 		}
-		if (customer) {
-			stripeCustomerId = customer.stripeCustomerId;
-		} else {
-			stripeCustomerId = user?.customer.stripeCustomerId as string;
+		if (subscription.trial_end) {
+			if (!subscriptionEntity.trialEnd || subscriptionEntity.trialEnd.getTime() !== subscription.trial_end * 1000)
+				return false;
 		}
-
-		// ToDo: add pagination
-
-		const subscriptions = await stripe.subscriptions.list({ 
-			customer: stripeCustomerId,
-			status: 'all',
-			limit: 100,
-		});
-		// Get list of all subscription and sort them by created time to make sure that we are processing them in the correct order
-		for (const subscription of subscriptions.data.sort((a, b) => a.created - b.created)) {
-			const existing = await this.subscriptionRepository.findOne({
-				where: { subscriptionId: subscription.id },
-			});
-			if (!existing) {
-				const customer = await CustomerService.instance.findbyStripeCustomerId(stripeCustomerId);
-				if (!customer) {
-					throw new Error(`Customer with stripeCustomerId ${stripeCustomerId} not found`);
-				}
-				const res = await this.create(
-					subscription.id,
-					customer,
-					subscription.status,
-					new Date(subscription.current_period_start * 1000),
-					new Date(subscription.current_period_end * 1000),
-					subscription.trial_start ? new Date(subscription.trial_start * 1000) : undefined,
-					subscription.trial_end ? new Date(subscription.trial_end * 1000) : undefined
-				);
-				if (!res) {
-					eventTracker.notify({
-						message: EventTracker.compileBasicNotification(
-							`Cannot create a new subscription with id ${subscription.id}`,
-							'Subscription syncronization'
-						),
-						severity: 'error',
-					});
-				}
-				eventTracker.notify({
-					message: EventTracker.compileBasicNotification(
-						`New subscription with id ${subscription.id} created`,
-						'Subscription syncronization'
-					),
-					severity: 'info',
-				});
-			} else {
-				// ToDo: Update only if there are changes
-				const res = await this.update(
-					subscription.id,
-					subscription.status,
-					new Date(subscription.current_period_start * 1000),
-					new Date(subscription.current_period_end * 1000),
-					subscription.trial_start ? new Date(subscription.trial_start * 1000) : undefined,
-					subscription.trial_end ? new Date(subscription.trial_end * 1000) : undefined
-				);
-				if (!res) {
-					eventTracker.notify({
-						message: EventTracker.compileBasicNotification(
-							`Cannot update subscription with id ${subscription.id}`,
-							'Subscription syncronization'
-						),
-						severity: 'error',
-					});
-				}
-				eventTracker.notify({
-					message: EventTracker.compileBasicNotification(
-						`Subscription with id ${subscription.id} updated`,
-						'Subscription syncronization'
-					),
-					severity: 'info',
-				});
-			}
-		}
+		return true;
 	}
 }

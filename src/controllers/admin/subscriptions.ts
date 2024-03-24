@@ -20,13 +20,44 @@ import type {
 	SubscriptionCancelRequestBody,
 } from '../../types/portal.js';
 import { StatusCodes } from 'http-status-codes';
-import { validationResult } from '../validator/index.js';
-import { check } from 'express-validator';
+import { check, validationResult } from '../validator/index.js';
 import { SubscriptionService } from '../../services/admin/subscription.js';
+import { stripeService } from '../../services/admin/stripe.js';
+import { UnsuccessfulResponseBody } from '../../types/shared.js';
+import { validate } from '../validator/decorator.js';
 
 dotenv.config();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+export function stripeSync(target: any, key: string, descriptor: PropertyDescriptor | undefined) {
+ 
+    // save a reference to the original method this way we keep the values currently in the
+    // descriptor and don't overwrite what another decorator might have done to the descriptor.
+    if(descriptor === undefined) {
+      descriptor = Object.getOwnPropertyDescriptor(target, key) as PropertyDescriptor;
+    }
+
+    const originalMethod = descriptor.value;
+ 
+    //editing the descriptor/value parameter
+    descriptor.value = async function (...args: any[]) {
+		const response: Response = args[1];
+		if (response.locals.customer) {
+			try {
+				await stripeService.syncCustomer(response.locals.customer);
+			} catch (error) {
+				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+					error: `Internal error: ${(error as Error)?.message || error}`,
+				} satisfies UnsuccessfulResponseBody);
+			}
+		}
+		return originalMethod.apply(this, args);
+    };
+ 
+    // return edited descriptor as opposed to overwriting the descriptor
+    return descriptor;
+}
 
 export class SubscriptionController {
 	static subscriptionCreateValidator = [
@@ -58,15 +89,15 @@ export class SubscriptionController {
 	static subscriptionUpdateValidator = [
 		check('returnURL')
 			.exists()
-			.withMessage('returnUrl was not provided')
+			.withMessage('returnURL was not provided')
 			.bail()
 			.isString()
-			.withMessage('returnUrl should be a string')
+			.withMessage('returnURL should be a string')
 			.bail(),
 	];
 
 	static subscriptionListValidator = [
-		check('customerId').optional().isString().withMessage('customerId should be a string').bail(),
+		check('stripeCustomerId').optional().isString().withMessage('customerId should be a string').bail(),
 	];
 
 	static subscriptionCancelValidator = [
@@ -119,6 +150,7 @@ export class SubscriptionController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 
+	@validate
 	async create(request: Request, response: Response) {
 		// Validate request
 		const result = validationResult(request);
@@ -199,20 +231,11 @@ export class SubscriptionController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
+	@stripeSync
 	async update(request: Request, response: Response) {
-		// Validate request
-		const result = validationResult(request);
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies SubscriptionUpdateUnsuccessfulResponseBody);
-		}
-
 		const { returnUrl } = request.body satisfies SubscriptionUpdateRequestBody;
-
 		try {
-			// Sync with Stripe
-			await SubscriptionService.instance.stripeSync(response.locals.customer);
 
 			// Get the subscription object from the DB
 			const subscription = await SubscriptionService.instance.findOne({ customer: response.locals.customer });
@@ -251,6 +274,12 @@ export class SubscriptionController {
 	 *    summary: Get a list of subscriptions
 	 *    description: Get a list of subscriptions
 	 *    tags: [Subscription]
+	 *    parameters:
+	 *      - in: query
+	 *        name: stripeCustomerId
+	 *        schema:
+	 *          type: string
+	 *          description: The customer id. If passed - returns filtered by this customer list of subscriptions.
 	 *    responses:
 	 *      200:
 	 *        description: A list of subscriptions
@@ -268,22 +297,15 @@ export class SubscriptionController {
 	 *        $ref: '#/components/schemas/NotFoundError'
 	 */
 
+	@validate
+	@stripeSync
 	public async list(request: Request, response: Response) {
-		// Validate request
-		const result = validationResult(request);
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies SubscriptionListUnsuccessfulResponseBody);
-		}
-		const customerId = response.locals.customer.stripeCustomerId;
+		const stripeCustomerId = response.locals.customer.stripeCustomerId;
 		try {
-			// Sync our DB with Stripe
-			await SubscriptionService.instance.stripeSync(response.locals.customer);
 			// Get the subscriptions
-			const subscriptions = customerId
+			const subscriptions = stripeCustomerId
 				? await stripe.subscriptions.list({
-						customer: customerId as string,
+						customer: stripeCustomerId as string,
 					})
 				: await stripe.subscriptions.list();
 
@@ -326,17 +348,10 @@ export class SubscriptionController {
 	 *       404:
 	 *         $ref: '#/components/schemas/NotFoundError'
 	 */
+	@validate
+	@stripeSync
 	async get(request: Request, response: Response) {
-		// Validate request
-		const result = validationResult(request);
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies SubscriptionGetUnsuccessfulResponseBody);
-		}
 		try {
-			// Sync our DB with Stripe
-			await SubscriptionService.instance.stripeSync(response.locals.customer);
 			// Get the subscriptionId from the request
 			const _sub = await SubscriptionService.instance.findOne({ 
 				customer: response.locals.customer,
@@ -392,14 +407,9 @@ export class SubscriptionController {
 	 *      404:
 	 *        $ref: '#/components/schemas/NotFoundError'
 	 */
+	@validate
+	@stripeSync
 	async cancel(request: Request, response: Response) {
-		// Validate request
-		const result = validationResult(request);
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies SubscriptionCancelUnsuccessfulResponseBody);
-		}
 		const { subscriptionId, idempotencyKey } = request.body satisfies SubscriptionCancelRequestBody;
 
 		try {
@@ -453,6 +463,8 @@ export class SubscriptionController {
 	 *     404:
 	 *       $ref: '#/components/schemas/NotFoundError'
 	 */
+	@validate
+	@stripeSync
 	async resume(request: Request, response: Response) {
 		// Validate request
 		const result = validationResult(request);

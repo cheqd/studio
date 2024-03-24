@@ -3,8 +3,8 @@ import type { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
 import type { PriceListResponseBody, PriceListUnsuccessfulResponseBody } from '../../types/portal.js';
 import { StatusCodes } from 'http-status-codes';
-import { validationResult } from '../validator/index.js';
-import { check } from 'express-validator';
+import { check } from '../validator/index.js';
+import { validate } from '../validator/decorator.js';
 
 dotenv.config();
 
@@ -46,14 +46,8 @@ export class PriceController {
 	 *      404:
 	 *        $ref: '#/components/schemas/NotFoundError'
 	 */
+	@validate
 	async getListPrices(request: Request, response: Response) {
-		const result = validationResult(request);
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies PriceListUnsuccessfulResponseBody);
-		}
 		// Get query parameters
 		const productId = request.query.productId;
 

@@ -8,7 +8,7 @@ import { APITokenUserInfoFetcher } from './user-info-fetcher/api-token.js';
 import type { IUserInfoFetcher } from './user-info-fetcher/base.js';
 import { IAuthHandler, RuleRoutine, IAPIGuard } from './routine.js';
 import type { IAuthResponse, MethodToScopeRule } from '../../types/authentication.js';
-import { M2MTokenUserInfoFetcher } from './user-info-fetcher/m2m-token.js';
+import { M2MCredsTokenUserInfoFetcher } from './user-info-fetcher/m2m-creds-token.js';
 import { decodeJwt } from 'jose';
 import { PortalUserInfoFetcher } from './user-info-fetcher/portal-token.js';
 
@@ -140,7 +140,7 @@ export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 				if (payload.aud === process.env.LOGTO_APP_ID) {
 					this.setUserInfoStrategy(new APITokenUserInfoFetcher(token));
 				} else {
-					this.setUserInfoStrategy(new M2MTokenUserInfoFetcher(token));
+					this.setUserInfoStrategy(new M2MCredsTokenUserInfoFetcher(token));
 				}
 			} else {
 				this.setUserInfoStrategy(new SwaggerUserInfoFetcher());

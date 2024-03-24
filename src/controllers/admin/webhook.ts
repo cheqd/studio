@@ -12,6 +12,8 @@ dotenv.config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export class WebhookController {
 	public async handleWebhook(request: Request, response: Response) {
+		// Signature verification and webhook handling is placed in the same method
+		// cause stripe uses the mthod which validate the signature and provides the event.
 		let event = request.body;
 		let subscription;
 		let status;
@@ -29,9 +31,6 @@ export class WebhookController {
 				} satisfies ISubmitData,
 			} satisfies ISubmitOperation;
 		};
-		// Only verify the event if you have an endpoint secret defined.
-		// Otherwise use the basic event deserialized with JSON.parse
-		// Get the signature sent by Stripe
 
 		if (!process.env.STRIPE_WEBHOOK_SECRET) {
 			await eventTracker.notify({
@@ -114,8 +113,6 @@ export class WebhookController {
 					severity: 'info',
 				} satisfies INotifyMessage);
 				await eventTracker.submit(builSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_UPDATE));
-				// Then define and call a method to handle the subscription update.
-				// handleSubscriptionUpdated(subscription);
 				break;
 			default:
 				// Unexpected event type
