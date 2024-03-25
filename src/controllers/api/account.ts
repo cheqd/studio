@@ -305,7 +305,7 @@ export class AccountController {
 			}
 		}
 		// 8. Add the Stripe account to the Customer
-		if (customer.stripeCustomerId === null) {
+		if (customer.paymentProviderId === null) {
 			eventTracker.submit({
 				operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 				data: {

@@ -42,7 +42,7 @@ export class CustomerService {
 		};
 	}
 
-	public async update(customerId: string, name?: string, stripeCustomerId?: string) {
+	public async update(customerId: string, name?: string, paymentProviderId?: string) {
 		const existingCustomer = await this.customerRepository.findOneBy({ customerId });
 		if (!existingCustomer) {
 			throw new Error(`CustomerId not found`);
@@ -51,8 +51,8 @@ export class CustomerService {
 			existingCustomer.name = name;
 		}
 
-		if (stripeCustomerId) {
-			existingCustomer.stripeCustomerId = stripeCustomerId;
+		if (paymentProviderId) {
+			existingCustomer.paymentProviderId = paymentProviderId;
 		}
 		return await this.customerRepository.save(existingCustomer);
 	}
@@ -77,9 +77,9 @@ export class CustomerService {
 		}
 	}
 
-	public async findbyStripeCustomerId(stripeCustomerId: string) {
+	public async findbyPaymentProviderId(paymentProviderId: string) {
 		return await this.customerRepository.findOne({
-			where: { stripeCustomerId },
+			where: { paymentProviderId: paymentProviderId },
 		});
 	}
 

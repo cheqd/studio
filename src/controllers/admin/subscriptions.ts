@@ -124,7 +124,7 @@ export class SubscriptionController {
 	];
 
 	static subscriptionListValidator = [
-		check('stripeCustomerId').optional().isString().withMessage('customerId should be a string').bail(),
+		check('paymentProviderId').optional().isString().withMessage('customerId should be a string').bail(),
 	];
 
 	static subscriptionCancelValidator = [
@@ -187,7 +187,7 @@ export class SubscriptionController {
 			const session = await stripe.checkout.sessions.create(
 				{
 					mode: 'subscription',
-					customer: response.locals.customer.stripeCustomerId,
+					customer: response.locals.customer.paymentProviderId,
 					line_items: [
 						{
 							price: price,
@@ -261,7 +261,7 @@ export class SubscriptionController {
 		const { returnUrl } = request.body satisfies SubscriptionUpdateRequestBody;
 		try {
 			// Get the subscription object from the DB
-			const subscription = await SubscriptionService.instance.findOne([{ customer: response.locals.customer }]);
+			const subscription = await SubscriptionService.instance.findOne({ customer: response.locals.customer });
 			if (!subscription) {
 				return response.status(StatusCodes.NOT_FOUND).json({
 					error: `Subscription was not found`,
@@ -270,7 +270,7 @@ export class SubscriptionController {
 
 			// Create portal link
 			const session = await stripe.billingPortal.sessions.create({
-				customer: response.locals.customer.stripeCustomerId,
+				customer: response.locals.customer.paymentProviderId,
 				return_url: returnUrl,
 			});
 
@@ -299,7 +299,7 @@ export class SubscriptionController {
 	 *    tags: [Subscription]
 	 *    parameters:
 	 *      - in: query
-	 *        name: stripeCustomerId
+	 *        name: paymentProviderId
 	 *        schema:
 	 *          type: string
 	 *          description: The customer id. If passed - returns filtered by this customer list of subscriptions.
@@ -324,12 +324,12 @@ export class SubscriptionController {
 	@syncCustomer
 	public async list(request: Request, response: Response) {
 		const stripe = response.locals.stripe as Stripe;
-		const stripeCustomerId = response.locals.customer.stripeCustomerId;
+		const paymentProviderId = response.locals.customer.paymentProviderId;
 		try {
 			// Get the subscriptions
-			const subscriptions = stripeCustomerId
+			const subscriptions = paymentProviderId
 				? await stripe.subscriptions.list({
-						customer: stripeCustomerId as string,
+						customer: paymentProviderId as string,
 					})
 				: await stripe.subscriptions.list();
 
@@ -373,20 +373,12 @@ export class SubscriptionController {
 	 *         $ref: '#/components/schemas/NotFoundError'
 	 */
 	@validate
-	@syncCustomer
+	@syncOne
 	async get(request: Request, response: Response) {
 		const stripe = response.locals.stripe as Stripe;
 		try {
 			// Get the subscriptionId from the request
-			const _sub = await SubscriptionService.instance.findOne([
-				{
-					customer: response.locals.customer,
-					status: 'active'},
-				{
-					customer: response.locals.customer,
-					status: 'trialing'
-				}
-			]);
+			const _sub = await SubscriptionService.instance.findCurrent(response.locals.customer);
 			if (!_sub) {
 				return response.status(StatusCodes.NOT_FOUND).json({
 					error: `Subscription was not found`,

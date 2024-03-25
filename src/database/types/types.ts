@@ -100,7 +100,7 @@ export class Postgres implements AbstractDatabase {
 				AlterOperationTable1695740345978,
 				// Change payment table structure
 				AlterPaymentTable1695740345979,
-				// Add stripeCustomerId to customer table
+				// Add paymentProviderId to customer table
 				AlterCustomerTable1695740346000,
 				// Add new category
 				AlterOperationTable1695740346001,

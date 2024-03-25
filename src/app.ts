@@ -31,7 +31,6 @@ import { ProductController } from './controllers/admin/product.js';
 import { SubscriptionController } from './controllers/admin/subscriptions.js';
 import { PriceController } from './controllers/admin/prices.js';
 import { WebhookController } from './controllers/admin/webhook.js';
-import { stripeService } from './services/admin/stripe.js';
 
 let swaggerOptions = {};
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -114,8 +113,6 @@ class App {
 				swaggerUi.setup(swaggerAdminDocument)
 			);
 			this.express.use(Middleware.setStripeClient)
-			// ToDo: move it to Setup phase.
-			this.express.use(async (_req, _res, next) => await stripeService.syncAll(next))
 		}
 		this.express.use(auth.handleError);
 		this.express.use(async (req, res, next) => await auth.accessControl(req, res, next));

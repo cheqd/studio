@@ -10,7 +10,7 @@ export interface ISubmitStripeCustomerCreateData {
 }
 
 export interface ISubmitSubscriptionData {
-	stripeCustomerId: string;
+	paymentProviderId: string;
 	status: string;
 	currentPeriodStart: Date;
 	currentPeriodEnd: Date;

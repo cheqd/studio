@@ -56,7 +56,7 @@ export class StripeService {
 	async syncCustomer(customer: CustomerEntity): Promise<void> {
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 		for await (const subscription of stripe.subscriptions.list({
-			customer: customer.stripeCustomerId,
+			customer: customer.paymentProviderId,
 			status: 'all',
 		})) {
 			const current = await SubscriptionService.instance.subscriptionRepository.findOne({
@@ -73,15 +73,7 @@ export class StripeService {
     async syncOne(customer: CustomerEntity): Promise<void> {
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
         
-        const local = await SubscriptionService.instance.findOne([
-            {
-                customer: customer,
-                status: 'active'},
-            {
-                customer: customer,
-                status: 'trialing'
-            }
-        ]);
+        const local = await SubscriptionService.instance.findCurrent(customer)
         if (!local) {
             eventTracker.notify({
                 message: EventTracker.compileBasicNotification(
@@ -90,6 +82,28 @@ export class StripeService {
                 ),
                 severity: 'debug',
             });
+            const activeSubs = await stripe.subscriptions.list({
+                customer: customer.paymentProviderId,
+                status: 'active',
+            });
+            const trialSubs = await stripe.subscriptions.list({
+                customer: customer.paymentProviderId,
+                status: 'trialing',
+            });
+            const subs = [...activeSubs.data, ...trialSubs.data];
+            if (subs.length > 1) {
+                eventTracker.notify({
+                    message: EventTracker.compileBasicNotification(
+                        `Multiple active subscriptions found for customer with id ${customer.customerId}`,
+                        'Subscription syncronization'
+                    ),
+                    severity: 'error',
+                });
+                return;
+            }
+            if (subs.length > 0) {
+                await this.createSubscription(subs[0], customer);
+            }
             return;
         }
         const subscriptionId = local.subscriptionId;

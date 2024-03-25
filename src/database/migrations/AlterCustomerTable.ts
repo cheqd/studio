@@ -7,7 +7,7 @@ export class AlterCustomerTable1695740346000 implements MigrationInterface {
 		await queryRunner.addColumn(
 			table_name,
 			new TableColumn({
-				name: 'stripeAccountId',
+				name: 'paymentProviderId',
 				type: 'text',
 				isNullable: true,
 			})

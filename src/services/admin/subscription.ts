@@ -66,9 +66,16 @@ export class SubscriptionService {
 		});
 	}
 
-	public async findOne(where: Array<Record<string, unknown>>) {
+	public async findOne(where: Record<string, unknown>) {
 		return await this.subscriptionRepository.findOne({
 			where: where,
+			relations: ['customer'],
+		});
+	}
+
+	public async findCurrent(customer: CustomerEntity) {
+		return await this.subscriptionRepository.findOne({
+			where: [{ customer: customer, status: 'active' }, { customer: customer, status: 'trialing' }],
 			relations: ['customer'],
 		});
 	}

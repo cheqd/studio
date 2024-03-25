@@ -40,7 +40,7 @@ export function builSubmitOperation (subscription: Stripe.Subscription, name: st
 		operation: name,
 		data: {
 			subscriptionId: subscription.id,
-			stripeCustomerId: subscription.customer as string,
+			paymentProviderId: subscription.customer as string,
 			status: subscription.status,
 			currentPeriodStart: new Date(subscription.current_period_start * 1000),
 			currentPeriodEnd: new Date(subscription.current_period_end * 1000),

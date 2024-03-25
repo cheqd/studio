@@ -30,7 +30,7 @@ export class CustomerEntity {
 		type: 'text',
 		nullable: true,
 	})
-	stripeCustomerId!: string;
+	paymentProviderId!: string;
 
 	@BeforeInsert()
 	setCreatedAt() {

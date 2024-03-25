@@ -40,13 +40,13 @@ export class SubscriptionSubmitter implements IObserver {
 		try {
 			if (!customer) {
 				const customers = await CustomerService.instance.find({
-					stripeCustomerId: data.stripeCustomerId,
+					paymentProviderId: data.paymentProviderId,
 				});
 
 				if (customers.length !== 1) {
 					this.notify({
 						message: EventTracker.compileBasicNotification(
-							`It should be only 1 Stripe account associated with CaaS customer. Stripe accountId: ${data.stripeCustomerId}.`,
+							`It should be only 1 Stripe account associated with CaaS customer. Stripe accountId: ${data.paymentProviderId}.`,
 							operation.operation
 						),
 						severity: 'error',
