@@ -66,7 +66,7 @@ export class SubscriptionService {
 		});
 	}
 
-	public async findOne(where: Record<string, unknown>) {
+	public async findOne(where: Array<Record<string, unknown>>) {
 		return await this.subscriptionRepository.findOne({
 			where: where,
 			relations: ['customer'],

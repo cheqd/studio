@@ -261,7 +261,7 @@ export class SubscriptionController {
 		const { returnUrl } = request.body satisfies SubscriptionUpdateRequestBody;
 		try {
 			// Get the subscription object from the DB
-			const subscription = await SubscriptionService.instance.findOne({ customer: response.locals.customer });
+			const subscription = await SubscriptionService.instance.findOne([{ customer: response.locals.customer }]);
 			if (!subscription) {
 				return response.status(StatusCodes.NOT_FOUND).json({
 					error: `Subscription was not found`,
@@ -373,15 +373,20 @@ export class SubscriptionController {
 	 *         $ref: '#/components/schemas/NotFoundError'
 	 */
 	@validate
-	@syncOne
+	@syncCustomer
 	async get(request: Request, response: Response) {
 		const stripe = response.locals.stripe as Stripe;
 		try {
 			// Get the subscriptionId from the request
-			const _sub = await SubscriptionService.instance.findOne({
-				customer: response.locals.customer,
-				status: 'active',
-			});
+			const _sub = await SubscriptionService.instance.findOne([
+				{
+					customer: response.locals.customer,
+					status: 'active'},
+				{
+					customer: response.locals.customer,
+					status: 'trialing'
+				}
+			]);
 			if (!_sub) {
 				return response.status(StatusCodes.NOT_FOUND).json({
 					error: `Subscription was not found`,

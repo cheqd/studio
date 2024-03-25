@@ -73,10 +73,15 @@ export class StripeService {
     async syncOne(customer: CustomerEntity): Promise<void> {
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
         
-        const local = await SubscriptionService.instance.findOne({
-            customer: customer,
-            status: 'active',
-        });
+        const local = await SubscriptionService.instance.findOne([
+            {
+                customer: customer,
+                status: 'active'},
+            {
+                customer: customer,
+                status: 'trialing'
+            }
+        ]);
         if (!local) {
             eventTracker.notify({
                 message: EventTracker.compileBasicNotification(
