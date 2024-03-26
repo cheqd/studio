@@ -24,13 +24,13 @@ dotenv.config();
 const { ENABLE_EXTERNAL_DB } = process.env;
 
 export class Authentication {
-	private authHandler: BaseAuthHandler;
+	private initHandler: BaseAuthHandler;
 	private isSetup = false;
 	private logToHelper: LogToHelper;
 
 	constructor() {
 		// Initial auth handler
-		this.authHandler = new AccountAuthHandler();
+		this.initHandler = new AccountAuthHandler();
 		this.logToHelper = new LogToHelper();
 	}
 
@@ -42,41 +42,26 @@ export class Authentication {
 					error: _r.error,
 				});
 			}
-			const oauthProvider = new LogToProvider();
-			oauthProvider.setHelper(this.logToHelper);
+			const fillChain = async (handler: BaseAuthHandler[]) => {
+				const oauthProvider = new LogToProvider();
+				oauthProvider.setHelper(this.logToHelper);
+				for (let i = 0; i < handler.length - 1; i++) {
+					handler[i].setOAuthProvider(oauthProvider);
+					handler[i].setNext(handler[i + 1]);
+				}
+			};
 
-			const didAuthHandler = new DidAuthHandler();
-			const keyAuthHandler = new KeyAuthHandler();
-			const credentialAuthHandler = new CredentialAuthHandler();
-			const credentialStatusAuthHandler = new CredentialStatusAuthHandler();
-			const resourceAuthHandler = new ResourceAuthHandler();
-			const presentationAuthHandler = new PresentationAuthHandler();
-			const authInfoHandler = new AuthInfoHandler();
-
-			const adminAuthHandler = new AdminHandler();
-
-			// Set logToHelper. We do it for avoiding re-asking LogToHelper.setup() in each auth handler
-			// cause it does a lot of requests to LogTo
-			this.authHandler.setOAuthProvider(oauthProvider);
-			didAuthHandler.setOAuthProvider(oauthProvider);
-			keyAuthHandler.setOAuthProvider(oauthProvider);
-			credentialAuthHandler.setOAuthProvider(oauthProvider);
-			credentialStatusAuthHandler.setOAuthProvider(oauthProvider);
-			resourceAuthHandler.setOAuthProvider(oauthProvider);
-			presentationAuthHandler.setOAuthProvider(oauthProvider);
-			authInfoHandler.setOAuthProvider(oauthProvider);
-			adminAuthHandler.setOAuthProvider(oauthProvider);
-
-			// Set chain of responsibility
-			this.authHandler
-				.setNext(didAuthHandler)
-				.setNext(keyAuthHandler)
-				.setNext(credentialAuthHandler)
-				.setNext(credentialStatusAuthHandler)
-				.setNext(resourceAuthHandler)
-				.setNext(presentationAuthHandler)
-				.setNext(authInfoHandler)
-				.setNext(adminAuthHandler);
+			fillChain([
+				this.initHandler,
+				new DidAuthHandler(),
+				new KeyAuthHandler(),
+				new CredentialAuthHandler(),
+				new CredentialStatusAuthHandler(),
+				new ResourceAuthHandler(),
+				new PresentationAuthHandler(),
+				new AuthInfoHandler(),
+				new AdminHandler(),
+			])
 
 			this.isSetup = true;
 		}
@@ -93,8 +78,9 @@ export class Authentication {
 	}
 
 	public async accessControl(request: Request, response: Response, next: NextFunction) {
-		if (this.authHandler.skipPath(request.path)) return next();
+		if (this.initHandler.skipPath(request.path)) return next();
 
+		// ToDo: Make it more readable
 		if (ENABLE_EXTERNAL_DB === 'false') {
 			if (['/account', '/did/create', '/key/create'].includes(request.path)) {
 				return response.status(StatusCodes.METHOD_NOT_ALLOWED).json({
@@ -115,7 +101,7 @@ export class Authentication {
 	}
 
 	public async withLogtoWrapper(request: Request, response: Response, next: NextFunction) {
-		if (this.authHandler.skipPath(request.path)) return next();
+		if (this.initHandler.skipPath(request.path)) return next();
 		try {
 			return withLogto({ ...configLogToExpress, scopes: ['roles'] })(request, response, next);
 		} catch (err) {
@@ -134,11 +120,11 @@ export class Authentication {
 
 	public async guard(request: Request, response: Response, next: NextFunction) {
 		const { provider } = request.body as { claim: string; provider: string };
-		if (this.authHandler.skipPath(request.path)) return next();
+		if (this.initHandler.skipPath(request.path)) return next();
 
 		try {
 			// If response got back that means error was raised
-			const _resp = await this.authHandler.handle(request, response);
+			const _resp = await this.initHandler.handle(request, response);
 			if (_resp.status !== StatusCodes.OK) {
 				return response.status(_resp.status).json({
 					error: _resp.error,

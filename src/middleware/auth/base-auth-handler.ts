@@ -25,8 +25,8 @@ export class BaseAPIGuard extends RuleRoutine implements IAPIGuard {
 
 		if (!rule) {
 			return this.returnError(
-				StatusCodes.INTERNAL_SERVER_ERROR,
-				`Internal error. There is no auth rule for such request. Please contact administrator`
+				StatusCodes.BAD_REQUEST,
+				`Bad Request. No atuh rules for handling such request: ${request.method} ${request.path}`
 			);
 		}
 		// If the rule is not found - skip the auth check
@@ -148,8 +148,9 @@ export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 		}
 	}
 
-	public setOAuthProvider(oauthProvider: IOAuthProvider): void {
+	public setOAuthProvider(oauthProvider: IOAuthProvider): IAuthHandler {
 		this.oauthProvider = oauthProvider;
+		return this;
 	}
 
 	public setUserInfoStrategy(strategy: IUserInfoFetcher): void {
