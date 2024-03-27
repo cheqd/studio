@@ -131,7 +131,8 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 				trackOperation.name,
 				defaultFee,
 				false,
-				trackOperation.successful
+				trackOperation.successful,
+				trackOperation.customer
 			);
 
 			if (!operationEntity) {

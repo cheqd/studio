@@ -23,7 +23,7 @@ export interface ITrackOperation {
 	// data of the operation, e.g. did, resource, credentialStatus
 	data: TrackData;
 	// customer who initiated the operation (like organistation)
-	customer?: CustomerEntity;
+	customer: CustomerEntity;
 	// user who initiated the operation
 	user?: UserEntity;
 	// was operation successful?
