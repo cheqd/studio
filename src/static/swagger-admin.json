@@ -261,7 +261,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "stripeCustomerId",
+            "name": "paymentProviderId",
             "schema": {
               "type": "string",
               "description": "The customer id. If passed - returns filtered by this customer list of subscriptions."
