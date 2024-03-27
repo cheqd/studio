@@ -74,7 +74,7 @@ ARG LOG_LEVEL=info
 # Verida connector: build-time
 ARG ENABLE_VERIDA_CONNECTOR=false
 ARG VERIDA_NETWORK=testnet
-ARG POLYGON_RPC_URL=https://rpc-mumbai.maticvigil.com
+ARG POLYGON_RPC_URL=https://rpc.ankr.com/polygon_mumbai
 ARG VERIDA_PRIVATE_KEY
 ARG POLYGON_PRIVATE_KEY
 ARG ENABLE_ACCOUNT_TOPUP=false
