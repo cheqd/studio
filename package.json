@@ -50,8 +50,8 @@
 		"README.md"
 	],
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "^4.1.0-develop.1",
 		"@cheqd/sdk": "^4.0.0-develop.1",
+		"@cheqd/did-provider-cheqd": "^4.1.0-develop.2",
 		"@cheqd/ts-proto": "^3.4.0",
 		"@cosmjs/amino": "^0.32.2",
 		"@cosmjs/encoding": "^0.32.2",
@@ -94,8 +94,8 @@
 		"pg-connection-string": "^2.6.2",
 		"secp256k1": "^5.0.0",
 		"sqlite3": "^5.1.7",
-		"swagger-ui-express": "^5.0.0",
 		"swagger-ui-dist": "5.10.5",
+		"swagger-ui-express": "^5.0.0",
 		"typeorm": "^0.3.20",
 		"uint8arrays": "^5.0.2",
 		"uri-js": "^4.4.1"
