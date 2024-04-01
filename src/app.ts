@@ -31,6 +31,7 @@ import { ProductController } from './controllers/admin/product.js';
 import { SubscriptionController } from './controllers/admin/subscriptions.js';
 import { PriceController } from './controllers/admin/prices.js';
 import { WebhookController } from './controllers/admin/webhook.js';
+import { APIKeyController } from './controllers/admin/api-key.js';
 
 let swaggerOptions = {};
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -112,7 +113,7 @@ class App {
 				swaggerUi.serveFiles(swaggerAdminDocument),
 				swaggerUi.setup(swaggerAdminDocument)
 			);
-			this.express.use(Middleware.setStripeClient)
+			this.express.use(Middleware.setStripeClient);
 		}
 		this.express.use(auth.handleError);
 		this.express.use(async (req, res, next) => await auth.accessControl(req, res, next));
@@ -226,7 +227,11 @@ class App {
 		// Portal
 		// Product
 		if (process.env.STRIPE_ENABLED === 'true') {
-			app.get('/admin/product/list', ProductController.productListValidator, new ProductController().listProducts);
+			app.get(
+				'/admin/product/list',
+				ProductController.productListValidator,
+				new ProductController().listProducts
+			);
 			app.get(
 				'/admin/product/get/:productId',
 				ProductController.productGetValidator,
@@ -263,6 +268,13 @@ class App {
 				SubscriptionController.subscriptionResumeValidator,
 				new SubscriptionController().resume
 			);
+
+			// API key
+			app.post('/admin/api-key/create', APIKeyController.apiKeyCreateValidator, new APIKeyController().create);
+			app.post('/admin/api-key/update', APIKeyController.apiKeyUpdateValidator, new APIKeyController().update);
+			app.get('/admin/api-key/get', APIKeyController.apiKeyGetValidator, new APIKeyController().get);
+			app.get('/admin/api-key/list', APIKeyController.apiKeyListValidator, new APIKeyController().list);
+			app.delete('/admin/api-key/revoke', APIKeyController.apiKeyRevokeValidator, new APIKeyController().revoke);
 
 			// Webhook
 			app.post('/admin/webhook', new WebhookController().handleWebhook);

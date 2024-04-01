@@ -1,4 +1,4 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import * as dotenv from 'dotenv';
 import { CustomerEntity } from './customer.entity.js';
@@ -11,6 +11,12 @@ export class APIKeyEntity {
 		type: 'text',
 		nullable: false,
 		primary: true,
+	})
+	apiKeyHash!: string;
+
+	@Column({
+		type: 'text',
+		nullable: false,
 	})
 	apiKey!: string;
 
@@ -60,7 +66,15 @@ export class APIKeyEntity {
 		return this.expiresAt < new Date();
 	}
 
-	constructor(apiKey: string, expiresAt: Date, customer: CustomerEntity, user: UserEntity, revoked = false) {
+	constructor(
+		apiKeyHash: string,
+		apiKey: string,
+		expiresAt: Date,
+		customer: CustomerEntity,
+		user: UserEntity,
+		revoked = false
+	) {
+		this.apiKeyHash = apiKeyHash;
 		this.apiKey = apiKey;
 		this.expiresAt = expiresAt;
 		this.customer = customer;

@@ -12,24 +12,23 @@ import type { NextFunction } from 'express';
 dotenv.config();
 
 export class StripeService {
+	submitter: SubscriptionSubmitter;
+	private isFullySynced = false;
 
-    submitter: SubscriptionSubmitter;
-    private isFullySynced = false;
+	constructor() {
+		this.submitter = new SubscriptionSubmitter(eventTracker.getEmitter());
+	}
 
-    constructor() {
-        this.submitter = new SubscriptionSubmitter(eventTracker.getEmitter());
-    }
-
-    async syncAll(next: NextFunction): Promise<void> {
-        if (!this.isFullySynced) {
-            await this.syncFull();
-            this.isFullySynced = true;
-        }
-        next()
-    }
+	async syncAll(next: NextFunction): Promise<void> {
+		if (!this.isFullySynced) {
+			await this.syncFull();
+			this.isFullySynced = true;
+		}
+		next();
+	}
 
 	async syncFull(): Promise<void> {
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 		// Sync all subscriptions
 		for await (const subscription of stripe.subscriptions.list({
 			status: 'all',
@@ -54,7 +53,7 @@ export class StripeService {
 
 	// Sync all the subscriptions for current customer
 	async syncCustomer(customer: CustomerEntity): Promise<void> {
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 		for await (const subscription of stripe.subscriptions.list({
 			customer: customer.paymentProviderId,
 			status: 'all',
@@ -70,66 +69,68 @@ export class StripeService {
 		}
 	}
 
-    async syncOne(customer: CustomerEntity): Promise<void> {
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-        
-        const local = await SubscriptionService.instance.findCurrent(customer)
-        if (!local) {
-            eventTracker.notify({
-                message: EventTracker.compileBasicNotification(
-                    `Active subscription not found for customer with id ${customer.customerId}`,
-                    'Subscription syncronization'
-                ),
-                severity: 'debug',
-            });
-            const activeSubs = await stripe.subscriptions.list({
-                customer: customer.paymentProviderId,
-                status: 'active',
-            });
-            const trialSubs = await stripe.subscriptions.list({
-                customer: customer.paymentProviderId,
-                status: 'trialing',
-            });
-            const subs = [...activeSubs.data, ...trialSubs.data];
-            if (subs.length > 1) {
-                eventTracker.notify({
-                    message: EventTracker.compileBasicNotification(
-                        `Multiple active subscriptions found for customer with id ${customer.customerId}`,
-                        'Subscription syncronization'
-                    ),
-                    severity: 'error',
-                });
-                return;
-            }
-            if (subs.length > 0) {
-                await this.createSubscription(subs[0], customer);
-            }
-            return;
-        }
-        const subscriptionId = local.subscriptionId;
-        const remote = await stripe.subscriptions.retrieve(subscriptionId);
-        if (!remote) {
-            eventTracker.notify({
-                message: EventTracker.compileBasicNotification(
-                    `Subscription with id ${subscriptionId} could not be retrieved from Stripe`,
-                    'Subscription syncronization'
-                ),
-                severity: 'error',
-            });
-            return;
-        }
-        const current = await SubscriptionService.instance.subscriptionRepository.findOne({
-            where: { subscriptionId: remote.id },
-        });
-        if (current) {
-            await this.updateSubscription(remote, current);
-        } else {
-            await this.createSubscription(remote);
-        }
-    }
+	async syncOne(customer: CustomerEntity): Promise<void> {
+		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+		const local = await SubscriptionService.instance.findCurrent(customer);
+		if (!local) {
+			eventTracker.notify({
+				message: EventTracker.compileBasicNotification(
+					`Active subscription not found for customer with id ${customer.customerId}`,
+					'Subscription syncronization'
+				),
+				severity: 'debug',
+			});
+			const activeSubs = await stripe.subscriptions.list({
+				customer: customer.paymentProviderId,
+				status: 'active',
+			});
+			const trialSubs = await stripe.subscriptions.list({
+				customer: customer.paymentProviderId,
+				status: 'trialing',
+			});
+			const subs = [...activeSubs.data, ...trialSubs.data];
+			if (subs.length > 1) {
+				eventTracker.notify({
+					message: EventTracker.compileBasicNotification(
+						`Multiple active subscriptions found for customer with id ${customer.customerId}`,
+						'Subscription syncronization'
+					),
+					severity: 'error',
+				});
+				return;
+			}
+			if (subs.length > 0) {
+				await this.createSubscription(subs[0], customer);
+			}
+			return;
+		}
+		const subscriptionId = local.subscriptionId;
+		const remote = await stripe.subscriptions.retrieve(subscriptionId);
+		if (!remote) {
+			eventTracker.notify({
+				message: EventTracker.compileBasicNotification(
+					`Subscription with id ${subscriptionId} could not be retrieved from Stripe`,
+					'Subscription syncronization'
+				),
+				severity: 'error',
+			});
+			return;
+		}
+		const current = await SubscriptionService.instance.subscriptionRepository.findOne({
+			where: { subscriptionId: remote.id },
+		});
+		if (current) {
+			await this.updateSubscription(remote, current);
+		} else {
+			await this.createSubscription(remote);
+		}
+	}
 
 	async createSubscription(subscription: Stripe.Subscription, customer?: CustomerEntity): Promise<void> {
-		await this.submitter.submitSubscriptionCreate(builSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_CREATE, {customer: customer}));
+		await this.submitter.submitSubscriptionCreate(
+			builSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_CREATE, { customer: customer })
+		);
 	}
 
 	async updateSubscription(subscription: Stripe.Subscription, current: SubscriptionEntity): Promise<void> {
@@ -144,7 +145,9 @@ export class StripeService {
 			});
 			return;
 		}
-		await this.submitter.submitSubscriptionUpdate(builSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_UPDATE));
+		await this.submitter.submitSubscriptionUpdate(
+			builSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_UPDATE)
+		);
 	}
 }
 

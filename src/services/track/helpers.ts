@@ -35,7 +35,7 @@ export function toCoin(amount: bigint, denom = MINIMAL_DENOM): Coin {
 	return coin(amount.toString(), denom);
 }
 
-export function builSubmitOperation (subscription: Stripe.Subscription, name: string, options?: ISubmitOptions) {
+export function builSubmitOperation(subscription: Stripe.Subscription, name: string, options?: ISubmitOptions) {
 	return {
 		operation: name,
 		data: {
@@ -49,4 +49,4 @@ export function builSubmitOperation (subscription: Stripe.Subscription, name: st
 		} satisfies ISubmitData,
 		options,
 	} satisfies ISubmitOperation;
-};
+}

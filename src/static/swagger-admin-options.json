@@ -22,13 +22,10 @@
 			"name": "Price"
 		},
 		{
-			"name": "Customer"
-		},
-		{
 			"name": "Subscription"
 		},
 		{
-			"name": "Checkout"
+			"name": "API Key"
 		}
 	]
 }

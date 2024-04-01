@@ -10,6 +10,9 @@ export const HEADERS = {
 // Application constants
 export const APPLICATION_BASE_URL = process.env.APPLICATION_BASE_URL || 'http://localhost:3000';
 export const CORS_ALLOWED_ORIGINS = process.env.CORS_ALLOWED_ORIGINS || APPLICATION_BASE_URL;
+export const API_KEY_PREFIX = process.env.API_KEY_PREFIX || 'caas';
+export const API_KEY_LENGTH = process.env.API_KEY_LENGTH || 32;
+export const API_KEY_EXPIRATION = process.env.API_KEY_EXPIRATION || 1;
 // By default we don't send events to datadog
 export const ENABLE_DATADOG = process.env.ENABLE_DATADOG === 'true' ? true : false;
 // Possible cases 'trace' 'debug' 'info' 'warn' 'error';
@@ -75,6 +78,7 @@ export enum OperationCategoryNameEnum {
 	PRESENTATION = 'presentation',
 	KEY = 'key',
 	SUBSCRIPTION = 'subscription',
+	API_KEY = 'api-key',
 }
 
 export enum OperationDefaultFeeEnum {
@@ -127,6 +131,13 @@ export enum OperationNameEnum {
 	SUBSCRIPTION_CANCEL = 'subscription-cancel',
 	SUBSCRIPTION_UPDATE = 'subscription-update',
 	SUBSCRIPTION_TRIAL_WILL_END = 'subscription-trial-will-end',
+
+	// API key operations
+	API_KEY_CREATE = 'api-key-create',
+	API_KEY_UPDATE = 'api-key-update',
+	API_KEY_REVOKE = 'api-key-revoke',
+	API_KEY_GET = 'api-key-get',
+	API_KEY_LIST = 'api-key-list',
 
 	// Stripe operations
 	STRIPE_ACCOUNT_CREATE = 'stripe-account-create',

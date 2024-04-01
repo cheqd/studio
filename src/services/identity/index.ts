@@ -171,6 +171,7 @@ export interface IIdentityService {
 	setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity>;
 	updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity>;
 	getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | undefined>;
+	decryptAPIKey(apiKey: string): Promise<string>;
 }
 
 export class IdentityServiceStrategySetup {

@@ -94,6 +94,54 @@ export type SubscriptionResumeUnsuccessfulResponseBody = UnsuccessfulResponseBod
 
 export type PortalCustomerGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
+// API key
+// Create
+export type APIKeyCreateRequestBody = {
+	expiresAt?: Date;
+};
+export type APIKeyCreateResponseBody = {
+	apiKey: string;
+	expiresAt: string;
+	revoked: boolean;
+};
+export type APIKeyCreateUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+
+// Update
+export type APIKeyUpdateRequestBody = {
+	apiKey: string;
+	expiresAt?: Date;
+	revoked?: boolean;
+};
+export type APIKeyUpdateResponseBody = {
+	apiKey: string;
+	expiresAt: string;
+	revoked: boolean;
+};
+export type APIKeyUpdateUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+
+// Revoke
+export type APIKeyRevokeRequestBody = {
+	apiKey: string;
+};
+export type APIKeyRevokeResponseBody = {
+	apiKey: string;
+	revoked: boolean;
+};
+export type APIKeyRevokeUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+
+// List
+export type APIKeyListResponseBody = {
+	apiKeys: APIKeyCreateResponseBody[];
+};
+export type APIKeyListUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+
+// Get
+export type APIKeyGetRequestBody = {
+	apiKey: string;
+};
+export type APIKeyGetResponseBody = APIKeyCreateResponseBody;
+export type APIKeyGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+
 // Utils
 
 export type PaymentBehavior = Stripe.SubscriptionCreateParams.PaymentBehavior;

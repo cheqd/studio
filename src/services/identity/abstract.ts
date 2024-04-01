@@ -221,6 +221,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<IVerifyResult> {
 		throw new Error(`Not supported`);
 	}
+	// ToDo: All the next functions should be removed after adding new API key mechanism
 	setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity> {
 		throw new Error(`Not supported`);
 	}
@@ -228,6 +229,9 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 	getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | undefined> {
+		throw new Error(`Not supported`);
+	}
+	decryptAPIKey(apiKey: string): Promise<string> {
 		throw new Error(`Not supported`);
 	}
 }

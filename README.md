@@ -97,6 +97,9 @@ By default, `ENABLE_AUTHENTICATION` is set to off/`false`. To enable external Ve
     2. `LOGTO_WEBHOOK_SECRET`: Webhook secret to authenticate incoming webhook requests from LogTo.
 5. **Miscellaneous**
     1. `COOKIE_SECRET`: Secret for cookie encryption.
+    2. `API_KEY_PREFIX` (optional): Prefix for API keys. (Default "caas")
+    3. `API_KEY_LENGTH` (optional): Length of API keys. (Default 32)
+    4. `API_KEY_EXPIRATION` (optional): Expiration time for API keys in month. (Default 1 month)
 
 #### Faucet settings
 

@@ -20,6 +20,9 @@ declare global {
 			EXTERNAL_DB_CONNECTION_URL: string;
 			EXTERNAL_DB_ENCRYPTION_KEY: string;
 			EXTERNAL_DB_CERT: string | undefined;
+			API_KEY_PREFIX: string;
+			API_KEY_LENGTH: number;
+			API_KEY_EXPIRATION: number;
 
 			// LogTo
 			LOGTO_ENDPOINT: string;

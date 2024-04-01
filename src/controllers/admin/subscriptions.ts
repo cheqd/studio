@@ -84,7 +84,6 @@ export function syncOne(target: any, key: string, descriptor: PropertyDescriptor
 	return descriptor;
 }
 
-
 export class SubscriptionController {
 	static subscriptionCreateValidator = [
 		check('price')
@@ -198,7 +197,7 @@ export class SubscriptionController {
 					cancel_url: cancelURL,
 					subscription_data: {
 						trial_period_days: trialPeriodDays,
-					}
+					},
 				},
 				{
 					idempotencyKey,

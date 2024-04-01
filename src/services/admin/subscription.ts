@@ -75,7 +75,10 @@ export class SubscriptionService {
 
 	public async findCurrent(customer: CustomerEntity) {
 		return await this.subscriptionRepository.findOne({
-			where: [{ customer: customer, status: 'active' }, { customer: customer, status: 'trialing' }],
+			where: [
+				{ customer: customer, status: 'active' },
+				{ customer: customer, status: 'trialing' },
+			],
 			relations: ['customer'],
 		});
 	}

@@ -61,7 +61,7 @@ export class Authentication {
 				new PresentationAuthHandler(),
 				new AuthInfoHandler(),
 				new AdminHandler(),
-			])
+			]);
 
 			this.isSetup = true;
 		}
