@@ -26,7 +26,7 @@ export class BaseAPIGuard extends RuleRoutine implements IAPIGuard {
 		if (!rule) {
 			return this.returnError(
 				StatusCodes.BAD_REQUEST,
-				`Bad Request. No atuh rules for handling such request: ${request.method} ${request.path}`
+				`Bad Request. No auth rules for handling such request: ${request.method} ${request.path}`
 			);
 		}
 		// If the rule is not found - skip the auth check

@@ -178,7 +178,7 @@
  *         expiresAt:
  *           type: string
  *           description: The expiration date of the API key
- *           example: 2000-10-31T01:30:00.000-05:00
+ *           example: "2000-10-31T01:30:00.000-05:00"
  *           format: date
  *           required: false
  *     APIKeyCreateResponseBody:
@@ -192,7 +192,7 @@
  *         expiresAt:
  *           type: string
  *           description: The expiration date of the API key
- *           example: 2000-10-31T01:30:00.000-05:00
+ *           example: "2000-10-31T01:30:00.000-05:00"
  *           format: date
  *         revoked:
  *           type: boolean
@@ -217,7 +217,7 @@
  *         expiresAt:
  *           type: string
  *           description: The expiration date of the API key
- *           example: 2000-10-31T01:30:00.000-05:00
+ *           example: "2000-10-31T01:30:00.000-05:00"
  *           format: date
  *           required: false
  *         revoked:
@@ -237,12 +237,19 @@
  *         expiresAt:
  *           type: string
  *           description: The expiration date of the API key
- *           example: 2000-10-31T01:30:00.000-05:00
+ *           example: "2000-10-31T01:30:00.000-05:00"
  *           format: date
  *         revoked:
  *           type: boolean
  *           description: The status of the API key
  *           example: false
+ *     APIKeyUpdateUnsuccessfulResponseBody:
+ *       description: The response body for an unsuccessful API key update
+ *       type: object
+ *       properties:
+ *         error:
+ *           type: string
+ *           example: API key update unsuccessful
  *     APIKeyRevokeRequestBody:
  *       description: The request body for revoking an API key
  *       type: object
@@ -288,7 +295,7 @@
  *               expiresAt:
  *                 type: string
  *                 description: The expiration date of the API key
- *                 example: 2000-10-31T01:30:00.000-05:00
+ *                 example: "2000-10-31T01:30:00.000-05:00"
  *                 format: date
  *               revoked:
  *                 type: boolean
@@ -314,7 +321,7 @@
  *         expiresAt:
  *           type: string
  *           description: The expiration date of the API key
- *           example: 2000-10-31T01:30:00.000-05:00
+ *           example: "2000-10-31T01:30:00.000-05:00"
  *           format: date
  *         revoked:
  *           type: boolean
