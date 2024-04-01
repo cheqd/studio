@@ -90,6 +90,7 @@ export class AccountController {
 	 *     tags: [Account]
 	 *     summary: Fetch IdToken.
 	 *     description: This endpoint returns IdToken as JWT with list of user roles inside
+	 *     deprecated: true
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.

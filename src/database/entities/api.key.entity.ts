@@ -7,14 +7,18 @@ dotenv.config();
 
 @Entity('apiKey')
 export class APIKeyEntity {
-	@PrimaryGeneratedColumn('uuid')
-	apiKeyId!: string;
-
 	@Column({
 		type: 'text',
 		nullable: false,
+		primary: true,
 	})
 	apiKey!: string;
+
+	@Column({
+		type: 'boolean',
+		nullable: false,
+	})
+	revoked!: boolean;
 
 	@Column({
 		type: 'timestamptz',
@@ -56,11 +60,11 @@ export class APIKeyEntity {
 		return this.expiresAt < new Date();
 	}
 
-	constructor(apiKeyId: string, apiKey: string, expiresAt: Date, customer: CustomerEntity, user: UserEntity) {
-		this.apiKeyId = apiKeyId;
+	constructor(apiKey: string, expiresAt: Date, customer: CustomerEntity, user: UserEntity, revoked = false) {
 		this.apiKey = apiKey;
 		this.expiresAt = expiresAt;
 		this.customer = customer;
 		this.user = user;
+		this.revoked = revoked;
 	}
 }
