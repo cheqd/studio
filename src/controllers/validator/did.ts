@@ -190,22 +190,22 @@ export class VeridaDIDValidator extends BaseDidValidator implements IValidator {
 		}
 
 		// Check identifier
-		const id = did.split(':')[3];
-		if (!id) {
+		const identifier = did.split(':')[3];
+		if (!identifier) {
 			return {
 				valid: false,
 				error: 'Identifier is required after "did:vda:<namespace>:" prefix',
 			};
 		}
 		// Check that identifier is valid
-		_v = this.identifierValidator.validate(id);
+		_v = this.identifierValidator.validate(identifier);
 		if (!_v.valid) {
 			return {
 				valid: false,
 				error: _v.error,
 			};
 		}
-		return { valid: true };
+		return { valid: true, namespace, identifier };
 	}
 }
 

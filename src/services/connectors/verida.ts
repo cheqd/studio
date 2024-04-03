@@ -130,14 +130,4 @@ export class VeridaService {
 		};
 		await this.sendData(environment, recipientDid, messageSubject, credentialRecord);
 	}
-
-	static splitVeridaDid(did: string) {
-		const splittedDid = did.split(':');
-
-		return {
-			method: splittedDid[1],
-			network: splittedDid[2] as EnvironmentType,
-			identifier: splittedDid[3],
-		};
-	}
 }
