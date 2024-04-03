@@ -38,7 +38,7 @@ export class Credentials {
 		).agent.createCredential(credential, request.format, statusOptions, customer);
 
 		const isVeridaDid = new VeridaDIDValidator().validate(request.subjectDid);
-		if (ENABLE_VERIDA_CONNECTOR === 'true' && isVeridaDid.valid) {
+		if (ENABLE_VERIDA_CONNECTOR === 'true' && isVeridaDid.valid && isVeridaDid.namespace) {
 			if (!request.credentialSchema) throw new Error('Credential schema is required');
 
 			// dynamic import to avoid circular dependency
