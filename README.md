@@ -119,9 +119,8 @@ Verida Wallet.
 By default, `ENABLE_VERIDA_CONNECTOR` is set to off/`false`. To enable external Veramo KMS database, set
 `ENABLE_VERIDA_CONNECTOR` to `true`, then define below environment variables in `.env` file:
 
-1. `VERIDA_NETWORK`: Verida Network type to connect to. (Default: `testnet`)
-2. `VERIDA_PRIVATE_KEY`: Secret key for Verida Network API.
-3. `POLYGON_PRIVATE_KEY`: Secret key for Polygon Network.
+1. `VERIDA_PRIVATE_KEY`: Secret key for Verida Network API.
+2. `POLYGON_PRIVATE_KEY`: Secret key for Polygon Network.
 
 ## 🧑‍💻🛠 Developer Guide
 

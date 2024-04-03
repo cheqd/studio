@@ -42,7 +42,10 @@ export class Credentials {
 			// dynamic import to avoid circular dependency
 			const { VeridaService } = await import('./connectors/verida.js');
 
+			const { network } = VeridaService.splitVeridaDid(request.subjectDid);
+
 			await VeridaService.instance.sendCredential(
+				network,
 				request.subjectDid,
 				'New Verifiable Credential',
 				verifiable_credential,
