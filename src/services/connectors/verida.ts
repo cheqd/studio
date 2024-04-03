@@ -97,7 +97,7 @@ export class VeridaService {
 
 			await messagingClient?.send(recipientDid, messageType, messageData, subject, messageConfig);
 		} catch (error) {
-			throw new Error(`Error sending data ${error}`);
+			throw new Error(`${(error as Error).message || error}`);
 		}
 	}
 
@@ -119,15 +119,19 @@ export class VeridaService {
 		credentialSchema: string,
 		credentialSummary?: string
 	) {
-		// The Credential record is how Verida wrap the credential to store it on the Network. Check the JSdoc of the type and each property. They are following the Verida Credential Record schema.
-		const credentialRecord: CredentialDataRecord = {
-			name: credentialName,
-			summary: credentialSummary,
-			schema: VERIDA_CREDENTIAL_RECORD_SCHEMA,
-			didJwtVc: credential.proof.jwt,
-			credentialSchema,
-			credentialData: credential,
-		};
-		await this.sendData(environment, recipientDid, messageSubject, credentialRecord);
+		try {
+			// The Credential record is how Verida wrap the credential to store it on the Network. Check the JSdoc of the type and each property. They are following the Verida Credential Record schema.
+			const credentialRecord: CredentialDataRecord = {
+				name: credentialName,
+				summary: credentialSummary,
+				schema: VERIDA_CREDENTIAL_RECORD_SCHEMA,
+				didJwtVc: credential.proof.jwt,
+				credentialSchema,
+				credentialData: credential,
+			};
+			await this.sendData(environment, recipientDid, messageSubject, credentialRecord);
+		} catch (error) {
+			throw new Error(`Error sending data to verida wallet: ${(error as Error).message || error}`);
+		}
 	}
 }
