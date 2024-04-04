@@ -58,7 +58,6 @@ jobs:
                 TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
                 TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
                 TESTNET_RPC_URL: ${{ vars.TESTNET_RPC_URL }}
-                VERIDA_NETWORK: ${{ vars.VERIDA_NETWORK }}
                 VERIDA_PRIVATE_KEY: ${{ secrets.VERIDA_PRIVATE_KEY }}
                 CREDS_DECRYPTION_SECRET: ${{ secrets.CREDS_DECRYPTION_SECRET }}
 

@@ -1,6 +1,7 @@
 import { CheqdNetwork } from '@cheqd/sdk';
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
 import { CheqdIdentifierValidator, KeyIdentifierValidator, VeridaIdentifierValidator } from './identifier.js';
+import { EnvironmentType } from '@verida/types';
 
 export class BaseDidValidator implements IValidator {
 	validate(did: Validatable): IValidationResult {
@@ -157,7 +158,7 @@ export class VeridaDIDValidator extends BaseDidValidator implements IValidator {
 		return this.subject;
 	}
 
-	validate(did: Validatable): IValidationResult {
+	validate(did: Validatable): IValidationResult & { namespace?: EnvironmentType; identifier?: string } {
 		// Call base validation
 		let _v = super.validate(did);
 		if (!_v.valid) {
@@ -174,38 +175,39 @@ export class VeridaDIDValidator extends BaseDidValidator implements IValidator {
 		}
 
 		// Check namepsace
-		const namespace = did.split(':')[2];
+		const namespace = did.split(':')[2] as EnvironmentType | undefined;
 		if (!namespace) {
 			return {
 				valid: false,
 				error: 'Verida DID namespace is required ("did:vda:mainnet:..." or "did:vda:testnet:...")',
 			};
 		}
+
 		// Check if namespace is valid
-		if (namespace !== CheqdNetwork.Testnet && namespace !== CheqdNetwork.Mainnet) {
+		if (!(namespace in EnvironmentType)) {
 			return {
 				valid: false,
-				error: `Verida DID namespace must be ${CheqdNetwork.Testnet} or ${CheqdNetwork.Mainnet}`,
+				error: `Verida DID namespace must be ${EnvironmentType.MAINNET} or ${EnvironmentType.TESTNET}`,
 			};
 		}
 
 		// Check identifier
-		const id = did.split(':')[3];
-		if (!id) {
+		const identifier = did.split(':')[3];
+		if (!identifier) {
 			return {
 				valid: false,
 				error: 'Identifier is required after "did:vda:<namespace>:" prefix',
 			};
 		}
 		// Check that identifier is valid
-		_v = this.identifierValidator.validate(id);
+		_v = this.identifierValidator.validate(identifier);
 		if (!_v.valid) {
 			return {
 				valid: false,
 				error: _v.error,
 			};
 		}
-		return { valid: true };
+		return { valid: true, namespace, identifier };
 	}
 }
 
