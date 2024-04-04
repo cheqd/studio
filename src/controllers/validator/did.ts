@@ -184,7 +184,7 @@ export class VeridaDIDValidator extends BaseDidValidator implements IValidator {
 		}
 
 		// Check if namespace is valid
-		if (!(namespace in EnvironmentType)) {
+		if (!Object.values(EnvironmentType).includes(namespace)) {
 			return {
 				valid: false,
 				error: `Verida DID namespace must be ${EnvironmentType.MAINNET} or ${EnvironmentType.TESTNET}`,
