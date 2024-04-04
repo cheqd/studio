@@ -61,6 +61,10 @@ export class VeridaService {
 				},
 				account: this.account[environment]!,
 			});
+
+			if (this.context[environment] === undefined) {
+				throw new Error(`Verida client connection failed for environment: ${environment}`);
+			}
 		} catch (error) {
 			throw new Error(`Error: ${error}`);
 		}
@@ -75,7 +79,7 @@ export class VeridaService {
 	 */
 	async sendData(environment: EnvironmentType, recipientDid: string, subject: string, data: DataRecord) {
 		try {
-			if (!this.context) {
+			if (!this.context[environment]) {
 				await VeridaService.instance.init(
 					environment,
 					VERIDA_APP_NAME,
