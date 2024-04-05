@@ -17,8 +17,8 @@ const { VERIDA_PRIVATE_KEY, POLYGON_PRIVATE_KEY } = process.env;
  * Run the init method before running any other method.
  */
 export class VeridaService {
-	private context: Partial<Record<EnvironmentType, Context>> = {};
-	private account: Partial<Record<EnvironmentType, AutoAccount>> = {};
+	private context: Partial<Record<EnvironmentType.TESTNET | EnvironmentType.MAINNET, Context>> = {};
+	private account: Partial<Record<EnvironmentType.TESTNET | EnvironmentType.MAINNET, AutoAccount>> = {};
 
 	static instance = new VeridaService();
 
@@ -30,7 +30,7 @@ export class VeridaService {
 	 * @param accountPrivateKey The private key of the account
 	 */
 	async init(
-		environment: EnvironmentType,
+		environment: EnvironmentType.TESTNET | EnvironmentType.MAINNET,
 		contextName: string,
 		accountPrivateKey: string,
 		polygonPrivateKey: string
@@ -77,7 +77,12 @@ export class VeridaService {
 	 * @param subject The subject of the message (similar to an email subject).
 	 * @param data The data to be sent.
 	 */
-	async sendData(environment: EnvironmentType, recipientDid: string, subject: string, data: DataRecord) {
+	async sendData(
+		environment: EnvironmentType.TESTNET | EnvironmentType.MAINNET,
+		recipientDid: string,
+		subject: string,
+		data: DataRecord
+	) {
 		try {
 			if (!this.context[environment]) {
 				await VeridaService.instance.init(
@@ -88,7 +93,7 @@ export class VeridaService {
 				);
 			}
 
-			const messagingClient = await this.context[environment]?.getMessaging();
+			const messagingClient = await this.context[environment]!.getMessaging();
 
 			const messageType = 'inbox/type/dataSend'; // There are different types of message, here we are sending some data.
 			const messageData = {
@@ -99,7 +104,7 @@ export class VeridaService {
 				did: recipientDid,
 			};
 
-			await messagingClient?.send(recipientDid, messageType, messageData, subject, messageConfig);
+			await messagingClient.send(recipientDid, messageType, messageData, subject, messageConfig);
 		} catch (error) {
 			throw new Error(`${(error as Error).message || error}`);
 		}
@@ -115,7 +120,7 @@ export class VeridaService {
 	 * @param credentialSummary A summary of the credential. For instance, will be displayed in the Verida Wallet UI.
 	 */
 	async sendCredential(
-		environment: EnvironmentType,
+		environment: EnvironmentType.TESTNET | EnvironmentType.MAINNET,
 		recipientDid: string,
 		messageSubject: string,
 		credential: VerifiableCredential,

@@ -55,8 +55,6 @@ jobs:
             #     POLYGON_PRIVATE_KEY: ${{ secrets.POLYGON_PRIVATE_KEY }}
             #     POLYGON_RPC_URL_MAINNET: ${{ vars.POLYGON_RPC_URL_MAINNET }}
             #     POLYGON_RPC_URL_TESTNET: ${{ vars.POLYGON_RPC_URL_TESTNET }}
-            #     POLYGON_RPC_URL_DEVNET: ${{ vars.POLYGON_RPC_URL_DEVNET }}
-            #     POLYGON_RPC_URL_LOCAL: ${{ vars.POLYGON_RPC_URL_LOCAL }}
             #     RESOLVER_URL: ${{ vars.RESOLVER_URL }}
             #     TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
             #     TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
