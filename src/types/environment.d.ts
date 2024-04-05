@@ -38,7 +38,10 @@ declare global {
 
 			// Verida
 			ENABLE_VERIDA_CONNECTOR: string | 'false';
-			POLYGON_RPC_URL: string;
+			POLYGON_RPC_URL_MAINNET: string;
+			POLYGON_RPC_URL_TESTNET: string;
+			POLYGON_RPC_URL_DEVNET: string;
+			POLYGON_RPC_URL_LOCAL: string;
 			VERIDA_PRIVATE_KEY: string;
 			POLYGON_PRIVATE_KEY: string;
 

@@ -45,7 +45,7 @@ export class VeridaService {
 			didClientConfig: {
 				callType: 'web3',
 				web3Config: {
-					rpcUrl: POLYGON_RPC_URL,
+					rpcUrl: POLYGON_RPC_URL[environment],
 					privateKey: polygonPrivateKey, // Polygon private key for creating DID, not needed in our case but required in the current version of the config.
 				},
 			},
@@ -61,8 +61,12 @@ export class VeridaService {
 				},
 				account: this.account[environment]!,
 			});
+
+			if (this.context[environment] === undefined) {
+				throw new Error(`Verida client connection failed for environment: ${environment}`);
+			}
 		} catch (error) {
-			throw new Error(`Error: ${error}`);
+			throw new Error(`${(error as Error).message || error}`);
 		}
 	}
 
@@ -75,7 +79,7 @@ export class VeridaService {
 	 */
 	async sendData(environment: EnvironmentType, recipientDid: string, subject: string, data: DataRecord) {
 		try {
-			if (!this.context) {
+			if (!this.context[environment]) {
 				await VeridaService.instance.init(
 					environment,
 					VERIDA_APP_NAME,
