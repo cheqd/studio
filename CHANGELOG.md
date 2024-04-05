@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.19.0](https://github.com/cheqd/credential-service/compare/2.18.3...2.19.0) (2024-04-05)
+
+
+### Features
+
+* Stop testing until testnet migration ([#514](https://github.com/cheqd/credential-service/issues/514)) ([acea57f](https://github.com/cheqd/credential-service/commit/acea57f38528a72154d8363f17d1ba1f531ac625))
+* Support multiple verida networks [DEV-3801] ([#511](https://github.com/cheqd/credential-service/issues/511)) ([5dd4665](https://github.com/cheqd/credential-service/commit/5dd4665ad6d90ba139729649bd17fe4eb2d120c8))
+
+
+### Bug Fixes
+
+* Fix did:vda validator ([#512](https://github.com/cheqd/credential-service/issues/512)) ([550afcf](https://github.com/cheqd/credential-service/commit/550afcf91b8cb2545aed40c8ef9c81ded4c72b6f))
+* Restrict verida to mainnet and testnet ([#515](https://github.com/cheqd/credential-service/issues/515)) ([ca27b47](https://github.com/cheqd/credential-service/commit/ca27b47dcc5ed2ae1ea73e4c8ae4e10fc53f3aef))
+
 ## [2.19.0-develop.2](https://github.com/cheqd/credential-service/compare/2.19.0-develop.1...2.19.0-develop.2) (2024-04-05)
 
 
