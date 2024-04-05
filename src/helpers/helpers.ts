@@ -60,13 +60,13 @@ export function toDefaultDkg(did: string): DkgOptions {
 		case CheqdNetwork.Mainnet:
 			return {
 				chain: LitCompatibleCosmosChains.cheqdMainnet,
-				network: LitNetworks.cayenne,
+				network: LitNetworks.serrano,
 			};
 		case CheqdNetwork.Testnet:
 		default:
 			return {
 				chain: LitCompatibleCosmosChains.cheqdTestnet,
-				network: LitNetworks.cayenne,
+				network: LitNetworks.serrano,
 			};
 	}
 }
@@ -108,7 +108,7 @@ export function isValidService(didDocument: DIDDocument): boolean {
 	return didDocument.service
 		? didDocument?.service?.every((s) => {
 				return s?.serviceEndpoint && s?.id && s?.type;
-		  })
+			})
 		: true;
 }
 
