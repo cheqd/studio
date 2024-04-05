@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.19.0-develop.2](https://github.com/cheqd/credential-service/compare/2.19.0-develop.1...2.19.0-develop.2) (2024-04-05)
+
+
+### Bug Fixes
+
+* Restrict verida to mainnet and testnet ([#515](https://github.com/cheqd/credential-service/issues/515)) ([ca27b47](https://github.com/cheqd/credential-service/commit/ca27b47dcc5ed2ae1ea73e4c8ae4e10fc53f3aef))
+
 ## [2.19.0-develop.1](https://github.com/cheqd/credential-service/compare/2.18.3...2.19.0-develop.1) (2024-04-05)
 
 
