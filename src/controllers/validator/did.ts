@@ -158,7 +158,9 @@ export class VeridaDIDValidator extends BaseDidValidator implements IValidator {
 		return this.subject;
 	}
 
-	validate(did: Validatable): IValidationResult & { namespace?: EnvironmentType; identifier?: string } {
+	validate(
+		did: Validatable
+	): IValidationResult & { namespace?: EnvironmentType.TESTNET | EnvironmentType.MAINNET; identifier?: string } {
 		// Call base validation
 		let _v = super.validate(did);
 		if (!_v.valid) {
@@ -184,7 +186,7 @@ export class VeridaDIDValidator extends BaseDidValidator implements IValidator {
 		}
 
 		// Check if namespace is valid
-		if (!Object.values(EnvironmentType).includes(namespace)) {
+		if (namespace !== EnvironmentType.MAINNET && namespace !== EnvironmentType.TESTNET) {
 			return {
 				valid: false,
 				error: `Verida DID namespace must be ${EnvironmentType.MAINNET} or ${EnvironmentType.TESTNET}`,
