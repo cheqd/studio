@@ -9,7 +9,7 @@ import * as dotenv from 'dotenv';
 import type { VerifiableCredential } from '@veramo/core';
 dotenv.config();
 
-const { VERIDA_NETWORK, VERIDA_PRIVATE_KEY, POLYGON_PRIVATE_KEY } = process.env;
+const { VERIDA_PRIVATE_KEY, POLYGON_PRIVATE_KEY } = process.env;
 
 /**
  * Helper class for the Verida protocol.
@@ -17,8 +17,8 @@ const { VERIDA_NETWORK, VERIDA_PRIVATE_KEY, POLYGON_PRIVATE_KEY } = process.env;
  * Run the init method before running any other method.
  */
 export class VeridaService {
-	private context?: Context;
-	private account?: AutoAccount;
+	private context: Partial<Record<EnvironmentType.TESTNET | EnvironmentType.MAINNET, Context>> = {};
+	private account: Partial<Record<EnvironmentType.TESTNET | EnvironmentType.MAINNET, AutoAccount>> = {};
 
 	static instance = new VeridaService();
 
@@ -30,37 +30,43 @@ export class VeridaService {
 	 * @param accountPrivateKey The private key of the account
 	 */
 	async init(
-		environment: EnvironmentType,
+		environment: EnvironmentType.TESTNET | EnvironmentType.MAINNET,
 		contextName: string,
 		accountPrivateKey: string,
 		polygonPrivateKey: string
 	) {
-		if (this.context && this.account) {
+		if (this.context[environment] && this.account[environment]) {
 			return;
 		}
-		this.account = new AutoAccount({
+
+		this.account[environment] = new AutoAccount({
 			privateKey: accountPrivateKey,
 			environment,
 			didClientConfig: {
 				callType: 'web3',
 				web3Config: {
-					rpcUrl: POLYGON_RPC_URL,
+					rpcUrl: POLYGON_RPC_URL[environment],
 					privateKey: polygonPrivateKey, // Polygon private key for creating DID, not needed in our case but required in the current version of the config.
 				},
 			},
 		});
+
 		try {
-			this.context = await Network.connect({
+			this.context[environment] = await Network.connect({
 				client: {
 					environment,
 				},
 				context: {
 					name: contextName,
 				},
-				account: this.account,
+				account: this.account[environment]!,
 			});
+
+			if (this.context[environment] === undefined) {
+				throw new Error(`Verida client connection failed for environment: ${environment}`);
+			}
 		} catch (error) {
-			throw new Error(`Error: ${error}`);
+			throw new Error(`${(error as Error).message || error}`);
 		}
 	}
 
@@ -71,18 +77,23 @@ export class VeridaService {
 	 * @param subject The subject of the message (similar to an email subject).
 	 * @param data The data to be sent.
 	 */
-	async sendData(recipientDid: string, subject: string, data: DataRecord) {
+	async sendData(
+		environment: EnvironmentType.TESTNET | EnvironmentType.MAINNET,
+		recipientDid: string,
+		subject: string,
+		data: DataRecord
+	) {
 		try {
-			if (!this.context) {
+			if (!this.context[environment]) {
 				await VeridaService.instance.init(
-					VERIDA_NETWORK,
+					environment,
 					VERIDA_APP_NAME,
 					VERIDA_PRIVATE_KEY,
 					POLYGON_PRIVATE_KEY
 				);
 			}
 
-			const messagingClient = await this.context?.getMessaging();
+			const messagingClient = await this.context[environment]!.getMessaging();
 
 			const messageType = 'inbox/type/dataSend'; // There are different types of message, here we are sending some data.
 			const messageData = {
@@ -93,9 +104,9 @@ export class VeridaService {
 				did: recipientDid,
 			};
 
-			await messagingClient?.send(recipientDid, messageType, messageData, subject, messageConfig);
+			await messagingClient.send(recipientDid, messageType, messageData, subject, messageConfig);
 		} catch (error) {
-			throw new Error(`Error sending data ${error}`);
+			throw new Error(`${(error as Error).message || error}`);
 		}
 	}
 
@@ -109,6 +120,7 @@ export class VeridaService {
 	 * @param credentialSummary A summary of the credential. For instance, will be displayed in the Verida Wallet UI.
 	 */
 	async sendCredential(
+		environment: EnvironmentType.TESTNET | EnvironmentType.MAINNET,
 		recipientDid: string,
 		messageSubject: string,
 		credential: VerifiableCredential,
@@ -116,15 +128,19 @@ export class VeridaService {
 		credentialSchema: string,
 		credentialSummary?: string
 	) {
-		// The Credential record is how Verida wrap the credential to store it on the Network. Check the JSdoc of the type and each property. They are following the Verida Credential Record schema.
-		const credentialRecord: CredentialDataRecord = {
-			name: credentialName,
-			summary: credentialSummary,
-			schema: VERIDA_CREDENTIAL_RECORD_SCHEMA,
-			didJwtVc: credential.proof.jwt,
-			credentialSchema,
-			credentialData: credential,
-		};
-		await this.sendData(recipientDid, messageSubject, credentialRecord);
+		try {
+			// The Credential record is how Verida wrap the credential to store it on the Network. Check the JSdoc of the type and each property. They are following the Verida Credential Record schema.
+			const credentialRecord: CredentialDataRecord = {
+				name: credentialName,
+				summary: credentialSummary,
+				schema: VERIDA_CREDENTIAL_RECORD_SCHEMA,
+				didJwtVc: credential.proof.jwt,
+				credentialSchema,
+				credentialData: credential,
+			};
+			await this.sendData(environment, recipientDid, messageSubject, credentialRecord);
+		} catch (error) {
+			throw new Error(`Error sending data to verida wallet: ${(error as Error).message || error}`);
+		}
 	}
 }
