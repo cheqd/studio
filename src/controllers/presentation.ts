@@ -279,7 +279,6 @@ export class PresentationController {
 		} catch (error) {
 			// define error
 			const errorRef = error as Record<string, unknown>;
-			console.log(errorRef.errorCode);
 			// handle doesn't meet condition
 			if (errorRef?.errorCode === 'NodeAccessControlConditionsReturnedNotAuthorized')
 				return response.status(StatusCodes.UNAUTHORIZED).json({
