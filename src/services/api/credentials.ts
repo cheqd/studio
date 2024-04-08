@@ -6,6 +6,7 @@ import { IdentityServiceStrategySetup } from '../identity/index.js';
 import { v4 } from 'uuid';
 import * as dotenv from 'dotenv';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import { VeridaDIDValidator } from '../../controllers/validator/did.js';
 dotenv.config();
 
 const { ENABLE_VERIDA_CONNECTOR } = process.env;
@@ -36,13 +37,15 @@ export class Credentials {
 			customer.customerId
 		).agent.createCredential(credential, request.format, statusOptions, customer);
 
-		if (ENABLE_VERIDA_CONNECTOR === 'true' && request.subjectDid.startsWith('did:vda')) {
+		const isVeridaDid = new VeridaDIDValidator().validate(request.subjectDid);
+		if (ENABLE_VERIDA_CONNECTOR === 'true' && isVeridaDid.valid && isVeridaDid.namespace) {
 			if (!request.credentialSchema) throw new Error('Credential schema is required');
 
 			// dynamic import to avoid circular dependency
 			const { VeridaService } = await import('../connectors/verida.js');
 
 			await VeridaService.instance.sendCredential(
+				isVeridaDid.namespace,
 				request.subjectDid,
 				'New Verifiable Credential',
 				verifiable_credential,
