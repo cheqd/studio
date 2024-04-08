@@ -61,9 +61,12 @@ export class APIKeyService {
 	// ToDo: Maybe we also need to store not the API key but the hash of it?
 	// But in that case the API key will be shown once and then it will be lost.
 	@decryptAPIKey
-	public async create(apiKey: string, user: UserEntity, expiresAt?: Date, revoked = false): Promise<APIKeyEntity> {
+	public async create(apiKey: string, name: string, user: UserEntity, expiresAt?: Date, revoked = false): Promise<APIKeyEntity> {
 		if (!apiKey) {
 			throw new Error('API key is not specified');
+		}
+		if (!name) {
+			throw new Error('API key name is not specified');
 		}
 		if (!user) {
 			throw new Error('API key user is not specified');
@@ -75,7 +78,7 @@ export class APIKeyService {
 		const apiKeyHash = APIKeyService.hashAPIKey(apiKey);
 		const encryptedAPIKey = await this.secretBox.encrypt(apiKey);
 		// Create entity
-		const apiKeyEntity = new APIKeyEntity(apiKeyHash, encryptedAPIKey, expiresAt, user.customer, user, revoked);
+		const apiKeyEntity = new APIKeyEntity(apiKeyHash, encryptedAPIKey, name, expiresAt, user.customer, user, revoked);
 		const apiKeyRecord = (await this.apiKeyRepository.insert(apiKeyEntity)).identifiers[0];
 		if (!apiKeyRecord) throw new Error(`Cannot create a new API key`);
 		return apiKeyEntity;
@@ -84,6 +87,7 @@ export class APIKeyService {
 	@decryptAPIKey
 	public async update(
 		apiKey: string,
+		name?: string,
 		expiresAt?: Date,
 		revoked?: boolean,
 		customer?: CustomerEntity,
@@ -93,6 +97,9 @@ export class APIKeyService {
 		const existingAPIKey = await this.apiKeyRepository.findOneBy({ apiKeyHash });
 		if (!existingAPIKey) {
 			throw new Error(`API with key id ${apiKey} not found`);
+		}
+		if (name) {
+			existingAPIKey.name = name;
 		}
 		if (expiresAt) {
 			existingAPIKey.expiresAt = expiresAt;
@@ -112,7 +119,7 @@ export class APIKeyService {
 	}
 
 	public async revoke(apiKey: string) {
-		return this.update(apiKey, undefined, true);
+		return this.update(apiKey, undefined, undefined, true);
 	}
 
 	public async decryptAPIKey(apiKey: string) {

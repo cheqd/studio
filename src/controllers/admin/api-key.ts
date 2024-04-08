@@ -12,6 +12,7 @@ import type {
 	APIKeyGetUnsuccessfulResponseBody,
 	APIKeyListResponseBody,
 	APIKeyListUnsuccessfulResponseBody,
+	APIKeyResponseBody,
 	APIKeyRevokeRequestBody,
 	APIKeyRevokeResponseBody,
 	APIKeyRevokeUnsuccessfulResponseBody,
@@ -39,6 +40,7 @@ export class APIKeyController {
 			})
 			.toDate()
 			.bail(),
+		check('name').exists().withMessage('Name is not specified').bail().isString().withMessage('Invalid name').bail(),
 	];
 	static apiKeyUpdateValidator = [
 		check('apiKey')
@@ -62,6 +64,7 @@ export class APIKeyController {
 			.toDate()
 			.bail(),
 		check('revoked').optional().isBoolean().withMessage('Invalid boolean value').bail(),
+		check('name').optional().isString().withMessage('Invalid name').bail(),
 	];
 	static apiKeyRevokeValidator = [
 		check('apiKey')
@@ -107,10 +110,10 @@ export class APIKeyController {
 	@validate
 	public async create(request: Request, response: Response) {
 		try {
-			const { expiresAt } = request.body satisfies APIKeyCreateRequestBody;
+			const { name, expiresAt } = request.body satisfies APIKeyCreateRequestBody;
 
 			const apiKey = APIKeyService.instance.generateAPIKey();
-			const apiKeyEntity = await APIKeyService.instance.create(apiKey, response.locals.user, expiresAt);
+			const apiKeyEntity = await APIKeyService.instance.create(apiKey, name, response.locals.user, expiresAt);
 			if (!apiKeyEntity) {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 					message: 'Cannot create a new API key',
@@ -125,6 +128,8 @@ export class APIKeyController {
 			});
 			return response.status(StatusCodes.CREATED).json({
 				apiKey: apiKeyEntity.apiKey,
+				name: apiKeyEntity.name,
+				createdAt: apiKeyEntity.createdAt.toISOString(),
 				expiresAt: apiKeyEntity.expiresAt.toISOString(),
 				revoked: apiKeyEntity.revoked,
 			} satisfies APIKeyCreateResponseBody);
@@ -166,8 +171,8 @@ export class APIKeyController {
 	@validate
 	public async update(request: Request, response: Response) {
 		try {
-			const { apiKey, expiresAt, revoked } = request.body satisfies APIKeyUpdateRequestBody;
-			const apiKeyEntity = await APIKeyService.instance.update(apiKey, expiresAt, revoked);
+			const { apiKey, name, expiresAt, revoked } = request.body satisfies APIKeyUpdateRequestBody;
+			const apiKeyEntity = await APIKeyService.instance.update(apiKey, name, expiresAt, revoked);
 			if (!apiKeyEntity) {
 				return response.status(StatusCodes.NOT_FOUND).json({
 					error: 'Cannot update API key cause it\'s not found',
@@ -183,6 +188,8 @@ export class APIKeyController {
 			});
 			return response.status(StatusCodes.OK).json({
 				apiKey: apiKeyEntity.apiKey,
+				name: apiKeyEntity.name,
+				createdAt: apiKeyEntity.createdAt.toISOString(),
 				expiresAt: apiKeyEntity.expiresAt.toISOString(),
 				revoked: apiKeyEntity.revoked,
 			} satisfies APIKeyUpdateResponseBody);
@@ -283,9 +290,11 @@ export class APIKeyController {
 			const keys = apiKeyList.map((apiKey) => {
 				return {
 					apiKey: apiKey.apiKey,
+					name: apiKey.name,
+					createdAt: apiKey.createdAt.toISOString(),
 					expiresAt: apiKey.expiresAt.toISOString(),
 					revoked: apiKey.revoked,
-				};
+				} satisfies APIKeyResponseBody;
 			});
 			return response.status(StatusCodes.OK).json({
 				apiKeys: keys,
@@ -341,9 +350,11 @@ export class APIKeyController {
 				}
 				return response.status(StatusCodes.OK).json({
 					apiKey: apiKeyEntity.apiKey,
+					name: apiKeyEntity.name,
+					createdAt: apiKeyEntity.createdAt.toISOString(),
 					expiresAt: apiKeyEntity.expiresAt.toISOString(),
 					revoked: apiKeyEntity.revoked,
-				});
+				} satisfies APIKeyGetResponseBody);
 			}
             // Otherwise try to get the latest not revoked API key
 			const keys = await APIKeyService.instance.find(
@@ -362,6 +373,8 @@ export class APIKeyController {
 			}
 			return response.status(StatusCodes.OK).json({
 				apiKey: keys[0].apiKey,
+				name: keys[0].name,
+				createdAt: keys[0].createdAt.toISOString(),
 				expiresAt: keys[0].expiresAt.toISOString(),
 				revoked: keys[0].revoked,
 			} satisfies APIKeyGetResponseBody);

@@ -21,6 +21,12 @@ export class APIKeyEntity {
 	apiKey!: string;
 
 	@Column({
+		type: 'text',
+		nullable: false,
+	})
+	name!: string;
+
+	@Column({
 		type: 'boolean',
 		nullable: false,
 	})
@@ -69,6 +75,7 @@ export class APIKeyEntity {
 	constructor(
 		apiKeyHash: string,
 		apiKey: string,
+		name: string,
 		expiresAt: Date,
 		customer: CustomerEntity,
 		user: UserEntity,
@@ -76,6 +83,7 @@ export class APIKeyEntity {
 	) {
 		this.apiKeyHash = apiKeyHash;
 		this.apiKey = apiKey;
+		this.name = name;
 		this.expiresAt = expiresAt;
 		this.customer = customer;
 		this.user = user;

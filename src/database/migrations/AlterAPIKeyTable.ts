@@ -15,6 +15,15 @@ export class AlterAPIKeyTable1695740346004 implements MigrationInterface {
 			})
 		);
 
+		await queryRunner.addColumn(
+			table_name,
+			new TableColumn({
+				name: 'name',
+				type: 'text',
+				isNullable: false,
+			})
+		);
+
 		// Remove unused apiKeyId column
 		await queryRunner.dropColumn(table_name, 'apiKeyId');
 		// Add column apiKeyHash

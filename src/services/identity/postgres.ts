@@ -528,7 +528,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (keys.length > 0) {
 			throw new Error(`API key for customer ${customer.customerId} and user ${user.logToId} already exists`);
 		}
-		const apiKeyEntity = await APIKeyService.instance.create(apiKey, user);
+		const apiKeyEntity = await APIKeyService.instance.create(apiKey, "idToken", user);
 		if (!apiKeyEntity) {
 			throw new Error(`Cannot create API key for customer ${customer.customerId} and user ${user.logToId}`);
 		}
@@ -543,6 +543,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		const apiKeyEntity = await APIKeyService.instance.update(
 			newApiKey,
+			undefined,
 			await APIKeyService.instance.getExpiryDate(newApiKey)
 		);
 		if (!apiKeyEntity) {

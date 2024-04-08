@@ -95,28 +95,31 @@ export type SubscriptionResumeUnsuccessfulResponseBody = UnsuccessfulResponseBod
 export type PortalCustomerGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
 // API key
-// Create
-export type APIKeyCreateRequestBody = {
-	expiresAt?: Date;
-};
-export type APIKeyCreateResponseBody = {
+export type APIKeyResponseBody = {
 	apiKey: string;
+	name: string;
+	createdAt: string;
 	expiresAt: string;
 	revoked: boolean;
 };
+// Create
+export type APIKeyCreateRequestBody = {
+	name: string,
+	expiresAt?: Date;
+};
+
+export type APIKeyCreateResponseBody = APIKeyResponseBody
 export type APIKeyCreateUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
 // Update
 export type APIKeyUpdateRequestBody = {
 	apiKey: string;
+	name?: string;
 	expiresAt?: Date;
 	revoked?: boolean;
 };
-export type APIKeyUpdateResponseBody = {
-	apiKey: string;
-	expiresAt: string;
-	revoked: boolean;
-};
+export type APIKeyUpdateResponseBody = APIKeyResponseBody;
+
 export type APIKeyUpdateUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
 // Revoke
@@ -131,14 +134,12 @@ export type APIKeyRevokeUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
 // List
 export type APIKeyListResponseBody = {
-	apiKeys: APIKeyCreateResponseBody[];
+	apiKeys: APIKeyResponseBody[];
 };
 export type APIKeyListUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
 // Get
-export type APIKeyGetRequestBody = {
-	apiKey: string;
-};
+export type APIKeyGetRequestBody = APIKeyResponseBody;
 export type APIKeyGetResponseBody = APIKeyCreateResponseBody;
 export type APIKeyGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
