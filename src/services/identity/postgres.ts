@@ -55,6 +55,7 @@ import type { AbstractIdentifierProvider } from '@veramo/did-manager';
 import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { toTPublicKeyEd25519 } from '../helpers.js';
+import type { APIServiceOptions } from '../../types/portal.js';
 
 dotenv.config();
 
@@ -524,7 +525,8 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity> {
-		const keys = await APIKeyService.instance.find({ customer: customer, user: user, revoked: false });
+		const options = { decryptionNeeded: true } satisfies APIServiceOptions
+		const keys = await APIKeyService.instance.find({ customer: customer, user: user, revoked: false }, undefined, options);
 		if (keys.length > 0) {
 			throw new Error(`API key for customer ${customer.customerId} and user ${user.logToId} already exists`);
 		}
@@ -532,29 +534,31 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!apiKeyEntity) {
 			throw new Error(`Cannot create API key for customer ${customer.customerId} and user ${user.logToId}`);
 		}
-		apiKeyEntity.apiKey = await this.decryptAPIKey(apiKeyEntity.apiKey);
 		return apiKeyEntity;
 	}
 
 	async updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity> {
-		const key = await APIKeyService.instance.get(apiKey.apiKey);
+		const options = { decryptionNeeded: true } satisfies APIServiceOptions
+		const key = await APIKeyService.instance.get(apiKey.apiKey, apiKey.customer, options);
 		if (!key) {
 			throw new Error(`API key not found`);
 		}
-		const apiKeyEntity = await APIKeyService.instance.update(
-			newApiKey,
-			undefined,
-			await APIKeyService.instance.getExpiryDate(newApiKey)
+		const apiKeyEntity = await APIKeyService.instance.update({
+				customer: key.customer,
+				apiKey: newApiKey,
+				expiresAt: await APIKeyService.instance.getExpiryDate(newApiKey)
+			}, 
+			options
 		);
 		if (!apiKeyEntity) {
 			throw new Error(`Cannot update API key`);
 		}
-		apiKeyEntity.apiKey = await this.decryptAPIKey(apiKeyEntity.apiKey);
 		return apiKeyEntity;
 	}
 
 	async getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | undefined> {
-		const keys = await APIKeyService.instance.find({ customer: customer, user: user, revoked: false });
+		const options = { decryptionNeeded: true } satisfies APIServiceOptions
+		const keys = await APIKeyService.instance.find({ customer: customer, user: user, revoked: false }, undefined, options);
 		if (keys.length > 1) {
 			throw new Error(
 				`For the customer with customer id ${customer.customerId} and user with logToId ${user.logToId} there more then 1 API key`

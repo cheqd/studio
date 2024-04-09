@@ -5,6 +5,11 @@ export type ProductWithPrices = Stripe.Product & {
 	prices?: Stripe.Price[];
 };
 
+
+export type APIServiceOptions = {
+	decryptionNeeded: boolean;
+};
+
 export type ProductListUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 export type ProductGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
@@ -146,3 +151,4 @@ export type APIKeyGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 // Utils
 
 export type PaymentBehavior = Stripe.SubscriptionCreateParams.PaymentBehavior;
+

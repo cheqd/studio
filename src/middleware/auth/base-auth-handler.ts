@@ -4,13 +4,14 @@ import type { IncomingHttpHeaders } from 'http';
 import type { IOAuthProvider } from './oauth/base.js';
 import { LogToProvider } from './oauth/logto-provider.js';
 import { SwaggerUserInfoFetcher } from './user-info-fetcher/swagger-ui.js';
-import { APITokenUserInfoFetcher } from './user-info-fetcher/api-token.js';
+import { IdTokenUserInfoFetcher } from './user-info-fetcher/idtoken.js';
 import type { IUserInfoFetcher } from './user-info-fetcher/base.js';
 import { IAuthHandler, RuleRoutine, IAPIGuard } from './routine.js';
 import type { IAuthResponse, MethodToScopeRule } from '../../types/authentication.js';
 import { M2MCredsTokenUserInfoFetcher } from './user-info-fetcher/m2m-creds-token.js';
 import { decodeJwt } from 'jose';
 import { PortalUserInfoFetcher } from './user-info-fetcher/portal-token.js';
+import { APITokenUserInfoFetcher } from './user-info-fetcher/api-token.js';
 
 export class BaseAPIGuard extends RuleRoutine implements IAPIGuard {
 	userInfoFetcher: IUserInfoFetcher = {} as IUserInfoFetcher;
@@ -131,21 +132,30 @@ export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 
 	private chooseUserFetcherStrategy(request: Request): void {
 		const token = BaseAuthHandler.extractBearerTokenFromHeaders(request.headers) as string;
+		const apiKey = request.headers['x-api-key'] as string;
 		const headerIdToken = request.headers['id-token'] as string;
 		if (headerIdToken && token) {
 			this.setUserInfoStrategy(new PortalUserInfoFetcher(token, headerIdToken));
-		} else {
-			if (token) {
-				const payload = decodeJwt(token);
-				if (payload.aud === process.env.LOGTO_APP_ID) {
-					this.setUserInfoStrategy(new APITokenUserInfoFetcher(token));
-				} else {
-					this.setUserInfoStrategy(new M2MCredsTokenUserInfoFetcher(token));
-				}
+			return;
+		}
+
+		if (token) {
+			const payload = decodeJwt(token);
+			if (payload.aud === process.env.LOGTO_APP_ID) {
+				this.setUserInfoStrategy(new IdTokenUserInfoFetcher(token));
+				return;
 			} else {
-				this.setUserInfoStrategy(new SwaggerUserInfoFetcher());
+				this.setUserInfoStrategy(new M2MCredsTokenUserInfoFetcher(token));
+				return;
 			}
 		}
+		if (apiKey) {
+			this.setUserInfoStrategy(new APITokenUserInfoFetcher(apiKey));
+			return;
+		} else {
+			this.setUserInfoStrategy(new SwaggerUserInfoFetcher());
+		}
+
 	}
 
 	public setOAuthProvider(oauthProvider: IOAuthProvider): IAuthHandler {

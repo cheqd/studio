@@ -226,7 +226,28 @@
  *     APIKeyUpdateRequestBody:
  *       description: The request body for updating an API key
  *       type: object
- *       ref: '#/components/schemas/APIKeyResponse'
+ *       properties:
+ *         apiKey:
+ *           type: string
+ *           description: The API key
+ *           example: abcdefghijklmnopqrstuvwxyz
+ *           required: true
+ *         name:
+ *           type: string
+ *           description: The name of the API key
+ *           example: My API Key
+ *         expiresAt:
+ *           type: string
+ *           description: The expiration date of the API key
+ *           example: 2000-10-31T01:30:00.000-05:00
+ *           format: date
+ *           required: false
+ *         revoked:
+ *           type: boolean
+ *           description: The status of the API key
+ *           example: false
+ *           required: false
+ *           default: false
  *     APIKeyUpdateResponseBody:
  *       description: The response body for an unsuccessful API key update
  *       type: object

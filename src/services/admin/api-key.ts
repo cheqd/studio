@@ -10,42 +10,11 @@ import type { UserEntity } from '../../database/entities/user.entity.js';
 import { SecretBox } from '@veramo/kms-local';
 import { API_KEY_LENGTH, API_KEY_PREFIX, API_KEY_EXPIRATION } from '../../types/constants.js';
 import pkg from 'js-sha3';
+import { v4 } from 'uuid';
+import type { APIServiceOptions } from '../../types/portal.js';
 dotenv.config();
 
 const { sha3_512 } = pkg;
-
-// Returns the decrypted API key
-export function decryptAPIKey(target: any, key: string, descriptor: PropertyDescriptor | undefined) {
-	// save a reference to the original method this way we keep the values currently in the
-	// descriptor and don't overwrite what another decorator might have done to the descriptor.
-	if (descriptor === undefined) {
-		descriptor = Object.getOwnPropertyDescriptor(target, key) as PropertyDescriptor;
-	}
-
-	const originalMethod = descriptor.value;
-
-	//editing the descriptor/value parameter
-	descriptor.value = async function (...args: any[]) {
-		const decryptOne = async (entity: APIKeyEntity) => {
-			if (entity && entity.apiKey) {
-				entity.apiKey = await APIKeyService.instance.decryptAPIKey(entity.apiKey);
-			}
-			return entity;
-		};
-		const entity = await originalMethod.apply(this, args);
-		if (Array.isArray(entity)) {
-			for (const apiKey of entity) {
-				await decryptOne(apiKey);
-			}
-		} else {
-			await decryptOne(entity);
-		}
-		return entity;
-	};
-
-	// return edited descriptor as opposed to overwriting the descriptor
-	return descriptor;
-}
 
 export class APIKeyService {
 	public apiKeyRepository: Repository<APIKeyEntity>;
@@ -60,8 +29,10 @@ export class APIKeyService {
 
 	// ToDo: Maybe we also need to store not the API key but the hash of it?
 	// But in that case the API key will be shown once and then it will be lost.
-	@decryptAPIKey
-	public async create(apiKey: string, name: string, user: UserEntity, expiresAt?: Date, revoked = false): Promise<APIKeyEntity> {
+
+	public async create(apiKey: string, name: string, user: UserEntity, expiresAt?: Date, revoked = false, options?: APIServiceOptions): Promise<APIKeyEntity> {
+		const apiKeyId = v4();
+		const { decryptionNeeded } = options || {};
 		if (!apiKey) {
 			throw new Error('API key is not specified');
 		}
@@ -75,28 +46,36 @@ export class APIKeyService {
 			expiresAt = new Date();
 			expiresAt.setMonth(expiresAt.getMonth() + API_KEY_EXPIRATION);
 		}
-		const apiKeyHash = APIKeyService.hashAPIKey(apiKey);
 		const encryptedAPIKey = await this.secretBox.encrypt(apiKey);
 		// Create entity
-		const apiKeyEntity = new APIKeyEntity(apiKeyHash, encryptedAPIKey, name, expiresAt, user.customer, user, revoked);
+		const apiKeyEntity = new APIKeyEntity(apiKeyId, encryptedAPIKey, name, expiresAt, user.customer, user, revoked);
 		const apiKeyRecord = (await this.apiKeyRepository.insert(apiKeyEntity)).identifiers[0];
 		if (!apiKeyRecord) throw new Error(`Cannot create a new API key`);
+
+		if (decryptionNeeded) {
+			apiKeyEntity.apiKey = apiKey;
+		}
 		return apiKeyEntity;
 	}
 
-	@decryptAPIKey
 	public async update(
-		apiKey: string,
-		name?: string,
-		expiresAt?: Date,
-		revoked?: boolean,
-		customer?: CustomerEntity,
-		user?: UserEntity
+		item: {
+			customer: CustomerEntity,
+			apiKey: string,
+			name?: string,
+			expiresAt?: Date,
+			revoked?: boolean,
+			user?: UserEntity
+		},
+		options?: APIServiceOptions
 	) {
-		const apiKeyHash = APIKeyService.hashAPIKey(apiKey);
-		const existingAPIKey = await this.apiKeyRepository.findOneBy({ apiKeyHash });
+		const { apiKey, name, expiresAt, revoked, customer, user } = item;
+		const { decryptionNeeded } = options || {};
+
+		const existingAPIKey = await this.discoverAPIKey(apiKey as string, customer);
+
 		if (!existingAPIKey) {
-			throw new Error(`API with key id ${apiKey} not found`);
+			throw new Error(`API key for customer ${customer.customerId} not found`);
 		}
 		if (name) {
 			existingAPIKey.name = name;
@@ -115,43 +94,66 @@ export class APIKeyService {
 		}
 
 		const entity = await this.apiKeyRepository.save(existingAPIKey);
+		if (entity && decryptionNeeded) {
+			entity.apiKey = await this.decryptAPIKey(existingAPIKey.apiKey);
+		}
 		return entity;
 	}
 
-	public async revoke(apiKey: string) {
-		return this.update(apiKey, undefined, undefined, true);
+	public async revoke(apiKey: string, customer: CustomerEntity, options?: APIServiceOptions) {
+		return this.update({
+			customer,
+			apiKey: apiKey,
+			revoked: true
+		}, options);
 	}
 
 	public async decryptAPIKey(apiKey: string) {
 		return await this.secretBox.decrypt(apiKey);
 	}
 
-	@decryptAPIKey
-	public async get(apiKey: string) {
-		const apiKeyHash = APIKeyService.hashAPIKey(apiKey);
-		const apiKeyEntity = await this.apiKeyRepository.findOne({
-			where: { apiKeyHash: apiKeyHash },
-			relations: ['customer', 'user'],
-		});
+	public async get(apiKey: string, customer: CustomerEntity, options?: APIServiceOptions) {
+		const { decryptionNeeded } = options || {};
+		const apiKeyEntity = await this.discoverAPIKey(apiKey, customer);
+
+		if (apiKeyEntity && decryptionNeeded) {
+			apiKeyEntity.apiKey = await this.decryptAPIKey(apiKeyEntity.apiKey);
+		}
+		
 		return apiKeyEntity;
 	}
 
-	@decryptAPIKey
-	public async find(where: Record<string, unknown>, order?: Record<string, 'ASC' | 'DESC'>) {
+	public async find(where: Record<string, unknown>, order?: Record<string, 'ASC' | 'DESC'>, options?: APIServiceOptions) {
 		try {
+			const { decryptionNeeded } = options || {};
 			const apiKeyList = await this.apiKeyRepository.find({
 				where: where,
 				relations: ['customer', 'user'],
 				order: order,
 			});
+			if (decryptionNeeded) {
+				for (const apiKey of apiKeyList) {
+					apiKey.apiKey = await this.decryptAPIKey(apiKey.apiKey);
+				}
+			}
 			return apiKeyList;
 		} catch {
 			return [];
 		}
 	}
 
-	// Utils
+	public async discoverAPIKey(apiKey: string, customer?: CustomerEntity) {
+		const where = customer ? { customer } : {};
+	    const keys = await this.find(where, { createdAt: 'DESC' });
+		for (const key of keys) {
+			if (await this.decryptAPIKey(key.apiKey) === apiKey) {
+				return key;
+			}
+		}
+		return undefined;
+	}
 
+	// Utils
 	public generateAPIKey(): string {
 		return `${API_KEY_PREFIX}_${randomBytes(API_KEY_LENGTH).toString('hex')}`;
 	}
