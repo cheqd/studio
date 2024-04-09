@@ -206,16 +206,18 @@
  *           description: The expiration date of the API key
  *           example: "2000-10-31T01:23:45Z"
  *           format: date
- *           required: false
  *         name:
  *           type: string
  *           description: The name of the API key
  *           example: My API Key
  *           required: true
+ *       required:
+ *         - name
  *     APIKeyCreateResponseBody:
  *       description: The response body for creating an API key
  *       type: object
- *       ref: '#/components/schemas/APIKeyResponse'
+ *       schema:
+ *         ref: '#/components/schemas/APIKeyResponse'
  *     APIKeyCreateUnsuccessfulResponseBody:
  *       description: The response body for an unsuccessful API key creation
  *       type: object
@@ -231,7 +233,6 @@
  *           type: string
  *           description: The API key
  *           example: abcdefghijklmnopqrstuvwxyz
- *           required: true
  *         name:
  *           type: string
  *           description: The name of the API key
@@ -241,17 +242,18 @@
  *           description: The expiration date of the API key
  *           example: 2000-10-31T01:23:45Z
  *           format: date
- *           required: false
  *         revoked:
  *           type: boolean
  *           description: The status of the API key
  *           example: false
- *           required: false
  *           default: false
+ *       required:
+ *         - apiKey
  *     APIKeyUpdateResponseBody:
  *       description: The response body for an unsuccessful API key update
  *       type: object
- *       ref: '#/components/schemas/APIKeyResponse'
+ *       schema:
+ *         ref: '#/components/schemas/APIKeyResponse'
  *     APIKeyUpdateUnsuccessfulResponseBody:
  *       description: The response body for an unsuccessful API key update
  *       type: object
@@ -267,7 +269,8 @@
  *           type: string
  *           description: The API key
  *           example: abcdefghijklmnopqrstuvwxyz
- *           required: true
+ *       required:
+ *         - apiKey
  *     APIKeyRevokeResponseBody:
  *        description: The response body for revoking an API key
  *        type: object
@@ -276,11 +279,12 @@
  *            type: string
  *            description: The API key
  *            example: abcdefghijklmnopqrstuvwxyz
- *            required: true
  *          revoked:
  *            type: boolean
  *            description: The status of the API key
  *            example: true
+ *        required:
+ *          - apiKey
  *     APIKeyRevokeUnsuccessfulResponseBody:
  *       description: The response body for an unsuccessful API key revocation
  *       type: object
@@ -296,7 +300,8 @@
  *           type: array
  *           items:
  *             type: object
- *             ref: '#/components/schemas/APIKeyResponse'
+ *             schema:
+ *               ref: '#/components/schemas/APIKeyResponse'
  *     APIKeyGetRequestBody:
  *       description: The request body for getting an API key
  *       type: object
@@ -305,11 +310,13 @@
  *           type: string
  *           description: The API key
  *           example: abcdefghijklmnopqrstuvwxyz
- *           required: false
+ *       required:
+ *         - apiKey
  *     APIKeyGetResponseBody:
  *       description: The response body for getting an API key
  *       type: object
- *       ref: '#/components/schemas/APIKeyResponse'
+ *       schema:
+ *         ref: '#/components/schemas/APIKeyResponse'
  *     NotFoundError:
  *       description: The requested resource could not be found but may be available in the future. Subsequent requests by the client are permissible.
  *       type: object
