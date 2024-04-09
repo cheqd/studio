@@ -210,7 +210,6 @@
  *           type: string
  *           description: The name of the API key
  *           example: My API Key
- *           required: true
  *       required:
  *         - name
  *     APIKeyCreateResponseBody:
