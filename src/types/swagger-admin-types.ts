@@ -183,7 +183,7 @@
  *           type: string
  *           description: The creation date of the API key
  *           example: "2000-10-31T01:23:45Z"
- *           format: date
+ *           format: date-time
  *         name:
  *           type: string
  *           description: The name of the API key
@@ -192,7 +192,7 @@
  *           type: string
  *           description: The expiration date of the API key
  *           example: "2000-10-31T01:23:45Z"
- *           format: date
+ *           format: date-time
  *         revoked:
  *           type: boolean
  *           description: The status of the API key
@@ -205,7 +205,7 @@
  *           type: string
  *           description: The expiration date of the API key
  *           example: "2000-10-31T01:23:45Z"
- *           format: date
+ *           format: date-time
  *         name:
  *           type: string
  *           description: The name of the API key
@@ -241,7 +241,7 @@
  *           type: string
  *           description: The expiration date of the API key
  *           example: 2000-10-31T01:23:45Z
- *           format: date
+ *           format: date-time
  *         revoked:
  *           type: boolean
  *           description: The status of the API key
