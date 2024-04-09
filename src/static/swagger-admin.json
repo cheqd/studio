@@ -849,7 +849,7 @@
           "createdAt": {
             "type": "string",
             "description": "The creation date of the API key",
-            "example": "2000-10-31T01:30:00.000-05:00",
+            "example": "2000-10-31T01:23:45Z",
             "format": "date"
           },
           "name": {
@@ -860,7 +860,7 @@
           "expiresAt": {
             "type": "string",
             "description": "The expiration date of the API key",
-            "example": "2000-10-31T01:30:00.000-05:00",
+            "example": "2000-10-31T01:23:45Z",
             "format": "date"
           },
           "revoked": {
@@ -877,7 +877,7 @@
           "expiresAt": {
             "type": "string",
             "description": "The expiration date of the API key",
-            "example": "2000-10-31T01:30:00.000-05:00",
+            "example": "2000-10-31T01:23:45Z",
             "format": "date",
             "required": false
           },
@@ -922,7 +922,7 @@
           "expiresAt": {
             "type": "string",
             "description": "The expiration date of the API key",
-            "example": "2000-10-31T01:30:00.000-05:00",
+            "example": "2000-10-31T01:23:45Z",
             "format": "date",
             "required": false
           },
