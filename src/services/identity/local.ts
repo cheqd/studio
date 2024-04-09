@@ -74,7 +74,7 @@ export class LocalIdentityService extends DefaultIdentityService {
 			rpcUrl: MAINNET_RPC_URL || DefaultRPCUrls.mainnet,
 			dkgOptions: {
 				chain: LitCompatibleCosmosChains.cheqdMainnet,
-				network: LitNetworks.serrano,
+				network: LitNetworks.cayenne,
 			},
 		});
 
@@ -85,7 +85,7 @@ export class LocalIdentityService extends DefaultIdentityService {
 			rpcUrl: TESTNET_RPC_URL || DefaultRPCUrls.testnet,
 			dkgOptions: {
 				chain: LitCompatibleCosmosChains.cheqdTestnet,
-				network: LitNetworks.serrano,
+				network: LitNetworks.cayenne,
 			},
 		});
 

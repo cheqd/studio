@@ -35,4 +35,5 @@ export interface IValidator {
 export interface IValidationResult {
 	valid: boolean;
 	error?: string;
+	[x: string]: any;
 }
