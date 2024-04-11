@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.20.0-develop.1](https://github.com/cheqd/credential-service/compare/2.19.1-develop.1...2.20.0-develop.1) (2024-04-11)
+
+
+### Features
+
+* Add base endpoints for Stripe integration [DEV-3671] ([#500](https://github.com/cheqd/credential-service/issues/500)) ([99792c7](https://github.com/cheqd/credential-service/commit/99792c7de96230b02db1f76d71dd8d431cc1cb08))
+
 ## [2.19.1-develop.1](https://github.com/cheqd/credential-service/compare/2.19.0...2.19.1-develop.1) (2024-04-08)
 
 ## [2.19.0](https://github.com/cheqd/credential-service/compare/2.18.3...2.19.0) (2024-04-05)
