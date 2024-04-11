@@ -5,7 +5,7 @@ import { StatusCodes } from 'http-status-codes';
 import { EventTracker, eventTracker } from '../../services/track/tracker.js';
 import type { INotifyMessage } from '../../types/track.js';
 import { OperationNameEnum } from '../../types/constants.js';
-import { builSubmitOperation } from '../../services/track/helpers.js';
+import { buildSubmitOperation } from '../../services/track/helpers.js';
 
 dotenv.config();
 export class WebhookController {
@@ -56,7 +56,7 @@ export class WebhookController {
 					severity: 'info',
 				} satisfies INotifyMessage);
 				await eventTracker.submit(
-					builSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_TRIAL_WILL_END)
+					buildSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_TRIAL_WILL_END)
 				);
 				break;
 			case 'customer.subscription.deleted':
@@ -69,9 +69,7 @@ export class WebhookController {
 					),
 					severity: 'info',
 				} satisfies INotifyMessage);
-				await eventTracker.submit(builSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_CANCEL));
-				// Then define and call a method to handle the subscription deleted.
-				// handleSubscriptionDeleted(subscriptionDeleted);
+				await eventTracker.submit(buildSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_CANCEL));
 				break;
 			case 'customer.subscription.created':
 				subscription = event.data.object;
@@ -83,9 +81,7 @@ export class WebhookController {
 					),
 					severity: 'info',
 				} satisfies INotifyMessage);
-				await eventTracker.submit(builSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_CREATE));
-				// Then define and call a method to handle the subscription created.
-				// handleSubscriptionCreated(subscription);
+				await eventTracker.submit(buildSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_CREATE));
 				break;
 			case 'customer.subscription.updated':
 				subscription = event.data.object;
@@ -97,13 +93,13 @@ export class WebhookController {
 					),
 					severity: 'info',
 				} satisfies INotifyMessage);
-				await eventTracker.submit(builSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_UPDATE));
+				await eventTracker.submit(buildSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_UPDATE));
 				break;
 			default:
 				// Unexpected event type
 				eventTracker.notify({
 					message: EventTracker.compileBasicNotification(
-						`Unexpected event type: ${event.type}`,
+						`Unexpected event: ${event} with type: ${event?.type}`,
 						'Stripe Webhook: unexpected'
 					),
 					severity: 'error',

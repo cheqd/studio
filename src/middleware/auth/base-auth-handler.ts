@@ -153,7 +153,16 @@ export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 			this.setUserInfoStrategy(new APITokenUserInfoFetcher(apiKey));
 			return;
 		} else {
-			this.setUserInfoStrategy(new SwaggerUserInfoFetcher());
+			if (token) {
+				const payload = decodeJwt(token);
+				if (payload.aud === process.env.LOGTO_APP_ID) {
+					this.setUserInfoStrategy(new APITokenUserInfoFetcher(token));
+				} else {
+					this.setUserInfoStrategy(new M2MCredsTokenUserInfoFetcher(token));
+				}
+			} else {
+				this.setUserInfoStrategy(new SwaggerUserInfoFetcher());
+			}
 		}
 
 	}
