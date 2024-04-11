@@ -44,7 +44,7 @@ export class APIKeyService {
 		}
 		if (!expiresAt) {
 			expiresAt = new Date();
-			expiresAt.setMonth(expiresAt.getMonth() + API_KEY_EXPIRATION);
+			expiresAt.setMonth(expiresAt.getDay() + API_KEY_EXPIRATION);
 		}
 		const encryptedAPIKey = await this.secretBox.encrypt(apiKey);
 		// Create entity
