@@ -15,7 +15,7 @@ export class WebhookController {
 		let event = request.body;
 		let subscription;
 		let status;
-		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 		if (!process.env.STRIPE_WEBHOOK_SECRET) {
 			await eventTracker.notify({

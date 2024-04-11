@@ -1,4 +1,4 @@
-import type { ISubmitOptions } from "./types";
+import type { ISubmitOptions } from './types';
 
 // Type: Interface
 export type ISubmitData = ISubmitStripeCustomerCreateData | ISubmitSubscriptionData;

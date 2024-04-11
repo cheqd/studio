@@ -112,7 +112,7 @@ class App {
 				swaggerUi.serveFiles(swaggerAdminDocument),
 				swaggerUi.setup(swaggerAdminDocument)
 			);
-			this.express.use(Middleware.setStripeClient)
+			this.express.use(Middleware.setStripeClient);
 		}
 		this.express.use(auth.handleError);
 		this.express.use(async (req, res, next) => await auth.accessControl(req, res, next));
@@ -226,7 +226,11 @@ class App {
 		// Portal
 		// Product
 		if (process.env.STRIPE_ENABLED === 'true') {
-			app.get('/admin/product/list', ProductController.productListValidator, new ProductController().listProducts);
+			app.get(
+				'/admin/product/list',
+				ProductController.productListValidator,
+				new ProductController().listProducts
+			);
 			app.get(
 				'/admin/product/get/:productId',
 				ProductController.productGetValidator,
