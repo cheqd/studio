@@ -4,7 +4,7 @@ import { SubscriptionService } from './subscription.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { EventTracker, eventTracker } from '../track/tracker.js';
 import type { SubscriptionEntity } from '../../database/entities/subscription.entity.js';
-import { builSubmitOperation } from '../track/helpers.js';
+import { buildSubmitOperation } from '../track/helpers.js';
 import { OperationNameEnum } from '../../types/constants.js';
 import { SubscriptionSubmitter } from '../track/admin/subscription-submitter.js';
 import type { NextFunction } from 'express';
@@ -129,7 +129,7 @@ export class StripeService {
     }
 
 	async createSubscription(subscription: Stripe.Subscription, customer?: CustomerEntity): Promise<void> {
-		await this.submitter.submitSubscriptionCreate(builSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_CREATE, {customer: customer}));
+		await this.submitter.submitSubscriptionCreate(buildSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_CREATE, {customer: customer}));
 	}
 
 	async updateSubscription(subscription: Stripe.Subscription, current: SubscriptionEntity): Promise<void> {
@@ -144,7 +144,7 @@ export class StripeService {
 			});
 			return;
 		}
-		await this.submitter.submitSubscriptionUpdate(builSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_UPDATE));
+		await this.submitter.submitSubscriptionUpdate(buildSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_UPDATE));
 	}
 }
 

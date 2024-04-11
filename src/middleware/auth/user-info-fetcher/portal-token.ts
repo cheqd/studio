@@ -30,7 +30,6 @@ export class PortalUserInfoFetcher extends AuthReturn implements IUserInfoFetche
 		if (idTokenVerification.error) {
 			return idTokenVerification;
 		}
-		// return this.returnOk();
 
 		return this.verifyM2MToken(oauthProvider);
 	}
