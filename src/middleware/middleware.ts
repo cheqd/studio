@@ -1,4 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
+import Stripe from 'stripe';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 export class Middleware {
 	static async parseUrlEncodedJson(request: Request, response: Response, next: NextFunction) {
@@ -21,6 +24,13 @@ export class Middleware {
 				}
 			}
 		}
+		next();
+	}
+
+	static async setStripeClient(request: Request, response: Response, next: NextFunction) {
+		// Set the Stripe client
+		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+		response.locals.stripe = stripe;
 		next();
 	}
 }

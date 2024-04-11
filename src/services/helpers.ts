@@ -2,7 +2,7 @@ import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import type { IBooleanResponse } from '../types/shared.js';
 import { IdentityServiceStrategySetup } from './identity/index.js';
-import { KeyService } from './key.js';
+import { KeyService } from './api/key.js';
 import type { CheqdW3CVerifiableCredential } from './w3c-credential.js';
 import type { CheqdW3CVerifiablePresentation } from './w3c-presentation.js';
 

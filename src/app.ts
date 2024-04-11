@@ -7,11 +7,11 @@ import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { StatusCodes } from 'http-status-codes';
 
-import { CredentialController } from './controllers/credential.js';
-import { AccountController } from './controllers/account.js';
+import { CredentialController } from './controllers/api/credential.js';
+import { AccountController } from './controllers/api/account.js';
 import { Authentication } from './middleware/authentication.js';
 import { Connection } from './database/connection/connection.js';
-import { CredentialStatusController } from './controllers/credential-status.js';
+import { CredentialStatusController } from './controllers/api/credential-status.js';
 import { CORS_ALLOWED_ORIGINS, CORS_ERROR_MSG } from './types/constants.js';
 import { LogToWebHook } from './middleware/hook.js';
 import { Middleware } from './middleware/middleware.js';
@@ -20,12 +20,17 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 // Define Swagger file
-import swaggerDocument from './static/swagger.json' assert { type: 'json' };
-import { PresentationController } from './controllers/presentation.js';
-import { KeyController } from './controllers/key.js';
-import { DIDController } from './controllers/did.js';
-import { ResourceController } from './controllers/resource.js';
-import { FailedResponseTracker } from './middleware/event-tracker.js';
+import swaggerAPIDocument from './static/swagger-api.json' assert { type: 'json' };
+import swaggerAdminDocument from './static/swagger-admin.json' assert { type: 'json' };
+import { PresentationController } from './controllers/api/presentation.js';
+import { KeyController } from './controllers/api/key.js';
+import { DIDController } from './controllers/api/did.js';
+import { ResourceController } from './controllers/api/resource.js';
+import { ResponseTracker } from './middleware/event-tracker.js';
+import { ProductController } from './controllers/admin/product.js';
+import { SubscriptionController } from './controllers/admin/subscriptions.js';
+import { PriceController } from './controllers/admin/prices.js';
+import { WebhookController } from './controllers/admin/webhook.js';
 
 let swaggerOptions = {};
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -71,7 +76,7 @@ class App {
 		this.express.use(cookieParser());
 		const auth = new Authentication();
 		// EventTracking
-		this.express.use(new FailedResponseTracker().trackJson);
+		this.express.use(new ResponseTracker().trackJson);
 		// Authentication
 		if (process.env.ENABLE_AUTHENTICATION === 'true') {
 			this.express.use(
@@ -96,7 +101,19 @@ class App {
 		}
 		this.express.use(express.text());
 
-		this.express.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerOptions));
+		this.express.use(
+			'/swagger',
+			swaggerUi.serveFiles(swaggerAPIDocument, swaggerOptions),
+			swaggerUi.setup(swaggerAPIDocument, swaggerOptions)
+		);
+		if (process.env.STRIPE_ENABLED === 'true') {
+			this.express.use(
+				'/admin/swagger',
+				swaggerUi.serveFiles(swaggerAdminDocument),
+				swaggerUi.setup(swaggerAdminDocument)
+			);
+			this.express.use(Middleware.setStripeClient);
+		}
 		this.express.use(auth.handleError);
 		this.express.use(async (req, res, next) => await auth.accessControl(req, res, next));
 	}
@@ -205,6 +222,55 @@ class App {
 			'/static/custom-button.js',
 			express.static(path.join(process.cwd(), '/dist'), { extensions: ['js'], index: false })
 		);
+
+		// Portal
+		// Product
+		if (process.env.STRIPE_ENABLED === 'true') {
+			app.get(
+				'/admin/product/list',
+				ProductController.productListValidator,
+				new ProductController().listProducts
+			);
+			app.get(
+				'/admin/product/get/:productId',
+				ProductController.productGetValidator,
+				new ProductController().getProduct
+			);
+
+			// Prices
+			app.get('/admin/price/list', PriceController.priceListValidator, new PriceController().getListPrices);
+
+			// Subscription
+			app.post(
+				'/admin/subscription/create',
+				SubscriptionController.subscriptionCreateValidator,
+				new SubscriptionController().create
+			);
+			app.post(
+				'/admin/subscription/update',
+				SubscriptionController.subscriptionUpdateValidator,
+				new SubscriptionController().update
+			);
+			app.get('/admin/subscription/get', new SubscriptionController().get);
+			app.get(
+				'/admin/subscription/list',
+				SubscriptionController.subscriptionListValidator,
+				new SubscriptionController().list
+			);
+			app.delete(
+				'/admin/subscription/cancel',
+				SubscriptionController.subscriptionCancelValidator,
+				new SubscriptionController().cancel
+			);
+			app.post(
+				'/admin/subscription/resume',
+				SubscriptionController.subscriptionResumeValidator,
+				new SubscriptionController().resume
+			);
+
+			// Webhook
+			app.post('/admin/webhook', new WebhookController().handleWebhook);
+		}
 
 		// 404 for all other requests
 		app.all('*', (_req, res) => res.status(StatusCodes.BAD_REQUEST).send('Bad request'));

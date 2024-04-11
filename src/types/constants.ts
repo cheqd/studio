@@ -79,6 +79,7 @@ export enum OperationCategoryNameEnum {
 	CREDENTIAL = 'credential',
 	PRESENTATION = 'presentation',
 	KEY = 'key',
+	SUBSCRIPTION = 'subscription',
 }
 
 export enum OperationDefaultFeeEnum {
@@ -126,6 +127,14 @@ export enum OperationNameEnum {
 	// Presentation operations
 	PRESENTATION_CREATE = 'presentation-create',
 	PRESENTATION_VERIFY = 'presentation-verify',
+	// Subscription
+	SUBSCRIPTION_CREATE = 'subscription-create',
+	SUBSCRIPTION_CANCEL = 'subscription-cancel',
+	SUBSCRIPTION_UPDATE = 'subscription-update',
+	SUBSCRIPTION_TRIAL_WILL_END = 'subscription-trial-will-end',
+
+	// Stripe operations
+	STRIPE_ACCOUNT_CREATE = 'stripe-account-create',
 }
 
 export const JWT_PROOF_TYPE = 'JwtProof2020';
