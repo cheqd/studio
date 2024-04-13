@@ -525,12 +525,23 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity> {
-		const options = { decryptionNeeded: true } satisfies APIServiceOptions
-		const keys = await APIKeyService.instance.find({ customer: customer, user: user, revoked: false }, undefined, options);
+		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
+		const keys = await APIKeyService.instance.find(
+			{ customer: customer, user: user, revoked: false },
+			undefined,
+			options
+		);
 		if (keys.length > 0) {
 			throw new Error(`API key for customer ${customer.customerId} and user ${user.logToId} already exists`);
 		}
-		const apiKeyEntity = await APIKeyService.instance.create(apiKey, "idToken", user);
+		const apiKeyEntity = await APIKeyService.instance.create(
+			apiKey,
+			'idToken',
+			user,
+			undefined,
+			undefined,
+			options
+		);
 		if (!apiKeyEntity) {
 			throw new Error(`Cannot create API key for customer ${customer.customerId} and user ${user.logToId}`);
 		}
@@ -538,16 +549,17 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity> {
-		const options = { decryptionNeeded: true } satisfies APIServiceOptions
-		const key = await APIKeyService.instance.get(apiKey.apiKey, apiKey.customer, options);
+		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
+		const key = await APIKeyService.instance.get(apiKey.apiKey, options);
 		if (!key) {
 			throw new Error(`API key not found`);
 		}
-		const apiKeyEntity = await APIKeyService.instance.update({
+		const apiKeyEntity = await APIKeyService.instance.update(
+			{
 				customer: key.customer,
 				apiKey: newApiKey,
-				expiresAt: await APIKeyService.instance.getExpiryDate(newApiKey)
-			}, 
+				expiresAt: APIKeyService.getExpiryDateJWT(newApiKey),
+			},
 			options
 		);
 		if (!apiKeyEntity) {
@@ -557,8 +569,12 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | undefined> {
-		const options = { decryptionNeeded: true } satisfies APIServiceOptions
-		const keys = await APIKeyService.instance.find({ customer: customer, user: user, revoked: false }, undefined, options);
+		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
+		const keys = await APIKeyService.instance.find(
+			{ customer: customer, user: user, revoked: false, name: 'idToken' },
+			undefined,
+			options
+		);
 		if (keys.length > 1) {
 			throw new Error(
 				`For the customer with customer id ${customer.customerId} and user with logToId ${user.logToId} there more then 1 API key`

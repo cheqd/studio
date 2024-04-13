@@ -12,7 +12,7 @@ export const HEADERS = {
 export const APPLICATION_BASE_URL = process.env.APPLICATION_BASE_URL || 'http://localhost:3000';
 export const CORS_ALLOWED_ORIGINS = process.env.CORS_ALLOWED_ORIGINS || APPLICATION_BASE_URL;
 export const API_KEY_PREFIX = 'caas';
-export const API_KEY_LENGTH = 64;
+export const API_SECRET_KEY_LENGTH = 64;
 export const API_KEY_EXPIRATION = 30;
 // By default we don't send events to datadog
 export const ENABLE_DATADOG = process.env.ENABLE_DATADOG === 'true' ? true : false;

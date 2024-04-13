@@ -41,7 +41,13 @@ export class APIKeyController {
 			})
 			.toDate()
 			.bail(),
-		check('name').exists().withMessage('Name is not specified').bail().isString().withMessage('Invalid name').bail(),
+		check('name')
+			.exists()
+			.withMessage('Name is not specified')
+			.bail()
+			.isString()
+			.withMessage('Invalid name')
+			.bail(),
 	];
 	static apiKeyUpdateValidator = [
 		check('apiKey')
@@ -111,11 +117,18 @@ export class APIKeyController {
 	@validate
 	public async create(request: Request, response: Response) {
 		const { name, expiresAt } = request.body satisfies APIKeyCreateRequestBody;
-		const options = { decryptionNeeded: true } satisfies APIServiceOptions
+		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
 
 		try {
-			const apiKey = APIKeyService.instance.generateAPIKey();
-			const apiKeyEntity = await APIKeyService.instance.create(apiKey, name, response.locals.user, expiresAt, false, options);
+			const apiKey = await APIKeyService.generateAPIKey(response.locals.user.logToId as string);
+			const apiKeyEntity = await APIKeyService.instance.create(
+				apiKey,
+				name,
+				response.locals.user,
+				expiresAt,
+				false,
+				options
+			);
 			if (!apiKeyEntity) {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 					message: 'Cannot create a new API key',
@@ -173,20 +186,20 @@ export class APIKeyController {
 	@validate
 	public async update(request: Request, response: Response) {
 		const { apiKey, name, expiresAt, revoked } = request.body satisfies APIKeyUpdateRequestBody;
-		const options = { decryptionNeeded: true } satisfies APIServiceOptions
+		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
 		try {
-			const apiKeyEntity = await APIKeyService.instance.update({
-					customer: response.locals.customer, 
-					apiKey, 
-					name, 
-					expiresAt, 
-					revoked
-				}, 
+			const apiKeyEntity = await APIKeyService.instance.update(
+				{
+					apiKey,
+					name,
+					expiresAt,
+					revoked,
+				},
 				options
-				);
+			);
 			if (!apiKeyEntity) {
 				return response.status(StatusCodes.NOT_FOUND).json({
-					error: 'Cannot update API key cause it\'s not found',
+					error: "Cannot update API key cause it's not found",
 				} satisfies APIKeyUpdateUnsuccessfulResponseBody);
 			}
 
@@ -241,10 +254,10 @@ export class APIKeyController {
 	 */
 	@validate
 	public async revoke(request: Request, response: Response) {
-		const options = { decryptionNeeded: true } satisfies APIServiceOptions
+		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
 		const { apiKey } = request.body satisfies APIKeyRevokeRequestBody;
 		try {
-			const apiKeyEntity = await APIKeyService.instance.revoke(apiKey, response.locals.customer, options);
+			const apiKeyEntity = await APIKeyService.instance.revoke(apiKey, options);
 			if (!apiKeyEntity) {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 					error: 'Cannot revoke API key',
@@ -296,8 +309,9 @@ export class APIKeyController {
 	@validate
 	public async list(request: Request, response: Response) {
 		try {
-			const options = { decryptionNeeded: true } satisfies APIServiceOptions
-			const apiKeyList = await APIKeyService.instance.find({
+			const options = { decryptionNeeded: true } satisfies APIServiceOptions;
+			const apiKeyList = await APIKeyService.instance.find(
+				{
 					customer: response.locals.customer,
 				},
 				undefined,
@@ -355,13 +369,12 @@ export class APIKeyController {
 	 */
 	@validate
 	public async get(request: Request, response: Response) {
-		
 		const apiKey = request.query.apiKey as string;
-		const options = { decryptionNeeded: true } satisfies APIServiceOptions
+		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
 
 		try {
 			if (apiKey) {
-				const apiKeyEntity = await APIKeyService.instance.get(apiKey, response.locals.customer, options);
+				const apiKeyEntity = await APIKeyService.instance.get(apiKey, options);
 				if (!apiKeyEntity) {
 					return response.status(StatusCodes.NOT_FOUND).json({
 						error: 'API key not found',
@@ -375,7 +388,7 @@ export class APIKeyController {
 					revoked: apiKeyEntity.revoked,
 				} satisfies APIKeyGetResponseBody);
 			}
-            // Otherwise try to get the latest not revoked API key
+			// Otherwise try to get the latest not revoked API key
 			const keys = await APIKeyService.instance.find(
 				{
 					customer: response.locals.customer,

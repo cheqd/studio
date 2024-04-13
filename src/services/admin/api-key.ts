@@ -1,6 +1,7 @@
 import type { Repository } from 'typeorm';
 import { decodeJWT } from 'did-jwt';
-import { randomBytes } from 'crypto';
+import bcrypt from 'bcrypt';
+import { randomBytes, createHmac } from 'crypto';
 import { Connection } from '../../database/connection/connection.js';
 
 import * as dotenv from 'dotenv';
@@ -8,13 +9,9 @@ import type { CustomerEntity } from '../../database/entities/customer.entity.js'
 import { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity.js';
 import { SecretBox } from '@veramo/kms-local';
-import { API_KEY_LENGTH, API_KEY_PREFIX, API_KEY_EXPIRATION } from '../../types/constants.js';
-import pkg from 'js-sha3';
-import { v4 } from 'uuid';
+import { API_SECRET_KEY_LENGTH, API_KEY_PREFIX, API_KEY_EXPIRATION } from '../../types/constants.js';
 import type { APIServiceOptions } from '../../types/portal.js';
 dotenv.config();
-
-const { sha3_512 } = pkg;
 
 export class APIKeyService {
 	public apiKeyRepository: Repository<APIKeyEntity>;
@@ -30,8 +27,15 @@ export class APIKeyService {
 	// ToDo: Maybe we also need to store not the API key but the hash of it?
 	// But in that case the API key will be shown once and then it will be lost.
 
-	public async create(apiKey: string, name: string, user: UserEntity, expiresAt?: Date, revoked = false, options?: APIServiceOptions): Promise<APIKeyEntity> {
-		const apiKeyId = v4();
+	public async create(
+		apiKey: string,
+		name: string,
+		user: UserEntity,
+		expiresAt?: Date,
+		revoked = false,
+		options?: APIServiceOptions
+	): Promise<APIKeyEntity> {
+		const apiKeyHash = await APIKeyService.hashAPIKey(apiKey);
 		const { decryptionNeeded } = options || {};
 		if (!apiKey) {
 			throw new Error('API key is not specified');
@@ -46,9 +50,17 @@ export class APIKeyService {
 			expiresAt = new Date();
 			expiresAt.setMonth(expiresAt.getDay() + API_KEY_EXPIRATION);
 		}
-		const encryptedAPIKey = await this.secretBox.encrypt(apiKey);
+		const encryptedAPIKey = await this.encryptAPIKey(apiKey);
 		// Create entity
-		const apiKeyEntity = new APIKeyEntity(apiKeyId, encryptedAPIKey, name, expiresAt, user.customer, user, revoked);
+		const apiKeyEntity = new APIKeyEntity(
+			apiKeyHash,
+			encryptedAPIKey,
+			name,
+			expiresAt,
+			user.customer,
+			user,
+			revoked
+		);
 		const apiKeyRecord = (await this.apiKeyRepository.insert(apiKeyEntity)).identifiers[0];
 		if (!apiKeyRecord) throw new Error(`Cannot create a new API key`);
 
@@ -60,22 +72,22 @@ export class APIKeyService {
 
 	public async update(
 		item: {
-			customer: CustomerEntity,
-			apiKey: string,
-			name?: string,
-			expiresAt?: Date,
-			revoked?: boolean,
-			user?: UserEntity
+			apiKey: string;
+			name?: string;
+			expiresAt?: Date;
+			revoked?: boolean;
+			customer?: CustomerEntity;
+			user?: UserEntity;
 		},
 		options?: APIServiceOptions
 	) {
-		const { apiKey, name, expiresAt, revoked, customer, user } = item;
+		const { apiKey, name, expiresAt, customer, revoked, user } = item;
 		const { decryptionNeeded } = options || {};
 
-		const existingAPIKey = await this.discoverAPIKey(apiKey as string, customer);
+		const existingAPIKey = await this.get(apiKey);
 
 		if (!existingAPIKey) {
-			throw new Error(`API key for customer ${customer.customerId} not found`);
+			throw new Error(`API key not found`);
 		}
 		if (name) {
 			existingAPIKey.name = name;
@@ -100,30 +112,44 @@ export class APIKeyService {
 		return entity;
 	}
 
-	public async revoke(apiKey: string, customer: CustomerEntity, options?: APIServiceOptions) {
-		return this.update({
-			customer,
-			apiKey: apiKey,
-			revoked: true
-		}, options);
+	public async revoke(apiKey: string, options?: APIServiceOptions) {
+		return this.update(
+			{
+				apiKey: apiKey,
+				revoked: true,
+			},
+			options
+		);
 	}
 
 	public async decryptAPIKey(apiKey: string) {
 		return await this.secretBox.decrypt(apiKey);
 	}
 
-	public async get(apiKey: string, customer: CustomerEntity, options?: APIServiceOptions) {
-		const { decryptionNeeded } = options || {};
-		const apiKeyEntity = await this.discoverAPIKey(apiKey, customer);
-
-		if (apiKeyEntity && decryptionNeeded) {
-			apiKeyEntity.apiKey = await this.decryptAPIKey(apiKeyEntity.apiKey);
-		}
-		
-		return apiKeyEntity;
+	public async encryptAPIKey(apiKey: string) {
+		return await this.secretBox.encrypt(apiKey);
 	}
 
-	public async find(where: Record<string, unknown>, order?: Record<string, 'ASC' | 'DESC'>, options?: APIServiceOptions) {
+	public async get(apiKey: string, options?: APIServiceOptions) {
+		const { decryptionNeeded } = options || {};
+
+		// ToDo: possible bottleneck cause we are fetching all the keys
+		for (const record of await this.find({})) {
+			if (await APIKeyService.compareAPIKey(apiKey, record.apiKeyHash)) {
+				if (decryptionNeeded) {
+					record.apiKey = await this.decryptAPIKey(record.apiKey);
+				}
+				return record;
+			}
+		}
+		return null;
+	}
+
+	public async find(
+		where: Record<string, unknown>,
+		order?: Record<string, 'ASC' | 'DESC'>,
+		options?: APIServiceOptions
+	) {
 		try {
 			const { decryptionNeeded } = options || {};
 			const apiKeyList = await this.apiKeyRepository.find({
@@ -142,28 +168,22 @@ export class APIKeyService {
 		}
 	}
 
-	public async discoverAPIKey(apiKey: string, customer?: CustomerEntity) {
-		const where = customer ? { customer } : {};
-	    const keys = await this.find(where, { createdAt: 'DESC' });
-		for (const key of keys) {
-			if (await this.decryptAPIKey(key.apiKey) === apiKey) {
-				return key;
-			}
-		}
-		return undefined;
-	}
-
 	// Utils
-	public generateAPIKey(): string {
-		return `${API_KEY_PREFIX}_${randomBytes(API_KEY_LENGTH).toString('hex')}`;
+	public static generateAPIKey(userId: string): string {
+		const apiKey = createHmac('sha512', randomBytes(API_SECRET_KEY_LENGTH)).update(userId).digest('hex');
+		return `${API_KEY_PREFIX}_${apiKey}`;
 	}
 
-	public async getExpiryDate(apiKey: string): Promise<Date> {
-		const decrypted = await decodeJWT(apiKey);
+	public static getExpiryDateJWT(apiKey: string): Date {
+		const decrypted = decodeJWT(apiKey);
 		return new Date(decrypted.payload.exp ? decrypted.payload.exp * 1000 : 0);
 	}
 
-	public static hashAPIKey(apiKey: string): string {
-		return sha3_512(apiKey);
+	public static async hashAPIKey(apiKey: string): Promise<string> {
+		return bcrypt.hash(apiKey, 12);
+	}
+
+	public static async compareAPIKey(apiKey: string, hash: string): Promise<boolean> {
+		return bcrypt.compare(apiKey, hash);
 	}
 }

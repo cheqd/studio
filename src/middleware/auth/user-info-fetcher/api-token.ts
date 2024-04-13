@@ -24,24 +24,24 @@ export class APITokenUserInfoFetcher extends AuthReturn implements IUserInfoFetc
 
 	public async verifyToken(token: string, oauthProvider: IOAuthProvider): Promise<IAuthResponse> {
 		try {
-			const apiEntity = await APIKeyService.instance.discoverAPIKey(token);
-            if (!apiEntity) {
-                return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: API Key not found.`);
-            }
-            if (apiEntity.revoked) {
-                return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: API Key is revoked.`);
-            }
-            const userEntity = await UserService.instance.findOne({ customer: apiEntity.customer});
-            if (!userEntity) {
-                return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: User not found.`);
-            }
-            const _resp = await oauthProvider.getUserScopes(userEntity.logToId as string);
-            if (_resp.status !== 200) {
-                return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: No scopes found for the user.`);
-            }
-            if (_resp.data) {
-                this.setScopes(_resp.data);
-            }
+			const apiEntity = await APIKeyService.instance.get(token);
+			if (!apiEntity) {
+				return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: API Key not found.`);
+			}
+			if (apiEntity.revoked) {
+				return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: API Key is revoked.`);
+			}
+			const userEntity = await UserService.instance.findOne({ customer: apiEntity.customer });
+			if (!userEntity) {
+				return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: User not found.`);
+			}
+			const _resp = await oauthProvider.getUserScopes(userEntity.logToId as string);
+			if (_resp.status !== 200) {
+				return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: No scopes found for the user.`);
+			}
+			if (_resp.data) {
+				this.setScopes(_resp.data);
+			}
 			this.setCustomerId(apiEntity.customer.customerId);
 			return this.returnOk();
 		} catch (error) {

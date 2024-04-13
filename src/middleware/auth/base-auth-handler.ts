@@ -164,7 +164,6 @@ export class BaseAuthHandler extends BaseAPIGuard implements IAuthHandler {
 				this.setUserInfoStrategy(new SwaggerUserInfoFetcher());
 			}
 		}
-
 	}
 
 	public setOAuthProvider(oauthProvider: IOAuthProvider): IAuthHandler {
