@@ -60,13 +60,13 @@ export function toDefaultDkg(did: string): DkgOptions {
 		case CheqdNetwork.Mainnet:
 			return {
 				chain: LitCompatibleCosmosChains.cheqdMainnet,
-				network: LitNetworks.serrano,
+				network: LitNetworks.cayenne,
 			};
 		case CheqdNetwork.Testnet:
 		default:
 			return {
 				chain: LitCompatibleCosmosChains.cheqdTestnet,
-				network: LitNetworks.serrano,
+				network: LitNetworks.cayenne,
 			};
 	}
 }
@@ -237,22 +237,3 @@ export async function decryptPrivateKey(encryptedPrivateKeyHex: string, ivHex: s
 
 	return secretKey;
 }
-
-// export function eventDecorator(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-// 	const originalMethod = descriptor.value;
-// 	descriptor.value = async function (...args: any[]) {
-// 		const response = await originalMethod.apply(this, args) as Response;
-
-// 		response.on('finish', () => {
-// 			console.log("Response finished");
-// 			if (response.statusCode !== StatusCodes.OK) {
-// 				eventTracker.emit('notify', {
-// 					message: `Response status code: ${response.statusCode}. Message to client: ${response.statusMessage}`,
-// 					severity: 'error'
-// 				} satisfies INotifyMessage)
-// 			}
-// 		})
-// 		return response;
-// 	};
-// 	return descriptor;
-// }

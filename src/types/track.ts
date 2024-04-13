@@ -4,7 +4,7 @@ import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import type { UserEntity } from '../database/entities/user.entity.js';
 import type { LogLevelDesc } from 'loglevel';
 import type { ResourceEntity } from '../database/entities/resource.entity.js';
-import { ResourceService } from '../services/resource.js';
+import { ResourceService } from '../services/api/resource.js';
 import type { Coin } from '@cosmjs/amino';
 
 export type TrackData =

@@ -38,8 +38,8 @@ declare global {
 
 			// Verida
 			ENABLE_VERIDA_CONNECTOR: string | 'false';
-			VERIDA_NETWORK: EnvironmentType;
-			POLYGON_RPC_URL: string;
+			POLYGON_RPC_URL_MAINNET: string;
+			POLYGON_RPC_URL_TESTNET: string;
 			VERIDA_PRIVATE_KEY: string;
 			POLYGON_PRIVATE_KEY: string;
 
@@ -56,6 +56,12 @@ declare global {
 
 			// Creds
 			CREDS_DECRYPTION_SECRET: string;
+
+			// Stripe
+			STRIPE_ENABLED: string | 'false';
+			STRIPE_SECRET_KEY: string;
+			STRIPE_PUBLISHABLE_KEY: string;
+			STRIPE_WEBHOOK_SECRET: string;
 		}
 	}
 

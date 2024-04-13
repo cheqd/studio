@@ -26,6 +26,12 @@ export class CustomerEntity {
 	})
 	updatedAt!: Date;
 
+	@Column({
+		type: 'text',
+		nullable: true,
+	})
+	paymentProviderId!: string;
+
 	@BeforeInsert()
 	setCreatedAt() {
 		this.createdAt = new Date();

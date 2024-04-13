@@ -42,13 +42,13 @@ import type { CustomerEntity } from '../../database/entities/customer.entity.js'
 import { Veramo } from './agent.js';
 import { DefaultIdentityService } from './default.js';
 import * as dotenv from 'dotenv';
-import { KeyService } from '../key.js';
-import { PaymentAccountService } from '../payment-account.js';
+import { KeyService } from '../api/key.js';
+import { PaymentAccountService } from '../api/payment-account.js';
 import { CheqdNetwork } from '@cheqd/sdk';
-import { IdentifierService } from '../identifier.js';
+import { IdentifierService } from '../api/identifier.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity.js';
-import { APIKeyService } from '../api-key.js';
+import { APIKeyService } from '../api/api-key.js';
 import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import { KeyDIDProvider } from '@veramo/did-provider-key';
 import type { AbstractIdentifierProvider } from '@veramo/did-manager';

@@ -20,7 +20,7 @@ setup('Authenticate as user', async ({ page }) => {
 	await page.getByRole('button', { name: 'Continue' }).click();
 	await page.waitForURL(`${process.env.APPLICATION_BASE_URL}/swagger/`, {
 		waitUntil: 'domcontentloaded',
-		timeout: 30000,
+		timeout: 45000,
 	});
 	await expect(page.getByRole('button', { name: 'Log out' })).toBeVisible();
 

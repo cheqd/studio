@@ -107,6 +107,15 @@ some tokens on the testnet for making the process simpler.
 2. `FAUCET_URI`: Faucet service API endpoint (Default: `https://faucet-api.cheqd.network/credit`)
 3. `TESTNET_MINIMUM_BALANCE`: Minimum balance on account before it is automatically topped up from the faucet. This value should be expressed as an integer in `CHEQ` tokens, which will then be converted in the background to `ncheq` denomination. Account balance check is carried out on every account creation/login. (Default: 10,000 CHEQ testnet tokens)
 
+#### Stripe integration
+
+The application supports Stripe integration for payment processing.
+
+1. `STRIPE_ENABLED` - Enable/disable Stripe integration (`false` by default)
+2. `STRIPE_SECRET_KEY` - Secret key for Stripe API. Please, keep it secret on deploying
+3. `STRIPE_PUBLISHABLE_KEY` - Publishable key for Stripe API.
+4. `STRIPE_WEBHOOK_SECRET` - Secret for Stripe Webhook.
+
 ### 3rd Party Connectors
 
 The app supports 3rd party connectors for credential storage and delivery.
@@ -119,9 +128,8 @@ Verida Wallet.
 By default, `ENABLE_VERIDA_CONNECTOR` is set to off/`false`. To enable external Veramo KMS database, set
 `ENABLE_VERIDA_CONNECTOR` to `true`, then define below environment variables in `.env` file:
 
-1. `VERIDA_NETWORK`: Verida Network type to connect to. (Default: `testnet`)
-2. `VERIDA_PRIVATE_KEY`: Secret key for Verida Network API.
-3. `POLYGON_PRIVATE_KEY`: Secret key for Polygon Network.
+1. `VERIDA_PRIVATE_KEY`: Secret key for Verida Network API.
+2. `POLYGON_PRIVATE_KEY`: Secret key for Polygon Network.
 
 ## 🧑‍💻🛠 Developer Guide
 

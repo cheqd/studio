@@ -33,6 +33,10 @@ import { AlterPaymentTable1695740345979 } from '../migrations/AlterPaymentTable.
 import { CreateCoinTable1695740345977 } from '../migrations/CreateCoinTable.js';
 import { CoinEntity } from '../entities/coin.entity.js';
 import { AlterOperationTableAddCustomer1695740345990 } from '../migrations/AlterOperatioinTableAddCustomer.js';
+import { AlterCustomerTable1695740346000 } from '../migrations/AlterCustomerTable.js';
+import { AlterOperationTable1695740346001 } from '../migrations/AlterOperationTableNewCategory.js';
+import { SubscriptionEntity } from '../entities/subscription.entity.js';
+import { CreateSubscritpionTable1695740346003 } from '../migrations/CreateSubscriptionTable.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -99,6 +103,12 @@ export class Postgres implements AbstractDatabase {
 				AlterPaymentTable1695740345979,
 				// Add Customer relation to Operation table
 				AlterOperationTableAddCustomer1695740345990,
+				// Add paymentProviderId to customer table
+				AlterCustomerTable1695740346000,
+				// Add new category
+				AlterOperationTable1695740346001,
+				// Add subscription table
+				CreateSubscritpionTable1695740346003,
 			],
 			entities: [
 				...Entities,
@@ -113,6 +123,7 @@ export class Postgres implements AbstractDatabase {
 				IdentifierEntity,
 				APIKeyEntity,
 				CoinEntity,
+				SubscriptionEntity,
 			],
 			logging: ['error', 'info', 'warn'],
 		});
