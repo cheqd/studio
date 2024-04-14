@@ -1,6 +1,6 @@
 import type { Request } from 'express';
 import { AuthReturn } from '../routine.js';
-import type { IOAuthProvider } from '../oauth/base.js';
+import type { IOAuthProvider } from '../oauth/abstract.js';
 import type { IAuthResponse } from '../../../types/authentication.js';
 import { StatusCodes } from 'http-status-codes';
 import type { IUserInfoFetcher } from './base.js';

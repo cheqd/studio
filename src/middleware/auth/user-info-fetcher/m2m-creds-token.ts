@@ -3,7 +3,7 @@ import { AuthReturn } from '../routine.js';
 import type { IAuthResponse } from '../../../types/authentication.js';
 import { StatusCodes } from 'http-status-codes';
 import type { IUserInfoFetcher } from './base.js';
-import type { IOAuthProvider } from '../oauth/base.js';
+import type { IOAuthProvider } from '../oauth/abstract.js';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 import * as dotenv from 'dotenv';

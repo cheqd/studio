@@ -2,8 +2,8 @@ import type { ICommonErrorResponse } from '../../types/authentication';
 import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
-import type { IOAuthProvider } from './oauth/base.js';
-import { OAuthProvider } from './oauth/base.js';
+import type { IOAuthProvider } from './oauth/abstract.js';
+import { OAuthProvider } from './oauth/abstract.js';
 dotenv.config();
 
 export class LogToHelper extends OAuthProvider implements IOAuthProvider {

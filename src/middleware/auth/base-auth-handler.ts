@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import type { IncomingHttpHeaders } from 'http';
-import type { IOAuthProvider } from './oauth/base.js';
+import type { IOAuthProvider } from './oauth/abstract.js';
 import { LogToProvider } from './oauth/logto-provider.js';
 import { SwaggerUserInfoFetcher } from './user-info-fetcher/swagger-ui.js';
 import { IdTokenUserInfoFetcher } from './user-info-fetcher/idtoken.js';

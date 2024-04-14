@@ -5,6 +5,9 @@ import type { IAuthResponse } from '../../../../types/authentication.js';
 export class AdminHandler extends BaseAuthHandler {
 	constructor() {
 		super();
+		// Main swagger route
+		this.registerRoute('/admin/swagger', 'GET', 'admin:swagger:testnet', { skipNamespace: true });
+		this.registerRoute('/admin/swagger', 'GET', 'admin:swagger:mainnet', { skipNamespace: true });
 		// Subscriptions
 		// skipNamespace is set to true cause we don't have the information about the namespace in the request
 		this.registerRoute('/admin/subscription/create', 'POST', 'admin:subscription:create:testnet', {
