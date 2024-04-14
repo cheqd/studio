@@ -2,20 +2,20 @@ import { Request, Response, NextFunction, response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
 import * as dotenv from 'dotenv';
-import { AccountAuthHandler } from './auth/routes/account-auth.js';
-import { CredentialAuthHandler } from './auth/routes/credential-auth.js';
-import { DidAuthHandler } from './auth/routes/did-auth.js';
-import { KeyAuthHandler } from './auth/routes/key-auth.js';
-import { CredentialStatusAuthHandler } from './auth/routes/credential-status-auth.js';
-import { ResourceAuthHandler } from './auth/routes/resource-auth.js';
+import { AccountAuthHandler } from './auth/routes/api/account-auth.js';
+import { CredentialAuthHandler } from './auth/routes/api/credential-auth.js';
+import { DidAuthHandler } from './auth/routes/api/did-auth.js';
+import { KeyAuthHandler } from './auth/routes/api/key-auth.js';
+import { CredentialStatusAuthHandler } from './auth/routes/api/credential-status-auth.js';
+import { ResourceAuthHandler } from './auth/routes/api/resource-auth.js';
 import type { BaseAuthHandler } from './auth/base-auth-handler.js';
 import { LogToHelper } from './auth/logto-helper.js';
-import { PresentationAuthHandler } from './auth/routes/presentation-auth.js';
+import { PresentationAuthHandler } from './auth/routes/api/presentation-auth.js';
 import { UserService } from '../services/api/user.js';
 import { configLogToExpress } from '../types/constants.js';
 import { handleAuthRoutes, withLogto } from '@logto/express';
 import { LogToProvider } from './auth/oauth/logto-provider.js';
-import { AuthInfoHandler } from './auth/routes/auth-user-info.js';
+import { AuthInfoHandler } from './auth/routes/api/auth-user-info.js';
 import { CustomerService } from '../services/api/customer.js';
 import { AdminHandler } from './auth/routes/admin/admin-auth.js';
 

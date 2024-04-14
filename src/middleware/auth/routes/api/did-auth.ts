@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import { BaseAuthHandler } from '../base-auth-handler.js';
-import type { IAuthResponse } from '../../../types/authentication.js';
+import { BaseAuthHandler } from '../../base-auth-handler.js';
+import type { IAuthResponse } from '../../../../types/authentication.js';
 
 export class DidAuthHandler extends BaseAuthHandler {
 	constructor() {

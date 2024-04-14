@@ -203,6 +203,7 @@ export class RuleRoutine extends AuthReturn implements IReturn {
 
 		return null;
 	}
+
 	protected findNetworkInBody(body: string): string | null {
 		const matches = body.match(DefaultNetworkPattern);
 		if (matches && matches.length > 0) {
@@ -210,6 +211,7 @@ export class RuleRoutine extends AuthReturn implements IReturn {
 		}
 		return null;
 	}
+
 	protected switchNetwork(network: string): Namespaces | null {
 		switch (network) {
 			case 'testnet': {
@@ -223,6 +225,7 @@ export class RuleRoutine extends AuthReturn implements IReturn {
 			}
 		}
 	}
+
 	protected findRule(route: string, method: string, namespace = Namespaces.Testnet): MethodToScopeRule | undefined {
 		for (const rule of this.getRouteToScopeList()) {
 			if (rule.doesRuleMatches(route, method, namespace)) {
