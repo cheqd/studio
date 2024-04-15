@@ -1,84 +1,83 @@
-import type { Request } from 'express';
-import { AuthReturn } from '../routine.js';
-import type { IAuthResponse } from '../../../types/authentication.js';
+import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import type { IUserInfoFetcher } from './base.js';
+import { UserInfoHelper, type IUserInfoFetcher } from './base.js';
 import type { IOAuthProvider } from '../oauth/abstract.js';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 import * as dotenv from 'dotenv';
+import type { UnsuccessfulResponseBody } from '../../../types/shared.js';
 dotenv.config();
 
-export class PortalUserInfoFetcher extends AuthReturn implements IUserInfoFetcher {
+export class PortalUserInfoFetcher extends UserInfoHelper implements IUserInfoFetcher {
 	private m2mToken: string;
 	private idToken;
+	private oauthProvider: IOAuthProvider;
 
-	constructor(m2mToken: string, idToken: string) {
+	constructor(m2mToken: string, idToken: string, oauthProvider: IOAuthProvider) {
 		super();
 		this.m2mToken = m2mToken;
 		this.idToken = idToken;
+		this.oauthProvider = oauthProvider;
 	}
 
-	async fetchUserInfo(request: Request, oauthProvider: IOAuthProvider): Promise<IAuthResponse> {
-		// Get customerId from header
-		if (!this.idToken) {
-			return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: No idToken found in the header.`);
-		}
-
+	async fetch(request: Request, response: Response) {
 		// Check the idToken, provided in header
-		const idTokenVerification = await this.verifyIdToken(oauthProvider);
-		if (idTokenVerification.error) {
-			return idTokenVerification;
+		const errorResponse = await this.verifyIdToken(request, response);
+		if (errorResponse) {
+			return errorResponse;
 		}
 
-		return this.verifyM2MToken(oauthProvider);
+		return this.verifyM2MToken(request, response);
 	}
 
-	public async verifyIdToken(oauthProvider: IOAuthProvider): Promise<IAuthResponse> {
+	public async verifyIdToken(request: Request, response: Response) {
 		try {
 			const { payload } = await jwtVerify(
 				this.idToken, // The raw Bearer Token extracted from the request header
-				createRemoteJWKSet(new URL(oauthProvider.endpoint_jwks)), // generate a jwks using jwks_uri inquired from Logto server
+				createRemoteJWKSet(new URL(this.oauthProvider.endpoint_jwks)), // generate a jwks using jwks_uri inquired from Logto server
 				{
 					// expected issuer of the token, should be issued by the Logto server
-					issuer: oauthProvider.endpoint_issuer,
+					issuer: this.oauthProvider.endpoint_issuer,
 				}
 			);
 			// Setup the scopes from the token
 			if (!payload.sub) {
-				return this.returnError(
-					StatusCodes.UNAUTHORIZED,
-					`Unauthorized error: No sub found in the token. Cannot set customerId.`
-				);
+				return response.status(StatusCodes.UNAUTHORIZED).json({ 
+					error: `Unauthorized error: No sub found in the token. Cannot set customerId.`
+				} satisfies UnsuccessfulResponseBody);
 			}
-			this.setUserId(payload.sub);
-			return this.returnOk();
+			return await this.setUserEntity(payload.sub, response);
 		} catch (error) {
 			console.error(error);
-			return this.returnError(StatusCodes.INTERNAL_SERVER_ERROR, `Unexpected error: ${error}`);
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
+				error:`Unexpected error: While verifying ID token for Portal: ${error}`
+			} satisfies UnsuccessfulResponseBody);
 		}
 	}
 
-	public async verifyM2MToken(oauthProvider: IOAuthProvider): Promise<IAuthResponse> {
+	public async verifyM2MToken(request: Request, response: Response) {
 		try {
 			const { payload } = await jwtVerify(
 				this.m2mToken, // The raw Bearer Token extracted from the request header
-				createRemoteJWKSet(new URL(oauthProvider.endpoint_jwks)), // generate a jwks using jwks_uri inquired from Logto server
+				createRemoteJWKSet(new URL(this.oauthProvider.endpoint_jwks)), // generate a jwks using jwks_uri inquired from Logto server
 				{
 					// expected issuer of the token, should be issued by the Logto server
-					issuer: oauthProvider.endpoint_issuer,
+					issuer: this.oauthProvider.endpoint_issuer,
 				}
 			);
 			// Setup the scopes from the token
 			if (!payload.sub) {
-				return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: No sub found in the token.`);
+				return response.status(StatusCodes.UNAUTHORIZED).json({ 
+					error: `Unauthorized error: No sub found in the token.`
+				} satisfies UnsuccessfulResponseBody);
 			}
 			const scopes = payload.scope ? (payload.scope as string).split(' ') : [];
-			this.setScopes(scopes);
-			return this.returnOk();
+			this.setScopes(scopes, response);
+			return;
 		} catch (error) {
-			console.error(error);
-			return this.returnError(StatusCodes.INTERNAL_SERVER_ERROR, `Unexpected error: ${error}`);
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
+				error: `Unexpected error: While verifying M2M token for Portal: ${error}`
+			} satisfies UnsuccessfulResponseBody);
 		}
 	}
 }

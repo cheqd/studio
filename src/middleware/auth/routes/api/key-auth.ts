@@ -1,20 +1,11 @@
-import type { Request, Response } from 'express';
-import { BaseAuthHandler } from '../../base-auth-handler.js';
-import type { IAuthResponse } from '../../../../types/authentication.js';
+import { AuthRuleProvider } from "../../auth-rule-provider.js";
 
-export class KeyAuthHandler extends BaseAuthHandler {
+export class KeyAuthProvider extends AuthRuleProvider {
 	constructor() {
 		super();
-		this.registerRoute('/key/create', 'POST', 'create:key', { skipNamespace: true });
-		this.registerRoute('/key/import', 'POST', 'import:key', { skipNamespace: true });
-		this.registerRoute('/key/read/(.*)', 'GET', 'read:key', { skipNamespace: true });
-		this.registerRoute('/key/list', 'GET', 'list:key', { skipNamespace: true });
-	}
-
-	public async handle(request: Request, response: Response): Promise<IAuthResponse> {
-		if (!request.path.includes('/key/')) {
-			return super.handle(request, response);
-		}
-		return this.guardAPI(request);
+		this.registerRule('/key/create', 'POST', 'create:key', { skipNamespace: true });
+		this.registerRule('/key/import', 'POST', 'import:key', { skipNamespace: true });
+		this.registerRule('/key/read/(.*)', 'GET', 'read:key', { skipNamespace: true });
+		this.registerRule('/key/list', 'GET', 'list:key', { skipNamespace: true });
 	}
 }

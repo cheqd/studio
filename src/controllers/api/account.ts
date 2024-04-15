@@ -23,6 +23,8 @@ import type { UnsuccessfulResponseBody } from '../../types/shared.js';
 import { check, validationResult } from 'express-validator';
 import { eventTracker } from '../../services/track/tracker.js';
 import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../../services/track/submitter.js';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 export class AccountController {
 	public static createValidator = [
@@ -306,7 +308,7 @@ export class AccountController {
 			}
 		}
 		// 8. Add the Stripe account to the Customer
-		if (customer.paymentProviderId === null) {
+		if (process.env.STRIPE_ENABLED === 'true' && customer.paymentProviderId === null) {
 			eventTracker.submit({
 				operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 				data: {
@@ -369,7 +371,7 @@ export class AccountController {
 			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
 		}
 
-		const username = request.body.username;
+		const { username } = request.body;
 
 		try {
 			// 2. Check if the customer exists
@@ -424,6 +426,16 @@ export class AccountController {
 						});
 					}
 				}
+			}
+			// 5. Setup stripe account
+			if (process.env.STRIPE_ENABLED === 'true' && customer.paymentProviderId === null) {
+				eventTracker.submit({
+					operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
+					data: {
+						name: customer.name,
+						customerId: customer.customerId,
+					} satisfies ISubmitStripeCustomerCreateData,
+				} satisfies ISubmitOperation);
 			}
 			return response.status(StatusCodes.CREATED).json(customer);
 		} catch (error) {

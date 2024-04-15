@@ -1,51 +1,58 @@
-import type { Request } from 'express';
-import { AuthReturn } from '../routine.js';
-import type { IAuthResponse } from '../../../types/authentication.js';
+import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import type { IUserInfoFetcher } from './base.js';
+import { UserInfoHelper, type IUserInfoFetcher } from './base.js';
 import type { IOAuthProvider } from '../oauth/abstract.js';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 import * as dotenv from 'dotenv';
+import type { UnsuccessfulResponseBody } from '../../../types/shared.js';
 dotenv.config();
 
-export class IdTokenUserInfoFetcher extends AuthReturn implements IUserInfoFetcher {
+export class IdTokenUserInfoFetcher extends UserInfoHelper implements IUserInfoFetcher {
 	token: string;
+	private oauthProvider: IOAuthProvider;
 
-	constructor(token: string) {
-		super();
+	constructor(token: string, oauthProvider: IOAuthProvider) {
+		super()
 		this.token = token;
+		this.oauthProvider = oauthProvider;
 	}
 
-	async fetchUserInfo(request: Request, oauthProvider: IOAuthProvider): Promise<IAuthResponse> {
-		return this.verifyJWTToken(this.token as string, oauthProvider);
+	async fetch(request: Request, response: Response) {
+		return this.verifyJWTToken(request, response);
 	}
 
-	public async verifyJWTToken(token: string, oauthProvider: IOAuthProvider): Promise<IAuthResponse> {
+	public async verifyJWTToken(request: Request, response: Response) {
 		try {
 			const { payload } = await jwtVerify(
-				token, // The raw Bearer Token extracted from the request header
-				createRemoteJWKSet(new URL(oauthProvider.endpoint_jwks)), // generate a jwks using jwks_uri inquired from Logto server
+				this.token, // The raw Bearer Token extracted from the request header
+				createRemoteJWKSet(new URL(this.oauthProvider.endpoint_jwks)),
 				{
 					// expected issuer of the token, should be issued by the Logto server
-					issuer: oauthProvider.endpoint_issuer,
+					issuer: this.oauthProvider.endpoint_issuer,
 					// expected audience token, should be the resource indicator of the current API
 					audience: process.env.LOGTO_APP_ID,
 				}
 			);
 			// Setup the scopes from the token
 			if (!payload.roles) {
-				return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: No roles found in the token.`);
+				return response.status(StatusCodes.UNAUTHORIZED).json({
+					error: `Unauthorized error: No roles found in the token.`
+				} satisfies UnsuccessfulResponseBody);
 			}
-			const scopes = await oauthProvider.getScopesForRoles(payload.roles as string[]);
+			const scopes = await this.oauthProvider.getScopesForRoles(payload.roles as string[]);
 			if (!scopes) {
-				return this.returnError(StatusCodes.UNAUTHORIZED, `Unauthorized error: No scopes found for the roles.`);
+				return response.status(StatusCodes.UNAUTHORIZED).json({
+					error: `Unauthorized error: No scopes found for the roles: ${payload.roles}`
+				} satisfies UnsuccessfulResponseBody);
 			}
-			this.setScopes(scopes);
-			this.setUserId(payload.sub as string);
-			return this.returnOk();
+			// Set global context
+			this.setScopes(scopes, response);
+			return await this.setUserEntity(payload.sub as string, response);
 		} catch (error) {
-			return this.returnError(StatusCodes.INTERNAL_SERVER_ERROR, `Unexpected error: ${error}`);
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Unexpected error: While verifying ID token: ${error}`
+			} satisfies UnsuccessfulResponseBody);
 		}
 	}
 }

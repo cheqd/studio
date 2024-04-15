@@ -1,44 +1,36 @@
-import type { Request, Response } from 'express';
-import { BaseAuthHandler } from '../../base-auth-handler.js';
-import type { IAuthResponse } from '../../../../types/authentication.js';
+import { AuthRuleProvider } from "../../auth-rule-provider.js";
 
-export class CredentialStatusAuthHandler extends BaseAuthHandler {
+export class CredentialStatusAuthRuleProvider extends AuthRuleProvider {
 	constructor() {
 		super();
-		this.registerRoute('/credential-status/create/encrypted', 'POST', 'create-encrypted:credential-status:testnet');
-		this.registerRoute('/credential-status/create/encrypted', 'POST', 'create-encrypted:credential-status:mainnet');
-		this.registerRoute(
+		this.registerRule('/credential-status/create/encrypted', 'POST', 'create-encrypted:credential-status:testnet');
+		this.registerRule('/credential-status/create/encrypted', 'POST', 'create-encrypted:credential-status:mainnet');
+		this.registerRule(
 			'/credential-status/create/unencrypted',
 			'POST',
 			'create-unencrypted:credential-status:testnet'
 		);
-		this.registerRoute(
+		this.registerRule(
 			'/credential-status/create/unencrypted',
 			'POST',
 			'create-unencrypted:credential-status:mainnet'
 		);
-		this.registerRoute('/credential-status/publish', 'POST', 'publish:credential-status:testnet');
-		this.registerRoute('/credential-status/publish', 'POST', 'publish:credential-status:mainnet');
-		this.registerRoute('/credential-status/update/encrypted', 'POST', 'update-encrypted:credential-status:testnet');
-		this.registerRoute('/credential-status/update/encrypted', 'POST', 'update-encrypted:credential-status:mainnet');
-		this.registerRoute(
+		this.registerRule('/credential-status/publish', 'POST', 'publish:credential-status:testnet');
+		this.registerRule('/credential-status/publish', 'POST', 'publish:credential-status:mainnet');
+		this.registerRule('/credential-status/update/encrypted', 'POST', 'update-encrypted:credential-status:testnet');
+		this.registerRule('/credential-status/update/encrypted', 'POST', 'update-encrypted:credential-status:mainnet');
+		this.registerRule(
 			'/credential-status/update/unencrypted',
 			'POST',
 			'update-unencrypted:credential-status:testnet'
 		);
-		this.registerRoute(
+		this.registerRule(
 			'/credential-status/update/unencrypted',
 			'POST',
 			'update-unencrypted:credential-status:mainnet'
 		);
 		// Unauthorized routes
-		this.registerRoute('/credential-status/search', 'GET', '', { allowUnauthorized: true, skipNamespace: true });
-		this.registerRoute('/credential-status/check', 'POST', 'check:credential-status', { skipNamespace: true });
-	}
-	public async handle(request: Request, response: Response): Promise<IAuthResponse> {
-		if (!request.path.includes('/credential-status/')) {
-			return super.handle(request, response);
-		}
-		return this.guardAPI(request);
+		this.registerRule('/credential-status/search', 'GET', '', { allowUnauthorized: true, skipNamespace: true });
+		this.registerRule('/credential-status/check', 'POST', 'check:credential-status', { skipNamespace: true });
 	}
 }

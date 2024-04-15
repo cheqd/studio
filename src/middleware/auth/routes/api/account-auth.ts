@@ -1,17 +1,9 @@
-import type { Request, Response } from 'express';
-import { BaseAuthHandler } from '../../base-auth-handler.js';
-import type { IAuthResponse } from '../../../../types/authentication.js';
+import { AuthRuleProvider } from '../../auth-rule-provider.js';
 
-export class AccountAuthHandler extends BaseAuthHandler {
+export class AccountAuthProvider extends AuthRuleProvider {
 	constructor() {
 		super();
-		this.registerRoute('/account', 'GET', 'read:account', { skipNamespace: true });
-		this.registerRoute('/account', 'POST', 'create:account', { skipNamespace: true });
-	}
-	public async handle(request: Request, response: Response): Promise<IAuthResponse> {
-		if (!request.path.includes('/account')) {
-			return super.handle(request, response);
-		}
-		return this.guardAPI(request);
+		this.registerRule('/account', 'GET', 'read:account', { skipNamespace: true });
+		this.registerRule('/account', 'POST', 'create:account', { skipNamespace: true });
 	}
 }

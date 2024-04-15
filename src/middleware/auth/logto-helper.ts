@@ -1,10 +1,10 @@
-import type { ICommonErrorResponse } from '../../types/authentication';
+import type { ICommonErrorResponse } from '../../types/authentication.js';
 import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
 import type { IOAuthProvider } from './oauth/abstract.js';
 import { OAuthProvider } from './oauth/abstract.js';
-import { EventTracker, eventTracker } from '../../services/track/tracker';
+import { EventTracker, eventTracker } from '../../services/track/tracker.js';
 dotenv.config();
 
 export class LogToHelper extends OAuthProvider implements IOAuthProvider {
@@ -44,7 +44,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 	}
 
 	private async getM2MToken(): Promise<string> {
-		if (this.isTokenExpired(this.m2mToken)) {
+		if (!this.m2mToken || this.isTokenExpired(this.m2mToken)) {
 			for (let i = 0; i < this.m2mGetTokenAttempts; i++) {
 				const response = await this.setM2MToken();
 				if (response.status === StatusCodes.OK) {
