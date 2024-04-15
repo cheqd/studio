@@ -32,7 +32,7 @@ import { AlterOperationTable1695740345978 } from '../migrations/AlterOperationTa
 import { AlterPaymentTable1695740345979 } from '../migrations/AlterPaymentTable.js';
 import { CreateCoinTable1695740345977 } from '../migrations/CreateCoinTable.js';
 import { CoinEntity } from '../entities/coin.entity.js';
-import { AlterOperationTableAddCustomer1695740345990 } from '../migrations/AlterOperatioinTableAddCustomer.js';
+import { AlterOperationTableAddCustomer1695740345990 } from '../migrations/AlterOperationTableAddCustomer.js';
 import { AlterCustomerTable1695740346000 } from '../migrations/AlterCustomerTable.js';
 import { AlterOperationTable1695740346001 } from '../migrations/AlterOperationTableNewCategory.js';
 import { SubscriptionEntity } from '../entities/subscription.entity.js';
