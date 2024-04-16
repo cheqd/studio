@@ -4,13 +4,13 @@ import { check } from 'express-validator';
 import { validate } from '../validator/decorator.js';
 import { CustomerService } from '../../services/api/customer.js';
 import { StatusCodes } from 'http-status-codes';
-import type { AdminOrganizationGetUnsuccessfulResponseBody, AdminOrganizationUpdateResponseBody, AdminOrganizationUpdateUnsuccessfulResponseBody } from '../../types/admin.js';
+import type { AdminCustomerGetUnsuccessfulResponseBody, AdminCustomerUpdateResponseBody, AdminCustomerUpdateUnsuccessfulResponseBody } from '../../types/admin.js';
 import { PaymentAccountService } from '../../services/api/payment-account.js';
 
 dotenv.config();
 
-export class OrganizationController {
-	static organizationUpdatevalidator = [
+export class OrganisationController {
+	static organisationUpdatevalidator = [
 		check('name').
 			optional().
 			isString().
@@ -29,11 +29,11 @@ export class OrganizationController {
 	/**
 	 * @openapi
 	 *
-	 * /admin/organization/update:
+	 * /admin/organisation/update:
 	 *   post:
-	 *     summary: Update an organization
-	 *     description: Update an organization
-	 *     tags: [Organization]
+	 *     summary: Update an organisation
+	 *     description: Update an organisation
+	 *     tags: [Organisation]
 	 *     requestBody:
 	 *       required: true
 	 *       content:
@@ -50,14 +50,14 @@ export class OrganizationController {
 	 *                 format: email
 	 *               description:
 	 *                 type: string
-	 *                 example: Cheqd organization
+	 *                 example: Cheqd organisation
 	 *     responses:
 	 *       200:
 	 *         description: A successful response
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/OrganizationResponseBody'
+	 *               $ref: '#/components/schemas/OrganisationResponseBody'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -77,7 +77,7 @@ export class OrganizationController {
 			if (!customer || !paymentAccount) {
 				response.status(StatusCodes.NOT_FOUND).json({
 					error: 'Customer for updating not found',
-				} satisfies AdminOrganizationUpdateUnsuccessfulResponseBody);
+				} satisfies AdminCustomerUpdateUnsuccessfulResponseBody);
 			}
 
 			return response.status(StatusCodes.OK).json({
@@ -85,29 +85,29 @@ export class OrganizationController {
 				email: customer.email,
 				description: customer.description,
 				cosmosAddress: paymentAccount[0].address as string
-			} satisfies AdminOrganizationUpdateResponseBody);
+			} satisfies AdminCustomerUpdateResponseBody);
 		} catch (error) {
 			return response.status(500).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			} satisfies AdminOrganizationUpdateUnsuccessfulResponseBody);
+			} satisfies AdminCustomerUpdateUnsuccessfulResponseBody);
 		}
 	}
 
 	/**
 	 * @openapi
 	 *
-	 * /admin/organization/get:
+	 * /admin/organisation/get:
 	 *   get:
-	 *     summary: Get an organization
-	 *     description: Get an organization
-	 *     tags: [Organization]
+	 *     summary: Get an organisation
+	 *     description: Get an organisation
+	 *     tags: [Organisation]
 	 *     responses:
 	 *       200:
 	 *         description: A successful response
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/OrganizationResponseBody'
+	 *               $ref: '#/components/schemas/OrganisationResponseBody'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -125,7 +125,7 @@ export class OrganizationController {
 			if (!customer || !paymentAccount) {
 				response.status(StatusCodes.NOT_FOUND).json({
 					error: 'Customer for current user was not found or did not setup properly. Please contact administrator.',
-				} satisfies AdminOrganizationGetUnsuccessfulResponseBody);
+				} satisfies AdminCustomerGetUnsuccessfulResponseBody);
 			}
 			return response.status(StatusCodes.OK).json({
 				name: customer.name,
@@ -136,7 +136,7 @@ export class OrganizationController {
 		} catch (error) {
 			return response.status(500).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			} satisfies AdminOrganizationGetUnsuccessfulResponseBody);
+			} satisfies AdminCustomerGetUnsuccessfulResponseBody);
 		}
 	}
 }

@@ -39,8 +39,8 @@ export class AdminAuthRuleProvider extends AuthRuleProvider {
 		this.registerRule('/admin/api-key/get', 'GET', 'admin:api-key:get', { skipNamespace: true });
 		this.registerRule('/admin/api-key/list', 'GET', 'admin:api-key:list', { skipNamespace: true });
 		// Customer
-		this.registerRule('/admin/organization/update', 'POST', 'admin:organization:update', { skipNamespace: true });
-		this.registerRule('/admin/organization/get', 'GET', 'admin:organization:get', { skipNamespace: true });
+		this.registerRule('/admin/organisation/update', 'POST', 'admin:organisation:update', { skipNamespace: true });
+		this.registerRule('/admin/organisation/get', 'GET', 'admin:organisation:get', { skipNamespace: true });
 
 	}
 }
