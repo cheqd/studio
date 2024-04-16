@@ -21,7 +21,7 @@ import type {
 } from '../../types/customer.js';
 import type { UnsuccessfulResponseBody } from '../../types/shared.js';
 import { check, validationResult } from 'express-validator';
-import { eventTracker } from '../../services/track/tracker.js';
+import { EventTracker, eventTracker } from '../../services/track/tracker.js';
 import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../../services/track/submitter.js';
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -194,6 +194,13 @@ export class AccountController {
 					error: 'User is not found in db: Customer was not created',
 				} satisfies UnsuccessfulResponseBody);
 			}
+			// Notify
+			await eventTracker.notify({
+				message: EventTracker.compileBasicNotification(
+					'User was not found in db: Customer with customerId: ' + customer.customerId + ' was created',
+				),
+				severity: 'info'
+			})
 			// 2.2. Create user
 			user = await UserService.instance.create(logToUserId, customer, defaultRole);
 			if (!user) {
@@ -201,6 +208,13 @@ export class AccountController {
 					error: 'User is not found in db: User was not created',
 				} satisfies UnsuccessfulResponseBody);
 			}
+			// Notify
+			await eventTracker.notify({
+				message: EventTracker.compileBasicNotification(
+					'User was not found in db: User with userId: ' + user.logToId + ' was created',
+				),
+				severity: 'info'
+			})
 		}
 		// 3. If yes - check that there is customer associated with such user
 		if (!user.customer) {
@@ -212,6 +226,13 @@ export class AccountController {
 					error: 'User exists in db: Customer was not created',
 				} satisfies UnsuccessfulResponseBody);
 			}
+			// Notify
+			await eventTracker.notify({
+				message: EventTracker.compileBasicNotification(
+					'User exists in db: Customer with customerId: ' + customer.customerId + ' was created',
+				),
+				severity: 'info'
+			})
 			// 3.1.2. Assign customer to the user
 			user.customer = customer;
 			await UserService.instance.update(user.logToId, customer);
@@ -242,6 +263,13 @@ export class AccountController {
 					error: 'PaymentAccount is not found in db: Payment account was not created',
 				} satisfies UnsuccessfulResponseBody);
 			}
+			// Notify
+			await eventTracker.notify({
+				message: EventTracker.compileBasicNotification(
+					'PaymentAccount was not found in db: Payment account with address: ' + paymentAccount.address + ' was created',
+				),
+				severity: 'info'
+			})
 		} else {
 			paymentAccount = accounts[0];
 		}
@@ -270,6 +298,14 @@ export class AccountController {
 					error: _r.error,
 				} satisfies UnsuccessfulResponseBody);
 			}
+
+			// Notify
+			await eventTracker.notify({
+				message: EventTracker.compileBasicNotification(
+					`Default role with id: ${process.env.LOGTO_DEFAULT_ROLE_ID} was assigned to user with id: ${user.logToId}`,
+				),
+				severity: 'info'
+			})
 		}
 
 		const customDataFromLogTo = await logToHelper.getCustomData(user.logToId);
@@ -305,6 +341,13 @@ export class AccountController {
 						error: resp.error,
 					} satisfies UnsuccessfulResponseBody);
 				}
+				// Notify
+				await eventTracker.notify({
+					message: EventTracker.compileBasicNotification(
+						`Testnet account with address: ${paymentAccount.address} was funded with ${TESTNET_MINIMUM_BALANCE}`,
+					),
+					severity: 'info'
+				})
 			}
 		}
 		// 8. Add the Stripe account to the Customer

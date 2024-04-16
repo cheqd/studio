@@ -18,7 +18,7 @@ export class WebhookController {
 		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 		if (!process.env.STRIPE_WEBHOOK_SECRET) {
-			await eventTracker.notify({
+			await await eventTracker.notify({
 				message: 'Stripe webhook secret not found. Webhook ID: ${request.body.id}.',
 				severity: 'error',
 			} satisfies INotifyMessage);
@@ -27,7 +27,7 @@ export class WebhookController {
 
 		const signature = request.headers['stripe-signature'];
 		if (!signature) {
-			await eventTracker.notify({
+			await await eventTracker.notify({
 				message: 'Webhook signature not found. Webhook ID: ${request.body.id}.',
 				severity: 'error',
 			} satisfies INotifyMessage);
@@ -37,7 +37,7 @@ export class WebhookController {
 		try {
 			event = stripe.webhooks.constructEvent(request.rawBody, signature, process.env.STRIPE_WEBHOOK_SECRET);
 		} catch (err) {
-			await eventTracker.notify({
+			await await eventTracker.notify({
 				message: `Webhook signature verification failed. Webhook ID: ${request.body.id}. Error: ${(err as Record<string, unknown>)?.message || err}`,
 				severity: 'error',
 			} satisfies INotifyMessage);
@@ -48,7 +48,7 @@ export class WebhookController {
 			case 'customer.subscription.trial_will_end':
 				subscription = event.data.object;
 				status = subscription.status;
-				await eventTracker.notify({
+				await await eventTracker.notify({
 					message: EventTracker.compileBasicNotification(
 						`Subscription status is ${status} for subscription with id: ${subscription.id}`,
 						'Stripe Webhook: customer.subscription.trial_will_end'
@@ -62,7 +62,7 @@ export class WebhookController {
 			case 'customer.subscription.deleted':
 				subscription = event.data.object;
 				status = subscription.status;
-				await eventTracker.notify({
+				await await eventTracker.notify({
 					message: EventTracker.compileBasicNotification(
 						`Subscription status is ${status} for subscription with id: ${subscription.id}`,
 						'Stripe Webhook: customer.subscription.deleted'
@@ -74,7 +74,7 @@ export class WebhookController {
 			case 'customer.subscription.created':
 				subscription = event.data.object;
 				status = subscription.status;
-				await eventTracker.notify({
+				await await eventTracker.notify({
 					message: EventTracker.compileBasicNotification(
 						`Subscription status is ${status} for subscription with id: ${subscription.id}`,
 						'Stripe Webhook: customer.subscription.created'
@@ -86,7 +86,7 @@ export class WebhookController {
 			case 'customer.subscription.updated':
 				subscription = event.data.object;
 				status = subscription.status;
-				await eventTracker.notify({
+				await await eventTracker.notify({
 					message: EventTracker.compileBasicNotification(
 						`Subscription status is ${status} for subscription with id: ${subscription.id}`,
 						'Stripe Webhook: customer.subscription.updated'
@@ -97,7 +97,7 @@ export class WebhookController {
 				break;
 			default:
 				// Unexpected event type
-				eventTracker.notify({
+				await eventTracker.notify({
 					message: EventTracker.compileBasicNotification(
 						`Unexpected event: ${event} with type: ${event?.type}`,
 						'Stripe Webhook: unexpected'

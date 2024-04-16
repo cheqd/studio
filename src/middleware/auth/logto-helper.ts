@@ -50,7 +50,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 				if (response.status === StatusCodes.OK) {
 					return this.m2mToken;
 				}
-				eventTracker.notify({
+				await eventTracker.notify({
 					message: EventTracker.compileBasicNotification(
 						'Failed to get M2M token, Attempt ' + i + ' of ' + this.m2mGetTokenAttempts,
 						'M2M token issuing'
