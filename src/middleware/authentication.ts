@@ -10,7 +10,7 @@ import { handleAuthRoutes, withLogto } from '@logto/express';
 import { LogToProvider } from './auth/oauth/logto-provider.js';
 import { AdminAuthRuleProvider } from './auth/routes/admin/admin-auth.js';
 import { APIGuard } from './auth/auth-gaurd.js';
-import { AuthRuleRepository } from './auth/auth-rule-provider.js';
+import { AuthRuleRepository } from "./auth/routes/auth-rule-repository.js";
 import type { IOAuthProvider } from './auth/oauth/abstract.js';
 import { DidAuthRuleProvider } from './auth/routes/api/did-auth.js';
 import { PresentationAuthRuleProvider } from './auth/routes/api/presentation-auth.js';

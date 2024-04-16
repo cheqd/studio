@@ -20,10 +20,11 @@ import type {
 	UnsuccessfulQueryIdTokenResponseBody,
 } from '../../types/customer.js';
 import type { UnsuccessfulResponseBody } from '../../types/shared.js';
-import { check, validationResult } from 'express-validator';
+import { check } from 'express-validator';
 import { EventTracker, eventTracker } from '../../services/track/tracker.js';
 import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../../services/track/submitter.js';
 import * as dotenv from 'dotenv';
+import { validate } from '../validator/decorator.js';
 dotenv.config();
 
 export class AccountController {
@@ -394,6 +395,7 @@ export class AccountController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	public async create(request: Request, response: Response) {
 		// For now we keep temporary 1-1 relation between user and customer
 		// So the flow is:
@@ -407,13 +409,6 @@ export class AccountController {
 		let paymentAccount: PaymentAccountEntity | null;
 
 		// 1. Get logTo UserId from request body
-		// validate request
-		const result = validationResult(request);
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
-		}
-
 		const { username } = request.body;
 
 		try {

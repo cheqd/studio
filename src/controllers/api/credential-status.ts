@@ -1,9 +1,8 @@
 import type { Request, Response } from 'express';
-import { check, validationResult, query } from '../validator/index.js';
+import { check, query } from '../validator/index.js';
 import { fromString } from 'uint8arrays';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
-import type { ValidationErrorResponseBody } from '../../types/shared.js';
 import type { CheckStatusListSuccessfulResponseBody, FeePaymentOptions } from '../../types/credential-status.js';
 import {
 	DefaultStatusAction,
@@ -49,6 +48,7 @@ import { eventTracker } from '../../services/track/tracker.js';
 import type { ICredentialStatusTrack, ITrackOperation, IFeePaymentOptions } from '../../types/track.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
 import { FeeAnalyzer } from '../../helpers/fee-analyzer.js';
+import { validate } from '../validator/decorator.js';
 
 export class CredentialStatusController {
 	static createUnencryptedValidator = [
@@ -492,17 +492,8 @@ export class CredentialStatusController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	async createUnencryptedStatusList(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies ValidationErrorResponseBody);
-		}
-
 		// collect request parameters - case: body
 		const { did, encodedList, statusListName, alsoKnownAs, statusListVersion, length, encoding } =
 			request.body as CreateUnencryptedStatusListRequestBody;
@@ -619,17 +610,8 @@ export class CredentialStatusController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	async createEncryptedStatusList(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies ValidationErrorResponseBody);
-		}
-
 		// collect request parameters - case: body
 		const {
 			did,
@@ -746,17 +728,8 @@ export class CredentialStatusController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	async updateUnencryptedStatusList(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies ValidationErrorResponseBody);
-		}
-
 		// collect request parameters - case: body
 		const { did, statusListName, statusListVersion, indices } =
 			request.body as UpdateUnencryptedStatusListRequestBody;
@@ -923,17 +896,8 @@ export class CredentialStatusController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	async updateEncryptedStatusList(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies ValidationErrorResponseBody);
-		}
-
 		// collect request parameters - case: body
 		const {
 			did,
@@ -1116,17 +1080,8 @@ export class CredentialStatusController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	async checkStatusList(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array()[0].msg,
-			} satisfies ValidationErrorResponseBody);
-		}
-
 		const feePaymentOptions: IFeePaymentOptions[] = [];
 
 		// Make the base body for tracking
@@ -1322,17 +1277,8 @@ export class CredentialStatusController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	async searchStatusList(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies ValidationErrorResponseBody);
-		}
-
 		// collect request parameters - case: query
 		const { did, statusListName, statusPurpose } = request.query as SearchStatusListQuery;
 

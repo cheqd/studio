@@ -1,4 +1,4 @@
-import { AuthRule, AuthRuleOptions } from "../../types/authentication.js";
+import { AuthRule, AuthRuleOptions } from "../../../types/authentication.js";
 import type { Request } from "express";
 
 export interface IAuthRuleProvider {
@@ -46,33 +46,4 @@ export class AuthRuleProvider implements IAuthRuleProvider {
         }
         return null;
     } 
-}
-
-export class AuthRuleRepository {
-    private providers: AuthRuleProvider[] = [];
-    /**
-     * Adds a new provider to the providers list.
-     *
-     * @param {AuthRuleProvider} provider - The provider to push.
-     * @return {void} 
-     */
-    public push(provider: AuthRuleProvider): void {
-        this.providers.push(provider);
-    }
-
-    /**
-     * Matches the request against the rules and returns the matching rule, if found.
-     *
-     * @param {Request} request - The request to match against the rules.
-     * @return {AuthRule | null} The matching rule, if found; otherwise, null.
-     */
-    public match(request: Request): AuthRule | null {
-        for (const provider of this.providers) {
-            const rule = provider.match(request);
-            if (rule) {
-                return rule;
-            }
-        }
-        return null;
-    }
 }

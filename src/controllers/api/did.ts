@@ -33,10 +33,9 @@ import type {
 	ResolveDIDRequestParams,
 	DeactivateDIDRequestBody,
 } from '../../types/did.js';
-import { check, validationResult, param } from '../validator/index.js';
+import { check, param } from '../validator/index.js';
 import type { IKey, RequireOnly } from '@veramo/core';
 import { extractPublicKeyHex } from '@veramo/utils';
-import type { ValidationErrorResponseBody } from '../../types/shared.js';
 import type { KeyImport } from '../../types/key.js';
 import { eventTracker } from '../../services/track/tracker.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
@@ -44,6 +43,7 @@ import type { IDIDTrack, ITrackOperation } from '../../types/track.js';
 import { arePublicKeyHexsInWallet } from '../../services/helpers.js';
 import { CheqdProviderErrorCodes } from '@cheqd/did-provider-cheqd';
 import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
+import { validate } from '../validator/decorator.js';
 
 export class DIDController {
 	public static createDIDValidator = [
@@ -169,17 +169,8 @@ export class DIDController {
 	 *             example:
 	 *               error: Internal Error
 	 */
+	@validate
 	public async createDid(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies ValidationErrorResponseBody);
-		}
-
 		// handle request params
 		const { identifierFormatType, network, verificationMethodType, service, key, options } =
 			request.body satisfies CreateDidRequestBody;
@@ -320,17 +311,8 @@ export class DIDController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	public async updateDid(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies ValidationErrorResponseBody);
-		}
-
 		// handle request params
 		const { did, service, verificationMethod, authentication, publicKeyHexs } =
 			request.body as UpdateDidRequestBody;
@@ -462,17 +444,8 @@ export class DIDController {
 	 *             example:
 	 *               error: Internal Error
 	 */
+	@validate
 	public async importDid(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies ValidationErrorResponseBody);
-		}
-
 		try {
 			// Get the params from body
 			const { did, controllerKeyId, keys } = request.body as ImportDidRequestBody;
@@ -584,17 +557,8 @@ export class DIDController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	public async deactivateDid(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies ValidationErrorResponseBody);
-		}
-
 		// Extract did from request params
 		const { did } = request.params as DeactivateDIDRequestParams;
 		const { publicKeyHexs } = request.body as DeactivateDIDRequestBody;

@@ -1,4 +1,4 @@
-import { AuthRuleProvider } from "../../auth-rule-provider.js";
+import { AuthRuleProvider } from "../auth-rule-provider.js";
 
 export class KeyAuthProvider extends AuthRuleProvider {
 	constructor() {

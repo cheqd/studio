@@ -30,6 +30,13 @@ export class PortalUserInfoFetcher extends UserInfoHelper implements IUserInfoFe
 		return this.verifyM2MToken(request, response);
 	}
 
+	/**
+	 * Verifies the ID token for the portal.
+	 *
+	 * @param {Request} request - The request object.
+	 * @param {Response} response - The response object.
+	 * @return {Promise<void>} The result of verifying the ID token.
+	 */
 	public async verifyIdToken(request: Request, response: Response) {
 		try {
 			const { payload } = await jwtVerify(

@@ -17,6 +17,13 @@ export class M2MCredsTokenUserInfoFetcher extends UserInfoHelper implements IUse
 		this.oauthProvider = oauthProvider;
 	}
 
+	/**
+	 * Verify M2M token
+	 *
+	 * @param {Request} request - The request object.
+	 * @param {Response} response - The response object.
+	 * @return {Promise<void>} The result of verifying the M2M token.
+	 */
 	async fetch(request: Request, response: Response) {
 		// Verify M2M token
 		return this.verifyJWTToken(request, response);

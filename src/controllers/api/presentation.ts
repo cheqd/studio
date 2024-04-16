@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
-import { check, validationResult, query } from '../validator/index.js';
+import { check, query } from '../validator/index.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { CheqdW3CVerifiablePresentation } from '../../services/w3c-presentation.js';
 import type {
@@ -14,10 +14,10 @@ import type {
 	VerifyPresentationResponseQuery,
 } from '../../types/presentation.js';
 import { isIssuerDidDeactivated } from '../../services/helpers.js';
-import type { ValidationErrorResponseBody } from '../../types/shared.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
 import { eventTracker } from '../../services/track/tracker.js';
 import type { IFeePaymentOptions, IPresentationTrack, ITrackOperation } from '../../types/track.js';
+import { validate } from '../validator/decorator.js';
 
 export class PresentationController {
 	public static presentationCreateValidator = [
@@ -95,17 +95,8 @@ export class PresentationController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
-
+	@validate
 	public async createPresentation(request: Request, response: Response) {
-		// Validate request
-		const result = validationResult(request);
-		// Handle validation error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array()[0].msg,
-			} satisfies ValidationErrorResponseBody);
-		}
-
 		const { credentials, holderDid, verifierDid } = request.body as CreatePresentationRequestBody;
 
 		try {
@@ -183,16 +174,10 @@ export class PresentationController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	public async verifyPresentation(request: Request, response: Response) {
-		const result = validationResult(request);
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array()[0].msg,
-			} satisfies UnsuccessfulVerifyCredentialResponseBody);
-		}
-
+		// Set fee payment options
 		let feePaymentOptions: IFeePaymentOptions[] = [];
-
 		// Make the base body for tracking
 		const trackInfo = {
 			name: OperationNameEnum.PRESENTATION_VERIFY,

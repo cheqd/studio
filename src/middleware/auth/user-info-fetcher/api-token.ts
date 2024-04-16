@@ -20,12 +20,18 @@ export class APITokenUserInfoFetcher extends UserInfoHelper implements IUserInfo
 	}
 
 	async fetch(request: Request, response: Response): Promise<Response | undefined> {
-		return this.verifyToken(this.token as string, response);
+		return this.verifyToken(response);
 	}
 
-	public async verifyToken(token: string, response: Response): Promise<Response | undefined> {
+	/**
+	 * Verifies the token and sets the user's scopes and customer entity in the global context.
+	 *
+	 * @param {Response} response - The response object to send the response.
+	 * @return {Promise<Response | undefined>} The response object with the appropriate status code and error message, or undefined if successful.
+	 */
+	public async verifyToken(response: Response): Promise<Response | undefined> {
 		try {
-			const apiEntity = await APIKeyService.instance.get(token);
+			const apiEntity = await APIKeyService.instance.get(this.token);
 			if (!apiEntity) {
 				return response.status(StatusCodes.UNAUTHORIZED).json({
 					error: `Unauthorized error: API Key not found.`

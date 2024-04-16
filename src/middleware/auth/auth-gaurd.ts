@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import type { AuthRuleRepository } from "./auth-rule-provider.js";
+import type { AuthRuleRepository } from "./routes/auth-rule-repository.js";
 import type { NextFunction, Request, Response } from "express";
 import type { ValidationErrorResponseBody } from "../../types/shared.js";
 import type { IUserInfoFetcher } from "./user-info-fetcher/base.js";
@@ -42,6 +42,7 @@ export class APIGuard {
             } satisfies ValidationErrorResponseBody);
         }
 
+        // There some requests where API guarding is not needed
         if (authRule.isAllowedUnauthorized()) {
             return next();
         }

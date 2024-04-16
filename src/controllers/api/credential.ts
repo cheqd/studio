@@ -2,11 +2,10 @@ import type { Request, Response } from 'express';
 import type { VerifiableCredential } from '@veramo/core';
 import { StatusCodes } from 'http-status-codes';
 
-import { check, validationResult, query } from '../validator/index.js';
+import { check, query } from '../validator/index.js';
 
 import { Credentials } from '../../services/api/credentials.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
-import type { ValidationErrorResponseBody } from '../../types/shared.js';
 import { CheqdW3CVerifiableCredential } from '../../services/w3c-credential.js';
 import { isCredentialIssuerDidDeactivated } from '../../services/helpers.js';
 import type {
@@ -35,6 +34,7 @@ import { Cheqd } from '@cheqd/did-provider-cheqd';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
 import { eventTracker } from '../../services/track/tracker.js';
 import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '../../types/track.js';
+import { validate } from '../validator/decorator.js';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -144,16 +144,8 @@ export class CredentialController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	public async issue(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies ValidationErrorResponseBody);
-		}
-
 		// Get request body
 		const requestBody = request.body as IssueCredentialRequestBody;
 
@@ -260,16 +252,8 @@ export class CredentialController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	public async verify(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies ValidationErrorResponseBody);
-		}
-
 		// Get params from request
 		const { credential, policies } = request.body as VerifyCredentialRequestBody;
 		const { verifyStatus, allowDeactivatedDid } = request.query as VerifyCredentialRequestQuery;
@@ -363,15 +347,8 @@ export class CredentialController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	public async revoke(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies UnsuccesfulRevokeCredentialResponseBody);
-		}
 		// Get publish flag
 		const { publish } = request.query as RevokeCredentialRequestQuery;
 		// Get symmetric key
@@ -463,16 +440,8 @@ export class CredentialController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	public async suspend(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies UnsuccesfulSuspendCredentialResponseBody);
-		}
-
 		// Get publish flag
 		const { publish } = request.query as SuspendCredentialRequestQuery;
 		// Get symmetric key
@@ -565,15 +534,8 @@ export class CredentialController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	public async reinstate(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies UnsuccesfulUnsuspendCredentialResponseBody);
-		}
 		// Get publish flag
 		const { publish } = request.query as UnsuspendCredentialRequestQuery;
 		// Get symmetric key

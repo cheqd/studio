@@ -12,6 +12,13 @@ export class SwaggerUserInfoFetcher extends UserInfoHelper implements IUserInfoF
 		this.oauthProvider = oauthProvider;
 	}
 	
+	/**
+	 * Tries to fetch user information based on the request and sets the appropriate response.
+	 *
+	 * @param {Request} request - The request object containing user information.
+	 * @param {Response} response - The response object to be set based on user authentication status.
+	 * @return {Promise<Response>} The response object with user information or an error message.
+	 */
 	async fetch(request: Request, response: Response) {
 		try {
 			// If the user is not authenticated - return error

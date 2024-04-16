@@ -22,6 +22,13 @@ export class IdTokenUserInfoFetcher extends UserInfoHelper implements IUserInfoF
 		return this.verifyJWTToken(request, response);
 	}
 
+	/**
+	 * Verifies the JWT token and sets the user's scopes and customer entity in the global context.
+	 *
+	 * @param {Request} request - The request object.
+	 * @param {Response} response - The response object.
+	 * @return {Promise<Response | undefined>} The response object with the appropriate status code and error message, or undefined if successful.
+	 */
 	public async verifyJWTToken(request: Request, response: Response) {
 		try {
 			const { payload } = await jwtVerify(
