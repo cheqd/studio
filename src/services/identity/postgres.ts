@@ -55,7 +55,7 @@ import type { AbstractIdentifierProvider } from '@veramo/did-manager';
 import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { toTPublicKeyEd25519 } from '../helpers.js';
-import type { APIServiceOptions } from '../../types/portal.js';
+import type { APIServiceOptions } from '../../types/admin.js';
 
 dotenv.config();
 

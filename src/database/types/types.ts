@@ -37,6 +37,7 @@ import { AlterOperationTable1695740346001 } from '../migrations/AlterOperationTa
 import { SubscriptionEntity } from '../entities/subscription.entity.js';
 import { CreateSubscritpionTable1695740346003 } from '../migrations/CreateSubscriptionTable.js';
 import { AlterAPIKeyTable1695740346004 } from '../migrations/AlterAPIKeyTable.js';
+import { AlterCustomerTableAddEmail1695740346005 } from '../migrations/AlterCustomerTableAddEmail.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -109,6 +110,8 @@ export class Postgres implements AbstractDatabase {
 				CreateSubscritpionTable1695740346003,
 				// Add revoked field to APIKey table
 				AlterAPIKeyTable1695740346004,
+				// Add email and description fields
+				AlterCustomerTableAddEmail1695740346005,
 			],
 			entities: [
 				...Entities,

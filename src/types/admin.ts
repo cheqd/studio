@@ -147,6 +147,26 @@ export type APIKeyGetRequestBody = APIKeyResponseBody;
 export type APIKeyGetResponseBody = APIKeyCreateResponseBody;
 export type APIKeyGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
+// Organisation
+export type AdminCustomerResponseBody = {
+	name: string;
+	email?: string;
+	description?: string;
+	cosmosAddress?: string;
+};
+
+export type AdminCustomerGetResponseBody = AdminCustomerResponseBody;
+export type AdminCustomerGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+
+export type AdminCustomerUpdateRequestBody = {
+	name?: string;
+	email?: string;
+	description?: string;
+};
+export type AdminCustomerUpdateResponseBody = AdminCustomerGetResponseBody;
+export type AdminCustomerUpdateUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+
+
 // Utils
 
 export type PaymentBehavior = Stripe.SubscriptionCreateParams.PaymentBehavior;

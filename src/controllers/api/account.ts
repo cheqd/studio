@@ -357,6 +357,7 @@ export class AccountController {
 				operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 				data: {
 					name: customer.name,
+					email: customer.email,
 					customerId: customer.customerId,
 				} satisfies ISubmitStripeCustomerCreateData,
 			} satisfies ISubmitOperation);
@@ -471,6 +472,7 @@ export class AccountController {
 					operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 					data: {
 						name: customer.name,
+						email: customer.email,
 						customerId: customer.customerId,
 					} satisfies ISubmitStripeCustomerCreateData,
 				} satisfies ISubmitOperation);

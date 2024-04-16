@@ -32,6 +32,7 @@ import { SubscriptionController } from './controllers/admin/subscriptions.js';
 import { PriceController } from './controllers/admin/prices.js';
 import { WebhookController } from './controllers/admin/webhook.js';
 import { APIKeyController } from './controllers/admin/api-key.js';
+import { OrganisationController } from './controllers/admin/organisation.js';
 
 let swaggerOptions = {};
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -278,6 +279,11 @@ class App {
 
 			// Webhook
 			app.post('/admin/webhook', new WebhookController().handleWebhook);
+
+			// Customer
+			app.post('/admin/organisation/update', OrganisationController.organisationUpdatevalidator, new OrganisationController().update);
+			app.get('/admin/organisation/get', new OrganisationController().get);
+
 		}
 
 		// 404 for all other requests

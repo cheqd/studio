@@ -10,7 +10,7 @@ import { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity.js';
 import { SecretBox } from '@veramo/kms-local';
 import { API_SECRET_KEY_LENGTH, API_KEY_PREFIX, API_KEY_EXPIRATION } from '../../types/constants.js';
-import type { APIServiceOptions } from '../../types/portal.js';
+import type { APIServiceOptions } from '../../types/admin.js';
 dotenv.config();
 
 export class APIKeyService {

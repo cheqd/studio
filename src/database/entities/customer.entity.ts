@@ -15,6 +15,18 @@ export class CustomerEntity {
 	name!: string;
 
 	@Column({
+		type: 'text',
+		nullable: true,
+	})
+	email?: string;
+
+	@Column({
+		type: 'text',
+		nullable: true,
+	})
+	description?: string;
+
+	@Column({
 		type: 'timestamptz',
 		nullable: false,
 	})
@@ -42,9 +54,11 @@ export class CustomerEntity {
 		this.updatedAt = new Date();
 	}
 
-	constructor(customerId: string, name: string) {
+	constructor(customerId: string, name: string, email?: string, description?: string) {
 		this.customerId = customerId;
 		this.name = name;
+		this.email = email;
+		this.description = description;
 	}
 
 	public isEqual(customer: CustomerEntity): boolean {

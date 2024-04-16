@@ -26,6 +26,9 @@
     },
     {
       "name": "API Key"
+    },
+    {
+      "name": "Organisation"
     }
   ],
   "paths": {
@@ -203,6 +206,97 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/APIKeyGetResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/organisation/update": {
+      "post": {
+        "summary": "Update an organisation",
+        "description": "Update an organisation",
+        "tags": [
+          "Organisation"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Cheqd"
+                  },
+                  "email": {
+                    "type": "string",
+                    "example": "cheqd@example.com",
+                    "format": "email"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "Cheqd organisation"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganisationResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/organisation/get": {
+      "get": {
+        "summary": "Get an organisation",
+        "description": "Get an organisation",
+        "tags": [
+          "Organisation"
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganisationResponseBody"
                 }
               }
             }
@@ -1032,6 +1126,37 @@
         "type": "object",
         "schema": {
           "ref": "#/components/schemas/APIKeyResponse"
+        }
+      },
+      "OrganisationResponseBody": {
+        "description": "The response body for an organisation",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the organisation",
+            "example": "Cheqd"
+          },
+          "email": {
+            "type": "string",
+            "description": "The email of the organisation",
+            "example": "cheqd@example.com",
+            "format": "email",
+            "nullable": true,
+            "default": null
+          },
+          "description": {
+            "type": "string",
+            "description": "The description of the organisation",
+            "example": "Cheqd organisation",
+            "nullable": true,
+            "default": null
+          },
+          "cosmosAddress": {
+            "type": "string",
+            "description": "The cosmos address of the organisation",
+            "example": "cheqd1hwzvac94udsk8x4mf6htt544lev4jltkwgxp7u"
+          }
         }
       },
       "NotFoundError": {

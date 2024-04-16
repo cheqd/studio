@@ -26,6 +26,9 @@
 		},
 		{
 			"name": "API Key"
+		},
+		{
+			"name": "Organisation"
 		}
 	]
 }
