@@ -6,6 +6,7 @@ import * as dotenv from 'dotenv';
 import { OperationEntity } from '../../database/entities/operation.entity.js';
 import { v4 } from 'uuid';
 import type { CoinEntity } from '../../database/entities/coin.entity.js';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 dotenv.config();
 
 export class OperationService {
@@ -22,7 +23,8 @@ export class OperationService {
 		operationName: string,
 		defaultFee: CoinEntity,
 		deprecated = false,
-		successful = true
+		successful = true,
+		customer: CustomerEntity
 	): Promise<OperationEntity> {
 		if (!category) {
 			throw new Error('Operation category is not specified');
@@ -37,7 +39,8 @@ export class OperationService {
 			operationName,
 			defaultFee,
 			deprecated,
-			successful
+			successful,
+			customer
 		);
 		const operation = (await this.operationRepository.insert(operationEntity)).identifiers[0];
 		if (!operation) throw new Error(`Cannot create a new operation`);
@@ -79,14 +82,14 @@ export class OperationService {
 	public async get(operationId: string) {
 		return await this.operationRepository.findOne({
 			where: { operationId },
-			relations: ['coin'],
+			relations: ['coin', 'customer'],
 		});
 	}
 
 	public async find(where: Record<string, unknown>) {
 		return await this.operationRepository.find({
 			where: where,
-			relations: ['coin'],
+			relations: ['coin', 'customer'],
 		});
 	}
 }
