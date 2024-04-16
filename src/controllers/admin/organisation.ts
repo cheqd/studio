@@ -4,7 +4,7 @@ import { check } from 'express-validator';
 import { validate } from '../validator/decorator.js';
 import { CustomerService } from '../../services/api/customer.js';
 import { StatusCodes } from 'http-status-codes';
-import type { AdminCustomerGetUnsuccessfulResponseBody, AdminCustomerUpdateResponseBody, AdminCustomerUpdateUnsuccessfulResponseBody } from '../../types/admin.js';
+import type { AdminOrganisationGetUnsuccessfulResponseBody, AdminOrganisationUpdateResponseBody, AdminOrganisationUpdateUnsuccessfulResponseBody } from '../../types/admin.js';
 import { PaymentAccountService } from '../../services/api/payment-account.js';
 
 dotenv.config();
@@ -77,7 +77,7 @@ export class OrganisationController {
 			if (!customer || !paymentAccount) {
 				response.status(StatusCodes.NOT_FOUND).json({
 					error: 'Customer for updating not found',
-				} satisfies AdminCustomerUpdateUnsuccessfulResponseBody);
+				} satisfies AdminOrganisationUpdateUnsuccessfulResponseBody);
 			}
 
 			return response.status(StatusCodes.OK).json({
@@ -85,11 +85,11 @@ export class OrganisationController {
 				email: customer.email,
 				description: customer.description,
 				cosmosAddress: paymentAccount[0].address as string
-			} satisfies AdminCustomerUpdateResponseBody);
+			} satisfies AdminOrganisationUpdateResponseBody);
 		} catch (error) {
 			return response.status(500).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			} satisfies AdminCustomerUpdateUnsuccessfulResponseBody);
+			} satisfies AdminOrganisationUpdateUnsuccessfulResponseBody);
 		}
 	}
 
@@ -125,7 +125,7 @@ export class OrganisationController {
 			if (!customer || !paymentAccount) {
 				response.status(StatusCodes.NOT_FOUND).json({
 					error: 'Customer for current user was not found or did not setup properly. Please contact administrator.',
-				} satisfies AdminCustomerGetUnsuccessfulResponseBody);
+				} satisfies AdminOrganisationGetUnsuccessfulResponseBody);
 			}
 			return response.status(StatusCodes.OK).json({
 				name: customer.name,
@@ -136,7 +136,7 @@ export class OrganisationController {
 		} catch (error) {
 			return response.status(500).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
-			} satisfies AdminCustomerGetUnsuccessfulResponseBody);
+			} satisfies AdminOrganisationGetUnsuccessfulResponseBody);
 		}
 	}
 }
