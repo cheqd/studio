@@ -316,30 +316,30 @@
  *       type: object
  *       schema:
  *         ref: '#/components/schemas/APIKeyResponse'
- *     OrganisationResponseBody:
- *       description: The response body for an organisation
+ *     OrganizationResponseBody:
+ *       description: The response body for an organization
  *       type: object
  *       properties:
  *         name:
  *           type: string
- *           description: The name of the organisation
+ *           description: The name of the organization
  *           example: Cheqd
  *         email:
  *           type: string
- *           description: The email of the organisation
+ *           description: The email of the organization
  *           example: cheqd@example.com
  *           format: email
  *           nullable: true
  *           default: null
  *         description:
  *           type: string
- *           description: The description of the organisation
- *           example: Cheqd organisation
+ *           description: The description of the organization
+ *           example: Cheqd organization
  *           nullable: true
  *           default: null
  *         cosmosAddress:
  *           type: string
- *           description: The cosmos address of the organisation
+ *           description: The cosmos address of the organization
  *           example: cheqd1hwzvac94udsk8x4mf6htt544lev4jltkwgxp7u
  *     NotFoundError:
  *       description: The requested resource could not be found but may be available in the future. Subsequent requests by the client are permissible.

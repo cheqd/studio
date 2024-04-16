@@ -147,24 +147,24 @@ export type APIKeyGetRequestBody = APIKeyResponseBody;
 export type APIKeyGetResponseBody = APIKeyCreateResponseBody;
 export type APIKeyGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
-// Organisation
-export type AdminCustomerResponseBody = {
+// Organization
+export type AdminOrganizationResponseBody = {
 	name: string;
 	email?: string;
 	description?: string;
 	cosmosAddress?: string;
 };
 
-export type AdminCustomerGetResponseBody = AdminCustomerResponseBody;
-export type AdminCustomerGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+export type AdminOrganizationGetResponseBody = AdminOrganizationResponseBody;
+export type AdminOrganizationGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
-export type AdminCustomerUpdateRequestBody = {
+export type AdminOrganizationUpdateRequestBody = {
 	name?: string;
 	email?: string;
 	description?: string;
 };
-export type AdminCustomerUpdateResponseBody = AdminCustomerGetResponseBody;
-export type AdminCustomerUpdateUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+export type AdminOrganizationUpdateResponseBody = AdminOrganizationGetResponseBody;
+export type AdminOrganizationUpdateUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
 
 // Utils

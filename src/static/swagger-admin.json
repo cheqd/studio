@@ -28,7 +28,7 @@
       "name": "API Key"
     },
     {
-      "name": "Organisation"
+      "name": "Organization"
     }
   ],
   "paths": {
@@ -225,12 +225,12 @@
         }
       }
     },
-    "/admin/organisation/update": {
+    "/admin/organization/update": {
       "post": {
-        "summary": "Update an organisation",
-        "description": "Update an organisation",
+        "summary": "Update an organization",
+        "description": "Update an organization",
         "tags": [
-          "Organisation"
+          "Organization"
         ],
         "requestBody": {
           "required": true,
@@ -250,7 +250,7 @@
                   },
                   "description": {
                     "type": "string",
-                    "example": "Cheqd organisation"
+                    "example": "Cheqd organization"
                   }
                 }
               }
@@ -263,7 +263,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganisationResponseBody"
+                  "$ref": "#/components/schemas/OrganizationResponseBody"
                 }
               }
             }
@@ -283,12 +283,12 @@
         }
       }
     },
-    "/admin/organisation/get": {
+    "/admin/organization/get": {
       "get": {
-        "summary": "Get an organisation",
-        "description": "Get an organisation",
+        "summary": "Get an organization",
+        "description": "Get an organization",
         "tags": [
-          "Organisation"
+          "Organization"
         ],
         "responses": {
           "200": {
@@ -296,7 +296,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OrganisationResponseBody"
+                  "$ref": "#/components/schemas/OrganizationResponseBody"
                 }
               }
             }
@@ -1128,18 +1128,18 @@
           "ref": "#/components/schemas/APIKeyResponse"
         }
       },
-      "OrganisationResponseBody": {
-        "description": "The response body for an organisation",
+      "OrganizationResponseBody": {
+        "description": "The response body for an organization",
         "type": "object",
         "properties": {
           "name": {
             "type": "string",
-            "description": "The name of the organisation",
+            "description": "The name of the organization",
             "example": "Cheqd"
           },
           "email": {
             "type": "string",
-            "description": "The email of the organisation",
+            "description": "The email of the organization",
             "example": "cheqd@example.com",
             "format": "email",
             "nullable": true,
@@ -1147,14 +1147,14 @@
           },
           "description": {
             "type": "string",
-            "description": "The description of the organisation",
-            "example": "Cheqd organisation",
+            "description": "The description of the organization",
+            "example": "Cheqd organization",
             "nullable": true,
             "default": null
           },
           "cosmosAddress": {
             "type": "string",
-            "description": "The cosmos address of the organisation",
+            "description": "The cosmos address of the organization",
             "example": "cheqd1hwzvac94udsk8x4mf6htt544lev4jltkwgxp7u"
           }
         }
