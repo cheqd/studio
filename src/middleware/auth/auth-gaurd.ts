@@ -58,7 +58,7 @@ export class APIGuard {
         // Checks if the list of scopes from user enough to make an action
         if (!authRule.areValidScopes(response.locals.scopes)) {
             return response.status(StatusCodes.FORBIDDEN).send({
-                error: `Forbidden. Your account is not authorized to carry out this action.`
+                error: `Unauthorized error: Your account is not authorized to carry out this action.`
             } satisfies ValidationErrorResponseBody);
         }
 

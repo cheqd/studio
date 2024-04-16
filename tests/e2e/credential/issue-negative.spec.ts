@@ -7,6 +7,7 @@ import {
 import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
+import { UnsuccessfulResponseBody } from '@cheqd/credential-service/src/types/shared.js';
 
 test.use({ storageState: STORAGE_STATE_AUTHENTICATED });
 
@@ -19,5 +20,6 @@ test('[Negative] It cannot issue credential in mainnet network for user with tes
 	});
 	expect(response).not.toBeOK();
 	expect(response.status()).toBe(StatusCodes.FORBIDDEN);
-	expect(await response.text()).toEqual(expect.stringContaining(DEFAULT_DOES_NOT_HAVE_PERMISSIONS));
+	const { error} = (await response.json()) as UnsuccessfulResponseBody;
+	expect(error).toEqual(expect.stringContaining(DEFAULT_DOES_NOT_HAVE_PERMISSIONS));
 });
