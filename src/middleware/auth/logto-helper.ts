@@ -55,7 +55,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 						'Failed to get M2M token, Attempt ' + i + ' of ' + this.m2mGetTokenAttempts,
 						'M2M token issuing'
 					),
-					severity: 'info',
+					severity: 'error',
 				});
 			}
 			throw new Error('Failed to get M2M token after ' + this.m2mGetTokenAttempts + ' attempts');

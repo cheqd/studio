@@ -46,7 +46,7 @@ export class SubscriptionSubmitter implements IObserver {
 				if (customers.length !== 1) {
 					await this.notify({
 						message: EventTracker.compileBasicNotification(
-							`It should be only 1 Stripe account associated with CaaS customer. Stripe accountId: ${data.paymentProviderId}.`,
+							`Only one Stripe account should be associated with CaaS customer. Stripe accountId: ${data.paymentProviderId}.`,
 							operation.operation
 						),
 						severity: 'error',
