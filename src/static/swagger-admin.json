@@ -1,1049 +1,1011 @@
 {
-  "openapi": "3.0.0",
-  "info": {
-    "title": "Credential Service admin API for cheqd network",
-    "version": "2.0.0",
-    "description": "Admin API which handles users subscriptions and payments",
-    "contact": {
-      "name": "Cheqd Foundation Limited",
-      "url": "https://github.com/cheqd/credential-service",
-      "email": "support-github@cheqd.io"
-    },
-    "license": {
-      "name": "Apache 2.0",
-      "url": "https://github.com/cheqd/credential-service/blob/main/LICENSE"
-    }
-  },
-  "tags": [
-    {
-      "name": "Product"
-    },
-    {
-      "name": "Price"
-    },
-    {
-      "name": "Subscription"
-    },
-    {
-      "name": "API Key"
-    }
-  ],
-  "paths": {
-    "/admin/api-key/create": {
-      "post": {
-        "summary": "Create a new API key",
-        "description": "Create a new API key",
-        "tags": [
-          "API Key"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/APIKeyCreateRequestBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "A new API key has been created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIKeyCreateResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/APIKeyCreateUnsuccessfulResponseBody"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/api-key/update": {
-      "post": {
-        "summary": "Update an existing API key",
-        "description": "Update an existing API key",
-        "tags": [
-          "API Key"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/APIKeyUpdateRequestBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The API key has been updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIKeyUpdateResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/APIKeyUpdateUnsuccessfulResponseBody"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/api-key/revoke": {
-      "delete": {
-        "summary": "Revoke an existing API key",
-        "description": "Revoke an existing API key",
-        "tags": [
-          "API Key"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/APIKeyRevokeRequestBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The API key has been revoked",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIKeyRevokeResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/APIKeyRevokeUnsuccessfulResponseBody"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/api-key/list": {
-      "get": {
-        "summary": "List all API keys",
-        "description": "List all API keys",
-        "tags": [
-          "API Key"
-        ],
-        "responses": {
-          "200": {
-            "description": "A list of API keys",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIKeyListResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/api-key/get": {
-      "get": {
-        "summary": "Get an API key",
-        "description": "Get an API key. If the API key is not provided, the latest not revoked API key it returns.",
-        "tags": [
-          "API Key"
-        ],
-        "parameters": [
-          {
-            "name": "apiKey",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The API key",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIKeyGetResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/price/list": {
-      "get": {
-        "summary": "Get a list of prices",
-        "description": "Get a list of prices",
-        "tags": [
-          "Price"
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "productId",
-            "schema": {
-              "type": "string",
-              "description": "The product id. If passed - returns filtered by this product list of prices.",
-              "required": false
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A list of prices",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PriceListResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/product/list": {
-      "get": {
-        "summary": "Get a list of products",
-        "description": "Get a list of products which are on a Stripe side",
-        "tags": [
-          "Product"
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "prices",
-            "schema": {
-              "type": "boolean",
-              "description": "If setup to true - returns the list of products with prices inside. Default - true",
-              "required": false
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A list of products",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductListResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/product/get/{productId}": {
-      "get": {
-        "summary": "Get a product",
-        "description": "Get a product by id",
-        "tags": [
-          "Product"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "productId",
-            "schema": {
-              "type": "string",
-              "description": "The product id which identifies the product in Stripe"
-            },
-            "required": true
-          },
-          {
-            "in": "query",
-            "name": "prices",
-            "schema": {
-              "type": "boolean",
-              "description": "If setup to true - returns the product with prices inside. Default - true",
-              "required": false
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A product",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductGetResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/subscription/create": {
-      "post": {
-        "summary": "Create a subscription",
-        "description": "Creates a new subscription for an existing customer",
-        "tags": [
-          "Subscription"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubscriptionCreateRequestBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubscriptionCreateResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/subscription/update": {
-      "post": {
-        "summary": "Update a subscription",
-        "description": "Updates an existing subscription",
-        "tags": [
-          "Subscription"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubscriptionUpdateRequestBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubscriptionUpdateResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/subscription/list": {
-      "get": {
-        "summary": "Get a list of subscriptions",
-        "description": "Get a list of subscriptions",
-        "tags": [
-          "Subscription"
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "paymentProviderId",
-            "schema": {
-              "type": "string",
-              "description": "The customer id. If passed - returns filtered by this customer list of subscriptions."
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A list of subscriptions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubscriptionListResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/subscription/get": {
-      "get": {
-        "summary": "Get a subscription",
-        "description": "Get a subscription",
-        "tags": [
-          "Subscription"
-        ],
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubscriptionGetResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/subscription/cancel": {
-      "post": {
-        "summary": "Cancel a subscription",
-        "description": "Cancels an existing subscription",
-        "tags": [
-          "Subscription"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubscriptionCancelRequestBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubscriptionCancelResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/subscription/resume": {},
-    "post": {
-      "summary": "Resume a subscription",
-      "description": "Resumes an existing subscription",
-      "tags": [
-        "Subscription"
-      ],
-      "requestBody": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SubscriptionResumeRequestBody"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "The request was successful.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubscriptionResumeResponseBody"
-              }
-            }
-          }
-        },
-        "400": {
-          "$ref": "#/components/schemas/InvalidRequest"
-        },
-        "401": {
-          "$ref": "#/components/schemas/UnauthorizedError"
-        },
-        "404": {
-          "$ref": "#/components/schemas/NotFoundError"
-        },
-        "500": {
-          "$ref": "#/components/schemas/InternalError"
-        }
-      }
-    }
-  },
-  "components": {
-    "schemas": {
-      "PriceListResponseBody": {
-        "description": "A list of active prcies from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/prices/list)",
-        "type": "object",
-        "properties": {
-          "prices": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "description": "A price object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/prices/object)"
-            }
-          }
-        }
-      },
-      "ProductListResponseBody": {
-        "type": "object",
-        "properties": {
-          "products": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "description": "A product object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/products/object)"
-            }
-          }
-        }
-      },
-      "ProductGetResponseBody": {
-        "description": "A product with or without prices inside. For more information see the [Stripe API documentation](https://docs.stripe.com/api/products/retrieve)",
-        "type": "object"
-      },
-      "InvalidRequest": {
-        "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "example": "InvalidRequest"
-          }
-        }
-      },
-      "InternalError": {
-        "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "example": "Internal Error"
-          }
-        }
-      },
-      "UnauthorizedError": {
-        "description": "Access token is missing or invalid",
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "example": "Unauthorized Error"
-          }
-        }
-      },
-      "SubscriptionCreateRequestBody": {
-        "description": "The request body for creating a subscription",
-        "type": "object",
-        "properties": {
-          "price": {
-            "type": "string",
-            "description": "The price id",
-            "example": "price_1234567890"
-          },
-          "successURL": {
-            "type": "string",
-            "description": "The URL to redirect to after the customer sucessfully completes the checkout",
-            "example": "https://example.com/success"
-          },
-          "cancelURL": {
-            "type": "string",
-            "description": "The URL to redirect to after the customer cancels the checkout",
-            "example": "https://example.com/cancel"
-          },
-          "quantity": {
-            "type": "number",
-            "description": "The quantity of the product",
-            "example": 1
-          },
-          "trialPeriodDays": {
-            "type": "number",
-            "description": "The number of days the customer has to pay for the product",
-            "example": 7
-          },
-          "idempotencyKey": {
-            "type": "string",
-            "description": "The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.",
-            "example": "abcdefghijklmnopqrstuvwxyz"
-          }
-        }
-      },
-      "SubscriptionCreateResponseBody": {
-        "description": "The response body for creating a subscription",
-        "type": "object",
-        "properties": {
-          "subscription": {
-            "type": "object",
-            "description": "An object with link to checkout session. For more information see the [Stripe API documentation](https://docs.stripe.com/api/checkout/sessions/object)",
-            "properties": {
-              "sessionURL": {
-                "type": "string",
-                "description": "URL which user should follow to manage subscription"
-              }
-            }
-          }
-        }
-      },
-      "SubscriptionUpdateRequestBody": {
-        "description": "The request body for updating a subscription",
-        "type": "object",
-        "properties": {
-          "returnURL": {
-            "type": "string",
-            "description": "URL which is used to redirect to the page with ability to update the subscription"
-          }
-        }
-      },
-      "SubscriptionUpdateResponseBody": {
-        "description": "The response body for updating a subscription",
-        "type": "object",
-        "properties": {
-          "subscription": {
-            "type": "object",
-            "description": "Object with redirect url inside",
-            "properties": {
-              "sessionURL": {
-                "type": "string",
-                "description": "URL with session URL rediect to"
-              }
-            }
-          }
-        }
-      },
-      "SubscriptionGetRequestBody": {
-        "description": "The request body for getting a subscription",
-        "type": "object",
-        "properties": {
-          "subscriptionId": {
-            "type": "string",
-            "description": "The subscription id",
-            "example": "sub_1234567890"
-          }
-        }
-      },
-      "SubscriptionGetResponseBody": {
-        "description": "The response body for getting a subscription",
-        "type": "object",
-        "properties": {
-          "subscription": {
-            "type": "object",
-            "description": "A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object)"
-          }
-        }
-      },
-      "SubscriptionListRequestBody": {
-        "description": "The request body for listing subscriptions",
-        "type": "object",
-        "properties": {
-          "customerId": {
-            "type": "string",
-            "description": "The Stripe customer id",
-            "example": "cus_1234567890"
-          }
-        }
-      },
-      "SubscriptionListResponseBody": {
-        "description": "The response body for listing subscriptions",
-        "type": "object",
-        "properties": {
-          "subscriptions": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "description": "A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object]"
-            }
-          }
-        }
-      },
-      "SubscriptionCancelRequestBody": {
-        "description": "The request body for canceling a subscription",
-        "type": "object",
-        "properties": {
-          "subscriptionId": {
-            "type": "string",
-            "description": "The subscription id",
-            "example": "sub_1234567890"
-          }
-        }
-      },
-      "SubscriptionCancelResponseBody": {
-        "description": "The response body for canceling a subscription",
-        "type": "object",
-        "properties": {
-          "subscription": {
-            "type": "object",
-            "description": "A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object]"
-          },
-          "idempotencyKey": {
-            "type": "string",
-            "description": "The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.",
-            "example": "abcdefghijklmnopqrstuvwxyz"
-          }
-        }
-      },
-      "SubscriptionResumeRequestBody": {
-        "description": "The request body for resuming a subscription",
-        "type": "object",
-        "properties": {
-          "subscriptionId": {
-            "type": "string",
-            "description": "The subscription id",
-            "example": "sub_1234567890"
-          },
-          "idempotencyKey": {
-            "type": "string",
-            "description": "The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.",
-            "example": "abcdefghijklmnopqrstuvwxyz"
-          }
-        }
-      },
-      "SubscriptionResumeResponseBody": {
-        "description": "The response body for resuming a subscription",
-        "type": "object",
-        "properties": {
-          "subscription": {
-            "type": "object",
-            "description": "A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object]"
-          }
-        }
-      },
-      "APIKeyResponse": {
-        "description": "The general view for API key in response",
-        "type": "object",
-        "properties": {
-          "apiKey": {
-            "type": "string",
-            "description": "The API key",
-            "example": "abcdefghijklmnopqrstuvwxyz"
-          },
-          "createdAt": {
-            "type": "string",
-            "description": "The creation date of the API key",
-            "example": "2000-10-31T01:23:45Z",
-            "format": "date-time"
-          },
-          "name": {
-            "type": "string",
-            "description": "The name of the API key",
-            "example": "My API Key"
-          },
-          "expiresAt": {
-            "type": "string",
-            "description": "The expiration date of the API key",
-            "example": "2000-10-31T01:23:45Z",
-            "format": "date-time"
-          },
-          "revoked": {
-            "type": "boolean",
-            "description": "The status of the API key",
-            "example": false
-          }
-        }
-      },
-      "APIKeyCreateRequestBody": {
-        "description": "The request body for creating an API key",
-        "type": "object",
-        "properties": {
-          "expiresAt": {
-            "type": "string",
-            "description": "The expiration date of the API key",
-            "example": "2000-10-31T01:23:45Z",
-            "format": "date-time"
-          },
-          "name": {
-            "type": "string",
-            "description": "The name of the API key",
-            "example": "My API Key"
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
-      "APIKeyCreateResponseBody": {
-        "description": "The response body for creating an API key",
-        "type": "object",
-        "schema": {
-          "ref": "#/components/schemas/APIKeyResponse"
-        }
-      },
-      "APIKeyCreateUnsuccessfulResponseBody": {
-        "description": "The response body for an unsuccessful API key creation",
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "example": "API key creation unsuccessful"
-          }
-        }
-      },
-      "APIKeyUpdateRequestBody": {
-        "description": "The request body for updating an API key",
-        "type": "object",
-        "properties": {
-          "apiKey": {
-            "type": "string",
-            "description": "The API key",
-            "example": "abcdefghijklmnopqrstuvwxyz"
-          },
-          "name": {
-            "type": "string",
-            "description": "The name of the API key",
-            "example": "My API Key"
-          },
-          "expiresAt": {
-            "type": "string",
-            "description": "The expiration date of the API key",
-            "example": "2000-10-31T01:23:45Z",
-            "format": "date-time"
-          },
-          "revoked": {
-            "type": "boolean",
-            "description": "The status of the API key",
-            "example": false,
-            "default": false
-          }
-        },
-        "required": [
-          "apiKey"
-        ]
-      },
-      "APIKeyUpdateResponseBody": {
-        "description": "The response body for an unsuccessful API key update",
-        "type": "object",
-        "schema": {
-          "ref": "#/components/schemas/APIKeyResponse"
-        }
-      },
-      "APIKeyUpdateUnsuccessfulResponseBody": {
-        "description": "The response body for an unsuccessful API key update",
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "example": "API key update unsuccessful"
-          }
-        }
-      },
-      "APIKeyRevokeRequestBody": {
-        "description": "The request body for revoking an API key",
-        "type": "object",
-        "properties": {
-          "apiKey": {
-            "type": "string",
-            "description": "The API key",
-            "example": "abcdefghijklmnopqrstuvwxyz"
-          }
-        },
-        "required": [
-          "apiKey"
-        ]
-      },
-      "APIKeyRevokeResponseBody": {
-        "description": "The response body for revoking an API key",
-        "type": "object",
-        "properties": {
-          "apiKey": {
-            "type": "string",
-            "description": "The API key",
-            "example": "abcdefghijklmnopqrstuvwxyz"
-          },
-          "revoked": {
-            "type": "boolean",
-            "description": "The status of the API key",
-            "example": true
-          }
-        },
-        "required": [
-          "apiKey"
-        ]
-      },
-      "APIKeyRevokeUnsuccessfulResponseBody": {
-        "description": "The response body for an unsuccessful API key revocation",
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "example": "API key revocation unsuccessful"
-          }
-        }
-      },
-      "APIKeyListResponseBody": {
-        "description": "The response body for listing API keys",
-        "type": "object",
-        "properties": {
-          "apiKeys": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "schema": {
-                "ref": "#/components/schemas/APIKeyResponse"
-              }
-            }
-          }
-        }
-      },
-      "APIKeyGetRequestBody": {
-        "description": "The request body for getting an API key",
-        "type": "object",
-        "properties": {
-          "apiKey": {
-            "type": "string",
-            "description": "The API key",
-            "example": "abcdefghijklmnopqrstuvwxyz"
-          }
-        },
-        "required": [
-          "apiKey"
-        ]
-      },
-      "APIKeyGetResponseBody": {
-        "description": "The response body for getting an API key",
-        "type": "object",
-        "schema": {
-          "ref": "#/components/schemas/APIKeyResponse"
-        }
-      },
-      "NotFoundError": {
-        "description": "The requested resource could not be found but may be available in the future. Subsequent requests by the client are permissible.",
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "example": "Not Found Error"
-          }
-        }
-      }
-    }
-  }
+	"openapi": "3.0.0",
+	"info": {
+		"title": "Credential Service admin API for cheqd network",
+		"version": "2.0.0",
+		"description": "Admin API which handles users subscriptions and payments",
+		"contact": {
+			"name": "Cheqd Foundation Limited",
+			"url": "https://github.com/cheqd/credential-service",
+			"email": "support-github@cheqd.io"
+		},
+		"license": {
+			"name": "Apache 2.0",
+			"url": "https://github.com/cheqd/credential-service/blob/main/LICENSE"
+		}
+	},
+	"tags": [
+		{
+			"name": "Product"
+		},
+		{
+			"name": "Price"
+		},
+		{
+			"name": "Subscription"
+		},
+		{
+			"name": "API Key"
+		}
+	],
+	"paths": {
+		"/admin/api-key/create": {
+			"post": {
+				"summary": "Create a new API key",
+				"description": "Create a new API key",
+				"tags": ["API Key"],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/APIKeyCreateRequestBody"
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "A new API key has been created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/APIKeyCreateResponseBody"
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/schemas/APIKeyCreateUnsuccessfulResponseBody"
+					},
+					"401": {
+						"$ref": "#/components/schemas/UnauthorizedError"
+					},
+					"500": {
+						"$ref": "#/components/schemas/InternalError"
+					}
+				}
+			}
+		},
+		"/admin/api-key/update": {
+			"post": {
+				"summary": "Update an existing API key",
+				"description": "Update an existing API key",
+				"tags": ["API Key"],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/APIKeyUpdateRequestBody"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "The API key has been updated",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/APIKeyUpdateResponseBody"
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/schemas/APIKeyUpdateUnsuccessfulResponseBody"
+					},
+					"401": {
+						"$ref": "#/components/schemas/UnauthorizedError"
+					},
+					"500": {
+						"$ref": "#/components/schemas/InternalError"
+					}
+				}
+			}
+		},
+		"/admin/api-key/revoke": {
+			"delete": {
+				"summary": "Revoke an existing API key",
+				"description": "Revoke an existing API key",
+				"tags": ["API Key"],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/APIKeyRevokeRequestBody"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "The API key has been revoked",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/APIKeyRevokeResponseBody"
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/schemas/APIKeyRevokeUnsuccessfulResponseBody"
+					},
+					"401": {
+						"$ref": "#/components/schemas/UnauthorizedError"
+					},
+					"500": {
+						"$ref": "#/components/schemas/InternalError"
+					}
+				}
+			}
+		},
+		"/admin/api-key/list": {
+			"get": {
+				"summary": "List all API keys",
+				"description": "List all API keys",
+				"tags": ["API Key"],
+				"responses": {
+					"200": {
+						"description": "A list of API keys",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/APIKeyListResponseBody"
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/schemas/InvalidRequest"
+					},
+					"401": {
+						"$ref": "#/components/schemas/UnauthorizedError"
+					},
+					"404": {
+						"$ref": "#/components/schemas/NotFoundError"
+					},
+					"500": {
+						"$ref": "#/components/schemas/InternalError"
+					}
+				}
+			}
+		},
+		"/admin/api-key/get": {
+			"get": {
+				"summary": "Get an API key",
+				"description": "Get an API key. If the API key is not provided, the latest not revoked API key it returns.",
+				"tags": ["API Key"],
+				"parameters": [
+					{
+						"name": "apiKey",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "The API key",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/APIKeyGetResponseBody"
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/schemas/InvalidRequest"
+					},
+					"401": {
+						"$ref": "#/components/schemas/UnauthorizedError"
+					},
+					"404": {
+						"$ref": "#/components/schemas/NotFoundError"
+					},
+					"500": {
+						"$ref": "#/components/schemas/InternalError"
+					}
+				}
+			}
+		},
+		"/admin/price/list": {
+			"get": {
+				"summary": "Get a list of prices",
+				"description": "Get a list of prices",
+				"tags": ["Price"],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "productId",
+						"schema": {
+							"type": "string",
+							"description": "The product id. If passed - returns filtered by this product list of prices.",
+							"required": false
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "A list of prices",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PriceListResponseBody"
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/schemas/InvalidRequest"
+					},
+					"401": {
+						"$ref": "#/components/schemas/UnauthorizedError"
+					},
+					"404": {
+						"$ref": "#/components/schemas/NotFoundError"
+					},
+					"500": {
+						"$ref": "#/components/schemas/InternalError"
+					}
+				}
+			}
+		},
+		"/admin/product/list": {
+			"get": {
+				"summary": "Get a list of products",
+				"description": "Get a list of products which are on a Stripe side",
+				"tags": ["Product"],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "prices",
+						"schema": {
+							"type": "boolean",
+							"description": "If setup to true - returns the list of products with prices inside. Default - true",
+							"required": false
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "A list of products",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ProductListResponseBody"
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/schemas/InvalidRequest"
+					},
+					"401": {
+						"$ref": "#/components/schemas/UnauthorizedError"
+					},
+					"404": {
+						"$ref": "#/components/schemas/NotFoundError"
+					},
+					"500": {
+						"$ref": "#/components/schemas/InternalError"
+					}
+				}
+			}
+		},
+		"/admin/product/get/{productId}": {
+			"get": {
+				"summary": "Get a product",
+				"description": "Get a product by id",
+				"tags": ["Product"],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "productId",
+						"schema": {
+							"type": "string",
+							"description": "The product id which identifies the product in Stripe"
+						},
+						"required": true
+					},
+					{
+						"in": "query",
+						"name": "prices",
+						"schema": {
+							"type": "boolean",
+							"description": "If setup to true - returns the product with prices inside. Default - true",
+							"required": false
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "A product",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ProductGetResponseBody"
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/schemas/InvalidRequest"
+					},
+					"401": {
+						"$ref": "#/components/schemas/UnauthorizedError"
+					},
+					"404": {
+						"$ref": "#/components/schemas/NotFoundError"
+					},
+					"500": {
+						"$ref": "#/components/schemas/InternalError"
+					}
+				}
+			}
+		},
+		"/admin/subscription/create": {
+			"post": {
+				"summary": "Create a subscription",
+				"description": "Creates a new subscription for an existing customer",
+				"tags": ["Subscription"],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SubscriptionCreateRequestBody"
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "The request was successful.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SubscriptionCreateResponseBody"
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/schemas/InvalidRequest"
+					},
+					"401": {
+						"$ref": "#/components/schemas/UnauthorizedError"
+					},
+					"500": {
+						"$ref": "#/components/schemas/InternalError"
+					}
+				}
+			}
+		},
+		"/admin/subscription/update": {
+			"post": {
+				"summary": "Update a subscription",
+				"description": "Updates an existing subscription",
+				"tags": ["Subscription"],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SubscriptionUpdateRequestBody"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "The request was successful.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SubscriptionUpdateResponseBody"
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/schemas/InvalidRequest"
+					},
+					"401": {
+						"$ref": "#/components/schemas/UnauthorizedError"
+					},
+					"500": {
+						"$ref": "#/components/schemas/InternalError"
+					}
+				}
+			}
+		},
+		"/admin/subscription/list": {
+			"get": {
+				"summary": "Get a list of subscriptions",
+				"description": "Get a list of subscriptions",
+				"tags": ["Subscription"],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "paymentProviderId",
+						"schema": {
+							"type": "string",
+							"description": "The customer id. If passed - returns filtered by this customer list of subscriptions."
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "A list of subscriptions",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SubscriptionListResponseBody"
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/schemas/InvalidRequest"
+					},
+					"401": {
+						"$ref": "#/components/schemas/UnauthorizedError"
+					},
+					"404": {
+						"$ref": "#/components/schemas/NotFoundError"
+					},
+					"500": {
+						"$ref": "#/components/schemas/InternalError"
+					}
+				}
+			}
+		},
+		"/admin/subscription/get": {
+			"get": {
+				"summary": "Get a subscription",
+				"description": "Get a subscription",
+				"tags": ["Subscription"],
+				"responses": {
+					"200": {
+						"description": "The request was successful.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SubscriptionGetResponseBody"
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/schemas/InvalidRequest"
+					},
+					"401": {
+						"$ref": "#/components/schemas/UnauthorizedError"
+					},
+					"404": {
+						"$ref": "#/components/schemas/NotFoundError"
+					},
+					"500": {
+						"$ref": "#/components/schemas/InternalError"
+					}
+				}
+			}
+		},
+		"/admin/subscription/cancel": {
+			"post": {
+				"summary": "Cancel a subscription",
+				"description": "Cancels an existing subscription",
+				"tags": ["Subscription"],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SubscriptionCancelRequestBody"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "The request was successful.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SubscriptionCancelResponseBody"
+								}
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/schemas/InvalidRequest"
+					},
+					"401": {
+						"$ref": "#/components/schemas/UnauthorizedError"
+					},
+					"404": {
+						"$ref": "#/components/schemas/NotFoundError"
+					},
+					"500": {
+						"$ref": "#/components/schemas/InternalError"
+					}
+				}
+			}
+		},
+		"/admin/subscription/resume": {},
+		"post": {
+			"summary": "Resume a subscription",
+			"description": "Resumes an existing subscription",
+			"tags": ["Subscription"],
+			"requestBody": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/SubscriptionResumeRequestBody"
+						}
+					}
+				}
+			},
+			"responses": {
+				"200": {
+					"description": "The request was successful.",
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SubscriptionResumeResponseBody"
+							}
+						}
+					}
+				},
+				"400": {
+					"$ref": "#/components/schemas/InvalidRequest"
+				},
+				"401": {
+					"$ref": "#/components/schemas/UnauthorizedError"
+				},
+				"404": {
+					"$ref": "#/components/schemas/NotFoundError"
+				},
+				"500": {
+					"$ref": "#/components/schemas/InternalError"
+				}
+			}
+		}
+	},
+	"components": {
+		"schemas": {
+			"PriceListResponseBody": {
+				"description": "A list of active prcies from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/prices/list)",
+				"type": "object",
+				"properties": {
+					"prices": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"description": "A price object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/prices/object)"
+						}
+					}
+				}
+			},
+			"ProductListResponseBody": {
+				"type": "object",
+				"properties": {
+					"products": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"description": "A product object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/products/object)"
+						}
+					}
+				}
+			},
+			"ProductGetResponseBody": {
+				"description": "A product with or without prices inside. For more information see the [Stripe API documentation](https://docs.stripe.com/api/products/retrieve)",
+				"type": "object"
+			},
+			"InvalidRequest": {
+				"description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+				"type": "object",
+				"properties": {
+					"error": {
+						"type": "string",
+						"example": "InvalidRequest"
+					}
+				}
+			},
+			"InternalError": {
+				"description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+				"type": "object",
+				"properties": {
+					"error": {
+						"type": "string",
+						"example": "Internal Error"
+					}
+				}
+			},
+			"UnauthorizedError": {
+				"description": "Access token is missing or invalid",
+				"type": "object",
+				"properties": {
+					"error": {
+						"type": "string",
+						"example": "Unauthorized Error"
+					}
+				}
+			},
+			"SubscriptionCreateRequestBody": {
+				"description": "The request body for creating a subscription",
+				"type": "object",
+				"properties": {
+					"price": {
+						"type": "string",
+						"description": "The price id",
+						"example": "price_1234567890"
+					},
+					"successURL": {
+						"type": "string",
+						"description": "The URL to redirect to after the customer sucessfully completes the checkout",
+						"example": "https://example.com/success"
+					},
+					"cancelURL": {
+						"type": "string",
+						"description": "The URL to redirect to after the customer cancels the checkout",
+						"example": "https://example.com/cancel"
+					},
+					"quantity": {
+						"type": "number",
+						"description": "The quantity of the product",
+						"example": 1
+					},
+					"trialPeriodDays": {
+						"type": "number",
+						"description": "The number of days the customer has to pay for the product",
+						"example": 7
+					},
+					"idempotencyKey": {
+						"type": "string",
+						"description": "The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.",
+						"example": "abcdefghijklmnopqrstuvwxyz"
+					}
+				}
+			},
+			"SubscriptionCreateResponseBody": {
+				"description": "The response body for creating a subscription",
+				"type": "object",
+				"properties": {
+					"subscription": {
+						"type": "object",
+						"description": "An object with link to checkout session. For more information see the [Stripe API documentation](https://docs.stripe.com/api/checkout/sessions/object)",
+						"properties": {
+							"sessionURL": {
+								"type": "string",
+								"description": "URL which user should follow to manage subscription"
+							}
+						}
+					}
+				}
+			},
+			"SubscriptionUpdateRequestBody": {
+				"description": "The request body for updating a subscription",
+				"type": "object",
+				"properties": {
+					"returnURL": {
+						"type": "string",
+						"description": "URL which is used to redirect to the page with ability to update the subscription"
+					}
+				}
+			},
+			"SubscriptionUpdateResponseBody": {
+				"description": "The response body for updating a subscription",
+				"type": "object",
+				"properties": {
+					"subscription": {
+						"type": "object",
+						"description": "Object with redirect url inside",
+						"properties": {
+							"sessionURL": {
+								"type": "string",
+								"description": "URL with session URL rediect to"
+							}
+						}
+					}
+				}
+			},
+			"SubscriptionGetRequestBody": {
+				"description": "The request body for getting a subscription",
+				"type": "object",
+				"properties": {
+					"subscriptionId": {
+						"type": "string",
+						"description": "The subscription id",
+						"example": "sub_1234567890"
+					}
+				}
+			},
+			"SubscriptionGetResponseBody": {
+				"description": "The response body for getting a subscription",
+				"type": "object",
+				"properties": {
+					"subscription": {
+						"type": "object",
+						"description": "A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object)"
+					}
+				}
+			},
+			"SubscriptionListRequestBody": {
+				"description": "The request body for listing subscriptions",
+				"type": "object",
+				"properties": {
+					"customerId": {
+						"type": "string",
+						"description": "The Stripe customer id",
+						"example": "cus_1234567890"
+					}
+				}
+			},
+			"SubscriptionListResponseBody": {
+				"description": "The response body for listing subscriptions",
+				"type": "object",
+				"properties": {
+					"subscriptions": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"description": "A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object]"
+						}
+					}
+				}
+			},
+			"SubscriptionCancelRequestBody": {
+				"description": "The request body for canceling a subscription",
+				"type": "object",
+				"properties": {
+					"subscriptionId": {
+						"type": "string",
+						"description": "The subscription id",
+						"example": "sub_1234567890"
+					}
+				}
+			},
+			"SubscriptionCancelResponseBody": {
+				"description": "The response body for canceling a subscription",
+				"type": "object",
+				"properties": {
+					"subscription": {
+						"type": "object",
+						"description": "A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object]"
+					},
+					"idempotencyKey": {
+						"type": "string",
+						"description": "The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.",
+						"example": "abcdefghijklmnopqrstuvwxyz"
+					}
+				}
+			},
+			"SubscriptionResumeRequestBody": {
+				"description": "The request body for resuming a subscription",
+				"type": "object",
+				"properties": {
+					"subscriptionId": {
+						"type": "string",
+						"description": "The subscription id",
+						"example": "sub_1234567890"
+					},
+					"idempotencyKey": {
+						"type": "string",
+						"description": "The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.",
+						"example": "abcdefghijklmnopqrstuvwxyz"
+					}
+				}
+			},
+			"SubscriptionResumeResponseBody": {
+				"description": "The response body for resuming a subscription",
+				"type": "object",
+				"properties": {
+					"subscription": {
+						"type": "object",
+						"description": "A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object]"
+					}
+				}
+			},
+			"APIKeyResponse": {
+				"description": "The general view for API key in response",
+				"type": "object",
+				"properties": {
+					"apiKey": {
+						"type": "string",
+						"description": "The API key",
+						"example": "abcdefghijklmnopqrstuvwxyz"
+					},
+					"createdAt": {
+						"type": "string",
+						"description": "The creation date of the API key",
+						"example": "2000-10-31T01:23:45Z",
+						"format": "date-time"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the API key",
+						"example": "My API Key"
+					},
+					"expiresAt": {
+						"type": "string",
+						"description": "The expiration date of the API key",
+						"example": "2000-10-31T01:23:45Z",
+						"format": "date-time"
+					},
+					"revoked": {
+						"type": "boolean",
+						"description": "The status of the API key",
+						"example": false
+					}
+				}
+			},
+			"APIKeyCreateRequestBody": {
+				"description": "The request body for creating an API key",
+				"type": "object",
+				"properties": {
+					"expiresAt": {
+						"type": "string",
+						"description": "The expiration date of the API key",
+						"example": "2000-10-31T01:23:45Z",
+						"format": "date-time"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the API key",
+						"example": "My API Key"
+					}
+				},
+				"required": ["name"]
+			},
+			"APIKeyCreateResponseBody": {
+				"description": "The response body for creating an API key",
+				"type": "object",
+				"schema": {
+					"ref": "#/components/schemas/APIKeyResponse"
+				}
+			},
+			"APIKeyCreateUnsuccessfulResponseBody": {
+				"description": "The response body for an unsuccessful API key creation",
+				"type": "object",
+				"properties": {
+					"error": {
+						"type": "string",
+						"example": "API key creation unsuccessful"
+					}
+				}
+			},
+			"APIKeyUpdateRequestBody": {
+				"description": "The request body for updating an API key",
+				"type": "object",
+				"properties": {
+					"apiKey": {
+						"type": "string",
+						"description": "The API key",
+						"example": "abcdefghijklmnopqrstuvwxyz"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the API key",
+						"example": "My API Key"
+					},
+					"expiresAt": {
+						"type": "string",
+						"description": "The expiration date of the API key",
+						"example": "2000-10-31T01:23:45Z",
+						"format": "date-time"
+					},
+					"revoked": {
+						"type": "boolean",
+						"description": "The status of the API key",
+						"example": false,
+						"default": false
+					}
+				},
+				"required": ["apiKey"]
+			},
+			"APIKeyUpdateResponseBody": {
+				"description": "The response body for an unsuccessful API key update",
+				"type": "object",
+				"schema": {
+					"ref": "#/components/schemas/APIKeyResponse"
+				}
+			},
+			"APIKeyUpdateUnsuccessfulResponseBody": {
+				"description": "The response body for an unsuccessful API key update",
+				"type": "object",
+				"properties": {
+					"error": {
+						"type": "string",
+						"example": "API key update unsuccessful"
+					}
+				}
+			},
+			"APIKeyRevokeRequestBody": {
+				"description": "The request body for revoking an API key",
+				"type": "object",
+				"properties": {
+					"apiKey": {
+						"type": "string",
+						"description": "The API key",
+						"example": "abcdefghijklmnopqrstuvwxyz"
+					}
+				},
+				"required": ["apiKey"]
+			},
+			"APIKeyRevokeResponseBody": {
+				"description": "The response body for revoking an API key",
+				"type": "object",
+				"properties": {
+					"apiKey": {
+						"type": "string",
+						"description": "The API key",
+						"example": "abcdefghijklmnopqrstuvwxyz"
+					},
+					"revoked": {
+						"type": "boolean",
+						"description": "The status of the API key",
+						"example": true
+					}
+				},
+				"required": ["apiKey"]
+			},
+			"APIKeyRevokeUnsuccessfulResponseBody": {
+				"description": "The response body for an unsuccessful API key revocation",
+				"type": "object",
+				"properties": {
+					"error": {
+						"type": "string",
+						"example": "API key revocation unsuccessful"
+					}
+				}
+			},
+			"APIKeyListResponseBody": {
+				"description": "The response body for listing API keys",
+				"type": "object",
+				"properties": {
+					"apiKeys": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"schema": {
+								"ref": "#/components/schemas/APIKeyResponse"
+							}
+						}
+					}
+				}
+			},
+			"APIKeyGetRequestBody": {
+				"description": "The request body for getting an API key",
+				"type": "object",
+				"properties": {
+					"apiKey": {
+						"type": "string",
+						"description": "The API key",
+						"example": "abcdefghijklmnopqrstuvwxyz"
+					}
+				},
+				"required": ["apiKey"]
+			},
+			"APIKeyGetResponseBody": {
+				"description": "The response body for getting an API key",
+				"type": "object",
+				"schema": {
+					"ref": "#/components/schemas/APIKeyResponse"
+				}
+			},
+			"NotFoundError": {
+				"description": "The requested resource could not be found but may be available in the future. Subsequent requests by the client are permissible.",
+				"type": "object",
+				"properties": {
+					"error": {
+						"type": "string",
+						"example": "Not Found Error"
+					}
+				}
+			}
+		}
+	}
 }
