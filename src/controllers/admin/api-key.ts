@@ -20,7 +20,7 @@ import type {
 	APIKeyUpdateResponseBody,
 	APIKeyUpdateUnsuccessfulResponseBody,
 	APIServiceOptions,
-} from '../../types/portal.js';
+} from '../../types/admin.js';
 import { EventTracker, eventTracker } from '../../services/track/tracker.js';
 import { OperationNameEnum } from '../../types/constants.js';
 

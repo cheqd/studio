@@ -7,7 +7,7 @@ import type {
 	ProductListResponseBody,
 	ProductListUnsuccessfulResponseBody,
 	ProductWithPrices,
-} from '../../types/portal.js';
+} from '../../types/admin.js';
 import { StatusCodes } from 'http-status-codes';
 import { check } from '../validator/index.js';
 import { validate } from '../validator/decorator.js';

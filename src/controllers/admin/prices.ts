@@ -1,7 +1,7 @@
 import type { Stripe } from 'stripe';
 import type { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
-import type { PriceListResponseBody, PriceListUnsuccessfulResponseBody } from '../../types/portal.js';
+import type { PriceListResponseBody, PriceListUnsuccessfulResponseBody } from '../../types/admin.js';
 import { StatusCodes } from 'http-status-codes';
 import { check } from '../validator/index.js';
 import { validate } from '../validator/decorator.js';

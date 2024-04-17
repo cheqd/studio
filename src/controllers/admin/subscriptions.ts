@@ -18,7 +18,7 @@ import type {
 	SubscriptionResumeResponseBody,
 	SubscriptionResumeRequestBody,
 	SubscriptionCancelRequestBody,
-} from '../../types/portal.js';
+} from '../../types/admin.js';
 import { StatusCodes } from 'http-status-codes';
 import { check } from '../validator/index.js';
 import { SubscriptionService } from '../../services/admin/subscription.js';

@@ -14,8 +14,6 @@ export const CORS_ALLOWED_ORIGINS = process.env.CORS_ALLOWED_ORIGINS || APPLICAT
 export const API_KEY_PREFIX = 'caas';
 export const API_SECRET_KEY_LENGTH = 64;
 export const API_KEY_EXPIRATION = 30;
-// By default we don't send events to datadog
-export const ENABLE_DATADOG = process.env.ENABLE_DATADOG === 'true' ? true : false;
 // Possible cases 'trace' 'debug' 'info' 'warn' 'error';
 export const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 

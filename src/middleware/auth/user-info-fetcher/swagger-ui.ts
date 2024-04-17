@@ -11,7 +11,6 @@ export class SwaggerUserInfoFetcher extends UserInfoHelper implements IUserInfoF
 		super();
 		this.oauthProvider = oauthProvider;
 	}
-
 	/**
 	 * Tries to fetch user information based on the request and sets the appropriate response.
 	 *
