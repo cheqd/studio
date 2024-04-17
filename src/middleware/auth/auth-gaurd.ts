@@ -10,7 +10,6 @@ import { PortalUserInfoFetcher } from "./user-info-fetcher/portal-token.js";
 import { IdTokenUserInfoFetcher } from "./user-info-fetcher/idtoken.js";
 import { M2MCredsTokenUserInfoFetcher } from "./user-info-fetcher/m2m-creds-token.js";
 import { APITokenUserInfoFetcher } from "./user-info-fetcher/api-token.js";
-import { decodeJwt } from 'jose';
 
 export class APIGuard {
     private authRuleRepository: AuthRuleRepository;
@@ -73,23 +72,33 @@ export class APIGuard {
 	 * @return {void} This function does not return a value.
 	 */
     private chooseUserFetcherStrategy(request: Request): void {
-		const token = APIGuard.extractBearerTokenFromHeaders(request.headers) as string;
-		const headerIdToken = request.headers['id-token'] as string;
-		if (headerIdToken && token) {
-			this.setUserInfoStrategy(new PortalUserInfoFetcher(token, headerIdToken, this.oauthProvider));
-		} else {
-			if (token) {
-				const payload = decodeJwt(token);
-				if (payload.aud === process.env.LOGTO_APP_ID) {
-					this.setUserInfoStrategy(new APITokenUserInfoFetcher(token, this.oauthProvider));
-				} else {
-					this.setUserInfoStrategy(new M2MCredsTokenUserInfoFetcher(token, this.oauthProvider));
-				}
-			} else {
-				this.setUserInfoStrategy(new SwaggerUserInfoFetcher(this.oauthProvider));
-			}
-		}
-	}
+        const bearerToken = APIGuard.extractBearerTokenFromHeaders(request.headers) as string;
+        const portalToken = request.headers['id-token'] as string;
+        const m2mCreds = request.headers['customer-id'] as string;
+        const apiToken = request.headers['x-api-key'] as string;
+
+        if (apiToken) {
+            this.setUserInfoStrategy(new APITokenUserInfoFetcher(apiToken, this.oauthProvider));
+            return;
+        }
+
+        if (m2mCreds) {
+            this.setUserInfoStrategy(new M2MCredsTokenUserInfoFetcher(m2mCreds, this.oauthProvider));
+            return;
+        }
+
+        if (portalToken && bearerToken) {
+            this.setUserInfoStrategy(new PortalUserInfoFetcher(bearerToken, portalToken, this.oauthProvider));
+            return;
+        }
+
+        if (bearerToken) {
+            this.setUserInfoStrategy(new IdTokenUserInfoFetcher(bearerToken, this.oauthProvider));
+            return;
+        }
+
+        this.setUserInfoStrategy(new SwaggerUserInfoFetcher(this.oauthProvider));
+    }
 
 
 	/**
