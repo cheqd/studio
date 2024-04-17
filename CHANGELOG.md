@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.20.0-develop.3](https://github.com/cheqd/credential-service/compare/2.20.0-develop.2...2.20.0-develop.3) (2024-04-17)
+
+
+### Features
+
+* Add API key endpoints [DEV-3793] ([#510](https://github.com/cheqd/credential-service/issues/510)) ([c237502](https://github.com/cheqd/credential-service/commit/c2375027fe43ea5cfa277b65a1cd20614430ec60))
+
 ## [2.20.0-develop.2](https://github.com/cheqd/credential-service/compare/2.20.0-develop.1...2.20.0-develop.2) (2024-04-15)
 
 
