@@ -199,7 +199,7 @@ export class APIKeyController {
 			);
 			if (!apiKeyEntity) {
 				return response.status(StatusCodes.NOT_FOUND).json({
-					error: "Cannot update API key cause it's not found",
+					error: "Update failed: API key does not exist",
 				} satisfies APIKeyUpdateUnsuccessfulResponseBody);
 			}
 
