@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.20.0-develop.4](https://github.com/cheqd/credential-service/compare/2.20.0-develop.3...2.20.0-develop.4) (2024-04-17)
+
+
+### Features
+
+* Add endpoints for organisation page [DEV-3848] ([#522](https://github.com/cheqd/credential-service/issues/522)) ([b5de42b](https://github.com/cheqd/credential-service/commit/b5de42b47b3cfe7cbf1d5b6d49cefea278402807))
+
 ## [2.20.0-develop.3](https://github.com/cheqd/credential-service/compare/2.20.0-develop.2...2.20.0-develop.3) (2024-04-17)
 
 
