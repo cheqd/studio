@@ -17,8 +17,8 @@ export class OrganisationController {
 			withMessage('name should be a valid string'),
 		check('email').
 			optional().
-			isString().
-			withMessage('email should be a valid string'),
+			isEmail().
+			withMessage('email value should a well-formatted string'),
 		check('description').
 			optional().
 			isString().
@@ -74,7 +74,7 @@ export class OrganisationController {
 			const customer = await CustomerService.instance.update(response.locals.customer.customerId, name, email, description);
 			const paymentAccount = await PaymentAccountService.instance.find({ customer: customer });
 
-			if (!customer || !paymentAccount) {
+			if (!customer || paymentAccount.length === 0) {
 				response.status(StatusCodes.NOT_FOUND).json({
 					error: 'Customer for updating not found',
 				} satisfies AdminOrganisationUpdateUnsuccessfulResponseBody);
@@ -122,7 +122,7 @@ export class OrganisationController {
 			const customer = response.locals.customer;
 			const paymentAccount = await PaymentAccountService.instance.find({ customer: response.locals.customer });
 
-			if (!customer || !paymentAccount) {
+			if (!customer || paymentAccount.length === 0) {
 				response.status(StatusCodes.NOT_FOUND).json({
 					error: 'Customer for current user was not found or did not setup properly. Please contact administrator.',
 				} satisfies AdminOrganisationGetUnsuccessfulResponseBody);

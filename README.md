@@ -37,8 +37,7 @@ The application allows configuring the following parameters using environment va
 
 #### Events tracking
 
-1. `ENABLE_DATADOG`: enables sending information about events to datadog
-2. `LOG_LEVEL`: specifies log level, like 'trace', 'debug', 'info', 'warn' or 'error';
+1. `LOG_LEVEL`: specifies log level, like 'trace', 'debug', 'info', 'warn' or 'error';
 
 #### Network API endpoints
 
