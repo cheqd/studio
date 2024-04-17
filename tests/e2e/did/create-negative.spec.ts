@@ -181,6 +181,6 @@ test('[Negative] It cannot create DID in mainnet network for user with testnet r
 	});
 	expect(response).not.toBeOK();
 	expect(response.status()).toBe(StatusCodes.FORBIDDEN);
-	const { error} = (await response.json()) as UnsuccessfulResponseBody;
+	const { error } = (await response.json()) as UnsuccessfulResponseBody;
 	expect(error).toEqual(expect.stringContaining(DEFAULT_DOES_NOT_HAVE_PERMISSIONS));
 });

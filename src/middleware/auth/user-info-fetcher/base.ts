@@ -9,11 +9,15 @@ export interface IUserInfoOptions {
 }
 
 export interface IUserInfoFetcher {
-	fetch(request: Request, response: Response, oauthProvider: IOAuthProvider, options?: IUserInfoOptions): Promise<Response | undefined>;
+	fetch(
+		request: Request,
+		response: Response,
+		oauthProvider: IOAuthProvider,
+		options?: IUserInfoOptions
+	): Promise<Response | undefined>;
 }
 
 export class UserInfoHelper {
-
 	setScopes(scopes: string[], response: Response) {
 		response.locals.scopes = scopes;
 		return;
@@ -23,13 +27,13 @@ export class UserInfoHelper {
 		if (!customerEntity) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Unexpected error: Customer entity for handling such request is not found in internal storage. CustomerId: ${customerId}`,
-			})
+			});
 		}
 		const userEntity = await UserService.instance.findOne({ customer: customerEntity });
 		if (!userEntity) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Unexpected error: User entity for handling such request is not found in internal storage. CustomerId: ${customerId}`,
-			})
+			});
 		}
 		response.locals.customer = customerEntity;
 		response.locals.user = userEntity;
@@ -41,7 +45,7 @@ export class UserInfoHelper {
 		if (!entity) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Unexpected error: User entity for handling such request is not found in internal storage`,
-			})
+			});
 		}
 		response.locals.user = entity;
 		response.locals.customer = entity.customer;

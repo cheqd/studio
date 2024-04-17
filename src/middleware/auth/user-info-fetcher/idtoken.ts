@@ -13,7 +13,7 @@ export class IdTokenUserInfoFetcher extends UserInfoHelper implements IUserInfoF
 	private oauthProvider: IOAuthProvider;
 
 	constructor(token: string, oauthProvider: IOAuthProvider) {
-		super()
+		super();
 		this.token = token;
 		this.oauthProvider = oauthProvider;
 	}
@@ -44,13 +44,13 @@ export class IdTokenUserInfoFetcher extends UserInfoHelper implements IUserInfoF
 			// Setup the scopes from the token
 			if (!payload.roles) {
 				return response.status(StatusCodes.UNAUTHORIZED).json({
-					error: `Unauthorized error: No roles found in the token.`
+					error: `Unauthorized error: No roles found in the token.`,
 				} satisfies UnsuccessfulResponseBody);
 			}
 			const scopes = await this.oauthProvider.getScopesForRoles(payload.roles as string[]);
 			if (!scopes) {
 				return response.status(StatusCodes.UNAUTHORIZED).json({
-					error: `Unauthorized error: No scopes found for the roles: ${payload.roles}`
+					error: `Unauthorized error: No scopes found for the roles: ${payload.roles}`,
 				} satisfies UnsuccessfulResponseBody);
 			}
 			// Set global context
@@ -58,7 +58,7 @@ export class IdTokenUserInfoFetcher extends UserInfoHelper implements IUserInfoF
 			return await this.setUserEntity(payload.sub as string, response);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `Unexpected error: While verifying ID token: ${error}`
+				error: `Unexpected error: While verifying ID token: ${error}`,
 			} satisfies UnsuccessfulResponseBody);
 		}
 	}

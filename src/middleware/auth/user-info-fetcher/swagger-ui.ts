@@ -11,7 +11,7 @@ export class SwaggerUserInfoFetcher extends UserInfoHelper implements IUserInfoF
 		super();
 		this.oauthProvider = oauthProvider;
 	}
-	
+
 	/**
 	 * Tries to fetch user information based on the request and sets the appropriate response.
 	 *
@@ -24,13 +24,13 @@ export class SwaggerUserInfoFetcher extends UserInfoHelper implements IUserInfoF
 			// If the user is not authenticated - return error
 			if (!request.user.isAuthenticated) {
 				return response.status(StatusCodes.UNAUTHORIZED).json({
-					error: "Unauthorized error: Seems like you are not authenticated. Please follow the authentication process using 'LogIn' button"
+					error: "Unauthorized error: Seems like you are not authenticated. Please follow the authentication process using 'LogIn' button",
 				} satisfies UnsuccessfulResponseBody);
 			}
 			// Tries to get customerId from the logTo user structure
 			if (!request.user || !request.user.claims || !request.user.claims.sub) {
-				return response.status(StatusCodes.BAD_GATEWAY).json({ 
-					error: 'Internal error: Seems like authentication process was corrupted and there are problems with getting customerId'
+				return response.status(StatusCodes.BAD_GATEWAY).json({
+					error: 'Internal error: Seems like authentication process was corrupted and there are problems with getting customerId',
 				} satisfies UnsuccessfulResponseBody);
 			}
 			const userId = request.user.claims.sub;
@@ -38,16 +38,15 @@ export class SwaggerUserInfoFetcher extends UserInfoHelper implements IUserInfoF
 			const _resp = await this.oauthProvider.getUserScopes(userId);
 			if (_resp.status !== 200) {
 				return response.status(StatusCodes.UNAUTHORIZED).json({
-					error: `Unauthorized error: No scopes found for the user: ${userId}.`
+					error: `Unauthorized error: No scopes found for the user: ${userId}.`,
 				} satisfies UnsuccessfulResponseBody);
 			}
 			this.setScopes(_resp.data, response);
 			return await this.setUserEntity(userId, response);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `Unexpected error: While verifying API key: ${error}`
+				error: `Unexpected error: While verifying API key: ${error}`,
 			} satisfies UnsuccessfulResponseBody);
 		}
-		
 	}
 }

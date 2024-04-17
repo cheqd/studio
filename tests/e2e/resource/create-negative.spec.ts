@@ -19,6 +19,6 @@ test('[Negative] It cannot create resource in mainnet network for user with test
 	});
 	expect(response).not.toBeOK();
 	expect(response.status()).toBe(StatusCodes.FORBIDDEN);
-	const { error} = (await response.json()) as UnsuccessfulResponseBody;
+	const { error } = (await response.json()) as UnsuccessfulResponseBody;
 	expect(error).toEqual(expect.stringContaining(DEFAULT_DOES_NOT_HAVE_PERMISSIONS));
 });

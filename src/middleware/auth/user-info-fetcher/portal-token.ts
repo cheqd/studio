@@ -49,15 +49,15 @@ export class PortalUserInfoFetcher extends UserInfoHelper implements IUserInfoFe
 			);
 			// Setup the scopes from the token
 			if (!payload.sub) {
-				return response.status(StatusCodes.UNAUTHORIZED).json({ 
-					error: `Unauthorized error: No sub found in the token. Cannot set customerId.`
+				return response.status(StatusCodes.UNAUTHORIZED).json({
+					error: `Unauthorized error: No sub found in the token. Cannot set customerId.`,
 				} satisfies UnsuccessfulResponseBody);
 			}
 			return await this.setUserEntity(payload.sub, response);
 		} catch (error) {
 			console.error(error);
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
-				error:`Unexpected error: While verifying ID token for Portal: ${error}`
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Unexpected error: While verifying ID token for Portal: ${error}`,
 			} satisfies UnsuccessfulResponseBody);
 		}
 	}
@@ -74,16 +74,16 @@ export class PortalUserInfoFetcher extends UserInfoHelper implements IUserInfoFe
 			);
 			// Setup the scopes from the token
 			if (!payload.sub) {
-				return response.status(StatusCodes.UNAUTHORIZED).json({ 
-					error: `Unauthorized error: No sub found in the token.`
+				return response.status(StatusCodes.UNAUTHORIZED).json({
+					error: `Unauthorized error: No sub found in the token.`,
 				} satisfies UnsuccessfulResponseBody);
 			}
 			const scopes = payload.scope ? (payload.scope as string).split(' ') : [];
 			this.setScopes(scopes, response);
 			return;
 		} catch (error) {
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
-				error: `Unexpected error: While verifying M2M token for Portal: ${error}`
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Unexpected error: While verifying M2M token for Portal: ${error}`,
 			} satisfies UnsuccessfulResponseBody);
 		}
 	}
