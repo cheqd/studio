@@ -73,34 +73,22 @@ export class APIGuard {
 	 * @return {void} This function does not return a value.
 	 */
     private chooseUserFetcherStrategy(request: Request): void {
-		const authorizationHeader = request.headers.authorization as string;
-		const apiKeyHeader = request.headers['x-api-key'] as string;
-
-		if (authorizationHeader && apiKeyHeader) {
-            const token = authorizationHeader.replace('Bearer ', '');
-			this.setUserInfoStrategy(new PortalUserInfoFetcher(token, apiKeyHeader, this.oauthProvider));
-			return;
-		}
-
-		if (authorizationHeader) {
-			const token = authorizationHeader.replace('Bearer ', '');
-			const payload = decodeJwt(token);
-
-			if (payload.aud === process.env.LOGTO_APP_ID) {
-				this.setUserInfoStrategy(new IdTokenUserInfoFetcher(token, this.oauthProvider));
+		const token = APIGuard.extractBearerTokenFromHeaders(request.headers) as string;
+		const headerIdToken = request.headers['id-token'] as string;
+		if (headerIdToken && token) {
+			this.setUserInfoStrategy(new PortalUserInfoFetcher(token, headerIdToken, this.oauthProvider));
+		} else {
+			if (token) {
+				const payload = decodeJwt(token);
+				if (payload.aud === process.env.LOGTO_APP_ID) {
+					this.setUserInfoStrategy(new APITokenUserInfoFetcher(token, this.oauthProvider));
+				} else {
+					this.setUserInfoStrategy(new M2MCredsTokenUserInfoFetcher(token, this.oauthProvider));
+				}
 			} else {
-				this.setUserInfoStrategy(new M2MCredsTokenUserInfoFetcher(token, this.oauthProvider));
+				this.setUserInfoStrategy(new SwaggerUserInfoFetcher(this.oauthProvider));
 			}
-
-			return;
 		}
-
-		if (apiKeyHeader) {
-			this.setUserInfoStrategy(new APITokenUserInfoFetcher(apiKeyHeader, this.oauthProvider));
-			return;
-		}
-
-		this.setUserInfoStrategy(new SwaggerUserInfoFetcher(this.oauthProvider));
 	}
 
 
