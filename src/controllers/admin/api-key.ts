@@ -34,7 +34,8 @@ export class APIKeyController {
 			.toDate()
 			.withMessage('Invalid date format')
 			.custom((value) => {
-				if (value < new Date()) {
+				const current = new Date();
+				if (value < new Date(current.toISOString())) {
 					throw new Error('expiresAt must be in the future');
 				}
 				return true;
@@ -63,7 +64,8 @@ export class APIKeyController {
 			.toDate()
 			.withMessage('Invalid date format')
 			.custom((value) => {
-				if (value < new Date()) {
+				const current = new Date();
+				if (value < new Date(current.toISOString())) {
 					throw new Error('expiresAt must be in the future');
 				}
 				return true;
