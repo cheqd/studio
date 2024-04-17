@@ -7,7 +7,7 @@ import { InvalidTokenError, jwtDecode } from 'jwt-decode';
 export type AuthRuleOptions = {
 	allowUnauthorized?: boolean;
 	skipNamespace?: boolean;
-}
+};
 
 export class AuthRule {
 	private route: string;
@@ -15,7 +15,12 @@ export class AuthRule {
 	private scope: string;
 	private options: AuthRuleOptions;
 
-	constructor(route: string, method: string, scope: string, options: AuthRuleOptions = { allowUnauthorized: false, skipNamespace: false }) {
+	constructor(
+		route: string,
+		method: string,
+		scope: string,
+		options: AuthRuleOptions = { allowUnauthorized: false, skipNamespace: false }
+	) {
 		this.route = route;
 		this.method = method;
 		this.scope = scope;
@@ -66,8 +71,8 @@ export class AuthRule {
 		return false;
 	}
 
-	 // Utils 
-	 protected getNamespaceFromRequest(req: Request): CheqdNetwork | null {
+	// Utils
+	protected getNamespaceFromRequest(req: Request): CheqdNetwork | null {
 		let network: string | null = '';
 
 		if (req && req.body && req.body.credential) {
@@ -128,15 +133,12 @@ export class AuthRule {
 
 	protected switchNetwork(network: string): CheqdNetwork | null {
 		switch (network) {
-			case 'testnet': {
+			case 'testnet':
 				return CheqdNetwork.Testnet;
-			}
-			case 'mainnet': {
+			case 'mainnet':
 				return CheqdNetwork.Mainnet;
-			}
-			default: {
+			default:
 				return null;
-			}
 		}
 	}
 
