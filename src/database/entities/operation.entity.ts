@@ -4,6 +4,7 @@ import { categoryEnum } from './../types/enum.js';
 import { CoinEntity } from './coin.entity.js';
 
 import * as dotenv from 'dotenv';
+import { CustomerEntity } from './customer.entity.js';
 dotenv.config();
 
 @Entity('operation')
@@ -63,13 +64,18 @@ export class OperationEntity {
 	@JoinColumn({ name: 'defaultFee' })
 	defaultFee!: CoinEntity;
 
+	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'customerId' })
+	customer!: CustomerEntity;
+
 	constructor(
 		operationId: string,
 		category: string,
 		operationName: string,
 		defaultFee: CoinEntity,
 		deprecated: boolean,
-		successful: boolean
+		successful: boolean,
+		customer: CustomerEntity
 	) {
 		this.operationId = operationId;
 		this.category = category;
@@ -77,5 +83,6 @@ export class OperationEntity {
 		this.defaultFee = defaultFee;
 		this.deprecated = deprecated;
 		this.successful = successful;
+		this.customer = customer;
 	}
 }

@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.20.0-develop.2](https://github.com/cheqd/credential-service/compare/2.20.0-develop.1...2.20.0-develop.2) (2024-04-15)
+
+
+### Bug Fixes
+
+* Add customerId into operation entity [DEV-3732] ([#507](https://github.com/cheqd/credential-service/issues/507)) ([b580646](https://github.com/cheqd/credential-service/commit/b580646d2d4e1030ee751c4bd2c1fcc93720f211))
+
 ## [2.20.0-develop.1](https://github.com/cheqd/credential-service/compare/2.19.1-develop.1...2.20.0-develop.1) (2024-04-11)
 
 
