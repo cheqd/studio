@@ -198,7 +198,7 @@ export class AccountController {
 			// Notify
 			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
-					'User was not found in db: Customer with customerId: ' + customer.customerId + ' was created'
+					'User was not found in database: Customer with customerId: ' + customer.customerId + ' was created'
 				),
 				severity: 'info',
 			});
@@ -212,7 +212,7 @@ export class AccountController {
 			// Notify
 			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
-					'User was not found in db: User with userId: ' + user.logToId + ' was created'
+					'User was not found in database: User with userId: ' + user.logToId + ' was created'
 				),
 				severity: 'info',
 			});
