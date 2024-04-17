@@ -10,7 +10,7 @@ import { handleAuthRoutes, withLogto } from '@logto/express';
 import { LogToProvider } from './auth/oauth/logto-provider.js';
 import { AdminAuthRuleProvider } from './auth/routes/admin/admin-auth.js';
 import { APIGuard } from './auth/auth-gaurd.js';
-import { AuthRuleRepository } from "./auth/routes/auth-rule-repository.js";
+import { AuthRuleRepository } from './auth/routes/auth-rule-repository.js';
 import type { IOAuthProvider } from './auth/oauth/abstract.js';
 import { DidAuthRuleProvider } from './auth/routes/api/did-auth.js';
 import { PresentationAuthRuleProvider } from './auth/routes/api/presentation-auth.js';
@@ -40,7 +40,7 @@ export class Authentication {
 		authRuleRepository.push(new KeyAuthProvider());
 
 		authRuleRepository.push(new DidAuthRuleProvider());
-		authRuleRepository.push(new ResourceAuthRuleProvider())
+		authRuleRepository.push(new ResourceAuthRuleProvider());
 		authRuleRepository.push(new CredentialAuthRuleProvider());
 		authRuleRepository.push(new CredentialStatusAuthRuleProvider());
 		authRuleRepository.push(new PresentationAuthRuleProvider());
@@ -123,7 +123,7 @@ export class Authentication {
 			return await this.apiGuardian.guard(request, response, next);
 		} catch (err) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
-				error: `Unexpected error: While guarding API request ${err}`
+				error: `Unexpected error: While guarding API request ${err}`,
 			} satisfies UnsuccessfulResponseBody);
 		}
 	}

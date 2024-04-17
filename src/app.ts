@@ -68,10 +68,14 @@ class App {
 			cors({
 				origin: function (origin, callback) {
 					if (!origin) return callback(null, true);
-					if (CORS_ALLOWED_ORIGINS?.indexOf(origin) === -1) {
-						return callback(new Error(CORS_ERROR_MSG), false);
+					const allowedList = CORS_ALLOWED_ORIGINS.split(',');
+
+					for (const allowed of allowedList) {
+						if (allowed.indexOf(origin) !== -1) {
+							return callback(null, true);
+						}
 					}
-					return callback(null, true);
+					return callback(new Error(CORS_ERROR_MSG), false);
 				},
 			})
 		);
@@ -184,7 +188,7 @@ class App {
 		// Keys API
 		app.post('/key/create', new KeyController().createKey);
 		app.post('/key/import', KeyController.keyImportValidator, new KeyController().importKey);
-		app.get('/key/read/:kid',KeyController.keyGetValidator,  new KeyController().getKey);
+		app.get('/key/read/:kid', KeyController.keyGetValidator, new KeyController().getKey);
 
 		// DIDs API
 		app.post('/did/create', DIDController.createDIDValidator, new DIDController().createDid);

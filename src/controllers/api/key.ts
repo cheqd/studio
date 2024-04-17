@@ -29,7 +29,7 @@ export class KeyController {
 			.isHexadecimal()
 			.withMessage('keyId should be a hexadecimal string')
 			.bail(),
-	]
+	];
 	public static keyImportValidator = [
 		check('privateKeyHex')
 			.exists()

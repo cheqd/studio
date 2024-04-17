@@ -9,7 +9,12 @@ export interface IUserInfoOptions {
 }
 
 export interface IUserInfoFetcher {
-	fetch(request: Request, response: Response, oauthProvider: IOAuthProvider, options?: IUserInfoOptions): Promise<Response | undefined>;
+	fetch(
+		request: Request,
+		response: Response,
+		oauthProvider: IOAuthProvider,
+		options?: IUserInfoOptions
+	): Promise<Response | undefined>;
 }
 
 export class UserInfoHelper {

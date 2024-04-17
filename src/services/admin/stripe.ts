@@ -44,8 +44,8 @@ export class StripeService {
 		}
 		await eventTracker.notify({
 			message: EventTracker.compileBasicNotification(
-				`Subscription syncronization completed`,
-				'Subscription syncronization'
+				`Subscription synchronization completed`,
+				'Subscription synchronization'
 			),
 			severity: 'info',
 		});
@@ -77,7 +77,7 @@ export class StripeService {
 			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
 					`Active subscription not found for customer with id ${customer.customerId}`,
-					'Subscription syncronization'
+					'Subscription synchronization'
 				),
 				severity: 'debug',
 			});
@@ -94,7 +94,7 @@ export class StripeService {
 				await eventTracker.notify({
 					message: EventTracker.compileBasicNotification(
 						`Multiple active subscriptions found for customer with id ${customer.customerId}`,
-						'Subscription syncronization'
+						'Subscription synchronization'
 					),
 					severity: 'error',
 				});
@@ -111,7 +111,7 @@ export class StripeService {
 			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
 					`Subscription with id ${subscriptionId} could not be retrieved from Stripe`,
-					'Subscription syncronization'
+					'Subscription synchronization'
 				),
 				severity: 'error',
 			});
@@ -139,7 +139,7 @@ export class StripeService {
 			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
 					`Subscription with id ${subscription.id} has no changes`,
-					'Subscription syncronization'
+					'Subscription synchronization'
 				),
 				severity: 'debug',
 			});

@@ -44,7 +44,7 @@ export class M2MCredsTokenUserInfoFetcher extends UserInfoHelper implements IUse
 			// Setup the scopes from the token
 			if (!payload.sub) {
 				return response.status(StatusCodes.UNAUTHORIZED).json({
-					error: `Unauthorized error: No sub found in the token.`
+					error: `Unauthorized error: No sub found in the token.`,
 				} satisfies UnsuccessfulResponseBody);
 			}
 			// Set global context
@@ -53,7 +53,7 @@ export class M2MCredsTokenUserInfoFetcher extends UserInfoHelper implements IUse
 			return await this.setCustomerEntity(customerId as string, response);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `Unexpected error: While verifying M2M token: ${error}`
+				error: `Unexpected error: While verifying M2M token: ${error}`,
 			} satisfies UnsuccessfulResponseBody);
 		}
 	}
