@@ -42,7 +42,13 @@ export class CustomerService {
 		};
 	}
 
-	public async update(customerId: string, name?: string, email?: string, description?: string, paymentProviderId?: string) {
+	public async update(
+		customerId: string,
+		name?: string,
+		email?: string,
+		description?: string,
+		paymentProviderId?: string
+	) {
 		const existingCustomer = await this.customerRepository.findOneBy({ customerId });
 		if (!existingCustomer) {
 			throw new Error(`CustomerId not found`);

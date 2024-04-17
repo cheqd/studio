@@ -70,35 +70,34 @@ export class APIGuard {
 	 * @param {Request} request - The request object containing the headers.
 	 * @return {void} This function does not return a value.
 	 */
-    private chooseUserFetcherStrategy(request: Request): void {
-        const bearerToken = APIGuard.extractBearerTokenFromHeaders(request.headers) as string;
-        const portalToken = request.headers['id-token'] as string;
-        const m2mCreds = request.headers['customer-id'] as string;
-        const apiToken = request.headers['x-api-key'] as string;
+	private chooseUserFetcherStrategy(request: Request): void {
+		const bearerToken = APIGuard.extractBearerTokenFromHeaders(request.headers) as string;
+		const portalToken = request.headers['id-token'] as string;
+		const m2mCreds = request.headers['customer-id'] as string;
+		const apiToken = request.headers['x-api-key'] as string;
 
-        if (apiToken) {
-            this.setUserInfoStrategy(new APITokenUserInfoFetcher(apiToken, this.oauthProvider));
-            return;
-        }
+		if (apiToken) {
+			this.setUserInfoStrategy(new APITokenUserInfoFetcher(apiToken, this.oauthProvider));
+			return;
+		}
 
-        if (m2mCreds) {
-            this.setUserInfoStrategy(new M2MCredsTokenUserInfoFetcher(m2mCreds, this.oauthProvider));
-            return;
-        }
+		if (m2mCreds) {
+			this.setUserInfoStrategy(new M2MCredsTokenUserInfoFetcher(m2mCreds, this.oauthProvider));
+			return;
+		}
 
-        if (portalToken && bearerToken) {
-            this.setUserInfoStrategy(new PortalUserInfoFetcher(bearerToken, portalToken, this.oauthProvider));
-            return;
-        }
+		if (portalToken && bearerToken) {
+			this.setUserInfoStrategy(new PortalUserInfoFetcher(bearerToken, portalToken, this.oauthProvider));
+			return;
+		}
 
-        if (bearerToken) {
-            this.setUserInfoStrategy(new IdTokenUserInfoFetcher(bearerToken, this.oauthProvider));
-            return;
-        }
+		if (bearerToken) {
+			this.setUserInfoStrategy(new IdTokenUserInfoFetcher(bearerToken, this.oauthProvider));
+			return;
+		}
 
-        this.setUserInfoStrategy(new SwaggerUserInfoFetcher(this.oauthProvider));
-    }
-
+		this.setUserInfoStrategy(new SwaggerUserInfoFetcher(this.oauthProvider));
+	}
 
 	/**
 	 * Sets the user info strategy for the API guard.

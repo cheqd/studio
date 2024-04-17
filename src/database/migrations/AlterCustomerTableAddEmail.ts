@@ -13,7 +13,7 @@ export class AlterCustomerTableAddEmail1695740346005 implements MigrationInterfa
 			})
 		);
 
-        await queryRunner.addColumn(
+		await queryRunner.addColumn(
 			table_name,
 			new TableColumn({
 				name: 'description',

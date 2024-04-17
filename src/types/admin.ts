@@ -166,7 +166,6 @@ export type AdminOrganisationUpdateRequestBody = {
 export type AdminOrganisationUpdateResponseBody = AdminOrganisationGetResponseBody;
 export type AdminOrganisationUpdateUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
-
 // Utils
 
 export type PaymentBehavior = Stripe.SubscriptionCreateParams.PaymentBehavior;

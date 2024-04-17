@@ -4,27 +4,21 @@ import { check } from 'express-validator';
 import { validate } from '../validator/decorator.js';
 import { CustomerService } from '../../services/api/customer.js';
 import { StatusCodes } from 'http-status-codes';
-import type { AdminOrganisationGetUnsuccessfulResponseBody, AdminOrganisationUpdateResponseBody, AdminOrganisationUpdateUnsuccessfulResponseBody } from '../../types/admin.js';
+import type {
+	AdminOrganisationGetUnsuccessfulResponseBody,
+	AdminOrganisationUpdateResponseBody,
+	AdminOrganisationUpdateUnsuccessfulResponseBody,
+} from '../../types/admin.js';
 import { PaymentAccountService } from '../../services/api/payment-account.js';
 
 dotenv.config();
 
 export class OrganisationController {
 	static organisationUpdatevalidator = [
-		check('name').
-			optional().
-			isString().
-			withMessage('name should be a valid string'),
-		check('email').
-			optional().
-			isEmail().
-			withMessage('email value should a well-formatted string'),
-		check('description').
-			optional().
-			isString().
-			withMessage('description should be a valid string'),
+		check('name').optional().isString().withMessage('name should be a valid string'),
+		check('email').optional().isEmail().withMessage('email value should a well-formatted string'),
+		check('description').optional().isString().withMessage('description should be a valid string'),
 	];
-
 
 	/**
 	 * @openapi
@@ -71,7 +65,12 @@ export class OrganisationController {
 	async update(request: Request, response: Response) {
 		const { name, email, description } = request.body;
 		try {
-			const customer = await CustomerService.instance.update(response.locals.customer.customerId, name, email, description);
+			const customer = await CustomerService.instance.update(
+				response.locals.customer.customerId,
+				name,
+				email,
+				description
+			);
 			const paymentAccount = await PaymentAccountService.instance.find({ customer: customer });
 
 			if (!customer || paymentAccount.length === 0) {
@@ -84,7 +83,7 @@ export class OrganisationController {
 				name: customer.name,
 				email: customer.email,
 				description: customer.description,
-				cosmosAddress: paymentAccount[0].address as string
+				cosmosAddress: paymentAccount[0].address as string,
 			} satisfies AdminOrganisationUpdateResponseBody);
 		} catch (error) {
 			return response.status(500).json({
@@ -116,7 +115,7 @@ export class OrganisationController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 *       404:
 	 *         $ref: '#/components/schemas/NotFoundError'
-	 */ 
+	 */
 	async get(request: Request, response: Response) {
 		try {
 			const customer = response.locals.customer;

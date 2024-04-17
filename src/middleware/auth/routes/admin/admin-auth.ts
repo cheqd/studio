@@ -41,6 +41,5 @@ export class AdminAuthRuleProvider extends AuthRuleProvider {
 		// Customer
 		this.registerRule('/admin/organisation/update', 'POST', 'admin:organisation:update', { skipNamespace: true });
 		this.registerRule('/admin/organisation/get', 'GET', 'admin:organisation:get', { skipNamespace: true });
-
 	}
 }

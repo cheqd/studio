@@ -285,9 +285,12 @@ class App {
 			app.post('/admin/webhook', new WebhookController().handleWebhook);
 
 			// Customer
-			app.post('/admin/organisation/update', OrganisationController.organisationUpdatevalidator, new OrganisationController().update);
+			app.post(
+				'/admin/organisation/update',
+				OrganisationController.organisationUpdatevalidator,
+				new OrganisationController().update
+			);
 			app.get('/admin/organisation/get', new OrganisationController().get);
-
 		}
 
 		// 404 for all other requests
