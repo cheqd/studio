@@ -97,7 +97,7 @@ export class WebhookController {
 				break;
 			default:
 				// Unexpected event type
-				eventTracker.notify({
+				await eventTracker.notify({
 					message: EventTracker.compileBasicNotification(
 						`Unexpected event: ${event} with type: ${event?.type}`,
 						'Stripe Webhook: unexpected'

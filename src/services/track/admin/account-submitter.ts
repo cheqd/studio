@@ -57,7 +57,7 @@ export class PortalAccountCreateSubmitter implements IObserver {
 		} catch (error) {
 			await this.notify({
 				message: EventTracker.compileBasicNotification(
-					`Failed to create Stripe account with name: ${data.name as string}.`,
+					`Failed to create Stripe account with name: ${data.name as string}. Error: ${error}`,
 					operation.operation
 				),
 				severity: 'error',

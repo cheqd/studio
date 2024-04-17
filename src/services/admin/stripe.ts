@@ -42,10 +42,10 @@ export class StripeService {
 				await this.createSubscription(subscription);
 			}
 		}
-		eventTracker.notify({
+		await eventTracker.notify({
 			message: EventTracker.compileBasicNotification(
-				`Subscription syncronization completed`,
-				'Subscription syncronization'
+				`Subscription synchronization completed`,
+				'Subscription synchronization'
 			),
 			severity: 'info',
 		});
@@ -74,10 +74,10 @@ export class StripeService {
 
 		const local = await SubscriptionService.instance.findCurrent(customer);
 		if (!local) {
-			eventTracker.notify({
+			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
 					`Active subscription not found for customer with id ${customer.customerId}`,
-					'Subscription syncronization'
+					'Subscription synchronization'
 				),
 				severity: 'debug',
 			});
@@ -91,10 +91,10 @@ export class StripeService {
 			});
 			const subs = [...activeSubs.data, ...trialSubs.data];
 			if (subs.length > 1) {
-				eventTracker.notify({
+				await eventTracker.notify({
 					message: EventTracker.compileBasicNotification(
 						`Multiple active subscriptions found for customer with id ${customer.customerId}`,
-						'Subscription syncronization'
+						'Subscription synchronization'
 					),
 					severity: 'error',
 				});
@@ -108,10 +108,10 @@ export class StripeService {
 		const subscriptionId = local.subscriptionId;
 		const remote = await stripe.subscriptions.retrieve(subscriptionId);
 		if (!remote) {
-			eventTracker.notify({
+			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
 					`Subscription with id ${subscriptionId} could not be retrieved from Stripe`,
-					'Subscription syncronization'
+					'Subscription synchronization'
 				),
 				severity: 'error',
 			});
@@ -136,10 +136,10 @@ export class StripeService {
 	async updateSubscription(subscription: Stripe.Subscription, current: SubscriptionEntity): Promise<void> {
 		// Update only if there are changes
 		if (SubscriptionService.instance.equals(current, subscription)) {
-			eventTracker.notify({
+			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
 					`Subscription with id ${subscription.id} has no changes`,
-					'Subscription syncronization'
+					'Subscription synchronization'
 				),
 				severity: 'debug',
 			});

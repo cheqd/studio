@@ -44,9 +44,9 @@ export class SubscriptionSubmitter implements IObserver {
 				});
 
 				if (customers.length !== 1) {
-					this.notify({
+					await this.notify({
 						message: EventTracker.compileBasicNotification(
-							`It should be only 1 Stripe account associated with CaaS customer. Stripe accountId: ${data.paymentProviderId}.`,
+							`Only one Stripe account should be associated with CaaS customer. Stripe accountId: ${data.paymentProviderId}.`,
 							operation.operation
 						),
 						severity: 'error',
@@ -65,7 +65,7 @@ export class SubscriptionSubmitter implements IObserver {
 				data.trialEnd as Date
 			);
 			if (!subscription) {
-				this.notify({
+				await this.notify({
 					message: EventTracker.compileBasicNotification(
 						`Failed to create a new subscription with id: ${data.subscriptionId}.`,
 						operation.operation
@@ -74,7 +74,7 @@ export class SubscriptionSubmitter implements IObserver {
 				});
 			}
 
-			this.notify({
+			await this.notify({
 				message: EventTracker.compileBasicNotification(
 					`Subscription created with id: ${data.subscriptionId}.`,
 					operation.operation
@@ -82,7 +82,7 @@ export class SubscriptionSubmitter implements IObserver {
 				severity: 'info',
 			});
 		} catch (error) {
-			this.notify({
+			await this.notify({
 				message: EventTracker.compileBasicNotification(
 					`Failed to create a new subscription with id: ${data.subscriptionId} because of error: ${(error as Error)?.message || error}`,
 					operation.operation
@@ -104,7 +104,7 @@ export class SubscriptionSubmitter implements IObserver {
 				data.trialEnd as Date
 			);
 			if (!subscription) {
-				this.notify({
+				await this.notify({
 					message: EventTracker.compileBasicNotification(
 						`Failed to update subscription with id: ${data.subscriptionId}.`,
 						operation.operation
@@ -113,7 +113,7 @@ export class SubscriptionSubmitter implements IObserver {
 				});
 			}
 
-			this.notify({
+			await this.notify({
 				message: EventTracker.compileBasicNotification(
 					`Subscription updated with id: ${data.subscriptionId}.`,
 					operation.operation
@@ -121,7 +121,7 @@ export class SubscriptionSubmitter implements IObserver {
 				severity: 'info',
 			});
 		} catch (error) {
-			this.notify({
+			await this.notify({
 				message: EventTracker.compileBasicNotification(
 					`Failed to update subscription with id: ${data.subscriptionId} because of error: ${(error as Error)?.message || error}`,
 					operation.operation
@@ -136,7 +136,7 @@ export class SubscriptionSubmitter implements IObserver {
 		try {
 			const subscription = await SubscriptionService.instance.update(data.subscriptionId, data.status);
 			if (!subscription) {
-				this.notify({
+				await this.notify({
 					message: EventTracker.compileBasicNotification(
 						`Failed to cancel subscription with id: ${data.subscriptionId}.`,
 						operation.operation
@@ -145,7 +145,7 @@ export class SubscriptionSubmitter implements IObserver {
 				});
 			}
 
-			this.notify({
+			await this.notify({
 				message: EventTracker.compileBasicNotification(
 					`Subscription canceled with id: ${data.subscriptionId}.`,
 					operation.operation
@@ -153,7 +153,7 @@ export class SubscriptionSubmitter implements IObserver {
 				severity: 'info',
 			});
 		} catch (error) {
-			this.notify({
+			await this.notify({
 				message: EventTracker.compileBasicNotification(
 					`Failed to cancel subscription with id: ${data.subscriptionId} because of error: ${(error as Error)?.message || error}`,
 					operation.operation

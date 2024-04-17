@@ -20,9 +20,12 @@ import type {
 	UnsuccessfulQueryIdTokenResponseBody,
 } from '../../types/customer.js';
 import type { UnsuccessfulResponseBody } from '../../types/shared.js';
-import { check, validationResult } from 'express-validator';
-import { eventTracker } from '../../services/track/tracker.js';
+import { check } from 'express-validator';
+import { EventTracker, eventTracker } from '../../services/track/tracker.js';
 import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../../services/track/submitter.js';
+import * as dotenv from 'dotenv';
+import { validate } from '../validator/decorator.js';
+dotenv.config();
 
 export class AccountController {
 	public static createValidator = [
@@ -189,16 +192,30 @@ export class AccountController {
 			customer = (await CustomerService.instance.create(logToUserEmail)) as CustomerEntity;
 			if (!customer) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'User is not found in db: Customer was not created',
+					error: 'User is not found in database: Customer was not created',
 				} satisfies UnsuccessfulResponseBody);
 			}
+			// Notify
+			await eventTracker.notify({
+				message: EventTracker.compileBasicNotification(
+					'User was not found in database: Customer with customerId: ' + customer.customerId + ' was created'
+				),
+				severity: 'info',
+			});
 			// 2.2. Create user
 			user = await UserService.instance.create(logToUserId, customer, defaultRole);
 			if (!user) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'User is not found in db: User was not created',
+					error: 'User is not found in database: User was not created',
 				} satisfies UnsuccessfulResponseBody);
 			}
+			// Notify
+			await eventTracker.notify({
+				message: EventTracker.compileBasicNotification(
+					'User was not found in database: User with userId: ' + user.logToId + ' was created'
+				),
+				severity: 'info',
+			});
 		}
 		// 3. If yes - check that there is customer associated with such user
 		if (!user.customer) {
@@ -207,9 +224,16 @@ export class AccountController {
 			customer = (await CustomerService.instance.create(logToUserEmail)) as CustomerEntity;
 			if (!customer) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'User exists in db: Customer was not created',
+					error: 'User exists in database: Customer was not created',
 				} satisfies UnsuccessfulResponseBody);
 			}
+			// Notify
+			await eventTracker.notify({
+				message: EventTracker.compileBasicNotification(
+					'User exists in database: Customer with customerId: ' + customer.customerId + ' was created'
+				),
+				severity: 'info',
+			});
 			// 3.1.2. Assign customer to the user
 			user.customer = customer;
 			await UserService.instance.update(user.logToId, customer);
@@ -226,7 +250,7 @@ export class AccountController {
 			);
 			if (!key) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'PaymentAccount is not found in db: Key was not created',
+					error: 'PaymentAccount is not found in database: Key was not created',
 				} satisfies UnsuccessfulResponseBody);
 			}
 			paymentAccount = (await PaymentAccountService.instance.create(
@@ -237,9 +261,18 @@ export class AccountController {
 			)) as PaymentAccountEntity;
 			if (!paymentAccount) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'PaymentAccount is not found in db: Payment account was not created',
+					error: 'PaymentAccount is not found in database: Payment account was not created',
 				} satisfies UnsuccessfulResponseBody);
 			}
+			// Notify
+			await eventTracker.notify({
+				message: EventTracker.compileBasicNotification(
+					'PaymentAccount was not found in database: Payment account with address: ' +
+						paymentAccount.address +
+						' was created'
+				),
+				severity: 'info',
+			});
 		} else {
 			paymentAccount = accounts[0];
 		}
@@ -268,6 +301,14 @@ export class AccountController {
 					error: _r.error,
 				} satisfies UnsuccessfulResponseBody);
 			}
+
+			// Notify
+			await eventTracker.notify({
+				message: EventTracker.compileBasicNotification(
+					`Default role with id: ${process.env.LOGTO_DEFAULT_ROLE_ID} was assigned to user with id: ${user.logToId}`
+				),
+				severity: 'info',
+			});
 		}
 
 		const customDataFromLogTo = await logToHelper.getCustomData(user.logToId);
@@ -303,10 +344,17 @@ export class AccountController {
 						error: resp.error,
 					} satisfies UnsuccessfulResponseBody);
 				}
+				// Notify
+				await eventTracker.notify({
+					message: EventTracker.compileBasicNotification(
+						`Testnet account with address: ${paymentAccount.address} was funded with ${TESTNET_MINIMUM_BALANCE}`
+					),
+					severity: 'info',
+				});
 			}
 		}
 		// 8. Add the Stripe account to the Customer
-		if (customer.paymentProviderId === null) {
+		if (process.env.STRIPE_ENABLED === 'true' && customer.paymentProviderId === null) {
 			eventTracker.submit({
 				operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 				data: {
@@ -349,6 +397,7 @@ export class AccountController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	public async create(request: Request, response: Response) {
 		// For now we keep temporary 1-1 relation between user and customer
 		// So the flow is:
@@ -362,14 +411,7 @@ export class AccountController {
 		let paymentAccount: PaymentAccountEntity | null;
 
 		// 1. Get logTo UserId from request body
-		// validate request
-		const result = validationResult(request);
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: result.array().pop()?.msg });
-		}
-
-		const username = request.body.username;
+		const { username } = request.body;
 
 		try {
 			// 2. Check if the customer exists
@@ -395,7 +437,7 @@ export class AccountController {
 				);
 				if (!key) {
 					return response.status(StatusCodes.BAD_REQUEST).json({
-						error: 'PaymentAccount is not found in db: Key was not created',
+						error: 'PaymentAccount is not found in database: Key was not created',
 					});
 				}
 				paymentAccount = (await PaymentAccountService.instance.create(
@@ -406,7 +448,7 @@ export class AccountController {
 				)) as PaymentAccountEntity;
 				if (!paymentAccount) {
 					return response.status(StatusCodes.BAD_REQUEST).json({
-						error: 'PaymentAccount is not found in db: Payment account was not created',
+						error: 'PaymentAccount is not found in database: Payment account was not created',
 					});
 				}
 			}
@@ -424,6 +466,16 @@ export class AccountController {
 						});
 					}
 				}
+			}
+			// 5. Setup stripe account
+			if (process.env.STRIPE_ENABLED === 'true' && customer.paymentProviderId === null) {
+				eventTracker.submit({
+					operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
+					data: {
+						name: customer.name,
+						customerId: customer.customerId,
+					} satisfies ISubmitStripeCustomerCreateData,
+				} satisfies ISubmitOperation);
 			}
 			return response.status(StatusCodes.CREATED).json(customer);
 		} catch (error) {

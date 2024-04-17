@@ -1,69 +1,67 @@
-import type { Request, Response } from 'express';
-import { BaseAuthHandler } from '../../base-auth-handler.js';
-import type { IAuthResponse } from '../../../../types/authentication.js';
+import { AuthRuleProvider } from '../auth-rule-provider.js';
 
-export class AdminHandler extends BaseAuthHandler {
+export class AdminAuthRuleProvider extends AuthRuleProvider {
+	/**
+	 * Constructor for the AdminHandler class. Registers various routes related to admin functionalities like swagger, subscriptions, prices, products, and API keys for different environments.
+	 */
 	constructor() {
 		super();
+		// Main swagger route
+		this.registerRule('/admin/swagger', 'GET', 'admin:swagger:testnet', { skipNamespace: true });
+		this.registerRule('/admin/swagger', 'GET', 'admin:swagger:mainnet', { skipNamespace: true });
 		// Subscriptions
 		// skipNamespace is set to true cause we don't have the information about the namespace in the request
-		this.registerRoute('/admin/subscription/create', 'POST', 'admin:subscription:create:testnet', {
+		this.registerRule('/admin/subscription/create', 'POST', 'admin:subscription:create:testnet', {
 			skipNamespace: true,
 		});
-		this.registerRoute('/admin/subscription/create', 'POST', 'admin:subscription:create:mainnet', {
+		this.registerRule('/admin/subscription/create', 'POST', 'admin:subscription:create:mainnet', {
 			skipNamespace: true,
 		});
-		this.registerRoute('/admin/subscription/list', 'GET', 'admin:subscription:list:testnet', {
+		this.registerRule('/admin/subscription/list', 'GET', 'admin:subscription:list:testnet', {
 			skipNamespace: true,
 		});
-		this.registerRoute('/admin/subscription/list', 'GET', 'admin:subscription:list:mainnet', {
+		this.registerRule('/admin/subscription/list', 'GET', 'admin:subscription:list:mainnet', {
 			skipNamespace: true,
 		});
-		this.registerRoute('/admin/subscription/update', 'POST', 'admin:subscription:update:testnet', {
+		this.registerRule('/admin/subscription/update', 'POST', 'admin:subscription:update:testnet', {
 			skipNamespace: true,
 		});
-		this.registerRoute('/admin/subscription/update', 'POST', 'admin:subscription:update:mainnet', {
+		this.registerRule('/admin/subscription/update', 'POST', 'admin:subscription:update:mainnet', {
 			skipNamespace: true,
 		});
-		this.registerRoute('/admin/subscription/cancel', 'POST', 'admin:subscription:cancel:testnet', {
+		this.registerRule('/admin/subscription/cancel', 'POST', 'admin:subscription:cancel:testnet', {
 			skipNamespace: true,
 		});
-		this.registerRoute('/admin/subscription/cancel', 'POST', 'admin:subscription:cancel:mainnet', {
+		this.registerRule('/admin/subscription/cancel', 'POST', 'admin:subscription:cancel:mainnet', {
 			skipNamespace: true,
 		});
-		this.registerRoute('/admin/subscription/resume', 'POST', 'admin:subscription:resume:testnet', {
+		this.registerRule('/admin/subscription/resume', 'POST', 'admin:subscription:resume:testnet', {
 			skipNamespace: true,
 		});
-		this.registerRoute('/admin/subscription/resume', 'POST', 'admin:subscription:resume:mainnet', {
+		this.registerRule('/admin/subscription/resume', 'POST', 'admin:subscription:resume:mainnet', {
 			skipNamespace: true,
 		});
-		this.registerRoute('/admin/subscription/get', 'GET', 'admin:subscription:get:testnet', { skipNamespace: true });
-		this.registerRoute('/admin/subscription/get', 'GET', 'admin:subscription:get:mainnet', { skipNamespace: true });
+		this.registerRule('/admin/subscription/get', 'GET', 'admin:subscription:get:testnet', { skipNamespace: true });
+		this.registerRule('/admin/subscription/get', 'GET', 'admin:subscription:get:mainnet', { skipNamespace: true });
 		// Prices
-		this.registerRoute('/admin/price/list', 'GET', 'admin:price:list:testnet', { skipNamespace: true });
-		this.registerRoute('/admin/price/list', 'GET', 'admin:price:list:mainnet', { skipNamespace: true });
+		this.registerRule('/admin/price/list', 'GET', 'admin:price:list:testnet', { skipNamespace: true });
+		this.registerRule('/admin/price/list', 'GET', 'admin:price:list:mainnet', { skipNamespace: true });
 
 		// Products
-		this.registerRoute('/admin/product/list', 'GET', 'admin:product:list:testnet', { skipNamespace: true });
-		this.registerRoute('/admin/product/list', 'GET', 'admin:product:list:mainnet', { skipNamespace: true });
-		this.registerRoute('/admin/product/get', 'GET', 'admin:product:get:testnet', { skipNamespace: true });
-		this.registerRoute('/admin/product/get', 'GET', 'admin:product:get:mainnet', { skipNamespace: true });
+		this.registerRule('/admin/product/list', 'GET', 'admin:product:list:testnet', { skipNamespace: true });
+		this.registerRule('/admin/product/list', 'GET', 'admin:product:list:mainnet', { skipNamespace: true });
+		this.registerRule('/admin/product/get', 'GET', 'admin:product:get:testnet', { skipNamespace: true });
+		this.registerRule('/admin/product/get', 'GET', 'admin:product:get:mainnet', { skipNamespace: true });
 		// API Key
-		this.registerRoute('/admin/api-key/create', 'POST', 'admin:api-key:create:testnet', { skipNamespace: true });
-		this.registerRoute('/admin/api-key/create', 'POST', 'admin:api-key:create:mainnet', { skipNamespace: true });
-		this.registerRoute('/admin/api-key/update', 'POST', 'admin:api-key:update:testnet', { skipNamespace: true });
-		this.registerRoute('/admin/api-key/update', 'POST', 'admin:api-key:update:mainnet', { skipNamespace: true });
-		this.registerRoute('/admin/api-key/revoke', 'DELETE', 'admin:api-key:revoke:testnet', { skipNamespace: true });
-		this.registerRoute('/admin/api-key/revoke', 'DELETE', 'admin:api-key:revoke:mainnet', { skipNamespace: true });
-		this.registerRoute('/admin/api-key/get', 'GET', 'admin:api-key:get:testnet', { skipNamespace: true });
-		this.registerRoute('/admin/api-key/get', 'GET', 'admin:api-key:get:mainnet', { skipNamespace: true });
-		this.registerRoute('/admin/api-key/list', 'GET', 'admin:api-key:list:testnet', { skipNamespace: true });
-		this.registerRoute('/admin/api-key/list', 'GET', 'admin:api-key:list:mainnet', { skipNamespace: true });
-	}
-	public async handle(request: Request, response: Response): Promise<IAuthResponse> {
-		if (!request.path.includes('/admin/')) {
-			return super.handle(request, response);
-		}
-		return this.guardAPI(request);
+		this.registerRule('/admin/api-key/create', 'POST', 'admin:api-key:create:testnet', { skipNamespace: true });
+		this.registerRule('/admin/api-key/create', 'POST', 'admin:api-key:create:mainnet', { skipNamespace: true });
+		this.registerRule('/admin/api-key/update', 'POST', 'admin:api-key:update:testnet', { skipNamespace: true });
+		this.registerRule('/admin/api-key/update', 'POST', 'admin:api-key:update:mainnet', { skipNamespace: true });
+		this.registerRule('/admin/api-key/revoke', 'DELETE', 'admin:api-key:revoke:testnet', { skipNamespace: true });
+		this.registerRule('/admin/api-key/revoke', 'DELETE', 'admin:api-key:revoke:mainnet', { skipNamespace: true });
+		this.registerRule('/admin/api-key/get', 'GET', 'admin:api-key:get:testnet', { skipNamespace: true });
+		this.registerRule('/admin/api-key/get', 'GET', 'admin:api-key:get:mainnet', { skipNamespace: true });
+		this.registerRule('/admin/api-key/list', 'GET', 'admin:api-key:list:testnet', { skipNamespace: true });
+		this.registerRule('/admin/api-key/list', 'GET', 'admin:api-key:list:mainnet', { skipNamespace: true });
 	}
 }

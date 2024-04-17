@@ -6,10 +6,9 @@ import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { getQueryParams } from '../../helpers/helpers.js';
 import { DIDMetadataDereferencingResult, DefaultResolverUrl } from '@cheqd/did-provider-cheqd';
-import type { ValidationErrorResponseBody } from '../../types/shared.js';
 import type { IResourceTrack, ITrackOperation } from '../../types/track.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
-import { check, validationResult, param, query } from '../validator/index.js';
+import { check, param, query } from '../validator/index.js';
 import type {
 	CreateResourceRequestBody,
 	CreateResourceResponseBody,
@@ -20,6 +19,7 @@ import type {
 } from '../../types/resource.js';
 import { eventTracker } from '../../services/track/tracker.js';
 import { arePublicKeyHexsInWallet } from '../../services/helpers.js';
+import { validate } from '../validator/decorator.js';
 
 export class ResourceController {
 	public static createResourceValidator = [
@@ -142,17 +142,8 @@ export class ResourceController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	public async createResource(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies ValidationErrorResponseBody);
-		}
-
 		// Extract the did from the request
 		const { did } = request.params;
 		// Extract the resource parameters from the request
@@ -306,16 +297,8 @@ export class ResourceController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	public async searchResource(request: Request, response: Response) {
-		// validate request
-		const result = validationResult(request);
-
-		// handle error
-		if (!result.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: result.array().pop()?.msg,
-			} satisfies ValidationErrorResponseBody);
-		}
 		const { did } = request.params as SearchResourceRequestParams;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();

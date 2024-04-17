@@ -21,7 +21,7 @@ export class PresentationSubscriber extends BaseOperationObserver implements IOb
 			// Just skip this operation
 			return;
 		}
-		// tracking resource creation in DB
+		// tracking resource creation in database
 		const result = await this.trackPresentationOperation(trackOperation);
 		// notify about the result of tracking, e.g. log or datadog
 		await this.notify({

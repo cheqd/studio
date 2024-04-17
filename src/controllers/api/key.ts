@@ -17,10 +17,19 @@ import { check } from '../validator/index.js';
 import { eventTracker } from '../../services/track/tracker.js';
 import type { IKeyTrack, ITrackOperation } from '../../types/track.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
+import { validate } from '../validator/decorator.js';
 
 // ToDo: Make the format of /key/create and /key/read the same
 // ToDo: Add valdiation for /key/import
 export class KeyController {
+	public static keyGetValidator = [
+		check('kid')
+			.exists()
+			.withMessage('keyId was not provided')
+			.isHexadecimal()
+			.withMessage('keyId should be a hexadecimal string')
+			.bail(),
+	];
 	public static keyImportValidator = [
 		check('privateKeyHex')
 			.exists()
@@ -140,6 +149,7 @@ export class KeyController {
 	 *             example:
 	 *               error: Internal Error
 	 */
+	@validate
 	public async importKey(request: Request, response: Response) {
 		// Get parameters requeired for key importing
 		const { type, encrypted = false, ivHex, salt, alias, privateKeyHex } = request.body as ImportKeyRequestBody;
@@ -224,6 +234,7 @@ export class KeyController {
 	 *             example:
 	 *               error: Internal Error
 	 */
+	@validate
 	public async getKey(request: Request, response: Response) {
 		const { kid } = request.params as GetKeyRequestBody;
 		// Get strategy e.g. postgres or local

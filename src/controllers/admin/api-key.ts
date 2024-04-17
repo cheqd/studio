@@ -136,7 +136,7 @@ export class APIKeyController {
 					message: 'Cannot create a new API key',
 				});
 			}
-			eventTracker.notify({
+			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
 					`API key for customer: ${response.locals.customer.customerId} has been created`,
 					OperationNameEnum.API_KEY_CREATE
@@ -205,7 +205,7 @@ export class APIKeyController {
 				} satisfies APIKeyUpdateUnsuccessfulResponseBody);
 			}
 
-			eventTracker.notify({
+			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
 					`API key for customer: ${response.locals.customer.customerId} has been updated`,
 					OperationNameEnum.API_KEY_UPDATE
@@ -265,7 +265,7 @@ export class APIKeyController {
 					error: 'Cannot revoke API key',
 				} satisfies APIKeyRevokeUnsuccessfulResponseBody);
 			}
-			eventTracker.notify({
+			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
 					`API key for customer: ${response.locals.customer.customerId} has been revoked`,
 					OperationNameEnum.API_KEY_REVOKE

@@ -14,7 +14,6 @@ import type { AbstractIdentifierProvider } from '@veramo/did-manager';
 import type { AbstractKeyManagementSystem } from '@veramo/key-manager';
 import type { DataSource } from 'typeorm';
 import { CheqdNetwork } from '@cheqd/sdk';
-import type { IReturn } from '../middleware/auth/routine.js';
 import type { ICommonErrorResponse } from './authentication.js';
 import { StatusCodes } from 'http-status-codes';
 
@@ -64,6 +63,11 @@ export type UnsuccessfulResponseBody = {
 export type UnsuccessfulQueryResponseBody = UnsuccessfulResponseBody;
 
 export type ValidationErrorResponseBody = UnsuccessfulResponseBody;
+
+export interface IReturn {
+	returnOk(): ICommonErrorResponse;
+	returnError(status: number, error: string): ICommonErrorResponse;
+}
 
 export class CommonReturn implements IReturn {
 	returnOk(data = {}): ICommonErrorResponse {

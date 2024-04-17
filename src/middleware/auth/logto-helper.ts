@@ -1,9 +1,10 @@
-import type { ICommonErrorResponse } from '../../types/authentication';
+import type { ICommonErrorResponse } from '../../types/authentication.js';
 import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
-import type { IOAuthProvider } from './oauth/base.js';
-import { OAuthProvider } from './oauth/base.js';
+import type { IOAuthProvider } from './oauth/abstract.js';
+import { OAuthProvider } from './oauth/abstract.js';
+import { EventTracker, eventTracker } from '../../services/track/tracker.js';
 dotenv.config();
 
 export class LogToHelper extends OAuthProvider implements IOAuthProvider {
@@ -11,6 +12,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 	private allScopes: string[];
 	private allResourceWithNames: string[];
 	public defaultScopes: string[];
+	private m2mGetTokenAttempts = 5;
 
 	constructor() {
 		super();
@@ -42,8 +44,21 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 	}
 
 	private async getM2MToken(): Promise<string> {
-		if (this.m2mToken === '' || this.isTokenExpired(this.m2mToken)) {
-			await this.setM2MToken();
+		if (!this.m2mToken || this.isTokenExpired(this.m2mToken)) {
+			for (let i = 0; i < this.m2mGetTokenAttempts; i++) {
+				const response = await this.setM2MToken();
+				if (response.status === StatusCodes.OK) {
+					return this.m2mToken;
+				}
+				await eventTracker.notify({
+					message: EventTracker.compileBasicNotification(
+						'Failed to get M2M token, Attempt ' + i + ' of ' + this.m2mGetTokenAttempts,
+						'M2M token issuing'
+					),
+					severity: 'error',
+				});
+			}
+			throw new Error('Failed to get M2M token after ' + this.m2mGetTokenAttempts + ' attempts');
 		}
 		return this.m2mToken;
 	}
@@ -77,7 +92,6 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 				return this.returnOk(roles.data);
 			}
 		}
-
 		// Assign a default role to a user
 		return await this.assignDefaultRoleForUser(userId, process.env.LOGTO_DEFAULT_ROLE_ID);
 	}
@@ -268,6 +282,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 			return this.returnError(StatusCodes.BAD_GATEWAY, `getRolesForUser ${err}`);
 		}
 	}
+
 	private async getRoleInfo(roleId: string): Promise<ICommonErrorResponse> {
 		const uri = new URL(`/api/roles/${roleId}`, process.env.LOGTO_ENDPOINT);
 		try {
@@ -276,6 +291,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 			return this.returnError(StatusCodes.BAD_GATEWAY, `getRoleInfo ${err}`);
 		}
 	}
+
 	private async assignDefaultRoleForUser(userId: string, roleId: string): Promise<ICommonErrorResponse> {
 		const userInfo = await this.getUserInfo(userId);
 		const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
@@ -294,8 +310,8 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		const role = await this.getRoleInfo(roleId);
 		if (role.status !== StatusCodes.OK) {
 			return this.returnError(
-				StatusCodes.INTERNAL_SERVER_ERROR,
-				`Could not fetch the info about user with userId ${userId}`
+				StatusCodes.BAD_GATEWAY,
+				`Could not fetch the info about user with userId ${userId} because of error from authority server: ${role.error}`
 			);
 		}
 		// Such role exists
@@ -355,6 +371,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 			return this.returnError(500, `updateCustomData ${err}`);
 		}
 	}
+
 	private async getUserInfo(userId: string): Promise<ICommonErrorResponse> {
 		const uri = new URL(`/api/users/${userId}`, process.env.LOGTO_ENDPOINT);
 		try {
@@ -363,6 +380,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 			return this.returnError(StatusCodes.BAD_GATEWAY, `getUserInfo ${err}`);
 		}
 	}
+
 	public async getCustomData(userId: string): Promise<ICommonErrorResponse> {
 		const uri = new URL(`/api/users/${userId}/custom-data`, process.env.LOGTO_ENDPOINT);
 		try {
@@ -378,7 +396,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		if (allResources.status !== StatusCodes.OK) {
 			return this.returnError(
 				StatusCodes.BAD_GATEWAY,
-				`setAllResourcesWithNames: Error while getting all resources`
+				`setAllResourcesWithNames: Error while getting all resources. Error: ${allResources.error}`
 			);
 		}
 		for (const resource of allResources.data) {
@@ -386,6 +404,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		}
 		return this.returnOk({});
 	}
+
 	public async getAllResources(): Promise<ICommonErrorResponse> {
 		const uri = new URL(`/api/resources`, process.env.LOGTO_ENDPOINT);
 
@@ -412,6 +431,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		}
 		return this.returnOk({});
 	}
+
 	private async postToLogto(uri: URL, body: any, headers: any = {}): Promise<ICommonErrorResponse> {
 		const response = await fetch(uri, {
 			headers: {
@@ -427,6 +447,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		}
 		return this.returnOk({});
 	}
+
 	private async getToLogto(uri: URL, headers: any = {}): Promise<ICommonErrorResponse> {
 		const response = await fetch(uri, {
 			headers: {
@@ -442,6 +463,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		const metadata = await response.json();
 		return this.returnOk(metadata);
 	}
+
 	private async setM2MToken(): Promise<ICommonErrorResponse> {
 		const searchParams = new URLSearchParams({
 			grant_type: 'client_credentials',

@@ -1,6 +1,6 @@
 import type { ICommonErrorResponse } from '../../../types/authentication.js';
 import { LogToHelper } from '../logto-helper.js';
-import { IOAuthProvider, OAuthProvider } from './base.js';
+import { IOAuthProvider, OAuthProvider } from './abstract.js';
 
 export class LogToProvider extends OAuthProvider implements IOAuthProvider {
 	private logToHelper: LogToHelper;

@@ -2,35 +2,53 @@ import { Request, Response, NextFunction, response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
 import * as dotenv from 'dotenv';
-import { AccountAuthHandler } from './auth/routes/account-auth.js';
-import { CredentialAuthHandler } from './auth/routes/credential-auth.js';
-import { DidAuthHandler } from './auth/routes/did-auth.js';
-import { KeyAuthHandler } from './auth/routes/key-auth.js';
-import { CredentialStatusAuthHandler } from './auth/routes/credential-status-auth.js';
-import { ResourceAuthHandler } from './auth/routes/resource-auth.js';
-import type { BaseAuthHandler } from './auth/base-auth-handler.js';
+import { AccountAuthProvider } from './auth/routes/api/account-auth.js';
+import { KeyAuthProvider } from './auth/routes/api/key-auth.js';
 import { LogToHelper } from './auth/logto-helper.js';
-import { PresentationAuthHandler } from './auth/routes/presentation-auth.js';
-import { UserService } from '../services/api/user.js';
 import { configLogToExpress } from '../types/constants.js';
 import { handleAuthRoutes, withLogto } from '@logto/express';
 import { LogToProvider } from './auth/oauth/logto-provider.js';
-import { AuthInfoHandler } from './auth/routes/auth-user-info.js';
-import { CustomerService } from '../services/api/customer.js';
-import { AdminHandler } from './auth/routes/admin/admin-auth.js';
+import { AdminAuthRuleProvider } from './auth/routes/admin/admin-auth.js';
+import { APIGuard } from './auth/auth-gaurd.js';
+import { AuthRuleRepository } from './auth/routes/auth-rule-repository.js';
+import type { IOAuthProvider } from './auth/oauth/abstract.js';
+import { DidAuthRuleProvider } from './auth/routes/api/did-auth.js';
+import { PresentationAuthRuleProvider } from './auth/routes/api/presentation-auth.js';
+import { ResourceAuthRuleProvider } from './auth/routes/api/resource-auth.js';
+import { CredentialAuthRuleProvider } from './auth/routes/api/credential-auth.js';
+import { CredentialStatusAuthRuleProvider } from './auth/routes/api/credential-status-auth.js';
+import { AuthInfoProvider } from './auth/routes/api/auth-user-info.js';
+import type { UnsuccessfulResponseBody } from '../types/shared.js';
 
 dotenv.config();
 
 const { ENABLE_EXTERNAL_DB } = process.env;
 
 export class Authentication {
-	private initHandler: BaseAuthHandler;
+	private apiGuardian: APIGuard;
 	private isSetup = false;
 	private logToHelper: LogToHelper;
+	private oauthProvider: IOAuthProvider;
 
 	constructor() {
+		this.oauthProvider = new LogToProvider();
+		const authRuleRepository = new AuthRuleRepository();
+
+		authRuleRepository.push(new AuthInfoProvider());
+
+		authRuleRepository.push(new AccountAuthProvider());
+		authRuleRepository.push(new KeyAuthProvider());
+
+		authRuleRepository.push(new DidAuthRuleProvider());
+		authRuleRepository.push(new ResourceAuthRuleProvider());
+		authRuleRepository.push(new CredentialAuthRuleProvider());
+		authRuleRepository.push(new CredentialStatusAuthRuleProvider());
+		authRuleRepository.push(new PresentationAuthRuleProvider());
+
+		authRuleRepository.push(new AdminAuthRuleProvider());
+
+		this.apiGuardian = new APIGuard(authRuleRepository, this.oauthProvider);
 		// Initial auth handler
-		this.initHandler = new AccountAuthHandler();
 		this.logToHelper = new LogToHelper();
 	}
 
@@ -42,26 +60,6 @@ export class Authentication {
 					error: _r.error,
 				});
 			}
-			const fillChain = async (handler: BaseAuthHandler[]) => {
-				const oauthProvider = new LogToProvider();
-				oauthProvider.setHelper(this.logToHelper);
-				for (let i = 0; i < handler.length - 1; i++) {
-					handler[i].setOAuthProvider(oauthProvider);
-					handler[i].setNext(handler[i + 1]);
-				}
-			};
-
-			fillChain([
-				this.initHandler,
-				new DidAuthHandler(),
-				new KeyAuthHandler(),
-				new CredentialAuthHandler(),
-				new CredentialStatusAuthHandler(),
-				new ResourceAuthHandler(),
-				new PresentationAuthHandler(),
-				new AuthInfoHandler(),
-				new AdminHandler(),
-			]);
 
 			this.isSetup = true;
 		}
@@ -78,7 +76,7 @@ export class Authentication {
 	}
 
 	public async accessControl(request: Request, response: Response, next: NextFunction) {
-		if (this.initHandler.skipPath(request.path)) return next();
+		if (this.apiGuardian.skipPath(request.path)) return next();
 
 		// ToDo: Make it more readable
 		if (ENABLE_EXTERNAL_DB === 'false') {
@@ -101,7 +99,7 @@ export class Authentication {
 	}
 
 	public async withLogtoWrapper(request: Request, response: Response, next: NextFunction) {
-		if (this.initHandler.skipPath(request.path)) return next();
+		if (this.apiGuardian.skipPath(request.path)) return next();
 		try {
 			return withLogto({ ...configLogToExpress, scopes: ['roles'] })(request, response, next);
 		} catch (err) {
@@ -114,65 +112,19 @@ export class Authentication {
 	}
 
 	// ToDo: refactor it or keep for the moment of setting up the admin panel
-	private isBootstrapping(request: Request) {
-		return ['/account/create'].includes(request.path);
-	}
+	// private isBootstrapping(request: Request) {
+	// 	return ['/account/create'].includes(request.path);
+	// }
 
 	public async guard(request: Request, response: Response, next: NextFunction) {
-		const { provider } = request.body as { claim: string; provider: string };
-		if (this.initHandler.skipPath(request.path)) return next();
+		if (this.apiGuardian.skipPath(request.path)) return next();
 
 		try {
-			// If response got back that means error was raised
-			const _resp = await this.initHandler.handle(request, response);
-			if (_resp.status !== StatusCodes.OK) {
-				return response.status(_resp.status).json({
-					error: _resp.error,
-				});
-			}
-			// Only for rules when it's not allowed for unauthorized users
-			// we need to find customer or user and assign them to the response.locals
-			if (!_resp.data.isAllowedUnauthorized) {
-				let customer;
-				let user;
-				if (_resp.data.userId !== '') {
-					user = await UserService.instance.get(_resp.data.userId);
-					if (!user) {
-						return response.status(StatusCodes.NOT_FOUND).json({
-							error: `Looks like user with logToId ${_resp.data.userId} is not found`,
-						});
-					}
-					if (user && !user.customer) {
-						return response.status(StatusCodes.NOT_FOUND).json({
-							error: `Looks like user with logToId ${_resp.data.userId} is not assigned to any CredentialService customer`,
-						});
-					}
-					customer = user.customer;
-				}
-				if (_resp.data.customerId !== '' && !customer) {
-					customer = await CustomerService.instance.get(_resp.data.customerId);
-					if (!customer) {
-						return response.status(StatusCodes.NOT_FOUND).json({
-							error: `Looks like customer with id ${_resp.data.customerId} is not found`,
-						});
-					}
-				}
-				if (!customer && !user && !this.isBootstrapping(request)) {
-					return response.status(StatusCodes.UNAUTHORIZED).json({
-						error: `Looks like customer and user are not found in the system or they are not registered yet. Please contact administrator.`,
-					});
-				}
-				response.locals.customer = customer;
-				response.locals.user = user;
-			}
-			next();
+			return await this.apiGuardian.guard(request, response, next);
 		} catch (err) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
-				authenticated: false,
-				error: `${err}`,
-				customerId: null,
-				provider,
-			});
+				error: `Unexpected error: While guarding API request ${err}`,
+			} satisfies UnsuccessfulResponseBody);
 		}
 	}
 }

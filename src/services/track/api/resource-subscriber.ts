@@ -52,7 +52,7 @@ export class ResourceSubscriber extends BaseOperationObserver implements IObserv
 		}
 		trackOperation.category = OperationCategoryNameEnum.RESOURCE;
 		trackOperation.name = OperationNameEnum.RESOURCE_CREATE;
-		// tracking resource creation in DB
+		// tracking resource creation in database
 		const result = await this.trackResourceOperation(trackOperation);
 		// notify about the result of tracking, e.g. log or datadog
 		await this.notify({
