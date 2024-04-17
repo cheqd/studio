@@ -19,7 +19,7 @@ export class DIDSubscriber extends BaseOperationObserver implements IObserver {
 			// Just skip this operation
 			return;
 		}
-		// tracking resource creation in DB
+		// tracking resource creation in database
 		const result = await this.trackDIDOperation(trackOperation);
 		// notify about the result of tracking, e.g. log or datadog
 		await this.notify({

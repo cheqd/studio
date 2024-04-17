@@ -192,7 +192,7 @@ export class AccountController {
 			customer = (await CustomerService.instance.create(logToUserEmail)) as CustomerEntity;
 			if (!customer) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'User is not found in db: Customer was not created',
+					error: 'User is not found in database: Customer was not created',
 				} satisfies UnsuccessfulResponseBody);
 			}
 			// Notify
@@ -206,7 +206,7 @@ export class AccountController {
 			user = await UserService.instance.create(logToUserId, customer, defaultRole);
 			if (!user) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'User is not found in db: User was not created',
+					error: 'User is not found in database: User was not created',
 				} satisfies UnsuccessfulResponseBody);
 			}
 			// Notify
@@ -224,13 +224,13 @@ export class AccountController {
 			customer = (await CustomerService.instance.create(logToUserEmail)) as CustomerEntity;
 			if (!customer) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'User exists in db: Customer was not created',
+					error: 'User exists in database: Customer was not created',
 				} satisfies UnsuccessfulResponseBody);
 			}
 			// Notify
 			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
-					'User exists in db: Customer with customerId: ' + customer.customerId + ' was created'
+					'User exists in database: Customer with customerId: ' + customer.customerId + ' was created'
 				),
 				severity: 'info',
 			});
@@ -250,7 +250,7 @@ export class AccountController {
 			);
 			if (!key) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'PaymentAccount is not found in db: Key was not created',
+					error: 'PaymentAccount is not found in database: Key was not created',
 				} satisfies UnsuccessfulResponseBody);
 			}
 			paymentAccount = (await PaymentAccountService.instance.create(
@@ -261,13 +261,13 @@ export class AccountController {
 			)) as PaymentAccountEntity;
 			if (!paymentAccount) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'PaymentAccount is not found in db: Payment account was not created',
+					error: 'PaymentAccount is not found in database: Payment account was not created',
 				} satisfies UnsuccessfulResponseBody);
 			}
 			// Notify
 			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
-					'PaymentAccount was not found in db: Payment account with address: ' +
+					'PaymentAccount was not found in database: Payment account with address: ' +
 						paymentAccount.address +
 						' was created'
 				),
@@ -437,7 +437,7 @@ export class AccountController {
 				);
 				if (!key) {
 					return response.status(StatusCodes.BAD_REQUEST).json({
-						error: 'PaymentAccount is not found in db: Key was not created',
+						error: 'PaymentAccount is not found in database: Key was not created',
 					});
 				}
 				paymentAccount = (await PaymentAccountService.instance.create(
@@ -448,7 +448,7 @@ export class AccountController {
 				)) as PaymentAccountEntity;
 				if (!paymentAccount) {
 					return response.status(StatusCodes.BAD_REQUEST).json({
-						error: 'PaymentAccount is not found in db: Payment account was not created',
+						error: 'PaymentAccount is not found in database: Payment account was not created',
 					});
 				}
 			}
