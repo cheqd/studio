@@ -31,6 +31,7 @@ import { ProductController } from './controllers/admin/product.js';
 import { SubscriptionController } from './controllers/admin/subscriptions.js';
 import { PriceController } from './controllers/admin/prices.js';
 import { WebhookController } from './controllers/admin/webhook.js';
+import { APIKeyController } from './controllers/admin/api-key.js';
 
 let swaggerOptions = {};
 if (process.env.ENABLE_AUTHENTICATION === 'true') {
@@ -66,10 +67,14 @@ class App {
 			cors({
 				origin: function (origin, callback) {
 					if (!origin) return callback(null, true);
-					if (CORS_ALLOWED_ORIGINS?.indexOf(origin) === -1) {
-						return callback(new Error(CORS_ERROR_MSG), false);
+					const allowedList = CORS_ALLOWED_ORIGINS.split(',');
+
+					for (const allowed of allowedList) {
+						if (allowed.indexOf(origin) !== -1) {
+							return callback(null, true);
+						}
 					}
-					return callback(null, true);
+					return callback(new Error(CORS_ERROR_MSG), false);
 				},
 			})
 		);
@@ -267,6 +272,13 @@ class App {
 				SubscriptionController.subscriptionResumeValidator,
 				new SubscriptionController().resume
 			);
+
+			// API key
+			app.post('/admin/api-key/create', APIKeyController.apiKeyCreateValidator, new APIKeyController().create);
+			app.post('/admin/api-key/update', APIKeyController.apiKeyUpdateValidator, new APIKeyController().update);
+			app.get('/admin/api-key/get', APIKeyController.apiKeyGetValidator, new APIKeyController().get);
+			app.get('/admin/api-key/list', APIKeyController.apiKeyListValidator, new APIKeyController().list);
+			app.delete('/admin/api-key/revoke', APIKeyController.apiKeyRevokeValidator, new APIKeyController().revoke);
 
 			// Webhook
 			app.post('/admin/webhook', new WebhookController().handleWebhook);

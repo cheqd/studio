@@ -48,6 +48,17 @@ export class AdminHandler extends BaseAuthHandler {
 		this.registerRoute('/admin/product/list', 'GET', 'admin:product:list:mainnet', { skipNamespace: true });
 		this.registerRoute('/admin/product/get', 'GET', 'admin:product:get:testnet', { skipNamespace: true });
 		this.registerRoute('/admin/product/get', 'GET', 'admin:product:get:mainnet', { skipNamespace: true });
+		// API Key
+		this.registerRoute('/admin/api-key/create', 'POST', 'admin:api-key:create:testnet', { skipNamespace: true });
+		this.registerRoute('/admin/api-key/create', 'POST', 'admin:api-key:create:mainnet', { skipNamespace: true });
+		this.registerRoute('/admin/api-key/update', 'POST', 'admin:api-key:update:testnet', { skipNamespace: true });
+		this.registerRoute('/admin/api-key/update', 'POST', 'admin:api-key:update:mainnet', { skipNamespace: true });
+		this.registerRoute('/admin/api-key/revoke', 'DELETE', 'admin:api-key:revoke:testnet', { skipNamespace: true });
+		this.registerRoute('/admin/api-key/revoke', 'DELETE', 'admin:api-key:revoke:mainnet', { skipNamespace: true });
+		this.registerRoute('/admin/api-key/get', 'GET', 'admin:api-key:get:testnet', { skipNamespace: true });
+		this.registerRoute('/admin/api-key/get', 'GET', 'admin:api-key:get:mainnet', { skipNamespace: true });
+		this.registerRoute('/admin/api-key/list', 'GET', 'admin:api-key:list:testnet', { skipNamespace: true });
+		this.registerRoute('/admin/api-key/list', 'GET', 'admin:api-key:list:mainnet', { skipNamespace: true });
 	}
 	public async handle(request: Request, response: Response): Promise<IAuthResponse> {
 		if (!request.path.includes('/admin/')) {

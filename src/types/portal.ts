@@ -5,6 +5,10 @@ export type ProductWithPrices = Stripe.Product & {
 	prices?: Stripe.Price[];
 };
 
+export type APIServiceOptions = {
+	decryptionNeeded: boolean;
+};
+
 export type ProductListUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 export type ProductGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
@@ -93,6 +97,55 @@ export type SubscriptionResumeUnsuccessfulResponseBody = UnsuccessfulResponseBod
 // Get
 
 export type PortalCustomerGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+
+// API key
+export type APIKeyResponseBody = {
+	apiKey: string;
+	name: string;
+	createdAt: string;
+	expiresAt: string;
+	revoked: boolean;
+};
+// Create
+export type APIKeyCreateRequestBody = {
+	name: string;
+	expiresAt?: Date;
+};
+
+export type APIKeyCreateResponseBody = APIKeyResponseBody;
+export type APIKeyCreateUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+
+// Update
+export type APIKeyUpdateRequestBody = {
+	apiKey: string;
+	name?: string;
+	expiresAt?: Date;
+	revoked?: boolean;
+};
+export type APIKeyUpdateResponseBody = APIKeyResponseBody;
+
+export type APIKeyUpdateUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+
+// Revoke
+export type APIKeyRevokeRequestBody = {
+	apiKey: string;
+};
+export type APIKeyRevokeResponseBody = {
+	apiKey: string;
+	revoked: boolean;
+};
+export type APIKeyRevokeUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+
+// List
+export type APIKeyListResponseBody = {
+	apiKeys: APIKeyResponseBody[];
+};
+export type APIKeyListUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+
+// Get
+export type APIKeyGetRequestBody = APIKeyResponseBody;
+export type APIKeyGetResponseBody = APIKeyCreateResponseBody;
+export type APIKeyGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
 // Utils
 

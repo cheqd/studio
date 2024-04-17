@@ -48,13 +48,14 @@ import { CheqdNetwork } from '@cheqd/sdk';
 import { IdentifierService } from '../api/identifier.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity.js';
-import { APIKeyService } from '../api/api-key.js';
+import { APIKeyService } from '../admin/api-key.js';
 import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import { KeyDIDProvider } from '@veramo/did-provider-key';
 import type { AbstractIdentifierProvider } from '@veramo/did-manager';
 import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { toTPublicKeyEd25519 } from '../helpers.js';
+import type { APIServiceOptions } from '../../types/portal.js';
 
 dotenv.config();
 
@@ -524,11 +525,23 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity> {
-		const keys = await APIKeyService.instance.find({ customer: customer, user: user });
+		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
+		const keys = await APIKeyService.instance.find(
+			{ customer: customer, user: user, revoked: false },
+			undefined,
+			options
+		);
 		if (keys.length > 0) {
 			throw new Error(`API key for customer ${customer.customerId} and user ${user.logToId} already exists`);
 		}
-		const apiKeyEntity = await APIKeyService.instance.create(apiKey, customer, user);
+		const apiKeyEntity = await APIKeyService.instance.create(
+			apiKey,
+			'idToken',
+			user,
+			undefined,
+			undefined,
+			options
+		);
 		if (!apiKeyEntity) {
 			throw new Error(`Cannot create API key for customer ${customer.customerId} and user ${user.logToId}`);
 		}
@@ -536,23 +549,32 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity> {
-		const key = await APIKeyService.instance.get(apiKey.apiKeyId);
+		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
+		const key = await APIKeyService.instance.get(apiKey.apiKey, options);
 		if (!key) {
-			throw new Error(`API key with id ${apiKey.apiKeyId} not found`);
+			throw new Error(`API key not found`);
 		}
 		const apiKeyEntity = await APIKeyService.instance.update(
-			key.apiKeyId,
-			newApiKey,
-			await APIKeyService.instance.getExpiryDate(newApiKey)
+			{
+				customer: key.customer,
+				apiKey: newApiKey,
+				expiresAt: APIKeyService.getExpiryDateJWT(newApiKey),
+			},
+			options
 		);
 		if (!apiKeyEntity) {
-			throw new Error(`Cannot update API key with id ${apiKey.apiKeyId}`);
+			throw new Error(`Cannot update API key`);
 		}
 		return apiKeyEntity;
 	}
 
 	async getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | undefined> {
-		const keys = await APIKeyService.instance.find({ customer: customer, user: user });
+		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
+		const keys = await APIKeyService.instance.find(
+			{ customer: customer, user: user, revoked: false, name: 'idToken' },
+			undefined,
+			options
+		);
 		if (keys.length > 1) {
 			throw new Error(
 				`For the customer with customer id ${customer.customerId} and user with logToId ${user.logToId} there more then 1 API key`
@@ -562,5 +584,9 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			return undefined;
 		}
 		return keys[0];
+	}
+
+	async decryptAPIKey(apiKey: string): Promise<string> {
+		return await APIKeyService.instance.decryptAPIKey(apiKey);
 	}
 }
