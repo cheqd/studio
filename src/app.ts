@@ -106,6 +106,8 @@ class App {
 			}
 		}
 		this.express.use(express.text());
+		this.express.use(auth.handleError);
+		this.express.use(async (req, res, next) => await auth.accessControl(req, res, next));
 
 		this.express.use(
 			'/swagger',
@@ -120,8 +122,6 @@ class App {
 			);
 			this.express.use(Middleware.setStripeClient);
 		}
-		this.express.use(auth.handleError);
-		this.express.use(async (req, res, next) => await auth.accessControl(req, res, next));
 	}
 
 	private routes() {
