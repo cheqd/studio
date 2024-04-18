@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.20.0-develop.5](https://github.com/cheqd/credential-service/compare/2.20.0-develop.4...2.20.0-develop.5) (2024-04-18)
+
+
+### Bug Fixes
+
+* Reject unauthorised users for /admin/swagger page ([#523](https://github.com/cheqd/credential-service/issues/523)) ([51f800b](https://github.com/cheqd/credential-service/commit/51f800b0c907d369dbc9937b735ab934bba7b12f))
+
 ## [2.20.0-develop.4](https://github.com/cheqd/credential-service/compare/2.20.0-develop.3...2.20.0-develop.4) (2024-04-17)
 
 
