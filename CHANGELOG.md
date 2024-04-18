@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.20.0](https://github.com/cheqd/credential-service/compare/2.19.0...2.20.0) (2024-04-18)
+
+
+### Features
+
+* Add API key endpoints [DEV-3793] ([#510](https://github.com/cheqd/credential-service/issues/510)) ([c237502](https://github.com/cheqd/credential-service/commit/c2375027fe43ea5cfa277b65a1cd20614430ec60))
+* Add base endpoints for Stripe integration [DEV-3671] ([#500](https://github.com/cheqd/credential-service/issues/500)) ([99792c7](https://github.com/cheqd/credential-service/commit/99792c7de96230b02db1f76d71dd8d431cc1cb08))
+* Add endpoints for organisation page [DEV-3848] ([#522](https://github.com/cheqd/credential-service/issues/522)) ([b5de42b](https://github.com/cheqd/credential-service/commit/b5de42b47b3cfe7cbf1d5b6d49cefea278402807))
+
+
+### Bug Fixes
+
+* Add customerId into operation entity [DEV-3732] ([#507](https://github.com/cheqd/credential-service/issues/507)) ([b580646](https://github.com/cheqd/credential-service/commit/b580646d2d4e1030ee751c4bd2c1fcc93720f211))
+* Reject unauthorised users for /admin/swagger page ([#523](https://github.com/cheqd/credential-service/issues/523)) ([51f800b](https://github.com/cheqd/credential-service/commit/51f800b0c907d369dbc9937b735ab934bba7b12f))
+
 ## [2.20.0-develop.5](https://github.com/cheqd/credential-service/compare/2.20.0-develop.4...2.20.0-develop.5) (2024-04-18)
 
 
