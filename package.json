@@ -106,7 +106,7 @@
 		"uri-js": "^4.4.1"
 	},
 	"devDependencies": {
-		"@playwright/test": "1.41.2",
+		"@playwright/test": "^1.43.1",
 		"@semantic-release/changelog": "^6.0.3",
 		"@semantic-release/commit-analyzer": "^11.1.0",
 		"@semantic-release/git": "^10.0.1",
