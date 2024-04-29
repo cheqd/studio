@@ -112,7 +112,7 @@
 		"@semantic-release/git": "^10.0.1",
 		"@semantic-release/github": "^10.0.3",
 		"@semantic-release/npm": "^11.0.3",
-		"@semantic-release/release-notes-generator": "^12.1.0",
+		"@semantic-release/release-notes-generator": "^13.0.0",
 		"@types/bcrypt": "^5.0.2",
 		"@types/bs58": "^4.0.4",
 		"@types/cookie-parser": "^1.4.7",
