@@ -57,7 +57,7 @@
 		"@cheqd/ts-proto": "^3.4.2",
 		"@cosmjs/amino": "^0.32.3",
 		"@cosmjs/encoding": "^0.32.3",
-		"@logto/express": "^2.3.8",
+		"@logto/express": "^2.3.9",
 		"@stablelib/ed25519": "^1.0.3",
 		"@veramo/core": "^5.6.0",
 		"@veramo/credential-ld": "^5.6.0",
