@@ -7,6 +7,7 @@ import { InvalidTokenError, jwtDecode } from 'jwt-decode';
 export type AuthRuleOptions = {
 	allowUnauthorized?: boolean;
 	skipNamespace?: boolean;
+	skipAuthentication?: boolean;
 };
 
 export class AuthRule {
@@ -148,6 +149,10 @@ export class AuthRule {
 
 	public isSkipNamespace(): boolean {
 		return this.options.skipNamespace || false;
+	}
+
+	public isSkipAuthentication(): boolean {
+		return this.options.skipAuthentication || false;
 	}
 
 	public isEmpty(): boolean {
