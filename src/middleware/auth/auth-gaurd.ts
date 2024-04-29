@@ -40,11 +40,6 @@ export class APIGuard {
 			} satisfies ValidationErrorResponseBody);
 		}
 
-		// There are some requests to be performed to Login
-		if (authRule.isSkipAuthentication()) {
-			return next();
-		}
-
 		// Set user info fetcher
 		this.chooseUserFetcherStrategy(request);
 
