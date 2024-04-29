@@ -40,13 +40,13 @@ export class APIGuard {
 			} satisfies ValidationErrorResponseBody);
 		}
 
-		// There some requests where API guarding is not needed
-		if (authRule.isAllowedUnauthorized()) {
-			return next();
-		}
-
 		// Set user info fetcher
 		this.chooseUserFetcherStrategy(request);
+
+		// There some requests where API guarding is not needed
+		if (!request.user.isAuthenticated && authRule.isAllowedUnauthorized()) {
+			return next();
+		}
 
 		// Get User info. scopes and user id maybe placed in M2M, API token or using Swagger UI
 		const resp = await this.userInfoFetcher.fetch(request, response, this.oauthProvider);
@@ -55,13 +55,13 @@ export class APIGuard {
 		}
 
 		// Checks if the list of scopes from user enough to make an action
-		if (!authRule.areValidScopes(response.locals.scopes)) {
+		if (!authRule.isAllowedUnauthorized() && !authRule.areValidScopes(response.locals.scopes)) {
 			return response.status(StatusCodes.FORBIDDEN).send({
 				error: `Unauthorized error: Your account is not authorized to carry out this action.`,
 			} satisfies ValidationErrorResponseBody);
 		}
 
-		next();
+		return next();
 	}
 
 	/**
