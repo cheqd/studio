@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.20.2](https://github.com/cheqd/credential-service/compare/2.20.1...2.20.2) (2024-05-20)
+
+
+### Bug Fixes
+
+* Fix unauthorized api for logged in user [DEV-3870] ([#534](https://github.com/cheqd/credential-service/issues/534)) ([dc0fc8a](https://github.com/cheqd/credential-service/commit/dc0fc8abf98caf235387e4e6ce2977cc1b9d87c1))
+
 ## [2.20.2-develop.1](https://github.com/cheqd/credential-service/compare/2.20.1...2.20.2-develop.1) (2024-04-29)
 
 
