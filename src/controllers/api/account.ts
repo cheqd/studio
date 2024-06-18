@@ -174,6 +174,8 @@ export class AccountController {
 		}
 		const logToUserId = request.body.user.id;
 		const logToUserEmail = request.body.user.primaryEmail;
+		const logToName = request.body.user.name || ''; // setting empty string as backup incase it was null.
+
 		const defaultRole = await RoleService.instance.getDefaultRole();
 		if (!defaultRole) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
@@ -191,7 +193,7 @@ export class AccountController {
 			// 2.1.1. Create customer
 			// I’m setting the "name" field to an empty string on the current CustomerEntity because it is non-nullable.
 			//  we will populate the customer's "name" field using the response from the Stripe account creation in account-submitter.ts.
-			customer = (await CustomerService.instance.create('', logToUserEmail)) as CustomerEntity;
+			customer = (await CustomerService.instance.create(logToName, logToUserEmail)) as CustomerEntity;
 			if (!customer) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'User is not found in database: Customer was not created',
