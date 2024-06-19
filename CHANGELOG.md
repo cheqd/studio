@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.20.3-develop.1](https://github.com/cheqd/credential-service/compare/2.20.2...2.20.3-develop.1) (2024-06-19)
+
+
+### Bug Fixes
+
+* Incorrect customer/Stripe details stored in DB [DEV-4005] ([#543](https://github.com/cheqd/credential-service/issues/543)) ([e6dd226](https://github.com/cheqd/credential-service/commit/e6dd22636d296a4b4917c7300c379f54bbb5c118))
+
 ## [2.20.2](https://github.com/cheqd/credential-service/compare/2.20.1...2.20.2) (2024-05-20)
 
 
