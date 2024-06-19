@@ -12,6 +12,14 @@ export type QueryCustomerResponseBody = {
 	};
 };
 
+export type UpdateCustomerBody = {
+	customerId: string;
+	name?: string;
+	email?: string;
+	description?: string;
+	paymentProviderId?: string;
+};
+
 export type QueryIdTokenResponseBody = {
 	idToken: string;
 };
