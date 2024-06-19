@@ -65,12 +65,12 @@ export class OrganisationController {
 	async update(request: Request, response: Response) {
 		const { name, email, description } = request.body;
 		try {
-			const customer = await CustomerService.instance.update(
-				response.locals.customer.customerId,
+			const customer = await CustomerService.instance.update({
+				customerId: response.locals.customer.customerId,
 				name,
 				email,
-				description
-			);
+				description,
+			});
 			const paymentAccount = await PaymentAccountService.instance.find({ customer: customer });
 
 			if (!customer || paymentAccount.length === 0) {

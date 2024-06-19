@@ -45,8 +45,12 @@ export class PortalAccountCreateSubmitter implements IObserver {
 				return;
 			}
 
-			// Update the CaaS customer with the new Stripe account
-			await CustomerService.instance.update(data.customerId, undefined, account.id);
+			// Update the CaaS customer with the new Stripe account. Note, we're populating the "name" field from stripe's response.
+			await CustomerService.instance.update({
+				customerId: data.customerId,
+				name: data.name,
+				paymentProviderId: account.id,
+			});
 			await this.notify({
 				message: EventTracker.compileBasicNotification(
 					`Stripe account created with name: ${data.name}.`,
