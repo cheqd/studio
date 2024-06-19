@@ -8,7 +8,7 @@ import * as dotenv from 'dotenv';
 import { PaymentAccountService } from './payment-account.js';
 import { CheqdNetwork } from '@cheqd/sdk';
 import { v4 as uuidv4 } from 'uuid';
-import type { UpdateCustomerBody } from '../../types/customer.js';
+import type { UpdateCustomerEntity } from '../../types/customer.js';
 dotenv.config();
 
 export class CustomerService {
@@ -43,7 +43,7 @@ export class CustomerService {
 		};
 	}
 
-	public async update(customer: UpdateCustomerBody) {
+	public async update(customer: UpdateCustomerEntity) {
 		const { customerId, name, email, description, paymentProviderId } = customer;
 
 		const existingCustomer = await this.customerRepository.findOneBy({ customerId });

@@ -1,3 +1,4 @@
+import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import type { UnsuccessfulQueryResponseBody } from './shared.js';
 
 // Positive
@@ -12,13 +13,7 @@ export type QueryCustomerResponseBody = {
 	};
 };
 
-export type UpdateCustomerBody = {
-	customerId: string;
-	name?: string;
-	email?: string;
-	description?: string;
-	paymentProviderId?: string;
-};
+export type UpdateCustomerEntity = Partial<CustomerEntity> & Pick<CustomerEntity, 'customerId'>;
 
 export type QueryIdTokenResponseBody = {
 	idToken: string;
