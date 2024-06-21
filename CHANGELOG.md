@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.20.3-develop.2](https://github.com/cheqd/credential-service/compare/2.20.3-develop.1...2.20.3-develop.2) (2024-06-21)
+
+
+### Bug Fixes
+
+* Manage user plan intents [DEV-4024] ([#545](https://github.com/cheqd/credential-service/issues/545)) ([4563b83](https://github.com/cheqd/credential-service/commit/4563b83b0515be273bb80944f37d8629286eb530))
+
 ## [2.20.3-develop.1](https://github.com/cheqd/credential-service/compare/2.20.2...2.20.3-develop.1) (2024-06-19)
 
 
