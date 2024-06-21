@@ -257,7 +257,7 @@ export class SubscriptionController {
 	@syncOne
 	async update(request: Request, response: Response) {
 		const stripe = response.locals.stripe as Stripe;
-		const { returnUrl } = request.body satisfies SubscriptionUpdateRequestBody;
+		const { returnUrl, isManagePlan, priceId } = request.body satisfies SubscriptionUpdateRequestBody;
 		try {
 			// Get the subscription object from the DB
 			const subscription = await SubscriptionService.instance.findOne({ customer: response.locals.customer });
@@ -266,16 +266,44 @@ export class SubscriptionController {
 					error: `Subscription was not found`,
 				} satisfies SubscriptionUpdateUnsuccessfulResponseBody);
 			}
+			// retrieve subscription to get subscription item id, which is different from subscriptionId.
+			const _sub = await stripe.subscriptions.retrieve(subscription.subscriptionId as string);
+			if (_sub.lastResponse?.statusCode !== StatusCodes.OK) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: `Subscription was not found`,
+				} satisfies SubscriptionGetUnsuccessfulResponseBody);
+			}
 
 			// Create portal link
 			const session = await stripe.billingPortal.sessions.create({
 				customer: response.locals.customer.paymentProviderId,
 				return_url: returnUrl,
+				// based on request body, trigger a manage or confirm update flow.
+				flow_data: isManagePlan
+					? undefined
+					: {
+							type: 'subscription_update_confirm',
+							subscription_update_confirm: {
+								subscription: subscription.subscriptionId,
+								items: [
+									{
+										id: _sub.items.data[0].id, // subscription item id
+										price: priceId, // the new price
+									},
+								],
+							},
+							after_completion: {
+								type: 'redirect',
+								redirect: {
+									return_url: returnUrl,
+								},
+							},
+						},
 			});
 
 			if (session.lastResponse?.statusCode !== StatusCodes.OK) {
 				return response.status(StatusCodes.BAD_GATEWAY).json({
-					error: 'Billing portal session for upgrading the subscription was not created',
+					error: 'Billing portal session for updating the subscription was not created',
 				} satisfies SubscriptionUpdateUnsuccessfulResponseBody);
 			}
 			return response.status(StatusCodes.OK).json({
