@@ -257,7 +257,7 @@ export class SubscriptionController {
 	@syncOne
 	async update(request: Request, response: Response) {
 		const stripe = response.locals.stripe as Stripe;
-		const { returnUrl, isManagePlan, priceId } = request.body satisfies SubscriptionUpdateRequestBody;
+		const { returnURL, isManagePlan, priceId } = request.body satisfies SubscriptionUpdateRequestBody;
 		try {
 			// Get the subscription object from the DB
 			const subscription = await SubscriptionService.instance.findOne({ customer: response.locals.customer });
@@ -277,7 +277,7 @@ export class SubscriptionController {
 			// Create portal link
 			const session = await stripe.billingPortal.sessions.create({
 				customer: response.locals.customer.paymentProviderId,
-				return_url: returnUrl,
+				return_url: returnURL,
 				// based on request body, trigger a manage or confirm update flow.
 				flow_data: isManagePlan
 					? undefined
@@ -295,7 +295,7 @@ export class SubscriptionController {
 							after_completion: {
 								type: 'redirect',
 								redirect: {
-									return_url: returnUrl,
+									return_url: returnURL,
 								},
 							},
 						},

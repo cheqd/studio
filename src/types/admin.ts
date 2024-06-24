@@ -48,7 +48,7 @@ export type SubscriptionUpdateResponseBody = {
 
 // Update
 export type SubscriptionUpdateRequestBody = {
-	returnUrl: string;
+	returnURL: string;
 	isManagePlan: boolean;
 	priceId?: string;
 };
