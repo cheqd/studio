@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.20.3-develop.3](https://github.com/cheqd/credential-service/compare/2.20.3-develop.2...2.20.3-develop.3) (2024-06-24)
+
+
+### Bug Fixes
+
+* subscription update request body schema ([#547](https://github.com/cheqd/credential-service/issues/547)) ([c0a8879](https://github.com/cheqd/credential-service/commit/c0a8879c917887925e7f1d04b88e48fabc3ebd87))
+
 ## [2.20.3-develop.2](https://github.com/cheqd/credential-service/compare/2.20.3-develop.1...2.20.3-develop.2) (2024-06-21)
 
 
