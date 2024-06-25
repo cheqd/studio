@@ -174,7 +174,7 @@ export class AccountController {
 		}
 		const logToUserId = request.body.user.id;
 		const logToUserEmail = request.body.user.primaryEmail;
-		const logToName = request.body.user.name || ''; // setting empty string as backup incase it was null.
+		const logToName = logToUserEmail; // use email as name, because "name" is unique in the current setup.
 
 		const defaultRole = await RoleService.instance.getDefaultRole();
 		if (!defaultRole) {
@@ -283,7 +283,9 @@ export class AccountController {
 
 		const logToHelper = new LogToHelper();
 		const _r = await logToHelper.setup();
+		console.log('logto helper response', JSON.stringify(_r, null, 2));
 		if (_r.status !== StatusCodes.OK) {
+			console.log('logto helper error', JSON.stringify(_r.error, null, 2));
 			return response.status(StatusCodes.BAD_GATEWAY).json({
 				error: _r.error,
 			} satisfies UnsuccessfulResponseBody);
