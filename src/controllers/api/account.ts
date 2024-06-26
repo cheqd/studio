@@ -174,7 +174,7 @@ export class AccountController {
 		}
 		const logToUserId = request.body.user.id;
 		const logToUserEmail = request.body.user.primaryEmail;
-		const logToName = logToUserEmail; // use email as name, because "name" is unique in the current setup.
+		const logToName = logToUserEmail; // use email as name, because "name" is unique in the current db setup.
 
 		const defaultRole = await RoleService.instance.getDefaultRole();
 		if (!defaultRole) {
