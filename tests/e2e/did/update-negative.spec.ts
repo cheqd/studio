@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 import { CONTENT_TYPE, DEFAULT_DOES_NOT_HAVE_PERMISSIONS, PAYLOADS_PATH } from '../constants';
-import { UnsuccessfulResponseBody } from '@cheqd/credential-service/src/types/shared.js';
+import { UnsuccessfulResponseBody } from '@cheqd/studio/src/types/shared.js';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 

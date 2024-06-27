@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 import { DEFAULT_DOES_NOT_HAVE_PERMISSIONS, DEFAULT_MAINNET_DID } from '../constants';
-import { UnsuccessfulResponseBody } from '@cheqd/credential-service/src/types/shared.js';
+import { UnsuccessfulResponseBody } from '@cheqd/studio/src/types/shared.js';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 

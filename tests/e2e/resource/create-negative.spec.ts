@@ -8,7 +8,7 @@ import {
 import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
-import { UnsuccessfulResponseBody } from '@cheqd/credential-service/src/types/shared.js';
+import { UnsuccessfulResponseBody } from '@cheqd/studio/src/types/shared.js';
 
 test.use({ storageState: STORAGE_STATE_AUTHENTICATED });
 

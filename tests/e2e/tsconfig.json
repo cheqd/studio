@@ -10,7 +10,7 @@
         "baseUrl": ".",
         "paths": {
             "dotenv/*": ["node_modules/dotenv/*"], // This mapping is relative to "baseUrl".
-            "@cheqd/credential-service/*": ["../../*"],
+            "@cheqd/studio/*": ["../../*"],
         },
     }
 }
