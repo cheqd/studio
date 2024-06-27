@@ -24,10 +24,12 @@ export enum CONTENT_TYPE {
 export const DID_METHOD = 'cheqd';
 export const DID_NOT_FOUND_ERROR = 'notFound';
 
+// todo: create a new mainnet did from test account
 export const DEFAULT_MAINNET_DID = 'did:cheqd:mainnet:7c950b5d-dbbb-4a12-9d79-6b553ca0c271';
-export const DEFAULT_TESTNET_DID = 'did:cheqd:testnet:0c3581f0-011f-4263-b1ca-15ad70d54ede';
-export const DEFAULT_TESTNET_DID_IDENTIFIER = '0c3581f0-011f-4263-b1ca-15ad70d54ede';
-export const DEFAULT_TESTNET_DID_RESOURCE_ID = '1a79a313-8fc3-421c-af3d-34730fa046d1';
+export const DEFAULT_TESTNET_DID = 'did:cheqd:testnet:f90e8a98-25d5-4106-bc44-83becaaf3e75';
+export const DEFAULT_TESTNET_DID_IDENTIFIER = 'f90e8a98-25d5-4106-bc44-83becaaf3e75';
+
+export const DEACTIVATED_TESTNET_DID = 'did:cheqd:testnet:UYBzUsTPHpTEXSnzYGTzUZ';
 
 export const TESTNET_DID_WITH_JSON_RESOURCE = 'did:cheqd:testnet:c69d7867-be90-4dea-8bbf-f4419d3599d8';
 export const TESTNET_DID_WITH_JSON_RESOURCE_ID = '3194b5a6-1b73-44a0-8ccf-27dc01509eb2';
