@@ -1,7 +1,7 @@
 import { expect, APIRequestContext } from '@playwright/test';
 
 import { DIDDocument } from '@cheqd/sdk';
-import { CreateDidResponseBody, UpdateDidResponseBody } from '@cheqd/studio/src/types/did';
+import { CreateDidResponseBody, UpdateDidResponseBody } from '@cheqd/credential-service/src/types/did';
 
 // Structures
 export type ResponseBody = CreateDidResponseBody | UpdateDidResponseBody;

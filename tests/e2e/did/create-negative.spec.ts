@@ -13,7 +13,7 @@ import { v4 } from 'uuid';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 import { CheqdNetwork, VerificationMethods } from '@cheqd/sdk';
-import { UnsuccessfulResponseBody } from '@cheqd/studio/src/types/shared.js';
+import { UnsuccessfulResponseBody } from '@cheqd/credential-service/src/types/shared.js';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 

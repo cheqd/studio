@@ -1,7 +1,7 @@
 {
-	"name": "@cheqd/studio",
+	"name": "@cheqd/credential-service",
 	"version": "2.20.3-develop.3",
-	"description": "cheqd Credential Service Backend",
+	"description": "cheqd Studio Backend",
 	"source": "src/index.ts",
 	"main": "dist/index.js",
 	"license": "Apache-2.0",
