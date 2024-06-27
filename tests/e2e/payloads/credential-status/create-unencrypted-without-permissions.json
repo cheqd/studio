@@ -1,5 +1,5 @@
 {
-	"did": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+	"did": "did:cheqd:mainnet:fbfe3fac-d48b-40aa-9853-f7a2656b8123",
 	"statusListName": "cheqd-employee-credentials-encrypted",
 	"length": 140000,
 	"encoding": "base64url"

@@ -7,7 +7,7 @@ const jsonldProofValdiator = new JsonLDProofValidator();
 const validProof = {
 	type: 'Ed25519Signature2018',
 	created: '2023-12-26T12:44:49Z',
-	verificationMethod: 'did:cheqd:testnet:4JdgsZ4A8LegKXdsKE3v6X#key-1',
+	verificationMethod: 'did:cheqd:testnet:fbfe3fac-d48b-40aa-9853-f7a2656b8123#key-1',
 	proofPurpose: 'assertionMethod',
 	jws: 'eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..ZUkh4FZ9IcxZK-H6hr0fduq5q4MBYrRfihENJXeJGzqgQkEy16dHwcowbE8NZwNYzmz5MjVJ73q7pkRTg6BvCw',
 };
