@@ -174,7 +174,10 @@ export class AccountController {
 		}
 		const logToUserId = request.body.user.id;
 		const logToUserEmail = request.body.user.primaryEmail;
-		const logToName = request.body.user.name || logToUserEmail; // use email as name, because "name" is unique in the current db setup.
+		// We're encountering a strange issue when checking if "request.body.user.name" exists. Even though, it should evaluate to "null" it is becoming empty string.
+		// This causes the app to fail because the "name" column must be unique, breaking the "Account bootstrap" webhook.
+		// Since we know the user won't have a name during the register flow, and even if they were to add name we need to ensure uniqueness,hence using the email right away.
+		const logToName = logToUserEmail; // use email as name, because "name" is unique in the current db setup.
 
 		const defaultRole = await RoleService.instance.getDefaultRole();
 		if (!defaultRole) {
