@@ -174,7 +174,7 @@ export class AccountController {
 		}
 		const logToUserId = request.body.user.id;
 		const logToUserEmail = request.body.user.primaryEmail;
-		const logToName = request.body.user.name || ''; // setting empty string as backup incase it was null.
+		const logToName = request.body.user.name || logToUserEmail; // use email as name, because "name" is unique in the current db setup.
 
 		const defaultRole = await RoleService.instance.getDefaultRole();
 		if (!defaultRole) {
@@ -290,7 +290,8 @@ export class AccountController {
 		}
 		// 5. Assign default role on LogTo
 		// 5.1 Get user's roles
-		const roles = await logToHelper.getRolesForUser(user.logToId);
+
+		const roles = await logToHelper.getRolesForUser(logToUserId);
 		if (roles.status !== StatusCodes.OK) {
 			return response.status(StatusCodes.BAD_GATEWAY).json({
 				error: roles.error,
@@ -357,8 +358,9 @@ export class AccountController {
 				});
 			}
 		}
+
 		// 8. Add the Stripe account to the Customer
-		if (process.env.STRIPE_ENABLED === 'true' && customer.paymentProviderId === null) {
+		if (process.env.STRIPE_ENABLED === 'true' && !customer.paymentProviderId) {
 			eventTracker.submit({
 				operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 				data: {
@@ -465,6 +467,7 @@ export class AccountController {
 				if (!balance || +balance.amount < TESTNET_MINIMUM_BALANCE * Math.pow(10, DEFAULT_DENOM_EXPONENT)) {
 					// 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
 					const resp = await FaucetHelper.delegateTokens(paymentAccount.address);
+
 					if (resp.status !== StatusCodes.OK) {
 						return response.status(StatusCodes.BAD_GATEWAY).json({
 							error: resp.error,
