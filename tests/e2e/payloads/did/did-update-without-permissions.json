@@ -1,16 +1,16 @@
 {
-	"did": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+	"did": "did:cheqd:mainnet:a6ef1d50-a040-4db3-b833-6bb3a0ff1eb6",
 	"service": [
 		{
-			"id": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1",
+			"id": "did:cheqd:mainnet:a6ef1d50-a040-4db3-b833-6bb3a0ff1eb6#service-1",
 			"type": "LinkedDomains",
 			"serviceEndpoint": ["https://example.com"]
 		}
 	],
 	"verificationMethod": [
 		{
-			"controller": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-			"id": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
+			"controller": "did:cheqd:mainnet:a6ef1d50-a040-4db3-b833-6bb3a0ff1eb6",
+			"id": "did:cheqd:mainnet:a6ef1d50-a040-4db3-b833-6bb3a0ff1eb6#key-1",
 			"publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
 			"type": "Ed25519VerificationKey2018"
 		}
@@ -18,20 +18,20 @@
 	"authentication": ["string"],
 	"didDocument": {
 		"@context": ["https://www.w3.org/ns/did/v1"],
-		"id": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-		"controller": ["did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"],
+		"id": "did:cheqd:mainnet:a6ef1d50-a040-4db3-b833-6bb3a0ff1eb6",
+		"controller": ["did:cheqd:mainnet:a6ef1d50-a040-4db3-b833-6bb3a0ff1eb6"],
 		"verificationMethod": [
 			{
-				"id": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
+				"id": "did:cheqd:mainnet:a6ef1d50-a040-4db3-b833-6bb3a0ff1eb6#key-1",
 				"type": "Ed25519VerificationKey2018",
-				"controller": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
+				"controller": "did:cheqd:mainnet:a6ef1d50-a040-4db3-b833-6bb3a0ff1eb6",
 				"publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt"
 			}
 		],
-		"authentication": ["did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1"],
+		"authentication": ["did:cheqd:mainnet:a6ef1d50-a040-4db3-b833-6bb3a0ff1eb6#key-1"],
 		"service": [
 			{
-				"id": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1",
+				"id": "did:cheqd:mainnet:a6ef1d50-a040-4db3-b833-6bb3a0ff1eb6#service-1",
 				"type": "LinkedDomains",
 				"serviceEndpoint": ["https://example.com"]
 			}

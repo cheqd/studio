@@ -25,7 +25,7 @@ export const DID_METHOD = 'cheqd';
 export const DID_NOT_FOUND_ERROR = 'notFound';
 
 // todo: create a new mainnet did from test account
-export const DEFAULT_MAINNET_DID = 'did:cheqd:mainnet:7c950b5d-dbbb-4a12-9d79-6b553ca0c271';
+export const DEFAULT_MAINNET_DID = 'did:cheqd:mainnet:a6ef1d50-a040-4db3-b833-6bb3a0ff1eb6';
 export const DEFAULT_TESTNET_DID = 'did:cheqd:testnet:f90e8a98-25d5-4106-bc44-83becaaf3e75';
 export const DEFAULT_TESTNET_DID_IDENTIFIER = 'f90e8a98-25d5-4106-bc44-83becaaf3e75';
 
