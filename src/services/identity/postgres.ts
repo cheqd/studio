@@ -56,6 +56,7 @@ import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { toTPublicKeyEd25519 } from '../helpers.js';
 import type { APIServiceOptions } from '../../types/admin.js';
+import { SupportedKeyTypes } from '@veramo/utils';
 
 dotenv.config();
 
@@ -158,7 +159,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		});
 	}
 
-	async createKey(type: 'Ed25519' | 'Secp256k1' = 'Ed25519', customer?: CustomerEntity, keyAlias?: string) {
+	async createKey(type: SupportedKeyTypes = SupportedKeyTypes.Ed25519, customer?: CustomerEntity, keyAlias?: string) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const key = await Veramo.instance.createKey(this.agent!, type);
 		// Update our specific key columns
@@ -166,7 +167,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async importKey(
-		type: 'Ed25519' | 'Secp256k1' = 'Ed25519',
+		type: SupportedKeyTypes = SupportedKeyTypes.Ed25519,
 		privateKeyHex: string,
 		customer?: CustomerEntity,
 		keyAlias?: string

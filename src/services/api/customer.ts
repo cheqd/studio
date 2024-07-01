@@ -9,6 +9,7 @@ import { PaymentAccountService } from './payment-account.js';
 import { CheqdNetwork } from '@cheqd/sdk';
 import { v4 as uuidv4 } from 'uuid';
 import type { UpdateCustomerEntity } from '../../types/customer.js';
+import { SupportedKeyTypes } from '@veramo/utils';
 dotenv.config();
 
 export class CustomerService {
@@ -35,7 +36,10 @@ export class CustomerService {
 		await this.customerRepository.insert(customerEntity);
 
 		// Create a new Cosmos account for the customer and make a link with customer entity;
-		const key = await new IdentityServiceStrategySetup(name).agent.createKey('Secp256k1', customerEntity);
+		const key = await new IdentityServiceStrategySetup(name).agent.createKey(
+			SupportedKeyTypes.Secp256k1,
+			customerEntity
+		);
 		await PaymentAccountService.instance.create(CheqdNetwork.Testnet, true, customerEntity, key);
 		return {
 			customerId: customerEntity.customerId,

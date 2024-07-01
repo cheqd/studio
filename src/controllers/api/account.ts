@@ -25,6 +25,7 @@ import { EventTracker, eventTracker } from '../../services/track/tracker.js';
 import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../../services/track/submitter.js';
 import * as dotenv from 'dotenv';
 import { validate } from '../validator/decorator.js';
+import { SupportedKeyTypes } from '@veramo/utils';
 dotenv.config();
 
 export class AccountController {
@@ -249,7 +250,7 @@ export class AccountController {
 		const accounts = await PaymentAccountService.instance.find({ customer });
 		if (accounts.length === 0) {
 			const key = await new IdentityServiceStrategySetup(customer.customerId).agent.createKey(
-				'Secp256k1',
+				SupportedKeyTypes.Secp256k1,
 				customer
 			);
 			if (!key) {
@@ -434,12 +435,12 @@ export class AccountController {
 				}
 			}
 
-			// 3. Check is paymentAccount exists for the customer
+			// 3. Check if paymentAccount exists for the customer
 			const accounts = await PaymentAccountService.instance.find({ customer });
 			paymentAccount = accounts.find((account) => account.namespace === CheqdNetwork.Testnet) || null;
 			if (paymentAccount === null) {
 				const key = await new IdentityServiceStrategySetup(customer.customerId).agent.createKey(
-					'Secp256k1',
+					SupportedKeyTypes.Secp256k1,
 					customer
 				);
 				if (!key) {
