@@ -43,6 +43,7 @@ import type { CustomerEntity } from '../../database/entities/customer.entity.js'
 import type { KeyEntity } from '../../database/entities/key.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity';
 import type { APIKeyEntity } from '../../database/entities/api.key.entity';
+import type { SupportedKeyTypes } from '@veramo/utils';
 
 export abstract class AbstractIdentityService implements IIdentityService {
 	agent?: VeramoAgent;
@@ -51,12 +52,12 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 
-	createKey(type: 'Ed25519' | 'Secp256k1', customer?: CustomerEntity, keyAlias?: string): Promise<KeyEntity> {
+	createKey(type: SupportedKeyTypes, customer?: CustomerEntity, keyAlias?: string): Promise<KeyEntity> {
 		throw new Error(`Not supported`);
 	}
 
 	importKey(
-		type: 'Ed25519' | 'Secp256k1',
+		type: SupportedKeyTypes,
 		privateKeyHex: string,
 		customer?: CustomerEntity,
 		keyAlias?: string

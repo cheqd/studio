@@ -18,10 +18,19 @@ import { eventTracker } from '../../services/track/tracker.js';
 import type { IKeyTrack, ITrackOperation } from '../../types/track.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
 import { validate } from '../validator/decorator.js';
+import { SupportedKeyTypes } from '@veramo/utils';
 
 // ToDo: Make the format of /key/create and /key/read the same
 // ToDo: Add valdiation for /key/import
 export class KeyController {
+	public static keyCreateValidator = [
+		check('type')
+			.optional()
+			.isString()
+			.isIn([SupportedKeyTypes.Ed25519, SupportedKeyTypes.Secp256k1])
+			.withMessage('Invalid key type')
+			.bail(),
+	];
 	public static keyGetValidator = [
 		check('kid')
 			.exists()
@@ -56,6 +65,15 @@ export class KeyController {
 	 *     tags: [ Key ]
 	 *     summary: Create an identity key pair.
 	 *     description: This endpoint creates an identity key pair associated with the user's account for custodian-mode clients.
+	 *     parameters:
+	 *       - name: type
+	 *         description: Key type of the identity key pair to create.
+	 *         in: query
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *              - Ed25519
+	 *              - Secp256k1
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -86,7 +104,11 @@ export class KeyController {
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
-			const key = await identityServiceStrategySetup.agent.createKey('Ed25519', response.locals.customer);
+			const keyType = request.query.type as SupportedKeyTypes | undefined;
+			const key = await identityServiceStrategySetup.agent.createKey(
+				keyType || SupportedKeyTypes.Ed25519,
+				response.locals.customer
+			);
 
 			eventTracker.emit('track', {
 				name: OperationNameEnum.KEY_CREATE,

@@ -48,6 +48,7 @@ import type { CustomerEntity } from '../../database/entities/customer.entity.js'
 import type { KeyEntity } from '../../database/entities/key.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity.js';
 import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
+import type { SupportedKeyTypes } from '@veramo/utils';
 
 dotenv.config();
 
@@ -59,9 +60,9 @@ export interface IIdentityService {
 
 	initAgent(): TAgent<any>;
 	createAgent?(customer: CustomerEntity): Promise<VeramoAgent>;
-	createKey(type: 'Ed25519' | 'Secp256k1', customer?: CustomerEntity, keyAlias?: string): Promise<KeyEntity>;
+	createKey(type: SupportedKeyTypes, customer?: CustomerEntity, keyAlias?: string): Promise<KeyEntity>;
 	importKey(
-		type: 'Ed25519' | 'Secp256k1',
+		type: SupportedKeyTypes,
 		privateKeyHex: string,
 		customer?: CustomerEntity,
 		keyAlias?: string

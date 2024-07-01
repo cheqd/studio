@@ -35,7 +35,7 @@ import type {
 } from '../../types/did.js';
 import { check, param } from '../validator/index.js';
 import type { IKey, RequireOnly } from '@veramo/core';
-import { extractPublicKeyHex } from '@veramo/utils';
+import { SupportedKeyTypes, extractPublicKeyHex } from '@veramo/utils';
 import type { KeyImport } from '../../types/key.js';
 import { eventTracker } from '../../services/track/tracker.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
@@ -183,8 +183,12 @@ export class DIDController {
 				if (options) {
 					const publicKeyHex =
 						options.key ||
-						(await identityServiceStrategySetup.agent.createKey('Ed25519', response.locals.customer))
-							.publicKeyHex;
+						(
+							await identityServiceStrategySetup.agent.createKey(
+								SupportedKeyTypes.Ed25519,
+								response.locals.customer
+							)
+						).publicKeyHex;
 					const pkBase64 =
 						publicKeyHex.length == 43 ? publicKeyHex : toString(fromString(publicKeyHex, 'hex'), 'base64');
 
@@ -207,8 +211,12 @@ export class DIDController {
 			} else if (verificationMethodType) {
 				const publicKeyHex =
 					key ||
-					(await identityServiceStrategySetup.agent.createKey('Ed25519', response.locals.customer))
-						.publicKeyHex;
+					(
+						await identityServiceStrategySetup.agent.createKey(
+							SupportedKeyTypes.Ed25519,
+							response.locals.customer
+						)
+					).publicKeyHex;
 				didDocument = generateDidDoc({
 					verificationMethod: verificationMethodType,
 					verificationMethodId: 'key-1',
