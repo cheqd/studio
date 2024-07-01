@@ -1155,6 +1155,20 @@
         ],
         "summary": "Create an identity key pair.",
         "description": "This endpoint creates an identity key pair associated with the user's account for custodian-mode clients.",
+        "parameters": [
+          {
+            "name": "type",
+            "description": "Key type of the identity key pair to create.",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Ed25519",
+                "Secp256k1"
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "The request was successful.",

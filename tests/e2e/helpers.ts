@@ -3,6 +3,7 @@ import {
 	DEFAULT_STATUS_LIST_ENCRYPTED_NAME,
 	DEFAULT_STATUS_LIST_INDICES,
 	DEFAULT_STATUS_LIST_PAYMENT_ADDRESS,
+	DEFAULT_STATUS_LIST_UNENCRYPTED_NAME,
 	DEFAULT_SUBJECT_DID,
 	DEFAULT_TESTNET_DID,
 } from './constants';
@@ -120,7 +121,7 @@ export const buildSimpleIssueCredentialRequest = (
 	issuerDid = DEFAULT_TESTNET_DID,
 	subjectDid = DEFAULT_SUBJECT_DID,
 	statusPurpose = 'revocation',
-	statusListName = 'employee-credentials'
+	statusListName = DEFAULT_STATUS_LIST_UNENCRYPTED_NAME
 ) => {
 	return {
 		issuerDid: issuerDid,

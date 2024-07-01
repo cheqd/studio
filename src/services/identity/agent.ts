@@ -72,6 +72,7 @@ import { toCoin, toDefaultDkg, toMinimalDenom } from '../../helpers/helpers.js';
 import { jwtDecode } from 'jwt-decode';
 import type { ICheqdCreateLinkedResourceArgs } from '@cheqd/did-provider-cheqd';
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
+import { SupportedKeyTypes } from '@veramo/utils';
 
 // dynamic import to avoid circular dependency
 const VeridaResolver =
@@ -152,7 +153,7 @@ export class Veramo {
 		return createAgent({ plugins });
 	}
 
-	async createKey(agent: TAgent<IKeyManager>, type: 'Ed25519' | 'Secp256k1' = 'Ed25519') {
+	async createKey(agent: TAgent<IKeyManager>, type: SupportedKeyTypes = SupportedKeyTypes.Ed25519) {
 		const [kms] = await agent.keyManagerGetKeyManagementSystems();
 		return await agent.keyManagerCreate({
 			type: type || 'Ed25519',
@@ -160,7 +161,11 @@ export class Veramo {
 		});
 	}
 
-	async importKey(agent: TAgent<IKeyManager>, type: 'Ed25519' | 'Secp256k1' = 'Ed25519', privateKeyHex: string) {
+	async importKey(
+		agent: TAgent<IKeyManager>,
+		type: SupportedKeyTypes = SupportedKeyTypes.Ed25519,
+		privateKeyHex: string
+	) {
 		const [kms] = await agent.keyManagerGetKeyManagementSystems();
 		return await agent.keyManagerImport({
 			type: type || 'Ed25519',

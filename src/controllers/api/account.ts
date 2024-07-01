@@ -25,6 +25,7 @@ import { EventTracker, eventTracker } from '../../services/track/tracker.js';
 import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../../services/track/submitter.js';
 import * as dotenv from 'dotenv';
 import { validate } from '../validator/decorator.js';
+import { SupportedKeyTypes } from '@veramo/utils';
 dotenv.config();
 
 export class AccountController {
@@ -174,7 +175,7 @@ export class AccountController {
 		}
 		const logToUserId = request.body.user.id;
 		const logToUserEmail = request.body.user.primaryEmail;
-		const logToName = request.body.user.name || ''; // setting empty string as backup incase it was null.
+		const logToName = request.body.user.name || logToUserEmail; // use email as name, because "name" is unique in the current db setup.
 
 		const defaultRole = await RoleService.instance.getDefaultRole();
 		if (!defaultRole) {
@@ -249,7 +250,7 @@ export class AccountController {
 		const accounts = await PaymentAccountService.instance.find({ customer });
 		if (accounts.length === 0) {
 			const key = await new IdentityServiceStrategySetup(customer.customerId).agent.createKey(
-				'Secp256k1',
+				SupportedKeyTypes.Secp256k1,
 				customer
 			);
 			if (!key) {
@@ -290,7 +291,8 @@ export class AccountController {
 		}
 		// 5. Assign default role on LogTo
 		// 5.1 Get user's roles
-		const roles = await logToHelper.getRolesForUser(user.logToId);
+
+		const roles = await logToHelper.getRolesForUser(logToUserId);
 		if (roles.status !== StatusCodes.OK) {
 			return response.status(StatusCodes.BAD_GATEWAY).json({
 				error: roles.error,
@@ -357,8 +359,9 @@ export class AccountController {
 				});
 			}
 		}
+
 		// 8. Add the Stripe account to the Customer
-		if (process.env.STRIPE_ENABLED === 'true' && customer.paymentProviderId === null) {
+		if (process.env.STRIPE_ENABLED === 'true' && !customer.paymentProviderId) {
 			eventTracker.submit({
 				operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 				data: {
@@ -432,12 +435,12 @@ export class AccountController {
 				}
 			}
 
-			// 3. Check is paymentAccount exists for the customer
+			// 3. Check if paymentAccount exists for the customer
 			const accounts = await PaymentAccountService.instance.find({ customer });
 			paymentAccount = accounts.find((account) => account.namespace === CheqdNetwork.Testnet) || null;
 			if (paymentAccount === null) {
 				const key = await new IdentityServiceStrategySetup(customer.customerId).agent.createKey(
-					'Secp256k1',
+					SupportedKeyTypes.Secp256k1,
 					customer
 				);
 				if (!key) {
@@ -465,6 +468,7 @@ export class AccountController {
 				if (!balance || +balance.amount < TESTNET_MINIMUM_BALANCE * Math.pow(10, DEFAULT_DENOM_EXPONENT)) {
 					// 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
 					const resp = await FaucetHelper.delegateTokens(paymentAccount.address);
+
 					if (resp.status !== StatusCodes.OK) {
 						return response.status(StatusCodes.BAD_GATEWAY).json({
 							error: resp.error,

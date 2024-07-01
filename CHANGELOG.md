@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.20.3-develop.4](https://github.com/cheqd/credential-service/compare/2.20.3-develop.3...2.20.3-develop.4) (2024-07-01)
+
+
+### Bug Fixes
+
+* Fix test payloads ([#553](https://github.com/cheqd/credential-service/issues/553)) ([78b4b84](https://github.com/cheqd/credential-service/commit/78b4b84d212804d6287991c4ce57e245bea19192))
+* Stripe account submitter [DEV-4042] ([#548](https://github.com/cheqd/credential-service/issues/548)) ([198c9da](https://github.com/cheqd/credential-service/commit/198c9da3c77a776bc135182cd2d9e581a8fc5064))
+
 ## [2.20.3-develop.3](https://github.com/cheqd/credential-service/compare/2.20.3-develop.2...2.20.3-develop.3) (2024-06-24)
 
 

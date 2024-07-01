@@ -24,10 +24,12 @@ export enum CONTENT_TYPE {
 export const DID_METHOD = 'cheqd';
 export const DID_NOT_FOUND_ERROR = 'notFound';
 
-export const DEFAULT_MAINNET_DID = 'did:cheqd:mainnet:7c950b5d-dbbb-4a12-9d79-6b553ca0c271';
-export const DEFAULT_TESTNET_DID = 'did:cheqd:testnet:0c3581f0-011f-4263-b1ca-15ad70d54ede';
-export const DEFAULT_TESTNET_DID_IDENTIFIER = '0c3581f0-011f-4263-b1ca-15ad70d54ede';
-export const DEFAULT_TESTNET_DID_RESOURCE_ID = '1a79a313-8fc3-421c-af3d-34730fa046d1';
+// todo: create a new mainnet did from test account
+export const DEFAULT_MAINNET_DID = 'did:cheqd:mainnet:a6ef1d50-a040-4db3-b833-6bb3a0ff1eb6';
+export const DEFAULT_TESTNET_DID = 'did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA';
+export const DEFAULT_TESTNET_DID_IDENTIFIER = '5RpEg66jhhbmASWPXJRWrA';
+
+export const DEACTIVATED_TESTNET_DID = 'did:cheqd:testnet:UYBzUsTPHpTEXSnzYGTzUZ';
 
 export const TESTNET_DID_WITH_JSON_RESOURCE = 'did:cheqd:testnet:c69d7867-be90-4dea-8bbf-f4419d3599d8';
 export const TESTNET_DID_WITH_JSON_RESOURCE_ID = '3194b5a6-1b73-44a0-8ccf-27dc01509eb2';
@@ -45,10 +47,9 @@ export const NOT_EXISTENT_TESTNET_DID_IDENTIFIER = 'd4a13003-0bc5-4608-b23a-54ea
 
 // Credential status list names
 export const DEFAULT_STATUS_LIST_ENCRYPTED_NAME = 'cheqd-employee-credentials-encrypted';
-export const DEFAULT_STATUS_LIST_UNENCRYPTED_NAME = 'cheqd-employee-credentials-unencrypted';
+export const DEFAULT_STATUS_LIST_UNENCRYPTED_NAME = 'testingStatusList';
 export const DEFAULT_STATUS_LIST_PAYMENT_ADDRESS = 'cheqd1qs0nhyk868c246defezhz5eymlt0dmajna2csg';
 export const DEFAULT_STATUS_LIST_INDICES = [10, 3199, 12109, 130999];
-export const DEFAULT_STATUS_LIST_NAME = 'cheqd-employee-credentials';
 
 // Credential names
 export const DEFAULT_SUBJECT_DID = 'did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK';

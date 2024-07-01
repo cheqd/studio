@@ -1,6 +1,7 @@
 import type { ManagedKeyInfo } from '@veramo/core';
 import type { KeyEntity } from '../database/entities/key.entity.js';
 import type { UnsuccessfulQueryResponseBody, UnsuccessfulResponseBody } from './shared.js';
+import type { SupportedKeyTypes } from '@veramo/utils';
 
 // Interfaces
 
@@ -10,7 +11,7 @@ export interface KeyImport {
 	ivHex: string | undefined;
 	salt: string | undefined;
 	alias?: string;
-	type: 'Ed25519' | 'Secp256k1';
+	type: SupportedKeyTypes.Ed25519 | SupportedKeyTypes.Secp256k1;
 }
 
 // Requests
