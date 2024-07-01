@@ -13,7 +13,7 @@ jobs:
             IMAGE_NAME: ${{ github.repository }}
         environment:
             name: staging
-            url: https://studio-staging.cheqd.net
+            url: https://studio-api-staging.cheqd.net
 
         steps:
             - name: Install DigitalOcean CLI

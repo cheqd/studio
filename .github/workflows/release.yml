@@ -60,7 +60,7 @@ jobs:
             IMAGE_NAME: ${{ github.repository }}
         environment:
             name: production
-            url: https://studio.cheqd.net
+            url: https://studio-api.cheqd.net
 
         steps:
             - uses: actions/checkout@v4

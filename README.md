@@ -26,8 +26,8 @@ definition endpoints that list all of the APIs and how they work.
 
 The Swagger API definition pages are:
 
-- [Production / Stable Release APIs](https://studio.cheqd.net/swagger/)
-- [Staging / Development Release APIs](https://studio-staging.cheqd.net/swagger/)
+- [Production / Stable Release APIs](https://studio-api.cheqd.net/swagger/)
+- [Staging / Development Release APIs](https://studio-api-staging.cheqd.net/swagger/)
 
 ## 🔧 Configuration
 
