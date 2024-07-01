@@ -26,8 +26,8 @@ export const DID_NOT_FOUND_ERROR = 'notFound';
 
 // todo: create a new mainnet did from test account
 export const DEFAULT_MAINNET_DID = 'did:cheqd:mainnet:a6ef1d50-a040-4db3-b833-6bb3a0ff1eb6';
-export const DEFAULT_TESTNET_DID = 'did:cheqd:testnet:f90e8a98-25d5-4106-bc44-83becaaf3e75';
-export const DEFAULT_TESTNET_DID_IDENTIFIER = 'f90e8a98-25d5-4106-bc44-83becaaf3e75';
+export const DEFAULT_TESTNET_DID = 'did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA';
+export const DEFAULT_TESTNET_DID_IDENTIFIER = '5RpEg66jhhbmASWPXJRWrA';
 
 export const DEACTIVATED_TESTNET_DID = 'did:cheqd:testnet:UYBzUsTPHpTEXSnzYGTzUZ';
 
@@ -47,10 +47,9 @@ export const NOT_EXISTENT_TESTNET_DID_IDENTIFIER = 'd4a13003-0bc5-4608-b23a-54ea
 
 // Credential status list names
 export const DEFAULT_STATUS_LIST_ENCRYPTED_NAME = 'cheqd-employee-credentials-encrypted';
-export const DEFAULT_STATUS_LIST_UNENCRYPTED_NAME = 'cheqd-employee-credentials-unencrypted';
+export const DEFAULT_STATUS_LIST_UNENCRYPTED_NAME = 'testingStatusList';
 export const DEFAULT_STATUS_LIST_PAYMENT_ADDRESS = 'cheqd1qs0nhyk868c246defezhz5eymlt0dmajna2csg';
 export const DEFAULT_STATUS_LIST_INDICES = [10, 3199, 12109, 130999];
-export const DEFAULT_STATUS_LIST_NAME = 'cheqd-employee-credentials';
 
 // Credential names
 export const DEFAULT_SUBJECT_DID = 'did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK';
