@@ -11,12 +11,24 @@ import type {
 import { StatusCodes } from 'http-status-codes';
 import { check } from '../validator/index.js';
 import { validate } from '../validator/decorator.js';
+import { DEFAULT_PAGINATION_LIST_LIMIT } from '../../types/constants.js';
 
 dotenv.config();
 
 export class ProductController {
 	static productListValidator = [
 		check('prices').optional().isBoolean().withMessage('prices should be a boolean').bail(),
+		check('limit')
+			.optional()
+			.isInt({ min: 1, max: 100 })
+			.default(DEFAULT_PAGINATION_LIST_LIMIT)
+			.withMessage('limit should be between 1 and 100')
+			.bail(),
+		check('cursor')
+			.optional()
+			.isString()
+			.withMessage('cursor must be an object id from a previous response')
+			.bail(),
 	];
 
 	static productGetValidator = [
@@ -39,6 +51,20 @@ export class ProductController {
 	 *         type: boolean
 	 *         description: If setup to true - returns the list of products with prices inside. Default - true
 	 *         required: false
+	 *     - in: query
+	 *       name: limit
+	 *       schema:
+	 *         type: integer
+	 *         minimum: 1
+	 *         maximum: 100
+	 *         description: Restrict the response to only include items from 1 to 100. Default - 10
+	 *         required: false
+	 *     - in: query
+	 *       name: cursor
+	 *       schema:
+	 *         type: string
+	 *         description: Cursor for pagination, this only goes forward, i.e., Stripe's equivalent of 'starting_after'
+	 *         required: false
 	 *    responses:
 	 *      200:
 	 *        description: A list of products
@@ -60,10 +86,14 @@ export class ProductController {
 		const stripe = response.locals.stripe as Stripe;
 		// Get query parameters
 		const prices = request.query.prices === 'false' ? false : true;
+		const limit = Number(request.query.limit) || DEFAULT_PAGINATION_LIST_LIMIT;
+		const cursor = request.query.cursor as string | undefined;
 
 		try {
 			const products = (await stripe.products.list({
 				active: true,
+				limit,
+				starting_after: cursor,
 			})) as Stripe.ApiList<ProductWithPrices>;
 
 			// If no products found return 404
@@ -74,18 +104,16 @@ export class ProductController {
 			}
 
 			if (prices) {
-				for (const product of products.data) {
-					const prices = await stripe.prices.list({
-						product: product.id,
-						active: true,
-					});
-					product.prices = prices.data;
-				}
+				const responses = await Promise.all(
+					products.data.map((p) => stripe.prices.list({ product: p.id, active: true }))
+				);
+
+				responses.forEach((r, i) => {
+					products.data[i].prices = r.data;
+				});
 			}
 
-			return response.status(StatusCodes.OK).json({
-				products: products,
-			} satisfies ProductListResponseBody);
+			return response.status(StatusCodes.OK).json({ products } satisfies ProductListResponseBody);
 		} catch (error) {
 			return response.status(500).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,

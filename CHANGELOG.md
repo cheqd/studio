@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.21.0-develop.2](https://github.com/cheqd/credential-service/compare/2.21.0-develop.1...2.21.0-develop.2) (2024-07-02)
+
+
+### Bug Fixes
+
+* Product list (Stripe) OpenAPI schema ([#554](https://github.com/cheqd/credential-service/issues/554)) ([81ff8ce](https://github.com/cheqd/credential-service/commit/81ff8ce5b1a193e89cf6a436300726bdcefc8e05))
+
+## [2.21.0-develop.1](https://github.com/cheqd/credential-service/compare/2.20.3-develop.4...2.21.0-develop.1) (2024-07-01)
+
+
+### Features
+
+* Add a basic form for pagination for Stripe Product list endpoint ([#549](https://github.com/cheqd/credential-service/issues/549)) ([e8439e5](https://github.com/cheqd/credential-service/commit/e8439e5748b48ba1db8f515dc7717345d6dc1073))
+
 ## [2.20.3-develop.4](https://github.com/cheqd/credential-service/compare/2.20.3-develop.3...2.20.3-develop.4) (2024-07-01)
 
 
