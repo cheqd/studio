@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.21.0-develop.3](https://github.com/cheqd/studio/compare/2.21.0-develop.2...2.21.0-develop.3) (2024-07-02)
+
+
+### Features
+
+* cheqd Studio rebranding [DEV-4010] ([#550](https://github.com/cheqd/studio/issues/550)) ([bb58b44](https://github.com/cheqd/studio/commit/bb58b44a3967a35f79c175ff5c5dcc3980fcfbc8))
+
 ## [2.21.0-develop.2](https://github.com/cheqd/credential-service/compare/2.21.0-develop.1...2.21.0-develop.2) (2024-07-02)
 
 
