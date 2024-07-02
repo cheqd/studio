@@ -373,6 +373,26 @@
               "description": "If setup to true - returns the list of products with prices inside. Default - true",
               "required": false
             }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Restrict the response to only include items from 1 to 100. Default - 10",
+              "required": false
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "description": "Cursor for pagination, this only goes forward, i.e., Stripe's equivalent of 'starting_after'",
+              "required": false
+            }
           }
         ],
         "responses": {

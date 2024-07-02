@@ -18,7 +18,12 @@ dotenv.config();
 export class ProductController {
 	static productListValidator = [
 		check('prices').optional().isBoolean().withMessage('prices should be a boolean').bail(),
-		check('limit').optional().isInt({ min: 1, max: 100 }).withMessage('limit should be between 1 and 100').bail(),
+		check('limit')
+			.optional()
+			.isInt({ min: 1, max: 100 })
+			.default(DEFAULT_PAGINATION_LIST_LIMIT)
+			.withMessage('limit should be between 1 and 100')
+			.bail(),
 		check('cursor')
 			.optional()
 			.isString()
@@ -46,6 +51,20 @@ export class ProductController {
 	 *         type: boolean
 	 *         description: If setup to true - returns the list of products with prices inside. Default - true
 	 *         required: false
+	 *     - in: query
+	 *       name: limit
+	 *       schema:
+	 *         type: integer
+	 *         minimum: 1
+	 *         maximum: 100
+	 *         description: Restrict the response to only include items from 1 to 100. Default - 10
+	 *         required: false
+	 *     - in: query
+	 *       name: cursor
+	 *       schema:
+	 *         type: string
+	 *         description: Cursor for pagination, this only goes forward, i.e., Stripe's equivalent of 'starting_after'
+	 *         required: false
 	 *    responses:
 	 *      200:
 	 *        description: A list of products
@@ -67,7 +86,7 @@ export class ProductController {
 		const stripe = response.locals.stripe as Stripe;
 		// Get query parameters
 		const prices = request.query.prices === 'false' ? false : true;
-		const limit = Number(request.query.limit) ?? DEFAULT_PAGINATION_LIST_LIMIT;
+		const limit = Number(request.query.limit) || DEFAULT_PAGINATION_LIST_LIMIT;
 		const cursor = request.query.cursor as string | undefined;
 
 		try {
