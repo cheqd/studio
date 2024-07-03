@@ -41,1582 +41,14 @@
     "description": "cheqd Studio API Documentation",
     "url": "https://docs.cheqd.io/identity"
   },
-  "paths": {
-    "/account": {
-      "get": {
-        "tags": [
-          "Account"
-        ],
-        "summary": "Fetch custodian-mode client details.",
-        "description": "This endpoint returns the custodian-mode client details for authenticated users.",
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Customer"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/account/idtoken": {
-      "get": {
-        "tags": [
-          "Account"
-        ],
-        "summary": "Fetch IdToken.",
-        "description": "This endpoint returns IdToken as JWT with list of user roles inside",
-        "deprecated": true,
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "idToken": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/account/create": {
-      "post": {
-        "tags": [
-          "Account"
-        ],
-        "summary": "Create an client for an authenticated user.",
-        "description": "This endpoint creates a client in the custodian-mode for an authenticated user",
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/AccountCreateRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AccountCreateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "idToken": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/credential-status/create/unencrypted": {
-      "post": {
-        "tags": [
-          "Credential Status"
-        ],
-        "summary": "Create an unencrypted StatusList2021 credential status list.",
-        "description": "This endpoint creates an unencrypted StatusList2021 credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "statusPurpose",
-            "description": "The purpose of the status list. Can be either revocation or suspension. Once this is set, it cannot be changed. A new status list must be created to change the purpose.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "revocation",
-                "suspension"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialStatusCreateUnencryptedRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialStatusCreateUnencryptedRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CredentialStatusCreateUnencryptedResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/credential-status/create/encrypted": {
-      "post": {
-        "tags": [
-          "Credential Status"
-        ],
-        "summary": "Create an encrypted StatusList2021 credential status list.",
-        "description": "This endpoint creates an encrypted StatusList2021 credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "statusPurpose",
-            "description": "The purpose of the status list. Can be either revocation or suspension. Once this is set, it cannot be changed. A new status list must be created to change the purpose.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "revocation",
-                "suspension"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialStatusCreateEncryptedFormRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialStatusCreateEncryptedJsonRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CredentialStatusCreateEncryptedResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/credential-status/update/unencrypted": {
-      "post": {
-        "tags": [
-          "Credential Status"
-        ],
-        "summary": "Update an existing unencrypted StatusList2021 credential status list.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "statusAction",
-            "description": "The update action to be performed on the unencrypted status list, can be revoke, suspend or reinstate",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "revoke",
-                "suspend",
-                "reinstate"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialStatusUpdateUnencryptedRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialStatusUpdateUnencryptedRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CredentialStatusUpdateUnencryptedResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/credential-status/update/encrypted": {
-      "post": {
-        "tags": [
-          "Credential Status"
-        ],
-        "summary": "Update an existing encrypted StatusList2021 credential status list.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "statusAction",
-            "description": "The update action to be performed on the encrypted status list, can be revoke, suspend or reinstate",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "revoke",
-                "suspend",
-                "reinstate"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialStatusUpdateEncryptedFormRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialStatusUpdateEncryptedJsonRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CredentialStatusUpdateEncryptedResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/credential-status/check": {
-      "post": {
-        "tags": [
-          "Credential Status"
-        ],
-        "summary": "Check a StatusList2021 index for a given Verifiable Credential.",
-        "description": "This endpoint checks a StatusList2021 index for a given Verifiable Credential and reports whether it is revoked or suspended. It offers a standalone method for checking an index without passing the entire Verifiable Credential or Verifiable Presentation.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "statusPurpose",
-            "description": "The purpose of the status list. Can be either revocation or suspension.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "revocation",
-                "suspension"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialStatusCheckRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialStatusCheckRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CredentialStatusCheckResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/credential-status/search": {
-      "get": {
-        "tags": [
-          "Credential Status"
-        ],
-        "summary": "Fetch StatusList2021 DID-Linked Resource based on search criteria.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "did",
-            "description": "The DID of the issuer of the status list.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "statusPurpose",
-            "description": "The purpose of the status list. Can be either revocation or suspension.",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "revocation",
-                "suspension"
-              ]
-            }
-          },
-          {
-            "in": "query",
-            "name": "statusListName",
-            "description": "The name of the StatusList2021 DID-Linked Resource.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CredentialStatusListSearchResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/credential/issue": {
-      "post": {
-        "tags": [
-          "Credential"
-        ],
-        "summary": "Issue a Verifiable Credential",
-        "description": "This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued.",
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Credential"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/credential/verify": {
-      "post": {
-        "tags": [
-          "Credential"
-        ],
-        "summary": "Verify a Verifiable Credential.",
-        "description": "This endpoint verifies a Verifiable Credential passed to it. As input, it can take the VC-JWT as a string or the entire credential itself.",
-        "operationId": "verify",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "verifyStatus",
-            "description": "If set to `true` the verification will also check the status of the credential. Requires the VC to have a `credentialStatus` property.",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          },
-          {
-            "in": "query",
-            "name": "fetchRemoteContexts",
-            "description": "When dealing with JSON-LD you also MUST provide the proper contexts. Set this to `true` ONLY if you want the `@context` URLs to be fetched in case they are a custom context.",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          },
-          {
-            "in": "query",
-            "name": "allowDeactivatedDid",
-            "description": "If set to `true` allow to verify credential which based on deactivated DID.",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialVerifyRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialVerifyRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VerifyCredentialResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/credential/revoke": {
-      "post": {
-        "tags": [
-          "Credential"
-        ],
-        "summary": "Revoke a Verifiable Credential.",
-        "description": "This endpoint revokes a given Verifiable Credential. As input, it can take the VC-JWT as a string or the entire credential itself. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.",
-        "operationId": "revoke",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "publish",
-            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
-            "required": true,
-            "schema": {
-              "type": "boolean",
-              "default": true
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialRevokeRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialRevokeRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RevocationResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/credential/suspend": {
-      "post": {
-        "tags": [
-          "Credential"
-        ],
-        "summary": "Suspend a Verifiable Credential.",
-        "description": "This endpoint suspends a given Verifiable Credential.  As input, it can take the VC-JWT as a string or the entire credential itself.",
-        "operationId": "suspend",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "publish",
-            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
-            "schema": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialRevokeRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialRevokeRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SuspensionResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/credential/reinstate": {
-      "post": {
-        "tags": [
-          "Credential"
-        ],
-        "summary": "Reinstate a suspended Verifiable Credential.",
-        "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
-        "operationId": "reinstate",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "publish",
-            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
-            "schema": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialRevokeRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CredentialRevokeRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UnsuspensionResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/did/create": {
-      "post": {
-        "tags": [
-          "DID"
-        ],
-        "summary": "Create a DID Document.",
-        "description": "This endpoint creates a DID and associated DID Document. As input, it can take the DID Document parameters via a form, or the fully-assembled DID Document itself.",
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/DidCreateRequestFormBased"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DidCreateRequestJson"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DidResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "InvalidRequest"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "Internal Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/did/update": {
-      "post": {
-        "tags": [
-          "DID"
-        ],
-        "summary": "Update a DID Document.",
-        "description": "This endpoint updates a DID Document. As an input, it can take JUST the sections/parameters that need to be updated in the DID Document (in this scenario, it fetches the current DID Document and applies the updated section). Alternatively, it take the fully-assembled DID Document with updated sections as well as unchanged sections.",
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/DidUpdateRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DidUpdateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DidUpdateResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/did/import": {
-      "post": {
-        "tags": [
-          "DID"
-        ],
-        "summary": "Import a DID Document.",
-        "description": "This endpoint imports a decentralized identifier associated with the user's account for custodian-mode clients.",
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/DidImportRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DidImportRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DidResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "InvalidRequest"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "Internal Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/did/deactivate/{did}": {
-      "post": {
-        "tags": [
-          "DID"
-        ],
-        "summary": "Deactivate a DID Document.",
-        "description": "This endpoint deactivates a DID Document by taking the DID identifier as input. Must be called and signed by the DID owner.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "did",
-            "description": "DID identifier to deactivate.",
-            "schema": {
-              "type": "string"
-            },
-            "required": true
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/DidDeactivateRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DidDeactivateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DeactivatedDidResolution"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/did/list": {
-      "get": {
-        "tags": [
-          "DID"
-        ],
-        "summary": "Fetch DIDs associated with an account.",
-        "description": "This endpoint returns the list of DIDs controlled by the account.",
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/did/search/{did}": {
-      "get": {
-        "tags": [
-          "DID"
-        ],
-        "summary": "Resolve a DID Document.",
-        "description": "Resolve a DID Document by DID identifier. Also supports DID Resolution Queries as defined in the <a href=\"https://w3c-ccg.github.io/did-resolution/\">W3C DID Resolution specification</a>.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "did",
-            "description": "DID identifier to resolve.",
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "example": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
-          },
-          {
-            "in": "query",
-            "name": "metadata",
-            "description": "Return only metadata of DID Document instead of actual DID Document.",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "in": "query",
-            "name": "versionId",
-            "description": "Unique UUID version identifier of DID Document. Allows for fetching a specific version of the DID Document. See <a href=\"https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#did-document-metadata\">cheqd DID Method Specification</a> for more details.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "example": "3ccde6ba-6ba5-56f2-9f4f-8825561a9860"
-          },
-          {
-            "in": "query",
-            "name": "versionTime",
-            "description": "Returns the closest version of the DID Document *at* or *before* specified time. See <a href=\"https://docs.cheqd.io/identity/architecture/adr-list/adr-005-did-resolution-and-did-url-dereferencing\">DID Resolution handling for `did:cheqd`</a> for more details.",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "example": "1970-01-01T00:00:00Z"
-          },
-          {
-            "in": "query",
-            "name": "transformKeys",
-            "description": "This directive transforms the Verification Method key format from the version in the DID Document to the specified format chosen below.",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "Ed25519VerificationKey2018",
-                "Ed25519VerificationKey2020",
-                "JsonWebKey2020"
-              ]
-            }
-          },
-          {
-            "in": "query",
-            "name": "service",
-            "description": "Query DID Document for a specific Service Endpoint by Service ID (e.g., `service-1` in `did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1`). This will typically redirect to the Service Endpoint based on <a href=\"https://w3c-ccg.github.io/did-resolution/#dereferencing\">DID Resolution specification</a> algorithm.",
-            "schema": {
-              "type": "string"
-            },
-            "example": "service-1"
-          },
-          {
-            "in": "query",
-            "name": "relativeRef",
-            "description": "Relative reference is a query fragment appended to the Service Endpoint URL. **Must** be used along with the `service` query property above. See <a href=\"https://w3c-ccg.github.io/did-resolution/#dereferencing\">DID Resolution specification</a> algorithm for more details.",
-            "schema": {
-              "type": "string"
-            },
-            "example": "/path/to/file"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DidResolution"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/key/create": {
-      "post": {
-        "tags": [
-          "Key"
-        ],
-        "summary": "Create an identity key pair.",
-        "description": "This endpoint creates an identity key pair associated with the user's account for custodian-mode clients.",
-        "parameters": [
-          {
-            "name": "type",
-            "description": "Key type of the identity key pair to create.",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "Ed25519",
-                "Secp256k1"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/KeyResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "InvalidRequest"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "Internal Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/key/import": {
-      "post": {
-        "tags": [
-          "Key"
-        ],
-        "summary": "Import an identity key pair.",
-        "description": "This endpoint imports an identity key pair associated with the user's account for custodian-mode clients.",
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/KeyImportRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/KeyImportRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/KeyResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "InvalidRequest"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "Internal Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/key/read/{kid}": {
-      "get": {
-        "tags": [
-          "Key"
-        ],
-        "summary": "Fetch an identity key pair.",
-        "description": "This endpoint fetches an identity key pair's details for a given key ID. Only the user account associated with the custodian-mode client can fetch the key pair.",
-        "parameters": [
-          {
-            "name": "kid",
-            "description": "Key ID of the identity key pair to fetch.",
-            "in": "path",
-            "schema": {
-              "type": "string"
-            },
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/KeyResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "InvalidRequest"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "Internal Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/presentation/create": {
-      "post": {
-        "tags": [
-          "Presentation"
-        ],
-        "summary": "!!! WARN. Such endpoint is made mostly for testing purposes and it is not supposed to be used in production !!! Create a Verifiable Presentation from credential(s).",
-        "description": "This endpoint creates a Verifiable Presentation from credential(s). As input, it can take the credential(s) as a string or the entire credential(s) itself. \n !!! WARN. Such endpoint is made only for testing purposes !!!",
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/PresentationCreateRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PresentationCreateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PresentationCreateResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/presentation/verify": {
-      "post": {
-        "tags": [
-          "Presentation"
-        ],
-        "summary": "Verify a Verifiable Presentation generated from credential(s).",
-        "description": "This endpoint verifies the Verifiable Presentation generated from credential(s). As input, it can take the Verifiable Presentation JWT as a string or the entire Verifiable Presentation itself.",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "verifyStatus",
-            "description": "If set to `true` the verification will also check the status of the presentation. Requires the VP to have a `credentialStatus` property.",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          },
-          {
-            "in": "query",
-            "name": "fetchRemoteContexts",
-            "description": "When dealing with JSON-LD you also MUST provide the proper contexts. * Set this to `true` ONLY if you want the `@context` URLs to be fetched in case they are a custom context.",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          },
-          {
-            "in": "query",
-            "name": "allowDeactivatedDid",
-            "description": "If set to `true` allow to verify credential which based on deactivated DID.",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/PresentationVerifyRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PresentationVerifyRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VerifyPresentationResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/resource/create/{did}": {
-      "post": {
-        "tags": [
-          "Resource"
-        ],
-        "summary": "Create a DID-Linked Resource.",
-        "description": "This endpoint creates a DID-Linked Resource. As input, it can take the DID identifier and the resource parameters via a form, or the fully-assembled resource itself.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "did",
-            "description": "DID identifier to link the resource to.",
-            "schema": {
-              "type": "string"
-            },
-            "required": true
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateResourceRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateResourceRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResourceMetadata"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/resource/search/{did}": {
-      "get": {
-        "tags": [
-          "Resource"
-        ],
-        "summary": "Get a DID-Linked Resource.",
-        "description": "This endpoint returns the DID-Linked Resource for a given DID identifier and resource identifier.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "did",
-            "description": "DID identifier",
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "example": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
-          },
-          {
-            "in": "query",
-            "name": "resourceId",
-            "description": "Fetch a DID-Linked Resource by Resource ID unique identifier. Since this is a unique identifier, other Resource query parameters are not required. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "example": "3ccde6ba-6ba5-56f2-9f4f-8825561a9860"
-          },
-          {
-            "in": "query",
-            "name": "resourceName",
-            "description": "Filter a DID-Linked Resource query by Resource Name. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
-            "schema": {
-              "type": "string"
-            },
-            "example": "cheqd-issuer-logo"
-          },
-          {
-            "in": "query",
-            "name": "resourceType",
-            "description": "Filter a DID-Linked Resource query by Resource Type. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
-            "schema": {
-              "type": "string"
-            },
-            "example": "CredentialArtwork"
-          },
-          {
-            "in": "query",
-            "name": "resourceVersion",
-            "description": "Filter a DID-Linked Resource query by Resource Version, which is an optional free-text field used by issuers (e.g., \"v1\", \"Final Version\", \"1st January 1970\" etc). See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
-            "schema": {
-              "type": "string"
-            },
-            "example": "v1"
-          },
-          {
-            "in": "query",
-            "name": "resourceVersionTime",
-            "description": "Filter a DID-Linked Resource query which returns the closest version of the Resource *at* or *before* specified time. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "example": "1970-01-01T00:00:00Z"
-          },
-          {
-            "in": "query",
-            "name": "checksum",
-            "description": "Request integrity check against a given DID-Linked Resource by providing a SHA-256 checksum hash. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
-            "schema": {
-              "type": "string"
-            },
-            "example": "dc64474d062ed750a66bad58cb609928de55ed0d81defd231a4a4bf97358e9ed"
-          },
-          {
-            "in": "query",
-            "name": "resourceMetadata",
-            "description": "Return only metadata of DID-Linked Resource instead of actual DID-Linked Resource. Mutually exclusive with some of the other parameters.",
-            "schema": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "any": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    }
-  },
   "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
     "schemas": {
       "AlsoKnownAs": {
         "type": "object",
@@ -3556,6 +1988,1586 @@
           "error": {
             "type": "string",
             "example": "Unauthorized Error"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "paths": {
+    "/account": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Fetch custodian-mode client details.",
+        "description": "This endpoint returns the custodian-mode client details for authenticated users.",
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/account/idtoken": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Fetch IdToken.",
+        "description": "This endpoint returns IdToken as JWT with list of user roles inside",
+        "deprecated": true,
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "idToken": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/account/create": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Create an client for an authenticated user.",
+        "description": "This endpoint creates a client in the custodian-mode for an authenticated user",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountCreateRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "idToken": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/create/unencrypted": {
+      "post": {
+        "tags": [
+          "Credential Status"
+        ],
+        "summary": "Create an unencrypted StatusList2021 credential status list.",
+        "description": "This endpoint creates an unencrypted StatusList2021 credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "statusPurpose",
+            "description": "The purpose of the status list. Can be either revocation or suspension. Once this is set, it cannot be changed. A new status list must be created to change the purpose.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "revocation",
+                "suspension"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusCreateUnencryptedRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusCreateUnencryptedRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialStatusCreateUnencryptedResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/create/encrypted": {
+      "post": {
+        "tags": [
+          "Credential Status"
+        ],
+        "summary": "Create an encrypted StatusList2021 credential status list.",
+        "description": "This endpoint creates an encrypted StatusList2021 credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "statusPurpose",
+            "description": "The purpose of the status list. Can be either revocation or suspension. Once this is set, it cannot be changed. A new status list must be created to change the purpose.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "revocation",
+                "suspension"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusCreateEncryptedFormRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusCreateEncryptedJsonRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialStatusCreateEncryptedResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/update/unencrypted": {
+      "post": {
+        "tags": [
+          "Credential Status"
+        ],
+        "summary": "Update an existing unencrypted StatusList2021 credential status list.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "statusAction",
+            "description": "The update action to be performed on the unencrypted status list, can be revoke, suspend or reinstate",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "revoke",
+                "suspend",
+                "reinstate"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusUpdateUnencryptedRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusUpdateUnencryptedRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialStatusUpdateUnencryptedResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/update/encrypted": {
+      "post": {
+        "tags": [
+          "Credential Status"
+        ],
+        "summary": "Update an existing encrypted StatusList2021 credential status list.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "statusAction",
+            "description": "The update action to be performed on the encrypted status list, can be revoke, suspend or reinstate",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "revoke",
+                "suspend",
+                "reinstate"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusUpdateEncryptedFormRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusUpdateEncryptedJsonRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialStatusUpdateEncryptedResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/check": {
+      "post": {
+        "tags": [
+          "Credential Status"
+        ],
+        "summary": "Check a StatusList2021 index for a given Verifiable Credential.",
+        "description": "This endpoint checks a StatusList2021 index for a given Verifiable Credential and reports whether it is revoked or suspended. It offers a standalone method for checking an index without passing the entire Verifiable Credential or Verifiable Presentation.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "statusPurpose",
+            "description": "The purpose of the status list. Can be either revocation or suspension.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "revocation",
+                "suspension"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusCheckRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialStatusCheckRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialStatusCheckResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/search": {
+      "get": {
+        "tags": [
+          "Credential Status"
+        ],
+        "summary": "Fetch StatusList2021 DID-Linked Resource based on search criteria.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "did",
+            "description": "The DID of the issuer of the status list.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "statusPurpose",
+            "description": "The purpose of the status list. Can be either revocation or suspension.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "revocation",
+                "suspension"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "statusListName",
+            "description": "The name of the StatusList2021 DID-Linked Resource.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialStatusListSearchResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential/issue": {
+      "post": {
+        "tags": [
+          "Credential"
+        ],
+        "summary": "Issue a Verifiable Credential",
+        "description": "This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Credential"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential/verify": {
+      "post": {
+        "tags": [
+          "Credential"
+        ],
+        "summary": "Verify a Verifiable Credential.",
+        "description": "This endpoint verifies a Verifiable Credential passed to it. As input, it can take the VC-JWT as a string or the entire credential itself.",
+        "operationId": "verify",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "verifyStatus",
+            "description": "If set to `true` the verification will also check the status of the credential. Requires the VC to have a `credentialStatus` property.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "in": "query",
+            "name": "fetchRemoteContexts",
+            "description": "When dealing with JSON-LD you also MUST provide the proper contexts. Set this to `true` ONLY if you want the `@context` URLs to be fetched in case they are a custom context.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "in": "query",
+            "name": "allowDeactivatedDid",
+            "description": "If set to `true` allow to verify credential which based on deactivated DID.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialVerifyRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialVerifyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyCredentialResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential/revoke": {
+      "post": {
+        "tags": [
+          "Credential"
+        ],
+        "summary": "Revoke a Verifiable Credential.",
+        "description": "This endpoint revokes a given Verifiable Credential. As input, it can take the VC-JWT as a string or the entire credential itself. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.",
+        "operationId": "revoke",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "publish",
+            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "required": true,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialRevokeRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialRevokeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevocationResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential/suspend": {
+      "post": {
+        "tags": [
+          "Credential"
+        ],
+        "summary": "Suspend a Verifiable Credential.",
+        "description": "This endpoint suspends a given Verifiable Credential.  As input, it can take the VC-JWT as a string or the entire credential itself.",
+        "operationId": "suspend",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "publish",
+            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialRevokeRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialRevokeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuspensionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential/reinstate": {
+      "post": {
+        "tags": [
+          "Credential"
+        ],
+        "summary": "Reinstate a suspended Verifiable Credential.",
+        "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+        "operationId": "reinstate",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "publish",
+            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialRevokeRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialRevokeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnsuspensionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/did/create": {
+      "post": {
+        "tags": [
+          "DID"
+        ],
+        "summary": "Create a DID Document.",
+        "description": "This endpoint creates a DID and associated DID Document. As input, it can take the DID Document parameters via a form, or the fully-assembled DID Document itself.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/DidCreateRequestFormBased"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DidCreateRequestJson"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DidResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "InvalidRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "Internal Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/did/update": {
+      "post": {
+        "tags": [
+          "DID"
+        ],
+        "summary": "Update a DID Document.",
+        "description": "This endpoint updates a DID Document. As an input, it can take JUST the sections/parameters that need to be updated in the DID Document (in this scenario, it fetches the current DID Document and applies the updated section). Alternatively, it take the fully-assembled DID Document with updated sections as well as unchanged sections.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/DidUpdateRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DidUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DidUpdateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/did/import": {
+      "post": {
+        "tags": [
+          "DID"
+        ],
+        "summary": "Import a DID Document.",
+        "description": "This endpoint imports a decentralized identifier associated with the user's account for custodian-mode clients.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/DidImportRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DidImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DidResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "InvalidRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "Internal Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/did/deactivate/{did}": {
+      "post": {
+        "tags": [
+          "DID"
+        ],
+        "summary": "Deactivate a DID Document.",
+        "description": "This endpoint deactivates a DID Document by taking the DID identifier as input. Must be called and signed by the DID owner.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "did",
+            "description": "DID identifier to deactivate.",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/DidDeactivateRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DidDeactivateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeactivatedDidResolution"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/did/list": {
+      "get": {
+        "tags": [
+          "DID"
+        ],
+        "summary": "Fetch DIDs associated with an account.",
+        "description": "This endpoint returns the list of DIDs controlled by the account.",
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/did/search/{did}": {
+      "get": {
+        "tags": [
+          "DID"
+        ],
+        "summary": "Resolve a DID Document.",
+        "description": "Resolve a DID Document by DID identifier. Also supports DID Resolution Queries as defined in the <a href=\"https://w3c-ccg.github.io/did-resolution/\">W3C DID Resolution specification</a>.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "did",
+            "description": "DID identifier to resolve.",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "example": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+          },
+          {
+            "in": "query",
+            "name": "metadata",
+            "description": "Return only metadata of DID Document instead of actual DID Document.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "versionId",
+            "description": "Unique UUID version identifier of DID Document. Allows for fetching a specific version of the DID Document. See <a href=\"https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#did-document-metadata\">cheqd DID Method Specification</a> for more details.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "3ccde6ba-6ba5-56f2-9f4f-8825561a9860"
+          },
+          {
+            "in": "query",
+            "name": "versionTime",
+            "description": "Returns the closest version of the DID Document *at* or *before* specified time. See <a href=\"https://docs.cheqd.io/identity/architecture/adr-list/adr-005-did-resolution-and-did-url-dereferencing\">DID Resolution handling for `did:cheqd`</a> for more details.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "1970-01-01T00:00:00Z"
+          },
+          {
+            "in": "query",
+            "name": "transformKeys",
+            "description": "This directive transforms the Verification Method key format from the version in the DID Document to the specified format chosen below.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Ed25519VerificationKey2018",
+                "Ed25519VerificationKey2020",
+                "JsonWebKey2020"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "service",
+            "description": "Query DID Document for a specific Service Endpoint by Service ID (e.g., `service-1` in `did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#service-1`). This will typically redirect to the Service Endpoint based on <a href=\"https://w3c-ccg.github.io/did-resolution/#dereferencing\">DID Resolution specification</a> algorithm.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "service-1"
+          },
+          {
+            "in": "query",
+            "name": "relativeRef",
+            "description": "Relative reference is a query fragment appended to the Service Endpoint URL. **Must** be used along with the `service` query property above. See <a href=\"https://w3c-ccg.github.io/did-resolution/#dereferencing\">DID Resolution specification</a> algorithm for more details.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "/path/to/file"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DidResolution"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/key/create": {
+      "post": {
+        "tags": [
+          "Key"
+        ],
+        "summary": "Create an identity key pair.",
+        "description": "This endpoint creates an identity key pair associated with the user's account for custodian-mode clients.",
+        "parameters": [
+          {
+            "name": "type",
+            "description": "Key type of the identity key pair to create.",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Ed25519",
+                "Secp256k1"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KeyResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "InvalidRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "Internal Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/key/import": {
+      "post": {
+        "tags": [
+          "Key"
+        ],
+        "summary": "Import an identity key pair.",
+        "description": "This endpoint imports an identity key pair associated with the user's account for custodian-mode clients.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/KeyImportRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KeyImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KeyResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "InvalidRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "Internal Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/key/read/{kid}": {
+      "get": {
+        "tags": [
+          "Key"
+        ],
+        "summary": "Fetch an identity key pair.",
+        "description": "This endpoint fetches an identity key pair's details for a given key ID. Only the user account associated with the custodian-mode client can fetch the key pair.",
+        "parameters": [
+          {
+            "name": "kid",
+            "description": "Key ID of the identity key pair to fetch.",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KeyResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "InvalidRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "Internal Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/presentation/create": {
+      "post": {
+        "tags": [
+          "Presentation"
+        ],
+        "summary": "!!! WARN. Such endpoint is made mostly for testing purposes and it is not supposed to be used in production !!! Create a Verifiable Presentation from credential(s).",
+        "description": "This endpoint creates a Verifiable Presentation from credential(s). As input, it can take the credential(s) as a string or the entire credential(s) itself. \n !!! WARN. Such endpoint is made only for testing purposes !!!",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PresentationCreateRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresentationCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresentationCreateResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/presentation/verify": {
+      "post": {
+        "tags": [
+          "Presentation"
+        ],
+        "summary": "Verify a Verifiable Presentation generated from credential(s).",
+        "description": "This endpoint verifies the Verifiable Presentation generated from credential(s). As input, it can take the Verifiable Presentation JWT as a string or the entire Verifiable Presentation itself.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "verifyStatus",
+            "description": "If set to `true` the verification will also check the status of the presentation. Requires the VP to have a `credentialStatus` property.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "in": "query",
+            "name": "fetchRemoteContexts",
+            "description": "When dealing with JSON-LD you also MUST provide the proper contexts. * Set this to `true` ONLY if you want the `@context` URLs to be fetched in case they are a custom context.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "in": "query",
+            "name": "allowDeactivatedDid",
+            "description": "If set to `true` allow to verify credential which based on deactivated DID.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PresentationVerifyRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresentationVerifyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyPresentationResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/resource/create/{did}": {
+      "post": {
+        "tags": [
+          "Resource"
+        ],
+        "summary": "Create a DID-Linked Resource.",
+        "description": "This endpoint creates a DID-Linked Resource. As input, it can take the DID identifier and the resource parameters via a form, or the fully-assembled resource itself.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "did",
+            "description": "DID identifier to link the resource to.",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateResourceRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateResourceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceMetadata"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/resource/search/{did}": {
+      "get": {
+        "tags": [
+          "Resource"
+        ],
+        "summary": "Get a DID-Linked Resource.",
+        "description": "This endpoint returns the DID-Linked Resource for a given DID identifier and resource identifier.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "did",
+            "description": "DID identifier",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "example": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+          },
+          {
+            "in": "query",
+            "name": "resourceId",
+            "description": "Fetch a DID-Linked Resource by Resource ID unique identifier. Since this is a unique identifier, other Resource query parameters are not required. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "3ccde6ba-6ba5-56f2-9f4f-8825561a9860"
+          },
+          {
+            "in": "query",
+            "name": "resourceName",
+            "description": "Filter a DID-Linked Resource query by Resource Name. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "cheqd-issuer-logo"
+          },
+          {
+            "in": "query",
+            "name": "resourceType",
+            "description": "Filter a DID-Linked Resource query by Resource Type. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "CredentialArtwork"
+          },
+          {
+            "in": "query",
+            "name": "resourceVersion",
+            "description": "Filter a DID-Linked Resource query by Resource Version, which is an optional free-text field used by issuers (e.g., \"v1\", \"Final Version\", \"1st January 1970\" etc). See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "v1"
+          },
+          {
+            "in": "query",
+            "name": "resourceVersionTime",
+            "description": "Filter a DID-Linked Resource query which returns the closest version of the Resource *at* or *before* specified time. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "1970-01-01T00:00:00Z"
+          },
+          {
+            "in": "query",
+            "name": "checksum",
+            "description": "Request integrity check against a given DID-Linked Resource by providing a SHA-256 checksum hash. See <a href=\"https://docs.cheqd.io/identity/credential-service/did-linked-resources/understanding-dlrs/technical-composition\">DID-Linked Resources</a> for more details.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "dc64474d062ed750a66bad58cb609928de55ed0d81defd231a4a4bf97358e9ed"
+          },
+          {
+            "in": "query",
+            "name": "resourceMetadata",
+            "description": "Return only metadata of DID-Linked Resource instead of actual DID-Linked Resource. Mutually exclusive with some of the other parameters.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "any": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
           }
         }
       }
