@@ -95,8 +95,6 @@ export class APIGuard {
 			this.setUserInfoStrategy(new IdTokenUserInfoFetcher(bearerToken, this.oauthProvider));
 			return;
 		}
-
-		this.setUserInfoStrategy(new SwaggerUserInfoFetcher(this.oauthProvider));
 	}
 
 	/**
