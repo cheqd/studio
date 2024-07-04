@@ -58,6 +58,7 @@ jobs:
                 RESOLVER_URL: ${{ vars.RESOLVER_URL }}
                 TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
                 TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+                TEST_USER_API_KEY: ${{ secrets.TEST_USER_API_KEY }}
                 TESTNET_RPC_URL: ${{ vars.TESTNET_RPC_URL }}
                 VERIDA_PRIVATE_KEY: ${{ secrets.VERIDA_PRIVATE_KEY }}
                 CREDS_DECRYPTION_SECRET: ${{ secrets.CREDS_DECRYPTION_SECRET }}
