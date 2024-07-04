@@ -1938,13 +1938,32 @@
       "Customer": {
         "type": "object",
         "properties": {
-          "customerId": {
-            "type": "string",
-            "example": "6w5drpiiwhhs"
+          "customer": {
+            "type": "object",
+            "properties": {
+              "customerId": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
           },
-          "address": {
-            "type": "string",
-            "example": "cheqd1wgsvqwlkmdp60f4dek26ak0sjw6au3ytd3pz7f"
+          "paymentAccount": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "QueryIdTokenResponseBody": {
+        "type": "object",
+        "properties": {
+          "idToken": {
+            "type": "string"
           }
         }
       },
@@ -2042,8 +2061,8 @@
             "description": "The request was successful.",
             "content": {
               "application/json": {
-                "idToken": {
-                  "type": "string"
+                "schema": {
+                  "$ref": "#/components/schemas/QueryIdTokenResponseBody"
                 }
               }
             }
@@ -2086,8 +2105,8 @@
             "description": "The request was successful.",
             "content": {
               "application/json": {
-                "idToken": {
-                  "type": "string"
+                "schema": {
+                  "$ref": "#/components/schemas/QueryIdTokenResponseBody"
                 }
               }
             }

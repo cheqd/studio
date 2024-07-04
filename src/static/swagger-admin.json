@@ -326,10 +326,7 @@
       },
       "APIKeyCreateResponseBody": {
         "description": "The response body for creating an API key",
-        "type": "object",
-        "schema": {
-          "ref": "#/components/schemas/APIKeyResponse"
-        }
+        "$ref": "#/components/schemas/APIKeyResponse"
       },
       "APIKeyCreateUnsuccessfulResponseBody": {
         "description": "The response body for an unsuccessful API key creation",
@@ -374,10 +371,7 @@
       },
       "APIKeyUpdateResponseBody": {
         "description": "The response body for an unsuccessful API key update",
-        "type": "object",
-        "schema": {
-          "ref": "#/components/schemas/APIKeyResponse"
-        }
+        "$ref": "#/components/schemas/APIKeyResponse"
       },
       "APIKeyUpdateUnsuccessfulResponseBody": {
         "description": "The response body for an unsuccessful API key update",
@@ -439,10 +433,7 @@
           "apiKeys": {
             "type": "array",
             "items": {
-              "type": "object",
-              "schema": {
-                "ref": "#/components/schemas/APIKeyResponse"
-              }
+              "$ref": "#/components/schemas/APIKeyResponse"
             }
           }
         }
@@ -464,9 +455,7 @@
       "APIKeyGetResponseBody": {
         "description": "The response body for getting an API key",
         "type": "object",
-        "schema": {
-          "ref": "#/components/schemas/APIKeyResponse"
-        }
+        "$ref": "#/components/schemas/APIKeyResponse"
       },
       "OrganisationResponseBody": {
         "description": "The response body for an organisation",
@@ -539,7 +528,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/APIKeyCreateResponseBody"
+                  "$ref": "#/components/schemas/APIKeyResponse"
                 }
               }
             }
@@ -596,7 +585,7 @@
       }
     },
     "/admin/api-key/revoke": {
-      "delete": {
+      "post": {
         "summary": "Revoke an existing API key",
         "description": "Revoke an existing API key",
         "tags": [
