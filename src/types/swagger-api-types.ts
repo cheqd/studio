@@ -916,13 +916,15 @@
  *           type: string
  *           description: DID to be imported
  *           format: uri
- *           required: true
  *         keys:
  *           type: array
  *           description: List of keys required to import the DID
- *           required: true
  *           items:
  *             $ref: '#/components/schemas/KeyImportRequest'
+ *
+ *       required:
+ *          - did
+ *          - keys
  *     PresentationCreateResult:
  *       type: object
  *       properties:
