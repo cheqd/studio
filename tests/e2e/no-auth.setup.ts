@@ -12,11 +12,9 @@ setup('Unauthenticated user', async ({ page, request }) => {
 	const authorizeButton = await page.locator('button.btn.authorize.unlocked:has(span:has-text("Authorize"))');
 	await expect(authorizeButton).toBeVisible();
 
-	// commenting this out, as we're intercepting and appending api-key to all requests.
-
-	// const response = await page.goto(`${process.env.APPLICATION_BASE_URL}/account`);
-	// expect(response.ok()).not.toBe(true);
-	// expect(response.status()).toBe(StatusCodes.UNAUTHORIZED);
+	const response = await page.goto(`${process.env.APPLICATION_BASE_URL}/account`);
+	expect(response.ok()).not.toBe(true);
+	expect(response.status()).toBe(StatusCodes.UNAUTHORIZED);
 
 	// End of authentication steps.
 
