@@ -1,5 +1,5 @@
 {
-	"name": "@cheqd/credential-service",
+	"name": "@cheqd/studio",
 	"version": "2.21.0",
 	"description": "cheqd Studio Backend",
 	"source": "src/index.ts",
