@@ -16,7 +16,7 @@ export class APIGuard {
 	private userInfoFetcher: IUserInfoFetcher;
 	private oauthProvider: IOAuthProvider;
 	private static bearerTokenIdentifier = 'Bearer';
-	private pathSkip = ['/swagger', '/static', '/logto', '/account/bootstrap', '/admin/webhook'];
+	private pathSkip = ['/swagger', '/admin/swagger', '/static', '/logto', '/account/bootstrap', '/admin/webhook'];
 
 	constructor(authRuleRepository: AuthRuleRepository, oauthProvider: IOAuthProvider) {
 		this.authRuleRepository = authRuleRepository;
@@ -95,6 +95,8 @@ export class APIGuard {
 			this.setUserInfoStrategy(new IdTokenUserInfoFetcher(bearerToken, this.oauthProvider));
 			return;
 		}
+
+		this.setUserInfoStrategy(new SwaggerUserInfoFetcher(this.oauthProvider));
 	}
 
 	/**

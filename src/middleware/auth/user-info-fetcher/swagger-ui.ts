@@ -23,7 +23,7 @@ export class SwaggerUserInfoFetcher extends UserInfoHelper implements IUserInfoF
 			// If the user is not authenticated - return error
 			if (!request.user.isAuthenticated) {
 				return response.status(StatusCodes.UNAUTHORIZED).json({
-					error: "Unauthorized error: Seems like you are not authenticated. Please follow the authentication process using 'LogIn' button",
+					error: "Unauthorized error: Seems like you are not authenticated. Please follow the authentication process using 'Authorize' button",
 				} satisfies UnsuccessfulResponseBody);
 			}
 			// Tries to get customerId from the logTo user structure
