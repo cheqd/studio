@@ -100,8 +100,8 @@ export class AccountController {
 	 *         description: The request was successful.
 	 *         content:
 	 *           application/json:
-	 *             idToken:
-	 *                type: string
+	 *             schema:
+	 *               $ref: '#/components/schemas/QueryIdTokenResponseBody'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -396,8 +396,8 @@ export class AccountController {
 	 *         description: The request was successful.
 	 *         content:
 	 *           application/json:
-	 *             idToken:
-	 *                type: string
+	 *             schema:
+	 *               $ref: '#/components/schemas/QueryIdTokenResponseBody'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
