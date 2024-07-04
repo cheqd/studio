@@ -32,16 +32,6 @@ setup('Authenticate as user', async ({ page }) => {
 	// Step 5: click on "Close" button
 	await page.locator('button.btn.modal-btn.auth.btn-done.button').click();
 
-	// intercept all routes and append the api key header.
-	await page.route('**/*', (route, request) => {
-		const headers = {
-			...request.headers(),
-			'x-api-key': process.env.TEST_USER_API_KEY,
-		};
-
-		route.continue({ headers });
-	});
-
 	// End of authentication steps.
 
 	await page.context().storageState({ path: STORAGE_STATE_AUTHENTICATED });
