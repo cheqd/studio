@@ -1,4 +1,4 @@
-# Credential Service
+# cheqd Studio
 
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/cheqd/studio?color=green&label=stable%20release&style=flat-square)](https://github.com/cheqd/studio/releases/latest)
 ![GitHub Release Date](https://img.shields.io/github/release-date/cheqd/studio?color=green&style=flat-square)
@@ -14,10 +14,7 @@
 
 ## ℹ️ Overview
 
-The purpose of this service is to issue and verify credentials. This service by itself does not take care of storing the
-credentials. If you'd like to store credentials, you would have to pair this service with
-[secret-box-service](https://github.com/cheqd/secret-box-service.git). This service is also dependent on
-[auth0-service](https://github.com/cheqd/auth0-service)
+cheqd Studio (formerly Credential Service) enables users to consume cheqd's identity functionality, such as DIDs, Trust Registries, Status Lists, Credential Payments and DID-Linked Resources over REST API. This enables users to integrate cheqd's functionality into existing applications or create a full end-to-end trusted ecosystem from the ground up.
 
 ## 📖 Usage
 
@@ -81,7 +78,7 @@ By default, `ENABLE_AUTHENTICATION` is set to off/`false`. To enable external Ve
        `http://localhost:3000/` on localhost.)
     3. `LOGTO_MANAGEMENT_API`: URL of management API for LogTo. This is typically static within self-hosted LogTo applications and is not meant to be a resolvable URL. (Default: `https://default.logto.app/api`)
 2. **User-facing APIs**
-    1. `LOGTO_APP_ID`: Application ID for the Credential Service application in LogTo. This can be set up as type
+    1. `LOGTO_APP_ID`: Application ID for the cheqd Studio application in LogTo. This can be set up as type
        "Traditional Web"
     2. `LOGTO_APP_SECRET`: Application secret associated with App ID above.
 3. **Machine-to-machine backend APIs**
@@ -207,7 +204,7 @@ When upgrading either the external Veramo KMS or LogTo, you might need to run mi
 You can run _just_ the migration scripts using [Docker Compose profiles](https://docs.docker.com/compose/profiles/)
 defined in the Compose file.
 
-For example, to run Credential Service app migrations on an existing Postgres database (for external Veramo KMS):
+For example, to run cheqd Studio app migrations on an existing Postgres database (for external Veramo KMS):
 
 ```bash
 docker compose -f docker/with-external-db/docker-compose-with-db.yml --profile app-setup up --detach
