@@ -325,7 +325,6 @@
         ]
       },
       "APIKeyCreateResponseBody": {
-        "description": "The response body for creating an API key",
         "$ref": "#/components/schemas/APIKeyResponse"
       },
       "APIKeyCreateUnsuccessfulResponseBody": {
@@ -370,7 +369,6 @@
         ]
       },
       "APIKeyUpdateResponseBody": {
-        "description": "The response body for an unsuccessful API key update",
         "$ref": "#/components/schemas/APIKeyResponse"
       },
       "APIKeyUpdateUnsuccessfulResponseBody": {
@@ -453,12 +451,7 @@
         ]
       },
       "APIKeyGetResponseBody": {
-        "description": "The response body for getting an API key",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/APIKeyResponse"
-          }
-        ]
+        "$ref": "#/components/schemas/APIKeyResponse"
       },
       "OrganisationResponseBody": {
         "description": "The response body for an organisation",
