@@ -27,7 +27,7 @@ export class PriceController {
 	 *       schema:
 	 *         type: string
 	 *         description: The product id. If passed - returns filtered by this product list of prices.
-	 *         required: false
+	 *
 	 *    responses:
 	 *      200:
 	 *        description: A list of prices
