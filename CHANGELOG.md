@@ -1,5 +1,34 @@
 # Changelog
 
+## [3.0.0-develop.1](https://github.com/cheqd/studio/compare/2.21.0-develop.3...3.0.0-develop.1) (2024-07-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* Change npm package name [DEV-4066] (#558)
+
+### Features
+
+* Change npm package name [DEV-4066] ([#558](https://github.com/cheqd/studio/issues/558)) ([5c032f5](https://github.com/cheqd/studio/commit/5c032f554bbf6f8d8b8d8b634e58f49d79ce9155)), closes [#549](https://github.com/cheqd/studio/issues/549) [#550](https://github.com/cheqd/studio/issues/550) [#553](https://github.com/cheqd/studio/issues/553) [#543](https://github.com/cheqd/studio/issues/543) [#545](https://github.com/cheqd/studio/issues/545) [#554](https://github.com/cheqd/studio/issues/554) [#548](https://github.com/cheqd/studio/issues/548) [#547](https://github.com/cheqd/studio/issues/547)
+
+## [2.21.0](https://github.com/cheqd/studio/compare/2.20.2...2.21.0) (2024-07-03)
+
+
+### Features
+
+* Add a basic form for pagination for Stripe Product list endpoint ([#549](https://github.com/cheqd/studio/issues/549)) ([e8439e5](https://github.com/cheqd/studio/commit/e8439e5748b48ba1db8f515dc7717345d6dc1073))
+* cheqd Studio rebranding [DEV-4010] ([#550](https://github.com/cheqd/studio/issues/550)) ([bb58b44](https://github.com/cheqd/studio/commit/bb58b44a3967a35f79c175ff5c5dcc3980fcfbc8))
+
+
+### Bug Fixes
+
+* Fix test payloads ([#553](https://github.com/cheqd/studio/issues/553)) ([78b4b84](https://github.com/cheqd/studio/commit/78b4b84d212804d6287991c4ce57e245bea19192))
+* Incorrect customer/Stripe details stored in DB [DEV-4005] ([#543](https://github.com/cheqd/studio/issues/543)) ([e6dd226](https://github.com/cheqd/studio/commit/e6dd22636d296a4b4917c7300c379f54bbb5c118))
+* Manage user plan intents [DEV-4024] ([#545](https://github.com/cheqd/studio/issues/545)) ([4563b83](https://github.com/cheqd/studio/commit/4563b83b0515be273bb80944f37d8629286eb530))
+* Product list (Stripe) OpenAPI schema ([#554](https://github.com/cheqd/studio/issues/554)) ([81ff8ce](https://github.com/cheqd/studio/commit/81ff8ce5b1a193e89cf6a436300726bdcefc8e05))
+* Stripe account submitter [DEV-4042] ([#548](https://github.com/cheqd/studio/issues/548)) ([198c9da](https://github.com/cheqd/studio/commit/198c9da3c77a776bc135182cd2d9e581a8fc5064))
+* subscription update request body schema ([#547](https://github.com/cheqd/studio/issues/547)) ([c0a8879](https://github.com/cheqd/studio/commit/c0a8879c917887925e7f1d04b88e48fabc3ebd87))
+
 ## [2.21.0-develop.3](https://github.com/cheqd/studio/compare/2.21.0-develop.2...2.21.0-develop.3) (2024-07-02)
 
 
