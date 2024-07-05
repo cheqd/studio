@@ -488,30 +488,30 @@ export class SubscriptionController {
 	 * @openapi
 	 *
 	 * /admin/subscription/resume:
-	 * post:
-	 *   summary: Resume a subscription
-	 *   description: Resumes an existing subscription
-	 *   tags: [Subscription]
-	 *   requestBody:
-	 *     content:
-	 *       application/json:
-	 *         schema:
-	 *           $ref: '#/components/schemas/SubscriptionResumeRequestBody'
-	 *   responses:
-	 *     200:
-	 *       description: The request was successful.
+	 *   post:
+	 *     summary: Resume a subscription
+	 *     description: Resumes an existing subscription
+	 *     tags: [Subscription]
+	 *     requestBody:
 	 *       content:
 	 *         application/json:
 	 *           schema:
-	 *             $ref: '#/components/schemas/SubscriptionResumeResponseBody'
-	 *     400:
-	 *       $ref: '#/components/schemas/InvalidRequest'
-	 *     401:
-	 *       $ref: '#/components/schemas/UnauthorizedError'
-	 *     500:
-	 *       $ref: '#/components/schemas/InternalError'
-	 *     404:
-	 *       $ref: '#/components/schemas/NotFoundError'
+	 *             $ref: '#/components/schemas/SubscriptionResumeRequestBody'
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/SubscriptionResumeResponseBody'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 *       404:
+	 *         $ref: '#/components/schemas/NotFoundError'
 	 */
 	@validate
 	@syncOne
