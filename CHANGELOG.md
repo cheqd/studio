@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0-develop.1](https://github.com/cheqd/studio/compare/2.21.0-develop.3...3.0.0-develop.1) (2024-07-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* Change npm package name [DEV-4066] (#558)
+
+### Features
+
+* Change npm package name [DEV-4066] ([#558](https://github.com/cheqd/studio/issues/558)) ([5c032f5](https://github.com/cheqd/studio/commit/5c032f554bbf6f8d8b8d8b634e58f49d79ce9155)), closes [#549](https://github.com/cheqd/studio/issues/549) [#550](https://github.com/cheqd/studio/issues/550) [#553](https://github.com/cheqd/studio/issues/553) [#543](https://github.com/cheqd/studio/issues/543) [#545](https://github.com/cheqd/studio/issues/545) [#554](https://github.com/cheqd/studio/issues/554) [#548](https://github.com/cheqd/studio/issues/548) [#547](https://github.com/cheqd/studio/issues/547)
+
 ## [2.21.0](https://github.com/cheqd/studio/compare/2.20.2...2.21.0) (2024-07-03)
 
 
