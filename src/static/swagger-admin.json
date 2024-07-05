@@ -803,8 +803,7 @@
             "name": "productId",
             "schema": {
               "type": "string",
-              "description": "The product id. If passed - returns filtered by this product list of prices.",
-              "required": false
+              "description": "The product id. If passed - returns filtered by this product list of prices."
             }
           }
         ],
@@ -847,8 +846,7 @@
             "name": "prices",
             "schema": {
               "type": "boolean",
-              "description": "If setup to true - returns the list of products with prices inside. Default - true",
-              "required": false
+              "description": "If setup to true - returns the list of products with prices inside. Default - true"
             }
           },
           {
@@ -858,8 +856,7 @@
               "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "description": "Restrict the response to only include items from 1 to 100. Default - 10",
-              "required": false
+              "description": "Restrict the response to only include items from 1 to 100. Default - 10"
             }
           },
           {
@@ -867,8 +864,7 @@
             "name": "cursor",
             "schema": {
               "type": "string",
-              "description": "Cursor for pagination, this only goes forward, i.e., Stripe's equivalent of 'starting_after'",
-              "required": false
+              "description": "Cursor for pagination, this only goes forward, i.e., Stripe's equivalent of 'starting_after'"
             }
           }
         ],
@@ -920,8 +916,7 @@
             "name": "prices",
             "schema": {
               "type": "boolean",
-              "description": "If setup to true - returns the product with prices inside. Default - true",
-              "required": false
+              "description": "If setup to true - returns the product with prices inside. Default - true"
             }
           }
         ],
@@ -1147,44 +1142,45 @@
         }
       }
     },
-    "/admin/subscription/resume": {},
-    "post": {
-      "summary": "Resume a subscription",
-      "description": "Resumes an existing subscription",
-      "tags": [
-        "Subscription"
-      ],
-      "requestBody": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SubscriptionResumeRequestBody"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "The request was successful.",
+    "/admin/subscription/resume": {
+      "post": {
+        "summary": "Resume a subscription",
+        "description": "Resumes an existing subscription",
+        "tags": [
+          "Subscription"
+        ],
+        "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SubscriptionResumeResponseBody"
+                "$ref": "#/components/schemas/SubscriptionResumeRequestBody"
               }
             }
           }
         },
-        "400": {
-          "$ref": "#/components/schemas/InvalidRequest"
-        },
-        "401": {
-          "$ref": "#/components/schemas/UnauthorizedError"
-        },
-        "404": {
-          "$ref": "#/components/schemas/NotFoundError"
-        },
-        "500": {
-          "$ref": "#/components/schemas/InternalError"
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResumeResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
         }
       }
     }
