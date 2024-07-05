@@ -454,8 +454,11 @@
       },
       "APIKeyGetResponseBody": {
         "description": "The response body for getting an API key",
-        "type": "object",
-        "$ref": "#/components/schemas/APIKeyResponse"
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/APIKeyResponse"
+          }
+        ]
       },
       "OrganisationResponseBody": {
         "description": "The response body for an organisation",
