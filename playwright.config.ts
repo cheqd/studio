@@ -78,6 +78,10 @@ export default defineConfig({
 				...devices['Desktop Chrome'],
 				// Use prepared auth state.
 				storageState: STORAGE_STATE_AUTHENTICATED,
+				extraHTTPHeaders: {
+					// Add x-api-key token to all authenticated requests.
+					'x-api-key': `${process.env.TEST_USER_API_KEY}`,
+				},
 			},
 			dependencies: ['Setup authenticated user'],
 		},

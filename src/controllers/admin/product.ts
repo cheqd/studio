@@ -50,7 +50,6 @@ export class ProductController {
 	 *       schema:
 	 *         type: boolean
 	 *         description: If setup to true - returns the list of products with prices inside. Default - true
-	 *         required: false
 	 *     - in: query
 	 *       name: limit
 	 *       schema:
@@ -58,13 +57,11 @@ export class ProductController {
 	 *         minimum: 1
 	 *         maximum: 100
 	 *         description: Restrict the response to only include items from 1 to 100. Default - 10
-	 *         required: false
 	 *     - in: query
 	 *       name: cursor
 	 *       schema:
 	 *         type: string
 	 *         description: Cursor for pagination, this only goes forward, i.e., Stripe's equivalent of 'starting_after'
-	 *         required: false
 	 *    responses:
 	 *      200:
 	 *        description: A list of products
@@ -141,7 +138,6 @@ export class ProductController {
 	 *       schema:
 	 *         type: boolean
 	 *         description: If setup to true - returns the product with prices inside. Default - true
-	 *         required: false
 	 *    responses:
 	 *      200:
 	 *        description: A product
