@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.0-develop.2](https://github.com/cheqd/studio/compare/3.0.0-develop.1...3.0.0-develop.2) (2024-07-08)
+
+
+### Bug Fixes
+
+* switch to x-api-key header authentication [DEV-4062] ([#556](https://github.com/cheqd/studio/issues/556)) ([01e6ab8](https://github.com/cheqd/studio/commit/01e6ab832c1084013842c031a5fa2e64c96298f0)), closes [#557](https://github.com/cheqd/studio/issues/557)
+
 ## [3.0.0-develop.1](https://github.com/cheqd/studio/compare/2.21.0-develop.3...3.0.0-develop.1) (2024-07-05)
 
 
