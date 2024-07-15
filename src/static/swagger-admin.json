@@ -28,691 +28,14 @@
       "name": "API Key"
     }
   ],
-  "paths": {
-    "/admin/api-key/create": {
-      "post": {
-        "summary": "Create a new API key",
-        "description": "Create a new API key",
-        "tags": [
-          "API Key"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/APIKeyCreateRequestBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "A new API key has been created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIKeyCreateResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/APIKeyCreateUnsuccessfulResponseBody"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/api-key/update": {
-      "post": {
-        "summary": "Update an existing API key",
-        "description": "Update an existing API key",
-        "tags": [
-          "API Key"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/APIKeyUpdateRequestBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The API key has been updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIKeyUpdateResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/APIKeyUpdateUnsuccessfulResponseBody"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/api-key/revoke": {
-      "delete": {
-        "summary": "Revoke an existing API key",
-        "description": "Revoke an existing API key",
-        "tags": [
-          "API Key"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/APIKeyRevokeRequestBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The API key has been revoked",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIKeyRevokeResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/APIKeyRevokeUnsuccessfulResponseBody"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/api-key/list": {
-      "get": {
-        "summary": "List all API keys",
-        "description": "List all API keys",
-        "tags": [
-          "API Key"
-        ],
-        "responses": {
-          "200": {
-            "description": "A list of API keys",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIKeyListResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/api-key/get": {
-      "get": {
-        "summary": "Get an API key",
-        "description": "Get an API key. If the API key is not provided, the latest not revoked API key it returns.",
-        "tags": [
-          "API Key"
-        ],
-        "parameters": [
-          {
-            "name": "apiKey",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The API key",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIKeyGetResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/organisation/update": {
-      "post": {
-        "summary": "Update an organisation",
-        "description": "Update an organisation",
-        "tags": [
-          "Organisation"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "example": "Cheqd"
-                  },
-                  "email": {
-                    "type": "string",
-                    "example": "cheqd@example.com",
-                    "format": "email"
-                  },
-                  "description": {
-                    "type": "string",
-                    "example": "Cheqd organisation"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "A successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/organisation/get": {
-      "get": {
-        "summary": "Get an organisation",
-        "description": "Get an organisation",
-        "tags": [
-          "Organisation"
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/price/list": {
-      "get": {
-        "summary": "Get a list of prices",
-        "description": "Get a list of prices",
-        "tags": [
-          "Price"
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "productId",
-            "schema": {
-              "type": "string",
-              "description": "The product id. If passed - returns filtered by this product list of prices.",
-              "required": false
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A list of prices",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PriceListResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/product/list": {
-      "get": {
-        "summary": "Get a list of products",
-        "description": "Get a list of products which are on a Stripe side",
-        "tags": [
-          "Product"
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "prices",
-            "schema": {
-              "type": "boolean",
-              "description": "If setup to true - returns the list of products with prices inside. Default - true",
-              "required": false
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "description": "Restrict the response to only include items from 1 to 100. Default - 10",
-              "required": false
-            }
-          },
-          {
-            "in": "query",
-            "name": "cursor",
-            "schema": {
-              "type": "string",
-              "description": "Cursor for pagination, this only goes forward, i.e., Stripe's equivalent of 'starting_after'",
-              "required": false
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A list of products",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductListResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/product/get/{productId}": {
-      "get": {
-        "summary": "Get a product",
-        "description": "Get a product by id",
-        "tags": [
-          "Product"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "productId",
-            "schema": {
-              "type": "string",
-              "description": "The product id which identifies the product in Stripe"
-            },
-            "required": true
-          },
-          {
-            "in": "query",
-            "name": "prices",
-            "schema": {
-              "type": "boolean",
-              "description": "If setup to true - returns the product with prices inside. Default - true",
-              "required": false
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A product",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductGetResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/subscription/create": {
-      "post": {
-        "summary": "Create a subscription",
-        "description": "Creates a new subscription for an existing customer",
-        "tags": [
-          "Subscription"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubscriptionCreateRequestBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubscriptionCreateResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/subscription/update": {
-      "post": {
-        "summary": "Update a subscription",
-        "description": "Updates an existing subscription",
-        "tags": [
-          "Subscription"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubscriptionUpdateRequestBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubscriptionUpdateResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/subscription/list": {
-      "get": {
-        "summary": "Get a list of subscriptions",
-        "description": "Get a list of subscriptions",
-        "tags": [
-          "Subscription"
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "paymentProviderId",
-            "schema": {
-              "type": "string",
-              "description": "The customer id. If passed - returns filtered by this customer list of subscriptions."
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A list of subscriptions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubscriptionListResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/subscription/get": {
-      "get": {
-        "summary": "Get a subscription",
-        "description": "Get a subscription",
-        "tags": [
-          "Subscription"
-        ],
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubscriptionGetResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/subscription/cancel": {
-      "post": {
-        "summary": "Cancel a subscription",
-        "description": "Cancels an existing subscription",
-        "tags": [
-          "Subscription"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubscriptionCancelRequestBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubscriptionCancelResponseBody"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/schemas/NotFoundError"
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          }
-        }
-      }
-    },
-    "/admin/subscription/resume": {},
-    "post": {
-      "summary": "Resume a subscription",
-      "description": "Resumes an existing subscription",
-      "tags": [
-        "Subscription"
-      ],
-      "requestBody": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/SubscriptionResumeRequestBody"
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "The request was successful.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubscriptionResumeResponseBody"
-              }
-            }
-          }
-        },
-        "400": {
-          "$ref": "#/components/schemas/InvalidRequest"
-        },
-        "401": {
-          "$ref": "#/components/schemas/UnauthorizedError"
-        },
-        "404": {
-          "$ref": "#/components/schemas/NotFoundError"
-        },
-        "500": {
-          "$ref": "#/components/schemas/InternalError"
-        }
-      }
-    }
-  },
   "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
     "schemas": {
       "PriceListResponseBody": {
         "description": "A list of active prcies from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/prices/list)",
@@ -1002,11 +325,14 @@
         ]
       },
       "APIKeyCreateResponseBody": {
-        "description": "The response body for creating an API key",
-        "type": "object",
-        "schema": {
-          "ref": "#/components/schemas/APIKeyResponse"
-        }
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/APIKeyResponse"
+          },
+          {
+            "description": "The response body for creating an API key"
+          }
+        ]
       },
       "APIKeyCreateUnsuccessfulResponseBody": {
         "description": "The response body for an unsuccessful API key creation",
@@ -1050,11 +376,14 @@
         ]
       },
       "APIKeyUpdateResponseBody": {
-        "description": "The response body for an unsuccessful API key update",
-        "type": "object",
-        "schema": {
-          "ref": "#/components/schemas/APIKeyResponse"
-        }
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/APIKeyResponse"
+          },
+          {
+            "description": "The response body for an successful API key update"
+          }
+        ]
       },
       "APIKeyUpdateUnsuccessfulResponseBody": {
         "description": "The response body for an unsuccessful API key update",
@@ -1116,10 +445,7 @@
           "apiKeys": {
             "type": "array",
             "items": {
-              "type": "object",
-              "schema": {
-                "ref": "#/components/schemas/APIKeyResponse"
-              }
+              "$ref": "#/components/schemas/APIKeyResponse"
             }
           }
         }
@@ -1139,11 +465,14 @@
         ]
       },
       "APIKeyGetResponseBody": {
-        "description": "The response body for getting an API key",
-        "type": "object",
-        "schema": {
-          "ref": "#/components/schemas/APIKeyResponse"
-        }
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/APIKeyResponse"
+          },
+          {
+            "description": "The response body for getting an API key"
+          }
+        ]
       },
       "OrganisationResponseBody": {
         "description": "The response body for an organisation",
@@ -1183,6 +512,691 @@
           "error": {
             "type": "string",
             "example": "Not Found Error"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "paths": {
+    "/admin/api-key/create": {
+      "post": {
+        "summary": "Create a new API key",
+        "description": "Create a new API key",
+        "tags": [
+          "API Key"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/APIKeyCreateRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "A new API key has been created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIKeyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/APIKeyCreateUnsuccessfulResponseBody"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/api-key/update": {
+      "post": {
+        "summary": "Update an existing API key",
+        "description": "Update an existing API key",
+        "tags": [
+          "API Key"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/APIKeyUpdateRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The API key has been updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIKeyUpdateResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/APIKeyUpdateUnsuccessfulResponseBody"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/api-key/revoke": {
+      "post": {
+        "summary": "Revoke an existing API key",
+        "description": "Revoke an existing API key",
+        "tags": [
+          "API Key"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/APIKeyRevokeRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The API key has been revoked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIKeyRevokeResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/APIKeyRevokeUnsuccessfulResponseBody"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/api-key/list": {
+      "get": {
+        "summary": "List all API keys",
+        "description": "List all API keys",
+        "tags": [
+          "API Key"
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of API keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIKeyListResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/api-key/get": {
+      "get": {
+        "summary": "Get an API key",
+        "description": "Get an API key. If the API key is not provided, the latest not revoked API key it returns.",
+        "tags": [
+          "API Key"
+        ],
+        "parameters": [
+          {
+            "name": "apiKey",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIKeyGetResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/organisation/update": {
+      "post": {
+        "summary": "Update an organisation",
+        "description": "Update an organisation",
+        "tags": [
+          "Organisation"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Cheqd"
+                  },
+                  "email": {
+                    "type": "string",
+                    "example": "cheqd@example.com",
+                    "format": "email"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "Cheqd organisation"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganisationResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/organisation/get": {
+      "get": {
+        "summary": "Get an organisation",
+        "description": "Get an organisation",
+        "tags": [
+          "Organisation"
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganisationResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/price/list": {
+      "get": {
+        "summary": "Get a list of prices",
+        "description": "Get a list of prices",
+        "tags": [
+          "Price"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "productId",
+            "schema": {
+              "type": "string",
+              "description": "The product id. If passed - returns filtered by this product list of prices."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of prices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceListResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/product/list": {
+      "get": {
+        "summary": "Get a list of products",
+        "description": "Get a list of products which are on a Stripe side",
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "prices",
+            "schema": {
+              "type": "boolean",
+              "description": "If setup to true - returns the list of products with prices inside. Default - true"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Restrict the response to only include items from 1 to 100. Default - 10"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "description": "Cursor for pagination, this only goes forward, i.e., Stripe's equivalent of 'starting_after'"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductListResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/product/get/{productId}": {
+      "get": {
+        "summary": "Get a product",
+        "description": "Get a product by id",
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "schema": {
+              "type": "string",
+              "description": "The product id which identifies the product in Stripe"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "prices",
+            "schema": {
+              "type": "boolean",
+              "description": "If setup to true - returns the product with prices inside. Default - true"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A product",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductGetResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/subscription/create": {
+      "post": {
+        "summary": "Create a subscription",
+        "description": "Creates a new subscription for an existing customer",
+        "tags": [
+          "Subscription"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionCreateRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionCreateResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/subscription/update": {
+      "post": {
+        "summary": "Update a subscription",
+        "description": "Updates an existing subscription",
+        "tags": [
+          "Subscription"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionUpdateRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionUpdateResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/subscription/list": {
+      "get": {
+        "summary": "Get a list of subscriptions",
+        "description": "Get a list of subscriptions",
+        "tags": [
+          "Subscription"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "paymentProviderId",
+            "schema": {
+              "type": "string",
+              "description": "The customer id. If passed - returns filtered by this customer list of subscriptions."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of subscriptions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionListResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/subscription/get": {
+      "get": {
+        "summary": "Get a subscription",
+        "description": "Get a subscription",
+        "tags": [
+          "Subscription"
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionGetResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/subscription/cancel": {
+      "post": {
+        "summary": "Cancel a subscription",
+        "description": "Cancels an existing subscription",
+        "tags": [
+          "Subscription"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionCancelRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionCancelResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/subscription/resume": {
+      "post": {
+        "summary": "Resume a subscription",
+        "description": "Resumes an existing subscription",
+        "tags": [
+          "Subscription"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionResumeRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResumeResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
           }
         }
       }

@@ -108,7 +108,7 @@ export class APIKeyController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/APIKeyCreateResponseBody'
+	 *               $ref: '#/components/schemas/APIKeyResponse'
 	 *       400:
 	 *         $ref: '#/components/schemas/APIKeyCreateUnsuccessfulResponseBody'
 	 *       401:
@@ -230,7 +230,7 @@ export class APIKeyController {
 	 * @openapi
 	 *
 	 * /admin/api-key/revoke:
-	 *  delete:
+	 *  post:
 	 *   summary: Revoke an existing API key
 	 *   description: Revoke an existing API key
 	 *   tags: [API Key]

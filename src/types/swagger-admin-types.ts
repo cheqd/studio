@@ -213,10 +213,9 @@
  *       required:
  *         - name
  *     APIKeyCreateResponseBody:
- *       description: The response body for creating an API key
- *       type: object
- *       schema:
- *         ref: '#/components/schemas/APIKeyResponse'
+ *       allOf:
+ *          - $ref: '#/components/schemas/APIKeyResponse'
+ *          - description: The response body for creating an API key
  *     APIKeyCreateUnsuccessfulResponseBody:
  *       description: The response body for an unsuccessful API key creation
  *       type: object
@@ -249,10 +248,9 @@
  *       required:
  *         - apiKey
  *     APIKeyUpdateResponseBody:
- *       description: The response body for an unsuccessful API key update
- *       type: object
- *       schema:
- *         ref: '#/components/schemas/APIKeyResponse'
+ *       allOf:
+ *          - $ref: '#/components/schemas/APIKeyResponse'
+ *          - description: The response body for an successful API key update
  *     APIKeyUpdateUnsuccessfulResponseBody:
  *       description: The response body for an unsuccessful API key update
  *       type: object
@@ -298,9 +296,7 @@
  *         apiKeys:
  *           type: array
  *           items:
- *             type: object
- *             schema:
- *               ref: '#/components/schemas/APIKeyResponse'
+ *              $ref: '#/components/schemas/APIKeyResponse'
  *     APIKeyGetRequestBody:
  *       description: The request body for getting an API key
  *       type: object
@@ -312,10 +308,9 @@
  *       required:
  *         - apiKey
  *     APIKeyGetResponseBody:
- *       description: The response body for getting an API key
- *       type: object
- *       schema:
- *         ref: '#/components/schemas/APIKeyResponse'
+ *       allOf:
+ *          - $ref: '#/components/schemas/APIKeyResponse'
+ *          - description: The response body for getting an API key
  *     OrganisationResponseBody:
  *       description: The response body for an organisation
  *       type: object

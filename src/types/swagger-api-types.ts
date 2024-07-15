@@ -916,13 +916,15 @@
  *           type: string
  *           description: DID to be imported
  *           format: uri
- *           required: true
  *         keys:
  *           type: array
  *           description: List of keys required to import the DID
- *           required: true
  *           items:
  *             $ref: '#/components/schemas/KeyImportRequest'
+ *
+ *       required:
+ *          - did
+ *          - keys
  *     PresentationCreateResult:
  *       type: object
  *       properties:
@@ -1273,12 +1275,23 @@
  *     Customer:
  *       type: object
  *       properties:
- *         customerId:
- *           type: string
- *           example: 6w5drpiiwhhs
- *         address:
- *           type: string
- *           example: cheqd1wgsvqwlkmdp60f4dek26ak0sjw6au3ytd3pz7f
+ *         customer:
+ *           type: object
+ *           properties:
+ *              customerId:
+ *                 type: string
+ *              name:
+ *                  type: string
+ *         paymentAccount:
+ *           type: object
+ *           properties:
+ *              address:
+ *                  type: string
+ *     QueryIdTokenResponseBody:
+ *         type: object
+ *         properties:
+ *              idToken:
+ *                  type: string
  *     AccountCreateRequest:
  *       type: object
  *       properties:

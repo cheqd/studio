@@ -40,5 +40,19 @@
 	"externalDocs": {
 		"description": "cheqd Studio API Documentation",
 		"url": "https://docs.cheqd.io/identity"
-	}
+	},
+	"components": {
+		"securitySchemes": {
+			"ApiKeyAuth": {
+				"type": "apiKey",
+				"name": "x-api-key",
+				"in": "header"
+			}
+		}
+	},
+	"security": [
+		{
+			"ApiKeyAuth": []
+		}
+	]
 }

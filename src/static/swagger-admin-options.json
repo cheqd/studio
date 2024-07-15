@@ -27,5 +27,19 @@
 		{
 			"name": "API Key"
 		}
+	],
+	"components": {
+		"securitySchemes": {
+			"ApiKeyAuth": {
+				"type": "apiKey",
+				"name": "x-api-key",
+				"in": "header"
+			}
+		}
+	},
+	"security": [
+		{
+			"ApiKeyAuth": []
+		}
 	]
 }

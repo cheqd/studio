@@ -34,13 +34,6 @@ import { WebhookController } from './controllers/admin/webhook.js';
 import { APIKeyController } from './controllers/admin/api-key.js';
 import { OrganisationController } from './controllers/admin/organisation.js';
 
-let swaggerOptions = {};
-if (process.env.ENABLE_AUTHENTICATION === 'true') {
-	swaggerOptions = {
-		customJs: '/static/custom-button.js',
-	};
-}
-
 class App {
 	public express: express.Application;
 
@@ -109,11 +102,7 @@ class App {
 		this.express.use(auth.handleError);
 		this.express.use(async (req, res, next) => await auth.accessControl(req, res, next));
 
-		this.express.use(
-			'/swagger',
-			swaggerUi.serveFiles(swaggerAPIDocument, swaggerOptions),
-			swaggerUi.setup(swaggerAPIDocument, swaggerOptions)
-		);
+		this.express.use('/swagger', swaggerUi.serveFiles(swaggerAPIDocument), swaggerUi.setup(swaggerAPIDocument));
 		if (process.env.STRIPE_ENABLED === 'true') {
 			this.express.use(
 				'/admin/swagger',
