@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.0.0](https://github.com/cheqd/studio/compare/2.21.0...3.0.0) (2024-07-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* Change npm package name [DEV-4066] (#558)
+
+### Features
+
+* Change npm package name [DEV-4066] ([#558](https://github.com/cheqd/studio/issues/558)) ([5c032f5](https://github.com/cheqd/studio/commit/5c032f554bbf6f8d8b8d8b634e58f49d79ce9155)), closes [#549](https://github.com/cheqd/studio/issues/549) [#550](https://github.com/cheqd/studio/issues/550) [#553](https://github.com/cheqd/studio/issues/553) [#543](https://github.com/cheqd/studio/issues/543) [#545](https://github.com/cheqd/studio/issues/545) [#554](https://github.com/cheqd/studio/issues/554) [#548](https://github.com/cheqd/studio/issues/548) [#547](https://github.com/cheqd/studio/issues/547)
+
+
+### Bug Fixes
+
+* switch to x-api-key header authentication [DEV-4062] ([#556](https://github.com/cheqd/studio/issues/556)) ([01e6ab8](https://github.com/cheqd/studio/commit/01e6ab832c1084013842c031a5fa2e64c96298f0)), closes [#557](https://github.com/cheqd/studio/issues/557)
+
 ## [3.0.0-develop.2](https://github.com/cheqd/studio/compare/3.0.0-develop.1...3.0.0-develop.2) (2024-07-08)
 
 
