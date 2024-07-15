@@ -14,7 +14,7 @@
 
 ## ℹ️ Overview
 
-cheqd Studio (formerly Credential Service) enables users to consume cheqd's identity functionality, such as DIDs, Trust Registries, Status Lists, Credential Payments and DID-Linked Resources over REST API. This enables users to integrate cheqd's functionality into existing applications or create a full end-to-end trusted ecosystem from the ground up.
+cheqd Studio (formerly known as Credential Service) enables users to consume cheqd's identity functionality, such as DIDs, Trust Registries, Status Lists, Credential Payments and DID-Linked Resources over REST API. This enables users to integrate cheqd's functionality into existing applications or create a full end-to-end trusted ecosystem from the ground up.
 
 ## 📖 Usage
 
