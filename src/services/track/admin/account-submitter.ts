@@ -29,6 +29,14 @@ export class PortalAccountCreateSubmitter implements IObserver {
 		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 		try {
+			//check if stripe account exists by email
+			const customer = await stripe.customers.search({
+				query: `email:\'${data.email}\'`,
+			});
+			if (customer) {
+				// if customer already exists don't create one.
+				return;
+			}
 			// Create a new Stripe account
 			const account = await stripe.customers.create({
 				name: data.name,
