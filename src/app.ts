@@ -91,7 +91,7 @@ class App {
 				})
 			);
 			// Authentication functions/methods
-			this.express.use(async (_req, _res, next) => await auth.setup(next));
+			this.express.use(async (_req, _res, next) => await auth.setup(_res, next));
 			this.express.use(async (_req, _res, next) => await auth.wrapperHandleAuthRoutes(_req, _res, next));
 			this.express.use(async (_req, _res, next) => await auth.withLogtoWrapper(_req, _res, next));
 			if (process.env.ENABLE_EXTERNAL_DB === 'true') {
