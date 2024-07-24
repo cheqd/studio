@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1-develop.2](https://github.com/cheqd/studio/compare/3.0.1-develop.1...3.0.1-develop.2) (2024-07-24)
+
+
+### Bug Fixes
+
+* trigger stripe account creation on sign-in ([#559](https://github.com/cheqd/studio/issues/559)) ([d2fec93](https://github.com/cheqd/studio/commit/d2fec9342a260b6bd36f1af87c112f030dbaeb15))
+
 ## [3.0.1-develop.1](https://github.com/cheqd/studio/compare/3.0.0...3.0.1-develop.1) (2024-07-24)
 
 
