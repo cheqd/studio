@@ -244,6 +244,17 @@ export class AccountController {
 			await UserService.instance.update(user.logToId, customer);
 		} else {
 			customer = user.customer;
+			// this time user exists, so notify stripe account should be created.
+			if (process.env.STRIPE_ENABLED === 'true' && !customer.paymentProviderId) {
+				eventTracker.submit({
+					operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
+					data: {
+						name: customer.name,
+						email: customer.email,
+						customerId: customer.customerId,
+					} satisfies ISubmitStripeCustomerCreateData,
+				} satisfies ISubmitOperation);
+			}
 		}
 
 		// 4. Check is paymentAccount exists for the customer
