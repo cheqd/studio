@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1-develop.1](https://github.com/cheqd/studio/compare/3.0.0...3.0.1-develop.1) (2024-07-24)
+
+
+### Bug Fixes
+
+* Return proper response on auth setup [DEV-4146] ([#560](https://github.com/cheqd/studio/issues/560)) ([690d854](https://github.com/cheqd/studio/commit/690d85472cbf44e8abfcc192e51cc7fb0e6354bd))
+
 ## [3.0.0](https://github.com/cheqd/studio/compare/2.21.0...3.0.0) (2024-07-15)
 
 

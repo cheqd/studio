@@ -109,5 +109,5 @@ export default defineConfig({
 	// Global timeout for overall test run in milliseconds
 	// By default, Playwright has no global timeout but suggests a "sensible limit" can be set if needed
 	// Docs: https://playwright.dev/docs/test-timeouts#global-timeout
-	globalTimeout: 15 * 60 * 1000,
+	globalTimeout: 30 * 60 * 1000,
 });

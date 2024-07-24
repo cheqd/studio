@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction, response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
 import * as dotenv from 'dotenv';
@@ -52,11 +52,11 @@ export class Authentication {
 		this.logToHelper = new LogToHelper();
 	}
 
-	public async setup(next: NextFunction) {
+	public async setup(response: Response, next: NextFunction) {
 		if (!this.isSetup) {
 			const _r = await this.logToHelper.setup();
 			if (_r.status !== StatusCodes.OK) {
-				return response.status(StatusCodes.BAD_GATEWAY).json({
+				return response.status(StatusCodes.BAD_GATEWAY).send({
 					error: _r.error,
 				});
 			}
