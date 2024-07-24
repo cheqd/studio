@@ -8,7 +8,7 @@ defaults:
 jobs:
     build-node:
         name: 'Build Node.js'
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-latest-xl
 
         steps:
             - uses: actions/checkout@v4
