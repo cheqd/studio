@@ -74,7 +74,7 @@ export default defineConfig({
 		},
 		{
 			name: 'Logged In User Tests',
-			testIgnore: /.*\.release.spec.ts/,
+			testIgnore: /.*\.release\.spec\.ts/,
 			use: {
 				...devices['Desktop Chrome'],
 				// Use prepared auth state.
@@ -99,7 +99,7 @@ export default defineConfig({
 			? [
 					{
 						name: 'Release Logged In User Tests',
-						testMatch: /.*\.release.spec.ts/,
+						testMatch: /.*\.release\.spec\.ts/,
 						use: {
 							...devices['Desktop Chrome'],
 							// Use prepared auth state.
