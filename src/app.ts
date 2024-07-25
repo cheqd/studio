@@ -30,7 +30,6 @@ import { WebhookController } from './controllers/admin/webhook.js';
 import { APIKeyController } from './controllers/admin/api-key.js';
 import { OrganisationController } from './controllers/admin/organisation.js';
 
-
 dotenv.config();
 
 class App {
@@ -40,7 +39,14 @@ class App {
 		this.express = express();
 		this.middleware();
 		this.routes();
-		Connection.instance.connect();
+		Connection.instance
+			.connect()
+			.then(() => {
+				console.log('Database connection: successful');
+			})
+			.catch((err) => {
+				console.log('DBConnectorError: ', err);
+			});
 	}
 
 	private middleware() {
