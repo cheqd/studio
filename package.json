@@ -21,6 +21,7 @@
 		}
 	},
 	"scripts": {
+		"dev": "tsx watch --clear-screen=false src/index.ts",
 		"build": "npm run build:swagger && npm run build:app",
 		"build:app": "tsc",
 		"build:swagger-api": "swagger-jsdoc --definition src/static/swagger-api-options.json -o src/static/swagger-api.json ./src/controllers/api/*.ts ./src/types/swagger-api-types.ts",
@@ -143,6 +144,7 @@
 		"ts-jest": "^29.1.5",
 		"ts-loader": "^9.5.1",
 		"ts-node": "^10.9.2",
+		"tsx": "^4.16.2",
 		"typescript": "^5.5.2",
 		"uint8arrays": "^5.1.0"
 	},
