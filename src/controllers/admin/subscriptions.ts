@@ -260,7 +260,7 @@ export class SubscriptionController {
 		const { returnURL, isManagePlan, priceId } = request.body satisfies SubscriptionUpdateRequestBody;
 		try {
 			// Get the subscription object from the DB
-			const subscription = await SubscriptionService.instance.findOne({ customer: response.locals.customer });
+			const subscription = await SubscriptionService.instance.findCurrent(response.locals.customer);
 			if (!subscription) {
 				return response.status(StatusCodes.NOT_FOUND).json({
 					error: `Subscription was not found`,

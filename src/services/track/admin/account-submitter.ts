@@ -35,7 +35,7 @@ export class PortalAccountCreateSubmitter implements IObserver {
 				email: data.email,
 			});
 			if (account.lastResponse.statusCode !== StatusCodes.OK) {
-				await this.notify({
+				this.notify({
 					message: EventTracker.compileBasicNotification(
 						`Failed to create Stripe account with name: ${data.name}.`,
 						operation.operation
@@ -51,7 +51,7 @@ export class PortalAccountCreateSubmitter implements IObserver {
 				name: data.name,
 				paymentProviderId: account.id,
 			});
-			await this.notify({
+			this.notify({
 				message: EventTracker.compileBasicNotification(
 					`Stripe account created with name: ${data.name}.`,
 					operation.operation
@@ -59,7 +59,7 @@ export class PortalAccountCreateSubmitter implements IObserver {
 				severity: 'info',
 			} as INotifyMessage);
 		} catch (error) {
-			await this.notify({
+			this.notify({
 				message: EventTracker.compileBasicNotification(
 					`Failed to create Stripe account with name: ${data.name as string}. Error: ${error}`,
 					operation.operation
