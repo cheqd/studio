@@ -74,6 +74,7 @@ export default defineConfig({
 		},
 		{
 			name: 'Logged In User Tests',
+			...(process.env.RELEASE === 'true' ? {} : { testIgnore: /.*\.release\.spec\.ts/ }),
 			use: {
 				...devices['Desktop Chrome'],
 				// Use prepared auth state.
