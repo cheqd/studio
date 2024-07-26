@@ -74,7 +74,7 @@ export default defineConfig({
 		},
 		{
 			name: 'Logged In User Tests',
-			testIgnore: /.*\.release\.spec\.ts/,
+			...(process.env.RELEASE === 'true' ? {} : { testIgnore: /.*\.release\.spec\.ts/ }),
 			use: {
 				...devices['Desktop Chrome'],
 				// Use prepared auth state.
@@ -95,24 +95,6 @@ export default defineConfig({
 			},
 			dependencies: ['Setup unauthenticated user'],
 		},
-		...(process.env.RELEASE === 'true'
-			? [
-					{
-						name: 'Release Logged In User Tests',
-						testMatch: /.*\.release\.spec\.ts/,
-						use: {
-							...devices['Desktop Chrome'],
-							// Use prepared auth state.
-							storageState: STORAGE_STATE_AUTHENTICATED,
-							extraHTTPHeaders: {
-								// Add x-api-key token to all authenticated requests.
-								'x-api-key': `${process.env.TEST_USER_API_KEY}`,
-							},
-						},
-						dependencies: ['Setup authenticated user'],
-					},
-				]
-			: []),
 	],
 
 	// Timeout for each test in milliseconds
