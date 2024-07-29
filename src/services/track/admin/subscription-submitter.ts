@@ -1,3 +1,4 @@
+import Stripe from 'stripe';
 import type { CustomerEntity } from '../../../database/entities/customer.entity.js';
 import { OperationNameEnum } from '../../../types/constants.js';
 import type { INotifyMessage } from '../../../types/track.js';
@@ -35,6 +36,7 @@ export class SubscriptionSubmitter implements IObserver {
 	}
 
 	async submitSubscriptionCreate(operation: ISubmitOperation): Promise<void> {
+		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 		const data = operation.data as ISubmitSubscriptionData;
 		let customer: CustomerEntity | undefined = operation.options?.customer;
 		try {
@@ -43,8 +45,30 @@ export class SubscriptionSubmitter implements IObserver {
 					paymentProviderId: data.paymentProviderId,
 				});
 
+				if (customers.length === 0) {
+					this.notify({
+						message: EventTracker.compileBasicNotification(
+							`Customer not found for Cheqd Studio, creating new customer record with paymentProviderId: ${data.paymentProviderId}`,
+							operation.operation
+						),
+						severity: 'info',
+					});
+
+					const stripeCustomer = await stripe.customers.retrieve(data.paymentProviderId);
+					if (!stripeCustomer.deleted && stripeCustomer.email) {
+						const customerName = stripeCustomer.name ?? stripeCustomer.email;
+						const customer = await CustomerService.instance.create(
+							customerName,
+							stripeCustomer.email,
+							undefined,
+							data.paymentProviderId
+						);
+						customers.push(customer as CustomerEntity);
+					}
+				}
+
 				if (customers.length !== 1) {
-					await this.notify({
+					this.notify({
 						message: EventTracker.compileBasicNotification(
 							`Only one Stripe account should be associated with CaaS customer. Stripe accountId: ${data.paymentProviderId}.`,
 							operation.operation
@@ -65,7 +89,7 @@ export class SubscriptionSubmitter implements IObserver {
 				data.trialEnd as Date
 			);
 			if (!subscription) {
-				await this.notify({
+				this.notify({
 					message: EventTracker.compileBasicNotification(
 						`Failed to create a new subscription with id: ${data.subscriptionId}.`,
 						operation.operation
@@ -74,7 +98,7 @@ export class SubscriptionSubmitter implements IObserver {
 				});
 			}
 
-			await this.notify({
+			this.notify({
 				message: EventTracker.compileBasicNotification(
 					`Subscription created with id: ${data.subscriptionId}.`,
 					operation.operation
@@ -82,7 +106,7 @@ export class SubscriptionSubmitter implements IObserver {
 				severity: 'info',
 			});
 		} catch (error) {
-			await this.notify({
+			this.notify({
 				message: EventTracker.compileBasicNotification(
 					`Failed to create a new subscription with id: ${data.subscriptionId} because of error: ${(error as Error)?.message || error}`,
 					operation.operation

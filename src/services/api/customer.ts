@@ -22,7 +22,7 @@ export class CustomerService {
 		this.customerRepository = Connection.instance.dbConnection.getRepository(CustomerEntity);
 	}
 
-	public async create(name: string, email?: string, description?: string) {
+	public async create(name: string, email?: string, description?: string, paymentProviderId?: string) {
 		// The sequence for creating a customer is supposed to be:
 		// 1. Create a new customer entity in the database;
 		// 2. Create new cosmos keypair
@@ -32,7 +32,7 @@ export class CustomerService {
 		if (await this.isExist({ name: name })) {
 			throw new Error(`Cannot create a new customer since the customer with same name ${name} already exists`);
 		}
-		const customerEntity = new CustomerEntity(uuidv4(), name, email, description);
+		const customerEntity = new CustomerEntity(uuidv4(), name, email, description, paymentProviderId);
 		await this.customerRepository.insert(customerEntity);
 
 		// Create a new Cosmos account for the customer and make a link with customer entity;

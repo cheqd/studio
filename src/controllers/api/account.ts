@@ -163,8 +163,6 @@ export class AccountController {
 		// 6.1 If custom_data is empty - create it
 		// 7. Check the token balance for Testnet account
 
-		let customer: CustomerEntity | null;
-		let user: UserEntity | null;
 		let paymentAccount: PaymentAccountEntity | null;
 
 		// 1. Get logTo UserId from request body
@@ -175,7 +173,8 @@ export class AccountController {
 		}
 		const logToUserId = request.body.user.id;
 		const logToUserEmail = request.body.user.primaryEmail;
-		const logToName = request.body.user.name || logToUserEmail; // use email as name, because "name" is unique in the current db setup.
+		// use email as name, because "name" is unique in the current db setup.
+		const logToName = request.body.user.name || logToUserEmail;
 
 		const defaultRole = await RoleService.instance.getDefaultRole();
 		if (!defaultRole) {
@@ -184,7 +183,11 @@ export class AccountController {
 			} satisfies UnsuccessfulResponseBody);
 		}
 		// 2. Check if such row exists in the DB
-		user = await UserService.instance.get(logToUserId);
+		let [user, [customer]] = await Promise.all([
+			UserService.instance.get(logToUserId),
+			CustomerService.instance.find({ email: logToUserEmail }),
+		]);
+
 		if (!user) {
 			// 2.1. If no - create customer first
 			// Cause for now we assume only 1-1 connection between user and customer
@@ -194,19 +197,24 @@ export class AccountController {
 			// 2.1.1. Create customer
 			// I’m setting the "name" field to an empty string on the current CustomerEntity because it is non-nullable.
 			//  we will populate the customer's "name" field using the response from the Stripe account creation in account-submitter.ts.
-			customer = (await CustomerService.instance.create(logToName, logToUserEmail)) as CustomerEntity;
 			if (!customer) {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'User is not found in database: Customer was not created',
-				} satisfies UnsuccessfulResponseBody);
+				customer = (await CustomerService.instance.create(logToName, logToUserEmail)) as CustomerEntity;
+				if (!customer) {
+					return response.status(StatusCodes.BAD_REQUEST).json({
+						error: 'User is not found in database: Customer was not created',
+					} satisfies UnsuccessfulResponseBody);
+				}
+				// Notify
+				await eventTracker.notify({
+					message: EventTracker.compileBasicNotification(
+						'User was not found in database: Customer with customerId: ' +
+							customer.customerId +
+							' was created'
+					),
+					severity: 'info',
+				});
 			}
-			// Notify
-			await eventTracker.notify({
-				message: EventTracker.compileBasicNotification(
-					'User was not found in database: Customer with customerId: ' + customer.customerId + ' was created'
-				),
-				severity: 'info',
-			});
+
 			// 2.2. Create user
 			user = await UserService.instance.create(logToUserId, customer, defaultRole);
 			if (!user) {
@@ -222,6 +230,7 @@ export class AccountController {
 				severity: 'info',
 			});
 		}
+
 		// 3. If yes - check that there is customer associated with such user
 		if (!user.customer) {
 			// 3.1. If no:
@@ -488,7 +497,7 @@ export class AccountController {
 				}
 			}
 			// 5. Setup stripe account
-			if (process.env.STRIPE_ENABLED === 'true' && customer.paymentProviderId === null) {
+			if (process.env.STRIPE_ENABLED === 'true' && !customer.paymentProviderId) {
 				eventTracker.submit({
 					operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 					data: {
