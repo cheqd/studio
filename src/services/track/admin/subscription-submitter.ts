@@ -7,7 +7,7 @@ import { CustomerService } from '../../api/customer.js';
 import type { ISubmitOperation, ISubmitSubscriptionData } from '../submitter.js';
 import { EventTracker } from '../tracker.js';
 import type { IObserver } from '../types.js';
-import { FindOptionsWhere } from 'typeorm';
+import type { FindOptionsWhere } from 'typeorm';
 
 export class SubscriptionSubmitter implements IObserver {
 	private emitter: EventEmitter;
