@@ -7,6 +7,7 @@ import { CustomerService } from '../../api/customer.js';
 import type { ISubmitOperation, ISubmitSubscriptionData } from '../submitter.js';
 import { EventTracker } from '../tracker.js';
 import type { IObserver } from '../types.js';
+import { FindOptionsWhere } from 'typeorm';
 
 export class SubscriptionSubmitter implements IObserver {
 	private emitter: EventEmitter;
@@ -41,8 +42,16 @@ export class SubscriptionSubmitter implements IObserver {
 		let customer: CustomerEntity | undefined = operation.options?.customer;
 		try {
 			if (!customer) {
-				const customers = await CustomerService.instance.find({
-					paymentProviderId: data.paymentProviderId,
+				const stripeCustomer = await stripe.customers.retrieve(data.paymentProviderId);
+
+				const whereClause: FindOptionsWhere<CustomerEntity>[] = [{ paymentProviderId: data.paymentProviderId }];
+				// we add an additional "OR" check in case that a customer was created locally with email and no paymentProviderId
+				if (!stripeCustomer.deleted && stripeCustomer.email) {
+					whereClause.push({ email: stripeCustomer.email });
+				}
+
+				const customers = await CustomerService.instance.customerRepository.find({
+					where: whereClause,
 				});
 
 				if (customers.length === 0) {
@@ -54,7 +63,6 @@ export class SubscriptionSubmitter implements IObserver {
 						severity: 'info',
 					});
 
-					const stripeCustomer = await stripe.customers.retrieve(data.paymentProviderId);
 					if (!stripeCustomer.deleted && stripeCustomer.email) {
 						const customerName = stripeCustomer.name ?? stripeCustomer.email;
 						const customer = await CustomerService.instance.create(
@@ -128,7 +136,7 @@ export class SubscriptionSubmitter implements IObserver {
 				data.trialEnd as Date
 			);
 			if (!subscription) {
-				await this.notify({
+				this.notify({
 					message: EventTracker.compileBasicNotification(
 						`Failed to update subscription with id: ${data.subscriptionId}.`,
 						operation.operation
@@ -137,7 +145,7 @@ export class SubscriptionSubmitter implements IObserver {
 				});
 			}
 
-			await this.notify({
+			this.notify({
 				message: EventTracker.compileBasicNotification(
 					`Subscription updated with id: ${data.subscriptionId}.`,
 					operation.operation
@@ -145,7 +153,7 @@ export class SubscriptionSubmitter implements IObserver {
 				severity: 'info',
 			});
 		} catch (error) {
-			await this.notify({
+			this.notify({
 				message: EventTracker.compileBasicNotification(
 					`Failed to update subscription with id: ${data.subscriptionId} because of error: ${(error as Error)?.message || error}`,
 					operation.operation
@@ -160,7 +168,7 @@ export class SubscriptionSubmitter implements IObserver {
 		try {
 			const subscription = await SubscriptionService.instance.update(data.subscriptionId, data.status);
 			if (!subscription) {
-				await this.notify({
+				this.notify({
 					message: EventTracker.compileBasicNotification(
 						`Failed to cancel subscription with id: ${data.subscriptionId}.`,
 						operation.operation
@@ -169,7 +177,7 @@ export class SubscriptionSubmitter implements IObserver {
 				});
 			}
 
-			await this.notify({
+			this.notify({
 				message: EventTracker.compileBasicNotification(
 					`Subscription canceled with id: ${data.subscriptionId}.`,
 					operation.operation
@@ -177,7 +185,7 @@ export class SubscriptionSubmitter implements IObserver {
 				severity: 'info',
 			});
 		} catch (error) {
-			await this.notify({
+			this.notify({
 				message: EventTracker.compileBasicNotification(
 					`Failed to cancel subscription with id: ${data.subscriptionId} because of error: ${(error as Error)?.message || error}`,
 					operation.operation

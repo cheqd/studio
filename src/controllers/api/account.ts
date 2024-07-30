@@ -10,7 +10,6 @@ import { UserService } from '../../services/api/user.js';
 import { RoleService } from '../../services/api/role.js';
 import { PaymentAccountService } from '../../services/api/payment-account.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
-import type { UserEntity } from '../../database/entities/user.entity.js';
 import type { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import type {

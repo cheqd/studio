@@ -88,12 +88,17 @@ export type SubscriptionResumeResponseBody = {
 	subscription: Stripe.Response<Stripe.Subscription>;
 };
 
+export type CheckoutSessionGetResponseBody = {
+	session: Stripe.Response<Stripe.Checkout.Session>;
+};
+
 export type SubscriptionCreateUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 export type SubscriptionListUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 export type SubscriptionGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 export type SubscriptionUpdateUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 export type SubscriptionCancelUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 export type SubscriptionResumeUnsuccessfulResponseBody = UnsuccessfulResponseBody;
+export type CheckoutSessionGetUnsuccessfulResponseBody = UnsuccessfulResponseBody;
 
 // Customer
 // Get

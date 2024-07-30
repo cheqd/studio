@@ -268,6 +268,8 @@ class App {
 				new SubscriptionController().resume
 			);
 
+			app.get('/admin/checkout/session/:id', new SubscriptionController().getCheckoutSession);
+
 			// API key
 			app.post('/admin/api-key/create', APIKeyController.apiKeyCreateValidator, new APIKeyController().create);
 			app.post('/admin/api-key/update', APIKeyController.apiKeyUpdateValidator, new APIKeyController().update);
