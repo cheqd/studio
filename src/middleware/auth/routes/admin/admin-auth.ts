@@ -26,7 +26,7 @@ export class AdminAuthRuleProvider extends AuthRuleProvider {
 			skipNamespace: true,
 		});
 		this.registerRule('/admin/subscription/get', 'GET', 'admin:subscription:get', { skipNamespace: true });
-		this.registerRule('/admin/checkout/session/(.*)', 'GET', '', { skipNamespace: true, allowUnauthorized: true });
+		this.registerRule('/admin/checkout/session/(.*)', 'GET', '', { skipNamespace: true });
 		// Prices
 		this.registerRule('/admin/price/list', 'GET', 'admin:price:list', { skipNamespace: true });
 
