@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0-develop.2](https://github.com/cheqd/studio/compare/3.1.0-develop.1...3.1.0-develop.2) (2024-07-31)
+
+
+### Bug Fixes
+
+* Use `admin:subscription:get` auth guard for Stripe checkout session ([#564](https://github.com/cheqd/studio/issues/564)) ([fc631e4](https://github.com/cheqd/studio/commit/fc631e42172bcdac6dbe50f1cfa3092f73ca8802))
+
 ## [3.1.0-develop.1](https://github.com/cheqd/studio/compare/3.0.1-develop.2...3.1.0-develop.1) (2024-07-31)
 
 
