@@ -185,6 +185,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 			`Looks like resource with id ${process.env.LOGTO_DEFAULT_RESOURCE_URL} is not placed on LogTo`
 		);
 	}
+
 	private async setAllScopes(): Promise<ICommonErrorResponse> {
 		const allResources = await this.getAllResources();
 		if (allResources.status !== StatusCodes.OK) {
@@ -204,6 +205,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		}
 		return this.returnOk({});
 	}
+
 	private async getScopesForRole(roleId: string): Promise<ICommonErrorResponse> {
 		const uri = new URL(`/api/roles/${roleId}/scopes`, process.env.LOGTO_ENDPOINT);
 		const scopes = [];
@@ -224,6 +226,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 			return this.returnError(StatusCodes.BAD_GATEWAY, `askRoleForScopes ${err}`);
 		}
 	}
+
 	private async getScopesForResource(resourceId: string): Promise<ICommonErrorResponse> {
 		const uri = new URL(`/api/resources/${resourceId}/scopes`, process.env.LOGTO_ENDPOINT);
 		const scopes = [];
@@ -244,6 +247,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 			return this.returnError(StatusCodes.BAD_GATEWAY, `askResourceForScopes ${err}`);
 		}
 	}
+
 	public async getScopesForRolesList(roles: string[]): Promise<ICommonErrorResponse> {
 		const scopes = [];
 		for (const role of roles) {

@@ -1,7 +1,7 @@
 import * as http from 'http';
 import App from './app.js';
-
 import * as dotenv from 'dotenv';
+
 dotenv.config();
 
 const port = process.env.PORT || 3000;
@@ -9,6 +9,11 @@ App.set('port', port);
 
 const server = http.createServer(App);
 server.listen(port);
+
+server.on('listening', () => {
+	console.log('Listening on port:', port);
+});
+
 server.on('error', onError);
 
 function onError(error: NodeJS.ErrnoException): void {

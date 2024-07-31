@@ -90,7 +90,7 @@ export class Authentication {
 	}
 
 	public async wrapperHandleAuthRoutes(request: Request, response: Response, next: NextFunction) {
-		const resources = await this.logToHelper.getAllResourcesWithNames();
+		const resources = this.logToHelper.getAllResourcesWithNames();
 		return handleAuthRoutes({ ...configLogToExpress, scopes: ['roles'], resources: resources as string[] })(
 			request,
 			response,

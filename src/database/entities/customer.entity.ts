@@ -54,11 +54,14 @@ export class CustomerEntity {
 		this.updatedAt = new Date();
 	}
 
-	constructor(customerId: string, name: string, email?: string, description?: string) {
+	constructor(customerId: string, name: string, email?: string, description?: string, paymentProviderId?: string) {
 		this.customerId = customerId;
 		this.name = name;
 		this.email = email;
 		this.description = description;
+		if (paymentProviderId) {
+			this.paymentProviderId = paymentProviderId;
+		}
 	}
 
 	public isEqual(customer: CustomerEntity): boolean {

@@ -214,7 +214,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object]"
+              "description": "A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object)"
             }
           }
         }
@@ -236,7 +236,7 @@
         "properties": {
           "subscription": {
             "type": "object",
-            "description": "A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object]"
+            "description": "A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object)"
           },
           "idempotencyKey": {
             "type": "string",
@@ -267,7 +267,17 @@
         "properties": {
           "subscription": {
             "type": "object",
-            "description": "A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object]"
+            "description": "A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object)"
+          }
+        }
+      },
+      "CheckoutSessionGetResponseBody": {
+        "description": "the response body for GET Stripe Checkout Session API",
+        "type": "object",
+        "properties": {
+          "session": {
+            "type": "object",
+            "description": "A Stripe checkout session object. For more information, see the [Stripe API documentation](https://docs.stripe.com/api/checkout/sessions/object)"
           }
         }
       },
@@ -1182,6 +1192,50 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SubscriptionResumeResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/checkout/session/{id}": {
+      "get": {
+        "summary": "Get a Stripe checkout session",
+        "description": "Retrieves a Stripe checkout session by id",
+        "tags": [
+          "Subscription"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "description": "The session id which identifies a unique checkout session in Stripe"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A Stripe checkout session record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutSessionGetResponseBody"
                 }
               }
             }

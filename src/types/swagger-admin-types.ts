@@ -132,7 +132,7 @@
  *           type: array
  *           items:
  *             type: object
- *             description: A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object]
+ *             description: A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object)
  *     SubscriptionCancelRequestBody:
  *       description: The request body for canceling a subscription
  *       type: object
@@ -147,7 +147,7 @@
  *       properties:
  *         subscription:
  *           type: object
- *           description: A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object]
+ *           description: A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object)
  *         idempotencyKey:
  *           type: string
  *           description: The idempotency key. It helps to prevent duplicate requests. In case if there was a request with the same idempotency key, the response will be the same as for the first request.
@@ -170,7 +170,14 @@
  *       properties:
  *         subscription:
  *           type: object
- *           description: A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object]
+ *           description: A subscription object from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/subscriptions/object)
+ *     CheckoutSessionGetResponseBody:
+ *       description: the response body for GET Stripe Checkout Session API
+ *       type: object
+ *       properties:
+ *         session:
+ *           type: object
+ *           description: A Stripe checkout session object. For more information, see the [Stripe API documentation](https://docs.stripe.com/api/checkout/sessions/object)
  *     APIKeyResponse:
  *       description: The general view for API key in response
  *       type: object

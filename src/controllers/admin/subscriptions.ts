@@ -18,6 +18,8 @@ import type {
 	SubscriptionResumeResponseBody,
 	SubscriptionResumeRequestBody,
 	SubscriptionCancelRequestBody,
+	CheckoutSessionGetUnsuccessfulResponseBody,
+	CheckoutSessionGetResponseBody,
 } from '../../types/admin.js';
 import { StatusCodes } from 'http-status-codes';
 import { check } from '../validator/index.js';
@@ -260,7 +262,7 @@ export class SubscriptionController {
 		const { returnURL, isManagePlan, priceId } = request.body satisfies SubscriptionUpdateRequestBody;
 		try {
 			// Get the subscription object from the DB
-			const subscription = await SubscriptionService.instance.findOne({ customer: response.locals.customer });
+			const subscription = await SubscriptionService.instance.findCurrent(response.locals.customer);
 			if (!subscription) {
 				return response.status(StatusCodes.NOT_FOUND).json({
 					error: `Subscription was not found`,
@@ -533,6 +535,61 @@ export class SubscriptionController {
 			return response.status(StatusCodes.OK).json({
 				subscription: subscription,
 			} satisfies SubscriptionResumeResponseBody);
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			} satisfies SubscriptionResumeUnsuccessfulResponseBody);
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /admin/checkout/session/{id}:
+	 *  get:
+	 *    summary: Get a Stripe checkout session
+	 *    description: Retrieves a Stripe checkout session by id
+	 *    tags: [Subscription]
+	 *    parameters:
+	 *     - in: path
+	 *       name: id
+	 *       schema:
+	 *         type: string
+	 *         description: The session id which identifies a unique checkout session in Stripe
+	 *       required: true
+	 *    responses:
+	 *      200:
+	 *        description: A Stripe checkout session record
+	 *        content:
+	 *          application/json:
+	 *            schema:
+	 *              $ref: '#/components/schemas/CheckoutSessionGetResponseBody'
+	 *      400:
+	 *        $ref: '#/components/schemas/InvalidRequest'
+	 *      401:
+	 *        $ref: '#/components/schemas/UnauthorizedError'
+	 *      500:
+	 *        $ref: '#/components/schemas/InternalError'
+	 *      404:
+	 *        $ref: '#/components/schemas/NotFoundError'
+	 */
+	// @validate
+	async getCheckoutSession(request: Request, response: Response) {
+		const stripe = response.locals.stripe as Stripe;
+		const checkoutSessionId = request.params.id;
+		try {
+			// retrieve the checkout session
+			const checkoutSession = await stripe.checkout.sessions.retrieve(checkoutSessionId);
+
+			// Check if the subscription was resumed
+			if (checkoutSession.lastResponse?.statusCode !== StatusCodes.OK) {
+				return response.status(StatusCodes.BAD_GATEWAY).json({
+					error: `Checkout session not found`,
+				} satisfies CheckoutSessionGetUnsuccessfulResponseBody);
+			}
+			return response.status(StatusCodes.OK).json({
+				session: checkoutSession,
+			} satisfies CheckoutSessionGetResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,

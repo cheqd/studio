@@ -6,7 +6,6 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { StatusCodes } from 'http-status-codes';
-
 import { CredentialController } from './controllers/api/credential.js';
 import { AccountController } from './controllers/api/account.js';
 import { Authentication } from './middleware/authentication.js';
@@ -15,10 +14,7 @@ import { CredentialStatusController } from './controllers/api/credential-status.
 import { CORS_ALLOWED_ORIGINS, CORS_ERROR_MSG } from './types/constants.js';
 import { LogToWebHook } from './middleware/hook.js';
 import { Middleware } from './middleware/middleware.js';
-
 import * as dotenv from 'dotenv';
-dotenv.config();
-
 // Define Swagger file
 import swaggerAPIDocument from './static/swagger-api.json' assert { type: 'json' };
 import swaggerAdminDocument from './static/swagger-admin.json' assert { type: 'json' };
@@ -34,6 +30,8 @@ import { WebhookController } from './controllers/admin/webhook.js';
 import { APIKeyController } from './controllers/admin/api-key.js';
 import { OrganisationController } from './controllers/admin/organisation.js';
 
+dotenv.config();
+
 class App {
 	public express: express.Application;
 
@@ -41,7 +39,14 @@ class App {
 		this.express = express();
 		this.middleware();
 		this.routes();
-		Connection.instance.connect();
+		Connection.instance
+			.connect()
+			.then(() => {
+				console.log('Database connection: successful');
+			})
+			.catch((err) => {
+				console.log('DBConnectorError: ', err);
+			});
 	}
 
 	private middleware() {
@@ -262,6 +267,8 @@ class App {
 				SubscriptionController.subscriptionResumeValidator,
 				new SubscriptionController().resume
 			);
+
+			app.get('/admin/checkout/session/:id', new SubscriptionController().getCheckoutSession);
 
 			// API key
 			app.post('/admin/api-key/create', APIKeyController.apiKeyCreateValidator, new APIKeyController().create);
