@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0-develop.1](https://github.com/cheqd/studio/compare/3.0.1-develop.2...3.1.0-develop.1) (2024-07-31)
+
+
+### Features
+
+* Synchronising stripe and studio API state - [DEV-4157] ([#561](https://github.com/cheqd/studio/issues/561)) ([f338db7](https://github.com/cheqd/studio/commit/f338db72f02daeaec88a3c8263f0586ba5dbce5d))
+
 ## [3.0.1-develop.2](https://github.com/cheqd/studio/compare/3.0.1-develop.1...3.0.1-develop.2) (2024-07-24)
 
 
