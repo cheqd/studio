@@ -4,6 +4,7 @@ import { Connection } from '../../database/connection/connection.js';
 
 import * as dotenv from 'dotenv';
 import { RoleEntity } from '../../database/entities/role.entity.js';
+import { DefaultStudioRoleName } from '../../types/constants.js';
 dotenv.config();
 
 export class RoleService {
@@ -57,6 +58,6 @@ export class RoleService {
 	}
 
 	public getDefaultRole() {
-		return this.roleRepository.findOneBy({ name: 'default' });
+		return this.roleRepository.findOneBy({ name: DefaultStudioRoleName });
 	}
 }

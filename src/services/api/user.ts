@@ -19,7 +19,7 @@ export class UserService {
 	}
 
 	public async create(logToId: string, customer: CustomerEntity, role: RoleEntity): Promise<UserEntity> {
-		if (await this.isExist({ logToId: logToId })) {
+		if (await this.isExist({ logToId })) {
 			throw new Error(`Cannot create a new user since the user with same logToId ${logToId} already exists`);
 		}
 		const userEntity = new UserEntity(logToId, customer, role);

@@ -30,7 +30,71 @@ import Stripe from 'stripe';
 import { getStripeObjectKey } from '../../services/helpers.js';
 import { RoleService } from '../../services/api/role.js';
 import { SafeAPIResponse } from '../../types/common.js';
+import { RoleEntity } from '../../database/entities/role.entity.js';
 dotenv.config();
+
+async function syncLogtoUserRoles(
+	logToHelper: LogToHelper,
+	stripe: Stripe,
+	request: Request,
+	logToUserId: string,
+	customer: CustomerEntity
+): Promise<SafeAPIResponse<string>> {
+	// const roles = await logToHelper.getRolesForUser(logToUserId);
+	// if (roles.status !== StatusCodes.OK) {
+	// 	return {
+	// 		success: false,
+	// 		status: roles.status,
+	// 		error: roles.error,
+	// 	};
+	// }
+
+	// 5.2 If list of roles is empty and the user is not suspended - assign default role
+	if (!LogToWebHook.isUserSuspended(request)) {
+		const subscription = await SubscriptionService.instance.findCurrent(customer);
+		if (!subscription) {
+			return {
+				success: false,
+				error: `Logto role assigned failed: No active subscription found for customer with id: ${customer.customerId}`,
+				status: 400,
+			};
+		}
+
+		const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscriptionId);
+		const product = await stripe.products.retrieve(
+			getStripeObjectKey(stripeSubscription.items.data[0].plan.product)
+		);
+
+		const logtoRoleName = product.name.toLowerCase() as SupportedPlanTypes;
+		const roleResponse = await logToHelper.assignCustomerPlanRoles(logToUserId, logtoRoleName);
+		if (roleResponse.status !== StatusCodes.OK) {
+			return {
+				success: false,
+				status: roleResponse.status,
+				error: roleResponse.error,
+			};
+		}
+
+		await eventTracker.notify({
+			message: EventTracker.compileBasicNotification(
+				`${product.name} role was assigned to user with id: ${logToUserId}`
+			),
+			severity: 'info',
+		});
+
+		return {
+			success: true,
+			status: 200,
+			data: logtoRoleName,
+		};
+	}
+
+	return {
+		success: false,
+		error: `Logto role not assigned: User with id ${logToUserId} is suspended`,
+		status: 409,
+	};
+}
 
 export class AccountController {
 	public static createValidator = [
@@ -229,17 +293,17 @@ export class AccountController {
 				});
 			}
 
-			const logtoRoleSync = await this.syncLogtoUserRoles(logToHelper, stripe, request, logToUserId, customer);
+			let role: RoleEntity | null = null;
+			const logtoRoleSync = await syncLogtoUserRoles(logToHelper, stripe, request, logToUserId, customer);
 			if (!logtoRoleSync.success) {
-				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-					error: logtoRoleSync.error,
-				} satisfies UnsuccessfulResponseBody);
+				role = await RoleService.instance.getDefaultRole();
+			} else {
+				role = await RoleService.instance.findOne({ name: logtoRoleSync.data });
 			}
 
-			const role = await RoleService.instance.findOne({ name: logtoRoleSync.data });
 			if (!role) {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-					error: `Internal error: No role found with name: ${logtoRoleSync.data}`,
+					error: `Internal error: No logto role found`,
 				} satisfies UnsuccessfulResponseBody);
 			}
 
@@ -509,66 +573,5 @@ export class AccountController {
 				error: `Internal Error: ${(error as Error)?.message || error}`,
 			});
 		}
-	}
-
-	async syncLogtoUserRoles(
-		logToHelper: LogToHelper,
-		stripe: Stripe,
-		request: Request,
-		logToUserId: string,
-		customer: CustomerEntity
-	): Promise<SafeAPIResponse<string>> {
-		const roles = await logToHelper.getRolesForUser(logToUserId);
-		if (roles.status !== StatusCodes.OK) {
-			return {
-				success: false,
-				status: roles.status,
-				error: roles.error,
-			};
-		}
-
-		// 5.2 If list of roles is empty and the user is not suspended - assign default role
-		if (roles.data.length === 0 && !LogToWebHook.isUserSuspended(request)) {
-			const subscription = await SubscriptionService.instance.findCurrent(customer);
-			if (subscription) {
-				const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscriptionId);
-				if (stripeSubscription && stripeSubscription.items.data.length > 0) {
-					const product = await stripe.products.retrieve(
-						getStripeObjectKey(stripeSubscription.items.data[0].plan.product)
-					);
-
-					if (product && product.active) {
-						const logtoRoleName = product.name.toLowerCase() as SupportedPlanTypes;
-						const roleResponse = await logToHelper.assignCustomerPlanRoles(logToUserId, logtoRoleName);
-						if (roleResponse.status !== StatusCodes.OK) {
-							return {
-								success: false,
-								status: roleResponse.status,
-								error: roleResponse.error,
-							};
-						} else {
-							await eventTracker.notify({
-								message: EventTracker.compileBasicNotification(
-									`${product.name} role was assigned to user with id: ${logToUserId}`
-								),
-								severity: 'info',
-							});
-
-							return {
-								success: true,
-								status: 200,
-								data: logtoRoleName,
-							};
-						}
-					}
-				}
-			}
-		}
-
-		return {
-			success: false,
-			error: `Internal Error: Failed to assigned logto role to user with id: ${logToUserId}`,
-			status: 500,
-		};
 	}
 }
