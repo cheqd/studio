@@ -7,7 +7,6 @@ import { FaucetHelper } from '../../helpers/faucet.js';
 import { StatusCodes } from 'http-status-codes';
 import { LogToWebHook } from '../../middleware/hook.js';
 import { UserService } from '../../services/api/user.js';
-import { RoleService } from '../../services/api/role.js';
 import { PaymentAccountService } from '../../services/api/payment-account.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
@@ -29,6 +28,8 @@ import { SupportedPlanTypes } from '../../types/admin.js';
 import { SubscriptionService } from '../../services/admin/subscription.js';
 import Stripe from 'stripe';
 import { getStripeObjectKey } from '../../services/helpers.js';
+import { RoleService } from '../../services/api/role.js';
+import { SafeAPIResponse } from '../../types/common.js';
 dotenv.config();
 
 export class AccountController {
@@ -180,17 +181,26 @@ export class AccountController {
 		const logToName = request.body.user.name || logToUserEmail;
 
 		const stripe = response.locals.stripe as Stripe;
-		const defaultRole = await RoleService.instance.getDefaultRole();
-		if (!defaultRole) {
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: 'Default role is not set on Credential Service side',
-			} satisfies UnsuccessfulResponseBody);
-		}
+		const logToHelper = new LogToHelper();
+		// const defaultRole = await RoleService.instance.getDefaultRole();
+		// if (!defaultRole) {
+		// 	return response.status(StatusCodes.BAD_REQUEST).json({
+		// 		error: 'Default role is not set on Credential Service side',
+		// 	} satisfies UnsuccessfulResponseBody);
+		// }
 		// 2. Check if such row exists in the DB
-		let [user, [customer]] = await Promise.all([
+		// eslint-disable-next-line prefer-const
+		let [user, [customer], _r] = await Promise.all([
 			UserService.instance.get(logToUserId),
 			CustomerService.instance.find({ email: logToUserEmail }),
+			logToHelper.setup(),
 		]);
+
+		if (_r.status !== StatusCodes.OK) {
+			return response.status(StatusCodes.BAD_GATEWAY).json({
+				error: _r.error,
+			} satisfies UnsuccessfulResponseBody);
+		}
 
 		if (!user) {
 			// 2.1. If no - create customer first
@@ -219,8 +229,22 @@ export class AccountController {
 				});
 			}
 
+			const logtoRoleSync = await this.syncLogtoUserRoles(logToHelper, stripe, request, logToUserId, customer);
+			if (!logtoRoleSync.success) {
+				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+					error: logtoRoleSync.error,
+				} satisfies UnsuccessfulResponseBody);
+			}
+
+			const role = await RoleService.instance.findOne({ name: logtoRoleSync.data });
+			if (!role) {
+				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+					error: `Internal error: No role found with name: ${logtoRoleSync.data}`,
+				} satisfies UnsuccessfulResponseBody);
+			}
+
 			// 2.2. Create user
-			user = await UserService.instance.create(logToUserId, customer, defaultRole);
+			user = await UserService.instance.create(logToUserId, customer, role);
 			if (!user) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'User is not found in database: User was not created',
@@ -306,54 +330,8 @@ export class AccountController {
 			paymentAccount = accounts[0];
 		}
 
-		const logToHelper = new LogToHelper();
-		const _r = await logToHelper.setup();
-		if (_r.status !== StatusCodes.OK) {
-			return response.status(StatusCodes.BAD_GATEWAY).json({
-				error: _r.error,
-			} satisfies UnsuccessfulResponseBody);
-		}
 		// 5. Assign default role on LogTo
 		// 5.1 Get user's roles
-
-		const roles = await logToHelper.getRolesForUser(logToUserId);
-		if (roles.status !== StatusCodes.OK) {
-			return response.status(StatusCodes.BAD_GATEWAY).json({
-				error: roles.error,
-			} satisfies UnsuccessfulResponseBody);
-		}
-
-		// 5.2 If list of roles is empty and the user is not suspended - assign default role
-		if (roles.data.length === 0 && !LogToWebHook.isUserSuspended(request)) {
-			const subscription = await SubscriptionService.instance.findCurrent(customer);
-			if (subscription) {
-				const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscriptionId);
-				if (stripeSubscription && stripeSubscription.items.data.length > 0) {
-					const product = await stripe.products.retrieve(
-						getStripeObjectKey(stripeSubscription.items.data[0].plan.product)
-					);
-
-					if (product && product.active) {
-						const roleResponse = await logToHelper.assignCustomerPlanRoles(
-							user.logToId,
-							product.name.toLowerCase() as SupportedPlanTypes
-						);
-						if (roleResponse.status !== StatusCodes.OK) {
-							return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-								error: roleResponse.error,
-							} satisfies UnsuccessfulResponseBody);
-						} else {
-							await eventTracker.notify({
-								message: EventTracker.compileBasicNotification(
-									`${product.name} role was assigned to user with id: ${user.logToId}`
-								),
-								severity: 'info',
-							});
-						}
-					}
-				}
-			}
-		}
 
 		const customDataFromLogTo = await logToHelper.getCustomData(user.logToId);
 
@@ -531,5 +509,66 @@ export class AccountController {
 				error: `Internal Error: ${(error as Error)?.message || error}`,
 			});
 		}
+	}
+
+	async syncLogtoUserRoles(
+		logToHelper: LogToHelper,
+		stripe: Stripe,
+		request: Request,
+		logToUserId: string,
+		customer: CustomerEntity
+	): Promise<SafeAPIResponse<string>> {
+		const roles = await logToHelper.getRolesForUser(logToUserId);
+		if (roles.status !== StatusCodes.OK) {
+			return {
+				success: false,
+				status: roles.status,
+				error: roles.error,
+			};
+		}
+
+		// 5.2 If list of roles is empty and the user is not suspended - assign default role
+		if (roles.data.length === 0 && !LogToWebHook.isUserSuspended(request)) {
+			const subscription = await SubscriptionService.instance.findCurrent(customer);
+			if (subscription) {
+				const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscriptionId);
+				if (stripeSubscription && stripeSubscription.items.data.length > 0) {
+					const product = await stripe.products.retrieve(
+						getStripeObjectKey(stripeSubscription.items.data[0].plan.product)
+					);
+
+					if (product && product.active) {
+						const logtoRoleName = product.name.toLowerCase() as SupportedPlanTypes;
+						const roleResponse = await logToHelper.assignCustomerPlanRoles(logToUserId, logtoRoleName);
+						if (roleResponse.status !== StatusCodes.OK) {
+							return {
+								success: false,
+								status: roleResponse.status,
+								error: roleResponse.error,
+							};
+						} else {
+							await eventTracker.notify({
+								message: EventTracker.compileBasicNotification(
+									`${product.name} role was assigned to user with id: ${logToUserId}`
+								),
+								severity: 'info',
+							});
+
+							return {
+								success: true,
+								status: 200,
+								data: logtoRoleName,
+							};
+						}
+					}
+				}
+			}
+		}
+
+		return {
+			success: false,
+			error: `Internal Error: Failed to assigned logto role to user with id: ${logToUserId}`,
+			status: 500,
+		};
 	}
 }
