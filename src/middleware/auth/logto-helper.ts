@@ -5,6 +5,8 @@ import * as dotenv from 'dotenv';
 import type { IOAuthProvider } from './oauth/abstract.js';
 import { OAuthProvider } from './oauth/abstract.js';
 import { EventTracker, eventTracker } from '../../services/track/tracker.js';
+import { env } from 'node:process';
+import { SupportedPlanTypes } from '../../types/admin.js';
 dotenv.config();
 
 export class LogToHelper extends OAuthProvider implements IOAuthProvider {
@@ -79,37 +81,6 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 
 	public getAllResourcesWithNames(): string[] {
 		return this.allResourceWithNames;
-	}
-
-	public async setDefaultRoleForUser(userId: string): Promise<ICommonErrorResponse> {
-		const roles = await this.getRolesForUser(userId);
-		if (roles.status !== StatusCodes.OK) {
-			return this.returnError(StatusCodes.BAD_GATEWAY, roles.error);
-		}
-		// Check that default role is set
-		for (const role of roles.data) {
-			if (role.id === process.env.LOGTO_DEFAULT_ROLE_ID) {
-				return this.returnOk(roles.data);
-			}
-		}
-		// Assign a default role to a user
-		return await this.assignDefaultRoleForUser(userId, process.env.LOGTO_DEFAULT_ROLE_ID);
-	}
-
-	public async setDefaultRoleForApp(appId: string): Promise<ICommonErrorResponse> {
-		const roles = await this.getRolesForUser(appId);
-		if (roles.status !== StatusCodes.OK) {
-			return this.returnError(StatusCodes.BAD_GATEWAY, roles.error);
-		}
-		// Check that default role is set
-		for (const role of roles.data) {
-			if (role.id === process.env.LOGTO_DEFAULT_ROLE_ID) {
-				return this.returnOk(roles.data);
-			}
-		}
-
-		// Assign a default role to a user
-		return await this.assignDefaultRoleForApp(appId, process.env.LOGTO_DEFAULT_ROLE_ID);
 	}
 
 	private returnOk(data: any): ICommonErrorResponse {
@@ -287,58 +258,104 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		}
 	}
 
-	private async getRoleInfo(roleId: string): Promise<ICommonErrorResponse> {
-		const uri = new URL(`/api/roles/${roleId}`, process.env.LOGTO_ENDPOINT);
-		try {
-			return await this.getToLogto(uri, 'GET');
-		} catch (err) {
-			return this.returnError(StatusCodes.BAD_GATEWAY, `getRoleInfo ${err}`);
-		}
-	}
-
-	private async assignDefaultRoleForUser(userId: string, roleId: string): Promise<ICommonErrorResponse> {
-		const userInfo = await this.getUserInfo(userId);
-		const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
+	async assignCustomerPlanRoles(userId: string, planType: SupportedPlanTypes): Promise<ICommonErrorResponse> {
+		const [userInfo, userRoles] = await Promise.all([this.getUserInfo(userId), this.getRolesForUser(userId)]);
+		console.log('assignCustomerPlanRoles: userInfo: ', userInfo);
+		console.log('assignCustomerPlanRoles: userRoles: ', userRoles);
 
 		if (userInfo.status !== StatusCodes.OK) {
-			return this.returnError(
-				StatusCodes.BAD_GATEWAY,
-				`Could not fetch the info about role with roleId ${roleId}`
-			);
+			return this.returnError(StatusCodes.BAD_GATEWAY, 'Could not fetch the info about the user');
 		}
 		// Means that user exists
-		if (userInfo.data.isSuspended === 'true') {
+		if (userInfo.data.isSuspended) {
 			return this.returnError(StatusCodes.FORBIDDEN, 'User is suspended');
 		}
-		// Means it's not suspended
-		const role = await this.getRoleInfo(roleId);
-		if (role.status !== StatusCodes.OK) {
-			return this.returnError(
-				StatusCodes.BAD_GATEWAY,
-				`Could not fetch the info about user with userId ${userId} because of error from authority server: ${role.error}`
-			);
+
+		if (userRoles.status !== StatusCodes.OK) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, 'Could not fetch the info about user roles');
 		}
-		// Such role exists
+
+		const assignedRoleIds = (userRoles.data as { id: string; name: string }[]).map((role) => role.id);
+
+		// INFO: Context
+		// We currently have two plans, Build and Test.
+		// All of our users get a "Portal" role which let's them work with our Studio Portal (UI)
+		// Test plan lets you operate with our Testnet so we assign the "Testnet" role
+		// Build plan lets you work with our Testnet and Mainnet, so we assign "Testnet" and "Mainnet" roles
+		// "build" is the superset of all the roles (testnet + mainnet)
+		const buildPlanRoleIds = [env.LOGTO_MAINNET_ROLE_ID.trim(), env.LOGTO_TESTNET_ROLE_ID.trim()];
+		const testPlanRoleId = env.LOGTO_TESTNET_ROLE_ID.trim();
+
+		const planRoleIds: string[] = [];
+		console.log('planType: ', planType);
+		if (planType === 'build') {
+			const buildRoleIsAssigned = buildPlanRoleIds.every((roleId) => assignedRoleIds.includes(roleId));
+			if (buildRoleIsAssigned) {
+				return {
+					status: 201,
+					error: '',
+					data: {
+						message: `${planType} plan role was successfull assigned to the user`,
+					},
+				};
+			}
+
+			const billingPlanRoleIds = buildPlanRoleIds.filter((id) => !assignedRoleIds.includes(id));
+			planRoleIds.push(...billingPlanRoleIds);
+		} else if (planType === 'test') {
+			// "build" plan is a superset of "test" plan
+
+			// check the user has mainnet role, remove it
+			const mainnetRoleId = assignedRoleIds.find((roleId) => roleId === buildPlanRoleIds[0]);
+			if (mainnetRoleId) {
+				await this.removeLogtoRoleFromUser(userId, mainnetRoleId);
+			}
+
+			const testnetRoleId = assignedRoleIds.find((roleId) => roleId === testPlanRoleId);
+			if (testnetRoleId) {
+				return {
+					status: 201,
+					error: '',
+					data: {
+						message: `${planType} plan role was successfull assigned to the user`,
+					},
+				};
+			}
+
+			planRoleIds.push(testPlanRoleId);
+		}
+
+		console.log('roles to assign: ', planRoleIds);
 		try {
+			const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
 			const body = {
-				roleIds: [roleId],
+				roleIds: planRoleIds,
 			};
+
 			return await this.postToLogto(uri, body, { 'Content-Type': 'application/json' });
 		} catch (err) {
 			return this.returnError(StatusCodes.BAD_GATEWAY, `getRolesForUser ${err}`);
 		}
 	}
 
-	private async assignDefaultRoleForApp(appId: string, roleId: string): Promise<ICommonErrorResponse> {
-		const uri = new URL(`/api/applications/${appId}/roles`, process.env.LOGTO_ENDPOINT);
-		// Such role exists
+	async removeLogtoRoleFromUser(userId: string, roleId: string) {
+		const uri = new URL(`/api/users/${userId}/roles/${roleId}`, process.env.LOGTO_ENDPOINT);
+
 		try {
-			const body = {
-				roleIds: [roleId],
-			};
-			return await this.postToLogto(uri, body, { 'Content-Type': 'application/json' });
+			const response = await fetch(uri, {
+				method: 'DELETE',
+				headers: {
+					Authorization: 'Bearer ' + (await this.getM2MToken()),
+				},
+			});
+			if (response.status === StatusCodes.NO_CONTENT) {
+				return this.returnOk({});
+			}
+
+			const err = await response.text();
+			return this.returnError(response.status, err);
 		} catch (err) {
-			return this.returnError(StatusCodes.BAD_GATEWAY, `getRolesForUser ${err}`);
+			return this.returnError(StatusCodes.INTERNAL_SERVER_ERROR, `removeUserRole: ${err}`);
 		}
 	}
 
@@ -437,6 +454,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 	}
 
 	private async postToLogto(uri: URL, body: any, headers: any = {}): Promise<ICommonErrorResponse> {
+		console.log('method=PUT uri=%s body=%s', uri.toString(), body);
 		const response = await fetch(uri, {
 			headers: {
 				...headers,

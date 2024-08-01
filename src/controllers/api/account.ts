@@ -25,6 +25,10 @@ import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../../se
 import * as dotenv from 'dotenv';
 import { validate } from '../validator/decorator.js';
 import { SupportedKeyTypes } from '@veramo/utils';
+import { SupportedPlanTypes } from '../../types/admin.js';
+import { SubscriptionService } from '../../services/admin/subscription.js';
+import Stripe from 'stripe';
+import { getStripeObjectKey } from '../../services/helpers.js';
 dotenv.config();
 
 export class AccountController {
@@ -175,6 +179,7 @@ export class AccountController {
 		// use email as name, because "name" is unique in the current db setup.
 		const logToName = request.body.user.name || logToUserEmail;
 
+		const stripe = response.locals.stripe as Stripe;
 		const defaultRole = await RoleService.instance.getDefaultRole();
 		if (!defaultRole) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
@@ -320,20 +325,34 @@ export class AccountController {
 
 		// 5.2 If list of roles is empty and the user is not suspended - assign default role
 		if (roles.data.length === 0 && !LogToWebHook.isUserSuspended(request)) {
-			const _r = await logToHelper.setDefaultRoleForUser(user.logToId);
-			if (_r.status !== StatusCodes.OK) {
-				return response.status(StatusCodes.BAD_GATEWAY).json({
-					error: _r.error,
-				} satisfies UnsuccessfulResponseBody);
-			}
+			const subscription = await SubscriptionService.instance.findCurrent(customer);
+			if (subscription) {
+				const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscriptionId);
+				if (stripeSubscription && stripeSubscription.items.data.length > 0) {
+					const product = await stripe.products.retrieve(
+						getStripeObjectKey(stripeSubscription.items.data[0].plan.product)
+					);
 
-			// Notify
-			await eventTracker.notify({
-				message: EventTracker.compileBasicNotification(
-					`Default role with id: ${process.env.LOGTO_DEFAULT_ROLE_ID} was assigned to user with id: ${user.logToId}`
-				),
-				severity: 'info',
-			});
+					if (product && product.active) {
+						const roleResponse = await logToHelper.assignCustomerPlanRoles(
+							user.logToId,
+							product.name.toLowerCase() as SupportedPlanTypes
+						);
+						if (roleResponse.status !== StatusCodes.OK) {
+							return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+								error: roleResponse.error,
+							} satisfies UnsuccessfulResponseBody);
+						} else {
+							await eventTracker.notify({
+								message: EventTracker.compileBasicNotification(
+									`${product.name} role was assigned to user with id: ${user.logToId}`
+								),
+								severity: 'info',
+							});
+						}
+					}
+				}
+			}
 		}
 
 		const customDataFromLogTo = await logToHelper.getCustomData(user.logToId);

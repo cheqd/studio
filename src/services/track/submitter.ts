@@ -17,6 +17,8 @@ export interface ISubmitSubscriptionData {
 	trialStart?: Date;
 	trialEnd?: Date;
 	subscriptionId: string;
+	productId: string;
+	priceId: string;
 }
 
 export interface ISubmitOperation {
