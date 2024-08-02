@@ -10,14 +10,16 @@ import type { IObserver } from '../types.js';
 import type { FindOptionsWhere } from 'typeorm';
 import { LogToHelper } from '../../../middleware/auth/logto-helper.js';
 import { StatusCodes } from 'http-status-codes';
-import { SupportedPlanTypes } from '../../../types/admin.js';
+import type { SupportedPlanTypes } from '../../../types/admin.js';
 import { UserService } from '../../api/user.js';
 
 export class SubscriptionSubmitter implements IObserver {
 	private emitter: EventEmitter;
+	private readonly stripe: Stripe;
 
 	constructor(emitter: EventEmitter) {
 		this.emitter = emitter;
+		this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 	}
 
 	notify(notifyMessage: INotifyMessage): void {
@@ -40,7 +42,7 @@ export class SubscriptionSubmitter implements IObserver {
 		}
 	}
 
-	private async handleCutomerRoleAssignment(
+	private async handleCustomerRoleAssignment(
 		operation: ISubmitOperation,
 		logToHelper: LogToHelper,
 		userLogtoId: string,
@@ -50,7 +52,6 @@ export class SubscriptionSubmitter implements IObserver {
 			userLogtoId,
 			productName.toLowerCase() as SupportedPlanTypes
 		);
-		console.log('handleCutomerRoleAssignment: roleAssignmentResponse: ', roleAssignmentResponse);
 		if (roleAssignmentResponse.status !== 201) {
 			this.notify({
 				message: EventTracker.compileBasicNotification(
@@ -64,7 +65,7 @@ export class SubscriptionSubmitter implements IObserver {
 
 		this.notify({
 			message: EventTracker.compileBasicNotification(
-				`User was missing the required role for plan: ${productName}. Role assigned successfully`,
+				`${productName} plan assigned to user with logtoId ${userLogtoId}`,
 				operation.operation
 			),
 			severity: 'info',
@@ -81,7 +82,7 @@ export class SubscriptionSubmitter implements IObserver {
 		if (allRolesRemoved) {
 			this.notify({
 				message: EventTracker.compileBasicNotification(
-					`Roles have been removed successfully for usre with id: ${userLogtoId}`,
+					`Roles have been removed successfully for user with id: ${userLogtoId}`,
 					operation.operation
 				),
 				severity: 'info',
@@ -119,13 +120,12 @@ export class SubscriptionSubmitter implements IObserver {
 		}
 
 		const user = await UserService.instance.userRepository.findOne({ where: { customer: { customerId } } });
-		console.log('UserService: user: ', user);
 
 		if (user) {
 			switch (operation.operation) {
 				case OperationNameEnum.SUBSCRIPTION_CREATE:
 				case OperationNameEnum.SUBSCRIPTION_UPDATE:
-					this.handleCutomerRoleAssignment(operation, logToHelper, user.logToId, productName);
+					this.handleCustomerRoleAssignment(operation, logToHelper, user.logToId, productName);
 					return;
 				case OperationNameEnum.SUBSCRIPTION_CANCEL:
 					this.handleCustomerRoleRemoval(operation, logToHelper, user.logToId);
@@ -143,14 +143,13 @@ export class SubscriptionSubmitter implements IObserver {
 	}
 
 	async submitSubscriptionCreate(operation: ISubmitOperation): Promise<void> {
-		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 		const data = operation.data as ISubmitSubscriptionData;
 		let customer: CustomerEntity | undefined = operation.options?.customer;
 
 		try {
 			const [product, stripeCustomer] = await Promise.all([
-				stripe.products.retrieve(data.productId),
-				stripe.customers.retrieve(data.paymentProviderId),
+				this.stripe.products.retrieve(data.productId),
+				this.stripe.customers.retrieve(data.paymentProviderId),
 			]);
 			if (!customer) {
 				const whereClause: FindOptionsWhere<CustomerEntity>[] = [{ paymentProviderId: data.paymentProviderId }];
@@ -236,7 +235,6 @@ export class SubscriptionSubmitter implements IObserver {
 
 	async submitSubscriptionUpdate(operation: ISubmitOperation): Promise<void> {
 		const data = operation.data as ISubmitSubscriptionData;
-		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 		try {
 			const subscription = await SubscriptionService.instance.update(
@@ -259,7 +257,7 @@ export class SubscriptionSubmitter implements IObserver {
 
 			const [customer, product] = await Promise.all([
 				CustomerService.instance.findbyPaymentProviderId(data.paymentProviderId),
-				stripe.products.retrieve(data.productId),
+				this.stripe.products.retrieve(data.productId),
 			]);
 
 			if (customer) {
