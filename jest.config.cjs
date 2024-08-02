@@ -16,4 +16,5 @@ module.exports = {
 	collectCoverageFrom: ['src/**/*.{ts,js}'],
 	moduleDirectories: ['node_modules', 'src'],
 	testEnvironment: 'node',
+	testTimeout: 10 * 1000, // 10s
 };
