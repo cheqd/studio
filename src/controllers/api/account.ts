@@ -24,7 +24,7 @@ import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../../se
 import * as dotenv from 'dotenv';
 import { validate } from '../validator/decorator.js';
 import { SupportedKeyTypes } from '@veramo/utils';
-import { SupportedPlanTypes } from '../../types/admin.js';
+import type { SupportedPlanTypes } from '../../types/admin.js';
 import { SubscriptionService } from '../../services/admin/subscription.js';
 import Stripe from 'stripe';
 import { getStripeObjectKey } from '../../services/helpers.js';
@@ -32,69 +32,6 @@ import { RoleService } from '../../services/api/role.js';
 import { SafeAPIResponse } from '../../types/common.js';
 import { RoleEntity } from '../../database/entities/role.entity.js';
 dotenv.config();
-
-async function syncLogtoUserRoles(
-	logToHelper: LogToHelper,
-	stripe: Stripe,
-	request: Request,
-	logToUserId: string,
-	customer: CustomerEntity
-): Promise<SafeAPIResponse<string>> {
-	// const roles = await logToHelper.getRolesForUser(logToUserId);
-	// if (roles.status !== StatusCodes.OK) {
-	// 	return {
-	// 		success: false,
-	// 		status: roles.status,
-	// 		error: roles.error,
-	// 	};
-	// }
-
-	// 5.2 If list of roles is empty and the user is not suspended - assign default role
-	if (!LogToWebHook.isUserSuspended(request)) {
-		const subscription = await SubscriptionService.instance.findCurrent(customer);
-		if (!subscription) {
-			return {
-				success: false,
-				error: `Logto role assigned failed: No active subscription found for customer with id: ${customer.customerId}`,
-				status: 400,
-			};
-		}
-
-		const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscriptionId);
-		const product = await stripe.products.retrieve(
-			getStripeObjectKey(stripeSubscription.items.data[0].plan.product)
-		);
-
-		const logtoRoleName = product.name.toLowerCase() as SupportedPlanTypes;
-		const roleResponse = await logToHelper.assignCustomerPlanRoles(logToUserId, logtoRoleName);
-		if (roleResponse.status !== StatusCodes.OK) {
-			return {
-				success: false,
-				status: roleResponse.status,
-				error: roleResponse.error,
-			};
-		}
-
-		await eventTracker.notify({
-			message: EventTracker.compileBasicNotification(
-				`${product.name} role was assigned to user with id: ${logToUserId}`
-			),
-			severity: 'info',
-		});
-
-		return {
-			success: true,
-			status: 200,
-			data: logtoRoleName,
-		};
-	}
-
-	return {
-		success: false,
-		error: `Logto role not assigned: User with id ${logToUserId} is suspended`,
-		status: 409,
-	};
-}
 
 export class AccountController {
 	public static createValidator = [
@@ -126,7 +63,7 @@ export class AccountController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
-	public async get(request: Request, response: Response) {
+	public async get(_request: Request, response: Response) {
 		try {
 			if (!response.locals.customer) {
 				// It's not ok, seems like there no any customer assigned to the user yet
@@ -210,12 +147,70 @@ export class AccountController {
 		}
 	}
 
+	async syncLogtoUserRoles(
+		logToHelper: LogToHelper,
+		stripe: Stripe,
+		request: Request,
+		logToUserId: string,
+		customer: CustomerEntity
+	): Promise<SafeAPIResponse<string>> {
+		// 5.2 If list of roles is empty and the user is not suspended - assign default role
+		if (!LogToWebHook.isUserSuspended(request)) {
+			const subscription = await SubscriptionService.instance.findCurrent(customer);
+			if (!subscription) {
+				return {
+					success: false,
+					error: `Logto role assigned failed: No active subscription found for customer with id: ${customer.customerId}`,
+					status: 400,
+				};
+			}
+
+			const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscriptionId);
+			const stripeProduct = await stripe.products.retrieve(
+				getStripeObjectKey(stripeSubscription.items.data[0].plan.product)
+			);
+
+			const logtoRoleName = stripeProduct.name.toLowerCase() as SupportedPlanTypes;
+			const roleResponse = await logToHelper.assignCustomerPlanRoles(logToUserId, logtoRoleName);
+			if (roleResponse.status !== StatusCodes.OK) {
+				return {
+					success: false,
+					status: roleResponse.status,
+					error: roleResponse.error,
+				};
+			}
+
+			await eventTracker.notify({
+				message: EventTracker.compileBasicNotification(
+					`${stripeProduct.name} role was assigned to user with id: ${logToUserId}`
+				),
+				severity: 'info',
+			});
+
+			return {
+				success: true,
+				status: 200,
+				data: logtoRoleName,
+			};
+		}
+
+		return {
+			success: false,
+			error: `Logto role not assigned: User with id ${logToUserId} is suspended`,
+			status: 409,
+		};
+	}
+
 	public async bootstrap(request: Request, response: Response) {
 		// For now we keep temporary 1-1 relation between user and customer
 		// So the flow is:
 		// 1. Get LogTo user id from request body
 		// 2. Check if such row exists in the DB
 		// 2.1. If no - create it
+		// 2.2. Assign role to user
+		// 2.2.1 If user already has a subscription, assign role based on subscription
+		// 2.2.2 Else assign the default "Portal" role
+		// 2.3. Create User
 		// 3. If yes - check that there is customer associated with such user
 		// 3.1. If no:
 		// 3.1.1. Create customer
@@ -225,8 +220,6 @@ export class AccountController {
 		// 4.1. If no - create it
 
 		// 5. Assign default role on LogTo
-		// 5.1 Get user's roles
-		// 5.2 If list of roles is empty and the user is not suspended - assign default role
 		// 6. Create custom_data and update the userInfo (send it to the LogTo)
 		// 6.1 If custom_data is empty - create it
 		// 7. Check the token balance for Testnet account
@@ -246,27 +239,21 @@ export class AccountController {
 
 		const stripe = response.locals.stripe as Stripe;
 		const logToHelper = new LogToHelper();
-		// const defaultRole = await RoleService.instance.getDefaultRole();
-		// if (!defaultRole) {
-		// 	return response.status(StatusCodes.BAD_REQUEST).json({
-		// 		error: 'Default role is not set on Credential Service side',
-		// 	} satisfies UnsuccessfulResponseBody);
-		// }
 		// 2. Check if such row exists in the DB
 		// eslint-disable-next-line prefer-const
-		let [user, [customer], _r] = await Promise.all([
+		let [userEntity, [customerEntity], logtoHelperSetup] = await Promise.all([
 			UserService.instance.get(logToUserId),
 			CustomerService.instance.find({ email: logToUserEmail }),
 			logToHelper.setup(),
 		]);
 
-		if (_r.status !== StatusCodes.OK) {
-			return response.status(StatusCodes.BAD_GATEWAY).json({
-				error: _r.error,
+		if (logtoHelperSetup.status !== StatusCodes.OK) {
+			return response.status(StatusCodes.SERVICE_UNAVAILABLE).json({
+				error: logtoHelperSetup.error,
 			} satisfies UnsuccessfulResponseBody);
 		}
 
-		if (!user) {
+		if (!userEntity) {
 			// 2.1. If no - create customer first
 			// Cause for now we assume only 1-1 connection between user and customer
 			// We think here that if no user row - no customer also, cause customer should be created before user
@@ -275,9 +262,9 @@ export class AccountController {
 			// 2.1.1. Create customer
 			// I’m setting the "name" field to an empty string on the current CustomerEntity because it is non-nullable.
 			//  we will populate the customer's "name" field using the response from the Stripe account creation in account-submitter.ts.
-			if (!customer) {
-				customer = (await CustomerService.instance.create(logToName, logToUserEmail)) as CustomerEntity;
-				if (!customer) {
+			if (!customerEntity) {
+				customerEntity = (await CustomerService.instance.create(logToName, logToUserEmail)) as CustomerEntity;
+				if (!customerEntity) {
 					return response.status(StatusCodes.BAD_REQUEST).json({
 						error: 'User is not found in database: Customer was not created',
 					} satisfies UnsuccessfulResponseBody);
@@ -286,15 +273,22 @@ export class AccountController {
 				await eventTracker.notify({
 					message: EventTracker.compileBasicNotification(
 						'User was not found in database: Customer with customerId: ' +
-							customer.customerId +
+							customerEntity.customerId +
 							' was created'
 					),
 					severity: 'info',
 				});
 			}
 
+			// 2.2 Assign role to user
 			let role: RoleEntity | null = null;
-			const logtoRoleSync = await syncLogtoUserRoles(logToHelper, stripe, request, logToUserId, customer);
+			const logtoRoleSync = await this.syncLogtoUserRoles(
+				logToHelper,
+				stripe,
+				request,
+				logToUserId,
+				customerEntity
+			);
 			if (!logtoRoleSync.success) {
 				role = await RoleService.instance.getDefaultRole();
 			} else {
@@ -307,9 +301,9 @@ export class AccountController {
 				} satisfies UnsuccessfulResponseBody);
 			}
 
-			// 2.2. Create user
-			user = await UserService.instance.create(logToUserId, customer, role);
-			if (!user) {
+			// 2.3. Create user
+			userEntity = await UserService.instance.create(logToUserId, customerEntity, role);
+			if (!userEntity) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'User is not found in database: User was not created',
 				} satisfies UnsuccessfulResponseBody);
@@ -317,18 +311,18 @@ export class AccountController {
 			// Notify
 			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
-					'User was not found in database: User with userId: ' + user.logToId + ' was created'
+					'User was not found in database: User with userId: ' + userEntity.logToId + ' was created'
 				),
 				severity: 'info',
 			});
 		}
 
 		// 3. If yes - check that there is customer associated with such user
-		if (!user.customer) {
+		if (!userEntity.customer) {
 			// 3.1. If no:
 			// 3.1.1. Create customer
-			customer = (await CustomerService.instance.create(logToUserEmail)) as CustomerEntity;
-			if (!customer) {
+			customerEntity = (await CustomerService.instance.create(logToUserEmail)) as CustomerEntity;
+			if (!customerEntity) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'User exists in database: Customer was not created',
 				} satisfies UnsuccessfulResponseBody);
@@ -336,34 +330,34 @@ export class AccountController {
 			// Notify
 			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
-					'User exists in database: Customer with customerId: ' + customer.customerId + ' was created'
+					'User exists in database: Customer with customerId: ' + customerEntity.customerId + ' was created'
 				),
 				severity: 'info',
 			});
 			// 3.1.2. Assign customer to the user
-			user.customer = customer;
-			await UserService.instance.update(user.logToId, customer);
+			userEntity.customer = customerEntity;
+			await UserService.instance.update(userEntity.logToId, customerEntity);
 		} else {
-			customer = user.customer;
+			customerEntity = userEntity.customer;
 			// this time user exists, so notify stripe account should be created.
-			if (process.env.STRIPE_ENABLED === 'true' && !customer.paymentProviderId) {
+			if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
 				eventTracker.submit({
 					operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 					data: {
-						name: customer.name,
-						email: customer.email,
-						customerId: customer.customerId,
+						name: customerEntity.name,
+						email: customerEntity.email,
+						customerId: customerEntity.customerId,
 					} satisfies ISubmitStripeCustomerCreateData,
 				} satisfies ISubmitOperation);
 			}
 		}
 
 		// 4. Check is paymentAccount exists for the customer
-		const accounts = await PaymentAccountService.instance.find({ customer });
+		const accounts = await PaymentAccountService.instance.find({ customer: customerEntity });
 		if (accounts.length === 0) {
-			const key = await new IdentityServiceStrategySetup(customer.customerId).agent.createKey(
+			const key = await new IdentityServiceStrategySetup(customerEntity.customerId).agent.createKey(
 				SupportedKeyTypes.Secp256k1,
-				customer
+				customerEntity
 			);
 			if (!key) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
@@ -373,7 +367,7 @@ export class AccountController {
 			paymentAccount = (await PaymentAccountService.instance.create(
 				CheqdNetwork.Testnet,
 				true,
-				customer,
+				customerEntity,
 				key
 			)) as PaymentAccountEntity;
 			if (!paymentAccount) {
@@ -397,20 +391,20 @@ export class AccountController {
 		// 5. Assign default role on LogTo
 		// 5.1 Get user's roles
 
-		const customDataFromLogTo = await logToHelper.getCustomData(user.logToId);
+		const customDataFromLogTo = await logToHelper.getCustomData(userEntity.logToId);
 
 		// 6. Create custom_data and update the userInfo (send it to the LogTo)
 		if (Object.keys(customDataFromLogTo.data).length === 0 && paymentAccount.address) {
 			const customData = {
 				customer: {
-					id: customer.customerId,
-					name: customer.name,
+					id: customerEntity.customerId,
+					name: customerEntity.name,
 				},
 				paymentAccount: {
 					address: paymentAccount.address,
 				},
 			};
-			const _r = await logToHelper.updateCustomData(user.logToId, customData);
+			const _r = await logToHelper.updateCustomData(userEntity.logToId, customData);
 			if (_r.status !== 200) {
 				return response.status(_r.status).json({
 					error: _r.error,
@@ -441,13 +435,13 @@ export class AccountController {
 		}
 
 		// 8. Add the Stripe account to the Customer
-		if (process.env.STRIPE_ENABLED === 'true' && !customer.paymentProviderId) {
+		if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
 			eventTracker.submit({
 				operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 				data: {
-					name: customer.name,
-					email: customer.email,
-					customerId: customer.customerId,
+					name: customerEntity.name,
+					email: customerEntity.email,
+					customerId: customerEntity.customerId,
 				} satisfies ISubmitStripeCustomerCreateData,
 			} satisfies ISubmitOperation);
 		}
