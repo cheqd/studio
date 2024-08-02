@@ -24,13 +24,13 @@ import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../../se
 import * as dotenv from 'dotenv';
 import { validate } from '../validator/decorator.js';
 import { SupportedKeyTypes } from '@veramo/utils';
-import type { SupportedPlanTypes } from '../../types/admin.js';
 import { SubscriptionService } from '../../services/admin/subscription.js';
 import Stripe from 'stripe';
 import { RoleService } from '../../services/api/role.js';
 import { SafeAPIResponse } from '../../types/common.js';
 import { RoleEntity } from '../../database/entities/role.entity.js';
 import { getStripeObjectKey } from '../../utils/index.js';
+import type { SupportedPlanTypes } from '../../types/admin.js';
 dotenv.config();
 
 export class AccountController {
@@ -154,7 +154,8 @@ export class AccountController {
 		logToUserId: string,
 		customer: CustomerEntity
 	): Promise<SafeAPIResponse<string>> {
-		// 5.2 If list of roles is empty and the user is not suspended - assign default role
+		// 3.1 If user already has a subscription, assign role based on subscription
+		// 3.2 Else assign the default "Portal" role
 		if (!LogToWebHook.isUserSuspended(request)) {
 			const subscription = await SubscriptionService.instance.findCurrent(customer);
 			if (!subscription) {
@@ -205,24 +206,20 @@ export class AccountController {
 		// For now we keep temporary 1-1 relation between user and customer
 		// So the flow is:
 		// 1. Get LogTo user id from request body
-		// 2. Check if such row exists in the DB
-		// 2.1. If no - create it
-		// 2.2. Assign role to user
-		// 2.2.1 If user already has a subscription, assign role based on subscription
-		// 2.2.2 Else assign the default "Portal" role
-		// 2.3. Create User
-		// 3. If yes - check that there is customer associated with such user
-		// 3.1. If no:
-		// 3.1.1. Create customer
-		// 3.1.2. Assign customer to the user
-
-		// 4. Check is paymentAccount exists for the customer
-		// 4.1. If no - create it
-
-		// 5. Assign default role on LogTo
-		// 6. Create custom_data and update the userInfo (send it to the LogTo)
-		// 6.1 If custom_data is empty - create it
-		// 7. Check the token balance for Testnet account
+		// 2. Check if there is customer associated with such user
+		// 2.1 If not, create a new customer entity
+		// 3. Assign role to user
+		// 3.1 If user already has a subscription, assign role based on subscription
+		// 3.2 Else assign the default "Portal" role
+		// 4. If no customer is associated with the user (from point 2), create customer
+		// 4.1 Assign customer to the user
+		// 5. Create User
+		// 6. Check is paymentAccount exists for the customer
+		// 6.1. If no - create it
+		// 7. Create custom_data and update the userInfo (send it to the LogTo)
+		// 8. If custom_data is empty - create it
+		// 9. Check the token balance for Testnet account
+		// 10. Add the Stripe account to the Customer
 
 		let paymentAccount: PaymentAccountEntity | null;
 
@@ -254,7 +251,7 @@ export class AccountController {
 		}
 
 		if (!userEntity) {
-			// 2.1. If no - create customer first
+			// 2. If no - create customer first
 			// Cause for now we assume only 1-1 connection between user and customer
 			// We think here that if no user row - no customer also, cause customer should be created before user
 			// Even if customer was created before for such user but the process was interruted somehow - we need to create it again
@@ -280,7 +277,7 @@ export class AccountController {
 				});
 			}
 
-			// 2.2 Assign role to user
+			// 3 Assign role to user
 			let role: RoleEntity | null = null;
 			const logtoRoleSync = await this.syncLogtoUserRoles(
 				logToHelper,
@@ -317,10 +314,8 @@ export class AccountController {
 			});
 		}
 
-		// 3. If yes - check that there is customer associated with such user
+		//4. Check if there is customer associated with such user
 		if (!userEntity.customer) {
-			// 3.1. If no:
-			// 3.1.1. Create customer
 			customerEntity = (await CustomerService.instance.create(logToUserEmail)) as CustomerEntity;
 			if (!customerEntity) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
@@ -334,7 +329,7 @@ export class AccountController {
 				),
 				severity: 'info',
 			});
-			// 3.1.2. Assign customer to the user
+			//4.1. Assign customer to the user
 			userEntity.customer = customerEntity;
 			await UserService.instance.update(userEntity.logToId, customerEntity);
 		} else {
@@ -352,7 +347,7 @@ export class AccountController {
 			}
 		}
 
-		// 4. Check is paymentAccount exists for the customer
+		// 6. Check is paymentAccount exists for the customer
 		const accounts = await PaymentAccountService.instance.find({ customer: customerEntity });
 		if (accounts.length === 0) {
 			const key = await new IdentityServiceStrategySetup(customerEntity.customerId).agent.createKey(
@@ -388,12 +383,10 @@ export class AccountController {
 			paymentAccount = accounts[0];
 		}
 
-		// 5. Assign default role on LogTo
-		// 5.1 Get user's roles
-
+		// 7. Assign default role on LogTo
 		const customDataFromLogTo = await logToHelper.getCustomData(userEntity.logToId);
 
-		// 6. Create custom_data and update the userInfo (send it to the LogTo)
+		// 8. Create custom_data and update the userInfo (send it to the LogTo)
 		if (Object.keys(customDataFromLogTo.data).length === 0 && paymentAccount.address) {
 			const customData = {
 				customer: {
@@ -412,7 +405,7 @@ export class AccountController {
 			}
 		}
 
-		// 7. Check the token balance for Testnet account
+		// 9. Check the token balance for Testnet account
 		if (paymentAccount.address && process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
 			const balances = await checkBalance(paymentAccount.address, process.env.TESTNET_RPC_URL);
 			const balance = balances[0];
@@ -434,7 +427,7 @@ export class AccountController {
 			}
 		}
 
-		// 8. Add the Stripe account to the Customer
+		// 10. Add the Stripe account to the Customer
 		if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
 			eventTracker.submit({
 				operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,

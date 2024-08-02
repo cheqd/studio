@@ -283,8 +283,9 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		// "build" is the superset of all the roles (testnet + mainnet)
 		const buildPlanRoleIds = [env.LOGTO_MAINNET_ROLE_ID.trim(), env.LOGTO_TESTNET_ROLE_ID.trim()];
 		const testPlanRoleId = env.LOGTO_TESTNET_ROLE_ID.trim();
+		const hasDefaultPortalRole = assignedRoleIds.findIndex((roleId) => roleId === env.LOGTO_DEFAULT_ROLE_ID) != -1;
 
-		const planRoleIds: string[] = [];
+		const planRoleIds = hasDefaultPortalRole ? [] : [env.LOGTO_DEFAULT_ROLE_ID.trim()];
 		if (planType === SupportedPlanTypes.Build) {
 			const buildRoleIsAssigned = buildPlanRoleIds.every((roleId) => assignedRoleIds.includes(roleId));
 			if (buildRoleIsAssigned) {
