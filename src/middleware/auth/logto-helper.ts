@@ -260,11 +260,9 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 
 	async assignCustomerPlanRoles(userId: string, planType: SupportedPlanTypes): Promise<ICommonErrorResponse> {
 		const [userInfo, userRoles] = await Promise.all([this.getUserInfo(userId), this.getRolesForUser(userId)]);
-		console.log('assignCustomerPlanRoles: userInfo: ', userInfo);
-		console.log('assignCustomerPlanRoles: userRoles: ', userRoles);
 
 		if (userInfo.status !== StatusCodes.OK) {
-			return this.returnError(StatusCodes.BAD_GATEWAY, 'Could not fetch the info about the user');
+			return this.returnError(userInfo.status, 'Could not fetch the info about the user');
 		}
 		// Means that user exists
 		if (userInfo.data.isSuspended) {
@@ -272,7 +270,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		}
 
 		if (userRoles.status !== StatusCodes.OK) {
-			return this.returnError(StatusCodes.BAD_GATEWAY, 'Could not fetch the info about user roles');
+			return this.returnError(userRoles.status, 'Could not fetch the info about user roles');
 		}
 
 		const assignedRoleIds = (userRoles.data as { id: string; name: string }[]).map((role) => role.id);
@@ -287,22 +285,21 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		const testPlanRoleId = env.LOGTO_TESTNET_ROLE_ID.trim();
 
 		const planRoleIds: string[] = [];
-		console.log('planType: ', planType);
-		if (planType === 'build') {
+		if (planType === SupportedPlanTypes.Build) {
 			const buildRoleIsAssigned = buildPlanRoleIds.every((roleId) => assignedRoleIds.includes(roleId));
 			if (buildRoleIsAssigned) {
 				return {
 					status: 201,
 					error: '',
 					data: {
-						message: `${planType} plan role was successfull assigned to the user`,
+						message: `${planType} plan role was successfully assigned to the user`,
 					},
 				};
 			}
 
 			const billingPlanRoleIds = buildPlanRoleIds.filter((id) => !assignedRoleIds.includes(id));
 			planRoleIds.push(...billingPlanRoleIds);
-		} else if (planType === 'test') {
+		} else if (planType === SupportedPlanTypes.Test) {
 			// "build" plan is a superset of "test" plan
 
 			// check the user has mainnet role, remove it
@@ -317,7 +314,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 					status: 201,
 					error: '',
 					data: {
-						message: `${planType} plan role was successfull assigned to the user`,
+						message: `${planType} plan role was successfully assigned to the user`,
 					},
 				};
 			}
@@ -325,7 +322,6 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 			planRoleIds.push(testPlanRoleId);
 		}
 
-		console.log('roles to assign: ', planRoleIds);
 		try {
 			const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
 			const body = {
@@ -398,7 +394,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		try {
 			return await this.getToLogto(uri, 'GET');
 		} catch (err) {
-			return this.returnError(StatusCodes.BAD_GATEWAY, `getUserInfo ${err}`);
+			return this.returnError(StatusCodes.SERVICE_UNAVAILABLE, `getUserInfo ${err}`);
 		}
 	}
 
@@ -454,7 +450,6 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 	}
 
 	private async postToLogto(uri: URL, body: any, headers: any = {}): Promise<ICommonErrorResponse> {
-		console.log('method=PUT uri=%s body=%s', uri.toString(), body);
 		const response = await fetch(uri, {
 			headers: {
 				...headers,
