@@ -27,10 +27,10 @@ import { SupportedKeyTypes } from '@veramo/utils';
 import type { SupportedPlanTypes } from '../../types/admin.js';
 import { SubscriptionService } from '../../services/admin/subscription.js';
 import Stripe from 'stripe';
-import { getStripeObjectKey } from '../../services/helpers.js';
 import { RoleService } from '../../services/api/role.js';
 import { SafeAPIResponse } from '../../types/common.js';
 import { RoleEntity } from '../../database/entities/role.entity.js';
+import { getStripeObjectKey } from '../../utils/index.js';
 dotenv.config();
 
 export class AccountController {

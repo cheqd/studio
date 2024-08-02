@@ -55,15 +55,3 @@ export function toTPublicKeyEd25519(publicKeyHex: string): TPublicKeyEd25519 {
 		kid: publicKeyHex,
 	} satisfies TPublicKeyEd25519;
 }
-
-export function getStripeObjectKey(input: string | { id: string } | null) {
-	if (!input) {
-		return '';
-	}
-
-	if (typeof input === 'string') {
-		return input;
-	}
-
-	return input.id;
-}

@@ -10,7 +10,7 @@ import type {
 import type Stripe from 'stripe';
 import type { ISubmitData, ISubmitOperation } from './submitter.js';
 import type { ISubmitOptions } from './types.js';
-import { getStripeObjectKey } from '../helpers.js';
+import { getStripeObjectKey } from '../../utils/index.js';
 
 export function isResourceTrack(data: TrackData): data is IResourceTrack {
 	return Object.keys(data).length === 2 && (data as IResourceTrack).resource !== undefined;
