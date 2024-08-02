@@ -176,3 +176,8 @@ export type AdminOrganisationUpdateUnsuccessfulResponseBody = UnsuccessfulRespon
 // Utils
 
 export type PaymentBehavior = Stripe.SubscriptionCreateParams.PaymentBehavior;
+
+export enum SupportedPlanTypes {
+	Build = 'build',
+	Test = 'test',
+}

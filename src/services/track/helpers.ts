@@ -10,6 +10,7 @@ import type {
 import type Stripe from 'stripe';
 import type { ISubmitData, ISubmitOperation } from './submitter.js';
 import type { ISubmitOptions } from './types.js';
+import { getStripeObjectKey } from '../../utils/index.js';
 
 export function isResourceTrack(data: TrackData): data is IResourceTrack {
 	return Object.keys(data).length === 2 && (data as IResourceTrack).resource !== undefined;
@@ -46,6 +47,8 @@ export function buildSubmitOperation(subscription: Stripe.Subscription, name: st
 			currentPeriodEnd: new Date(subscription.current_period_end * 1000),
 			trialStart: subscription.trial_start ? new Date(subscription.trial_start * 1000) : undefined,
 			trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : undefined,
+			productId: getStripeObjectKey(subscription.items.data[0].plan.product),
+			priceId: getStripeObjectKey(subscription.items.data[0].plan.id),
 		} satisfies ISubmitData,
 		options,
 	} satisfies ISubmitOperation;
