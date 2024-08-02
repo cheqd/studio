@@ -1,6 +1,6 @@
 {
 	"name": "@cheqd/studio",
-	"version": "3.1.0-develop.2",
+	"version": "3.1.0-develop.3",
 	"description": "cheqd Studio Backend",
 	"source": "src/index.ts",
 	"main": "dist/index.js",

@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0-develop.3](https://github.com/cheqd/studio/compare/3.1.0-develop.2...3.1.0-develop.3) (2024-08-02)
+
+
+### Features
+
+* Switch logto role assignment to subscription webhook [DEV-4164] ([#565](https://github.com/cheqd/studio/issues/565)) ([0b93908](https://github.com/cheqd/studio/commit/0b9390865b0d684584c81853832eee5c62d9e4f2))
+
 ## [3.1.0-develop.2](https://github.com/cheqd/studio/compare/3.1.0-develop.1...3.1.0-develop.2) (2024-07-31)
 
 
