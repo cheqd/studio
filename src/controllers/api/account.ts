@@ -147,61 +147,6 @@ export class AccountController {
 		}
 	}
 
-	async syncLogtoUserRoles(
-		logToHelper: LogToHelper,
-		stripe: Stripe,
-		request: Request,
-		logToUserId: string,
-		customer: CustomerEntity
-	): Promise<SafeAPIResponse<string>> {
-		// 3.1 If user already has a subscription, assign role based on subscription
-		// 3.2 Else assign the default "Portal" role
-		if (!LogToWebHook.isUserSuspended(request)) {
-			const subscription = await SubscriptionService.instance.findCurrent(customer);
-			if (!subscription) {
-				return {
-					success: false,
-					error: `Logto role assigned failed: No active subscription found for customer with id: ${customer.customerId}`,
-					status: 400,
-				};
-			}
-
-			const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscriptionId);
-			const stripeProduct = await stripe.products.retrieve(
-				getStripeObjectKey(stripeSubscription.items.data[0].plan.product)
-			);
-
-			const logtoRoleName = stripeProduct.name.toLowerCase() as SupportedPlanTypes;
-			const roleResponse = await logToHelper.assignCustomerPlanRoles(logToUserId, logtoRoleName);
-			if (roleResponse.status !== StatusCodes.OK) {
-				return {
-					success: false,
-					status: roleResponse.status,
-					error: roleResponse.error,
-				};
-			}
-
-			await eventTracker.notify({
-				message: EventTracker.compileBasicNotification(
-					`${stripeProduct.name} role was assigned to user with id: ${logToUserId}`
-				),
-				severity: 'info',
-			});
-
-			return {
-				success: true,
-				status: 200,
-				data: logtoRoleName,
-			};
-		}
-
-		return {
-			success: false,
-			error: `Logto role not assigned: User with id ${logToUserId} is suspended`,
-			status: 409,
-		};
-	}
-
 	public async bootstrap(request: Request, response: Response) {
 		// For now we keep temporary 1-1 relation between user and customer
 		// So the flow is:
@@ -279,13 +224,7 @@ export class AccountController {
 
 			// 3 Assign role to user
 			let role: RoleEntity | null = null;
-			const logtoRoleSync = await this.syncLogtoUserRoles(
-				logToHelper,
-				stripe,
-				request,
-				logToUserId,
-				customerEntity
-			);
+			const logtoRoleSync = await syncLogtoUserRoles(logToHelper, stripe, request, logToUserId, customerEntity);
 			if (!logtoRoleSync.success) {
 				role = await RoleService.instance.getDefaultRole();
 			} else {
@@ -561,4 +500,59 @@ export class AccountController {
 			});
 		}
 	}
+}
+
+async function syncLogtoUserRoles(
+	logToHelper: LogToHelper,
+	stripe: Stripe,
+	request: Request,
+	logToUserId: string,
+	customer: CustomerEntity
+): Promise<SafeAPIResponse<string>> {
+	// 3.1 If user already has a subscription, assign role based on subscription
+	// 3.2 Else assign the default "Portal" role
+	if (!LogToWebHook.isUserSuspended(request)) {
+		const subscription = await SubscriptionService.instance.findCurrent(customer);
+		if (!subscription) {
+			return {
+				success: false,
+				error: `Logto role assigned failed: No active subscription found for customer with id: ${customer.customerId}`,
+				status: 400,
+			};
+		}
+
+		const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscriptionId);
+		const stripeProduct = await stripe.products.retrieve(
+			getStripeObjectKey(stripeSubscription.items.data[0].plan.product)
+		);
+
+		const logtoRoleName = stripeProduct.name.toLowerCase() as SupportedPlanTypes;
+		const roleResponse = await logToHelper.assignCustomerPlanRoles(logToUserId, logtoRoleName);
+		if (roleResponse.status !== StatusCodes.OK) {
+			return {
+				success: false,
+				status: roleResponse.status,
+				error: roleResponse.error,
+			};
+		}
+
+		await eventTracker.notify({
+			message: EventTracker.compileBasicNotification(
+				`${stripeProduct.name} role was assigned to user with id: ${logToUserId}`
+			),
+			severity: 'info',
+		});
+
+		return {
+			success: true,
+			status: 200,
+			data: logtoRoleName,
+		};
+	}
+
+	return {
+		success: false,
+		error: `Logto role not assigned: User with id ${logToUserId} is suspended`,
+		status: 409,
+	};
 }
