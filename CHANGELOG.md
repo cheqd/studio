@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.1.0](https://github.com/cheqd/studio/compare/3.0.0...3.1.0) (2024-08-05)
+
+
+### Features
+
+* Switch logto role assignment to subscription webhook [DEV-4164] ([#565](https://github.com/cheqd/studio/issues/565)) ([0b93908](https://github.com/cheqd/studio/commit/0b9390865b0d684584c81853832eee5c62d9e4f2))
+* Synchronising stripe and studio API state - [DEV-4157] ([#561](https://github.com/cheqd/studio/issues/561)) ([f338db7](https://github.com/cheqd/studio/commit/f338db72f02daeaec88a3c8263f0586ba5dbce5d))
+
+
+### Bug Fixes
+
+* Return proper response on auth setup [DEV-4146] ([#560](https://github.com/cheqd/studio/issues/560)) ([690d854](https://github.com/cheqd/studio/commit/690d85472cbf44e8abfcc192e51cc7fb0e6354bd))
+* trigger stripe account creation on sign-in ([#559](https://github.com/cheqd/studio/issues/559)) ([d2fec93](https://github.com/cheqd/studio/commit/d2fec9342a260b6bd36f1af87c112f030dbaeb15))
+* Use `admin:subscription:get` auth guard for Stripe checkout session ([#564](https://github.com/cheqd/studio/issues/564)) ([fc631e4](https://github.com/cheqd/studio/commit/fc631e42172bcdac6dbe50f1cfa3092f73ca8802))
+
 ## [3.1.0-develop.3](https://github.com/cheqd/studio/compare/3.1.0-develop.2...3.1.0-develop.3) (2024-08-02)
 
 
