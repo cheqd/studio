@@ -161,8 +161,8 @@ export type AdminOrganisationResponseBody = {
 	email?: string;
 	description?: string;
 	cosmosAddress?: {
-		[CheqdNetwork.Testnet]?: string;
-		[CheqdNetwork.Mainnet]?: string;
+		[CheqdNetwork.Testnet]: string | null;
+		[CheqdNetwork.Mainnet]: string | null;
 	};
 };
 

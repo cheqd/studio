@@ -346,8 +346,10 @@
  *             testnet:
  *               type: string
  *               example: cheqd1hwzvac94udsk8x4mf6htt544lev4jltkwgxp7u
+ *               nullable: true
  *             mainnet:
  *               type: string
+ *               nullable: true
  *               example: cheqd1hwzvac94udsk8x4mf6htt544lev4jltkwgxp7u
  *     NotFoundError:
  *       description: The requested resource could not be found but may be available in the future. Subsequent requests by the client are permissible.

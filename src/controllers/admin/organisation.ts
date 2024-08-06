@@ -81,15 +81,16 @@ export class OrganisationController {
 				} satisfies AdminOrganisationUpdateUnsuccessfulResponseBody);
 			}
 
+			const testnetAddress = paymentAccount.find((acc) => acc.namespace === CheqdNetwork.Testnet)?.address;
+			const mainnetAddress = paymentAccount.find((acc) => acc.namespace === CheqdNetwork.Mainnet)?.address;
+
 			return response.status(StatusCodes.OK).json({
 				name: customer.name,
 				email: customer.email,
 				description: customer.description,
 				cosmosAddress: {
-					[CheqdNetwork.Testnet]: paymentAccount.find((acc) => acc.namespace === CheqdNetwork.Testnet)
-						?.address,
-					[CheqdNetwork.Mainnet]: paymentAccount.find((acc) => acc.namespace === CheqdNetwork.Mainnet)
-						?.address,
+					[CheqdNetwork.Testnet]: testnetAddress ?? null,
+					[CheqdNetwork.Mainnet]: mainnetAddress ?? null,
 				},
 			} satisfies AdminOrganisationUpdateResponseBody);
 		} catch (error) {
@@ -134,15 +135,16 @@ export class OrganisationController {
 				} satisfies AdminOrganisationGetUnsuccessfulResponseBody);
 			}
 
+			const testnetAddress = paymentAccount.find((acc) => acc.namespace === CheqdNetwork.Testnet)?.address;
+			const mainnetAddress = paymentAccount.find((acc) => acc.namespace === CheqdNetwork.Mainnet)?.address;
+
 			return response.status(StatusCodes.OK).json({
 				name: customer.name,
 				email: customer.email,
 				description: customer.description,
 				cosmosAddress: {
-					[CheqdNetwork.Testnet]: paymentAccount.find((acc) => acc.namespace === CheqdNetwork.Testnet)
-						?.address,
-					[CheqdNetwork.Mainnet]: paymentAccount.find((acc) => acc.namespace === CheqdNetwork.Mainnet)
-						?.address,
+					[CheqdNetwork.Testnet]: testnetAddress ?? null,
+					[CheqdNetwork.Mainnet]: mainnetAddress ?? null,
 				},
 			} satisfies AdminOrganisationGetResponseBody);
 		} catch (error) {

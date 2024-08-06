@@ -514,10 +514,12 @@
             "properties": {
               "testnet": {
                 "type": "string",
-                "example": "cheqd1hwzvac94udsk8x4mf6htt544lev4jltkwgxp7u"
+                "example": "cheqd1hwzvac94udsk8x4mf6htt544lev4jltkwgxp7u",
+                "nullable": true
               },
               "mainnet": {
                 "type": "string",
+                "nullable": true,
                 "example": "cheqd1hwzvac94udsk8x4mf6htt544lev4jltkwgxp7u"
               }
             }
