@@ -509,9 +509,18 @@
             "default": null
           },
           "cosmosAddress": {
-            "type": "string",
+            "type": "object",
             "description": "The cosmos address of the organisation",
-            "example": "cheqd1hwzvac94udsk8x4mf6htt544lev4jltkwgxp7u"
+            "properties": {
+              "testnet": {
+                "type": "string",
+                "example": "cheqd1hwzvac94udsk8x4mf6htt544lev4jltkwgxp7u"
+              },
+              "mainnet": {
+                "type": "string",
+                "example": "cheqd1hwzvac94udsk8x4mf6htt544lev4jltkwgxp7u"
+              }
+            }
           }
         }
       },

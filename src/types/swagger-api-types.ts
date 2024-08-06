@@ -1285,7 +1285,9 @@
  *         paymentAccount:
  *           type: object
  *           properties:
- *              address:
+ *              mainnet:
+ *                  type: string
+ *              testnet:
  *                  type: string
  *     QueryIdTokenResponseBody:
  *         type: object

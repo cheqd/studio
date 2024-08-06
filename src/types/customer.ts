@@ -10,8 +10,8 @@ export type QueryCustomerResponseBody = {
 		name: string;
 	};
 	paymentAccount: {
-		[CheqdNetwork.Testnet]: string | null;
-		[CheqdNetwork.Mainnet]: string | null;
+		[CheqdNetwork.Testnet]: string;
+		[CheqdNetwork.Mainnet]: string;
 	};
 };
 
