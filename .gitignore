@@ -475,3 +475,5 @@ cython_debug/
 #.idea/
 
 *.tar
+*.prod
+*.local

@@ -31,6 +31,8 @@ import { SafeAPIResponse } from '../../types/common.js';
 import { RoleEntity } from '../../database/entities/role.entity.js';
 import { getStripeObjectKey } from '../../utils/index.js';
 import type { SupportedPlanTypes } from '../../types/admin.js';
+import { KeyService } from '../../services/api/key.js';
+import { KeyEntity } from '../../database/entities/key.entity.js';
 dotenv.config();
 
 export class AccountController {
@@ -166,8 +168,6 @@ export class AccountController {
 		// 9. Check the token balance for Testnet account
 		// 10. Add the Stripe account to the Customer
 
-		let paymentAccount: PaymentAccountEntity | null;
-
 		// 1. Get logTo UserId from request body
 		if (!request.body.user || !request.body.user.id || !request.body.user.primaryEmail) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
@@ -288,52 +288,112 @@ export class AccountController {
 
 		// 6. Check is paymentAccount exists for the customer
 		const accounts = await PaymentAccountService.instance.find({ customer: customerEntity });
-		if (accounts.length === 0) {
-			const key = await new IdentityServiceStrategySetup(customerEntity.customerId).agent.createKey(
+		// const key = await (async () => {
+		// 	if (accounts.length === 0) {
+		// 		return await new IdentityServiceStrategySetup(customerEntity.customerId).agent.createKey(
+		// 			SupportedKeyTypes.Secp256k1,
+		// 			customerEntity
+		// 		);
+		// 	}
+		//
+		// 	return await KeyService.instance.keyRepository.findOne({ where: { customer: customerEntity } });
+		// })();
+		//
+		// if (!key) {
+		// 	return response.status(StatusCodes.BAD_REQUEST).json({
+		// 		error: 'PaymentAccount is not found in database: Key was not created',
+		// 	} satisfies UnsuccessfulResponseBody);
+		// }
+
+		const existingMainnetAccount = accounts.find((acc) => acc.namespace === CheqdNetwork.Mainnet);
+		const existingTestnetAccount = accounts.find((acc) => acc.namespace === CheqdNetwork.Testnet);
+		let mainnetKey: KeyEntity | null = null;
+		let testnetKey: KeyEntity | null = null;
+
+		let mainnetAccount: PaymentAccountEntity | null;
+		let testnetAccount: PaymentAccountEntity | null;
+
+		if (existingMainnetAccount) {
+			mainnetAccount = existingMainnetAccount;
+			mainnetKey = await KeyService.instance.get(existingMainnetAccount.key.kid);
+		} else {
+			mainnetKey = await new IdentityServiceStrategySetup(customerEntity.customerId).agent.createKey(
 				SupportedKeyTypes.Secp256k1,
 				customerEntity
 			);
-			if (!key) {
+			if (!mainnetKey) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'PaymentAccount is not found in database: Key was not created',
+					error: 'PaymentAccount is not found in database: Mainnet key was not created',
 				} satisfies UnsuccessfulResponseBody);
 			}
-			paymentAccount = (await PaymentAccountService.instance.create(
-				CheqdNetwork.Testnet,
+			mainnetAccount = (await PaymentAccountService.instance.create(
+				CheqdNetwork.Mainnet,
 				true,
 				customerEntity,
-				key
+				mainnetKey
 			)) as PaymentAccountEntity;
-			if (!paymentAccount) {
+			if (!mainnetAccount) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'PaymentAccount is not found in database: Payment account was not created',
 				} satisfies UnsuccessfulResponseBody);
 			}
-			// Notify
 			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
 					'PaymentAccount was not found in database: Payment account with address: ' +
-						paymentAccount.address +
+						mainnetAccount.address +
 						' was created'
 				),
 				severity: 'info',
 			});
+		}
+
+		if (existingTestnetAccount) {
+			testnetAccount = existingTestnetAccount;
+			testnetKey = await KeyService.instance.get(existingTestnetAccount.key.kid);
 		} else {
-			paymentAccount = accounts[0];
+			testnetKey = await new IdentityServiceStrategySetup(customerEntity.customerId).agent.createKey(
+				SupportedKeyTypes.Secp256k1,
+				customerEntity
+			);
+			if (!testnetKey) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: 'PaymentAccount is not found in database: Testnet key was not created',
+				} satisfies UnsuccessfulResponseBody);
+			}
+			testnetAccount = (await PaymentAccountService.instance.create(
+				CheqdNetwork.Testnet,
+				true,
+				customerEntity,
+				testnetKey
+			)) as PaymentAccountEntity;
+			if (!testnetAccount) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: 'PaymentAccount is not found in database: Payment account was not created',
+				} satisfies UnsuccessfulResponseBody);
+			}
+			await eventTracker.notify({
+				message: EventTracker.compileBasicNotification(
+					'PaymentAccount was not found in database: Payment account with address: ' +
+						testnetAccount.address +
+						' was created'
+				),
+				severity: 'info',
+			});
 		}
 
 		// 7. Assign default role on LogTo
 		const customDataFromLogTo = await logToHelper.getCustomData(userEntity.logToId);
 
 		// 8. Create custom_data and update the userInfo (send it to the LogTo)
-		if (Object.keys(customDataFromLogTo.data).length === 0 && paymentAccount.address) {
+		if (Object.keys(customDataFromLogTo.data).length === 0 && testnetAccount.address && mainnetAccount.address) {
 			const customData = {
 				customer: {
 					id: customerEntity.customerId,
 					name: customerEntity.name,
 				},
 				paymentAccount: {
-					address: paymentAccount.address,
+					address: testnetAccount.address,
+					mainnet: mainnetAccount.address,
 				},
 			};
 			const _r = await logToHelper.updateCustomData(userEntity.logToId, customData);
@@ -345,12 +405,12 @@ export class AccountController {
 		}
 
 		// 9. Check the token balance for Testnet account
-		if (paymentAccount.address && process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
-			const balances = await checkBalance(paymentAccount.address, process.env.TESTNET_RPC_URL);
+		if (testnetAccount.address && process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
+			const balances = await checkBalance(testnetAccount.address, process.env.TESTNET_RPC_URL);
 			const balance = balances[0];
 			if (!balance || +balance.amount < TESTNET_MINIMUM_BALANCE * Math.pow(10, DEFAULT_DENOM_EXPONENT)) {
 				// 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
-				const resp = await FaucetHelper.delegateTokens(paymentAccount.address);
+				const resp = await FaucetHelper.delegateTokens(testnetAccount.address);
 				if (resp.status !== StatusCodes.OK) {
 					return response.status(StatusCodes.BAD_GATEWAY).json({
 						error: resp.error,
@@ -359,7 +419,7 @@ export class AccountController {
 				// Notify
 				await eventTracker.notify({
 					message: EventTracker.compileBasicNotification(
-						`Testnet account with address: ${paymentAccount.address} was funded with ${TESTNET_MINIMUM_BALANCE}`
+						`Testnet account with address: ${testnetAccount.address} was funded with ${TESTNET_MINIMUM_BALANCE}`
 					),
 					severity: 'info',
 				});
