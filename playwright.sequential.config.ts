@@ -6,7 +6,7 @@ import { STORAGE_STATE_AUTHENTICATED } from './tests/e2e/constants';
  */
 export default defineConfig({
 	// Directory where all tests are located
-	testDir: './tests/e2e/sequential',
+	testDir: './tests/e2e',
 
 	// Start local dev server before starting the tests
 	webServer: {
@@ -65,10 +65,6 @@ export default defineConfig({
 	// Docs: https://playwright.dev/docs/test-projects
 	projects: [
 		{
-			name: 'Setup unauthenticated user',
-			testMatch: /no-auth\.setup\.ts/,
-		},
-		{
 			name: 'Setup authenticated user',
 			testMatch: /auth\.setup\.ts/,
 		},
@@ -84,7 +80,7 @@ export default defineConfig({
 					'x-api-key': `${process.env.TEST_USER_API_KEY}`,
 				},
 			},
-
+			testDir: './tests/e2e/sequential',
 			dependencies: ['Setup authenticated user'],
 		},
 	],

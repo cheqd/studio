@@ -6,7 +6,7 @@ import { STORAGE_STATE_AUTHENTICATED, STORAGE_STATE_UNAUTHENTICATED } from './te
  */
 export default defineConfig({
 	// Directory where all tests are located
-	testDir: './tests/e2e/parallel',
+	testDir: './tests/e2e',
 
 	// Start local dev server before starting the tests
 	webServer: {
@@ -84,6 +84,7 @@ export default defineConfig({
 					'x-api-key': `${process.env.TEST_USER_API_KEY}`,
 				},
 			},
+			testDir: './tests/e2e/parallel',
 			dependencies: ['Setup authenticated user'],
 		},
 		{
@@ -93,6 +94,7 @@ export default defineConfig({
 				...devices['Desktop Chrome'],
 				storageState: STORAGE_STATE_UNAUTHENTICATED,
 			},
+			testDir: './tests/e2e/parallel',
 			dependencies: ['Setup unauthenticated user'],
 		},
 	],
