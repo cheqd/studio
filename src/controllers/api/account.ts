@@ -32,7 +32,6 @@ import { RoleEntity } from '../../database/entities/role.entity.js';
 import { getStripeObjectKey } from '../../utils/index.js';
 import type { SupportedPlanTypes } from '../../types/admin.js';
 import { KeyService } from '../../services/api/key.js';
-import { KeyEntity } from '../../database/entities/key.entity.js';
 dotenv.config();
 
 export class AccountController {
@@ -288,98 +287,31 @@ export class AccountController {
 
 		// 6. Check is paymentAccount exists for the customer
 		const accounts = await PaymentAccountService.instance.find({ customer: customerEntity });
-		// const key = await (async () => {
-		// 	if (accounts.length === 0) {
-		// 		return await new IdentityServiceStrategySetup(customerEntity.customerId).agent.createKey(
-		// 			SupportedKeyTypes.Secp256k1,
-		// 			customerEntity
-		// 		);
-		// 	}
-		//
-		// 	return await KeyService.instance.keyRepository.findOne({ where: { customer: customerEntity } });
-		// })();
-		//
-		// if (!key) {
-		// 	return response.status(StatusCodes.BAD_REQUEST).json({
-		// 		error: 'PaymentAccount is not found in database: Key was not created',
-		// 	} satisfies UnsuccessfulResponseBody);
-		// }
 
-		const existingMainnetAccount = accounts.find((acc) => acc.namespace === CheqdNetwork.Mainnet);
-		const existingTestnetAccount = accounts.find((acc) => acc.namespace === CheqdNetwork.Testnet);
-		let mainnetKey: KeyEntity | null = null;
-		let testnetKey: KeyEntity | null = null;
-
-		let mainnetAccount: PaymentAccountEntity | null;
-		let testnetAccount: PaymentAccountEntity | null;
-
-		if (existingMainnetAccount) {
-			mainnetAccount = existingMainnetAccount;
-			mainnetKey = await KeyService.instance.get(existingMainnetAccount.key.kid);
-		} else {
-			mainnetKey = await new IdentityServiceStrategySetup(customerEntity.customerId).agent.createKey(
-				SupportedKeyTypes.Secp256k1,
-				customerEntity
-			);
-			if (!mainnetKey) {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'PaymentAccount is not found in database: Mainnet key was not created',
-				} satisfies UnsuccessfulResponseBody);
-			}
-			mainnetAccount = (await PaymentAccountService.instance.create(
-				CheqdNetwork.Mainnet,
-				true,
-				customerEntity,
-				mainnetKey
-			)) as PaymentAccountEntity;
-			if (!mainnetAccount) {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'PaymentAccount is not found in database: Payment account was not created',
-				} satisfies UnsuccessfulResponseBody);
-			}
-			await eventTracker.notify({
-				message: EventTracker.compileBasicNotification(
-					'PaymentAccount was not found in database: Payment account with address: ' +
-						mainnetAccount.address +
-						' was created'
-				),
-				severity: 'info',
-			});
+		const mainnetAccountResponse = await this.provisionCustomerAccount(
+			CheqdNetwork.Mainnet,
+			accounts,
+			customerEntity
+		);
+		if (!mainnetAccountResponse.success) {
+			return response.status(mainnetAccountResponse.status).json({
+				error: mainnetAccountResponse.error,
+			} satisfies UnsuccessfulResponseBody);
 		}
 
-		if (existingTestnetAccount) {
-			testnetAccount = existingTestnetAccount;
-			testnetKey = await KeyService.instance.get(existingTestnetAccount.key.kid);
-		} else {
-			testnetKey = await new IdentityServiceStrategySetup(customerEntity.customerId).agent.createKey(
-				SupportedKeyTypes.Secp256k1,
-				customerEntity
-			);
-			if (!testnetKey) {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'PaymentAccount is not found in database: Testnet key was not created',
-				} satisfies UnsuccessfulResponseBody);
-			}
-			testnetAccount = (await PaymentAccountService.instance.create(
-				CheqdNetwork.Testnet,
-				true,
-				customerEntity,
-				testnetKey
-			)) as PaymentAccountEntity;
-			if (!testnetAccount) {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'PaymentAccount is not found in database: Payment account was not created',
-				} satisfies UnsuccessfulResponseBody);
-			}
-			await eventTracker.notify({
-				message: EventTracker.compileBasicNotification(
-					'PaymentAccount was not found in database: Payment account with address: ' +
-						testnetAccount.address +
-						' was created'
-				),
-				severity: 'info',
-			});
+		const testnetAccountResponse = await this.provisionCustomerAccount(
+			CheqdNetwork.Testnet,
+			accounts,
+			customerEntity
+		);
+		if (!testnetAccountResponse.success) {
+			return response.status(testnetAccountResponse.status).json({
+				error: testnetAccountResponse.error,
+			} satisfies UnsuccessfulResponseBody);
 		}
+
+		const mainnetAccount = mainnetAccountResponse.data;
+		const testnetAccount = testnetAccountResponse.data;
 
 		// 7. Assign default role on LogTo
 		const customDataFromLogTo = await logToHelper.getCustomData(userEntity.logToId);
@@ -392,10 +324,11 @@ export class AccountController {
 					name: customerEntity.name,
 				},
 				paymentAccount: {
-					address: testnetAccount.address,
+					testnet: testnetAccount.address,
 					mainnet: mainnetAccount.address,
 				},
 			};
+
 			const _r = await logToHelper.updateCustomData(userEntity.logToId, customData);
 			if (_r.status !== 200) {
 				return response.status(_r.status).json({
@@ -439,6 +372,69 @@ export class AccountController {
 		}
 
 		return response.status(StatusCodes.OK).json({});
+	}
+
+	public async provisionCustomerAccount(
+		network: CheqdNetwork,
+		accounts: PaymentAccountEntity[],
+		customerEntity: CustomerEntity
+	): Promise<SafeAPIResponse<PaymentAccountEntity>> {
+		const existingAccount = accounts.find((acc) => acc.namespace === network);
+		if (existingAccount) {
+			const key = await KeyService.instance.get(existingAccount.key.kid);
+			if (key) {
+				return {
+					success: true,
+					status: 200,
+					data: existingAccount,
+				};
+			}
+
+			return {
+				success: false,
+				status: 412, // precondition
+				error: `Error: account key not found for kid: ${existingAccount.key.kid}`,
+			};
+		}
+
+		const key = await new IdentityServiceStrategySetup(customerEntity.customerId).agent.createKey(
+			SupportedKeyTypes.Secp256k1,
+			customerEntity
+		);
+		if (!key) {
+			return {
+				success: false,
+				status: 400,
+				error: `PaymentAccount is not found in database: ${network} key was not created`,
+			};
+		}
+
+		const account = (await PaymentAccountService.instance.create(
+			network,
+			true,
+			customerEntity,
+			key
+		)) as PaymentAccountEntity;
+		if (!account) {
+			return {
+				success: false,
+				status: 400,
+				error: 'PaymentAccount is not found in database: Payment account was not created',
+			};
+		}
+
+		await eventTracker.notify({
+			message: EventTracker.compileBasicNotification(
+				`PaymentAccount was not found in database: Payment account with address: ${account.address} on ${network} was created`
+			),
+			severity: 'info',
+		});
+
+		return {
+			success: true,
+			status: 200,
+			data: account,
+		};
 	}
 
 	/**
