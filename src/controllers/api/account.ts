@@ -80,8 +80,8 @@ export class AccountController {
 					name: response.locals.customer.name,
 				},
 				paymentAccount: {
-					mainnet: paymentAccounts.find((acc) => acc.namespace === CheqdNetwork.Mainnet)?.address ?? null,
-					testnet: paymentAccounts.find((acc) => acc.namespace === CheqdNetwork.Testnet)?.address ?? null,
+					mainnet: paymentAccounts.find((acc) => acc.namespace === CheqdNetwork.Mainnet)?.address ?? '',
+					testnet: paymentAccounts.find((acc) => acc.namespace === CheqdNetwork.Testnet)?.address ?? '',
 				},
 			};
 
