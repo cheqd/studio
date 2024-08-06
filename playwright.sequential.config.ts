@@ -11,7 +11,7 @@ export default defineConfig({
 	// Start local dev server before starting the tests
 	webServer: {
 		command: 'npm run start',
-		url: 'http://localhost:3000',
+		url: 'http://localhost:3001',
 		reuseExistingServer: !process.env.CI,
 	},
 
@@ -19,7 +19,7 @@ export default defineConfig({
 	// Docs: https://playwright.dev/docs/api/class-testoptions
 	use: {
 		// Base URL to use in actions like `await page.goto('/')`
-		baseURL: 'http://localhost:3000',
+		baseURL: 'http://localhost:3001',
 
 		// Set whether to record traces
 		// Docs: https://playwright.dev/docs/api/class-testoptions#test-options-trace
