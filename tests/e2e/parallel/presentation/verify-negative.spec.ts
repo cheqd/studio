@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 // import { StatusCodes } from 'http-status-codes';
 import { test, expect } from '@playwright/test';
-import { CONTENT_TYPE, PAYLOADS_PATH } from '../constants';
+import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 

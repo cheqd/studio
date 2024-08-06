@@ -3,7 +3,7 @@ import type { VerifiableCredential } from '@veramo/core';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 import * as fs from 'fs';
-import { CONTENT_TYPE, PAYLOADS_PATH } from '../constants';
+import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 

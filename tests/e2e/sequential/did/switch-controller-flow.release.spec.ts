@@ -1,4 +1,4 @@
-import { CONTENT_TYPE, ID_TYPE } from '../constants';
+import { CONTENT_TYPE, ID_TYPE } from '../../constants';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 import {
@@ -7,10 +7,10 @@ import {
 	mustIncludeKey,
 	mustIncludeKeyControllerRef,
 	mustAllControllerKeysHaveController,
-} from './helpers';
+} from '../../parallel/did/helpers';
 import { CheqdNetwork, DIDDocument, VerificationMethods } from '@cheqd/sdk';
 
-import { ResponseBody } from './helpers';
+import { ResponseBody } from '../../parallel/did/helpers';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 

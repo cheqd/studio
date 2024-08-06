@@ -7,7 +7,7 @@ import {
 	NOT_SUPPORTED_VERIFICATION_METHOD_TYPE,
 	PAYLOADS_PATH,
 	CONTENT_TYPE,
-} from '../constants';
+} from '../../constants';
 import * as fs from 'fs';
 import { v4 } from 'uuid';
 import { test, expect } from '@playwright/test';

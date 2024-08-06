@@ -3,7 +3,7 @@ import {
 	PAYLOADS_PATH,
 	STORAGE_STATE_AUTHENTICATED,
 	DEFAULT_DOES_NOT_HAVE_PERMISSIONS,
-} from '../constants';
+} from '../../constants';
 import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
@@ -11,12 +11,10 @@ import { UnsuccessfulResponseBody } from '@cheqd/credential-service/src/types/sh
 
 test.use({ storageState: STORAGE_STATE_AUTHENTICATED });
 
-test('[Negative] It cannot update an encrypted statusList2021 in mainnet network for user with testnet role', async ({
-	request,
-}) => {
-	const response = await request.post(`/credential-status/update/encrypted`, {
+test('[Negative] It cannot revoke credential in mainnet network for user with testnet role', async ({ request }) => {
+	const response = await request.post(`/credential/revoke`, {
 		data: JSON.parse(
-			fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL_STATUS}/update-encrypted-without-permissions.json`, 'utf-8')
+			fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/revoke-credential-without-permissions.json`, 'utf-8')
 		),
 		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});

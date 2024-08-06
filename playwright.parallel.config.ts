@@ -6,7 +6,7 @@ import { STORAGE_STATE_AUTHENTICATED, STORAGE_STATE_UNAUTHENTICATED } from './te
  */
 export default defineConfig({
 	// Directory where all tests are located
-	testDir: './tests/e2e',
+	testDir: './tests/e2e/parallel',
 
 	// Start local dev server before starting the tests
 	webServer: {
@@ -49,13 +49,13 @@ export default defineConfig({
 
 	// Whether to run tests in parallel
 	// Docs: https://playwright.dev/docs/api/class-testconfig#test-config-fully-parallel
-	fullyParallel: false,
+	fullyParallel: true,
 
 	// Number of parallel workers OR %age of logical CPUs to use
 	// Github Actions runners have 2 logical CPU cores
 	// Defaults to half of the logical CPU cores available
 	// Docs: https://playwright.dev/docs/api/class-testconfig#test-config-workers
-	workers: process.env.CI ? 1 : undefined,
+	workers: undefined,
 
 	// Limit the numbers of failures to set a fail-fast strategy on CI
 	// Docs: https://playwright.dev/docs/api/class-testconfig#test-config-max-failures
@@ -73,7 +73,7 @@ export default defineConfig({
 			testMatch: /auth\.setup\.ts/,
 		},
 		{
-			name: 'Logged In User Tests',
+			name: 'Parallel Logged In User Tests',
 			...(process.env.RELEASE === 'true' ? {} : { testIgnore: /.*\.release\.spec\.ts/ }),
 			use: {
 				...devices['Desktop Chrome'],

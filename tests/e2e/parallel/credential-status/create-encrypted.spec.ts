@@ -3,7 +3,7 @@ import {
 	PAYLOADS_PATH,
 	STORAGE_STATE_AUTHENTICATED,
 	DEFAULT_DOES_NOT_HAVE_PERMISSIONS,
-} from '../constants';
+} from '../../constants';
 import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';

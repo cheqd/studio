@@ -5,7 +5,7 @@ import {
 	NOT_EXISTENT_STATUS_LIST_NAME,
 	DEFAULT_STATUS_LIST_UNENCRYPTED_NAME,
 	STORAGE_STATE_AUTHENTICATED,
-} from '../constants';
+} from '../../constants';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 
