@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.0-develop.1](https://github.com/cheqd/studio/compare/3.1.0...3.2.0-develop.1) (2024-08-06)
+
+
+### Features
+
+* Provision mainnet account for customers on account bootstrap [DEV-4203] ([#567](https://github.com/cheqd/studio/issues/567)) ([3ad0955](https://github.com/cheqd/studio/commit/3ad0955f5d7e33083a790045319ffae11630da4e))
+
 ## [3.1.0](https://github.com/cheqd/studio/compare/3.0.0...3.1.0) (2024-08-05)
 
 
