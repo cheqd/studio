@@ -288,7 +288,7 @@ export class AccountController {
 		// 6. Check is paymentAccount exists for the customer
 		const accounts = await PaymentAccountService.instance.find({ customer: customerEntity });
 
-		const mainnetAccountResponse = await this.provisionCustomerAccount(
+		const mainnetAccountResponse = await AccountController.provisionCustomerAccount(
 			CheqdNetwork.Mainnet,
 			accounts,
 			customerEntity
@@ -299,7 +299,7 @@ export class AccountController {
 			} satisfies UnsuccessfulResponseBody);
 		}
 
-		const testnetAccountResponse = await this.provisionCustomerAccount(
+		const testnetAccountResponse = await AccountController.provisionCustomerAccount(
 			CheqdNetwork.Testnet,
 			accounts,
 			customerEntity
@@ -374,7 +374,7 @@ export class AccountController {
 		return response.status(StatusCodes.OK).json({});
 	}
 
-	public async provisionCustomerAccount(
+	static async provisionCustomerAccount(
 		network: CheqdNetwork,
 		accounts: PaymentAccountEntity[],
 		customerEntity: CustomerEntity
