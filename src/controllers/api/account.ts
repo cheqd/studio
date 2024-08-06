@@ -73,16 +73,17 @@ export class AccountController {
 					error: 'Bad state cause there is no customer assigned to the user yet. Please contact administrator.',
 				} satisfies UnsuccessfulQueryCustomerResponseBody);
 			}
-			const paymentAccount = await PaymentAccountService.instance.find({ customer: response.locals.customer });
-			const result = {
+			const paymentAccounts = await PaymentAccountService.instance.find({ customer: response.locals.customer });
+			const result: QueryCustomerResponseBody = {
 				customer: {
 					customerId: response.locals.customer.customerId,
 					name: response.locals.customer.name,
 				},
 				paymentAccount: {
-					address: paymentAccount[0].address,
+					mainnet: paymentAccounts.find((acc) => acc.namespace === CheqdNetwork.Mainnet)?.address ?? null,
+					testnet: paymentAccounts.find((acc) => acc.namespace === CheqdNetwork.Testnet)?.address ?? null,
 				},
-			} satisfies QueryCustomerResponseBody;
+			};
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
