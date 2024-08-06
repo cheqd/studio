@@ -29,35 +29,43 @@ export class PortalAccountCreateSubmitter implements IObserver {
 		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 		try {
-			// Create a new Stripe account
-			const account = await stripe.customers.create({
-				name: data.name,
-				email: data.email,
+			const customer = await CustomerService.instance.customerRepository.findOne({
+				where: {
+					email: data.email,
+				},
 			});
-			if (account.lastResponse.statusCode !== StatusCodes.OK) {
+
+			let stripeCustomer: Stripe.Response<Stripe.Customer>;
+			if (customer && !customer.paymentProviderId) {
+				// Create a new Stripe account
+				stripeCustomer = await stripe.customers.create({
+					name: data.name,
+					email: data.email,
+				});
+				if (stripeCustomer.lastResponse.statusCode !== StatusCodes.OK) {
+					this.notify({
+						message: EventTracker.compileBasicNotification(
+							`Failed to create Stripe account with name: ${data.name}.`,
+							operation.operation
+						),
+						severity: 'error',
+					} as INotifyMessage);
+					return;
+				}
 				this.notify({
 					message: EventTracker.compileBasicNotification(
-						`Failed to create Stripe account with name: ${data.name}.`,
+						`Stripe account created with name: ${data.name}.`,
 						operation.operation
 					),
-					severity: 'error',
+					severity: 'info',
 				} as INotifyMessage);
-				return;
+				// Update the CaaS customer with the new Stripe account. Note, we're populating the "name" field from stripe's response.
+				await CustomerService.instance.update({
+					customerId: data.customerId,
+					name: data.name,
+					paymentProviderId: stripeCustomer.id,
+				});
 			}
-
-			// Update the CaaS customer with the new Stripe account. Note, we're populating the "name" field from stripe's response.
-			await CustomerService.instance.update({
-				customerId: data.customerId,
-				name: data.name,
-				paymentProviderId: account.id,
-			});
-			this.notify({
-				message: EventTracker.compileBasicNotification(
-					`Stripe account created with name: ${data.name}.`,
-					operation.operation
-				),
-				severity: 'info',
-			} as INotifyMessage);
 		} catch (error) {
 			this.notify({
 				message: EventTracker.compileBasicNotification(

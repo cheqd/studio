@@ -275,7 +275,7 @@ export class AccountController {
 			customerEntity = userEntity.customer;
 			// this time user exists, so notify stripe account should be created.
 			if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
-				eventTracker.submit({
+				await eventTracker.submit({
 					operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 					data: {
 						name: customerEntity.name,
@@ -362,7 +362,7 @@ export class AccountController {
 
 		// 10. Add the Stripe account to the Customer
 		if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
-			eventTracker.submit({
+			await eventTracker.submit({
 				operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 				data: {
 					name: customerEntity.name,
@@ -538,7 +538,7 @@ export class AccountController {
 			}
 			// 5. Setup stripe account
 			if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
-				eventTracker.submit({
+				await eventTracker.submit({
 					operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 					data: {
 						name: customerEntity.name,
