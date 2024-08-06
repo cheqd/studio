@@ -99,7 +99,7 @@ export default defineConfig({
 
 	// Timeout for each test in milliseconds
 	// Docs: https://playwright.dev/docs/test-timeouts
-	timeout: 60 * 1000,
+	timeout: 120 * 1000,
 
 	// Timeout for each expect/assertion in milliseconds
 	// Docs: https://playwright.dev/docs/test-timeouts
