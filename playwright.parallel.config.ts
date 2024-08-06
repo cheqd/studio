@@ -49,7 +49,7 @@ export default defineConfig({
 
 	// Whether to run tests in parallel
 	// Docs: https://playwright.dev/docs/api/class-testconfig#test-config-fully-parallel
-	fullyParallel: true,
+	fullyParallel: false,
 
 	// Number of parallel workers OR %age of logical CPUs to use
 	// Github Actions runners have 2 logical CPU cores
