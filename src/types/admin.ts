@@ -1,5 +1,6 @@
 import type Stripe from 'stripe';
 import type { UnsuccessfulResponseBody } from './shared.js';
+import { CheqdNetwork } from '@cheqd/sdk';
 
 export type ProductWithPrices = Stripe.Product & {
 	prices?: Stripe.Price[];
@@ -159,7 +160,10 @@ export type AdminOrganisationResponseBody = {
 	name: string;
 	email?: string;
 	description?: string;
-	cosmosAddress?: string;
+	cosmosAddress?: {
+		[CheqdNetwork.Testnet]: string | null;
+		[CheqdNetwork.Mainnet]: string | null;
+	};
 };
 
 export type AdminOrganisationGetResponseBody = AdminOrganisationResponseBody;

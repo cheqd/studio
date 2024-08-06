@@ -5,11 +5,13 @@ import { validate } from '../validator/decorator.js';
 import { CustomerService } from '../../services/api/customer.js';
 import { StatusCodes } from 'http-status-codes';
 import type {
+	AdminOrganisationGetResponseBody,
 	AdminOrganisationGetUnsuccessfulResponseBody,
 	AdminOrganisationUpdateResponseBody,
 	AdminOrganisationUpdateUnsuccessfulResponseBody,
 } from '../../types/admin.js';
 import { PaymentAccountService } from '../../services/api/payment-account.js';
+import { CheqdNetwork } from '@cheqd/sdk';
 
 dotenv.config();
 
@@ -79,11 +81,17 @@ export class OrganisationController {
 				} satisfies AdminOrganisationUpdateUnsuccessfulResponseBody);
 			}
 
+			const testnetAddress = paymentAccount.find((acc) => acc.namespace === CheqdNetwork.Testnet)?.address;
+			const mainnetAddress = paymentAccount.find((acc) => acc.namespace === CheqdNetwork.Mainnet)?.address;
+
 			return response.status(StatusCodes.OK).json({
 				name: customer.name,
 				email: customer.email,
 				description: customer.description,
-				cosmosAddress: paymentAccount[0].address as string,
+				cosmosAddress: {
+					[CheqdNetwork.Testnet]: testnetAddress ?? null,
+					[CheqdNetwork.Mainnet]: mainnetAddress ?? null,
+				},
 			} satisfies AdminOrganisationUpdateResponseBody);
 		} catch (error) {
 			return response.status(500).json({
@@ -126,12 +134,19 @@ export class OrganisationController {
 					error: 'Customer for current user was not found or did not setup properly. Please contact administrator.',
 				} satisfies AdminOrganisationGetUnsuccessfulResponseBody);
 			}
+
+			const testnetAddress = paymentAccount.find((acc) => acc.namespace === CheqdNetwork.Testnet)?.address;
+			const mainnetAddress = paymentAccount.find((acc) => acc.namespace === CheqdNetwork.Mainnet)?.address;
+
 			return response.status(StatusCodes.OK).json({
 				name: customer.name,
 				email: customer.email,
 				description: customer.description,
-				cosmosAddress: paymentAccount[0].address as string,
-			});
+				cosmosAddress: {
+					[CheqdNetwork.Testnet]: testnetAddress ?? null,
+					[CheqdNetwork.Mainnet]: mainnetAddress ?? null,
+				},
+			} satisfies AdminOrganisationGetResponseBody);
 		} catch (error) {
 			return response.status(500).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,

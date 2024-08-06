@@ -1,3 +1,4 @@
+import { CheqdNetwork } from '@cheqd/sdk';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import type { UnsuccessfulQueryResponseBody } from './shared.js';
 
@@ -9,7 +10,8 @@ export type QueryCustomerResponseBody = {
 		name: string;
 	};
 	paymentAccount: {
-		address: string;
+		[CheqdNetwork.Testnet]: string | null;
+		[CheqdNetwork.Mainnet]: string | null;
 	};
 };
 
