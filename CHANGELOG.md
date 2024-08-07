@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.1-develop.1](https://github.com/cheqd/studio/compare/3.2.0...3.2.1-develop.1) (2024-08-07)
+
+
+### Performance Improvements
+
+* Parallelize non ledger operation tests ([#568](https://github.com/cheqd/studio/issues/568)) ([4d3ad9d](https://github.com/cheqd/studio/commit/4d3ad9db7614caf6143ce78380d0386c8ee23964))
+
 ## [3.2.0](https://github.com/cheqd/studio/compare/3.1.0...3.2.0) (2024-08-06)
 
 
