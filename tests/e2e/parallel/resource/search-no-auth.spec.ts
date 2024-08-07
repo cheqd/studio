@@ -12,7 +12,7 @@ import {
 	TESTNET_DID_WITH_IMAGE_RESOURCE_ID,
 	TESTNET_DID_WITH_JSON_RESOURCE_ID,
 	TESTNET_DID_WITH_JSON_RESOURCE,
-} from '../constants';
+} from '../../constants';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 

@@ -1,6 +1,6 @@
-import { ID_TYPE, DEFAULT_CONTEXT, CONTENT_TYPE } from '../constants';
+import { ID_TYPE, DEFAULT_CONTEXT, CONTENT_TYPE } from '../../constants';
 import { v4 } from 'uuid';
-import { buildSimpleService } from '../helpers';
+import { buildSimpleService } from '../../helpers';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 

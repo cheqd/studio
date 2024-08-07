@@ -1,4 +1,4 @@
-import { CONTENT_TYPE, INVALID_JWT_TOKEN, GENERATED_PATH, STORAGE_STATE_UNAUTHENTICATED } from '../constants';
+import { CONTENT_TYPE, INVALID_JWT_TOKEN, GENERATED_PATH, STORAGE_STATE_UNAUTHENTICATED } from '../../constants';
 import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';

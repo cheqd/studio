@@ -6,7 +6,7 @@ import {
 	STORAGE_STATE_UNAUTHENTICATED,
 	DEFAULT_STATUS_LIST_UNENCRYPTED_NAME,
 	DEFAULT_TESTNET_DID_IDENTIFIER,
-} from '../constants';
+} from '../../constants';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 
