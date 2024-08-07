@@ -33,7 +33,7 @@
 		"lint": "eslint --max-warnings=0 src && prettier --check '**/*.{js,ts,cjs,mjs,json}'",
 		"test": "npm run test:unit && npm run test:e2e",
 		"test:unit": "cross-env NODE_OPTIONS='--experimental-vm-modules' jest --verbose",
-		"test:e2e": "npx playwright test -c playwright.parallel.config.ts && npx playwright test -c playwright.sequential.config.ts",
+		"test:e2e": "TEST_MODE_PARALLEL=true npx playwright test -c playwright.config.ts && npx playwright test -c playwright.config.ts",
 		"typeorm": "typeorm-ts-node-esm  -d ./dist/database/ormconfig.js",
 		"generate": "npm run typeorm migration:generate .",
 		"migrate": "npm run typeorm migration:run"

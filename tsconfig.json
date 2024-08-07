@@ -75,7 +75,6 @@
 		"dist",
 		"playwright",
 		"tests",
-		"playwright.parallel.config.ts",
-        "playwright.sequential.config.ts",
+		"playwright.config.ts",
 	]
 }
