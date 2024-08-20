@@ -467,7 +467,9 @@ export class DIDController {
 			}
 			const publicKeyHexs: string[] = [
 				...new Set(
-					didDocument.verificationMethod.map((vm) => extractPublicKeyHex(vm)).filter((pk) => pk) || []
+					didDocument.verificationMethod
+						.map((vm) => extractPublicKeyHex(vm).publicKeyHex)
+						.filter((pk) => pk) || []
 				),
 			];
 
