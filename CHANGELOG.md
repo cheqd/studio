@@ -1,5 +1,7 @@
 # Changelog
 
+## [3.2.1-develop.2](https://github.com/cheqd/studio/compare/3.2.1-develop.1...3.2.1-develop.2) (2024-08-20)
+
 ## [3.2.1-develop.1](https://github.com/cheqd/studio/compare/3.2.0...3.2.1-develop.1) (2024-08-07)
 
 
