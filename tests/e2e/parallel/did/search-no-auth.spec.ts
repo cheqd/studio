@@ -7,7 +7,7 @@ import {
 	NOT_EXISTENT_TESTNET_DID,
 	STORAGE_STATE_UNAUTHENTICATED,
 	DID_NOT_FOUND_ERROR,
-} from '../constants';
+} from '../../constants';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 

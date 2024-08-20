@@ -49,13 +49,13 @@ export default defineConfig({
 
 	// Whether to run tests in parallel
 	// Docs: https://playwright.dev/docs/api/class-testconfig#test-config-fully-parallel
-	fullyParallel: false,
+	fullyParallel: process.env.TEST_MODE_PARALLEL === 'true' ? true : false,
 
 	// Number of parallel workers OR %age of logical CPUs to use
 	// Github Actions runners have 2 logical CPU cores
 	// Defaults to half of the logical CPU cores available
 	// Docs: https://playwright.dev/docs/api/class-testconfig#test-config-workers
-	workers: process.env.CI ? 1 : undefined,
+	workers: process.env.TEST_MODE_PARALLEL ? 4 : 1,
 
 	// Limit the numbers of failures to set a fail-fast strategy on CI
 	// Docs: https://playwright.dev/docs/api/class-testconfig#test-config-max-failures
@@ -63,39 +63,64 @@ export default defineConfig({
 
 	// Configure project specific settings
 	// Docs: https://playwright.dev/docs/test-projects
-	projects: [
-		{
-			name: 'Setup unauthenticated user',
-			testMatch: /no-auth\.setup\.ts/,
-		},
-		{
-			name: 'Setup authenticated user',
-			testMatch: /auth\.setup\.ts/,
-		},
-		{
-			name: 'Logged In User Tests',
-			...(process.env.RELEASE === 'true' ? {} : { testIgnore: /.*\.release\.spec\.ts/ }),
-			use: {
-				...devices['Desktop Chrome'],
-				// Use prepared auth state.
-				storageState: STORAGE_STATE_AUTHENTICATED,
-				extraHTTPHeaders: {
-					// Add x-api-key token to all authenticated requests.
-					'x-api-key': `${process.env.TEST_USER_API_KEY}`,
-				},
-			},
-			dependencies: ['Setup authenticated user'],
-		},
-		{
-			name: 'Non-Logged In User Tests',
-			testMatch: /.*\.no-auth.spec.ts/,
-			use: {
-				...devices['Desktop Chrome'],
-				storageState: STORAGE_STATE_UNAUTHENTICATED,
-			},
-			dependencies: ['Setup unauthenticated user'],
-		},
-	],
+	projects:
+		process.env.TEST_MODE_PARALLEL === 'true'
+			? [
+					{
+						name: 'Setup unauthenticated user',
+						testMatch: /no-auth\.setup\.ts/,
+					},
+					{
+						name: 'Setup authenticated user',
+						testMatch: /auth\.setup\.ts/,
+					},
+					{
+						name: 'Parallel Logged In User Tests',
+						...(process.env.RELEASE === 'true' ? {} : { testIgnore: /.*\.release\.spec\.ts/ }),
+						use: {
+							...devices['Desktop Chrome'],
+							// Use prepared auth state.
+							storageState: STORAGE_STATE_AUTHENTICATED,
+							extraHTTPHeaders: {
+								// Add x-api-key token to all authenticated requests.
+								'x-api-key': `${process.env.TEST_USER_API_KEY}`,
+							},
+						},
+						testDir: './tests/e2e/parallel',
+						dependencies: ['Setup authenticated user'],
+					},
+					{
+						name: 'Non-Logged In User Tests',
+						testMatch: /.*\.no-auth.spec.ts/,
+						use: {
+							...devices['Desktop Chrome'],
+							storageState: STORAGE_STATE_UNAUTHENTICATED,
+						},
+						testDir: './tests/e2e/parallel',
+						dependencies: ['Setup unauthenticated user'],
+					},
+				]
+			: [
+					{
+						name: 'Setup authenticated user',
+						testMatch: /auth\.setup\.ts/,
+					},
+					{
+						name: 'Logged In User Tests',
+						...(process.env.RELEASE === 'true' ? {} : { testIgnore: /.*\.release\.spec\.ts/ }),
+						use: {
+							...devices['Desktop Chrome'],
+							// Use prepared auth state.
+							storageState: STORAGE_STATE_AUTHENTICATED,
+							extraHTTPHeaders: {
+								// Add x-api-key token to all authenticated requests.
+								'x-api-key': `${process.env.TEST_USER_API_KEY}`,
+							},
+						},
+						testDir: './tests/e2e/sequential',
+						dependencies: ['Setup authenticated user'],
+					},
+				],
 
 	// Timeout for each test in milliseconds
 	// Docs: https://playwright.dev/docs/test-timeouts
