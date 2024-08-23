@@ -23,7 +23,19 @@ export interface CredentialRequest {
 	credentialSchema?: string;
 	credentialName?: string;
 	credentialSummary?: string;
+	termsOfUse?: AdditionalData | AdditionalData[];
+	refreshService?: AdditionalData | AdditionalData[];
+	evidence?: AdditionalData | AdditionalData[];
+
+	[x: string]: any;
 }
+
+export type AdditionalData = {
+	type: string | string[];
+	id?: string;
+
+	[x: string]: any;
+};
 
 export type VerificationPoliciesRequest = {
 	policies: VerificationPolicies;

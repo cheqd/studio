@@ -15,43 +15,59 @@ export class Credentials {
 	public static instance = new Credentials();
 
 	async issue_credential(request: CredentialRequest, customer: CustomerEntity): Promise<VerifiableCredential> {
+		const {
+			attributes,
+			credentialName,
+			credentialSummary,
+			credentialSchema,
+			issuerDid,
+			subjectDid,
+			type,
+			expirationDate,
+			credentialStatus,
+			'@context': context,
+			format,
+			...additionalData
+		} = request;
+
 		const credential: CredentialPayload = {
-			'@context': [...(request['@context'] || []), ...VC_CONTEXT],
-			type: [...(request.type || []), VC_TYPE],
-			issuer: { id: request.issuerDid },
-			credentialSchema: request.credentialSchema,
+			'@context': [...(context || []), ...VC_CONTEXT],
+			type: [...(type || []), VC_TYPE],
+			issuer: { id: issuerDid },
+			credentialSchema,
 			credentialSubject: {
-				id: request.subjectDid,
-				...request.attributes,
+				id: subjectDid,
+				...attributes,
 			},
 			issuanceDate: new Date().toISOString(),
+			...additionalData,
 		};
 
-		if (request.expirationDate) {
-			credential.expirationDate = request.expirationDate;
+		if (expirationDate) {
+			credential.expirationDate = expirationDate;
 		}
 
-		const statusOptions = request.credentialStatus || null;
+		const statusOptions = credentialStatus || null;
 
 		const verifiable_credential = await new IdentityServiceStrategySetup(
 			customer.customerId
-		).agent.createCredential(credential, request.format, statusOptions, customer);
+		).agent.createCredential(credential, format, statusOptions, customer);
 
-		const isVeridaDid = new VeridaDIDValidator().validate(request.subjectDid);
+		const isVeridaDid = new VeridaDIDValidator().validate(subjectDid);
 		if (ENABLE_VERIDA_CONNECTOR === 'true' && isVeridaDid.valid && isVeridaDid.namespace) {
-			if (!request.credentialSchema) throw new Error('Credential schema is required');
+			if (!credentialSchema) throw new Error('Credential schema is required');
 
 			// dynamic import to avoid circular dependency
 			const { VeridaService } = await import('../connectors/verida.js');
 
 			await VeridaService.instance.sendCredential(
 				isVeridaDid.namespace,
-				request.subjectDid,
+				subjectDid,
 				'New Verifiable Credential',
 				verifiable_credential,
-				request.credentialName || v4(),
-				request.credentialSchema,
-				request.credentialSummary
+				credentialName || v4(),
+				credentialSchema,
+				credentialSummary
 			);
 		}
 		return verifiable_credential;
