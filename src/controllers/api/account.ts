@@ -255,7 +255,7 @@ export class AccountController {
 
 		//4. Check if there is customer associated with such user
 		if (!userEntity.customer) {
-			customerEntity = (await CustomerService.instance.create(logToUserEmail)) as CustomerEntity;
+			customerEntity = (await CustomerService.instance.create(logToName, logToUserEmail)) as CustomerEntity;
 			if (!customerEntity) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'User exists in database: Customer was not created',
@@ -480,14 +480,14 @@ export class AccountController {
 		// 4. Check the token balance for Testnet account
 
 		// 1. Get logTo UserId from request body
-		const { username } = request.body;
+		const { username, primaryEmail } = request.body;
 
 		try {
 			// 2. Check if the customer exists
 			const customerEntity = response.locals.customer
 				? (response.locals.customer as CustomerEntity)
 				: // 2.1 Create customer
-					((await CustomerService.instance.create(username)) as CustomerEntity);
+					((await CustomerService.instance.create(username || primaryEmail, primaryEmail)) as CustomerEntity);
 
 			if (!customerEntity) {
 				return response.status(StatusCodes.BAD_REQUEST).json({

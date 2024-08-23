@@ -22,14 +22,14 @@ export class CustomerService {
 		this.customerRepository = Connection.instance.dbConnection.getRepository(CustomerEntity);
 	}
 
-	public async create(name: string, email?: string, description?: string, paymentProviderId?: string) {
+	public async create(name: string, email: string, description?: string, paymentProviderId?: string) {
 		// The sequence for creating a customer is supposed to be:
 		// 1. Create a new customer entity in the database;
 		// 2. Create new cosmos keypair
 		// 3. Get the cosmos address from the keypair
 		// 4. Create a new payment account entity in the database
 
-		if (await this.isExist({ name: name })) {
+		if (await this.isExist({ email: email })) {
 			throw new Error(`Cannot create a new customer since the customer with same name ${name} already exists`);
 		}
 		const customerEntity = new CustomerEntity(uuidv4(), name, email, description, paymentProviderId);
