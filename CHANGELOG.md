@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.3.0-develop.2](https://github.com/cheqd/studio/compare/3.3.0-develop.1...3.3.0-develop.2) (2024-08-23)
+
+### Features
+
+* Update credential issue schema ([c3f9e68](https://github.com/cheqd/studio/commit/c3f9e68162025bf6e7ed8c11087e8b86b7897997))
+
 ## [3.3.0-develop.1](https://github.com/cheqd/studio/compare/3.2.1-develop.2...3.3.0-develop.1) (2024-08-23)
 
 ### Features
