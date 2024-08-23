@@ -171,6 +171,57 @@
               "statusPurpose": "revocation",
               "statusListName": "employee-credentials"
             }
+          },
+          "termsOfUse": {
+            "description": "Terms of use can be utilized by an issuer or a holder to communicate the terms under which a verifiable credential was issued.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "example": {
+                "type": "IssuerPolicy",
+                "id": "http://example.com/policies/credential/4",
+                "profile": "http://example.com/profiles/credential",
+                "prohibition": [
+                  {
+                    "assigner": "https://example.edu/issuers/14",
+                    "assignee": "AllVerifiers",
+                    "target": "http://example.edu/credentials/3732",
+                    "action": [
+                      "Archival"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "refreshService": {
+            "description": "RefreshService property MUST be one or more refresh services that provides enough information to the recipient's software such that the recipient can refresh the verifiable credential.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "example": {
+                "type": "ManualRefreshService2018",
+                "id": "https://example.edu/refresh/3732"
+              }
+            }
+          },
+          "evidence": {
+            "description": "Evidence property MUST be one or more evidence schemes providing enough information for a verifier to determine whether the evidence gathered by the issuer meets its confidence requirements for relying on the credential.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "example": {
+                "type": [
+                  "DocumentVerification"
+                ],
+                "id": "https://example.edu/evidence/f2aeec97-fc0d-42bf-8ca7-0548192d4231",
+                "verifier": "https://example.edu/issuers/14",
+                "evidenceDocument": "DriversLicense",
+                "subjectPresence": "Physical",
+                "documentPresence": "Physical",
+                "licenseNumber": "123AB4567"
+              }
+            }
           }
         },
         "required": [
