@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.3.0-develop.1](https://github.com/cheqd/studio/compare/3.2.1-develop.2...3.3.0-develop.1) (2024-08-23)
+
+### Features
+
+* Allow additional data in credential request [DEV-4257] ([#572](https://github.com/cheqd/studio/issues/572)) ([35dc34b](https://github.com/cheqd/studio/commit/35dc34bce3db82129d4da8fa4f54de93781cc8a8))
+
 ## [3.2.1-develop.2](https://github.com/cheqd/studio/compare/3.2.1-develop.1...3.2.1-develop.2) (2024-08-20)
 
 ## [3.2.1-develop.1](https://github.com/cheqd/studio/compare/3.2.0...3.2.1-develop.1) (2024-08-07)
