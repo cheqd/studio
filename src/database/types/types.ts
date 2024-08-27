@@ -39,6 +39,7 @@ import { SubscriptionEntity } from '../entities/subscription.entity.js';
 import { CreateSubscritpionTable1695740346003 } from '../migrations/CreateSubscriptionTable.js';
 import { AlterAPIKeyTable1695740346004 } from '../migrations/AlterAPIKeyTable.js';
 import { AlterCustomerTableAddEmail1695740346005 } from '../migrations/AlterCustomerTableAddEmail.js';
+import { AlterCustomerTableUpdateEmail1695740346006 } from '../migrations/AlterCustomerTableUniqueEmail.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -115,6 +116,8 @@ export class Postgres implements AbstractDatabase {
 				AlterAPIKeyTable1695740346004,
 				// Add email and description fields
 				AlterCustomerTableAddEmail1695740346005,
+				// Add unique constraint to email field
+				AlterCustomerTableUpdateEmail1695740346006,
 			],
 			entities: [
 				...Entities,

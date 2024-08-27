@@ -16,9 +16,10 @@ export class CustomerEntity {
 
 	@Column({
 		type: 'text',
-		nullable: true,
+		nullable: false,
+		unique: true,
 	})
-	email?: string;
+	email!: string;
 
 	@Column({
 		type: 'text',
@@ -54,7 +55,7 @@ export class CustomerEntity {
 		this.updatedAt = new Date();
 	}
 
-	constructor(customerId: string, name: string, email?: string, description?: string, paymentProviderId?: string) {
+	constructor(customerId: string, name: string, email: string, description?: string, paymentProviderId?: string) {
 		this.customerId = customerId;
 		this.name = name;
 		this.email = email;
@@ -67,7 +68,7 @@ export class CustomerEntity {
 	public isEqual(customer: CustomerEntity): boolean {
 		return (
 			this.customerId === customer.customerId &&
-			this.name === customer.name &&
+			this.email === customer.email &&
 			this.createdAt.toISOString() === customer.createdAt.toISOString() &&
 			((!this.updatedAt && !customer.updatedAt) ||
 				this.updatedAt.toISOString() === customer.updatedAt.toISOString())
