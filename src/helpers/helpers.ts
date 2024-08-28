@@ -60,13 +60,13 @@ export function toDefaultDkg(did: string): DkgOptions {
 		case CheqdNetwork.Mainnet:
 			return {
 				chain: LitCompatibleCosmosChains.cheqdMainnet,
-				network: LitNetworks.cayenne,
+				network: LitNetworks.datildev,
 			};
 		case CheqdNetwork.Testnet:
 		default:
 			return {
 				chain: LitCompatibleCosmosChains.cheqdTestnet,
-				network: LitNetworks.cayenne,
+				network: LitNetworks.datildev,
 			};
 	}
 }
