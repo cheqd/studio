@@ -1,5 +1,7 @@
 # Changelog
 
+## [3.3.0-develop.3](https://github.com/cheqd/studio/compare/3.3.0-develop.2...3.3.0-develop.3) (2024-08-28)
+
 ## [3.3.0-develop.2](https://github.com/cheqd/studio/compare/3.3.0-develop.1...3.3.0-develop.2) (2024-08-23)
 
 ### Features
