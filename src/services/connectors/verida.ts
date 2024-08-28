@@ -1,5 +1,5 @@
-import type { EnvironmentType } from '@verida/types';
-import { Context, Network } from '@verida/client-ts';
+import type { Network } from '@verida/types';
+import { Context, Network as NetworkClient } from '@verida/client-ts';
 import { AutoAccount } from '@verida/account-node';
 
 import type { CredentialDataRecord, DataRecord } from '../../types/verida.js';
@@ -17,8 +17,8 @@ const { VERIDA_PRIVATE_KEY, POLYGON_PRIVATE_KEY } = process.env;
  * Run the init method before running any other method.
  */
 export class VeridaService {
-	private context: Partial<Record<EnvironmentType.TESTNET | EnvironmentType.MAINNET, Context>> = {};
-	private account: Partial<Record<EnvironmentType.TESTNET | EnvironmentType.MAINNET, AutoAccount>> = {};
+	private context: Partial<Record<Network, Context>> = {};
+	private account: Partial<Record<Network, AutoAccount>> = {};
 
 	static instance = new VeridaService();
 
@@ -29,41 +29,36 @@ export class VeridaService {
 	 * @param contextName The Context name of the application.
 	 * @param accountPrivateKey The private key of the account
 	 */
-	async init(
-		environment: EnvironmentType.TESTNET | EnvironmentType.MAINNET,
-		contextName: string,
-		accountPrivateKey: string,
-		polygonPrivateKey: string
-	) {
-		if (this.context[environment] && this.account[environment]) {
+	async init(network: Network, contextName: string, accountPrivateKey: string, polygonPrivateKey: string) {
+		if (this.context[network] && this.account[network]) {
 			return;
 		}
 
-		this.account[environment] = new AutoAccount({
+		this.account[network] = new AutoAccount({
 			privateKey: accountPrivateKey,
-			environment,
 			didClientConfig: {
 				callType: 'web3',
 				web3Config: {
-					rpcUrl: POLYGON_RPC_URL[environment],
+					rpcUrl: POLYGON_RPC_URL[network],
 					privateKey: polygonPrivateKey, // Polygon private key for creating DID, not needed in our case but required in the current version of the config.
 				},
 			},
+			network,
 		});
 
 		try {
-			this.context[environment] = await Network.connect({
+			this.context[network] = await NetworkClient.connect({
 				client: {
-					environment,
+					network,
 				},
 				context: {
 					name: contextName,
 				},
-				account: this.account[environment]!,
+				account: this.account[network]!,
 			});
 
-			if (this.context[environment] === undefined) {
-				throw new Error(`Verida client connection failed for environment: ${environment}`);
+			if (this.context[network] === undefined) {
+				throw new Error(`Verida client connection failed for environment: ${network}`);
 			}
 		} catch (error) {
 			throw new Error(`${(error as Error).message || error}`);
@@ -77,12 +72,7 @@ export class VeridaService {
 	 * @param subject The subject of the message (similar to an email subject).
 	 * @param data The data to be sent.
 	 */
-	async sendData(
-		environment: EnvironmentType.TESTNET | EnvironmentType.MAINNET,
-		recipientDid: string,
-		subject: string,
-		data: DataRecord
-	) {
+	async sendData(environment: Network, recipientDid: string, subject: string, data: DataRecord) {
 		try {
 			if (!this.context[environment]) {
 				await VeridaService.instance.init(
@@ -120,7 +110,7 @@ export class VeridaService {
 	 * @param credentialSummary A summary of the credential. For instance, will be displayed in the Verida Wallet UI.
 	 */
 	async sendCredential(
-		environment: EnvironmentType.TESTNET | EnvironmentType.MAINNET,
+		environment: Network,
 		recipientDid: string,
 		messageSubject: string,
 		credential: VerifiableCredential,

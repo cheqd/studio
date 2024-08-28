@@ -1,7 +1,7 @@
 import { CheqdNetwork } from '@cheqd/sdk';
 import type { IValidationResult, IValidator, Validatable } from './validator.js';
 import { CheqdIdentifierValidator, KeyIdentifierValidator, VeridaIdentifierValidator } from './identifier.js';
-import { EnvironmentType } from '@verida/types';
+import { Network } from '@verida/types';
 
 export class BaseDidValidator implements IValidator {
 	validate(did: Validatable): IValidationResult {
@@ -158,9 +158,7 @@ export class VeridaDIDValidator extends BaseDidValidator implements IValidator {
 		return this.subject;
 	}
 
-	validate(
-		did: Validatable
-	): IValidationResult & { namespace?: EnvironmentType.TESTNET | EnvironmentType.MAINNET; identifier?: string } {
+	validate(did: Validatable): IValidationResult & { namespace?: Network; identifier?: string } {
 		// Call base validation
 		let _v = super.validate(did);
 		if (!_v.valid) {
@@ -177,7 +175,7 @@ export class VeridaDIDValidator extends BaseDidValidator implements IValidator {
 		}
 
 		// Check namepsace
-		const namespace = did.split(':')[2] as EnvironmentType | undefined;
+		const namespace = did.split(':')[2] as Network | undefined;
 		if (!namespace) {
 			return {
 				valid: false,
@@ -186,10 +184,10 @@ export class VeridaDIDValidator extends BaseDidValidator implements IValidator {
 		}
 
 		// Check if namespace is valid
-		if (namespace !== EnvironmentType.MAINNET && namespace !== EnvironmentType.TESTNET) {
+		if (namespace !== Network.DEVNET && namespace !== Network.MYRTLE && namespace !== Network.BANKSIA) {
 			return {
 				valid: false,
-				error: `Verida DID namespace must be ${EnvironmentType.MAINNET} or ${EnvironmentType.TESTNET}`,
+				error: `Verida DID namespace must be ${Network.DEVNET}, ${Network.MYRTLE} or ${Network.BANKSIA}`,
 			};
 		}
 

@@ -1,4 +1,4 @@
-import type { EnvironmentType } from '@verida/types';
+import type { Network } from '@verida/types';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -64,9 +64,11 @@ export const VC_REMOVE_ORIGINAL_FIELDS = true;
 export const CORS_ERROR_MSG = 'The CORS policy for this site does not allow access from the specified Origin.';
 
 // Verida
-export const POLYGON_RPC_URL: Record<EnvironmentType.MAINNET | EnvironmentType.TESTNET, string> = {
-	mainnet: process.env.POLYGON_RPC_URL_MAINNET || 'https://polygon-rpc.com',
-	testnet: process.env.POLYGON_RPC_URL_TESTNET || 'https://rpc.ankr.com/polygon_mumbai',
+export const POLYGON_RPC_URL: Record<Network, string> = {
+	local: process.env.POLYGON_RPC_URL_LOCAL || 'https://rpc.ankr.com/polygon_mumbai',
+	myrtle: process.env.POLYGON_RPC_URL_MAINNET || 'https://polygon-rpc.com',
+	banksia: process.env.POLYGON_RPC_URL_MAINNET || 'https://polygon-rpc.com',
+	devnet: process.env.POLYGON_RPC_URL_TESTNET || 'https://rpc.ankr.com/polygon_mumbai',
 };
 
 export const VERIDA_APP_NAME = 'Cheqd Verida Connector';
