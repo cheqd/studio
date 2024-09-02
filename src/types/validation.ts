@@ -14,7 +14,7 @@ export type JSONLDProofType = {
 	created: string;
 	verificationMethod: string;
 	proofPurpose: string;
-	jws: string;
+	proofValue: string;
 };
 export type CheqdCredentialStatus = {
 	id: string;

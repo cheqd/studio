@@ -41,7 +41,7 @@ export class JsonLDProofValidator implements IValidator {
 				error: 'Proof.verificationMethod is required',
 			};
 		}
-		if (!proof.jws) {
+		if (!proof.proofValue) {
 			return {
 				valid: false,
 				error: 'Proof.jws is required',
