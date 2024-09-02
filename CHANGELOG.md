@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.3.0-develop.4](https://github.com/cheqd/studio/compare/3.3.0-develop.3...3.3.0-develop.4) (2024-09-02)
+
+### Features
+
+* Support all signature suites in jsonld [DEV-4346] ([#587](https://github.com/cheqd/studio/issues/587)) ([60581f6](https://github.com/cheqd/studio/commit/60581f6614f70ea660311d0e25a6f961588b07ba))
+
 ## [3.3.0-develop.3](https://github.com/cheqd/studio/compare/3.3.0-develop.2...3.3.0-develop.3) (2024-08-28)
 
 ## [3.3.0-develop.2](https://github.com/cheqd/studio/compare/3.3.0-develop.1...3.3.0-develop.2) (2024-08-23)
