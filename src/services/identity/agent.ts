@@ -153,9 +153,9 @@ export class Veramo {
 				new CredentialIssuerLD({
 					contextMaps: [LdDefaultContexts],
 					suites: [
+						new VeramoJsonWebSignature2020(),
 						new VeramoEd25519Signature2018(),
 						new VeramoEd25519Signature2020(),
-						new VeramoJsonWebSignature2020(),
 					],
 				})
 			);
