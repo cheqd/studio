@@ -23,7 +23,13 @@ import { DIDStore, KeyStore } from '@veramo/data-store';
 import { DIDManager } from '@veramo/did-manager';
 import { DIDResolverPlugin, getUniversalResolver as UniversalResolver } from '@veramo/did-resolver';
 import { CredentialPlugin } from '@veramo/credential-w3c';
-import { CredentialIssuerLD, LdDefaultContexts, VeramoEd25519Signature2018 } from '@veramo/credential-ld';
+import {
+	CredentialIssuerLD,
+	LdDefaultContexts,
+	VeramoEd25519Signature2018,
+	VeramoEd25519Signature2020,
+	VeramoJsonWebSignature2020,
+} from '@veramo/credential-ld';
 import {
 	Cheqd,
 	getResolver as CheqdDidResolver,
@@ -146,7 +152,11 @@ export class Veramo {
 				new CredentialPlugin(),
 				new CredentialIssuerLD({
 					contextMaps: [LdDefaultContexts],
-					suites: [new VeramoEd25519Signature2018()],
+					suites: [
+						new VeramoJsonWebSignature2020(),
+						new VeramoEd25519Signature2018(),
+						new VeramoEd25519Signature2020(),
+					],
 				})
 			);
 		}

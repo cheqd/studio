@@ -5,11 +5,11 @@ import { JSONLD_PROOF_TYPES } from '../../../src/types/constants';
 const jsonldProofValdiator = new JsonLDProofValidator();
 
 const validProof = {
-	type: 'Ed25519Signature2018',
-	created: '2023-12-26T12:44:49Z',
-	verificationMethod: 'did:cheqd:testnet:4JdgsZ4A8LegKXdsKE3v6X#key-1',
+	type: 'Ed25519Signature2020',
+	created: '2024-09-02T11:19:17Z',
+	verificationMethod: 'did:cheqd:testnet:11ceabbd-1fdc-46c0-a15d-534c07926d2b#key-1',
 	proofPurpose: 'assertionMethod',
-	jws: 'eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..ZUkh4FZ9IcxZK-H6hr0fduq5q4MBYrRfihENJXeJGzqgQkEy16dHwcowbE8NZwNYzmz5MjVJ73q7pkRTg6BvCw',
+	proofValue: 'z3yauZKryHsVvnW2y8XCB1b993makLQfk1ocKLyhu6w1q2EgeAqAFEhGE1C44XkCoFVPg7r9BK6dTT6P4XCHo6mZp',
 };
 
 describe('isJSONLDProofValidator. Positive', () => {
@@ -46,9 +46,9 @@ describe('isJSONLDProofValidator. Negative', () => {
 		expect(result.valid).toBe(false);
 		expect(result.error).toContain('Proof.proofPurpose is required');
 	});
-	it('should return false for invalid JSONLD proof. No jws', () => {
-		const result = jsonldProofValdiator.validate({ ...validProof, jws: undefined } as any);
+	it('should return false for invalid JSONLD proof. No proofValue', () => {
+		const result = jsonldProofValdiator.validate({ ...validProof, proofValue: undefined } as any);
 		expect(result.valid).toBe(false);
-		expect(result.error).toContain('Proof.jws is required');
+		expect(result.error).toContain('Proof.proofValue or Proof.jws is required');
 	});
 });
