@@ -148,6 +148,6 @@ export enum OperationNameEnum {
 
 export const JWT_PROOF_TYPE = 'JwtProof2020';
 export const StatusList2021Entry = 'StatusList2021Entry';
-export const JSONLD_PROOF_TYPES = ['Ed25519Signature2018', 'Ed25519Signature2020'];
+export const JSONLD_PROOF_TYPES = ['Ed25519Signature2018', 'Ed25519Signature2020', 'JsonWebSignature2020'];
 export const DEFAULT_PAGINATION_LIST_LIMIT = 10;
 export const DefaultStudioRoleName = 'default' as const;

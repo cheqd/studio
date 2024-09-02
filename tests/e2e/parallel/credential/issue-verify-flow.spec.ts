@@ -73,7 +73,7 @@ test(' Issue a jsonLD credential with Ed25519VerificationKey2018', async ({ requ
 	expect(issueResponse).toBeOK();
 	expect(issueResponse.status()).toBe(StatusCodes.OK);
 	expect(jsonldCredential.proof.type).toBe('Ed25519Signature2018');
-	expect(jsonldCredential.proof).toHaveProperty('proofValue');
+	expect(jsonldCredential.proof).toHaveProperty('jws');
 	expect(typeof jsonldCredential.issuer === 'string' ? jsonldCredential.issuer : jsonldCredential.issuer.id).toBe(
 		credentialData.issuerDid
 	);
@@ -152,7 +152,7 @@ test(' Issue a jsonLD credential with JsonWebKey2020', async ({ request }) => {
 	expect(issueResponse).toBeOK();
 	expect(issueResponse.status()).toBe(StatusCodes.OK);
 	expect(jsonldCredential.proof.type).toBe('JsonWebSignature2020');
-	expect(jsonldCredential.proof).toHaveProperty('proofValue');
+	expect(jsonldCredential.proof).toHaveProperty('jws');
 	expect(typeof jsonldCredential.issuer === 'string' ? jsonldCredential.issuer : jsonldCredential.issuer.id).toBe(
 		credentialData.issuerDid
 	);

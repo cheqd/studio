@@ -49,6 +49,6 @@ describe('isJSONLDProofValidator. Negative', () => {
 	it('should return false for invalid JSONLD proof. No proofValue', () => {
 		const result = jsonldProofValdiator.validate({ ...validProof, proofValue: undefined } as any);
 		expect(result.valid).toBe(false);
-		expect(result.error).toContain('Proof.proofValue is required');
+		expect(result.error).toContain('Proof.proofValue or Proof.jws is required');
 	});
 });
