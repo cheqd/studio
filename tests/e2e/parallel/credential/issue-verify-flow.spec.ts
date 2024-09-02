@@ -7,21 +7,19 @@ import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
-let jwtCredential: VerifiableCredential, jsonldCredential: VerifiableCredential;
-
 test(' Issue a jwt credential', async ({ request }) => {
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jwt.json`, 'utf-8')
 	);
-	const response = await request.post(`/credential/issue`, {
+	const issueResponse = await request.post(`/credential/issue`, {
 		data: JSON.stringify(credentialData),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
 		},
 	});
-	jwtCredential = await response.json();
-	expect(response).toBeOK();
-	expect(response.status()).toBe(StatusCodes.OK);
+	const jwtCredential: VerifiableCredential = await issueResponse.json();
+	expect(issueResponse).toBeOK();
+	expect(issueResponse.status()).toBe(StatusCodes.OK);
 	expect(jwtCredential.proof.type).toBe('JwtProof2020');
 	expect(jwtCredential.proof).toHaveProperty('jwt');
 	expect(typeof jwtCredential.issuer === 'string' ? jwtCredential.issuer : jwtCredential.issuer.id).toBe(
@@ -32,10 +30,8 @@ test(' Issue a jwt credential', async ({ request }) => {
 		...credentialData.attributes,
 		id: credentialData.subjectDid,
 	});
-});
 
-test(' Verify a jwt credential', async ({ request }) => {
-	const response = await request.post(`/credential/verify`, {
+	const verifyResponse = await request.post(`/credential/verify`, {
 		data: JSON.stringify({
 			credential: jwtCredential.proof.jwt,
 		}),
@@ -43,9 +39,9 @@ test(' Verify a jwt credential', async ({ request }) => {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
 		},
 	});
-	const result = await response.json();
-	expect(response).toBeOK();
-	expect(response.status()).toBe(StatusCodes.OK);
+	const result = await verifyResponse.json();
+	expect(verifyResponse).toBeOK();
+	expect(verifyResponse.status()).toBe(StatusCodes.OK);
 	expect(result.verified).toBe(true);
 });
 
@@ -67,29 +63,27 @@ test(' Issue a jsonLD credential with Ed25519VerificationKey2018', async ({ requ
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jsonld-ed25519-2018.json`, 'utf-8')
 	);
-	const response = await request.post(`/credential/issue`, {
+	const issueResponse = await request.post(`/credential/issue`, {
 		data: JSON.stringify(credentialData),
 		headers: {
 			'Content-Type': 'application/json',
 		},
 	});
-	jsonldCredential = await response.json();
-	expect(response).toBeOK();
-	expect(response.status()).toBe(StatusCodes.OK);
+	const jsonldCredential: VerifiableCredential = await issueResponse.json();
+	expect(issueResponse).toBeOK();
+	expect(issueResponse.status()).toBe(StatusCodes.OK);
 	expect(jsonldCredential.proof.type).toBe('Ed25519Signature2018');
-	expect(jsonldCredential.proof).toHaveProperty('jws');
-	expect(typeof jwtCredential.issuer === 'string' ? jwtCredential.issuer : jwtCredential.issuer.id).toBe(
+	expect(jsonldCredential.proof).toHaveProperty('proofValue');
+	expect(typeof jsonldCredential.issuer === 'string' ? jsonldCredential.issuer : jsonldCredential.issuer.id).toBe(
 		credentialData.issuerDid
 	);
-	expect(jwtCredential.type).toContain('VerifiableCredential');
-	expect(jwtCredential.credentialSubject).toMatchObject({
+	expect(jsonldCredential.type).toContain('VerifiableCredential');
+	expect(jsonldCredential.credentialSubject).toMatchObject({
 		...credentialData.attributes,
 		id: credentialData.subjectDid,
 	});
-});
 
-test(' Verify a jsonld credential with Ed25519VerificationKey2018', async ({ request }) => {
-	const response = await request.post(`/credential/verify`, {
+	const verifyResponse = await request.post(`/credential/verify`, {
 		data: JSON.stringify({
 			credential: jsonldCredential,
 			fetchRemoteContexts: true,
@@ -98,9 +92,9 @@ test(' Verify a jsonld credential with Ed25519VerificationKey2018', async ({ req
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
 		},
 	});
-	const result = await response.json();
-	expect(response).toBeOK();
-	expect(response.status()).toBe(StatusCodes.OK);
+	const result = await verifyResponse.json();
+	expect(verifyResponse).toBeOK();
+	expect(verifyResponse.status()).toBe(StatusCodes.OK);
 	expect(result.verified).toBe(true);
 });
 
@@ -108,30 +102,28 @@ test(' Issue a jsonLD credential with Ed25519VerificationKey2020', async ({ requ
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jsonld-ed25519-2020.json`, 'utf-8')
 	);
-	const response = await request.post(`/credential/issue`, {
+	const issueResponse = await request.post(`/credential/issue`, {
 		data: JSON.stringify(credentialData),
 		headers: {
 			'Content-Type': 'application/json',
 		},
 	});
-	jsonldCredential = await response.json();
-	expect(response).toBeOK();
-	expect(response.status()).toBe(StatusCodes.OK);
+	const jsonldCredential = await issueResponse.json();
+	expect(issueResponse).toBeOK();
+	expect(issueResponse.status()).toBe(StatusCodes.OK);
 	expect(jsonldCredential.proof.type).toBe('Ed25519Signature2020');
-	expect(jsonldCredential.proof).toHaveProperty('jws');
-	expect(typeof jwtCredential.issuer === 'string' ? jwtCredential.issuer : jwtCredential.issuer.id).toBe(
+	expect(jsonldCredential.proof).toHaveProperty('proofValue');
+	expect(typeof jsonldCredential.issuer === 'string' ? jsonldCredential.issuer : jsonldCredential.issuer.id).toBe(
 		credentialData.issuerDid
 	);
-	expect(jwtCredential.type).toContain('VerifiableCredential');
-	expect(jwtCredential.credentialSubject).toMatchObject({
+	expect(jsonldCredential.type).toContain('VerifiableCredential');
+	expect(jsonldCredential.credentialSubject).toMatchObject({
 		...credentialData.attributes,
 		id: credentialData.subjectDid,
 	});
-	expect(jwtCredential['@context']).toContain('https://w3id.org/security/suites/ed25519-2020/v1');
-});
+	expect(jsonldCredential['@context']).toContain('https://w3id.org/security/suites/ed25519-2020/v1');
 
-test(' Verify a jsonld credential with Ed25519VerificationKey2020', async ({ request }) => {
-	const response = await request.post(`/credential/verify`, {
+	const verifyResponse = await request.post(`/credential/verify`, {
 		data: JSON.stringify({
 			credential: jsonldCredential,
 			fetchRemoteContexts: true,
@@ -140,9 +132,9 @@ test(' Verify a jsonld credential with Ed25519VerificationKey2020', async ({ req
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
 		},
 	});
-	const result = await response.json();
-	expect(response).toBeOK();
-	expect(response.status()).toBe(StatusCodes.OK);
+	const result = await verifyResponse.json();
+	expect(verifyResponse).toBeOK();
+	expect(verifyResponse.status()).toBe(StatusCodes.OK);
 	expect(result.verified).toBe(true);
 });
 
@@ -150,30 +142,28 @@ test(' Issue a jsonLD credential with JsonWebKey2020', async ({ request }) => {
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jsonld-jsonwebkey-2020.json`, 'utf-8')
 	);
-	const response = await request.post(`/credential/issue`, {
+	const issueResponse = await request.post(`/credential/issue`, {
 		data: JSON.stringify(credentialData),
 		headers: {
 			'Content-Type': 'application/json',
 		},
 	});
-	jsonldCredential = await response.json();
-	expect(response).toBeOK();
-	expect(response.status()).toBe(StatusCodes.OK);
+	const jsonldCredential = await issueResponse.json();
+	expect(issueResponse).toBeOK();
+	expect(issueResponse.status()).toBe(StatusCodes.OK);
 	expect(jsonldCredential.proof.type).toBe('JsonWebSignature2020');
-	expect(jsonldCredential.proof).toHaveProperty('jws');
-	expect(typeof jwtCredential.issuer === 'string' ? jwtCredential.issuer : jwtCredential.issuer.id).toBe(
+	expect(jsonldCredential.proof).toHaveProperty('proofValue');
+	expect(typeof jsonldCredential.issuer === 'string' ? jsonldCredential.issuer : jsonldCredential.issuer.id).toBe(
 		credentialData.issuerDid
 	);
-	expect(jwtCredential.type).toContain('VerifiableCredential');
-	expect(jwtCredential.credentialSubject).toMatchObject({
+	expect(jsonldCredential.type).toContain('VerifiableCredential');
+	expect(jsonldCredential.credentialSubject).toMatchObject({
 		...credentialData.attributes,
 		id: credentialData.subjectDid,
 	});
-	expect(jwtCredential['@context']).toContain('https://w3id.org/security/suites/jws-2020/v1');
-});
+	expect(jsonldCredential['@context']).toContain('https://w3id.org/security/suites/jws-2020/v1');
 
-test(' Verify a jsonld credential with JsonWebKey2020', async ({ request }) => {
-	const response = await request.post(`/credential/verify`, {
+	const verifyResponse = await request.post(`/credential/verify`, {
 		data: JSON.stringify({
 			credential: jsonldCredential,
 			fetchRemoteContexts: true,
@@ -182,9 +172,9 @@ test(' Verify a jsonld credential with JsonWebKey2020', async ({ request }) => {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
 		},
 	});
-	const result = await response.json();
-	expect(response).toBeOK();
-	expect(response.status()).toBe(StatusCodes.OK);
+	const result = await verifyResponse.json();
+	expect(verifyResponse).toBeOK();
+	expect(verifyResponse.status()).toBe(StatusCodes.OK);
 	expect(result.verified).toBe(true);
 });
 
