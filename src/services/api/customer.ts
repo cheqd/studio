@@ -41,10 +41,7 @@ export class CustomerService {
 			customerEntity
 		);
 		await PaymentAccountService.instance.create(CheqdNetwork.Testnet, true, customerEntity, key);
-		return {
-			customerId: customerEntity.customerId,
-			name: customerEntity.name,
-		};
+		return customerEntity;
 	}
 
 	public async update(customer: UpdateCustomerEntity) {

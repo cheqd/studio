@@ -7,7 +7,6 @@ import { CustomerService } from '../../api/customer.js';
 import type { ISubmitOperation, ISubmitSubscriptionData } from '../submitter.js';
 import { EventTracker } from '../tracker.js';
 import type { IObserver } from '../types.js';
-import type { FindOptionsWhere } from 'typeorm';
 import { LogToHelper } from '../../../middleware/auth/logto-helper.js';
 import { StatusCodes } from 'http-status-codes';
 import type { SupportedPlanTypes } from '../../../types/admin.js';
@@ -152,37 +151,48 @@ export class SubscriptionSubmitter implements IObserver {
 				this.stripe.customers.retrieve(data.paymentProviderId),
 			]);
 			if (!customer) {
-				const whereClause: FindOptionsWhere<CustomerEntity>[] = [{ paymentProviderId: data.paymentProviderId }];
-				// we add an additional "OR" check in case that a customer was created locally with email and no paymentProviderId
-				if (!stripeCustomer.deleted && stripeCustomer.email) {
-					whereClause.push({ email: stripeCustomer.email });
-				}
-
 				const customers = await CustomerService.instance.customerRepository.find({
-					where: whereClause,
+					where: { paymentProviderId: data.paymentProviderId },
 				});
 				if (customers.length === 0) {
-					this.notify({
-						message: EventTracker.compileBasicNotification(
-							`Customer not found for Cheqd Studio, creating new customer record with paymentProviderId: ${data.paymentProviderId}`,
-							operation.operation
-						),
-						severity: 'info',
-					});
-
+					// we add an additional check in case that a customer was created locally with email and no paymentProviderId
 					if (!stripeCustomer.deleted && stripeCustomer.email) {
-						const customerName = stripeCustomer.name ?? stripeCustomer.email;
-						const customer = await CustomerService.instance.create(
-							customerName,
-							stripeCustomer.email,
-							undefined,
-							data.paymentProviderId
-						);
-						customers.push(customer as CustomerEntity);
-					}
-				}
+						const customerWithoutPaymentProviderId =
+							await CustomerService.instance.customerRepository.findOne({
+								where: { email: stripeCustomer.email },
+							});
 
-				if (customers.length !== 1) {
+						if (!customerWithoutPaymentProviderId) {
+							this.notify({
+								message: EventTracker.compileBasicNotification(
+									`Customer not found for Cheqd Studio, creating new customer record with paymentProviderId: ${data.paymentProviderId}`,
+									operation.operation
+								),
+								severity: 'info',
+							});
+
+							const customerName = stripeCustomer.name ?? stripeCustomer.email;
+							customers.push(
+								await CustomerService.instance.create(
+									customerName,
+									stripeCustomer.email,
+									undefined,
+									data.paymentProviderId
+								)
+							);
+						} else {
+							customers.push(customerWithoutPaymentProviderId);
+						}
+					} else {
+						this.notify({
+							message: EventTracker.compileBasicNotification(
+								`Customer not found for Cheqd Studio, cannot create new customer without a email id: ${data.paymentProviderId}`,
+								operation.operation
+							),
+							severity: 'error',
+						});
+					}
+				} else if (customers.length !== 1) {
 					this.notify({
 						message: EventTracker.compileBasicNotification(
 							`Only one Stripe account should be associated with CaaS customer. Stripe accountId: ${data.paymentProviderId}.`,
@@ -191,6 +201,7 @@ export class SubscriptionSubmitter implements IObserver {
 						severity: 'error',
 					});
 				}
+
 				customer = customers[0];
 			}
 
