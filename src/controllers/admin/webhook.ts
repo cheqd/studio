@@ -136,194 +136,176 @@ export class WebhookController {
 		}
 	}
 
-	async handleSubscriptionCreate(subscription: Stripe.Subscription, customer?: CustomerEntity): Promise<void> {
-		const data = buildSubscriptionData(subscription);
+	async handleSubscriptionCreate(stripeSubscription: Stripe.Subscription, customer?: CustomerEntity): Promise<void> {
+		const data = buildSubscriptionData(stripeSubscription);
 		const operation = OperationNameEnum.SUBSCRIPTION_CREATE;
-		try {
-			const [product, stripeCustomer] = await Promise.all([
-				this.stripe.products.retrieve(data.productId),
-				this.stripe.customers.retrieve(data.paymentProviderId),
-			]);
-			if (!customer) {
-				const customers = await CustomerService.instance.customerRepository.find({
-					where: { paymentProviderId: data.paymentProviderId },
-				});
-				if (customers.length === 0) {
-					// we add an additional check in case that a customer was created locally with email and no paymentProviderId
-					if (!stripeCustomer.deleted && stripeCustomer.email) {
-						const customerWithoutPaymentProviderId =
-							await CustomerService.instance.customerRepository.findOne({
-								where: { email: stripeCustomer.email },
-							});
+		const [product, stripeCustomer] = await Promise.all([
+			this.stripe.products.retrieve(data.productId),
+			this.stripe.customers.retrieve(data.paymentProviderId),
+		]);
+		if (!customer) {
+			const customers = await CustomerService.instance.customerRepository.find({
+				where: { paymentProviderId: data.paymentProviderId },
+			});
+			if (customers.length === 0) {
+				// we add an additional check in case that a customer was created locally with email and no paymentProviderId
+				if (!stripeCustomer.deleted && stripeCustomer.email) {
+					const customerWithoutPaymentProviderId = await CustomerService.instance.customerRepository.findOne({
+						where: { email: stripeCustomer.email },
+					});
 
-						if (!customerWithoutPaymentProviderId) {
-							await eventTracker.notify({
-								message: EventTracker.compileBasicNotification(
-									`Customer not found for Cheqd Studio, creating new customer record with paymentProviderId: ${data.paymentProviderId}`,
-									operation
-								),
-								severity: 'info',
-							});
-
-							const customerName = stripeCustomer.name ?? stripeCustomer.email;
-							customers.push(
-								await CustomerService.instance.create(
-									customerName,
-									stripeCustomer.email,
-									undefined,
-									data.paymentProviderId
-								)
-							);
-						} else {
-							customers.push(customerWithoutPaymentProviderId);
-						}
-					} else {
+					if (!customerWithoutPaymentProviderId) {
 						await eventTracker.notify({
 							message: EventTracker.compileBasicNotification(
-								`Customer not found for Cheqd Studio, cannot create new customer without a email id: ${data.paymentProviderId}`,
+								`Customer not found for Cheqd Studio, creating new customer record with paymentProviderId: ${data.paymentProviderId}`,
 								operation
 							),
-							severity: 'error',
+							severity: 'info',
 						});
-						return;
+
+						const customerName = stripeCustomer.name ?? stripeCustomer.email;
+						customers.push(
+							await CustomerService.instance.create(
+								customerName,
+								stripeCustomer.email,
+								undefined,
+								data.paymentProviderId
+							)
+						);
+					} else {
+						customers.push(customerWithoutPaymentProviderId);
 					}
-				} else if (customers.length !== 1) {
+				} else {
+					const message = EventTracker.compileBasicNotification(
+						`Customer not found for Cheqd Studio, cannot create new customer without a email id: ${data.paymentProviderId}`,
+						operation
+					);
 					await eventTracker.notify({
-						message: EventTracker.compileBasicNotification(
-							`Only one Stripe account should be associated with CaaS customer. Stripe accountId: ${data.paymentProviderId}.`,
-							operation
-						),
+						message,
 						severity: 'error',
 					});
+					throw new Error(message);
 				}
-
-				customer = customers[0];
-			}
-
-			const subscription = await SubscriptionService.instance.create(
-				data.subscriptionId,
-				customer,
-				data.status,
-				data.currentPeriodStart,
-				data.currentPeriodEnd,
-				data.trialStart as Date,
-				data.trialEnd as Date
-			);
-			if (!subscription) {
+			} else if (customers.length !== 1) {
+				const message = EventTracker.compileBasicNotification(
+					`Only one Stripe account should be associated with CaaS customer. Stripe accountId: ${data.paymentProviderId}.`,
+					operation
+				);
 				await eventTracker.notify({
-					message: EventTracker.compileBasicNotification(
-						`Failed to create a new subscription with id: ${data.subscriptionId}.`,
-						operation
-					),
+					message,
 					severity: 'error',
 				});
+				throw new Error(message);
 			}
 
-			await this.syncLogtoRoles(operation, customer.customerId, product.name);
+			customer = customers[0];
+		}
 
+		const subscription = await SubscriptionService.instance.create(
+			data.subscriptionId,
+			customer,
+			data.status,
+			data.currentPeriodStart,
+			data.currentPeriodEnd,
+			data.trialStart as Date,
+			data.trialEnd as Date
+		);
+		if (!subscription) {
+			const message = EventTracker.compileBasicNotification(
+				`Failed to create a new subscription with id: ${data.subscriptionId}.`,
+				operation
+			);
 			await eventTracker.notify({
-				message: EventTracker.compileBasicNotification(
-					`Subscription created with id: ${data.subscriptionId}.`,
-					operation
-				),
-				severity: 'info',
-			});
-		} catch (error) {
-			await eventTracker.notify({
-				message: EventTracker.compileBasicNotification(
-					`Failed to create a new subscription with id: ${data.subscriptionId} because of error: ${(error as Error)?.message || error}`,
-					operation
-				),
+				message,
 				severity: 'error',
 			});
+			throw new Error(message);
 		}
+
+		await this.syncLogtoRoles(operation, customer.customerId, product.name);
+
+		await eventTracker.notify({
+			message: EventTracker.compileBasicNotification(
+				`Subscription created with id: ${data.subscriptionId}.`,
+				operation
+			),
+			severity: 'info',
+		});
 	}
 
-	async handleSubscriptionUpdate(subscription: Stripe.Subscription): Promise<void> {
-		const data = buildSubscriptionData(subscription);
+	async handleSubscriptionUpdate(stripeSubscription: Stripe.Subscription): Promise<void> {
+		const data = buildSubscriptionData(stripeSubscription);
 		const operation = OperationNameEnum.SUBSCRIPTION_UPDATE;
-		try {
-			const subscription = await SubscriptionService.instance.update(
-				data.subscriptionId,
-				data.status,
-				data.currentPeriodStart,
-				data.currentPeriodEnd,
-				data.trialStart as Date,
-				data.trialEnd as Date
+
+		const subscription = await SubscriptionService.instance.update(
+			data.subscriptionId,
+			data.status,
+			data.currentPeriodStart,
+			data.currentPeriodEnd,
+			data.trialStart as Date,
+			data.trialEnd as Date
+		);
+		if (!subscription) {
+			const message = EventTracker.compileBasicNotification(
+				`Failed to update subscription with id: ${data.subscriptionId}.`,
+				operation
 			);
-			if (!subscription) {
-				await eventTracker.notify({
-					message: EventTracker.compileBasicNotification(
-						`Failed to update subscription with id: ${data.subscriptionId}.`,
-						operation
-					),
-					severity: 'error',
-				});
-			}
-
-			const [customer, product] = await Promise.all([
-				CustomerService.instance.findbyPaymentProviderId(data.paymentProviderId),
-				this.stripe.products.retrieve(data.productId),
-			]);
-
-			if (customer) {
-				await this.syncLogtoRoles(operation, customer.customerId, product.name);
-			}
-
 			await eventTracker.notify({
-				message: EventTracker.compileBasicNotification(
-					`Subscription updated with id: ${data.subscriptionId}.`,
-					operation
-				),
-				severity: 'info',
-			});
-		} catch (error) {
-			await eventTracker.notify({
-				message: EventTracker.compileBasicNotification(
-					`Failed to update subscription with id: ${data.subscriptionId} because of error: ${(error as Error)?.message || error}`,
-					operation
-				),
+				message,
 				severity: 'error',
 			});
+
+			throw new Error(message);
 		}
+
+		const [customer, product] = await Promise.all([
+			CustomerService.instance.findbyPaymentProviderId(data.paymentProviderId),
+			this.stripe.products.retrieve(data.productId),
+		]);
+
+		if (customer) {
+			await this.syncLogtoRoles(operation, customer.customerId, product.name);
+		}
+
+		await eventTracker.notify({
+			message: EventTracker.compileBasicNotification(
+				`Subscription updated with id: ${data.subscriptionId}.`,
+				operation
+			),
+			severity: 'info',
+		});
 	}
 
-	async handleSubscriptionCancel(subscription: Stripe.Subscription): Promise<void> {
-		const data = buildSubscriptionData(subscription);
+	async handleSubscriptionCancel(stripeSubscription: Stripe.Subscription): Promise<void> {
+		const data = buildSubscriptionData(stripeSubscription);
 		const operation = OperationNameEnum.SUBSCRIPTION_CANCEL;
-		try {
-			const subscription = await SubscriptionService.instance.update(data.subscriptionId, data.status);
-			if (!subscription) {
-				await eventTracker.notify({
-					message: EventTracker.compileBasicNotification(
-						`Failed to cancel subscription with id: ${data.subscriptionId}.`,
-						operation
-					),
-					severity: 'error',
-				});
-			}
 
-			const customer = await CustomerService.instance.findbyPaymentProviderId(data.paymentProviderId);
-			if (customer) {
-				this.syncLogtoRoles(operation, customer.customerId, '');
-			}
-
+		const subscription = await SubscriptionService.instance.update(data.subscriptionId, data.status);
+		if (!subscription) {
+			const message = EventTracker.compileBasicNotification(
+				`Failed to cancel subscription with id: ${data.subscriptionId}.`,
+				operation
+			);
 			await eventTracker.notify({
-				message: EventTracker.compileBasicNotification(
-					`Subscription canceled with id: ${data.subscriptionId}.`,
-					operation
-				),
-				severity: 'info',
-			});
-		} catch (error) {
-			await eventTracker.notify({
-				message: EventTracker.compileBasicNotification(
-					`Failed to cancel subscription with id: ${data.subscriptionId} because of error: ${(error as Error)?.message || error}`,
-					operation
-				),
+				message,
 				severity: 'error',
 			});
+
+			throw new Error(message);
 		}
+
+		const customer = await CustomerService.instance.findbyPaymentProviderId(data.paymentProviderId);
+		if (customer) {
+			this.syncLogtoRoles(operation, customer.customerId, '');
+		}
+
+		await eventTracker.notify({
+			message: EventTracker.compileBasicNotification(
+				`Subscription canceled with id: ${data.subscriptionId}.`,
+				operation
+			),
+			severity: 'info',
+		});
 	}
 
 	private async handleCustomerRoleAssignment(
@@ -337,14 +319,15 @@ export class WebhookController {
 			productName.toLowerCase() as SupportedPlanTypes
 		);
 		if (roleAssignmentResponse.status !== 201) {
+			const message = EventTracker.compileBasicNotification(
+				`Failed to assign roles to user for planType ${productName}: ${roleAssignmentResponse.error}`,
+				operation
+			);
 			await eventTracker.notify({
-				message: EventTracker.compileBasicNotification(
-					`Failed to assign roles to user for planType ${productName}: ${roleAssignmentResponse.error}`,
-					operation
-				),
+				message,
 				severity: 'error',
 			});
-			return;
+			throw new Error(message);
 		}
 
 		await eventTracker.notify({
@@ -381,6 +364,7 @@ export class WebhookController {
 					message: EventTracker.compileBasicNotification(`Role removal error: ${errMsg}`, operation),
 					severity: 'error',
 				});
+				throw new Error(errMsg);
 			}
 		}
 	}
@@ -389,15 +373,16 @@ export class WebhookController {
 		const logToHelper = new LogToHelper();
 		const setupResp = await logToHelper.setup();
 		if (setupResp.status !== StatusCodes.OK) {
+			const message = EventTracker.compileBasicNotification(
+				`Logto client initialisation failed: ${setupResp.error}`,
+				operation
+			);
 			await eventTracker.notify({
-				message: EventTracker.compileBasicNotification(
-					`Logto client initialisation failed: ${setupResp.error}`,
-					operation
-				),
+				message,
 				severity: 'error',
 			});
 
-			return;
+			throw new Error(message);
 		}
 
 		const user = await UserService.instance.userRepository.findOne({ where: { customer: { customerId } } });
@@ -414,12 +399,14 @@ export class WebhookController {
 			}
 		}
 
+		const message = EventTracker.compileBasicNotification(
+			`Role assignment failed: No user found with customerId: ${customerId}`,
+			operation
+		);
 		await eventTracker.notify({
-			message: EventTracker.compileBasicNotification(
-				`Role assignment failed: No user found with customerId: ${customerId}`,
-				operation
-			),
+			message,
 			severity: 'error',
 		});
+		throw new Error(message);
 	}
 }
