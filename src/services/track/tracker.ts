@@ -11,7 +11,6 @@ import type { ITrackType } from './types.js';
 import { SubmitSubject, TrackSubject } from './observer.js';
 import type { ISubmitOperation } from './submitter.js';
 import { PortalAccountCreateSubmitter } from './admin/account-submitter.js';
-import { SubscriptionSubmitter } from './admin/subscription-submitter.js';
 
 export class EventTracker {
 	readonly emitter: EventEmitter;
@@ -52,7 +51,6 @@ export class EventTracker {
 
 	setupDefaultSubmitters() {
 		this.submitter.attach(new PortalAccountCreateSubmitter(this.getEmitter()));
-		this.submitter.attach(new SubscriptionSubmitter(this.getEmitter()));
 	}
 
 	getEmitter(): EventEmitter {

@@ -4,20 +4,13 @@ import { SubscriptionService } from './subscription.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { EventTracker, eventTracker } from '../track/tracker.js';
 import type { SubscriptionEntity } from '../../database/entities/subscription.entity.js';
-import { buildSubmitOperation } from '../track/helpers.js';
-import { OperationNameEnum } from '../../types/constants.js';
-import { SubscriptionSubmitter } from '../track/admin/subscription-submitter.js';
 import type { NextFunction } from 'express';
+import { WebhookController } from '../../controllers/admin/webhook.js';
 
 dotenv.config();
 
 export class StripeService {
-	submitter: SubscriptionSubmitter;
 	private isFullySynced = false;
-
-	constructor() {
-		this.submitter = new SubscriptionSubmitter(eventTracker.getEmitter());
-	}
 
 	async syncAll(next: NextFunction): Promise<void> {
 		if (!this.isFullySynced) {
@@ -128,9 +121,7 @@ export class StripeService {
 	}
 
 	async createSubscription(subscription: Stripe.Subscription, customer?: CustomerEntity): Promise<void> {
-		await this.submitter.submitSubscriptionCreate(
-			buildSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_CREATE, { customer: customer })
-		);
+		await WebhookController.instance.handleSubscriptionCreate(subscription, customer);
 	}
 
 	async updateSubscription(subscription: Stripe.Subscription, current: SubscriptionEntity): Promise<void> {
@@ -145,9 +136,7 @@ export class StripeService {
 			});
 			return;
 		}
-		await this.submitter.submitSubscriptionUpdate(
-			buildSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_UPDATE)
-		);
+		await WebhookController.instance.handleSubscriptionUpdate(subscription);
 	}
 }
 
