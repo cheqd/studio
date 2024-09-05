@@ -54,13 +54,13 @@ export class WebhookController {
 			// Handle the event
 			switch (event.type) {
 				case 'customer.subscription.deleted':
-					await this.handleSubscriptionCancel(stripe, event.data.object);
+					await WebhookController.instance.handleSubscriptionCancel(stripe, event.data.object);
 					break;
 				case 'customer.subscription.created':
-					await this.handleSubscriptionCreate(stripe, event.data.object);
+					await WebhookController.instance.handleSubscriptionCreate(stripe, event.data.object);
 					break;
 				case 'customer.subscription.updated':
-					await this.handleSubscriptionUpdate(stripe, event.data.object);
+					await WebhookController.instance.handleSubscriptionUpdate(stripe, event.data.object);
 					break;
 				default:
 					// Unexpected event type
@@ -78,7 +78,7 @@ export class WebhookController {
 			// Unexpected event type
 			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
-					`Webhook failed: ${event} with type: ${event?.type}`,
+					`Webhook failed: ${(error as Error)?.message || error} with type: ${event?.type}`,
 					'Stripe Webhook: unexpected'
 				),
 				severity: 'error',
@@ -106,6 +106,7 @@ export class WebhookController {
 			severity: 'info',
 		} satisfies INotifyMessage);
 
+		console.log('fetching stripe data');
 		const [product, stripeCustomer] = await Promise.all([
 			stripe.products.retrieve(data.productId),
 			stripe.customers.retrieve(data.paymentProviderId),
