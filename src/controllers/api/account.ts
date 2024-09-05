@@ -37,11 +37,14 @@ dotenv.config();
 
 export class AccountController {
 	public static createValidator = [
-		check('username')
+		check('primaryEmail')
 			.exists()
-			.withMessage('username is required')
-			.isString()
-			.withMessage('username should be a unique valid string'),
+			.withMessage('primaryEmail is required')
+			.bail()
+			.isEmail()
+			.withMessage('Invalid email id')
+			.bail(),
+		check('name').optional().isString().withMessage('name should be a valid string'),
 	];
 	/**
 	 * @openapi
