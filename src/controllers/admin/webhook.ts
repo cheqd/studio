@@ -1,4 +1,4 @@
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
 import type { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
 import { StatusCodes } from 'http-status-codes';
@@ -15,21 +15,13 @@ import { buildSubscriptionData } from '../../services/track/helpers.js';
 
 dotenv.config();
 export class WebhookController {
-	private readonly stripe: Stripe;
-
-	constructor() {
-		this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-	}
-
 	public static instance = new WebhookController();
 
 	public async handleWebhook(request: Request, response: Response) {
 		// Signature verification and webhook handling is placed in the same method
 		// cause stripe uses the mthod which validate the signature and provides the event.
 		let event = request.body;
-		let subscription;
-		let status;
-		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+		const stripe = response.locals.stripe as Stripe;
 
 		if (!process.env.STRIPE_WEBHOOK_SECRET) {
 			await eventTracker.notify({
@@ -61,52 +53,14 @@ export class WebhookController {
 		try {
 			// Handle the event
 			switch (event.type) {
-				case 'customer.subscription.trial_will_end':
-					subscription = event.data.object;
-					status = subscription.status;
-					await eventTracker.notify({
-						message: EventTracker.compileBasicNotification(
-							`Subscription status is ${status} for subscription with id: ${subscription.id}`,
-							'Stripe Webhook: customer.subscription.trial_will_end'
-						),
-						severity: 'info',
-					} satisfies INotifyMessage);
-					break;
 				case 'customer.subscription.deleted':
-					subscription = event.data.object;
-					status = subscription.status;
-					await eventTracker.notify({
-						message: EventTracker.compileBasicNotification(
-							`Subscription status is ${status} for subscription with id: ${subscription.id}`,
-							'Stripe Webhook: customer.subscription.deleted'
-						),
-						severity: 'info',
-					} satisfies INotifyMessage);
-					await this.handleSubscriptionCancel(subscription);
+					await this.handleSubscriptionCancel(stripe, event.data.object);
 					break;
 				case 'customer.subscription.created':
-					subscription = event.data.object;
-					status = subscription.status;
-					await eventTracker.notify({
-						message: EventTracker.compileBasicNotification(
-							`Subscription status is ${status} for subscription with id: ${subscription.id}`,
-							'Stripe Webhook: customer.subscription.created'
-						),
-						severity: 'info',
-					} satisfies INotifyMessage);
-					await this.handleSubscriptionCreate(subscription);
+					await this.handleSubscriptionCreate(stripe, event.data.object);
 					break;
 				case 'customer.subscription.updated':
-					subscription = event.data.object;
-					status = subscription.status;
-					await eventTracker.notify({
-						message: EventTracker.compileBasicNotification(
-							`Subscription status is ${status} for subscription with id: ${subscription.id}`,
-							'Stripe Webhook: customer.subscription.updated'
-						),
-						severity: 'info',
-					} satisfies INotifyMessage);
-					await this.handleSubscriptionUpdate(subscription);
+					await this.handleSubscriptionUpdate(stripe, event.data.object);
 					break;
 				default:
 					// Unexpected event type
@@ -136,12 +90,25 @@ export class WebhookController {
 		}
 	}
 
-	async handleSubscriptionCreate(stripeSubscription: Stripe.Subscription, customer?: CustomerEntity): Promise<void> {
+	async handleSubscriptionCreate(
+		stripe: Stripe,
+		stripeSubscription: Stripe.Subscription,
+		customer?: CustomerEntity
+	): Promise<void> {
 		const data = buildSubscriptionData(stripeSubscription);
 		const operation = OperationNameEnum.SUBSCRIPTION_CREATE;
+
+		await eventTracker.notify({
+			message: EventTracker.compileBasicNotification(
+				`Subscription status is ${stripeSubscription.status} for subscription with id: ${stripeSubscription.id}`,
+				'Stripe Webhook: customer.subscription.created'
+			),
+			severity: 'info',
+		} satisfies INotifyMessage);
+
 		const [product, stripeCustomer] = await Promise.all([
-			this.stripe.products.retrieve(data.productId),
-			this.stripe.customers.retrieve(data.paymentProviderId),
+			stripe.products.retrieve(data.productId),
+			stripe.customers.retrieve(data.paymentProviderId),
 		]);
 		if (!customer) {
 			const customers = await CustomerService.instance.customerRepository.find({
@@ -233,9 +200,17 @@ export class WebhookController {
 		});
 	}
 
-	async handleSubscriptionUpdate(stripeSubscription: Stripe.Subscription): Promise<void> {
+	async handleSubscriptionUpdate(stripe: Stripe, stripeSubscription: Stripe.Subscription): Promise<void> {
 		const data = buildSubscriptionData(stripeSubscription);
 		const operation = OperationNameEnum.SUBSCRIPTION_UPDATE;
+
+		await eventTracker.notify({
+			message: EventTracker.compileBasicNotification(
+				`Subscription status is ${stripeSubscription.status} for subscription with id: ${stripeSubscription.id}`,
+				'Stripe Webhook: customer.subscription.updated'
+			),
+			severity: 'info',
+		} satisfies INotifyMessage);
 
 		const subscription = await SubscriptionService.instance.update(
 			data.subscriptionId,
@@ -260,7 +235,7 @@ export class WebhookController {
 
 		const [customer, product] = await Promise.all([
 			CustomerService.instance.findbyPaymentProviderId(data.paymentProviderId),
-			this.stripe.products.retrieve(data.productId),
+			stripe.products.retrieve(data.productId),
 		]);
 
 		if (customer) {
@@ -276,9 +251,17 @@ export class WebhookController {
 		});
 	}
 
-	async handleSubscriptionCancel(stripeSubscription: Stripe.Subscription): Promise<void> {
+	async handleSubscriptionCancel(stripe: Stripe, stripeSubscription: Stripe.Subscription): Promise<void> {
 		const data = buildSubscriptionData(stripeSubscription);
 		const operation = OperationNameEnum.SUBSCRIPTION_CANCEL;
+
+		await eventTracker.notify({
+			message: EventTracker.compileBasicNotification(
+				`Subscription status is ${stripeSubscription.status} for subscription with id: ${stripeSubscription.id}`,
+				'Stripe Webhook: customer.subscription.deleted'
+			),
+			severity: 'info',
+		} satisfies INotifyMessage);
 
 		const subscription = await SubscriptionService.instance.update(data.subscriptionId, data.status);
 		if (!subscription) {

@@ -11,6 +11,11 @@ dotenv.config();
 
 export class StripeService {
 	private isFullySynced = false;
+	private stripe: Stripe;
+
+	constructor() {
+		this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+	}
 
 	async syncAll(next: NextFunction): Promise<void> {
 		if (!this.isFullySynced) {
@@ -21,9 +26,8 @@ export class StripeService {
 	}
 
 	async syncFull(): Promise<void> {
-		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 		// Sync all subscriptions
-		for await (const subscription of stripe.subscriptions.list({
+		for await (const subscription of this.stripe.subscriptions.list({
 			status: 'all',
 		})) {
 			const current = await SubscriptionService.instance.subscriptionRepository.findOne({
@@ -46,8 +50,7 @@ export class StripeService {
 
 	// Sync all the subscriptions for current customer
 	async syncCustomer(customer: CustomerEntity): Promise<void> {
-		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-		for await (const subscription of stripe.subscriptions.list({
+		for await (const subscription of this.stripe.subscriptions.list({
 			customer: customer.paymentProviderId,
 			status: 'all',
 		})) {
@@ -63,8 +66,6 @@ export class StripeService {
 	}
 
 	async syncOne(customer: CustomerEntity): Promise<void> {
-		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
 		const local = await SubscriptionService.instance.findCurrent(customer);
 		if (!local) {
 			await eventTracker.notify({
@@ -74,11 +75,11 @@ export class StripeService {
 				),
 				severity: 'debug',
 			});
-			const activeSubs = await stripe.subscriptions.list({
+			const activeSubs = await this.stripe.subscriptions.list({
 				customer: customer.paymentProviderId,
 				status: 'active',
 			});
-			const trialSubs = await stripe.subscriptions.list({
+			const trialSubs = await this.stripe.subscriptions.list({
 				customer: customer.paymentProviderId,
 				status: 'trialing',
 			});
@@ -99,7 +100,7 @@ export class StripeService {
 			return;
 		}
 		const subscriptionId = local.subscriptionId;
-		const remote = await stripe.subscriptions.retrieve(subscriptionId);
+		const remote = await this.stripe.subscriptions.retrieve(subscriptionId);
 		if (!remote) {
 			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
@@ -121,7 +122,7 @@ export class StripeService {
 	}
 
 	async createSubscription(subscription: Stripe.Subscription, customer?: CustomerEntity): Promise<void> {
-		await WebhookController.instance.handleSubscriptionCreate(subscription, customer);
+		await WebhookController.instance.handleSubscriptionCreate(this.stripe, subscription, customer);
 	}
 
 	async updateSubscription(subscription: Stripe.Subscription, current: SubscriptionEntity): Promise<void> {
@@ -136,7 +137,7 @@ export class StripeService {
 			});
 			return;
 		}
-		await WebhookController.instance.handleSubscriptionUpdate(subscription);
+		await WebhookController.instance.handleSubscriptionUpdate(this.stripe, subscription);
 	}
 }
 
