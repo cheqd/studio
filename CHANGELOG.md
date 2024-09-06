@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.3.0-develop.5](https://github.com/cheqd/studio/compare/3.3.0-develop.4...3.3.0-develop.5) (2024-09-06)
+
+### Bug Fixes
+
+* Fix customer creation workflow [DEV-4287] ([#574](https://github.com/cheqd/studio/issues/574)) ([6e1ca72](https://github.com/cheqd/studio/commit/6e1ca728a820d1bba8c870c60e849f96c0685d8e))
+
 ## [3.3.0-develop.4](https://github.com/cheqd/studio/compare/3.3.0-develop.3...3.3.0-develop.4) (2024-09-02)
 
 ### Features
