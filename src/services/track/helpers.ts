@@ -39,17 +39,21 @@ export function toCoin(amount: bigint, denom = MINIMAL_DENOM): Coin {
 export function buildSubmitOperation(subscription: Stripe.Subscription, name: string, options?: ISubmitOptions) {
 	return {
 		operation: name,
-		data: {
-			subscriptionId: subscription.id,
-			paymentProviderId: subscription.customer as string,
-			status: subscription.status,
-			currentPeriodStart: new Date(subscription.current_period_start * 1000),
-			currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-			trialStart: subscription.trial_start ? new Date(subscription.trial_start * 1000) : undefined,
-			trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : undefined,
-			productId: getStripeObjectKey(subscription.items.data[0].plan.product),
-			priceId: getStripeObjectKey(subscription.items.data[0].plan.id),
-		} satisfies ISubmitData,
+		data: buildSubscriptionData(subscription),
 		options,
 	} satisfies ISubmitOperation;
+}
+
+export function buildSubscriptionData(subscription: Stripe.Subscription) {
+	return {
+		subscriptionId: subscription.id,
+		paymentProviderId: subscription.customer as string,
+		status: subscription.status,
+		currentPeriodStart: new Date(subscription.current_period_start * 1000),
+		currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+		trialStart: subscription.trial_start ? new Date(subscription.trial_start * 1000) : undefined,
+		trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : undefined,
+		productId: getStripeObjectKey(subscription.items.data[0].plan.product),
+		priceId: getStripeObjectKey(subscription.items.data[0].plan.id),
+	} satisfies ISubmitData;
 }

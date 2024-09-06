@@ -99,7 +99,7 @@ export class MigrateData1695740345977 implements MigrationInterface {
 		for (const oldCustomer of await queryRunner.query(`SELECT * FROM customers`)) {
 			// 1. Create customer row:
 			console.info(`Creating CustomerEntity with id ${oldCustomer.customerId}`);
-			const customerEntity = new CustomerEntity(uuidv4(), oldCustomer.address);
+			const customerEntity = new CustomerEntity(uuidv4(), oldCustomer.name, oldCustomer.email);
 			customerEntity.createdAt = new Date();
 
 			console.info(`Creating customer with address ${oldCustomer.address}`);

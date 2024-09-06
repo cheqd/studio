@@ -1338,7 +1338,11 @@
  *       properties:
  *          user:
  *            type: object
+ *            required:
+ *              - primaryEmail
  *            properties:
+ *              name:
+ *                type: string
  *              primaryEmail:
  *                type: string
  *     InvalidRequest:

@@ -4,19 +4,17 @@ import { SubscriptionService } from './subscription.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { EventTracker, eventTracker } from '../track/tracker.js';
 import type { SubscriptionEntity } from '../../database/entities/subscription.entity.js';
-import { buildSubmitOperation } from '../track/helpers.js';
-import { OperationNameEnum } from '../../types/constants.js';
-import { SubscriptionSubmitter } from '../track/admin/subscription-submitter.js';
 import type { NextFunction } from 'express';
+import { WebhookController } from '../../controllers/admin/webhook.js';
 
 dotenv.config();
 
 export class StripeService {
-	submitter: SubscriptionSubmitter;
 	private isFullySynced = false;
+	private stripe: Stripe;
 
 	constructor() {
-		this.submitter = new SubscriptionSubmitter(eventTracker.getEmitter());
+		this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 	}
 
 	async syncAll(next: NextFunction): Promise<void> {
@@ -28,9 +26,8 @@ export class StripeService {
 	}
 
 	async syncFull(): Promise<void> {
-		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 		// Sync all subscriptions
-		for await (const subscription of stripe.subscriptions.list({
+		for await (const subscription of this.stripe.subscriptions.list({
 			status: 'all',
 		})) {
 			const current = await SubscriptionService.instance.subscriptionRepository.findOne({
@@ -53,8 +50,7 @@ export class StripeService {
 
 	// Sync all the subscriptions for current customer
 	async syncCustomer(customer: CustomerEntity): Promise<void> {
-		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-		for await (const subscription of stripe.subscriptions.list({
+		for await (const subscription of this.stripe.subscriptions.list({
 			customer: customer.paymentProviderId,
 			status: 'all',
 		})) {
@@ -70,8 +66,6 @@ export class StripeService {
 	}
 
 	async syncOne(customer: CustomerEntity): Promise<void> {
-		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
 		const local = await SubscriptionService.instance.findCurrent(customer);
 		if (!local) {
 			await eventTracker.notify({
@@ -81,11 +75,11 @@ export class StripeService {
 				),
 				severity: 'debug',
 			});
-			const activeSubs = await stripe.subscriptions.list({
+			const activeSubs = await this.stripe.subscriptions.list({
 				customer: customer.paymentProviderId,
 				status: 'active',
 			});
-			const trialSubs = await stripe.subscriptions.list({
+			const trialSubs = await this.stripe.subscriptions.list({
 				customer: customer.paymentProviderId,
 				status: 'trialing',
 			});
@@ -106,7 +100,7 @@ export class StripeService {
 			return;
 		}
 		const subscriptionId = local.subscriptionId;
-		const remote = await stripe.subscriptions.retrieve(subscriptionId);
+		const remote = await this.stripe.subscriptions.retrieve(subscriptionId);
 		if (!remote) {
 			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
@@ -128,9 +122,7 @@ export class StripeService {
 	}
 
 	async createSubscription(subscription: Stripe.Subscription, customer?: CustomerEntity): Promise<void> {
-		await this.submitter.submitSubscriptionCreate(
-			buildSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_CREATE, { customer: customer })
-		);
+		await WebhookController.instance.handleSubscriptionCreate(this.stripe, subscription, customer);
 	}
 
 	async updateSubscription(subscription: Stripe.Subscription, current: SubscriptionEntity): Promise<void> {
@@ -145,9 +137,7 @@ export class StripeService {
 			});
 			return;
 		}
-		await this.submitter.submitSubscriptionUpdate(
-			buildSubmitOperation(subscription, OperationNameEnum.SUBSCRIPTION_UPDATE)
-		);
+		await WebhookController.instance.handleSubscriptionUpdate(this.stripe, subscription);
 	}
 }
 

@@ -1,4 +1,19 @@
 import type { Request, Response } from 'express';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import type { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
+import type {
+	QueryCustomerResponseBody,
+	QueryIdTokenResponseBody,
+	UnsuccessfulQueryCustomerResponseBody,
+	UnsuccessfulQueryIdTokenResponseBody,
+} from '../../types/customer.js';
+import type { UnsuccessfulResponseBody } from '../../types/shared.js';
+import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../../services/track/submitter.js';
+import type Stripe from 'stripe';
+import type { SafeAPIResponse } from '../../types/common.js';
+import type { RoleEntity } from '../../database/entities/role.entity.js';
+import type { SupportedPlanTypes } from '../../types/admin.js';
+
 import { CheqdNetwork, checkBalance } from '@cheqd/sdk';
 import { TESTNET_MINIMUM_BALANCE, DEFAULT_DENOM_EXPONENT, OperationNameEnum } from '../../types/constants.js';
 import { CustomerService } from '../../services/api/customer.js';
@@ -8,39 +23,28 @@ import { StatusCodes } from 'http-status-codes';
 import { LogToWebHook } from '../../middleware/hook.js';
 import { UserService } from '../../services/api/user.js';
 import { PaymentAccountService } from '../../services/api/payment-account.js';
-import type { CustomerEntity } from '../../database/entities/customer.entity.js';
-import type { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
-import type {
-	QueryCustomerResponseBody,
-	QueryIdTokenResponseBody,
-	UnsuccessfulQueryCustomerResponseBody,
-	UnsuccessfulQueryIdTokenResponseBody,
-} from '../../types/customer.js';
-import type { UnsuccessfulResponseBody } from '../../types/shared.js';
 import { check } from 'express-validator';
 import { EventTracker, eventTracker } from '../../services/track/tracker.js';
-import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../../services/track/submitter.js';
 import * as dotenv from 'dotenv';
 import { validate } from '../validator/decorator.js';
 import { SupportedKeyTypes } from '@veramo/utils';
 import { SubscriptionService } from '../../services/admin/subscription.js';
-import Stripe from 'stripe';
 import { RoleService } from '../../services/api/role.js';
-import { SafeAPIResponse } from '../../types/common.js';
-import { RoleEntity } from '../../database/entities/role.entity.js';
 import { getStripeObjectKey } from '../../utils/index.js';
-import type { SupportedPlanTypes } from '../../types/admin.js';
 import { KeyService } from '../../services/api/key.js';
 dotenv.config();
 
 export class AccountController {
 	public static createValidator = [
-		check('username')
+		check('primaryEmail')
 			.exists()
-			.withMessage('username is required')
-			.isString()
-			.withMessage('username should be a unique valid string'),
+			.withMessage('primaryEmail is required')
+			.bail()
+			.isEmail()
+			.withMessage('Invalid email id')
+			.bail(),
+		check('name').optional().isString().withMessage('name should be a valid string'),
 	];
 	/**
 	 * @openapi
@@ -255,7 +259,7 @@ export class AccountController {
 
 		//4. Check if there is customer associated with such user
 		if (!userEntity.customer) {
-			customerEntity = (await CustomerService.instance.create(logToUserEmail)) as CustomerEntity;
+			customerEntity = (await CustomerService.instance.create(logToName, logToUserEmail)) as CustomerEntity;
 			if (!customerEntity) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'User exists in database: Customer was not created',
@@ -480,14 +484,14 @@ export class AccountController {
 		// 4. Check the token balance for Testnet account
 
 		// 1. Get logTo UserId from request body
-		const { username } = request.body;
+		const { name, primaryEmail } = request.body;
 
 		try {
 			// 2. Check if the customer exists
 			const customerEntity = response.locals.customer
 				? (response.locals.customer as CustomerEntity)
 				: // 2.1 Create customer
-					((await CustomerService.instance.create(username)) as CustomerEntity);
+					((await CustomerService.instance.create(name || primaryEmail, primaryEmail)) as CustomerEntity);
 
 			if (!customerEntity) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
