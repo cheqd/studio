@@ -280,7 +280,7 @@ export class WebhookController {
 
 		const customer = await CustomerService.instance.findbyPaymentProviderId(data.paymentProviderId);
 		if (customer) {
-			this.syncLogtoRoles(operation, customer.customerId, '');
+			await this.syncLogtoRoles(operation, customer.customerId, '');
 		}
 
 		await eventTracker.notify({
@@ -375,11 +375,9 @@ export class WebhookController {
 			switch (operation) {
 				case OperationNameEnum.SUBSCRIPTION_CREATE:
 				case OperationNameEnum.SUBSCRIPTION_UPDATE:
-					this.handleCustomerRoleAssignment(operation, logToHelper, user.logToId, productName);
-					return;
+					return await this.handleCustomerRoleAssignment(operation, logToHelper, user.logToId, productName);
 				case OperationNameEnum.SUBSCRIPTION_CANCEL:
-					this.handleCustomerRoleRemoval(operation, logToHelper, user.logToId);
-					return;
+					return await this.handleCustomerRoleRemoval(operation, logToHelper, user.logToId);
 			}
 		}
 
