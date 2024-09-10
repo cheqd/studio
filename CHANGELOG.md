@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.3.0](https://github.com/cheqd/studio/compare/3.2.0...3.3.0) (2024-09-10)
+
+### Features
+
+* Allow additional data in credential request [DEV-4257] ([#572](https://github.com/cheqd/studio/issues/572)) ([35dc34b](https://github.com/cheqd/studio/commit/35dc34bce3db82129d4da8fa4f54de93781cc8a8))
+* Support all signature suites in jsonld [DEV-4346] ([#587](https://github.com/cheqd/studio/issues/587)) ([60581f6](https://github.com/cheqd/studio/commit/60581f6614f70ea660311d0e25a6f961588b07ba))
+* Update credential issue schema ([c3f9e68](https://github.com/cheqd/studio/commit/c3f9e68162025bf6e7ed8c11087e8b86b7897997))
+
+### Bug Fixes
+
+* Fix customer creation workflow [DEV-4287] ([#574](https://github.com/cheqd/studio/issues/574)) ([6e1ca72](https://github.com/cheqd/studio/commit/6e1ca728a820d1bba8c870c60e849f96c0685d8e))
+* Fix error handling in webhook ([#590](https://github.com/cheqd/studio/issues/590)) ([5ede2ff](https://github.com/cheqd/studio/commit/5ede2ff6a2f2e85dc2e5c06347fbec7c51eca61b))
+
+### Performance Improvements
+
+* Parallelize non ledger operation tests ([#568](https://github.com/cheqd/studio/issues/568)) ([4d3ad9d](https://github.com/cheqd/studio/commit/4d3ad9db7614caf6143ce78380d0386c8ee23964))
+
 ## [3.3.0-develop.6](https://github.com/cheqd/studio/compare/3.3.0-develop.5...3.3.0-develop.6) (2024-09-10)
 
 ### Bug Fixes
