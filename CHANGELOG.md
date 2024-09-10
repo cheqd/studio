@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.3.0-develop.6](https://github.com/cheqd/studio/compare/3.3.0-develop.5...3.3.0-develop.6) (2024-09-10)
+
+### Bug Fixes
+
+* Fix error handling in webhook ([#590](https://github.com/cheqd/studio/issues/590)) ([5ede2ff](https://github.com/cheqd/studio/commit/5ede2ff6a2f2e85dc2e5c06347fbec7c51eca61b))
+
 ## [3.3.0-develop.5](https://github.com/cheqd/studio/compare/3.3.0-develop.4...3.3.0-develop.5) (2024-09-06)
 
 ### Bug Fixes
