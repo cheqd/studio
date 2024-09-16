@@ -73,7 +73,7 @@
 		"@verida/account-node": "^3.0.3",
 		"@verida/client-ts": "^3.0.4",
 		"@verida/encryption-utils": "^3.0.1",
-		"@verida/types": "^3.0.2",
+		"@verida/types": "^4.1.0",
 		"@verida/vda-did-resolver": "^3.0.3",
 		"bcrypt": "^5.1.1",
 		"bs58": "^5.0.0",
