@@ -99,7 +99,7 @@
 		"pg-connection-string": "^2.6.4",
 		"secp256k1": "^5.0.0",
 		"sqlite3": "^5.1.7",
-		"stripe": "^14.25.0",
+		"stripe": "^16.11.0",
 		"swagger-ui-dist": "5.17.14",
 		"swagger-ui-express": "^5.0.1",
 		"typeorm": "^0.3.20",
