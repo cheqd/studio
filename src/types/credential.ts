@@ -11,6 +11,11 @@ import type {
 } from '@cheqd/did-provider-cheqd';
 import type { VerificationOptions } from './shared.js';
 
+export enum CredentialConnectors {
+	Verida,
+	Resource,
+}
+
 export interface CredentialRequest {
 	subjectDid: string;
 	attributes: Record<string, unknown>;
@@ -26,6 +31,7 @@ export interface CredentialRequest {
 	termsOfUse?: AdditionalData | AdditionalData[];
 	refreshService?: AdditionalData | AdditionalData[];
 	evidence?: AdditionalData | AdditionalData[];
+	connector?: CredentialConnectors;
 
 	[x: string]: any;
 }

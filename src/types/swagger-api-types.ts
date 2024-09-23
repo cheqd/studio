@@ -130,6 +130,11 @@
  *                documentPresence: Physical,
  *                licenseNumber: 123AB4567
  *              }
+ *       connector:
+ *         type: string
+ *         enum:
+ *           - verida
+ *           - resource
  *       required:
  *         - issuerDid
  *         - subjectDid
