@@ -3,6 +3,14 @@ import type { DIDDocument, DIDResolutionResult, VerificationMethod } from 'did-r
 import type { UnsuccessfulQueryResponseBody, UnsuccessfulResponseBody } from './shared.js';
 import type { KeyImport } from './key.js';
 import type { ICheqdIDentifier } from '@cheqd/did-provider-cheqd';
+import type { CredentialRequest } from './credential.js';
+
+// Enums
+export enum DIDAccreditationTypes {
+	VerifiableAuthorisationForTrustChain = 'VerifiableAuthorisationForTrustChain',
+	VerifiableAccreditationToAccredit = 'VerifiableAccreditationToAccredit',
+	VerifiableAccreditationToAttest = 'VerifiableAccreditationToAttest',
+}
 
 // Interfaces
 export interface DidImportRequest {
@@ -48,6 +56,19 @@ export type DeactivateDIDRequestBody = { publicKeyHexs?: string[] };
 export type GetDIDRequestParams = DIDRequest;
 
 export type ResolveDIDRequestParams = DIDRequest;
+
+export type DIDAccreditationRequestBody = Omit<CredentialRequest, 'issuerDid' | 'attributes'> & {
+	schemas: {
+		type: string;
+		url: string;
+	}[];
+	attributes?: Record<string, unknown>;
+};
+
+export type DIDAccreditationRequestParams = {
+	did: string;
+	type: DIDAccreditationTypes;
+};
 
 // Responses
 //Positive
