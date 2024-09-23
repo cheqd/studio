@@ -441,15 +441,13 @@
  *           - verida
  *           - resource
  *       required:
- *         - issuerDid
  *         - subjectDid
  *         - schemas
  *       example:
- *         issuerDid: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
  *         subjectDid: did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
- *         attributes:
- *           gender: male
- *           name: Bob
+ *         schemas:
+ *           - type: MuseumPassCredential
+ *             url: https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:0a5b94d0-a417-48ed-a6f5-4abc9e95888d?resourceName=MuseumPassCredentialSchema&resourceType=JsonSchemaValidator2018
  *         '@context':
  *           - https://schema.org
  *         type:

@@ -801,7 +801,7 @@ export class DIDController {
 	 *         required: true
 	 *       - in: query
 	 *         name: type
-	 *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
+	 *         description: Select the type of accreditation to be issued.
 	 *         schema:
 	 *           type: string
 	 *           enum:
