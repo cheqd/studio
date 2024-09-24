@@ -42,6 +42,7 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 	proof: ProofType;
 	statusList?: StatusList2021Revocation | StatusList2021Suspension;
 	resourceId?: string;
+	termsOfUse?: Record<string, string>;
 
 	constructor(w3Credential: W3CVerifiableCredential) {
 		super();

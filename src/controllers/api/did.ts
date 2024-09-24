@@ -48,7 +48,8 @@ import { CheqdProviderErrorCodes } from '@cheqd/did-provider-cheqd';
 import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
 import { validate } from '../validator/decorator.js';
 import { Credentials } from '../../services/api/credentials.js';
-import { CredentialConnectors, type CredentialRequest } from '../../types/credential.js';
+import { CredentialConnectors, VerifyCredentialRequestQuery, type CredentialRequest } from '../../types/credential.js';
+import { DIDService } from '../../services/api/did.js';
 
 export class DIDController {
 	public static createDIDValidator = [
@@ -930,6 +931,82 @@ export class DIDController {
 			eventTracker.emit('track', trackInfo);
 
 			return response.status(StatusCodes.OK).json(credential);
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			} satisfies UnsuccessfulResolveDidResponseBody);
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /did/accredit/verify/{:did}:
+	 *   post:
+	 *     tags: [ DID ]
+	 *     summary: Verify a verifiable accreditation for a DID.
+	 *     description: Generate and publish a verifiable accreditation for a subject DID accrediting schema's as a DID Linked resource.
+	 *     operationId: accredit
+	 *     parameters:
+	 *       - in: path
+	 *         name: did
+	 *         description: Accreditation identifier.
+	 *         schema:
+	 *           type: string
+	 *         required: true
+	 *     requestBody:
+	 *       content:
+	 *         application/x-www-form-urlencoded:
+	 *           schema:
+	 *             $ref: '#/components/schemas/DIDAccreditationRequest'
+	 *         application/json:
+	 *           schema:
+	 *             $ref: '#/components/schemas/DIDAccreditationRequest'
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/Credential'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async accreditVerify(request: Request, response: Response) {
+		// Extract did from params
+		const { did } = request.params as DIDAccreditationRequestParams;
+		const { verifyStatus, allowDeactivatedDid } = request.query as VerifyCredentialRequestQuery;
+
+		try {
+			const didUrl = request.params.did + getQueryParams(request.query);
+
+			const result = await DIDService.instance.verify_accreditation(
+				didUrl,
+				verifyStatus || true,
+				allowDeactivatedDid || false,
+				response.locals.customer
+			);
+			// Track operation
+			const trackInfo = {
+				category: OperationCategoryNameEnum.CREDENTIAL,
+				name: OperationNameEnum.CREDENTIAL_VERIFY,
+				customer: response.locals.customer,
+				user: response.locals.user,
+				data: {
+					did,
+				} satisfies ICredentialTrack,
+			} as ITrackOperation;
+
+			eventTracker.emit('track', trackInfo);
+			if (result.success) {
+				return response.status(StatusCodes.OK).json(result.data);
+			} else {
+				return response.status(result.status).json(result.error);
+			}
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
