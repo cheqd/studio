@@ -89,7 +89,7 @@ export class AccreditationController {
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 		// Extract did from params
-		const { accreditationType } = request.params as DIDAccreditationRequestParams;
+		const { accreditationType } = request.query as DIDAccreditationRequestParams;
 		const {
 			issuerDid,
 			subjectDid,
@@ -253,15 +253,15 @@ export class AccreditationController {
 	public async verify(request: Request, response: Response) {
 		// Extract did from params
 		const { did } = request.params;
-		const { verifyStatus, allowDeactivatedDid } = request.query as VerifyCredentialRequestQuery;
+		const { verifyStatus = false, allowDeactivatedDid = false } = request.query as VerifyCredentialRequestQuery;
 
 		try {
-			const didUrl = request.params.did + getQueryParams(request.query);
+			const didUrl = did + getQueryParams(request.query);
 
 			const result = await AccreditationService.instance.verify_accreditation(
 				didUrl,
-				verifyStatus || true,
-				allowDeactivatedDid || false,
+				verifyStatus,
+				allowDeactivatedDid,
 				response.locals.customer
 			);
 			// Track operation

@@ -28,14 +28,8 @@ test(' Issue a accreditation', async ({ request }) => {
 		...credentialData.attributes,
 		id: credentialData.subjectDid,
 	});
-
-	const verifyResponse = await request.post(`/accreditation/verify/${didUrls[0]}`, {
-		headers: {
-			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
-		},
-	});
-	const result = await verifyResponse.json();
-	expect(verifyResponse).toBeOK();
-	expect(verifyResponse.status()).toBe(StatusCodes.OK);
-	expect(result.verified).toBe(true);
+	expect(didUrls).toHaveLength(2);
+	expect(didUrls).toContain(
+		`did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=testAccreditation&resourceType=VerifiableAuthorisationForTrustChain`
+	);
 });

@@ -7,5 +7,6 @@
 			"type": "Person"
 		}
 	],
-	"format": "jwt"
+	"format": "jwt",
+	"accreditationName": "testAccreditation"
 }
