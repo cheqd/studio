@@ -18,7 +18,7 @@ import { body, param } from '../validator/index.js';
 export class AccreditationController {
 	public static issueValidator = [
 		param('did').exists().isString().isDID().bail(),
-		param('type').exists().isString().isIn(['authorize', 'accredit', 'attest']).bail(),
+		param('accreditationType').exists().isString().isIn(['authorize', 'accredit', 'attest']).bail(),
 		body('subjectDid').exists().isString().isDID().bail(),
 		body('schemas').exists().isArray().bail(),
 		body('schemas.*.url').isURL().bail(),
@@ -26,7 +26,7 @@ export class AccreditationController {
 		body('schemas.*.type.*').isString().bail(),
 		body('parentAccreditation').optional().isURL().bail(),
 		body('rootAuthorisation').optional().isURL().bail(),
-		body('type').custom((value, { req }) => {
+		param('accreditationType').custom((value, { req }) => {
 			if (value === 'accredit' || value === 'attest') {
 				return req.body.parentAccreditation && req.body.rootAuthorisation;
 			}

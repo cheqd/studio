@@ -1,0 +1,11 @@
+{
+	"issuerDid": "did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA",
+	"subjectDid": "did:cheqd:testnet:11ceabbd-1fdc-46c0-a15d-534c07926d2b",
+	"schemas": [
+		{
+			"url": "https://schema.org/Person",
+			"type": "Person"
+		}
+	],
+	"format": "jwt"
+}
