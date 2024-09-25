@@ -4,6 +4,7 @@ import { DIDAccreditationTypes } from '../../types/accreditation.js';
 import { isCredentialIssuerDidDeactivated } from '../helpers.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
 import { CheqdW3CVerifiableCredential } from '../w3c-credential.js';
+import type { VerificationPolicies } from '@veramo/core';
 
 export class AccreditationService {
 	public static instance = new AccreditationService();
@@ -12,7 +13,8 @@ export class AccreditationService {
 		didUrl: string,
 		verifyStatus: boolean,
 		allowDeactivatedDid: boolean,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		policies?: VerificationPolicies
 	): Promise<SafeAPIResponse<{ verified: boolean; parentAccreditation?: boolean; rootAuthorisation?: boolean }>> {
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
@@ -44,6 +46,7 @@ export class AccreditationService {
 			accreditation,
 			{
 				verifyStatus,
+				policies,
 			},
 			customer
 		);

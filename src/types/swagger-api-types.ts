@@ -327,7 +327,7 @@
  *           id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1
  *           publicKeyBase58: BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt
  *           type: Ed25519VerificationKey2018
- *     DIDAccreditationRequest:
+ *     AccreditationIssueRequest:
  *       description: Input fields for the creating a Verifiable Credential.
  *       type: object
  *       additionalProperties: false
@@ -463,6 +463,28 @@
  *           statusPurpose: revocation
  *           statusListName: employee-credentials
  *           statusListIndex: 10
+ *     AccreditationVerifyRequest:
+ *       type: object
+ *       properties:
+ *         accrditation:
+ *           description: Verifiable Credential to be verified as a VC-JWT string or a JSON object.
+ *           type: object
+ *         policies:
+ *           description: Custom verification policies to execute when verifying credential.
+ *           type: object
+ *           properties:
+ *             issuanceDate:
+ *               description: Policy to skip the `issuanceDate` (`nbf`) timestamp check when set to `false`.
+ *               type: boolean
+ *               default: true
+ *             expirationDate:
+ *               description: Policy to skip the `expirationDate` (`exp`) timestamp check when set to `false`.
+ *               type: boolean
+ *               default: true
+ *             audience:
+ *               description: Policy to skip the audience check when set to `false`.
+ *               type: boolean
+ *               default: false
  *     PresentationCreateRequest:
  *       type: object
  *       required:

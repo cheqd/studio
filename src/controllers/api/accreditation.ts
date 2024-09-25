@@ -12,7 +12,6 @@ import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { AccreditationService } from '../../services/api/accreditation.js';
 import { Credentials } from '../../services/api/credentials.js';
 import { eventTracker } from '../../services/track/tracker.js';
-import { getQueryParams } from '../../helpers/helpers.js';
 import { body, param } from '../validator/index.js';
 
 export class AccreditationController {
@@ -26,13 +25,16 @@ export class AccreditationController {
 		body('schemas.*.type.*').isString().bail(),
 		body('parentAccreditation').optional().isURL().bail(),
 		body('rootAuthorisation').optional().isURL().bail(),
-		param('accreditationType').custom((value, { req }) => {
-			if (value === 'accredit' || value === 'attest') {
-				return req.body.parentAccreditation && req.body.rootAuthorisation;
-			}
+		param('accreditationType')
+			.custom((value, { req }) => {
+				if (value === 'accredit' || value === 'attest') {
+					return req.body.parentAccreditation && req.body.rootAuthorisation;
+				}
 
-			return true;
-		}),
+				return true;
+			})
+			.bail(),
+		body('accreditationName').isString(),
 	];
 
 	public static verifyValidator = [param('did').exists().isString().isDID().bail()];
@@ -67,10 +69,10 @@ export class AccreditationController {
 	 *       content:
 	 *         application/x-www-form-urlencoded:
 	 *           schema:
-	 *             $ref: '#/components/schemas/DIDAccreditationRequest'
+	 *             $ref: '#/components/schemas/AccreditationIssueRequest'
 	 *         application/json:
 	 *           schema:
-	 *             $ref: '#/components/schemas/DIDAccreditationRequest'
+	 *             $ref: '#/components/schemas/AccreditationIssueRequest'
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -147,7 +149,7 @@ export class AccreditationController {
 				format: 'jwt',
 				connector: CredentialConnectors.Resource, // resource connector
 				credentialId: resourceId,
-				accreditationName,
+				credentialName: accreditationName,
 			};
 			switch (accreditationType) {
 				case AccreditationRequestType.authroize:
@@ -211,19 +213,13 @@ export class AccreditationController {
 	/**
 	 * @openapi
 	 *
-	 * /accreditation/verify/{:did}:
+	 * /accreditation/verify:
 	 *   post:
 	 *     tags: [ Trust Registry ]
 	 *     summary: Verify a verifiable accreditation for a DID.
 	 *     description: Generate and publish a verifiable accreditation for a subject DID accrediting schema's as a DID Linked resource.
 	 *     operationId: accredit
 	 *     parameters:
-	 *       - in: path
-	 *         name: did
-	 *         description: DID Url of the Accreditation resource.
-	 *         schema:
-	 *           type: string
-	 *         required: true
 	 *       - in: query
 	 *         name: verifyStatus
 	 *         description: If set to `true` the verification will also check the status of the accreditation. Requires the VC to have a `credentialStatus` property.
@@ -236,6 +232,14 @@ export class AccreditationController {
 	 *         schema:
 	 *           type: boolean
 	 *           default: false
+	 *     requestBody:
+	 *       content:
+	 *         application/x-www-form-urlencoded:
+	 *           schema:
+	 *             $ref: '#/components/schemas/AccreditationVerifyRequest'
+	 *         application/json:
+	 *           schema:
+	 *             $ref: '#/components/schemas/AccreditationVerifyRequest'
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -252,17 +256,15 @@ export class AccreditationController {
 	 */
 	public async verify(request: Request, response: Response) {
 		// Extract did from params
-		const { did } = request.params;
 		const { verifyStatus = false, allowDeactivatedDid = false } = request.query as VerifyCredentialRequestQuery;
-
+		const { accreditation, policies } = request.body;
 		try {
-			const didUrl = did + getQueryParams(request.query);
-
 			const result = await AccreditationService.instance.verify_accreditation(
-				didUrl,
+				accreditation,
 				verifyStatus,
 				allowDeactivatedDid,
-				response.locals.customer
+				response.locals.customer,
+				policies
 			);
 			// Track operation
 			const trackInfo = {
@@ -271,7 +273,7 @@ export class AccreditationController {
 				customer: response.locals.customer,
 				user: response.locals.user,
 				data: {
-					did,
+					did: accreditation.split('/')[0],
 				} satisfies ICredentialTrack,
 			} as ITrackOperation;
 
@@ -279,7 +281,7 @@ export class AccreditationController {
 			if (result.success) {
 				return response.status(StatusCodes.OK).json(result.data);
 			} else {
-				return response.status(result.status).json(result.error);
+				return response.status(result.status).json({ verified: false, error: result.error });
 			}
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

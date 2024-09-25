@@ -32,4 +32,18 @@ test(' Issue a accreditation', async ({ request }) => {
 	expect(didUrls).toContain(
 		`did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=testAccreditation&resourceType=VerifiableAuthorisationForTrustChain`
 	);
+
+	const verifyResponse = await request.post(`/accreditation/verify`, {
+		data: JSON.stringify({
+			accreditation: `did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=testAccreditation&resourceType=VerifiableAuthorisationForTrustChain`,
+		}),
+		headers: {
+			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
+		},
+	});
+	const result = await verifyResponse.json();
+	expect(verifyResponse).toBeOK();
+	expect(verifyResponse.status()).toBe(StatusCodes.OK);
+	expect(result.error).toBe(undefined);
+	expect(result.verified).toBe(true);
 });
