@@ -3,7 +3,6 @@ import type { SafeAPIResponse } from '../../types/common.js';
 import { DIDAccreditationTypes } from '../../types/accreditation.js';
 import { isCredentialIssuerDidDeactivated } from '../helpers.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
-import { CheqdW3CVerifiableCredential } from '../w3c-credential.js';
 import type { VerificationPolicies } from '@veramo/core';
 
 export class AccreditationService {
@@ -32,7 +31,7 @@ export class AccreditationService {
 		}
 
 		// Create credential object
-		const accreditation = new CheqdW3CVerifiableCredential(result);
+		const accreditation = result;
 
 		if (!allowDeactivatedDid && (await isCredentialIssuerDidDeactivated(accreditation))) {
 			return {
@@ -68,7 +67,7 @@ export class AccreditationService {
 		}
 
 		const accreditationTypes = Object.keys(DIDAccreditationTypes);
-		const isTypeAccreditation = accreditation.type.find((x) => accreditationTypes.includes(x));
+		const isTypeAccreditation = accreditation.type.find((x: any) => accreditationTypes.includes(x));
 
 		if (!isTypeAccreditation) {
 			return {

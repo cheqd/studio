@@ -92,6 +92,15 @@ export class AccreditationController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 		// Extract did from params
 		const { accreditationType } = request.query as DIDAccreditationRequestParams;
+
+		// Handles string input instead of an array
+		if (typeof request.body.type === 'string') {
+			request.body.type = [request.body.type];
+		}
+		if (typeof request.body['@context'] === 'string') {
+			request.body['@context'] = [request.body['@context']];
+		}
+
 		const {
 			issuerDid,
 			subjectDid,
@@ -153,25 +162,28 @@ export class AccreditationController {
 			};
 			switch (accreditationType) {
 				case AccreditationRequestType.authroize:
-					credentialRequest.type = [DIDAccreditationTypes.VerifiableAuthorisationForTrustChain];
+					credentialRequest.type = [
+						...(type || []),
+						DIDAccreditationTypes.VerifiableAuthorisationForTrustChain,
+					];
 					credentialRequest.termsOfUse = {
-						type,
+						type: DIDAccreditationTypes.VerifiableAuthorisationForTrustChain,
 						trustFramework: 'cheqd Governance Framework',
 						trustFrameworkId: 'https://learn.cheqd.io/governance/start',
 					};
 					break;
 				case AccreditationRequestType.accredit:
-					credentialRequest.type = [DIDAccreditationTypes.VerifiableAccreditationToAccredit];
+					credentialRequest.type = [...(type || []), DIDAccreditationTypes.VerifiableAccreditationToAccredit];
 					credentialRequest.termsOfUse = {
-						type,
+						type: DIDAccreditationTypes.VerifiableAccreditationToAccredit,
 						parentAccreditation,
 						rootAuthorisation,
 					};
 					break;
 				case AccreditationRequestType.attest:
-					credentialRequest.type = [DIDAccreditationTypes.VerifiableAccreditationToAttest];
+					credentialRequest.type = [...(type || []), DIDAccreditationTypes.VerifiableAccreditationToAttest];
 					credentialRequest.termsOfUse = {
-						type,
+						type: DIDAccreditationTypes.VerifiableAccreditationToAttest,
 						parentAccreditation,
 						rootAuthorisation,
 					};

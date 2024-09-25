@@ -3,8 +3,8 @@ import type { VerifiableCredential } from '@veramo/core';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
 import type { AlternativeUri, MsgCreateResourcePayload } from '@cheqd/ts-proto/cheqd/resource/v2';
 import { v4 } from 'uuid';
-import { fromString } from 'uint8arrays';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import { fromString } from 'uint8arrays';
 dotenv.config();
 
 /**

@@ -23,6 +23,7 @@ export type DIDAccreditationRequestBody = Omit<
 	}[];
 	accreditationName: string;
 	attributes?: Record<string, unknown>;
+	type: string[] | undefined;
 };
 
 export type DIDAccreditationRequestParams = {

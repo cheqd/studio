@@ -60,6 +60,7 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 		this.issuer = typeof credential.issuer === 'string' ? credential.issuer : credential.issuer.id;
 		this.issuanceDate = credential.issuanceDate;
 		this.proof = (credential as ICheqdCredential).proof;
+		this.termsOfUse = credential.termsOfUse;
 	}
 
 	public fromVCCompactJWT(jwt: CompactJWT): VerifiableCredential {
