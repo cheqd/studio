@@ -16,36 +16,37 @@ export class ResourceConnector {
 	static instance = new ResourceConnector();
 
 	/**
-	 * Send a Verifiable Credential to a DID via the Verida protocol.
+	 * Publish a Verifiable Credential to a DID as a DID-Linked Resource.
 	 *
-	 * @param recipientDid  The DID of the recipient.
-	 * @param messageSubject The subject of the message in which the Credential will be sent to the recipient (similar to an email subject).
+	 * @param did  The DID of the issuer.
+	 * @param credentialId The unique identifier of the credential
 	 * @param credential The credential itself.
 	 * @param credentialName The name of the credential. For instance, will be displayed in the Verida Wallet UI.
 	 * @param credentialSummary A summary of the credential. For instance, will be displayed in the Verida Wallet UI.
 	 */
 	async sendCredential(
 		customer: CustomerEntity,
-		recipientDid: string,
+		did: string,
 		credential: VerifiableCredential,
 		credentialName: string,
 		resourceType: string,
 		resourceVersion: string,
-		alsoKnownAs?: AlternativeUri[]
+		alsoKnownAs?: AlternativeUri[],
+		credentialId?: string
 	) {
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
 
 		let resourcePayload: Partial<MsgCreateResourcePayload> = {};
 		resourcePayload = {
-			collectionId: recipientDid.split(':').pop(),
-			id: v4(),
+			collectionId: did.split(':').pop(),
+			id: credentialId || v4(),
 			name: credentialName,
 			resourceType,
 			data: fromString(credential, 'utf-8'),
 			version: resourceVersion,
 			alsoKnownAs,
 		};
-		await identityServiceStrategySetup.agent.createResource(recipientDid.split(':')[2], resourcePayload, customer);
+		await identityServiceStrategySetup.agent.createResource(did.split(':')[2], resourcePayload, customer);
 	}
 }

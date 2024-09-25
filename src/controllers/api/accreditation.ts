@@ -4,6 +4,7 @@ import type { DIDAccreditationRequestBody, DIDAccreditationRequestParams } from 
 import type { ICredentialTrack, ITrackOperation } from '../../types/track.js';
 import type { CredentialRequest } from '../../types/credential.js';
 import { StatusCodes } from 'http-status-codes';
+import { v4 } from 'uuid';
 import { AccreditationRequestType, DIDAccreditationTypes } from '../../types/accreditation.js';
 import { CredentialConnectors, VerifyCredentialRequestQuery } from '../../types/credential.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
@@ -89,8 +90,16 @@ export class AccreditationController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 		// Extract did from params
 		const { accreditationType } = request.params as DIDAccreditationRequestParams;
-		const { issuerDid, subjectDid, schemas, type, parentAccreditation, rootAuthorisation, attributes } =
-			request.body as DIDAccreditationRequestBody;
+		const {
+			issuerDid,
+			subjectDid,
+			schemas,
+			type,
+			parentAccreditation,
+			rootAuthorisation,
+			attributes,
+			accreditationName,
+		} = request.body as DIDAccreditationRequestBody;
 
 		try {
 			// Validte issuer DID
@@ -122,6 +131,7 @@ export class AccreditationController {
 				});
 			}
 
+			const resourceId = v4();
 			// construct credential request
 			const credentialRequest: CredentialRequest = {
 				subjectDid,
@@ -136,6 +146,8 @@ export class AccreditationController {
 				issuerDid,
 				format: 'jwt',
 				connector: CredentialConnectors.Resource, // resource connector
+				credentialId: resourceId,
+				accreditationName,
 			};
 			switch (accreditationType) {
 				case AccreditationRequestType.authroize:
@@ -182,7 +194,13 @@ export class AccreditationController {
 
 			eventTracker.emit('track', trackInfo);
 
-			return response.status(StatusCodes.OK).json(credential);
+			return response.status(StatusCodes.OK).json({
+				didUrls: [
+					`${issuerDid}/resources/${resourceId}`,
+					`${issuerDid}?resourceName=${credentialName}&resourceType=${credentialRequest.type}`,
+				],
+				credential,
+			});
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,

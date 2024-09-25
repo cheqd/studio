@@ -28,6 +28,7 @@ export class Credentials {
 			'@context': context,
 			format,
 			connector,
+			credentialId,
 			...additionalData
 		} = request;
 
@@ -81,8 +82,10 @@ export class Credentials {
 				issuerDid,
 				verifiable_credential,
 				credentialName || v4(),
-				type ? type[0] : 'Verifiable Credential',
-				v4()
+				type ? type[0] : 'VerifiableCredential',
+				v4(),
+				undefined,
+				credentialId
 			);
 		}
 		return verifiable_credential;

@@ -13,11 +13,15 @@ export enum AccreditationRequestType {
 	attest = 'attest',
 }
 
-export type DIDAccreditationRequestBody = Omit<CredentialRequest, 'attributes'> & {
+export type DIDAccreditationRequestBody = Omit<
+	CredentialRequest,
+	'attributes' | 'credentialSummary' | 'credentialSchema' | 'credentialName'
+> & {
 	schemas: {
 		type: string;
 		url: string;
 	}[];
+	accreditationName: string;
 	attributes?: Record<string, unknown>;
 };
 
