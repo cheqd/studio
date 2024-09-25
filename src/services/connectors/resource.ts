@@ -43,7 +43,7 @@ export class ResourceConnector {
 			id: credentialId || v4(),
 			name: credentialName,
 			resourceType,
-			data: fromString(credential, 'utf-8'),
+			data: fromString(JSON.stringify(credential)),
 			version: resourceVersion,
 			alsoKnownAs,
 		};
