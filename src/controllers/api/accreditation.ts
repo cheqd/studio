@@ -197,7 +197,7 @@ export class AccreditationController {
 			return response.status(StatusCodes.OK).json({
 				didUrls: [
 					`${issuerDid}/resources/${resourceId}`,
-					`${issuerDid}?resourceName=${credentialName}&resourceType=${credentialRequest.type}`,
+					`${issuerDid}?resourceName=${accreditationName}&resourceType=${credentialRequest.type}`,
 				],
 				credential,
 			});
