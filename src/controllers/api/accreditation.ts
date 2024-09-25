@@ -1,21 +1,18 @@
 import type { Request, Response } from 'express';
-import { IdentityServiceStrategySetup } from '../../services/identity';
-import {
-	AccreditationRequestType,
-	DIDAccreditationTypes,
-	type DIDAccreditationRequestBody,
-	type DIDAccreditationRequestParams,
-} from '../../types/accreditation';
-import { Credentials } from '../../services/api/credentials.js';
-import { CredentialConnectors, VerifyCredentialRequestQuery, type CredentialRequest } from '../../types/credential.js';
-import { StatusCodes } from 'http-status-codes';
 import type { VerifiableCredential } from '@veramo/core';
-import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants';
-import type { ICredentialTrack, ITrackOperation } from '../../types/track';
-import { getQueryParams } from '../../helpers/helpers';
-import { AccreditationService } from '../../services/api/accreditation';
-import { body, param } from '../validator';
+import type { DIDAccreditationRequestBody, DIDAccreditationRequestParams } from '../../types/accreditation.js';
+import type { ICredentialTrack, ITrackOperation } from '../../types/track.js';
+import type { CredentialRequest } from '../../types/credential.js';
+import { StatusCodes } from 'http-status-codes';
+import { AccreditationRequestType, DIDAccreditationTypes } from '../../types/accreditation.js';
+import { CredentialConnectors, VerifyCredentialRequestQuery } from '../../types/credential.js';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
+import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
+import { AccreditationService } from '../../services/api/accreditation.js';
+import { Credentials } from '../../services/api/credentials.js';
 import { eventTracker } from '../../services/track/tracker.js';
+import { getQueryParams } from '../../helpers/helpers.js';
+import { body, param } from '../validator/index.js';
 
 export class AccreditationController {
 	public static issueValidator = [

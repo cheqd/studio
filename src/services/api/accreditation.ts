@@ -1,9 +1,9 @@
-import type { CustomerEntity } from '../../database/entities/customer.entity';
-import type { SafeAPIResponse } from '../../types/common';
-import { DIDAccreditationTypes } from '../../types/accreditation';
-import { isCredentialIssuerDidDeactivated } from '../helpers';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import type { SafeAPIResponse } from '../../types/common.js';
+import { DIDAccreditationTypes } from '../../types/accreditation.js';
+import { isCredentialIssuerDidDeactivated } from '../helpers.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
-import { CheqdW3CVerifiableCredential } from '../w3c-credential';
+import { CheqdW3CVerifiableCredential } from '../w3c-credential.js';
 
 export class AccreditationService {
 	public static instance = new AccreditationService();
