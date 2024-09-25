@@ -1,12 +1,12 @@
 import type { CustomerEntity } from '../../database/entities/customer.entity';
 import type { SafeAPIResponse } from '../../types/common';
-import { DIDAccreditationTypes } from '../../types/did';
+import { DIDAccreditationTypes } from '../../types/accreditation';
 import { isCredentialIssuerDidDeactivated } from '../helpers';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
 import { CheqdW3CVerifiableCredential } from '../w3c-credential';
 
-export class DIDService {
-	public static instance = new DIDService();
+export class AccreditationService {
+	public static instance = new AccreditationService();
 
 	async verify_accreditation(
 		didUrl: string,

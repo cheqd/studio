@@ -13,43 +13,37 @@ import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { decryptPrivateKey, generateDidDoc, getQueryParams } from '../../helpers/helpers.js';
 import { bases } from 'multiformats/basics';
 import { base64ToBytes } from 'did-jwt';
-import {
-	type CreateDidRequestBody,
-	type CreateDidResponseBody,
-	type DeactivateDidResponseBody,
-	type ListDidsResponseBody,
-	type QueryDidResponseBody,
-	type ResolveDidResponseBody,
-	type UnsuccessfulCreateDidResponseBody,
-	type UnsuccessfulDeactivateDidResponseBody,
-	type UnsuccessfulGetDidResponseBody,
-	type UnsuccessfulResolveDidResponseBody,
-	type UnsuccessfulUpdateDidResponseBody,
-	type UpdateDidResponseBody,
-	type UpdateDidRequestBody,
-	type ImportDidRequestBody,
-	type DeactivateDIDRequestParams,
-	type GetDIDRequestParams,
-	type ResolveDIDRequestParams,
-	type DeactivateDIDRequestBody,
-	DIDAccreditationTypes,
-	DIDAccreditationRequestParams,
-	DIDAccreditationRequestBody,
+import type {
+	CreateDidRequestBody,
+	CreateDidResponseBody,
+	DeactivateDidResponseBody,
+	ListDidsResponseBody,
+	QueryDidResponseBody,
+	ResolveDidResponseBody,
+	UnsuccessfulCreateDidResponseBody,
+	UnsuccessfulDeactivateDidResponseBody,
+	UnsuccessfulGetDidResponseBody,
+	UnsuccessfulResolveDidResponseBody,
+	UnsuccessfulUpdateDidResponseBody,
+	UpdateDidResponseBody,
+	UpdateDidRequestBody,
+	ImportDidRequestBody,
+	DeactivateDIDRequestParams,
+	GetDIDRequestParams,
+	ResolveDIDRequestParams,
+	DeactivateDIDRequestBody,
 } from '../../types/did.js';
-import { check, param, body } from '../validator/index.js';
-import type { IKey, RequireOnly, VerifiableCredential } from '@veramo/core';
+import { check, param } from '../validator/index.js';
+import type { IKey, RequireOnly } from '@veramo/core';
 import { SupportedKeyTypes, extractPublicKeyHex } from '@veramo/utils';
 import type { KeyImport } from '../../types/key.js';
 import { eventTracker } from '../../services/track/tracker.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
-import type { ICredentialTrack, IDIDTrack, ITrackOperation } from '../../types/track.js';
+import type { IDIDTrack, ITrackOperation } from '../../types/track.js';
 import { arePublicKeyHexsInWallet } from '../../services/helpers.js';
 import { CheqdProviderErrorCodes } from '@cheqd/did-provider-cheqd';
 import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
 import { validate } from '../validator/decorator.js';
-import { Credentials } from '../../services/api/credentials.js';
-import { CredentialConnectors, VerifyCredentialRequestQuery, type CredentialRequest } from '../../types/credential.js';
-import { DIDService } from '../../services/api/did.js';
 
 export class DIDController {
 	public static createDIDValidator = [
@@ -131,25 +125,6 @@ export class DIDController {
 				'KeyImportRequest object is invalid, privateKeyHex is required, Property ivHex, salt is required when encrypted is set to true, property type should be Ed25519 or Secp256k1'
 			)
 			.bail(),
-	];
-
-	public static accreditDIDValidator = [
-		param('did').exists().isString().isDID().bail(),
-		param('type').exists().isString().isIn(['authorize', 'accredit', 'attest']).bail(),
-		body('subjectDid').exists().isString().isDID().bail(),
-		body('schemas').exists().isArray().bail(),
-		body('schemas.*.url').isURL().bail(),
-		body('schemas.*.type').isArray().bail(),
-		body('schemas.*.type.*').isString().bail(),
-		body('parentAccreditation').optional().isURL().bail(),
-		body('rootAuthorisation').optional().isURL().bail(),
-		body('type').custom((value, { req }) => {
-			if (value === 'accredit' || value === 'attest') {
-				return req.body.parentAccreditation && req.body.rootAuthorisation;
-			}
-
-			return true;
-		}),
 	];
 
 	/**
@@ -776,236 +751,6 @@ export class DIDController {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'The DIDUrl parameter is empty.',
 				} satisfies UnsuccessfulResolveDidResponseBody);
-			}
-		} catch (error) {
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `Internal error: ${(error as Error)?.message || error}`,
-			} satisfies UnsuccessfulResolveDidResponseBody);
-		}
-	}
-
-	/**
-	 * @openapi
-	 *
-	 * /did/{did}/accredit/issue:
-	 *   post:
-	 *     tags: [ DID ]
-	 *     summary: Publish a verifiable accreditation for a DID.
-	 *     description: Generate and publish a verifiable accreditation for a subject DID accrediting schema's as a DID Linked resource.
-	 *     operationId: accredit
-	 *     parameters:
-	 *       - in: path
-	 *         name: did
-	 *         description: DID identifier of the Accreditor.
-	 *         schema:
-	 *           type: string
-	 *         required: true
-	 *       - in: query
-	 *         name: type
-	 *         description: Select the type of accreditation to be issued.
-	 *         schema:
-	 *           type: string
-	 *           enum:
-	 *              - authorize
-	 *              - accredit
-	 *              - attest
-	 *         required: true
-	 *     requestBody:
-	 *       content:
-	 *         application/x-www-form-urlencoded:
-	 *           schema:
-	 *             $ref: '#/components/schemas/DIDAccreditationRequest'
-	 *         application/json:
-	 *           schema:
-	 *             $ref: '#/components/schemas/DIDAccreditationRequest'
-	 *     responses:
-	 *       200:
-	 *         description: The request was successful.
-	 *         content:
-	 *           application/json:
-	 *             schema:
-	 *               $ref: '#/components/schemas/Credential'
-	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
-	 *       401:
-	 *         $ref: '#/components/schemas/UnauthorizedError'
-	 *       500:
-	 *         $ref: '#/components/schemas/InternalError'
-	 */
-	public async accredit(request: Request, response: Response) {
-		// Get strategy e.g. postgres or local
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
-		// Extract did from params
-		const { did } = request.params as DIDAccreditationRequestParams;
-		const { subjectDid, schemas, type, parentAccreditation, rootAuthorisation, attributes } =
-			request.body as DIDAccreditationRequestBody;
-
-		try {
-			// Validte issuer DID
-			const resolvedResult = await identityServiceStrategySetup.agent.resolve(did);
-			// check if DID-Document is resolved
-			const body = await resolvedResult.json();
-			if (!body?.didDocument) {
-				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `DID ${did} is not resolved because of error from resolver: ${body.didResolutionMetadata.error}.`,
-				});
-			}
-			if (body.didDocumentMetadata.deactivated) {
-				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `${did} is deactivated`,
-				});
-			}
-
-			// Validate subject DID
-			const res = await identityServiceStrategySetup.agent.resolve(subjectDid);
-			const subjectDidRes = await res.json();
-			if (!subjectDidRes?.didDocument) {
-				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `DID ${subjectDid} is not resolved because of error from resolver: ${body.didResolutionMetadata.error}.`,
-				});
-			}
-			if (subjectDidRes.didDocumentMetadata.deactivated) {
-				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `${subjectDid} is deactivated`,
-				});
-			}
-
-			// construct credential request
-			const credentialRequest: CredentialRequest = {
-				subjectDid,
-				attributes: {
-					...attributes,
-					accreditedFor: schemas.map(({ url, type }: any) => ({
-						schemaId: url,
-						type,
-					})),
-					id: subjectDid,
-				},
-				issuerDid: did,
-				format: 'jwt',
-				connector: CredentialConnectors.Resource, // resource connector
-			};
-			switch (type) {
-				case 'authorize':
-					credentialRequest.type = [DIDAccreditationTypes.VerifiableAuthorisationForTrustChain];
-					credentialRequest.termsOfUse = {
-						type,
-						trustFramework: 'cheqd Governance Framework',
-						trustFrameworkId: 'https://learn.cheqd.io/governance/start',
-					};
-					break;
-				case 'accredit':
-					credentialRequest.type = [DIDAccreditationTypes.VerifiableAccreditationToAccredit];
-					credentialRequest.termsOfUse = {
-						type,
-						parentAccreditation,
-						rootAuthorisation,
-					};
-					break;
-				case 'attest':
-					credentialRequest.type = [DIDAccreditationTypes.VerifiableAccreditationToAttest];
-					credentialRequest.termsOfUse = {
-						type,
-						parentAccreditation,
-						rootAuthorisation,
-					};
-			}
-
-			// issue credential
-			const credential: VerifiableCredential = await Credentials.instance.issue_credential(
-				credentialRequest,
-				response.locals.customer
-			);
-
-			// Track operation
-			const trackInfo = {
-				category: OperationCategoryNameEnum.CREDENTIAL,
-				name: OperationNameEnum.CREDENTIAL_ISSUE,
-				customer: response.locals.customer,
-				user: response.locals.user,
-				data: {
-					did,
-				} satisfies ICredentialTrack,
-			} as ITrackOperation;
-
-			eventTracker.emit('track', trackInfo);
-
-			return response.status(StatusCodes.OK).json(credential);
-		} catch (error) {
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `Internal error: ${(error as Error)?.message || error}`,
-			} satisfies UnsuccessfulResolveDidResponseBody);
-		}
-	}
-
-	/**
-	 * @openapi
-	 *
-	 * /did/accredit/verify/{:did}:
-	 *   post:
-	 *     tags: [ DID ]
-	 *     summary: Verify a verifiable accreditation for a DID.
-	 *     description: Generate and publish a verifiable accreditation for a subject DID accrediting schema's as a DID Linked resource.
-	 *     operationId: accredit
-	 *     parameters:
-	 *       - in: path
-	 *         name: did
-	 *         description: Accreditation identifier.
-	 *         schema:
-	 *           type: string
-	 *         required: true
-	 *     requestBody:
-	 *       content:
-	 *         application/x-www-form-urlencoded:
-	 *           schema:
-	 *             $ref: '#/components/schemas/DIDAccreditationRequest'
-	 *         application/json:
-	 *           schema:
-	 *             $ref: '#/components/schemas/DIDAccreditationRequest'
-	 *     responses:
-	 *       200:
-	 *         description: The request was successful.
-	 *         content:
-	 *           application/json:
-	 *             schema:
-	 *               $ref: '#/components/schemas/Credential'
-	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
-	 *       401:
-	 *         $ref: '#/components/schemas/UnauthorizedError'
-	 *       500:
-	 *         $ref: '#/components/schemas/InternalError'
-	 */
-	public async accreditVerify(request: Request, response: Response) {
-		// Extract did from params
-		const { did } = request.params as DIDAccreditationRequestParams;
-		const { verifyStatus, allowDeactivatedDid } = request.query as VerifyCredentialRequestQuery;
-
-		try {
-			const didUrl = request.params.did + getQueryParams(request.query);
-
-			const result = await DIDService.instance.verify_accreditation(
-				didUrl,
-				verifyStatus || true,
-				allowDeactivatedDid || false,
-				response.locals.customer
-			);
-			// Track operation
-			const trackInfo = {
-				category: OperationCategoryNameEnum.CREDENTIAL,
-				name: OperationNameEnum.CREDENTIAL_VERIFY,
-				customer: response.locals.customer,
-				user: response.locals.user,
-				data: {
-					did,
-				} satisfies ICredentialTrack,
-			} as ITrackOperation;
-
-			eventTracker.emit('track', trackInfo);
-			if (result.success) {
-				return response.status(StatusCodes.OK).json(result.data);
-			} else {
-				return response.status(result.status).json(result.error);
 			}
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
