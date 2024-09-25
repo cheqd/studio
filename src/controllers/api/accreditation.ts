@@ -175,8 +175,8 @@ export class AccreditationController {
 					};
 			}
 
-			// issue credential
-			const credential: VerifiableCredential = await Credentials.instance.issue_credential(
+			// issue accreditation
+			const accreditation: VerifiableCredential = await Credentials.instance.issue_credential(
 				credentialRequest,
 				response.locals.customer
 			);
@@ -199,7 +199,7 @@ export class AccreditationController {
 					`${issuerDid}/resources/${resourceId}`,
 					`${issuerDid}?resourceName=${accreditationName}&resourceType=${credentialRequest.type}`,
 				],
-				credential,
+				accreditation,
 			});
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
