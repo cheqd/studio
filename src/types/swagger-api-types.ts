@@ -466,7 +466,7 @@
  *     AccreditationVerifyRequest:
  *       type: object
  *       properties:
- *         accrditation:
+ *         accreditation:
  *           description: Verifiable Credential to be verified as a VC-JWT string or a JSON object.
  *           type: object
  *         policies:

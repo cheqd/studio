@@ -16,8 +16,8 @@ import { body, param } from '../validator/index.js';
 
 export class AccreditationController {
 	public static issueValidator = [
-		param('did').exists().isString().isDID().bail(),
 		param('accreditationType').exists().isString().isIn(['authorize', 'accredit', 'attest']).bail(),
+		body('issuerDid').exists().isString().isDID().bail(),
 		body('subjectDid').exists().isString().isDID().bail(),
 		body('schemas').exists().isArray().bail(),
 		body('schemas.*.url').isURL().bail(),
@@ -37,7 +37,7 @@ export class AccreditationController {
 		body('accreditationName').isString(),
 	];
 
-	public static verifyValidator = [param('did').exists().isString().isDID().bail()];
+	public static verifyValidator = [body('accreditation').exists().bail()];
 
 	/**
 	 * @openapi
@@ -47,14 +47,8 @@ export class AccreditationController {
 	 *     tags: [ Trust Registry ]
 	 *     summary: Publish a verifiable accreditation for a DID.
 	 *     description: Generate and publish a verifiable accreditation for a subject DID accrediting schema's as a DID Linked resource.
-	 *     operationId: accredit
+	 *     operationId: accredit-issue
 	 *     parameters:
-	 *       - in: path
-	 *         name: did
-	 *         description: DID identifier of the Accreditor.
-	 *         schema:
-	 *           type: string
-	 *         required: true
 	 *       - in: query
 	 *         name: type
 	 *         description: Select the type of accreditation to be issued.
@@ -230,7 +224,7 @@ export class AccreditationController {
 	 *     tags: [ Trust Registry ]
 	 *     summary: Verify a verifiable accreditation for a DID.
 	 *     description: Generate and publish a verifiable accreditation for a subject DID accrediting schema's as a DID Linked resource.
-	 *     operationId: accredit
+	 *     operationId: accredit-verify
 	 *     parameters:
 	 *       - in: query
 	 *         name: verifyStatus

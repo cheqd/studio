@@ -2429,17 +2429,8 @@
         ],
         "summary": "Publish a verifiable accreditation for a DID.",
         "description": "Generate and publish a verifiable accreditation for a subject DID accrediting schema's as a DID Linked resource.",
-        "operationId": "accredit",
+        "operationId": "accredit-issue",
         "parameters": [
-          {
-            "in": "path",
-            "name": "did",
-            "description": "DID identifier of the Accreditor.",
-            "schema": {
-              "type": "string"
-            },
-            "required": true
-          },
           {
             "in": "query",
             "name": "type",
@@ -2499,7 +2490,7 @@
         ],
         "summary": "Verify a verifiable accreditation for a DID.",
         "description": "Generate and publish a verifiable accreditation for a subject DID accrediting schema's as a DID Linked resource.",
-        "operationId": "accredit",
+        "operationId": "accredit-verify",
         "parameters": [
           {
             "in": "query",
