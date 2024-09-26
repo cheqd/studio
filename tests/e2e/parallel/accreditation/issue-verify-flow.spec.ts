@@ -5,7 +5,7 @@ import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
-test(' Issue a accreditation', async ({ request }) => {
+test(' Issue and verify a accreditation', async ({ request }) => {
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/accreditation-issue-jwt.json`, 'utf-8')
 	);
@@ -46,4 +46,26 @@ test(' Issue a accreditation', async ({ request }) => {
 	expect(verifyResponse.status()).toBe(StatusCodes.OK);
 	expect(result.error).toBe(undefined);
 	expect(result.verified).toBe(true);
+});
+
+test(' Issue accreditation [Negative]', async ({ request }) => {
+	const credentialData = JSON.parse(
+		fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/accreditation-issue-jwt.json`, 'utf-8')
+	);
+	const issueResponse = await request.post(`/accreditation/issue`, {
+		data: JSON.stringify(credentialData),
+		headers: {
+			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
+		},
+	});
+	expect(issueResponse).toBeFalsy();
+});
+
+test(' Verify accreditation [Negative]', async ({ request }) => {
+	const verifyResponse = await request.post(`/accreditation/verify`, {
+		headers: {
+			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
+		},
+	});
+	expect(verifyResponse).toBeFalsy();
 });
