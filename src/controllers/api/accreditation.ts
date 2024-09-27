@@ -37,7 +37,7 @@ export class AccreditationController {
 		body('accreditationName').isString(),
 	];
 
-	public static verifyValidator = [body('accreditation').exists().bail()];
+	public static verifyValidator = [body('accreditation').exists().bail(), body('subjectDid').exists().bail()];
 
 	/**
 	 * @openapi
@@ -183,6 +183,35 @@ export class AccreditationController {
 					};
 			}
 
+			// validate parent and root accreditations
+			if (
+				accreditationType === AccreditationRequestType.accredit ||
+				accreditationType === AccreditationRequestType.attest
+			) {
+				const results = await Promise.all([
+					AccreditationService.instance.verify_accreditation(
+						issuerDid,
+						parentAccreditation,
+						true,
+						false,
+						response.locals.customer
+					),
+					AccreditationService.instance.verify_accreditation(
+						issuerDid,
+						parentAccreditation,
+						true,
+						false,
+						response.locals.customer
+					),
+				]);
+
+				if (results.some((x) => x.success == false)) {
+					return response.status(StatusCodes.BAD_REQUEST).send({
+						error: `root Authorization or parent Accreditation is not valid`,
+					});
+				}
+			}
+
 			// issue accreditation
 			const accreditation: VerifiableCredential = await Credentials.instance.issue_credential(
 				credentialRequest,
@@ -263,9 +292,10 @@ export class AccreditationController {
 	public async verify(request: Request, response: Response) {
 		// Extract did from params
 		const { verifyStatus = false, allowDeactivatedDid = false } = request.query as VerifyCredentialRequestQuery;
-		const { accreditation, policies } = request.body;
+		const { accreditation, policies, subjectDid } = request.body;
 		try {
 			const result = await AccreditationService.instance.verify_accreditation(
+				subjectDid,
 				accreditation,
 				verifyStatus,
 				allowDeactivatedDid,

@@ -4,11 +4,13 @@ import { DIDAccreditationTypes } from '../../types/accreditation.js';
 import { isCredentialIssuerDidDeactivated } from '../helpers.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
 import type { VerificationPolicies } from '@veramo/core';
+import type { CheqdW3CVerifiableCredential } from '../w3c-credential.js';
 
 export class AccreditationService {
 	public static instance = new AccreditationService();
 
 	async verify_accreditation(
+		subjectDid: string,
 		didUrl: string,
 		verifyStatus: boolean,
 		allowDeactivatedDid: boolean,
@@ -31,13 +33,21 @@ export class AccreditationService {
 		}
 
 		// Create credential object
-		const accreditation = result;
+		const accreditation: CheqdW3CVerifiableCredential = result;
 
 		if (!allowDeactivatedDid && (await isCredentialIssuerDidDeactivated(accreditation))) {
 			return {
 				success: false,
 				status: 400,
 				error: `Credential issuer DID is deactivated`,
+			};
+		}
+
+		if (accreditation.credentialSubject.id !== subjectDid) {
+			return {
+				success: false,
+				status: 400,
+				error: `Accreditation is not linked to the subject DID`,
 			};
 		}
 
@@ -89,24 +99,30 @@ export class AccreditationService {
 					error: `Invalid termsOfUse`,
 				};
 			}
-
+			const accreditorDid = didUrl.split('?')[0];
+			const parentDid = termsOfUse.parentAccreditation.split('?')[0];
 			const parentAccreditation = (
 				await this.verify_accreditation(
+					accreditorDid,
 					termsOfUse.parentAccreditation,
 					verifyStatus,
 					allowDeactivatedDid,
 					customer
 				)
 			).success;
-			const rootAuthorisation = (
-				await this.verify_accreditation(
-					termsOfUse.rootAuthorisation,
-					verifyStatus,
-					allowDeactivatedDid,
-					customer
-				)
-			).success;
-
+			const rootDid = termsOfUse.rootAuthorisation.split('?')[0];
+			let rootAuthorisation = false;
+			if (parentDid == rootDid) {
+				rootAuthorisation = (
+					await this.verify_accreditation(
+						accreditorDid,
+						termsOfUse.rootAuthorisation,
+						verifyStatus,
+						allowDeactivatedDid,
+						customer
+					)
+				).success;
+			}
 			return {
 				status: 200,
 				success: true,

@@ -35,6 +35,7 @@ test(' Issue and verify a accreditation', async ({ request }) => {
 
 	const verifyResponse = await request.post(`/accreditation/verify`, {
 		data: JSON.stringify({
+			subjectDid: `${credentialData.subjectDid}`,
 			accreditation: `did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=testAccreditation&resourceType=VerifiableAuthorisationForTrustChain`,
 		}),
 		headers: {
@@ -58,7 +59,7 @@ test(' Issue accreditation [Negative]', async ({ request }) => {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
 		},
 	});
-	expect(issueResponse).toBeFalsy();
+	expect(issueResponse.status()).toBe(400);
 });
 
 test(' Verify accreditation [Negative]', async ({ request }) => {
@@ -67,5 +68,5 @@ test(' Verify accreditation [Negative]', async ({ request }) => {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
 		},
 	});
-	expect(verifyResponse).toBeFalsy();
+	expect(verifyResponse.status()).toBe(400);
 });

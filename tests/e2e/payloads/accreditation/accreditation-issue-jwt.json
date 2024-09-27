@@ -1,6 +1,6 @@
 {
 	"issuerDid": "did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA",
-	"subjectDid": "did:cheqd:testnet:11ceabbd-1fdc-46c0-a15d-534c07926d2b",
+	"subjectDid": "did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578",
 	"schemas": [
 		{
 			"url": "https://schema.org/Person",
@@ -8,5 +8,6 @@
 		}
 	],
 	"format": "jwt",
-	"accreditationName": "testAccreditation"
+	"accreditationName": "accreditAccreditation",
+	"rootAuthroization": "did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=rootAccreditation&resourceType=VerifiableAuthorisationForTrustChain"
 }

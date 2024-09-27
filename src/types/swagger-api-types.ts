@@ -466,6 +466,10 @@
  *     AccreditationVerifyRequest:
  *       type: object
  *       properties:
+ *         subjectDid:
+ *           description: DID of the Verifiable Credential holder/subject. This needs to be a `did:key` DID.
+ *           type: string
+ *           example: did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
  *         accreditation:
  *           description: Verifiable Credential to be verified as a VC-JWT string or a JSON object.
  *           type: object
@@ -485,6 +489,9 @@
  *               description: Policy to skip the audience check when set to `false`.
  *               type: boolean
  *               default: false
+ *       required:
+ *         - accreditation
+ *         - subjectDid
  *     PresentationCreateRequest:
  *       type: object
  *       required:
