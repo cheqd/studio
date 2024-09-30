@@ -48,7 +48,7 @@ test(' Issue and verify a authorize accreditation', async ({ request }) => {
 });
 
 test(' Issue accreditation [Negative]', async ({ request }) => {
-	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/accredit.json`, 'utf-8'));
+	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/authorize-jwt.json`, 'utf-8'));
 	const issueResponse = await request.post(`/accreditation/issue`, {
 		data: JSON.stringify(credentialData),
 		headers: {

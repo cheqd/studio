@@ -16,7 +16,7 @@ export class AccreditationService {
 		allowDeactivatedDid: boolean,
 		customer: CustomerEntity,
 		policies?: VerificationPolicies
-	): Promise<SafeAPIResponse<{ verified: boolean; parentAccreditation?: boolean; rootAuthorisation?: boolean }>> {
+	): Promise<SafeAPIResponse<{ verified: boolean; rootAuthorization: string }>> {
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 
@@ -92,7 +92,7 @@ export class AccreditationService {
 			isTypeAccreditation === DIDAccreditationTypes.VerifiableAccreditationToAttest
 		) {
 			const termsOfUse = accreditation.termsOfUse;
-			if (!termsOfUse || !termsOfUse.parentAccreditation || !termsOfUse.rootAuthorisation) {
+			if (!termsOfUse || !termsOfUse.parentAccreditation || !termsOfUse.rootAuthorization) {
 				return {
 					success: false,
 					status: 200,
@@ -100,29 +100,34 @@ export class AccreditationService {
 				};
 			}
 			const accreditorDid = didUrl.split('?')[0];
-			const [parentAccreditation, rootAuthorisation] = await Promise.all([
-				this.verify_accreditation(
-					accreditorDid,
-					termsOfUse.parentAccreditation,
-					verifyStatus,
-					allowDeactivatedDid,
-					customer
-				),
-				this.verify_accreditation(
-					accreditorDid,
-					termsOfUse.rootAuthorisation,
-					verifyStatus,
-					allowDeactivatedDid,
-					customer
-				),
-			]);
+			const parentAccreditationResult = await this.verify_accreditation(
+				accreditorDid,
+				termsOfUse.parentAccreditation,
+				verifyStatus,
+				allowDeactivatedDid,
+				customer
+			);
+
+			if (!parentAccreditationResult.success) {
+				return parentAccreditationResult;
+			} else if (parentAccreditationResult.data.rootAuthorization !== termsOfUse.rootAuthorization) {
+				return {
+					status: 200,
+					success: true,
+					data: {
+						...verifyResult,
+						verified: false,
+						rootAuthorization: parentAccreditationResult.data.rootAuthorization,
+					},
+				};
+			}
+
 			return {
 				status: 200,
 				success: true,
 				data: {
 					...verifyResult,
-					parentAccreditation: parentAccreditation.success,
-					rootAuthorisation: rootAuthorisation.success,
+					rootAuthorization: termsOfUse.rootAuthorization,
 				},
 			};
 		}
@@ -130,7 +135,10 @@ export class AccreditationService {
 		return {
 			status: 200,
 			success: true,
-			data: verifyResult,
+			data: {
+				...verifyResult,
+				rootAuthorization: didUrl,
+			},
 		};
 	}
 }

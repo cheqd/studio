@@ -10,5 +10,5 @@
 	"format": "jwt",
 	"accreditationName": "accreditAccreditation",
 	"parentAccreditation": "did:cheqd:testnet:BjS4Nv8bVdxm2WW28MCfXA?resourceName=accreditAuthorization&resoourceType=",
-	"rootAuthroization": "did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorisationForTrustChain"
+	"rootAuthorization": "did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorisationForTrustChain"
 }

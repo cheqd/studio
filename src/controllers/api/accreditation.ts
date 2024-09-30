@@ -18,7 +18,6 @@ export class AccreditationController {
 	public static issueValidator = [
 		query('accreditationType')
 			.exists()
-			.isString()
 			.isIn([
 				AccreditationRequestType.authorize,
 				AccreditationRequestType.accredit,
@@ -32,12 +31,25 @@ export class AccreditationController {
 		body('schemas.*.type').custom(
 			(value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string')
 		),
-		body('parentAccreditation').optional().isURL().bail(),
-		body('rootAuthorization').optional().isURL().bail(),
+		body('parentAccreditation').optional().bail(),
+		body('rootAuthorization').optional().bail(),
 		query('accreditationType')
 			.custom((value, { req }) => {
-				if (value === AccreditationRequestType.accredit || value === AccreditationRequestType.attest) {
-					return req.body.parentAccreditation && req.body.rootAuthorization;
+				const { parentAccreditation, rootAuthorization } = req.body;
+
+				const hasParentOrRoot = parentAccreditation || rootAuthorization;
+
+				if (
+					!hasParentOrRoot &&
+					(value === AccreditationRequestType.accredit || value === AccreditationRequestType.attest)
+				) {
+					throw new Error('parentAccreditation or rootAuthorization is required');
+				}
+
+				if (hasParentOrRoot && value === AccreditationRequestType.authorize) {
+					throw new Error(
+						'parentAccreditation or rootAuthorization is not required for an authorize operation'
+					);
 				}
 
 				return true;
@@ -226,24 +238,15 @@ export class AccreditationController {
 				accreditationType === AccreditationRequestType.accredit ||
 				accreditationType === AccreditationRequestType.attest
 			) {
-				const results = await Promise.all([
-					AccreditationService.instance.verify_accreditation(
-						issuerDid,
-						parentAccreditation!,
-						false,
-						false,
-						response.locals.customer
-					),
-					AccreditationService.instance.verify_accreditation(
-						issuerDid,
-						rootAuthorization!,
-						false,
-						false,
-						response.locals.customer
-					),
-				]);
+				const result = await AccreditationService.instance.verify_accreditation(
+					issuerDid,
+					parentAccreditation!,
+					false,
+					false,
+					response.locals.customer
+				);
 
-				if (results.some((x) => x.success == false)) {
+				if (result.success === false || result.data.rootAuthorization !== rootAuthorization) {
 					return response.status(StatusCodes.BAD_REQUEST).send({
 						error: `root Authorization or parent Accreditation is not valid`,
 					});
