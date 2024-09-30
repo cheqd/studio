@@ -110,7 +110,7 @@ test(' Issue and verify a accredit accreditation', async ({ request }) => {
 });
 
 test(' Issue and verify a attest accreditation', async ({ request }) => {
-	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/accredit-jwt.json`, 'utf-8'));
+	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/attest-jwt.json`, 'utf-8'));
 	const issueResponse = await request.post(`/accreditation/issue?accreditationType=attest`, {
 		data: JSON.stringify(credentialData),
 		headers: {

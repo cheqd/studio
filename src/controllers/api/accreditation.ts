@@ -59,8 +59,8 @@ export class AccreditationController {
 	];
 
 	public static verifyValidator = [
-		body('accreditation').exists().bail(),
-		body('subjectDid').exists().bail(),
+		body('accreditation').exists().withMessage('accreditation should be a DID Url').bail(),
+		body('subjectDid').exists().isDID().bail(),
 		query('verifyStatus')
 			.optional()
 			.isBoolean()
@@ -121,11 +121,9 @@ export class AccreditationController {
 	public async issue(request: Request, response: Response) {
 		const result = validationResult(request);
 		if (!result.isEmpty()) {
-			return response
-				.json({
-					message: result.array(),
-				})
-				.status(400);
+			return response.status(400).json({
+				message: result.array(),
+			});
 		}
 
 		// Get strategy e.g. postgres or local
@@ -333,11 +331,9 @@ export class AccreditationController {
 	public async verify(request: Request, response: Response) {
 		const result = validationResult(request);
 		if (!result.isEmpty()) {
-			return response
-				.json({
-					message: result.array(),
-				})
-				.status(400);
+			return response.status(400).json({
+				message: result.array(),
+			});
 		}
 
 		// Extract did from params
