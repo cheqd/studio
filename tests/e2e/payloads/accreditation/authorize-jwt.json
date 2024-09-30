@@ -8,6 +8,5 @@
 		}
 	],
 	"format": "jwt",
-	"accreditationName": "accreditAccreditation",
-	"rootAuthroization": "did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=rootAccreditation&resourceType=VerifiableAuthorisationForTrustChain"
+	"accreditationName": "authorizeAccreditation"
 }
