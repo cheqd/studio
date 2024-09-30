@@ -12,7 +12,7 @@ import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { AccreditationService } from '../../services/api/accreditation.js';
 import { Credentials } from '../../services/api/credentials.js';
 import { eventTracker } from '../../services/track/tracker.js';
-import { body, query } from '../validator/index.js';
+import { body, query, validationResult } from '../validator/index.js';
 
 export class AccreditationController {
 	public static issueValidator = [
@@ -29,20 +29,21 @@ export class AccreditationController {
 		body('subjectDid').exists().isString().isDID().bail(),
 		body('schemas').exists().isArray().bail(),
 		body('schemas.*.url').isURL().bail(),
-		body('schemas.*.type').isArray().bail(),
-		body('schemas.*.type.*').isString().bail(),
+		body('schemas.*.type').custom(
+			(value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string')
+		),
 		body('parentAccreditation').optional().isURL().bail(),
 		body('rootAuthorization').optional().isURL().bail(),
 		query('accreditationType')
 			.custom((value, { req }) => {
-				if (value === 'accredit' || value === 'attest') {
-					return req.body.parentAccreditation && req.body.rootAuthorisation;
+				if (value === AccreditationRequestType.accredit || value === AccreditationRequestType.attest) {
+					return req.body.parentAccreditation && req.body.rootAuthorization;
 				}
 
 				return true;
 			})
 			.bail(),
-		body('accreditationName').isString(),
+		body('accreditationName').exists().isString(),
 	];
 
 	public static verifyValidator = [
@@ -106,6 +107,15 @@ export class AccreditationController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async issue(request: Request, response: Response) {
+		const result = validationResult(request);
+		if (!result.isEmpty()) {
+			return response
+				.json({
+					message: result.array(),
+				})
+				.status(400);
+		}
+
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 		// Extract did from params
@@ -318,6 +328,15 @@ export class AccreditationController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async verify(request: Request, response: Response) {
+		const result = validationResult(request);
+		if (!result.isEmpty()) {
+			return response
+				.json({
+					message: result.array(),
+				})
+				.status(400);
+		}
+
 		// Extract did from params
 		let { verifyStatus = false, allowDeactivatedDid = false } = request.query as VerifyCredentialRequestQuery;
 		const { accreditation, policies, subjectDid } = request.body;
