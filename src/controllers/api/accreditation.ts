@@ -12,11 +12,19 @@ import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { AccreditationService } from '../../services/api/accreditation.js';
 import { Credentials } from '../../services/api/credentials.js';
 import { eventTracker } from '../../services/track/tracker.js';
-import { body, param } from '../validator/index.js';
+import { body, query } from '../validator/index.js';
 
 export class AccreditationController {
 	public static issueValidator = [
-		param('accreditationType').exists().isString().isIn(['authorize', 'accredit', 'attest']).bail(),
+		query('accreditationType')
+			.exists()
+			.isString()
+			.isIn([
+				AccreditationRequestType.authorize,
+				AccreditationRequestType.accredit,
+				AccreditationRequestType.attest,
+			])
+			.bail(),
 		body('issuerDid').exists().isString().isDID().bail(),
 		body('subjectDid').exists().isString().isDID().bail(),
 		body('schemas').exists().isArray().bail(),
@@ -24,8 +32,8 @@ export class AccreditationController {
 		body('schemas.*.type').isArray().bail(),
 		body('schemas.*.type.*').isString().bail(),
 		body('parentAccreditation').optional().isURL().bail(),
-		body('rootAuthorisation').optional().isURL().bail(),
-		param('accreditationType')
+		body('rootAuthorization').optional().isURL().bail(),
+		query('accreditationType')
 			.custom((value, { req }) => {
 				if (value === 'accredit' || value === 'attest') {
 					return req.body.parentAccreditation && req.body.rootAuthorisation;
@@ -37,7 +45,23 @@ export class AccreditationController {
 		body('accreditationName').isString(),
 	];
 
-	public static verifyValidator = [body('accreditation').exists().bail(), body('subjectDid').exists().bail()];
+	public static verifyValidator = [
+		body('accreditation').exists().bail(),
+		body('subjectDid').exists().bail(),
+		query('verifyStatus')
+			.optional()
+			.isBoolean()
+			.withMessage('verifyStatus should be a boolean value')
+			.toBoolean()
+			.bail(),
+		query('allowDeactivatedDid')
+			.optional()
+			.isBoolean()
+			.withMessage('allowDeactivatedDid should be a boolean value')
+			.toBoolean()
+			.bail(),
+		query('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
+	];
 
 	/**
 	 * @openapi
@@ -50,7 +74,7 @@ export class AccreditationController {
 	 *     operationId: accredit-issue
 	 *     parameters:
 	 *       - in: query
-	 *         name: type
+	 *         name: accreditationType
 	 *         description: Select the type of accreditation to be issued.
 	 *         schema:
 	 *           type: string
@@ -101,9 +125,10 @@ export class AccreditationController {
 			schemas,
 			type,
 			parentAccreditation,
-			rootAuthorisation,
+			rootAuthorization,
 			attributes,
 			accreditationName,
+			format,
 		} = request.body as DIDAccreditationRequestBody;
 
 		try {
@@ -149,38 +174,41 @@ export class AccreditationController {
 					id: subjectDid,
 				},
 				issuerDid,
-				format: 'jwt',
+				format: format || 'jwt',
 				connector: CredentialConnectors.Resource, // resource connector
 				credentialId: resourceId,
 				credentialName: accreditationName,
 			};
+
+			let resourceType: string;
 			switch (accreditationType) {
-				case AccreditationRequestType.authroize:
-					credentialRequest.type = [
-						...(type || []),
-						DIDAccreditationTypes.VerifiableAuthorisationForTrustChain,
-					];
+				case AccreditationRequestType.authorize:
+					resourceType = DIDAccreditationTypes.VerifiableAuthorisationForTrustChain;
+					credentialRequest.type = [...(type || []), resourceType];
 					credentialRequest.termsOfUse = {
-						type: DIDAccreditationTypes.VerifiableAuthorisationForTrustChain,
+						type: resourceType,
 						trustFramework: 'cheqd Governance Framework',
 						trustFrameworkId: 'https://learn.cheqd.io/governance/start',
 					};
 					break;
 				case AccreditationRequestType.accredit:
-					credentialRequest.type = [...(type || []), DIDAccreditationTypes.VerifiableAccreditationToAccredit];
+					resourceType = DIDAccreditationTypes.VerifiableAccreditationToAccredit;
+					credentialRequest.type = [...(type || []), resourceType];
 					credentialRequest.termsOfUse = {
-						type: DIDAccreditationTypes.VerifiableAccreditationToAccredit,
+						type: resourceType,
 						parentAccreditation,
-						rootAuthorisation,
+						rootAuthorization,
 					};
 					break;
 				case AccreditationRequestType.attest:
-					credentialRequest.type = [...(type || []), DIDAccreditationTypes.VerifiableAccreditationToAttest];
+					resourceType = DIDAccreditationTypes.VerifiableAccreditationToAttest;
+					credentialRequest.type = [...(type || []), resourceType];
 					credentialRequest.termsOfUse = {
-						type: DIDAccreditationTypes.VerifiableAccreditationToAttest,
+						type: resourceType,
 						parentAccreditation,
-						rootAuthorisation,
+						rootAuthorization,
 					};
+					break;
 			}
 
 			// validate parent and root accreditations
@@ -191,15 +219,15 @@ export class AccreditationController {
 				const results = await Promise.all([
 					AccreditationService.instance.verify_accreditation(
 						issuerDid,
-						parentAccreditation,
-						true,
+						parentAccreditation!,
+						false,
 						false,
 						response.locals.customer
 					),
 					AccreditationService.instance.verify_accreditation(
 						issuerDid,
-						rootAuthorisation,
-						true,
+						rootAuthorization!,
+						false,
 						false,
 						response.locals.customer
 					),
@@ -291,7 +319,7 @@ export class AccreditationController {
 	 */
 	public async verify(request: Request, response: Response) {
 		// Extract did from params
-		const { verifyStatus = false, allowDeactivatedDid = false } = request.query as VerifyCredentialRequestQuery;
+		let { verifyStatus = false, allowDeactivatedDid = false } = request.query as VerifyCredentialRequestQuery;
 		const { accreditation, policies, subjectDid } = request.body;
 		try {
 			const result = await AccreditationService.instance.verify_accreditation(

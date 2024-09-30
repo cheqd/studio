@@ -8,7 +8,7 @@ export enum DIDAccreditationTypes {
 }
 
 export enum AccreditationRequestType {
-	authroize = 'authorize',
+	authorize = 'authorize',
 	accredit = 'accredit',
 	attest = 'attest',
 }
@@ -24,6 +24,8 @@ export type DIDAccreditationRequestBody = Omit<
 	accreditationName: string;
 	attributes?: Record<string, unknown>;
 	type: string[] | undefined;
+	rootAuthorization?: string;
+	parentAccreditation?: string;
 };
 
 export type DIDAccreditationRequestParams = {

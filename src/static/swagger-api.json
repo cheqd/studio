@@ -704,7 +704,12 @@
       "AccreditationVerifyRequest": {
         "type": "object",
         "properties": {
-          "accrditation": {
+          "subjectDid": {
+            "description": "DID of the Verifiable Credential holder/subject. This needs to be a `did:key` DID.",
+            "type": "string",
+            "example": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+          },
+          "accreditation": {
             "description": "Verifiable Credential to be verified as a VC-JWT string or a JSON object.",
             "type": "object"
           },
@@ -729,7 +734,11 @@
               }
             }
           }
-        }
+        },
+        "required": [
+          "accreditation",
+          "subjectDid"
+        ]
       },
       "PresentationCreateRequest": {
         "type": "object",
@@ -2433,7 +2442,7 @@
         "parameters": [
           {
             "in": "query",
-            "name": "type",
+            "name": "accreditationType",
             "description": "Select the type of accreditation to be issued.",
             "schema": {
               "type": "string",
