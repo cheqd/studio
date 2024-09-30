@@ -28,13 +28,13 @@ test(' Issue and verify a authorize accreditation', async ({ request }) => {
 	});
 	expect(didUrls).toHaveLength(2);
 	expect(didUrls).toContain(
-		`did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=testAccreditation&resourceType=VerifiableAuthorisationForTrustChain`
+		`did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorisationForTrustChain`
 	);
 
 	const verifyResponse = await request.post(`/accreditation/verify`, {
 		data: JSON.stringify({
 			subjectDid: `${credentialData.subjectDid}`,
-			accreditation: `did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=testAccreditation&resourceType=VerifiableAuthorisationForTrustChain`,
+			accreditation: `did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorisationForTrustChain`,
 		}),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
@@ -69,7 +69,7 @@ test(' Verify accreditation [Negative]', async ({ request }) => {
 
 test(' Issue and verify a accredit accreditation', async ({ request }) => {
 	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/accredit-jwt.json`, 'utf-8'));
-	const issueResponse = await request.post(`/accreditation/issue?accreditationType=authorize`, {
+	const issueResponse = await request.post(`/accreditation/issue?accreditationType=accredit`, {
 		data: JSON.stringify(credentialData),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
@@ -111,7 +111,7 @@ test(' Issue and verify a accredit accreditation', async ({ request }) => {
 
 test(' Issue and verify a attest accreditation', async ({ request }) => {
 	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/accredit-jwt.json`, 'utf-8'));
-	const issueResponse = await request.post(`/accreditation/issue?accreditationType=authorize`, {
+	const issueResponse = await request.post(`/accreditation/issue?accreditationType=attest`, {
 		data: JSON.stringify(credentialData),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,

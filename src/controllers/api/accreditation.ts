@@ -198,7 +198,7 @@ export class AccreditationController {
 					),
 					AccreditationService.instance.verify_accreditation(
 						issuerDid,
-						parentAccreditation,
+						rootAuthorisation,
 						true,
 						false,
 						response.locals.customer

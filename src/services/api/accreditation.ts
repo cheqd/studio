@@ -100,33 +100,30 @@ export class AccreditationService {
 				};
 			}
 			const accreditorDid = didUrl.split('?')[0];
-			const parentDid = termsOfUse.parentAccreditation.split('?')[0];
-			const parentAccreditation = (
-				await this.verify_accreditation(
+			const [parentAccreditation, rootAuthorisation] = await Promise.all([
+				this.verify_accreditation(
 					accreditorDid,
 					termsOfUse.parentAccreditation,
 					verifyStatus,
 					allowDeactivatedDid,
 					customer
-				)
-			).success;
-			const rootDid = termsOfUse.rootAuthorisation.split('?')[0];
-			let rootAuthorisation = false;
-			if (parentDid == rootDid) {
-				rootAuthorisation = (
-					await this.verify_accreditation(
-						accreditorDid,
-						termsOfUse.rootAuthorisation,
-						verifyStatus,
-						allowDeactivatedDid,
-						customer
-					)
-				).success;
-			}
+				),
+				this.verify_accreditation(
+					accreditorDid,
+					termsOfUse.rootAuthorisation,
+					verifyStatus,
+					allowDeactivatedDid,
+					customer
+				),
+			]);
 			return {
 				status: 200,
 				success: true,
-				data: { ...verifyResult, parentAccreditation, rootAuthorisation },
+				data: {
+					...verifyResult,
+					parentAccreditation: parentAccreditation.success,
+					rootAuthorisation: rootAuthorisation.success,
+				},
 			};
 		}
 
