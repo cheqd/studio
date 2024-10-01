@@ -354,6 +354,12 @@
  *           items:
  *             type: string
  *           example: [https://schema.org/schema.jsonld, https://veramo.io/contexts/profile/v1]
+ *         parentAccreditation:
+ *           description: DID Url of the parent Verifiable Accreditation.
+ *           type: string
+ *         rootAuthorization:
+ *           description: DID Url of the root Verifiable Accreditation.
+ *           type: string
  *         type:
  *           description: Optional properties to be included in the `type` property of the credential.
  *           type: array

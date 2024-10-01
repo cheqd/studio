@@ -39,7 +39,7 @@ export class AccreditationService {
 			return {
 				success: false,
 				status: 400,
-				error: `Credential issuer DID is deactivated`,
+				error: `Issuer DID is deactivated`,
 			};
 		}
 
@@ -49,6 +49,10 @@ export class AccreditationService {
 				status: 400,
 				error: `Accreditation is not linked to the subject DID`,
 			};
+		}
+
+		if (verifyStatus && !accreditation.credentialStatus) {
+			verifyStatus = false;
 		}
 
 		const verifyResult = await identityServiceStrategySetup.agent.verifyCredential(

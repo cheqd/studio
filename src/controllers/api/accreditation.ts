@@ -239,7 +239,7 @@ export class AccreditationController {
 				const result = await AccreditationService.instance.verify_accreditation(
 					issuerDid,
 					parentAccreditation!,
-					false,
+					true,
 					false,
 					response.locals.customer
 				);
