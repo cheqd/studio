@@ -53,7 +53,7 @@
 		"esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */,
 		// "preserveSymlinks": true,              /* Do not resolve the real path of symlinks. */
 		// "allowUmdGlobalAccess": true,          /* Allow accessing UMD globals from modules. */
-		"importsNotUsedAsValues": "error" /* Specify emit/checking behavior for imports that are only used for types */,
+		"verbatimModuleSyntax": true /* Specify emit/checking behavior for imports that are only used for types */,
 		"ignoreDeprecations": "5.0" /* Ignore deprecation warnings */,
 
 		/* Source Map Options */
