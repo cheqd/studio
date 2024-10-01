@@ -12,7 +12,8 @@ import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { AccreditationService } from '../../services/api/accreditation.js';
 import { Credentials } from '../../services/api/credentials.js';
 import { eventTracker } from '../../services/track/tracker.js';
-import { body, query, validationResult } from '../validator/index.js';
+import { body, query } from '../validator/index.js';
+import { validate } from '../validator/decorator.js';
 
 export class AccreditationController {
 	public static issueValidator = [
@@ -118,14 +119,8 @@ export class AccreditationController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	public async issue(request: Request, response: Response) {
-		const result = validationResult(request);
-		if (!result.isEmpty()) {
-			return response.status(400).json({
-				message: result.array(),
-			});
-		}
-
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 		// Extract did from params
@@ -328,14 +323,8 @@ export class AccreditationController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	public async verify(request: Request, response: Response) {
-		const result = validationResult(request);
-		if (!result.isEmpty()) {
-			return response.status(400).json({
-				message: result.array(),
-			});
-		}
-
 		// Extract did from params
 		let { verifyStatus = false, allowDeactivatedDid = false } = request.query as VerifyCredentialRequestQuery;
 		const { accreditation, policies, subjectDid } = request.body;
