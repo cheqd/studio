@@ -147,7 +147,7 @@ export class AccreditationController {
 		} = request.body as DIDAccreditationRequestBody;
 
 		try {
-			// Validte issuer DID
+			// Validate issuer DID
 			const resolvedResult = await identityServiceStrategySetup.agent.resolve(issuerDid);
 			// check if DID-Document is resolved
 			const body = await resolvedResult.json();
