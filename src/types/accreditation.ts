@@ -26,6 +26,8 @@ export type DIDAccreditationRequestBody = Omit<
 	type: string[] | undefined;
 	rootAuthorization?: string;
 	parentAccreditation?: string;
+	trustFramework?: string;
+	trustFrameworkId?: string;
 };
 
 export type DIDAccreditationRequestParams = {

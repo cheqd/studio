@@ -194,9 +194,13 @@ class App {
 		app.get('/did/search/:did', new DIDController().resolveDidUrl);
 
 		// Trust Registry API
-		app.post('/accreditation/issue', AccreditationController.issueValidator, new AccreditationController().issue);
 		app.post(
-			'/accreditation/verify',
+			'/trust-registry/accreditation/issue',
+			AccreditationController.issueValidator,
+			new AccreditationController().issue
+		);
+		app.post(
+			'/trust-registry/accreditation/verify',
 			AccreditationController.verifyValidator,
 			new AccreditationController().verify
 		);

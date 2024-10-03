@@ -36,7 +36,7 @@ export class AccreditationController {
 		body('rootAuthorization').optional().bail(),
 		query('accreditationType')
 			.custom((value, { req }) => {
-				const { parentAccreditation, rootAuthorization } = req.body;
+				const { parentAccreditation, rootAuthorization, trustFramework, trustFrameworkId } = req.body;
 
 				const hasParentOrRoot = parentAccreditation || rootAuthorization;
 
@@ -51,6 +51,12 @@ export class AccreditationController {
 					throw new Error(
 						'parentAccreditation or rootAuthorization is not required for an authorize operation'
 					);
+				}
+
+				const hasTrustFramewok = trustFramework && trustFrameworkId;
+
+				if (!hasTrustFramewok && value === AccreditationRequestType.authorize) {
+					throw new Error('trustFramework and trustFrameworkId are required for an authorize operation');
 				}
 
 				return true;
@@ -141,6 +147,8 @@ export class AccreditationController {
 			type,
 			parentAccreditation,
 			rootAuthorization,
+			trustFramework,
+			trustFrameworkId,
 			attributes,
 			accreditationName,
 			format,
@@ -202,8 +210,8 @@ export class AccreditationController {
 					credentialRequest.type = [...(type || []), resourceType];
 					credentialRequest.termsOfUse = {
 						type: resourceType,
-						trustFramework: 'cheqd Governance Framework',
-						trustFrameworkId: 'https://learn.cheqd.io/governance/start',
+						trustFramework,
+						trustFrameworkId,
 					};
 					break;
 				case AccreditationRequestType.accredit:

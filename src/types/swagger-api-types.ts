@@ -337,9 +337,9 @@
  *           type: string
  *           example: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
  *         subjectDid:
- *           description: DID of the Verifiable Credential holder/subject. This needs to be a `did:key` DID.
+ *           description: DID of the Verifiable Credential holder/subject. This needs to be a `did:cheqd` DID.
  *           type: string
- *           example: did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
+ *           example: did:cheqd:testnet:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
  *         schemas:
  *            description: The list of schemas the subject DID is accredited for.
  *            type: array
