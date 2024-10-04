@@ -7,7 +7,7 @@ test.use({ storageState: 'playwright/.auth/user.json' });
 
 test(' Issue and verify a authorize accreditation', async ({ request }) => {
 	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/authorize-jwt.json`, 'utf-8'));
-	const issueResponse = await request.post(`/accreditation/issue?accreditationType=authorize`, {
+	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=authorize`, {
 		data: JSON.stringify(credentialData),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
@@ -31,7 +31,7 @@ test(' Issue and verify a authorize accreditation', async ({ request }) => {
 		`did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorisationForTrustChain`
 	);
 
-	const verifyResponse = await request.post(`/accreditation/verify`, {
+	const verifyResponse = await request.post(`/trust-registry/accreditation/verify`, {
 		data: JSON.stringify({
 			subjectDid: `${credentialData.subjectDid}`,
 			accreditation: `did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorisationForTrustChain`,
@@ -49,7 +49,7 @@ test(' Issue and verify a authorize accreditation', async ({ request }) => {
 
 test(' Issue accreditation [Negative]', async ({ request }) => {
 	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/authorize-jwt.json`, 'utf-8'));
-	const issueResponse = await request.post(`/accreditation/issue`, {
+	const issueResponse = await request.post(`/trust-registry/accreditation/issue`, {
 		data: JSON.stringify(credentialData),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
@@ -59,7 +59,7 @@ test(' Issue accreditation [Negative]', async ({ request }) => {
 });
 
 test(' Verify accreditation [Negative]', async ({ request }) => {
-	const verifyResponse = await request.post(`/accreditation/verify`, {
+	const verifyResponse = await request.post(`/trust-registry/accreditation/verify`, {
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
 		},
@@ -69,7 +69,7 @@ test(' Verify accreditation [Negative]', async ({ request }) => {
 
 test(' Issue and verify a accredit accreditation', async ({ request }) => {
 	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/accredit-jwt.json`, 'utf-8'));
-	const issueResponse = await request.post(`/accreditation/issue?accreditationType=accredit`, {
+	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=accredit`, {
 		data: JSON.stringify(credentialData),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
@@ -93,7 +93,7 @@ test(' Issue and verify a accredit accreditation', async ({ request }) => {
 		`did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578?resourceName=accreditAccreditation&resourceType=VerifiableAccreditationToAccredit`
 	);
 
-	const verifyResponse = await request.post(`/accreditation/verify`, {
+	const verifyResponse = await request.post(`/trust-registry/accreditation/verify`, {
 		data: JSON.stringify({
 			subjectDid: `${credentialData.subjectDid}`,
 			accreditation: `did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578?resourceName=accreditAccreditation&resourceType=VerifiableAccreditationToAccredit`,
@@ -111,7 +111,7 @@ test(' Issue and verify a accredit accreditation', async ({ request }) => {
 
 test(' Issue and verify a attest accreditation', async ({ request }) => {
 	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/attest-jwt.json`, 'utf-8'));
-	const issueResponse = await request.post(`/accreditation/issue?accreditationType=attest`, {
+	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=attest`, {
 		data: JSON.stringify(credentialData),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
@@ -135,7 +135,7 @@ test(' Issue and verify a attest accreditation', async ({ request }) => {
 		`did:cheqd:testnet:BjS4Nv8bVdxm2WW28MCfXA?resourceName=attestAccreditation&resourceType=VerifiableAccreditationToAttest`
 	);
 
-	const verifyResponse = await request.post(`/accreditation/verify`, {
+	const verifyResponse = await request.post(`/trust-registry/accreditation/verify`, {
 		data: JSON.stringify({
 			subjectDid: `${credentialData.subjectDid}`,
 			accreditation: `did:cheqd:testnet:BjS4Nv8bVdxm2WW28MCfXA?resourceName=attestAccreditation&resourceType=VerifiableAccreditationToAttest`,

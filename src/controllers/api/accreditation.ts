@@ -86,7 +86,7 @@ export class AccreditationController {
 	/**
 	 * @openapi
 	 *
-	 * /accreditation/issue:
+	 * /trust-registry/accreditation/issue:
 	 *   post:
 	 *     tags: [ Trust Registry ]
 	 *     summary: Publish a verifiable accreditation for a DID.
@@ -290,7 +290,7 @@ export class AccreditationController {
 	/**
 	 * @openapi
 	 *
-	 * /accreditation/verify:
+	 * /trust-registry/accreditation/verify:
 	 *   post:
 	 *     tags: [ Trust Registry ]
 	 *     summary: Verify a verifiable accreditation for a DID.
