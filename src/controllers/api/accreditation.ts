@@ -38,11 +38,11 @@ export class AccreditationController {
 			.bail(),
 		body('issuerDid').exists().isString().isDID().bail(),
 		body('subjectDid').exists().isString().isDID().bail(),
-		body('schemas').exists().isArray().bail(),
-		body('schemas.*.url').isURL().bail(),
-		body('schemas.*.type').custom(
-			(value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string')
-		),
+		body('schemas').exists().isArray().withMessage('schemas must be a array').bail(),
+		body('schemas.*.url').isString().withMessage('schema urls must be a string').bail(),
+		body('schemas.*.type')
+			.custom((value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string'))
+			.withMessage('schema type must be a string'),
 		body('parentAccreditation').optional().bail(),
 		body('rootAuthorization').optional().bail(),
 		query('accreditationType')
@@ -80,18 +80,18 @@ export class AccreditationController {
 		body('did').optional().isDID().bail(),
 		body('didUrl')
 			.optional()
-			.isDID()
+			.isString()
 			.custom((value) => value.includes('/resources/') || value.includes('?resourceName'))
 			.withMessage('didUrls should point to a unique DID Linked Resource')
 			.bail(),
 		body('resourceId').optional().isUUID().withMessage('resourceId should be a string').bail(),
 		body('resourceName').optional().isString().withMessage('resourceName should be a string').bail(),
 		body('resourceType').optional().isString().withMessage('resourceType should be a string').bail(),
-		body('schemas').optional().isArray().bail(),
-		body('schemas.*.url').isURL().bail(),
-		body('schemas.*.type').custom(
-			(value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string')
-		),
+		body('schemas').optional().isArray().withMessage('schemas must be a array').bail(),
+		body('schemas.*.url').isString().withMessage('schema urls must be a string').bail(),
+		body('schemas.*.type')
+			.custom((value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string'))
+			.withMessage('schema type must be a string'),
 		body('did')
 			.custom((value, { req }) => {
 				const { didUrl, resourceId, resourceName, resourceType } = req.body;
@@ -224,15 +224,17 @@ export class AccreditationController {
 			}
 
 			const resourceId = v4();
+			const accreditedFor = schemas.map(({ url, type }: any) => ({
+				schemaId: url,
+				type,
+			}));
+
 			// construct credential request
 			const credentialRequest: CredentialRequest = {
 				subjectDid,
 				attributes: {
 					...attributes,
-					accreditedFor: schemas.map(({ url, type }: any) => ({
-						schemaId: url,
-						type,
-					})),
+					accreditedFor,
 					id: subjectDid,
 				},
 				issuerDid,
@@ -281,7 +283,7 @@ export class AccreditationController {
 				const result = await AccreditationService.instance.verify_accreditation(
 					issuerDid,
 					parentAccreditation!,
-					schemas,
+					accreditedFor,
 					true,
 					false,
 					response.locals.customer,
@@ -397,10 +399,15 @@ export class AccreditationController {
 		}
 
 		try {
+			const accreditedFor = schemas?.map(({ url, type }: any) => ({
+				schemaId: url,
+				type,
+			}));
+
 			const result = await AccreditationService.instance.verify_accreditation(
 				subjectDid,
 				didUrl,
-				schemas,
+				accreditedFor,
 				verifyStatus,
 				allowDeactivatedDid,
 				response.locals.customer,

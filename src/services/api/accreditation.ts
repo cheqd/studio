@@ -12,7 +12,7 @@ export class AccreditationService {
 	async verify_accreditation(
 		subjectDid: string,
 		didUrl: string,
-		schemas: AccreditationSchemaType[] = [],
+		accreditedFor: AccreditationSchemaType[] = [],
 		verifyStatus: boolean,
 		allowDeactivatedDid: boolean,
 		customer: CustomerEntity,
@@ -66,9 +66,9 @@ export class AccreditationService {
 
 			// Check if the accreditor has permission for the schema provided
 			if (
-				!schemas.every((schema) =>
+				!accreditedFor.every((schema) =>
 					accreditation.credentialSubject.accreditedFor.some(
-						(accredited) => accredited.type === schema.type && accredited.url === schema.url
+						(accredited) => accredited.type === schema.type && accredited.schemaId === schema.schemaId
 					)
 				)
 			) {
@@ -133,7 +133,7 @@ export class AccreditationService {
 
 				accreditationUrl = termsOfUse.parentAccreditation;
 				accreditedSubject = accreditorDid;
-				schemas = accreditation.credentialSubject.accreditedFor;
+				accreditedFor = accreditation.credentialSubject.accreditedFor;
 
 				if (rootAuthorization && rootAuthorization !== termsOfUse.rootAuthorization) {
 					return {

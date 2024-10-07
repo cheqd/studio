@@ -16,6 +16,11 @@ export enum AccreditationRequestType {
 
 export type AccreditationSchemaType = {
 	type: string;
+	schemaId: string;
+};
+
+export type SchemaUrlType = {
+	type: string;
 	url: string;
 };
 
@@ -23,7 +28,7 @@ export type DIDAccreditationRequestBody = Omit<
 	CredentialRequest,
 	'attributes' | 'credentialSummary' | 'credentialSchema' | 'credentialName'
 > & {
-	schemas: AccreditationSchemaType[];
+	schemas: SchemaUrlType[];
 	accreditationName: string;
 	attributes?: Record<string, unknown>;
 	type: string[] | undefined;
@@ -44,7 +49,7 @@ export interface VerifyAccreditationRequestBody extends Pick<VerifyCredentialReq
 	resourceName?: string;
 	resourceType?: string;
 	subjectDid: string;
-	schemas?: AccreditationSchemaType[];
+	schemas?: SchemaUrlType[];
 }
 
 type DidUrl = Pick<VerifyAccreditationRequestBody, 'policies' | 'subjectDid' | 'schemas'> & {

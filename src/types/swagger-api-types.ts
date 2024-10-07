@@ -475,11 +475,11 @@
  *         subjectDid:
  *           description: DID of the Verifiable  Accreditation holder/subject. This needs to be a `did:key` DID.
  *           type: string
- *           example: did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
+ *           example: did:cheqd:testnet:5efa5126-c070-420f-a9c2-d22ae6eefb92
  *         didUrl:
  *           description: Verifiable  Accreditation to be verified as a VC-JWT string or a JSON object.
  *           type: string
- *         example: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-issuer-logo&resourceType=CredentialArtwork
+ *           example: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-issuer-logo&resourceType=CredentialArtwork
  *         did:
  *           type: string
  *           example: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
@@ -492,6 +492,11 @@
  *         resourceType:
  *           type: string
  *           example: CredentialArtwork
+ *         schemas:
+ *            description: The list of schemas the subject DID is accredited for.
+ *            type: array
+ *            items:
+ *              $ref: '#/components/schemas/SchemaUrl'
  *         policies:
  *           description: Custom verification policies to execute when verifying  Accreditation.
  *           type: object
