@@ -3,8 +3,8 @@ import type { SafeAPIResponse } from '../../types/common.js';
 import { DIDAccreditationTypes } from '../../types/accreditation.js';
 import { isCredentialIssuerDidDeactivated } from '../helpers.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
-import type { VerificationPolicies } from '@veramo/core';
-import type { CheqdW3CVerifiableCredential } from '../w3c-credential.js';
+import type { VerifiableCredential, VerificationPolicies } from '@veramo/core';
+import { CheqdW3CVerifiableCredential } from '../w3c-credential.js';
 
 export class AccreditationService {
 	public static instance = new AccreditationService();
@@ -15,8 +15,9 @@ export class AccreditationService {
 		verifyStatus: boolean,
 		allowDeactivatedDid: boolean,
 		customer: CustomerEntity,
+		rootAuthorization?: string,
 		policies?: VerificationPolicies
-	): Promise<SafeAPIResponse<{ verified: boolean; rootAuthorization: string }>> {
+	): Promise<SafeAPIResponse<{ verified: boolean }>> {
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 
@@ -36,9 +37,12 @@ export class AccreditationService {
 			}
 
 			// Create credential object
-			const accreditation: CheqdW3CVerifiableCredential = result;
+			const accreditation: VerifiableCredential = result;
 
-			if (!allowDeactivatedDid && (await isCredentialIssuerDidDeactivated(accreditation))) {
+			if (
+				!allowDeactivatedDid &&
+				(await isCredentialIssuerDidDeactivated(accreditation as CheqdW3CVerifiableCredential))
+			) {
 				return {
 					success: false,
 					status: 400,
@@ -50,7 +54,7 @@ export class AccreditationService {
 				return {
 					success: false,
 					status: 400,
-					error: `Accreditation is not linked to the subject DID`,
+					error: `Accreditation mismatch: Expected accreditation to be linked to subject DID ${accreditedSubject}, but found it linked to DID ${accreditation.credentialSubject.id} instead.`,
 				};
 			}
 
@@ -107,51 +111,33 @@ export class AccreditationService {
 					};
 				}
 
-				const accreditorDid = didUrl.includes('?') ? didUrl.split('?')[0] : didUrl.split('/')[0];
+				const accreditorDid =
+					typeof accreditation.issuer === 'string' ? accreditation.issuer : accreditation.issuer.id;
 
 				accreditationUrl = termsOfUse.parentAccreditation;
 				accreditedSubject = accreditorDid;
 
-				const parentAccreditationResult = await this.verify_accreditation(
-					accreditorDid,
-					termsOfUse.parentAccreditation,
-					verifyStatus,
-					allowDeactivatedDid,
-					customer
-				);
-
-				if (!parentAccreditationResult.success) {
-					return parentAccreditationResult;
-				} else if (parentAccreditationResult.data.rootAuthorization !== termsOfUse.rootAuthorization) {
+				if (rootAuthorization && rootAuthorization !== termsOfUse.rootAuthorization) {
 					return {
 						status: 200,
 						success: true,
 						data: {
 							...verifyResult,
 							verified: false,
-							rootAuthorization: parentAccreditationResult.data.rootAuthorization,
 						},
 					};
 				}
 
+				rootAuthorization = termsOfUse.rootAuthorization;
+			} else {
 				return {
 					status: 200,
 					success: true,
 					data: {
 						...verifyResult,
-						rootAuthorization: termsOfUse.rootAuthorization,
 					},
 				};
 			}
-
-			return {
-				status: 200,
-				success: true,
-				data: {
-					...verifyResult,
-					rootAuthorization: didUrl,
-				},
-			};
 		}
 	}
 }

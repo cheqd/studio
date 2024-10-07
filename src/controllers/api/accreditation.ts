@@ -268,10 +268,11 @@ export class AccreditationController {
 					parentAccreditation!,
 					true,
 					false,
-					response.locals.customer
+					response.locals.customer,
+					rootAuthorization
 				);
 
-				if (result.success === false || result.data.rootAuthorization !== rootAuthorization) {
+				if (result.success === false) {
 					return response.status(StatusCodes.BAD_REQUEST).send({
 						error: `root Authorization or parent Accreditation is not valid`,
 					});
@@ -386,6 +387,7 @@ export class AccreditationController {
 				verifyStatus,
 				allowDeactivatedDid,
 				response.locals.customer,
+				undefined,
 				policies
 			);
 			// Track operation
