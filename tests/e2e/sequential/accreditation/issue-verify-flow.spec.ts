@@ -34,7 +34,9 @@ test(' Issue and verify a authorize accreditation', async ({ request }) => {
 	const verifyResponse = await request.post(`/trust-registry/accreditation/verify`, {
 		data: JSON.stringify({
 			subjectDid: `${credentialData.subjectDid}`,
-			didUrl: `did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorisationForTrustChain`,
+			didUrl: `${credentialData.issuerDid}`,
+			resourceName: 'authorizeAccreditation',
+			resourceType: 'VerifiableAuthorisationForTrustChain',
 		}),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
