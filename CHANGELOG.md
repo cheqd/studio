@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.4.0-develop.1](https://github.com/cheqd/studio/compare/3.3.0...3.4.0-develop.1) (2024-10-07)
+
+### Features
+
+* Support DID accreditations [DEV-4415] ([#601](https://github.com/cheqd/studio/issues/601)) ([7447516](https://github.com/cheqd/studio/commit/744751613ba8c2e859be6601346c31b17df976c2))
+
 ## [3.3.0](https://github.com/cheqd/studio/compare/3.2.0...3.3.0) (2024-09-10)
 
 ### Features
