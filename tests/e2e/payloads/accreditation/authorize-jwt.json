@@ -8,5 +8,7 @@
 		}
 	],
 	"format": "jwt",
-	"accreditationName": "authorizeAccreditation"
+	"accreditationName": "authorizeAccreditation",
+	"trustFrameworkId": "https://learn.cheqd.io/governance/start",
+	"trustFramework": "cheqd Governance Framework"
 }
