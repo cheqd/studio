@@ -64,9 +64,9 @@ export class AccreditationController {
 					);
 				}
 
-				const hasTrustFramewok = trustFramework && trustFrameworkId;
+				const hasTrustFramework = trustFramework && trustFrameworkId;
 
-				if (!hasTrustFramewok && value === AccreditationRequestType.authorize) {
+				if (!hasTrustFramework && value === AccreditationRequestType.authorize) {
 					throw new Error('trustFramework and trustFrameworkId are required for an authorize operation');
 				}
 
