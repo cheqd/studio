@@ -34,7 +34,7 @@ test(' Issue and verify a authorize accreditation', async ({ request }) => {
 	const verifyResponse = await request.post(`/trust-registry/accreditation/verify`, {
 		data: JSON.stringify({
 			subjectDid: `${credentialData.subjectDid}`,
-			accreditation: `did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorisationForTrustChain`,
+			didUrl: `did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorisationForTrustChain`,
 		}),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
@@ -96,7 +96,7 @@ test(' Issue and verify a accredit accreditation', async ({ request }) => {
 	const verifyResponse = await request.post(`/trust-registry/accreditation/verify`, {
 		data: JSON.stringify({
 			subjectDid: `${credentialData.subjectDid}`,
-			accreditation: `did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578?resourceName=accreditAccreditation&resourceType=VerifiableAccreditationToAccredit`,
+			didUrl: `did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578?resourceName=accreditAccreditation&resourceType=VerifiableAccreditationToAccredit`,
 		}),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
@@ -138,7 +138,7 @@ test(' Issue and verify a attest accreditation', async ({ request }) => {
 	const verifyResponse = await request.post(`/trust-registry/accreditation/verify`, {
 		data: JSON.stringify({
 			subjectDid: `${credentialData.subjectDid}`,
-			accreditation: `did:cheqd:testnet:BjS4Nv8bVdxm2WW28MCfXA?resourceName=attestAccreditation&resourceType=VerifiableAccreditationToAttest`,
+			didUrl: `did:cheqd:testnet:BjS4Nv8bVdxm2WW28MCfXA?resourceName=attestAccreditation&resourceType=VerifiableAccreditationToAttest`,
 		}),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,

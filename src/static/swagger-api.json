@@ -688,7 +688,7 @@
         ],
         "example": {
           "issuerDid": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-          "subjectDid": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+          "subjectDid": "did:cheqd:testnet:cbe7ccf6-5937-44e6-8480-282b2d7ccc5b",
           "schemas": [
             {
               "type": "MuseumPassCredential",
@@ -713,12 +713,12 @@
         "type": "object",
         "properties": {
           "subjectDid": {
-            "description": "DID of the Verifiable Credential holder/subject. This needs to be a `did:key` DID.",
+            "description": "DID of the Verifiable Accreditation holder/subject. This needs to be a `did:cheqd` DID.",
             "type": "string",
-            "example": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+            "example": "did:cheqd:testnet:cbe7ccf6-5937-44e6-8480-282b2d7ccc5b"
           },
-          "accreditation": {
-            "description": "Verifiable Credential to be verified as a VC-JWT string or a JSON object.",
+          "didUrl": {
+            "description": "Verifiable Accreditation to be verified as a VC-JWT string or a JSON object.",
             "type": "object"
           },
           "policies": {

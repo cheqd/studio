@@ -106,7 +106,8 @@ export class AccreditationService {
 						error: `Invalid termsOfUse`,
 					};
 				}
-				const accreditorDid = didUrl.split('?')[0];
+
+				const accreditorDid = didUrl.includes('?') ? didUrl.split('?')[0] : didUrl.split('/')[0];
 
 				accreditationUrl = termsOfUse.parentAccreditation;
 				accreditedSubject = accreditorDid;

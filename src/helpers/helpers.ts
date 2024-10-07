@@ -237,3 +237,7 @@ export async function decryptPrivateKey(encryptedPrivateKeyHex: string, ivHex: s
 
 	return secretKey;
 }
+
+export function parseDidFromDidUrl(didUrl: string) {
+	return didUrl.includes('?') ? didUrl.split('?')[0] : didUrl.split('/')[0];
+}

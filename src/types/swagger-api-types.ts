@@ -328,16 +328,16 @@
  *           publicKeyBase58: BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt
  *           type: Ed25519VerificationKey2018
  *     AccreditationIssueRequest:
- *       description: Input fields for the creating a Verifiable Credential.
+ *       description: Input fields for the creating a Verifiable Accreditation.
  *       type: object
  *       additionalProperties: false
  *       properties:
  *         issuerDid:
- *           description: DID of the Verifiable Credential issuer. This needs to be a `did:cheqd` DID.
+ *           description: DID of the Verifiable Accreditation issuer. This needs to be a `did:cheqd` DID.
  *           type: string
  *           example: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
  *         subjectDid:
- *           description: DID of the Verifiable Credential holder/subject. This needs to be a `did:cheqd` DID.
+ *           description: DID of the Verifiable Accreditation holder/subject. This needs to be a `did:cheqd` DID.
  *           type: string
  *           example: did:cheqd:testnet:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
  *         schemas:
@@ -346,10 +346,10 @@
  *            items:
  *              $ref: '#/components/schemas/SchemaUrl'
  *         attributes:
- *           description: JSON object containing the attributes to be included in the credential.
+ *           description: JSON object containing the attributes to be included in the Accreditation.
  *           type: object
  *         '@context':
- *           description: Optional properties to be included in the `@context` property of the credential.
+ *           description: Optional properties to be included in the `@context` property of the Accreditation.
  *           type: array
  *           items:
  *             type: string
@@ -361,7 +361,7 @@
  *           description: DID Url of the root Verifiable Accreditation.
  *           type: string
  *         type:
- *           description: Optional properties to be included in the `type` property of the credential.
+ *           description: Optional properties to be included in the `type` property of the Accreditation.
  *           type: array
  *           items:
  *             type: string
@@ -372,7 +372,7 @@
  *           format: date-time
  *           example: 2023-06-08T13:49:28.000Z
  *         format:
- *           description: Format of the Verifiable Credential. Defaults to VC-JWT.
+ *           description: Format of the Verifiable Accreditation. Defaults to VC-JWT.
  *           type: string
  *           enum:
  *             - jwt
@@ -473,14 +473,27 @@
  *       type: object
  *       properties:
  *         subjectDid:
- *           description: DID of the Verifiable Credential holder/subject. This needs to be a `did:key` DID.
+ *           description: DID of the Verifiable  Accreditation holder/subject. This needs to be a `did:key` DID.
  *           type: string
  *           example: did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
- *         accreditation:
- *           description: Verifiable Credential to be verified as a VC-JWT string or a JSON object.
- *           type: object
+ *         didUrl:
+ *           description: Verifiable  Accreditation to be verified as a VC-JWT string or a JSON object.
+ *           type: string
+ *         example: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-issuer-logo&resourceType=CredentialArtwork
+ *         did:
+ *           type: string
+ *           example: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *         resourceId:
+ *           type: string
+ *           example: 398cee0a-efac-4643-9f4c-74c48c72a14b
+ *         resourceName:
+ *           type: string
+ *           example: cheqd-issuer-logo
+ *         resourceType:
+ *           type: string
+ *           example: CredentialArtwork
  *         policies:
- *           description: Custom verification policies to execute when verifying credential.
+ *           description: Custom verification policies to execute when verifying  Accreditation.
  *           type: object
  *           properties:
  *             issuanceDate:
@@ -496,7 +509,6 @@
  *               type: boolean
  *               default: false
  *       required:
- *         - accreditation
  *         - subjectDid
  *     PresentationCreateRequest:
  *       type: object

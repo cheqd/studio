@@ -1,11 +1,21 @@
 import type { Request, Response } from 'express';
 import type { VerifiableCredential } from '@veramo/core';
-import type { DIDAccreditationRequestBody, DIDAccreditationRequestParams } from '../../types/accreditation.js';
+import type {
+	DIDAccreditationRequestBody,
+	DIDAccreditationRequestParams,
+	VerifyAccreditationRequestBody,
+} from '../../types/accreditation.js';
 import type { ICredentialTrack, ITrackOperation } from '../../types/track.js';
 import type { CredentialRequest } from '../../types/credential.js';
 import { StatusCodes } from 'http-status-codes';
 import { v4 } from 'uuid';
-import { AccreditationRequestType, DIDAccreditationTypes } from '../../types/accreditation.js';
+import {
+	AccreditationRequestType,
+	DIDAccreditationTypes,
+	isDidAndResourceId,
+	isDidAndResourceName,
+	isDidUrl,
+} from '../../types/accreditation.js';
 import { CredentialConnectors, VerifyCredentialRequestQuery } from '../../types/credential.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
@@ -14,6 +24,7 @@ import { Credentials } from '../../services/api/credentials.js';
 import { eventTracker } from '../../services/track/tracker.js';
 import { body, query } from '../validator/index.js';
 import { validate } from '../validator/decorator.js';
+import { parseDidFromDidUrl } from '../../helpers/helpers.js';
 
 export class AccreditationController {
 	public static issueValidator = [
@@ -66,7 +77,20 @@ export class AccreditationController {
 	];
 
 	public static verifyValidator = [
-		body('accreditation').exists().withMessage('accreditation should be a DID Url').bail(),
+		body('did')
+			.custom((value, { req }) => {
+				const { didUrl, resourceId, resourceName, resourceType } = req.body;
+				if (!value && !didUrl) {
+					throw new Error('Either "did" or "didUrl" is required');
+				}
+
+				// If did is provided, ensure either resourceId or both resourceName and resourceType are provided
+				if (value && !(resourceId || (resourceName && resourceType))) {
+					throw new Error('Either "resourceId" or both "resourceName" and "resourceType" are required');
+				}
+				return true;
+			})
+			.bail(),
 		body('subjectDid').exists().isDID().bail(),
 		query('verifyStatus')
 			.optional()
@@ -335,11 +359,30 @@ export class AccreditationController {
 	public async verify(request: Request, response: Response) {
 		// Extract did from params
 		let { verifyStatus = false, allowDeactivatedDid = false } = request.query as VerifyCredentialRequestQuery;
-		const { accreditation, policies, subjectDid } = request.body;
+		const { policies, subjectDid } = request.body as VerifyAccreditationRequestBody;
+
+		// construct didUrl
+		let didUrl: string;
+		let did: string;
+		if (isDidUrl(request.body)) {
+			didUrl = request.body.didUrl;
+			did = parseDidFromDidUrl(didUrl);
+		} else if (isDidAndResourceId(request.body)) {
+			did = request.body.did;
+			didUrl = `${did}/resources/${request.body.resourceId}`;
+		} else if (isDidAndResourceName(request.body)) {
+			did = request.body.did;
+			didUrl = `${did}?resourceName=${request.body.resourceName}&resourceType=${request.body.resourceType}`;
+		} else {
+			return response.status(400).json({
+				error: `Invalid Request: Either didUrl or did with resource attributes are required`,
+			});
+		}
+
 		try {
 			const result = await AccreditationService.instance.verify_accreditation(
 				subjectDid,
-				accreditation,
+				didUrl,
 				verifyStatus,
 				allowDeactivatedDid,
 				response.locals.customer,
@@ -352,7 +395,7 @@ export class AccreditationController {
 				customer: response.locals.customer,
 				user: response.locals.user,
 				data: {
-					did: accreditation.split('/')[0],
+					did,
 				} satisfies ICredentialTrack,
 			} as ITrackOperation;
 
