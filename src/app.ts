@@ -29,6 +29,7 @@ import { PriceController } from './controllers/admin/prices.js';
 import { WebhookController } from './controllers/admin/webhook.js';
 import { APIKeyController } from './controllers/admin/api-key.js';
 import { OrganisationController } from './controllers/admin/organisation.js';
+import { AccreditationController } from './controllers/api/accreditation.js';
 
 dotenv.config();
 
@@ -191,6 +192,18 @@ class App {
 		app.post('/did/deactivate/:did', DIDController.deactivateDIDValidator, new DIDController().deactivateDid);
 		app.get('/did/list', new DIDController().getDids);
 		app.get('/did/search/:did', new DIDController().resolveDidUrl);
+
+		// Trust Registry API
+		app.post(
+			'/trust-registry/accreditation/issue',
+			AccreditationController.issueValidator,
+			new AccreditationController().issue
+		);
+		app.post(
+			'/trust-registry/accreditation/verify',
+			AccreditationController.verifyValidator,
+			new AccreditationController().verify
+		);
 
 		// Resource API
 		app.post(

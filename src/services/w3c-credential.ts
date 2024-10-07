@@ -42,6 +42,7 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 	proof: ProofType;
 	statusList?: StatusList2021Revocation | StatusList2021Suspension;
 	resourceId?: string;
+	termsOfUse?: Record<string, string>;
 
 	constructor(w3Credential: W3CVerifiableCredential) {
 		super();
@@ -59,6 +60,7 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 		this.issuer = typeof credential.issuer === 'string' ? credential.issuer : credential.issuer.id;
 		this.issuanceDate = credential.issuanceDate;
 		this.proof = (credential as ICheqdCredential).proof;
+		this.termsOfUse = credential.termsOfUse;
 	}
 
 	public fromVCCompactJWT(jwt: CompactJWT): VerifiableCredential {

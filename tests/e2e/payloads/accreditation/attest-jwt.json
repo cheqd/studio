@@ -1,0 +1,14 @@
+{
+	"issuerDid": "did:cheqd:testnet:BjS4Nv8bVdxm2WW28MCfXA",
+	"subjectDid": "did:cheqd:testnet:GEMXDEg5EhL3YdG2qpbspB",
+	"schemas": [
+		{
+			"url": "https://schema.org/Person",
+			"type": "Person"
+		}
+	],
+	"format": "jwt",
+	"accreditationName": "attestAccreditation",
+	"parentAccreditation": "did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578?resourceName=accreditAccreditation&resourceType=VerifiableAccreditationToAccredit",
+	"rootAuthorization": "did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorisationForTrustChain"
+}
