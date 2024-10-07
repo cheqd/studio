@@ -12,7 +12,7 @@ import { CheqdDidLinkedAlsoKnownAsValidator } from './resource-also-known-as.js'
 import { CheqdW3CVerifiableCredentialValidator } from './credential.js';
 import { CheqdW3CVerifiablePresentationValidator } from './presentation.js';
 
-export const { check, validationResult, query, param } = new ExpressValidator({
+export const { check, validationResult, query, param, body } = new ExpressValidator({
 	isDID: (value: Validatable) => {
 		const res = new DIDValidator().validate(value);
 		if (!res.valid) {

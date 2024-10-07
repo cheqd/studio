@@ -19,6 +19,7 @@ import { CredentialAuthRuleProvider } from './auth/routes/api/credential-auth.js
 import { CredentialStatusAuthRuleProvider } from './auth/routes/api/credential-status-auth.js';
 import { AuthInfoProvider } from './auth/routes/api/auth-user-info.js';
 import type { UnsuccessfulResponseBody } from '../types/shared.js';
+import { AccreditationAuthRuleProvider } from './auth/routes/api/accreditation-auth.js';
 
 dotenv.config();
 
@@ -44,6 +45,7 @@ export class Authentication {
 		authRuleRepository.push(new CredentialAuthRuleProvider());
 		authRuleRepository.push(new CredentialStatusAuthRuleProvider());
 		authRuleRepository.push(new PresentationAuthRuleProvider());
+		authRuleRepository.push(new AccreditationAuthRuleProvider());
 
 		authRuleRepository.push(new AdminAuthRuleProvider());
 

@@ -8,6 +8,7 @@ export enum PAYLOADS_PATH {
 	CREDENTIAL = `${PAYLOAD_BASE_PATH}/credential`,
 	CREDENTIAL_STATUS = `${PAYLOAD_BASE_PATH}/credential-status`,
 	PRESENTATION = `${PAYLOAD_BASE_PATH}/presentation`,
+	ACCREDITATION = `${PAYLOAD_BASE_PATH}/accreditation`,
 }
 
 const GENERATED_BASE_PATH = './tests/e2e/generated';
