@@ -1,11 +1,21 @@
 import type { Request, Response } from 'express';
 import type { VerifiableCredential } from '@veramo/core';
-import type { DIDAccreditationRequestBody, DIDAccreditationRequestParams } from '../../types/accreditation.js';
+import type {
+	DIDAccreditationRequestBody,
+	DIDAccreditationRequestParams,
+	VerifyAccreditationRequestBody,
+} from '../../types/accreditation.js';
 import type { ICredentialTrack, ITrackOperation } from '../../types/track.js';
 import type { CredentialRequest } from '../../types/credential.js';
 import { StatusCodes } from 'http-status-codes';
 import { v4 } from 'uuid';
-import { AccreditationRequestType, DIDAccreditationTypes } from '../../types/accreditation.js';
+import {
+	AccreditationRequestType,
+	DIDAccreditationTypes,
+	isDidAndResourceId,
+	isDidAndResourceName,
+	isDidUrl,
+} from '../../types/accreditation.js';
 import { CredentialConnectors, VerifyCredentialRequestQuery } from '../../types/credential.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
@@ -14,6 +24,7 @@ import { Credentials } from '../../services/api/credentials.js';
 import { eventTracker } from '../../services/track/tracker.js';
 import { body, query } from '../validator/index.js';
 import { validate } from '../validator/decorator.js';
+import { parseDidFromDidUrl } from '../../helpers/helpers.js';
 
 export class AccreditationController {
 	public static issueValidator = [
@@ -27,16 +38,16 @@ export class AccreditationController {
 			.bail(),
 		body('issuerDid').exists().isString().isDID().bail(),
 		body('subjectDid').exists().isString().isDID().bail(),
-		body('schemas').exists().isArray().bail(),
-		body('schemas.*.url').isURL().bail(),
-		body('schemas.*.type').custom(
-			(value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string')
-		),
+		body('schemas').exists().isArray().withMessage('schemas must be a array').bail(),
+		body('schemas.*.url').isString().withMessage('schema urls must be a string').bail(),
+		body('schemas.*.type')
+			.custom((value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string'))
+			.withMessage('schema type must be a string'),
 		body('parentAccreditation').optional().bail(),
 		body('rootAuthorization').optional().bail(),
 		query('accreditationType')
 			.custom((value, { req }) => {
-				const { parentAccreditation, rootAuthorization } = req.body;
+				const { parentAccreditation, rootAuthorization, trustFramework, trustFrameworkId } = req.body;
 
 				const hasParentOrRoot = parentAccreditation || rootAuthorization;
 
@@ -53,6 +64,12 @@ export class AccreditationController {
 					);
 				}
 
+				const hasTrustFramewok = trustFramework && trustFrameworkId;
+
+				if (!hasTrustFramewok && value === AccreditationRequestType.authorize) {
+					throw new Error('trustFramework and trustFrameworkId are required for an authorize operation');
+				}
+
 				return true;
 			})
 			.bail(),
@@ -60,7 +77,35 @@ export class AccreditationController {
 	];
 
 	public static verifyValidator = [
-		body('accreditation').exists().withMessage('accreditation should be a DID Url').bail(),
+		body('did').optional().isDID().bail(),
+		body('didUrl')
+			.optional()
+			.isString()
+			.custom((value) => value.includes('/resources/') || value.includes('?resourceName'))
+			.withMessage('didUrls should point to a unique DID Linked Resource')
+			.bail(),
+		body('resourceId').optional().isUUID().withMessage('resourceId should be a string').bail(),
+		body('resourceName').optional().isString().withMessage('resourceName should be a string').bail(),
+		body('resourceType').optional().isString().withMessage('resourceType should be a string').bail(),
+		body('schemas').optional().isArray().withMessage('schemas must be a array').bail(),
+		body('schemas.*.url').isString().withMessage('schema urls must be a string').bail(),
+		body('schemas.*.type')
+			.custom((value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string'))
+			.withMessage('schema type must be a string'),
+		body('did')
+			.custom((value, { req }) => {
+				const { didUrl, resourceId, resourceName, resourceType } = req.body;
+				if (!value && !didUrl) {
+					throw new Error('Either "did" or "didUrl" is required');
+				}
+
+				// If did is provided, ensure either resourceId or both resourceName and resourceType are provided
+				if (value && !(resourceId || (resourceName && resourceType))) {
+					throw new Error('Either "resourceId" or both "resourceName" and "resourceType" are required');
+				}
+				return true;
+			})
+			.bail(),
 		body('subjectDid').exists().isDID().bail(),
 		query('verifyStatus')
 			.optional()
@@ -80,7 +125,7 @@ export class AccreditationController {
 	/**
 	 * @openapi
 	 *
-	 * /accreditation/issue:
+	 * /trust-registry/accreditation/issue:
 	 *   post:
 	 *     tags: [ Trust Registry ]
 	 *     summary: Publish a verifiable accreditation for a DID.
@@ -141,6 +186,8 @@ export class AccreditationController {
 			type,
 			parentAccreditation,
 			rootAuthorization,
+			trustFramework,
+			trustFrameworkId,
 			attributes,
 			accreditationName,
 			format,
@@ -177,15 +224,17 @@ export class AccreditationController {
 			}
 
 			const resourceId = v4();
+			const accreditedFor = schemas.map(({ url, type }: any) => ({
+				schemaId: url,
+				type,
+			}));
+
 			// construct credential request
 			const credentialRequest: CredentialRequest = {
 				subjectDid,
 				attributes: {
 					...attributes,
-					accreditedFor: schemas.map(({ url, type }: any) => ({
-						schemaId: url,
-						type,
-					})),
+					accreditedFor,
 					id: subjectDid,
 				},
 				issuerDid,
@@ -202,8 +251,8 @@ export class AccreditationController {
 					credentialRequest.type = [...(type || []), resourceType];
 					credentialRequest.termsOfUse = {
 						type: resourceType,
-						trustFramework: 'cheqd Governance Framework',
-						trustFrameworkId: 'https://learn.cheqd.io/governance/start',
+						trustFramework,
+						trustFrameworkId,
 					};
 					break;
 				case AccreditationRequestType.accredit:
@@ -234,14 +283,16 @@ export class AccreditationController {
 				const result = await AccreditationService.instance.verify_accreditation(
 					issuerDid,
 					parentAccreditation!,
+					accreditedFor,
 					true,
 					false,
-					response.locals.customer
+					response.locals.customer,
+					rootAuthorization
 				);
 
-				if (result.success === false || result.data.rootAuthorization !== rootAuthorization) {
-					return response.status(StatusCodes.BAD_REQUEST).send({
-						error: `root Authorization or parent Accreditation is not valid`,
+				if (result.success === false) {
+					return response.status(result.status).send({
+						error: `Invalid Request: Root Authorization or parent Accreditation is not valid: ${result.error}`,
 					});
 				}
 			}
@@ -282,7 +333,7 @@ export class AccreditationController {
 	/**
 	 * @openapi
 	 *
-	 * /accreditation/verify:
+	 * /trust-registry/accreditation/verify:
 	 *   post:
 	 *     tags: [ Trust Registry ]
 	 *     summary: Verify a verifiable accreditation for a DID.
@@ -327,14 +378,40 @@ export class AccreditationController {
 	public async verify(request: Request, response: Response) {
 		// Extract did from params
 		let { verifyStatus = false, allowDeactivatedDid = false } = request.query as VerifyCredentialRequestQuery;
-		const { accreditation, policies, subjectDid } = request.body;
+		const { policies, subjectDid, schemas } = request.body as VerifyAccreditationRequestBody;
+
+		// construct didUrl
+		let didUrl: string;
+		let did: string;
+		if (isDidUrl(request.body)) {
+			didUrl = request.body.didUrl;
+			did = parseDidFromDidUrl(didUrl);
+		} else if (isDidAndResourceId(request.body)) {
+			did = request.body.did;
+			didUrl = `${did}/resources/${request.body.resourceId}`;
+		} else if (isDidAndResourceName(request.body)) {
+			did = request.body.did;
+			didUrl = `${did}?resourceName=${request.body.resourceName}&resourceType=${request.body.resourceType}`;
+		} else {
+			return response.status(400).json({
+				error: `Invalid Request: Either didUrl or did with resource attributes are required`,
+			});
+		}
+
 		try {
+			const accreditedFor = schemas?.map(({ url, type }: any) => ({
+				schemaId: url,
+				type,
+			}));
+
 			const result = await AccreditationService.instance.verify_accreditation(
 				subjectDid,
-				accreditation,
+				didUrl,
+				accreditedFor,
 				verifyStatus,
 				allowDeactivatedDid,
 				response.locals.customer,
+				undefined,
 				policies
 			);
 			// Track operation
@@ -344,7 +421,7 @@ export class AccreditationController {
 				customer: response.locals.customer,
 				user: response.locals.user,
 				data: {
-					did: accreditation.split('/')[0],
+					did,
 				} satisfies ICredentialTrack,
 			} as ITrackOperation;
 
