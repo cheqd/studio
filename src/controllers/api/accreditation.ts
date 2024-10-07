@@ -129,7 +129,7 @@ export class AccreditationController {
 	 *   post:
 	 *     tags: [ Trust Registry ]
 	 *     summary: Publish a verifiable accreditation for a DID.
-	 *     description: Generate and publish a verifiable accreditation for a subject DID accrediting schema's as a DID Linked resource.
+	 *     description: Generate and publish a Verifiable Accreditation for a subject DID as a DID Linked resource.
 	 *     operationId: accredit-issue
 	 *     parameters:
 	 *       - in: query
@@ -337,7 +337,7 @@ export class AccreditationController {
 	 *   post:
 	 *     tags: [ Trust Registry ]
 	 *     summary: Verify a verifiable accreditation for a DID.
-	 *     description: Generate and publish a verifiable accreditation for a subject DID accrediting schema's as a DID Linked resource.
+	 *     description: Generate and publish a Verifiable Accreditation for a subject DID as a DID Linked resource.
 	 *     operationId: accredit-verify
 	 *     parameters:
 	 *       - in: query
