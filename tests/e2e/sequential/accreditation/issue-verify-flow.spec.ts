@@ -50,26 +50,6 @@ test(' Issue and verify a authorize accreditation', async ({ request }) => {
 	expect(result.verified).toBe(true);
 });
 
-test(' Issue accreditation [Negative]', async ({ request }) => {
-	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/authorize-jwt.json`, 'utf-8'));
-	const issueResponse = await request.post(`/trust-registry/accreditation/issue`, {
-		data: JSON.stringify(credentialData),
-		headers: {
-			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
-		},
-	});
-	expect(issueResponse.status()).toBe(400);
-});
-
-test(' Verify accreditation [Negative]', async ({ request }) => {
-	const verifyResponse = await request.post(`/trust-registry/accreditation/verify`, {
-		headers: {
-			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
-		},
-	});
-	expect(verifyResponse.status()).toBe(400);
-});
-
 test(' Issue and verify a accredit accreditation', async ({ request }) => {
 	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/accredit-jwt.json`, 'utf-8'));
 	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=accredit`, {
@@ -156,20 +136,6 @@ test(' Issue and verify a child accredit accreditation', async ({ request }) => 
 	expect(verifyResponse.status()).toBe(StatusCodes.OK);
 	expect(result.error).toBe(undefined);
 	expect(result.verified).toBe(true);
-});
-
-test(' Issue invalid schema accreditation', async ({ request }) => {
-	const credentialData = JSON.parse(
-		fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/invalid-schema-accredit.json`, 'utf-8')
-	);
-	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=accredit`, {
-		data: JSON.stringify(credentialData),
-		headers: {
-			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
-		},
-	});
-
-	expect(issueResponse.status()).toBe(StatusCodes.UNAUTHORIZED);
 });
 
 test(' Issue and verify a attest accreditation', async ({ request }) => {

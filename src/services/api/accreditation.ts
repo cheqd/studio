@@ -125,7 +125,7 @@ export class AccreditationService {
 					return {
 						success: false,
 						status: StatusCodes.BAD_REQUEST,
-						error: `Invalid termsOfUse`,
+						error: `Missing parentAccreditaiton and rootAuthorization in termsOfUse for accreditation: ${accreditationUrl}`,
 					};
 				}
 
