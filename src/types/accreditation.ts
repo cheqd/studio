@@ -1,3 +1,4 @@
+import { VerifiableCredential } from '@veramo/core';
 import type { CredentialRequest, VerifyCredentialRequestBody } from './credential';
 
 // Enums
@@ -13,14 +14,16 @@ export enum AccreditationRequestType {
 	attest = 'attest',
 }
 
+export type AccreditationSchemaType = {
+	type: string;
+	url: string;
+};
+
 export type DIDAccreditationRequestBody = Omit<
 	CredentialRequest,
 	'attributes' | 'credentialSummary' | 'credentialSchema' | 'credentialName'
 > & {
-	schemas: {
-		type: string;
-		url: string;
-	}[];
+	schemas: AccreditationSchemaType[];
 	accreditationName: string;
 	attributes?: Record<string, unknown>;
 	type: string[] | undefined;
@@ -41,16 +44,17 @@ export interface VerifyAccreditationRequestBody extends Pick<VerifyCredentialReq
 	resourceName?: string;
 	resourceType?: string;
 	subjectDid: string;
+	schemas?: AccreditationSchemaType[];
 }
 
-type DidUrl = Pick<VerifyAccreditationRequestBody, 'policies' | 'subjectDid'> & {
+type DidUrl = Pick<VerifyAccreditationRequestBody, 'policies' | 'subjectDid' | 'schemas'> & {
 	didUrl: string;
 };
-type DidAndResourceId = Pick<VerifyAccreditationRequestBody, 'policies' | 'subjectDid'> & {
+type DidAndResourceId = Pick<VerifyAccreditationRequestBody, 'policies' | 'subjectDid' | 'schemas'> & {
 	did: string;
 	resourceId: string;
 };
-type DidResourceNameAndType = Pick<VerifyAccreditationRequestBody, 'policies' | 'subjectDid'> & {
+type DidResourceNameAndType = Pick<VerifyAccreditationRequestBody, 'policies' | 'subjectDid' | 'schemas'> & {
 	did: string;
 	resourceName: string;
 	resourceType: string;
@@ -70,4 +74,11 @@ export function isDidAndResourceName(body: VerifyAccreditationRequestBody): body
 	return (
 		typeof body.did === 'string' && typeof body.resourceName === 'string' && typeof body.resourceType === 'string'
 	);
+}
+
+export interface VerfifiableAccreditation extends VerifiableCredential {
+	credentialSubject: {
+		id: string;
+		accreditedFor: AccreditationSchemaType[];
+	};
 }

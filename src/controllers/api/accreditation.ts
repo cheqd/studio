@@ -77,6 +77,21 @@ export class AccreditationController {
 	];
 
 	public static verifyValidator = [
+		body('did').optional().isDID().bail(),
+		body('didUrl')
+			.optional()
+			.isDID()
+			.custom((value) => value.includes('/resources/') || value.includes('?resourceName'))
+			.withMessage('didUrls should point to a unique DID Linked Resource')
+			.bail(),
+		body('resourceId').optional().isUUID().withMessage('resourceId should be a string').bail(),
+		body('resourceName').optional().isString().withMessage('resourceName should be a string').bail(),
+		body('resourceType').optional().isString().withMessage('resourceType should be a string').bail(),
+		body('schemas').optional().isArray().bail(),
+		body('schemas.*.url').isURL().bail(),
+		body('schemas.*.type').custom(
+			(value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string')
+		),
 		body('did')
 			.custom((value, { req }) => {
 				const { didUrl, resourceId, resourceName, resourceType } = req.body;
@@ -266,6 +281,7 @@ export class AccreditationController {
 				const result = await AccreditationService.instance.verify_accreditation(
 					issuerDid,
 					parentAccreditation!,
+					schemas,
 					true,
 					false,
 					response.locals.customer,
@@ -360,7 +376,7 @@ export class AccreditationController {
 	public async verify(request: Request, response: Response) {
 		// Extract did from params
 		let { verifyStatus = false, allowDeactivatedDid = false } = request.query as VerifyCredentialRequestQuery;
-		const { policies, subjectDid } = request.body as VerifyAccreditationRequestBody;
+		const { policies, subjectDid, schemas } = request.body as VerifyAccreditationRequestBody;
 
 		// construct didUrl
 		let didUrl: string;
@@ -384,6 +400,7 @@ export class AccreditationController {
 			const result = await AccreditationService.instance.verify_accreditation(
 				subjectDid,
 				didUrl,
+				schemas,
 				verifyStatus,
 				allowDeactivatedDid,
 				response.locals.customer,

@@ -1,9 +1,9 @@
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { SafeAPIResponse } from '../../types/common.js';
-import { DIDAccreditationTypes } from '../../types/accreditation.js';
+import { AccreditationSchemaType, DIDAccreditationTypes, VerfifiableAccreditation } from '../../types/accreditation.js';
 import { isCredentialIssuerDidDeactivated } from '../helpers.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
-import type { VerifiableCredential, VerificationPolicies } from '@veramo/core';
+import type { VerificationPolicies } from '@veramo/core';
 import { CheqdW3CVerifiableCredential } from '../w3c-credential.js';
 
 export class AccreditationService {
@@ -12,6 +12,7 @@ export class AccreditationService {
 	async verify_accreditation(
 		subjectDid: string,
 		didUrl: string,
+		schemas: AccreditationSchemaType[] = [],
 		verifyStatus: boolean,
 		allowDeactivatedDid: boolean,
 		customer: CustomerEntity,
@@ -37,11 +38,11 @@ export class AccreditationService {
 			}
 
 			// Create credential object
-			const accreditation: VerifiableCredential = result;
+			const accreditation: VerfifiableAccreditation = result;
 
 			if (
 				!allowDeactivatedDid &&
-				(await isCredentialIssuerDidDeactivated(accreditation as CheqdW3CVerifiableCredential))
+				(await isCredentialIssuerDidDeactivated(accreditation as unknown as CheqdW3CVerifiableCredential))
 			) {
 				return {
 					success: false,
@@ -50,6 +51,7 @@ export class AccreditationService {
 				};
 			}
 
+			// Check if the accreditation is provided for the subjectDid
 			if (accreditation.credentialSubject.id !== accreditedSubject) {
 				return {
 					success: false,
@@ -60,6 +62,21 @@ export class AccreditationService {
 
 			if (verifyStatus && !accreditation.credentialStatus) {
 				verifyStatus = false;
+			}
+
+			// Check if the accreditor has permission for the schema provided
+			if (
+				!schemas.every((schema) =>
+					accreditation.credentialSubject.accreditedFor.some(
+						(accredited) => accredited.type === schema.type && accredited.url === schema.url
+					)
+				)
+			) {
+				return {
+					success: false,
+					status: 401,
+					error: `Invalid Request: Accreditation does not have the permissions for the given schema`,
+				};
 			}
 
 			const verifyResult = await identityServiceStrategySetup.agent.verifyCredential(
@@ -116,6 +133,7 @@ export class AccreditationService {
 
 				accreditationUrl = termsOfUse.parentAccreditation;
 				accreditedSubject = accreditorDid;
+				schemas = accreditation.credentialSubject.accreditedFor;
 
 				if (rootAuthorization && rootAuthorization !== termsOfUse.rootAuthorization) {
 					return {
