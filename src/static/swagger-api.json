@@ -715,7 +715,7 @@
           "subjectDid": {
             "description": "DID of the Verifiable  Accreditation holder/subject. This needs to be a `did:key` DID.",
             "type": "string",
-            "example": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+            "example": "did:cheqd:testnet:5efa5126-c070-420f-a9c2-d22ae6eefb92"
           },
           "didUrl": {
             "description": "Verifiable  Accreditation to be verified as a VC-JWT string or a JSON object.",

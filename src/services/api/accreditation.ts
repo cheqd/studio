@@ -5,6 +5,7 @@ import { isCredentialIssuerDidDeactivated } from '../helpers.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
 import type { VerificationPolicies } from '@veramo/core';
 import { CheqdW3CVerifiableCredential } from '../w3c-credential.js';
+import { StatusCodes } from 'http-status-codes';
 
 export class AccreditationService {
 	public static instance = new AccreditationService();
@@ -32,7 +33,7 @@ export class AccreditationService {
 			if (result.dereferencingMetadata) {
 				return {
 					success: false,
-					status: 404,
+					status: StatusCodes.NOT_FOUND,
 					error: `DID Url ${accreditationUrl} is not found`,
 				};
 			}
@@ -46,7 +47,7 @@ export class AccreditationService {
 			) {
 				return {
 					success: false,
-					status: 400,
+					status: StatusCodes.BAD_REQUEST,
 					error: `Issuer DID is deactivated`,
 				};
 			}
@@ -55,7 +56,7 @@ export class AccreditationService {
 			if (accreditation.credentialSubject.id !== accreditedSubject) {
 				return {
 					success: false,
-					status: 400,
+					status: StatusCodes.BAD_REQUEST,
 					error: `Accreditation mismatch: Expected accreditation to be linked to subject DID ${accreditedSubject}, but found it linked to DID ${accreditation.credentialSubject.id} instead.`,
 				};
 			}
@@ -74,7 +75,7 @@ export class AccreditationService {
 			) {
 				return {
 					success: false,
-					status: 401,
+					status: StatusCodes.UNAUTHORIZED,
 					error: `Invalid Request: Accreditation does not have the permissions for the given schema`,
 				};
 			}
@@ -91,7 +92,7 @@ export class AccreditationService {
 			if (verifyResult.error) {
 				return {
 					success: false,
-					status: 200,
+					status: StatusCodes.OK,
 					error: `verify: ${verifyResult.error.message}`,
 				};
 			}
@@ -99,7 +100,7 @@ export class AccreditationService {
 			if (!Array.isArray(accreditation.type)) {
 				return {
 					success: false,
-					status: 200,
+					status: StatusCodes.BAD_REQUEST,
 					error: `invalid accreditation type`,
 				};
 			}
@@ -110,7 +111,7 @@ export class AccreditationService {
 			if (!isTypeAccreditation) {
 				return {
 					success: false,
-					status: 200,
+					status: StatusCodes.BAD_REQUEST,
 					error: `invalid accreditation type`,
 				};
 			}
@@ -123,7 +124,7 @@ export class AccreditationService {
 				if (!termsOfUse || !termsOfUse.parentAccreditation || !termsOfUse.rootAuthorization) {
 					return {
 						success: false,
-						status: 200,
+						status: StatusCodes.BAD_REQUEST,
 						error: `Invalid termsOfUse`,
 					};
 				}
@@ -137,7 +138,7 @@ export class AccreditationService {
 
 				if (rootAuthorization && rootAuthorization !== termsOfUse.rootAuthorization) {
 					return {
-						status: 200,
+						status: StatusCodes.OK,
 						success: true,
 						data: {
 							...verifyResult,
@@ -149,7 +150,7 @@ export class AccreditationService {
 				rootAuthorization = termsOfUse.rootAuthorization;
 			} else {
 				return {
-					status: 200,
+					status: StatusCodes.OK,
 					success: true,
 					data: {
 						...verifyResult,

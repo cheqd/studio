@@ -291,7 +291,7 @@ export class AccreditationController {
 				);
 
 				if (result.success === false) {
-					return response.status(StatusCodes.BAD_REQUEST).send({
+					return response.status(result.status).send({
 						error: `root Authorization or parent Accreditation is not valid`,
 					});
 				}
