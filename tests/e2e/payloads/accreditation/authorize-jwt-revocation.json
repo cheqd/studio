@@ -12,7 +12,7 @@
 			"type": "Learn"
 		}
 	],
-	"accreditationName": "authorizeAccreditation",
+	"accreditationName": "revocationAccreditation",
 	"trustFrameworkId": "https://learn.cheqd.io/governance/start",
 	"trustFramework": "cheqd Governance Framework"
 }

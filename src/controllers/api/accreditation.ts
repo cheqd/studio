@@ -202,6 +202,7 @@ export class AccreditationController {
 			attributes,
 			accreditationName,
 			format,
+			credentialStatus,
 		} = request.body as DIDAccreditationRequestBody;
 
 		try {
@@ -253,6 +254,7 @@ export class AccreditationController {
 				connector: CredentialConnectors.Resource, // resource connector
 				credentialId: resourceId,
 				credentialName: accreditationName,
+				credentialStatus,
 			};
 
 			let resourceType: string;
