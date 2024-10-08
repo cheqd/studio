@@ -571,10 +571,10 @@ export class AccreditationController {
 	 *       content:
 	 *         application/x-www-form-urlencoded:
 	 *           schema:
-	 *             $ref: '#/components/schemas/AccreditationSuspendRequest'
+	 *             $ref: '#/components/schemas/AccreditationRevokeRequest'
 	 *         application/json:
 	 *           schema:
-	 *             $ref: '#/components/schemas/AccreditationSuspendRequest'
+	 *             $ref: '#/components/schemas/AccreditationRevokeRequest'
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -682,10 +682,10 @@ export class AccreditationController {
 	 *       content:
 	 *         application/x-www-form-urlencoded:
 	 *           schema:
-	 *             $ref: '#/components/schemas/AccreditationReinstateRequest'
+	 *             $ref: '#/components/schemas/AccreditationRevokeRequest'
 	 *         application/json:
 	 *           schema:
-	 *             $ref: '#/components/schemas/AccreditationReinstateRequest'
+	 *             $ref: '#/components/schemas/AccreditationRevokeRequest'
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.

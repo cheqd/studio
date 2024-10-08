@@ -57,7 +57,7 @@ export const DEFAULT_DENOM_EXPONENT = 9;
 export const TESTNET_MINIMUM_BALANCE = process.env.TESTNET_MINIMUM_BALANCE || 1000;
 
 // Verifiable Credential constants
-export const VC_CONTEXT = ['https://www.w3.org/2018/credentials/v1', 'https://veramo.io/contexts/profile/v1'];
+export const VC_CONTEXT = ['https://www.w3.org/2018/credentials/v1'];
 export const VC_TYPE = 'VerifiableCredential';
 export const VC_PROOF_FORMAT = 'jwt';
 export const VC_REMOVE_ORIGINAL_FIELDS = true;

@@ -688,20 +688,17 @@
         ],
         "example": {
           "issuerDid": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-          "subjectDid": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+          "subjectDid": "did:cheqd:testnet:2582fe17-9b25-45e4-8104-1cfca430f0c3",
           "schemas": [
             {
               "type": "MuseumPassCredential",
               "url": "https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:0a5b94d0-a417-48ed-a6f5-4abc9e95888d?resourceName=MuseumPassCredentialSchema&resourceType=JsonSchemaValidator2018"
             }
           ],
-          "@context": [
-            "https://schema.org"
-          ],
-          "type": [
-            "Person"
-          ],
           "format": "jwt",
+          "accreditationName": "authorizeAccreditation",
+          "trustFramework": "https://learn.cheqd.io/governance/start",
+          "trustFrameworkId": "cheqd Governance Framework",
           "credentialStatus": {
             "statusPurpose": "revocation",
             "statusListName": "employee-credentials",
@@ -770,6 +767,36 @@
         "required": [
           "subjectDid"
         ]
+      },
+      "AccreditationRevokeRequest": {
+        "type": "object",
+        "properties": {
+          "didUrl": {
+            "description": "Verifiable  Accreditation to be verified as a VC-JWT string or a JSON object.",
+            "type": "string",
+            "example": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-issuer-logo&resourceType=CredentialArtwork"
+          },
+          "did": {
+            "type": "string",
+            "example": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e"
+          },
+          "resourceId": {
+            "type": "string",
+            "example": "398cee0a-efac-4643-9f4c-74c48c72a14b"
+          },
+          "resourceName": {
+            "type": "string",
+            "example": "cheqd-issuer-logo"
+          },
+          "resourceType": {
+            "type": "string",
+            "example": "CredentialArtwork"
+          },
+          "symmetricKey": {
+            "description": "The symmetric key used to encrypt the StatusList2021 DID-Linked Resource. Required if the StatusList2021 DID-Linked Resource is encrypted.",
+            "type": "string"
+          }
+        }
       },
       "PresentationCreateRequest": {
         "type": "object",
@@ -2669,12 +2696,12 @@
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/AccreditationSuspendRequest"
+                "$ref": "#/components/schemas/AccreditationRevokeRequest"
               }
             },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AccreditationSuspendRequest"
+                "$ref": "#/components/schemas/AccreditationRevokeRequest"
               }
             }
           }
@@ -2726,12 +2753,12 @@
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/AccreditationReinstateRequest"
+                "$ref": "#/components/schemas/AccreditationRevokeRequest"
               }
             },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AccreditationReinstateRequest"
+                "$ref": "#/components/schemas/AccreditationRevokeRequest"
               }
             }
           }

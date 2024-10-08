@@ -76,7 +76,7 @@ export class AccreditationService {
 				return {
 					success: false,
 					status: StatusCodes.UNAUTHORIZED,
-					error: `Invalid Request: Accreditation does not have the permissions for the given schema`,
+					error: `Accreditation does not have the permissions for the given schema`,
 				};
 			}
 
@@ -101,7 +101,7 @@ export class AccreditationService {
 				return {
 					success: false,
 					status: StatusCodes.BAD_REQUEST,
-					error: `invalid accreditation type`,
+					error: `Invalid accreditation type`,
 				};
 			}
 
@@ -112,7 +112,7 @@ export class AccreditationService {
 				return {
 					success: false,
 					status: StatusCodes.BAD_REQUEST,
-					error: `invalid accreditation type`,
+					error: `Invalid accreditation type`,
 				};
 			}
 
