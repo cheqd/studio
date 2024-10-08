@@ -534,6 +534,10 @@
               "$ref": "#/components/schemas/SchemaUrl"
             }
           },
+          "accreditationName": {
+            "description": "Unique name of the Verifiable Accreditation.",
+            "type": "string"
+          },
           "attributes": {
             "description": "JSON object containing the attributes to be included in the Accreditation.",
             "type": "object"
@@ -684,7 +688,8 @@
         "required": [
           "issuerDid",
           "subjectDid",
-          "schemas"
+          "schemas",
+          "accreditationName"
         ],
         "example": {
           "issuerDid": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
@@ -699,6 +704,8 @@
           "accreditationName": "authorizeAccreditation",
           "trustFramework": "https://learn.cheqd.io/governance/start",
           "trustFrameworkId": "cheqd Governance Framework",
+          "parentAccreditation": "did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578?resourceName=accreditAccreditation&resourceType=VerifiableAccreditationToAccredit",
+          "rootAuthorization": "did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorisationForTrustChain",
           "credentialStatus": {
             "statusPurpose": "revocation",
             "statusListName": "employee-credentials",
