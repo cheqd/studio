@@ -21,5 +21,35 @@ export class AccreditationAuthRuleProvider extends AuthRuleProvider {
 				skipNamespace: true,
 			}
 		);
+		this.registerRule(
+			'/trust-registry/accreditation/revoke',
+			'POST',
+			'revoke-accreditation:trust-registry:testnet'
+		);
+		this.registerRule(
+			'/trust-registry/accreditation/revoke',
+			'POST',
+			'revoke-accreditation:trust-registry:mainnet'
+		);
+		this.registerRule(
+			'/trust-registry/accreditation/suspend',
+			'POST',
+			'suspend-accreditation:trust-registry:testnet'
+		);
+		this.registerRule(
+			'/trust-registry/accreditation/suspend',
+			'POST',
+			'suspend-accreditation:trust-registry:mainnet'
+		);
+		this.registerRule(
+			'/trust-registry/accreditation/reinstate',
+			'POST',
+			'reinstate-accreditation:trust-registry:testnet'
+		);
+		this.registerRule(
+			'/trust-registry/accreditation/reinstate',
+			'POST',
+			'reinstate-accreditation:trust-registry:mainnet'
+		);
 	}
 }

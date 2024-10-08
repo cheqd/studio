@@ -48,7 +48,7 @@ export type VerificationPoliciesRequest = {
 	policies: VerificationPolicies;
 };
 
-export type PubslishRequest = {
+export type PublishRequest = {
 	publish?: boolean;
 };
 
@@ -70,15 +70,15 @@ export type VerifyCredentialRequestQuery = VerificationOptions;
 
 export type RevokeCredentialRequestBody = CredentialRequestBody;
 
-export type RevokeCredentialRequestQuery = PubslishRequest;
+export type RevokeCredentialRequestQuery = PublishRequest;
 
 export type SuspendCredentialRequestBody = CredentialRequestBody;
 
-export type SuspendCredentialRequestQuery = PubslishRequest;
+export type SuspendCredentialRequestQuery = PublishRequest;
 
 export type UnsuspendCredentialRequestBody = CredentialRequestBody;
 
-export type UnsuspendCredentialRequestQuery = PubslishRequest;
+export type UnsuspendCredentialRequestQuery = PublishRequest;
 
 // Response bodies
 // Positive
