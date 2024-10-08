@@ -40,6 +40,7 @@ export class AccreditationController {
 				AccreditationRequestType.attest,
 			])
 			.bail(),
+		body('accreditationName').exists().isString().withMessage('accreditationName is required').bail(),
 		body('issuerDid').exists().isDID().bail(),
 		body('subjectDid').exists().isDID().bail(),
 		body('schemas').exists().isArray().withMessage('schemas must be a array').bail(),
@@ -48,7 +49,9 @@ export class AccreditationController {
 			.custom((value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string'))
 			.withMessage('schema type must be a string'),
 		body('parentAccreditation').optional().isString().withMessage('parentAccreditation must be a string').bail(),
-		body('rootAuthorization').optional().withMessage('rootAuthorization must be a string').bail(),
+		body('rootAuthorization').optional().isString().withMessage('rootAuthorization must be a string').bail(),
+		body('trustFramework').optional().isString().withMessage('trustFramework must be a string').bail(),
+		body('trustFrameworkId').optional().isString().withMessage('trustFrameworkId must be a string').bail(),
 		query('accreditationType')
 			.custom((value, { req }) => {
 				const { parentAccreditation, rootAuthorization, trustFramework, trustFrameworkId } = req.body;
