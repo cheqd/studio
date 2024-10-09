@@ -505,7 +505,7 @@ export class AccreditationController {
 				return {
 					success: false,
 					status: 404,
-					error: `DID Url ${didUrl} is not found`,
+					error: `DID URL ${didUrl} is not found`,
 				};
 			}
 
@@ -616,7 +616,7 @@ export class AccreditationController {
 				return {
 					success: false,
 					status: 404,
-					error: `DID Url ${didUrl} is not found`,
+					error: `DID URL ${didUrl} is not found`,
 				};
 			}
 
@@ -727,7 +727,7 @@ export class AccreditationController {
 				return {
 					success: false,
 					status: 404,
-					error: `DID Url ${didUrl} is not found`,
+					error: `DID URL ${didUrl} is not found`,
 				};
 			}
 

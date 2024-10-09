@@ -358,10 +358,10 @@
  *             type: string
  *           example: [https://schema.org/schema.jsonld, https://veramo.io/contexts/profile/v1]
  *         parentAccreditation:
- *           description: DID Url of the parent Verifiable Accreditation, required for accredit/attest operation.
+ *           description: DID URL of the parent Verifiable Accreditation, required for accredit/attest operation.
  *           type: string
  *         rootAuthorization:
- *           description: DID Url of the root Verifiable Accreditation, required for accredit/attest operation.
+ *           description: DID URL of the root Verifiable Accreditation, required for accredit/attest operation.
  *           type: string
  *         trustFramework:
  *           description: Name or Type of the Trust Framework, required for authorize operation.

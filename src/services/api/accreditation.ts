@@ -34,7 +34,7 @@ export class AccreditationService {
 				return {
 					success: false,
 					status: StatusCodes.NOT_FOUND,
-					error: `DID Url ${accreditationUrl} is not found`,
+					error: `DID URL ${accreditationUrl} is not found`,
 				};
 			}
 
