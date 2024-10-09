@@ -454,11 +454,6 @@
  *                documentPresence: Physical,
  *                licenseNumber: 123AB4567
  *              }
- *       connector:
- *         type: string
- *         enum:
- *           - verida
- *           - resource
  *       required:
  *         - issuerDid
  *         - subjectDid
@@ -488,19 +483,23 @@
  *           type: string
  *           example: did:cheqd:testnet:5efa5126-c070-420f-a9c2-d22ae6eefb92
  *         didUrl:
- *           description: Verifiable  Accreditation to be verified as a VC-JWT string or a JSON object.
+ *           description: DID Url of the Verifiable Accreditation to be verified as a VC-JWT string or a JSON object.
  *           type: string
  *           example: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-issuer-logo&resourceType=CredentialArtwork
  *         did:
+ *           description: DID of the Verifiable Accreditation holder/subject
  *           type: string
  *           example: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
  *         resourceId:
+ *           description: Unique resource identifier of the Verifiable Accreditation
  *           type: string
  *           example: 398cee0a-efac-4643-9f4c-74c48c72a14b
  *         resourceName:
+ *           description: Resource name of the Verifiable Accreditation
  *           type: string
  *           example: cheqd-issuer-logo
  *         resourceType:
+ *           description: Resource type of the Verifiable Accreditation
  *           type: string
  *           example: CredentialArtwork
  *         schemas:
@@ -530,19 +529,23 @@
  *       type: object
  *       properties:
  *         didUrl:
- *           description: Verifiable  Accreditation to be verified as a VC-JWT string or a JSON object.
+ *           description: DID Url of the Verifiable Accreditation to be verified as a VC-JWT string or a JSON object.
  *           type: string
  *           example: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-issuer-logo&resourceType=CredentialArtwork
  *         did:
+ *           description: DID of the Verifiable Accreditation holder/subject
  *           type: string
  *           example: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
  *         resourceId:
+ *           description: Unique resource identifier of the Verifiable Accreditation
  *           type: string
  *           example: 398cee0a-efac-4643-9f4c-74c48c72a14b
  *         resourceName:
+ *           description: Resource name of the Verifiable Accreditation
  *           type: string
  *           example: cheqd-issuer-logo
  *         resourceType:
+ *           description: Resource type of the Verifiable Accreditation
  *           type: string
  *           example: CredentialArtwork
  *         symmetricKey:
