@@ -3,19 +3,22 @@ import type { VerifiableCredential } from '@veramo/core';
 import type {
 	DIDAccreditationRequestBody,
 	DIDAccreditationRequestParams,
+	RevokeAccreditationRequestBody,
+	RevokeAccreditationRequestQuery,
+	RevokeAccreditationResponseBody,
+	SuspendAccreditationRequestBody,
+	SuspendAccreditationRequestQuery,
+	SuspendAccreditationResponseBody,
+	UnsuspendAccreditationRequestBody,
+	UnsuspendAccreditationRequestQuery,
+	UnsuspendAccreditationResponseBody,
 	VerifyAccreditationRequestBody,
 } from '../../types/accreditation.js';
-import type { ICredentialTrack, ITrackOperation } from '../../types/track.js';
-import type { CredentialRequest } from '../../types/credential.js';
+import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '../../types/track.js';
+import type { CredentialRequest, UnsuccesfulRevokeCredentialResponseBody } from '../../types/credential.js';
 import { StatusCodes } from 'http-status-codes';
 import { v4 } from 'uuid';
-import {
-	AccreditationRequestType,
-	DIDAccreditationTypes,
-	isDidAndResourceId,
-	isDidAndResourceName,
-	isDidUrl,
-} from '../../types/accreditation.js';
+import { AccreditationRequestType, DIDAccreditationTypes } from '../../types/accreditation.js';
 import { CredentialConnectors, VerifyCredentialRequestQuery } from '../../types/credential.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
@@ -24,7 +27,8 @@ import { Credentials } from '../../services/api/credentials.js';
 import { eventTracker } from '../../services/track/tracker.js';
 import { body, query } from '../validator/index.js';
 import { validate } from '../validator/decorator.js';
-import { parseDidFromDidUrl } from '../../helpers/helpers.js';
+import { constructDidUrl, parseDidFromDidUrl } from '../../helpers/helpers.js';
+import { CheqdW3CVerifiableCredential } from '../../services/w3c-credential.js';
 
 export class AccreditationController {
 	public static issueValidator = [
@@ -36,15 +40,18 @@ export class AccreditationController {
 				AccreditationRequestType.attest,
 			])
 			.bail(),
-		body('issuerDid').exists().isString().isDID().bail(),
-		body('subjectDid').exists().isString().isDID().bail(),
+		body('accreditationName').exists().isString().withMessage('accreditationName is required').bail(),
+		body('issuerDid').exists().isDID().bail(),
+		body('subjectDid').exists().isDID().bail(),
 		body('schemas').exists().isArray().withMessage('schemas must be a array').bail(),
 		body('schemas.*.url').isString().withMessage('schema urls must be a string').bail(),
 		body('schemas.*.type')
 			.custom((value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string'))
 			.withMessage('schema type must be a string'),
-		body('parentAccreditation').optional().bail(),
-		body('rootAuthorization').optional().bail(),
+		body('parentAccreditation').optional().isString().withMessage('parentAccreditation must be a string').bail(),
+		body('rootAuthorization').optional().isString().withMessage('rootAuthorization must be a string').bail(),
+		body('trustFramework').optional().isString().withMessage('trustFramework must be a string').bail(),
+		body('trustFrameworkId').optional().isString().withMessage('trustFrameworkId must be a string').bail(),
 		query('accreditationType')
 			.custom((value, { req }) => {
 				const { parentAccreditation, rootAuthorization, trustFramework, trustFrameworkId } = req.body;
@@ -122,6 +129,10 @@ export class AccreditationController {
 		query('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
 	];
 
+	public static publishValidator = [
+		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').toBoolean().bail(),
+	];
+
 	/**
 	 * @openapi
 	 *
@@ -191,6 +202,7 @@ export class AccreditationController {
 			attributes,
 			accreditationName,
 			format,
+			credentialStatus,
 		} = request.body as DIDAccreditationRequestBody;
 
 		try {
@@ -242,6 +254,7 @@ export class AccreditationController {
 				connector: CredentialConnectors.Resource, // resource connector
 				credentialId: resourceId,
 				credentialName: accreditationName,
+				credentialStatus,
 			};
 
 			let resourceType: string;
@@ -381,18 +394,8 @@ export class AccreditationController {
 		const { policies, subjectDid, schemas } = request.body as VerifyAccreditationRequestBody;
 
 		// construct didUrl
-		let didUrl: string;
-		let did: string;
-		if (isDidUrl(request.body)) {
-			didUrl = request.body.didUrl;
-			did = parseDidFromDidUrl(didUrl);
-		} else if (isDidAndResourceId(request.body)) {
-			did = request.body.did;
-			didUrl = `${did}/resources/${request.body.resourceId}`;
-		} else if (isDidAndResourceName(request.body)) {
-			did = request.body.did;
-			didUrl = `${did}?resourceName=${request.body.resourceName}&resourceType=${request.body.resourceType}`;
-		} else {
+		const didUrl = constructDidUrl(request.body);
+		if (!didUrl) {
 			return response.status(400).json({
 				error: `Invalid Request: Either didUrl or did with resource attributes are required`,
 			});
@@ -421,7 +424,7 @@ export class AccreditationController {
 				customer: response.locals.customer,
 				user: response.locals.user,
 				data: {
-					did,
+					did: parseDidFromDidUrl(didUrl),
 				} satisfies ICredentialTrack,
 			} as ITrackOperation;
 
@@ -435,6 +438,339 @@ export class AccreditationController {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /trust-registry/accreditation/revoke:
+	 *   post:
+	 *     tags: [ Trust Registry ]
+	 *     summary: Revoke a Verifiable Accreditation.
+	 *     description: This endpoint revokes a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.
+	 *     operationId: accredit-revoke
+	 *     parameters:
+	 *       - in: query
+	 *         name: publish
+	 *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
+	 *         required: true
+	 *         schema:
+	 *           type: boolean
+	 *           default: true
+	 *     requestBody:
+	 *       content:
+	 *         application/x-www-form-urlencoded:
+	 *           schema:
+	 *             $ref: '#/components/schemas/AccreditationRevokeRequest'
+	 *         application/json:
+	 *           schema:
+	 *             $ref: '#/components/schemas/AccreditationRevokeRequest'
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RevocationResult'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	@validate
+	public async revoke(request: Request, response: Response) {
+		// Get publish flag
+		const { publish } = request.query as RevokeAccreditationRequestQuery;
+		// Get symmetric key
+		const { symmetricKey, ...didUrlParams } = request.body as RevokeAccreditationRequestBody;
+		// Get strategy e.g. postgres or local
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+
+		const didUrl = constructDidUrl(didUrlParams);
+		if (!didUrl) {
+			return response.status(400).json({
+				error: `Invalid Request: Either didUrl or did with resource attributes are required`,
+			});
+		}
+
+		try {
+			const res = await identityServiceStrategySetup.agent.resolve(didUrl);
+
+			const resource = await res.json();
+
+			if (resource.dereferencingMetadata) {
+				return {
+					success: false,
+					status: 404,
+					error: `DID URL ${didUrl} is not found`,
+				};
+			}
+
+			const accreditation: CheqdW3CVerifiableCredential = resource;
+
+			const result = await identityServiceStrategySetup.agent.revokeCredentials(
+				accreditation,
+				publish as boolean,
+				response.locals.customer,
+				symmetricKey as string
+			);
+
+			// Track operation if revocation was successful and publish is true
+			// Otherwise the StatusList2021 publisher should manually publish the resource
+			// and it will be tracked there
+			if (!result.error && result.resourceMetadata && publish) {
+				// get issuer did
+				const issuerDid =
+					typeof accreditation.issuer === 'string'
+						? accreditation.issuer
+						: (accreditation.issuer as { id: string }).id;
+				const trackInfo = {
+					category: OperationCategoryNameEnum.CREDENTIAL,
+					name: OperationNameEnum.CREDENTIAL_REVOKE,
+					customer: response.locals.customer,
+					user: response.locals.user,
+					data: {
+						did: issuerDid,
+						encrypted: result.statusList?.metadata?.encrypted,
+						resource: result.resourceMetadata,
+						symmetricKey: '',
+					} satisfies ICredentialStatusTrack,
+				} as ITrackOperation;
+
+				// Track operation
+				eventTracker.emit('track', trackInfo);
+			}
+			// Return Ok response
+			return response.status(StatusCodes.OK).json(result satisfies RevokeAccreditationResponseBody);
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			});
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /trust-registry/accreditation/suspend:
+	 *   post:
+	 *     tags: [ Trust Registry ]
+	 *     summary: Suspend a Verifiable Accreditation.
+	 *     description: This endpoint suspends a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.
+	 *     operationId: accredit-suspend
+	 *     parameters:
+	 *       - in: query
+	 *         name: publish
+	 *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
+	 *         required: true
+	 *         schema:
+	 *           type: boolean
+	 *           default: true
+	 *     requestBody:
+	 *       content:
+	 *         application/x-www-form-urlencoded:
+	 *           schema:
+	 *             $ref: '#/components/schemas/AccreditationRevokeRequest'
+	 *         application/json:
+	 *           schema:
+	 *             $ref: '#/components/schemas/AccreditationRevokeRequest'
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RevocationResult'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	@validate
+	public async suspend(request: Request, response: Response) {
+		// Get publish flag
+		const { publish } = request.query as SuspendAccreditationRequestQuery;
+		// Get symmetric key
+		const { symmetricKey, ...didUrlParams } = request.body as SuspendAccreditationRequestBody;
+		// Get strategy e.g. postgres or local
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+
+		const didUrl = constructDidUrl(didUrlParams);
+		if (!didUrl) {
+			return response.status(400).json({
+				error: `Invalid Request: Either didUrl or did with resource attributes are required`,
+			});
+		}
+
+		try {
+			const res = await identityServiceStrategySetup.agent.resolve(didUrl);
+
+			const resource = await res.json();
+
+			if (resource.dereferencingMetadata) {
+				return {
+					success: false,
+					status: 404,
+					error: `DID URL ${didUrl} is not found`,
+				};
+			}
+
+			const accreditation: CheqdW3CVerifiableCredential = resource;
+
+			const result = await identityServiceStrategySetup.agent.suspendCredentials(
+				accreditation,
+				publish as boolean,
+				response.locals.customer,
+				symmetricKey as string
+			);
+
+			// Track operation if revocation was successful and publish is true
+			// Otherwise the StatusList2021 publisher should manually publish the resource
+			// and it will be tracked there
+			if (!result.error && result.resourceMetadata && publish) {
+				// get issuer did
+				const issuerDid =
+					typeof accreditation.issuer === 'string'
+						? accreditation.issuer
+						: (accreditation.issuer as { id: string }).id;
+				const trackInfo = {
+					category: OperationCategoryNameEnum.CREDENTIAL,
+					name: OperationNameEnum.CREDENTIAL_SUSPEND,
+					customer: response.locals.customer,
+					user: response.locals.user,
+					data: {
+						did: issuerDid,
+						encrypted: result.statusList?.metadata?.encrypted,
+						resource: result.resourceMetadata,
+						symmetricKey: '',
+					},
+				} as ITrackOperation;
+
+				// Track operation
+				eventTracker.emit('track', trackInfo);
+			}
+			// Return Ok response
+			return response.status(StatusCodes.OK).json(result satisfies SuspendAccreditationResponseBody);
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			});
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /trust-registry/accreditation/reinstate:
+	 *   post:
+	 *     tags: [ Trust Registry ]
+	 *     summary: Reinstate a Verifiable Accreditation.
+	 *     description: This endpoint reinstates a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.
+	 *     operationId: accredit-reinstate
+	 *     parameters:
+	 *       - in: query
+	 *         name: publish
+	 *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
+	 *         required: true
+	 *         schema:
+	 *           type: boolean
+	 *           default: true
+	 *     requestBody:
+	 *       content:
+	 *         application/x-www-form-urlencoded:
+	 *           schema:
+	 *             $ref: '#/components/schemas/AccreditationRevokeRequest'
+	 *         application/json:
+	 *           schema:
+	 *             $ref: '#/components/schemas/AccreditationRevokeRequest'
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RevocationResult'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	@validate
+	public async reinstate(request: Request, response: Response) {
+		// Get publish flag
+		const { publish } = request.query as UnsuspendAccreditationRequestQuery;
+		// Get symmetric key
+		const { symmetricKey, ...didUrlParams } = request.body as UnsuspendAccreditationRequestBody;
+		// Get strategy e.g. postgres or local
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+
+		const didUrl = constructDidUrl(didUrlParams);
+		if (!didUrl) {
+			return response.status(400).json({
+				error: `Invalid Request: Either didUrl or did with resource attributes are required`,
+			});
+		}
+
+		try {
+			const res = await identityServiceStrategySetup.agent.resolve(didUrl);
+
+			const resource = await res.json();
+
+			if (resource.dereferencingMetadata) {
+				return {
+					success: false,
+					status: 404,
+					error: `DID URL ${didUrl} is not found`,
+				};
+			}
+
+			const accreditation: CheqdW3CVerifiableCredential = resource;
+
+			const result = await identityServiceStrategySetup.agent.reinstateCredentials(
+				accreditation,
+				publish as boolean,
+				response.locals.customer,
+				symmetricKey as string
+			);
+
+			// Track operation if revocation was successful and publish is true
+			// Otherwise the StatusList2021 publisher should manually publish the resource
+			// and it will be tracked there
+			if (!result.error && result.resourceMetadata && publish) {
+				// get issuer did
+				const issuerDid =
+					typeof accreditation.issuer === 'string'
+						? accreditation.issuer
+						: (accreditation.issuer as { id: string }).id;
+				const trackInfo = {
+					category: OperationCategoryNameEnum.CREDENTIAL,
+					name: OperationNameEnum.CREDENTIAL_UNSUSPEND,
+					customer: response.locals.customer,
+					user: response.locals.user,
+					data: {
+						did: issuerDid,
+						encrypted: result.statusList?.metadata?.encrypted || false,
+						resource: result.resourceMetadata,
+						symmetricKey: '',
+					} satisfies ICredentialStatusTrack,
+				} as ITrackOperation;
+
+				// Track operation
+				eventTracker.emit('track', trackInfo);
+			}
+			// Return Ok response
+			return response.status(StatusCodes.OK).json(result satisfies UnsuspendAccreditationResponseBody);
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			} satisfies UnsuccesfulRevokeCredentialResponseBody);
 		}
 	}
 }

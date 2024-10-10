@@ -345,6 +345,9 @@
  *            type: array
  *            items:
  *              $ref: '#/components/schemas/SchemaUrl'
+ *         accreditationName:
+ *           description: Unique name of the Verifiable Accreditation.
+ *           type: string
  *         attributes:
  *           description: JSON object containing the attributes to be included in the Accreditation.
  *           type: object
@@ -355,10 +358,16 @@
  *             type: string
  *           example: [https://schema.org/schema.jsonld, https://veramo.io/contexts/profile/v1]
  *         parentAccreditation:
- *           description: DID Url of the parent Verifiable Accreditation.
+ *           description: DID URL of the parent Verifiable Accreditation, required for accredit/attest operation.
  *           type: string
  *         rootAuthorization:
- *           description: DID Url of the root Verifiable Accreditation.
+ *           description: DID URL of the root Verifiable Accreditation, required for accredit/attest operation.
+ *           type: string
+ *         trustFramework:
+ *           description: Name or Type of the Trust Framework, required for authorize operation.
+ *           type: string
+ *         trustFrameworkId:
+ *           description: Url of the Trust Framework, required for authorize operation.
  *           type: string
  *         type:
  *           description: Optional properties to be included in the `type` property of the Accreditation.
@@ -454,17 +463,19 @@
  *         - issuerDid
  *         - subjectDid
  *         - schemas
+ *         - accreditationName
  *       example:
  *         issuerDid: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
- *         subjectDid: did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
+ *         subjectDid: did:cheqd:testnet:2582fe17-9b25-45e4-8104-1cfca430f0c3
  *         schemas:
  *           - type: MuseumPassCredential
  *             url: https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:0a5b94d0-a417-48ed-a6f5-4abc9e95888d?resourceName=MuseumPassCredentialSchema&resourceType=JsonSchemaValidator2018
- *         '@context':
- *           - https://schema.org
- *         type:
- *           - Person
  *         format: jwt
+ *         accreditationName: authorizeAccreditation
+ *         trustFramework: https://learn.cheqd.io/governance/start
+ *         trustFrameworkId: cheqd Governance Framework
+ *         parentAccreditation: did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578?resourceName=accreditAccreditation&resourceType=VerifiableAccreditationToAccredit
+ *         rootAuthorization: did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorisationForTrustChain
  *         credentialStatus:
  *           statusPurpose: revocation
  *           statusListName: employee-credentials
@@ -515,6 +526,28 @@
  *               default: false
  *       required:
  *         - subjectDid
+ *     AccreditationRevokeRequest:
+ *       type: object
+ *       properties:
+ *         didUrl:
+ *           description: Verifiable  Accreditation to be verified as a VC-JWT string or a JSON object.
+ *           type: string
+ *           example: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-issuer-logo&resourceType=CredentialArtwork
+ *         did:
+ *           type: string
+ *           example: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *         resourceId:
+ *           type: string
+ *           example: 398cee0a-efac-4643-9f4c-74c48c72a14b
+ *         resourceName:
+ *           type: string
+ *           example: cheqd-issuer-logo
+ *         resourceType:
+ *           type: string
+ *           example: CredentialArtwork
+ *         symmetricKey:
+ *           description: The symmetric key used to encrypt the StatusList2021 DID-Linked Resource. Required if the StatusList2021 DID-Linked Resource is encrypted.
+ *           type: string
  *     PresentationCreateRequest:
  *       type: object
  *       required:

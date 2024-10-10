@@ -204,6 +204,21 @@ class App {
 			AccreditationController.verifyValidator,
 			new AccreditationController().verify
 		);
+		app.post(
+			'/trust-registry/accreditation/revoke',
+			AccreditationController.publishValidator,
+			new AccreditationController().revoke
+		);
+		app.post(
+			'/trust-registry/accreditation/suspend',
+			AccreditationController.publishValidator,
+			new AccreditationController().suspend
+		);
+		app.post(
+			'/trust-registry/accreditation/reinstate',
+			AccreditationController.publishValidator,
+			new AccreditationController().reinstate
+		);
 
 		// Resource API
 		app.post(

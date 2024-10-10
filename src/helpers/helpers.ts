@@ -18,6 +18,7 @@ import { LitCompatibleCosmosChains, type DkgOptions, LitNetworks } from '@cheqd/
 import { fromString } from 'uint8arrays';
 
 import { config } from 'dotenv';
+import { DIDUrlParams, isDidAndResourceId, isDidAndResourceName, isDidUrl } from '../types/accreditation.js';
 
 config();
 
@@ -240,4 +241,17 @@ export async function decryptPrivateKey(encryptedPrivateKeyHex: string, ivHex: s
 
 export function parseDidFromDidUrl(didUrl: string) {
 	return didUrl.includes('?') ? didUrl.split('?')[0] : didUrl.split('/')[0];
+}
+
+export function constructDidUrl(data: DIDUrlParams) {
+	let didUrl: string | undefined = undefined;
+	if (isDidUrl(data)) {
+		didUrl = data.didUrl;
+	} else if (isDidAndResourceId(data)) {
+		didUrl = `${data.did}/resources/${data.resourceId}`;
+	} else if (isDidAndResourceName(data)) {
+		didUrl = `${data.did}?resourceName=${data.resourceName}&resourceType=${data.resourceType}`;
+	}
+
+	return didUrl;
 }

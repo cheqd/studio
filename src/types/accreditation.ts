@@ -1,5 +1,13 @@
 import { VerifiableCredential } from '@veramo/core';
-import type { CredentialRequest, VerifyCredentialRequestBody } from './credential';
+import type { CredentialRequest, PublishRequest, VerifyCredentialRequestBody } from './credential';
+import {
+	BulkRevocationResult,
+	BulkSuspensionResult,
+	BulkUnsuspensionResult,
+	RevocationResult,
+	SuspensionResult,
+	UnsuspensionResult,
+} from '@cheqd/did-provider-cheqd/build/types';
 
 // Enums
 export enum DIDAccreditationTypes {
@@ -42,12 +50,15 @@ export type DIDAccreditationRequestParams = {
 	accreditationType: 'authorize' | 'accredit' | 'attest';
 };
 
-export interface VerifyAccreditationRequestBody extends Pick<VerifyCredentialRequestBody, 'policies'> {
+export interface DIDUrlParams {
 	didUrl?: string;
 	did?: string;
 	resourceId?: string;
 	resourceName?: string;
 	resourceType?: string;
+}
+
+export interface VerifyAccreditationRequestBody extends Pick<VerifyCredentialRequestBody, 'policies'>, DIDUrlParams {
 	subjectDid: string;
 	schemas?: SchemaUrlType[];
 }
@@ -67,15 +78,15 @@ type DidResourceNameAndType = Pick<VerifyAccreditationRequestBody, 'policies' | 
 
 export type VerifyAccreditationRequest = DidUrl | DidAndResourceId | DidResourceNameAndType;
 
-export function isDidUrl(body: VerifyAccreditationRequestBody): body is DidUrl {
+export function isDidUrl(body: DIDUrlParams): body is DidUrl {
 	return typeof body.didUrl === 'string';
 }
 
-export function isDidAndResourceId(body: VerifyAccreditationRequestBody): body is DidAndResourceId {
+export function isDidAndResourceId(body: DIDUrlParams): body is DidAndResourceId {
 	return typeof body.did === 'string' && typeof body.resourceId === 'string';
 }
 
-export function isDidAndResourceName(body: VerifyAccreditationRequestBody): body is DidResourceNameAndType {
+export function isDidAndResourceName(body: DIDUrlParams): body is DidResourceNameAndType {
 	return (
 		typeof body.did === 'string' && typeof body.resourceName === 'string' && typeof body.resourceType === 'string'
 	);
@@ -87,3 +98,27 @@ export interface VerfifiableAccreditation extends VerifiableCredential {
 		accreditedFor: AccreditationSchemaType[];
 	};
 }
+
+export interface RevokeAccreditationRequestBody extends DIDUrlParams {
+	symmetricKey?: string;
+}
+
+export interface SuspendAccreditationRequestBody extends DIDUrlParams {
+	symmetricKey?: string;
+}
+
+export interface UnsuspendAccreditationRequestBody extends DIDUrlParams {
+	symmetricKey?: string;
+}
+
+export type RevokeAccreditationResponseBody = RevocationResult | BulkRevocationResult;
+
+export type SuspendAccreditationResponseBody = SuspensionResult | BulkSuspensionResult;
+
+export type UnsuspendAccreditationResponseBody = UnsuspensionResult | BulkUnsuspensionResult;
+
+export type RevokeAccreditationRequestQuery = PublishRequest;
+
+export type SuspendAccreditationRequestQuery = PublishRequest;
+
+export type UnsuspendAccreditationRequestQuery = PublishRequest;

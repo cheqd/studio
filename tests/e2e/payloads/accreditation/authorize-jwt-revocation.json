@@ -1,0 +1,18 @@
+{
+	"issuerDid": "did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA",
+	"subjectDid": "did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578",
+	"format": "jwt",
+	"credentialStatus": {
+		"statusPurpose": "revocation",
+		"statusListName": "testingstatuslist"
+	},
+	"schemas": [
+		{
+			"url": "https://schema.org/Learn",
+			"type": "Learn"
+		}
+	],
+	"accreditationName": "revocationAccreditation",
+	"trustFrameworkId": "https://learn.cheqd.io/governance/start",
+	"trustFramework": "cheqd Governance Framework"
+}

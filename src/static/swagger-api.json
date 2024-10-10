@@ -534,6 +534,10 @@
               "$ref": "#/components/schemas/SchemaUrl"
             }
           },
+          "accreditationName": {
+            "description": "Unique name of the Verifiable Accreditation.",
+            "type": "string"
+          },
           "attributes": {
             "description": "JSON object containing the attributes to be included in the Accreditation.",
             "type": "object"
@@ -550,11 +554,19 @@
             ]
           },
           "parentAccreditation": {
-            "description": "DID Url of the parent Verifiable Accreditation.",
+            "description": "DID URL of the parent Verifiable Accreditation, required for accredit/attest operation.",
             "type": "string"
           },
           "rootAuthorization": {
-            "description": "DID Url of the root Verifiable Accreditation.",
+            "description": "DID URL of the root Verifiable Accreditation, required for accredit/attest operation.",
+            "type": "string"
+          },
+          "trustFramework": {
+            "description": "Name or Type of the Trust Framework, required for authorize operation.",
+            "type": "string"
+          },
+          "trustFrameworkId": {
+            "description": "Url of the Trust Framework, required for authorize operation.",
             "type": "string"
           },
           "type": {
@@ -684,24 +696,24 @@
         "required": [
           "issuerDid",
           "subjectDid",
-          "schemas"
+          "schemas",
+          "accreditationName"
         ],
         "example": {
           "issuerDid": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0",
-          "subjectDid": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+          "subjectDid": "did:cheqd:testnet:2582fe17-9b25-45e4-8104-1cfca430f0c3",
           "schemas": [
             {
               "type": "MuseumPassCredential",
               "url": "https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:0a5b94d0-a417-48ed-a6f5-4abc9e95888d?resourceName=MuseumPassCredentialSchema&resourceType=JsonSchemaValidator2018"
             }
           ],
-          "@context": [
-            "https://schema.org"
-          ],
-          "type": [
-            "Person"
-          ],
           "format": "jwt",
+          "accreditationName": "authorizeAccreditation",
+          "trustFramework": "https://learn.cheqd.io/governance/start",
+          "trustFrameworkId": "cheqd Governance Framework",
+          "parentAccreditation": "did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578?resourceName=accreditAccreditation&resourceType=VerifiableAccreditationToAccredit",
+          "rootAuthorization": "did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorisationForTrustChain",
           "credentialStatus": {
             "statusPurpose": "revocation",
             "statusListName": "employee-credentials",
@@ -770,6 +782,36 @@
         "required": [
           "subjectDid"
         ]
+      },
+      "AccreditationRevokeRequest": {
+        "type": "object",
+        "properties": {
+          "didUrl": {
+            "description": "Verifiable  Accreditation to be verified as a VC-JWT string or a JSON object.",
+            "type": "string",
+            "example": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-issuer-logo&resourceType=CredentialArtwork"
+          },
+          "did": {
+            "type": "string",
+            "example": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e"
+          },
+          "resourceId": {
+            "type": "string",
+            "example": "398cee0a-efac-4643-9f4c-74c48c72a14b"
+          },
+          "resourceName": {
+            "type": "string",
+            "example": "cheqd-issuer-logo"
+          },
+          "resourceType": {
+            "type": "string",
+            "example": "CredentialArtwork"
+          },
+          "symmetricKey": {
+            "description": "The symmetric key used to encrypt the StatusList2021 DID-Linked Resource. Required if the StatusList2021 DID-Linked Resource is encrypted.",
+            "type": "string"
+          }
+        }
       },
       "PresentationCreateRequest": {
         "type": "object",
@@ -2572,6 +2614,177 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Credential"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/trust-registry/accreditation/revoke": {
+      "post": {
+        "tags": [
+          "Trust Registry"
+        ],
+        "summary": "Revoke a Verifiable Accreditation.",
+        "description": "This endpoint revokes a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.",
+        "operationId": "accredit-revoke",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "publish",
+            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "required": true,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/AccreditationRevokeRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccreditationRevokeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevocationResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/trust-registry/accreditation/suspend": {
+      "post": {
+        "tags": [
+          "Trust Registry"
+        ],
+        "summary": "Suspend a Verifiable Accreditation.",
+        "description": "This endpoint suspends a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.",
+        "operationId": "accredit-suspend",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "publish",
+            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "required": true,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/AccreditationRevokeRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccreditationRevokeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevocationResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/trust-registry/accreditation/reinstate": {
+      "post": {
+        "tags": [
+          "Trust Registry"
+        ],
+        "summary": "Reinstate a Verifiable Accreditation.",
+        "description": "This endpoint reinstates a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.",
+        "operationId": "accredit-reinstate",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "publish",
+            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "required": true,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/AccreditationRevokeRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccreditationRevokeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevocationResult"
                 }
               }
             }
