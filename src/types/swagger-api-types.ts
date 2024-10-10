@@ -358,10 +358,10 @@
  *             type: string
  *           example: [https://schema.org/schema.jsonld, https://veramo.io/contexts/profile/v1]
  *         parentAccreditation:
- *           description: DID Url of the parent Verifiable Accreditation, required for accredit/attest operation.
+ *           description: DID URL of the parent Verifiable Accreditation, required for accredit/attest operation.
  *           type: string
  *         rootAuthorization:
- *           description: DID Url of the root Verifiable Accreditation, required for accredit/attest operation.
+ *           description: DID URL of the root Verifiable Accreditation, required for accredit/attest operation.
  *           type: string
  *         trustFramework:
  *           description: Name or Type of the Trust Framework, required for authorize operation.
@@ -529,23 +529,19 @@
  *       type: object
  *       properties:
  *         didUrl:
- *           description: DID Url of the Verifiable Accreditation to be verified as a VC-JWT string or a JSON object.
+ *           description: Verifiable  Accreditation to be verified as a VC-JWT string or a JSON object.
  *           type: string
  *           example: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-issuer-logo&resourceType=CredentialArtwork
  *         did:
- *           description: DID of the Verifiable Accreditation holder/subject
  *           type: string
  *           example: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
  *         resourceId:
- *           description: Unique resource identifier of the Verifiable Accreditation
  *           type: string
  *           example: 398cee0a-efac-4643-9f4c-74c48c72a14b
  *         resourceName:
- *           description: Resource name of the Verifiable Accreditation
  *           type: string
  *           example: cheqd-issuer-logo
  *         resourceType:
- *           description: Resource type of the Verifiable Accreditation
  *           type: string
  *           example: CredentialArtwork
  *         symmetricKey:
