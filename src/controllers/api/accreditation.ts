@@ -432,7 +432,7 @@ export class AccreditationController {
 			if (result.success) {
 				return response.status(StatusCodes.OK).json(result.data);
 			} else {
-				return response.status(result.status).json({ verified: false, error: result.error });
+				return response.status(result.status).json({ ...result.data, verified: false, error: result.error });
 			}
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

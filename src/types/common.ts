@@ -8,6 +8,7 @@ export type APIErrorResponse<Input> = {
 	success: false;
 	status: number;
 	error: Input;
+	data?: any;
 };
 
 export type SafeAPIResponse<Output, Input = string> = APISuccessResponse<Output> | APIErrorResponse<Input>;
