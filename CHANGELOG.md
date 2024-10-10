@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.4.0-develop.2](https://github.com/cheqd/studio/compare/3.4.0-develop.1...3.4.0-develop.2) (2024-10-10)
+
+### Features
+
+* Add trust-registry revocation apis [DEV-4437] ([#604](https://github.com/cheqd/studio/issues/604)) ([e409321](https://github.com/cheqd/studio/commit/e4093216fee5d48838c63437650222a1bdc28358))
+
 ## [3.4.0-develop.1](https://github.com/cheqd/studio/compare/3.3.0...3.4.0-develop.1) (2024-10-07)
 
 ### Features
