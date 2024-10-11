@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.4.0-develop.3](https://github.com/cheqd/studio/compare/3.4.0-develop.2...3.4.0-develop.3) (2024-10-11)
+
+### Features
+
+* Update accreditation verifyResult [DEV-4436] ([#605](https://github.com/cheqd/studio/issues/605)) ([ee879c8](https://github.com/cheqd/studio/commit/ee879c81666677443fe65f5c3c0acf2d8ee88668))
+
 ## [3.4.0-develop.2](https://github.com/cheqd/studio/compare/3.4.0-develop.1...3.4.0-develop.2) (2024-10-10)
 
 ### Features
