@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.4.0](https://github.com/cheqd/studio/compare/3.3.0...3.4.0) (2024-10-11)
+
+### Features
+
+* Add trust-registry revocation apis [DEV-4437] ([#604](https://github.com/cheqd/studio/issues/604)) ([e409321](https://github.com/cheqd/studio/commit/e4093216fee5d48838c63437650222a1bdc28358))
+* Support DID accreditations [DEV-4415] ([#601](https://github.com/cheqd/studio/issues/601)) ([7447516](https://github.com/cheqd/studio/commit/744751613ba8c2e859be6601346c31b17df976c2))
+* Update accreditation verifyResult [DEV-4436] ([#605](https://github.com/cheqd/studio/issues/605)) ([ee879c8](https://github.com/cheqd/studio/commit/ee879c81666677443fe65f5c3c0acf2d8ee88668))
+
 ## [3.4.0-develop.3](https://github.com/cheqd/studio/compare/3.4.0-develop.2...3.4.0-develop.3) (2024-10-11)
 
 ### Features
