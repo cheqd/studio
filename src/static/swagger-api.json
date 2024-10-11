@@ -723,7 +723,7 @@
             "example": "did:cheqd:testnet:5efa5126-c070-420f-a9c2-d22ae6eefb92"
           },
           "didUrl": {
-            "description": "DID Url of the Verifiable Accreditation to be verified as a VC-JWT string or a JSON object.",
+            "description": "DID URL of the Verifiable Accreditation to be verified as a VC-JWT string or a JSON object.",
             "type": "string",
             "example": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-issuer-logo&resourceType=CredentialArtwork"
           },

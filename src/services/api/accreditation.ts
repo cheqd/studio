@@ -37,7 +37,7 @@ export class AccreditationService {
 					success: false,
 					status: StatusCodes.NOT_FOUND,
 					data: initialVerifyResult,
-					error: `Error on verifying accreditation ${accreditationUrl}: DID Url ${accreditationUrl} is not found`,
+					error: `Error on verifying accreditation ${accreditationUrl}: DID URL ${accreditationUrl} is not found`,
 				};
 			}
 
