@@ -3,7 +3,7 @@ import type { SafeAPIResponse } from '../../types/common.js';
 import { AccreditationSchemaType, DIDAccreditationTypes, VerfifiableAccreditation } from '../../types/accreditation.js';
 import { isCredentialIssuerDidDeactivated } from '../helpers.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
-import type { VerificationPolicies } from '@veramo/core';
+import type { IVerifyResult, VerificationPolicies } from '@veramo/core';
 import { CheqdW3CVerifiableCredential } from '../w3c-credential.js';
 import { StatusCodes } from 'http-status-codes';
 
@@ -25,6 +25,8 @@ export class AccreditationService {
 
 		let accreditationUrl = didUrl;
 		let accreditedSubject = subjectDid;
+		let initialVerifyResult: IVerifyResult | undefined = undefined;
+
 		while (true) {
 			const res = await identityServiceStrategySetup.agent.resolve(accreditationUrl);
 
@@ -34,7 +36,8 @@ export class AccreditationService {
 				return {
 					success: false,
 					status: StatusCodes.NOT_FOUND,
-					error: `DID URL ${accreditationUrl} is not found`,
+					data: initialVerifyResult,
+					error: `Error on verifying accreditation ${accreditationUrl}: DID URL ${accreditationUrl} is not found`,
 				};
 			}
 
@@ -48,7 +51,8 @@ export class AccreditationService {
 				return {
 					success: false,
 					status: StatusCodes.BAD_REQUEST,
-					error: `Issuer DID is deactivated`,
+					data: initialVerifyResult,
+					error: `Error on verifying accreditation ${accreditationUrl}: Issuer DID is deactivated`,
 				};
 			}
 
@@ -57,7 +61,8 @@ export class AccreditationService {
 				return {
 					success: false,
 					status: StatusCodes.BAD_REQUEST,
-					error: `Accreditation mismatch: Expected accreditation to be linked to subject DID ${accreditedSubject}, but found it linked to DID ${accreditation.credentialSubject.id} instead.`,
+					data: initialVerifyResult,
+					error: `Error on verifying accreditation ${accreditationUrl}: Expected accreditation to be linked to subject DID ${accreditedSubject}, but found it linked to DID ${accreditation.credentialSubject.id} instead.`,
 				};
 			}
 
@@ -76,7 +81,8 @@ export class AccreditationService {
 				return {
 					success: false,
 					status: StatusCodes.UNAUTHORIZED,
-					error: `Accreditation does not have the permissions for the given schema`,
+					data: initialVerifyResult,
+					error: `Error on verifying accreditation ${accreditationUrl}: Accreditation does not have the permissions for the given schema`,
 				};
 			}
 
@@ -89,11 +95,16 @@ export class AccreditationService {
 				customer
 			);
 
+			if (!initialVerifyResult) {
+				initialVerifyResult = { ...verifyResult, rootAuthorization };
+			}
+
 			if (verifyResult.error) {
 				return {
 					success: false,
 					status: StatusCodes.OK,
-					error: `verify: ${verifyResult.error.message}`,
+					data: initialVerifyResult,
+					error: `Error on verifying accreditation ${accreditationUrl}: ${verifyResult.error.message}`,
 				};
 			}
 
@@ -101,7 +112,8 @@ export class AccreditationService {
 				return {
 					success: false,
 					status: StatusCodes.BAD_REQUEST,
-					error: `Invalid accreditation type`,
+					data: initialVerifyResult,
+					error: `Error on verifying accreditation ${accreditationUrl}: Invalid accreditation type`,
 				};
 			}
 
@@ -112,7 +124,8 @@ export class AccreditationService {
 				return {
 					success: false,
 					status: StatusCodes.BAD_REQUEST,
-					error: `Invalid accreditation type`,
+					data: initialVerifyResult,
+					error: `Error on verifying accreditation ${accreditationUrl}: Invalid accreditation type`,
 				};
 			}
 
@@ -125,7 +138,8 @@ export class AccreditationService {
 					return {
 						success: false,
 						status: StatusCodes.BAD_REQUEST,
-						error: `Missing parentAccreditaiton and rootAuthorization in termsOfUse for accreditation: ${accreditationUrl}`,
+						data: initialVerifyResult,
+						error: `Error on verifying accreditation ${accreditationUrl}: Missing parentAccreditaiton and rootAuthorization in termsOfUse for accreditation: ${accreditationUrl}`,
 					};
 				}
 
@@ -139,11 +153,9 @@ export class AccreditationService {
 				if (rootAuthorization && rootAuthorization !== termsOfUse.rootAuthorization) {
 					return {
 						status: StatusCodes.OK,
-						success: true,
-						data: {
-							...verifyResult,
-							verified: false,
-						},
+						success: false,
+						data: initialVerifyResult,
+						error: `Error on verifying accreditation ${accreditationUrl}: Expected accreditation to be linked to root accreditation ${rootAuthorization}, but found it linked to DID ${termsOfUse.rootAuthorization} instead`,
 					};
 				}
 
@@ -152,9 +164,7 @@ export class AccreditationService {
 				return {
 					status: StatusCodes.OK,
 					success: true,
-					data: {
-						...verifyResult,
-					},
+					data: initialVerifyResult,
 				};
 			}
 		}
