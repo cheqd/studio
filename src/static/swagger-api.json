@@ -2354,7 +2354,7 @@
             "type": "string"
           },
           "url": {
-            "type": "string"
+            "types": "string"
           }
         }
       },
