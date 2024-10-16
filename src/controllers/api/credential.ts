@@ -284,7 +284,7 @@ export class CredentialController {
 			if (verifyResult.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					verified: verifyResult.verified,
-					error: `verify: ${verifyResult.error.message}`,
+					error: `verify: ${JSON.stringify(verifyResult.error)}`,
 				} satisfies UnsuccesfulVerifyCredentialResponseBody);
 			}
 

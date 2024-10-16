@@ -2350,11 +2350,11 @@
       "SchemaUrl": {
         "type": "object",
         "properties": {
-          "type": {
+          "types": {
             "type": "string"
           },
           "url": {
-            "types": "string"
+            "type": "string"
           }
         }
       },

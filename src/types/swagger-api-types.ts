@@ -1573,10 +1573,10 @@
  *     SchemaUrl:
  *       type: object
  *       properties:
- *         type:
+ *         types:
  *           type: string
  *         url:
- *           types: string
+ *           type: string
  *     InvalidRequest:
  *       description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
  *       type: object
