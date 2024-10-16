@@ -6,6 +6,7 @@ import type {
 	RevokeAccreditationRequestBody,
 	RevokeAccreditationRequestQuery,
 	RevokeAccreditationResponseBody,
+	SchemaUrlType,
 	SuspendAccreditationRequestBody,
 	SuspendAccreditationRequestQuery,
 	SuspendAccreditationResponseBody,
@@ -45,9 +46,9 @@ export class AccreditationController {
 		body('subjectDid').exists().isDID().bail(),
 		body('schemas').exists().isArray().withMessage('schemas must be a array').bail(),
 		body('schemas.*.url').isString().withMessage('schema urls must be a string').bail(),
-		body('schemas.*.type')
+		body('schemas.*.types')
 			.custom((value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string'))
-			.withMessage('schema type must be a string'),
+			.withMessage('schema.types must be a string or a string array'),
 		body('parentAccreditation').optional().isString().withMessage('parentAccreditation must be a string').bail(),
 		body('rootAuthorisation').optional().isString().withMessage('rootAuthorisation must be a string').bail(),
 		body('trustFramework').optional().isString().withMessage('trustFramework must be a string').bail(),
@@ -96,9 +97,9 @@ export class AccreditationController {
 		body('resourceType').optional().isString().withMessage('resourceType should be a string').bail(),
 		body('schemas').optional().isArray().withMessage('schemas must be a array').bail(),
 		body('schemas.*.url').isString().withMessage('schema urls must be a string').bail(),
-		body('schemas.*.type')
+		body('schemas.*.types')
 			.custom((value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string'))
-			.withMessage('schema type must be a string'),
+			.withMessage('schema.types must be a string or a string array'),
 		body('did')
 			.custom((value, { req }) => {
 				const { didUrl, resourceId, resourceName, resourceType } = req.body;
@@ -236,9 +237,9 @@ export class AccreditationController {
 			}
 
 			const resourceId = v4();
-			const accreditedFor = schemas.map(({ url, type }: any) => ({
+			const accreditedFor = schemas.map(({ url, types }: SchemaUrlType) => ({
 				schemaId: url,
-				type,
+				types: Array.isArray(types) ? types : [types],
 			}));
 
 			// construct credential request
@@ -402,9 +403,9 @@ export class AccreditationController {
 		}
 
 		try {
-			const accreditedFor = schemas?.map(({ url, type }: any) => ({
+			const accreditedFor = schemas?.map(({ url, types }: SchemaUrlType) => ({
 				schemaId: url,
-				type,
+				types: Array.isArray(types) ? types : [types],
 			}));
 
 			const result = await AccreditationService.instance.verify_accreditation(

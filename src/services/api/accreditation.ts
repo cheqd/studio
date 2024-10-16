@@ -74,7 +74,9 @@ export class AccreditationService {
 			if (
 				!accreditedFor.every((schema) =>
 					accreditation.credentialSubject.accreditedFor.some(
-						(accredited) => accredited.type === schema.type && accredited.schemaId === schema.schemaId
+						(accredited) =>
+							schema.types.every((value) => (accredited.types || []).includes(value)) &&
+							accredited.schemaId === schema.schemaId
 					)
 				)
 			) {

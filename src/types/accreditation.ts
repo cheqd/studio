@@ -23,12 +23,12 @@ export enum AccreditationRequestType {
 }
 
 export type AccreditationSchemaType = {
-	type: string;
+	types: string[];
 	schemaId: string;
 };
 
 export type SchemaUrlType = {
-	type: string;
+	types: string[] | string;
 	url: string;
 };
 

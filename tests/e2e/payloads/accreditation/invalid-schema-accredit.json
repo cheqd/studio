@@ -4,7 +4,7 @@
 	"schemas": [
 		{
 			"url": "https://schema.org/Event",
-			"type": "Event"
+			"types": "Event"
 		}
 	],
 	"format": "jwt",
