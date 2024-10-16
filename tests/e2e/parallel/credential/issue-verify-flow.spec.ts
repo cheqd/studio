@@ -59,7 +59,7 @@ test(' Issue a jwt credential with a deactivated DID', async ({ request }) => {
 	expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
 });
 
-test.skip(' Issue a jsonLD credential with Ed25519VerificationKey2018', async ({ request }) => {
+test(' Issue a jsonLD credential with Ed25519VerificationKey2018', async ({ request }) => {
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jsonld-ed25519-2018.json`, 'utf-8')
 	);
@@ -98,7 +98,7 @@ test.skip(' Issue a jsonLD credential with Ed25519VerificationKey2018', async ({
 	expect(result.verified).toBe(true);
 });
 
-test.skip(' Issue a jsonLD credential with Ed25519VerificationKey2020', async ({ request }) => {
+test(' Issue a jsonLD credential with Ed25519VerificationKey2020', async ({ request }) => {
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jsonld-ed25519-2020.json`, 'utf-8')
 	);
