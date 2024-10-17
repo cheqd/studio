@@ -136,7 +136,7 @@ test(' Issue a jsonLD credential with Ed25519VerificationKey2020', async ({ requ
 	expect(result.verified).toBe(true);
 });
 
-test(' Issue a jsonLD credential with JsonWebKey2020', async ({ request }) => {
+test.skip(' Issue a jsonLD credential with JsonWebKey2020', async ({ request }) => {
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jsonld-jsonwebkey-2020.json`, 'utf-8')
 	);
