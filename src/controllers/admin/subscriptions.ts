@@ -198,8 +198,14 @@ export class SubscriptionController {
 					success_url: successURL,
 					cancel_url: cancelURL,
 					subscription_data: {
+						trial_settings: {
+							end_behavior: {
+								missing_payment_method: 'cancel',
+							},
+						},
 						trial_period_days: trialPeriodDays,
 					},
+					payment_method_collection: 'if_required',
 				},
 				{
 					idempotencyKey,
