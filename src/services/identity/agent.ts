@@ -55,7 +55,7 @@ import {
 	DefaultStatusList2021StatusPurposeType,
 	TransactionResult,
 } from '@cheqd/did-provider-cheqd';
-import type { CheqdNetwork } from '@cheqd/sdk';
+import { ResourceModule, type CheqdNetwork } from '@cheqd/sdk';
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key';
 import { Resolver, ResolverRegistry } from 'did-resolver';
 import { DefaultDidUrlPattern, CreateAgentRequest, VeramoAgent } from '../../types/shared.js';
@@ -306,7 +306,7 @@ export class Veramo {
 				network: network as CheqdNetwork,
 				signInputs: publicKeyHexs,
 				fee: {
-					amount: [],
+					amount: [ResourceModule.fees.DefaultCreateResourceJsonFee],
 					gas: '2000000',
 				},
 			} satisfies ICheqdCreateLinkedResourceArgs);
