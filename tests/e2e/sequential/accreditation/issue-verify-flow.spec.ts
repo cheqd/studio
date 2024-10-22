@@ -5,9 +5,9 @@ import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
-test(' Issue and verify a authorize accreditation', async ({ request }) => {
-	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/authorize-jwt.json`, 'utf-8'));
-	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=authorize`, {
+test(' Issue and verify a authorise accreditation', async ({ request }) => {
+	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/authorise-jwt.json`, 'utf-8'));
+	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=authorise`, {
 		data: JSON.stringify(credentialData),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,

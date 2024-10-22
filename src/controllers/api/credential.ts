@@ -256,7 +256,8 @@ export class CredentialController {
 	public async verify(request: Request, response: Response) {
 		// Get params from request
 		const { credential, policies } = request.body as VerifyCredentialRequestBody;
-		const { verifyStatus, allowDeactivatedDid } = request.query as VerifyCredentialRequestQuery;
+		const { verifyStatus, allowDeactivatedDid, fetchRemoteContexts } =
+			request.query as VerifyCredentialRequestQuery;
 
 		// Create credential object
 		const cheqdCredential = new CheqdW3CVerifiableCredential(credential);
@@ -275,6 +276,7 @@ export class CredentialController {
 				{
 					verifyStatus,
 					policies,
+					fetchRemoteContexts,
 				},
 				response.locals.customer
 			);
@@ -282,7 +284,7 @@ export class CredentialController {
 			if (verifyResult.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					verified: verifyResult.verified,
-					error: `verify: ${verifyResult.error.message}`,
+					error: `verify: ${JSON.stringify(verifyResult.error)}`,
 				} satisfies UnsuccesfulVerifyCredentialResponseBody);
 			}
 

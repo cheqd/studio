@@ -6,6 +6,7 @@ import type {
 	RevokeAccreditationRequestBody,
 	RevokeAccreditationRequestQuery,
 	RevokeAccreditationResponseBody,
+	SchemaUrlType,
 	SuspendAccreditationRequestBody,
 	SuspendAccreditationRequestQuery,
 	SuspendAccreditationResponseBody,
@@ -35,7 +36,7 @@ export class AccreditationController {
 		query('accreditationType')
 			.exists()
 			.isIn([
-				AccreditationRequestType.authorize,
+				AccreditationRequestType.authorise,
 				AccreditationRequestType.accredit,
 				AccreditationRequestType.attest,
 			])
@@ -45,36 +46,36 @@ export class AccreditationController {
 		body('subjectDid').exists().isDID().bail(),
 		body('schemas').exists().isArray().withMessage('schemas must be a array').bail(),
 		body('schemas.*.url').isString().withMessage('schema urls must be a string').bail(),
-		body('schemas.*.type')
+		body('schemas.*.types')
 			.custom((value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string'))
-			.withMessage('schema type must be a string'),
+			.withMessage('schema.types must be a string or a string array'),
 		body('parentAccreditation').optional().isString().withMessage('parentAccreditation must be a string').bail(),
-		body('rootAuthorization').optional().isString().withMessage('rootAuthorization must be a string').bail(),
+		body('rootAuthorisation').optional().isString().withMessage('rootAuthorisation must be a string').bail(),
 		body('trustFramework').optional().isString().withMessage('trustFramework must be a string').bail(),
 		body('trustFrameworkId').optional().isString().withMessage('trustFrameworkId must be a string').bail(),
 		query('accreditationType')
 			.custom((value, { req }) => {
-				const { parentAccreditation, rootAuthorization, trustFramework, trustFrameworkId } = req.body;
+				const { parentAccreditation, rootAuthorisation, trustFramework, trustFrameworkId } = req.body;
 
-				const hasParentOrRoot = parentAccreditation || rootAuthorization;
+				const hasParentOrRoot = parentAccreditation || rootAuthorisation;
 
 				if (
 					!hasParentOrRoot &&
 					(value === AccreditationRequestType.accredit || value === AccreditationRequestType.attest)
 				) {
-					throw new Error('parentAccreditation or rootAuthorization is required');
+					throw new Error('parentAccreditation or rootAuthorisation is required');
 				}
 
-				if (hasParentOrRoot && value === AccreditationRequestType.authorize) {
+				if (hasParentOrRoot && value === AccreditationRequestType.authorise) {
 					throw new Error(
-						'parentAccreditation or rootAuthorization is not required for an authorize operation'
+						'parentAccreditation or rootAuthorisation is not required for an authorise operation'
 					);
 				}
 
 				const hasTrustFramework = trustFramework && trustFrameworkId;
 
-				if (!hasTrustFramework && value === AccreditationRequestType.authorize) {
-					throw new Error('trustFramework and trustFrameworkId are required for an authorize operation');
+				if (!hasTrustFramework && value === AccreditationRequestType.authorise) {
+					throw new Error('trustFramework and trustFrameworkId are required for an authorise operation');
 				}
 
 				return true;
@@ -96,9 +97,9 @@ export class AccreditationController {
 		body('resourceType').optional().isString().withMessage('resourceType should be a string').bail(),
 		body('schemas').optional().isArray().withMessage('schemas must be a array').bail(),
 		body('schemas.*.url').isString().withMessage('schema urls must be a string').bail(),
-		body('schemas.*.type')
+		body('schemas.*.types')
 			.custom((value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string'))
-			.withMessage('schema type must be a string'),
+			.withMessage('schema.types must be a string or a string array'),
 		body('did')
 			.custom((value, { req }) => {
 				const { didUrl, resourceId, resourceName, resourceType } = req.body;
@@ -149,7 +150,7 @@ export class AccreditationController {
 	 *         schema:
 	 *           type: string
 	 *           enum:
-	 *              - authorize
+	 *              - authorise
 	 *              - accredit
 	 *              - attest
 	 *         required: true
@@ -196,7 +197,7 @@ export class AccreditationController {
 			schemas,
 			type,
 			parentAccreditation,
-			rootAuthorization,
+			rootAuthorisation,
 			trustFramework,
 			trustFrameworkId,
 			attributes,
@@ -236,9 +237,9 @@ export class AccreditationController {
 			}
 
 			const resourceId = v4();
-			const accreditedFor = schemas.map(({ url, type }: any) => ({
+			const accreditedFor = schemas.map(({ url, types }: SchemaUrlType) => ({
 				schemaId: url,
-				type,
+				types: Array.isArray(types) ? types : [types],
 			}));
 
 			// construct credential request
@@ -259,7 +260,7 @@ export class AccreditationController {
 
 			let resourceType: string;
 			switch (accreditationType) {
-				case AccreditationRequestType.authorize:
+				case AccreditationRequestType.authorise:
 					resourceType = DIDAccreditationTypes.VerifiableAuthorisationForTrustChain;
 					credentialRequest.type = [...(type || []), resourceType];
 					credentialRequest.termsOfUse = {
@@ -274,7 +275,7 @@ export class AccreditationController {
 					credentialRequest.termsOfUse = {
 						type: resourceType,
 						parentAccreditation,
-						rootAuthorization,
+						rootAuthorisation,
 					};
 					break;
 				case AccreditationRequestType.attest:
@@ -283,7 +284,7 @@ export class AccreditationController {
 					credentialRequest.termsOfUse = {
 						type: resourceType,
 						parentAccreditation,
-						rootAuthorization,
+						rootAuthorisation,
 					};
 					break;
 			}
@@ -300,12 +301,12 @@ export class AccreditationController {
 					true,
 					false,
 					response.locals.customer,
-					rootAuthorization
+					rootAuthorisation
 				);
 
 				if (result.success === false) {
 					return response.status(result.status).send({
-						error: `Invalid Request: Root Authorization or parent Accreditation is not valid: ${result.error}`,
+						error: `Invalid Request: Root Authorisation or parent Accreditation is not valid: ${result.error}`,
 					});
 				}
 			}
@@ -402,9 +403,9 @@ export class AccreditationController {
 		}
 
 		try {
-			const accreditedFor = schemas?.map(({ url, type }: any) => ({
+			const accreditedFor = schemas?.map(({ url, types }: SchemaUrlType) => ({
 				schemaId: url,
-				type,
+				types: Array.isArray(types) ? types : [types],
 			}));
 
 			const result = await AccreditationService.instance.verify_accreditation(
