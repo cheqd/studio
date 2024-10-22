@@ -306,7 +306,7 @@ export class AccreditationController {
 
 				if (result.success === false) {
 					return response.status(result.status).send({
-						error: `Invalid Request: Root Authorization or parent Accreditation is not valid: ${result.error}`,
+						error: `Invalid Request: Root Authorisation or parent Accreditation is not valid: ${result.error}`,
 					});
 				}
 			}
