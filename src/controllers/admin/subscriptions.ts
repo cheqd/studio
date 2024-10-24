@@ -27,6 +27,7 @@ import { SubscriptionService } from '../../services/admin/subscription.js';
 import { stripeService } from '../../services/admin/stripe.js';
 import type { UnsuccessfulResponseBody } from '../../types/shared.js';
 import { validate } from '../validator/decorator.js';
+import { MaxAllowedTrialPeriodDays } from '../../types/constants.js';
 
 dotenv.config();
 
@@ -180,52 +181,86 @@ export class SubscriptionController {
 
 	@validate
 	async create(request: Request, response: Response) {
-		const stripe = response.locals.stripe as Stripe;
+		const body: SubscriptionCreateRequestBody = request.body;
 
-		const { price, successURL, cancelURL, quantity, idempotencyKey, trialPeriodDays } =
-			request.body satisfies SubscriptionCreateRequestBody;
+		// ensure trials don't succeed 30 days (default)
+		if (!body.trialPeriodDays || body.trialPeriodDays > MaxAllowedTrialPeriodDays) {
+			body.trialPeriodDays = MaxAllowedTrialPeriodDays;
+		}
+
 		try {
-			const session = await stripe.checkout.sessions.create(
-				{
-					mode: 'subscription',
-					customer: response.locals.customer.paymentProviderId,
-					line_items: [
-						{
-							price: price,
-							quantity: quantity || 1,
-						},
-					],
-					success_url: successURL,
-					cancel_url: cancelURL,
-					subscription_data: {
-						trial_period_days: trialPeriodDays,
-					},
-				},
-				{
-					idempotencyKey,
-				}
-			);
-
-			if (session.lastResponse?.statusCode !== StatusCodes.OK) {
-				return response.status(StatusCodes.BAD_GATEWAY).json({
-					error: 'Checkout session was not created',
-				} satisfies SubscriptionCreateUnsuccessfulResponseBody);
+			if (body.trialMode) {
+				return await this.startTrialForPlan(response, body);
+			} else {
+				return await this.createCheckoutSession(response, body);
 			}
-
-			if (!session.url) {
-				return response.status(StatusCodes.BAD_GATEWAY).json({
-					error: 'Checkout session URL was not provided',
-				} satisfies SubscriptionCreateUnsuccessfulResponseBody);
-			}
-
-			return response.json({
-				sessionURL: session.url as string,
-			} satisfies SubscriptionCreateResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies SubscriptionCreateUnsuccessfulResponseBody);
 		}
+	}
+
+	async createCheckoutSession(response: Response, body: SubscriptionCreateRequestBody) {
+		const stripe = response.locals.stripe as Stripe;
+		const { price, quantity = 1, cancelURL, successURL, idempotencyKey, trialPeriodDays } = body;
+
+		const session = await stripe.checkout.sessions.create(
+			{
+				mode: 'subscription',
+				customer: response.locals.customer.paymentProviderId,
+				line_items: [{ price, quantity }],
+				success_url: successURL,
+				cancel_url: cancelURL,
+				subscription_data: {
+					trial_period_days: trialPeriodDays,
+				},
+			},
+			{ idempotencyKey }
+		);
+
+		if (session.lastResponse?.statusCode !== StatusCodes.OK) {
+			return response.status(StatusCodes.BAD_GATEWAY).json({
+				error: 'Checkout session was not created',
+			} satisfies SubscriptionCreateUnsuccessfulResponseBody);
+		}
+
+		if (!session.url) {
+			return response.status(StatusCodes.BAD_GATEWAY).json({
+				error: 'Checkout session URL was not provided',
+			} satisfies SubscriptionCreateUnsuccessfulResponseBody);
+		}
+
+		return response.json({
+			sessionURL: session.url as string,
+		} satisfies SubscriptionCreateResponseBody);
+	}
+
+	async startTrialForPlan(response: Response, body: SubscriptionCreateRequestBody): Promise<Response> {
+		const stripe = response.locals.stripe as Stripe;
+
+		const { price, quantity = 1, trialPeriodDays } = body;
+		const subscriptionResponse = await stripe.subscriptions.create({
+			customer: response.locals.customer.paymentProviderId,
+			items: [{ price: price, quantity: quantity }],
+			payment_settings: {
+				save_default_payment_method: 'on_subscription',
+			},
+			trial_period_days: trialPeriodDays,
+			trial_settings: {
+				end_behavior: {
+					missing_payment_method: 'cancel',
+				},
+			},
+		});
+
+		if (subscriptionResponse.lastResponse.statusCode !== StatusCodes.OK) {
+			return response.status(StatusCodes.BAD_GATEWAY).json({
+				error: 'Failed to start trial plan',
+			} satisfies SubscriptionCreateUnsuccessfulResponseBody);
+		}
+
+		return response.status(StatusCodes.NO_CONTENT);
 	}
 
 	/**

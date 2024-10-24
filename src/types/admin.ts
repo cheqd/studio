@@ -37,10 +37,11 @@ export type SubscriptionCreateRequestBody = {
 	quantity?: number;
 	trialPeriodDays?: number;
 	idempotencyKey?: string;
+	trialMode?: boolean;
 };
 
 export type SubscriptionCreateResponseBody = {
-	sessionURL: Stripe.Checkout.Session['client_secret'];
+	sessionURL?: Stripe.Checkout.Session['url'];
 };
 
 export type SubscriptionUpdateResponseBody = {
