@@ -345,7 +345,9 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 					Authorization: 'Bearer ' + (await this.getM2MToken()),
 				},
 			});
-			if (response.status === StatusCodes.NO_CONTENT) {
+
+			// check if role is removed or doesn't to begin with
+			if (response.status === StatusCodes.NO_CONTENT || response.status === StatusCodes.NOT_FOUND) {
 				return this.returnOk({});
 			}
 
