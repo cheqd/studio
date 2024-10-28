@@ -503,11 +503,9 @@ export class AccreditationController {
 			const resource = await res.json();
 
 			if (resource.dereferencingMetadata) {
-				return {
-					success: false,
-					status: 404,
+				return response.status(StatusCodes.NOT_FOUND).json({
 					error: `DID URL ${didUrl} is not found`,
-				};
+				});
 			}
 
 			const accreditation: CheqdW3CVerifiableCredential = resource;

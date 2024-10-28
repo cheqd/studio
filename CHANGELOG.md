@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.5.0-develop.1](https://github.com/cheqd/studio/compare/3.4.0...3.5.0-develop.1) (2024-10-25)
+
+### Features
+
+* Configure free trial without payment details [DEV-4455] ([#613](https://github.com/cheqd/studio/issues/613)) ([f018051](https://github.com/cheqd/studio/commit/f01805175479d111952a2e9c047880a873b2993e))
+
 ## [3.4.0](https://github.com/cheqd/studio/compare/3.3.0...3.4.0) (2024-10-11)
 
 ### Features
