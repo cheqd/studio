@@ -6,7 +6,7 @@ import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
 test.use({ storageState: 'playwright/.auth/user.json' });
 
 test(' Issue accreditation [Negative]: Missing query parameters', async ({ request }) => {
-	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/authorize-jwt.json`, 'utf-8'));
+	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/authorise-jwt.json`, 'utf-8'));
 	const issueResponse = await request.post(`/trust-registry/accreditation/issue`, {
 		data: JSON.stringify(credentialData),
 		headers: {

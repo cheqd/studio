@@ -9,7 +9,7 @@
 	"schemas": [
 		{
 			"url": "https://schema.org/Learn",
-			"type": "Learn"
+			"types": "Learn"
 		}
 	],
 	"accreditationName": "revocationAccreditation",
