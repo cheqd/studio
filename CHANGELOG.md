@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.5.0-develop.2](https://github.com/cheqd/studio/compare/3.5.0-develop.1...3.5.0-develop.2) (2024-10-29)
+
+### Bug Fixes
+
+* jsonLd tests & trust registry improvments [DEV-4432] ([#612](https://github.com/cheqd/studio/issues/612)) ([e61d3f8](https://github.com/cheqd/studio/commit/e61d3f8e83f2103796675264db181a66feb3007d))
+
 ## [3.5.0-develop.1](https://github.com/cheqd/studio/compare/3.4.0...3.5.0-develop.1) (2024-10-25)
 
 ### Features
