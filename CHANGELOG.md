@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.5.0](https://github.com/cheqd/studio/compare/3.4.0...3.5.0) (2024-11-06)
+
+### Features
+
+* Configure free trial without payment details [DEV-4455] ([#613](https://github.com/cheqd/studio/issues/613)) ([f018051](https://github.com/cheqd/studio/commit/f01805175479d111952a2e9c047880a873b2993e))
+
+### Bug Fixes
+
+* jsonLd tests & trust registry improvments [DEV-4432] ([#612](https://github.com/cheqd/studio/issues/612)) ([e61d3f8](https://github.com/cheqd/studio/commit/e61d3f8e83f2103796675264db181a66feb3007d))
+
 ## [3.5.0-develop.2](https://github.com/cheqd/studio/compare/3.5.0-develop.1...3.5.0-develop.2) (2024-10-29)
 
 ### Bug Fixes
