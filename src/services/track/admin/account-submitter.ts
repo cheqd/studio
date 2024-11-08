@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import type { IObserver } from '../types.js';
-import { OperationNameEnum } from '../../../types/constants.js';
+import { MaxAllowedTrialPeriodDays, OperationNameEnum } from '../../../types/constants.js';
 import type { INotifyMessage } from '../../../types/track.js';
 import { EventTracker } from '../tracker.js';
 import { StatusCodes } from 'http-status-codes';
@@ -65,6 +65,11 @@ export class PortalAccountCreateSubmitter implements IObserver {
 					name: data.name,
 					paymentProviderId: stripeCustomer.id,
 				});
+
+				if (process.env.STRIPE_TRIAL_PLAN_PRICING_ID) {
+					// Start a trial for the user
+					await this.startTrialForPlan(stripe, stripeCustomer.id, MaxAllowedTrialPeriodDays);
+				}
 			}
 		} catch (error) {
 			this.notify({
@@ -74,6 +79,26 @@ export class PortalAccountCreateSubmitter implements IObserver {
 				),
 				severity: 'error',
 			} as INotifyMessage);
+		}
+	}
+
+	async startTrialForPlan(stripe: Stripe, paymentProviderId: string, trialPeriodDays: number = 30) {
+		const subscriptionResponse = await stripe.subscriptions.create({
+			customer: paymentProviderId,
+			items: [{ price: process.env.STRIPE_TRIAL_PLAN_PRICING_ID, quantity: 1 }],
+			payment_settings: {
+				save_default_payment_method: 'on_subscription',
+			},
+			trial_period_days: trialPeriodDays,
+			trial_settings: {
+				end_behavior: {
+					missing_payment_method: 'cancel',
+				},
+			},
+		});
+
+		if (subscriptionResponse.lastResponse.statusCode !== StatusCodes.OK) {
+			throw new Error(`Failed to start trial plan`);
 		}
 	}
 }

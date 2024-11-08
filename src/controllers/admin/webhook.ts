@@ -106,7 +106,6 @@ export class WebhookController {
 			severity: 'info',
 		} satisfies INotifyMessage);
 
-		console.log('fetching stripe data');
 		const [product, stripeCustomer] = await Promise.all([
 			stripe.products.retrieve(data.productId),
 			stripe.customers.retrieve(data.paymentProviderId),
