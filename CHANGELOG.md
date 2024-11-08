@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.6.0-develop.1](https://github.com/cheqd/studio/compare/3.5.0...3.6.0-develop.1) (2024-11-08)
+
+### Features
+
+* Start trial on signup - [DEV-4560] ([#622](https://github.com/cheqd/studio/issues/622)) ([47b8df5](https://github.com/cheqd/studio/commit/47b8df5e214158215298b05b95023b10202bd156))
+
 ## [3.5.0](https://github.com/cheqd/studio/compare/3.4.0...3.5.0) (2024-11-06)
 
 ### Features
