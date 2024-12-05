@@ -53,7 +53,7 @@
 		"README.md"
 	],
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "^4.4.0",
+		"@cheqd/did-provider-cheqd": "^4.4.1-develop.1",
 		"@cheqd/sdk": "^5.0.1",
 		"@cheqd/ts-proto": "^4.0.0",
 		"@cosmjs/amino": "^0.32.4",
