@@ -1,5 +1,7 @@
 # Changelog
 
+## [3.6.1-develop.2](https://github.com/cheqd/studio/compare/3.6.1-develop.1...3.6.1-develop.2) (2024-12-05)
+
 ## [3.6.1-develop.1](https://github.com/cheqd/studio/compare/3.6.0...3.6.1-develop.1) (2024-12-05)
 
 ## [3.6.0](https://github.com/cheqd/studio/compare/3.5.0...3.6.0) (2024-11-21)
