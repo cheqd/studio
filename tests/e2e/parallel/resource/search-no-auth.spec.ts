@@ -50,7 +50,7 @@ test('[Positive] It can search resource with an existent DID and resourceMetadat
 
 	const body = await response.json();
 
-	expect(body.dereferencingMetadata.contentType).toBe(CONTENT_TYPE.APPLICATION_DID_LD_JSON);
+	expect(body.dereferencingMetadata.contentType).toBe(CONTENT_TYPE.APPLICATION_LD_JSON);
 	expect(body.dereferencingMetadata.did.didString).toStrictEqual(DEFAULT_TESTNET_DID);
 	expect(body.dereferencingMetadata.did.methodSpecificId).toBe(DEFAULT_TESTNET_DID_IDENTIFIER);
 	expect(body.dereferencingMetadata.did.method).toBe(DID_METHOD);
@@ -66,7 +66,7 @@ test('[Negative] It cannot search not existent {did} and {resourceId}', async ({
 
 	const body = await response.json();
 
-	expect(body.dereferencingMetadata.contentType).toBe(CONTENT_TYPE.APPLICATION_DID_LD_JSON);
+	expect(body.dereferencingMetadata.contentType).toBe(CONTENT_TYPE.APPLICATION_LD_JSON);
 	expect(body.dereferencingMetadata.did.didString).toStrictEqual(NOT_EXISTENT_TESTNET_DID);
 	expect(body.dereferencingMetadata.did.methodSpecificId).toBe(NOT_EXISTENT_TESTNET_DID_IDENTIFIER);
 	expect(body.dereferencingMetadata.did.method).toBe(DID_METHOD);

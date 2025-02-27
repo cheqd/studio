@@ -16,8 +16,8 @@ import { LogToWebHook } from './middleware/hook.js';
 import { Middleware } from './middleware/middleware.js';
 import * as dotenv from 'dotenv';
 // Define Swagger file
-import swaggerAPIDocument from './static/swagger-api.json' assert { type: 'json' };
-import swaggerAdminDocument from './static/swagger-admin.json' assert { type: 'json' };
+import swaggerAPIDocument from './static/swagger-api.json' with { type: 'json' };
+import swaggerAdminDocument from './static/swagger-admin.json' with { type: 'json' };
 import { PresentationController } from './controllers/api/presentation.js';
 import { KeyController } from './controllers/api/key.js';
 import { DIDController } from './controllers/api/did.js';
