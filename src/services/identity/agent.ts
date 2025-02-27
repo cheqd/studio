@@ -848,16 +848,16 @@ export class Veramo {
 			}
 
 			// early return, if no resource metadata
-			if (!resourceMetadataVersioned?.contentStream?.linkedResourceMetadata)
+			if (!resourceMetadataVersioned?.contentMetadata?.linkedResourceMetadata)
 				return { found: false, error: 'notFound' } satisfies SearchStatusListResult;
 
 			// get latest resource version by nextVersionId null pointer, or by latest created date as fallback
 			const resourceMetadata =
-				resourceMetadataVersioned.contentStream.linkedResourceMetadata.find(
-					(resource) => !resource.nextVersionId
+				resourceMetadataVersioned.contentMetadata.linkedResourceMetadata.find(
+					(resource: { nextVersionId: any; }) => !resource.nextVersionId
 				) ||
-				resourceMetadataVersioned.contentStream.linkedResourceMetadata.sort(
-					(a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
+				resourceMetadataVersioned.contentMetadata.linkedResourceMetadata.sort(
+					(a: { created: string | number | Date; }, b: { created: string | number | Date; }) => new Date(b.created).getTime() - new Date(a.created).getTime()
 				)[0];
 
 			// unset resourceMetadata
