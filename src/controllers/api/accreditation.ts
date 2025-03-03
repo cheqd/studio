@@ -338,7 +338,6 @@ export class AccreditationController {
 				accreditation,
 			});
 		} catch (error) {
-            console.log(error)
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
