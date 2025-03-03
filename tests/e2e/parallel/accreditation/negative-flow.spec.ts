@@ -36,6 +36,5 @@ test(' Issue accreditation [Negative]: Invalid schema', async ({ request }) => {
 		},
 	});
 
-    console.log("Accredidtation response", await issueResponse.json())
 	expect(issueResponse.status()).toBe(StatusCodes.UNAUTHORIZED);
 });
