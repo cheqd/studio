@@ -5,6 +5,7 @@ import type {
 	ContextType,
 	CredentialStatusReference,
 	CredentialSubject,
+	IssuerType,
 	ProofType,
 	UnsignedCredential,
 	VerifiableCredential,
@@ -31,7 +32,7 @@ export interface IJWTPayloadVC extends JwtPayload {
 
 // ToDo: make unit tests
 export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqdCredential {
-	issuer: string;
+	issuer: IssuerType;
 	credentialSubject: CredentialSubject;
 	type?: string[] | string;
 	'@context': ContextType;
@@ -97,7 +98,7 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 		const url = new URL(this.credentialStatus.id);
 		const statusListName = url.searchParams.get('resourceName');
 		const statusPurpose = this.credentialStatus.statusPurpose;
-		const did = this.issuer;
+		const did = typeof this.issuer === 'string' ? this.issuer : this.issuer.id;
 
 		if (!statusListName) {
 			return this.returnError(
@@ -141,7 +142,7 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 	}
 
 	public async makeFeePayment(agent: IIdentityService, customer: CustomerEntity): Promise<ICommonErrorResponse> {
-		const did = this.issuer;
+		const did = typeof this.issuer === 'string' ? this.issuer : this.issuer.id;
 		const statusList = this.statusList;
 		const feePaymentOptions: IFeePaymentOptions[] = [];
 

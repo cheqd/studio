@@ -20,7 +20,7 @@ test('[Positive] It can search with an existent DID', async ({ request }) => {
 
 	const body = await response.json();
 
-	expect(body.didResolutionMetadata.contentType).toBe(CONTENT_TYPE.APPLICATION_DID_LD_JSON);
+	expect(body.didResolutionMetadata.contentType).toBe(CONTENT_TYPE.APPLICATION_LD_JSON);
 	expect(body.didResolutionMetadata.did.didString).toStrictEqual(DEFAULT_TESTNET_DID);
 	expect(body.didResolutionMetadata.did.methodSpecificId).toBe(DEFAULT_TESTNET_DID_IDENTIFIER);
 	expect(body.didResolutionMetadata.did.method).toBe(DID_METHOD);
@@ -32,12 +32,11 @@ test('[Positive] It can search with an existent DID and metadata=true query para
 
 	const body = await response.json();
 
-	expect(body.dereferencingMetadata.contentType).toBe(CONTENT_TYPE.APPLICATION_DID_LD_JSON);
-	expect(body.dereferencingMetadata.did.didString).toStrictEqual(DEFAULT_TESTNET_DID);
-	expect(body.dereferencingMetadata.did.methodSpecificId).toBe(DEFAULT_TESTNET_DID_IDENTIFIER);
-	expect(body.dereferencingMetadata.did.method).toBe(DID_METHOD);
-	expect(body.contentMetadata).not.toBeNull();
-	expect(body.contentStream).not.toBeNull();
+	expect(body.didResolutionMetadata.contentType).toBe(CONTENT_TYPE.APPLICATION_LD_JSON);
+	expect(body.didResolutionMetadata.did.didString).toStrictEqual(DEFAULT_TESTNET_DID);
+	expect(body.didResolutionMetadata.did.methodSpecificId).toBe(DEFAULT_TESTNET_DID_IDENTIFIER);
+	expect(body.didResolutionMetadata.did.method).toBe(DID_METHOD);
+	expect(body.didDocumentMetadata).not.toBeNull();
 });
 
 test('[Positive] It can search with an existent DID and fragment', async ({ request }) => {
@@ -49,7 +48,7 @@ test('[Positive] It can search with an existent DID and fragment', async ({ requ
 
 	const body = await response.json();
 
-	expect(body.dereferencingMetadata.contentType).toBe(CONTENT_TYPE.APPLICATION_DID_LD_JSON);
+	expect(body.dereferencingMetadata.contentType).toBe(CONTENT_TYPE.APPLICATION_LD_JSON);
 	expect(body.dereferencingMetadata.did.didString).toStrictEqual(DEFAULT_TESTNET_DID);
 	expect(body.dereferencingMetadata.did.methodSpecificId).toBe(DEFAULT_TESTNET_DID_IDENTIFIER);
 	expect(body.dereferencingMetadata.did.method).toBe(DID_METHOD);
