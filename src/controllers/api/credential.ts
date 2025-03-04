@@ -288,7 +288,7 @@ export class CredentialController {
 				} satisfies UnsuccesfulVerifyCredentialResponseBody);
 			}
 
-            const did = typeof cheqdCredential.issuer === 'string' ? cheqdCredential.issuer : cheqdCredential.issuer.id;
+			const did = typeof cheqdCredential.issuer === 'string' ? cheqdCredential.issuer : cheqdCredential.issuer.id;
 			// Track operation
 			const trackInfo = {
 				category: OperationCategoryNameEnum.CREDENTIAL,
