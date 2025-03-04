@@ -18,8 +18,8 @@ export enum GENERATED_PATH {
 
 export enum CONTENT_TYPE {
 	APPLICATION_JSON = 'application/json',
-	//APPLICATION_DID_LD_JSON = 'application/did+ld+json',
 	APPLICATION_LD_JSON = 'application/ld+json',
+	APPLICATION_DID_LD_JSON = 'application/did+ld+json',
 	APPLICATION_X_WWW_FORM_URLENCODED = 'application/x-www-form-urlencoded',
 }
 

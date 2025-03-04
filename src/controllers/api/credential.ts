@@ -288,6 +288,7 @@ export class CredentialController {
 				} satisfies UnsuccesfulVerifyCredentialResponseBody);
 			}
 
+            const did = typeof cheqdCredential.issuer === 'string' ? cheqdCredential.issuer : cheqdCredential.issuer.id;
 			// Track operation
 			const trackInfo = {
 				category: OperationCategoryNameEnum.CREDENTIAL,
@@ -295,7 +296,7 @@ export class CredentialController {
 				customer: response.locals.customer,
 				user: response.locals.user,
 				data: {
-					did: cheqdCredential.issuer,
+					did,
 					resource: verifyResult.resourceMetadata,
 				} satisfies ICredentialTrack,
 			} as ITrackOperation;

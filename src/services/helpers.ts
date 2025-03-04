@@ -8,8 +8,8 @@ import type { CheqdW3CVerifiablePresentation } from './w3c-presentation.js';
 
 export async function isCredentialIssuerDidDeactivated(credential: CheqdW3CVerifiableCredential): Promise<boolean> {
 	const identityServiceStrategySetup = new IdentityServiceStrategySetup();
-
-	const resolutionResult = await identityServiceStrategySetup.agent.resolve(credential.issuer);
+    const did = typeof credential.issuer === 'string' ? credential.issuer : credential.issuer.id;
+	const resolutionResult = await identityServiceStrategySetup.agent.resolve(did);
 	const body = await resolutionResult.json();
 
 	return body.didDocumentMetadata.deactivated;

@@ -49,7 +49,6 @@ import {
 	DefaultStatusList2021Encodings,
 	ICheqdSuspendBulkCredentialsWithStatusList2021Args,
 	ICheqdUnsuspendBulkCredentialsWithStatusList2021Args,
-	DIDMetadataDereferencingResult,
 	StatusList2021Revocation,
 	StatusList2021Suspension,
 	DefaultStatusList2021StatusPurposeType,
@@ -57,7 +56,7 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import { ResourceModule, type CheqdNetwork } from '@cheqd/sdk';
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key';
-import { Resolver, ResolverRegistry } from 'did-resolver';
+import { DIDResolutionResult, Resolver, ResolverRegistry } from 'did-resolver';
 import { DefaultDidUrlPattern, CreateAgentRequest, VeramoAgent } from '../../types/shared.js';
 import type { VerificationOptions } from '../../types/shared.js';
 import type { FeePaymentOptions } from '../../types/credential-status.js';
@@ -829,15 +828,19 @@ export class Veramo {
 		const url = new URL(
 			`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?resourceName=${statusListName}&resourceType=${
 				DefaultStatusList2021ResourceTypes[statusPurpose]
-			}&resourceMetadata=true`
+			}`
 		);
 
 		try {
 			// fetch resource metadata
-			const resourceMetadataVersioned = (await (await fetch(url)).json()) as DIDMetadataDereferencingResult;
+			const resourceMetadataVersioned = (await (await fetch(url, {
+                headers: {
+                    "Accept": "application/ld+json;profile=https://w3id.org/did-resolution"
+                }
+            })).json()) as DIDResolutionResult;
 
 			// define arbitrary error
-			const arbitraryError = resourceMetadataVersioned?.dereferencingMetadata?.error;
+			const arbitraryError = resourceMetadataVersioned?.didResolutionMetadata?.error;
 
 			// handle error
 			if (arbitraryError) {
@@ -848,16 +851,16 @@ export class Veramo {
 			}
 
 			// early return, if no resource metadata
-			if (!resourceMetadataVersioned?.contentMetadata?.linkedResourceMetadata)
+			if (!resourceMetadataVersioned?.didDocumentMetadata?.linkedResourceMetadata)
 				return { found: false, error: 'notFound' } satisfies SearchStatusListResult;
 
 			// get latest resource version by nextVersionId null pointer, or by latest created date as fallback
 			const resourceMetadata =
-				resourceMetadataVersioned.contentMetadata.linkedResourceMetadata.find(
-					(resource: { nextVersionId: any; }) => !resource.nextVersionId
+				resourceMetadataVersioned.didDocumentMetadata.linkedResourceMetadata.find(
+					(resource: any) => !resource.nextVersionId
 				) ||
-				resourceMetadataVersioned.contentMetadata.linkedResourceMetadata.sort(
-					(a: { created: string | number | Date; }, b: { created: string | number | Date; }) => new Date(b.created).getTime() - new Date(a.created).getTime()
+				resourceMetadataVersioned.didDocumentMetadata.linkedResourceMetadata.sort(
+					(a: any, b: any) => new Date(b.created).getTime() - new Date(a.created).getTime()
 				)[0];
 
 			// unset resourceMetadata
