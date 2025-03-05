@@ -193,7 +193,7 @@ export class ResourceController {
 						`resourceId=${resourcePayload.id}&resourceMetadata=true`
 				);
 				const didDereferencing = (await (await fetch(url)).json()) as DIDMetadataDereferencingResult;
-				const resource = didDereferencing.contentStream.linkedResourceMetadata[0];
+				const resource = didDereferencing.contentMetadata.linkedResourceMetadata[0];
 
 				// track resource creation
 				const trackResourceInfo = {

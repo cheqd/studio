@@ -833,11 +833,13 @@ export class Veramo {
 
 		try {
 			// fetch resource metadata
-			const resourceMetadataVersioned = (await (await fetch(url, {
-                headers: {
-                    "Accept": "application/ld+json;profile=https://w3id.org/did-resolution"
-                }
-            })).json()) as DIDResolutionResult;
+			const resourceMetadataVersioned = (await (
+				await fetch(url, {
+					headers: {
+						Accept: 'application/ld+json;profile=https://w3id.org/did-resolution',
+					},
+				})
+			).json()) as DIDResolutionResult;
 
 			// define arbitrary error
 			const arbitraryError = resourceMetadataVersioned?.didResolutionMetadata?.error;

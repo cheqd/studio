@@ -9,7 +9,7 @@ import {
 	mustAllControllerKeysHaveController,
 } from '../../parallel/did/helpers';
 import { CheqdNetwork, DIDDocument, VerificationMethods } from '@cheqd/sdk';
-
+import { CreateResourceResponseBody } from '../../../../src/types/resource';
 import { ResponseBody } from '../../parallel/did/helpers';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
@@ -170,6 +170,12 @@ test.describe.serial('Running test sequentially', () => {
 		});
 
 		expect(response).toBeOK();
+		// Make specific checks.
+		const createResourceResponse = (await response.json()) as CreateResourceResponseBody;
+		expect(createResourceResponse.resource).toBeDefined();
+		expect(createResourceResponse.resource.resourceName).toEqual('ResourceName-DID-A-DID-B');
+		expect(createResourceResponse.resource.resourceType).toEqual('TextDocument');
+		expect(createResourceResponse.resource.nextVersionId).toBeNull();
 	});
 
 	test('6. It creates a resource for DID_B. Controllers are [DID_B]', async ({ request }) => {

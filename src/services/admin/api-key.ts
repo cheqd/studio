@@ -170,7 +170,9 @@ export class APIKeyService {
 
 	// Utils
 	public static generateAPIKey(userId: string): string {
-		const apiKey = createHmac('sha512', randomBytes(API_SECRET_KEY_LENGTH).toString('hex')).update(userId).digest('hex');
+		const apiKey = createHmac('sha512', randomBytes(API_SECRET_KEY_LENGTH).toString('hex'))
+			.update(userId)
+			.digest('hex');
 		return `${API_KEY_PREFIX}_${apiKey}`;
 	}
 
