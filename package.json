@@ -53,11 +53,11 @@
 		"README.md"
 	],
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "npm:@daevm/cheqd-did-provider-cheqd",
-		"@cheqd/sdk": "^5.1.0",
+		"@cheqd/did-provider-cheqd": "npm:@daevm/cheqd-did-provider-cheqd@v4.5.5",
+		"@cheqd/sdk": "^5.1.2-develop.1",
 		"@cheqd/ts-proto": "^4.0.1",
-		"@cosmjs/amino": "^0.32.4",
-		"@cosmjs/encoding": "^0.32.4",
+		"@cosmjs/amino": "^0.33.0",
+		"@cosmjs/encoding": "^0.33.0",
 		"@logto/express": "^2.3.17",
 		"@stablelib/ed25519": "^1.0.3",
 		"@veramo/core": "^6.0.0",
