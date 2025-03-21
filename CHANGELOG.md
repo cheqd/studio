@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.6.2](https://github.com/cheqd/studio/compare/3.6.1...3.6.2) (2025-03-21)
+
+### Bug Fixes
+
+* Changes for resolver updates [DEV-4772] ([#643](https://github.com/cheqd/studio/issues/643)) ([e97e909](https://github.com/cheqd/studio/commit/e97e909dd0e573ae5075371f22d67216fa3f252a))
+
 ## [3.6.2-develop.2](https://github.com/cheqd/studio/compare/3.6.2-develop.1...3.6.2-develop.2) (2025-03-21)
 
 ### Bug Fixes
