@@ -2,7 +2,7 @@
 ###         STAGE 1: Build cheqd studio app                 ###
 ###############################################################
 
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /home/node/app
@@ -21,7 +21,7 @@ RUN npm run build
 ###         STAGE 2: Build cheqd studio runner              ###
 ###############################################################
 
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 
 # Set Node.js environment
 ENV NODE_ENV=production
@@ -123,7 +123,7 @@ ENV LOGTO_MAINNET_ROLE_ID=${LOGTO_MAINNET_ROLE_ID}
 ENV LOGTO_WEBHOOK_SECRET=${LOGTO_WEBHOOK_SECRET}
 ENV LOG_LEVEL=${LOG_LEVEL}
 
-# API generatioin
+# API generation
 ENV API_KEY_EXPIRATION=${API_KEY_EXPIRATION}
 
 # Faucet setup
