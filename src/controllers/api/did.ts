@@ -100,7 +100,20 @@ export class DIDController {
 			.bail()
 			.isDIDArray()
 			.bail(),
-		check('publicKeyHexs').optional().isArray().withMessage('publicKeyHexs should be an array of strings').bail(),
+		check('publicKeyHexs')
+			.optional()
+			.custom((value) => {
+				if (typeof value === 'string') {
+					return true;
+				}
+				if (Array.isArray(value) && value.every((item) => typeof item === 'string')) {
+					return true;
+				}
+
+				return false;
+			})
+			.withMessage('publicKeyHexs should be an array of strings')
+			.bail(),
 	];
 
 	public static deactivateDIDValidator = [param('did').exists().isString().isDID().bail()];
@@ -189,9 +202,8 @@ export class DIDController {
 								response.locals.customer
 							)
 						).publicKeyHex;
-					const pkBase64 =
-						publicKeyHex.length == 43 ? publicKeyHex : toString(fromString(publicKeyHex, 'hex'), 'base64');
 
+					const pkBase64 = toString(fromString(publicKeyHex, 'hex'), 'base64');
 					didDocument.verificationMethod = createDidVerificationMethod(
 						[options.verificationMethodType],
 						[

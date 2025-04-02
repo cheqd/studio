@@ -46,7 +46,7 @@ export class Credentials {
 		};
 
 		if (expirationDate) {
-			credential.expirationDate = expirationDate;
+			credential.expirationDate = expirationDate instanceof Date ? expirationDate.toISOString() : expirationDate;
 		}
 
 		const statusOptions = credentialStatus || null;
