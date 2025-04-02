@@ -35,7 +35,6 @@ import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/consta
 import { eventTracker } from '../../services/track/tracker.js';
 import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '../../types/track.js';
 import { validate } from '../validator/decorator.js';
-import validator from 'validator';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -52,19 +51,7 @@ export class CredentialController {
 			.isObject()
 			.withMessage('attributes should be an object')
 			.bail(),
-		check('expirationDate')
-			.optional()
-			.custom((value) => {
-				if (typeof value === 'string') {
-					if (!validator.isISO8601(value)) {
-						throw new Error('Expiration date must be in ISO 8601 format');
-					}
-				} else if (!(value instanceof Date) || isNaN(value.getTime())) {
-					throw new Error('Expiration date must be a valid Date object');
-				}
-				return true;
-			})
-			.bail(),
+		check('expirationDate').optional().isISO8601().withMessage('Expect to see ISO8601 date format').bail(),
 		check('format').optional().isString().withMessage('Invalid credential format').bail(),
 	];
 	public static verifyValidator = [
