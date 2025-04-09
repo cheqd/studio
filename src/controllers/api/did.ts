@@ -100,20 +100,7 @@ export class DIDController {
 			.bail()
 			.isDIDArray()
 			.bail(),
-		check('publicKeyHexs')
-			.optional()
-			.custom((value) => {
-				if (typeof value === 'string') {
-					return true;
-				}
-				if (Array.isArray(value) && value.every((item) => typeof item === 'string')) {
-					return true;
-				}
-
-				return false;
-			})
-			.withMessage('publicKeyHexs should be an array of strings')
-			.bail(),
+		check('publicKeyHexs').optional().isArray().withMessage('publicKeyHexs should be an array of strings').bail(),
 	];
 
 	public static deactivateDIDValidator = [param('did').exists().isString().isDID().bail()];
