@@ -51,14 +51,7 @@ export class CredentialController {
 			.isObject()
 			.withMessage('attributes should be an object')
 			.bail(),
-		check('expirationDate')
-			.optional()
-			.isDate()
-			.withMessage('Invalid expiration date')
-			.bail()
-			.isISO8601()
-			.withMessage('Expect to see ISO8601 date format')
-			.bail(),
+		check('expirationDate').optional().isISO8601().withMessage('Expect to see ISO8601 date format').bail(),
 		check('format').optional().isString().withMessage('Invalid credential format').bail(),
 	];
 	public static verifyValidator = [

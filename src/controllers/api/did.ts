@@ -189,9 +189,8 @@ export class DIDController {
 								response.locals.customer
 							)
 						).publicKeyHex;
-					const pkBase64 =
-						publicKeyHex.length == 43 ? publicKeyHex : toString(fromString(publicKeyHex, 'hex'), 'base64');
 
+					const pkBase64 = toString(fromString(publicKeyHex, 'hex'), 'base64');
 					didDocument.verificationMethod = createDidVerificationMethod(
 						[options.verificationMethodType],
 						[
