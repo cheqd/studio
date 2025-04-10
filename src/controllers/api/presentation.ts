@@ -23,8 +23,9 @@ export class PresentationController {
 	public static presentationCreateValidator = [
 		check('credentials')
 			.exists()
-			.withMessage('W3c verifiable credential was not provided')
-			.isW3CCheqdCredential()
+			.withMessage('W3c verifiable credentials were not provided')
+			.isW3CCheqdCredentials()
+            .withMessage('Provide an array of valid w3c verifiable credentials')
 			.bail(),
 		check('holderDid').optional().isDID().bail(),
 		check('verifierDid').optional().isDID().bail(),
@@ -36,6 +37,7 @@ export class PresentationController {
 			.exists()
 			.withMessage('W3c verifiable presentation was not provided')
 			.isW3CCheqdPresentation()
+            .withMessage('Provide a valid w3c verifiable presentation')
 			.bail(),
 		check('verifierDid').optional().isDID().bail(),
 		check('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),

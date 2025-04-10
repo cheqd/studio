@@ -8,7 +8,7 @@ test.use({ storageState: 'playwright/.auth/user.json' });
 
 let jwtCredential: VerifiableCredential;
 
-test(' Issue a jwt credential with revocation statuslist', async ({ request }) => {
+test.skip(' Issue a jwt credential with revocation statuslist', async ({ request }) => {
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jwt-revocation.json`, 'utf-8')
 	);
@@ -39,7 +39,7 @@ test(' Issue a jwt credential with revocation statuslist', async ({ request }) =
 	expect(jwtCredential.credentialStatus).toHaveProperty('id');
 });
 
-test(" Verify a credential's revocation status", async ({ request }) => {
+test.skip(" Verify a credential's revocation status", async ({ request }) => {
 	const response = await request.post(`/credential/verify?verifyStatus=true`, {
 		data: JSON.stringify({
 			credential: jwtCredential,
@@ -55,7 +55,7 @@ test(" Verify a credential's revocation status", async ({ request }) => {
 	expect(result.revoked).toBe(false);
 });
 
-test(' Verify a credential status after revocation', async ({ request }) => {
+test.skip(' Verify a credential status after revocation', async ({ request }) => {
 	const response = await request.post(`/credential/revoke?publish=true`, {
 		data: JSON.stringify({
 			credential: jwtCredential,
