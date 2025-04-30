@@ -326,7 +326,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		try {
 			const uri = new URL(`/api/users/${userId}/roles`, process.env.LOGTO_ENDPOINT);
 			const body = {
-				roleIds: planRoleIds,
+				roleIds: assignedRoleIds.concat(planRoleIds),
 			};
 
 			return await this.postToLogto(uri, body, { 'Content-Type': 'application/json' });
