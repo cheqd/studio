@@ -1,5 +1,5 @@
 {
-	"aliveStatusCodes": [0, 200, 206],
+	"aliveStatusCodes": [0, 200, 206, 403, 429, 501, 999],
 	"replacementPatterns": [
 		{
 			"pattern": "\" %}",
@@ -18,8 +18,5 @@
 			"pattern": "^https://twitter.com/"
 		}
 	],
-	"retryOn429": true,
-    "timeout": 10000,
-    "concurrency": 8,
-    "cache": true
+	"retryOn429": true
 }
