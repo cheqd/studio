@@ -188,7 +188,7 @@ export class WebhookController {
 			throw new Error(message);
 		}
 
-		await this.syncLogtoRoles(operation, customer.customerId, product.name);
+		await this.syncLogtoRoles(operation, customer.customerId, product);
 
 		await eventTracker.notify({
 			message: EventTracker.compileBasicNotification(
@@ -238,7 +238,7 @@ export class WebhookController {
 		]);
 
 		if (customer) {
-			await this.syncLogtoRoles(operation, customer.customerId, product.name);
+			await this.syncLogtoRoles(operation, customer.customerId, product);
 		}
 
 		await eventTracker.notify({
@@ -276,9 +276,13 @@ export class WebhookController {
 			throw new Error(message);
 		}
 
-		const customer = await CustomerService.instance.findbyPaymentProviderId(data.paymentProviderId);
+        const [customer, product] = await Promise.all([
+			CustomerService.instance.findbyPaymentProviderId(data.paymentProviderId),
+			stripe.products.retrieve(data.productId),
+		]);
+
 		if (customer) {
-			await this.syncLogtoRoles(operation, customer.customerId, '');
+			await this.syncLogtoRoles(operation, customer.customerId, product);
 		}
 
 		await eventTracker.notify({
@@ -294,12 +298,15 @@ export class WebhookController {
 		operation: OperationNameEnum,
 		logToHelper: LogToHelper,
 		userLogtoId: string,
-		productId: string
+		product: Stripe.Response<Stripe.Product>
 	) {
-		const roleAssignmentResponse = await logToHelper.assignCustomerPlanRoles(userLogtoId, productId);
+		const roleAssignmentResponse = await logToHelper.assignCustomerPlanRoles(
+			userLogtoId,
+			product
+		);
 		if (roleAssignmentResponse.status !== 201) {
 			const message = EventTracker.compileBasicNotification(
-				`Failed to assign roles to user for planType ${productId}: ${roleAssignmentResponse.error}`,
+				`Failed to assign roles to user for planType ${product.name}: ${roleAssignmentResponse.error}`,
 				operation
 			);
 			await eventTracker.notify({
@@ -311,7 +318,7 @@ export class WebhookController {
 
 		await eventTracker.notify({
 			message: EventTracker.compileBasicNotification(
-				`${productId} plan assigned to user with logtoId ${userLogtoId}`,
+				`${product.name} plan assigned to user with logtoId ${userLogtoId}`,
 				operation
 			),
 			severity: 'info',
@@ -348,7 +355,7 @@ export class WebhookController {
 		}
 	}
 
-	private async syncLogtoRoles(operation: OperationNameEnum, customerId: string, productName: string) {
+	private async syncLogtoRoles(operation: OperationNameEnum, customerId: string, product: Stripe.Response<Stripe.Product>) {
 		const logToHelper = new LogToHelper();
 		const setupResp = await logToHelper.setup();
 		if (setupResp.status !== StatusCodes.OK) {
@@ -370,7 +377,7 @@ export class WebhookController {
 			switch (operation) {
 				case OperationNameEnum.SUBSCRIPTION_CREATE:
 				case OperationNameEnum.SUBSCRIPTION_UPDATE:
-					return await this.handleCustomerRoleAssignment(operation, logToHelper, user.logToId, productName);
+					return await this.handleCustomerRoleAssignment(operation, logToHelper, user.logToId, product);
 				case OperationNameEnum.SUBSCRIPTION_CANCEL:
 					return await this.handleCustomerRoleRemoval(operation, logToHelper, user.logToId);
 			}

@@ -583,8 +583,7 @@ async function syncLogtoUserRoles(
 			getStripeObjectKey(stripeSubscription.items.data[0].plan.product)
 		);
 
-		const logtoRoleName = stripeProduct.id;
-		const roleResponse = await logToHelper.assignCustomerPlanRoles(logToUserId, logtoRoleName);
+		const roleResponse = await logToHelper.assignCustomerPlanRoles(logToUserId, stripeProduct);
 		if (roleResponse.status !== StatusCodes.OK) {
 			return {
 				success: false,
@@ -603,7 +602,7 @@ async function syncLogtoUserRoles(
 		return {
 			success: true,
 			status: 200,
-			data: logtoRoleName,
+			data: stripeProduct.name,
 		};
 	}
 
