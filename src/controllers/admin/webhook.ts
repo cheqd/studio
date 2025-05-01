@@ -296,10 +296,7 @@ export class WebhookController {
 		userLogtoId: string,
 		productId: string
 	) {
-		const roleAssignmentResponse = await logToHelper.assignCustomerPlanRoles(
-			userLogtoId,
-			productId
-		);
+		const roleAssignmentResponse = await logToHelper.assignCustomerPlanRoles(userLogtoId, productId);
 		if (roleAssignmentResponse.status !== 201) {
 			const message = EventTracker.compileBasicNotification(
 				`Failed to assign roles to user for planType ${productId}: ${roleAssignmentResponse.error}`,

@@ -184,4 +184,3 @@ export type AdminOrganisationUpdateUnsuccessfulResponseBody = UnsuccessfulRespon
 // Utils
 
 export type PaymentBehavior = Stripe.SubscriptionCreateParams.PaymentBehavior;
-
