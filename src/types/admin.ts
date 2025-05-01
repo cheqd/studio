@@ -1,6 +1,9 @@
 import type Stripe from 'stripe';
 import type { UnsuccessfulResponseBody } from './shared.js';
 import { CheqdNetwork } from '@cheqd/sdk';
+import { config } from 'dotenv';
+
+config();
 
 export type ProductWithPrices = Stripe.Product & {
 	prices?: Stripe.Price[];
@@ -182,7 +185,3 @@ export type AdminOrganisationUpdateUnsuccessfulResponseBody = UnsuccessfulRespon
 
 export type PaymentBehavior = Stripe.SubscriptionCreateParams.PaymentBehavior;
 
-export enum SupportedPlanTypes {
-	Build = 'build',
-	Test = 'test',
-}

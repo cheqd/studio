@@ -12,7 +12,6 @@ import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../../se
 import type Stripe from 'stripe';
 import type { SafeAPIResponse } from '../../types/common.js';
 import type { RoleEntity } from '../../database/entities/role.entity.js';
-import type { SupportedPlanTypes } from '../../types/admin.js';
 
 import { CheqdNetwork, checkBalance } from '@cheqd/sdk';
 import { TESTNET_MINIMUM_BALANCE, DEFAULT_DENOM_EXPONENT, OperationNameEnum } from '../../types/constants.js';
@@ -584,7 +583,7 @@ async function syncLogtoUserRoles(
 			getStripeObjectKey(stripeSubscription.items.data[0].plan.product)
 		);
 
-		const logtoRoleName = stripeProduct.name.toLowerCase() as SupportedPlanTypes;
+		const logtoRoleName = stripeProduct.id;
 		const roleResponse = await logToHelper.assignCustomerPlanRoles(logToUserId, logtoRoleName);
 		if (roleResponse.status !== StatusCodes.OK) {
 			return {

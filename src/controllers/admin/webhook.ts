@@ -9,7 +9,6 @@ import { SubscriptionService } from '../../services/admin/subscription.js';
 import { CustomerService } from '../../services/api/customer.js';
 import { LogToHelper } from '../../middleware/auth/logto-helper.js';
 import { UserService } from '../../services/api/user.js';
-import type { SupportedPlanTypes } from '../../types/admin.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { buildSubscriptionData } from '../../services/track/helpers.js';
 
@@ -295,15 +294,15 @@ export class WebhookController {
 		operation: OperationNameEnum,
 		logToHelper: LogToHelper,
 		userLogtoId: string,
-		productName: string
+		productId: string
 	) {
 		const roleAssignmentResponse = await logToHelper.assignCustomerPlanRoles(
 			userLogtoId,
-			productName.toLowerCase() as SupportedPlanTypes
+			productId
 		);
 		if (roleAssignmentResponse.status !== 201) {
 			const message = EventTracker.compileBasicNotification(
-				`Failed to assign roles to user for planType ${productName}: ${roleAssignmentResponse.error}`,
+				`Failed to assign roles to user for planType ${productId}: ${roleAssignmentResponse.error}`,
 				operation
 			);
 			await eventTracker.notify({
@@ -315,7 +314,7 @@ export class WebhookController {
 
 		await eventTracker.notify({
 			message: EventTracker.compileBasicNotification(
-				`${productName} plan assigned to user with logtoId ${userLogtoId}`,
+				`${productId} plan assigned to user with logtoId ${userLogtoId}`,
 				operation
 			),
 			severity: 'info',

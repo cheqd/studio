@@ -64,6 +64,8 @@ declare global {
 			STRIPE_SECRET_KEY: string;
 			STRIPE_PUBLISHABLE_KEY: string;
 			STRIPE_WEBHOOK_SECRET: string;
+            STRIPE_BUILD_PLAN_ID: string,
+	        STRIPE_TEST_PLAN_ID: string,
 		}
 	}
 
