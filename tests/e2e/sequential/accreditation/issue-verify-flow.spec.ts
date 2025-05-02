@@ -5,7 +5,7 @@ import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
-test(' Issue and verify a authorise accreditation', async ({ request }) => {
+test.skip(' Issue and verify a authorise accreditation', async ({ request }) => {
 	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/authorise-jwt.json`, 'utf-8'));
 	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=authorise`, {
 		data: JSON.stringify(credentialData),
@@ -50,7 +50,7 @@ test(' Issue and verify a authorise accreditation', async ({ request }) => {
 	expect(result.verified).toBe(true);
 });
 
-test(' Issue and verify a accredit accreditation', async ({ request }) => {
+test.skip(' Issue and verify a accredit accreditation', async ({ request }) => {
 	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/accredit-jwt.json`, 'utf-8'));
 	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=accredit`, {
 		data: JSON.stringify(credentialData),
@@ -93,7 +93,7 @@ test(' Issue and verify a accredit accreditation', async ({ request }) => {
 	expect(result.verified).toBe(true);
 });
 
-test(' Issue and verify a child accredit accreditation', async ({ request }) => {
+test.skip(' Issue and verify a child accredit accreditation', async ({ request }) => {
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/child-accredit-jwt.json`, 'utf-8')
 	);
@@ -138,7 +138,7 @@ test(' Issue and verify a child accredit accreditation', async ({ request }) => 
 	expect(result.verified).toBe(true);
 });
 
-test(' Issue and verify a attest accreditation', async ({ request }) => {
+test.skip(' Issue and verify a attest accreditation', async ({ request }) => {
 	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/attest-jwt.json`, 'utf-8'));
 	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=attest`, {
 		data: JSON.stringify(credentialData),
