@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.6.4-develop.2](https://github.com/cheqd/studio/compare/3.6.4-develop.1...3.6.4-develop.2) (2025-05-02)
+
+### Bug Fixes
+
+* Role assignment in Logto [DEV-4953] ([#669](https://github.com/cheqd/studio/issues/669)) ([ef5b6bf](https://github.com/cheqd/studio/commit/ef5b6bf2b6f01ecea0622c288db613cdac074391))
+
 ## [3.6.4-develop.1](https://github.com/cheqd/studio/compare/3.6.3...3.6.4-develop.1) (2025-04-10)
 
 ### Bug Fixes
