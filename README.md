@@ -112,6 +112,8 @@ The application supports Stripe integration for payment processing.
 2. `STRIPE_SECRET_KEY` - Secret key for Stripe API. Please, keep it secret on deploying
 3. `STRIPE_PUBLISHABLE_KEY` - Publishable key for Stripe API.
 4. `STRIPE_WEBHOOK_SECRET` - Secret for Stripe Webhook.
+5. `STRIPE_BUILD_PLAN_ID` - Subscription planId of Build plan
+6. `STRIPE_TEST_PLAN_ID` -  Subscription planId of Test plan
 
 ### 3rd Party Connectors
 
