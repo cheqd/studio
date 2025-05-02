@@ -149,20 +149,22 @@ export class ResourceController {
 		// Extract the resource parameters from the request
 		const { data, encoding, name, type, alsoKnownAs, version, network, publicKeyHexs } =
 			request.body as CreateResourceRequestBody;
-		// If list of publicKeyHexs is placed - check that publicKeyHexs are owned by the customer
-		if (publicKeyHexs) {
-			const areOwned = await arePublicKeyHexsInWallet(publicKeyHexs, response.locals.customer);
-			if (!areOwned.status) {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: areOwned.error as string,
-				} satisfies UnsuccessfulCreateResourceResponseBody);
-			}
-		}
-		// Get strategy e.g. postgres or local
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+		
+        try {
+            // If list of publicKeyHexs is placed - check that publicKeyHexs are owned by the customer
+            if (publicKeyHexs) {
+                const areOwned = await arePublicKeyHexsInWallet(publicKeyHexs, response.locals.customer);
+                if (!areOwned.status) {
+                    return response.status(StatusCodes.BAD_REQUEST).json({
+                        error: areOwned.error as string,
+                    } satisfies UnsuccessfulCreateResourceResponseBody);
+                }
+            }
+            // Get strategy e.g. postgres or local
+            const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
-		let resourcePayload: Partial<MsgCreateResourcePayload> = {};
-		try {
+            let resourcePayload: Partial<MsgCreateResourcePayload> = {};
+
 			// check if did is registered on the ledger
 			const { didDocument, didDocumentMetadata } = await identityServiceStrategySetup.agent.resolveDid(did);
 			if (!didDocument || !didDocumentMetadata || didDocumentMetadata.deactivated) {
