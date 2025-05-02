@@ -12,6 +12,12 @@
 
 * Role assignment in Logto [DEV-4953] ([#669](https://github.com/cheqd/studio/issues/669)) ([ef5b6bf](https://github.com/cheqd/studio/commit/ef5b6bf2b6f01ecea0622c288db613cdac074391))
 
+## [3.6.4](https://github.com/cheqd/studio/compare/3.6.3...3.6.4) (2025-04-14)
+
+### Bug Fixes
+
+* presentation create validator ([#663](https://github.com/cheqd/studio/issues/663)) ([1bc7ff9](https://github.com/cheqd/studio/commit/1bc7ff94f0ac5faf4c8018ac21cbef03b8e9e2c3)), closes [#658](https://github.com/cheqd/studio/issues/658)
+
 ## [3.6.4-develop.1](https://github.com/cheqd/studio/compare/3.6.3...3.6.4-develop.1) (2025-04-10)
 
 ### Bug Fixes
