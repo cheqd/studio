@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.5](https://github.com/cheqd/studio/compare/3.6.4...3.6.5) (2025-05-02)
+
+### Bug Fixes
+
+* Add missing stripe env vars in docker ([#670](https://github.com/cheqd/studio/issues/670)) ([9f65add](https://github.com/cheqd/studio/commit/9f65add8e8d4c5447409ec73bf9d2cdc9b3abb8d))
+* Role assignment in Logto [DEV-4953] ([#669](https://github.com/cheqd/studio/issues/669)) ([ef5b6bf](https://github.com/cheqd/studio/commit/ef5b6bf2b6f01ecea0622c288db613cdac074391))
+
 ## [3.6.4-develop.3](https://github.com/cheqd/studio/compare/3.6.4-develop.2...3.6.4-develop.3) (2025-05-02)
 
 ### Bug Fixes
