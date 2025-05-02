@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.6.4-develop.3](https://github.com/cheqd/studio/compare/3.6.4-develop.2...3.6.4-develop.3) (2025-05-02)
+
+### Bug Fixes
+
+* Add missing stripe env vars in docker ([#670](https://github.com/cheqd/studio/issues/670)) ([9f65add](https://github.com/cheqd/studio/commit/9f65add8e8d4c5447409ec73bf9d2cdc9b3abb8d))
+
 ## [3.6.4-develop.2](https://github.com/cheqd/studio/compare/3.6.4-develop.1...3.6.4-develop.2) (2025-05-02)
 
 ### Bug Fixes
