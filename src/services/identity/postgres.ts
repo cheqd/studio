@@ -57,6 +57,7 @@ import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { toTPublicKeyEd25519 } from '../helpers.js';
 import type { APIServiceOptions } from '../../types/admin.js';
 import { SupportedKeyTypes } from '@veramo/utils';
+import { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
 
 dotenv.config();
 
@@ -89,7 +90,8 @@ export class PostgresIdentityService extends DefaultIdentityService {
 
 	async createCheqdProvider(
 		customer: CustomerEntity,
-		namespace: CheqdNetwork
+		namespace: CheqdNetwork,
+		paymentAccounts: PaymentAccountEntity[]
 	): Promise<CheqdDIDProvider | undefined> {
 		let rpcUrl = '';
 		if (namespace === CheqdNetwork.Mainnet) {
@@ -97,28 +99,23 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		} else {
 			rpcUrl = TESTNET_RPC_URL || DefaultRPCUrls.testnet;
 		}
-		const paymentAccount = await PaymentAccountService.instance.find({
-			namespace: namespace,
-			customer: customer,
+		const paymentAccount = paymentAccounts.find((acc) => acc.namespace === namespace);
+		if (paymentAccount === undefined) {
+			return undefined;
+		}
+
+		const privateKey = (await this.getPrivateKey(paymentAccount.key.kid))?.privateKeyHex;
+
+		if (!privateKey) {
+			throw new Error(`No keys is initialized`);
+		}
+
+		return new CheqdDIDProvider({
+			defaultKms: 'postgres',
+			cosmosPayerSeed: privateKey,
+			networkType: namespace,
+			rpcUrl: rpcUrl,
 		});
-		if (paymentAccount.length > 1) {
-			throw new Error(`More than one payment account for ${namespace} found`);
-		}
-		if (paymentAccount.length === 1) {
-			const privateKey = (await this.getPrivateKey(paymentAccount[0].key.kid))?.privateKeyHex;
-
-			if (!privateKey) {
-				throw new Error(`No keys is initialized`);
-			}
-
-			return new CheqdDIDProvider({
-				defaultKms: 'postgres',
-				cosmosPayerSeed: privateKey,
-				networkType: namespace,
-				rpcUrl: rpcUrl,
-			});
-		}
-		return undefined;
 	}
 
 	async createAgent(customer: CustomerEntity): Promise<VeramoAgent> {
@@ -133,10 +130,12 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		const dbConnection = Connection.instance.dbConnection;
 
+		const paymentAccounts = await PaymentAccountService.instance.find({ customer }, ['key']);
+
 		// One customer may / may not have one Mainnet paymentAccount
-		const providerMainnet = await this.createCheqdProvider(customer, CheqdNetwork.Mainnet);
+		const providerMainnet = await this.createCheqdProvider(customer, CheqdNetwork.Mainnet, paymentAccounts);
 		// One customer may / may not have one Testnet paymentAccount
-		const providerTestnet = await this.createCheqdProvider(customer, CheqdNetwork.Testnet);
+		const providerTestnet = await this.createCheqdProvider(customer, CheqdNetwork.Testnet, paymentAccounts);
 		// did:key provider
 		providers['did:key'] = new KeyDIDProvider({ defaultKms: 'postgres' });
 		if (providerMainnet) {
