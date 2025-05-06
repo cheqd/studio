@@ -8,6 +8,7 @@ declare global {
 			PORT: string;
 			NPM_CONFIG_LOGLEVEL: string;
 			LOG_LEVEL: string | 'info';
+			LOCAL_STORE_TTL: string | undefined;
 
 			// Network API endpoints
 			MAINNET_RPC_URL: string;

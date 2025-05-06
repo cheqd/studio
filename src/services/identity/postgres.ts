@@ -58,6 +58,7 @@ import { toTPublicKeyEd25519 } from '../helpers.js';
 import type { APIServiceOptions } from '../../types/admin.js';
 import { SupportedKeyTypes } from '@veramo/utils';
 import { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
+import { LocalStore } from '../../database/cache/store.js';
 
 dotenv.config();
 
@@ -130,7 +131,17 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		const dbConnection = Connection.instance.dbConnection;
 
-		const paymentAccounts = await PaymentAccountService.instance.find({ customer }, ['key']);
+		const cachedAccounts = LocalStore.instance.getCustomerAccounts(customer.customerId);
+		let paymentAccounts: PaymentAccountEntity[];
+		if (cachedAccounts?.length == 2) {
+			paymentAccounts = cachedAccounts;
+		} else {
+			paymentAccounts = await PaymentAccountService.instance.find({ customer }, ['key']);
+
+			if (paymentAccounts.length > 0) {
+				LocalStore.instance.setCustomerAccounts(customer.customerId, paymentAccounts);
+			}
+		}
 
 		// One customer may / may not have one Mainnet paymentAccount
 		const providerMainnet = await this.createCheqdProvider(customer, CheqdNetwork.Mainnet, paymentAccounts);
