@@ -84,10 +84,17 @@ export class PaymentAccountService {
 		});
 	}
 
-	public async find(where: Record<string, unknown>) {
+	public async find(where: Record<string, unknown>, relations?: string[]) {
 		return await this.paymentAccountRepository.find({
 			where: where,
-			relations: ['customer', 'key'],
+			relations,
+		});
+	}
+
+	public async findOne(where: Record<string, unknown>, relations?: string[]) {
+		return await this.paymentAccountRepository.findOne({
+			where: where,
+			relations,
 		});
 	}
 }
