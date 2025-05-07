@@ -32,6 +32,8 @@ import { SubscriptionService } from '../../services/admin/subscription.js';
 import { RoleService } from '../../services/api/role.js';
 import { getStripeObjectKey } from '../../utils/index.js';
 import { KeyService } from '../../services/api/key.js';
+import { LocalStore } from '../../database/cache/store.js';
+
 dotenv.config();
 
 export class AccountController {
@@ -76,7 +78,14 @@ export class AccountController {
 					error: 'Bad state cause there is no customer assigned to the user yet. Please contact administrator.',
 				} satisfies UnsuccessfulQueryCustomerResponseBody);
 			}
-			const paymentAccounts = await PaymentAccountService.instance.find({ customer: response.locals.customer });
+            
+            const cachedAccounts = LocalStore.instance.getCustomerAccounts(response.locals.customer.customerId);
+            let paymentAccounts: PaymentAccountEntity[];
+            if (cachedAccounts?.length == 2) {
+                paymentAccounts = cachedAccounts;
+            } else {
+                paymentAccounts = await PaymentAccountService.instance.find({ customer: response.locals.customer });
+            }
 			const result: QueryCustomerResponseBody = {
 				customer: {
 					customerId: response.locals.customer.customerId,
