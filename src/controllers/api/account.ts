@@ -78,14 +78,14 @@ export class AccountController {
 					error: 'Bad state cause there is no customer assigned to the user yet. Please contact administrator.',
 				} satisfies UnsuccessfulQueryCustomerResponseBody);
 			}
-            
-            const cachedAccounts = LocalStore.instance.getCustomerAccounts(response.locals.customer.customerId);
-            let paymentAccounts: PaymentAccountEntity[];
-            if (cachedAccounts?.length == 2) {
-                paymentAccounts = cachedAccounts;
-            } else {
-                paymentAccounts = await PaymentAccountService.instance.find({ customer: response.locals.customer });
-            }
+
+			const cachedAccounts = LocalStore.instance.getCustomerAccounts(response.locals.customer.customerId);
+			let paymentAccounts: PaymentAccountEntity[];
+			if (cachedAccounts?.length == 2) {
+				paymentAccounts = cachedAccounts;
+			} else {
+				paymentAccounts = await PaymentAccountService.instance.find({ customer: response.locals.customer });
+			}
 			const result: QueryCustomerResponseBody = {
 				customer: {
 					customerId: response.locals.customer.customerId,

@@ -40,6 +40,8 @@ import { CreateSubscritpionTable1695740346003 } from '../migrations/CreateSubscr
 import { AlterAPIKeyTable1695740346004 } from '../migrations/AlterAPIKeyTable.js';
 import { AlterCustomerTableAddEmail1695740346005 } from '../migrations/AlterCustomerTableAddEmail.js';
 import { AlterCustomerTableUpdateEmail1695740346006 } from '../migrations/AlterCustomerTableUniqueEmail.js';
+import { IndexPaymentAccountTable1746513196390 } from '../migrations/IndexPaymentAccountTable.js';
+
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -118,6 +120,8 @@ export class Postgres implements AbstractDatabase {
 				AlterCustomerTableAddEmail1695740346005,
 				// Add unique constraint to email field
 				AlterCustomerTableUpdateEmail1695740346006,
+				// Add unique index in PaymentAccount table
+				IndexPaymentAccountTable1746513196390,
 			],
 			entities: [
 				...Entities,

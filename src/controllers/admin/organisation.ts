@@ -75,14 +75,14 @@ export class OrganisationController {
 				email,
 				description,
 			});
-            
-            const cachedAccounts = LocalStore.instance.getCustomerAccounts(response.locals.customer.customerId);
-            let paymentAccounts: PaymentAccountEntity[];
-            if (cachedAccounts?.length == 2) {
-                paymentAccounts = cachedAccounts;
-            } else {
-                paymentAccounts = await PaymentAccountService.instance.find({ customer: response.locals.customer });
-            }
+
+			const cachedAccounts = LocalStore.instance.getCustomerAccounts(response.locals.customer.customerId);
+			let paymentAccounts: PaymentAccountEntity[];
+			if (cachedAccounts?.length == 2) {
+				paymentAccounts = cachedAccounts;
+			} else {
+				paymentAccounts = await PaymentAccountService.instance.find({ customer: response.locals.customer });
+			}
 
 			if (!customer || paymentAccounts.length === 0) {
 				response.status(StatusCodes.NOT_FOUND).json({
