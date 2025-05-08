@@ -16,7 +16,7 @@ export class FaucetHelper {
 		const response = await fetch(faucetURI, {
 			headers: {
 				'Content-Type': 'application/json',
-				'CF-IPCountry': 'CS', // To differentiate users coming from cheqd Studio 
+				'CF-IPCountry': 'CS', // To differentiate users coming from cheqd Studio
 			},
 			body: JSON.stringify(faucetBody),
 			method: 'POST',
