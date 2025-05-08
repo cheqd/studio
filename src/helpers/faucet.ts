@@ -1,5 +1,5 @@
 import type { ICommonErrorResponse } from '../types/authentication.js';
-import { MINIMAL_DENOM, FAUCET_URI } from '../types/constants.js';
+import { MINIMAL_DENOM, FAUCET_URI, FAUCET_AMOUNT } from '../types/constants.js';
 
 export class FaucetHelper {
 	// ...
@@ -10,10 +10,13 @@ export class FaucetHelper {
 			address: address,
 			email,
 			name,
+			amount: FAUCET_AMOUNT,
+			marketingOptIn: false,
 		};
 		const response = await fetch(faucetURI, {
 			headers: {
 				'Content-Type': 'application/json',
+				'CF-IPCountry': 'CS', // To differentiate users coming from cheqd Studio 
 			},
 			body: JSON.stringify(faucetBody),
 			method: 'POST',
