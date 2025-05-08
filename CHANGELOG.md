@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.6.6](https://github.com/cheqd/studio/compare/3.6.5...3.6.6) (2025-05-08)
+
+### Performance Improvements
+
+* Improve customer account query [DEV-4965] ([#673](https://github.com/cheqd/studio/issues/673)) ([25e9ed3](https://github.com/cheqd/studio/commit/25e9ed30bc185ecd0789b1ac164e521de5bc8fca)), closes [#674](https://github.com/cheqd/studio/issues/674)
+
 ## [3.6.6-develop.1](https://github.com/cheqd/studio/compare/3.6.5...3.6.6-develop.1) (2025-05-07)
 
 ### Performance Improvements
