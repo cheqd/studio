@@ -3,11 +3,13 @@ import { MINIMAL_DENOM, FAUCET_URI } from '../types/constants.js';
 
 export class FaucetHelper {
 	// ...
-	static async delegateTokens(address: string): Promise<ICommonErrorResponse> {
+	static async delegateTokens(address: string, name: string, email: string): Promise<ICommonErrorResponse> {
 		const faucetURI = FAUCET_URI;
 		const faucetBody = {
 			denom: MINIMAL_DENOM,
 			address: address,
+			email,
+			name,
 		};
 		const response = await fetch(faucetURI, {
 			headers: {

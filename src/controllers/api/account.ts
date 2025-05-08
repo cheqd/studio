@@ -356,7 +356,11 @@ export class AccountController {
 			const balance = balances[0];
 			if (!balance || +balance.amount < TESTNET_MINIMUM_BALANCE * Math.pow(10, DEFAULT_DENOM_EXPONENT)) {
 				// 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
-				const resp = await FaucetHelper.delegateTokens(testnetAccount.address);
+				const resp = await FaucetHelper.delegateTokens(
+					testnetAccount.address,
+					customerEntity.name,
+					customerEntity.email
+				);
 				if (resp.status !== StatusCodes.OK) {
 					return response.status(StatusCodes.BAD_GATEWAY).json({
 						error: resp.error,
@@ -539,7 +543,11 @@ export class AccountController {
 				const balance = balances[0];
 				if (!balance || +balance.amount < TESTNET_MINIMUM_BALANCE * Math.pow(10, DEFAULT_DENOM_EXPONENT)) {
 					// 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
-					const resp = await FaucetHelper.delegateTokens(testnetAccount.address);
+					const resp = await FaucetHelper.delegateTokens(
+						testnetAccount.address,
+						customerEntity.name,
+						customerEntity.email
+					);
 
 					if (resp.status !== StatusCodes.OK) {
 						return response.status(StatusCodes.BAD_GATEWAY).json({
