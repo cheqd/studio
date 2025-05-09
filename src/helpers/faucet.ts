@@ -10,13 +10,13 @@ export class FaucetHelper {
 			address: address,
 			email,
 			name,
+			company: 'Requested via cheqd Studio',
 			amount: FAUCET_AMOUNT,
-			marketingOptIn: false,
+			marketing_optin: false,
 		};
 		const response = await fetch(faucetURI, {
 			headers: {
 				'Content-Type': 'application/json',
-				'CF-IPCountry': 'CS', // To differentiate users coming from cheqd Studio
 			},
 			body: JSON.stringify(faucetBody),
 			method: 'POST',
