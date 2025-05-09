@@ -1,6 +1,6 @@
 import { TableColumn, type MigrationInterface, type QueryRunner } from 'typeorm';
 import { SecretBox } from '@veramo/kms-local';
-import { sha256 } from '../../utils'; // ensure this returns a hex string
+import { sha256 } from '../../utils/index.js'; // ensure this returns a hex string
 
 export class InsertFingerprintAPIKeyTable1746780465032 implements MigrationInterface {
 	public async up(queryRunner: QueryRunner): Promise<void> {
