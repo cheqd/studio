@@ -55,6 +55,7 @@ export const MINIMAL_DENOM = 'ncheq';
 export const FAUCET_URI = process.env.FAUCET_URI || 'https://faucet-api.cheqd.network/credit';
 export const DEFAULT_DENOM_EXPONENT = 9;
 export const TESTNET_MINIMUM_BALANCE = process.env.TESTNET_MINIMUM_BALANCE || 1000;
+export const FAUCET_AMOUNT = process.env.FAUCET_AMOUNT || 100000000000000;
 
 // Verifiable Credential constants
 export const VC_CONTEXT = ['https://www.w3.org/2018/credentials/v1'];
