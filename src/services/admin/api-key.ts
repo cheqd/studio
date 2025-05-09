@@ -1,16 +1,16 @@
-import type { Repository } from 'typeorm';
+import type { FindOptionsOrder, FindOptionsRelations, FindOptionsWhere, Repository } from 'typeorm';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import type { UserEntity } from '../../database/entities/user.entity.js';
+import type { APIServiceOptions } from '../../types/admin.js';
 import { decodeJWT } from 'did-jwt';
 import bcrypt from 'bcrypt';
 import { randomBytes, createHmac } from 'crypto';
-import { Connection } from '../../database/connection/connection.js';
-
-import * as dotenv from 'dotenv';
-import type { CustomerEntity } from '../../database/entities/customer.entity.js';
-import { APIKeyEntity } from '../../database/entities/api.key.entity.js';
-import type { UserEntity } from '../../database/entities/user.entity.js';
 import { SecretBox } from '@veramo/kms-local';
+import { Connection } from '../../database/connection/connection.js';
+import { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import { API_SECRET_KEY_LENGTH, API_KEY_PREFIX, API_KEY_EXPIRATION } from '../../types/constants.js';
-import type { APIServiceOptions } from '../../types/admin.js';
+import { sha256 } from '../../utils/index.js';
+import * as dotenv from 'dotenv';
 dotenv.config();
 
 export class APIKeyService {
@@ -35,11 +35,17 @@ export class APIKeyService {
 		revoked = false,
 		options?: APIServiceOptions
 	): Promise<APIKeyEntity> {
-		const apiKeyHash = await APIKeyService.hashAPIKey(apiKey);
 		const { decryptionNeeded } = options || {};
 		if (!apiKey) {
 			throw new Error('API key is not specified');
 		}
+
+		// fingerprint
+		const fingerprint = sha256(apiKey);
+
+		// slow - hash
+		const apiKeyHash = await APIKeyService.hashAPIKey(apiKey);
+
 		if (!name) {
 			throw new Error('API key name is not specified');
 		}
@@ -50,7 +56,10 @@ export class APIKeyService {
 			expiresAt = new Date();
 			expiresAt.setMonth(expiresAt.getDay() + API_KEY_EXPIRATION);
 		}
+
+		// encrypt the key
 		const encryptedAPIKey = await this.encryptAPIKey(apiKey);
+
 		// Create entity
 		const apiKeyEntity = new APIKeyEntity(
 			apiKeyHash,
@@ -59,7 +68,8 @@ export class APIKeyService {
 			expiresAt,
 			user.customer,
 			user,
-			revoked
+			revoked,
+			fingerprint
 		);
 		const apiKeyRecord = (await this.apiKeyRepository.insert(apiKeyEntity)).identifiers[0];
 		if (!apiKeyRecord) throw new Error(`Cannot create a new API key`);
@@ -131,31 +141,45 @@ export class APIKeyService {
 	}
 
 	public async get(apiKey: string, options?: APIServiceOptions) {
-		const { decryptionNeeded } = options || {};
+		// fingerprint
+		const fingerprint = sha256(apiKey);
 
-		// ToDo: possible bottleneck cause we are fetching all the keys
-		for (const record of await this.find({})) {
-			if (await APIKeyService.compareAPIKey(apiKey, record.apiKeyHash)) {
-				if (decryptionNeeded) {
-					record.apiKey = await this.decryptAPIKey(record.apiKey);
-				}
-				return record;
-			}
+		// fetch the api key entity
+		const apiKeyEntity = await APIKeyService.instance.findOne(
+			{
+				fingerprint,
+			},
+			{ customer: true, user: true },
+			options
+		);
+		if (!apiKeyEntity) {
+			throw new Error('Invalid API key');
 		}
-		return null;
+
+		// validate expiry
+		if (apiKeyEntity.revoked) {
+			throw new Error('API Key is expired');
+		}
+
+		// bcrypt comparison
+		const isValid = await APIKeyService.compareAPIKey(apiKey, apiKeyEntity.apiKeyHash);
+		if (!isValid) throw new Error('Invalid API key');
+
+		return apiKeyEntity;
 	}
 
 	public async find(
-		where: Record<string, unknown>,
-		order?: Record<string, 'ASC' | 'DESC'>,
-		options?: APIServiceOptions
+		where: FindOptionsWhere<APIKeyEntity>,
+		relations?: FindOptionsRelations<APIKeyEntity>,
+		options?: APIServiceOptions,
+		order?: FindOptionsOrder<APIKeyEntity>
 	) {
 		try {
 			const { decryptionNeeded } = options || {};
 			const apiKeyList = await this.apiKeyRepository.find({
-				where: where,
-				relations: ['customer', 'user'],
-				order: order,
+				where,
+				relations,
+				order,
 			});
 			if (decryptionNeeded) {
 				for (const apiKey of apiKeyList) {
@@ -166,6 +190,25 @@ export class APIKeyService {
 		} catch {
 			return [];
 		}
+	}
+
+	public async findOne(
+		where: FindOptionsWhere<APIKeyEntity>,
+		relations?: FindOptionsRelations<APIKeyEntity>,
+		options?: APIServiceOptions,
+		order?: FindOptionsOrder<APIKeyEntity>
+	) {
+		const apiKeyEntity = await this.apiKeyRepository.findOne({
+			where,
+			relations,
+			order,
+		});
+
+		if (apiKeyEntity && options?.decryptionNeeded) {
+			apiKeyEntity.apiKey = await this.decryptAPIKey(apiKeyEntity.apiKey);
+		}
+
+		return apiKeyEntity;
 	}
 
 	// Utils

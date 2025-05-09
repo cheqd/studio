@@ -579,22 +579,14 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return apiKeyEntity;
 	}
 
-	async getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | undefined> {
+	async getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | null> {
 		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
-		const keys = await APIKeyService.instance.find(
+		const key = await APIKeyService.instance.findOne(
 			{ customer: customer, user: user, revoked: false, name: 'idToken' },
 			undefined,
 			options
 		);
-		if (keys.length > 1) {
-			throw new Error(
-				`For the customer with customer id ${customer.customerId} and user with logToId ${user.logToId} there more then 1 API key`
-			);
-		}
-		if (keys.length == 0) {
-			return undefined;
-		}
-		return keys[0];
+		return key;
 	}
 
 	async decryptAPIKey(apiKey: string): Promise<string> {

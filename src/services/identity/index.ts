@@ -171,7 +171,7 @@ export interface IIdentityService {
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult>;
 	setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity>;
 	updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity>;
-	getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | undefined>;
+	getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | null>;
 	decryptAPIKey(apiKey: string): Promise<string>;
 }
 

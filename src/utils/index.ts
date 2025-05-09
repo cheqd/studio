@@ -1,3 +1,5 @@
+import { createHash } from 'crypto';
+
 export function getStripeObjectKey(input: string | { id: string } | null) {
 	if (!input) {
 		return '';
@@ -8,4 +10,8 @@ export function getStripeObjectKey(input: string | { id: string } | null) {
 	}
 
 	return input.id;
+}
+
+export function sha256(input: string): string {
+	return createHash('sha256').update(input).digest('hex');
 }
