@@ -161,24 +161,24 @@ export class AccountController {
 		}
 	}
 
-	// For now we keep temporary 1-1 relation between user and customer
-	// So the flow is:
-	// 1. Get LogTo user id from request body
-	// 2. Check if there is customer associated with such user
-	// 2.1 If not, create a new customer entity
-	// 3. Assign role to user
-	// 3.1 If user already has a subscription, assign role based on subscription
-	// 3.2 Else assign the default "Portal" role
-	// 4. If no customer is associated with the user (from point 2), create customer
-	// 4.1 Assign customer to the user
-	// 5. Create User
-	// 6. Check is paymentAccount exists for the customer
-	// 6.1. If no - create it
-	// 7. Create custom_data and update the userInfo (send it to the LogTo)
-	// 8. If custom_data is empty - create it
-	// 9. Check the token balance for Testnet account
-	// 10. Add the Stripe account to the Customer
 	public async bootstrap(request: Request, response: Response) {
+        // For now we keep temporary 1-1 relation between user and customer
+        // So the flow is:
+        // 1. Get LogTo user id from request body
+        // 2. Check if there is customer associated with such user
+        // 2.1 If not, create a new customer entity
+        // 3. Assign role to user
+        // 3.1 If user already has a subscription, assign role based on subscription
+        // 3.2 Else assign the default "Portal" role
+        // 4. If no customer is associated with the user (from point 2), create customer
+        // 4.1 Assign customer to the user
+        // 5. Create User
+        // 6. Add the Stripe account to the Customer
+        // 7. Check is paymentAccount exists for the customer
+        // 7.1. If no - create it
+        // 8. Create custom_data and update the userInfo (send it to the LogTo)
+        // 9. If custom_data is empty - create it
+        // 10. Check the token balance for Testnet account
 		// Track success of each step
 		const status = {
 			customerCreated: false,
@@ -263,7 +263,7 @@ export class AccountController {
 					severity: 'info',
 				});
 			} else if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
-                // if user existed and stripe not linked yet
+				// if user existed and stripe not linked yet
 				await eventTracker.submit({
 					operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 					data: {
@@ -275,36 +275,7 @@ export class AccountController {
 				status.stripeAccountCreated = true;
 			}
 
-			// 6. Provision Mainnet & Testnet accounts
-			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, ['key']);
-			const mainnetResp = await AccountController.provisionCustomerAccount(
-				CheqdNetwork.Mainnet,
-				accounts,
-				customerEntity
-			);
-			if (mainnetResp.success) status.mainnetAccountProvisioned = true;
-
-			const testnetResp = await AccountController.provisionCustomerAccount(
-				CheqdNetwork.Testnet,
-				accounts,
-				customerEntity
-			);
-			if (testnetResp.success) status.testnetAccountProvisioned = true;
-
-			// 7. Update LogTo custom data (non-blocking)
-			await this.updateCustomData(
-				userEntity.logToId,
-				customerEntity,
-				mainnetResp,
-				testnetResp,
-				logToHelper,
-				status
-			);
-
-			// 8. Top‑up Testnet (non‑blocking)
-			await this.topupTestnet(customerEntity, testnetResp, status);
-
-			// 9. Final Stripe check if still missing
+			// 6. check Stripe account if still missing
 			if (
 				process.env.STRIPE_ENABLED === 'true' &&
 				!status.stripeAccountCreated &&
@@ -321,9 +292,40 @@ export class AccountController {
 				status.stripeAccountCreated = true;
 			}
 
+			// 7. Provision Mainnet & Testnet accounts
+			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, ['key']);
+			const mainnetResp = await AccountController.provisionCustomerAccount(
+				CheqdNetwork.Mainnet,
+				accounts,
+				customerEntity
+			);
+			if (mainnetResp.success) status.mainnetAccountProvisioned = true;
+
+			const testnetResp = await AccountController.provisionCustomerAccount(
+				CheqdNetwork.Testnet,
+				accounts,
+				customerEntity
+			);
+			if (testnetResp.success) status.testnetAccountProvisioned = true;
+
+			// 8. Update LogTo custom data (non-blocking)
+			await this.updateCustomData(
+				userEntity.logToId,
+				customerEntity,
+				mainnetResp,
+				testnetResp,
+				logToHelper,
+				status
+			);
+
+			// 9. Top‑up Testnet (non‑blocking)
+			await this.topupTestnet(customerEntity, testnetResp, status);
+
 			// 10. Send response with full status
 			const allOK = Object.values(status).every((v) => v);
-			return response.status(allOK ? StatusCodes.OK : StatusCodes.INTERNAL_SERVER_ERROR).json({ success: allOK, status });
+			return response
+				.status(allOK ? StatusCodes.OK : StatusCodes.INTERNAL_SERVER_ERROR)
+				.json({ success: allOK, status });
 		} catch (err) {
 			console.error('Bootstrap error:', err);
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
