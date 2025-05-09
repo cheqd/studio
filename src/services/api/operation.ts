@@ -1,4 +1,4 @@
-import type { Repository } from 'typeorm';
+import type { FindOptionsRelations, Repository } from 'typeorm';
 
 import { Connection } from '../../database/connection/connection.js';
 
@@ -56,7 +56,7 @@ export class OperationService {
 		deprecated?: false,
 		successful?: boolean
 	) {
-		const existingOperation = await this.get(operationId);
+		const existingOperation = await this.get(operationId, { defaultFee: true, customer: true });
 		if (!existingOperation) {
 			throw new Error(`Operation with id ${operationId} does not exist`);
 		}
@@ -79,17 +79,17 @@ export class OperationService {
 		return await this.operationRepository.save(existingOperation);
 	}
 
-	public async get(operationId: string) {
+	public async get(operationId: string, relations: FindOptionsRelations<OperationEntity>) {
 		return await this.operationRepository.findOne({
 			where: { operationId },
-			relations: ['coin', 'customer'],
+			relations,
 		});
 	}
 
-	public async find(where: Record<string, unknown>) {
+	public async find(where: Record<string, unknown>, relations: FindOptionsRelations<OperationEntity>) {
 		return await this.operationRepository.find({
 			where: where,
-			relations: ['coin', 'customer'],
+			relations,
 		});
 	}
 }

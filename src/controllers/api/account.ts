@@ -196,7 +196,7 @@ export class AccountController {
 		// 2. Check if such row exists in the DB
 		// eslint-disable-next-line prefer-const
 		let [userEntity, [customerEntity], logtoHelperSetup] = await Promise.all([
-			UserService.instance.get(logToUserId),
+			UserService.instance.get(logToUserId, { customer: true }),
 			CustomerService.instance.find({ email: logToUserEmail }),
 			logToHelper.setup(),
 		]);
@@ -299,7 +299,7 @@ export class AccountController {
 		}
 
 		// 6. Check is paymentAccount exists for the customer
-		const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, [ 'key' ]);
+		const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
 
 		const mainnetAccountResponse = await AccountController.provisionCustomerAccount(
 			CheqdNetwork.Mainnet,

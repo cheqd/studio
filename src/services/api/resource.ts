@@ -1,4 +1,4 @@
-import type { Repository } from 'typeorm';
+import type { FindOptionsRelations, Repository } from 'typeorm';
 
 import { Connection } from '../../database/connection/connection.js';
 
@@ -80,17 +80,17 @@ export class ResourceService {
 		return await this.resourceRepository.save(existingResource);
 	}
 
-	public async get(resourceId: string) {
+	public async get(resourceId: string, relations?: FindOptionsRelations<ResourceEntity>) {
 		return await this.resourceRepository.findOne({
 			where: { resourceId },
-			relations: ['customer', 'key', 'identifier'],
+			relations,
 		});
 	}
 
-	public async find(where: Record<string, unknown>) {
+	public async find(where: Record<string, unknown>, relations?: FindOptionsRelations<ResourceEntity>) {
 		return await this.resourceRepository.find({
 			where: where,
-			relations: ['customer', 'key', 'identifier'],
+			relations,
 		});
 	}
 

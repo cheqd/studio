@@ -136,7 +136,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (cachedAccounts?.length == 2) {
 			paymentAccounts = cachedAccounts;
 		} else {
-			paymentAccounts = await PaymentAccountService.instance.find({ customer }, ['key']);
+			paymentAccounts = await PaymentAccountService.instance.find({ customer }, { key: true });
 
 			if (paymentAccounts.length > 0) {
 				LocalStore.instance.setCustomerAccounts(customer.customerId, paymentAccounts);
@@ -215,7 +215,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async getPaymentAccount(address: string) {
-		return await PaymentAccountService.instance.get(address);
+		return await PaymentAccountService.instance.get(address, { key: true });
 	}
 
 	async findPaymentAccount(where: Record<string, unknown>) {

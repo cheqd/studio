@@ -1,12 +1,11 @@
-import type { Repository } from 'typeorm';
-
-import { Connection } from '../../database/connection/connection.js';
-
-import * as dotenv from 'dotenv';
-import { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
+import type { FindOptionsRelations, Repository } from 'typeorm';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
 import { getCosmosAccount } from '@cheqd/sdk';
+import { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
+import { Connection } from '../../database/connection/connection.js';
+import * as dotenv from 'dotenv';
+
 dotenv.config();
 
 export class PaymentAccountService {
@@ -77,21 +76,21 @@ export class PaymentAccountService {
 		return await this.paymentAccountRepository.save(existingPaymentAccount);
 	}
 
-	public async get(address: string) {
+	public async get(address: string, relations?: FindOptionsRelations<PaymentAccountEntity>) {
 		return await this.paymentAccountRepository.findOne({
 			where: { address },
-			relations: ['customer', 'key'],
+			relations,
 		});
 	}
 
-	public async find(where: Record<string, unknown>, relations?: string[]) {
+	public async find(where: Record<string, unknown>, relations?: FindOptionsRelations<PaymentAccountEntity>) {
 		return await this.paymentAccountRepository.find({
 			where: where,
 			relations,
 		});
 	}
 
-	public async findOne(where: Record<string, unknown>, relations?: string[]) {
+	public async findOne(where: Record<string, unknown>, relations?: FindOptionsRelations<PaymentAccountEntity>) {
 		return await this.paymentAccountRepository.findOne({
 			where: where,
 			relations,
