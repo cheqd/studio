@@ -11,7 +11,6 @@ import type { UnsuccessfulResponseBody } from '../../types/shared.js';
 import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../../services/track/submitter.js';
 import type Stripe from 'stripe';
 import type { SafeAPIResponse } from '../../types/common.js';
-import type { RoleEntity } from '../../database/entities/role.entity.js';
 
 import { CheqdNetwork, checkBalance } from '@cheqd/sdk';
 import { TESTNET_MINIMUM_BALANCE, DEFAULT_DENOM_EXPONENT, OperationNameEnum } from '../../types/constants.js';
