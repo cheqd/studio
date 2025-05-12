@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.6.8-develop.1](https://github.com/cheqd/studio/compare/3.6.7...3.6.8-develop.1) (2025-05-09)
+
+### Bug Fixes
+
+* Resolve testnet token delegation issues ([#678](https://github.com/cheqd/studio/issues/678)) ([1e44bf2](https://github.com/cheqd/studio/commit/1e44bf2970c193e0b438205016bb6a141f98276d))
+
+## [3.6.7](https://github.com/cheqd/studio/compare/3.6.6...3.6.7) (2025-05-09)
+
+### Bug Fixes
+
+* Fix faucet request ([#675](https://github.com/cheqd/studio/issues/675)) ([8b66022](https://github.com/cheqd/studio/commit/8b660221c3987c54667654b7d8a44c1e3653d1a5))
+
 ## [3.6.7-develop.1](https://github.com/cheqd/studio/compare/3.6.6...3.6.7-develop.1) (2025-05-09)
 
 ### Bug Fixes
