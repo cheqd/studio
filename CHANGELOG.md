@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.6.8-develop.2](https://github.com/cheqd/studio/compare/3.6.8-develop.1...3.6.8-develop.2) (2025-05-12)
+
+### Bug Fixes
+
+* Added missing relations ([25d1242](https://github.com/cheqd/studio/commit/25d1242718c988dbe797353d1ab24968c1509045))
+
+### Performance Improvements
+
+* Perform join operations when necessary [DEV-4993] ([#676](https://github.com/cheqd/studio/issues/676)) ([20afe19](https://github.com/cheqd/studio/commit/20afe198631e71b2d7cec63127abd3b6c8c34d28)), closes [#677](https://github.com/cheqd/studio/issues/677)
+
 ## [3.6.8-develop.1](https://github.com/cheqd/studio/compare/3.6.7...3.6.8-develop.1) (2025-05-09)
 
 ### Bug Fixes
