@@ -1,4 +1,4 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
 import * as dotenv from 'dotenv';
 import { CustomerEntity } from './customer.entity.js';
@@ -58,6 +58,13 @@ export class APIKeyEntity {
 	@JoinColumn({ name: 'userId' })
 	user!: UserEntity;
 
+	@Index({ unique: true })
+	@Column({
+		type: 'varchar',
+		nullable: false,
+	})
+	fingerprint!: string;
+
 	@BeforeInsert()
 	setCreatedAt() {
 		this.createdAt = new Date();
@@ -79,7 +86,8 @@ export class APIKeyEntity {
 		expiresAt: Date,
 		customer: CustomerEntity,
 		user: UserEntity,
-		revoked = false
+		revoked = false,
+		fingerprint: string
 	) {
 		this.apiKeyHash = apiKeyHash;
 		this.apiKey = apiKey;
@@ -88,5 +96,6 @@ export class APIKeyEntity {
 		this.customer = customer;
 		this.user = user;
 		this.revoked = revoked;
+		this.fingerprint = fingerprint;
 	}
 }

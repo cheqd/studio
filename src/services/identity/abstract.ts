@@ -229,7 +229,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity> {
 		throw new Error(`Not supported`);
 	}
-	getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | undefined> {
+	getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | null> {
 		throw new Error(`Not supported`);
 	}
 	decryptAPIKey(apiKey: string): Promise<string> {

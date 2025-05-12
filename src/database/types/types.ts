@@ -41,6 +41,7 @@ import { AlterAPIKeyTable1695740346004 } from '../migrations/AlterAPIKeyTable.js
 import { AlterCustomerTableAddEmail1695740346005 } from '../migrations/AlterCustomerTableAddEmail.js';
 import { AlterCustomerTableUpdateEmail1695740346006 } from '../migrations/AlterCustomerTableUniqueEmail.js';
 import { IndexPaymentAccountTable1746513196390 } from '../migrations/IndexPaymentAccountTable.js';
+import { InsertFingerprintAPIKeyTable1746780465032 } from '../migrations/InsertFingerprintApiKeyTable.js';
 
 dotenv.config();
 
@@ -122,6 +123,8 @@ export class Postgres implements AbstractDatabase {
 				AlterCustomerTableUpdateEmail1695740346006,
 				// Add unique index in PaymentAccount table
 				IndexPaymentAccountTable1746513196390,
+				// Add fingerprint in APIKey table
+				InsertFingerprintAPIKeyTable1746780465032,
 			],
 			entities: [
 				...Entities,
