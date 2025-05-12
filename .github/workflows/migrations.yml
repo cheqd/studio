@@ -76,7 +76,7 @@ jobs:
 
       - name: Get runner public IP
         id: ip
-        run: echo "ip=$(curl -s https://ifconfig.me)" >> $GITHUB_OUTPUT
+        run: echo "ip=$(curl -s https://ifconfig.me)" >> "$GITHUB_OUTPUT"
 
       - name: Temporarily allow runner IP address
         run: |
