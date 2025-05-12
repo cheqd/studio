@@ -5,7 +5,6 @@ import type { IOAuthProvider } from '../oauth/abstract.js';
 
 import * as dotenv from 'dotenv';
 import { APIKeyService } from '../../../services/admin/api-key.js';
-import { UserService } from '../../../services/api/user.js';
 import type { UnsuccessfulResponseBody } from '../../../types/shared.js';
 dotenv.config();
 
@@ -31,7 +30,10 @@ export class APITokenUserInfoFetcher extends UserInfoHelper implements IUserInfo
 	 */
 	public async verifyToken(response: Response): Promise<Response | undefined> {
 		try {
+            // fetches api, customer and user entity
 			const apiEntity = await APIKeyService.instance.get(this.token);
+            const userEntity = apiEntity.user
+            const customerEntity = apiEntity.customer;
 			if (!apiEntity) {
 				return response.status(StatusCodes.UNAUTHORIZED).json({
 					error: `Unauthorized error: API Key not found.`,
@@ -42,8 +44,7 @@ export class APITokenUserInfoFetcher extends UserInfoHelper implements IUserInfo
 					error: `Unauthorized error: API Key is revoked.`,
 				} satisfies UnsuccessfulResponseBody);
 			}
-			const userEntity = await UserService.instance.findOne({ customer: apiEntity.customer });
-			if (!userEntity) {
+			if (!userEntity || !customerEntity) {
 				return response.status(StatusCodes.UNAUTHORIZED).json({
 					error: `Unauthorized error: User not found.`,
 				} satisfies UnsuccessfulResponseBody);
@@ -56,7 +57,9 @@ export class APITokenUserInfoFetcher extends UserInfoHelper implements IUserInfo
 			}
 			// Set global context
 			this.setScopes(_resp.data, response);
-			return await this.setCustomerEntity(apiEntity.customer.customerId, response);
+            response.locals.user = userEntity;
+            response.locals.customer = customerEntity;
+			return;
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Unexpected error: While verifying API key: ${error}`,
