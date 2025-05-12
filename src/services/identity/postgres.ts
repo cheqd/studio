@@ -249,7 +249,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		const identifier = await IdentifierService.instance.get(didDocument.id);
+		const identifier = await IdentifierService.instance.get(didDocument.id, { customer: true });
 		if (!identifier) {
 			throw new Error(`Identifier ${didDocument.id} not found`);
 		}
@@ -280,7 +280,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		const identifier = await IdentifierService.instance.get(did);
+		const identifier = await IdentifierService.instance.get(did, { customer: true });
 		if (!identifier) {
 			throw new Error(`Identifier ${did} not found`);
 		}
@@ -303,7 +303,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		const entities = await IdentifierService.instance.find({ customer: customer });
+		const entities = await IdentifierService.instance.find({ customer });
 		return entities.map((entity) => entity.did);
 	}
 
