@@ -34,7 +34,7 @@ jobs:
               run: npm run test
               env:
                 CI: true
-                RELEASE: ${{ github.ref_name == 'develop' }} 
+                RELEASE: ${{ github.ref_name == 'develop' }}
                 APPLICATION_BASE_URL: ${{ vars.APPLICATION_BASE_URL }}
                 COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
                 ENABLE_AUTHENTICATION: ${{ vars.ENABLE_AUTHENTICATION }}
@@ -73,7 +73,6 @@ jobs:
                   test-results/
                 retention-days: 14
                 if-no-files-found: ignore
-
 
     build-docker:
         name: 'Build Docker image'
