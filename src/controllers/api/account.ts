@@ -33,6 +33,7 @@ import { getStripeObjectKey } from '../../utils/index.js';
 import { KeyService } from '../../services/api/key.js';
 import { LocalStore } from '../../database/cache/store.js';
 import { BootStrapAccountResponse } from '../../types/account.js';
+import { RoleEntity } from '../../database/entities/role.entity.js';
 
 dotenv.config();
 
@@ -173,68 +174,133 @@ export class AccountController {
 		// 4. If no customer is associated with the user (from point 2), create customer
 		// 4.1 Assign customer to the user
 		// 5. Create User
-		// 6. Add the Stripe account to the Customer
-		// 7. Check is paymentAccount exists for the customer
-		// 7.1. If no - create it
-		// 8. Create custom_data and update the userInfo (send it to the LogTo)
-		// 9. If custom_data is empty - create it
-		// 10. Check the token balance for Testnet account
+		// 6. Check is paymentAccount exists for the customer
+		// 6.1. If no - create it
+		// 7. Create custom_data and update the userInfo (send it to the LogTo)
+		// 8. If custom_data is empty - create it
+		// 9. Check the token balance for Testnet account
+		// 10. Add the Stripe account to the Customer
 
-		// Track success of each step
+		// Status Tracker
 		const status = BootStrapAccountResponse.initialize();
 
+		// 1. Get logTo UserId from request body
+		if (!request.body.user || !request.body.user.id || !request.body.user.primaryEmail) {
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: 'User id is not specified or primaryEmail is not set',
+			} satisfies UnsuccessfulResponseBody);
+		}
+		const logToUserId = request.body.user.id;
+		const logToUserEmail = request.body.user.primaryEmail;
+		// use email as name, because "name" is unique in the current db setup.
+		const logToName = request.body.user.name || logToUserEmail;
+
+		const stripe = response.locals.stripe as Stripe;
+		const logToHelper = new LogToHelper();
+		// 2. Check if such row exists in the DB
+		// eslint-disable-next-line prefer-const
+		let [userEntity, [customerEntity], logtoHelperSetup] = await Promise.all([
+			UserService.instance.get(logToUserId, { customer: true }),
+			CustomerService.instance.find({ email: logToUserEmail }),
+			logToHelper.setup(),
+		]);
+
+		if (logtoHelperSetup.status !== StatusCodes.OK) {
+			return response.status(StatusCodes.SERVICE_UNAVAILABLE).json({
+				error: logtoHelperSetup.error,
+			} satisfies UnsuccessfulResponseBody);
+		}
+
 		try {
-			// 1. Validate input
-			if (!request.body.user?.id || !request.body.user.primaryEmail) {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'User id is not specified or primaryEmail is not set',
+			if (!userEntity) {
+				// 2. If no - create customer first
+				// Cause for now we assume only 1-1 connection between user and customer
+				// We think here that if no user row - no customer also, cause customer should be created before user
+				// Even if customer was created before for such user but the process was interruted somehow - we need to create it again
+				// Cause we don't know the state of the customer in this case
+				// 2.1.1. Create customer
+				// I’m setting the "name" field to an empty string on the current CustomerEntity because it is non-nullable.
+				//  we will populate the customer's "name" field using the response from the Stripe account creation in account-submitter.ts.
+				if (!customerEntity) {
+					customerEntity = (await CustomerService.instance.create(
+						logToName,
+						logToUserEmail
+					)) as CustomerEntity;
+					if (!customerEntity) {
+						return response.status(StatusCodes.BAD_REQUEST).json({
+							error: 'User is not found in database: Customer was not created',
+						} satisfies UnsuccessfulResponseBody);
+					}
+					// Notify
+					await eventTracker.notify({
+						message: EventTracker.compileBasicNotification(
+							'User was not found in database: Customer with customerId: ' +
+								customerEntity.customerId +
+								' was created'
+						),
+						severity: 'info',
+					});
+				}
+
+				// 3 Assign role to user
+				let role: RoleEntity | null = null;
+				const logtoRoleSync = await syncLogtoUserRoles(
+					logToHelper,
+					stripe,
+					request,
+					logToUserId,
+					customerEntity
+				);
+				if (!logtoRoleSync.success) {
+					role = await RoleService.instance.getDefaultRole();
+				} else {
+					role = await RoleService.instance.findOne({ name: logtoRoleSync.data });
+				}
+
+				if (!role) {
+					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+						error: `Internal error: No logto role found`,
+					} satisfies UnsuccessfulResponseBody);
+				}
+
+				// 2.3. Create user
+				userEntity = await UserService.instance.create(logToUserId, customerEntity, role);
+				if (!userEntity) {
+					return response.status(StatusCodes.BAD_REQUEST).json({
+						error: 'User is not found in database: User was not created',
+					} satisfies UnsuccessfulResponseBody);
+				}
+				// Notify
+				await eventTracker.notify({
+					message: EventTracker.compileBasicNotification(
+						'User was not found in database: User with userId: ' + userEntity.logToId + ' was created'
+					),
+					severity: 'info',
 				});
 			}
 
-			const logToUserId = request.body.user.id;
-			const logToUserEmail = request.body.user.primaryEmail;
-			const logToName = request.body.user.name || logToUserEmail;
-
-			const stripe = response.locals.stripe as Stripe;
-			const logToHelper = new LogToHelper();
-
-			// 2. Initial fetch & LogTo setup
-			let [userEntity, [customerEntity], logtoSetup] = await Promise.all([
-				UserService.instance.get(logToUserId, { customer: true }),
-				CustomerService.instance.find({ email: logToUserEmail }),
-				logToHelper.setup(),
-			]);
-			if (logtoSetup.status !== StatusCodes.OK) {
-				throw new Error(logtoSetup.error);
-			}
-
-			// 3. Create Customer if missing
-			if (!customerEntity) {
-				customerEntity = (await CustomerService.instance.create(logToName, logToUserEmail)) as CustomerEntity;
-				if (!customerEntity) throw new Error('Failed to create customer');
-				status.customerCreated = true;
-			}
-
-			// 4. Create User if missing
-			if (!userEntity) {
-				// 4.1 Determine role
-				const roleSync = await syncLogtoUserRoles(logToHelper, stripe, request, logToUserId, customerEntity);
-				const role = roleSync.success
-					? await RoleService.instance.findOne({ name: roleSync.data })
-					: await RoleService.instance.getDefaultRole();
-				if (!role) throw new Error('No logto role found');
-
-				// 4.2 Create user record
-				userEntity = await UserService.instance.create(logToUserId, customerEntity, role);
-				if (!userEntity) throw new Error('Failed to create user');
-				status.userCreated = true;
-			}
-
-			// 5. Link Customer to User if missing
+			//4. Check if there is customer associated with such user
 			if (!userEntity.customer) {
+				customerEntity = (await CustomerService.instance.create(logToName, logToUserEmail)) as CustomerEntity;
+				if (!customerEntity) {
+					return response.status(StatusCodes.BAD_REQUEST).json({
+						error: 'User exists in database: Customer was not created',
+					} satisfies UnsuccessfulResponseBody);
+				}
+				// Notify
+				await eventTracker.notify({
+					message: EventTracker.compileBasicNotification(
+						'User exists in database: Customer with customerId: ' +
+							customerEntity.customerId +
+							' was created'
+					),
+					severity: 'info',
+				});
+				//4.1. Assign customer to the user
 				userEntity.customer = customerEntity;
 				await UserService.instance.update(userEntity.logToId, customerEntity);
-				status.customerAssignedToUser = true;
+			} else {
+				customerEntity = userEntity.customer;
 			}
 
 			// 6. check Stripe account if still missing
