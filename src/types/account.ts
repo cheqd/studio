@@ -7,4 +7,20 @@ export interface BootStrapAccountResponse {
 	customDataUpdated: boolean;
 	testnetMinimumBalance: boolean;
 	stripeAccountCreated: boolean;
+	error?: string[];
 }
+
+export const BootStrapAccountResponse = {
+	initialize() {
+		return {
+			customerCreated: false,
+			userCreated: false,
+			customerAssignedToUser: false,
+			mainnetAccountProvisioned: false,
+			testnetAccountProvisioned: false,
+			customDataUpdated: false,
+			testnetMinimumBalance: false,
+			stripeAccountCreated: false,
+		} as BootStrapAccountResponse;
+	},
+};
