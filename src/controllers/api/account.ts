@@ -213,13 +213,6 @@ export class AccountController {
 				customerEntity = (await CustomerService.instance.create(logToName, logToUserEmail)) as CustomerEntity;
 				if (!customerEntity) throw new Error('Failed to create customer');
 				status.customerCreated = true;
-
-				await eventTracker.notify({
-					message: EventTracker.compileBasicNotification(
-						`User not found: Created Customer ${customerEntity.customerId}`
-					),
-					severity: 'info',
-				});
 			}
 
 			// 4. Create User if missing
@@ -235,11 +228,6 @@ export class AccountController {
 				userEntity = await UserService.instance.create(logToUserId, customerEntity, role);
 				if (!userEntity) throw new Error('Failed to create user');
 				status.userCreated = true;
-
-				await eventTracker.notify({
-					message: EventTracker.compileBasicNotification(`Created User ${userEntity.logToId}`),
-					severity: 'info',
-				});
 			}
 
 			// 5. Link Customer to User if missing
@@ -247,18 +235,11 @@ export class AccountController {
 				userEntity.customer = customerEntity;
 				await UserService.instance.update(userEntity.logToId, customerEntity);
 				status.customerAssignedToUser = true;
-
-				await eventTracker.notify({
-					message: EventTracker.compileBasicNotification(
-						`Assigned Customer ${customerEntity.customerId} to user`
-					),
-					severity: 'info',
-				});
 			}
 
 			// 6. check Stripe account if still missing
 			if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
-                // should we await? or fire off and forget?
+				// should we await? or fire off and forget?
 				await eventTracker.submit({
 					operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 					data: {
@@ -360,12 +341,6 @@ export class AccountController {
 				);
 				if (faucet.status === StatusCodes.OK) {
 					status.testnetMinimumBalance = true;
-					await eventTracker.notify({
-						message: EventTracker.compileBasicNotification(
-							`Funded Testnet address: ${testnetResp.data.address}`
-						),
-						severity: 'info',
-					});
 				}
 			} else {
 				status.testnetMinimumBalance = true;
