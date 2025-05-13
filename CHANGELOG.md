@@ -1,5 +1,30 @@
 # Changelog
 
+## [3.6.8](https://github.com/cheqd/studio/compare/3.6.7...3.6.8) (2025-05-13)
+
+### Bug Fixes
+
+* Added missing relations ([25d1242](https://github.com/cheqd/studio/commit/25d1242718c988dbe797353d1ab24968c1509045))
+* Perform join in user entity ([#680](https://github.com/cheqd/studio/issues/680)) ([ba8d7a8](https://github.com/cheqd/studio/commit/ba8d7a833b57f969e4c7cf5d50be4ff35168817a))
+* Resolve testnet token delegation issues ([#678](https://github.com/cheqd/studio/issues/678)) ([1e44bf2](https://github.com/cheqd/studio/commit/1e44bf2970c193e0b438205016bb6a141f98276d))
+
+### Performance Improvements
+
+* Improve lookup for DIDs ([#681](https://github.com/cheqd/studio/issues/681)) ([6fbd014](https://github.com/cheqd/studio/commit/6fbd014c3b1e2059e9b2becf78fb7f6d94affbfc))
+* Perform join operations when necessary [DEV-4993] ([#676](https://github.com/cheqd/studio/issues/676)) ([20afe19](https://github.com/cheqd/studio/commit/20afe198631e71b2d7cec63127abd3b6c8c34d28)), closes [#677](https://github.com/cheqd/studio/issues/677)
+
+## [3.6.8-develop.4](https://github.com/cheqd/studio/compare/3.6.8-develop.3...3.6.8-develop.4) (2025-05-13)
+
+### Performance Improvements
+
+* Improve lookup for DIDs ([#681](https://github.com/cheqd/studio/issues/681)) ([6fbd014](https://github.com/cheqd/studio/commit/6fbd014c3b1e2059e9b2becf78fb7f6d94affbfc))
+
+## [3.6.8-develop.3](https://github.com/cheqd/studio/compare/3.6.8-develop.2...3.6.8-develop.3) (2025-05-13)
+
+### Bug Fixes
+
+* Perform join in user entity ([#680](https://github.com/cheqd/studio/issues/680)) ([ba8d7a8](https://github.com/cheqd/studio/commit/ba8d7a833b57f969e4c7cf5d50be4ff35168817a))
+
 ## [3.6.8-develop.2](https://github.com/cheqd/studio/compare/3.6.8-develop.1...3.6.8-develop.2) (2025-05-12)
 
 ### Bug Fixes

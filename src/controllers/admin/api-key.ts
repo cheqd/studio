@@ -127,6 +127,7 @@ export class APIKeyController {
 				apiKey,
 				name,
 				response.locals.user,
+				response.locals.customer,
 				expiresAt,
 				false,
 				options
