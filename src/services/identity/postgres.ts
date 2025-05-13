@@ -549,6 +549,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			apiKey,
 			'idToken',
 			user,
+            customer,
 			undefined,
 			undefined,
 			options
