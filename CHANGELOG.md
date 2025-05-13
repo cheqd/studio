@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.6.8-develop.4](https://github.com/cheqd/studio/compare/3.6.8-develop.3...3.6.8-develop.4) (2025-05-13)
+
+### Performance Improvements
+
+* Improve lookup for DIDs ([#681](https://github.com/cheqd/studio/issues/681)) ([6fbd014](https://github.com/cheqd/studio/commit/6fbd014c3b1e2059e9b2becf78fb7f6d94affbfc))
+
 ## [3.6.8-develop.3](https://github.com/cheqd/studio/compare/3.6.8-develop.2...3.6.8-develop.3) (2025-05-13)
 
 ### Bug Fixes
