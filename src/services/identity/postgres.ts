@@ -249,14 +249,8 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		const identifier = await IdentifierService.instance.get(didDocument.id, { customer: true });
-		if (!identifier) {
-			throw new Error(`Identifier ${didDocument.id} not found`);
-		}
-		if (!identifier.customer.isEqual(customer)) {
-			throw new Error(
-				`Identifier ${didDocument.id} does not belong to the customer with id ${customer.customerId}`
-			);
+		if (!(await IdentifierService.instance.find({ did: didDocument.id, customer: customer }))) {
+			throw new Error(`${didDocument.id} not found in wallet`);
 		}
 		try {
 			const agent = await this.createAgent(customer);
@@ -280,12 +274,8 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		const identifier = await IdentifierService.instance.get(did, { customer: true });
-		if (!identifier) {
-			throw new Error(`Identifier ${did} not found`);
-		}
-		if (!identifier.customer.isEqual(customer)) {
-			throw new Error(`Identifier ${did} does not belong to the customer with id ${customer.customerId}`);
+		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
+			throw new Error(`${did} not found in wallet`);
 		}
 		try {
 			const agent = await this.createAgent(customer);
@@ -549,7 +539,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			apiKey,
 			'idToken',
 			user,
-            customer,
+			customer,
 			undefined,
 			undefined,
 			options
