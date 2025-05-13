@@ -162,23 +162,23 @@ export class AccountController {
 	}
 
 	public async bootstrap(request: Request, response: Response) {
-        // For now we keep temporary 1-1 relation between user and customer
-        // So the flow is:
-        // 1. Get LogTo user id from request body
-        // 2. Check if there is customer associated with such user
-        // 2.1 If not, create a new customer entity
-        // 3. Assign role to user
-        // 3.1 If user already has a subscription, assign role based on subscription
-        // 3.2 Else assign the default "Portal" role
-        // 4. If no customer is associated with the user (from point 2), create customer
-        // 4.1 Assign customer to the user
-        // 5. Create User
-        // 6. Add the Stripe account to the Customer
-        // 7. Check is paymentAccount exists for the customer
-        // 7.1. If no - create it
-        // 8. Create custom_data and update the userInfo (send it to the LogTo)
-        // 9. If custom_data is empty - create it
-        // 10. Check the token balance for Testnet account
+		// For now we keep temporary 1-1 relation between user and customer
+		// So the flow is:
+		// 1. Get LogTo user id from request body
+		// 2. Check if there is customer associated with such user
+		// 2.1 If not, create a new customer entity
+		// 3. Assign role to user
+		// 3.1 If user already has a subscription, assign role based on subscription
+		// 3.2 Else assign the default "Portal" role
+		// 4. If no customer is associated with the user (from point 2), create customer
+		// 4.1 Assign customer to the user
+		// 5. Create User
+		// 6. Add the Stripe account to the Customer
+		// 7. Check is paymentAccount exists for the customer
+		// 7.1. If no - create it
+		// 8. Create custom_data and update the userInfo (send it to the LogTo)
+		// 9. If custom_data is empty - create it
+		// 10. Check the token balance for Testnet account
 		// Track success of each step
 		const status = {
 			customerCreated: false,
@@ -208,7 +208,7 @@ export class AccountController {
 
 			// 2. Initial fetch & LogTo setup
 			let [userEntity, [customerEntity], logtoSetup] = await Promise.all([
-				UserService.instance.get(logToUserId),
+				UserService.instance.get(logToUserId, { customer: true }),
 				CustomerService.instance.find({ email: logToUserEmail }),
 				logToHelper.setup(),
 			]);
@@ -293,7 +293,7 @@ export class AccountController {
 			}
 
 			// 7. Provision Mainnet & Testnet accounts
-			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, ['key']);
+			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
 			const mainnetResp = await AccountController.provisionCustomerAccount(
 				CheqdNetwork.Mainnet,
 				accounts,

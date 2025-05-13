@@ -136,7 +136,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (cachedAccounts?.length == 2) {
 			paymentAccounts = cachedAccounts;
 		} else {
-			paymentAccounts = await PaymentAccountService.instance.find({ customer }, ['key']);
+			paymentAccounts = await PaymentAccountService.instance.find({ customer }, { key: true });
 
 			if (paymentAccounts.length > 0) {
 				LocalStore.instance.setCustomerAccounts(customer.customerId, paymentAccounts);
@@ -215,7 +215,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async getPaymentAccount(address: string) {
-		return await PaymentAccountService.instance.get(address);
+		return await PaymentAccountService.instance.get(address, { key: true });
 	}
 
 	async findPaymentAccount(where: Record<string, unknown>) {
@@ -249,7 +249,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		const identifier = await IdentifierService.instance.get(didDocument.id);
+		const identifier = await IdentifierService.instance.get(didDocument.id, { customer: true });
 		if (!identifier) {
 			throw new Error(`Identifier ${didDocument.id} not found`);
 		}
@@ -280,7 +280,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		const identifier = await IdentifierService.instance.get(did);
+		const identifier = await IdentifierService.instance.get(did, { customer: true });
 		if (!identifier) {
 			throw new Error(`Identifier ${did} not found`);
 		}
@@ -303,7 +303,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		const entities = await IdentifierService.instance.find({ customer: customer });
+		const entities = await IdentifierService.instance.find({ customer });
 		return entities.map((entity) => entity.did);
 	}
 
@@ -579,22 +579,14 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return apiKeyEntity;
 	}
 
-	async getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | undefined> {
+	async getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | null> {
 		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
-		const keys = await APIKeyService.instance.find(
+		const key = await APIKeyService.instance.findOne(
 			{ customer: customer, user: user, revoked: false, name: 'idToken' },
 			undefined,
 			options
 		);
-		if (keys.length > 1) {
-			throw new Error(
-				`For the customer with customer id ${customer.customerId} and user with logToId ${user.logToId} there more then 1 API key`
-			);
-		}
-		if (keys.length == 0) {
-			return undefined;
-		}
-		return keys[0];
+		return key;
 	}
 
 	async decryptAPIKey(apiKey: string): Promise<string> {
