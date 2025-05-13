@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.6.8-develop.3](https://github.com/cheqd/studio/compare/3.6.8-develop.2...3.6.8-develop.3) (2025-05-13)
+
+### Bug Fixes
+
+* Perform join in user entity ([#680](https://github.com/cheqd/studio/issues/680)) ([ba8d7a8](https://github.com/cheqd/studio/commit/ba8d7a833b57f969e4c7cf5d50be4ff35168817a))
+
 ## [3.6.8-develop.2](https://github.com/cheqd/studio/compare/3.6.8-develop.1...3.6.8-develop.2) (2025-05-12)
 
 ### Bug Fixes
