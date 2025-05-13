@@ -262,25 +262,10 @@ export class AccountController {
 					),
 					severity: 'info',
 				});
-			} else if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
-				// if user existed and stripe not linked yet
-				await eventTracker.submit({
-					operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
-					data: {
-						name: customerEntity.name,
-						email: customerEntity.email,
-						customerId: customerEntity.customerId,
-					},
-				});
-				status.stripeAccountCreated = true;
 			}
 
 			// 6. check Stripe account if still missing
-			if (
-				process.env.STRIPE_ENABLED === 'true' &&
-				!status.stripeAccountCreated &&
-				!customerEntity.paymentProviderId
-			) {
+			if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
 				await eventTracker.submit({
 					operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 					data: {
