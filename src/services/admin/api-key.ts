@@ -31,6 +31,7 @@ export class APIKeyService {
 		apiKey: string,
 		name: string,
 		user: UserEntity,
+		customer: CustomerEntity,
 		expiresAt?: Date,
 		revoked = false,
 		options?: APIServiceOptions
@@ -66,7 +67,7 @@ export class APIKeyService {
 			encryptedAPIKey,
 			name,
 			expiresAt,
-			user.customer,
+			customer,
 			user,
 			revoked,
 			fingerprint
