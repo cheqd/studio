@@ -1,26 +1,23 @@
 export interface BootStrapAccountResponse {
-	customerCreated: boolean;
-	userCreated: boolean;
-	customerAssignedToUser: boolean;
+	customerInitialized: boolean;
 	mainnetAccountProvisioned: boolean;
 	testnetAccountProvisioned: boolean;
 	customDataUpdated: boolean;
 	testnetMinimumBalance: boolean;
 	stripeAccountCreated: boolean;
-	error?: string[];
+	errors: string[];
 }
 
 export const BootStrapAccountResponse = {
 	initialize() {
 		return {
-			customerCreated: false,
-			userCreated: false,
-			customerAssignedToUser: false,
+			customerInitialized: false,
 			mainnetAccountProvisioned: false,
 			testnetAccountProvisioned: false,
 			customDataUpdated: false,
 			testnetMinimumBalance: false,
 			stripeAccountCreated: false,
+			errors: [],
 		} as BootStrapAccountResponse;
 	},
 };

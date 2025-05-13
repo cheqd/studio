@@ -303,6 +303,9 @@ export class AccountController {
 				customerEntity = userEntity.customer;
 			}
 
+			// Customer initializaiton is complete
+			status.customerInitialized = true;
+
 			// 6. check Stripe account if still missing
 			if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
 				// should we await? or fire off and forget?
@@ -314,8 +317,8 @@ export class AccountController {
 						customerId: customerEntity.customerId,
 					},
 				});
-				status.stripeAccountCreated = true;
 			}
+            status.stripeAccountCreated = true;
 
 			// 7. Provision Mainnet & Testnet accounts
 			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
@@ -326,7 +329,7 @@ export class AccountController {
 			);
 			if (mainnetResp.success) {
 				status.mainnetAccountProvisioned = true;
-			} else status.error?.push(mainnetResp.error);
+			} else status.errors.push(mainnetResp.error);
 
 			const testnetResp = await AccountController.provisionCustomerAccount(
 				CheqdNetwork.Testnet,
@@ -335,7 +338,7 @@ export class AccountController {
 			);
 			if (testnetResp.success) {
 				status.testnetAccountProvisioned = true;
-			} else status.error?.push(testnetResp.error);
+			} else status.errors.push(testnetResp.error);
 
 			// 8. Update LogTo custom data (non-blocking)
 			await this.updateCustomData(
@@ -351,13 +354,13 @@ export class AccountController {
 			await this.topupTestnet(customerEntity, testnetResp, status);
 
 			// 10. Send response with full status
-			const allOK = Object.values(status).every((v) => v);
+			const allOK = status.errors.length === 0;
 			return response
 				.status(allOK ? StatusCodes.OK : StatusCodes.INTERNAL_SERVER_ERROR)
 				.json({ success: allOK, status });
 		} catch (err: any) {
 			console.error('Bootstrap error:', err);
-			status.error?.push((err as Error)?.message || err);
+			status.errors.push((err as Error)?.message || err);
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				success: false,
 				status,
@@ -387,7 +390,7 @@ export class AccountController {
 				if (res.status === 200) status.customDataUpdated = true;
 			}
 		} catch (err: any) {
-			status.error?.push((err as Error)?.message || err);
+			status.errors.push((err as Error)?.message || err);
 			console.warn('Logto Custom Data Update failed:', err);
 		}
 	}
@@ -412,7 +415,7 @@ export class AccountController {
 				status.testnetMinimumBalance = true;
 			}
 		} catch (err: any) {
-			status.error?.push((err as Error)?.message || err);
+			status.errors.push((err as Error)?.message || err);
 			console.warn('Faucet request failed or timed out:', err);
 		}
 	}
