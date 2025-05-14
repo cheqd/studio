@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.6.9-develop.2](https://github.com/cheqd/studio/compare/3.6.9-develop.1...3.6.9-develop.2) (2025-05-14)
+
+### Bug Fixes
+
+* Handle DID create options ([#684](https://github.com/cheqd/studio/issues/684)) ([5492d00](https://github.com/cheqd/studio/commit/5492d00199650a0ead018680322d91f4feedf18b))
+
 ## [3.6.9-develop.1](https://github.com/cheqd/studio/compare/3.6.8...3.6.9-develop.1) (2025-05-14)
 
 ### Bug Fixes
