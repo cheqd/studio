@@ -1154,10 +1154,6 @@
  *           enum:
  *             - uuid
  *             - base58btc
- *         assertionMethod:
- *           description: Usually a reference to a Verification Method. An Assertion Method is required to issue JSON-LD credentials. See <a href="https://w3c.github.io/did-core/#assertion">DID Core specification</a> for more details.
- *           type: boolean
- *           default: true
  *         options:
  *           type: object
  *           properties:
