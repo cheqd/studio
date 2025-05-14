@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.6.9-develop.3](https://github.com/cheqd/studio/compare/3.6.9-develop.2...3.6.9-develop.3) (2025-05-14)
+
+### Performance Improvements
+
+* Parallelize operations where possible ([#685](https://github.com/cheqd/studio/issues/685)) ([15cf9ca](https://github.com/cheqd/studio/commit/15cf9ca84db0083589620ffa7ac1e5e3ddaca543))
+
 ## [3.6.9-develop.2](https://github.com/cheqd/studio/compare/3.6.9-develop.1...3.6.9-develop.2) (2025-05-14)
 
 ### Bug Fixes
