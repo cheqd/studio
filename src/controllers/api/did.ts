@@ -54,6 +54,17 @@ export class DIDController {
 			.isIn([VerificationMethods.Ed255192020, VerificationMethods.Ed255192018, VerificationMethods.JWK])
 			.withMessage('Invalid verificationMethod')
 			.bail(),
+		check('key')
+			.optional()
+			.isString()
+			.withMessage('key should be a string')
+			.custom((key, { req }) => {
+				if (key && !req.body.verificationMethodType) {
+					throw new Error('If key is provided, verificationMethodType is required');
+				}
+				return true;
+			})
+			.bail(),
 		check('identifierFormatType')
 			.optional()
 			.isString()
@@ -66,13 +77,30 @@ export class DIDController {
 			.isIn([CheqdNetwork.Mainnet, CheqdNetwork.Testnet])
 			.withMessage('Invalid network')
 			.bail(),
-		check('assertionMethod').optional().isBoolean().withMessage('Invalid assertionMethod').bail(),
 		check('service')
 			.optional()
 			.isArray()
 			.withMessage('Service should be an array of objects for creating DID-Service')
 			.bail()
 			.isCreateDIDDocumentService()
+			.bail(),
+		check('options').optional().isObject().withMessage('options should be an object').bail(),
+		check('options.verificationMethodType')
+			.optional()
+			.isString()
+			.isIn([VerificationMethods.Ed255192020, VerificationMethods.Ed255192018, VerificationMethods.JWK])
+			.withMessage('Invalid verificationMethod')
+			.bail(),
+		check('options.key')
+			.optional()
+			.isString()
+			.withMessage('key should be a string')
+			.custom((key, { req }) => {
+				if (key && !req.body.options?.verificationMethodType) {
+					throw new Error('If key is provided, options.verificationMethodType is required');
+				}
+				return true;
+			})
 			.bail(),
 	];
 
@@ -172,17 +200,19 @@ export class DIDController {
 	@validate
 	public async createDid(request: Request, response: Response) {
 		// handle request params
-		const { identifierFormatType, network, verificationMethodType, service, key, options } =
-			request.body satisfies CreateDidRequestBody;
+		const { identifierFormatType, network, service, options } = request.body satisfies CreateDidRequestBody;
 		let didDocument: DIDDocument;
+
+		const key = options?.key || request.body.key;
+		const verificationMethodType = options?.verificationMethodType || request.body.verificationMethodType;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
 			if (request.body.didDocument) {
 				didDocument = request.body.didDocument;
-				if (options) {
+				if (verificationMethodType) {
 					const publicKeyHex =
-						options.key ||
+						key ||
 						(
 							await identityServiceStrategySetup.agent.createKey(
 								SupportedKeyTypes.Ed25519,
@@ -192,7 +222,7 @@ export class DIDController {
 
 					const pkBase64 = toString(fromString(publicKeyHex, 'hex'), 'base64');
 					didDocument.verificationMethod = createDidVerificationMethod(
-						[options.verificationMethodType],
+						[verificationMethodType],
 						[
 							{
 								methodSpecificId: bases['base58btc'].encode(base64ToBytes(pkBase64)),
