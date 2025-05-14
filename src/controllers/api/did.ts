@@ -58,6 +58,7 @@ export class DIDController {
 			.optional()
 			.isString()
 			.withMessage('key should be a string')
+            .bail()
 			.custom((key, { req }) => {
 				if (key && !req.body.verificationMethodType) {
 					throw new Error('If key is provided, verificationMethodType is required');
@@ -95,6 +96,7 @@ export class DIDController {
 			.optional()
 			.isString()
 			.withMessage('key should be a string')
+            .bail()
 			.custom((key, { req }) => {
 				if (key && !req.body.options?.verificationMethodType) {
 					throw new Error('If key is provided, options.verificationMethodType is required');
