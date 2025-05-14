@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.6.9-develop.1](https://github.com/cheqd/studio/compare/3.6.8...3.6.9-develop.1) (2025-05-14)
+
+### Bug Fixes
+
+* Fix function calls in bootstrap ([5f81a86](https://github.com/cheqd/studio/commit/5f81a86210d594736965ac63f3d84e530f3bae9b))
+
 ## [3.6.8](https://github.com/cheqd/studio/compare/3.6.7...3.6.8) (2025-05-13)
 
 ### Bug Fixes
