@@ -174,12 +174,12 @@ export class AccountController {
 		// 4. If no customer is associated with the user (from point 2), create customer
 		// 4.1 Assign customer to the user
 		// 5. Create User
-		// 6. Check is paymentAccount exists for the customer
-		// 6.1. If no - create it
-		// 7. Create custom_data and update the userInfo (send it to the LogTo)
-		// 8. If custom_data is empty - create it
-		// 9. Check the token balance for Testnet account
-		// 10. Add the Stripe account to the Customer
+        // 6. Add the Stripe account to the Customer
+		// 7. Check is paymentAccount exists for the customer
+		// 7.1. If no - create it
+		// 8.a Create custom_data and update the userInfo (send it to the LogTo)
+		// 8.a If custom_data is empty - create it
+		// 8.b Check the token balance for Testnet account
 
 		// Status Tracker
 		const status = BootStrapAccountResponse.initialize();
@@ -306,47 +306,42 @@ export class AccountController {
 			// Customer initializaiton is complete
 			status.customerInitialized = true;
 
-			// 6. check Stripe account if still missing
-			if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
-				// should we await? or fire off and forget?
-				await eventTracker.submit({
-					operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
-					data: {
-						name: customerEntity.name,
-						email: customerEntity.email,
-						customerId: customerEntity.customerId,
-					},
-				});
-			}
-			status.stripeAccountCreated = true;
+            // 6. check Stripe account if still missing
+            if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
+                // should we await? or fire off and forget?
+                await eventTracker.submit({
+                    operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
+                    data: {
+                        name: customerEntity.name,
+                        email: customerEntity.email,
+                        customerId: customerEntity.customerId,
+                    },
+                });
+            }
+            status.stripeAccountCreated = true;
 
-			// 7. Provision Mainnet & Testnet accounts
-			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
-			const mainnetResp = await AccountController.provisionCustomerAccount(
-				CheqdNetwork.Mainnet,
-				accounts,
-				customerEntity
-			);
-			if (mainnetResp.success) {
-				status.mainnetAccountProvisioned = true;
-			} else status.errors.push(mainnetResp.error);
+            // 7. Provision Mainnet & Testnet accounts in parallel
+            const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
+            const [mainnetResp, testnetResp] = await Promise.all([
+                AccountController.provisionCustomerAccount(CheqdNetwork.Mainnet, accounts, customerEntity),
+                AccountController.provisionCustomerAccount(CheqdNetwork.Testnet, accounts, customerEntity),
+            ]);
 
-			const testnetResp = await AccountController.provisionCustomerAccount(
-				CheqdNetwork.Testnet,
-				accounts,
-				customerEntity
-			);
-			if (testnetResp.success) {
-				status.testnetAccountProvisioned = true;
-			} else status.errors.push(testnetResp.error);
+            if (mainnetResp.success) {
+                status.mainnetAccountProvisioned = true;
+            } else status.errors.push(mainnetResp.error);
 
-			// 8. Update LogTo custom data (non-blocking)
-			await updateCustomData(userEntity.logToId, customerEntity, mainnetResp, testnetResp, logToHelper, status);
+            if (testnetResp.success) {
+                status.testnetAccountProvisioned = true;
+            } else status.errors.push(testnetResp.error);
 
-			// 9. Top‑up Testnet (non‑blocking)
-			await topupTestnet(customerEntity, testnetResp, status);
+            // 8. Update LogTo custom data and Top‑up Testnet in parallel (non-blocking)
+            await Promise.all([
+                updateCustomData(userEntity.logToId, customerEntity, mainnetResp, testnetResp, logToHelper, status),
+                topupTestnet(customerEntity, testnetResp, status),
+            ]);
 
-			// 10. Send response with full status
+			// 9. Send response with full status
 			const allOK = status.errors.length === 0;
 			return response
 				.status(allOK ? StatusCodes.OK : StatusCodes.INTERNAL_SERVER_ERROR)
