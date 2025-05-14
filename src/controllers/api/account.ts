@@ -174,7 +174,7 @@ export class AccountController {
 		// 4. If no customer is associated with the user (from point 2), create customer
 		// 4.1 Assign customer to the user
 		// 5. Create User
-        // 6. Add the Stripe account to the Customer
+		// 6. Add the Stripe account to the Customer
 		// 7. Check is paymentAccount exists for the customer
 		// 7.1. If no - create it
 		// 8.a Create custom_data and update the userInfo (send it to the LogTo)
@@ -306,40 +306,40 @@ export class AccountController {
 			// Customer initializaiton is complete
 			status.customerInitialized = true;
 
-            // 6. check Stripe account if still missing
-            if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
-                // should we await? or fire off and forget?
-                await eventTracker.submit({
-                    operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
-                    data: {
-                        name: customerEntity.name,
-                        email: customerEntity.email,
-                        customerId: customerEntity.customerId,
-                    },
-                });
-            }
-            status.stripeAccountCreated = true;
+			// 6. check Stripe account if still missing
+			if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
+				// should we await? or fire off and forget?
+				await eventTracker.submit({
+					operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
+					data: {
+						name: customerEntity.name,
+						email: customerEntity.email,
+						customerId: customerEntity.customerId,
+					},
+				});
+			}
+			status.stripeAccountCreated = true;
 
-            // 7. Provision Mainnet & Testnet accounts in parallel
-            const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
-            const [mainnetResp, testnetResp] = await Promise.all([
-                AccountController.provisionCustomerAccount(CheqdNetwork.Mainnet, accounts, customerEntity),
-                AccountController.provisionCustomerAccount(CheqdNetwork.Testnet, accounts, customerEntity),
-            ]);
+			// 7. Provision Mainnet & Testnet accounts in parallel
+			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
+			const [mainnetResp, testnetResp] = await Promise.all([
+				AccountController.provisionCustomerAccount(CheqdNetwork.Mainnet, accounts, customerEntity),
+				AccountController.provisionCustomerAccount(CheqdNetwork.Testnet, accounts, customerEntity),
+			]);
 
-            if (mainnetResp.success) {
-                status.mainnetAccountProvisioned = true;
-            } else status.errors.push(mainnetResp.error);
+			if (mainnetResp.success) {
+				status.mainnetAccountProvisioned = true;
+			} else status.errors.push(mainnetResp.error);
 
-            if (testnetResp.success) {
-                status.testnetAccountProvisioned = true;
-            } else status.errors.push(testnetResp.error);
+			if (testnetResp.success) {
+				status.testnetAccountProvisioned = true;
+			} else status.errors.push(testnetResp.error);
 
-            // 8. Update LogTo custom data and Top‑up Testnet in parallel (non-blocking)
-            await Promise.all([
-                updateCustomData(userEntity.logToId, customerEntity, mainnetResp, testnetResp, logToHelper, status),
-                topupTestnet(customerEntity, testnetResp, status),
-            ]);
+			// 8. Update LogTo custom data and Top‑up Testnet in parallel (non-blocking)
+			await Promise.all([
+				updateCustomData(userEntity.logToId, customerEntity, mainnetResp, testnetResp, logToHelper, status),
+				topupTestnet(customerEntity, testnetResp, status),
+			]);
 
 			// 9. Send response with full status
 			const allOK = status.errors.length === 0;
