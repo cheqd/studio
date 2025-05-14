@@ -318,7 +318,7 @@ export class AccountController {
 					},
 				});
 			}
-            status.stripeAccountCreated = true;
+			status.stripeAccountCreated = true;
 
 			// 7. Provision Mainnet & Testnet accounts
 			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
@@ -341,17 +341,10 @@ export class AccountController {
 			} else status.errors.push(testnetResp.error);
 
 			// 8. Update LogTo custom data (non-blocking)
-			await this.updateCustomData(
-				userEntity.logToId,
-				customerEntity,
-				mainnetResp,
-				testnetResp,
-				logToHelper,
-				status
-			);
+			await updateCustomData(userEntity.logToId, customerEntity, mainnetResp, testnetResp, logToHelper, status);
 
 			// 9. Top‑up Testnet (non‑blocking)
-			await this.topupTestnet(customerEntity, testnetResp, status);
+			await topupTestnet(customerEntity, testnetResp, status);
 
 			// 10. Send response with full status
 			const allOK = status.errors.length === 0;
@@ -365,58 +358,6 @@ export class AccountController {
 				success: false,
 				status,
 			});
-		}
-	}
-
-	private async updateCustomData(
-		logToId: string,
-		customer: CustomerEntity,
-		mainnetResp: any,
-		testnetResp: any,
-		logToHelper: LogToHelper,
-		status: BootStrapAccountResponse
-	) {
-		try {
-			const existing = await logToHelper.getCustomData(logToId);
-			if (Object.keys(existing.data).length === 0 && mainnetResp.data?.address && testnetResp.data?.address) {
-				const customData = {
-					customer: { id: customer.customerId, name: customer.name },
-					paymentAccount: {
-						mainnet: mainnetResp.data.address,
-						testnet: testnetResp.data.address,
-					},
-				};
-				const res = await logToHelper.updateCustomData(logToId, customData);
-				if (res.status === 200) status.customDataUpdated = true;
-			}
-		} catch (err: any) {
-			status.errors.push((err as Error)?.message || err);
-			console.warn('Logto Custom Data Update failed:', err);
-		}
-	}
-
-	private async topupTestnet(customer: CustomerEntity, testnetResp: any, status: BootStrapAccountResponse) {
-		if (!testnetResp.data?.address || process.env.ENABLE_ACCOUNT_TOPUP !== 'true') {
-			return;
-		}
-		try {
-			const balances = await checkBalance(testnetResp.data.address, process.env.TESTNET_RPC_URL);
-			const bal = balances[0];
-			if (!bal || +bal.amount < TESTNET_MINIMUM_BALANCE * 10 ** DEFAULT_DENOM_EXPONENT) {
-				const faucet = await FaucetHelper.delegateTokens(
-					testnetResp.data.address,
-					customer.name,
-					customer.email
-				);
-				if (faucet.status === StatusCodes.OK) {
-					status.testnetMinimumBalance = true;
-				}
-			} else {
-				status.testnetMinimumBalance = true;
-			}
-		} catch (err: any) {
-			status.errors.push((err as Error)?.message || err);
-			console.warn('Faucet request failed or timed out:', err);
 		}
 	}
 
@@ -657,4 +598,54 @@ async function syncLogtoUserRoles(
 		error: `Logto role not assigned: User with id ${logToUserId} is suspended`,
 		status: 409,
 	};
+}
+
+async function updateCustomData(
+	logToId: string,
+	customer: CustomerEntity,
+	mainnetResp: any,
+	testnetResp: any,
+	logToHelper: LogToHelper,
+	status: BootStrapAccountResponse
+) {
+	try {
+		const existing = await logToHelper.getCustomData(logToId);
+		if (Object.keys(existing.data).length === 0 && mainnetResp.data?.address && testnetResp.data?.address) {
+			const customData = {
+				customer: { id: customer.customerId, name: customer.name },
+				paymentAccount: {
+					mainnet: mainnetResp.data.address,
+					testnet: testnetResp.data.address,
+				},
+			};
+			const res = await logToHelper.updateCustomData(logToId, customData);
+			if (res.status === 200) status.customDataUpdated = true;
+		}
+	} catch (err: any) {
+		status.errors.push((err as Error)?.message || err);
+		console.warn('Logto Custom Data Update failed:', err);
+	}
+}
+
+async function topupTestnet(customer: CustomerEntity, testnetResp: any, status: BootStrapAccountResponse) {
+	if (!testnetResp.data?.address || process.env.ENABLE_ACCOUNT_TOPUP !== 'true') {
+		return;
+	}
+	try {
+		const balances = await checkBalance(testnetResp.data.address, process.env.TESTNET_RPC_URL);
+		const bal = balances[0];
+		if (!bal || +bal.amount < TESTNET_MINIMUM_BALANCE * 10 ** DEFAULT_DENOM_EXPONENT) {
+			const faucet = await FaucetHelper.delegateTokens(testnetResp.data.address, customer.name, customer.email);
+			if (faucet.status === StatusCodes.OK) {
+				status.testnetMinimumBalance = true;
+			} else {
+				status.errors.push(faucet.error);
+			}
+		} else {
+			status.testnetMinimumBalance = true;
+		}
+	} catch (err: any) {
+		status.errors.push((err as Error)?.message || err);
+		console.warn('Faucet request failed or timed out:', err);
+	}
 }
