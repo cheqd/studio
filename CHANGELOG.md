@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.6.9](https://github.com/cheqd/studio/compare/3.6.8...3.6.9) (2025-05-15)
+
+### Bug Fixes
+
+* Fix function calls in bootstrap ([5f81a86](https://github.com/cheqd/studio/commit/5f81a86210d594736965ac63f3d84e530f3bae9b))
+* Handle DID create options ([#684](https://github.com/cheqd/studio/issues/684)) ([5492d00](https://github.com/cheqd/studio/commit/5492d00199650a0ead018680322d91f4feedf18b))
+
+### Performance Improvements
+
+* Parallelize operations where possible ([#685](https://github.com/cheqd/studio/issues/685)) ([15cf9ca](https://github.com/cheqd/studio/commit/15cf9ca84db0083589620ffa7ac1e5e3ddaca543))
+
 ## [3.6.9-develop.3](https://github.com/cheqd/studio/compare/3.6.9-develop.2...3.6.9-develop.3) (2025-05-14)
 
 ### Performance Improvements
