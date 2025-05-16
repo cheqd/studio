@@ -1,4 +1,4 @@
-import type { Repository } from 'typeorm';
+import type { FindOptionsRelations, Repository } from 'typeorm';
 
 import { Connection } from '../../database/connection/connection.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
@@ -38,17 +38,17 @@ export class UserService {
 		return await this.userRepository.save(existing);
 	}
 
-	public async get(logToId?: string): Promise<UserEntity | null> {
+	public async get(logToId?: string, relations?: FindOptionsRelations<UserEntity>): Promise<UserEntity | null> {
 		return await this.userRepository.findOne({
 			where: { logToId },
-			relations: ['customer', 'role'],
+			relations,
 		});
 	}
 
-	public async findOne(where: Record<string, unknown>) {
+	public async findOne(where: Record<string, unknown>, relations?: FindOptionsRelations<UserEntity>) {
 		return await this.userRepository.findOne({
 			where: where,
-			relations: ['customer', 'role'],
+			relations,
 		});
 	}
 

@@ -41,8 +41,8 @@ export class UserInfoHelper {
 	}
 
 	async setUserEntity(logToId: string, response: Response): Promise<Response | undefined> {
-		const entity = await UserService.instance.get(logToId);
-		if (!entity) {
+		const entity = await UserService.instance.get(logToId, { customer: true });
+		if (!entity || !entity.customer) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Unexpected error: User entity for handling such request is not found in internal storage`,
 			});

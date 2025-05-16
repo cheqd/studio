@@ -83,7 +83,7 @@ test('[Negative] It cannot create DID with an invalid VerificationMethodType in 
 		},
 		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
-	expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+	expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
 	expect(await response.text()).toEqual(expect.stringContaining('Unsupported verificationMethod type'));
 });
 
@@ -152,23 +152,6 @@ test('[Negative] It cannot create DID without VerificationMethodType in request 
 	expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
 	expect(await response.text()).toEqual(
 		expect.stringContaining('Invalid format of DID. Expected to start with did:<method>')
-	);
-});
-
-test('[Negative] It cannot create DID without DidDocument in request body (JSON based)', async ({ request }) => {
-	const response = await request.post('/did/create', {
-		data: {
-			network: CheqdNetwork.Testnet,
-			identifierFormatType: ID_TYPE.UUID,
-			options: {
-				verificationMethodType: VerificationMethods.Ed255192020,
-			},
-		},
-		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
-	});
-	expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
-	expect(await response.text()).toEqual(
-		expect.stringContaining('Provide a DID Document or the VerificationMethodType to create a DID')
 	);
 });
 

@@ -1,4 +1,4 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
 import * as dotenv from 'dotenv';
 import { namespaceEnum } from './../types/enum.js';
@@ -8,6 +8,7 @@ import type { KeyEntity } from './key.entity.js';
 dotenv.config();
 
 @Entity('paymentAccount')
+@Index(['customer', 'namespace'], { unique: true })
 export class PaymentAccountEntity {
 	@Column({
 		type: 'text',

@@ -12,6 +12,8 @@ import type {
 } from '../../types/admin.js';
 import { PaymentAccountService } from '../../services/api/payment-account.js';
 import { CheqdNetwork } from '@cheqd/sdk';
+import { LocalStore } from '../../database/cache/store.js';
+import { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
 
 dotenv.config();
 
@@ -73,16 +75,23 @@ export class OrganisationController {
 				email,
 				description,
 			});
-			const paymentAccount = await PaymentAccountService.instance.find({ customer: customer });
 
-			if (!customer || paymentAccount.length === 0) {
+			const cachedAccounts = LocalStore.instance.getCustomerAccounts(response.locals.customer.customerId);
+			let paymentAccounts: PaymentAccountEntity[];
+			if (cachedAccounts?.length == 2) {
+				paymentAccounts = cachedAccounts;
+			} else {
+				paymentAccounts = await PaymentAccountService.instance.find({ customer: response.locals.customer });
+			}
+
+			if (!customer || paymentAccounts.length === 0) {
 				response.status(StatusCodes.NOT_FOUND).json({
 					error: 'Customer for updating not found',
 				} satisfies AdminOrganisationUpdateUnsuccessfulResponseBody);
 			}
 
-			const testnetAddress = paymentAccount.find((acc) => acc.namespace === CheqdNetwork.Testnet)?.address;
-			const mainnetAddress = paymentAccount.find((acc) => acc.namespace === CheqdNetwork.Mainnet)?.address;
+			const testnetAddress = paymentAccounts.find((acc) => acc.namespace === CheqdNetwork.Testnet)?.address;
+			const mainnetAddress = paymentAccounts.find((acc) => acc.namespace === CheqdNetwork.Mainnet)?.address;
 
 			return response.status(StatusCodes.OK).json({
 				name: customer.name,

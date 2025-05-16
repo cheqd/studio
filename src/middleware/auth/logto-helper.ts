@@ -259,7 +259,10 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		}
 	}
 
-	async assignCustomerPlanRoles(userId: string, product: Stripe.Response<Stripe.Product>): Promise<ICommonErrorResponse> {
+	async assignCustomerPlanRoles(
+		userId: string,
+		product: Stripe.Response<Stripe.Product>
+	): Promise<ICommonErrorResponse> {
 		const [userInfo, userRoles] = await Promise.all([this.getUserInfo(userId), this.getRolesForUser(userId)]);
 
 		if (userInfo.status !== StatusCodes.OK) {

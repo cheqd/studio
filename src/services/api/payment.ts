@@ -1,14 +1,13 @@
-import type { Repository } from 'typeorm';
-
-import { Connection } from '../../database/connection/connection.js';
-
-import * as dotenv from 'dotenv';
-import type { CustomerEntity } from '../../database/entities/customer.entity.js';
-import { PaymentEntity } from '../../database/entities/payment.entity.js';
+import type { FindOptionsRelations, Repository } from 'typeorm';
+import type { CheqdNetwork } from '@cheqd/sdk';
 import type { OperationEntity } from '../../database/entities/operation.entity.js';
 import type { ResourceEntity } from '../../database/entities/resource.entity.js';
-import type { CheqdNetwork } from '@cheqd/sdk';
 import type { CoinEntity } from '../../database/entities/coin.entity.js';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import { PaymentEntity } from '../../database/entities/payment.entity.js';
+import { Connection } from '../../database/connection/connection.js';
+import * as dotenv from 'dotenv';
+
 dotenv.config();
 
 export class PaymentService {
@@ -102,17 +101,17 @@ export class PaymentService {
 		return await this.paymentRepository.save(existingPayment);
 	}
 
-	public async get(txHash: string) {
+	public async get(txHash: string, relations?: FindOptionsRelations<PaymentEntity>) {
 		return await this.paymentRepository.findOne({
 			where: { txHash },
-			relations: ['customer', 'operation', 'resource', 'coin'],
+			relations,
 		});
 	}
 
-	public async find(where: Record<string, unknown>) {
+	public async find(where: Record<string, unknown>, relations?: FindOptionsRelations<PaymentEntity>) {
 		return await this.paymentRepository.find({
 			where: where,
-			relations: ['customer', 'operation', 'resource', 'coin'],
+			relations,
 		});
 	}
 }

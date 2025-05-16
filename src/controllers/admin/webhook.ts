@@ -276,7 +276,7 @@ export class WebhookController {
 			throw new Error(message);
 		}
 
-        const [customer, product] = await Promise.all([
+		const [customer, product] = await Promise.all([
 			CustomerService.instance.findbyPaymentProviderId(data.paymentProviderId),
 			stripe.products.retrieve(data.productId),
 		]);
@@ -300,10 +300,7 @@ export class WebhookController {
 		userLogtoId: string,
 		product: Stripe.Response<Stripe.Product>
 	) {
-		const roleAssignmentResponse = await logToHelper.assignCustomerPlanRoles(
-			userLogtoId,
-			product
-		);
+		const roleAssignmentResponse = await logToHelper.assignCustomerPlanRoles(userLogtoId, product);
 		if (roleAssignmentResponse.status !== 201) {
 			const message = EventTracker.compileBasicNotification(
 				`Failed to assign roles to user for planType ${product.name}: ${roleAssignmentResponse.error}`,
@@ -355,7 +352,11 @@ export class WebhookController {
 		}
 	}
 
-	private async syncLogtoRoles(operation: OperationNameEnum, customerId: string, product: Stripe.Response<Stripe.Product>) {
+	private async syncLogtoRoles(
+		operation: OperationNameEnum,
+		customerId: string,
+		product: Stripe.Response<Stripe.Product>
+	) {
 		const logToHelper = new LogToHelper();
 		const setupResp = await logToHelper.setup();
 		if (setupResp.status !== StatusCodes.OK) {
