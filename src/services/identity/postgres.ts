@@ -57,6 +57,8 @@ import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { toTPublicKeyEd25519 } from '../helpers.js';
 import type { APIServiceOptions } from '../../types/admin.js';
 import { SupportedKeyTypes } from '@veramo/utils';
+import { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
+import { LocalStore } from '../../database/cache/store.js';
 
 dotenv.config();
 
@@ -89,7 +91,8 @@ export class PostgresIdentityService extends DefaultIdentityService {
 
 	async createCheqdProvider(
 		customer: CustomerEntity,
-		namespace: CheqdNetwork
+		namespace: CheqdNetwork,
+		paymentAccounts: PaymentAccountEntity[]
 	): Promise<CheqdDIDProvider | undefined> {
 		let rpcUrl = '';
 		if (namespace === CheqdNetwork.Mainnet) {
@@ -97,28 +100,23 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		} else {
 			rpcUrl = TESTNET_RPC_URL || DefaultRPCUrls.testnet;
 		}
-		const paymentAccount = await PaymentAccountService.instance.find({
-			namespace: namespace,
-			customer: customer,
+		const paymentAccount = paymentAccounts.find((acc) => acc.namespace === namespace);
+		if (paymentAccount === undefined) {
+			return undefined;
+		}
+
+		const privateKey = (await this.getPrivateKey(paymentAccount.key.kid))?.privateKeyHex;
+
+		if (!privateKey) {
+			throw new Error(`No keys is initialized`);
+		}
+
+		return new CheqdDIDProvider({
+			defaultKms: 'postgres',
+			cosmosPayerSeed: privateKey,
+			networkType: namespace,
+			rpcUrl: rpcUrl,
 		});
-		if (paymentAccount.length > 1) {
-			throw new Error(`More than one payment account for ${namespace} found`);
-		}
-		if (paymentAccount.length === 1) {
-			const privateKey = (await this.getPrivateKey(paymentAccount[0].key.kid))?.privateKeyHex;
-
-			if (!privateKey) {
-				throw new Error(`No keys is initialized`);
-			}
-
-			return new CheqdDIDProvider({
-				defaultKms: 'postgres',
-				cosmosPayerSeed: privateKey,
-				networkType: namespace,
-				rpcUrl: rpcUrl,
-			});
-		}
-		return undefined;
 	}
 
 	async createAgent(customer: CustomerEntity): Promise<VeramoAgent> {
@@ -133,10 +131,22 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		const dbConnection = Connection.instance.dbConnection;
 
+		const cachedAccounts = LocalStore.instance.getCustomerAccounts(customer.customerId);
+		let paymentAccounts: PaymentAccountEntity[];
+		if (cachedAccounts?.length == 2) {
+			paymentAccounts = cachedAccounts;
+		} else {
+			paymentAccounts = await PaymentAccountService.instance.find({ customer }, { key: true });
+
+			if (paymentAccounts.length > 0) {
+				LocalStore.instance.setCustomerAccounts(customer.customerId, paymentAccounts);
+			}
+		}
+
 		// One customer may / may not have one Mainnet paymentAccount
-		const providerMainnet = await this.createCheqdProvider(customer, CheqdNetwork.Mainnet);
+		const providerMainnet = await this.createCheqdProvider(customer, CheqdNetwork.Mainnet, paymentAccounts);
 		// One customer may / may not have one Testnet paymentAccount
-		const providerTestnet = await this.createCheqdProvider(customer, CheqdNetwork.Testnet);
+		const providerTestnet = await this.createCheqdProvider(customer, CheqdNetwork.Testnet, paymentAccounts);
 		// did:key provider
 		providers['did:key'] = new KeyDIDProvider({ defaultKms: 'postgres' });
 		if (providerMainnet) {
@@ -205,7 +215,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 	}
 
 	async getPaymentAccount(address: string) {
-		return await PaymentAccountService.instance.get(address);
+		return await PaymentAccountService.instance.get(address, { key: true });
 	}
 
 	async findPaymentAccount(where: Record<string, unknown>) {
@@ -239,14 +249,8 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		const identifier = await IdentifierService.instance.get(didDocument.id);
-		if (!identifier) {
-			throw new Error(`Identifier ${didDocument.id} not found`);
-		}
-		if (!identifier.customer.isEqual(customer)) {
-			throw new Error(
-				`Identifier ${didDocument.id} does not belong to the customer with id ${customer.customerId}`
-			);
+		if (!(await IdentifierService.instance.find({ did: didDocument.id, customer: customer }))) {
+			throw new Error(`${didDocument.id} not found in wallet`);
 		}
 		try {
 			const agent = await this.createAgent(customer);
@@ -270,12 +274,8 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		const identifier = await IdentifierService.instance.get(did);
-		if (!identifier) {
-			throw new Error(`Identifier ${did} not found`);
-		}
-		if (!identifier.customer.isEqual(customer)) {
-			throw new Error(`Identifier ${did} does not belong to the customer with id ${customer.customerId}`);
+		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
+			throw new Error(`${did} not found in wallet`);
 		}
 		try {
 			const agent = await this.createAgent(customer);
@@ -293,7 +293,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		const entities = await IdentifierService.instance.find({ customer: customer });
+		const entities = await IdentifierService.instance.find({ customer });
 		return entities.map((entity) => entity.did);
 	}
 
@@ -539,6 +539,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			apiKey,
 			'idToken',
 			user,
+			customer,
 			undefined,
 			undefined,
 			options
@@ -569,22 +570,14 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return apiKeyEntity;
 	}
 
-	async getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | undefined> {
+	async getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | null> {
 		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
-		const keys = await APIKeyService.instance.find(
+		const key = await APIKeyService.instance.findOne(
 			{ customer: customer, user: user, revoked: false, name: 'idToken' },
 			undefined,
 			options
 		);
-		if (keys.length > 1) {
-			throw new Error(
-				`For the customer with customer id ${customer.customerId} and user with logToId ${user.logToId} there more then 1 API key`
-			);
-		}
-		if (keys.length == 0) {
-			return undefined;
-		}
-		return keys[0];
+		return key;
 	}
 
 	async decryptAPIKey(apiKey: string): Promise<string> {

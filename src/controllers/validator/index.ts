@@ -78,17 +78,17 @@ export const { check, validationResult, query, param, body } = new ExpressValida
 		return true;
 	},
 
-    isW3CCheqdCredentials: (value: Validatable[]) => {
-        if (!Array.isArray(value)) {
-            return false
-        }
-        
-        value.forEach((credential) => {
-            const res = new CheqdW3CVerifiableCredentialValidator().validate(credential);
-            if (!res.valid) {
-                throw new Error(res.error);
-            }
-        })
+	isW3CCheqdCredentials: (value: Validatable[]) => {
+		if (!Array.isArray(value)) {
+			return false;
+		}
+
+		value.forEach((credential) => {
+			const res = new CheqdW3CVerifiableCredentialValidator().validate(credential);
+			if (!res.valid) {
+				throw new Error(res.error);
+			}
+		});
 		return true;
 	},
 

@@ -11,8 +11,6 @@ import type { UnsuccessfulResponseBody } from '../../types/shared.js';
 import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../../services/track/submitter.js';
 import type Stripe from 'stripe';
 import type { SafeAPIResponse } from '../../types/common.js';
-import type { RoleEntity } from '../../database/entities/role.entity.js';
-import type { SupportedPlanTypes } from '../../types/admin.js';
 
 import { CheqdNetwork, checkBalance } from '@cheqd/sdk';
 import { TESTNET_MINIMUM_BALANCE, DEFAULT_DENOM_EXPONENT, OperationNameEnum } from '../../types/constants.js';
@@ -33,6 +31,10 @@ import { SubscriptionService } from '../../services/admin/subscription.js';
 import { RoleService } from '../../services/api/role.js';
 import { getStripeObjectKey } from '../../utils/index.js';
 import { KeyService } from '../../services/api/key.js';
+import { LocalStore } from '../../database/cache/store.js';
+import { BootStrapAccountResponse } from '../../types/account.js';
+import { RoleEntity } from '../../database/entities/role.entity.js';
+
 dotenv.config();
 
 export class AccountController {
@@ -77,7 +79,14 @@ export class AccountController {
 					error: 'Bad state cause there is no customer assigned to the user yet. Please contact administrator.',
 				} satisfies UnsuccessfulQueryCustomerResponseBody);
 			}
-			const paymentAccounts = await PaymentAccountService.instance.find({ customer: response.locals.customer });
+
+			const cachedAccounts = LocalStore.instance.getCustomerAccounts(response.locals.customer.customerId);
+			let paymentAccounts: PaymentAccountEntity[];
+			if (cachedAccounts?.length == 2) {
+				paymentAccounts = cachedAccounts;
+			} else {
+				paymentAccounts = await PaymentAccountService.instance.find({ customer: response.locals.customer });
+			}
 			const result: QueryCustomerResponseBody = {
 				customer: {
 					customerId: response.locals.customer.customerId,
@@ -165,12 +174,15 @@ export class AccountController {
 		// 4. If no customer is associated with the user (from point 2), create customer
 		// 4.1 Assign customer to the user
 		// 5. Create User
-		// 6. Check is paymentAccount exists for the customer
-		// 6.1. If no - create it
-		// 7. Create custom_data and update the userInfo (send it to the LogTo)
-		// 8. If custom_data is empty - create it
-		// 9. Check the token balance for Testnet account
-		// 10. Add the Stripe account to the Customer
+		// 6. Add the Stripe account to the Customer
+		// 7. Check is paymentAccount exists for the customer
+		// 7.1. If no - create it
+		// 8.a Create custom_data and update the userInfo (send it to the LogTo)
+		// 8.a If custom_data is empty - create it
+		// 8.b Check the token balance for Testnet account
+
+		// Status Tracker
+		const status = BootStrapAccountResponse.initialize();
 
 		// 1. Get logTo UserId from request body
 		if (!request.body.user || !request.body.user.id || !request.body.user.primaryEmail) {
@@ -188,7 +200,7 @@ export class AccountController {
 		// 2. Check if such row exists in the DB
 		// eslint-disable-next-line prefer-const
 		let [userEntity, [customerEntity], logtoHelperSetup] = await Promise.all([
-			UserService.instance.get(logToUserId),
+			UserService.instance.get(logToUserId, { customer: true }),
 			CustomerService.instance.find({ email: logToUserEmail }),
 			logToHelper.setup(),
 		]);
@@ -199,184 +211,149 @@ export class AccountController {
 			} satisfies UnsuccessfulResponseBody);
 		}
 
-		if (!userEntity) {
-			// 2. If no - create customer first
-			// Cause for now we assume only 1-1 connection between user and customer
-			// We think here that if no user row - no customer also, cause customer should be created before user
-			// Even if customer was created before for such user but the process was interruted somehow - we need to create it again
-			// Cause we don't know the state of the customer in this case
-			// 2.1.1. Create customer
-			// I’m setting the "name" field to an empty string on the current CustomerEntity because it is non-nullable.
-			//  we will populate the customer's "name" field using the response from the Stripe account creation in account-submitter.ts.
-			if (!customerEntity) {
-				customerEntity = (await CustomerService.instance.create(logToName, logToUserEmail)) as CustomerEntity;
+		try {
+			if (!userEntity) {
+				// 2. If no - create customer first
+				// Cause for now we assume only 1-1 connection between user and customer
+				// We think here that if no user row - no customer also, cause customer should be created before user
+				// Even if customer was created before for such user but the process was interruted somehow - we need to create it again
+				// Cause we don't know the state of the customer in this case
+				// 2.1.1. Create customer
+				// I’m setting the "name" field to an empty string on the current CustomerEntity because it is non-nullable.
+				//  we will populate the customer's "name" field using the response from the Stripe account creation in account-submitter.ts.
 				if (!customerEntity) {
+					customerEntity = (await CustomerService.instance.create(
+						logToName,
+						logToUserEmail
+					)) as CustomerEntity;
+					if (!customerEntity) {
+						return response.status(StatusCodes.BAD_REQUEST).json({
+							error: 'User is not found in database: Customer was not created',
+						} satisfies UnsuccessfulResponseBody);
+					}
+					// Notify
+					await eventTracker.notify({
+						message: EventTracker.compileBasicNotification(
+							'User was not found in database: Customer with customerId: ' +
+								customerEntity.customerId +
+								' was created'
+						),
+						severity: 'info',
+					});
+				}
+
+				// 3 Assign role to user
+				let role: RoleEntity | null = null;
+				const logtoRoleSync = await syncLogtoUserRoles(
+					logToHelper,
+					stripe,
+					request,
+					logToUserId,
+					customerEntity
+				);
+				if (!logtoRoleSync.success) {
+					role = await RoleService.instance.getDefaultRole();
+				} else {
+					role = await RoleService.instance.findOne({ name: logtoRoleSync.data });
+				}
+
+				if (!role) {
+					return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+						error: `Internal error: No logto role found`,
+					} satisfies UnsuccessfulResponseBody);
+				}
+
+				// 2.3. Create user
+				userEntity = await UserService.instance.create(logToUserId, customerEntity, role);
+				if (!userEntity) {
 					return response.status(StatusCodes.BAD_REQUEST).json({
-						error: 'User is not found in database: Customer was not created',
+						error: 'User is not found in database: User was not created',
 					} satisfies UnsuccessfulResponseBody);
 				}
 				// Notify
 				await eventTracker.notify({
 					message: EventTracker.compileBasicNotification(
-						'User was not found in database: Customer with customerId: ' +
-							customerEntity.customerId +
-							' was created'
+						'User was not found in database: User with userId: ' + userEntity.logToId + ' was created'
 					),
 					severity: 'info',
 				});
 			}
 
-			// 3 Assign role to user
-			let role: RoleEntity | null = null;
-			const logtoRoleSync = await syncLogtoUserRoles(logToHelper, stripe, request, logToUserId, customerEntity);
-			if (!logtoRoleSync.success) {
-				role = await RoleService.instance.getDefaultRole();
+			//4. Check if there is customer associated with such user
+			if (!userEntity.customer) {
+				customerEntity = (await CustomerService.instance.create(logToName, logToUserEmail)) as CustomerEntity;
+				if (!customerEntity) {
+					return response.status(StatusCodes.BAD_REQUEST).json({
+						error: 'User exists in database: Customer was not created',
+					} satisfies UnsuccessfulResponseBody);
+				}
+				// Notify
+				await eventTracker.notify({
+					message: EventTracker.compileBasicNotification(
+						'User exists in database: Customer with customerId: ' +
+							customerEntity.customerId +
+							' was created'
+					),
+					severity: 'info',
+				});
+				//4.1. Assign customer to the user
+				userEntity.customer = customerEntity;
+				await UserService.instance.update(userEntity.logToId, customerEntity);
 			} else {
-				role = await RoleService.instance.findOne({ name: logtoRoleSync.data });
+				customerEntity = userEntity.customer;
 			}
 
-			if (!role) {
-				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-					error: `Internal error: No logto role found`,
-				} satisfies UnsuccessfulResponseBody);
-			}
+			// Customer initializaiton is complete
+			status.customerInitialized = true;
 
-			// 2.3. Create user
-			userEntity = await UserService.instance.create(logToUserId, customerEntity, role);
-			if (!userEntity) {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'User is not found in database: User was not created',
-				} satisfies UnsuccessfulResponseBody);
-			}
-			// Notify
-			await eventTracker.notify({
-				message: EventTracker.compileBasicNotification(
-					'User was not found in database: User with userId: ' + userEntity.logToId + ' was created'
-				),
-				severity: 'info',
-			});
-		}
-
-		//4. Check if there is customer associated with such user
-		if (!userEntity.customer) {
-			customerEntity = (await CustomerService.instance.create(logToName, logToUserEmail)) as CustomerEntity;
-			if (!customerEntity) {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'User exists in database: Customer was not created',
-				} satisfies UnsuccessfulResponseBody);
-			}
-			// Notify
-			await eventTracker.notify({
-				message: EventTracker.compileBasicNotification(
-					'User exists in database: Customer with customerId: ' + customerEntity.customerId + ' was created'
-				),
-				severity: 'info',
-			});
-			//4.1. Assign customer to the user
-			userEntity.customer = customerEntity;
-			await UserService.instance.update(userEntity.logToId, customerEntity);
-		} else {
-			customerEntity = userEntity.customer;
-			// this time user exists, so notify stripe account should be created.
+			// 6. check Stripe account if still missing
 			if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
+				// should we await? or fire off and forget?
 				await eventTracker.submit({
 					operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
 					data: {
 						name: customerEntity.name,
 						email: customerEntity.email,
 						customerId: customerEntity.customerId,
-					} satisfies ISubmitStripeCustomerCreateData,
-				} satisfies ISubmitOperation);
-			}
-		}
-
-		// 6. Check is paymentAccount exists for the customer
-		const accounts = await PaymentAccountService.instance.find({ customer: customerEntity });
-
-		const mainnetAccountResponse = await AccountController.provisionCustomerAccount(
-			CheqdNetwork.Mainnet,
-			accounts,
-			customerEntity
-		);
-		if (!mainnetAccountResponse.success) {
-			return response.status(mainnetAccountResponse.status).json({
-				error: mainnetAccountResponse.error,
-			} satisfies UnsuccessfulResponseBody);
-		}
-
-		const testnetAccountResponse = await AccountController.provisionCustomerAccount(
-			CheqdNetwork.Testnet,
-			accounts,
-			customerEntity
-		);
-		if (!testnetAccountResponse.success) {
-			return response.status(testnetAccountResponse.status).json({
-				error: testnetAccountResponse.error,
-			} satisfies UnsuccessfulResponseBody);
-		}
-
-		const mainnetAccount = mainnetAccountResponse.data;
-		const testnetAccount = testnetAccountResponse.data;
-
-		// 7. Assign default role on LogTo
-		const customDataFromLogTo = await logToHelper.getCustomData(userEntity.logToId);
-
-		// 8. Create custom_data and update the userInfo (send it to the LogTo)
-		if (Object.keys(customDataFromLogTo.data).length === 0 && testnetAccount.address && mainnetAccount.address) {
-			const customData = {
-				customer: {
-					id: customerEntity.customerId,
-					name: customerEntity.name,
-				},
-				paymentAccount: {
-					mainnet: mainnetAccount.address,
-					testnet: testnetAccount.address,
-				},
-			};
-
-			const _r = await logToHelper.updateCustomData(userEntity.logToId, customData);
-			if (_r.status !== 200) {
-				return response.status(_r.status).json({
-					error: _r.error,
-				} satisfies UnsuccessfulResponseBody);
-			}
-		}
-
-		// 9. Check the token balance for Testnet account
-		if (testnetAccount.address && process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
-			const balances = await checkBalance(testnetAccount.address, process.env.TESTNET_RPC_URL);
-			const balance = balances[0];
-			if (!balance || +balance.amount < TESTNET_MINIMUM_BALANCE * Math.pow(10, DEFAULT_DENOM_EXPONENT)) {
-				// 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
-				const resp = await FaucetHelper.delegateTokens(testnetAccount.address);
-				if (resp.status !== StatusCodes.OK) {
-					return response.status(StatusCodes.BAD_GATEWAY).json({
-						error: resp.error,
-					} satisfies UnsuccessfulResponseBody);
-				}
-				// Notify
-				await eventTracker.notify({
-					message: EventTracker.compileBasicNotification(
-						`Testnet account with address: ${testnetAccount.address} was funded with ${TESTNET_MINIMUM_BALANCE}`
-					),
-					severity: 'info',
+					},
 				});
 			}
-		}
+			status.stripeAccountCreated = true;
 
-		// 10. Add the Stripe account to the Customer
-		if (process.env.STRIPE_ENABLED === 'true' && !customerEntity.paymentProviderId) {
-			await eventTracker.submit({
-				operation: OperationNameEnum.STRIPE_ACCOUNT_CREATE,
-				data: {
-					name: customerEntity.name,
-					email: customerEntity.email,
-					customerId: customerEntity.customerId,
-				} satisfies ISubmitStripeCustomerCreateData,
-			} satisfies ISubmitOperation);
-		}
+			// 7. Provision Mainnet & Testnet accounts in parallel
+			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
+			const [mainnetResp, testnetResp] = await Promise.all([
+				AccountController.provisionCustomerAccount(CheqdNetwork.Mainnet, accounts, customerEntity),
+				AccountController.provisionCustomerAccount(CheqdNetwork.Testnet, accounts, customerEntity),
+			]);
 
-		return response.status(StatusCodes.OK).json({});
+			if (mainnetResp.success) {
+				status.mainnetAccountProvisioned = true;
+			} else status.errors.push(mainnetResp.error);
+
+			if (testnetResp.success) {
+				status.testnetAccountProvisioned = true;
+			} else status.errors.push(testnetResp.error);
+
+			// 8. Update LogTo custom data and Top‑up Testnet in parallel (non-blocking)
+			await Promise.all([
+				updateCustomData(userEntity.logToId, customerEntity, mainnetResp, testnetResp, logToHelper, status),
+				topupTestnet(customerEntity, testnetResp, status),
+			]);
+
+			// 9. Send response with full status
+			const allOK = status.errors.length === 0;
+			return response
+				.status(allOK ? StatusCodes.OK : StatusCodes.INTERNAL_SERVER_ERROR)
+				.json({ success: allOK, status });
+		} catch (err: any) {
+			console.error('Bootstrap error:', err);
+			status.errors.push((err as Error)?.message || err);
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				success: false,
+				status,
+			});
+		}
 	}
 
 	static async provisionCustomerAccount(
@@ -531,7 +508,11 @@ export class AccountController {
 				const balance = balances[0];
 				if (!balance || +balance.amount < TESTNET_MINIMUM_BALANCE * Math.pow(10, DEFAULT_DENOM_EXPONENT)) {
 					// 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
-					const resp = await FaucetHelper.delegateTokens(testnetAccount.address);
+					const resp = await FaucetHelper.delegateTokens(
+						testnetAccount.address,
+						customerEntity.name,
+						customerEntity.email
+					);
 
 					if (resp.status !== StatusCodes.OK) {
 						return response.status(StatusCodes.BAD_GATEWAY).json({
@@ -584,8 +565,7 @@ async function syncLogtoUserRoles(
 			getStripeObjectKey(stripeSubscription.items.data[0].plan.product)
 		);
 
-		const logtoRoleName = stripeProduct.name.toLowerCase() as SupportedPlanTypes;
-		const roleResponse = await logToHelper.assignCustomerPlanRoles(logToUserId, logtoRoleName);
+		const roleResponse = await logToHelper.assignCustomerPlanRoles(logToUserId, stripeProduct);
 		if (roleResponse.status !== StatusCodes.OK) {
 			return {
 				success: false,
@@ -604,7 +584,7 @@ async function syncLogtoUserRoles(
 		return {
 			success: true,
 			status: 200,
-			data: logtoRoleName,
+			data: stripeProduct.name,
 		};
 	}
 
@@ -613,4 +593,54 @@ async function syncLogtoUserRoles(
 		error: `Logto role not assigned: User with id ${logToUserId} is suspended`,
 		status: 409,
 	};
+}
+
+async function updateCustomData(
+	logToId: string,
+	customer: CustomerEntity,
+	mainnetResp: any,
+	testnetResp: any,
+	logToHelper: LogToHelper,
+	status: BootStrapAccountResponse
+) {
+	try {
+		const existing = await logToHelper.getCustomData(logToId);
+		if (Object.keys(existing.data).length === 0 && mainnetResp.data?.address && testnetResp.data?.address) {
+			const customData = {
+				customer: { id: customer.customerId, name: customer.name },
+				paymentAccount: {
+					mainnet: mainnetResp.data.address,
+					testnet: testnetResp.data.address,
+				},
+			};
+			const res = await logToHelper.updateCustomData(logToId, customData);
+			if (res.status === 200) status.customDataUpdated = true;
+		}
+	} catch (err: any) {
+		status.errors.push((err as Error)?.message || err);
+		console.warn('Logto Custom Data Update failed:', err);
+	}
+}
+
+async function topupTestnet(customer: CustomerEntity, testnetResp: any, status: BootStrapAccountResponse) {
+	if (!testnetResp.data?.address || process.env.ENABLE_ACCOUNT_TOPUP !== 'true') {
+		return;
+	}
+	try {
+		const balances = await checkBalance(testnetResp.data.address, process.env.TESTNET_RPC_URL);
+		const bal = balances[0];
+		if (!bal || +bal.amount < TESTNET_MINIMUM_BALANCE * 10 ** DEFAULT_DENOM_EXPONENT) {
+			const faucet = await FaucetHelper.delegateTokens(testnetResp.data.address, customer.name, customer.email);
+			if (faucet.status === StatusCodes.OK) {
+				status.testnetMinimumBalance = true;
+			} else {
+				status.errors.push(faucet.error);
+			}
+		} else {
+			status.testnetMinimumBalance = true;
+		}
+	} catch (err: any) {
+		status.errors.push((err as Error)?.message || err);
+		console.warn('Faucet request failed or timed out:', err);
+	}
 }

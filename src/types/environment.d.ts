@@ -8,6 +8,7 @@ declare global {
 			PORT: string;
 			NPM_CONFIG_LOGLEVEL: string;
 			LOG_LEVEL: string | 'info';
+			LOCAL_STORE_TTL: string | undefined;
 
 			// Network API endpoints
 			MAINNET_RPC_URL: string;
@@ -64,6 +65,8 @@ declare global {
 			STRIPE_SECRET_KEY: string;
 			STRIPE_PUBLISHABLE_KEY: string;
 			STRIPE_WEBHOOK_SECRET: string;
+			STRIPE_BUILD_PLAN_ID: string;
+			STRIPE_TEST_PLAN_ID: string;
 		}
 	}
 

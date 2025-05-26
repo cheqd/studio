@@ -1,0 +1,93 @@
+name: "Database migrations"
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "src/database/migrations/*"
+    branches:
+      - develop
+      - main
+defaults:
+  run:
+    shell: bash
+
+jobs:
+
+  staging-migrations:
+    name: "Staging DB migrations"
+    runs-on: ubuntu-latest
+    if: ${{ github.ref_name == 'develop' }}
+    environment:
+      name: staging
+      url: https://studio-api-staging.cheqd.net/swagger/
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies and build
+        run: |
+          npm ci
+          npm run build
+
+      - name: "Execute migrations"
+        run: |
+          npm run migrate
+        env:
+          EXTERNAL_DB_CONNECTION_URL: ${{ secrets.EXTERNAL_DB_CONNECTION_URL }}
+          EXTERNAL_DB_CERT: ${{ secrets.EXTERNAL_DB_CERT }}
+          EXTERNAL_DB_ENCRYPTION_KEY: ${{ secrets.EXTERNAL_DB_ENCRYPTION_KEY }}
+          ENABLE_EXTERNAL_DB: true
+
+  production-migrations:
+    name: "Production DB migrations"
+    runs-on: ubuntu-latest
+    if: ${{ github.ref_name == 'main' }}
+    environment:
+      name: production
+      url: https://studio-api.cheqd.net/swagger/
+    env:
+      EXTERNAL_DB_CONNECTION_URL: ${{ secrets.EXTERNAL_DB_CONNECTION_URL }}
+      EXTERNAL_DB_CERT: ${{ secrets.EXTERNAL_DB_CERT }}
+      EXTERNAL_DB_ENCRYPTION_KEY: ${{ secrets.EXTERNAL_DB_ENCRYPTION_KEY }}
+      ENABLE_EXTERNAL_DB: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: "Install DigitalOcean CLI"
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Install dependencies and build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Get runner public IP
+        id: ip
+        run: echo "ip=$(curl -s https://ifconfig.me)" >> "$GITHUB_OUTPUT"
+
+      - name: Temporarily allow runner IP address
+        run: |
+          doctl databases firewalls append ${{ secrets.DATABASE_ID }} --rule "ip_addr:${{ steps.ip.outputs.ip }}/32"
+
+      - name: "Execute migrations"
+        id: migrations
+        run: |
+          npm run migrate
+
+      - name: Remove runner IP from DO DB firewall
+        if: always()
+        run: |
+          doctl databases firewalls remove ${{ secrets.DATABASE_ID }} --rule "ip_addr:${{ steps.ip.outputs.ip }}/32"

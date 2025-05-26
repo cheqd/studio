@@ -5,18 +5,19 @@ defaults:
         shell: bash
 
 jobs:
-    md-link-check:
-        name: 'Broken Markdown links'
-        runs-on: ubuntu-latest
+    # TODO: Taking 40m fix in a separate PR
+    # md-link-check:
+    #     name: 'Broken Markdown links'
+    #     runs-on: ubuntu-latest
 
-        steps:
-            - uses: actions/checkout@v4
+    #     steps:
+    #         - uses: actions/checkout@v4
 
-            - name: Run Markdown link check
-              uses: gaurav-nelson/github-action-markdown-link-check@v1
-              with:
-                  config-file: '.github/linters/mlc_config.json'
-                  use-quiet-mode: 'yes'
+    #         - name: Run Markdown link check
+    #           uses: gaurav-nelson/github-action-markdown-link-check@v1
+    #           with:
+    #               config-file: '.github/linters/mlc_config.json'
+    #               use-quiet-mode: 'yes'
 
     super-lint:
         name: 'Super Linter'

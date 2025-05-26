@@ -6,7 +6,8 @@ import type { IOAuthProvider } from './oauth/abstract.js';
 import { OAuthProvider } from './oauth/abstract.js';
 import { EventTracker, eventTracker } from '../../services/track/tracker.js';
 import { env } from 'node:process';
-import { SupportedPlanTypes } from '../../types/admin.js';
+import Stripe from 'stripe';
+
 dotenv.config();
 
 export class LogToHelper extends OAuthProvider implements IOAuthProvider {
@@ -258,7 +259,10 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		}
 	}
 
-	async assignCustomerPlanRoles(userId: string, planType: SupportedPlanTypes): Promise<ICommonErrorResponse> {
+	async assignCustomerPlanRoles(
+		userId: string,
+		product: Stripe.Response<Stripe.Product>
+	): Promise<ICommonErrorResponse> {
 		const [userInfo, userRoles] = await Promise.all([this.getUserInfo(userId), this.getRolesForUser(userId)]);
 
 		if (userInfo.status !== StatusCodes.OK) {
@@ -286,21 +290,21 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		const hasDefaultPortalRole = assignedRoleIds.findIndex((roleId) => roleId === env.LOGTO_DEFAULT_ROLE_ID) != -1;
 
 		const planRoleIds = hasDefaultPortalRole ? [] : [env.LOGTO_DEFAULT_ROLE_ID.trim()];
-		if (planType === SupportedPlanTypes.Build) {
+		if (product.id === process.env.STRIPE_BUILD_PLAN_ID) {
 			const buildRoleIsAssigned = buildPlanRoleIds.every((roleId) => assignedRoleIds.includes(roleId));
 			if (buildRoleIsAssigned) {
 				return {
 					status: 201,
 					error: '',
 					data: {
-						message: `${planType} plan role was successfully assigned to the user`,
+						message: `${product.name} plan role was successfully assigned to the user`,
 					},
 				};
 			}
 
 			const billingPlanRoleIds = buildPlanRoleIds.filter((id) => !assignedRoleIds.includes(id));
 			planRoleIds.push(...billingPlanRoleIds);
-		} else if (planType === SupportedPlanTypes.Test) {
+		} else if (product.id === process.env.STRIPE_TEST_PLAN_ID) {
 			// "build" plan is a superset of "test" plan
 
 			// check the user has mainnet role, remove it
@@ -315,7 +319,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 					status: 201,
 					error: '',
 					data: {
-						message: `${planType} plan role was successfully assigned to the user`,
+						message: `${product.name} plan role was successfully assigned to the user`,
 					},
 				};
 			}

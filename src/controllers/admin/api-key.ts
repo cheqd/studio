@@ -127,6 +127,7 @@ export class APIKeyController {
 				apiKey,
 				name,
 				response.locals.user,
+				response.locals.customer,
 				expiresAt,
 				false,
 				options
@@ -391,27 +392,28 @@ export class APIKeyController {
 				} satisfies APIKeyGetResponseBody);
 			}
 			// Otherwise try to get the latest not revoked API key
-			const keys = await APIKeyService.instance.find(
+			const key = await APIKeyService.instance.findOne(
 				{
 					customer: response.locals.customer,
 					revoked: false,
 				},
+				undefined,
+				options,
 				{
 					createdAt: 'DESC',
-				},
-				options
+				}
 			);
-			if (keys.length == 0) {
+			if (!key) {
 				return response.status(StatusCodes.NOT_FOUND).json({
 					error: 'API key not found',
 				});
 			}
 			return response.status(StatusCodes.OK).json({
-				apiKey: keys[0].apiKey,
-				name: keys[0].name,
-				createdAt: keys[0].createdAt.toISOString(),
-				expiresAt: keys[0].expiresAt.toISOString(),
-				revoked: keys[0].revoked,
+				apiKey: key.apiKey,
+				name: key.name,
+				createdAt: key.createdAt.toISOString(),
+				expiresAt: key.expiresAt.toISOString(),
+				revoked: key.revoked,
 			} satisfies APIKeyGetResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

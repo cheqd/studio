@@ -1,4 +1,4 @@
-import type { Repository } from 'typeorm';
+import type { FindOptionsRelations, Repository } from 'typeorm';
 
 import { Connection } from '../../database/connection/connection.js';
 import { IdentifierEntity } from '../../database/entities/identifier.entity.js';
@@ -25,18 +25,18 @@ export class IdentifierService {
 		return await this.identifierRepository.save(existing);
 	}
 
-	public async get(did?: string) {
+	public async get(did?: string, relations?: FindOptionsRelations<IdentifierEntity>) {
 		return await this.identifierRepository.findOne({
 			where: { did },
-			relations: ['customer'],
+			relations,
 		});
 	}
 
-	public async find(where: Record<string, unknown>) {
+	public async find(where: Record<string, unknown>, relations?: FindOptionsRelations<IdentifierEntity>) {
 		try {
 			return await this.identifierRepository.find({
 				where: where,
-				relations: ['customer'],
+				relations,
 			});
 		} catch {
 			return [];

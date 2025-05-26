@@ -1,5 +1,124 @@
 # Changelog
 
+## [3.6.9](https://github.com/cheqd/studio/compare/3.6.8...3.6.9) (2025-05-15)
+
+### Bug Fixes
+
+* Fix function calls in bootstrap ([5f81a86](https://github.com/cheqd/studio/commit/5f81a86210d594736965ac63f3d84e530f3bae9b))
+* Handle DID create options ([#684](https://github.com/cheqd/studio/issues/684)) ([5492d00](https://github.com/cheqd/studio/commit/5492d00199650a0ead018680322d91f4feedf18b))
+
+### Performance Improvements
+
+* Parallelize operations where possible ([#685](https://github.com/cheqd/studio/issues/685)) ([15cf9ca](https://github.com/cheqd/studio/commit/15cf9ca84db0083589620ffa7ac1e5e3ddaca543))
+
+## [3.6.9-develop.3](https://github.com/cheqd/studio/compare/3.6.9-develop.2...3.6.9-develop.3) (2025-05-14)
+
+### Performance Improvements
+
+* Parallelize operations where possible ([#685](https://github.com/cheqd/studio/issues/685)) ([15cf9ca](https://github.com/cheqd/studio/commit/15cf9ca84db0083589620ffa7ac1e5e3ddaca543))
+
+## [3.6.9-develop.2](https://github.com/cheqd/studio/compare/3.6.9-develop.1...3.6.9-develop.2) (2025-05-14)
+
+### Bug Fixes
+
+* Handle DID create options ([#684](https://github.com/cheqd/studio/issues/684)) ([5492d00](https://github.com/cheqd/studio/commit/5492d00199650a0ead018680322d91f4feedf18b))
+
+## [3.6.9-develop.1](https://github.com/cheqd/studio/compare/3.6.8...3.6.9-develop.1) (2025-05-14)
+
+### Bug Fixes
+
+* Fix function calls in bootstrap ([5f81a86](https://github.com/cheqd/studio/commit/5f81a86210d594736965ac63f3d84e530f3bae9b))
+
+## [3.6.8](https://github.com/cheqd/studio/compare/3.6.7...3.6.8) (2025-05-13)
+
+### Bug Fixes
+
+* Added missing relations ([25d1242](https://github.com/cheqd/studio/commit/25d1242718c988dbe797353d1ab24968c1509045))
+* Perform join in user entity ([#680](https://github.com/cheqd/studio/issues/680)) ([ba8d7a8](https://github.com/cheqd/studio/commit/ba8d7a833b57f969e4c7cf5d50be4ff35168817a))
+* Resolve testnet token delegation issues ([#678](https://github.com/cheqd/studio/issues/678)) ([1e44bf2](https://github.com/cheqd/studio/commit/1e44bf2970c193e0b438205016bb6a141f98276d))
+
+### Performance Improvements
+
+* Improve lookup for DIDs ([#681](https://github.com/cheqd/studio/issues/681)) ([6fbd014](https://github.com/cheqd/studio/commit/6fbd014c3b1e2059e9b2becf78fb7f6d94affbfc))
+* Perform join operations when necessary [DEV-4993] ([#676](https://github.com/cheqd/studio/issues/676)) ([20afe19](https://github.com/cheqd/studio/commit/20afe198631e71b2d7cec63127abd3b6c8c34d28)), closes [#677](https://github.com/cheqd/studio/issues/677)
+
+## [3.6.8-develop.4](https://github.com/cheqd/studio/compare/3.6.8-develop.3...3.6.8-develop.4) (2025-05-13)
+
+### Performance Improvements
+
+* Improve lookup for DIDs ([#681](https://github.com/cheqd/studio/issues/681)) ([6fbd014](https://github.com/cheqd/studio/commit/6fbd014c3b1e2059e9b2becf78fb7f6d94affbfc))
+
+## [3.6.8-develop.3](https://github.com/cheqd/studio/compare/3.6.8-develop.2...3.6.8-develop.3) (2025-05-13)
+
+### Bug Fixes
+
+* Perform join in user entity ([#680](https://github.com/cheqd/studio/issues/680)) ([ba8d7a8](https://github.com/cheqd/studio/commit/ba8d7a833b57f969e4c7cf5d50be4ff35168817a))
+
+## [3.6.8-develop.2](https://github.com/cheqd/studio/compare/3.6.8-develop.1...3.6.8-develop.2) (2025-05-12)
+
+### Bug Fixes
+
+* Added missing relations ([25d1242](https://github.com/cheqd/studio/commit/25d1242718c988dbe797353d1ab24968c1509045))
+
+### Performance Improvements
+
+* Perform join operations when necessary [DEV-4993] ([#676](https://github.com/cheqd/studio/issues/676)) ([20afe19](https://github.com/cheqd/studio/commit/20afe198631e71b2d7cec63127abd3b6c8c34d28)), closes [#677](https://github.com/cheqd/studio/issues/677)
+
+## [3.6.8-develop.1](https://github.com/cheqd/studio/compare/3.6.7...3.6.8-develop.1) (2025-05-09)
+
+### Bug Fixes
+
+* Resolve testnet token delegation issues ([#678](https://github.com/cheqd/studio/issues/678)) ([1e44bf2](https://github.com/cheqd/studio/commit/1e44bf2970c193e0b438205016bb6a141f98276d))
+
+## [3.6.7](https://github.com/cheqd/studio/compare/3.6.6...3.6.7) (2025-05-09)
+
+### Bug Fixes
+
+* Fix faucet request ([#675](https://github.com/cheqd/studio/issues/675)) ([8b66022](https://github.com/cheqd/studio/commit/8b660221c3987c54667654b7d8a44c1e3653d1a5))
+
+## [3.6.7-develop.1](https://github.com/cheqd/studio/compare/3.6.6...3.6.7-develop.1) (2025-05-09)
+
+### Bug Fixes
+
+* Fix faucet request ([#675](https://github.com/cheqd/studio/issues/675)) ([8b66022](https://github.com/cheqd/studio/commit/8b660221c3987c54667654b7d8a44c1e3653d1a5))
+
+## [3.6.6](https://github.com/cheqd/studio/compare/3.6.5...3.6.6) (2025-05-08)
+
+### Performance Improvements
+
+* Improve customer account query [DEV-4965] ([#673](https://github.com/cheqd/studio/issues/673)) ([25e9ed3](https://github.com/cheqd/studio/commit/25e9ed30bc185ecd0789b1ac164e521de5bc8fca)), closes [#674](https://github.com/cheqd/studio/issues/674)
+
+## [3.6.6-develop.1](https://github.com/cheqd/studio/compare/3.6.5...3.6.6-develop.1) (2025-05-07)
+
+### Performance Improvements
+
+* Improve customer account query [DEV-4965] ([#673](https://github.com/cheqd/studio/issues/673)) ([25e9ed3](https://github.com/cheqd/studio/commit/25e9ed30bc185ecd0789b1ac164e521de5bc8fca)), closes [#674](https://github.com/cheqd/studio/issues/674)
+
+## [3.6.5](https://github.com/cheqd/studio/compare/3.6.4...3.6.5) (2025-05-02)
+
+### Bug Fixes
+
+* Add missing stripe env vars in docker ([#670](https://github.com/cheqd/studio/issues/670)) ([9f65add](https://github.com/cheqd/studio/commit/9f65add8e8d4c5447409ec73bf9d2cdc9b3abb8d))
+* Role assignment in Logto [DEV-4953] ([#669](https://github.com/cheqd/studio/issues/669)) ([ef5b6bf](https://github.com/cheqd/studio/commit/ef5b6bf2b6f01ecea0622c288db613cdac074391))
+
+## [3.6.4-develop.3](https://github.com/cheqd/studio/compare/3.6.4-develop.2...3.6.4-develop.3) (2025-05-02)
+
+### Bug Fixes
+
+* Add missing stripe env vars in docker ([#670](https://github.com/cheqd/studio/issues/670)) ([9f65add](https://github.com/cheqd/studio/commit/9f65add8e8d4c5447409ec73bf9d2cdc9b3abb8d))
+
+## [3.6.4-develop.2](https://github.com/cheqd/studio/compare/3.6.4-develop.1...3.6.4-develop.2) (2025-05-02)
+
+### Bug Fixes
+
+* Role assignment in Logto [DEV-4953] ([#669](https://github.com/cheqd/studio/issues/669)) ([ef5b6bf](https://github.com/cheqd/studio/commit/ef5b6bf2b6f01ecea0622c288db613cdac074391))
+
+## [3.6.4](https://github.com/cheqd/studio/compare/3.6.3...3.6.4) (2025-04-14)
+
+### Bug Fixes
+
+* presentation create validator ([#663](https://github.com/cheqd/studio/issues/663)) ([1bc7ff9](https://github.com/cheqd/studio/commit/1bc7ff94f0ac5faf4c8018ac21cbef03b8e9e2c3)), closes [#658](https://github.com/cheqd/studio/issues/658)
+
 ## [3.6.4-develop.1](https://github.com/cheqd/studio/compare/3.6.3...3.6.4-develop.1) (2025-04-10)
 
 ### Bug Fixes
