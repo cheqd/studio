@@ -35,7 +35,7 @@
 		"test:unit": "cross-env NODE_OPTIONS='--experimental-vm-modules' jest --verbose",
 		"test:e2e": "TEST_MODE_PARALLEL=true npx playwright test -c playwright.config.ts && npx playwright test -c playwright.config.ts",
 		"typeorm": "typeorm-ts-node-esm  -d ./dist/database/ormconfig.js",
-		"generate": "npm run typeorm migration:generate .",
+		"generate": "npm run typeorm migration:generate ./src/database/migrations/migrations",
 		"migrate": "npm run typeorm migration:run"
 	},
 	"eslintConfig": {

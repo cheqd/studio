@@ -1,4 +1,4 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import * as dotenv from 'dotenv';
 import { Key } from '@veramo/data-store';
@@ -17,27 +17,19 @@ export class KeyEntity extends Key {
 	@Column({
 		type: 'timestamptz',
 		nullable: false,
+		default: () => 'now()',
 	})
 	createdAt!: Date;
 
 	@Column({
 		type: 'timestamptz',
 		nullable: true,
+		default: () => 'now()',
 	})
 	updatedAt!: Date;
 
-	@BeforeInsert()
-	setCreatedAt() {
-		this.createdAt = new Date();
-	}
-
-	@BeforeUpdate()
-	setUpdateAt() {
-		this.updatedAt = new Date();
-	}
-
-	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { onDelete: 'CASCADE' })
-	@JoinColumn({ name: 'customerId' })
+	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'customerId', referencedColumnName: 'customerId' })
 	customer!: CustomerEntity;
 
 	constructor(kid: string, type: TKeyType, publicKeyHex: string) {

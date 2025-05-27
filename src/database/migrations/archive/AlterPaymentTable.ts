@@ -1,5 +1,5 @@
 import { Table, TableColumn, TableForeignKey, type MigrationInterface, type QueryRunner } from 'typeorm';
-import { namespaceEnum } from '../types/enum.js';
+import { namespaceEnum } from '../../types/enum.js';
 
 export class AlterPaymentTable1695740345979 implements MigrationInterface {
 	public async up(queryRunner: QueryRunner): Promise<void> {

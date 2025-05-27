@@ -15,6 +15,7 @@ import { PaymentService } from '../api/payment.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { Coin } from '@cosmjs/amino';
 import { CoinService } from '../api/coin.js';
+import { PaymentAccountService } from '../api/payment-account.js';
 
 export class DBOperationSubscriber extends BaseOperationObserver implements IObserver {
 	protected logSeverity: LogLevelDesc = 'debug';
@@ -53,6 +54,12 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 				feePayment.amount.denom
 			);
 
+			// Fetch PaymentAccountEntity for fromAddress
+			const fromAccountEntity = await PaymentAccountService.instance.get(feePayment.fromAddress);
+			if (!fromAccountEntity) {
+				throw new Error(`PaymentAccountEntity not found for address: ${feePayment.fromAddress}`);
+			}
+
 			const payment = await PaymentService.instance.create(
 				feePayment.txHash as string,
 				operationWithPayment.customer as CustomerEntity,
@@ -62,7 +69,7 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 				feePayment.successful,
 				feePayment.network,
 				resource,
-				feePayment.fromAddress,
+				fromAccountEntity,
 				feePayment.toAddress,
 				feePayment.timestamp
 			);

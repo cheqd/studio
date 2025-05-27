@@ -8,9 +8,9 @@ dotenv.config();
 @Entity('apiKey')
 export class APIKeyEntity {
 	@Column({
-		type: 'text',
-		primary: true,
-		nullable: false,
+		type: 'varchar',
+		unique: true,
+		primary: true
 	})
 	apiKeyHash!: string;
 
@@ -29,6 +29,7 @@ export class APIKeyEntity {
 	@Column({
 		type: 'boolean',
 		nullable: false,
+		default: false,
 	})
 	revoked!: boolean;
 
@@ -50,19 +51,16 @@ export class APIKeyEntity {
 	})
 	updatedAt!: Date;
 
-	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { onDelete: 'CASCADE' })
+	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'customerId' })
 	customer!: CustomerEntity;
 
-	@ManyToOne(() => UserEntity, (user) => user.logToId, { onDelete: 'CASCADE' })
+	@ManyToOne(() => UserEntity, (user) => user.logToId, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'userId' })
 	user!: UserEntity;
 
 	@Index({ unique: true })
-	@Column({
-		type: 'varchar',
-		nullable: false,
-	})
+	@Column({ type: 'varchar', nullable: false })
 	fingerprint!: string;
 
 	@BeforeInsert()

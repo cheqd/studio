@@ -34,13 +34,13 @@ export class ResourceEntity {
 	mediaType!: string;
 
 	@Column({
-		type: 'uuid',
+		type: 'uuid', // declared as text in the database, we should migrate to uuid
 		nullable: true,
 	})
 	previousVersionId!: string;
 
 	@Column({
-		type: 'uuid',
+		type: 'uuid', // declared as text in the database, we should migrate to uuid
 		nullable: true,
 	})
 	nextVersionId!: string;
@@ -65,20 +65,26 @@ export class ResourceEntity {
 	})
 	createdAt!: Date;
 
+	@Column({
+		type: 'timestamptz',
+		nullable: true,
+	})
+	updatedAt?: Date;
+
 	@BeforeInsert()
 	setCreatedAt() {
 		this.createdAt = new Date();
 	}
 
-	@ManyToOne(() => Identifier, (identifier) => identifier.did, { onDelete: 'CASCADE' })
+	@ManyToOne(() => Identifier, (identifier) => identifier.did, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'identifierDid' })
 	identifier!: Identifier;
 
-	@ManyToOne(() => Key, (key) => key.kid, { onDelete: 'CASCADE' })
+	@ManyToOne(() => Key, (key) => key.kid, { nullable: false,onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'kid' })
 	key!: Key;
 
-	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { onDelete: 'CASCADE' })
+	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'customerId' })
 	customer!: CustomerEntity;
 

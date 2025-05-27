@@ -7,6 +7,7 @@ import type { CustomerEntity } from '../../database/entities/customer.entity.js'
 import { PaymentEntity } from '../../database/entities/payment.entity.js';
 import { Connection } from '../../database/connection/connection.js';
 import * as dotenv from 'dotenv';
+import { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
 
 dotenv.config();
 
@@ -28,7 +29,7 @@ export class PaymentService {
 		successful: boolean,
 		namespace: CheqdNetwork,
 		resource: ResourceEntity,
-		fromAccount: string,
+		fromAccount: PaymentAccountEntity,
 		toAccount: string,
 		timestamp: Date
 	) {
@@ -59,7 +60,7 @@ export class PaymentService {
 		successful: boolean,
 		namespace: CheqdNetwork,
 		resource: ResourceEntity,
-		fromAccount: string,
+		fromAccount: PaymentAccountEntity,
 		toAccount: string,
 		timestamp: Date
 	) {
