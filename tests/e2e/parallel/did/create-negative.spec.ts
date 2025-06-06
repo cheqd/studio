@@ -83,7 +83,7 @@ test('[Negative] It cannot create DID with an invalid VerificationMethodType in 
 		},
 		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
 	});
-	expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+	expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
 	expect(await response.text()).toEqual(expect.stringContaining('Unsupported verificationMethod type'));
 });
 
