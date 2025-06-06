@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner, Table } from 'typeorm';
-import { categoryEnum } from '../types/enum.js';
+import { categoryEnum } from '../../types/enum.js';
 
 export class CreateOperationTable1695740345977 implements MigrationInterface {
 	public async up(queryRunner: QueryRunner): Promise<void> {

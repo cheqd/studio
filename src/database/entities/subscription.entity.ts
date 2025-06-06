@@ -65,7 +65,7 @@ export class SubscriptionEntity {
 		this.updatedAt = new Date();
 	}
 
-	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId)
+	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { nullable: false , onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'customerId' })
 	customer!: CustomerEntity;
 

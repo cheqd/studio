@@ -27,3 +27,5 @@ export class AlterTableClaim1695740345977 implements MigrationInterface {
 		throw new Error('illegal_operation: cannot roll back initial migration');
 	}
 }
+// this is wrong - table is declared by veramo/data-store and we manually generated this migration
+// this is causing a migration drift

@@ -90,4 +90,7 @@ jobs:
       - name: Remove runner IP from DO DB firewall
         if: always()
         run: |
-          doctl databases firewalls remove ${{ secrets.DATABASE_ID }} --rule "ip_addr:${{ steps.ip.outputs.ip }}/32"
+          UUID=$(doctl databases firewalls list --output json ${{ secrets.DATABASE_ID }} | jq -r '.[] | select(.type == "ip_addr" and .value == "${{ steps.ip.outputs.ip }}") | .uuid')
+          if [ -n "$UUID" ]; then
+            doctl databases firewalls remove ${{ secrets.DATABASE_ID }} "$UUID"
+          fi
