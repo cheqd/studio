@@ -306,7 +306,7 @@ export class Veramo {
 				signInputs: publicKeyHexs,
 				fee: {
 					amount: [ResourceModule.fees.DefaultCreateResourceJsonFee],
-					gas: '2000000',
+					gas: '6400000',
 				},
 			} satisfies ICheqdCreateLinkedResourceArgs);
 			return result;
