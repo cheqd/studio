@@ -33,7 +33,7 @@
 		"lint": "eslint --max-warnings=0 src && prettier --check '**/*.{js,ts,cjs,mjs,json}'",
 		"test": "npm run test:unit && npm run test:e2e",
 		"test:unit": "cross-env NODE_OPTIONS='--experimental-vm-modules' jest --verbose",
-		"test:e2e": "TEST_MODE_PARALLEL=true npx playwright test -c playwright.config.ts && npx playwright test -c playwright.config.ts",
+		"test:e2e": "npx playwright test -c playwright.config.ts",
 		"typeorm": "typeorm-ts-node-esm  -d ./dist/database/ormconfig.js",
 		"generate": "npm run typeorm migration:generate .",
 		"migrate": "npm run typeorm migration:run"
@@ -53,7 +53,7 @@
 		"README.md"
 	],
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "^4.5.4",
+		"@cheqd/did-provider-cheqd": "^4.5.5-develop.1",
 		"@cheqd/sdk": "^5.3.1",
 		"@cheqd/ts-proto": "^4.1.0",
 		"@cosmjs/amino": "^0.33.1",

@@ -59,7 +59,7 @@ export type SymmetricKeyRequest = {
 
 export type CredentialRequestBody = { credential: W3CVerifiableCredential } & SymmetricKeyRequest;
 
-export type PublishResourceOptions = { fee?: DidStdFee; [x: string]: any };
+export type PublishResourceOptions = { fee?: DidStdFee | 'auto' | number; [x: string]: any };
 
 export type DateType = string | Date;
 

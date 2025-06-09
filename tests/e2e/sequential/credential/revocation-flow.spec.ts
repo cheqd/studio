@@ -61,10 +61,7 @@ test(' Verify a credential status after revocation', async ({ request }) => {
 		data: JSON.stringify({
 			credential: jwtCredential,
 			options: {
-				fee: {
-					amount: '20000000000',
-					denom: ResourceModule.baseMinimalDenom,
-				},
+				fee: 1.8,
 			},
 		}),
 		headers: {
@@ -72,6 +69,7 @@ test(' Verify a credential status after revocation', async ({ request }) => {
 		},
 	});
 	const result = await response.json();
+        console.log(result)
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 	expect(result.revoked).toBe(true);
