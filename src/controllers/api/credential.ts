@@ -348,7 +348,7 @@ export class CredentialController {
 		// Get publish flag
 		const { publish } = request.query as RevokeCredentialRequestQuery;
 		// Get symmetric key
-		const { credential, symmetricKey } = request.body as RevokeCredentialRequestBody;
+		const { credential, symmetricKey, options } = request.body as RevokeCredentialRequestBody;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
@@ -357,7 +357,8 @@ export class CredentialController {
 				credential,
 				publish as boolean,
 				response.locals.customer,
-				symmetricKey as string
+				symmetricKey as string,
+                options
 			);
 
 			// Track operation if revocation was successful and publish is true
@@ -441,7 +442,7 @@ export class CredentialController {
 		// Get publish flag
 		const { publish } = request.query as SuspendCredentialRequestQuery;
 		// Get symmetric key
-		const { credential, symmetricKey } = request.body as SuspendCredentialRequestBody;
+		const { credential, symmetricKey, options } = request.body as SuspendCredentialRequestBody;
 
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
@@ -451,7 +452,8 @@ export class CredentialController {
 				credential,
 				publish as boolean,
 				response.locals.customer,
-				symmetricKey as string
+				symmetricKey as string,
+                options
 			);
 
 			// Track operation if suspension was successful and publish is true
@@ -535,7 +537,7 @@ export class CredentialController {
 		// Get publish flag
 		const { publish } = request.query as UnsuspendCredentialRequestQuery;
 		// Get symmetric key
-		const { credential, symmetricKey } = request.body as UnsuspendCredentialRequestBody;
+		const { credential, symmetricKey, options } = request.body as UnsuspendCredentialRequestBody;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
@@ -544,7 +546,8 @@ export class CredentialController {
 				credential,
 				publish as boolean,
 				response.locals.customer,
-				symmetricKey as string
+				symmetricKey as string,
+                options
 			);
 
 			// Track operation if the process of reinstantiating was successful and publish is true

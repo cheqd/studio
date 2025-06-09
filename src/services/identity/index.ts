@@ -33,7 +33,7 @@ import type {
 import type { VeramoAgent } from '../../types/shared.js';
 import type { VerificationOptions } from '../../types/shared.js';
 import type { FeePaymentOptions } from '../../types/credential-status.js';
-import type { CredentialRequest } from '../../types/credential.js';
+import type { CredentialRequest, PublishResourceOptions } from '../../types/credential.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
 import type { StatusOptions } from '../../types/credential-status.js';
 import type {
@@ -155,19 +155,22 @@ export interface IIdentityService {
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish: boolean,
 		customer: CustomerEntity,
-		symmetricKey: string
+		symmetricKey: string,
+        options?: PublishResourceOptions
 	): Promise<RevocationResult | BulkRevocationResult>;
 	suspendCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish: boolean,
 		customer: CustomerEntity,
-		symmetricKey: string
+		symmetricKey: string,
+        options?: PublishResourceOptions
 	): Promise<SuspensionResult | BulkSuspensionResult>;
 	reinstateCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish: boolean,
 		customer: CustomerEntity,
-		symmetricKey: string
+		symmetricKey: string,
+        options?: PublishResourceOptions
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult>;
 	setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity>;
 	updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity>;

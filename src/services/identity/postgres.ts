@@ -27,7 +27,7 @@ import {
 import { DefaultDidUrlPattern, VeramoAgent } from '../../types/shared.js';
 import type { VerificationOptions } from '../../types/shared.js';
 import type { FeePaymentOptions } from '../../types/credential-status.js';
-import type { CredentialRequest } from '../../types/credential.js';
+import type { CredentialRequest, PublishResourceOptions } from '../../types/credential.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
 import type { StatusOptions } from '../../types/credential-status.js';
 import type {
@@ -472,11 +472,12 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish: boolean,
 		customer: CustomerEntity,
-		symmetricKey: string
+		symmetricKey: string,
+        options?: PublishResourceOptions,
 	) {
 		const agent = await this.createAgent(customer);
 		await this.validateCredentialAccess(credentials, customer);
-		return await Veramo.instance.revokeCredentials(agent, credentials, publish, symmetricKey);
+		return await Veramo.instance.revokeCredentials(agent, credentials, publish, symmetricKey, options);
 	}
 
 	async suspendCredentials(
