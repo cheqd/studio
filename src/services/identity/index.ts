@@ -85,7 +85,8 @@ export interface IIdentityService {
 		network: string,
 		payload: ResourcePayload,
 		customer: CustomerEntity,
-		publicKeyHexs?: string[]
+		publicKeyHexs?: string[],
+		options?: PublishResourceOptions
 	): Promise<any>;
 	createCredential(
 		credential: CredentialPayload,
@@ -156,21 +157,21 @@ export interface IIdentityService {
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string,
-        options?: PublishResourceOptions
+		options?: PublishResourceOptions
 	): Promise<RevocationResult | BulkRevocationResult>;
 	suspendCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string,
-        options?: PublishResourceOptions
+		options?: PublishResourceOptions
 	): Promise<SuspensionResult | BulkSuspensionResult>;
 	reinstateCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string,
-        options?: PublishResourceOptions
+		options?: PublishResourceOptions
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult>;
 	setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity>;
 	updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity>;

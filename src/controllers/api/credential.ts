@@ -358,7 +358,7 @@ export class CredentialController {
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string,
-                options
+				options
 			);
 
 			// Track operation if revocation was successful and publish is true
@@ -453,7 +453,7 @@ export class CredentialController {
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string,
-                options
+				options
 			);
 
 			// Track operation if suspension was successful and publish is true
@@ -547,7 +547,7 @@ export class CredentialController {
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string,
-                options
+				options
 			);
 
 			// Track operation if the process of reinstantiating was successful and publish is true

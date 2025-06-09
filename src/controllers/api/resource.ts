@@ -147,7 +147,7 @@ export class ResourceController {
 		// Extract the did from the request
 		const { did } = request.params;
 		// Extract the resource parameters from the request
-		const { data, encoding, name, type, alsoKnownAs, version, network, publicKeyHexs } =
+		const { data, encoding, name, type, alsoKnownAs, version, network, publicKeyHexs, options } =
 			request.body as CreateResourceRequestBody;
 
 		try {
@@ -186,7 +186,8 @@ export class ResourceController {
 				network || did.split(':')[2],
 				resourcePayload,
 				response.locals.customer,
-				publicKeyHexs
+				publicKeyHexs,
+				options
 			);
 
 			if (result) {

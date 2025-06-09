@@ -59,7 +59,7 @@ export type SymmetricKeyRequest = {
 
 export type CredentialRequestBody = { credential: W3CVerifiableCredential } & SymmetricKeyRequest;
 
-export type PublishResourceOptions = { fee?: DidStdFee };
+export type PublishResourceOptions = { fee?: DidStdFee; [x: string]: any };
 
 export type DateType = string | Date;
 
@@ -71,15 +71,15 @@ export type VerifyCredentialRequestBody = { credential: W3CVerifiableCredential 
 
 export type VerifyCredentialRequestQuery = VerificationOptions;
 
-export type RevokeCredentialRequestBody = CredentialRequestBody & { options?: PublishResourceOptions};
+export type RevokeCredentialRequestBody = CredentialRequestBody & { options?: PublishResourceOptions };
 
 export type RevokeCredentialRequestQuery = PublishRequest;
 
-export type SuspendCredentialRequestBody = CredentialRequestBody & { options?: PublishResourceOptions};
+export type SuspendCredentialRequestBody = CredentialRequestBody & { options?: PublishResourceOptions };
 
 export type SuspendCredentialRequestQuery = PublishRequest;
 
-export type UnsuspendCredentialRequestBody = CredentialRequestBody & { options?: PublishResourceOptions};
+export type UnsuspendCredentialRequestBody = CredentialRequestBody & { options?: PublishResourceOptions };
 
 export type UnsuspendCredentialRequestQuery = PublishRequest;
 

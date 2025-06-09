@@ -4,6 +4,7 @@ import type { DIDRequest } from './did.js';
 import type { CheqdNetwork } from '@cheqd/sdk';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
 import type { SupportedEncodings } from 'uint8arrays';
+import { PublishResourceOptions } from './credential.js';
 
 // Requests
 export type CreateResourceRequestParams = DIDRequest;
@@ -16,6 +17,7 @@ export type CreateResourceRequestBody = {
 	network: CheqdNetwork.Mainnet | CheqdNetwork.Testnet;
 	alsoKnownAs?: AlternativeUri[];
 	version?: string;
+	options?: PublishResourceOptions;
 } & { publicKeyHexs?: string[] };
 
 export type SearchResourceRequestParams = DIDRequest;

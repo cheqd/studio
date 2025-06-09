@@ -473,7 +473,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string,
-        options?: PublishResourceOptions,
+		options?: PublishResourceOptions
 	) {
 		const agent = await this.createAgent(customer);
 		await this.validateCredentialAccess(credentials, customer);

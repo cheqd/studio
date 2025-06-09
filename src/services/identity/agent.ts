@@ -294,7 +294,8 @@ export class Veramo {
 		agent: VeramoAgent,
 		network: string,
 		payload: ResourcePayload,
-		publicKeyHexs?: TPublicKeyEd25519[]
+		publicKeyHexs?: TPublicKeyEd25519[],
+		options?: PublishResourceOptions
 	) {
 		try {
 			const [kms] = await agent.keyManagerGetKeyManagementSystems();
@@ -304,7 +305,7 @@ export class Veramo {
 				payload,
 				network: network as CheqdNetwork,
 				signInputs: publicKeyHexs,
-				fee: {
+				fee: options?.fee || {
 					amount: [ResourceModule.fees.DefaultCreateResourceJsonFee],
 					gas: '2000000',
 				},
@@ -598,19 +599,19 @@ export class Veramo {
 		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish = true,
 		symmetricKey = '',
-        options: PublishResourceOptions = {
-            fee: {
-                    amount: [ResourceModule.fees.DefaultCreateResourceJsonFee],
-					gas: '6400000',
-            }
-        }
+		options: PublishResourceOptions = {
+			fee: {
+				amount: [ResourceModule.fees.DefaultCreateResourceJsonFee],
+				gas: '2400000',
+			},
+		}
 	) {
 		if (Array.isArray(credentials))
 			return await agent.cheqdRevokeCredentials({
 				credentials,
 				fetchList: true,
 				publish: true,
-                options
+				options,
 			} satisfies ICheqdRevokeBulkCredentialsWithStatusList2021Args);
 		return await agent.cheqdRevokeCredential({
 			credential: credentials,
@@ -619,7 +620,7 @@ export class Veramo {
 			symmetricKey,
 			returnStatusListMetadata: true,
 			returnUpdatedStatusList: true,
-            options
+			options,
 		});
 	}
 
@@ -628,12 +629,12 @@ export class Veramo {
 		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish = true,
 		symmetricKey = '',
-        options: PublishResourceOptions = {
-            fee: {
-                    amount: [ResourceModule.fees.DefaultCreateResourceJsonFee],
-					gas: '6400000',
-            }
-        }
+		options: PublishResourceOptions = {
+			fee: {
+				amount: [ResourceModule.fees.DefaultCreateResourceJsonFee],
+				gas: '2400000',
+			},
+		}
 	) {
 		if (Array.isArray(credentials))
 			return await agent.cheqdSuspendCredentials({ credentials, fetchList: true, publish, options });
@@ -644,7 +645,7 @@ export class Veramo {
 			symmetricKey,
 			returnStatusListMetadata: true,
 			returnUpdatedStatusList: true,
-            options
+			options,
 		});
 	}
 
@@ -653,12 +654,12 @@ export class Veramo {
 		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
 		publish = true,
 		symmetricKey = '',
-        options: PublishResourceOptions = {
-            fee: {
-                    amount: [ResourceModule.fees.DefaultCreateResourceJsonFee],
-					gas: '6400000',
-            }
-        }
+		options: PublishResourceOptions = {
+			fee: {
+				amount: [ResourceModule.fees.DefaultCreateResourceJsonFee],
+				gas: '2400000',
+			},
+		}
 	) {
 		if (Array.isArray(credentials))
 			return await agent.cheqdUnsuspendCredentials({ credentials, fetchList: true, publish, options });
@@ -669,7 +670,7 @@ export class Veramo {
 			symmetricKey,
 			returnStatusListMetadata: true,
 			returnUpdatedStatusList: true,
-            options
+			options,
 		});
 	}
 
