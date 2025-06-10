@@ -57,7 +57,9 @@ export type SymmetricKeyRequest = {
 	symmetricKey?: string;
 };
 
-export type CredentialRequestBody = { credential: W3CVerifiableCredential } & SymmetricKeyRequest;
+export type CredentialRequestBody = {
+	credential: W3CVerifiableCredential | W3CVerifiableCredential[];
+} & SymmetricKeyRequest;
 
 export type PublishResourceOptions = { fee?: DidStdFee | 'auto' | number; [x: string]: any };
 

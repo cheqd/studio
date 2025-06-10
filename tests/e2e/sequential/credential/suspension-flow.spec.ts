@@ -4,16 +4,36 @@ import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 import * as fs from 'fs';
 import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
+import { v4 } from 'uuid';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
 let jwtCredential: VerifiableCredential;
+let statusListName: string;
+
+test('[Positive] It can create an unencrypted statusList2021 in testnet for user with testnet role', async ({
+    request,
+}) => {
+    const payload = JSON.parse(
+        fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL_STATUS}/create-unencrypted-with-permissions.json`, 'utf-8')
+    );
+
+    payload.statusListName = (payload.statusListName as string).concat(`${v4()}`);
+    payload.status
+    statusListName = payload.statusListName;
+    const response = await request.post(`/credential-status/create/unencrypted?statusPurpose=suspension`, {
+        data: payload,
+        headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
+    });
+    expect(response).toBeOK();
+});
 
 test.skip(' Issue a jwt credential with suspension statuslist', async ({ request }) => {
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jwt-revocation.json`, 'utf-8')
 	);
 	credentialData.credentialStatus.statusPurpose = 'suspension';
+    credentialData.credentialStatus.statusListName = statusListName;
 	const response = await request.post(`/credential/issue`, {
 		data: JSON.stringify(credentialData),
 		headers: {

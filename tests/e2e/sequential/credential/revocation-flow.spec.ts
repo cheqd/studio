@@ -3,16 +3,35 @@ import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
-import { ResourceModule } from '@cheqd/sdk';
+import { v4 } from 'uuid';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
 let jwtCredential: VerifiableCredential;
+let statusListName: string;
+
+test('[Positive] It can create an unencrypted statusList2021 in testnet for user with testnet role', async ({
+	request,
+}) => {
+	const payload = JSON.parse(
+		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL_STATUS}/create-unencrypted-with-permissions.json`, 'utf-8')
+	);
+
+	payload.statusListName = (payload.statusListName as string).concat(`${v4()}`);
+	statusListName = payload.statusListName;
+	const response = await request.post(`/credential-status/create/unencrypted?statusPurpose=revocation`, {
+		data: payload,
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
+	});
+	expect(response).toBeOK();
+});
 
 test(' Issue a jwt credential with revocation statuslist', async ({ request }) => {
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jwt-revocation.json`, 'utf-8')
 	);
+
+	credentialData.credentialStatus.statusListName = statusListName;
 	const response = await request.post(`/credential/issue`, {
 		data: JSON.stringify(credentialData),
 		headers: {
@@ -60,16 +79,13 @@ test(' Verify a credential status after revocation', async ({ request }) => {
 	const response = await request.post(`/credential/revoke?publish=true`, {
 		data: JSON.stringify({
 			credential: jwtCredential,
-			options: {
-				fee: 1.8,
-			},
 		}),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
 		},
 	});
 	const result = await response.json();
-        console.log(result)
+	console.log(result);
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 	expect(result.revoked).toBe(true);

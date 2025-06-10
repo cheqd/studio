@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import type { VerifiableCredential } from '@veramo/core';
+import type { VerifiableCredential, W3CVerifiableCredential } from '@veramo/core';
 import { StatusCodes } from 'http-status-codes';
 
 import { check, query } from '../validator/index.js';
@@ -365,31 +365,41 @@ export class CredentialController {
 			// Otherwise the StatusList2021 publisher should manually publish the resource
 			// and it will be tracked there
 			if (!result.error && result.resourceMetadata && publish) {
-				// decode credential for getting issuer did
-				const credential =
-					typeof request.body.credential === 'string'
-						? await Cheqd.decodeCredentialJWT(request.body.credential)
-						: request.body.credential;
-				// get issuer did
-				const issuerDid =
-					typeof credential.issuer === 'string'
-						? credential.issuer
-						: (credential.issuer as { id: string }).id;
-				const trackInfo = {
-					category: OperationCategoryNameEnum.CREDENTIAL,
-					name: OperationNameEnum.CREDENTIAL_REVOKE,
-					customer: response.locals.customer,
-					user: response.locals.user,
-					data: {
-						did: issuerDid,
-						encrypted: result.statusList?.metadata?.encrypted,
-						resource: result.resourceMetadata,
-						symmetricKey: '',
-					} satisfies ICredentialStatusTrack,
-				} as ITrackOperation;
+				// Normalize credential(s) to an array
+				const credentials = Array.isArray(request.body.credential)
+					? request.body.credential
+					: [request.body.credential];
 
-				// Track operation
-				eventTracker.emit('track', trackInfo);
+				// Decode any JWT strings into credential objects
+				const decodedCredentials = await Promise.all(
+					credentials.map(async (cred: W3CVerifiableCredential) =>
+						typeof cred === 'string' ? await Cheqd.decodeCredentialJWT(cred) : cred
+					)
+				);
+
+				for (const credential of decodedCredentials) {
+					// Get issuer DID
+					const issuerDid =
+						typeof credential.issuer === 'string'
+							? credential.issuer
+							: (credential.issuer as { id: string }).id;
+
+					const trackInfo = {
+						category: OperationCategoryNameEnum.CREDENTIAL,
+						name: OperationNameEnum.CREDENTIAL_REVOKE,
+						customer: response.locals.customer,
+						user: response.locals.user,
+						data: {
+							did: issuerDid,
+							encrypted: result.statusList?.metadata?.encrypted,
+							resource: result.resourceMetadata,
+							symmetricKey: '',
+						} satisfies ICredentialStatusTrack,
+					} as ITrackOperation;
+
+					// Track operation
+					eventTracker.emit('track', trackInfo);
+				}
 			}
 			// Return Ok response
 			return response.status(StatusCodes.OK).json(result satisfies RevokeCredentialResponseBody);
@@ -460,31 +470,40 @@ export class CredentialController {
 			// Otherwise the StatusList2021 publisher should manually publish the resource
 			// and it will be tracked there
 			if (!result.error && result.resourceMetadata && publish) {
-				// decode credential for getting issuer did
-				const credential =
-					typeof request.body.credential === 'string'
-						? await Cheqd.decodeCredentialJWT(request.body.credential)
-						: request.body.credential;
-				// get issuer did
-				const issuerDid =
-					typeof credential.issuer === 'string'
-						? credential.issuer
-						: (credential.issuer as { id: string }).id;
-				const trackInfo = {
-					category: OperationCategoryNameEnum.CREDENTIAL,
-					name: OperationNameEnum.CREDENTIAL_SUSPEND,
-					customer: response.locals.customer,
-					user: response.locals.user,
-					data: {
-						did: issuerDid,
-						encrypted: result.statusList?.metadata?.encrypted,
-						resource: result.resourceMetadata,
-						symmetricKey: '',
-					},
-				} as ITrackOperation;
+				// Normalize credential(s) to an array
+				const credentials = Array.isArray(request.body.credential)
+					? request.body.credential
+					: [request.body.credential];
 
-				// Track operation
-				eventTracker.emit('track', trackInfo);
+				// Decode any JWT strings into credential objects
+				const decodedCredentials = await Promise.all(
+					credentials.map(async (cred: W3CVerifiableCredential) =>
+						typeof cred === 'string' ? await Cheqd.decodeCredentialJWT(cred) : cred
+					)
+				);
+
+				for (const credential of decodedCredentials) {
+					// Get issuer DID
+					const issuerDid =
+						typeof credential.issuer === 'string'
+							? credential.issuer
+							: (credential.issuer as { id: string }).id;
+					const trackInfo = {
+						category: OperationCategoryNameEnum.CREDENTIAL,
+						name: OperationNameEnum.CREDENTIAL_SUSPEND,
+						customer: response.locals.customer,
+						user: response.locals.user,
+						data: {
+							did: issuerDid,
+							encrypted: result.statusList?.metadata?.encrypted,
+							resource: result.resourceMetadata,
+							symmetricKey: '',
+						},
+					} as ITrackOperation;
+
+					// Track operation
+					eventTracker.emit('track', trackInfo);
+				}
 			}
 
 			return response.status(StatusCodes.OK).json(result satisfies SuspendCredentialResponseBody);
@@ -554,31 +573,40 @@ export class CredentialController {
 			// Otherwise the StatusList2021 publisher should manually publish the resource
 			// and it will be tracked there
 			if (!result.error && result.resourceMetadata && publish) {
-				// decode credential for getting issuer did
-				const credential =
-					typeof request.body.credential === 'string'
-						? await Cheqd.decodeCredentialJWT(request.body.credential)
-						: request.body.credential;
-				// get issuer did
-				const issuerDid =
-					typeof credential.issuer === 'string'
-						? credential.issuer
-						: (credential.issuer as { id: string }).id;
-				const trackInfo = {
-					category: OperationCategoryNameEnum.CREDENTIAL,
-					name: OperationNameEnum.CREDENTIAL_UNSUSPEND,
-					customer: response.locals.customer,
-					user: response.locals.user,
-					data: {
-						did: issuerDid,
-						encrypted: result.statusList?.metadata?.encrypted || false,
-						resource: result.resourceMetadata,
-						symmetricKey: '',
-					} satisfies ICredentialStatusTrack,
-				} as ITrackOperation;
+				// Normalize credential(s) to an array
+				const credentials = Array.isArray(request.body.credential)
+					? request.body.credential
+					: [request.body.credential];
 
-				// Track operation
-				eventTracker.emit('track', trackInfo);
+				// Decode any JWT strings into credential objects
+				const decodedCredentials = await Promise.all(
+					credentials.map(async (cred: W3CVerifiableCredential) =>
+						typeof cred === 'string' ? await Cheqd.decodeCredentialJWT(cred) : cred
+					)
+				);
+
+				for (const credential of decodedCredentials) {
+					// Get issuer DID
+					const issuerDid =
+						typeof credential.issuer === 'string'
+							? credential.issuer
+							: (credential.issuer as { id: string }).id;
+					const trackInfo = {
+						category: OperationCategoryNameEnum.CREDENTIAL,
+						name: OperationNameEnum.CREDENTIAL_UNSUSPEND,
+						customer: response.locals.customer,
+						user: response.locals.user,
+						data: {
+							did: issuerDid,
+							encrypted: result.statusList?.metadata?.encrypted || false,
+							resource: result.resourceMetadata,
+							symmetricKey: '',
+						} satisfies ICredentialStatusTrack,
+					} as ITrackOperation;
+
+					// Track operation
+					eventTracker.emit('track', trackInfo);
+				}
 			}
 			// Return Ok response
 			return response.status(StatusCodes.OK).json(result satisfies UnsuspendCredentialResponseBody);
