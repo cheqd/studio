@@ -10,6 +10,7 @@ import type {
 	UnsuspensionResult,
 } from '@cheqd/did-provider-cheqd';
 import type { VerificationOptions } from './shared.js';
+import { DidStdFee } from '@cheqd/sdk';
 
 export enum CredentialConnectors {
 	Verida,
@@ -56,7 +57,11 @@ export type SymmetricKeyRequest = {
 	symmetricKey?: string;
 };
 
-export type CredentialRequestBody = { credential: W3CVerifiableCredential } & SymmetricKeyRequest;
+export type CredentialRequestBody = {
+	credential: W3CVerifiableCredential | W3CVerifiableCredential[];
+} & SymmetricKeyRequest;
+
+export type PublishResourceOptions = { fee?: DidStdFee | 'auto' | number; [x: string]: any };
 
 export type DateType = string | Date;
 
@@ -68,15 +73,15 @@ export type VerifyCredentialRequestBody = { credential: W3CVerifiableCredential 
 
 export type VerifyCredentialRequestQuery = VerificationOptions;
 
-export type RevokeCredentialRequestBody = CredentialRequestBody;
+export type RevokeCredentialRequestBody = CredentialRequestBody & { options?: PublishResourceOptions };
 
 export type RevokeCredentialRequestQuery = PublishRequest;
 
-export type SuspendCredentialRequestBody = CredentialRequestBody;
+export type SuspendCredentialRequestBody = CredentialRequestBody & { options?: PublishResourceOptions };
 
 export type SuspendCredentialRequestQuery = PublishRequest;
 
-export type UnsuspendCredentialRequestBody = CredentialRequestBody;
+export type UnsuspendCredentialRequestBody = CredentialRequestBody & { options?: PublishResourceOptions };
 
 export type UnsuspendCredentialRequestQuery = PublishRequest;
 
