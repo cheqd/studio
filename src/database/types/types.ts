@@ -1,6 +1,18 @@
 import pkg from 'pg-connection-string';
 import { DataSource } from 'typeorm';
 import { migrations, Entities } from '@veramo/data-store';
+import { APIKeyEntity } from '../entities/api.key.entity.js';
+import { CustomerEntity } from '../entities/customer.entity.js';
+import { UserEntity } from '../entities/user.entity.js';
+import { RoleEntity } from '../entities/role.entity.js';
+import { OperationEntity } from '../entities/operation.entity.js';
+import { PaymentEntity } from '../entities/payment.entity.js';
+import { PaymentAccountEntity } from '../entities/payment.account.entity.js';
+import { ResourceEntity } from '../entities/resource.entity.js';
+import { KeyEntity } from '../entities/key.entity.js';
+import { IdentifierEntity } from '../entities/identifier.entity.js';
+import { CoinEntity } from '../entities/coin.entity.js';
+import { SubscriptionEntity } from '../entities/subscription.entity.js';
 
 import * as dotenv from 'dotenv';
 
@@ -51,7 +63,22 @@ export class Postgres implements AbstractDatabase {
 				...migrations,
 				'src/database/migrations/**/*.ts',
 			],
-			entities: [...Entities, 'src/database/entities/*.entity.ts'],
+			entities: [
+				...Entities,
+				APIKeyEntity,
+				CustomerEntity,
+				UserEntity,
+				RoleEntity,
+				OperationEntity,
+				PaymentEntity,
+				PaymentAccountEntity,
+				ResourceEntity,
+				KeyEntity,
+				IdentifierEntity,
+				CoinEntity,
+				SubscriptionEntity,
+				'src/database/entities/*.entity.ts'
+			],
 			logging: ['error', 'info', 'warn'],
 		});
 	}
