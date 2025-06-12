@@ -14,20 +14,14 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 export class APIKeyService {
-	private apiKeyRepository: Repository<APIKeyEntity> | null = null;
+	public apiKeyRepository: Repository<APIKeyEntity>;
 	private secretBox: SecretBox;
 
 	public static instance = new APIKeyService();
 
 	constructor() {
+		this.apiKeyRepository = Connection.instance.dbConnection.getRepository(APIKeyEntity);
 		this.secretBox = new SecretBox(process.env.EXTERNAL_DB_ENCRYPTION_KEY);
-	}
-
-	private getRepository(): Repository<APIKeyEntity> {
-		if (!this.apiKeyRepository) {
-			this.apiKeyRepository = Connection.instance.dbConnection.getRepository(APIKeyEntity);
-		}
-		return this.apiKeyRepository;
 	}
 
 	// ToDo: Maybe we also need to store not the API key but the hash of it?
@@ -78,7 +72,7 @@ export class APIKeyService {
 			revoked,
 			fingerprint
 		);
-		const apiKeyRecord = (await this.getRepository().insert(apiKeyEntity)).identifiers[0];
+		const apiKeyRecord = (await this.apiKeyRepository.insert(apiKeyEntity)).identifiers[0];
 		if (!apiKeyRecord) throw new Error(`Cannot create a new API key`);
 
 		if (decryptionNeeded) {
@@ -122,7 +116,7 @@ export class APIKeyService {
 			existingAPIKey.revoked = revoked;
 		}
 
-		const entity = await this.getRepository().save(existingAPIKey);
+		const entity = await this.apiKeyRepository.save(existingAPIKey);
 		if (entity && decryptionNeeded) {
 			entity.apiKey = await this.decryptAPIKey(existingAPIKey.apiKey);
 		}
@@ -152,10 +146,13 @@ export class APIKeyService {
 		const fingerprint = sha256(apiKey);
 
 		// fetch the api key entity
-		const apiKeyEntity = await this.getRepository().findOne({
-			where: { fingerprint },
-			relations: { customer: true, user: true }
-		});
+		const apiKeyEntity = await APIKeyService.instance.findOne(
+			{
+				fingerprint,
+			},
+			{ customer: true, user: true },
+			options
+		);
 		if (!apiKeyEntity) {
 			throw new Error('Invalid API key');
 		}
@@ -180,7 +177,7 @@ export class APIKeyService {
 	) {
 		try {
 			const { decryptionNeeded } = options || {};
-			const apiKeyList = await this.getRepository().find({
+			const apiKeyList = await this.apiKeyRepository.find({
 				where,
 				relations,
 				order,
@@ -202,7 +199,7 @@ export class APIKeyService {
 		options?: APIServiceOptions,
 		order?: FindOptionsOrder<APIKeyEntity>
 	) {
-		const apiKeyEntity = await this.getRepository().findOne({
+		const apiKeyEntity = await this.apiKeyRepository.findOne({
 			where,
 			relations,
 			order,
