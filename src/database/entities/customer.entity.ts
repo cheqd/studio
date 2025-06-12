@@ -37,13 +37,13 @@ export class CustomerEntity {
 		type: 'timestamptz',
 		nullable: true,
 	})
-	updatedAt!: Date;
+	updatedAt?: Date;
 
 	@Column({
 		type: 'text',
 		nullable: true,
 	})
-	paymentProviderId!: string;
+	paymentProviderId?: string;
 
 	@BeforeInsert()
 	setCreatedAt() {
@@ -71,7 +71,7 @@ export class CustomerEntity {
 			this.email === customer.email &&
 			this.createdAt.toISOString() === customer.createdAt.toISOString() &&
 			((!this.updatedAt && !customer.updatedAt) ||
-				this.updatedAt.toISOString() === customer.updatedAt.toISOString())
+				this.updatedAt?.toISOString() === customer.updatedAt?.toISOString())
 		);
 	}
 }
