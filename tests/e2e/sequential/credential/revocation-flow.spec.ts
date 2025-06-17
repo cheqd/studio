@@ -4,6 +4,7 @@ import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
 import { v4 } from 'uuid';
+import { ResourceModule } from '@cheqd/sdk';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
@@ -79,6 +80,10 @@ test(' Verify a credential status after revocation', async ({ request }) => {
 	const response = await request.post(`/credential/revoke?publish=true`, {
 		data: JSON.stringify({
 			credential: jwtCredential,
+            fee: {
+                amount: [ResourceModule.fees.DefaultCreateResourceJsonFee],
+                gas: '4800000',
+            }
 		}),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
