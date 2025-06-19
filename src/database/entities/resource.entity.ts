@@ -37,13 +37,13 @@ export class ResourceEntity {
 		type: 'uuid', // declared as text in the database, we should migrate to uuid
 		nullable: true,
 	})
-	previousVersionId!: string | null;
+	previousVersionId?: string;
 
 	@Column({
 		type: 'uuid', // declared as text in the database, we should migrate to uuid
 		nullable: true,
 	})
-	nextVersionId!: string | null;
+	nextVersionId?: string;
 
 	@Column({
 		type: 'bool',
@@ -93,8 +93,8 @@ export class ResourceEntity {
 		resourceName: string,
 		resourceType: string,
 		mediaType: string,
-		previousVersionId: string | null,
-		nextVersionId: string | null,
+		previousVersionId: string,
+		nextVersionId: string,
 		customer: CustomerEntity,
 		identifier: IdentifierEntity,
 		key: KeyEntity,
