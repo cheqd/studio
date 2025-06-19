@@ -5,7 +5,11 @@ import { createHash } from 'crypto';
 export class InsertFingerprintAPIKeyTable1746780465032 implements MigrationInterface {
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		const tableName = 'apiKey';
-		const secretBox = new SecretBox(process.env.EXTERNAL_DB_ENCRYPTION_KEY);
+		const encryptionKey = process.env.EXTERNAL_DB_ENCRYPTION_KEY;
+		if (!encryptionKey) {
+			throw new Error('EXTERNAL_DB_ENCRYPTION_KEY environment variable is not set');
+		}
+		const secretBox = new SecretBox(encryptionKey);
 
 		// Step 1: Add the fingerprint column (nullable, no default)
 		await queryRunner.addColumn(

@@ -43,11 +43,11 @@ export class PaymentAccountEntity {
 	})
 	updatedAt!: Date;
 
-	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { onDelete: 'CASCADE' })
+	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'customerId' })
 	customer!: CustomerEntity;
 
-	@ManyToOne(() => Key, (key) => key.kid, { onDelete: 'CASCADE' })
+	@ManyToOne(() => Key, (key) => key.kid, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'kid' })
 	key!: Key;
 

@@ -35,6 +35,7 @@ export class OperationEntity {
 	@Column({
 		type: 'boolean',
 		nullable: false,
+		default: true,
 	})
 	successful!: boolean;
 
@@ -60,13 +61,13 @@ export class OperationEntity {
 		this.updatedAt = new Date();
 	}
 
-	@ManyToOne(() => CoinEntity, (defaultFee) => defaultFee.coinId, { onDelete: 'CASCADE' })
+	@ManyToOne(() => CoinEntity, (defaultFee) => defaultFee.coinId, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'defaultFee' })
-	defaultFee!: CoinEntity;
+	defaultFee?: CoinEntity;
 
-	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { onDelete: 'CASCADE' })
+	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'customerId' })
-	customer!: CustomerEntity;
+	customer?: CustomerEntity;
 
 	constructor(
 		operationId: string,

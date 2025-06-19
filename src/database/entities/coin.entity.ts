@@ -31,7 +31,7 @@ export class CoinEntity {
 		type: 'timestamptz',
 		nullable: true,
 	})
-	updatedAt!: Date;
+	updatedAt?: Date;
 
 	@BeforeInsert()
 	setCreatedAt() {

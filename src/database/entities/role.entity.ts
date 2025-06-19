@@ -5,6 +5,8 @@ dotenv.config();
 
 const { ENABLE_EXTERNAL_DB } = process.env;
 
+if (!ENABLE_EXTERNAL_DB) throw new Error('ENABLE_EXTERNAL_DB is not set');
+
 const arrayToJsonTransformer = (shouldTransform: string): ValueTransformer => {
 	return {
 		to: (array: any[]) => {
@@ -39,9 +41,10 @@ export class RoleEntity {
 		type: 'text',
 		transformer: arrayToJsonTransformer(ENABLE_EXTERNAL_DB),
 		array: true,
+		default: () => "'{}'",
 		nullable: true,
 	})
-	logToRoleIds: string[];
+	logToRoleIds?: string[];
 
 	constructor(roleTypeId: string, name: string, logToRoleIds = [] as string[]) {
 		this.roleTypeId = roleTypeId;

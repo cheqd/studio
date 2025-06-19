@@ -14,11 +14,11 @@ export class UserEntity {
 	})
 	logToId!: string;
 
-	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { onDelete: 'CASCADE' })
+	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'customerId' })
 	customer!: CustomerEntity;
 
-	@ManyToOne(() => RoleEntity, (role) => role.roleTypeId, { onDelete: 'CASCADE' })
+	@ManyToOne(() => RoleEntity, (role) => role.roleTypeId, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'roleTypeId' })
 	role!: RoleEntity;
 

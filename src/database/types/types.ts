@@ -10,38 +10,39 @@ import { RoleEntity } from '../entities/role.entity.js';
 import { OperationEntity } from '../entities/operation.entity.js';
 import { PaymentEntity } from '../entities/payment.entity.js';
 import { PaymentAccountEntity } from '../entities/payment.account.entity.js';
-
-import { CreatePaymentTable1695740345977 } from '../migrations/CreatePaymentTable.js';
-import { CreateOperationTable1695740345977 } from '../migrations/CreateOperationTable.js';
-import { CreateCustomersTable1683723285946 } from '../migrations/CreateCustomersTable.js';
-import { CreateUserTable1695740345977 } from '../migrations/CreateUserTable.js';
-import { CreateRoleTable1695740345977 } from '../migrations/CreateRoleTable.js';
-import { CreatePaymentAccountTable1695740345977 } from '../migrations/CreatePaymentAccountTable.js';
 import { ResourceEntity } from '../entities/resource.entity.js';
-import { CreateResourceTable1695740345977 } from '../migrations/CreateResourceTable.js';
-import { CreateCustomerTable1695740345977 } from '../migrations/CreateCustomerTable.js';
-import { AlterTableClaim1695740345977 } from '../migrations/AlterTableClaim.js';
-import { AlterTableIdentifier1695740345977 } from '../migrations/AlterTableIdentifier.js';
-import { AlterTableKey1695740345977 } from '../migrations/AlterTableKey.js';
 import { KeyEntity } from '../entities/key.entity.js';
-import { IdentifierEntity } from '../entities/identifier.entity.js';
-import { MigrateData1695740345977 } from '../migrations/MigrateData.js';
 import { APIKeyEntity } from '../entities/api.key.entity.js';
-import { CreateAPIKeyTable1695740345977 } from '../migrations/CreateApiKeyMigration.js';
-import { AlterOperationTable1695740345978 } from '../migrations/AlterOperationTable.js';
-import { AlterPaymentTable1695740345979 } from '../migrations/AlterPaymentTable.js';
-import { CreateCoinTable1695740345977 } from '../migrations/CreateCoinTable.js';
+import { IdentifierEntity } from '../entities/identifier.entity.js';
 import { CoinEntity } from '../entities/coin.entity.js';
-import { AlterOperationTableAddCustomer1695740345990 } from '../migrations/AlterOperationTableAddCustomer.js';
-import { AlterCustomerTable1695740346000 } from '../migrations/AlterCustomerTable.js';
-import { AlterOperationTable1695740346001 } from '../migrations/AlterOperationTableNewCategory.js';
 import { SubscriptionEntity } from '../entities/subscription.entity.js';
-import { CreateSubscritpionTable1695740346003 } from '../migrations/CreateSubscriptionTable.js';
-import { AlterAPIKeyTable1695740346004 } from '../migrations/AlterAPIKeyTable.js';
-import { AlterCustomerTableAddEmail1695740346005 } from '../migrations/AlterCustomerTableAddEmail.js';
-import { AlterCustomerTableUpdateEmail1695740346006 } from '../migrations/AlterCustomerTableUniqueEmail.js';
-import { IndexPaymentAccountTable1746513196390 } from '../migrations/IndexPaymentAccountTable.js';
-import { InsertFingerprintAPIKeyTable1746780465032 } from '../migrations/InsertFingerprintApiKeyTable.js';
+
+import { CreatePaymentTable1695740345977 } from '../migrations/archive/CreatePaymentTable.js';
+import { CreateOperationTable1695740345977 } from '../migrations/archive/CreateOperationTable.js';
+import { CreateCustomersTable1683723285946 } from '../migrations/archive/CreateCustomersTable.js';
+import { CreateUserTable1695740345977 } from '../migrations/archive/CreateUserTable.js';
+import { CreateRoleTable1695740345977 } from '../migrations/archive/CreateRoleTable.js';
+import { CreatePaymentAccountTable1695740345977 } from '../migrations/archive/CreatePaymentAccountTable.js';
+import { CreateResourceTable1695740345977 } from '../migrations/archive/CreateResourceTable.js';
+import { CreateCustomerTable1695740345977 } from '../migrations/archive/CreateCustomerTable.js';
+import { AlterTableClaim1695740345977 } from '../migrations/archive/AlterTableClaim.js';
+import { AlterTableIdentifier1695740345977 } from '../migrations/archive/AlterTableIdentifier.js';
+import { AlterTableKey1695740345977 } from '../migrations/archive/AlterTableKey.js';
+import { MigrateData1695740345977 } from '../migrations/archive/MigrateData.js';
+import { CreateAPIKeyTable1695740345977 } from '../migrations/archive/CreateApiKeyMigration.js';
+import { AlterOperationTable1695740345978 } from '../migrations/archive/AlterOperationTable.js';
+import { AlterPaymentTable1695740345979 } from '../migrations/archive/AlterPaymentTable.js';
+import { CreateCoinTable1695740345977 } from '../migrations/archive/CreateCoinTable.js';
+import { AlterOperationTableAddCustomer1695740345990 } from '../migrations/archive/AlterOperationTableAddCustomer.js';
+import { AlterCustomerTable1695740346000 } from '../migrations/archive/AlterCustomerTable.js';
+import { AlterOperationTable1695740346001 } from '../migrations/archive/AlterOperationTableNewCategory.js';
+import { CreateSubscritpionTable1695740346003 } from '../migrations/archive/CreateSubscriptionTable.js';
+import { AlterAPIKeyTable1695740346004 } from '../migrations/archive/AlterAPIKeyTable.js';
+import { AlterCustomerTableAddEmail1695740346005 } from '../migrations/archive/AlterCustomerTableAddEmail.js';
+import { AlterCustomerTableUpdateEmail1695740346006 } from '../migrations/archive/AlterCustomerTableUniqueEmail.js';
+import { IndexPaymentAccountTable1746513196390 } from '../migrations/archive/IndexPaymentAccountTable.js';
+import { InsertFingerprintAPIKeyTable1746780465032 } from '../migrations/archive/InsertFingerprintApiKeyTable.js';
+import { Cleanup1748331341024 } from '../migrations/custom/1748331341024-Cleanup.js';
 
 dotenv.config();
 
@@ -125,6 +126,8 @@ export class Postgres implements AbstractDatabase {
 				IndexPaymentAccountTable1746513196390,
 				// Add fingerprint in APIKey table
 				InsertFingerprintAPIKeyTable1746780465032,
+				// Add custom migrations
+				Cleanup1748331341024,
 			],
 			entities: [
 				...Entities,

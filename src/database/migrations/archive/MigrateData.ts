@@ -2,9 +2,9 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 import * as dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
 import { CheqdNetwork } from '@cheqd/sdk';
-import { CustomerEntity } from '../entities/customer.entity.js';
-import type { UserEntity } from '../entities/user.entity.js';
-import type { RoleEntity } from '../entities/role.entity.js';
+import { CustomerEntity } from '../../entities/customer.entity.js';
+import type { UserEntity } from '../../entities/user.entity.js';
+import type { RoleEntity } from '../../entities/role.entity.js';
 dotenv.config();
 
 export class MigrateData1695740345977 implements MigrationInterface {
