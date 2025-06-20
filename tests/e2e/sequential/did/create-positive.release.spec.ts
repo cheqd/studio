@@ -8,6 +8,14 @@ import { CheqdNetwork, MethodSpecificIdAlgo, VerificationMethods, createVerifica
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
+// Helper function to handle StringOrStringArray format from DID resolver
+function getServiceEndpointValue(serviceEndpoint: string | string[]): string {
+	if (Array.isArray(serviceEndpoint)) {
+		return serviceEndpoint[0];
+	}
+	return serviceEndpoint;
+}
+
 test('[Positive] It can create DID with mandatory properties (Form based + Indy style)', async ({ request }) => {
 	// send request to create DID
 	let response = await request.post(`/did/create`, {
@@ -76,7 +84,7 @@ test('[Positive] It can create DID with mandatory and optional properties (Form 
 	expect(didDocument.verificationMethod[0].type).toBe(VerificationMethods.Ed255192018);
 	expect(didDocument.service[0].id).toBe(`${body.did}#service-1`);
 	expect(didDocument.service[0].type).toBe('LinkedDomains');
-	expect(didDocument.service[0].serviceEndpoint[0]).toBe('https://example.com');
+	expect(getServiceEndpointValue(didDocument.service[0].serviceEndpoint)).toBe('https://example.com');
 });
 
 test('[Positive] It can create  DID with mandatory properties (JSON based + Indy style)', async ({ request }) => {
@@ -174,5 +182,5 @@ test('[Positive] It can create DID with mandatory and optional properties (JSON 
 	expect(didDocument.verificationMethod[0].type).toBe(VerificationMethods.JWK);
 	expect(didDocument.service[0].id).toBe(`${did}#service-1`);
 	expect(didDocument.service[0].type).toBe('LinkedDomains');
-	expect(didDocument.service[0].serviceEndpoint[0]).toBe('https://example.com');
+	expect(getServiceEndpointValue(didDocument.service[0].serviceEndpoint)).toBe('https://example.com');
 });

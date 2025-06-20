@@ -43,9 +43,9 @@ export class PaymentEntity {
 	@JoinColumn({ name: 'customerId' })
 	customer!: CustomerEntity;
 
-	@ManyToOne(() => ResourceEntity, (resource) => resource.resourceId, { nullable: false, onDelete: 'CASCADE' })
+	@ManyToOne(() => ResourceEntity, (resource) => resource.resourceId, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'resourceId' })
-	resource!: ResourceEntity;
+	resource!: ResourceEntity | null;
 
 	@ManyToOne(() => OperationEntity, (operation) => operation.operationId, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'operationId' })
@@ -77,7 +77,7 @@ export class PaymentEntity {
 		amount: CoinEntity,
 		successful: boolean,
 		namespace: CheqdNetwork,
-		resource: ResourceEntity,
+		resource: ResourceEntity | null,
 		fromAccount: PaymentAccountEntity,
 		toAccount: string,
 		timestamp: Date
