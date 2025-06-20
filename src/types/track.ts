@@ -6,6 +6,7 @@ import type { LogLevelDesc } from 'loglevel';
 import type { ResourceEntity } from '../database/entities/resource.entity.js';
 import { ResourceService } from '../services/api/resource.js';
 import type { Coin } from '@cosmjs/amino';
+import { isResourceTrack } from '../services/track/helpers.js';
 
 export type TrackData =
 	| IResourceTrack
@@ -115,10 +116,10 @@ export class TrackOperationWithPayment implements ITrackOperation {
 	}
 
 	async getResourceEntity(): Promise<ResourceEntity | null> {
-		if (this.data && (this.data as IResourceTrack).resource) {
-			return await ResourceService.instance.get((this.data as IResourceTrack).resource.resourceId);
+		if (this.data && isResourceTrack(this.data) && this.data.resource) {
+			return await ResourceService.instance.get(this.data.resource.resourceId);
 		}
-		if (this.feePaymentOptions && this.feePaymentOptions[0].resourceId) {
+		if (this.feePaymentOptions && this.feePaymentOptions[0]?.resourceId) {
 			return await ResourceService.instance.get(this.feePaymentOptions[0].resourceId);
 		}
 		return null;

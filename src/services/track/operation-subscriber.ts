@@ -38,12 +38,8 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 		operationEntity: OperationEntity
 	): Promise<ITrackResult> {
 		const resource = await operationWithPayment.getResourceEntity();
-		if (!resource) {
-			return {
-				operation: operationWithPayment,
-				error: `Resource for operation ${operationWithPayment.name} not found. Customer: ${operationWithPayment.customer.customerId}`,
-			} satisfies ITrackResult;
-		}
+		// For some operations, there might not be an associated resource
+		// This is normal and should not be treated as an error
 
 		for (const feePayment of operationWithPayment.feePaymentOptions) {
 			// Create Fee Coin

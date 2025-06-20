@@ -43,6 +43,7 @@ import { AlterCustomerTableUpdateEmail1695740346006 } from '../migrations/archiv
 import { IndexPaymentAccountTable1746513196390 } from '../migrations/archive/IndexPaymentAccountTable.js';
 import { InsertFingerprintAPIKeyTable1746780465032 } from '../migrations/archive/InsertFingerprintApiKeyTable.js';
 import { Cleanup1748331341024 } from '../migrations/custom/1748331341024-Cleanup.js';
+import { StudioMigrations1750427001486 } from '../migrations/1750427001486-studio-migrations.js';
 
 dotenv.config();
 
@@ -128,6 +129,7 @@ export class Postgres implements AbstractDatabase {
 				InsertFingerprintAPIKeyTable1746780465032,
 				// Add custom migrations
 				Cleanup1748331341024,
+				StudioMigrations1750427001486,
 			],
 			entities: [
 				...Entities,

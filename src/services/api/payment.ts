@@ -28,7 +28,7 @@ export class PaymentService {
 		amount: CoinEntity,
 		successful: boolean,
 		namespace: CheqdNetwork,
-		resource: ResourceEntity,
+		resource: ResourceEntity | null,
 		fromAccount: PaymentAccountEntity,
 		toAccount: string,
 		timestamp: Date
@@ -59,7 +59,7 @@ export class PaymentService {
 		amount: CoinEntity,
 		successful: boolean,
 		namespace: CheqdNetwork,
-		resource: ResourceEntity,
+		resource: ResourceEntity | null,
 		fromAccount: PaymentAccountEntity,
 		toAccount: string,
 		timestamp: Date
