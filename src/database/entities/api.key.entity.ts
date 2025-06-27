@@ -10,7 +10,7 @@ export class APIKeyEntity {
 	@Column({
 		type: 'varchar',
 		unique: true,
-		primary: true
+		primary: true,
 	})
 	apiKeyHash!: string;
 

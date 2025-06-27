@@ -206,6 +206,7 @@
  *               type: string
  *               enum:
  *                 - StatusList2021Entry
+ *                 - BitstringStatusListEntry
  *         issuanceDate:
  *           type: string
  *           format: date-time

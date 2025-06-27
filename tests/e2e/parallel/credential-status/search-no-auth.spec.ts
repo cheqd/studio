@@ -19,6 +19,7 @@ test('[Positive] It can search credential-status with existent DID, statusListNa
 		'/credential-status/search?' +
 			`did=${DEFAULT_TESTNET_DID}&` +
 			'statusPurpose=revocation&' +
+			'listType=StatusList2021&' +
 			`statusListName=${DEFAULT_STATUS_LIST_UNENCRYPTED_NAME}`
 	);
 	expect(response).toBeOK();
@@ -40,6 +41,7 @@ test('[Positive] It can search credential-status with existent DID, statusListNa
 		'/credential-status/search?' +
 			`did=${DEFAULT_TESTNET_DID}&` +
 			'statusPurpose=suspension&' +
+			'listType=StatusList2021&' +
 			`statusListName=${DEFAULT_STATUS_LIST_UNENCRYPTED_NAME}`
 	);
 	expect(response).toBeOK();
@@ -59,6 +61,7 @@ test('[Negative] It cannot search credential-status with not existent DID', asyn
 		'/credential-status/search?' +
 			`did=${NOT_EXISTENT_TESTNET_DID}&` +
 			'statusPurpose=revocation&' +
+			'listType=StatusList2021&' +
 			`statusListName=${DEFAULT_STATUS_LIST_UNENCRYPTED_NAME}`
 	);
 	expect(response.status()).toBe(StatusCodes.NOT_FOUND);
@@ -72,6 +75,7 @@ test('[Negative] It cannot search credential-status with an invalid DID', async 
 		'/credential-status/search?' +
 			`did=${INVALID_DID}&` +
 			'statusPurpose=revocation&' +
+			'listType=StatusList2021&' +
 			`statusListName=${DEFAULT_STATUS_LIST_UNENCRYPTED_NAME}`
 	);
 	expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
@@ -87,6 +91,7 @@ test('[Negative] It cannot search credential-status with an existent DID an not 
 		'/credential-status/search?' +
 			`did=${DEFAULT_TESTNET_DID}&` +
 			'statusPurpose=revocation&' +
+			'listType=StatusList2021&' +
 			`statusListName=${NOT_EXISTENT_STATUS_LIST_NAME}`
 	);
 	expect(response.status()).toBe(StatusCodes.NOT_FOUND);
