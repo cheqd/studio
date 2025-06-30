@@ -44,17 +44,17 @@ import {
 	type ICheqdVerifyCredentialWithStatusListArgs,
 	type ICheqdVerifyPresentationWithStatusListArgs,
 	type PaymentCondition,
-	DefaultStatusListResourceType,
-	StatusList2021StatusPurposeTypes,
+	BitstringStatusListResourceType,
+	DefaultStatusList2021StatusPurposeTypes,
 	DefaultStatusListEncodings,
 	ICheqdSuspendBulkCredentialsWithStatusListArgs,
 	ICheqdUnsuspendBulkCredentialsWithStatusListArgs,
 	StatusList2021Revocation,
 	StatusList2021Suspension,
-	StatusList2021StatusPurposeType,
+	DefaultStatusList2021StatusPurposeType,
 	TransactionResult,
-	DefaultStatusPurposeTypes,
-	StatusList2021ResourceTypes,
+	BitstringStatusPurposeTypes,
+	DefaultStatusList2021ResourceTypes,
 } from '@cheqd/did-provider-cheqd';
 import { ResourceModule, type CheqdNetwork } from '@cheqd/sdk';
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key';
@@ -485,7 +485,7 @@ export class Veramo {
 			kms,
 			issuerDid: did,
 			statusListName: resourceOptions.name,
-			statusPurpose: statusOptions.statusPurpose || StatusList2021StatusPurposeTypes.revocation,
+			statusPurpose: statusOptions.statusPurpose || DefaultStatusList2021StatusPurposeTypes.revocation,
 			statusListEncoding: statusOptions.encoding || DefaultStatusListEncodings.base64url,
 			statusListLength: statusOptions.length,
 			resourceVersion: resourceOptions.version,
@@ -507,7 +507,7 @@ export class Veramo {
 			kms,
 			issuerDid: did,
 			statusListName: resourceOptions.name,
-			statusPurpose: statusOptions.statusPurpose || DefaultStatusPurposeTypes.revocation,
+			statusPurpose: statusOptions.statusPurpose || BitstringStatusPurposeTypes.revocation,
 			statusListEncoding: statusOptions.encoding || DefaultStatusListEncodings.base64url,
 			statusListLength: statusOptions.length,
 			resourceVersion: resourceOptions.version,
@@ -566,7 +566,7 @@ export class Veramo {
 			kms,
 			issuerDid: did,
 			statusListName: resourceOptions.name,
-			statusPurpose: statusOptions.statusPurpose || StatusList2021StatusPurposeTypes.revocation,
+			statusPurpose: statusOptions.statusPurpose || DefaultStatusList2021StatusPurposeTypes.revocation,
 			statusListEncoding: statusOptions.encoding || DefaultStatusListEncodings.base64url,
 			statusListLength: statusOptions.length,
 			resourceVersion: resourceOptions.version,
@@ -627,7 +627,7 @@ export class Veramo {
 			kms,
 			issuerDid: did,
 			statusListName: resourceOptions.name,
-			statusPurpose: statusOptions.statusPurpose || DefaultStatusPurposeTypes.revocation,
+			statusPurpose: statusOptions.statusPurpose || BitstringStatusPurposeTypes.revocation,
 			statusListEncoding: statusOptions.encoding || DefaultStatusListEncodings.base64url,
 			statusListLength: statusOptions.length,
 			statusSize: statusOptions.size || 2,
@@ -657,7 +657,7 @@ export class Veramo {
 				...resourceOptions,
 				collectionId: did.split(':')[3],
 				data: resourceOptions.data,
-				resourceType: DefaultStatusListResourceType,
+				resourceType: BitstringStatusListResourceType,
 			},
 			network: did.split(':')[2] as CheqdNetwork,
 		} satisfies ICheqdBroadcastStatusListArgs);
@@ -906,13 +906,13 @@ export class Veramo {
 		did: string,
 		statusListName: string,
 		listType: string,
-		statusPurpose: StatusList2021StatusPurposeType
+		statusPurpose: DefaultStatusList2021StatusPurposeType
 	): Promise<SearchStatusListResult> {
 		let resourceType: string;
 		if (listType === 'BitstringStatusList') {
-			resourceType = DefaultStatusListResourceType;
+			resourceType = BitstringStatusListResourceType;
 		} else {
-			resourceType = StatusList2021ResourceTypes[statusPurpose];
+			resourceType = DefaultStatusList2021ResourceTypes[statusPurpose];
 		}
 		// construct url
 		const url = new URL(

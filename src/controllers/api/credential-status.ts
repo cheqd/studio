@@ -45,7 +45,7 @@ import {
 	BulkSuspensionResult,
 	BulkUnsuspensionResult,
 	DefaultStatusListEncodings,
-	StatusList2021StatusPurposeTypes,
+	DefaultStatusList2021StatusPurposeTypes,
 } from '@cheqd/did-provider-cheqd';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
 import { toNetwork } from '../../helpers/helpers.js';
@@ -75,10 +75,10 @@ export class CredentialStatusController {
 			.isString()
 			.withMessage('statusPurpose: should be a string')
 			.bail()
-			.isIn(Object.keys(StatusList2021StatusPurposeTypes))
+			.isIn(Object.keys(DefaultStatusList2021StatusPurposeTypes))
 			.withMessage(
 				`statusPurpose: invalid statusPurpose, should be one of ${Object.keys(
-					StatusList2021StatusPurposeTypes
+					DefaultStatusList2021StatusPurposeTypes
 				).join(', ')}`
 			)
 			.bail(),
@@ -413,10 +413,10 @@ export class CredentialStatusController {
 			.notEmpty()
 			.withMessage('statusPurpose: should be a non-empty string')
 			.bail()
-			.isIn(Object.keys(StatusList2021StatusPurposeTypes))
+			.isIn(Object.keys(DefaultStatusList2021StatusPurposeTypes))
 			.withMessage(
 				`statusPurpose: invalid statusPurpose, should be one of ${Object.keys(
-					StatusList2021StatusPurposeTypes
+					DefaultStatusList2021StatusPurposeTypes
 				).join(', ')}`
 			)
 			.bail(),
@@ -467,10 +467,10 @@ export class CredentialStatusController {
 			.notEmpty()
 			.withMessage('statusPurpose: should be a non-empty string')
 			.bail()
-			.isIn(Object.keys(StatusList2021StatusPurposeTypes))
+			.isIn(Object.keys(DefaultStatusList2021StatusPurposeTypes))
 			.withMessage(
 				`statusPurpose: invalid statusPurpose, should be one of ${Object.keys(
-					StatusList2021StatusPurposeTypes
+					DefaultStatusList2021StatusPurposeTypes
 				).join(', ')}`
 			)
 			.bail(),

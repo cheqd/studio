@@ -4,13 +4,13 @@ import {
 	BulkRevocationResult,
 	BulkSuspensionResult,
 	BulkUnsuspensionResult,
-	StatusList2021StatusPurposeType,
+	DefaultStatusList2021StatusPurposeType,
 	StatusCheckResult,
 	LinkedResourceMetadataResolutionResult,
 	StatusList2021Revocation,
 	StatusList2021Suspension,
-	StatusList2021StatusPurposeTypes,
-	DefaultStatusListPurposeType,
+	DefaultStatusList2021StatusPurposeTypes,
+	BitstringStatusListPurposeType,
 	CreateStatusListResult,
 	ICheqdCheckCredentialStatusOptions,
 	BitstringStatusList,
@@ -30,7 +30,7 @@ export type CreateUnencryptedStatusListRequestBody = {
 
 export type CreateUnencryptedStatusListRequestQuery = {
 	listType: string;
-	statusPurpose: StatusList2021StatusPurposeType;
+	statusPurpose: DefaultStatusList2021StatusPurposeType;
 };
 
 export type CreateUnencryptedStatusListSuccessfulResponseBody = Pick<
@@ -133,7 +133,7 @@ export type CheckStatusListRequestBody = {
 };
 
 export type CheckStatusListRequestQuery = {
-	statusPurpose: StatusList2021StatusPurposeType;
+	statusPurpose: DefaultStatusList2021StatusPurposeType;
 };
 
 export type CheckStatusListSuccessfulResponseBody = {
@@ -149,7 +149,7 @@ export type SearchStatusListQuery = {
 	did: string;
 	statusListName: string;
 	listType: 'StatusList2021' | 'BitstringStatusList';
-	statusPurpose: StatusList2021StatusPurposeType;
+	statusPurpose: DefaultStatusList2021StatusPurposeType;
 };
 
 export type SearchStatusListSuccessfulResponseBody = Required<
@@ -165,13 +165,13 @@ export type SearchStatusListUnsuccessfulResponseBody = {
 export type CreateUnencryptedStatusListOptions = {
 	length?: number;
 	encoding?: keyof typeof DefaultStatusListEncodings;
-	statusPurpose: StatusList2021StatusPurposeType;
+	statusPurpose: DefaultStatusList2021StatusPurposeType;
 };
 export type CreateUnencryptedBitstringOptions = {
 	length?: number;
 	size?: number; // in bits, strictly integer, e.g. 1 bits, 2 bits
 	encoding?: keyof typeof DefaultStatusListEncodings;
-	statusPurpose: DefaultStatusListPurposeType;
+	statusPurpose: BitstringStatusListPurposeType;
 };
 
 export type CreateEncryptedStatusListOptions = CreateUnencryptedStatusListOptions & {
@@ -230,9 +230,9 @@ export const DefaultStatusActions = {
 } as const;
 
 export const DefaultStatusActionPurposeMap = {
-	[DefaultStatusActions.revoke]: StatusList2021StatusPurposeTypes.revocation,
-	[DefaultStatusActions.suspend]: StatusList2021StatusPurposeTypes.suspension,
-	[DefaultStatusActions.reinstate]: StatusList2021StatusPurposeTypes.suspension,
+	[DefaultStatusActions.revoke]: DefaultStatusList2021StatusPurposeTypes.revocation,
+	[DefaultStatusActions.suspend]: DefaultStatusList2021StatusPurposeTypes.suspension,
+	[DefaultStatusActions.reinstate]: DefaultStatusList2021StatusPurposeTypes.suspension,
 } as const;
 
 export type DefaultStatusAction = keyof typeof DefaultStatusActions;
