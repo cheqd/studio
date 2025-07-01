@@ -1,5 +1,7 @@
 # Changelog
 
+## [3.6.10-develop.2](https://github.com/cheqd/studio/compare/3.6.10-develop.1...3.6.10-develop.2) (2025-07-01)
+
 ## [3.6.10-develop.1](https://github.com/cheqd/studio/compare/3.6.9...3.6.10-develop.1) (2025-06-20)
 
 ### Bug Fixes
