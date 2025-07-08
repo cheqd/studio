@@ -24,6 +24,9 @@ jobs:
             - name: 'Run npm build'
               run: npm run build
 
+            - name: Setup services
+              run: docker compose -f tests/docker-compose.yml up -d
+
             - name: Install Playwright Browsers
               # We only care about Chromium in this repo, drop the word "chromium" to install all browsers
               run: npx playwright install --with-deps chromium
