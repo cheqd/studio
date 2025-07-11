@@ -24,10 +24,11 @@ import type {
 	SuspensionResult,
 	UnsuspensionResult,
 	TransactionResult,
+	CreateStatusListResult,
 } from '@cheqd/did-provider-cheqd';
 import type { VeramoAgent } from '../../types/shared';
 import type { VerificationOptions } from '../../types/shared';
-import type { FeePaymentOptions } from '../../types/credential-status';
+import type { CreateEncryptedBitstringOptions, CreateUnencryptedBitstringOptions, FeePaymentOptions } from '../../types/credential-status';
 import type { CredentialRequest } from '../../types/credential';
 import type { CheckStatusListOptions } from '../../types/credential-status';
 import type { StatusOptions } from '../../types/credential-status';
@@ -111,12 +112,28 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<CreateStatusList2021Result> {
 		throw new Error(`Not supported`);
 	}
+	createUnencryptedBitstringStatusList(
+		did: string,
+		resourceOptions: ResourcePayload,
+		statusOptions: CreateUnencryptedBitstringOptions,
+		customer: CustomerEntity
+	): Promise<CreateStatusListResult> {
+		throw new Error(`Not supported`);
+	}
 	createEncryptedStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
 		statusOptions: CreateEncryptedStatusListOptions,
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result> {
+		throw new Error(`Not supported`);
+	}
+	createEncryptedBitstringStatusList(
+		did: string,
+		resourceOptions: ResourcePayload,
+		statusOptions: CreateEncryptedBitstringOptions,
+		customer: CustomerEntity
+	): Promise<CreateStatusListResult> {
 		throw new Error(`Not supported`);
 	}
 	updateUnencryptedStatusList2021(
@@ -140,9 +157,10 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<StatusCheckResult> {
 		throw new Error(`Not supported`);
 	}
-	searchStatusList2021(
+	searchStatusList(
 		did: string,
 		statusListName: string,
+		listType: 'StatusList2021' | 'BitstringStatusList',
 		statusPurpose: 'revocation' | 'suspension',
 		customer?: CustomerEntity
 	): Promise<any> {

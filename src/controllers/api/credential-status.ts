@@ -3,7 +3,12 @@ import { check, query } from '../validator/index.js';
 import { fromString } from 'uint8arrays';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
-import type { CheckStatusListSuccessfulResponseBody, FeePaymentOptions } from '../../types/credential-status.js';
+import type {
+	CheckStatusListSuccessfulResponseBody,
+	CreateEncryptedBitstringSuccessfulResponseBody,
+	CreateUnencryptedBitstringSuccessfulResponseBody,
+	FeePaymentOptions,
+} from '../../types/credential-status.js';
 import {
 	DefaultStatusAction,
 	DefaultStatusActionPurposeMap,
@@ -39,7 +44,7 @@ import {
 	BulkRevocationResult,
 	BulkSuspensionResult,
 	BulkUnsuspensionResult,
-	DefaultStatusList2021Encodings,
+	DefaultStatusListEncodings,
 	DefaultStatusList2021StatusPurposeTypes,
 } from '@cheqd/did-provider-cheqd';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
@@ -53,6 +58,16 @@ import { validate } from '../validator/decorator.js';
 export class CredentialStatusController {
 	static createUnencryptedValidator = [
 		check('did').exists().withMessage('did: required').bail().isDID(),
+		check('listType')
+			.exists()
+			.withMessage('listType: required')
+			.bail()
+			.isString()
+			.withMessage('listType: should be a string')
+			.bail()
+			.isIn(['StatusList2021', 'BitstringStatusList'])
+			.withMessage(`listType: invalid listType, should be one of ['StatusList2021', 'BitstringStatusList']`)
+			.bail(),
 		check('statusPurpose')
 			.exists()
 			.withMessage('statusPurpose: required')
@@ -117,9 +132,9 @@ export class CredentialStatusController {
 			.bail(),
 		check('encoding')
 			.optional()
-			.isIn(Object.keys(DefaultStatusList2021Encodings))
+			.isIn(Object.keys(DefaultStatusListEncodings))
 			.withMessage(
-				`encoding: invalid encoding, should be one of ${Object.keys(DefaultStatusList2021Encodings).join(', ')}`
+				`encoding: invalid encoding, should be one of ${Object.keys(DefaultStatusListEncodings).join(', ')}`
 			)
 			.bail(),
 		check('encodedList').optional().isString().withMessage('encodedList: should be a string').bail(),
@@ -433,6 +448,15 @@ export class CredentialStatusController {
 			.notEmpty()
 			.withMessage('statusListName: should be a non-empty string')
 			.bail(),
+		query('listType')
+			.exists()
+			.withMessage('listType: required')
+			.bail()
+			.isString()
+			.withMessage('listType: should be a string')
+			.bail()
+			.isIn(['StatusList2021', 'BitstringStatusList'])
+			.withMessage(`listType: invalid listType, should be one of ['StatusList2021', 'BitstringStatusList']`),
 		query('statusPurpose')
 			.exists()
 			.withMessage('statusPurpose: required')
@@ -458,9 +482,18 @@ export class CredentialStatusController {
 	 * /credential-status/create/unencrypted:
 	 *   post:
 	 *     tags: [ Credential Status ]
-	 *     summary: Create an unencrypted StatusList2021 credential status list.
-	 *     description: This endpoint creates an unencrypted StatusList2021 credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.
+	 *     summary: Create an unencrypted StatusList2021 or BitstringStatusList credential status list.
+	 *     description: This endpoint creates an unencrypted StatusList2021 or BitstringStatusList credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.
 	 *     parameters:
+	 *       - in: query
+	 *         name: listType
+	 *         description: The type of Status List.
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - StatusList2021
+	 *             - BitstringStatusList
 	 *       - in: query
 	 *         name: statusPurpose
 	 *         description: The purpose of the status list. Can be either revocation or suspension. Once this is set, it cannot be changed. A new status list must be created to change the purpose.
@@ -499,7 +532,7 @@ export class CredentialStatusController {
 			request.body as CreateUnencryptedStatusListRequestBody;
 
 		// collect request parameters - case: query
-		const { statusPurpose } = request.query as CreateUnencryptedStatusListRequestQuery;
+		const { listType, statusPurpose } = request.query as CreateUnencryptedStatusListRequestQuery;
 
 		// define broadcast mode
 		const data = encodedList ? fromString(encodedList, encoding) : undefined;
@@ -518,22 +551,43 @@ export class CredentialStatusController {
 				);
 				return response.status(StatusCodes.OK).json(result);
 			}
-
+			let result:
+				| CreateUnencryptedStatusListSuccessfulResponseBody
+				| CreateUnencryptedBitstringSuccessfulResponseBody;
 			// create unencrypted status list
-			const result = (await identityServiceStrategySetup.agent.createUnencryptedStatusList2021(
-				did,
-				{
-					name: statusListName,
-					alsoKnownAs,
-					version: statusListVersion,
-				},
-				{
-					length,
-					encoding,
-					statusPurpose,
-				},
-				response.locals.customer
-			)) as CreateUnencryptedStatusListSuccessfulResponseBody;
+			if (listType === 'BitstringStatusList') {
+				// create BitstringStatusList
+				result = (await identityServiceStrategySetup.agent.createUnencryptedBitstringStatusList(
+					did,
+					{
+						name: statusListName,
+						alsoKnownAs,
+						version: statusListVersion,
+					},
+					{
+						length,
+						encoding,
+						statusPurpose,
+					},
+					response.locals.customer
+				)) as CreateUnencryptedBitstringSuccessfulResponseBody;
+			} else {
+				// create StatusList2021
+				result = (await identityServiceStrategySetup.agent.createUnencryptedStatusList2021(
+					did,
+					{
+						name: statusListName,
+						alsoKnownAs,
+						version: statusListVersion,
+					},
+					{
+						length,
+						encoding,
+						statusPurpose,
+					},
+					response.locals.customer
+				)) as CreateUnencryptedStatusListSuccessfulResponseBody;
+			}
 
 			// handle error
 			if (result.error) {
@@ -576,9 +630,18 @@ export class CredentialStatusController {
 	 * /credential-status/create/encrypted:
 	 *   post:
 	 *     tags: [ Credential Status ]
-	 *     summary: Create an encrypted StatusList2021 credential status list.
-	 *     description: This endpoint creates an encrypted StatusList2021 credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.
+	 *     summary: Create an encrypted StatusList2021 or BitstringStatusList credential status list.
+	 *     description: This endpoint creates an encrypted StatusList2021  or BitstringStatusList credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.
 	 *     parameters:
+	 *       - in: query
+	 *         name: listType
+	 *         description: The type of Status List.
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - StatusList2021
+	 *             - BitstringStatusList
 	 *       - in: query
 	 *         name: statusPurpose
 	 *         description: The purpose of the status list. Can be either revocation or suspension. Once this is set, it cannot be changed. A new status list must be created to change the purpose.
@@ -627,30 +690,54 @@ export class CredentialStatusController {
 		} = request.body as CreateEncryptedStatusListRequestBody;
 
 		// collect request parameters - case: query
-		const { statusPurpose } = request.query as CreateEncryptedStatusListRequestQuery;
+		const { listType, statusPurpose } = request.query as CreateEncryptedStatusListRequestQuery;
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
-
+		let result:
+				| CreateEncryptedStatusListSuccessfulResponseBody
+				| CreateEncryptedBitstringSuccessfulResponseBody;
 		try {
 			// create encrypted status list
-			const result = (await identityServiceStrategySetup.agent.createEncryptedStatusList2021(
-				did,
-				{
-					name: statusListName,
-					alsoKnownAs,
-					version: statusListVersion,
-				},
-				{
-					length,
-					encoding,
-					statusPurpose,
-					paymentConditions,
-					feePaymentAddress,
-					feePaymentAmount,
-					feePaymentWindow,
-				},
-				response.locals.customer
-			)) as CreateEncryptedStatusListSuccessfulResponseBody;
-
+			if (listType === 'BitstringStatusList') {
+				// create BitstringStatusList
+				result = (await identityServiceStrategySetup.agent.createEncryptedBitstringStatusList(
+					did,
+					{
+						name: statusListName,
+						alsoKnownAs,
+						version: statusListVersion,
+					},
+					{
+						length,
+						encoding,
+						statusPurpose,
+						paymentConditions,
+						feePaymentAddress,
+						feePaymentAmount,
+						feePaymentWindow,
+					},
+					response.locals.customer
+				)) as CreateEncryptedBitstringSuccessfulResponseBody;
+			} else {
+				// create StatusList2021
+				result = (await identityServiceStrategySetup.agent.createEncryptedStatusList2021(
+					did,
+					{
+						name: statusListName,
+						alsoKnownAs,
+						version: statusListVersion,
+					},
+					{
+						length,
+						encoding,
+						statusPurpose,
+						paymentConditions,
+						feePaymentAddress,
+						feePaymentAmount,
+						feePaymentWindow,
+					},
+					response.locals.customer
+				)) as CreateEncryptedStatusListSuccessfulResponseBody;
+			}
 			// handle error
 			if (result.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
@@ -741,9 +828,10 @@ export class CredentialStatusController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		// ensure unencrypted status list
-		const unencrypted = await identityServiceStrategySetup.agent.searchStatusList2021(
+		const unencrypted = await identityServiceStrategySetup.agent.searchStatusList(
 			did,
 			statusListName,
+			"StatusList2021",
 			DefaultStatusActionPurposeMap[statusAction]
 		);
 
@@ -918,9 +1006,10 @@ export class CredentialStatusController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		// ensure encrypted status list
-		const encrypted = await identityServiceStrategySetup.agent.searchStatusList2021(
+		const encrypted = await identityServiceStrategySetup.agent.searchStatusList(
 			did,
 			statusListName,
+			"StatusList2021",
 			DefaultStatusActionPurposeMap[statusAction]
 		);
 
@@ -1103,9 +1192,10 @@ export class CredentialStatusController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		// ensure status list
-		const statusList = await identityServiceStrategySetup.agent.searchStatusList2021(
+		const statusList = await identityServiceStrategySetup.agent.searchStatusList(
 			did,
 			statusListName,
+			"StatusList2021",
 			statusPurpose
 		);
 
@@ -1242,7 +1332,7 @@ export class CredentialStatusController {
 	 * /credential-status/search:
 	 *   get:
 	 *     tags: [ Credential Status ]
-	 *     summary: Fetch StatusList2021 DID-Linked Resource based on search criteria.
+	 *     summary: Fetch StatusList2021 or BitstringStatusList DID-Linked Resource based on search criteria.
 	 *     parameters:
 	 *       - in: query
 	 *         name: did
@@ -1251,8 +1341,18 @@ export class CredentialStatusController {
 	 *         schema:
 	 *           type: string
 	 *       - in: query
+	 *         name: listType
+	 *         description: The type of Status List.
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - StatusList2021
+	 *             - BitstringStatusList
+	 *       - in: query
 	 *         name: statusPurpose
 	 *         description: The purpose of the status list. Can be either revocation or suspension.
+	 *         required: true
 	 *         schema:
 	 *           type: string
 	 *           enum:
@@ -1260,7 +1360,8 @@ export class CredentialStatusController {
 	 *             - suspension
 	 *       - in: query
 	 *         name: statusListName
-	 *         description: The name of the StatusList2021 DID-Linked Resource.
+	 *         description: The name of the Status List DID-Linked Resource.
+	 *         required: true
 	 *         schema:
 	 *           type: string
 	 *     responses:
@@ -1280,13 +1381,14 @@ export class CredentialStatusController {
 	@validate
 	async searchStatusList(request: Request, response: Response) {
 		// collect request parameters - case: query
-		const { did, statusListName, statusPurpose } = request.query as SearchStatusListQuery;
+		const { did, statusListName, listType, statusPurpose } = request.query as SearchStatusListQuery;
 
 		try {
 			// search status list
-			const result = await new IdentityServiceStrategySetup().agent.searchStatusList2021(
+			const result = await new IdentityServiceStrategySetup().agent.searchStatusList(
 				did,
 				statusListName,
+				listType,
 				statusPurpose
 			);
 

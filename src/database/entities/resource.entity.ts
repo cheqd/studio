@@ -80,7 +80,7 @@ export class ResourceEntity {
 	@JoinColumn({ name: 'identifierDid' })
 	identifier!: Identifier;
 
-	@ManyToOne(() => Key, (key) => key.kid, { nullable: false,onDelete: 'CASCADE' })
+	@ManyToOne(() => Key, (key) => key.kid, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'kid' })
 	key!: Key;
 
