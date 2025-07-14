@@ -6,7 +6,7 @@ import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
 test.use({ storageState: 'playwright/.auth/user.json' });
 
 // TODO: Fix out of gas error for the following tests
-const didUrl: string = `did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=revocationAccreditation&resourceType=VerifiableAuthorisationForTrustChain`;
+const didUrl: string = `did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=revocationAccreditation&resourceType=VerifiableAuthorizationForTrustChain`;
 const subjectDid: string = 'did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578';
 test.skip(' Issue an Accreditation with revocation statuslist', async ({ request }) => {
 	const payload = JSON.parse(

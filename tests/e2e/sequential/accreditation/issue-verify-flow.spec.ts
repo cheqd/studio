@@ -28,7 +28,7 @@ test.skip(' Issue and verify a authorise accreditation', async ({ request }) => 
 	});
 	expect(didUrls).toHaveLength(2);
 	expect(didUrls).toContain(
-		`did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorisationForTrustChain`
+		`did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorizationForTrustChain`
 	);
 
 	const verifyResponse = await request.post(`/trust-registry/accreditation/verify`, {
@@ -37,7 +37,7 @@ test.skip(' Issue and verify a authorise accreditation', async ({ request }) => 
 			did: `${credentialData.issuerDid}`,
 			schemas: credentialData.schemas,
 			resourceName: 'authorizeAccreditation',
-			resourceType: 'VerifiableAuthorisationForTrustChain',
+			resourceType: 'VerifiableAuthorizationForTrustChain',
 		}),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,

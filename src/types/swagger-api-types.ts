@@ -360,7 +360,7 @@
  *         parentAccreditation:
  *           description: DID URL of the parent Verifiable Accreditation, required for accredit/attest operation.
  *           type: string
- *         rootAuthorisation:
+ *         rootAuthorization:
  *           description: DID URL of the root Verifiable Accreditation, required for accredit/attest operation.
  *           type: string
  *         trustFramework:
@@ -470,7 +470,7 @@
  *         trustFramework: https://learn.cheqd.io/governance/start
  *         trustFrameworkId: cheqd Governance Framework
  *         parentAccreditation: did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578?resourceName=accreditAccreditation&resourceType=VerifiableAccreditationToAccredit
- *         rootAuthorisation: did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authoriseAccreditation&resourceType=VerifiableAuthorisationForTrustChain
+ *         rootAuthorization: did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authoriseAccreditation&resourceType=VerifiableAuthorizationForTrustChain
  *         credentialStatus:
  *           statusPurpose: revocation
  *           statusListName: employee-credentials
