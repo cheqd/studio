@@ -9,7 +9,7 @@ test.use({ storageState: 'playwright/.auth/user.json' });
 const didUrl: string = `did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=suspensionAccreditation&resourceType=VerifiableAuthorizationForTrustChain`;
 const subjectDid: string = 'did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578';
 
-test.skip(' Issue a jwt accreditation with suspension statuslist', async ({ request }) => {
+test(' Issue a jwt accreditation with suspension statuslist', async ({ request }) => {
 	const payload = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/authorize-jwt-revocation.json`, 'utf-8')
 	);
@@ -39,7 +39,7 @@ test.skip(' Issue a jwt accreditation with suspension statuslist', async ({ requ
 	expect(accreditation.credentialStatus).toHaveProperty('id');
 });
 
-test.skip(" Verify a Accreditation's suspension status", async ({ request }) => {
+test(" Verify a Accreditation's suspension status", async ({ request }) => {
 	const response = await request.post(`/trust-registry/accreditation/verify?verifyStatus=true`, {
 		data: JSON.stringify({
 			didUrl,
@@ -56,7 +56,7 @@ test.skip(" Verify a Accreditation's suspension status", async ({ request }) => 
 	expect(result.suspended).toBe(false);
 });
 
-test.skip(' Verify a credential status after suspension', async ({ request }) => {
+test(' Verify a credential status after suspension', async ({ request }) => {
 	const response = await request.post(`/trust-registry/accreditation/suspend?publish=true`, {
 		data: JSON.stringify({
 			didUrl,
@@ -88,7 +88,7 @@ test.skip(' Verify a credential status after suspension', async ({ request }) =>
 	expect(verificationResult.suspended).toBe(true);
 });
 
-test.skip(' Verify a accreditation status after reinstating', async ({ request }) => {
+test(' Verify a accreditation status after reinstating', async ({ request }) => {
 	const response = await request.post(`/trust-registry/accreditation/reinstate?publish=true`, {
 		data: JSON.stringify({
 			didUrl,
