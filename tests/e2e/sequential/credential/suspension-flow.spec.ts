@@ -9,7 +9,7 @@ test.use({ storageState: 'playwright/.auth/user.json' });
 
 let jwtCredential: VerifiableCredential;
 
-test.skip(' Issue a jwt credential with suspension statuslist', async ({ request }) => {
+test(' Issue a jwt credential with suspension statuslist', async ({ request }) => {
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jwt-revocation.json`, 'utf-8')
 	);
@@ -41,7 +41,7 @@ test.skip(' Issue a jwt credential with suspension statuslist', async ({ request
 	expect(jwtCredential.credentialStatus).toHaveProperty('id');
 });
 
-test.skip(" Verify a credential's suspension status", async ({ request }) => {
+test(" Verify a credential's suspension status", async ({ request }) => {
 	const response = await request.post(`/credential/verify?verifyStatus=true`, {
 		data: JSON.stringify({
 			credential: jwtCredential,
@@ -57,7 +57,7 @@ test.skip(" Verify a credential's suspension status", async ({ request }) => {
 	expect(result.suspended).toBe(false);
 });
 
-test.skip(' Verify a credential status after suspension', async ({ request }) => {
+test(' Verify a credential status after suspension', async ({ request }) => {
 	const response = await request.post(`/credential/suspend?publish=true`, {
 		data: JSON.stringify({
 			credential: jwtCredential,
@@ -87,7 +87,7 @@ test.skip(' Verify a credential status after suspension', async ({ request }) =>
 	expect(verificationResult.suspended).toBe(true);
 });
 
-test.skip(' Verify a credential status after reinstating', async ({ request }) => {
+test(' Verify a credential status after reinstating', async ({ request }) => {
 	const response = await request.post(`/credential/reinstate?publish=true`, {
 		data: JSON.stringify({
 			credential: jwtCredential,
