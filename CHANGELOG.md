@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.7.0-develop.1](https://github.com/cheqd/studio/compare/3.6.10-develop.2...3.7.0-develop.1) (2025-07-14)
+
+### Features
+
+* Rename Authorisation to Authorization && Reinstate tests ([#704](https://github.com/cheqd/studio/issues/704)) ([f3873d7](https://github.com/cheqd/studio/commit/f3873d7784796ab99518be89ea659875c451a757))
+
 ## [3.6.10-develop.2](https://github.com/cheqd/studio/compare/3.6.10-develop.1...3.6.10-develop.2) (2025-07-01)
 
 ## [3.6.10-develop.1](https://github.com/cheqd/studio/compare/3.6.9...3.6.10-develop.1) (2025-06-20)
