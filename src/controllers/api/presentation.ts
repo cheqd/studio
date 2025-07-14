@@ -271,7 +271,7 @@ export class PresentationController {
 				return response.status(StatusCodes.UNAUTHORIZED).json({
 					error: `check: error: ${
 						errorRef?.message
-							? 'unauthorised: decryption conditions are not met'
+							? 'unauthorized: decryption conditions are not met'
 							: (error as Record<string, unknown>).toString()
 					}`,
 				} satisfies UnsuccessfulVerifyCredentialResponseBody);

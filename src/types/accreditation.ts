@@ -17,7 +17,7 @@ export enum DIDAccreditationTypes {
 }
 
 export enum AccreditationRequestType {
-	authorise = 'authorise',
+	authorize = 'authorize',
 	accredit = 'accredit',
 	attest = 'attest',
 }
@@ -47,7 +47,7 @@ export type DIDAccreditationRequestBody = Omit<
 };
 
 export type DIDAccreditationRequestParams = {
-	accreditationType: 'authorise' | 'accredit' | 'attest';
+	accreditationType: 'authorize' | 'accredit' | 'attest';
 };
 
 export interface DIDUrlParams {

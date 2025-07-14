@@ -36,7 +36,7 @@ export class AccreditationController {
 		query('accreditationType')
 			.exists()
 			.isIn([
-				AccreditationRequestType.authorise,
+				AccreditationRequestType.authorize,
 				AccreditationRequestType.accredit,
 				AccreditationRequestType.attest,
 			])
@@ -66,16 +66,16 @@ export class AccreditationController {
 					throw new Error('parentAccreditation or rootAuthorization is required');
 				}
 
-				if (hasParentOrRoot && value === AccreditationRequestType.authorise) {
+				if (hasParentOrRoot && value === AccreditationRequestType.authorize) {
 					throw new Error(
-						'parentAccreditation or rootAuthorization is not required for an authorise operation'
+						'parentAccreditation or rootAuthorization is not required for an authorize operation'
 					);
 				}
 
 				const hasTrustFramework = trustFramework && trustFrameworkId;
 
-				if (!hasTrustFramework && value === AccreditationRequestType.authorise) {
-					throw new Error('trustFramework and trustFrameworkId are required for an authorise operation');
+				if (!hasTrustFramework && value === AccreditationRequestType.authorize) {
+					throw new Error('trustFramework and trustFrameworkId are required for an authorize operation');
 				}
 
 				return true;
@@ -150,7 +150,7 @@ export class AccreditationController {
 	 *         schema:
 	 *           type: string
 	 *           enum:
-	 *              - authorise
+	 *              - authorize
 	 *              - accredit
 	 *              - attest
 	 *         required: true
@@ -260,7 +260,7 @@ export class AccreditationController {
 
 			let resourceType: string;
 			switch (accreditationType) {
-				case AccreditationRequestType.authorise:
+				case AccreditationRequestType.authorize:
 					resourceType = DIDAccreditationTypes.VerifiableAuthorizationForTrustChain;
 					credentialRequest.type = [...(type || []), resourceType];
 					credentialRequest.termsOfUse = {

@@ -11,11 +11,11 @@ const subjectDid: string = 'did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e9905
 
 test.skip(' Issue a jwt accreditation with suspension statuslist', async ({ request }) => {
 	const payload = JSON.parse(
-		fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/authorise-jwt-revocation.json`, 'utf-8')
+		fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/authorize-jwt-revocation.json`, 'utf-8')
 	);
 	payload.credentialStatus.statusPurpose = 'suspension';
 	payload.accreditationName = 'suspensionAccreditation';
-	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=authorise`, {
+	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=authorize`, {
 		data: JSON.stringify(payload),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,

@@ -1212,7 +1212,7 @@ export class CredentialStatusController {
 					checked: false,
 					error: `check: error: ${
 						errorRef?.message
-							? 'unauthorised: decryption conditions are not met'
+							? 'unauthorized: decryption conditions are not met'
 							: (error as Record<string, unknown>).toString()
 					}`,
 				} satisfies CheckStatusListUnsuccessfulResponseBody);
