@@ -17,7 +17,7 @@ export class AccreditationService {
 		verifyStatus: boolean,
 		allowDeactivatedDid: boolean,
 		customer: CustomerEntity,
-		rootAuthorisation?: string,
+		rootAuthorization?: string,
 		policies?: VerificationPolicies
 	): Promise<SafeAPIResponse<{ verified: boolean }>> {
 		// Get strategy e.g. postgres or local
@@ -98,7 +98,7 @@ export class AccreditationService {
 			);
 
 			if (!initialVerifyResult) {
-				initialVerifyResult = { ...verifyResult, rootAuthorisation };
+				initialVerifyResult = { ...verifyResult, rootAuthorization };
 			}
 
 			if (verifyResult.error) {
@@ -136,12 +136,12 @@ export class AccreditationService {
 				isTypeAccreditation === DIDAccreditationTypes.VerifiableAccreditationToAttest
 			) {
 				const termsOfUse = accreditation.termsOfUse;
-				if (!termsOfUse || !termsOfUse.parentAccreditation || !termsOfUse.rootAuthorisation) {
+				if (!termsOfUse || !termsOfUse.parentAccreditation || !termsOfUse.rootAuthorization) {
 					return {
 						success: false,
 						status: StatusCodes.BAD_REQUEST,
 						data: initialVerifyResult,
-						error: `Error on verifying accreditation ${accreditationUrl}: Missing parentAccreditaiton and rootAuthorisation in termsOfUse for accreditation: ${accreditationUrl}`,
+						error: `Error on verifying accreditation ${accreditationUrl}: Missing parentAccreditaiton and rootAuthorization in termsOfUse for accreditation: ${accreditationUrl}`,
 					};
 				}
 
@@ -152,16 +152,16 @@ export class AccreditationService {
 				accreditedSubject = accreditorDid;
 				accreditedFor = accreditation.credentialSubject.accreditedFor;
 
-				if (rootAuthorisation && rootAuthorisation !== termsOfUse.rootAuthorisation) {
+				if (rootAuthorization && rootAuthorization !== termsOfUse.rootAuthorization) {
 					return {
 						status: StatusCodes.OK,
 						success: false,
 						data: initialVerifyResult,
-						error: `Error on verifying accreditation ${accreditationUrl}: Expected accreditation to be linked to root accreditation ${rootAuthorisation}, but found it linked to DID ${termsOfUse.rootAuthorisation} instead`,
+						error: `Error on verifying accreditation ${accreditationUrl}: Expected accreditation to be linked to root accreditation ${rootAuthorization}, but found it linked to DID ${termsOfUse.rootAuthorization} instead`,
 					};
 				}
 
-				rootAuthorisation = termsOfUse.rootAuthorisation;
+				rootAuthorization = termsOfUse.rootAuthorization;
 			} else {
 				return {
 					status: StatusCodes.OK,

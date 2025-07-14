@@ -132,7 +132,7 @@ export class AccountController {
 	public async getIdToken(request: Request, response: Response) {
 		if (!request.user || !request.session.idToken) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
-				error: 'Seems like authorisation process was corrupted. Please contact administrator.',
+				error: 'Seems like Authorization process was corrupted. Please contact administrator.',
 			} satisfies UnsuccessfulQueryIdTokenResponseBody);
 		}
 

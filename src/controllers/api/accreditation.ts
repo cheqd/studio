@@ -36,7 +36,7 @@ export class AccreditationController {
 		query('accreditationType')
 			.exists()
 			.isIn([
-				AccreditationRequestType.authorise,
+				AccreditationRequestType.authorize,
 				AccreditationRequestType.accredit,
 				AccreditationRequestType.attest,
 			])
@@ -50,32 +50,32 @@ export class AccreditationController {
 			.custom((value) => typeof value === 'string' || (Array.isArray(value) && typeof value[0] === 'string'))
 			.withMessage('schema.types must be a string or a string array'),
 		body('parentAccreditation').optional().isString().withMessage('parentAccreditation must be a string').bail(),
-		body('rootAuthorisation').optional().isString().withMessage('rootAuthorisation must be a string').bail(),
+		body('rootAuthorization').optional().isString().withMessage('rootAuthorization must be a string').bail(),
 		body('trustFramework').optional().isString().withMessage('trustFramework must be a string').bail(),
 		body('trustFrameworkId').optional().isString().withMessage('trustFrameworkId must be a string').bail(),
 		query('accreditationType')
 			.custom((value, { req }) => {
-				const { parentAccreditation, rootAuthorisation, trustFramework, trustFrameworkId } = req.body;
+				const { parentAccreditation, rootAuthorization, trustFramework, trustFrameworkId } = req.body;
 
-				const hasParentOrRoot = parentAccreditation || rootAuthorisation;
+				const hasParentOrRoot = parentAccreditation || rootAuthorization;
 
 				if (
 					!hasParentOrRoot &&
 					(value === AccreditationRequestType.accredit || value === AccreditationRequestType.attest)
 				) {
-					throw new Error('parentAccreditation or rootAuthorisation is required');
+					throw new Error('parentAccreditation or rootAuthorization is required');
 				}
 
-				if (hasParentOrRoot && value === AccreditationRequestType.authorise) {
+				if (hasParentOrRoot && value === AccreditationRequestType.authorize) {
 					throw new Error(
-						'parentAccreditation or rootAuthorisation is not required for an authorise operation'
+						'parentAccreditation or rootAuthorization is not required for an authorize operation'
 					);
 				}
 
 				const hasTrustFramework = trustFramework && trustFrameworkId;
 
-				if (!hasTrustFramework && value === AccreditationRequestType.authorise) {
-					throw new Error('trustFramework and trustFrameworkId are required for an authorise operation');
+				if (!hasTrustFramework && value === AccreditationRequestType.authorize) {
+					throw new Error('trustFramework and trustFrameworkId are required for an authorize operation');
 				}
 
 				return true;
@@ -150,7 +150,7 @@ export class AccreditationController {
 	 *         schema:
 	 *           type: string
 	 *           enum:
-	 *              - authorise
+	 *              - authorize
 	 *              - accredit
 	 *              - attest
 	 *         required: true
@@ -197,7 +197,7 @@ export class AccreditationController {
 			schemas,
 			type,
 			parentAccreditation,
-			rootAuthorisation,
+			rootAuthorization,
 			trustFramework,
 			trustFrameworkId,
 			attributes,
@@ -260,8 +260,8 @@ export class AccreditationController {
 
 			let resourceType: string;
 			switch (accreditationType) {
-				case AccreditationRequestType.authorise:
-					resourceType = DIDAccreditationTypes.VerifiableAuthorisationForTrustChain;
+				case AccreditationRequestType.authorize:
+					resourceType = DIDAccreditationTypes.VerifiableAuthorizationForTrustChain;
 					credentialRequest.type = [...(type || []), resourceType];
 					credentialRequest.termsOfUse = {
 						type: resourceType,
@@ -275,7 +275,7 @@ export class AccreditationController {
 					credentialRequest.termsOfUse = {
 						type: resourceType,
 						parentAccreditation,
-						rootAuthorisation,
+						rootAuthorization,
 					};
 					break;
 				case AccreditationRequestType.attest:
@@ -284,7 +284,7 @@ export class AccreditationController {
 					credentialRequest.termsOfUse = {
 						type: resourceType,
 						parentAccreditation,
-						rootAuthorisation,
+						rootAuthorization,
 					};
 					break;
 			}
@@ -301,12 +301,12 @@ export class AccreditationController {
 					true,
 					false,
 					response.locals.customer,
-					rootAuthorisation
+					rootAuthorization
 				);
 
 				if (result.success === false) {
 					return response.status(result.status).send({
-						error: `Invalid Request: Root Authorisation or parent Accreditation is not valid: ${result.error}`,
+						error: `Invalid Request: Root Authorization or parent Accreditation is not valid: ${result.error}`,
 					});
 				}
 			}

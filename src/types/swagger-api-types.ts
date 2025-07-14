@@ -360,14 +360,14 @@
  *         parentAccreditation:
  *           description: DID URL of the parent Verifiable Accreditation, required for accredit/attest operation.
  *           type: string
- *         rootAuthorisation:
+ *         rootAuthorization:
  *           description: DID URL of the root Verifiable Accreditation, required for accredit/attest operation.
  *           type: string
  *         trustFramework:
- *           description: Name or Type of the Trust Framework, required for authorise operation.
+ *           description: Name or Type of the Trust Framework, required for authorize operation.
  *           type: string
  *         trustFrameworkId:
- *           description: Url of the Trust Framework, required for authorise operation.
+ *           description: Url of the Trust Framework, required for authorize operation.
  *           type: string
  *         type:
  *           description: Optional properties to be included in the `type` property of the Accreditation.
@@ -466,11 +466,11 @@
  *           - type: MuseumPassCredential
  *             url: https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:0a5b94d0-a417-48ed-a6f5-4abc9e95888d?resourceName=MuseumPassCredentialSchema&resourceType=JsonSchemaValidator2018
  *         format: jwt
- *         accreditationName: authoriseAccreditation
+ *         accreditationName: authorizeAccreditation
  *         trustFramework: https://learn.cheqd.io/governance/start
  *         trustFrameworkId: cheqd Governance Framework
  *         parentAccreditation: did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578?resourceName=accreditAccreditation&resourceType=VerifiableAccreditationToAccredit
- *         rootAuthorisation: did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authoriseAccreditation&resourceType=VerifiableAuthorisationForTrustChain
+ *         rootAuthorization: did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorizationForTrustChain
  *         credentialStatus:
  *           statusPurpose: revocation
  *           statusListName: employee-credentials

@@ -5,9 +5,9 @@ import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
-test.skip(' Issue and verify a authorise accreditation', async ({ request }) => {
-	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/authorise-jwt.json`, 'utf-8'));
-	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=authorise`, {
+test(' Issue and verify a authorize accreditation', async ({ request }) => {
+	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/authorize-jwt.json`, 'utf-8'));
+	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=authorize`, {
 		data: JSON.stringify(credentialData),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
@@ -28,7 +28,7 @@ test.skip(' Issue and verify a authorise accreditation', async ({ request }) => 
 	});
 	expect(didUrls).toHaveLength(2);
 	expect(didUrls).toContain(
-		`did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorisationForTrustChain`
+		`did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorizationForTrustChain`
 	);
 
 	const verifyResponse = await request.post(`/trust-registry/accreditation/verify`, {
@@ -37,7 +37,7 @@ test.skip(' Issue and verify a authorise accreditation', async ({ request }) => 
 			did: `${credentialData.issuerDid}`,
 			schemas: credentialData.schemas,
 			resourceName: 'authorizeAccreditation',
-			resourceType: 'VerifiableAuthorisationForTrustChain',
+			resourceType: 'VerifiableAuthorizationForTrustChain',
 		}),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
@@ -50,7 +50,7 @@ test.skip(' Issue and verify a authorise accreditation', async ({ request }) => 
 	expect(result.verified).toBe(true);
 });
 
-test.skip(' Issue and verify a accredit accreditation', async ({ request }) => {
+test(' Issue and verify a accredit accreditation', async ({ request }) => {
 	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/accredit-jwt.json`, 'utf-8'));
 	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=accredit`, {
 		data: JSON.stringify(credentialData),
@@ -93,7 +93,7 @@ test.skip(' Issue and verify a accredit accreditation', async ({ request }) => {
 	expect(result.verified).toBe(true);
 });
 
-test.skip(' Issue and verify a child accredit accreditation', async ({ request }) => {
+test(' Issue and verify a child accredit accreditation', async ({ request }) => {
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/child-accredit-jwt.json`, 'utf-8')
 	);
@@ -138,7 +138,7 @@ test.skip(' Issue and verify a child accredit accreditation', async ({ request }
 	expect(result.verified).toBe(true);
 });
 
-test.skip(' Issue and verify a attest accreditation', async ({ request }) => {
+test(' Issue and verify a attest accreditation', async ({ request }) => {
 	const credentialData = JSON.parse(fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/attest-jwt.json`, 'utf-8'));
 	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=attest`, {
 		data: JSON.stringify(credentialData),

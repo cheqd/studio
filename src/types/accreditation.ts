@@ -11,13 +11,13 @@ import {
 
 // Enums
 export enum DIDAccreditationTypes {
-	VerifiableAuthorisationForTrustChain = 'VerifiableAuthorisationForTrustChain',
+	VerifiableAuthorizationForTrustChain = 'VerifiableAuthorizationForTrustChain',
 	VerifiableAccreditationToAccredit = 'VerifiableAccreditationToAccredit',
 	VerifiableAccreditationToAttest = 'VerifiableAccreditationToAttest',
 }
 
 export enum AccreditationRequestType {
-	authorise = 'authorise',
+	authorize = 'authorize',
 	accredit = 'accredit',
 	attest = 'attest',
 }
@@ -40,14 +40,14 @@ export type DIDAccreditationRequestBody = Omit<
 	accreditationName: string;
 	attributes?: Record<string, unknown>;
 	type: string[] | undefined;
-	rootAuthorisation?: string;
+	rootAuthorization?: string;
 	parentAccreditation?: string;
 	trustFramework?: string;
 	trustFrameworkId?: string;
 };
 
 export type DIDAccreditationRequestParams = {
-	accreditationType: 'authorise' | 'accredit' | 'attest';
+	accreditationType: 'authorize' | 'accredit' | 'attest';
 };
 
 export interface DIDUrlParams {

@@ -6,13 +6,13 @@ import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
 test.use({ storageState: 'playwright/.auth/user.json' });
 
 // TODO: Fix out of gas error for the following tests
-const didUrl: string = `did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=revocationAccreditation&resourceType=VerifiableAuthorisationForTrustChain`;
+const didUrl: string = `did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=revocationAccreditation&resourceType=VerifiableAuthorizationForTrustChain`;
 const subjectDid: string = 'did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578';
-test.skip(' Issue an Accreditation with revocation statuslist', async ({ request }) => {
+test(' Issue an Accreditation with revocation statuslist', async ({ request }) => {
 	const payload = JSON.parse(
-		fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/authorise-jwt-revocation.json`, 'utf-8')
+		fs.readFileSync(`${PAYLOADS_PATH.ACCREDITATION}/authorize-jwt-revocation.json`, 'utf-8')
 	);
-	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=authorise`, {
+	const issueResponse = await request.post(`/trust-registry/accreditation/issue?accreditationType=authorize`, {
 		data: JSON.stringify(payload),
 		headers: {
 			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
@@ -37,7 +37,7 @@ test.skip(' Issue an Accreditation with revocation statuslist', async ({ request
 	expect(accreditation.credentialStatus).toHaveProperty('id');
 });
 
-test.skip(" Verify a Accreditation's revocation status", async ({ request }) => {
+test(" Verify a Accreditation's revocation status", async ({ request }) => {
 	const response = await request.post(`/trust-registry/accreditation/verify?verifyStatus=true`, {
 		data: JSON.stringify({
 			didUrl,
@@ -54,7 +54,7 @@ test.skip(" Verify a Accreditation's revocation status", async ({ request }) => 
 	expect(result.revoked).toBe(false);
 });
 
-test.skip(' Verify a Accreditation status after revocation', async ({ request }) => {
+test(' Verify a Accreditation status after revocation', async ({ request }) => {
 	const response = await request.post(`/trust-registry/accreditation/revoke?publish=true`, {
 		data: JSON.stringify({
 			didUrl,
