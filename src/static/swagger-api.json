@@ -137,7 +137,8 @@
             "type": "object",
             "required": [
               "statusPurpose",
-              "statusListName"
+              "statusListName",
+              "statusListType"
             ],
             "properties": {
               "statusPurpose": {
@@ -149,6 +150,13 @@
               },
               "statusListName": {
                 "type": "string"
+              },
+              "statusListType": {
+                "type": "string",
+                "enum": [
+                  "StatusList2021",
+                  "BitstringStatusList"
+                ]
               },
               "statusListIndex": {
                 "type": "number"
@@ -169,7 +177,8 @@
             },
             "example": {
               "statusPurpose": "revocation",
-              "statusListName": "employee-credentials"
+              "statusListName": "employee-credentials",
+              "statusListType": "StatusList2021"
             }
           },
           "termsOfUse": {

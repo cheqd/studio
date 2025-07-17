@@ -69,6 +69,7 @@
  *           required:
  *             - statusPurpose
  *             - statusListName
+ *             - statusListType
  *           properties:
  *             statusPurpose:
  *               type: string
@@ -77,6 +78,11 @@
  *                 - suspension
  *             statusListName:
  *               type: string
+ *             statusListType:
+ *               type: string
+ *               enum:
+ *                 - StatusList2021
+ *                 - BitstringStatusList
  *             statusListIndex:
  *               type: number
  *             statusListVersion:
@@ -91,6 +97,7 @@
  *           example:
  *             statusPurpose: revocation
  *             statusListName: employee-credentials
+ *             statusListType: StatusList2021
  *         termsOfUse:
  *           description: Terms of use can be utilized by an issuer or a holder to communicate the terms under which a verifiable credential was issued.
  *           type: array

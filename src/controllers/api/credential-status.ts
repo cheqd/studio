@@ -1443,12 +1443,12 @@ export class CredentialStatusController {
 				return response.status(StatusCodes.BAD_REQUEST).json(result as CheckStatusListUnsuccessfulResponseBody);
 			}
 
-			((trackInfo.data = {
+			(trackInfo.data = {
 				did: did,
 				resource: statusList.resourceMetadata,
 				encrypted: statusList.resource?.metadata?.encrypted,
 			} satisfies ICredentialStatusTrack),
-				(trackInfo.successful = true));
+				(trackInfo.successful = true);
 			trackInfo.feePaymentOptions = feePaymentOptions;
 
 			// Track operation

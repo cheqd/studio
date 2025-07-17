@@ -78,10 +78,19 @@ import type {
 	UpdateEncryptedStatusListOptions,
 	SearchStatusListResult,
 } from '../../types/credential-status.js';
-import { MINIMAL_DENOM, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js';
+import {
+	BitstringStatusListEntry,
+	MINIMAL_DENOM,
+	VC_PROOF_FORMAT,
+	VC_REMOVE_ORIGINAL_FIELDS,
+} from '../../types/constants.js';
 import { toCoin, toDefaultDkg, toMinimalDenom } from '../../helpers/helpers.js';
 import { jwtDecode } from 'jwt-decode';
-import type { ICheqdCreateBitstringStatusListArgs, ICheqdCreateLinkedResourceArgs } from '@cheqd/did-provider-cheqd';
+import type {
+	ICheqdCreateBitstringStatusListArgs,
+	ICheqdCreateLinkedResourceArgs,
+	ICheqdVerifyCredentialWithBitstringArgs,
+} from '@cheqd/did-provider-cheqd';
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { SupportedKeyTypes } from '@veramo/utils';
 
@@ -336,16 +345,24 @@ export class Veramo {
 		try {
 			let verifiable_credential: VerifiableCredential;
 			if (statusListOptions) {
-				verifiable_credential =
-					statusListOptions.statusPurpose == 'revocation'
-						? await agent.cheqdIssueRevocableCredentialWithStatusList2021({
-								issuanceOptions,
-								statusOptions: statusListOptions as RevocationStatusOptions,
-							})
-						: await agent.cheqdIssueSuspendableCredentialWithStatusList2021({
-								issuanceOptions,
-								statusOptions: statusListOptions as SuspensionStatusOptions,
-							});
+				const { statusListType, ...statusOptions } = statusListOptions;
+				if (statusListType == 'BitstringStatusList') {
+					verifiable_credential = await agent.cheqdIssueCredentialWithStatusList({
+						issuanceOptions,
+						statusOptions: statusOptions,
+					});
+				} else {
+					verifiable_credential =
+						statusListOptions.statusPurpose == 'revocation'
+							? await agent.cheqdIssueRevocableCredentialWithStatusList2021({
+									issuanceOptions,
+									statusOptions: statusOptions as RevocationStatusOptions,
+								})
+							: await agent.cheqdIssueSuspendableCredentialWithStatusList2021({
+									issuanceOptions,
+									statusOptions: statusOptions as SuspensionStatusOptions,
+								});
+				}
 			} else {
 				verifiable_credential = await agent.createVerifiableCredential(issuanceOptions);
 			}
@@ -362,13 +379,24 @@ export class Veramo {
 	): Promise<IVerifyResult> {
 		let result: IVerifyResult;
 		if (verificationOptions.verifyStatus) {
-			result = await agent.cheqdVerifyCredential({
-				credential: credential as VerifiableCredential,
-				fetchList: true,
-				verificationArgs: {
-					...verificationOptions,
-				},
-			} as ICheqdVerifyCredentialWithStatusListArgs);
+			const cred = credential as VerifiableCredential;
+			if (cred.credentialStatus?.type === BitstringStatusListEntry) {
+				result = await agent.cheqdVerifyCredentialWithStatusList({
+					credential: cred,
+					fetchList: true,
+					verificationArgs: {
+						...verificationOptions,
+					},
+				} as ICheqdVerifyCredentialWithBitstringArgs);
+			} else {
+				result = await agent.cheqdVerifyCredential({
+					credential: cred,
+					fetchList: true,
+					verificationArgs: {
+						...verificationOptions,
+					},
+				} as ICheqdVerifyCredentialWithStatusListArgs);
+			}
 		} else {
 			result = await agent.verifyCredential({
 				credential,

@@ -77,7 +77,7 @@ test('[Positive] It can search credential-status with existent DID, statusListNa
 	expect(body.resourceMetadata).not.toBeNull();
 	expect(body.resource.bitstringStatusListCredential).not.toBeNull();
 	expect(body.resource.metadata.encrypted).toBe(false);
-	expect(body.resourceMetadata.resourceCollectionId).toBe(BITSTRING_STATUS_LIST_UNENCRYPTED_DID.split(":")[3]);
+	expect(body.resourceMetadata.resourceCollectionId).toBe(BITSTRING_STATUS_LIST_UNENCRYPTED_DID.split(':')[3]);
 	expect(body.resourceMetadata.resourceName).toBe(BITSTRING_STATUS_LIST_UNENCRYPTED_NAME);
 	const credential = body.resource.bitstringStatusListCredential;
 	expect(credential.type).toContain(BitstringStatusListResourceType);

@@ -217,7 +217,8 @@ export type SearchStatusListResult = {
 
 export type BroadcastStatusListOptions = Omit<CreateUnencryptedStatusListOptions, 'length'>;
 export type StatusOptions = {
-	statusPurpose: CreateUnencryptedStatusListOptions['statusPurpose'];
+	statusListType: string;
+	statusPurpose: DefaultStatusList2021StatusPurposeType | BitstringStatusListPurposeType;
 	statusListName: string;
 	statusListIndex?: number;
 	statusListVersion?: string;
