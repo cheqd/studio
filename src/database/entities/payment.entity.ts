@@ -52,14 +52,17 @@ export class PaymentEntity {
 	operation!: OperationEntity;
 
 	@ManyToOne(() => CoinEntity, (coin) => coin.coinId, { nullable: false, onDelete: 'CASCADE' })
-	@JoinColumn({ name: 'fee'})
+	@JoinColumn({ name: 'fee' })
 	fee!: CoinEntity;
 
 	@ManyToOne(() => CoinEntity, (coin) => coin.coinId, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'amount' })
 	amount!: CoinEntity;
 
-	@ManyToOne(() => PaymentAccountEntity, (paymentAccount) => paymentAccount.address, { nullable: false, onDelete: 'CASCADE' })
+	@ManyToOne(() => PaymentAccountEntity, (paymentAccount) => paymentAccount.address, {
+		nullable: false,
+		onDelete: 'CASCADE',
+	})
 	@JoinColumn({ name: 'fromAccount' })
 	fromAccount!: PaymentAccountEntity;
 

@@ -35,31 +35,37 @@ import {
 	getResolver as CheqdDidResolver,
 	DefaultResolverUrl,
 	type ResourcePayload,
-	type ICheqdBroadcastStatusList2021Args,
-	type ICheqdCheckCredentialStatusWithStatusList2021Args,
+	type ICheqdBroadcastStatusListArgs,
+	type ICheqdCheckCredentialStatusWithStatusListArgs,
 	type ICheqdCreateStatusList2021Args,
 	type ICheqdDeactivateIdentifierArgs,
-	type ICheqdRevokeBulkCredentialsWithStatusList2021Args,
+	type ICheqdRevokeBulkCredentialsWithStatusListArgs,
 	type ICheqdUpdateIdentifierArgs,
-	type ICheqdVerifyCredentialWithStatusList2021Args,
-	type ICheqdVerifyPresentationWithStatusList2021Args,
+	type ICheqdVerifyCredentialWithStatusListArgs,
+	type ICheqdVerifyPresentationWithStatusListArgs,
 	type PaymentCondition,
-	DefaultStatusList2021ResourceTypes,
+	BitstringStatusListResourceType,
 	DefaultStatusList2021StatusPurposeTypes,
-	DefaultStatusList2021Encodings,
-	ICheqdSuspendBulkCredentialsWithStatusList2021Args,
-	ICheqdUnsuspendBulkCredentialsWithStatusList2021Args,
+	DefaultStatusListEncodings,
+	ICheqdSuspendBulkCredentialsWithStatusListArgs,
+	ICheqdUnsuspendBulkCredentialsWithStatusListArgs,
 	StatusList2021Revocation,
 	StatusList2021Suspension,
 	DefaultStatusList2021StatusPurposeType,
 	TransactionResult,
+	BitstringStatusPurposeTypes,
+	DefaultStatusList2021ResourceTypes,
 } from '@cheqd/did-provider-cheqd';
 import { ResourceModule, type CheqdNetwork } from '@cheqd/sdk';
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key';
 import { DIDResolutionResult, Resolver, ResolverRegistry } from 'did-resolver';
 import { DefaultDidUrlPattern, CreateAgentRequest, VeramoAgent } from '../../types/shared.js';
 import type { VerificationOptions } from '../../types/shared.js';
-import type { FeePaymentOptions } from '../../types/credential-status.js';
+import type {
+	CreateEncryptedBitstringOptions,
+	CreateUnencryptedBitstringOptions,
+	FeePaymentOptions,
+} from '../../types/credential-status.js';
 import type { CredentialRequest } from '../../types/credential.js';
 import { DefaultStatusActions } from '../../types/credential-status.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
@@ -75,7 +81,7 @@ import type {
 import { MINIMAL_DENOM, VC_PROOF_FORMAT, VC_REMOVE_ORIGINAL_FIELDS } from '../../types/constants.js';
 import { toCoin, toDefaultDkg, toMinimalDenom } from '../../helpers/helpers.js';
 import { jwtDecode } from 'jwt-decode';
-import type { ICheqdCreateLinkedResourceArgs } from '@cheqd/did-provider-cheqd';
+import type { ICheqdCreateBitstringStatusListArgs, ICheqdCreateLinkedResourceArgs } from '@cheqd/did-provider-cheqd';
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { SupportedKeyTypes } from '@veramo/utils';
 
@@ -362,7 +368,7 @@ export class Veramo {
 				verificationArgs: {
 					...verificationOptions,
 				},
-			} as ICheqdVerifyCredentialWithStatusList2021Args);
+			} as ICheqdVerifyCredentialWithStatusListArgs);
 		} else {
 			result = await agent.verifyCredential({
 				credential,
@@ -437,7 +443,7 @@ export class Veramo {
 				verificationArgs: {
 					...verificationOptions,
 				},
-			} as ICheqdVerifyPresentationWithStatusList2021Args);
+			} as ICheqdVerifyPresentationWithStatusListArgs);
 		} else {
 			result = await agent.verifyPresentation({
 				presentation,
@@ -484,11 +490,37 @@ export class Veramo {
 			issuerDid: did,
 			statusListName: resourceOptions.name,
 			statusPurpose: statusOptions.statusPurpose || DefaultStatusList2021StatusPurposeTypes.revocation,
-			statusListEncoding: statusOptions.encoding || DefaultStatusList2021Encodings.base64url,
+			statusListEncoding: statusOptions.encoding || DefaultStatusListEncodings.base64url,
 			statusListLength: statusOptions.length,
 			resourceVersion: resourceOptions.version,
 			encrypted: false,
 		} satisfies ICheqdCreateStatusList2021Args);
+	}
+	async createUnencryptedBitstringStatusList(
+		agent: VeramoAgent,
+		did: string,
+		resourceOptions: ResourcePayload,
+		statusOptions: CreateUnencryptedBitstringOptions
+	) {
+		const [kms] = await agent.keyManagerGetKeyManagementSystems();
+
+		if (!resourceOptions.name) {
+			throw new Error(`createUnencryptedBitstringStatusList: status list name is required`);
+		}
+		return await agent.cheqdCreateStatusList({
+			kms,
+			issuerDid: did,
+			statusListName: resourceOptions.name,
+			statusPurpose: statusOptions.statusPurpose || BitstringStatusPurposeTypes.message,
+			statusSize: statusOptions.size || 1,
+			statusMessages: statusOptions.statusMessages,
+			ttl: statusOptions.ttl,
+			statusListEncoding: statusOptions.encoding || DefaultStatusListEncodings.base64url,
+			statusListLength: statusOptions.length,
+			resourceVersion: resourceOptions.version,
+			alsoKnownAs: resourceOptions.alsoKnownAs,
+			encrypted: false,
+		} satisfies ICheqdCreateBitstringStatusListArgs);
 	}
 
 	async createEncryptedStatusList2021(
@@ -543,7 +575,7 @@ export class Veramo {
 			issuerDid: did,
 			statusListName: resourceOptions.name,
 			statusPurpose: statusOptions.statusPurpose || DefaultStatusList2021StatusPurposeTypes.revocation,
-			statusListEncoding: statusOptions.encoding || DefaultStatusList2021Encodings.base64url,
+			statusListEncoding: statusOptions.encoding || DefaultStatusListEncodings.base64url,
 			statusListLength: statusOptions.length,
 			resourceVersion: resourceOptions.version,
 			encrypted: true,
@@ -551,6 +583,69 @@ export class Veramo {
 			returnSymmetricKey: true,
 			dkgOptions: toDefaultDkg(did),
 		} satisfies ICheqdCreateStatusList2021Args);
+	}
+	async createEncryptedBitstringStatusList(
+		agent: VeramoAgent,
+		did: string,
+		resourceOptions: ResourcePayload,
+		statusOptions: CreateEncryptedBitstringOptions
+	) {
+		const [kms] = await agent.keyManagerGetKeyManagementSystems();
+
+		if (!resourceOptions.name) {
+			throw new Error(`createEncryptedBitstringStatusList: status list name is required`);
+		}
+		// construct payment conditions
+		const paymentConditions = (
+			statusOptions?.paymentConditions
+				? statusOptions.paymentConditions.map((condition) => {
+						return {
+							type: 'timelockPayment',
+							feePaymentAddress: condition.feePaymentAddress,
+							feePaymentAmount: `${toMinimalDenom(condition.feePaymentAmount)}${MINIMAL_DENOM}`,
+							intervalInSeconds: condition.feePaymentWindow * 60,
+						};
+					})
+				: (function () {
+						// validate relevant components - case: feePaymentAddress
+						if (!statusOptions.feePaymentAddress)
+							throw new Error('createEncryptedBitstringStatusList: feePaymentAddress is required');
+
+						// validate relevant components - case: feePaymentAmount
+						if (!statusOptions.feePaymentAmount)
+							throw new Error('createEncryptedBitstringStatusList: feePaymentAmount is required');
+
+						// validate relevant components - case: feePaymentWindow
+						if (!statusOptions.feePaymentWindow)
+							throw new Error('createEncryptedBitstringStatusList: feePaymentWindow is required');
+
+						return [
+							{
+								type: 'timelockPayment',
+								feePaymentAddress: statusOptions.feePaymentAddress,
+								feePaymentAmount: `${toMinimalDenom(statusOptions.feePaymentAmount)}${MINIMAL_DENOM}`,
+								intervalInSeconds: statusOptions.feePaymentWindow * 60,
+							},
+						];
+					})()
+		) satisfies PaymentCondition[];
+		return await agent.cheqdCreateStatusList({
+			kms,
+			issuerDid: did,
+			statusListName: resourceOptions.name,
+			statusPurpose: statusOptions.statusPurpose || BitstringStatusPurposeTypes.message,
+			statusSize: statusOptions.size || 1,
+			statusMessages: statusOptions.statusMessages,
+			ttl: statusOptions.ttl,
+			statusListEncoding: statusOptions.encoding || DefaultStatusListEncodings.base64url,
+			statusListLength: statusOptions.length,
+			resourceVersion: resourceOptions.version,
+			alsoKnownAs: resourceOptions.alsoKnownAs,
+			encrypted: true,
+			paymentConditions,
+			returnSymmetricKey: true,
+			dkgOptions: toDefaultDkg(did),
+		} satisfies ICheqdCreateBitstringStatusListArgs);
 	}
 
 	async broadcastStatusList2021(
@@ -577,7 +672,26 @@ export class Veramo {
 						: DefaultStatusList2021ResourceTypes.suspension,
 			},
 			network: did.split(':')[2] as CheqdNetwork,
-		} satisfies ICheqdBroadcastStatusList2021Args);
+		} satisfies ICheqdBroadcastStatusListArgs);
+	}
+
+	async broadcastBitstringStatusList(agent: VeramoAgent, did: string, resourceOptions: ResourcePayload) {
+		const [kms] = await agent.keyManagerGetKeyManagementSystems();
+
+		if (!resourceOptions.data) {
+			throw new Error(`StatusList data is required`);
+		}
+
+		return await agent.cheqdBroadcastStatusList({
+			kms,
+			payload: {
+				...resourceOptions,
+				collectionId: did.split(':')[3],
+				data: resourceOptions.data,
+				resourceType: BitstringStatusListResourceType,
+			},
+			network: did.split(':')[2] as CheqdNetwork,
+		} satisfies ICheqdBroadcastStatusListArgs);
 	}
 
 	async remunerateStatusList2021(
@@ -604,7 +718,7 @@ export class Veramo {
 				credentials,
 				fetchList: true,
 				publish: true,
-			} satisfies ICheqdRevokeBulkCredentialsWithStatusList2021Args);
+			} satisfies ICheqdRevokeBulkCredentialsWithStatusListArgs);
 		return await agent.cheqdRevokeCredential({
 			credential: credentials,
 			fetchList: true,
@@ -670,7 +784,7 @@ export class Veramo {
 					publishEncrypted: false,
 					returnUpdatedStatusList: true,
 					returnStatusListMetadata: true,
-				} satisfies ICheqdRevokeBulkCredentialsWithStatusList2021Args);
+				} satisfies ICheqdRevokeBulkCredentialsWithStatusListArgs);
 			case DefaultStatusActions.suspend:
 				return await agent.cheqdSuspendCredentials({
 					suspensionOptions: {
@@ -684,7 +798,7 @@ export class Veramo {
 					publishEncrypted: false,
 					returnUpdatedStatusList: true,
 					returnStatusListMetadata: true,
-				} satisfies ICheqdSuspendBulkCredentialsWithStatusList2021Args);
+				} satisfies ICheqdSuspendBulkCredentialsWithStatusListArgs);
 			case DefaultStatusActions.reinstate:
 				return await agent.cheqdUnsuspendCredentials({
 					unsuspensionOptions: {
@@ -698,7 +812,7 @@ export class Veramo {
 					publishEncrypted: false,
 					returnUpdatedStatusList: true,
 					returnStatusListMetadata: true,
-				} satisfies ICheqdUnsuspendBulkCredentialsWithStatusList2021Args);
+				} satisfies ICheqdUnsuspendBulkCredentialsWithStatusListArgs);
 		}
 	}
 
@@ -768,7 +882,7 @@ export class Veramo {
 					returnUpdatedStatusList: true,
 					returnStatusListMetadata: true,
 					dkgOptions: toDefaultDkg(did),
-				} satisfies ICheqdRevokeBulkCredentialsWithStatusList2021Args);
+				} satisfies ICheqdRevokeBulkCredentialsWithStatusListArgs);
 			case DefaultStatusActions.suspend:
 				return await agent.cheqdSuspendCredentials({
 					suspensionOptions: {
@@ -786,7 +900,7 @@ export class Veramo {
 					returnUpdatedStatusList: true,
 					returnStatusListMetadata: true,
 					dkgOptions: toDefaultDkg(did),
-				} satisfies ICheqdSuspendBulkCredentialsWithStatusList2021Args);
+				} satisfies ICheqdSuspendBulkCredentialsWithStatusListArgs);
 			case DefaultStatusActions.reinstate:
 				return await agent.cheqdUnsuspendCredentials({
 					unsuspensionOptions: {
@@ -804,7 +918,7 @@ export class Veramo {
 					returnUpdatedStatusList: true,
 					returnStatusListMetadata: true,
 					dkgOptions: toDefaultDkg(did),
-				} satisfies ICheqdUnsuspendBulkCredentialsWithStatusList2021Args);
+				} satisfies ICheqdUnsuspendBulkCredentialsWithStatusListArgs);
 		}
 	}
 
@@ -816,18 +930,25 @@ export class Veramo {
 			},
 			fetchList: true,
 			dkgOptions: toDefaultDkg(did),
-		} satisfies ICheqdCheckCredentialStatusWithStatusList2021Args);
+		} satisfies ICheqdCheckCredentialStatusWithStatusListArgs);
 	}
 
-	async searchStatusList2021(
+	async searchStatusList(
 		did: string,
 		statusListName: string,
+		listType: string,
 		statusPurpose: DefaultStatusList2021StatusPurposeType
 	): Promise<SearchStatusListResult> {
+		let resourceType: string;
+		if (listType === 'BitstringStatusList') {
+			resourceType = BitstringStatusListResourceType;
+		} else {
+			resourceType = DefaultStatusList2021ResourceTypes[statusPurpose];
+		}
 		// construct url
 		const url = new URL(
 			`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?resourceName=${statusListName}&resourceType=${
-				DefaultStatusList2021ResourceTypes[statusPurpose]
+				resourceType
 			}`
 		);
 
@@ -879,7 +1000,7 @@ export class Veramo {
 			} satisfies SearchStatusListResult;
 		} catch (error) {
 			// silent fail
-			console.error(`searchStatusList2021: fetch: failed: ${error}`);
+			console.error(`searchStatusList: fetch: failed: ${error}`);
 
 			// return result
 			return {

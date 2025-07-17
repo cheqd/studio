@@ -23,7 +23,11 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import { CheqdNetwork } from '@cheqd/sdk';
 import type { VerificationOptions } from '../../types/shared.js';
-import type { FeePaymentOptions } from '../../types/credential-status.js';
+import type {
+	CreateEncryptedBitstringOptions,
+	CreateUnencryptedBitstringOptions,
+	FeePaymentOptions,
+} from '../../types/credential-status.js';
 import type { CredentialRequest } from '../../types/credential.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
 import type { StatusOptions } from '../../types/credential-status.js';
@@ -37,7 +41,7 @@ import type {
 import { DefaultIdentityService } from './default.js';
 import { Connection } from '../../database/connection/connection.js';
 import { Veramo } from './agent.js';
-import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
+import type { CreateStatusListResult, TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { toTPublicKeyEd25519 } from '../helpers.js';
 
@@ -202,6 +206,19 @@ export class LocalIdentityService extends DefaultIdentityService {
 			statusListOptions
 		);
 	}
+	async createUnencryptedBitstringStatusList(
+		did: string,
+		resourceOptions: ResourcePayload,
+		statusListOptions: CreateUnencryptedBitstringOptions
+	): Promise<CreateStatusListResult> {
+		await this.importDid();
+		return await Veramo.instance.createUnencryptedBitstringStatusList(
+			this.initAgent(),
+			did,
+			resourceOptions,
+			statusListOptions
+		);
+	}
 
 	async createEncryptedStatusList2021(
 		did: string,
@@ -210,6 +227,19 @@ export class LocalIdentityService extends DefaultIdentityService {
 	): Promise<CreateStatusList2021Result> {
 		await this.importDid();
 		return await Veramo.instance.createEncryptedStatusList2021(
+			this.initAgent(),
+			did,
+			resourceOptions,
+			statusListOptions
+		);
+	}
+	async createEncryptedBitstringStatusList(
+		did: string,
+		resourceOptions: ResourcePayload,
+		statusListOptions: CreateEncryptedBitstringOptions
+	): Promise<CreateStatusListResult> {
+		await this.importDid();
+		return await Veramo.instance.createEncryptedBitstringStatusList(
 			this.initAgent(),
 			did,
 			resourceOptions,

@@ -206,6 +206,7 @@
  *               type: string
  *               enum:
  *                 - StatusList2021Entry
+ *                 - BitstringStatusListEntry
  *         issuanceDate:
  *           type: string
  *           format: date-time
@@ -575,7 +576,7 @@
  *           description: Provide an optional verifier DID (also known as 'domain' parameter), if the verifier DID in the presentation is not managed in the wallet.
  *           type: string
  *         makeFeePayment:
- *           description: Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 DID-Linked Resource.
+ *           description: Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 or BitstringStatusList DID-Linked Resource.
  *           type: boolean
  *           default: false
  *         policies:
@@ -602,29 +603,48 @@
  *             - statusListName
  *           properties:
  *             did:
- *               description: DID of the StatusList2021 publisher.
+ *               description: DID of the StatusList2021 or BitstringStatusList publisher.
  *               type: string
  *               format: uri
  *             statusListName:
- *               description: The name of the StatusList2021 DID-Linked Resource to be created.
+ *               description: The name of the StatusList2021 or BitstringStatusList DID-Linked Resource to be created.
  *               type: string
  *             length:
- *               description: The length of the status list to be created. The default and minimum length is 140000 which is 16kb.
+ *               description: The length of the status list to be created. The default and minimum length is 131072 which is 16kb.
  *               type: integer
  *               minimum: 0
  *               exclusiveMinimum: true
- *               default: 140000
+ *               default: 131072
  *             encoding:
- *               description: The encoding format of the StatusList2021 DiD-Linked Resource to be created.
+ *               description: The encoding format of the StatusList2021 or BitstringStatusList (only base64url supported) DiD-Linked Resource to be created.
  *               type: string
  *               default: base64url
  *               enum:
  *                 - base64url
- *                 - base64
  *                 - hex
  *             statusListVersion:
- *               description: Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.
+ *               description: Optional field to assign a human-readable version in the StatusList2021 or BitstringStatusList DID-Linked Resource.
  *               type: string
+ *             statusSize:
+ *               description: "Only for BitstringStatusList: bits per credential, used to support multiple status in same list."
+ *               type: integer
+ *               minimum: 1
+ *             statusMessages:
+ *               description: "Only for BitstringStatusList (Mandatory if statusSize > 1): Message explaining each bit"
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   status:
+ *                     type: string
+ *                     example: "0x0"
+ *                   message:
+ *                     type: string
+ *                     example: valid
+ *             ttl:
+ *               description: "Only for BitstringStatusList: Time to Live in Miliseconds (not expiry)."
+ *               type: integer
+ *               minimum: 1000
  *         - $ref: '#/components/schemas/AlsoKnownAs'
  *     CredentialStatusCreateUnencryptedRequest:
  *       allOf:
@@ -691,17 +711,17 @@
  *       type: object
  *       properties:
  *         feePaymentAddress:
- *           description: The cheqd/Cosmos payment address where payments to unlock the encrypted StatusList2021 DID-Linked Resource need to be sent.
+ *           description: The cheqd/Cosmos payment address where payments to unlock the encrypted StatusList2021 or BitstringStatusList DID-Linked Resource need to be sent.
  *           type: string
  *           example: cheqd1qs0nhyk868c246defezhz5eymlt0dmajna2csg
  *         feePaymentAmount:
- *           description: Amount in CHEQ tokens to unlock the encrypted StatusList2021 DID-Linked Resource.
+ *           description: Amount in CHEQ tokens to unlock the encrypted StatusList2021 or BitstringStatusList DID-Linked Resource.
  *           type: number
  *           minimum: 0
  *           exclusiveMinimum: true
  *           default: 20
  *         feePaymentWindow:
- *           description: Time window (in minutes) within which the payment to unlock the encrypted StatusList2021 DID-Linked Resource is considered valid.
+ *           description: Time window (in minutes) within which the payment to unlock the encrypted StatusList2021 or BitstringStatusList DID-Linked Resource is considered valid.
  *           type: number
  *           minimum: 0
  *           exclusiveMinimum: true
@@ -921,7 +941,7 @@
  *           minimum: 0
  *           exclusiveMinimum: false
  *         makeFeePayment:
- *           description: Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 DID-Linked Resource.
+ *           description: Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 or BitstringStatusList DID-Linked Resource.
  *           type: boolean
  *           default: true
  *     CredentialStatusCheckResult:

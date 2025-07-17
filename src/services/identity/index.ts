@@ -29,10 +29,15 @@ import type {
 	SuspensionResult,
 	UnsuspensionResult,
 	TransactionResult,
+	CreateStatusListResult,
 } from '@cheqd/did-provider-cheqd';
 import type { VeramoAgent } from '../../types/shared.js';
 import type { VerificationOptions } from '../../types/shared.js';
-import type { FeePaymentOptions } from '../../types/credential-status.js';
+import type {
+	CreateEncryptedBitstringOptions,
+	CreateUnencryptedBitstringOptions,
+	FeePaymentOptions,
+} from '../../types/credential-status.js';
 import type { CredentialRequest } from '../../types/credential.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
 import type { StatusOptions } from '../../types/credential-status.js';
@@ -114,12 +119,24 @@ export interface IIdentityService {
 		statusOptions: CreateUnencryptedStatusListOptions,
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result>;
+	createUnencryptedBitstringStatusList(
+		did: string,
+		resourceOptions: ResourcePayload,
+		statusOptions: CreateUnencryptedBitstringOptions,
+		customer: CustomerEntity
+	): Promise<CreateStatusListResult>;
 	createEncryptedStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
 		statusOptions: CreateEncryptedStatusListOptions,
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result>;
+	createEncryptedBitstringStatusList(
+		did: string,
+		resourceOptions: ResourcePayload,
+		statusOptions: CreateEncryptedBitstringOptions,
+		customer: CustomerEntity
+	): Promise<CreateStatusListResult>;
 	updateUnencryptedStatusList2021(
 		did: string,
 		statusOptions: UpdateUnencryptedStatusListOptions,
@@ -135,9 +152,10 @@ export interface IIdentityService {
 		statusOptions: CheckStatusListOptions,
 		customer: CustomerEntity
 	): Promise<StatusCheckResult>;
-	searchStatusList2021(
+	searchStatusList(
 		did: string,
 		statusListName: string,
+		listType: 'StatusList2021' | 'BitstringStatusList',
 		statusPurpose: 'revocation' | 'suspension',
 		customer?: CustomerEntity
 	): Promise<SearchStatusListResult>;
@@ -145,6 +163,11 @@ export interface IIdentityService {
 		did: string,
 		resourceOptions: ResourcePayload,
 		statusOptions: BroadcastStatusListOptions,
+		customer: CustomerEntity
+	): Promise<boolean>;
+	broadcastBitstringStatusList(
+		did: string,
+		resourceOptions: ResourcePayload,
 		customer: CustomerEntity
 	): Promise<boolean>;
 	remunerateStatusList2021(

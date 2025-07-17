@@ -53,6 +53,10 @@ export const DEFAULT_STATUS_LIST_ENCRYPTED_NAME = 'cheqd-employee-credentials-en
 export const DEFAULT_STATUS_LIST_UNENCRYPTED_NAME = 'testingStatusList';
 export const DEFAULT_STATUS_LIST_PAYMENT_ADDRESS = 'cheqd1qs0nhyk868c246defezhz5eymlt0dmajna2csg';
 export const DEFAULT_STATUS_LIST_INDICES = [10, 3199, 12109, 130999];
+export const BITSTRING_STATUS_LIST_ENCRYPTED_NAME = 'encrypted-status-list';
+export const BITSTRING_STATUS_LIST_UNENCRYPTED_NAME = 'unit-test-list';
+export const BITSTRING_STATUS_LIST_ENCRYPTED_DID = 'did:cheqd:testnet:507e8348-fc66-4717-aa4a-5753baf78399';
+export const BITSTRING_STATUS_LIST_UNENCRYPTED_DID = 'did:cheqd:testnet:380f07ba-e2b6-444a-a2d6-2bea33951609';
 
 // Credential names
 export const DEFAULT_SUBJECT_DID = 'did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK';

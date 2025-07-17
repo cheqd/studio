@@ -26,7 +26,11 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import { DefaultDidUrlPattern, VeramoAgent } from '../../types/shared.js';
 import type { VerificationOptions } from '../../types/shared.js';
-import type { FeePaymentOptions } from '../../types/credential-status.js';
+import type {
+	CreateEncryptedBitstringOptions,
+	CreateUnencryptedBitstringOptions,
+	FeePaymentOptions,
+} from '../../types/credential-status.js';
 import type { CredentialRequest } from '../../types/credential.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
 import type { StatusOptions } from '../../types/credential-status.js';
@@ -52,7 +56,7 @@ import { APIKeyService } from '../admin/api-key.js';
 import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import { KeyDIDProvider } from '@veramo/did-provider-key';
 import type { AbstractIdentifierProvider } from '@veramo/did-manager';
-import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
+import type { CheqdProviderError, CreateStatusListResult } from '@cheqd/did-provider-cheqd';
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { toTPublicKeyEd25519 } from '../helpers.js';
 import type { APIServiceOptions } from '../../types/admin.js';
@@ -396,6 +400,18 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		return await Veramo.instance.createUnencryptedStatusList2021(agent, did, resourceOptions, statusOptions);
 	}
+	async createUnencryptedBitstringStatusList(
+		did: string,
+		resourceOptions: ResourcePayload,
+		statusOptions: CreateUnencryptedBitstringOptions,
+		customer: CustomerEntity
+	): Promise<CreateStatusListResult> {
+		const agent = await this.createAgent(customer);
+		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
+			throw new Error(`${did} not found in wallet`);
+		}
+		return await Veramo.instance.createUnencryptedBitstringStatusList(agent, did, resourceOptions, statusOptions);
+	}
 
 	async createEncryptedStatusList2021(
 		did: string,
@@ -408,6 +424,18 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			throw new Error(`${did} not found in wallet`);
 		}
 		return await Veramo.instance.createEncryptedStatusList2021(agent, did, resourceOptions, statusOptions);
+	}
+	async createEncryptedBitstringStatusList(
+		did: string,
+		resourceOptions: ResourcePayload,
+		statusOptions: CreateEncryptedBitstringOptions,
+		customer: CustomerEntity
+	): Promise<CreateStatusListResult> {
+		const agent = await this.createAgent(customer);
+		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
+			throw new Error(`${did} not found in wallet`);
+		}
+		return await Veramo.instance.createEncryptedBitstringStatusList(agent, did, resourceOptions, statusOptions);
 	}
 
 	async updateUnencryptedStatusList2021(
