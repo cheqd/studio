@@ -25,6 +25,7 @@ import type {
 	UnsuspensionResult,
 	TransactionResult,
 	CreateStatusListResult,
+	BulkBitstringUpdateResult,
 } from '@cheqd/did-provider-cheqd';
 import type { VeramoAgent } from '../../types/shared';
 import type { VerificationOptions } from '../../types/shared';
@@ -140,18 +141,20 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<CreateStatusListResult> {
 		throw new Error(`Not supported`);
 	}
-	updateUnencryptedStatusList2021(
+	updateUnencryptedStatusList(
 		did: string,
+		listType: string,
 		statusOptions: UpdateUnencryptedStatusListOptions,
 		customer: CustomerEntity
-	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult> {
 		throw new Error(`Not supported`);
 	}
-	updateEncryptedStatusList2021(
+	updateEncryptedStatusList(
 		did: string,
+		listType: string,
 		statusOptions: UpdateEncryptedStatusListOptions,
 		customer: CustomerEntity
-	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult> {
 		throw new Error(`Not supported`);
 	}
 	checkStatusList2021(

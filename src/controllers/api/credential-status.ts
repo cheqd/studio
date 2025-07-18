@@ -10,7 +10,6 @@ import type {
 	FeePaymentOptions,
 } from '../../types/credential-status.js';
 import {
-	DefaultStatusAction,
 	DefaultStatusActionPurposeMap,
 	DefaultStatusActions,
 	MinimalPaymentCondition,
@@ -48,6 +47,7 @@ import {
 	DefaultStatusList2021StatusPurposeTypes,
 	BitstringStatusPurposeTypes,
 	BitstringStatusMessage,
+	BulkBitstringUpdateResult,
 } from '@cheqd/did-provider-cheqd';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
 import { toNetwork } from '../../helpers/helpers.js';
@@ -336,6 +336,16 @@ export class CredentialStatusController {
 
 	static updateUnencryptedValidator = [
 		check('did').exists().withMessage('did: required').bail().isDID().bail(),
+		check('listType')
+			.exists()
+			.withMessage('listType: required')
+			.bail()
+			.isString()
+			.withMessage('listType: should be a string')
+			.bail()
+			.isIn(['StatusList2021', 'BitstringStatusList'])
+			.withMessage(`listType: invalid listType, should be one of ['StatusList2021', 'BitstringStatusList']`)
+			.bail(),
 		check('statusAction')
 			.exists()
 			.withMessage('statusAction: required')
@@ -943,8 +953,17 @@ export class CredentialStatusController {
 	 * /credential-status/update/unencrypted:
 	 *   post:
 	 *     tags: [ Credential Status ]
-	 *     summary: Update an existing unencrypted StatusList2021 credential status list.
+	 *     summary: Update an existing unencrypted StatusList2021 or BitstringStatusList credential status list.
 	 *     parameters:
+	 *       - in: query
+	 *         name: listType
+	 *         description: The type of Status List.
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - StatusList2021
+	 *             - BitstringStatusList
 	 *       - in: query
 	 *         name: statusAction
 	 *         description: The update action to be performed on the unencrypted status list, can be revoke, suspend or reinstate
@@ -984,7 +1003,7 @@ export class CredentialStatusController {
 			request.body as UpdateUnencryptedStatusListRequestBody;
 
 		// collect request parameters - case: query
-		const { statusAction } = request.query as UpdateUnencryptedStatusListRequestQuery;
+		const { statusAction, listType } = request.query as UpdateUnencryptedStatusListRequestQuery;
 
 		// define identity service strategy setup
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
@@ -993,7 +1012,7 @@ export class CredentialStatusController {
 		const unencrypted = await identityServiceStrategySetup.agent.searchStatusList(
 			did,
 			statusListName,
-			'StatusList2021',
+			listType,
 			DefaultStatusActionPurposeMap[statusAction]
 		);
 
@@ -1023,8 +1042,9 @@ export class CredentialStatusController {
 
 		try {
 			// update unencrypted status list
-			const result = (await identityServiceStrategySetup.agent.updateUnencryptedStatusList2021(
+			const result = (await identityServiceStrategySetup.agent.updateUnencryptedStatusList(
 				did,
+				listType,
 				{
 					indices: typeof indices === 'number' ? [indices] : indices,
 					statusListName,
@@ -1032,7 +1052,9 @@ export class CredentialStatusController {
 					statusAction,
 				},
 				response.locals.customer
-			)) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult) & { updated?: boolean };
+			)) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult) & {
+				updated?: boolean;
+			};
 
 			// enhance result
 			result.updated = (function (that) {
@@ -1112,8 +1134,17 @@ export class CredentialStatusController {
 	 * /credential-status/update/encrypted:
 	 *   post:
 	 *     tags: [ Credential Status ]
-	 *     summary: Update an existing encrypted StatusList2021 credential status list.
+	 *     summary: Update an existing encrypted StatusList2021 or BitstringStatusList credential status list.
 	 *     parameters:
+	 *       - in: query
+	 *         name: listType
+	 *         description: The type of Status List.
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - StatusList2021
+	 *             - BitstringStatusList
 	 *       - in: query
 	 *         name: statusAction
 	 *         description: The update action to be performed on the encrypted status list, can be revoke, suspend or reinstate
@@ -1162,7 +1193,7 @@ export class CredentialStatusController {
 		} = request.body as UpdateEncryptedStatusListRequestBody;
 
 		// collect request parameters - case: query
-		const { statusAction } = request.query as { statusAction: DefaultStatusAction };
+		const { statusAction, listType } = request.query as UpdateUnencryptedStatusListRequestQuery;
 
 		// define identity service strategy setup
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
@@ -1171,7 +1202,7 @@ export class CredentialStatusController {
 		const encrypted = await identityServiceStrategySetup.agent.searchStatusList(
 			did,
 			statusListName,
-			'StatusList2021',
+			listType,
 			DefaultStatusActionPurposeMap[statusAction]
 		);
 
@@ -1201,8 +1232,9 @@ export class CredentialStatusController {
 
 		try {
 			// update encrypted status list
-			const result = (await identityServiceStrategySetup.agent.updateEncryptedStatusList2021(
+			const result = (await identityServiceStrategySetup.agent.updateEncryptedStatusList(
 				did,
+				listType,
 				{
 					indices: typeof indices === 'number' ? [indices] : indices,
 					statusListName,
@@ -1215,7 +1247,9 @@ export class CredentialStatusController {
 					feePaymentWindow,
 				},
 				response.locals.customer
-			)) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult) & { updated: boolean };
+			)) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult) & {
+				updated: boolean;
+			};
 
 			// enhance result
 			result.updated = (function (that) {

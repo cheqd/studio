@@ -67,7 +67,7 @@ import type {
 	FeePaymentOptions,
 } from '../../types/credential-status.js';
 import type { CredentialRequest } from '../../types/credential.js';
-import { DefaultStatusActions } from '../../types/credential-status.js';
+import { BitstringStatusActions, DefaultStatusActions } from '../../types/credential-status.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
 import type { RevocationStatusOptions, StatusOptions, SuspensionStatusOptions } from '../../types/credential-status.js';
 import type {
@@ -87,6 +87,8 @@ import {
 import { toCoin, toDefaultDkg, toMinimalDenom } from '../../helpers/helpers.js';
 import { jwtDecode } from 'jwt-decode';
 import type {
+	BitstringStatusValue,
+	ICheqdBulkUpdateCredentialWithStatusListArgs,
 	ICheqdCreateBitstringStatusListArgs,
 	ICheqdCreateLinkedResourceArgs,
 	ICheqdVerifyCredentialWithBitstringArgs,
@@ -793,60 +795,79 @@ export class Veramo {
 		});
 	}
 
-	async updateUnencryptedStatusList2021(
+	async updateUnencryptedStatusList(
 		agent: VeramoAgent,
 		did: string,
+		listType: string,
 		statusOptions: UpdateUnencryptedStatusListOptions
 	) {
-		switch (statusOptions.statusAction) {
-			case DefaultStatusActions.revoke:
-				return await agent.cheqdRevokeCredentials({
-					revocationOptions: {
-						issuerDid: did,
-						statusListIndices: statusOptions.indices,
-						statusListName: statusOptions.statusListName,
-						statusListVersion: statusOptions.statusListVersion,
-					},
-					fetchList: true,
-					publish: true,
-					publishEncrypted: false,
-					returnUpdatedStatusList: true,
-					returnStatusListMetadata: true,
-				} satisfies ICheqdRevokeBulkCredentialsWithStatusListArgs);
-			case DefaultStatusActions.suspend:
-				return await agent.cheqdSuspendCredentials({
-					suspensionOptions: {
-						issuerDid: did,
-						statusListIndices: statusOptions.indices,
-						statusListName: statusOptions.statusListName,
-						statusListVersion: statusOptions.statusListVersion,
-					},
-					fetchList: true,
-					publish: true,
-					publishEncrypted: false,
-					returnUpdatedStatusList: true,
-					returnStatusListMetadata: true,
-				} satisfies ICheqdSuspendBulkCredentialsWithStatusListArgs);
-			case DefaultStatusActions.reinstate:
-				return await agent.cheqdUnsuspendCredentials({
-					unsuspensionOptions: {
-						issuerDid: did,
-						statusListIndices: statusOptions.indices,
-						statusListName: statusOptions.statusListName,
-						statusListVersion: statusOptions.statusListVersion,
-					},
-					fetchList: true,
-					publish: true,
-					publishEncrypted: false,
-					returnUpdatedStatusList: true,
-					returnStatusListMetadata: true,
-				} satisfies ICheqdUnsuspendBulkCredentialsWithStatusListArgs);
+		if (listType === 'BitstringStatusList') {
+			return await agent.cheqdBulkUpdateCredentialsWithStatusList({
+				newStatus: BitstringStatusActions[statusOptions.statusAction] as unknown as BitstringStatusValue,
+				updateOptions: {
+					issuerDid: did,
+					statusListIndices: statusOptions.indices,
+					statusListName: statusOptions.statusListName,
+					statusListVersion: statusOptions.statusListVersion,
+				},
+				fetchList: true,
+				publish: true,
+				publishEncrypted: false,
+				returnUpdatedStatusList: true,
+				returnStatusListMetadata: true,
+			} satisfies ICheqdBulkUpdateCredentialWithStatusListArgs);
+		} else {
+			switch (statusOptions.statusAction) {
+				case DefaultStatusActions.revoke:
+					return await agent.cheqdRevokeCredentials({
+						revocationOptions: {
+							issuerDid: did,
+							statusListIndices: statusOptions.indices,
+							statusListName: statusOptions.statusListName,
+							statusListVersion: statusOptions.statusListVersion,
+						},
+						fetchList: true,
+						publish: true,
+						publishEncrypted: false,
+						returnUpdatedStatusList: true,
+						returnStatusListMetadata: true,
+					} satisfies ICheqdRevokeBulkCredentialsWithStatusListArgs);
+				case DefaultStatusActions.suspend:
+					return await agent.cheqdSuspendCredentials({
+						suspensionOptions: {
+							issuerDid: did,
+							statusListIndices: statusOptions.indices,
+							statusListName: statusOptions.statusListName,
+							statusListVersion: statusOptions.statusListVersion,
+						},
+						fetchList: true,
+						publish: true,
+						publishEncrypted: false,
+						returnUpdatedStatusList: true,
+						returnStatusListMetadata: true,
+					} satisfies ICheqdSuspendBulkCredentialsWithStatusListArgs);
+				case DefaultStatusActions.reinstate:
+					return await agent.cheqdUnsuspendCredentials({
+						unsuspensionOptions: {
+							issuerDid: did,
+							statusListIndices: statusOptions.indices,
+							statusListName: statusOptions.statusListName,
+							statusListVersion: statusOptions.statusListVersion,
+						},
+						fetchList: true,
+						publish: true,
+						publishEncrypted: false,
+						returnUpdatedStatusList: true,
+						returnStatusListMetadata: true,
+					} satisfies ICheqdUnsuspendBulkCredentialsWithStatusListArgs);
+			}
 		}
 	}
 
-	async updateEncryptedStatusList2021(
+	async updateEncryptedStatusList(
 		agent: VeramoAgent,
 		did: string,
+		listType: string,
 		statusOptions: UpdateEncryptedStatusListOptions
 	) {
 		// construct payment conditions
@@ -871,15 +892,15 @@ export class Veramo {
 
 						// validate relevant components - case: feePaymentAddress
 						if (!statusOptions.feePaymentAddress)
-							throw new Error('updateEncryptedStatusList2021: feePaymentAddress is required');
+							throw new Error('updateEncryptedStatusList: feePaymentAddress is required');
 
 						// validate relevant components - case: feePaymentAmount
 						if (!statusOptions.feePaymentAmount)
-							throw new Error('updateEncryptedStatusList2021: feePaymentAmount is required');
+							throw new Error('updateEncryptedStatusList: feePaymentAmount is required');
 
 						// validate relevant components - case: feePaymentWindow
 						if (!statusOptions.feePaymentWindow)
-							throw new Error('updateEncryptedStatusList2021: feePaymentWindow is required');
+							throw new Error('updateEncryptedStatusList: feePaymentWindow is required');
 
 						return [
 							{
@@ -891,62 +912,82 @@ export class Veramo {
 						];
 					})()
 		) satisfies PaymentCondition[] | undefined;
-
-		switch (statusOptions.statusAction) {
-			case DefaultStatusActions.revoke:
-				return await agent.cheqdRevokeCredentials({
-					revocationOptions: {
-						issuerDid: did,
-						statusListIndices: statusOptions.indices,
-						statusListName: statusOptions.statusListName,
-						statusListVersion: statusOptions.statusListVersion,
-					},
-					symmetricKey: statusOptions.symmetricKey,
-					paymentConditions,
-					fetchList: true,
-					publish: true,
-					publishEncrypted: true,
-					returnSymmetricKey: true,
-					returnUpdatedStatusList: true,
-					returnStatusListMetadata: true,
-					dkgOptions: toDefaultDkg(did),
-				} satisfies ICheqdRevokeBulkCredentialsWithStatusListArgs);
-			case DefaultStatusActions.suspend:
-				return await agent.cheqdSuspendCredentials({
-					suspensionOptions: {
-						issuerDid: did,
-						statusListIndices: statusOptions.indices,
-						statusListName: statusOptions.statusListName,
-						statusListVersion: statusOptions.statusListVersion,
-					},
-					symmetricKey: statusOptions.symmetricKey,
-					paymentConditions,
-					fetchList: true,
-					publish: true,
-					publishEncrypted: true,
-					returnSymmetricKey: true,
-					returnUpdatedStatusList: true,
-					returnStatusListMetadata: true,
-					dkgOptions: toDefaultDkg(did),
-				} satisfies ICheqdSuspendBulkCredentialsWithStatusListArgs);
-			case DefaultStatusActions.reinstate:
-				return await agent.cheqdUnsuspendCredentials({
-					unsuspensionOptions: {
-						issuerDid: did,
-						statusListIndices: statusOptions.indices,
-						statusListName: statusOptions.statusListName,
-						statusListVersion: statusOptions.statusListVersion,
-					},
-					symmetricKey: statusOptions.symmetricKey,
-					paymentConditions,
-					fetchList: true,
-					publish: true,
-					publishEncrypted: true,
-					returnSymmetricKey: true,
-					returnUpdatedStatusList: true,
-					returnStatusListMetadata: true,
-					dkgOptions: toDefaultDkg(did),
-				} satisfies ICheqdUnsuspendBulkCredentialsWithStatusListArgs);
+		if (listType === 'BitstringStatusList') {
+			return await agent.cheqdBulkUpdateCredentialsWithStatusList({
+				newStatus: BitstringStatusActions[statusOptions.statusAction] as unknown as BitstringStatusValue,
+				updateOptions: {
+					issuerDid: did,
+					statusListIndices: statusOptions.indices,
+					statusListName: statusOptions.statusListName,
+					statusListVersion: statusOptions.statusListVersion,
+				},
+				symmetricKey: statusOptions.symmetricKey,
+				paymentConditions,
+				fetchList: true,
+				publish: true,
+				publishEncrypted: true,
+				returnSymmetricKey: true,
+				returnUpdatedStatusList: true,
+				returnStatusListMetadata: true,
+				dkgOptions: toDefaultDkg(did),
+			} satisfies ICheqdBulkUpdateCredentialWithStatusListArgs);
+		} else {
+			switch (statusOptions.statusAction) {
+				case DefaultStatusActions.revoke:
+					return await agent.cheqdRevokeCredentials({
+						revocationOptions: {
+							issuerDid: did,
+							statusListIndices: statusOptions.indices,
+							statusListName: statusOptions.statusListName,
+							statusListVersion: statusOptions.statusListVersion,
+						},
+						symmetricKey: statusOptions.symmetricKey,
+						paymentConditions,
+						fetchList: true,
+						publish: true,
+						publishEncrypted: true,
+						returnSymmetricKey: true,
+						returnUpdatedStatusList: true,
+						returnStatusListMetadata: true,
+						dkgOptions: toDefaultDkg(did),
+					} satisfies ICheqdRevokeBulkCredentialsWithStatusListArgs);
+				case DefaultStatusActions.suspend:
+					return await agent.cheqdSuspendCredentials({
+						suspensionOptions: {
+							issuerDid: did,
+							statusListIndices: statusOptions.indices,
+							statusListName: statusOptions.statusListName,
+							statusListVersion: statusOptions.statusListVersion,
+						},
+						symmetricKey: statusOptions.symmetricKey,
+						paymentConditions,
+						fetchList: true,
+						publish: true,
+						publishEncrypted: true,
+						returnSymmetricKey: true,
+						returnUpdatedStatusList: true,
+						returnStatusListMetadata: true,
+						dkgOptions: toDefaultDkg(did),
+					} satisfies ICheqdSuspendBulkCredentialsWithStatusListArgs);
+				case DefaultStatusActions.reinstate:
+					return await agent.cheqdUnsuspendCredentials({
+						unsuspensionOptions: {
+							issuerDid: did,
+							statusListIndices: statusOptions.indices,
+							statusListName: statusOptions.statusListName,
+							statusListVersion: statusOptions.statusListVersion,
+						},
+						symmetricKey: statusOptions.symmetricKey,
+						paymentConditions,
+						fetchList: true,
+						publish: true,
+						publishEncrypted: true,
+						returnSymmetricKey: true,
+						returnUpdatedStatusList: true,
+						returnStatusListMetadata: true,
+						dkgOptions: toDefaultDkg(did),
+					} satisfies ICheqdUnsuspendBulkCredentialsWithStatusListArgs);
+			}
 		}
 	}
 

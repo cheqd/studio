@@ -3052,8 +3052,21 @@
         "tags": [
           "Credential Status"
         ],
-        "summary": "Update an existing unencrypted StatusList2021 credential status list.",
+        "summary": "Update an existing unencrypted StatusList2021 or BitstringStatusList credential status list.",
         "parameters": [
+          {
+            "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
           {
             "in": "query",
             "name": "statusAction",
@@ -3111,8 +3124,21 @@
         "tags": [
           "Credential Status"
         ],
-        "summary": "Update an existing encrypted StatusList2021 credential status list.",
+        "summary": "Update an existing encrypted StatusList2021 or BitstringStatusList credential status list.",
         "parameters": [
+          {
+            "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
           {
             "in": "query",
             "name": "statusAction",

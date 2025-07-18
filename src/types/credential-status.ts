@@ -15,6 +15,8 @@ import {
 	ICheqdCheckCredentialStatusOptions,
 	BitstringStatusMessage,
 	BitstringStatusList,
+	BitstringStatusValue,
+	BulkBitstringUpdateResult,
 } from '@cheqd/did-provider-cheqd';
 import type { CheqdNetwork } from '@cheqd/sdk';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2';
@@ -80,6 +82,7 @@ export type UpdateUnencryptedStatusListRequestBody = {
 
 export type UpdateUnencryptedStatusListRequestQuery = {
 	statusAction: DefaultStatusAction;
+	listType: string;
 };
 
 export type UpdateUnencryptedStatusListSuccessfulResponseBody = {
@@ -91,7 +94,8 @@ export type UpdateUnencryptedStatusListSuccessfulResponseBody = {
 		resource?:
 			| BulkRevocationResult['statusList']
 			| BulkSuspensionResult['statusList']
-			| BulkUnsuspensionResult['statusList'];
+			| BulkUnsuspensionResult['statusList']
+			| BulkBitstringUpdateResult['statusList'];
 	};
 
 export type UpdateUnencryptedStatusListUnsuccessfulResponseBody = {
@@ -124,7 +128,8 @@ export type UpdateEncryptedStatusListSuccessfulResponseBody = {
 		resource?:
 			| BulkRevocationResult['statusList']
 			| BulkSuspensionResult['statusList']
-			| BulkUnsuspensionResult['statusList'];
+			| BulkUnsuspensionResult['statusList']
+			| BulkBitstringUpdateResult['statusList'];
 	};
 
 export type UpdateEncryptedStatusListUnsuccessfulResponseBody = UpdateUnencryptedStatusListUnsuccessfulResponseBody;
@@ -152,7 +157,7 @@ export type CheckStatusListUnsuccessfulResponseBody = {
 export type SearchStatusListQuery = {
 	did: string;
 	statusListName: string;
-	listType: 'StatusList2021' | 'BitstringStatusList';
+	listType: string;
 	statusPurpose: DefaultStatusList2021StatusPurposeType;
 };
 
@@ -235,6 +240,11 @@ export const DefaultStatusActions = {
 	suspend: 'suspend',
 	reinstate: 'reinstate',
 } as const;
+export enum BitstringStatusActions {
+	revoke = BitstringStatusValue.REVOKED, // "revoke" -> 1
+	suspend = BitstringStatusValue.SUSPENDED, // "suspend" -> 2
+	reinstate = BitstringStatusValue.VALID, // "reinstate" -> 0
+}
 
 export const DefaultStatusActionPurposeMap = {
 	[DefaultStatusActions.revoke]: DefaultStatusList2021StatusPurposeTypes.revocation,

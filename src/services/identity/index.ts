@@ -30,6 +30,7 @@ import type {
 	UnsuspensionResult,
 	TransactionResult,
 	CreateStatusListResult,
+	BulkBitstringUpdateResult,
 } from '@cheqd/did-provider-cheqd';
 import type { VeramoAgent } from '../../types/shared.js';
 import type { VerificationOptions } from '../../types/shared.js';
@@ -137,16 +138,18 @@ export interface IIdentityService {
 		statusOptions: CreateEncryptedBitstringOptions,
 		customer: CustomerEntity
 	): Promise<CreateStatusListResult>;
-	updateUnencryptedStatusList2021(
+	updateUnencryptedStatusList(
 		did: string,
+		listType: string,
 		statusOptions: UpdateUnencryptedStatusListOptions,
 		customer: CustomerEntity
-	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult>;
-	updateEncryptedStatusList2021(
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult>;
+	updateEncryptedStatusList(
 		did: string,
+		listType: string,
 		statusOptions: UpdateEncryptedStatusListOptions,
 		customer: CustomerEntity
-	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult>;
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult>;
 	checkStatusList2021(
 		did: string,
 		statusOptions: CheckStatusListOptions,
@@ -155,7 +158,7 @@ export interface IIdentityService {
 	searchStatusList(
 		did: string,
 		statusListName: string,
-		listType: 'StatusList2021' | 'BitstringStatusList',
+		listType: string,
 		statusPurpose: 'revocation' | 'suspension',
 		customer?: CustomerEntity
 	): Promise<SearchStatusListResult>;

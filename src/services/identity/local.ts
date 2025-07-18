@@ -41,7 +41,7 @@ import type {
 import { DefaultIdentityService } from './default.js';
 import { Connection } from '../../database/connection/connection.js';
 import { Veramo } from './agent.js';
-import type { CreateStatusListResult, TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
+import type { BulkBitstringUpdateResult, CreateStatusListResult, TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { toTPublicKeyEd25519 } from '../helpers.js';
 
@@ -247,20 +247,22 @@ export class LocalIdentityService extends DefaultIdentityService {
 		);
 	}
 
-	async updateUnencryptedStatusList2021(
+	async updateUnencryptedStatusList(
 		did: string,
+		listType: string,
 		statusOptions: UpdateUnencryptedStatusListOptions
-	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult> {
 		await this.importDid();
-		return await Veramo.instance.updateUnencryptedStatusList2021(this.initAgent(), did, statusOptions);
+		return await Veramo.instance.updateUnencryptedStatusList(this.initAgent(), did, listType, statusOptions);
 	}
 
-	async updateEncryptedStatusList2021(
+	async updateEncryptedStatusList(
 		did: string,
+		listType: string,
 		statusOptions: UpdateEncryptedStatusListOptions
-	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult> {
 		await this.importDid();
-		return await Veramo.instance.updateEncryptedStatusList2021(this.initAgent(), did, statusOptions);
+		return await Veramo.instance.updateEncryptedStatusList(this.initAgent(), did, listType, statusOptions);
 	}
 
 	async checkStatusList2021(did: string, statusOptions: CheckStatusListOptions): Promise<StatusCheckResult> {
