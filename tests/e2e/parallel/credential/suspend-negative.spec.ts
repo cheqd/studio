@@ -12,7 +12,7 @@ import { UnsuccessfulResponseBody } from '@cheqd/credential-service/src/types/sh
 test.use({ storageState: STORAGE_STATE_AUTHENTICATED });
 
 test('[Negative] It cannot suspend credential in mainnet network for user with testnet role', async ({ request }) => {
-	const response = await request.post(`/credential/suspend`, {
+	const response = await request.post(`/credential/suspend?listType=StatusList2021`, {
 		data: JSON.parse(
 			fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/suspend-credential-without-permissions.json`, 'utf-8')
 		),

@@ -3,15 +3,11 @@ import type { VerifiableCredential } from '@veramo/core';
 import type {
 	DIDAccreditationRequestBody,
 	DIDAccreditationRequestParams,
-	RevokeAccreditationRequestBody,
-	RevokeAccreditationRequestQuery,
+	UpdateAccreditationRequestBody,
+	UpdateAccreditationRequestQuery,
 	RevokeAccreditationResponseBody,
 	SchemaUrlType,
-	SuspendAccreditationRequestBody,
-	SuspendAccreditationRequestQuery,
 	SuspendAccreditationResponseBody,
-	UnsuspendAccreditationRequestBody,
-	UnsuspendAccreditationRequestQuery,
 	UnsuspendAccreditationResponseBody,
 	VerifyAccreditationRequestBody,
 } from '../../types/accreditation.js';
@@ -449,12 +445,12 @@ export class AccreditationController {
 	 *   post:
 	 *     tags: [ Trust Registry ]
 	 *     summary: Revoke a Verifiable Accreditation.
-	 *     description: This endpoint revokes a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.
+	 *     description: This endpoint revokes a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.
 	 *     operationId: accredit-revoke
 	 *     parameters:
 	 *       - in: query
 	 *         name: publish
-	 *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
+	 *         description: Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.
 	 *         required: true
 	 *         schema:
 	 *           type: boolean
@@ -484,9 +480,9 @@ export class AccreditationController {
 	@validate
 	public async revoke(request: Request, response: Response) {
 		// Get publish flag
-		const { publish } = request.query as RevokeAccreditationRequestQuery;
+		const { publish } = request.query as UpdateAccreditationRequestQuery;
 		// Get symmetric key
-		const { symmetricKey, ...didUrlParams } = request.body as RevokeAccreditationRequestBody;
+		const { symmetricKey, ...didUrlParams } = request.body as UpdateAccreditationRequestBody;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
@@ -512,13 +508,14 @@ export class AccreditationController {
 
 			const result = await identityServiceStrategySetup.agent.revokeCredentials(
 				accreditation,
+				'default', // send default list type
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
 			);
 
 			// Track operation if revocation was successful and publish is true
-			// Otherwise the StatusList2021 publisher should manually publish the resource
+			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
 			// and it will be tracked there
 			if (!result.error && result.resourceMetadata && publish) {
 				// get issuer did
@@ -558,12 +555,12 @@ export class AccreditationController {
 	 *   post:
 	 *     tags: [ Trust Registry ]
 	 *     summary: Suspend a Verifiable Accreditation.
-	 *     description: This endpoint suspends a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.
+	 *     description: This endpoint suspends a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.
 	 *     operationId: accredit-suspend
 	 *     parameters:
 	 *       - in: query
 	 *         name: publish
-	 *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
+	 *         description: Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.
 	 *         required: true
 	 *         schema:
 	 *           type: boolean
@@ -593,9 +590,9 @@ export class AccreditationController {
 	@validate
 	public async suspend(request: Request, response: Response) {
 		// Get publish flag
-		const { publish } = request.query as SuspendAccreditationRequestQuery;
+		const { publish } = request.query as UpdateAccreditationRequestQuery;
 		// Get symmetric key
-		const { symmetricKey, ...didUrlParams } = request.body as SuspendAccreditationRequestBody;
+		const { symmetricKey, ...didUrlParams } = request.body as UpdateAccreditationRequestBody;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
@@ -623,13 +620,14 @@ export class AccreditationController {
 
 			const result = await identityServiceStrategySetup.agent.suspendCredentials(
 				accreditation,
+				'default', // send default list type
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
 			);
 
 			// Track operation if revocation was successful and publish is true
-			// Otherwise the StatusList2021 publisher should manually publish the resource
+			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
 			// and it will be tracked there
 			if (!result.error && result.resourceMetadata && publish) {
 				// get issuer did
@@ -669,12 +667,12 @@ export class AccreditationController {
 	 *   post:
 	 *     tags: [ Trust Registry ]
 	 *     summary: Reinstate a Verifiable Accreditation.
-	 *     description: This endpoint reinstates a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.
+	 *     description: This endpoint reinstates a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.
 	 *     operationId: accredit-reinstate
 	 *     parameters:
 	 *       - in: query
 	 *         name: publish
-	 *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
+	 *         description: Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.
 	 *         required: true
 	 *         schema:
 	 *           type: boolean
@@ -704,9 +702,9 @@ export class AccreditationController {
 	@validate
 	public async reinstate(request: Request, response: Response) {
 		// Get publish flag
-		const { publish } = request.query as UnsuspendAccreditationRequestQuery;
+		const { publish } = request.query as UpdateAccreditationRequestQuery;
 		// Get symmetric key
-		const { symmetricKey, ...didUrlParams } = request.body as UnsuspendAccreditationRequestBody;
+		const { symmetricKey, ...didUrlParams } = request.body as UpdateAccreditationRequestBody;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
@@ -734,13 +732,14 @@ export class AccreditationController {
 
 			const result = await identityServiceStrategySetup.agent.reinstateCredentials(
 				accreditation,
+				'default', // send default list type
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
 			);
 
 			// Track operation if revocation was successful and publish is true
-			// Otherwise the StatusList2021 publisher should manually publish the resource
+			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
 			// and it will be tracked there
 			if (!result.error && result.resourceMetadata && publish) {
 				// get issuer did
