@@ -2670,19 +2670,6 @@
         "parameters": [
           {
             "in": "query",
-            "name": "listType",
-            "description": "The type of Status List.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "StatusList2021",
-                "BitstringStatusList"
-              ]
-            }
-          },
-          {
-            "in": "query",
             "name": "publish",
             "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
             "required": true,
@@ -2740,19 +2727,6 @@
         "parameters": [
           {
             "in": "query",
-            "name": "listType",
-            "description": "The type of Status List.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "StatusList2021",
-                "BitstringStatusList"
-              ]
-            }
-          },
-          {
-            "in": "query",
             "name": "publish",
             "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
             "required": true,
@@ -2808,19 +2782,6 @@
         "description": "This endpoint reinstates a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.",
         "operationId": "accredit-reinstate",
         "parameters": [
-          {
-            "in": "query",
-            "name": "listType",
-            "description": "The type of Status List.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "StatusList2021",
-                "BitstringStatusList"
-              ]
-            }
-          },
           {
             "in": "query",
             "name": "publish",

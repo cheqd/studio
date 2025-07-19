@@ -58,7 +58,7 @@ test(" Verify a credential's suspension status", async ({ request }) => {
 });
 
 test(' Verify a credential status after suspension', async ({ request }) => {
-	const response = await request.post(`/credential/suspend?publish=true`, {
+	const response = await request.post(`/credential/suspend?publish=true&listType=StatusList2021`, {
 		data: JSON.stringify({
 			credential: jwtCredential,
 		}),
@@ -88,7 +88,7 @@ test(' Verify a credential status after suspension', async ({ request }) => {
 });
 
 test(' Verify a credential status after reinstating', async ({ request }) => {
-	const response = await request.post(`/credential/reinstate?publish=true`, {
+	const response = await request.post(`/credential/reinstate?publish=true&listType=StatusList2021`, {
 		data: JSON.stringify({
 			credential: jwtCredential,
 		}),

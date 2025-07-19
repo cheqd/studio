@@ -449,15 +449,6 @@ export class AccreditationController {
 	 *     operationId: accredit-revoke
 	 *     parameters:
 	 *       - in: query
-	 *         name: listType
-	 *         description: The type of Status List.
-	 *         required: true
-	 *         schema:
-	 *           type: string
-	 *           enum:
-	 *             - StatusList2021
-	 *             - BitstringStatusList
-	 *       - in: query
 	 *         name: publish
 	 *         description: Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.
 	 *         required: true
@@ -489,7 +480,7 @@ export class AccreditationController {
 	@validate
 	public async revoke(request: Request, response: Response) {
 		// Get publish flag
-		const { publish, listType } = request.query as UpdateAccreditationRequestQuery;
+		const { publish } = request.query as UpdateAccreditationRequestQuery;
 		// Get symmetric key
 		const { symmetricKey, ...didUrlParams } = request.body as UpdateAccreditationRequestBody;
 		// Get strategy e.g. postgres or local
@@ -517,7 +508,7 @@ export class AccreditationController {
 
 			const result = await identityServiceStrategySetup.agent.revokeCredentials(
 				accreditation,
-				listType || 'BitstringStatusList',
+				'default', // send default list type
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
@@ -568,15 +559,6 @@ export class AccreditationController {
 	 *     operationId: accredit-suspend
 	 *     parameters:
 	 *       - in: query
-	 *         name: listType
-	 *         description: The type of Status List.
-	 *         required: true
-	 *         schema:
-	 *           type: string
-	 *           enum:
-	 *             - StatusList2021
-	 *             - BitstringStatusList
-	 *       - in: query
 	 *         name: publish
 	 *         description: Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.
 	 *         required: true
@@ -608,7 +590,7 @@ export class AccreditationController {
 	@validate
 	public async suspend(request: Request, response: Response) {
 		// Get publish flag
-		const { publish, listType } = request.query as UpdateAccreditationRequestQuery;
+		const { publish } = request.query as UpdateAccreditationRequestQuery;
 		// Get symmetric key
 		const { symmetricKey, ...didUrlParams } = request.body as UpdateAccreditationRequestBody;
 		// Get strategy e.g. postgres or local
@@ -638,7 +620,7 @@ export class AccreditationController {
 
 			const result = await identityServiceStrategySetup.agent.suspendCredentials(
 				accreditation,
-				listType || 'BitstringStatusList',
+				'default', // send default list type
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
@@ -689,15 +671,6 @@ export class AccreditationController {
 	 *     operationId: accredit-reinstate
 	 *     parameters:
 	 *       - in: query
-	 *         name: listType
-	 *         description: The type of Status List.
-	 *         required: true
-	 *         schema:
-	 *           type: string
-	 *           enum:
-	 *             - StatusList2021
-	 *             - BitstringStatusList
-	 *       - in: query
 	 *         name: publish
 	 *         description: Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.
 	 *         required: true
@@ -729,7 +702,7 @@ export class AccreditationController {
 	@validate
 	public async reinstate(request: Request, response: Response) {
 		// Get publish flag
-		const { publish, listType } = request.query as UpdateAccreditationRequestQuery;
+		const { publish } = request.query as UpdateAccreditationRequestQuery;
 		// Get symmetric key
 		const { symmetricKey, ...didUrlParams } = request.body as UpdateAccreditationRequestBody;
 		// Get strategy e.g. postgres or local
@@ -759,7 +732,7 @@ export class AccreditationController {
 
 			const result = await identityServiceStrategySetup.agent.reinstateCredentials(
 				accreditation,
-				listType || 'BitstringStatusList',
+				'default', // send default list type
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
