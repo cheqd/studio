@@ -31,6 +31,7 @@ import type {
 	TransactionResult,
 	CreateStatusListResult,
 	BulkBitstringUpdateResult,
+	BitstringUpdateResult,
 } from '@cheqd/did-provider-cheqd';
 import type { VeramoAgent } from '../../types/shared.js';
 import type { VerificationOptions } from '../../types/shared.js';
@@ -179,22 +180,25 @@ export interface IIdentityService {
 	): Promise<TransactionResult>;
 	revokeCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
-	): Promise<RevocationResult | BulkRevocationResult>;
+	): Promise<RevocationResult | BulkRevocationResult | BitstringUpdateResult | BulkBitstringUpdateResult>;
 	suspendCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
-	): Promise<SuspensionResult | BulkSuspensionResult>;
+	): Promise<SuspensionResult | BulkSuspensionResult | BitstringUpdateResult | BulkBitstringUpdateResult>;
 	reinstateCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
-	): Promise<UnsuspensionResult | BulkUnsuspensionResult>;
+	): Promise<UnsuspensionResult | BulkUnsuspensionResult | BitstringUpdateResult | BulkBitstringUpdateResult>;
 	setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity>;
 	updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity>;
 	getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | null>;

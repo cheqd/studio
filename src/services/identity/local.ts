@@ -281,15 +281,27 @@ export class LocalIdentityService extends DefaultIdentityService {
 		return await Veramo.instance.remunerateStatusList2021(this.initAgent(), feePaymentOptions);
 	}
 
-	async revokeCredentials(credentials: W3CVerifiableCredential | W3CVerifiableCredential[], publish: boolean) {
-		return await Veramo.instance.revokeCredentials(this.initAgent(), credentials, publish);
+	async revokeCredentials(
+		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
+		publish: boolean
+	) {
+		return await Veramo.instance.revokeCredentials(this.initAgent(), credentials, listType, publish);
 	}
 
-	async suspendCredentials(credentials: W3CVerifiableCredential | W3CVerifiableCredential[], publish: boolean) {
-		return await Veramo.instance.suspendCredentials(this.initAgent(), credentials, publish);
+	async suspendCredentials(
+		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
+		publish: boolean
+	) {
+		return await Veramo.instance.suspendCredentials(this.initAgent(), credentials, listType, publish);
 	}
 
-	async reinstateCredentials(credentials: W3CVerifiableCredential | W3CVerifiableCredential[], publish: boolean) {
-		return await Veramo.instance.unsuspendCredentials(this.initAgent(), credentials, publish);
+	async reinstateCredentials(
+		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
+		publish: boolean
+	) {
+		return await Veramo.instance.unsuspendCredentials(this.initAgent(), credentials, listType, publish);
 	}
 }

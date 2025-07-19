@@ -91,6 +91,7 @@ import type {
 	ICheqdBulkUpdateCredentialWithStatusListArgs,
 	ICheqdCreateBitstringStatusListArgs,
 	ICheqdCreateLinkedResourceArgs,
+	ICheqdUpdateCredentialWithStatusListArgs,
 	ICheqdVerifyCredentialWithBitstringArgs,
 } from '@cheqd/did-provider-cheqd';
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
@@ -467,13 +468,27 @@ export class Veramo {
 			});
 		}
 		if (verificationOptions.verifyStatus) {
-			result = await agent.cheqdVerifyPresentation({
-				presentation: presentation as VerifiablePresentation,
-				fetchList: true,
-				verificationArgs: {
-					...verificationOptions,
-				},
-			} as ICheqdVerifyPresentationWithStatusListArgs);
+			const firstCredential =
+				typeof presentation.verifiableCredential?.[0] === 'string'
+					? (jwtDecode(presentation.verifiableCredential[0]) as VerifiableCredential)
+					: presentation.verifiableCredential?.[0];
+			if (firstCredential?.credentialStatus?.type === BitstringStatusListEntry) {
+				result = await agent.cheqdVerifyPresentationWithStatusList({
+					presentation: presentation as VerifiablePresentation,
+					fetchList: true,
+					verificationArgs: {
+						...verificationOptions,
+					},
+				} as ICheqdVerifyPresentationWithStatusListArgs);
+			} else {
+				result = await agent.cheqdVerifyPresentation({
+					presentation: presentation as VerifiablePresentation,
+					fetchList: true,
+					verificationArgs: {
+						...verificationOptions,
+					},
+				} as ICheqdVerifyPresentationWithStatusListArgs);
+			}
 		} else {
 			result = await agent.verifyPresentation({
 				presentation,
@@ -740,9 +755,30 @@ export class Veramo {
 	async revokeCredentials(
 		agent: VeramoAgent,
 		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish = true,
 		symmetricKey = ''
 	) {
+		if (listType === 'BitstringStatusList') {
+			if (Array.isArray(credentials)) {
+				return await agent.cheqdBulkUpdateCredentialsWithStatusList({
+					credentials,
+					newStatus: BitstringStatusActions.revoke as unknown as BitstringStatusValue,
+					fetchList: true,
+					publish,
+				} satisfies ICheqdBulkUpdateCredentialWithStatusListArgs);
+			}
+			return await agent.cheqdUpdateCredentialWithStatusList({
+				credential: credentials,
+				newStatus: BitstringStatusActions.revoke as unknown as BitstringStatusValue,
+				fetchList: true,
+				publish,
+				symmetricKey,
+				returnStatusListMetadata: true,
+				returnUpdatedStatusList: true,
+			} satisfies ICheqdUpdateCredentialWithStatusListArgs);
+		}
+		// default to StatusList2021
 		if (Array.isArray(credentials))
 			return await agent.cheqdRevokeCredentials({
 				credentials,
@@ -762,9 +798,30 @@ export class Veramo {
 	async suspendCredentials(
 		agent: VeramoAgent,
 		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish = true,
 		symmetricKey = ''
 	) {
+		if (listType === 'BitstringStatusList') {
+			if (Array.isArray(credentials)) {
+				return await agent.cheqdBulkUpdateCredentialsWithStatusList({
+					credentials,
+					newStatus: BitstringStatusActions.suspend as unknown as BitstringStatusValue,
+					fetchList: true,
+					publish,
+				} satisfies ICheqdBulkUpdateCredentialWithStatusListArgs);
+			}
+			return await agent.cheqdUpdateCredentialWithStatusList({
+				credential: credentials,
+				newStatus: BitstringStatusActions.suspend as unknown as BitstringStatusValue,
+				fetchList: true,
+				publish,
+				symmetricKey,
+				returnStatusListMetadata: true,
+				returnUpdatedStatusList: true,
+			} satisfies ICheqdUpdateCredentialWithStatusListArgs);
+		}
+		// default to StatusList2021
 		if (Array.isArray(credentials))
 			return await agent.cheqdSuspendCredentials({ credentials, fetchList: true, publish });
 		return await agent.cheqdSuspendCredential({
@@ -780,9 +837,30 @@ export class Veramo {
 	async unsuspendCredentials(
 		agent: VeramoAgent,
 		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish = true,
 		symmetricKey = ''
 	) {
+		if (listType === 'BitstringStatusList') {
+			if (Array.isArray(credentials)) {
+				return await agent.cheqdBulkUpdateCredentialsWithStatusList({
+					credentials,
+					newStatus: BitstringStatusActions.reinstate as unknown as BitstringStatusValue,
+					fetchList: true,
+					publish,
+				} satisfies ICheqdBulkUpdateCredentialWithStatusListArgs);
+			}
+			return await agent.cheqdUpdateCredentialWithStatusList({
+				credential: credentials,
+				newStatus: BitstringStatusActions.reinstate as unknown as BitstringStatusValue,
+				fetchList: true,
+				publish,
+				symmetricKey,
+				returnStatusListMetadata: true,
+				returnUpdatedStatusList: true,
+			} satisfies ICheqdUpdateCredentialWithStatusListArgs);
+		}
+		// default to StatusList2021
 		if (Array.isArray(credentials))
 			return await agent.cheqdUnsuspendCredentials({ credentials, fetchList: true, publish });
 		return await agent.cheqdUnsuspendCredential({

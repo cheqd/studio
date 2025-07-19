@@ -26,6 +26,7 @@ import type {
 	TransactionResult,
 	CreateStatusListResult,
 	BulkBitstringUpdateResult,
+	BitstringUpdateResult,
 } from '@cheqd/did-provider-cheqd';
 import type { VeramoAgent } from '../../types/shared';
 import type { VerificationOptions } from '../../types/shared';
@@ -196,26 +197,29 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	}
 	revokeCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
-	): Promise<RevocationResult | BulkRevocationResult> {
+	): Promise<RevocationResult | BulkRevocationResult | BitstringUpdateResult | BulkBitstringUpdateResult> {
 		throw new Error(`Not supported`);
 	}
 	suspendCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
-	): Promise<SuspensionResult | BulkSuspensionResult> {
+	): Promise<SuspensionResult | BulkSuspensionResult | BitstringUpdateResult | BulkBitstringUpdateResult> {
 		throw new Error(`Not supported`);
 	}
 	reinstateCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
-	): Promise<UnsuspensionResult | BulkUnsuspensionResult> {
+	): Promise<UnsuspensionResult | BulkUnsuspensionResult | BitstringUpdateResult | BulkBitstringUpdateResult> {
 		throw new Error(`Not supported`);
 	}
 	getKey(kid: string, customer: CustomerEntity): Promise<ManagedKeyInfo | null> {

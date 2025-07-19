@@ -1,6 +1,8 @@
 import { VerifiableCredential } from '@veramo/core';
 import type { CredentialRequest, PublishRequest, VerifyCredentialRequestBody } from './credential';
 import {
+	BitstringUpdateResult,
+	BulkBitstringUpdateResult,
 	BulkRevocationResult,
 	BulkSuspensionResult,
 	BulkUnsuspensionResult,
@@ -99,26 +101,26 @@ export interface VerfifiableAccreditation extends VerifiableCredential {
 	};
 }
 
-export interface RevokeAccreditationRequestBody extends DIDUrlParams {
+export interface UpdateAccreditationRequestBody extends DIDUrlParams {
 	symmetricKey?: string;
 }
 
-export interface SuspendAccreditationRequestBody extends DIDUrlParams {
-	symmetricKey?: string;
-}
+export type RevokeAccreditationResponseBody =
+	| RevocationResult
+	| BulkRevocationResult
+	| BitstringUpdateResult
+	| BulkBitstringUpdateResult;
 
-export interface UnsuspendAccreditationRequestBody extends DIDUrlParams {
-	symmetricKey?: string;
-}
+export type SuspendAccreditationResponseBody =
+	| SuspensionResult
+	| BulkSuspensionResult
+	| BitstringUpdateResult
+	| BulkBitstringUpdateResult;
 
-export type RevokeAccreditationResponseBody = RevocationResult | BulkRevocationResult;
+export type UnsuspendAccreditationResponseBody =
+	| UnsuspensionResult
+	| BulkUnsuspensionResult
+	| BitstringUpdateResult
+	| BulkBitstringUpdateResult;
 
-export type SuspendAccreditationResponseBody = SuspensionResult | BulkSuspensionResult;
-
-export type UnsuspendAccreditationResponseBody = UnsuspensionResult | BulkUnsuspensionResult;
-
-export type RevokeAccreditationRequestQuery = PublishRequest;
-
-export type SuspendAccreditationRequestQuery = PublishRequest;
-
-export type UnsuspendAccreditationRequestQuery = PublishRequest;
+export type UpdateAccreditationRequestQuery = PublishRequest;

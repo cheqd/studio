@@ -262,7 +262,8 @@
           "credentialStatus": {
             "statusPurpose": "revocation",
             "statusListName": "employee-credentials",
-            "statusListIndex": 10
+            "statusListIndex": 10,
+            "statusListType": "StatusList2021"
           }
         }
       },
@@ -2664,13 +2665,26 @@
           "Trust Registry"
         ],
         "summary": "Revoke a Verifiable Accreditation.",
-        "description": "This endpoint revokes a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.",
+        "description": "This endpoint revokes a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.",
         "operationId": "accredit-revoke",
         "parameters": [
           {
             "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
+          {
+            "in": "query",
             "name": "publish",
-            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
             "required": true,
             "schema": {
               "type": "boolean",
@@ -2721,13 +2735,26 @@
           "Trust Registry"
         ],
         "summary": "Suspend a Verifiable Accreditation.",
-        "description": "This endpoint suspends a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.",
+        "description": "This endpoint suspends a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.",
         "operationId": "accredit-suspend",
         "parameters": [
           {
             "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
+          {
+            "in": "query",
             "name": "publish",
-            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
             "required": true,
             "schema": {
               "type": "boolean",
@@ -2778,13 +2805,26 @@
           "Trust Registry"
         ],
         "summary": "Reinstate a Verifiable Accreditation.",
-        "description": "This endpoint reinstates a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.",
+        "description": "This endpoint reinstates a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.",
         "operationId": "accredit-reinstate",
         "parameters": [
           {
             "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
+          {
+            "in": "query",
             "name": "publish",
-            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
             "required": true,
             "schema": {
               "type": "boolean",
@@ -3449,13 +3489,26 @@
           "Credential"
         ],
         "summary": "Revoke a Verifiable Credential.",
-        "description": "This endpoint revokes a given Verifiable Credential. As input, it can take the VC-JWT as a string or the entire credential itself. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.",
+        "description": "This endpoint revokes a given Verifiable Credential. As input, it can take the VC-JWT as a string or the entire credential itself. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.",
         "operationId": "revoke",
         "parameters": [
           {
             "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
+          {
+            "in": "query",
             "name": "publish",
-            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
             "required": true,
             "schema": {
               "type": "boolean",
@@ -3511,8 +3564,21 @@
         "parameters": [
           {
             "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
+          {
+            "in": "query",
             "name": "publish",
-            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
             "schema": {
               "type": "boolean"
             }
@@ -3561,13 +3627,26 @@
           "Credential"
         ],
         "summary": "Reinstate a suspended Verifiable Credential.",
-        "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+        "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
         "operationId": "reinstate",
         "parameters": [
           {
             "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
+          {
+            "in": "query",
             "name": "publish",
-            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
             "schema": {
               "type": "boolean"
             }

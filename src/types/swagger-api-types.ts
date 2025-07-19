@@ -161,6 +161,7 @@
  *           statusPurpose: revocation
  *           statusListName: employee-credentials
  *           statusListIndex: 10
+ *           statusListType: StatusList2021
  *     Credential:
  *       description: Input fields for revoking/suspending a Verifiable Credential.
  *       type: object

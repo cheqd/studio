@@ -2,6 +2,8 @@ import type { IVerifyResult, VerifiableCredential, VerificationPolicies, W3CVeri
 import type { StatusOptions } from './credential-status.js';
 import type { UnsuccessfulResponseBody } from './shared.js';
 import type {
+	BitstringUpdateResult,
+	BulkBitstringUpdateResult,
 	BulkRevocationResult,
 	BulkSuspensionResult,
 	BulkUnsuspensionResult,
@@ -50,6 +52,7 @@ export type VerificationPoliciesRequest = {
 
 export type PublishRequest = {
 	publish?: boolean;
+	listType?: string;
 };
 
 export type SymmetricKeyRequest = {
@@ -68,17 +71,9 @@ export type VerifyCredentialRequestBody = { credential: W3CVerifiableCredential 
 
 export type VerifyCredentialRequestQuery = VerificationOptions;
 
-export type RevokeCredentialRequestBody = CredentialRequestBody;
+export type UpdateCredentialRequestBody = CredentialRequestBody;
 
-export type RevokeCredentialRequestQuery = PublishRequest;
-
-export type SuspendCredentialRequestBody = CredentialRequestBody;
-
-export type SuspendCredentialRequestQuery = PublishRequest;
-
-export type UnsuspendCredentialRequestBody = CredentialRequestBody;
-
-export type UnsuspendCredentialRequestQuery = PublishRequest;
+export type UpdateCredentialRequestQuery = PublishRequest;
 
 // Response bodies
 // Positive
@@ -87,11 +82,23 @@ export type IssueCredentialResponseBody = VerifiableCredential;
 
 export type VerifyCredentialResponseBody = IVerifyResult;
 
-export type RevokeCredentialResponseBody = RevocationResult | BulkRevocationResult;
+export type RevokeCredentialResponseBody =
+	| RevocationResult
+	| BulkRevocationResult
+	| BitstringUpdateResult
+	| BulkBitstringUpdateResult;
 
-export type SuspendCredentialResponseBody = SuspensionResult | BulkSuspensionResult;
+export type SuspendCredentialResponseBody =
+	| SuspensionResult
+	| BulkSuspensionResult
+	| BitstringUpdateResult
+	| BulkBitstringUpdateResult;
 
-export type UnsuspendCredentialResponseBody = UnsuspensionResult | BulkUnsuspensionResult;
+export type UnsuspendCredentialResponseBody =
+	| UnsuspensionResult
+	| BulkUnsuspensionResult
+	| BitstringUpdateResult
+	| BulkBitstringUpdateResult;
 
 // Negative
 

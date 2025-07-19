@@ -500,35 +500,38 @@ export class PostgresIdentityService extends DefaultIdentityService {
 
 	async revokeCredentials(
 		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
 	) {
 		const agent = await this.createAgent(customer);
 		await this.validateCredentialAccess(credentials, customer);
-		return await Veramo.instance.revokeCredentials(agent, credentials, publish, symmetricKey);
+		return await Veramo.instance.revokeCredentials(agent, credentials, listType, publish, symmetricKey);
 	}
 
 	async suspendCredentials(
 		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
 	) {
 		const agent = await this.createAgent(customer);
 		await this.validateCredentialAccess(credentials, customer);
-		return await Veramo.instance.suspendCredentials(agent, credentials, publish, symmetricKey);
+		return await Veramo.instance.suspendCredentials(agent, credentials, listType, publish, symmetricKey);
 	}
 
 	async reinstateCredentials(
 		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
 	) {
 		const agent = await this.createAgent(customer);
 		await this.validateCredentialAccess(credentials, customer);
-		return await Veramo.instance.unsuspendCredentials(agent, credentials, publish, symmetricKey);
+		return await Veramo.instance.unsuspendCredentials(agent, credentials, listType, publish, symmetricKey);
 	}
 
 	private async validateCredentialAccess(
