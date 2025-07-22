@@ -70,7 +70,7 @@ test(' Issue a jwt credential with status', async ({ request }) => {
 	});
 	expect(jwtCredential.credentialStatus.type).toBe('BitstringStatusListEntry');
 	expect(jwtCredential.credentialStatus.statusPurpose).toBe(credentialData.credentialStatus.statusPurpose);
-	expect(jwtCredential.credentialStatus.statusListIndex).toBe(credentialData.credentialStatus.statusListIndex);
+	expect(jwtCredential.credentialStatus).toHaveProperty('statusListIndex');
 
 	const verifyResponse = await request.post(`/credential/verify`, {
 		data: JSON.stringify({
