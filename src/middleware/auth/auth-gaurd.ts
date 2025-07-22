@@ -36,7 +36,7 @@ export class APIGuard {
 		const authRule = this.authRuleRepository.match(request);
 		if (!authRule) {
 			return response.status(StatusCodes.BAD_REQUEST).send({
-				error: `Bad Request. No auth rules for handling such request: ${request.method} ${request.path} or please check that namespace scpecified correctly.`,
+				error: `Bad Request. No auth rules for handling such request: ${request.method} ${request.path} or please check that namespace specified correctly.`,
 			} satisfies ValidationErrorResponseBody);
 		}
 

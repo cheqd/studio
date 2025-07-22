@@ -45,6 +45,47 @@ test(' Issue a jwt credential', async ({ request }) => {
 	expect(result.verified).toBe(true);
 });
 
+test(' Issue a jwt credential with status', async ({ request }) => {
+	const credentialData = JSON.parse(
+		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jwt-statuslist.json`, 'utf-8')
+	);
+	const issueResponse = await request.post(`/credential/issue`, {
+		data: JSON.stringify(credentialData),
+		headers: {
+			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
+		},
+	});
+	const jwtCredential: VerifiableCredential = await issueResponse.json();
+	expect(issueResponse).toBeOK();
+	expect(issueResponse.status()).toBe(StatusCodes.OK);
+	expect(jwtCredential.proof.type).toBe('JwtProof2020');
+	expect(jwtCredential.proof).toHaveProperty('jwt');
+	expect(typeof jwtCredential.issuer === 'string' ? jwtCredential.issuer : jwtCredential.issuer.id).toBe(
+		credentialData.issuerDid
+	);
+	expect(jwtCredential.type).toContain('VerifiableCredential');
+	expect(jwtCredential.credentialSubject).toMatchObject({
+		...credentialData.attributes,
+		id: credentialData.subjectDid,
+	});
+	expect(jwtCredential.credentialStatus.type).toBe('BitstringStatusListEntry');
+	expect(jwtCredential.credentialStatus.statusPurpose).toBe(credentialData.credentialStatus.statusPurpose);
+	expect(jwtCredential.credentialStatus.statusListIndex).toBe(credentialData.credentialStatus.statusListIndex);
+
+	const verifyResponse = await request.post(`/credential/verify`, {
+		data: JSON.stringify({
+			credential: jwtCredential.proof.jwt,
+		}),
+		headers: {
+			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
+		},
+	});
+	const result = await verifyResponse.json();
+	expect(verifyResponse).toBeOK();
+	expect(verifyResponse.status()).toBe(StatusCodes.OK);
+	expect(result.verified).toBe(true);
+});
+
 test(' Issue a jwt credential with a deactivated DID', async ({ request }) => {
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jwt.json`, 'utf-8')
