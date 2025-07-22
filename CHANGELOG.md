@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.7.0](https://github.com/cheqd/studio/compare/3.6.9...3.7.0) (2025-07-22)
+
+### Features
+
+* Rename Authorisation to Authorization && Reinstate tests ([#704](https://github.com/cheqd/studio/issues/704)) ([f3873d7](https://github.com/cheqd/studio/commit/f3873d7784796ab99518be89ea659875c451a757))
+
+### Bug Fixes
+
+* Allow null values for resource version IDs ([#697](https://github.com/cheqd/studio/issues/697)) ([3ef53aa](https://github.com/cheqd/studio/commit/3ef53aa987ab7c1ada187b62df8d675369b6bb13))
+* Allow tracking operations without resources [DEV-5109] ([#698](https://github.com/cheqd/studio/issues/698)) ([d98c4bc](https://github.com/cheqd/studio/commit/d98c4bc7149af0008d773605c3e54924ac152b75))
+
 ## [3.7.0-develop.1](https://github.com/cheqd/studio/compare/3.6.10-develop.2...3.7.0-develop.1) (2025-07-14)
 
 ### Features
