@@ -260,7 +260,7 @@ export class AccreditationController {
 					resourceType = DIDAccreditationTypes.VerifiableAuthorizationForTrustChain;
 					credentialRequest.type = [...(type || []), resourceType];
 					credentialRequest.termsOfUse = {
-						type: resourceType,
+						type: "TrustFrameworkPolicy",
 						trustFramework,
 						trustFrameworkId,
 					};
@@ -269,7 +269,7 @@ export class AccreditationController {
 					resourceType = DIDAccreditationTypes.VerifiableAccreditationToAccredit;
 					credentialRequest.type = [...(type || []), resourceType];
 					credentialRequest.termsOfUse = {
-						type: resourceType,
+						type: "AccreditationPolicy",
 						parentAccreditation,
 						rootAuthorization,
 					};
@@ -278,7 +278,7 @@ export class AccreditationController {
 					resourceType = DIDAccreditationTypes.VerifiableAccreditationToAttest;
 					credentialRequest.type = [...(type || []), resourceType];
 					credentialRequest.termsOfUse = {
-						type: resourceType,
+						type: "AttestationPolicy",
 						parentAccreditation,
 						rootAuthorization,
 					};
