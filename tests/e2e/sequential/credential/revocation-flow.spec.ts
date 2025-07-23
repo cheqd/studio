@@ -56,7 +56,7 @@ test(" Verify a credential's revocation status", async ({ request }) => {
 });
 
 test(' Verify a credential status after revocation', async ({ request }) => {
-	const response = await request.post(`/credential/revoke?publish=true`, {
+	const response = await request.post(`/credential/revoke?publish=true&listType=StatusList2021`, {
 		data: JSON.stringify({
 			credential: jwtCredential,
 		}),

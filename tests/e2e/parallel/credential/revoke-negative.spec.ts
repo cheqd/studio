@@ -12,7 +12,7 @@ import { UnsuccessfulResponseBody } from '@cheqd/credential-service/src/types/sh
 test.use({ storageState: STORAGE_STATE_AUTHENTICATED });
 
 test('[Negative] It cannot revoke credential in mainnet network for user with testnet role', async ({ request }) => {
-	const response = await request.post(`/credential/revoke`, {
+	const response = await request.post(`/credential/revoke?listType=StatusList2021`, {
 		data: JSON.parse(
 			fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/revoke-credential-without-permissions.json`, 'utf-8')
 		),

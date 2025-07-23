@@ -1,10 +1,10 @@
 {
-	"issuerDid": "did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA",
+	"issuerDid": "did:cheqd:testnet:11ceabbd-1fdc-46c0-a15d-534c07926d2b",
 	"subjectDid": "did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578",
 	"format": "jwt",
 	"credentialStatus": {
-		"statusPurpose": "revocation",
-		"statusListName": "testingstatuslist"
+		"statusPurpose": "message",
+		"statusListName": "unencrypted-status-list"
 	},
 	"schemas": [
 		{
@@ -12,7 +12,7 @@
 			"types": "Learn"
 		}
 	],
-	"accreditationName": "revocationAccreditation",
+	"accreditationName": "testAccreditation",
 	"trustFrameworkId": "https://learn.cheqd.io/governance/start",
 	"trustFramework": "cheqd Governance Framework"
 }

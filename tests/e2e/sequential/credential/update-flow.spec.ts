@@ -1,19 +1,17 @@
 import type { VerifiableCredential } from '@veramo/core';
-
+import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
-import * as fs from 'fs';
 import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
 let jwtCredential: VerifiableCredential;
 
-test(' Issue a jwt credential with suspension statuslist', async ({ request }) => {
+test(' Issue a jwt credential with bitstring statuslist', async ({ request }) => {
 	const credentialData = JSON.parse(
-		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jwt-revocation.json`, 'utf-8')
+		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jwt-statuslist.json`, 'utf-8')
 	);
-	credentialData.credentialStatus.statusPurpose = 'suspension';
 	const response = await request.post(`/credential/issue`, {
 		data: JSON.stringify(credentialData),
 		headers: {
@@ -33,15 +31,15 @@ test(' Issue a jwt credential with suspension statuslist', async ({ request }) =
 		...credentialData.attributes,
 		id: credentialData.subjectDid,
 	});
-	expect(jwtCredential.credentialStatus).toMatchObject({
-		type: 'StatusList2021Entry',
-		statusPurpose: 'suspension',
-	});
-	expect(jwtCredential.credentialStatus).toHaveProperty('statusListIndex');
+
 	expect(jwtCredential.credentialStatus).toHaveProperty('id');
+	expect(jwtCredential.credentialStatus.type).toBe('BitstringStatusListEntry');
+	expect(jwtCredential.credentialStatus.statusPurpose).toBe(credentialData.credentialStatus.statusPurpose);
+	expect(jwtCredential.credentialStatus).toHaveProperty('statusListIndex');
+	expect(jwtCredential.credentialStatus).toHaveProperty('statusListCredential');
 });
 
-test(" Verify a credential's suspension status", async ({ request }) => {
+test(" Verify a credential's status", async ({ request }) => {
 	const response = await request.post(`/credential/verify?verifyStatus=true`, {
 		data: JSON.stringify({
 			credential: jwtCredential,
@@ -54,11 +52,13 @@ test(" Verify a credential's suspension status", async ({ request }) => {
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 	expect(result.verified).toBe(true);
-	expect(result.suspended).toBe(false);
+	expect(result.valid).toBe(true);
+	expect(result.status).toBe(0);
+	expect(result.message).toBe('valid');
 });
 
-test(' Verify a credential status after suspension', async ({ request }) => {
-	const response = await request.post(`/credential/suspend?publish=true&listType=StatusList2021`, {
+test(' Suspend and Verify a credential status after suspension', async ({ request }) => {
+	const response = await request.post(`/credential/suspend?publish=true&listType=BitstringStatusList`, {
 		data: JSON.stringify({
 			credential: jwtCredential,
 		}),
@@ -69,7 +69,9 @@ test(' Verify a credential status after suspension', async ({ request }) => {
 	const result = await response.json();
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
-	expect(result.suspended).toBe(true);
+	expect(result.updated).toBe(true);
+	expect(result.statusValue).toBe(2);
+	expect(result.statusMessage).toBe('suspended');
 	expect(result.published).toBe(true);
 
 	const verificationResponse = await request.post(`/credential/verify?verifyStatus=true`, {
@@ -84,11 +86,13 @@ test(' Verify a credential status after suspension', async ({ request }) => {
 	expect(verificationResponse).toBeOK();
 	expect(verificationResponse.status()).toBe(StatusCodes.OK);
 	expect(verificationResult.verified).toBe(true);
-	expect(verificationResult.suspended).toBe(true);
+	expect(verificationResult.valid).toBe(false);
+	expect(verificationResult.status).toBe(2);
+	expect(verificationResult.message).toBe('suspended');
 });
 
-test(' Verify a credential status after reinstating', async ({ request }) => {
-	const response = await request.post(`/credential/reinstate?publish=true&listType=StatusList2021`, {
+test(' Reinstate and Verify a credential status', async ({ request }) => {
+	const response = await request.post(`/credential/reinstate?publish=true&listType=BitstringStatusList`, {
 		data: JSON.stringify({
 			credential: jwtCredential,
 		}),
@@ -99,7 +103,10 @@ test(' Verify a credential status after reinstating', async ({ request }) => {
 	const result = await response.json();
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
-	expect(result.unsuspended).toBe(true);
+	expect(result.updated).toBe(true);
+	expect(result.statusValue).toBe(0);
+	expect(result.statusMessage).toBe('valid');
+	expect(result.published).toBe(true);
 
 	const verificationResponse = await request.post(`/credential/verify?verifyStatus=true`, {
 		data: JSON.stringify({
@@ -113,5 +120,41 @@ test(' Verify a credential status after reinstating', async ({ request }) => {
 	expect(verificationResponse).toBeOK();
 	expect(verificationResponse.status()).toBe(StatusCodes.OK);
 	expect(verificationResult.verified).toBe(true);
-	expect(verificationResult.suspended).toBe(false);
+	expect(verificationResult.valid).toBe(true);
+	expect(verificationResult.status).toBe(0);
+	expect(verificationResult.message).toBe('valid');
+});
+
+test(' Revoke and Verify a credential status', async ({ request }) => {
+	const response = await request.post(`/credential/revoke?publish=true&listType=BitstringStatusList`, {
+		data: JSON.stringify({
+			credential: jwtCredential,
+		}),
+		headers: {
+			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
+		},
+	});
+	const result = await response.json();
+	expect(response).toBeOK();
+	expect(response.status()).toBe(StatusCodes.OK);
+	expect(result.updated).toBe(true);
+	expect(result.statusValue).toBe(1);
+	expect(result.statusMessage).toBe('revoked');
+	expect(result.published).toBe(true);
+
+	const verificationResponse = await request.post(`/credential/verify?verifyStatus=true`, {
+		data: JSON.stringify({
+			credential: jwtCredential,
+		}),
+		headers: {
+			'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
+		},
+	});
+	const verificationResult = await verificationResponse.json();
+	expect(verificationResponse).toBeOK();
+	expect(verificationResponse.status()).toBe(StatusCodes.OK);
+	expect(verificationResult.verified).toBe(true);
+	expect(verificationResult.valid).toBe(false);
+	expect(verificationResult.status).toBe(1);
+	expect(verificationResult.message).toBe('revoked');
 });
