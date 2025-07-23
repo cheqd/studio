@@ -508,7 +508,7 @@ export class AccreditationController {
 
 			const result = await identityServiceStrategySetup.agent.revokeCredentials(
 				accreditation,
-				'default', // send default list type
+				'BitstringStatusList', // default to BitstringStatusList for accreditation
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
@@ -620,7 +620,7 @@ export class AccreditationController {
 
 			const result = await identityServiceStrategySetup.agent.suspendCredentials(
 				accreditation,
-				'default', // send default list type
+				'BitstringStatusList', // default to BitstringStatusList for accreditation
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
@@ -732,7 +732,7 @@ export class AccreditationController {
 
 			const result = await identityServiceStrategySetup.agent.reinstateCredentials(
 				accreditation,
-				'default', // send default list type
+				'BitstringStatusList', // default to BitstringStatusList for accreditation
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string

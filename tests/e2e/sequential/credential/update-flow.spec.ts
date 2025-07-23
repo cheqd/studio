@@ -8,7 +8,7 @@ test.use({ storageState: 'playwright/.auth/user.json' });
 
 let jwtCredential: VerifiableCredential;
 
-test(" Issue a jwt credential with bitstring statuslist", async ({ request }) => {
+test(' Issue a jwt credential with bitstring statuslist', async ({ request }) => {
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jwt-statuslist.json`, 'utf-8')
 	);
@@ -36,7 +36,7 @@ test(" Issue a jwt credential with bitstring statuslist", async ({ request }) =>
 	expect(jwtCredential.credentialStatus.type).toBe('BitstringStatusListEntry');
 	expect(jwtCredential.credentialStatus.statusPurpose).toBe(credentialData.credentialStatus.statusPurpose);
 	expect(jwtCredential.credentialStatus).toHaveProperty('statusListIndex');
-	expect(jwtCredential.credentialStatus).toHaveProperty('statusListCredential');	
+	expect(jwtCredential.credentialStatus).toHaveProperty('statusListCredential');
 });
 
 test(" Verify a credential's status", async ({ request }) => {
@@ -54,7 +54,7 @@ test(" Verify a credential's status", async ({ request }) => {
 	expect(result.verified).toBe(true);
 	expect(result.valid).toBe(true);
 	expect(result.status).toBe(0);
-	expect(result.message).toBe("valid");
+	expect(result.message).toBe('valid');
 });
 
 test(' Suspend and Verify a credential status after suspension', async ({ request }) => {
@@ -71,7 +71,7 @@ test(' Suspend and Verify a credential status after suspension', async ({ reques
 	expect(response.status()).toBe(StatusCodes.OK);
 	expect(result.updated).toBe(true);
 	expect(result.statusValue).toBe(2);
-	expect(result.statusMessage).toBe("suspended");
+	expect(result.statusMessage).toBe('suspended');
 	expect(result.published).toBe(true);
 
 	const verificationResponse = await request.post(`/credential/verify?verifyStatus=true`, {
@@ -88,7 +88,7 @@ test(' Suspend and Verify a credential status after suspension', async ({ reques
 	expect(verificationResult.verified).toBe(true);
 	expect(verificationResult.valid).toBe(false);
 	expect(verificationResult.status).toBe(2);
-	expect(verificationResult.message).toBe("suspended");
+	expect(verificationResult.message).toBe('suspended');
 });
 
 test(' Reinstate and Verify a credential status', async ({ request }) => {
@@ -105,7 +105,7 @@ test(' Reinstate and Verify a credential status', async ({ request }) => {
 	expect(response.status()).toBe(StatusCodes.OK);
 	expect(result.updated).toBe(true);
 	expect(result.statusValue).toBe(0);
-	expect(result.statusMessage).toBe("valid");
+	expect(result.statusMessage).toBe('valid');
 	expect(result.published).toBe(true);
 
 	const verificationResponse = await request.post(`/credential/verify?verifyStatus=true`, {
@@ -122,7 +122,7 @@ test(' Reinstate and Verify a credential status', async ({ request }) => {
 	expect(verificationResult.verified).toBe(true);
 	expect(verificationResult.valid).toBe(true);
 	expect(verificationResult.status).toBe(0);
-	expect(verificationResult.message).toBe("valid");
+	expect(verificationResult.message).toBe('valid');
 });
 
 test(' Revoke and Verify a credential status', async ({ request }) => {
@@ -139,7 +139,7 @@ test(' Revoke and Verify a credential status', async ({ request }) => {
 	expect(response.status()).toBe(StatusCodes.OK);
 	expect(result.updated).toBe(true);
 	expect(result.statusValue).toBe(1);
-	expect(result.statusMessage).toBe("revoked");
+	expect(result.statusMessage).toBe('revoked');
 	expect(result.published).toBe(true);
 
 	const verificationResponse = await request.post(`/credential/verify?verifyStatus=true`, {
@@ -156,5 +156,5 @@ test(' Revoke and Verify a credential status', async ({ request }) => {
 	expect(verificationResult.verified).toBe(true);
 	expect(verificationResult.valid).toBe(false);
 	expect(verificationResult.status).toBe(1);
-	expect(verificationResult.message).toBe("revoked");
+	expect(verificationResult.message).toBe('revoked');
 });

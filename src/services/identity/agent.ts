@@ -349,12 +349,8 @@ export class Veramo {
 			let verifiable_credential: VerifiableCredential;
 			if (statusListOptions) {
 				const { statusListType, ...statusOptions } = statusListOptions;
-				if (statusListType == 'BitstringStatusList') {
-					verifiable_credential = await agent.cheqdIssueCredentialWithStatusList({
-						issuanceOptions,
-						statusOptions: statusOptions,
-					});
-				} else {
+				if (statusListType == 'StatusList2021') {
+					// TODO: remove this check when we remove StatusList2021
 					verifiable_credential =
 						statusListOptions.statusPurpose == 'revocation'
 							? await agent.cheqdIssueRevocableCredentialWithStatusList2021({
@@ -365,6 +361,11 @@ export class Veramo {
 									issuanceOptions,
 									statusOptions: statusOptions as SuspensionStatusOptions,
 								});
+				} else {
+					verifiable_credential = await agent.cheqdIssueCredentialWithStatusList({
+						issuanceOptions,
+						statusOptions: statusOptions,
+					});
 				}
 			} else {
 				verifiable_credential = await agent.createVerifiableCredential(issuanceOptions);
