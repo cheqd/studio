@@ -2,6 +2,10 @@ export type CreateDIDService = {
 	idFragment: string;
 	type: string;
 	serviceEndpoint: string[];
+	recipientKeys?: string[];
+	routingKeys?: string[];
+	accept?: string[];
+	priority?: number;
 };
 
 export type JwtProof2020 = {

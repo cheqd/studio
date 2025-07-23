@@ -273,6 +273,10 @@ export class DIDController {
 									id: `${didDocument.id}#${service.idFragment}`,
 									type: service.type,
 									serviceEndpoint: service.serviceEndpoint,
+									recipientKeys: service.recipientKeys,
+									routingKeys: service.routingKeys,
+									priority: service.priority,
+									accept: service.accept,
 								});
 							}
 						} catch (e) {
@@ -286,6 +290,10 @@ export class DIDController {
 								id: `${didDocument.id}#${service.idFragment}`,
 								type: service.type,
 								serviceEndpoint: service.serviceEndpoint,
+								recipientKeys: service.recipientKeys,
+								routingKeys: service.routingKeys,
+								priority: service.priority,
+								accept: service.accept,
 							},
 						];
 					}
