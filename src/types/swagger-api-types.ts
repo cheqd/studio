@@ -1322,6 +1322,28 @@
  *           items:
  *             type: string
  *             example: https://example.com
+ *         priority:
+ *           description: (Optional) Priority of the service endpoint, used for distinction when multiple did-communication service endpoints are present in a single DID document.
+ *           type: integer
+ *           example: 0
+ *         recipientKeys:
+ *           description: (Optional) List of recipient keys used to denote the default recipients of an endpoint.
+ *           type: array
+ *           items:
+ *            type: string
+ *            example: did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1
+ *         routingKeys:
+ *           description: (Optional) List of routing keys used to used to denote the individual routing hops in between the sender and recipients.
+ *           type: array
+ *           items:
+ *             type: string
+ *             example: did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-2
+ *         accept:
+ *           description: (Optional) List of media types that the service endpoint accepts.
+ *           type: array
+ *           items:
+ *             type: string
+ *             example: didcomm/aip2;env=rfc587
  *     DidUpdateRequest:
  *       type: object
  *       properties:

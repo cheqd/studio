@@ -38,6 +38,31 @@ export class CreateDIDDocumentServiceValidator implements IValidator {
 				error: `service.serviceEndpoint should be an array in object ${service}`,
 			};
 		}
+		// Optional fields validation
+		if (service.priority !== undefined && (typeof service.priority !== 'number' || service.priority < 0)) {
+			return { valid: false, error: `service.priority should be a non-negative number in object ${service}` };
+		}
+
+		if (
+			service.accept !== undefined &&
+			(!Array.isArray(service.accept) || !service.accept.every((item) => typeof item === 'string'))
+		) {
+			return { valid: false, error: `service.accept should be an array of strings in object ${service}` };
+		}
+
+		if (
+			service.routingKeys !== undefined &&
+			(!Array.isArray(service.routingKeys) || !service.routingKeys.every((key) => typeof key === 'string'))
+		) {
+			return { valid: false, error: `service.routingKeys should be an array of strings in object ${service}` };
+		}
+
+		if (
+			service.recipientKeys !== undefined &&
+			(!Array.isArray(service.recipientKeys) || !service.recipientKeys.every((key) => typeof key === 'string'))
+		) {
+			return { valid: false, error: `service.recipientKeys should be an array of strings in object ${service}` };
+		}
 		return { valid: true };
 	}
 

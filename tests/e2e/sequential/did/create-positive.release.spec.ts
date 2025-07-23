@@ -184,3 +184,68 @@ test('[Positive] It can create DID with mandatory and optional properties (JSON 
 	expect(didDocument.service[0].type).toBe('LinkedDomains');
 	expect(getServiceEndpointValue(didDocument.service[0].serviceEndpoint)).toBe('https://example.com');
 });
+
+test('[Positive] It can create DID with didcomm service type properties (JSON based + UUID style)', async ({
+	request,
+}) => {
+	// send request to create key
+	let response = await request.post('/key/create', {
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
+	});
+	expect(response).toBeOK();
+	expect(response.status()).toBe(StatusCodes.OK);
+
+	const kid = (await response.json()).kid;
+
+	const did = `did:cheqd:testnet:${v4()}`;
+	response = await request.post('/did/create', {
+		data: {
+			network: CheqdNetwork.Testnet,
+			identifierFormatType: ID_TYPE.UUID,
+			assertionMethod: true,
+			options: {
+				verificationMethodType: VerificationMethods.JWK,
+				key: kid,
+			},
+			didDocument: {
+				'@context': ['https://www.w3.org/ns/did/v1'],
+				id: did,
+				controller: [did],
+				authentication: [`${did}#key-1`],
+				service: [
+					{
+						id: `${did}#did-communication-1`,
+						type: 'did-communication',
+						serviceEndpoint: ['https://example.com/agent'],
+						priority: 1,
+						recipientKeys: [`${did}#key-1`],
+						routingKeys: [`${did}#key-1`],
+						accept: ['didcomm/aip2;env=rfc587', 'didcomm/aip2;env=rfc19'],
+					},
+				],
+			},
+		},
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
+	});
+	expect(response).toBeOK();
+	expect(response.status()).toBe(StatusCodes.OK);
+
+	// resolve a created DID
+	response = await request.get(`/did/search/${did}`, {
+		headers: { 'Content-Type': CONTENT_TYPE.APPLICATION_JSON },
+	});
+	expect(response).toBeOK();
+	expect(response.status()).toBe(StatusCodes.OK);
+
+	const didDocument = (await response.json()).didDocument;
+
+	// check optional properties
+	expect(didDocument.verificationMethod[0].type).toBe(VerificationMethods.JWK);
+	expect(didDocument.service[0].id).toBe(`${did}#did-communication-1`);
+	expect(didDocument.service[0].type).toBe('did-communication');
+	expect(getServiceEndpointValue(didDocument.service[0].serviceEndpoint)).toBe('https://example.com/agent');
+	expect(didDocument.service[0].priority).toBe(1);
+	expect(didDocument.service[0].recipientKeys).toStrictEqual([`${did}#key-1`]);
+	expect(didDocument.service[0].routingKeys).toStrictEqual([`${did}#key-1`]);
+	expect(didDocument.service[0].accept).toStrictEqual(['didcomm/aip2;env=rfc587', 'didcomm/aip2;env=rfc19']);
+});
