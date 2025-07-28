@@ -18,6 +18,12 @@ export enum DIDAccreditationTypes {
 	VerifiableAccreditationToAttest = 'VerifiableAccreditationToAttest',
 }
 
+export enum DIDAccreditationPolicyTypes {
+	Authorize = 'TrustFrameworkPolicy',
+	Accredit = 'AccreditationPolicy',
+	Attest = 'AttestationPolicy',
+}
+
 export enum AccreditationRequestType {
 	authorize = 'authorize',
 	accredit = 'accredit',

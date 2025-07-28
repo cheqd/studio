@@ -21,6 +21,10 @@ import {
 import type { CheqdNetwork } from '@cheqd/sdk';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2';
 
+export enum StatusListType {
+	Bitstring = 'BitstringStatusList',
+	StatusList2021 = 'StatusList2021',
+}
 export type CreateUnencryptedStatusListRequestBody = {
 	did: string;
 	statusListName: string;

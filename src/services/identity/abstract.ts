@@ -34,6 +34,7 @@ import type {
 	CreateEncryptedBitstringOptions,
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
+	StatusListType,
 } from '../../types/credential-status';
 import type { CredentialRequest } from '../../types/credential';
 import type { CheckStatusListOptions } from '../../types/credential-status';
@@ -168,7 +169,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	searchStatusList(
 		did: string,
 		statusListName: string,
-		listType: 'StatusList2021' | 'BitstringStatusList',
+		listType: StatusListType,
 		statusPurpose: 'revocation' | 'suspension',
 		customer?: CustomerEntity
 	): Promise<any> {

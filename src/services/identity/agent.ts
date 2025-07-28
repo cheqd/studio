@@ -67,7 +67,7 @@ import type {
 	FeePaymentOptions,
 } from '../../types/credential-status.js';
 import type { CredentialRequest } from '../../types/credential.js';
-import { BitstringStatusActions, DefaultStatusActions } from '../../types/credential-status.js';
+import { BitstringStatusActions, DefaultStatusActions, StatusListType } from '../../types/credential-status.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
 import type { RevocationStatusOptions, StatusOptions, SuspensionStatusOptions } from '../../types/credential-status.js';
 import type {
@@ -349,10 +349,10 @@ export class Veramo {
 			let verifiable_credential: VerifiableCredential;
 			if (statusListOptions) {
 				const { statusListType, ...statusOptions } = statusListOptions;
-				if (statusListType == 'StatusList2021') {
+				if (statusListType == StatusListType.StatusList2021) {
 					// TODO: remove this check when we remove StatusList2021
 					verifiable_credential =
-						statusListOptions.statusPurpose == 'revocation'
+						statusListOptions.statusPurpose == DefaultStatusList2021StatusPurposeTypes.revocation
 							? await agent.cheqdIssueRevocableCredentialWithStatusList2021({
 									issuanceOptions,
 									statusOptions: statusOptions as RevocationStatusOptions,
@@ -713,7 +713,7 @@ export class Veramo {
 				collectionId: did.split(':')[3],
 				data: resourceOptions.data,
 				resourceType:
-					statusOptions.statusPurpose === 'revocation'
+					statusOptions.statusPurpose === DefaultStatusList2021StatusPurposeTypes.revocation
 						? DefaultStatusList2021ResourceTypes.revocation
 						: DefaultStatusList2021ResourceTypes.suspension,
 			},
@@ -760,7 +760,7 @@ export class Veramo {
 		publish = true,
 		symmetricKey = ''
 	) {
-		if (listType === 'BitstringStatusList') {
+		if (listType === StatusListType.Bitstring) {
 			if (Array.isArray(credentials)) {
 				return await agent.cheqdBulkUpdateCredentialsWithStatusList({
 					credentials,
@@ -803,7 +803,7 @@ export class Veramo {
 		publish = true,
 		symmetricKey = ''
 	) {
-		if (listType === 'BitstringStatusList') {
+		if (listType === StatusListType.Bitstring) {
 			if (Array.isArray(credentials)) {
 				return await agent.cheqdBulkUpdateCredentialsWithStatusList({
 					credentials,
@@ -842,7 +842,7 @@ export class Veramo {
 		publish = true,
 		symmetricKey = ''
 	) {
-		if (listType === 'BitstringStatusList') {
+		if (listType === StatusListType.Bitstring) {
 			if (Array.isArray(credentials)) {
 				return await agent.cheqdBulkUpdateCredentialsWithStatusList({
 					credentials,
@@ -880,7 +880,7 @@ export class Veramo {
 		listType: string,
 		statusOptions: UpdateUnencryptedStatusListOptions
 	) {
-		if (listType === 'BitstringStatusList') {
+		if (listType === StatusListType.Bitstring) {
 			return await agent.cheqdBulkUpdateCredentialsWithStatusList({
 				newStatus: BitstringStatusActions[statusOptions.statusAction] as unknown as BitstringStatusValue,
 				updateOptions: {
@@ -991,7 +991,7 @@ export class Veramo {
 						];
 					})()
 		) satisfies PaymentCondition[] | undefined;
-		if (listType === 'BitstringStatusList') {
+		if (listType === StatusListType.Bitstring) {
 			return await agent.cheqdBulkUpdateCredentialsWithStatusList({
 				newStatus: BitstringStatusActions[statusOptions.statusAction] as unknown as BitstringStatusValue,
 				updateOptions: {
@@ -1088,7 +1088,7 @@ export class Veramo {
 		statusPurpose: DefaultStatusList2021StatusPurposeType
 	): Promise<SearchStatusListResult> {
 		let resourceType: string;
-		if (listType === 'BitstringStatusList') {
+		if (listType === StatusListType.Bitstring) {
 			resourceType = BitstringStatusListResourceType;
 		} else {
 			resourceType = DefaultStatusList2021ResourceTypes[statusPurpose];

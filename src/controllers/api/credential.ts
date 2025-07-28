@@ -31,6 +31,7 @@ import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/consta
 import { eventTracker } from '../../services/track/tracker.js';
 import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '../../types/track.js';
 import { validate } from '../validator/decorator.js';
+import { StatusListType } from '../../types/credential-status.js';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -91,8 +92,12 @@ export class CredentialController {
 			.isString()
 			.withMessage('listType: should be a string')
 			.bail()
-			.isIn(['StatusList2021', 'BitstringStatusList'])
-			.withMessage(`listType: invalid listType, should be one of ['StatusList2021', 'BitstringStatusList']`),
+			.isIn([Object.values(StatusListType)])
+			.withMessage(
+				`listType: invalid listType, should be one of [${Object.values(StatusListType)
+					.map((v) => `'${v}'`)
+					.join(', ')}]`
+			),
 	];
 
 	/**
@@ -352,7 +357,7 @@ export class CredentialController {
 		try {
 			const result = await identityServiceStrategySetup.agent.revokeCredentials(
 				credential,
-				listType || 'BitstringStatusList',
+				listType || StatusListType.Bitstring,
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
@@ -456,7 +461,7 @@ export class CredentialController {
 		try {
 			const result = await identityServiceStrategySetup.agent.suspendCredentials(
 				credential,
-				listType || 'BitstringStatusList',
+				listType || StatusListType.Bitstring,
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
@@ -559,7 +564,7 @@ export class CredentialController {
 		try {
 			const result = await identityServiceStrategySetup.agent.reinstateCredentials(
 				credential,
-				listType || 'BitstringStatusList',
+				listType || StatusListType.Bitstring,
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string

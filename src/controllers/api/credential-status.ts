@@ -13,6 +13,7 @@ import {
 	DefaultStatusActionPurposeMap,
 	DefaultStatusActions,
 	MinimalPaymentCondition,
+	StatusListType,
 } from '../../types/credential-status.js';
 import type {
 	SearchStatusListQuery,
@@ -67,8 +68,12 @@ export class CredentialStatusController {
 			.isString()
 			.withMessage('listType: should be a string')
 			.bail()
-			.isIn(['StatusList2021', 'BitstringStatusList'])
-			.withMessage(`listType: invalid listType, should be one of ['StatusList2021', 'BitstringStatusList']`)
+			.isIn([Object.values(StatusListType)])
+			.withMessage(
+				`listType: invalid listType, should be one of [${Object.values(StatusListType)
+					.map((v) => `'${v}'`)
+					.join(', ')}]`
+			)
 			.bail(),
 		check('statusPurpose')
 			.exists()
@@ -89,14 +94,14 @@ export class CredentialStatusController {
 					throw new Error('statusPurpose: should be a string or array');
 				}
 				// Check if multiple purposes are allowed for this listType
-				if (purposes.length > 1 && listType === 'StatusList2021') {
+				if (purposes.length > 1 && listType === StatusListType.StatusList2021) {
 					throw new Error('statusPurpose: multiple values only allowed for BitstringStatusList');
 				}
 				// Validate array is not empty
 				if (purposes.length === 0) {
 					throw new Error('statusPurpose: cannot be empty');
 				}
-				if (listType === 'StatusList2021') {
+				if (listType === StatusListType.StatusList2021) {
 					const validPurposes = Object.keys(DefaultStatusList2021StatusPurposeTypes);
 					// Check for valid purposes
 					const invalidPurposes = purposes.filter((purpose) => !validPurposes.includes(purpose));
@@ -176,7 +181,7 @@ export class CredentialStatusController {
 			.optional()
 			.custom((value, { req }) => {
 				const listType = req.query?.listType || req.body.listType;
-				if (listType === 'StatusList2021') {
+				if (listType === StatusListType.StatusList2021) {
 					if (!Object.values(DefaultStatusListEncodings).includes(value)) {
 						throw new Error(
 							`encoding: invalid encoding, should be one of ${Object.keys(DefaultStatusListEncodings).join(', ')}`
@@ -343,8 +348,12 @@ export class CredentialStatusController {
 			.isString()
 			.withMessage('listType: should be a string')
 			.bail()
-			.isIn(['StatusList2021', 'BitstringStatusList'])
-			.withMessage(`listType: invalid listType, should be one of ['StatusList2021', 'BitstringStatusList']`)
+			.isIn([Object.values(StatusListType)])
+			.withMessage(
+				`listType: invalid listType, should be one of [${Object.values(StatusListType)
+					.map((v) => `'${v}'`)
+					.join(', ')}]`
+			)
 			.bail(),
 		check('statusAction')
 			.exists()
@@ -561,8 +570,12 @@ export class CredentialStatusController {
 			.isString()
 			.withMessage('listType: should be a string')
 			.bail()
-			.isIn(['StatusList2021', 'BitstringStatusList'])
-			.withMessage(`listType: invalid listType, should be one of ['StatusList2021', 'BitstringStatusList']`),
+			.isIn([Object.values(StatusListType)])
+			.withMessage(
+				`listType: invalid listType, should be one of [${Object.values(StatusListType)
+					.map((v) => `'${v}'`)
+					.join(', ')}]`
+			),
 		query('statusPurpose')
 			.exists()
 			.withMessage('statusPurpose: required')
@@ -680,7 +693,7 @@ export class CredentialStatusController {
 			// broadcast, if applicable
 			if (data) {
 				let result;
-				if (listType === 'BitstringStatusList') {
+				if (listType === StatusListType.Bitstring) {
 					result = await identityServiceStrategySetup.agent.broadcastBitstringStatusList(
 						did,
 						{ data, name: statusListName, alsoKnownAs, version: statusListVersion },
@@ -700,7 +713,7 @@ export class CredentialStatusController {
 				| CreateUnencryptedStatusListSuccessfulResponseBody
 				| CreateUnencryptedBitstringSuccessfulResponseBody;
 			// create unencrypted status list
-			if (listType === 'BitstringStatusList') {
+			if (listType === StatusListType.Bitstring) {
 				// create BitstringStatusList
 				result = (await identityServiceStrategySetup.agent.createUnencryptedBitstringStatusList(
 					did,
@@ -866,7 +879,7 @@ export class CredentialStatusController {
 		let result: CreateEncryptedStatusListSuccessfulResponseBody | CreateEncryptedBitstringSuccessfulResponseBody;
 		try {
 			// create encrypted status list
-			if (listType === 'BitstringStatusList') {
+			if (listType === StatusListType.Bitstring) {
 				// create BitstringStatusList
 				result = (await identityServiceStrategySetup.agent.createEncryptedBitstringStatusList(
 					did,
@@ -1391,7 +1404,7 @@ export class CredentialStatusController {
 		const statusList = await identityServiceStrategySetup.agent.searchStatusList(
 			did,
 			statusListName,
-			'StatusList2021',
+			StatusListType.StatusList2021,
 			statusPurpose
 		);
 

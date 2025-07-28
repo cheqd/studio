@@ -16,7 +16,7 @@ import type { IIdentityService } from './identity/index.js';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import { toNetwork } from '../helpers/helpers.js';
 import { CommonReturn } from '../types/shared.js';
-import type { FeePaymentOptions } from '../types/credential-status.js';
+import { StatusListType, type FeePaymentOptions } from '../types/credential-status.js';
 import { JWT_PROOF_TYPE } from '../types/constants.js';
 import type {
 	BitstringStatusList,
@@ -118,7 +118,12 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 		}
 
 		// ensure status list
-		const statusList = await agent.searchStatusList(did, statusListName, 'StatusList2021', statusPurpose);
+		const statusList = await agent.searchStatusList(
+			did,
+			statusListName,
+			StatusListType.StatusList2021,
+			statusPurpose
+		);
 		// if no such statusList - error
 		if (statusList.error) {
 			return this.returnError(

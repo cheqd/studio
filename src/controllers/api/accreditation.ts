@@ -15,7 +15,11 @@ import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '
 import type { CredentialRequest, UnsuccesfulRevokeCredentialResponseBody } from '../../types/credential.js';
 import { StatusCodes } from 'http-status-codes';
 import { v4 } from 'uuid';
-import { AccreditationRequestType, DIDAccreditationTypes } from '../../types/accreditation.js';
+import {
+	AccreditationRequestType,
+	DIDAccreditationPolicyTypes,
+	DIDAccreditationTypes,
+} from '../../types/accreditation.js';
 import { CredentialConnectors, VerifyCredentialRequestQuery } from '../../types/credential.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
@@ -26,6 +30,7 @@ import { body, query } from '../validator/index.js';
 import { validate } from '../validator/decorator.js';
 import { constructDidUrl, parseDidFromDidUrl } from '../../helpers/helpers.js';
 import { CheqdW3CVerifiableCredential } from '../../services/w3c-credential.js';
+import { StatusListType } from '../../types/credential-status.js';
 
 export class AccreditationController {
 	public static issueValidator = [
@@ -260,7 +265,7 @@ export class AccreditationController {
 					resourceType = DIDAccreditationTypes.VerifiableAuthorizationForTrustChain;
 					credentialRequest.type = [...(type || []), resourceType];
 					credentialRequest.termsOfUse = {
-						type: 'TrustFrameworkPolicy',
+						type: DIDAccreditationPolicyTypes.Authorize,
 						trustFramework,
 						trustFrameworkId,
 					};
@@ -269,7 +274,7 @@ export class AccreditationController {
 					resourceType = DIDAccreditationTypes.VerifiableAccreditationToAccredit;
 					credentialRequest.type = [...(type || []), resourceType];
 					credentialRequest.termsOfUse = {
-						type: 'AccreditationPolicy',
+						type: DIDAccreditationPolicyTypes.Accredit,
 						parentAccreditation,
 						rootAuthorization,
 					};
@@ -278,7 +283,7 @@ export class AccreditationController {
 					resourceType = DIDAccreditationTypes.VerifiableAccreditationToAttest;
 					credentialRequest.type = [...(type || []), resourceType];
 					credentialRequest.termsOfUse = {
-						type: 'AttestationPolicy',
+						type: DIDAccreditationPolicyTypes.Attest,
 						parentAccreditation,
 						rootAuthorization,
 					};
@@ -508,7 +513,7 @@ export class AccreditationController {
 
 			const result = await identityServiceStrategySetup.agent.revokeCredentials(
 				accreditation,
-				'BitstringStatusList', // default to BitstringStatusList for accreditation
+				StatusListType.Bitstring, // default to BitstringStatusList for accreditation
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
@@ -620,7 +625,7 @@ export class AccreditationController {
 
 			const result = await identityServiceStrategySetup.agent.suspendCredentials(
 				accreditation,
-				'BitstringStatusList', // default to BitstringStatusList for accreditation
+				StatusListType.Bitstring, // default to BitstringStatusList for accreditation
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
@@ -732,7 +737,7 @@ export class AccreditationController {
 
 			const result = await identityServiceStrategySetup.agent.reinstateCredentials(
 				accreditation,
-				'BitstringStatusList', // default to BitstringStatusList for accreditation
+				StatusListType.Bitstring, // default to BitstringStatusList for accreditation
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
