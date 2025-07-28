@@ -183,7 +183,7 @@ export class CredentialStatusController {
 						);
 					}
 				} else {
-					if (value !== 'base64url') {
+					if (value !== DefaultStatusListEncodings.base64url) {
 						throw new Error(`encoding: invalid encoding, should be base64url for BitstringStatusList`);
 					}
 				}
