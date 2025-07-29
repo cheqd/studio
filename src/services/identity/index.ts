@@ -29,10 +29,17 @@ import type {
 	SuspensionResult,
 	UnsuspensionResult,
 	TransactionResult,
+	CreateStatusListResult,
+	BulkBitstringUpdateResult,
+	BitstringUpdateResult,
 } from '@cheqd/did-provider-cheqd';
 import type { VeramoAgent } from '../../types/shared.js';
 import type { VerificationOptions } from '../../types/shared.js';
-import type { FeePaymentOptions } from '../../types/credential-status.js';
+import type {
+	CreateEncryptedBitstringOptions,
+	CreateUnencryptedBitstringOptions,
+	FeePaymentOptions,
+} from '../../types/credential-status.js';
 import type { CredentialRequest } from '../../types/credential.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
 import type { StatusOptions } from '../../types/credential-status.js';
@@ -114,30 +121,45 @@ export interface IIdentityService {
 		statusOptions: CreateUnencryptedStatusListOptions,
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result>;
+	createUnencryptedBitstringStatusList(
+		did: string,
+		resourceOptions: ResourcePayload,
+		statusOptions: CreateUnencryptedBitstringOptions,
+		customer: CustomerEntity
+	): Promise<CreateStatusListResult>;
 	createEncryptedStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
 		statusOptions: CreateEncryptedStatusListOptions,
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result>;
-	updateUnencryptedStatusList2021(
+	createEncryptedBitstringStatusList(
 		did: string,
+		resourceOptions: ResourcePayload,
+		statusOptions: CreateEncryptedBitstringOptions,
+		customer: CustomerEntity
+	): Promise<CreateStatusListResult>;
+	updateUnencryptedStatusList(
+		did: string,
+		listType: string,
 		statusOptions: UpdateUnencryptedStatusListOptions,
 		customer: CustomerEntity
-	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult>;
-	updateEncryptedStatusList2021(
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult>;
+	updateEncryptedStatusList(
 		did: string,
+		listType: string,
 		statusOptions: UpdateEncryptedStatusListOptions,
 		customer: CustomerEntity
-	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult>;
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult>;
 	checkStatusList2021(
 		did: string,
 		statusOptions: CheckStatusListOptions,
 		customer: CustomerEntity
 	): Promise<StatusCheckResult>;
-	searchStatusList2021(
+	searchStatusList(
 		did: string,
 		statusListName: string,
+		listType: string,
 		statusPurpose: 'revocation' | 'suspension',
 		customer?: CustomerEntity
 	): Promise<SearchStatusListResult>;
@@ -147,28 +169,36 @@ export interface IIdentityService {
 		statusOptions: BroadcastStatusListOptions,
 		customer: CustomerEntity
 	): Promise<boolean>;
+	broadcastBitstringStatusList(
+		did: string,
+		resourceOptions: ResourcePayload,
+		customer: CustomerEntity
+	): Promise<boolean>;
 	remunerateStatusList2021(
 		feePaymentOptions: FeePaymentOptions,
 		customer?: CustomerEntity
 	): Promise<TransactionResult>;
 	revokeCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
-	): Promise<RevocationResult | BulkRevocationResult>;
+	): Promise<RevocationResult | BulkRevocationResult | BitstringUpdateResult | BulkBitstringUpdateResult>;
 	suspendCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
-	): Promise<SuspensionResult | BulkSuspensionResult>;
+	): Promise<SuspensionResult | BulkSuspensionResult | BitstringUpdateResult | BulkBitstringUpdateResult>;
 	reinstateCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
-	): Promise<UnsuspensionResult | BulkUnsuspensionResult>;
+	): Promise<UnsuspensionResult | BulkUnsuspensionResult | BitstringUpdateResult | BulkBitstringUpdateResult>;
 	setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity>;
 	updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity>;
 	getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | null>;

@@ -1,3 +1,5 @@
+import { BitstringStatusPurposeTypes, DefaultStatusList2021StatusPurposeTypes } from '@cheqd/did-provider-cheqd';
+import { BitstringStatusListEntry } from '../../types/constants.js';
 import type { CheqdCredentialStatus } from '../../types/validation.js';
 import type { IValidationResult, IValidator } from './validator.js';
 
@@ -27,11 +29,24 @@ export class CredentialStatusValidator implements IValidator {
 				error: 'credentialStatus.statusListIndex is required',
 			};
 		}
-		if (credentialStatus.statusPurpose !== 'revocation' && credentialStatus.statusPurpose !== 'suspension') {
-			return {
-				valid: false,
-				error: 'credentialStatus.statusPurpose must be "revocation" or "suspension"',
-			};
+		if (credentialStatus.type === BitstringStatusListEntry) {
+			const validPurposes = Object.keys(BitstringStatusPurposeTypes);
+			if (!validPurposes.includes(credentialStatus.statusPurpose)) {
+				return {
+					valid: false,
+					error: `credentialStatus.statusPurpose must be one of ${validPurposes.join(', ')}`,
+				};
+			}
+		} else {
+			if (
+				credentialStatus.statusPurpose !== DefaultStatusList2021StatusPurposeTypes.revocation &&
+				credentialStatus.statusPurpose !== DefaultStatusList2021StatusPurposeTypes.suspension
+			) {
+				return {
+					valid: false,
+					error: 'credentialStatus.statusPurpose must be "revocation" or "suspension"',
+				};
+			}
 		}
 		return { valid: true };
 	}

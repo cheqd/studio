@@ -43,6 +43,31 @@ export class ServiceValidator implements IValidator {
 				error: 'service.serviceEndpoint should be an array',
 			};
 		}
+		// Optional fields validation
+		if (service.priority !== undefined && (typeof service.priority !== 'number' || service.priority < 0)) {
+			return { valid: false, error: `service.priority should be a non-negative number` };
+		}
+
+		if (
+			service.accept !== undefined &&
+			(!Array.isArray(service.accept) || !service.accept.every((item) => typeof item === 'string'))
+		) {
+			return { valid: false, error: `service.accept should be an array of strings` };
+		}
+
+		if (
+			service.routingKeys !== undefined &&
+			(!Array.isArray(service.routingKeys) || !service.routingKeys.every((key) => typeof key === 'string'))
+		) {
+			return { valid: false, error: `service.routingKeys should be an array of strings` };
+		}
+
+		if (
+			service.recipientKeys !== undefined &&
+			(!Array.isArray(service.recipientKeys) || !service.recipientKeys.every((key) => typeof key === 'string'))
+		) {
+			return { valid: false, error: `service.recipientKeys should be an array of strings` };
+		}
 		const id = service.id;
 		const _v = this.didDocumentIDValidator.validate(id);
 		if (!_v.valid) {

@@ -24,10 +24,18 @@ import type {
 	SuspensionResult,
 	UnsuspensionResult,
 	TransactionResult,
+	CreateStatusListResult,
+	BulkBitstringUpdateResult,
+	BitstringUpdateResult,
 } from '@cheqd/did-provider-cheqd';
 import type { VeramoAgent } from '../../types/shared';
 import type { VerificationOptions } from '../../types/shared';
-import type { FeePaymentOptions } from '../../types/credential-status';
+import type {
+	CreateEncryptedBitstringOptions,
+	CreateUnencryptedBitstringOptions,
+	FeePaymentOptions,
+	StatusListType,
+} from '../../types/credential-status';
 import type { CredentialRequest } from '../../types/credential';
 import type { CheckStatusListOptions } from '../../types/credential-status';
 import type { StatusOptions } from '../../types/credential-status';
@@ -111,6 +119,14 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<CreateStatusList2021Result> {
 		throw new Error(`Not supported`);
 	}
+	createUnencryptedBitstringStatusList(
+		did: string,
+		resourceOptions: ResourcePayload,
+		statusOptions: CreateUnencryptedBitstringOptions,
+		customer: CustomerEntity
+	): Promise<CreateStatusListResult> {
+		throw new Error(`Not supported`);
+	}
 	createEncryptedStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
@@ -119,18 +135,28 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<CreateStatusList2021Result> {
 		throw new Error(`Not supported`);
 	}
-	updateUnencryptedStatusList2021(
+	createEncryptedBitstringStatusList(
 		did: string,
-		statusOptions: UpdateUnencryptedStatusListOptions,
+		resourceOptions: ResourcePayload,
+		statusOptions: CreateEncryptedBitstringOptions,
 		customer: CustomerEntity
-	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
+	): Promise<CreateStatusListResult> {
 		throw new Error(`Not supported`);
 	}
-	updateEncryptedStatusList2021(
+	updateUnencryptedStatusList(
 		did: string,
+		listType: string,
+		statusOptions: UpdateUnencryptedStatusListOptions,
+		customer: CustomerEntity
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult> {
+		throw new Error(`Not supported`);
+	}
+	updateEncryptedStatusList(
+		did: string,
+		listType: string,
 		statusOptions: UpdateEncryptedStatusListOptions,
 		customer: CustomerEntity
-	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult> {
 		throw new Error(`Not supported`);
 	}
 	checkStatusList2021(
@@ -140,9 +166,10 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<StatusCheckResult> {
 		throw new Error(`Not supported`);
 	}
-	searchStatusList2021(
+	searchStatusList(
 		did: string,
 		statusListName: string,
+		listType: StatusListType,
 		statusPurpose: 'revocation' | 'suspension',
 		customer?: CustomerEntity
 	): Promise<any> {
@@ -162,28 +189,38 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<boolean> {
 		throw new Error(`Not supported`);
 	}
+	broadcastBitstringStatusList(
+		did: string,
+		resourceOptions: ResourcePayload,
+		customer: CustomerEntity
+	): Promise<boolean> {
+		throw new Error(`Not supported`);
+	}
 	revokeCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
-	): Promise<RevocationResult | BulkRevocationResult> {
+	): Promise<RevocationResult | BulkRevocationResult | BitstringUpdateResult | BulkBitstringUpdateResult> {
 		throw new Error(`Not supported`);
 	}
 	suspendCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
-	): Promise<SuspensionResult | BulkSuspensionResult> {
+	): Promise<SuspensionResult | BulkSuspensionResult | BitstringUpdateResult | BulkBitstringUpdateResult> {
 		throw new Error(`Not supported`);
 	}
 	reinstateCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
 		publish: boolean,
 		customer: CustomerEntity,
 		symmetricKey: string
-	): Promise<UnsuspensionResult | BulkUnsuspensionResult> {
+	): Promise<UnsuspensionResult | BulkUnsuspensionResult | BitstringUpdateResult | BulkBitstringUpdateResult> {
 		throw new Error(`Not supported`);
 	}
 	getKey(kid: string, customer: CustomerEntity): Promise<ManagedKeyInfo | null> {

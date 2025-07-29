@@ -1,5 +1,5 @@
 import {
-	DefaultStatusList2021Encodings,
+	DefaultStatusListEncodings,
 	CreateStatusList2021Result,
 	BulkRevocationResult,
 	BulkSuspensionResult,
@@ -9,28 +9,46 @@ import {
 	LinkedResourceMetadataResolutionResult,
 	StatusList2021Revocation,
 	StatusList2021Suspension,
-	ICheqdCheckCredentialWithStatusList2021StatusOptions,
 	DefaultStatusList2021StatusPurposeTypes,
+	BitstringStatusListPurposeType,
+	CreateStatusListResult,
+	ICheqdCheckCredentialStatusOptions,
+	BitstringStatusMessage,
+	BitstringStatusList,
+	BitstringStatusValue,
+	BulkBitstringUpdateResult,
 } from '@cheqd/did-provider-cheqd';
 import type { CheqdNetwork } from '@cheqd/sdk';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2';
 
+export enum StatusListType {
+	Bitstring = 'BitstringStatusList',
+	StatusList2021 = 'StatusList2021',
+}
 export type CreateUnencryptedStatusListRequestBody = {
 	did: string;
 	statusListName: string;
 	statusListVersion?: string;
 	alsoKnownAs?: AlternativeUri[];
 	length?: number;
-	encoding?: keyof typeof DefaultStatusList2021Encodings;
+	statusSize?: number;
+	statusMessages?: BitstringStatusMessage[];
+	ttl?: number;
+	encoding?: keyof typeof DefaultStatusListEncodings;
 	encodedList?: string;
 };
 
 export type CreateUnencryptedStatusListRequestQuery = {
+	listType: string;
 	statusPurpose: DefaultStatusList2021StatusPurposeType;
 };
 
 export type CreateUnencryptedStatusListSuccessfulResponseBody = Pick<
 	CreateStatusList2021Result,
+	'created' | 'error' | 'resource' | 'resourceMetadata'
+>;
+export type CreateUnencryptedBitstringSuccessfulResponseBody = Pick<
+	CreateStatusListResult,
 	'created' | 'error' | 'resource' | 'resourceMetadata'
 >;
 
@@ -52,6 +70,10 @@ export type CreateEncryptedStatusListSuccessfulResponseBody = Pick<
 	CreateStatusList2021Result,
 	'created' | 'error' | 'resource' | 'resourceMetadata' | 'symmetricKey'
 >;
+export type CreateEncryptedBitstringSuccessfulResponseBody = Pick<
+	CreateStatusListResult,
+	'created' | 'error' | 'resource' | 'resourceMetadata' | 'symmetricKey'
+>;
 
 export type CreateEncryptedStatusListUnsuccessfulResponseBody = CreateUnencryptedStatusListUnsuccessfulResponseBody;
 
@@ -64,6 +86,7 @@ export type UpdateUnencryptedStatusListRequestBody = {
 
 export type UpdateUnencryptedStatusListRequestQuery = {
 	statusAction: DefaultStatusAction;
+	listType: string;
 };
 
 export type UpdateUnencryptedStatusListSuccessfulResponseBody = {
@@ -75,7 +98,8 @@ export type UpdateUnencryptedStatusListSuccessfulResponseBody = {
 		resource?:
 			| BulkRevocationResult['statusList']
 			| BulkSuspensionResult['statusList']
-			| BulkUnsuspensionResult['statusList'];
+			| BulkUnsuspensionResult['statusList']
+			| BulkBitstringUpdateResult['statusList'];
 	};
 
 export type UpdateUnencryptedStatusListUnsuccessfulResponseBody = {
@@ -108,7 +132,8 @@ export type UpdateEncryptedStatusListSuccessfulResponseBody = {
 		resource?:
 			| BulkRevocationResult['statusList']
 			| BulkSuspensionResult['statusList']
-			| BulkUnsuspensionResult['statusList'];
+			| BulkUnsuspensionResult['statusList']
+			| BulkBitstringUpdateResult['statusList'];
 	};
 
 export type UpdateEncryptedStatusListUnsuccessfulResponseBody = UpdateUnencryptedStatusListUnsuccessfulResponseBody;
@@ -136,6 +161,7 @@ export type CheckStatusListUnsuccessfulResponseBody = {
 export type SearchStatusListQuery = {
 	did: string;
 	statusListName: string;
+	listType: string;
 	statusPurpose: DefaultStatusList2021StatusPurposeType;
 };
 
@@ -151,11 +177,25 @@ export type SearchStatusListUnsuccessfulResponseBody = {
 };
 export type CreateUnencryptedStatusListOptions = {
 	length?: number;
-	encoding?: keyof typeof DefaultStatusList2021Encodings;
+	encoding?: keyof typeof DefaultStatusListEncodings;
 	statusPurpose: DefaultStatusList2021StatusPurposeType;
+};
+export type CreateUnencryptedBitstringOptions = {
+	length?: number;
+	size?: number; // in bits, strictly integer, e.g. 1 bits, 2 bits
+	statusMessages?: BitstringStatusMessage[];
+	ttl?: number;
+	encoding?: keyof typeof DefaultStatusListEncodings;
+	statusPurpose: BitstringStatusListPurposeType | BitstringStatusListPurposeType[];
 };
 
 export type CreateEncryptedStatusListOptions = CreateUnencryptedStatusListOptions & {
+	paymentConditions?: MinimalPaymentCondition[];
+	feePaymentAddress?: MinimalPaymentCondition['feePaymentAddress'];
+	feePaymentAmount?: MinimalPaymentCondition['feePaymentAmount'];
+	feePaymentWindow?: MinimalPaymentCondition['feePaymentWindow'];
+};
+export type CreateEncryptedBitstringOptions = CreateUnencryptedBitstringOptions & {
 	paymentConditions?: MinimalPaymentCondition[];
 	feePaymentAddress?: MinimalPaymentCondition['feePaymentAddress'];
 	feePaymentAmount?: MinimalPaymentCondition['feePaymentAmount'];
@@ -180,13 +220,14 @@ export type UpdateEncryptedStatusListOptions = UpdateUnencryptedStatusListOption
 export type SearchStatusListResult = {
 	found: boolean;
 	error?: string;
-	resource?: StatusList2021Revocation | StatusList2021Suspension;
+	resource?: StatusList2021Revocation | StatusList2021Suspension | BitstringStatusList;
 	resourceMetadata?: LinkedResourceMetadataResolutionResult;
 };
 
 export type BroadcastStatusListOptions = Omit<CreateUnencryptedStatusListOptions, 'length'>;
 export type StatusOptions = {
-	statusPurpose: CreateUnencryptedStatusListOptions['statusPurpose'];
+	statusListType: string;
+	statusPurpose: DefaultStatusList2021StatusPurposeType | BitstringStatusListPurposeType;
 	statusListName: string;
 	statusListIndex?: number;
 	statusListVersion?: string;
@@ -197,12 +238,17 @@ export type StatusOptions = {
 
 export type RevocationStatusOptions = StatusOptions & { statusPurpose: 'revocation' };
 export type SuspensionStatusOptions = StatusOptions & { statusPurpose: 'suspension' };
-export type CheckStatusListOptions = Omit<ICheqdCheckCredentialWithStatusList2021StatusOptions, 'issuerDid'>;
+export type CheckStatusListOptions = Omit<ICheqdCheckCredentialStatusOptions, 'issuerDid'>;
 export const DefaultStatusActions = {
 	revoke: 'revoke',
 	suspend: 'suspend',
 	reinstate: 'reinstate',
 } as const;
+export enum BitstringStatusActions {
+	revoke = BitstringStatusValue.REVOKED, // "revoke" -> 1
+	suspend = BitstringStatusValue.SUSPENDED, // "suspend" -> 2
+	reinstate = BitstringStatusValue.VALID, // "reinstate" -> 0
+}
 
 export const DefaultStatusActionPurposeMap = {
 	[DefaultStatusActions.revoke]: DefaultStatusList2021StatusPurposeTypes.revocation,

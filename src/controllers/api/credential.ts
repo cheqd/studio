@@ -11,19 +11,15 @@ import { isCredentialIssuerDidDeactivated } from '../../services/helpers.js';
 import type {
 	IssueCredentialRequestBody,
 	IssueCredentialResponseBody,
-	RevokeCredentialRequestBody,
-	RevokeCredentialRequestQuery,
+	UpdateCredentialRequestBody,
+	UpdateCredentialRequestQuery,
 	RevokeCredentialResponseBody,
-	SuspendCredentialRequestBody,
-	SuspendCredentialRequestQuery,
 	SuspendCredentialResponseBody,
 	UnsuccesfulIssueCredentialResponseBody,
 	UnsuccesfulRevokeCredentialResponseBody,
 	UnsuccesfulSuspendCredentialResponseBody,
 	UnsuccesfulUnsuspendCredentialResponseBody,
 	UnsuccesfulVerifyCredentialResponseBody,
-	UnsuspendCredentialRequestBody,
-	UnsuspendCredentialRequestQuery,
 	UnsuspendCredentialResponseBody,
 	VerifyCredentialRequestBody,
 	VerifyCredentialRequestQuery,
@@ -35,6 +31,7 @@ import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/consta
 import { eventTracker } from '../../services/track/tracker.js';
 import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '../../types/track.js';
 import { validate } from '../validator/decorator.js';
+import { StatusListType } from '../../types/credential-status.js';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -80,15 +77,7 @@ export class CredentialController {
 			.bail(),
 		query('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
 	];
-	public static revokeValidator = [
-		check('credential')
-			.exists()
-			.withMessage('W3c verifiable credential was not provided')
-			.isW3CCheqdCredential()
-			.bail(),
-		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').toBoolean().bail(),
-	];
-	public static suspendValidator = [
+	public static updateValidator = [
 		check('credential')
 			.exists()
 			.withMessage('W3c verifiable credential was not provided')
@@ -96,15 +85,19 @@ export class CredentialController {
 			.isW3CCheqdCredential()
 			.bail(),
 		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').toBoolean().bail(),
-	];
-
-	public static reinstateValidator = [
-		check('credential')
+		query('listType')
 			.exists()
-			.withMessage('W3c verifiable credential was not provided')
-			.isW3CCheqdCredential()
-			.bail(),
-		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').toBoolean().bail(),
+			.withMessage('listType: required')
+			.bail()
+			.isString()
+			.withMessage('listType: should be a string')
+			.bail()
+			.isIn([StatusListType.Bitstring, StatusListType.StatusList2021])
+			.withMessage(
+				`listType: invalid listType, should be one of [${Object.values(StatusListType)
+					.map((v) => `'${v}'`)
+					.join(', ')}]`
+			),
 	];
 
 	/**
@@ -311,12 +304,21 @@ export class CredentialController {
 	 *   post:
 	 *     tags: [ Credential ]
 	 *     summary: Revoke a Verifiable Credential.
-	 *     description: This endpoint revokes a given Verifiable Credential. As input, it can take the VC-JWT as a string or the entire credential itself. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.
+	 *     description: This endpoint revokes a given Verifiable Credential. As input, it can take the VC-JWT as a string or the entire credential itself. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.
 	 *     operationId: revoke
 	 *     parameters:
 	 *       - in: query
+	 *         name: listType
+	 *         description: The type of Status List.
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - StatusList2021
+	 *             - BitstringStatusList
+	 *       - in: query
 	 *         name: publish
-	 *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
+	 *         description: Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.
 	 *         required: true
 	 *         schema:
 	 *           type: boolean
@@ -346,22 +348,23 @@ export class CredentialController {
 	@validate
 	public async revoke(request: Request, response: Response) {
 		// Get publish flag
-		const { publish } = request.query as RevokeCredentialRequestQuery;
+		const { publish, listType } = request.query as UpdateCredentialRequestQuery;
 		// Get symmetric key
-		const { credential, symmetricKey } = request.body as RevokeCredentialRequestBody;
+		const { credential, symmetricKey } = request.body as UpdateCredentialRequestBody;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
 			const result = await identityServiceStrategySetup.agent.revokeCredentials(
 				credential,
+				listType || StatusListType.Bitstring,
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
 			);
 
 			// Track operation if revocation was successful and publish is true
-			// Otherwise the StatusList2021 publisher should manually publish the resource
+			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
 			// and it will be tracked there
 			if (!result.error && result.resourceMetadata && publish) {
 				// decode credential for getting issuer did
@@ -410,8 +413,17 @@ export class CredentialController {
 	 *     operationId: suspend
 	 *     parameters:
 	 *       - in: query
+	 *         name: listType
+	 *         description: The type of Status List.
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - StatusList2021
+	 *             - BitstringStatusList
+	 *       - in: query
 	 *         name: publish
-	 *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
+	 *         description: Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.
 	 *         schema:
 	 *           type: boolean
 	 *     requestBody:
@@ -439,9 +451,9 @@ export class CredentialController {
 	@validate
 	public async suspend(request: Request, response: Response) {
 		// Get publish flag
-		const { publish } = request.query as SuspendCredentialRequestQuery;
+		const { publish, listType } = request.query as UpdateCredentialRequestQuery;
 		// Get symmetric key
-		const { credential, symmetricKey } = request.body as SuspendCredentialRequestBody;
+		const { credential, symmetricKey } = request.body as UpdateCredentialRequestBody;
 
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
@@ -449,13 +461,14 @@ export class CredentialController {
 		try {
 			const result = await identityServiceStrategySetup.agent.suspendCredentials(
 				credential,
+				listType || StatusListType.Bitstring,
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
 			);
 
 			// Track operation if suspension was successful and publish is true
-			// Otherwise the StatusList2021 publisher should manually publish the resource
+			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
 			// and it will be tracked there
 			if (!result.error && result.resourceMetadata && publish) {
 				// decode credential for getting issuer did
@@ -500,12 +513,21 @@ export class CredentialController {
 	 *   post:
 	 *     tags: [ Credential ]
 	 *     summary: Reinstate a suspended Verifiable Credential.
-	 *     description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
+	 *     description: Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.
 	 *     operationId: reinstate
 	 *     parameters:
 	 *       - in: query
+	 *         name: listType
+	 *         description: The type of Status List.
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - StatusList2021
+	 *             - BitstringStatusList
+	 *       - in: query
 	 *         name: publish
-	 *         description: Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.
+	 *         description: Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.
 	 *         schema:
 	 *           type: boolean
 	 *     requestBody:
@@ -533,22 +555,23 @@ export class CredentialController {
 	@validate
 	public async reinstate(request: Request, response: Response) {
 		// Get publish flag
-		const { publish } = request.query as UnsuspendCredentialRequestQuery;
+		const { publish, listType } = request.query as UpdateCredentialRequestQuery;
 		// Get symmetric key
-		const { credential, symmetricKey } = request.body as UnsuspendCredentialRequestBody;
+		const { credential, symmetricKey } = request.body as UpdateCredentialRequestBody;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
 			const result = await identityServiceStrategySetup.agent.reinstateCredentials(
 				credential,
+				listType || StatusListType.Bitstring,
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
 			);
 
 			// Track operation if the process of reinstantiating was successful and publish is true
-			// Otherwise the StatusList2021 publisher should manually publish the resource
+			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
 			// and it will be tracked there
 			if (!result.error && result.resourceMetadata && publish) {
 				// decode credential for getting issuer did

@@ -137,7 +137,8 @@
             "type": "object",
             "required": [
               "statusPurpose",
-              "statusListName"
+              "statusListName",
+              "statusListType"
             ],
             "properties": {
               "statusPurpose": {
@@ -149,6 +150,13 @@
               },
               "statusListName": {
                 "type": "string"
+              },
+              "statusListType": {
+                "type": "string",
+                "enum": [
+                  "StatusList2021",
+                  "BitstringStatusList"
+                ]
               },
               "statusListIndex": {
                 "type": "number"
@@ -169,7 +177,8 @@
             },
             "example": {
               "statusPurpose": "revocation",
-              "statusListName": "employee-credentials"
+              "statusListName": "employee-credentials",
+              "statusListType": "StatusList2021"
             }
           },
           "termsOfUse": {
@@ -253,7 +262,8 @@
           "credentialStatus": {
             "statusPurpose": "revocation",
             "statusListName": "employee-credentials",
-            "statusListIndex": 10
+            "statusListIndex": 10,
+            "statusListType": "StatusList2021"
           }
         }
       },
@@ -330,7 +340,8 @@
               "type": {
                 "type": "string",
                 "enum": [
-                  "StatusList2021Entry"
+                  "StatusList2021Entry",
+                  "BitstringStatusListEntry"
                 ]
               }
             }
@@ -848,7 +859,7 @@
             "type": "string"
           },
           "makeFeePayment": {
-            "description": "Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 DID-Linked Resource.",
+            "description": "Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 or BitstringStatusList DID-Linked Resource.",
             "type": "boolean",
             "default": false
           },
@@ -885,34 +896,60 @@
             ],
             "properties": {
               "did": {
-                "description": "DID of the StatusList2021 publisher.",
+                "description": "DID of the StatusList2021 or BitstringStatusList publisher.",
                 "type": "string",
                 "format": "uri"
               },
               "statusListName": {
-                "description": "The name of the StatusList2021 DID-Linked Resource to be created.",
+                "description": "The name of the StatusList2021 or BitstringStatusList DID-Linked Resource to be created.",
                 "type": "string"
               },
               "length": {
-                "description": "The length of the status list to be created. The default and minimum length is 140000 which is 16kb.",
+                "description": "The length of the status list to be created. The default and minimum length is 131072 which is 16kb.",
                 "type": "integer",
                 "minimum": 0,
                 "exclusiveMinimum": true,
-                "default": 140000
+                "default": 131072
               },
               "encoding": {
-                "description": "The encoding format of the StatusList2021 DiD-Linked Resource to be created.",
+                "description": "The encoding format of the StatusList2021 or BitstringStatusList (only base64url supported) DiD-Linked Resource to be created.",
                 "type": "string",
                 "default": "base64url",
                 "enum": [
                   "base64url",
-                  "base64",
                   "hex"
                 ]
               },
               "statusListVersion": {
-                "description": "Optional field to assign a human-readable version in the StatusList2021 DID-Linked Resource.",
+                "description": "Optional field to assign a human-readable version in the StatusList2021 or BitstringStatusList DID-Linked Resource.",
                 "type": "string"
+              },
+              "statusSize": {
+                "description": "Only for BitstringStatusList: bits per credential, used to support multiple status in same list.",
+                "type": "integer",
+                "minimum": 1
+              },
+              "statusMessages": {
+                "description": "Only for BitstringStatusList (Mandatory if statusSize > 1): Message explaining each bit",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "0x0"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "valid"
+                    }
+                  }
+                }
+              },
+              "ttl": {
+                "description": "Only for BitstringStatusList: Time to Live in Miliseconds (not expiry).",
+                "type": "integer",
+                "minimum": 1000
               }
             }
           },
@@ -1015,19 +1052,19 @@
         "type": "object",
         "properties": {
           "feePaymentAddress": {
-            "description": "The cheqd/Cosmos payment address where payments to unlock the encrypted StatusList2021 DID-Linked Resource need to be sent.",
+            "description": "The cheqd/Cosmos payment address where payments to unlock the encrypted StatusList2021 or BitstringStatusList DID-Linked Resource need to be sent.",
             "type": "string",
             "example": "cheqd1qs0nhyk868c246defezhz5eymlt0dmajna2csg"
           },
           "feePaymentAmount": {
-            "description": "Amount in CHEQ tokens to unlock the encrypted StatusList2021 DID-Linked Resource.",
+            "description": "Amount in CHEQ tokens to unlock the encrypted StatusList2021 or BitstringStatusList DID-Linked Resource.",
             "type": "number",
             "minimum": 0,
             "exclusiveMinimum": true,
             "default": 20
           },
           "feePaymentWindow": {
-            "description": "Time window (in minutes) within which the payment to unlock the encrypted StatusList2021 DID-Linked Resource is considered valid.",
+            "description": "Time window (in minutes) within which the payment to unlock the encrypted StatusList2021 or BitstringStatusList DID-Linked Resource is considered valid.",
             "type": "number",
             "minimum": 0,
             "exclusiveMinimum": true,
@@ -1387,7 +1424,7 @@
             "exclusiveMinimum": false
           },
           "makeFeePayment": {
-            "description": "Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 DID-Linked Resource.",
+            "description": "Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 or BitstringStatusList DID-Linked Resource.",
             "type": "boolean",
             "default": true
           }
@@ -1946,6 +1983,35 @@
             "items": {
               "type": "string",
               "example": "https://example.com"
+            }
+          },
+          "priority": {
+            "description": "(Optional) Priority of the service endpoint, used for distinction when multiple did-communication service endpoints are present in a single DID document.",
+            "type": "integer",
+            "example": 0
+          },
+          "recipientKeys": {
+            "description": "(Optional) List of recipient keys used to denote the default recipients of an endpoint.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1"
+            }
+          },
+          "routingKeys": {
+            "description": "(Optional) List of routing keys used to used to denote the individual routing hops in between the sender and recipients.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "did:cheqd:mainnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-2"
+            }
+          },
+          "accept": {
+            "description": "(Optional) List of media types that the service endpoint accepts.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "didcomm/aip2;env=rfc587"
             }
           }
         }
@@ -2628,13 +2694,13 @@
           "Trust Registry"
         ],
         "summary": "Revoke a Verifiable Accreditation.",
-        "description": "This endpoint revokes a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.",
+        "description": "This endpoint revokes a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.",
         "operationId": "accredit-revoke",
         "parameters": [
           {
             "in": "query",
             "name": "publish",
-            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
             "required": true,
             "schema": {
               "type": "boolean",
@@ -2685,13 +2751,13 @@
           "Trust Registry"
         ],
         "summary": "Suspend a Verifiable Accreditation.",
-        "description": "This endpoint suspends a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.",
+        "description": "This endpoint suspends a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.",
         "operationId": "accredit-suspend",
         "parameters": [
           {
             "in": "query",
             "name": "publish",
-            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
             "required": true,
             "schema": {
               "type": "boolean",
@@ -2742,13 +2808,13 @@
           "Trust Registry"
         ],
         "summary": "Reinstate a Verifiable Accreditation.",
-        "description": "This endpoint reinstates a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.",
+        "description": "This endpoint reinstates a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.",
         "operationId": "accredit-reinstate",
         "parameters": [
           {
             "in": "query",
             "name": "publish",
-            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
             "required": true,
             "schema": {
               "type": "boolean",
@@ -2798,20 +2864,70 @@
         "tags": [
           "Credential Status"
         ],
-        "summary": "Create an unencrypted StatusList2021 credential status list.",
-        "description": "This endpoint creates an unencrypted StatusList2021 credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.",
+        "summary": "Create an unencrypted StatusList2021 or BitstringStatusList credential status list.",
+        "description": "This endpoint creates an unencrypted StatusList2021 or BitstringStatusList credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted.",
         "parameters": [
           {
             "in": "query",
-            "name": "statusPurpose",
-            "description": "The purpose of the status list. Can be either revocation or suspension. Once this is set, it cannot be changed. A new status list must be created to change the purpose.",
+            "name": "listType",
+            "description": "The type of Status List.",
             "required": true,
             "schema": {
               "type": "string",
               "enum": [
-                "revocation",
-                "suspension"
+                "StatusList2021",
+                "BitstringStatusList"
               ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "statusPurpose",
+            "description": "The purpose of the status list.\n- For StatusList2021: Single value (revocation or suspension)\n- For BitstringStatusList: Can accept multiple values as array of strings\n\nOnce this is set, it cannot be changed. A new status list must be created to change the purpose.\n",
+            "required": true,
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "revocation",
+                    "suspension"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "revocation",
+                      "suspension",
+                      "message",
+                      "refresh"
+                    ]
+                  }
+                }
+              ]
+            },
+            "examples": {
+              "single_value": {
+                "summary": "Single purpose (StatusList2021)",
+                "value": "revocation"
+              },
+              "multiple_values_array": {
+                "summary": "Multiple purposes as array (BitstringStatusList)",
+                "value": [
+                  "revocation",
+                  "suspension",
+                  "message"
+                ]
+              },
+              "with_message": {
+                "summary": "Including message purpose",
+                "value": [
+                  "revocation",
+                  "message"
+                ]
+              }
             }
           }
         ],
@@ -2857,20 +2973,70 @@
         "tags": [
           "Credential Status"
         ],
-        "summary": "Create an encrypted StatusList2021 credential status list.",
-        "description": "This endpoint creates an encrypted StatusList2021 credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted; and with purpose as either revocation or suspension.",
+        "summary": "Create an encrypted StatusList2021 or BitstringStatusList credential status list.",
+        "description": "This endpoint creates an encrypted StatusList2021 or BitstringStatusList credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted.",
         "parameters": [
           {
             "in": "query",
-            "name": "statusPurpose",
-            "description": "The purpose of the status list. Can be either revocation or suspension. Once this is set, it cannot be changed. A new status list must be created to change the purpose.",
+            "name": "listType",
+            "description": "The type of Status List.",
             "required": true,
             "schema": {
               "type": "string",
               "enum": [
-                "revocation",
-                "suspension"
+                "StatusList2021",
+                "BitstringStatusList"
               ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "statusPurpose",
+            "description": "The purpose of the status list.\n- For StatusList2021: Single value (revocation or suspension)\n- For BitstringStatusList: Can accept multiple values as array of strings\n\nOnce this is set, it cannot be changed. A new status list must be created to change the purpose.\n",
+            "required": true,
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "revocation",
+                    "suspension"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "revocation",
+                      "suspension",
+                      "message",
+                      "refresh"
+                    ]
+                  }
+                }
+              ]
+            },
+            "examples": {
+              "single_value": {
+                "summary": "Single purpose (StatusList2021)",
+                "value": "revocation"
+              },
+              "multiple_values_array": {
+                "summary": "Multiple purposes as array (BitstringStatusList)",
+                "value": [
+                  "revocation",
+                  "suspension",
+                  "message"
+                ]
+              },
+              "with_message": {
+                "summary": "Including message purpose",
+                "value": [
+                  "revocation",
+                  "message"
+                ]
+              }
             }
           }
         ],
@@ -2916,8 +3082,21 @@
         "tags": [
           "Credential Status"
         ],
-        "summary": "Update an existing unencrypted StatusList2021 credential status list.",
+        "summary": "Update an existing unencrypted StatusList2021 or BitstringStatusList credential status list.",
         "parameters": [
+          {
+            "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
           {
             "in": "query",
             "name": "statusAction",
@@ -2975,8 +3154,21 @@
         "tags": [
           "Credential Status"
         ],
-        "summary": "Update an existing encrypted StatusList2021 credential status list.",
+        "summary": "Update an existing encrypted StatusList2021 or BitstringStatusList credential status list.",
         "parameters": [
+          {
+            "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
           {
             "in": "query",
             "name": "statusAction",
@@ -3093,7 +3285,7 @@
         "tags": [
           "Credential Status"
         ],
-        "summary": "Fetch StatusList2021 DID-Linked Resource based on search criteria.",
+        "summary": "Fetch StatusList2021 or BitstringStatusList DID-Linked Resource based on search criteria.",
         "parameters": [
           {
             "in": "query",
@@ -3106,8 +3298,22 @@
           },
           {
             "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
+          {
+            "in": "query",
             "name": "statusPurpose",
             "description": "The purpose of the status list. Can be either revocation or suspension.",
+            "required": true,
             "schema": {
               "type": "string",
               "enum": [
@@ -3119,7 +3325,8 @@
           {
             "in": "query",
             "name": "statusListName",
-            "description": "The name of the StatusList2021 DID-Linked Resource.",
+            "description": "The name of the Status List DID-Linked Resource.",
+            "required": true,
             "schema": {
               "type": "string"
             }
@@ -3272,13 +3479,26 @@
           "Credential"
         ],
         "summary": "Revoke a Verifiable Credential.",
-        "description": "This endpoint revokes a given Verifiable Credential. As input, it can take the VC-JWT as a string or the entire credential itself. The StatusList2021 resource should already be setup in the VC and `credentialStatus` property present in the VC.",
+        "description": "This endpoint revokes a given Verifiable Credential. As input, it can take the VC-JWT as a string or the entire credential itself. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.",
         "operationId": "revoke",
         "parameters": [
           {
             "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
+          {
+            "in": "query",
             "name": "publish",
-            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
             "required": true,
             "schema": {
               "type": "boolean",
@@ -3334,8 +3554,21 @@
         "parameters": [
           {
             "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
+          {
+            "in": "query",
             "name": "publish",
-            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
             "schema": {
               "type": "boolean"
             }
@@ -3384,13 +3617,26 @@
           "Credential"
         ],
         "summary": "Reinstate a suspended Verifiable Credential.",
-        "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+        "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
         "operationId": "reinstate",
         "parameters": [
           {
             "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
+          {
+            "in": "query",
             "name": "publish",
-            "description": "Set whether the StatusList2021 resource should be published to the ledger or not. If set to `false`, the StatusList2021 publisher should manually publish the resource.",
+            "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
             "schema": {
               "type": "boolean"
             }

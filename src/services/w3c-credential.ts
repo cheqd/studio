@@ -16,9 +16,13 @@ import type { IIdentityService } from './identity/index.js';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import { toNetwork } from '../helpers/helpers.js';
 import { CommonReturn } from '../types/shared.js';
-import type { FeePaymentOptions } from '../types/credential-status.js';
+import { StatusListType, type FeePaymentOptions } from '../types/credential-status.js';
 import { JWT_PROOF_TYPE } from '../types/constants.js';
-import type { StatusList2021Revocation, StatusList2021Suspension } from '@cheqd/did-provider-cheqd';
+import type {
+	BitstringStatusList,
+	StatusList2021Revocation,
+	StatusList2021Suspension,
+} from '@cheqd/did-provider-cheqd';
 import { FeeAnalyzer } from '../helpers/fee-analyzer.js';
 import type { IFeePaymentOptions } from '../types/track.js';
 
@@ -41,7 +45,7 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 	credentialStatus?: CredentialStatusReference;
 	id?: string;
 	proof: ProofType;
-	statusList?: StatusList2021Revocation | StatusList2021Suspension;
+	statusList?: StatusList2021Revocation | StatusList2021Suspension | BitstringStatusList;
 	resourceId?: string;
 	termsOfUse?: Record<string, string>;
 
@@ -114,7 +118,12 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 		}
 
 		// ensure status list
-		const statusList = await agent.searchStatusList2021(did, statusListName, statusPurpose);
+		const statusList = await agent.searchStatusList(
+			did,
+			statusListName,
+			StatusListType.StatusList2021,
+			statusPurpose
+		);
 		// if no such statusList - error
 		if (statusList.error) {
 			return this.returnError(

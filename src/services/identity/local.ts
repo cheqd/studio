@@ -23,7 +23,11 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import { CheqdNetwork } from '@cheqd/sdk';
 import type { VerificationOptions } from '../../types/shared.js';
-import type { FeePaymentOptions } from '../../types/credential-status.js';
+import type {
+	CreateEncryptedBitstringOptions,
+	CreateUnencryptedBitstringOptions,
+	FeePaymentOptions,
+} from '../../types/credential-status.js';
 import type { CredentialRequest } from '../../types/credential.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
 import type { StatusOptions } from '../../types/credential-status.js';
@@ -37,7 +41,7 @@ import type {
 import { DefaultIdentityService } from './default.js';
 import { Connection } from '../../database/connection/connection.js';
 import { Veramo } from './agent.js';
-import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
+import type { BulkBitstringUpdateResult, CreateStatusListResult, TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { toTPublicKeyEd25519 } from '../helpers.js';
 
@@ -202,6 +206,19 @@ export class LocalIdentityService extends DefaultIdentityService {
 			statusListOptions
 		);
 	}
+	async createUnencryptedBitstringStatusList(
+		did: string,
+		resourceOptions: ResourcePayload,
+		statusListOptions: CreateUnencryptedBitstringOptions
+	): Promise<CreateStatusListResult> {
+		await this.importDid();
+		return await Veramo.instance.createUnencryptedBitstringStatusList(
+			this.initAgent(),
+			did,
+			resourceOptions,
+			statusListOptions
+		);
+	}
 
 	async createEncryptedStatusList2021(
 		did: string,
@@ -216,21 +233,36 @@ export class LocalIdentityService extends DefaultIdentityService {
 			statusListOptions
 		);
 	}
-
-	async updateUnencryptedStatusList2021(
+	async createEncryptedBitstringStatusList(
 		did: string,
-		statusOptions: UpdateUnencryptedStatusListOptions
-	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
+		resourceOptions: ResourcePayload,
+		statusListOptions: CreateEncryptedBitstringOptions
+	): Promise<CreateStatusListResult> {
 		await this.importDid();
-		return await Veramo.instance.updateUnencryptedStatusList2021(this.initAgent(), did, statusOptions);
+		return await Veramo.instance.createEncryptedBitstringStatusList(
+			this.initAgent(),
+			did,
+			resourceOptions,
+			statusListOptions
+		);
 	}
 
-	async updateEncryptedStatusList2021(
+	async updateUnencryptedStatusList(
 		did: string,
-		statusOptions: UpdateEncryptedStatusListOptions
-	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult> {
+		listType: string,
+		statusOptions: UpdateUnencryptedStatusListOptions
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult> {
 		await this.importDid();
-		return await Veramo.instance.updateEncryptedStatusList2021(this.initAgent(), did, statusOptions);
+		return await Veramo.instance.updateUnencryptedStatusList(this.initAgent(), did, listType, statusOptions);
+	}
+
+	async updateEncryptedStatusList(
+		did: string,
+		listType: string,
+		statusOptions: UpdateEncryptedStatusListOptions
+	): Promise<BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult> {
+		await this.importDid();
+		return await Veramo.instance.updateEncryptedStatusList(this.initAgent(), did, listType, statusOptions);
 	}
 
 	async checkStatusList2021(did: string, statusOptions: CheckStatusListOptions): Promise<StatusCheckResult> {
@@ -249,15 +281,27 @@ export class LocalIdentityService extends DefaultIdentityService {
 		return await Veramo.instance.remunerateStatusList2021(this.initAgent(), feePaymentOptions);
 	}
 
-	async revokeCredentials(credentials: W3CVerifiableCredential | W3CVerifiableCredential[], publish: boolean) {
-		return await Veramo.instance.revokeCredentials(this.initAgent(), credentials, publish);
+	async revokeCredentials(
+		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
+		publish: boolean
+	) {
+		return await Veramo.instance.revokeCredentials(this.initAgent(), credentials, listType, publish);
 	}
 
-	async suspendCredentials(credentials: W3CVerifiableCredential | W3CVerifiableCredential[], publish: boolean) {
-		return await Veramo.instance.suspendCredentials(this.initAgent(), credentials, publish);
+	async suspendCredentials(
+		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
+		publish: boolean
+	) {
+		return await Veramo.instance.suspendCredentials(this.initAgent(), credentials, listType, publish);
 	}
 
-	async reinstateCredentials(credentials: W3CVerifiableCredential | W3CVerifiableCredential[], publish: boolean) {
-		return await Veramo.instance.unsuspendCredentials(this.initAgent(), credentials, publish);
+	async reinstateCredentials(
+		credentials: W3CVerifiableCredential | W3CVerifiableCredential[],
+		listType: string,
+		publish: boolean
+	) {
+		return await Veramo.instance.unsuspendCredentials(this.initAgent(), credentials, listType, publish);
 	}
 }
