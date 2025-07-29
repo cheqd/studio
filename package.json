@@ -84,7 +84,7 @@
 		"cross-env": "^7.0.3",
 		"did-resolver": "^4.1.0",
 		"dotenv": "^16.5.0",
-		"express": "^5.1.0",
+		"express": "^4.21.2",
 		"express-session": "^1.18.1",
 		"express-validator": "^7.2.1",
 		"helmet": "^8.1.0",
