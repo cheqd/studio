@@ -92,7 +92,7 @@ export class CredentialController {
 			.isString()
 			.withMessage('listType: should be a string')
 			.bail()
-			.isIn([Object.values(StatusListType)])
+			.isIn([StatusListType.Bitstring, StatusListType.StatusList2021])
 			.withMessage(
 				`listType: invalid listType, should be one of [${Object.values(StatusListType)
 					.map((v) => `'${v}'`)
