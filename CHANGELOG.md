@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.8.0](https://github.com/cheqd/studio/compare/3.7.0...3.8.0) (2025-07-30)
+
+### Features
+
+* Support for Bitstring status list [DEV-5084] [DEV-5085] ([#703](https://github.com/cheqd/studio/issues/703)) ([665a895](https://github.com/cheqd/studio/commit/665a895155c9aec3b12ef930f2e95a367ef58fb6)), closes [#706](https://github.com/cheqd/studio/issues/706)
+
 ## [3.8.0-develop.1](https://github.com/cheqd/studio/compare/3.7.0...3.8.0-develop.1) (2025-07-29)
 
 ### Features
