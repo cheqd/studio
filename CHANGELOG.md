@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.8.1](https://github.com/cheqd/studio/compare/3.8.0...3.8.1) (2025-07-30)
+
+### Bug Fixes
+
+* Align accreditation policy to attest ([7c2bb1a](https://github.com/cheqd/studio/commit/7c2bb1ab0dd1d0d31665b30edb7b6d7875f2d13f))
+
 ## [3.8.1-develop.1](https://github.com/cheqd/studio/compare/3.8.0...3.8.1-develop.1) (2025-07-30)
 
 ### Bug Fixes
