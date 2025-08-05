@@ -20,6 +20,7 @@ import type {
 import { eventTracker } from '../../services/track/tracker.js';
 import { arePublicKeyHexsInWallet } from '../../services/helpers.js';
 import { validate } from '../validator/decorator.js';
+import { UnsuccessfulGetDidResponseBody } from '../../types/did.js';
 
 export class ResourceController {
 	public static createResourceValidator = [
@@ -325,6 +326,55 @@ export class ResourceController {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
 			} satisfies UnsuccessfulQueryResourceResponseBody);
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /resource/list:
+	 *   get:
+	 *     tags: [ Resource ]
+	 *     summary: Fetch Resources created by the user.
+	 *     description: This endpoint returns the list of DID Linked Resources controlled by the account.
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               type: array
+	 *               items:
+	 *                 type: string
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async listResources(request: Request, response: Response) {
+		// Extract params, filters and pagination
+		const { did, page, limit } = request.params;
+		// Get strategy e.g. postgres or local
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
+
+		try {
+			const result = await identityServiceStrategySetup.agent.listResources(
+				{ did },
+				Number(page),
+				Number(limit),
+				response.locals.customer
+			);
+
+			return response.status(StatusCodes.OK).json({
+				total: result.length,
+				resources: result,
+			});
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			} satisfies UnsuccessfulGetDidResponseBody);
 		}
 	}
 }

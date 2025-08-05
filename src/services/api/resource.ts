@@ -1,4 +1,4 @@
-import type { FindOptionsRelations, Repository } from 'typeorm';
+import { LessThanOrEqual, type FindOptionsRelations, type Repository } from 'typeorm';
 
 import { Connection } from '../../database/connection/connection.js';
 
@@ -87,10 +87,17 @@ export class ResourceService {
 		});
 	}
 
-	public async find(where: Record<string, unknown>, relations?: FindOptionsRelations<ResourceEntity>) {
-		return await this.resourceRepository.find({
-			where: where,
+	public async find(
+		where: Record<string, unknown>,
+		relations?: FindOptionsRelations<ResourceEntity>,
+		page?: number,
+		limit?: number
+	) {
+		await this.resourceRepository.find({
+			where,
 			relations,
+			skip: page && limit ? (page - 1) * limit : 0,
+			take: limit,
 		});
 	}
 

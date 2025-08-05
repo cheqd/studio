@@ -94,6 +94,19 @@ export interface IIdentityService {
 		customer: CustomerEntity,
 		publicKeyHexs?: string[]
 	): Promise<any>;
+	listResources(
+		filter: {
+			did?: string;
+			encrypted?: boolean;
+			createdAt?: number;
+			updatedAt?: number;
+			name?: string;
+			type?: string;
+		},
+		page: number,
+		limit: number,
+		customer: CustomerEntity
+	): Promise<any>;
 	createCredential(
 		credential: CredentialPayload,
 		format: CredentialRequest['format'],

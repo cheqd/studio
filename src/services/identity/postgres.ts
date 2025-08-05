@@ -63,6 +63,8 @@ import type { APIServiceOptions } from '../../types/admin.js';
 import { SupportedKeyTypes } from '@veramo/utils';
 import { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
 import { LocalStore } from '../../database/cache/store.js';
+import { ResourceService } from '../api/resource.js';
+import { LessThanOrEqual } from 'typeorm';
 
 dotenv.config();
 
@@ -338,6 +340,26 @@ export class PostgresIdentityService extends DefaultIdentityService {
 					return toTPublicKeyEd25519(key);
 				}) || [];
 			return await Veramo.instance.createResource(agent, network, payload, publicKeys);
+		} catch (error) {
+			throw new Error(`${error}`);
+		}
+	}
+
+	async listResources(filter: Record<string, any>, page: number, limit: number, customer: CustomerEntity) {
+		try {
+			return await ResourceService.instance.find(
+				{
+					identifier: filter.did,
+					resourceName: filter.name,
+					resourceType: filter.type,
+					createdAt: LessThanOrEqual(filter.createdAt),
+					customer: customer,
+					encrypted: filter.encrypted,
+				},
+				undefined,
+				page,
+				limit
+			);
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
