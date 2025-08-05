@@ -23,10 +23,10 @@ export class UserInfoHelper {
 		return;
 	}
 
-    appendScopes(scopes: string[], response: Response) {
-        response.locals.scopes = Array.from(new Set([...response.locals.scopes, ...scopes]));
-        return;
-    }
+	appendScopes(scopes: string[], response: Response) {
+		response.locals.scopes = Array.from(new Set([...response.locals.scopes, ...scopes]));
+		return;
+	}
 
 	async setCustomerEntity(customerId: string, response: Response): Promise<Response | undefined> {
 		const customerEntity = await CustomerService.instance.get(customerId);
