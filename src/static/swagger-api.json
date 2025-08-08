@@ -4506,6 +4506,39 @@
           }
         }
       }
+    },
+    "/resource/list": {
+      "get": {
+        "tags": [
+          "Resource"
+        ],
+        "summary": "Fetch Resources created by the user.",
+        "description": "This endpoint returns the list of DID Linked Resources controlled by the account.",
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
     }
   }
 }

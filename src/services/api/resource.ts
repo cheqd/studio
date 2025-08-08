@@ -1,13 +1,14 @@
-import { LessThanOrEqual, type FindOptionsRelations, type Repository } from 'typeorm';
-
-import { Connection } from '../../database/connection/connection.js';
-
-import * as dotenv from 'dotenv';
-import { ResourceEntity } from '../../database/entities/resource.entity.js';
+import type { FindOptionsRelations, Repository } from 'typeorm';
 import type { IdentifierEntity } from '../../database/entities/identifier.entity.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { LinkedResourceMetadataResolutionResult } from '@cheqd/did-provider-cheqd';
+
+import { Connection } from '../../database/connection/connection.js';
+import { ResourceEntity } from '../../database/entities/resource.entity.js';
+
+import * as dotenv from 'dotenv';
+
 dotenv.config();
 
 export class ResourceService {

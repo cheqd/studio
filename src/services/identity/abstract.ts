@@ -103,6 +103,10 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 
+	async listResources(filter: Record<string, any>, page: number, limit: number, customer: CustomerEntity) {
+		throw new Error(`Not supported`);
+	}
+
 	createCredential(
 		credential: CredentialPayload,
 		format: CredentialRequest['format'],

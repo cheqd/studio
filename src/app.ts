@@ -227,6 +227,7 @@ class App {
 			ResourceController.searchResourceValidator,
 			new ResourceController().searchResource
 		);
+		app.get(`/resource/list`, new ResourceController().listResources);
 
 		// Account API
 		app.post('/account/create', AccountController.createValidator, new AccountController().create);
