@@ -52,8 +52,8 @@ import type { KeyEntity } from '../../database/entities/key.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity';
 import type { APIKeyEntity } from '../../database/entities/api.key.entity';
 import type { SupportedKeyTypes } from '@veramo/utils';
-import { ListDIDRequestOptions } from '../../types/did';
-import { ListResourceOptions } from '../../types/resource';
+import { ListDIDRequestOptions, ListDidsResponseBody } from '../../types/did';
+import { ListResourceOptions, ListResourceResponse } from '../../types/resource';
 
 export abstract class AbstractIdentityService implements IIdentityService {
 	agent?: VeramoAgent;
@@ -105,7 +105,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 
-	async listResources(options: ListResourceOptions, customer: CustomerEntity) {
+	async listResources(options: ListResourceOptions, customer: CustomerEntity): Promise<ListResourceResponse> {
 		throw new Error(`Not supported`);
 	}
 
@@ -232,7 +232,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	getKey(kid: string, customer: CustomerEntity): Promise<ManagedKeyInfo | null> {
 		throw new Error(`Not supported`);
 	}
-	listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<string[]> {
+	listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<ListDidsResponseBody> {
 		throw new Error(`Not supported`);
 	}
 	getDid(did: string): Promise<any> {

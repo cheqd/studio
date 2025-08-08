@@ -21,25 +21,39 @@ export type CreateResourceRequestBody = {
 export type SearchResourceRequestParams = DIDRequest;
 
 export type FilterResourceParams = {
-    did?: string;
-    encrypted?: boolean;
-    createdAt?: number;
-    updatedAt?: number;
-    name?: string;
-    type?: string;
-    network?: CheqdNetwork;
-}
+	did?: string;
+	encrypted?: boolean;
+	createdAt?: number;
+	updatedAt?: number;
+	name?: string;
+	type?: string;
+	network?: CheqdNetwork;
+};
 
 export type ListResourceOptions = FilterResourceParams & {
-    page?: number,
-    limit?: number,
-}
+	page?: number;
+	limit?: number;
+};
 
 // Positive
 
 export type CreateResourceResponseBody = { resource: LinkedResourceMetadataResolutionResult };
 
 export type QueryResourceResponseBody = any;
+
+export type ListResourceResponse = {
+	total: number;
+	resources: {
+		resourceId: string;
+		resourceName: string;
+		resourceType: string;
+		mediaType: string;
+		previousVersionId: string | null;
+		nextVersionId: string | null;
+		encrypted: boolean;
+		did: string;
+	}[];
+};
 
 // Negative
 

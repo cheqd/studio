@@ -47,7 +47,7 @@ export type DeactivateDIDRequestBody = { publicKeyHexs?: string[] };
 
 export type GetDIDRequestParams = { did?: string } & ListDIDRequestOptions;
 
-export type ListDIDRequestOptions = {network?: CheqdNetwork; page?: number; limit?: number }
+export type ListDIDRequestOptions = { network?: CheqdNetwork; page?: number; limit?: number };
 export type ResolveDIDRequestParams = DIDRequest;
 
 // Responses
@@ -59,7 +59,7 @@ export type UpdateDidResponseBody = ICheqdIDentifier;
 
 export type DeactivateDidResponseBody = DIDResolutionResult;
 
-export type ListDidsResponseBody = string[];
+export type ListDidsResponseBody = { total: number; dids: string[] };
 
 export type QueryDidResponseBody = DIDResolutionResult;
 

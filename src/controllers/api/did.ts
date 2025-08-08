@@ -685,7 +685,7 @@ export class DIDController {
 		try {
 			const didDocument = did
 				? await identityServiceStrategySetup.agent.resolveDid(did)
-				: await identityServiceStrategySetup.agent.listDids({network, page, limit}, response.locals.customer);
+				: await identityServiceStrategySetup.agent.listDids({ network, page, limit }, response.locals.customer);
 
 			return response
 				.status(StatusCodes.OK)

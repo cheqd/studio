@@ -92,9 +92,9 @@ export class ResourceService {
 		where: Record<string, unknown>,
 		page?: number,
 		limit?: number,
-        relations?: FindOptionsRelations<ResourceEntity>,
+		relations?: FindOptionsRelations<ResourceEntity>
 	) {
-		await this.resourceRepository.find({
+		return await this.resourceRepository.findAndCount({
 			where,
 			relations,
 			skip: page && limit ? (page - 1) * limit : 0,

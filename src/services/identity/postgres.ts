@@ -67,7 +67,8 @@ import { ResourceService } from '../api/resource.js';
 import { FindOptionsWhere, LessThanOrEqual } from 'typeorm';
 import { IdentifierEntity } from '../../database/entities/identifier.entity.js';
 import { ListDIDRequestOptions } from '../../types/did.js';
-import { ListResourceOptions } from '../../types/resource.js';
+import { ListResourceOptions, ListResourceResponse } from '../../types/resource.js';
+import type { LinkedResourceMetadataResolutionResult } from '@cheqd/did-provider-cheqd/build/types';
 
 dotenv.config();
 
@@ -303,13 +304,13 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			throw new Error('Customer not found');
 		}
 
-        const where: FindOptionsWhere<IdentifierEntity> = { customer }
-        if(options.network) {
-            where.provider = `did:cheqd:${options.network}`
-        }
+		const where: FindOptionsWhere<IdentifierEntity> = { customer };
+		if (options.network) {
+			where.provider = `did:cheqd:${options.network}`;
+		}
 
-		const entities = await IdentifierService.instance.find(where, options.page, options.limit);
-		return entities.map((entity) => entity.did);
+		const [entities, total] = await IdentifierService.instance.find(where, options.page, options.limit);
+		return { total, dids: entities.map((entity) => entity.did) };
 	}
 
 	async getDid(did: string) {
@@ -354,12 +355,12 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async listResources(options: ListResourceOptions, customer: CustomerEntity) {
+	async listResources(options: ListResourceOptions, customer: CustomerEntity): Promise<ListResourceResponse> {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
 		try {
-			return await ResourceService.instance.find(
+			const [resources, total] = await ResourceService.instance.find(
 				{
 					identifier: options.did,
 					resourceName: options.name,
@@ -367,11 +368,25 @@ export class PostgresIdentityService extends DefaultIdentityService {
 					createdAt: options.createdAt && LessThanOrEqual(options.createdAt),
 					customer: customer,
 					encrypted: options.encrypted,
-                    namespace: options.network
+					namespace: options.network,
 				},
-                options.page,
-                options.limit
+				options.page,
+				options.limit
 			);
+
+			return {
+				total,
+				resources: resources.map((r) => ({
+					resourceId: r.resourceId,
+					resourceName: r.resourceName,
+					resourceType: r.resourceType,
+					mediaType: r.mediaType,
+					previousVersionId: r.previousVersionId,
+					nextVersionId: r.nextVersionId,
+					did: r.identifier.did,
+					encrypted: r.encrypted,
+				})),
+			};
 		} catch (error) {
 			throw new Error(`${error}`);
 		}

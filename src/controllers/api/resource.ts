@@ -360,15 +360,9 @@ export class ResourceController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await identityServiceStrategySetup.agent.listResources(
-				params,
-				response.locals.customer
-			);
+			const result = await identityServiceStrategySetup.agent.listResources(params, response.locals.customer);
 
-			return response.status(StatusCodes.OK).json({
-				total: result.length,
-				resources: result,
-			});
+			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
