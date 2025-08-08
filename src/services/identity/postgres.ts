@@ -68,7 +68,6 @@ import { FindOptionsWhere, LessThanOrEqual } from 'typeorm';
 import { IdentifierEntity } from '../../database/entities/identifier.entity.js';
 import { ListDIDRequestOptions } from '../../types/did.js';
 import { ListResourceOptions, ListResourceResponse } from '../../types/resource.js';
-import type { LinkedResourceMetadataResolutionResult } from '@cheqd/did-provider-cheqd/build/types';
 
 dotenv.config();
 

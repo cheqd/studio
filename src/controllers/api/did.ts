@@ -664,9 +664,7 @@ export class DIDController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               type: array
-	 *               items:
-	 *                 type: string
+	 *               $ref: '#/components/schemas/ListDidResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:

@@ -343,9 +343,7 @@ export class ResourceController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               type: array
-	 *               items:
-	 *                 type: string
+	 *               $ref: '#/components/schemas/ListResourceResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
