@@ -337,6 +337,59 @@ export class ResourceController {
 	 *     tags: [ Resource ]
 	 *     summary: Fetch Resources created by the user.
 	 *     description: This endpoint returns the list of DID Linked Resources controlled by the account.
+     *     parameters:
+	 *       - in: query
+	 *         name: network
+	 *         description: Filter resources by the network published.
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - mainnet
+	 *             - testnet
+	 *         required: false
+     *       - in: query
+     *         name: name
+     *         description: Filter resources by the resource name
+	 *         schema:
+	 *           type: string
+	 *         required: false
+     *       - in: query
+     *         name: type
+     *         description: Filter resources by the resource name
+	 *         schema:
+	 *           type: string
+	 *         required: false
+     *       - in: query
+     *         name: did
+     *         description: Filter resources published by a DID
+	 *         schema:
+	 *           type: string
+	 *         required: false
+     *       - in: query
+     *         name: encrypted
+     *         description: Filter resource by encryption type
+	 *         schema:
+	 *           type: boolean
+	 *         required: false
+     *       - in: query
+     *         name: createdAt
+     *         description: Filter resource by created date
+	 *         schema:
+	 *           type: string
+     *           format: date
+	 *         required: false
+	 *       - in: query
+	 *         name: page
+	 *         description: Page number.
+	 *         schema:
+	 *           type: number
+	 *         required: false
+	 *       - in: query
+	 *         name: limit
+	 *         description: Number of items to be listed in a single page.
+	 *         schema:
+	 *           type: number
+	 *         required: false
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.

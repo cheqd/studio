@@ -308,6 +308,10 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			where.provider = `did:cheqd:${options.network}`;
 		}
 
+        if (options.createdAt) {
+            where.saveDate = LessThanOrEqual(new Date(options.createdAt))
+        }
+
 		const [entities, total] = await IdentifierService.instance.find(where, options.page, options.limit);
 		return { total, dids: entities.map((entity) => entity.did) };
 	}
@@ -364,7 +368,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 					identifier: options.did,
 					resourceName: options.name,
 					resourceType: options.type,
-					createdAt: options.createdAt && LessThanOrEqual(options.createdAt),
+					createdAt: LessThanOrEqual(options.createdAt),
 					customer: customer,
 					encrypted: options.encrypted,
 					namespace: options.network,
