@@ -676,7 +676,7 @@ export class DIDController {
 	 */
 	public async getDids(request: Request, response: Response) {
 		// Extract did from params
-		const { did } = request.params as GetDIDRequestParams;
+		const { did, network, page, limit } = request.params as GetDIDRequestParams;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = response.locals.customer
 			? new IdentityServiceStrategySetup(response.locals.customer.customerId)
@@ -685,7 +685,7 @@ export class DIDController {
 		try {
 			const didDocument = did
 				? await identityServiceStrategySetup.agent.resolveDid(did)
-				: await identityServiceStrategySetup.agent.listDids(response.locals.customer);
+				: await identityServiceStrategySetup.agent.listDids({network, page, limit}, response.locals.customer);
 
 			return response
 				.status(StatusCodes.OK)

@@ -5,6 +5,8 @@ import { Identifier, Key } from '@veramo/data-store';
 import { CustomerEntity } from './customer.entity.js';
 import type { IdentifierEntity } from './identifier.entity.js';
 import type { KeyEntity } from './key.entity.js';
+import { namespaceEnum } from '../types/enum.js';
+
 dotenv.config();
 
 @Entity('resource')
@@ -70,6 +72,13 @@ export class ResourceEntity {
 		nullable: true,
 	})
 	updatedAt?: Date;
+
+	@Column({
+		type: 'enum',
+		enum: namespaceEnum,
+		nullable: false,
+	})
+	namespace!: string;
 
 	@BeforeInsert()
 	setCreatedAt() {

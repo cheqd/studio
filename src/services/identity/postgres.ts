@@ -64,7 +64,10 @@ import { SupportedKeyTypes } from '@veramo/utils';
 import { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
 import { LocalStore } from '../../database/cache/store.js';
 import { ResourceService } from '../api/resource.js';
-import { LessThanOrEqual } from 'typeorm';
+import { FindOptionsWhere, LessThanOrEqual } from 'typeorm';
+import { IdentifierEntity } from '../../database/entities/identifier.entity.js';
+import { ListDIDRequestOptions } from '../../types/did.js';
+import { ListResourceOptions } from '../../types/resource.js';
 
 dotenv.config();
 
@@ -295,11 +298,17 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async listDids(customer: CustomerEntity) {
+	async listDids(options: ListDIDRequestOptions, customer: CustomerEntity) {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		const entities = await IdentifierService.instance.find({ customer });
+
+        const where: FindOptionsWhere<IdentifierEntity> = { customer }
+        if(options.network) {
+            where.provider = `did:cheqd:${options.network}`
+        }
+
+		const entities = await IdentifierService.instance.find(where, options.page, options.limit);
 		return entities.map((entity) => entity.did);
 	}
 
@@ -345,20 +354,23 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async listResources(filter: Record<string, any>, page: number, limit: number, customer: CustomerEntity) {
+	async listResources(options: ListResourceOptions, customer: CustomerEntity) {
+		if (!customer) {
+			throw new Error('Customer not found');
+		}
 		try {
 			return await ResourceService.instance.find(
 				{
-					identifier: filter.did,
-					resourceName: filter.name,
-					resourceType: filter.type,
-					createdAt: LessThanOrEqual(filter.createdAt),
+					identifier: options.did,
+					resourceName: options.name,
+					resourceType: options.type,
+					createdAt: options.createdAt && LessThanOrEqual(options.createdAt),
 					customer: customer,
-					encrypted: filter.encrypted,
+					encrypted: options.encrypted,
+                    namespace: options.network
 				},
-				undefined,
-				page,
-				limit
+                options.page,
+                options.limit
 			);
 		} catch (error) {
 			throw new Error(`${error}`);

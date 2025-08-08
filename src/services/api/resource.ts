@@ -90,9 +90,9 @@ export class ResourceService {
 
 	public async find(
 		where: Record<string, unknown>,
-		relations?: FindOptionsRelations<ResourceEntity>,
 		page?: number,
-		limit?: number
+		limit?: number,
+        relations?: FindOptionsRelations<ResourceEntity>,
 	) {
 		await this.resourceRepository.find({
 			where,

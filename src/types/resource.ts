@@ -20,6 +20,21 @@ export type CreateResourceRequestBody = {
 
 export type SearchResourceRequestParams = DIDRequest;
 
+export type FilterResourceParams = {
+    did?: string;
+    encrypted?: boolean;
+    createdAt?: number;
+    updatedAt?: number;
+    name?: string;
+    type?: string;
+    network?: CheqdNetwork;
+}
+
+export type ListResourceOptions = FilterResourceParams & {
+    page?: number,
+    limit?: number,
+}
+
 // Positive
 
 export type CreateResourceResponseBody = { resource: LinkedResourceMetadataResolutionResult };

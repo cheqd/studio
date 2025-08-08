@@ -355,15 +355,13 @@ export class ResourceController {
 	 */
 	public async listResources(request: Request, response: Response) {
 		// Extract params, filters and pagination
-		const { page, limit, ...filter } = request.params;
+		const params = request.params;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
 			const result = await identityServiceStrategySetup.agent.listResources(
-				filter,
-				Number(page),
-				Number(limit),
+				params,
 				response.locals.customer
 			);
 

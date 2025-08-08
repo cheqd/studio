@@ -56,6 +56,8 @@ import type { KeyEntity } from '../../database/entities/key.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity.js';
 import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import type { SupportedKeyTypes } from '@veramo/utils';
+import { ListDIDRequestOptions } from '../../types/did.js';
+import { ListResourceOptions } from '../../types/resource.js';
 
 dotenv.config();
 
@@ -78,7 +80,7 @@ export interface IIdentityService {
 	createDid(network: string, didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier>;
 	updateDid(didDocument: DIDDocument, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<IIdentifier>;
 	deactivateDid(did: string, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<boolean>;
-	listDids(customer: CustomerEntity): Promise<string[]>;
+	listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<string[]>;
 	resolveDid(did: string): Promise<DIDResolutionResult>;
 	resolve(didUrl: string): Promise<Response>;
 	getDid(did: string, customer: CustomerEntity): Promise<any>;
@@ -95,16 +97,7 @@ export interface IIdentityService {
 		publicKeyHexs?: string[]
 	): Promise<any>;
 	listResources(
-		filter: {
-			did?: string;
-			encrypted?: boolean;
-			createdAt?: number;
-			updatedAt?: number;
-			name?: string;
-			type?: string;
-		},
-		page: number,
-		limit: number,
+		options: ListResourceOptions,
 		customer: CustomerEntity
 	): Promise<any>;
 	createCredential(
