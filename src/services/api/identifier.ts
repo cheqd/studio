@@ -32,11 +32,18 @@ export class IdentifierService {
 		});
 	}
 
-	public async find(where: Record<string, unknown>, relations?: FindOptionsRelations<IdentifierEntity>) {
+	public async find(
+		where: Record<string, unknown>,
+		page?: number,
+		limit?: number,
+		relations?: FindOptionsRelations<IdentifierEntity>
+	) {
 		try {
-			return await this.identifierRepository.find({
+			return await this.identifierRepository.findAndCount({
 				where: where,
 				relations,
+				skip: page && limit ? (page - 1) * limit : 0,
+				take: limit,
 			});
 		} catch {
 			return [];

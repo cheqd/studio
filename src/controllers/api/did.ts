@@ -658,15 +658,42 @@ export class DIDController {
 	 *     tags: [ DID ]
 	 *     summary: Fetch DIDs associated with an account.
 	 *     description: This endpoint returns the list of DIDs controlled by the account.
+	 *     parameters:
+	 *       - in: query
+	 *         name: network
+	 *         description: Filter DID by the network published.
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - mainnet
+	 *             - testnet
+	 *         required: false
+     *       - in: query
+     *         name: createdAt
+     *         description: Filter resource by created date
+	 *         schema:
+	 *           type: string
+     *           format: date
+	 *         required: false
+	 *       - in: query
+	 *         name: page
+	 *         description: Page number.
+	 *         schema:
+	 *           type: number
+	 *         required: false
+	 *       - in: query
+	 *         name: limit
+	 *         description: Number of items to be listed in a single page.
+	 *         schema:
+	 *           type: number
+	 *         required: false
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               type: array
-	 *               items:
-	 *                 type: string
+	 *               $ref: '#/components/schemas/ListDidResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -676,7 +703,7 @@ export class DIDController {
 	 */
 	public async getDids(request: Request, response: Response) {
 		// Extract did from params
-		const { did } = request.params as GetDIDRequestParams;
+		const { did, network, page, limit } = request.params as GetDIDRequestParams;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = response.locals.customer
 			? new IdentityServiceStrategySetup(response.locals.customer.customerId)
@@ -685,7 +712,7 @@ export class DIDController {
 		try {
 			const didDocument = did
 				? await identityServiceStrategySetup.agent.resolveDid(did)
-				: await identityServiceStrategySetup.agent.listDids(response.locals.customer);
+				: await identityServiceStrategySetup.agent.listDids({ network, page, limit }, response.locals.customer);
 
 			return response
 				.status(StatusCodes.OK)

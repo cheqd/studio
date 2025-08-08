@@ -63,6 +63,11 @@ import type { APIServiceOptions } from '../../types/admin.js';
 import { SupportedKeyTypes } from '@veramo/utils';
 import { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
 import { LocalStore } from '../../database/cache/store.js';
+import { ResourceService } from '../api/resource.js';
+import { FindOptionsWhere, LessThanOrEqual } from 'typeorm';
+import { IdentifierEntity } from '../../database/entities/identifier.entity.js';
+import { ListDIDRequestOptions } from '../../types/did.js';
+import { ListResourceOptions, ListResourceResponse } from '../../types/resource.js';
 
 dotenv.config();
 
@@ -293,12 +298,22 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async listDids(customer: CustomerEntity) {
+	async listDids(options: ListDIDRequestOptions, customer: CustomerEntity) {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		const entities = await IdentifierService.instance.find({ customer });
-		return entities.map((entity) => entity.did);
+
+		const where: FindOptionsWhere<IdentifierEntity> = { customer };
+		if (options.network) {
+			where.provider = `did:cheqd:${options.network}`;
+		}
+
+        if (options.createdAt) {
+            where.saveDate = LessThanOrEqual(new Date(options.createdAt))
+        }
+
+		const [entities, total] = await IdentifierService.instance.find(where, options.page, options.limit);
+		return { total, dids: entities.map((entity) => entity.did) };
 	}
 
 	async getDid(did: string) {
@@ -338,6 +353,43 @@ export class PostgresIdentityService extends DefaultIdentityService {
 					return toTPublicKeyEd25519(key);
 				}) || [];
 			return await Veramo.instance.createResource(agent, network, payload, publicKeys);
+		} catch (error) {
+			throw new Error(`${error}`);
+		}
+	}
+
+	async listResources(options: ListResourceOptions, customer: CustomerEntity): Promise<ListResourceResponse> {
+		if (!customer) {
+			throw new Error('Customer not found');
+		}
+		try {
+			const [resources, total] = await ResourceService.instance.find(
+				{
+					identifier: options.did,
+					resourceName: options.name,
+					resourceType: options.type,
+					createdAt: LessThanOrEqual(options.createdAt),
+					customer: customer,
+					encrypted: options.encrypted,
+					namespace: options.network,
+				},
+				options.page,
+				options.limit
+			);
+
+			return {
+				total,
+				resources: resources.map((r) => ({
+					resourceId: r.resourceId,
+					resourceName: r.resourceName,
+					resourceType: r.resourceType,
+					mediaType: r.mediaType,
+					previousVersionId: r.previousVersionId,
+					nextVersionId: r.nextVersionId,
+					did: r.identifier.did,
+					encrypted: r.encrypted,
+				})),
+			};
 		} catch (error) {
 			throw new Error(`${error}`);
 		}

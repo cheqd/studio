@@ -127,7 +127,8 @@ export class LocalIdentityService extends DefaultIdentityService {
 	}
 
 	async listDids() {
-		return [(await this.importDid()).did];
+		const dids = [(await this.importDid()).did];
+		return { total: 1, dids };
 	}
 
 	async getDid(did: string) {
