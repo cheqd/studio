@@ -23,10 +23,9 @@ export type SearchResourceRequestParams = DIDRequest;
 export type FilterResourceParams = {
 	did?: string;
 	encrypted?: boolean;
-	createdAt?: number;
-	updatedAt?: number;
-	name?: string;
-	type?: string;
+	createdAt?: string;
+	resourceName?: string;
+	resourceType?: string;
 	network?: CheqdNetwork;
 };
 

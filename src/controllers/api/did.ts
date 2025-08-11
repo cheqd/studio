@@ -44,6 +44,7 @@ import { arePublicKeyHexsInWallet } from '../../services/helpers.js';
 import { CheqdProviderErrorCodes } from '@cheqd/did-provider-cheqd';
 import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
 import { validate } from '../validator/decorator.js';
+import { query } from 'express-validator';
 
 export class DIDController {
 	public static createDIDValidator = [
@@ -154,6 +155,15 @@ export class DIDController {
 			.withMessage(
 				'KeyImportRequest object is invalid, privateKeyHex is required, Property ivHex, salt is required when encrypted is set to true, property type should be Ed25519 or Secp256k1'
 			)
+			.bail(),
+	];
+
+	public static listDIDValidator = [
+		query('network')
+			.optional()
+			.isString()
+			.isIn([CheqdNetwork.Mainnet, CheqdNetwork.Testnet])
+			.withMessage('Invalid network')
 			.bail(),
 	];
 

@@ -69,6 +69,8 @@ import { IdentifierEntity } from '../../database/entities/identifier.entity.js';
 import { ListDIDRequestOptions } from '../../types/did.js';
 import { ListResourceOptions, ListResourceResponse } from '../../types/resource.js';
 import { ResourceEntity } from '../../database/entities/resource.entity.js';
+import { OperationService } from '../api/operation.js';
+import { ListOperationOptions } from '../../types/track.js';
 
 dotenv.config();
 
@@ -366,8 +368,8 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		try {
 			const filter: Record<string, any> = {
 				identifier: options.did,
-				resourceName: options.name,
-				resourceType: options.type,
+				resourceName: options.resourceName,
+				resourceType: options.resourceType,
 				createdAt: LessThanOrEqual(options.createdAt),
 				customer: customer,
 				encrypted: options.encrypted,
@@ -679,5 +681,10 @@ export class PostgresIdentityService extends DefaultIdentityService {
 
 	async decryptAPIKey(apiKey: string): Promise<string> {
 		return await APIKeyService.instance.decryptAPIKey(apiKey);
+	}
+
+	async listOperations(options: ListOperationOptions, customerEntity: CustomerEntity) {
+		const { page, limit, ...where } = options;
+		return await OperationService.instance.find({ ...where, customerEntity }, page, limit);
 	}
 }

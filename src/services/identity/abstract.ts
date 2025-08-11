@@ -54,6 +54,7 @@ import type { APIKeyEntity } from '../../database/entities/api.key.entity';
 import type { SupportedKeyTypes } from '@veramo/utils';
 import { ListDIDRequestOptions, ListDidsResponseBody } from '../../types/did';
 import { ListResourceOptions, ListResourceResponse } from '../../types/resource';
+import { ListOperationOptions } from '../../types/track';
 
 export abstract class AbstractIdentityService implements IIdentityService {
 	agent?: VeramoAgent;
@@ -276,6 +277,9 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 	decryptAPIKey(apiKey: string): Promise<string> {
+		throw new Error(`Not supported`);
+	}
+	listOperations(where: ListOperationOptions, customer: CustomerEntity): Promise<any> {
 		throw new Error(`Not supported`);
 	}
 }

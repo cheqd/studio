@@ -12,6 +12,7 @@ import { check, param, query } from '../validator/index.js';
 import type {
 	CreateResourceRequestBody,
 	CreateResourceResponseBody,
+	ListResourceOptions,
 	QueryResourceResponseBody,
 	SearchResourceRequestParams,
 	UnsuccessfulCreateResourceResponseBody,
@@ -21,6 +22,7 @@ import { eventTracker } from '../../services/track/tracker.js';
 import { arePublicKeyHexsInWallet } from '../../services/helpers.js';
 import { validate } from '../validator/decorator.js';
 import { UnsuccessfulGetDidResponseBody } from '../../types/did.js';
+import { CheqdNetwork } from '@cheqd/sdk';
 
 export class ResourceController {
 	public static createResourceValidator = [
@@ -103,6 +105,27 @@ export class ResourceController {
 			.optional()
 			.isBoolean()
 			.withMessage('resourceMetadata is supposed to have type of Boolean')
+			.bail(),
+	];
+
+	public static listResourceValidator = [
+		query('did').optional().isDID().bail(),
+		query('resourceName')
+			.optional()
+			.isString()
+			.withMessage('resourceName is supposed to have type of String')
+			.bail(),
+		query('resourceType')
+			.optional()
+			.isString()
+			.withMessage('resourceType is supposed to have type of String')
+			.bail(),
+		query('encrypted').optional().isBoolean().withMessage('encrypted filter should be a boolean value').bail(),
+		query('network')
+			.optional()
+			.isString()
+			.isIn([CheqdNetwork.Mainnet, CheqdNetwork.Testnet])
+			.withMessage('Invalid network')
 			.bail(),
 	];
 
@@ -348,13 +371,13 @@ export class ResourceController {
 	 *             - testnet
 	 *         required: false
 	 *       - in: query
-	 *         name: name
+	 *         name: resourceName
 	 *         description: Filter resources by the resource name
 	 *         schema:
 	 *           type: string
 	 *         required: false
 	 *       - in: query
-	 *         name: type
+	 *         name: resourceType
 	 *         description: Filter resources by the resource name
 	 *         schema:
 	 *           type: string
@@ -406,12 +429,25 @@ export class ResourceController {
 	 */
 	public async listResources(request: Request, response: Response) {
 		// Extract params, filters and pagination
-		const params = request.params;
+		const { did, encrypted, createdAt, resourceName, resourceType, network, page, limit } =
+			request.params satisfies ListResourceOptions;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await identityServiceStrategySetup.agent.listResources(params, response.locals.customer);
+			const result = await identityServiceStrategySetup.agent.listResources(
+				{
+					did,
+					encrypted: encrypted === 'true',
+					createdAt,
+					resourceName,
+					resourceType,
+					network: network as CheqdNetwork,
+					page: parseInt(page),
+					limit: parseInt(limit),
+				},
+				response.locals.customer
+			);
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
