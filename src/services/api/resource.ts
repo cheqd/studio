@@ -31,8 +31,7 @@ export class ResourceService {
 		identifier: IdentifierEntity,
 		key: KeyEntity,
 		encrypted: boolean,
-		symmetricKey: string,
-		namespace: string
+		symmetricKey: string
 	): Promise<ResourceEntity> {
 		const resourceEntity = new ResourceEntity(
 			resourceId,
@@ -45,8 +44,7 @@ export class ResourceService {
 			identifier,
 			key,
 			encrypted,
-			symmetricKey,
-			namespace
+			symmetricKey
 		);
 		const resource = (await this.resourceRepository.insert(resourceEntity)).identifiers[0];
 		if (!resource) throw new Error(`Cannot create a new resource`);
@@ -81,7 +79,6 @@ export class ResourceService {
 		if (customer) existingResource.customer = customer;
 		if (encrypted) existingResource.encrypted = encrypted;
 		if (symmetricKey) existingResource.symmetricKey = symmetricKey;
-		if (namespace) existingResource.namespace = namespace;
 		return await this.resourceRepository.save(existingResource);
 	}
 
@@ -126,8 +123,7 @@ export class ResourceService {
 			identifier,
 			key,
 			encrypted,
-			symmetricKey,
-			namespace
+			symmetricKey
 		);
 		const result = (await this.resourceRepository.insert(resourceEntity)).identifiers[0];
 		if (!result) throw new Error(`Cannot create a new resource`);

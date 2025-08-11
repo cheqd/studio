@@ -64,10 +64,11 @@ import { SupportedKeyTypes } from '@veramo/utils';
 import { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
 import { LocalStore } from '../../database/cache/store.js';
 import { ResourceService } from '../api/resource.js';
-import { FindOptionsWhere, LessThanOrEqual } from 'typeorm';
+import { FindOptionsRelations, FindOptionsWhere, LessThanOrEqual } from 'typeorm';
 import { IdentifierEntity } from '../../database/entities/identifier.entity.js';
 import { ListDIDRequestOptions } from '../../types/did.js';
 import { ListResourceOptions, ListResourceResponse } from '../../types/resource.js';
+import { ResourceEntity } from '../../database/entities/resource.entity.js';
 
 dotenv.config();
 
@@ -363,18 +364,29 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			throw new Error('Customer not found');
 		}
 		try {
+			const filter: Record<string, any> = {
+				identifier: options.did,
+				resourceName: options.name,
+				resourceType: options.type,
+				createdAt: LessThanOrEqual(options.createdAt),
+				customer: customer,
+				encrypted: options.encrypted,
+			};
+
+			let relations: FindOptionsRelations<ResourceEntity | undefined> = undefined;
+			if (options.network) {
+				relations = {
+					identifier: true,
+				};
+
+				filter.provider = `did:cheqd:${options.network}`;
+			}
+
 			const [resources, total] = await ResourceService.instance.find(
-				{
-					identifier: options.did,
-					resourceName: options.name,
-					resourceType: options.type,
-					createdAt: LessThanOrEqual(options.createdAt),
-					customer: customer,
-					encrypted: options.encrypted,
-					namespace: options.network,
-				},
+				filter,
 				options.page,
-				options.limit
+				options.limit,
+				relations
 			);
 
 			return {
