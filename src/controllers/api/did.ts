@@ -668,12 +668,12 @@ export class DIDController {
 	 *             - mainnet
 	 *             - testnet
 	 *         required: false
-     *       - in: query
-     *         name: createdAt
-     *         description: Filter resource by created date
+	 *       - in: query
+	 *         name: createdAt
+	 *         description: Filter resource by created date
 	 *         schema:
 	 *           type: string
-     *           format: date
+	 *           format: date
 	 *         required: false
 	 *       - in: query
 	 *         name: page

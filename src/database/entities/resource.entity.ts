@@ -108,7 +108,8 @@ export class ResourceEntity {
 		identifier: IdentifierEntity,
 		key: KeyEntity,
 		encrypted: boolean,
-		symmetricKey: string
+		symmetricKey: string,
+		namespace: string
 	) {
 		this.resourceId = resourceId;
 		this.resourceName = resourceName;
@@ -121,5 +122,6 @@ export class ResourceEntity {
 		this.key = key;
 		this.encrypted = encrypted;
 		this.symmetricKey = symmetricKey;
+		this.namespace = namespace;
 	}
 }
