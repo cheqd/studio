@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.10.0](https://github.com/cheqd/studio/compare/3.9.0...3.10.0) (2025-08-12)
+
+### Features
+
+* Include user scopes in idToken strategy ([#710](https://github.com/cheqd/studio/issues/710)) ([b7bf5bc](https://github.com/cheqd/studio/commit/b7bf5bceec6e4c8ba98675e87befa7e90921e531))
+
+### Bug Fixes
+
+* Updated https endpoint ([#715](https://github.com/cheqd/studio/issues/715)) ([9ce2916](https://github.com/cheqd/studio/commit/9ce291646dea8fb960585aa3fd0f6249586de0ba))
+
 ## [3.9.0](https://github.com/cheqd/studio/compare/3.8.1...3.9.0) (2025-08-12)
 
 ### Features
