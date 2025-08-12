@@ -14,32 +14,45 @@
       "url": "https://github.com/cheqd/studio/blob/main/LICENSE"
     }
   },
+  "servers": [
+    {
+      "url": "https://studio-api.cheqd.net",
+      "description": "Main (production) server"
+    },
+    {
+      "url": "https://studio-api-staging.cheqd.net",
+      "description": "Staging server for testing"
+    }
+  ],
   "tags": [
     {
       "name": "Account"
     },
     {
-      "name": "Key"
+      "name": "Keys"
     },
     {
-      "name": "DID"
+      "name": "Decentralized Identifiers (DIDs)"
     },
     {
-      "name": "Resource"
+      "name": "DID-Linked Resources (DLRs)"
     },
     {
-      "name": "Credential"
+      "name": "Trust Registries"
     },
     {
-      "name": "Presentation"
+      "name": "Verifiable Credentials"
     },
     {
-      "name": "Credential Status"
+      "name": "Status Lists"
+    },
+    {
+      "name": "Verifiable Presentations"
     }
   ],
   "externalDocs": {
     "description": "cheqd Studio API Documentation",
-    "url": "https://docs.cheqd.io/identity"
+    "url": "https://docs.cheqd.io/product"
   },
   "components": {
     "securitySchemes": {
@@ -2565,7 +2578,7 @@
     "/trust-registry/accreditation/issue": {
       "post": {
         "tags": [
-          "Trust Registry"
+          "Trust Registries"
         ],
         "summary": "Publish a verifiable accreditation for a DID.",
         "description": "Generate and publish a Verifiable Accreditation for a subject DID as a DID Linked resource.",
@@ -2626,7 +2639,7 @@
     "/trust-registry/accreditation/verify": {
       "post": {
         "tags": [
-          "Trust Registry"
+          "Trust Registries"
         ],
         "summary": "Verify a verifiable accreditation for a DID.",
         "description": "Generate and publish a Verifiable Accreditation for a subject DID as a DID Linked resource.",
@@ -2691,7 +2704,7 @@
     "/trust-registry/accreditation/revoke": {
       "post": {
         "tags": [
-          "Trust Registry"
+          "Trust Registries"
         ],
         "summary": "Revoke a Verifiable Accreditation.",
         "description": "This endpoint revokes a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.",
@@ -2748,7 +2761,7 @@
     "/trust-registry/accreditation/suspend": {
       "post": {
         "tags": [
-          "Trust Registry"
+          "Trust Registries"
         ],
         "summary": "Suspend a Verifiable Accreditation.",
         "description": "This endpoint suspends a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.",
@@ -2805,7 +2818,7 @@
     "/trust-registry/accreditation/reinstate": {
       "post": {
         "tags": [
-          "Trust Registry"
+          "Trust Registries"
         ],
         "summary": "Reinstate a Verifiable Accreditation.",
         "description": "This endpoint reinstates a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.",
@@ -2862,7 +2875,7 @@
     "/credential-status/create/unencrypted": {
       "post": {
         "tags": [
-          "Credential Status"
+          "Status Lists"
         ],
         "summary": "Create an unencrypted StatusList2021 or BitstringStatusList credential status list.",
         "description": "This endpoint creates an unencrypted StatusList2021 or BitstringStatusList credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted.",
@@ -2971,7 +2984,7 @@
     "/credential-status/create/encrypted": {
       "post": {
         "tags": [
-          "Credential Status"
+          "Status Lists"
         ],
         "summary": "Create an encrypted StatusList2021 or BitstringStatusList credential status list.",
         "description": "This endpoint creates an encrypted StatusList2021 or BitstringStatusList credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted.",
@@ -3080,7 +3093,7 @@
     "/credential-status/update/unencrypted": {
       "post": {
         "tags": [
-          "Credential Status"
+          "Status Lists"
         ],
         "summary": "Update an existing unencrypted StatusList2021 or BitstringStatusList credential status list.",
         "parameters": [
@@ -3152,7 +3165,7 @@
     "/credential-status/update/encrypted": {
       "post": {
         "tags": [
-          "Credential Status"
+          "Status Lists"
         ],
         "summary": "Update an existing encrypted StatusList2021 or BitstringStatusList credential status list.",
         "parameters": [
@@ -3224,7 +3237,7 @@
     "/credential-status/check": {
       "post": {
         "tags": [
-          "Credential Status"
+          "Status Lists"
         ],
         "summary": "Check a StatusList2021 index for a given Verifiable Credential.",
         "description": "This endpoint checks a StatusList2021 index for a given Verifiable Credential and reports whether it is revoked or suspended. It offers a standalone method for checking an index without passing the entire Verifiable Credential or Verifiable Presentation.",
@@ -3283,7 +3296,7 @@
     "/credential-status/search": {
       "get": {
         "tags": [
-          "Credential Status"
+          "Status Lists"
         ],
         "summary": "Fetch StatusList2021 or BitstringStatusList DID-Linked Resource based on search criteria.",
         "parameters": [
@@ -3358,7 +3371,7 @@
     "/credential/issue": {
       "post": {
         "tags": [
-          "Credential"
+          "Verifiable Credentials"
         ],
         "summary": "Issue a Verifiable Credential",
         "description": "This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued.",
@@ -3402,7 +3415,7 @@
     "/credential/verify": {
       "post": {
         "tags": [
-          "Credential"
+          "Verifiable Credentials"
         ],
         "summary": "Verify a Verifiable Credential.",
         "description": "This endpoint verifies a Verifiable Credential passed to it. As input, it can take the VC-JWT as a string or the entire credential itself.",
@@ -3476,7 +3489,7 @@
     "/credential/revoke": {
       "post": {
         "tags": [
-          "Credential"
+          "Verifiable Credentials"
         ],
         "summary": "Revoke a Verifiable Credential.",
         "description": "This endpoint revokes a given Verifiable Credential. As input, it can take the VC-JWT as a string or the entire credential itself. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.",
@@ -3546,7 +3559,7 @@
     "/credential/suspend": {
       "post": {
         "tags": [
-          "Credential"
+          "Verifiable Credentials"
         ],
         "summary": "Suspend a Verifiable Credential.",
         "description": "This endpoint suspends a given Verifiable Credential.  As input, it can take the VC-JWT as a string or the entire credential itself.",
@@ -3614,7 +3627,7 @@
     "/credential/reinstate": {
       "post": {
         "tags": [
-          "Credential"
+          "Verifiable Credentials"
         ],
         "summary": "Reinstate a suspended Verifiable Credential.",
         "description": "Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.",
@@ -3682,7 +3695,7 @@
     "/did/create": {
       "post": {
         "tags": [
-          "DID"
+          "Decentralized Identifiers (DIDs)"
         ],
         "summary": "Create a DID Document.",
         "description": "This endpoint creates a DID and associated DID Document. As input, it can take the DID Document parameters via a form, or the fully-assembled DID Document itself.",
@@ -3746,7 +3759,7 @@
     "/did/update": {
       "post": {
         "tags": [
-          "DID"
+          "Decentralized Identifiers (DIDs)"
         ],
         "summary": "Update a DID Document.",
         "description": "This endpoint updates a DID Document. As an input, it can take JUST the sections/parameters that need to be updated in the DID Document (in this scenario, it fetches the current DID Document and applies the updated section). Alternatively, it take the fully-assembled DID Document with updated sections as well as unchanged sections.",
@@ -3790,7 +3803,7 @@
     "/did/import": {
       "post": {
         "tags": [
-          "DID"
+          "Decentralized Identifiers (DIDs)"
         ],
         "summary": "Import a DID Document.",
         "description": "This endpoint imports a decentralized identifier associated with the user's account for custodian-mode clients.",
@@ -3854,7 +3867,7 @@
     "/did/deactivate/{did}": {
       "post": {
         "tags": [
-          "DID"
+          "Decentralized Identifiers (DIDs)"
         ],
         "summary": "Deactivate a DID Document.",
         "description": "This endpoint deactivates a DID Document by taking the DID identifier as input. Must be called and signed by the DID owner.",
@@ -3909,7 +3922,7 @@
     "/did/list": {
       "get": {
         "tags": [
-          "DID"
+          "Decentralized Identifiers (DIDs)"
         ],
         "summary": "Fetch DIDs associated with an account.",
         "description": "This endpoint returns the list of DIDs controlled by the account.",
@@ -3942,7 +3955,7 @@
     "/did/search/{did}": {
       "get": {
         "tags": [
-          "DID"
+          "Decentralized Identifiers (DIDs)"
         ],
         "summary": "Resolve a DID Document.",
         "description": "Resolve a DID Document by DID identifier. Also supports DID Resolution Queries as defined in the <a href=\"https://w3c-ccg.github.io/did-resolution/\">W3C DID Resolution specification</a>.",
@@ -4043,7 +4056,7 @@
     "/key/create": {
       "post": {
         "tags": [
-          "Key"
+          "Keys"
         ],
         "summary": "Create an identity key pair.",
         "description": "This endpoint creates an identity key pair associated with the user's account for custodian-mode clients.",
@@ -4107,7 +4120,7 @@
     "/key/import": {
       "post": {
         "tags": [
-          "Key"
+          "Keys"
         ],
         "summary": "Import an identity key pair.",
         "description": "This endpoint imports an identity key pair associated with the user's account for custodian-mode clients.",
@@ -4171,7 +4184,7 @@
     "/key/read/{kid}": {
       "get": {
         "tags": [
-          "Key"
+          "Keys"
         ],
         "summary": "Fetch an identity key pair.",
         "description": "This endpoint fetches an identity key pair's details for a given key ID. Only the user account associated with the custodian-mode client can fetch the key pair.",
@@ -4232,7 +4245,7 @@
     "/presentation/create": {
       "post": {
         "tags": [
-          "Presentation"
+          "Verifiable Presentations"
         ],
         "summary": "!!! WARN. Such endpoint is made mostly for testing purposes and it is not supposed to be used in production !!! Create a Verifiable Presentation from credential(s).",
         "description": "This endpoint creates a Verifiable Presentation from credential(s). As input, it can take the credential(s) as a string or the entire credential(s) itself. \n !!! WARN. Such endpoint is made only for testing purposes !!!",
@@ -4276,7 +4289,7 @@
     "/presentation/verify": {
       "post": {
         "tags": [
-          "Presentation"
+          "Verifiable Presentations"
         ],
         "summary": "Verify a Verifiable Presentation generated from credential(s).",
         "description": "This endpoint verifies the Verifiable Presentation generated from credential(s). As input, it can take the Verifiable Presentation JWT as a string or the entire Verifiable Presentation itself.",
@@ -4349,7 +4362,7 @@
     "/resource/create/{did}": {
       "post": {
         "tags": [
-          "Resource"
+          "DID-Linked Resources (DLRs)"
         ],
         "summary": "Create a DID-Linked Resource.",
         "description": "This endpoint creates a DID-Linked Resource. As input, it can take the DID identifier and the resource parameters via a form, or the fully-assembled resource itself.",
@@ -4404,7 +4417,7 @@
     "/resource/search/{did}": {
       "get": {
         "tags": [
-          "Resource"
+          "DID-Linked Resources (DLRs)"
         ],
         "summary": "Get a DID-Linked Resource.",
         "description": "This endpoint returns the DID-Linked Resource for a given DID identifier and resource identifier.",

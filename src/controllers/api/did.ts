@@ -162,7 +162,7 @@ export class DIDController {
 	 *
 	 * /did/create:
 	 *   post:
-	 *     tags: [ DID ]
+	 *     tags: [ Decentralized Identifiers (DIDs) ]
 	 *     summary: Create a DID Document.
 	 *     description: This endpoint creates a DID and associated DID Document. As input, it can take the DID Document parameters via a form, or the fully-assembled DID Document itself.
 	 *     requestBody:
@@ -333,7 +333,7 @@ export class DIDController {
 	 *
 	 * /did/update:
 	 *   post:
-	 *     tags: [ DID ]
+	 *     tags: [ Decentralized Identifiers (DIDs) ]
 	 *     summary: Update a DID Document.
 	 *     description: This endpoint updates a DID Document. As an input, it can take JUST the sections/parameters that need to be updated in the DID Document (in this scenario, it fetches the current DID Document and applies the updated section). Alternatively, it take the fully-assembled DID Document with updated sections as well as unchanged sections.
 	 *     requestBody:
@@ -454,7 +454,7 @@ export class DIDController {
 	 *
 	 * /did/import:
 	 *   post:
-	 *     tags: [ DID ]
+	 *     tags: [ Decentralized Identifiers (DIDs) ]
 	 *     summary: Import a DID Document.
 	 *     description: This endpoint imports a decentralized identifier associated with the user's account for custodian-mode clients.
 	 *     requestBody:
@@ -574,7 +574,7 @@ export class DIDController {
 	 *
 	 * /did/deactivate/{did}:
 	 *   post:
-	 *     tags: [ DID ]
+	 *     tags: [ Decentralized Identifiers (DIDs) ]
 	 *     summary: Deactivate a DID Document.
 	 *     description: This endpoint deactivates a DID Document by taking the DID identifier as input. Must be called and signed by the DID owner.
 	 *     parameters:
@@ -655,7 +655,7 @@ export class DIDController {
 	 *
 	 * /did/list:
 	 *   get:
-	 *     tags: [ DID ]
+	 *     tags: [ Decentralized Identifiers (DIDs) ]
 	 *     summary: Fetch DIDs associated with an account.
 	 *     description: This endpoint returns the list of DIDs controlled by the account.
 	 *     responses:
@@ -702,7 +702,7 @@ export class DIDController {
 	 *
 	 * /did/search/{did}:
 	 *   get:
-	 *     tags: [ DID ]
+	 *     tags: [ Decentralized Identifiers (DIDs) ]
 	 *     summary: Resolve a DID Document.
 	 *     description: Resolve a DID Document by DID identifier. Also supports DID Resolution Queries as defined in the <a href="https://w3c-ccg.github.io/did-resolution/">W3C DID Resolution specification</a>.
 	 *     parameters:

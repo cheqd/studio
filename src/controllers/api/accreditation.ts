@@ -140,7 +140,7 @@ export class AccreditationController {
 	 *
 	 * /trust-registry/accreditation/issue:
 	 *   post:
-	 *     tags: [ Trust Registry ]
+	 *     tags: [ Trust Registries ]
 	 *     summary: Publish a verifiable accreditation for a DID.
 	 *     description: Generate and publish a Verifiable Accreditation for a subject DID as a DID Linked resource.
 	 *     operationId: accredit-issue
@@ -350,7 +350,7 @@ export class AccreditationController {
 	 *
 	 * /trust-registry/accreditation/verify:
 	 *   post:
-	 *     tags: [ Trust Registry ]
+	 *     tags: [ Trust Registries ]
 	 *     summary: Verify a verifiable accreditation for a DID.
 	 *     description: Generate and publish a Verifiable Accreditation for a subject DID as a DID Linked resource.
 	 *     operationId: accredit-verify
@@ -448,7 +448,7 @@ export class AccreditationController {
 	 *
 	 * /trust-registry/accreditation/revoke:
 	 *   post:
-	 *     tags: [ Trust Registry ]
+	 *     tags: [ Trust Registries ]
 	 *     summary: Revoke a Verifiable Accreditation.
 	 *     description: This endpoint revokes a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.
 	 *     operationId: accredit-revoke
@@ -558,7 +558,7 @@ export class AccreditationController {
 	 *
 	 * /trust-registry/accreditation/suspend:
 	 *   post:
-	 *     tags: [ Trust Registry ]
+	 *     tags: [ Trust Registries ]
 	 *     summary: Suspend a Verifiable Accreditation.
 	 *     description: This endpoint suspends a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.
 	 *     operationId: accredit-suspend
@@ -670,7 +670,7 @@ export class AccreditationController {
 	 *
 	 * /trust-registry/accreditation/reinstate:
 	 *   post:
-	 *     tags: [ Trust Registry ]
+	 *     tags: [ Trust Registries ]
 	 *     summary: Reinstate a Verifiable Accreditation.
 	 *     description: This endpoint reinstates a given Verifiable Accreditation. As input, it can take the didUrl as a string. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.
 	 *     operationId: accredit-reinstate

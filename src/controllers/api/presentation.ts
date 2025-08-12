@@ -72,7 +72,7 @@ export class PresentationController {
 	 *
 	 * /presentation/create:
 	 *   post:
-	 *     tags: [ Presentation ]
+	 *     tags: [ Verifiable Presentations ]
 	 *     summary: "!!! WARN. Such endpoint is made mostly for testing purposes and it is not supposed to be used in production !!! Create a Verifiable Presentation from credential(s)."
 	 *     description: "This endpoint creates a Verifiable Presentation from credential(s). As input, it can take the credential(s) as a string or the entire credential(s) itself. \n !!! WARN. Such endpoint is made only for testing purposes !!!"
 	 *     requestBody:
@@ -132,7 +132,7 @@ export class PresentationController {
 	 *
 	 * /presentation/verify:
 	 *   post:
-	 *     tags: [ Presentation ]
+	 *     tags: [ Verifiable Presentations ]
 	 *     summary: Verify a Verifiable Presentation generated from credential(s).
 	 *     description: This endpoint verifies the Verifiable Presentation generated from credential(s). As input, it can take the Verifiable Presentation JWT as a string or the entire Verifiable Presentation itself.
 	 *     parameters:
