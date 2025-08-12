@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.9.0](https://github.com/cheqd/studio/compare/3.8.1...3.9.0) (2025-08-12)
+
+### Features
+
+* Update swagger-api.json ([#714](https://github.com/cheqd/studio/issues/714)) ([83fe8fd](https://github.com/cheqd/studio/commit/83fe8fdc00d741c54bd686c80fbcc909621f0c28))
+
 ## [3.8.1](https://github.com/cheqd/studio/compare/3.8.0...3.8.1) (2025-07-30)
 
 ### Bug Fixes
