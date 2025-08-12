@@ -223,15 +223,15 @@ class App {
 			ResourceController.createResourceValidator,
 			new ResourceController().createResource
 		);
+		app.get(`/resource/list`, ResourceController.listResourceValidator, new ResourceController().listResources);
 		app.get(
 			'/resource/search/:did',
 			ResourceController.searchResourceValidator,
 			new ResourceController().searchResource
 		);
-		app.get(`/resource/list`, ResourceController.listResourceValidator, new ResourceController().listResources);
 
 		// Events API
-		app.get(`/event`, OperationController.listOperationValidator, new OperationController().listOperations);
+		app.get(`/event/list`, OperationController.listOperationValidator, new OperationController().listOperations);
 
 		// Account API
 		app.post('/account/create', AccountController.createValidator, new AccountController().create);

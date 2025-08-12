@@ -430,7 +430,7 @@ export class ResourceController {
 	public async listResources(request: Request, response: Response) {
 		// Extract params, filters and pagination
 		const { did, encrypted, createdAt, resourceName, resourceType, network, page, limit } =
-			request.params satisfies ListResourceOptions;
+			request.query as ListResourceOptions;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
@@ -438,13 +438,13 @@ export class ResourceController {
 			const result = await identityServiceStrategySetup.agent.listResources(
 				{
 					did,
-					encrypted: encrypted === 'true',
+					encrypted,
 					createdAt,
 					resourceName,
 					resourceType,
 					network: network as CheqdNetwork,
-					page: parseInt(page),
-					limit: parseInt(limit),
+					page,
+					limit,
 				},
 				response.locals.customer
 			);

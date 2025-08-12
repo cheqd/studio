@@ -367,21 +367,21 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 		try {
 			const filter: Record<string, any> = {
-				identifier: options.did,
 				resourceName: options.resourceName,
 				resourceType: options.resourceType,
-				createdAt: LessThanOrEqual(options.createdAt),
+				createdAt: options.createdAt ? LessThanOrEqual(options.createdAt) : undefined,
 				customer: customer,
 				encrypted: options.encrypted,
 			};
 
-			let relations: FindOptionsRelations<ResourceEntity | undefined> = undefined;
+			let relations: FindOptionsRelations<ResourceEntity | undefined> = {
+				identifier: true,
+			};
 			if (options.network) {
-				relations = {
-					identifier: true,
+				filter.identifier = {
+					did: options.did,
+					provider: `did:cheqd:${options.network}`,
 				};
-
-				filter.provider = `did:cheqd:${options.network}`;
 			}
 
 			const [resources, total] = await ResourceService.instance.find(
@@ -683,8 +683,13 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return await APIKeyService.instance.decryptAPIKey(apiKey);
 	}
 
-	async listOperations(options: ListOperationOptions, customerEntity: CustomerEntity) {
+	async listOperations(options: ListOperationOptions, customer: CustomerEntity) {
 		const { page, limit, ...where } = options;
-		return await OperationService.instance.find({ ...where, customerEntity }, page, limit);
+		const [operations, total] = await OperationService.instance.find({ ...where, customer }, page, limit);
+
+		return {
+			total,
+			events: operations,
+		};
 	}
 }

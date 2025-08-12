@@ -713,7 +713,7 @@ export class DIDController {
 	 */
 	public async getDids(request: Request, response: Response) {
 		// Extract did from params
-		const { did, network, page, limit } = request.params as GetDIDRequestParams;
+		const { did, network, page, limit } = request.query as GetDIDRequestParams;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = response.locals.customer
 			? new IdentityServiceStrategySetup(response.locals.customer.customerId)

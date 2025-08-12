@@ -1,9 +1,10 @@
 import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { IdentityServiceStrategySetup } from '../../services/identity';
-import { ListResourceOptions } from '../../types/resource';
 import { query } from 'express-validator';
 import { CheqdNetwork } from '@cheqd/sdk';
+
+import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
+import { ListOperationOptions } from '../../types/track.js';
 
 export class OperationController {
 	public static listOperationValidator = [
@@ -29,7 +30,7 @@ export class OperationController {
 	/**
 	 * @openapi
 	 *
-	 * /events:
+	 * /event/list:
 	 *   get:
 	 *     tags: [ Event ]
 	 *     summary: Fetch Credential event's triggered by the user.
@@ -37,7 +38,7 @@ export class OperationController {
 	 *     parameters:
 	 *       - in: query
 	 *         name: network
-	 *         description: Filter credential events by the network published.
+	 *         description: Filter events by the network published.
 	 *         schema:
 	 *           type: string
 	 *           enum:
@@ -45,16 +46,34 @@ export class OperationController {
 	 *             - testnet
 	 *         required: false
 	 *       - in: query
+	 *         name: category
+	 *         description: Filter events by the category.
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *              - did
+	 *              - resource
+	 *              - credential
+	 *              - credential-status
+	 *              - presentation
+	 *         required: false
+	 *       - in: query
+	 *         name: name
+	 *         description: Filter events by the name.
+	 *         schema:
+	 *           type: string
+	 *         required: false
+	 *       - in: query
 	 *         name: deprecated
-	 *         description: Filter credential events by the deprecated type
+	 *         description: Filter events by the deprecated type
 	 *         schema:
 	 *           type: boolean
 	 *         required: false
 	 *       - in: query
 	 *         name: successful
-	 *         description: Filter credential events by the resource name
+	 *         description: Filter events by the status
 	 *         schema:
-	 *           type: string
+	 *           type: boolean
 	 *         required: false
 	 *       - in: query
 	 *         name: createdAt
@@ -92,7 +111,7 @@ export class OperationController {
 	public async listOperations(request: Request, response: Response) {
 		// Extract params, filters and pagination
 		const { category, operationName, deprecated, successful, createdAt, page, limit } =
-			request.params satisfies ListResourceOptions;
+			request.query as ListOperationOptions;
 
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
@@ -102,11 +121,11 @@ export class OperationController {
 				{
 					category,
 					operationName,
-					deprecated: deprecated === 'true',
-					successful: successful === 'true',
+					deprecated,
+					successful,
 					createdAt,
-					page: parseInt(page),
-					limit: parseInt(limit),
+					page: page,
+					limit: limit,
 				},
 				response.locals.customer
 			);
