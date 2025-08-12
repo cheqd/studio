@@ -105,7 +105,7 @@ export class CredentialController {
 	 *
 	 * /credential/issue:
 	 *   post:
-	 *     tags: [ Credential ]
+	 *     tags: [ Verifiable Credentials ]
 	 *     summary: Issue a Verifiable Credential
 	 *     description: This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued.
 	 *     requestBody:
@@ -193,7 +193,7 @@ export class CredentialController {
 	 *
 	 * /credential/verify:
 	 *   post:
-	 *     tags: [ Credential ]
+	 *     tags: [ Verifiable Credentials ]
 	 *     summary: Verify a Verifiable Credential.
 	 *     description: This endpoint verifies a Verifiable Credential passed to it. As input, it can take the VC-JWT as a string or the entire credential itself.
 	 *     operationId: verify
@@ -302,7 +302,7 @@ export class CredentialController {
 	 *
 	 * /credential/revoke:
 	 *   post:
-	 *     tags: [ Credential ]
+	 *     tags: [ Verifiable Credentials ]
 	 *     summary: Revoke a Verifiable Credential.
 	 *     description: This endpoint revokes a given Verifiable Credential. As input, it can take the VC-JWT as a string or the entire credential itself. The StatusList2021 or BitstringStatusList resource should already be setup in the VC and `credentialStatus` property present in the VC.
 	 *     operationId: revoke
@@ -407,7 +407,7 @@ export class CredentialController {
 	 *
 	 * /credential/suspend:
 	 *   post:
-	 *     tags: [ Credential ]
+	 *     tags: [ Verifiable Credentials ]
 	 *     summary: Suspend a Verifiable Credential.
 	 *     description: This endpoint suspends a given Verifiable Credential.  As input, it can take the VC-JWT as a string or the entire credential itself.
 	 *     operationId: suspend
@@ -511,7 +511,7 @@ export class CredentialController {
 	 *
 	 * /credential/reinstate:
 	 *   post:
-	 *     tags: [ Credential ]
+	 *     tags: [ Verifiable Credentials ]
 	 *     summary: Reinstate a suspended Verifiable Credential.
 	 *     description: Set whether the StatusList2021 or BitstringStatusList resource should be published to the ledger or not. If set to `false`, the StatusList2021 or BitstringStatusList publisher should manually publish the resource.
 	 *     operationId: reinstate
