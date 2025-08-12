@@ -62,7 +62,7 @@ export class KeyController {
 	 *
 	 * /key/create:
 	 *   post:
-	 *     tags: [ Key ]
+	 *     tags: [ Keys ]
 	 *     summary: Create an identity key pair.
 	 *     description: This endpoint creates an identity key pair associated with the user's account for custodian-mode clients.
 	 *     parameters:
@@ -134,7 +134,7 @@ export class KeyController {
 	 *
 	 * /key/import:
 	 *   post:
-	 *     tags: [ Key ]
+	 *     tags: [ Keys ]
 	 *     summary: Import an identity key pair.
 	 *     description: This endpoint imports an identity key pair associated with the user's account for custodian-mode clients.
 	 *     requestBody:
@@ -220,7 +220,7 @@ export class KeyController {
 	 *
 	 * /key/read/{kid}:
 	 *   get:
-	 *     tags: [ Key ]
+	 *     tags: [ Keys ]
 	 *     summary: Fetch an identity key pair.
 	 *     description: This endpoint fetches an identity key pair's details for a given key ID. Only the user account associated with the custodian-mode client can fetch the key pair.
 	 *     parameters:

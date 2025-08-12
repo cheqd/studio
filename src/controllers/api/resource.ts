@@ -110,7 +110,7 @@ export class ResourceController {
 	 *
 	 * /resource/create/{did}:
 	 *   post:
-	 *     tags: [ Resource ]
+	 *     tags: [ DID-Linked Resources (DLRs) ]
 	 *     summary: Create a DID-Linked Resource.
 	 *     description: This endpoint creates a DID-Linked Resource. As input, it can take the DID identifier and the resource parameters via a form, or the fully-assembled resource itself.
 	 *     parameters:
@@ -231,7 +231,7 @@ export class ResourceController {
 	 *
 	 * /resource/search/{did}:
 	 *   get:
-	 *     tags: [ Resource ]
+	 *     tags: [ DID-Linked Resources (DLRs) ]
 	 *     summary: Get a DID-Linked Resource.
 	 *     description: This endpoint returns the DID-Linked Resource for a given DID identifier and resource identifier.
 	 *     parameters:
