@@ -5,6 +5,7 @@
 ### Features
 
 * Update swagger-api.json ([#714](https://github.com/cheqd/studio/issues/714)) ([83fe8fd](https://github.com/cheqd/studio/commit/83fe8fdc00d741c54bd686c80fbcc909621f0c28))
+
 ## [3.9.0-develop.2](https://github.com/cheqd/studio/compare/3.9.0-develop.1...3.9.0-develop.2) (2025-08-12)
 
 ### Bug Fixes
