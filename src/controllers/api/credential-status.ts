@@ -600,7 +600,7 @@ export class CredentialStatusController {
 	 *
 	 * /credential-status/create/unencrypted:
 	 *   post:
-	 *     tags: [ Credential Status ]
+	 *     tags: [ Status Lists ]
 	 *     summary: Create an unencrypted StatusList2021 or BitstringStatusList credential status list.
 	 *     description: This endpoint creates an unencrypted StatusList2021 or BitstringStatusList credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted.
 	 *     parameters:
@@ -790,7 +790,7 @@ export class CredentialStatusController {
 	 *
 	 * /credential-status/create/encrypted:
 	 *   post:
-	 *     tags: [ Credential Status ]
+	 *     tags: [ Status Lists ]
 	 *     summary: Create an encrypted StatusList2021 or BitstringStatusList credential status list.
 	 *     description: This endpoint creates an encrypted StatusList2021 or BitstringStatusList credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted.
 	 *     parameters:
@@ -965,7 +965,7 @@ export class CredentialStatusController {
 	 *
 	 * /credential-status/update/unencrypted:
 	 *   post:
-	 *     tags: [ Credential Status ]
+	 *     tags: [ Status Lists ]
 	 *     summary: Update an existing unencrypted StatusList2021 or BitstringStatusList credential status list.
 	 *     parameters:
 	 *       - in: query
@@ -1146,7 +1146,7 @@ export class CredentialStatusController {
 	 *
 	 * /credential-status/update/encrypted:
 	 *   post:
-	 *     tags: [ Credential Status ]
+	 *     tags: [ Status Lists ]
 	 *     summary: Update an existing encrypted StatusList2021 or BitstringStatusList credential status list.
 	 *     parameters:
 	 *       - in: query
@@ -1343,7 +1343,7 @@ export class CredentialStatusController {
 	 *
 	 * /credential-status/check:
 	 *   post:
-	 *     tags: [ Credential Status ]
+	 *     tags: [ Status Lists ]
 	 *     summary: Check a StatusList2021 index for a given Verifiable Credential.
 	 *     description: This endpoint checks a StatusList2021 index for a given Verifiable Credential and reports whether it is revoked or suspended. It offers a standalone method for checking an index without passing the entire Verifiable Credential or Verifiable Presentation.
 	 *     parameters:
@@ -1542,7 +1542,7 @@ export class CredentialStatusController {
 	 *
 	 * /credential-status/search:
 	 *   get:
-	 *     tags: [ Credential Status ]
+	 *     tags: [ Status Lists ]
 	 *     summary: Fetch StatusList2021 or BitstringStatusList DID-Linked Resource based on search criteria.
 	 *     parameters:
 	 *       - in: query

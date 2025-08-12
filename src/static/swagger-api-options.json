@@ -14,32 +14,45 @@
 			"url": "https://github.com/cheqd/studio/blob/main/LICENSE"
 		}
 	},
+	"servers": [
+		{
+			"url": "http://studio-api.cheqd.net",
+			"description": "Main (production) server"
+		},
+		{
+			"url": "http://studio-api-staging.cheqd.net",
+			"description": "Staging server for testing"
+		}
+	],
 	"tags": [
 		{
 			"name": "Account"
 		},
 		{
-			"name": "Key"
+			"name": "Keys"
 		},
 		{
-			"name": "DID"
+			"name": "Decentralized Identifiers (DIDs)"
 		},
 		{
-			"name": "Resource"
+			"name": "DID-Linked Resources (DLRs)"
 		},
 		{
-			"name": "Credential"
+			"name": "Trust Registries"
 		},
 		{
-			"name": "Presentation"
+			"name": "Verifiable Credentials"
 		},
 		{
-			"name": "Credential Status"
+			"name": "Status Lists"
+		},
+		{
+			"name": "Verifiable Presentations"
 		}
 	],
 	"externalDocs": {
 		"description": "cheqd Studio API Documentation",
-		"url": "https://docs.cheqd.io/identity"
+		"url": "https://docs.cheqd.io/product"
 	},
 	"components": {
 		"securitySchemes": {
