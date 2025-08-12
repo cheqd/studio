@@ -3371,7 +3371,7 @@
     "/credential/issue": {
       "post": {
         "tags": [
-          "verifiable Credentials"
+          "Verifiable Credentials"
         ],
         "summary": "Issue a Verifiable Credential",
         "description": "This endpoint issues a Verifiable Credential. As input it takes the list of issuerDid, subjectDid, attributes, and other parameters of the credential to be issued.",
