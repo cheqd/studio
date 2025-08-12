@@ -5,6 +5,17 @@
 ### Features
 
 * Update swagger-api.json ([#714](https://github.com/cheqd/studio/issues/714)) ([83fe8fd](https://github.com/cheqd/studio/commit/83fe8fdc00d741c54bd686c80fbcc909621f0c28))
+## [3.9.0-develop.2](https://github.com/cheqd/studio/compare/3.9.0-develop.1...3.9.0-develop.2) (2025-08-12)
+
+### Bug Fixes
+
+* Updated https endpoint ([#715](https://github.com/cheqd/studio/issues/715)) ([9ce2916](https://github.com/cheqd/studio/commit/9ce291646dea8fb960585aa3fd0f6249586de0ba))
+
+## [3.9.0-develop.1](https://github.com/cheqd/studio/compare/3.8.1...3.9.0-develop.1) (2025-08-06)
+
+### Features
+
+* Include user scopes in idToken strategy ([#710](https://github.com/cheqd/studio/issues/710)) ([b7bf5bc](https://github.com/cheqd/studio/commit/b7bf5bceec6e4c8ba98675e87befa7e90921e531))
 
 ## [3.8.1](https://github.com/cheqd/studio/compare/3.8.0...3.8.1) (2025-07-30)
 

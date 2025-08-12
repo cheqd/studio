@@ -53,6 +53,15 @@ export class PortalUserInfoFetcher extends UserInfoHelper implements IUserInfoFe
 					error: `Unauthorized error: No sub found in the token. Cannot set customerId.`,
 				} satisfies UnsuccessfulResponseBody);
 			}
+			// add user scopes
+			const _resp = await this.oauthProvider.getUserScopes(payload.sub);
+			if (_resp.status !== 200) {
+				return response.status(StatusCodes.UNAUTHORIZED).json({
+					error: `Unauthorized error: No scopes found for the user: ${payload.sub}`,
+				} satisfies UnsuccessfulResponseBody);
+			}
+			// Set global context
+			this.setScopes(_resp.data, response);
 			return await this.setUserEntity(payload.sub, response);
 		} catch (error) {
 			console.error(error);
@@ -79,7 +88,7 @@ export class PortalUserInfoFetcher extends UserInfoHelper implements IUserInfoFe
 				} satisfies UnsuccessfulResponseBody);
 			}
 			const scopes = payload.scope ? (payload.scope as string).split(' ') : [];
-			this.setScopes(scopes, response);
+			this.appendScopes(scopes, response);
 			return;
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

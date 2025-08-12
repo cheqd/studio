@@ -16,11 +16,11 @@
   },
   "servers": [
     {
-      "url": "http://studio-api.cheqd.net",
+      "url": "https://studio-api.cheqd.net",
       "description": "Main (production) server"
     },
     {
-      "url": "http://studio-api-staging.cheqd.net",
+      "url": "https://studio-api-staging.cheqd.net",
       "description": "Staging server for testing"
     }
   ],
