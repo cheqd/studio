@@ -5,6 +5,7 @@
 ### Features
 
 * Add apis to support analytics in portal ([#711](https://github.com/cheqd/studio/issues/711)) ([21e7a6e](https://github.com/cheqd/studio/commit/21e7a6e7b1532f590624705b00a916e56fc1abb2))
+
 ## [3.10.0](https://github.com/cheqd/studio/compare/3.9.0...3.10.0) (2025-08-12)
 
 ### Features
