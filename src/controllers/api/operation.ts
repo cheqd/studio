@@ -17,12 +17,12 @@ export class OperationController {
 		query('deprecated')
 			.optional()
 			.isBoolean()
-			.withMessage('resourceName is supposed to have type of String')
+			.withMessage('deprecated is supposed to have type of Boolean')
 			.bail(),
 		query('successful')
 			.optional()
 			.isBoolean()
-			.withMessage('resourceType is supposed to have type of String')
+			.withMessage('successful is supposed to have type of Boolean')
 			.bail(),
 		query('encrypted').optional().isBoolean().withMessage('encrypted filter should be a boolean value').bail(),
 	];

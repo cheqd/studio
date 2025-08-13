@@ -378,7 +378,7 @@ export class ResourceController {
 	 *         required: false
 	 *       - in: query
 	 *         name: resourceType
-	 *         description: Filter resources by the resource name
+	 *         description: Filter resources by the resource type
 	 *         schema:
 	 *           type: string
 	 *         required: false

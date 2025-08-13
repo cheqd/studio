@@ -1457,7 +1457,9 @@
  *          total:
  *              type: number
  *          resources:
- *              $ref: '#/components/schemas/ResourceMetadata'
+ *              type: array
+ *              items:
+ *                  $ref: '#/components/schemas/ResourceMetadata'
  *     DereferencingMetadata:
  *       type: object
  *       properties:
