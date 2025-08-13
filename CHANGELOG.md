@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.9.0-develop.3](https://github.com/cheqd/studio/compare/3.9.0-develop.2...3.9.0-develop.3) (2025-08-13)
+
+### Features
+
+* Add apis to support analytics in portal ([#711](https://github.com/cheqd/studio/issues/711)) ([21e7a6e](https://github.com/cheqd/studio/commit/21e7a6e7b1532f590624705b00a916e56fc1abb2))
+
 ## [3.9.0-develop.2](https://github.com/cheqd/studio/compare/3.9.0-develop.1...3.9.0-develop.2) (2025-08-12)
 
 ### Bug Fixes
