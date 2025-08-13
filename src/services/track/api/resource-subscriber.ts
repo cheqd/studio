@@ -13,6 +13,7 @@ import { KeyService } from '../../api/key.js';
 import { ResourceService } from '../../api/resource.js';
 import type { IObserver } from '../types.js';
 import { BaseOperationObserver } from '../base.js';
+import { parseCheqdDid } from '../../../helpers/helpers.js';
 
 export class ResourceSubscriber extends BaseOperationObserver implements IObserver {
 	private static acceptedOperations = [
@@ -119,7 +120,8 @@ export class ResourceSubscriber extends BaseOperationObserver implements IObserv
 			key,
 			identifier,
 			encrypted,
-			symmetricKey
+			symmetricKey,
+			parseCheqdDid(did).network
 		);
 		if (!resourceEntity) {
 			return {

@@ -1257,6 +1257,15 @@
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/Service'
+ *     ListDidResult:
+ *       type: object
+ *       properties:
+ *          total:
+ *              type: number
+ *          dids:
+ *              type: array
+ *              items:
+ *                  type: string
  *     DidUpdateResponse:
  *       type: object
  *       properties:
@@ -1442,6 +1451,15 @@
  *           type: object
  *         dereferencingMetadata:
  *           $ref: '#/components/schemas/DereferencingMetadata'
+ *     ListResourceResult:
+ *       type: object
+ *       properties:
+ *          total:
+ *              type: number
+ *          resources:
+ *              type: array
+ *              items:
+ *                  $ref: '#/components/schemas/ResourceMetadata'
  *     DereferencingMetadata:
  *       type: object
  *       properties:

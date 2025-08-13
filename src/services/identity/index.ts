@@ -56,6 +56,9 @@ import type { KeyEntity } from '../../database/entities/key.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity.js';
 import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import type { SupportedKeyTypes } from '@veramo/utils';
+import { ListDIDRequestOptions, ListDidsResponseBody } from '../../types/did.js';
+import { ListResourceOptions, ListResourceResponse } from '../../types/resource.js';
+import { ListOperationOptions } from '../../types/track.js';
 
 dotenv.config();
 
@@ -78,7 +81,7 @@ export interface IIdentityService {
 	createDid(network: string, didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier>;
 	updateDid(didDocument: DIDDocument, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<IIdentifier>;
 	deactivateDid(did: string, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<boolean>;
-	listDids(customer: CustomerEntity): Promise<string[]>;
+	listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<ListDidsResponseBody>;
 	resolveDid(did: string): Promise<DIDResolutionResult>;
 	resolve(didUrl: string): Promise<Response>;
 	getDid(did: string, customer: CustomerEntity): Promise<any>;
@@ -94,6 +97,7 @@ export interface IIdentityService {
 		customer: CustomerEntity,
 		publicKeyHexs?: string[]
 	): Promise<any>;
+	listResources(options: ListResourceOptions, customer: CustomerEntity): Promise<ListResourceResponse>;
 	createCredential(
 		credential: CredentialPayload,
 		format: CredentialRequest['format'],
@@ -203,6 +207,7 @@ export interface IIdentityService {
 	updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity>;
 	getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | null>;
 	decryptAPIKey(apiKey: string): Promise<string>;
+	listOperations(options: ListOperationOptions, customer: CustomerEntity): Promise<any>;
 }
 
 export class IdentityServiceStrategySetup {

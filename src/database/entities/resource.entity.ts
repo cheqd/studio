@@ -5,6 +5,7 @@ import { Identifier, Key } from '@veramo/data-store';
 import { CustomerEntity } from './customer.entity.js';
 import type { IdentifierEntity } from './identifier.entity.js';
 import type { KeyEntity } from './key.entity.js';
+
 dotenv.config();
 
 @Entity('resource')

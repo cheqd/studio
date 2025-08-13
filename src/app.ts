@@ -30,6 +30,7 @@ import { WebhookController } from './controllers/admin/webhook.js';
 import { APIKeyController } from './controllers/admin/api-key.js';
 import { OrganisationController } from './controllers/admin/organisation.js';
 import { AccreditationController } from './controllers/api/accreditation.js';
+import { OperationController } from './controllers/api/operation.js';
 
 dotenv.config();
 
@@ -186,7 +187,7 @@ class App {
 		app.post('/did/update', DIDController.updateDIDValidator, new DIDController().updateDid);
 		app.post('/did/import', DIDController.importDIDValidator, new DIDController().importDid);
 		app.post('/did/deactivate/:did', DIDController.deactivateDIDValidator, new DIDController().deactivateDid);
-		app.get('/did/list', new DIDController().getDids);
+		app.get('/did/list', DIDController.listDIDValidator, new DIDController().getDids);
 		app.get('/did/search/:did', new DIDController().resolveDidUrl);
 
 		// Trust Registry API
@@ -222,11 +223,15 @@ class App {
 			ResourceController.createResourceValidator,
 			new ResourceController().createResource
 		);
+		app.get(`/resource/list`, ResourceController.listResourceValidator, new ResourceController().listResources);
 		app.get(
 			'/resource/search/:did',
 			ResourceController.searchResourceValidator,
 			new ResourceController().searchResource
 		);
+
+		// Events API
+		app.get(`/event/list`, OperationController.listOperationValidator, new OperationController().listOperations);
 
 		// Account API
 		app.post('/account/create', AccountController.createValidator, new AccountController().create);

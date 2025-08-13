@@ -1908,6 +1908,20 @@
           }
         }
       },
+      "ListDidResult": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number"
+          },
+          "dids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "DidUpdateResponse": {
         "type": "object",
         "properties": {
@@ -2163,6 +2177,20 @@
           },
           "dereferencingMetadata": {
             "$ref": "#/components/schemas/DereferencingMetadata"
+          }
+        }
+      },
+      "ListResourceResult": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number"
+          },
+          "resources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceMetadata"
+            }
           }
         }
       },
@@ -3926,16 +3954,56 @@
         ],
         "summary": "Fetch DIDs associated with an account.",
         "description": "This endpoint returns the list of DIDs controlled by the account.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "network",
+            "description": "Filter DID by the network published.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ]
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "createdAt",
+            "description": "Filter resource by created date",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Page number.",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "description": "Number of items to be listed in a single page.",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          }
+        ],
         "responses": {
           "200": {
             "description": "The request was successful.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                  "$ref": "#/components/schemas/ListDidResult"
                 }
               }
             }
@@ -4242,6 +4310,122 @@
         }
       }
     },
+    "/event/list": {
+      "get": {
+        "tags": [
+          "Event"
+        ],
+        "summary": "Fetch Credential event's triggered by the user.",
+        "description": "This endpoint returns the list of Credential Events controlled by the account.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "network",
+            "description": "Filter events by the network published.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ]
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "description": "Filter events by the category.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "did",
+                "resource",
+                "credential",
+                "credential-status",
+                "presentation"
+              ]
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "name",
+            "description": "Filter events by the name.",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "deprecated",
+            "description": "Filter events by the deprecated type",
+            "schema": {
+              "type": "boolean"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "successful",
+            "description": "Filter events by the status",
+            "schema": {
+              "type": "boolean"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "createdAt",
+            "description": "Filter resource by created date",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Page number.",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "description": "Number of items to be listed in a single page.",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListResourceResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
     "/presentation/create": {
       "post": {
         "tags": [
@@ -4504,6 +4688,115 @@
               "any": {
                 "schema": {
                   "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/resource/list": {
+      "get": {
+        "tags": [
+          "Resource"
+        ],
+        "summary": "Fetch Resources created by the user.",
+        "description": "This endpoint returns the list of DID Linked Resources controlled by the account.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "network",
+            "description": "Filter resources by the network published.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ]
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "resourceName",
+            "description": "Filter resources by the resource name",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "resourceType",
+            "description": "Filter resources by the resource type",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "did",
+            "description": "Filter resources published by a DID",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "encrypted",
+            "description": "Filter resource by encryption type",
+            "schema": {
+              "type": "boolean"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "createdAt",
+            "description": "Filter resource by created date",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Page number.",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "description": "Number of items to be listed in a single page.",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListResourceResult"
                 }
               }
             }

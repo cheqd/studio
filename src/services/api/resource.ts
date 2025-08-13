@@ -1,13 +1,14 @@
 import type { FindOptionsRelations, Repository } from 'typeorm';
-
-import { Connection } from '../../database/connection/connection.js';
-
-import * as dotenv from 'dotenv';
-import { ResourceEntity } from '../../database/entities/resource.entity.js';
 import type { IdentifierEntity } from '../../database/entities/identifier.entity.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { LinkedResourceMetadataResolutionResult } from '@cheqd/did-provider-cheqd';
+
+import { Connection } from '../../database/connection/connection.js';
+import { ResourceEntity } from '../../database/entities/resource.entity.js';
+
+import * as dotenv from 'dotenv';
+
 dotenv.config();
 
 export class ResourceService {
@@ -61,7 +62,8 @@ export class ResourceService {
 		nextVersionId?: string,
 		customer?: CustomerEntity,
 		encrypted?: boolean,
-		symmetricKey?: string
+		symmetricKey?: string,
+		namespace?: string
 	) {
 		const existingResource = await this.resourceRepository.findOneBy({ resourceId });
 		if (!existingResource) {
@@ -87,10 +89,17 @@ export class ResourceService {
 		});
 	}
 
-	public async find(where: Record<string, unknown>, relations?: FindOptionsRelations<ResourceEntity>) {
-		return await this.resourceRepository.find({
-			where: where,
+	public async find(
+		where: Record<string, unknown>,
+		page?: number,
+		limit?: number,
+		relations?: FindOptionsRelations<ResourceEntity>
+	) {
+		return await this.resourceRepository.findAndCount({
+			where,
 			relations,
+			skip: page && limit ? (page - 1) * limit : 0,
+			take: limit,
 		});
 	}
 
@@ -100,7 +109,8 @@ export class ResourceService {
 		key: KeyEntity,
 		identifier: IdentifierEntity,
 		encrypted: boolean,
-		symmetricKey: string
+		symmetricKey: string,
+		namespace: string
 	) {
 		const resourceEntity = new ResourceEntity(
 			resource.resourceId,

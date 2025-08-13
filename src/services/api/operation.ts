@@ -86,9 +86,16 @@ export class OperationService {
 		});
 	}
 
-	public async find(where: Record<string, unknown>, relations: FindOptionsRelations<OperationEntity>) {
-		return await this.operationRepository.find({
+	public async find(
+		where: Record<string, unknown>,
+		page?: number,
+		limit?: number,
+		relations?: FindOptionsRelations<OperationEntity>
+	) {
+		return await this.operationRepository.findAndCount({
 			where: where,
+			skip: page && limit ? (page - 1) * limit : 0,
+			take: limit,
 			relations,
 		});
 	}

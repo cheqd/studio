@@ -86,6 +86,16 @@ export interface INotifyMessage {
 	severity?: LogLevelDesc;
 }
 
+export interface ListOperationOptions {
+	category?: string;
+	operationName?: string;
+	deprecated?: boolean;
+	successful?: boolean;
+	createdAt?: string;
+	page?: number;
+	limit?: number;
+}
+
 export class TrackOperationWithPayment implements ITrackOperation {
 	name: string;
 	category: string;

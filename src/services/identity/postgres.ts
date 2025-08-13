@@ -63,6 +63,14 @@ import type { APIServiceOptions } from '../../types/admin.js';
 import { SupportedKeyTypes } from '@veramo/utils';
 import { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
 import { LocalStore } from '../../database/cache/store.js';
+import { ResourceService } from '../api/resource.js';
+import { FindOptionsRelations, FindOptionsWhere, LessThanOrEqual } from 'typeorm';
+import { IdentifierEntity } from '../../database/entities/identifier.entity.js';
+import { ListDIDRequestOptions } from '../../types/did.js';
+import { ListResourceOptions, ListResourceResponse } from '../../types/resource.js';
+import { ResourceEntity } from '../../database/entities/resource.entity.js';
+import { OperationService } from '../api/operation.js';
+import { ListOperationOptions } from '../../types/track.js';
 
 dotenv.config();
 
@@ -293,12 +301,22 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
-	async listDids(customer: CustomerEntity) {
+	async listDids(options: ListDIDRequestOptions, customer: CustomerEntity) {
 		if (!customer) {
 			throw new Error('Customer not found');
 		}
-		const entities = await IdentifierService.instance.find({ customer });
-		return entities.map((entity) => entity.did);
+
+		const where: FindOptionsWhere<IdentifierEntity> = { customer };
+		if (options.network) {
+			where.provider = `did:cheqd:${options.network}`;
+		}
+
+		if (options.createdAt) {
+			where.saveDate = LessThanOrEqual(new Date(options.createdAt));
+		}
+
+		const [entities, total] = await IdentifierService.instance.find(where, options.page, options.limit);
+		return { total, dids: entities.map((entity) => entity.did) };
 	}
 
 	async getDid(did: string) {
@@ -338,6 +356,54 @@ export class PostgresIdentityService extends DefaultIdentityService {
 					return toTPublicKeyEd25519(key);
 				}) || [];
 			return await Veramo.instance.createResource(agent, network, payload, publicKeys);
+		} catch (error) {
+			throw new Error(`${error}`);
+		}
+	}
+
+	async listResources(options: ListResourceOptions, customer: CustomerEntity): Promise<ListResourceResponse> {
+		if (!customer) {
+			throw new Error('Customer not found');
+		}
+		try {
+			const filter: Record<string, any> = {
+				resourceName: options.resourceName,
+				resourceType: options.resourceType,
+				createdAt: options.createdAt ? LessThanOrEqual(options.createdAt) : undefined,
+				customer: customer,
+				encrypted: options.encrypted,
+			};
+
+			let relations: FindOptionsRelations<ResourceEntity | undefined> = {
+				identifier: true,
+			};
+			if (options.network) {
+				filter.identifier = {
+					did: options.did,
+					provider: `did:cheqd:${options.network}`,
+				};
+			}
+
+			const [resources, total] = await ResourceService.instance.find(
+				filter,
+				options.page,
+				options.limit,
+				relations
+			);
+
+			return {
+				total,
+				resources: resources.map((r) => ({
+					resourceId: r.resourceId,
+					resourceName: r.resourceName,
+					resourceType: r.resourceType,
+					mediaType: r.mediaType,
+					previousVersionId: r.previousVersionId,
+					nextVersionId: r.nextVersionId,
+					did: r.identifier.did,
+					encrypted: r.encrypted,
+				})),
+			};
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
@@ -615,5 +681,15 @@ export class PostgresIdentityService extends DefaultIdentityService {
 
 	async decryptAPIKey(apiKey: string): Promise<string> {
 		return await APIKeyService.instance.decryptAPIKey(apiKey);
+	}
+
+	async listOperations(options: ListOperationOptions, customer: CustomerEntity) {
+		const { page, limit, ...where } = options;
+		const [operations, total] = await OperationService.instance.find({ ...where, customer }, page, limit);
+
+		return {
+			total,
+			events: operations,
+		};
 	}
 }

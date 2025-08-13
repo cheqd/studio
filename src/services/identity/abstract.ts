@@ -52,6 +52,9 @@ import type { KeyEntity } from '../../database/entities/key.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity';
 import type { APIKeyEntity } from '../../database/entities/api.key.entity';
 import type { SupportedKeyTypes } from '@veramo/utils';
+import { ListDIDRequestOptions, ListDidsResponseBody } from '../../types/did';
+import { ListResourceOptions, ListResourceResponse } from '../../types/resource';
+import { ListOperationOptions } from '../../types/track';
 
 export abstract class AbstractIdentityService implements IIdentityService {
 	agent?: VeramoAgent;
@@ -100,6 +103,10 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		customer: CustomerEntity,
 		publicKeyHexs?: string[]
 	): Promise<any> {
+		throw new Error(`Not supported`);
+	}
+
+	async listResources(options: ListResourceOptions, customer: CustomerEntity): Promise<ListResourceResponse> {
 		throw new Error(`Not supported`);
 	}
 
@@ -226,7 +233,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	getKey(kid: string, customer: CustomerEntity): Promise<ManagedKeyInfo | null> {
 		throw new Error(`Not supported`);
 	}
-	listDids(customer: CustomerEntity): Promise<string[]> {
+	listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<ListDidsResponseBody> {
 		throw new Error(`Not supported`);
 	}
 	getDid(did: string): Promise<any> {
@@ -270,6 +277,9 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 	decryptAPIKey(apiKey: string): Promise<string> {
+		throw new Error(`Not supported`);
+	}
+	listOperations(where: ListOperationOptions, customer: CustomerEntity): Promise<any> {
 		throw new Error(`Not supported`);
 	}
 }

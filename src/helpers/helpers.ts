@@ -243,6 +243,21 @@ export function parseDidFromDidUrl(didUrl: string) {
 	return didUrl.includes('?') ? didUrl.split('?')[0] : didUrl.split('/')[0];
 }
 
+export function parseCheqdDid(did: string) {
+	const splittedDid = did.split(':');
+	if (splittedDid[1] !== 'cheqd') {
+		throw new Error('Invalid did:cheqd identifier');
+	}
+
+	const parts = {
+		method: 'cheqd',
+		network: splittedDid[2],
+		id: splittedDid[3],
+	};
+
+	return parts;
+}
+
 export function constructDidUrl(data: DIDUrlParams) {
 	let didUrl: string | undefined = undefined;
 	if (isDidUrl(data)) {
