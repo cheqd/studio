@@ -2187,7 +2187,10 @@
             "type": "number"
           },
           "resources": {
-            "$ref": "#/components/schemas/ResourceMetadata"
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceMetadata"
+            }
           }
         }
       },
@@ -4734,7 +4737,7 @@
           {
             "in": "query",
             "name": "resourceType",
-            "description": "Filter resources by the resource name",
+            "description": "Filter resources by the resource type",
             "schema": {
               "type": "string"
             },
