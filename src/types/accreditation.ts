@@ -130,3 +130,8 @@ export type UnsuspendAccreditationResponseBody =
 	| BulkBitstringUpdateResult;
 
 export type UpdateAccreditationRequestQuery = PublishRequest;
+
+export type ListAccreditationResult = {
+	total: number;
+	accreditations: VerfifiableAccreditation[];
+};

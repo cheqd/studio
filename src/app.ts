@@ -216,6 +216,11 @@ class App {
 			AccreditationController.publishValidator,
 			new AccreditationController().reinstate
 		);
+		app.get(
+			'/trust-registry/accreditation/list',
+			AccreditationController.listValidator,
+			new AccreditationController().listAccreditations
+		);
 
 		// Resource API
 		app.post(

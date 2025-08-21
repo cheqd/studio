@@ -14,16 +14,8 @@ export class OperationController {
 			.isIn([CheqdNetwork.Mainnet, CheqdNetwork.Testnet])
 			.withMessage('Invalid network')
 			.bail(),
-		query('deprecated')
-			.optional()
-			.isBoolean()
-			.withMessage('deprecated is supposed to have type of Boolean')
-			.bail(),
-		query('successful')
-			.optional()
-			.isBoolean()
-			.withMessage('successful is supposed to have type of Boolean')
-			.bail(),
+		query('deprecated').optional().isBoolean().withMessage('deprecated is supposed to have type of Boolean').bail(),
+		query('successful').optional().isBoolean().withMessage('successful is supposed to have type of Boolean').bail(),
 		query('encrypted').optional().isBoolean().withMessage('encrypted filter should be a boolean value').bail(),
 	];
 

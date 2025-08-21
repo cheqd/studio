@@ -5,6 +5,10 @@ import type { AlternativeUri, MsgCreateResourcePayload } from '@cheqd/ts-proto/c
 import { v4 } from 'uuid';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { fromString } from 'uint8arrays';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
+import { IResourceTrack, ITrackOperation } from '../../types/track.js';
+import { eventTracker } from '../track/tracker.js';
+import { DefaultResolverUrl, DIDMetadataDereferencingResult } from '@cheqd/did-provider-cheqd';
 dotenv.config();
 
 /**
@@ -47,6 +51,29 @@ export class ResourceConnector {
 			version: resourceVersion,
 			alsoKnownAs,
 		};
-		await identityServiceStrategySetup.agent.createResource(did.split(':')[2], resourcePayload, customer);
+		const isPublished = await identityServiceStrategySetup.agent.createResource(did.split(':')[2], resourcePayload, customer);
+
+        if(isPublished) {
+            const url = new URL(
+                `${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?` +
+                    `resourceId=${resourcePayload.id}&resourceMetadata=true`
+            );
+            const didDereferencing = (await (await fetch(url)).json()) as DIDMetadataDereferencingResult;
+            const resource = didDereferencing.contentMetadata.linkedResourceMetadata[0];
+
+            // track resource creation
+            const trackResourceInfo = {
+                category: OperationCategoryNameEnum.RESOURCE,
+                name: OperationNameEnum.RESOURCE_CREATE,
+                customer: customer,
+                data: {
+                    did,
+                    resource: resource,
+                } satisfies IResourceTrack,
+            } as ITrackOperation;
+
+            // track resource creation
+            eventTracker.emit('track', trackResourceInfo);
+        }
 	}
 }

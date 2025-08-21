@@ -10,6 +10,7 @@ import type {
 	SuspendAccreditationResponseBody,
 	UnsuspendAccreditationResponseBody,
 	VerifyAccreditationRequestBody,
+    VerfifiableAccreditation,
 } from '../../types/accreditation.js';
 import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '../../types/track.js';
 import type { CredentialRequest, UnsuccesfulRevokeCredentialResponseBody } from '../../types/credential.js';
@@ -31,6 +32,7 @@ import { validate } from '../validator/decorator.js';
 import { constructDidUrl, parseDidFromDidUrl } from '../../helpers/helpers.js';
 import { CheqdW3CVerifiableCredential } from '../../services/w3c-credential.js';
 import { StatusListType } from '../../types/credential-status.js';
+import { CheqdNetwork } from '@cheqd/sdk';
 
 export class AccreditationController {
 	public static issueValidator = [
@@ -133,6 +135,24 @@ export class AccreditationController {
 
 	public static publishValidator = [
 		query('publish').optional().isBoolean().withMessage('publish should be a boolean value').toBoolean().bail(),
+	];
+
+	public static listValidator = [
+		query('accreditationType')
+			.exists()
+			.isIn([
+				AccreditationRequestType.authorize,
+				AccreditationRequestType.accredit,
+				AccreditationRequestType.attest,
+			])
+			.bail(),
+		query('network')
+			.optional()
+			.isString()
+			.isIn([CheqdNetwork.Mainnet, CheqdNetwork.Testnet])
+			.withMessage('Invalid network')
+			.bail(),
+        query('did').optional().isDID().bail(),
 	];
 
 	/**
@@ -774,6 +794,118 @@ export class AccreditationController {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccesfulRevokeCredentialResponseBody);
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /trust-registry/accreditation/list:
+	 *   get:
+	 *     tags: [ Trust Registries ]
+	 *     summary: Fetch Verifiable Accreditations for DIDs associated with an account.
+	 *     description: This endpoint returns the list of Verifiable Accreditations created by the account.
+	 *     parameters:
+	 *       - in: query
+	 *         name: network
+	 *         description: Filter Accreditations by the network published.
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - mainnet
+	 *             - testnet
+	 *         required: false
+	 *       - in: query
+	 *         name: accreditationType
+	 *         description: Select the type of accreditation to be issued.
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *              - authorize
+	 *              - accredit
+	 *              - attest
+	 *         required: true
+	 *       - in: query
+	 *         name: did
+	 *         description: Filter accreditations published by a DID
+	 *         schema:
+	 *           type: string
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/ListAccreditationResult'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async listAccreditations(request: Request, response: Response) {
+		const { network, accreditationType, did } = request.query as any;
+
+		// Get strategy e.g. postgres or local
+		const identityServiceStrategySetup = response.locals.customer
+			? new IdentityServiceStrategySetup(response.locals.customer.customerId)
+			: new IdentityServiceStrategySetup();
+
+		let resourceType: string;
+		switch (accreditationType) {
+			case AccreditationRequestType.authorize:
+				resourceType = DIDAccreditationTypes.VerifiableAuthorizationForTrustChain;
+				break;
+			case AccreditationRequestType.accredit:
+				resourceType = DIDAccreditationTypes.VerifiableAccreditationToAccredit;
+				break;
+			case AccreditationRequestType.attest:
+				resourceType = DIDAccreditationTypes.VerifiableAccreditationToAttest;
+				break;
+			default:
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: `Invalid accreditationType: ${accreditationType}. Must be one of: authorize, accredit, attest.`,
+				});
+		}
+
+		try {
+			// Fetch resources of accreditation resourceType associated with the account
+			const { resources } = await identityServiceStrategySetup.agent.listResources(
+				{ network, resourceType, did },
+				response.locals.customer
+			);
+
+			// Build resource URLs for resolution
+			const resourceUrls = resources.map(
+				(item) => `${item.did}?resourceName=${item.resourceName}&resourceType=${item.resourceType}`
+			);
+
+            // remove duplicates of resourceUrls
+            const uniqueResourceUrls = Array.from(new Set(resourceUrls));
+
+			// Resolve resources to get full accreditation details
+			const resolvedResources = await Promise.all(
+				uniqueResourceUrls.map((url) => identityServiceStrategySetup.agent.resolve(url))
+			);
+
+			// Collect valid accreditations
+			const accreditations: VerfifiableAccreditation[] = [];
+			for (const res of resolvedResources) {
+				const resource = await res.json();
+				if (!resource.dereferencingMetadata) {
+					accreditations.push(resource as VerfifiableAccreditation);
+				}
+			}
+
+			return response.status(StatusCodes.OK).json({
+				total: accreditations.length,
+				accreditations: accreditations,
+			});
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			});
 		}
 	}
 }
