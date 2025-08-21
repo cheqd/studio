@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.12.0-develop.1](https://github.com/cheqd/studio/compare/3.11.0...3.12.0-develop.1) (2025-08-21)
+
+### Features
+
+* Add accreditations/list api ([#718](https://github.com/cheqd/studio/issues/718)) ([0f0ddea](https://github.com/cheqd/studio/commit/0f0ddeab74680fa161f302f7e2239eb2bf729a61))
+
 ## [3.11.0](https://github.com/cheqd/studio/compare/3.10.0...3.11.0) (2025-08-13)
 
 ### Features
