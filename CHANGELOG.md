@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.12.0-develop.2](https://github.com/cheqd/studio/compare/3.12.0-develop.1...3.12.0-develop.2) (2025-08-21)
+
+### Bug Fixes
+
+* error codes ([#719](https://github.com/cheqd/studio/issues/719)) ([905567a](https://github.com/cheqd/studio/commit/905567a5da3efbaf3f7210c8630ea0dc59571719))
+
 ## [3.12.0-develop.1](https://github.com/cheqd/studio/compare/3.11.0...3.12.0-develop.1) (2025-08-21)
 
 ### Features
