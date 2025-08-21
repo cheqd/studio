@@ -1638,7 +1638,9 @@
  *       type: object
  *       properties:
  *         types:
- *           type: string
+ *           type: array
+ *           items:
+ *            type: string
  *         url:
  *           type: string
  *     InvalidRequest:
