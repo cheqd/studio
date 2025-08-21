@@ -398,7 +398,7 @@ export class AccreditationController {
 		// construct didUrl
 		const didUrl = constructDidUrl(request.body);
 		if (!didUrl) {
-			return response.status(400).json({
+			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: `Invalid Request: Either didUrl or did with resource attributes are required`,
 			});
 		}
@@ -493,7 +493,7 @@ export class AccreditationController {
 
 		const didUrl = constructDidUrl(didUrlParams);
 		if (!didUrl) {
-			return response.status(400).json({
+			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: `Invalid Request: Either didUrl or did with resource attributes are required`,
 			});
 		}
@@ -603,7 +603,7 @@ export class AccreditationController {
 
 		const didUrl = constructDidUrl(didUrlParams);
 		if (!didUrl) {
-			return response.status(400).json({
+			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: `Invalid Request: Either didUrl or did with resource attributes are required`,
 			});
 		}
@@ -715,7 +715,7 @@ export class AccreditationController {
 
 		const didUrl = constructDidUrl(didUrlParams);
 		if (!didUrl) {
-			return response.status(400).json({
+			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: `Invalid Request: Either didUrl or did with resource attributes are required`,
 			});
 		}

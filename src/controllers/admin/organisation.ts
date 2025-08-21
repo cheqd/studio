@@ -84,9 +84,14 @@ export class OrganisationController {
 				paymentAccounts = await PaymentAccountService.instance.find({ customer: response.locals.customer });
 			}
 
-			if (!customer || paymentAccounts.length === 0) {
-				response.status(StatusCodes.NOT_FOUND).json({
+			if (!customer) {
+				return response.status(StatusCodes.NOT_FOUND).json({
 					error: 'Customer for updating not found',
+				} satisfies AdminOrganisationUpdateUnsuccessfulResponseBody);
+			}
+			if (paymentAccounts.length === 0) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: 'Payment account was not found.',
 				} satisfies AdminOrganisationUpdateUnsuccessfulResponseBody);
 			}
 
@@ -103,7 +108,7 @@ export class OrganisationController {
 				},
 			} satisfies AdminOrganisationUpdateResponseBody);
 		} catch (error) {
-			return response.status(500).json({
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies AdminOrganisationUpdateUnsuccessfulResponseBody);
 		}
@@ -139,7 +144,7 @@ export class OrganisationController {
 			const paymentAccount = await PaymentAccountService.instance.find({ customer: response.locals.customer });
 
 			if (!customer || paymentAccount.length === 0) {
-				response.status(StatusCodes.NOT_FOUND).json({
+				return response.status(StatusCodes.NOT_FOUND).json({
 					error: 'Customer for current user was not found or did not setup properly. Please contact administrator.',
 				} satisfies AdminOrganisationGetUnsuccessfulResponseBody);
 			}
@@ -157,7 +162,7 @@ export class OrganisationController {
 				},
 			} satisfies AdminOrganisationGetResponseBody);
 		} catch (error) {
-			return response.status(500).json({
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies AdminOrganisationGetUnsuccessfulResponseBody);
 		}

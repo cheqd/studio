@@ -152,7 +152,7 @@ export class APIKeyController {
 				revoked: apiKeyEntity.revoked,
 			} satisfies APIKeyCreateResponseBody);
 		} catch (error) {
-			return response.status(500).json({
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies APIKeyCreateUnsuccessfulResponseBody);
 		}
