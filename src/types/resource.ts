@@ -40,18 +40,20 @@ export type CreateResourceResponseBody = { resource: LinkedResourceMetadataResol
 
 export type QueryResourceResponseBody = any;
 
+export type ResourceMetadataResponse = {
+	resourceId: string;
+	resourceName: string;
+	resourceType: string;
+	mediaType: string;
+	previousVersionId: string | null;
+	nextVersionId: string | null;
+	encrypted: boolean;
+	did: string;
+};
+
 export type ListResourceResponse = {
 	total: number;
-	resources: {
-		resourceId: string;
-		resourceName: string;
-		resourceType: string;
-		mediaType: string;
-		previousVersionId: string | null;
-		nextVersionId: string | null;
-		encrypted: boolean;
-		did: string;
-	}[];
+	resources: ResourceMetadataResponse[];
 };
 
 // Negative
