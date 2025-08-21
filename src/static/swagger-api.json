@@ -3,9 +3,9 @@
   "info": {
     "title": "cheqd Studio API for cheqd network",
     "version": "2.0.0",
-    "description": "API service to create and manage DIDs, Verifiable Credentials, and DID-Linked Resources",
+    "description": "REST API service for creating and managing Decentralized Identfiers (DIDs), DID-Linked Resources (DLRs), Trust Registries, Status Lists and Verifiable Credentials.",
     "contact": {
-      "name": "Cheqd Foundation Limited",
+      "name": "cheqd",
       "url": "https://github.com/cheqd/studio",
       "email": "support-github@cheqd.io"
     },
@@ -2489,6 +2489,68 @@
             "example": "Unauthorized Error"
           }
         }
+      },
+      "ListAccreditationResult": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total number of accreditations.",
+            "example": 5
+          },
+          "accreditations": {
+            "type": "array",
+            "description": "List of accreditations.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier of the accreditation.",
+                  "example": "did:cheqd:testnet:12345678-90ab-cdef-1234-567890abcdef"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Name of the accreditation.",
+                  "example": "MuseumPassAccreditation"
+                },
+                "issuerDid": {
+                  "type": "string",
+                  "description": "DID of the accreditation issuer.",
+                  "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
+                },
+                "subjectDid": {
+                  "type": "string",
+                  "description": "DID of the accreditation holder/subject.",
+                  "example": "did:cheqd:testnet:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+                },
+                "schemas": {
+                  "type": "array",
+                  "description": "List of schemas associated with the accreditation.",
+                  "items": {
+                    "$ref": "#/components/schemas/SchemaUrl"
+                  }
+                },
+                "expirationDate": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Expiration date of the accreditation.",
+                  "example": "2025-12-31T23:59:59Z"
+                },
+                "status": {
+                  "type": "string",
+                  "description": "Current status of the accreditation.",
+                  "enum": [
+                    "active",
+                    "revoked",
+                    "expired"
+                  ],
+                  "example": "active"
+                }
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -2884,6 +2946,65 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RevocationResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/accreditation/list": {
+      "get": {
+        "tags": [
+          "Trust Registries"
+        ],
+        "summary": "Fetch Verifiable Accreditations for DIDs associated with an account.",
+        "description": "This endpoint returns the list of Verifiable Accreditations created by the account.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "network",
+            "description": "Filter Accreditations by the network published.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ]
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "accreditationType",
+            "description": "Select the type of accreditation to be issued.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "authorize",
+                "accredit",
+                "attest"
+              ]
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAccreditationResult"
                 }
               }
             }

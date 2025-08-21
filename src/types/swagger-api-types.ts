@@ -1662,4 +1662,51 @@
  *         error:
  *           type: string
  *           example: Unauthorized Error
+ *     ListAccreditationResult:
+ *       type: object
+ *       properties:
+ *         total:
+ *           type: number
+ *           description: Total number of accreditations.
+ *           example: 5
+ *         accreditations:
+ *           type: array
+ *           description: List of accreditations.
+ *           items:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *                 description: Unique identifier of the accreditation.
+ *                 example: did:cheqd:testnet:12345678-90ab-cdef-1234-567890abcdef
+ *               name:
+ *                 type: string
+ *                 description: Name of the accreditation.
+ *                 example: MuseumPassAccreditation
+ *               issuerDid:
+ *                 type: string
+ *                 description: DID of the accreditation issuer.
+ *                 example: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
+ *               subjectDid:
+ *                 type: string
+ *                 description: DID of the accreditation holder/subject.
+ *                 example: did:cheqd:testnet:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
+ *               schemas:
+ *                 type: array
+ *                 description: List of schemas associated with the accreditation.
+ *                 items:
+ *                   $ref: '#/components/schemas/SchemaUrl'
+ *               expirationDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Expiration date of the accreditation.
+ *                 example: 2025-12-31T23:59:59Z
+ *               status:
+ *                 type: string
+ *                 description: Current status of the accreditation.
+ *                 enum:
+ *                   - active
+ *                   - revoked
+ *                   - expired
+ *                 example: active
  */
