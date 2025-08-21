@@ -22,6 +22,10 @@
     {
       "url": "https://studio-api-staging.cheqd.net",
       "description": "Staging server for testing"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Local server for testing"
     }
   ],
   "tags": [
@@ -2962,7 +2966,7 @@
         }
       }
     },
-    "/accreditation/list": {
+    "/trust-registry/accreditation/list": {
       "get": {
         "tags": [
           "Trust Registries"
