@@ -65,7 +65,7 @@ export class PriceController {
 				prices: prices,
 			} satisfies PriceListResponseBody);
 		} catch (error) {
-			return response.status(500).json({
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies PriceListUnsuccessfulResponseBody);
 		}

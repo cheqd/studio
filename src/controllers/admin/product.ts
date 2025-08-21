@@ -112,7 +112,7 @@ export class ProductController {
 
 			return response.status(StatusCodes.OK).json({ products } satisfies ProductListResponseBody);
 		} catch (error) {
-			return response.status(500).json({
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies ProductListUnsuccessfulResponseBody);
 		}

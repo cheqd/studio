@@ -179,8 +179,7 @@ export class SubscriptionController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 
-	@validate
-	async create(request: Request, response: Response) {
+	create = async (request: Request, response: Response) => {
 		const body: SubscriptionCreateRequestBody = request.body;
 
 		// ensure trials don't succeed 30 days (default)
