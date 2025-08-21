@@ -2996,6 +2996,14 @@
               ]
             },
             "required": true
+          },
+          {
+            "in": "query",
+            "name": "did",
+            "description": "Filter accreditations published by a DID",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {

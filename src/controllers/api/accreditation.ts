@@ -10,6 +10,7 @@ import type {
 	SuspendAccreditationResponseBody,
 	UnsuspendAccreditationResponseBody,
 	VerifyAccreditationRequestBody,
+    VerfifiableAccreditation,
 } from '../../types/accreditation.js';
 import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '../../types/track.js';
 import type { CredentialRequest, UnsuccesfulRevokeCredentialResponseBody } from '../../types/credential.js';
@@ -31,7 +32,6 @@ import { validate } from '../validator/decorator.js';
 import { constructDidUrl, parseDidFromDidUrl } from '../../helpers/helpers.js';
 import { CheqdW3CVerifiableCredential } from '../../services/w3c-credential.js';
 import { StatusListType } from '../../types/credential-status.js';
-import { ResourceMetadataResponse } from '../../types/resource.js';
 import { CheqdNetwork } from '@cheqd/sdk';
 
 export class AccreditationController {
@@ -152,6 +152,7 @@ export class AccreditationController {
 			.isIn([CheqdNetwork.Mainnet, CheqdNetwork.Testnet])
 			.withMessage('Invalid network')
 			.bail(),
+        query('did').optional().isDID().bail(),
 	];
 
 	/**
@@ -824,6 +825,11 @@ export class AccreditationController {
 	 *              - accredit
 	 *              - attest
 	 *         required: true
+	 *       - in: query
+	 *         name: did
+	 *         description: Filter accreditations published by a DID
+	 *         schema:
+	 *           type: string
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -839,7 +845,7 @@ export class AccreditationController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async listAccreditations(request: Request, response: Response) {
-		const { network, accreditationType } = request.query as any;
+		const { network, accreditationType, did } = request.query as any;
 
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = response.locals.customer
@@ -866,36 +872,29 @@ export class AccreditationController {
 		try {
 			// Fetch resources of accreditation resourceType associated with the account
 			const { resources } = await identityServiceStrategySetup.agent.listResources(
-				{ network, resourceType },
+				{ network, resourceType, did },
 				response.locals.customer
 			);
 
-			// Remove duplicates by resourceName
-			const uniqueAccreditations = Object.values(
-				resources.reduce((acc: Record<string, ResourceMetadataResponse>, curr: ResourceMetadataResponse) => {
-					if (curr.resourceName && !acc[curr.resourceName]) {
-						acc[curr.resourceName] = curr;
-					}
-					return acc;
-				}, {})
-			);
-
 			// Build resource URLs for resolution
-			const resourceUrls = uniqueAccreditations.map(
+			const resourceUrls = resources.map(
 				(item) => `${item.did}?resourceName=${item.resourceName}&resourceType=${item.resourceType}`
 			);
 
+            // remove duplicates of resourceUrls
+            const uniqueResourceUrls = Array.from(new Set(resourceUrls));
+
 			// Resolve resources to get full accreditation details
 			const resolvedResources = await Promise.all(
-				resourceUrls.map((url) => identityServiceStrategySetup.agent.resolve(url))
+				uniqueResourceUrls.map((url) => identityServiceStrategySetup.agent.resolve(url))
 			);
 
 			// Collect valid accreditations
-			const accreditations: CheqdW3CVerifiableCredential[] = [];
+			const accreditations: VerfifiableAccreditation[] = [];
 			for (const res of resolvedResources) {
 				const resource = await res.json();
 				if (!resource.dereferencingMetadata) {
-					accreditations.push(resource as CheqdW3CVerifiableCredential);
+					accreditations.push(resource as VerfifiableAccreditation);
 				}
 			}
 
