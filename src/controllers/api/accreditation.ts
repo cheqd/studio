@@ -800,7 +800,7 @@ export class AccreditationController {
 	/**
 	 * @openapi
 	 *
-	 * /accreditation/list:
+	 * /trust-registry/accreditation/list:
 	 *   get:
 	 *     tags: [ Trust Registries ]
 	 *     summary: Fetch Verifiable Accreditations for DIDs associated with an account.
