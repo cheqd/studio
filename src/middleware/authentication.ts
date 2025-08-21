@@ -107,7 +107,7 @@ export class Authentication {
 		try {
 			return withLogto({ ...configLogToExpress, scopes: ['roles'] })(request, response, next);
 		} catch (err) {
-			return response.status(500).send({
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
 				authenticated: false,
 				error: `${err}`,
 				customerId: null,
