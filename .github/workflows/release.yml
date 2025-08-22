@@ -16,7 +16,7 @@ jobs:
             RELEASE_VERSION: ${{ steps.set-version.outputs.RELEASE_VERSION }}
 
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
               with:
                   fetch-depth: 0
                   persist-credentials: false
@@ -63,7 +63,7 @@ jobs:
             url: https://studio-api.cheqd.net
 
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
               with:
                   persist-credentials: false
 
