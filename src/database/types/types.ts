@@ -16,6 +16,8 @@ import { APIKeyEntity } from '../entities/api.key.entity.js';
 import { IdentifierEntity } from '../entities/identifier.entity.js';
 import { CoinEntity } from '../entities/coin.entity.js';
 import { SubscriptionEntity } from '../entities/subscription.entity.js';
+import { CredentialProviderEntity } from '../entities/credential-provider.entity.js';
+import { ProviderConfigurationEntity } from '../entities/provider-configuration.entity.js';
 
 import { CreatePaymentTable1695740345977 } from '../migrations/archive/CreatePaymentTable.js';
 import { CreateOperationTable1695740345977 } from '../migrations/archive/CreateOperationTable.js';
@@ -44,7 +46,7 @@ import { IndexPaymentAccountTable1746513196390 } from '../migrations/archive/Ind
 import { InsertFingerprintAPIKeyTable1746780465032 } from '../migrations/archive/InsertFingerprintApiKeyTable.js';
 import { Cleanup1748331341024 } from '../migrations/custom/1748331341024-Cleanup.js';
 import { StudioMigrations1750427001486 } from '../migrations/1750427001486-studio-migrations.js';
-
+import { StudioMigrations1756996499358 } from '../migrations/1756996499358-studio-migrations.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -130,6 +132,7 @@ export class Postgres implements AbstractDatabase {
 				// Add custom migrations
 				Cleanup1748331341024,
 				StudioMigrations1750427001486,
+				StudioMigrations1756996499358,
 			],
 			entities: [
 				...Entities,
@@ -145,6 +148,8 @@ export class Postgres implements AbstractDatabase {
 				APIKeyEntity,
 				CoinEntity,
 				SubscriptionEntity,
+				CredentialProviderEntity,
+				ProviderConfigurationEntity,
 			],
 			logging: ['error', 'info', 'warn'],
 		});

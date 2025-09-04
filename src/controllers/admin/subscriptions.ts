@@ -198,7 +198,7 @@ export class SubscriptionController {
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies SubscriptionCreateUnsuccessfulResponseBody);
 		}
-	}
+	};
 
 	async createCheckoutSession(response: Response, body: SubscriptionCreateRequestBody) {
 		const stripe = response.locals.stripe as Stripe;

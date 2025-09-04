@@ -54,7 +54,7 @@ export class AccreditationAuthRuleProvider extends AuthRuleProvider {
 		this.registerRule('/trust-registry/accreditation/list', 'GET', 'list-accreditation:trust-registry:testnet', {
 			skipNamespace: true,
 		});
-        this.registerRule('/trust-registry/accreditation/list', 'GET', 'list-accreditation:trust-registry:mainnet', {
+		this.registerRule('/trust-registry/accreditation/list', 'GET', 'list-accreditation:trust-registry:mainnet', {
 			skipNamespace: true,
 		});
 	}

@@ -1,0 +1,67 @@
+import { ProviderService } from '../../services/api/provider.service.js';
+export async function seedProviders() {
+	const providerService = ProviderService.instance;
+
+	const defaultProviders = [
+		{
+			providerId: 'studio',
+			name: 'cheqd Studio',
+			description: 'Native cheqd credential issuance using Studio API',
+			providerType: 'credential-all',
+			supportedFormats: ['json-ld', 'jwt-vc'],
+			supportedProtocols: ['direct'],
+			capabilities: ['issue', 'revoke', 'suspend', 'reinstate', 'verify'],
+			logoUrl: '/cheqd-logo-favicon.png',
+			documentationUrl: 'https://docs.cheqd.io',
+			apiUrl: process.env.APPLICATION_BASE_URL || 'http://localhost:3000',
+		},
+		{
+			providerId: 'dock',
+			name: 'Dock Truvera',
+			description: 'Dock Labs Truvera credential issuance platform',
+			providerType: 'credential-all',
+			supportedFormats: ['json-ld', 'sd-jwt-vc'],
+			supportedProtocols: ['direct', 'openid4vc'],
+			capabilities: ['issue', 'revoke', 'verify', 'batch-issue'],
+			logoUrl: '/dock-logo.png',
+			documentationUrl: 'https://docs.truvera.io/truvera-api',
+			apiUrl: 'https://api-testnet.truvera.io',
+		},
+		{
+			providerId: 'hovi',
+			name: 'HOVI',
+			description: 'HOVI credential issuance and verification platform',
+			providerType: 'credential-all',
+			supportedFormats: ['json-ld', 'jwt-vc', 'sd-jwt-vc'],
+			supportedProtocols: ['direct', 'didcomm', 'openid4vc'],
+			capabilities: ['issue', 'revoke', 'suspend', 'reinstate', 'verify', 'batch-issue'],
+			logoUrl: '/hovi-logo.png',
+			documentationUrl: 'https://docs.hovi.id',
+			apiUrl: 'https://api.hovi.id',
+		},
+		{
+			providerId: 'paradym',
+			name: 'Paradym',
+			description: 'Animo Paradym credential management platform',
+			providerType: 'credential-all',
+			supportedFormats: ['json-ld', 'anoncreds'],
+			supportedProtocols: ['didcomm', 'openid4vc'],
+			capabilities: ['issue', 'revoke', 'verify', 'connection-management'],
+			logoUrl: '/paradym-logo.png',
+			documentationUrl: 'https://docs.paradym.id/api-and-dashboard',
+			apiUrl: 'https://api.paradym.id',
+		},
+	];
+
+	for (const providerData of defaultProviders) {
+		try {
+			const existing = await providerService.getProvider(providerData.providerId);
+			if (!existing) {
+				await providerService.createProvider(providerData);
+				console.log(`✅ Seeded provider: ${providerData.name}`);
+			}
+		} catch (error) {
+			console.error(`❌ Failed to seed provider ${providerData.name}:`, error);
+		}
+	}
+}

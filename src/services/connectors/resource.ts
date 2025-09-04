@@ -51,29 +51,33 @@ export class ResourceConnector {
 			version: resourceVersion,
 			alsoKnownAs,
 		};
-		const isPublished = await identityServiceStrategySetup.agent.createResource(did.split(':')[2], resourcePayload, customer);
+		const isPublished = await identityServiceStrategySetup.agent.createResource(
+			did.split(':')[2],
+			resourcePayload,
+			customer
+		);
 
-        if(isPublished) {
-            const url = new URL(
-                `${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?` +
-                    `resourceId=${resourcePayload.id}&resourceMetadata=true`
-            );
-            const didDereferencing = (await (await fetch(url)).json()) as DIDMetadataDereferencingResult;
-            const resource = didDereferencing.contentMetadata.linkedResourceMetadata[0];
+		if (isPublished) {
+			const url = new URL(
+				`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?` +
+					`resourceId=${resourcePayload.id}&resourceMetadata=true`
+			);
+			const didDereferencing = (await (await fetch(url)).json()) as DIDMetadataDereferencingResult;
+			const resource = didDereferencing.contentMetadata.linkedResourceMetadata[0];
 
-            // track resource creation
-            const trackResourceInfo = {
-                category: OperationCategoryNameEnum.RESOURCE,
-                name: OperationNameEnum.RESOURCE_CREATE,
-                customer: customer,
-                data: {
-                    did,
-                    resource: resource,
-                } satisfies IResourceTrack,
-            } as ITrackOperation;
+			// track resource creation
+			const trackResourceInfo = {
+				category: OperationCategoryNameEnum.RESOURCE,
+				name: OperationNameEnum.RESOURCE_CREATE,
+				customer: customer,
+				data: {
+					did,
+					resource: resource,
+				} satisfies IResourceTrack,
+			} as ITrackOperation;
 
-            // track resource creation
-            eventTracker.emit('track', trackResourceInfo);
-        }
+			// track resource creation
+			eventTracker.emit('track', trackResourceInfo);
+		}
 	}
 }
