@@ -4743,6 +4743,59 @@
             "description": "Provider configuration"
           }
         }
+      },
+      "put": {
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Update provider configuration",
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "apiEndpoint": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "API endpoint URL"
+                  },
+                  "webhookUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Webhook URL for notifications"
+                  },
+                  "defaultSettings": {
+                    "type": "object",
+                    "description": "Provider-specific default settings"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Configuration updated successfully"
+          },
+          "400": {
+            "description": "Invalid configuration data"
+          },
+          "404": {
+            "description": "Provider configuration not found"
+          }
+        }
       }
     },
     "/providers/{providerId}/activate": {

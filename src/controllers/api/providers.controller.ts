@@ -192,6 +192,118 @@ export class ProvidersController {
 
 	/**
 	 * @openapi
+	 * /providers/{providerId}/configuration:
+	 *   put:
+	 *     tags: [Providers]
+	 *     summary: Update provider configuration
+	 *     parameters:
+	 *       - name: providerId
+	 *         in: path
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *     requestBody:
+	 *       required: true
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+	 *             properties:
+	 *               apiEndpoint:
+	 *                 type: string
+	 *                 format: uri
+	 *                 description: API endpoint URL
+	 *               webhookUrl:
+	 *                 type: string
+	 *                 format: uri
+	 *                 description: Webhook URL for notifications
+	 *               defaultSettings:
+	 *                 type: object
+	 *                 description: Provider-specific default settings
+	 *     responses:
+	 *       200:
+	 *         description: Configuration updated successfully
+	 *       400:
+	 *         description: Invalid configuration data
+	 *       404:
+	 *         description: Provider configuration not found
+	 */
+	async updateProviderConfiguration(req: Request, res: Response) {
+		try {
+			const customer = res.locals.customer as CustomerEntity;
+			const { providerId } = req.params;
+			const { apiEndpoint, webhookUrl, defaultSettings } = req.body;
+
+			// Validate input
+			if (apiEndpoint && typeof apiEndpoint !== 'string') {
+				return res.status(StatusCodes.BAD_REQUEST).json({
+					error: 'Invalid API endpoint: must be a string',
+				});
+			}
+
+			if (webhookUrl && typeof webhookUrl !== 'string') {
+				return res.status(StatusCodes.BAD_REQUEST).json({
+					error: 'Invalid webhook URL: must be a string',
+				});
+			}
+
+			if(process.env.APPLICATION_BASE_URL?.includes('localhost')) {
+				console.warn('Skipping URL validation in local development environment');
+			} else {
+				if (apiEndpoint && !apiEndpoint.startsWith('https://')) {
+					return res.status(StatusCodes.BAD_REQUEST).json({
+						error: 'API endpoint must be a valid HTTPS URL',
+					});
+				}
+
+				if (webhookUrl && webhookUrl.trim() && !webhookUrl.startsWith('https://')) {
+					return res.status(StatusCodes.BAD_REQUEST).json({
+						error: 'Webhook URL must be a valid HTTPS URL',
+					});
+				}
+			}
+
+			const updatedConfig = await ProviderService.instance.updateProviderConfiguration(
+				customer.customerId,
+				providerId,
+				{
+					apiEndpoint: apiEndpoint?.trim() || undefined,
+					webhookUrl: webhookUrl?.trim() || undefined,
+					defaultSettings: defaultSettings || undefined,
+				}
+			);
+
+			const safeConfig = {
+				configId: updatedConfig.configId,
+				providerId: updatedConfig.providerId,
+				apiEndpoint: updatedConfig.apiEndpoint,
+				webhookUrl: updatedConfig.webhookUrl,
+				validated: updatedConfig.validated,
+				validatedAt: updatedConfig.validatedAt,
+				active: updatedConfig.active,
+				capabilities: updatedConfig.capabilities,
+				defaultSettings: updatedConfig.defaultSettings,
+				hasApiKey: !!updatedConfig.encryptedApiKey,
+				updatedAt: updatedConfig.updatedAt,
+			};
+
+			return res.status(StatusCodes.OK).json({
+				message: 'Provider configuration updated successfully',
+				data: safeConfig,
+			});
+		} catch (error) {
+			const status = (error as Error)?.message.includes('not found')
+				? StatusCodes.NOT_FOUND
+				: StatusCodes.BAD_REQUEST;
+
+			return res.status(status).json({
+				error: `Configuration update failed: ${(error as Error)?.message || error}`,
+			});
+		}
+	}
+
+	/**
+	 * @openapi
 	 * /providers/{providerId}/test:
 	 *   post:
 	 *     tags: [Providers]

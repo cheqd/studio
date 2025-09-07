@@ -144,36 +144,38 @@ export class ProviderService {
 		});
 	}
 
-	async updateConfiguration(
-		configId: string,
+	async updateProviderConfiguration(
+		customerId: string,
+		providerId: string,
 		updates: Partial<{
 			apiEndpoint: string;
 			webhookUrl: string;
-			capabilities: string[];
 			defaultSettings: any;
-			active: boolean;
-			validated: boolean;
 		}>
 	): Promise<ProviderConfigurationEntity> {
-		const config = await this.configRepository.findOne({
-			where: { configId },
-			relations: ['provider', 'customer'],
-		});
+		const config = await this.getProviderConfiguration(customerId, providerId);
 
 		if (!config) {
-			throw new Error(`Configuration ${configId} not found`);
+			throw new Error(`Provider configuration not found for provider ${providerId}`);
 		}
 
 		// Update fields
-		if (updates.apiEndpoint) config.apiEndpoint = updates.apiEndpoint;
-		if (updates.webhookUrl !== undefined) config.webhookUrl = updates.webhookUrl;
-		if (updates.capabilities) config.capabilities = updates.capabilities;
-		if (updates.defaultSettings) config.defaultSettings = updates.defaultSettings;
-		if (updates.active !== undefined) config.active = updates.active;
-		if (updates.validated !== undefined) {
-			config.validated = updates.validated;
-			config.validatedAt = updates.validated ? new Date() : undefined;
+		if (updates.apiEndpoint !== undefined) {
+			config.apiEndpoint = updates.apiEndpoint;
 		}
+		if (updates.webhookUrl !== undefined) {
+			config.webhookUrl = updates.webhookUrl;
+		}
+		if (updates.defaultSettings !== undefined) {
+			config.defaultSettings = { ...config.defaultSettings, ...updates.defaultSettings };
+		}
+
+		// Mark as updated
+		config.updatedAt = new Date();
+
+		// Reset validation status when configuration changes
+		config.validated = false;
+		config.validatedAt = undefined;
 
 		return await this.configRepository.save(config);
 	}
@@ -340,24 +342,35 @@ export class ProviderService {
 		if (!config) {
 			return { success: false, message: 'Provider not activated for this customer' };
 		}
-
+		let result: { success: boolean; message: string } = { success: false, message: 'Not tested' };
 		try {
 			const apiKey = await this.getDecryptedApiKey(config);
 			switch (providerId) {
 				case 'studio':
-					return await this.testStudioConnection(apiKey, config.apiEndpoint);
+					result = await this.testStudioConnection(apiKey, config.apiEndpoint);
+					break;
 				case 'dock':
-					return await DockApiService.instance.testConnection(apiKey, config.defaultSettings?.subaccountId);
+					result = await DockApiService.instance.testConnection(apiKey, config.defaultSettings?.subaccountId);
+					break;
 				case 'hovi':
-					return await HoviApiService.instance.testConnection(apiKey, config.defaultSettings?.tenantId);
+					result = await HoviApiService.instance.testConnection(apiKey, config.defaultSettings?.tenantId);
+					break;
 				case 'paradym':
-					return await ParadymApiService.instance.testConnection(
+					result = await ParadymApiService.instance.testConnection(
 						apiKey,
 						config.defaultSettings?.organizationId
 					);
+					break;
 				default:
 					return { success: false, message: `Test connection not implemented for ${providerId}` };
 			}
+			if (result.success) {
+				// Update configuration as validated
+				config.validated = true;
+				config.validatedAt = new Date();
+				await this.configRepository.save(config);
+			}
+			return result;
 		} catch (error) {
 			return { success: false, message: `Connection test failed: ${(error as Error).message}` };
 		}

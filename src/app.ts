@@ -254,6 +254,7 @@ class App {
 		app.get('/providers', new ProvidersController().getProviders);
 		app.get('/providers/activated', new ProvidersController().getActiveProviders);
 		app.get('/providers/:providerId/configuration', new ProvidersController().getProviderConfiguration);
+		app.put('/providers/:providerId/configuration', new ProvidersController().updateProviderConfiguration);
 		app.post('/providers/:providerId/activate', new ProvidersController().activateProvider);
 		app.post('/providers/:providerId/test', new ProvidersController().testConnection);
 		app.delete('/providers/:providerId', new ProvidersController().removeProvider);
