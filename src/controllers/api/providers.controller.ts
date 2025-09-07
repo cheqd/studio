@@ -247,7 +247,7 @@ export class ProvidersController {
 				});
 			}
 
-			if(process.env.APPLICATION_BASE_URL?.includes('localhost')) {
+			if (process.env.APPLICATION_BASE_URL?.includes('localhost')) {
 				console.warn('Skipping URL validation in local development environment');
 			} else {
 				if (apiEndpoint && !apiEndpoint.startsWith('https://')) {
