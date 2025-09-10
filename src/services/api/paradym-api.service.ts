@@ -1,14 +1,9 @@
 import * as dotenv from 'dotenv';
-import { ProviderService } from './provider.service.js';
+import { BaseProviderService } from './base-provider.service.js';
+import { ConnectionTestResult, ProviderAccountResponse, ProviderApiKeyResponse } from '../../types/provider.types.js';
+import { ProviderConfigurationEntity } from '../../database/entities/provider-configuration.entity.js';
 
 dotenv.config();
-
-interface ParadymOrganizationResponse {
-	id: string;
-	name: string;
-	description: string;
-	createdAt: string;
-}
 
 interface ParadymApiKeyResponse {
 	id: string;
@@ -18,25 +13,37 @@ interface ParadymApiKeyResponse {
 	createdAt: string;
 }
 
-export class ParadymApiService {
-	private masterApiKey: string;
-
+export class ParadymApiService extends BaseProviderService {
 	public static instance = new ParadymApiService();
 
 	constructor() {
-		this.masterApiKey = process.env.PARADYM_MASTER_API_KEY || '';
-
-		if (!this.masterApiKey) {
-			throw new Error('PARADYM_MASTER_API_KEY environment variable is required');
-		}
+		super('PARADYM_MASTER_API_KEY');
 	}
 
-	private async getBaseUrl(): Promise<string> {
-		const provider = await ProviderService.instance.getProvider('paradym');
-		return provider?.apiUrl || 'https://api.paradym.id';
+	getProviderId(): string {
+		return 'paradym';
 	}
 
-	async createOrganization(customerId: string, customerName: string): Promise<ParadymOrganizationResponse> {
+	protected getDefaultApiUrl(): string {
+		return 'https://api.paradym.id';
+	}
+
+	protected extractAccountId(config: ProviderConfigurationEntity): string {
+		return config.defaultSettings?.organizationId || '';
+	}
+
+	protected getProviderSpecificSettings(
+		account: ProviderAccountResponse,
+		apiKey: ProviderApiKeyResponse
+	): Record<string, any> {
+		return {
+			organizationId: account.id,
+			organizationName: account.name,
+			paradymApiKeyId: apiKey.id,
+		};
+	}
+
+	protected async createAccount(customerId: string, customerName?: string): Promise<ProviderAccountResponse> {
 		const baseUrl = await this.getBaseUrl();
 		const response = await fetch(`${baseUrl}/organizations`, {
 			method: 'POST',
@@ -59,16 +66,16 @@ export class ParadymApiService {
 		return await response.json();
 	}
 
-	async createApiKeyForOrganization(organizationId: string, customerName: string): Promise<ParadymApiKeyResponse> {
+	protected async createApiKey(accountId: string, customerName?: string): Promise<ProviderApiKeyResponse> {
 		const baseUrl = await this.getBaseUrl();
-		const response = await fetch(`${baseUrl}/organizations/${organizationId}/api-keys`, {
+		const response = await fetch(`${baseUrl}/organizations/${accountId}/api-keys`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 				Authorization: `Bearer ${this.masterApiKey}`,
 			},
 			body: JSON.stringify({
-				name: `API Key for ${customerName}`,
+				name: `API Key for ${customerName || 'Customer'}`,
 				scopes: ['credentials:read', 'credentials:write', 'connections:read'],
 			}),
 		});
@@ -78,12 +85,19 @@ export class ParadymApiService {
 			throw new Error(`Failed to create Paradym API key: ${response.status} ${error}`);
 		}
 
-		return await response.json();
+		const paradymResponse: ParadymApiKeyResponse = await response.json();
+		return {
+			id: paradymResponse.id,
+			key: paradymResponse.key,
+			name: paradymResponse.name,
+			scopes: paradymResponse.scopes,
+			createdAt: paradymResponse.createdAt,
+		};
 	}
 
-	async deleteOrganization(organizationId: string): Promise<void> {
+	protected async deleteAccount(accountId: string): Promise<void> {
 		const baseUrl = await this.getBaseUrl();
-		const response = await fetch(`${baseUrl}/organizations/${organizationId}`, {
+		const response = await fetch(`${baseUrl}/organizations/${accountId}`, {
 			method: 'DELETE',
 			headers: {
 				Authorization: `Bearer ${this.masterApiKey}`,
@@ -96,10 +110,14 @@ export class ParadymApiService {
 		}
 	}
 
-	async testConnection(apiKey: string, organizationId: string): Promise<{ success: boolean; message: string }> {
+	protected async testConnection(
+		apiKey: string,
+		accountId: string,
+		config?: ProviderConfigurationEntity
+	): Promise<ConnectionTestResult> {
 		try {
-			const baseUrl = await this.getBaseUrl();
-			const response = await fetch(`${baseUrl}/organizations/${organizationId}`, {
+			const baseUrl = config ? this.getBaseUrlFromConfig(config) : await this.getBaseUrl();
+			const response = await fetch(`${baseUrl}/organizations/${accountId}`, {
 				headers: { Authorization: `Bearer ${apiKey}` },
 			});
 			return response.ok

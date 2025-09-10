@@ -1,14 +1,9 @@
 import * as dotenv from 'dotenv';
-import { ProviderService } from './provider.service.js';
+import { BaseProviderService } from './base-provider.service.js';
+import { ConnectionTestResult, ProviderAccountResponse, ProviderApiKeyResponse } from '../../types/provider.types.js';
+import { ProviderConfigurationEntity } from '../../database/entities/provider-configuration.entity.js';
 
 dotenv.config();
-
-interface HoviTenantResponse {
-	id: string;
-	name: string;
-	description: string;
-	createdAt: string;
-}
 
 interface HoviApiKeyResponse {
 	id: string;
@@ -18,25 +13,37 @@ interface HoviApiKeyResponse {
 	createdAt: string;
 }
 
-export class HoviApiService {
-	private masterApiKey: string;
-
+export class HoviApiService extends BaseProviderService {
 	public static instance = new HoviApiService();
 
 	constructor() {
-		this.masterApiKey = process.env.HOVI_MASTER_API_KEY || '';
-
-		if (!this.masterApiKey) {
-			throw new Error('HOVI_MASTER_API_KEY environment variable is required');
-		}
+		super('HOVI_MASTER_API_KEY');
 	}
 
-	private async getBaseUrl(): Promise<string> {
-		const provider = await ProviderService.instance.getProvider('hovi');
-		return provider?.apiUrl || 'https://api.hovi.id';
+	getProviderId(): string {
+		return 'hovi';
 	}
 
-	async createTenant(customerId: string, customerName: string): Promise<HoviTenantResponse> {
+	protected getDefaultApiUrl(): string {
+		return 'https://api.hovi.id';
+	}
+
+	protected extractAccountId(config: ProviderConfigurationEntity): string {
+		return config.defaultSettings?.tenantId || '';
+	}
+
+	protected getProviderSpecificSettings(
+		account: ProviderAccountResponse,
+		apiKey: ProviderApiKeyResponse
+	): Record<string, any> {
+		return {
+			tenantId: account.id,
+			tenantName: account.name,
+			hoviApiKeyId: apiKey.id,
+		};
+	}
+
+	protected async createAccount(customerId: string, customerName?: string): Promise<ProviderAccountResponse> {
 		const baseUrl = await this.getBaseUrl();
 		const response = await fetch(`${baseUrl}/tenants`, {
 			method: 'POST',
@@ -59,16 +66,16 @@ export class HoviApiService {
 		return await response.json();
 	}
 
-	async createApiKeyForTenant(tenantId: string, customerName: string): Promise<HoviApiKeyResponse> {
+	protected async createApiKey(accountId: string, customerName?: string): Promise<ProviderApiKeyResponse> {
 		const baseUrl = await this.getBaseUrl();
-		const response = await fetch(`${baseUrl}/tenants/${tenantId}/keys`, {
+		const response = await fetch(`${baseUrl}/tenants/${accountId}/keys`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 				Authorization: `Bearer ${this.masterApiKey}`,
 			},
 			body: JSON.stringify({
-				name: `API Key for ${customerName}`,
+				name: `API Key for ${customerName || 'Customer'}`,
 				permissions: ['read', 'write'],
 			}),
 		});
@@ -78,12 +85,19 @@ export class HoviApiService {
 			throw new Error(`Failed to create HOVI API key: ${response.status} ${error}`);
 		}
 
-		return await response.json();
+		const hoviResponse: HoviApiKeyResponse = await response.json();
+		return {
+			id: hoviResponse.id,
+			key: hoviResponse.key,
+			name: hoviResponse.name,
+			permissions: hoviResponse.permissions,
+			createdAt: hoviResponse.createdAt,
+		};
 	}
 
-	async deleteTenant(tenantId: string): Promise<void> {
+	protected async deleteAccount(accountId: string): Promise<void> {
 		const baseUrl = await this.getBaseUrl();
-		const response = await fetch(`${baseUrl}/tenants/${tenantId}`, {
+		const response = await fetch(`${baseUrl}/tenants/${accountId}`, {
 			method: 'DELETE',
 			headers: {
 				Authorization: `Bearer ${this.masterApiKey}`,
@@ -96,10 +110,14 @@ export class HoviApiService {
 		}
 	}
 
-	async testConnection(apiKey: string, tenantId: string): Promise<{ success: boolean; message: string }> {
+	protected async testConnection(
+		apiKey: string,
+		accountId: string,
+		config?: ProviderConfigurationEntity
+	): Promise<ConnectionTestResult> {
 		try {
-			const baseUrl = await this.getBaseUrl();
-			const response = await fetch(`${baseUrl}/tenants/${tenantId}`, {
+			const baseUrl = config ? this.getBaseUrlFromConfig(config) : await this.getBaseUrl();
+			const response = await fetch(`${baseUrl}/tenants/${accountId}`, {
 				headers: { Authorization: `Bearer ${apiKey}` },
 			});
 			return response.ok

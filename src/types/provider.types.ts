@@ -1,81 +1,38 @@
-// src/types/provider.types.ts
-export interface ProviderConfiguration {
-	configId?: string;
-	providerId: string;
-	apiKey: string;
-	apiEndpoint: string;
-	webhookUrl?: string;
-	capabilities?: string[];
-	defaultSettings?: any;
-	validated?: boolean;
-	active?: boolean;
-}
+import { CustomerEntity } from '../database/entities/customer.entity.js';
+import { ProviderConfigurationEntity } from '../database/entities/provider-configuration.entity.js';
 
-export interface ProviderInfo {
-	providerId: string;
+export interface ProviderAccountResponse {
+	id: string;
 	name: string;
-	description?: string;
-	providerType: ProviderType;
-	supportedFormats: CredentialFormat[];
-	supportedProtocols: IssuanceProtocol[];
-	capabilities: ProviderCapability[];
-	logoUrl?: string;
-	documentationUrl?: string;
-	enabled: boolean;
+	[key: string]: any; // Allow for provider-specific fields
 }
 
-export enum ProviderType {
-	STUDIO = 'studio',
-	DOCK = 'dock',
-	HOVI = 'hovi',
-	PARADYM = 'paradym',
+export interface ProviderApiKeyResponse {
+	id: string;
+	key: string;
+	name?: string;
+	permissions?: string[];
+	scopes?: string[];
+	[key: string]: any; // Allow for provider-specific fields
 }
 
-export enum CredentialFormat {
-	JSON_LD = 'json-ld',
-	JWT_VC = 'jwt-vc',
-	SD_JWT_VC = 'sd-jwt-vc',
-	ANONCREDS = 'anoncreds',
+export interface ConnectionTestResult {
+	success: boolean;
+	message: string;
 }
 
-export enum IssuanceProtocol {
-	DIRECT = 'direct',
-	DIDCOMM = 'didcomm',
-	OPENID4VC = 'openid4vc',
+export interface ProviderActivationResult {
+	apiKey: string;
+	settings: any;
 }
 
-export enum ProviderCapability {
-	ISSUE = 'issue',
-	REVOKE = 'revoke',
-	SUSPEND = 'suspend',
-	REINSTATE = 'reinstate',
-	VERIFY = 'verify',
-	BATCH_ISSUE = 'batch-issue',
-	CONNECTION_MANAGEMENT = 'connection-management',
-	TEMPLATE_MANAGEMENT = 'template-management',
-}
+// Clean interface - only exposes high-level operations
+export interface IProviderService {
+	// Core provider identity
+	getProviderId(): string;
 
-export interface ValidationResult {
-	valid: boolean;
-	errors: string[];
-	warnings: string[];
-	responseTime?: number;
-	capabilities?: string[];
-}
-
-export interface ConfiguredProvider {
-	configId: string;
-	providerId: string;
-	providerName: string;
-	providerType: ProviderType;
-	apiEndpoint: string;
-	webhookUrl?: string;
-	validated: boolean;
-	validatedAt?: Date;
-	active: boolean;
-	capabilities: string[];
-	defaultSettings?: any;
-	createdAt: Date;
-	updatedAt?: Date;
-	lastHealthCheck?: Date;
+	// High-level provider operations (what consumers actually need)
+	activateProvider(customer: CustomerEntity): Promise<ProviderActivationResult>;
+	testProviderConfiguration(config: ProviderConfigurationEntity): Promise<ConnectionTestResult>;
+	cleanupProviderResources(config: ProviderConfigurationEntity): Promise<void>;
 }

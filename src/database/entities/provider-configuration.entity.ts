@@ -48,22 +48,10 @@ export class ProviderConfigurationEntity {
 	validatedAt?: Date;
 
 	@Column({
-		type: 'timestamptz',
-		nullable: true,
-	})
-	lastHealthCheck?: Date;
-
-	@Column({
 		type: 'boolean',
 		default: false,
 	})
 	active!: boolean;
-
-	@Column({
-		type: 'json',
-		nullable: true,
-	})
-	capabilities!: string[];
 
 	@Column({
 		type: 'json',
@@ -108,7 +96,6 @@ export class ProviderConfigurationEntity {
 		customer: CustomerEntity,
 		provider: CredentialProviderEntity,
 		webhookUrl?: string,
-		capabilities: string[] = [],
 		defaultSettings?: any
 	) {
 		this.providerId = providerId;
@@ -117,7 +104,6 @@ export class ProviderConfigurationEntity {
 		this.customer = customer;
 		this.provider = provider;
 		this.webhookUrl = webhookUrl;
-		this.capabilities = capabilities;
 		this.defaultSettings = defaultSettings;
 	}
 }

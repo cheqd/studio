@@ -1,39 +1,47 @@
 import * as dotenv from 'dotenv';
-import { ProviderService } from './provider.service.js';
+import { BaseProviderService } from './base-provider.service.js';
+import { ConnectionTestResult, ProviderAccountResponse, ProviderApiKeyResponse } from '../../types/provider.types.js';
+import { ProviderConfigurationEntity } from '../../database/entities/provider-configuration.entity.js';
 
 dotenv.config();
-
-interface DockSubaccountResponse {
-	id: string;
-	name: string;
-	parentId: string;
-	createdAt: string;
-}
 
 interface DockApiKeyResponse {
 	id: string;
 	token: string;
 }
 
-export class DockApiService {
-	private masterApiKey: string;
-
+export class DockApiService extends BaseProviderService {
 	public static instance = new DockApiService();
 
 	constructor() {
-		this.masterApiKey = process.env.DOCK_MASTER_API_KEY || '';
-
-		if (!this.masterApiKey) {
-			throw new Error('DOCK_MASTER_API_KEY environment variable is required');
-		}
+		super('DOCK_MASTER_API_KEY');
 	}
 
-	private async getBaseUrl(): Promise<string> {
-		const provider = await ProviderService.instance.getProvider('dock');
-		return provider?.apiUrl || 'https://api-testnet.truvera.io';
+	getProviderId(): string {
+		return 'dock';
 	}
 
-	async createSubaccount(customerId: string): Promise<DockSubaccountResponse> {
+	protected getDefaultApiUrl(): string {
+		return 'https://api-testnet.truvera.io';
+	}
+
+	protected extractAccountId(config: ProviderConfigurationEntity): string {
+		return config.defaultSettings?.subaccountId || '';
+	}
+
+	protected getProviderSpecificSettings(
+		account: ProviderAccountResponse,
+		apiKey: ProviderApiKeyResponse
+	): Record<string, any> {
+		return {
+			subaccountId: account.id,
+			subaccountName: account.name,
+			dockApiKeyId: apiKey.id,
+			parentId: (account as any).parentId,
+		};
+	}
+
+	protected async createAccount(customerId: string): Promise<ProviderAccountResponse> {
 		const baseUrl = await this.getBaseUrl();
 		const response = await fetch(`${baseUrl}/subaccounts`, {
 			method: 'POST',
@@ -55,9 +63,9 @@ export class DockApiService {
 		return await response.json();
 	}
 
-	async createApiKeyForSubaccount(subaccountId: string): Promise<DockApiKeyResponse> {
+	protected async createApiKey(accountId: string): Promise<ProviderApiKeyResponse> {
 		const baseUrl = await this.getBaseUrl();
-		const response = await fetch(`${baseUrl}/subaccounts/${subaccountId}/keys`, {
+		const response = await fetch(`${baseUrl}/subaccounts/${accountId}/keys`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -71,12 +79,16 @@ export class DockApiService {
 			throw new Error(`Failed to create Dock API key: ${response.status} ${error}`);
 		}
 
-		return await response.json();
+		const dockResponse: DockApiKeyResponse = await response.json();
+		return {
+			id: dockResponse.id,
+			key: dockResponse.token,
+		};
 	}
 
-	async deleteSubaccount(subaccountId: string): Promise<void> {
+	protected async deleteAccount(accountId: string): Promise<void> {
 		const baseUrl = await this.getBaseUrl();
-		const response = await fetch(`${baseUrl}/subaccounts/${subaccountId}`, {
+		const response = await fetch(`${baseUrl}/subaccounts/${accountId}`, {
 			method: 'DELETE',
 			headers: {
 				Authorization: `Bearer ${this.masterApiKey}`,
@@ -89,9 +101,13 @@ export class DockApiService {
 		}
 	}
 
-	async testConnection(apiKey: string, subaccountId: string): Promise<{ success: boolean; message: string }> {
+	protected async testConnection(
+		apiKey: string,
+		accountId: string,
+		config?: ProviderConfigurationEntity
+	): Promise<ConnectionTestResult> {
 		try {
-			const baseUrl = await this.getBaseUrl();
+			const baseUrl = config ? this.getBaseUrlFromConfig(config) : await this.getBaseUrl();
 			const response = await fetch(`${baseUrl}/subaccounts`, {
 				headers: { Authorization: `Bearer ${apiKey}` },
 			});

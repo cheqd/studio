@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class StudioMigrations1756996499358 implements MigrationInterface {
-	name = 'StudioMigrations1756996499358';
+export class StudioMigrations1757514441385 implements MigrationInterface {
+	name = 'StudioMigrations1757514441385';
 
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		await queryRunner.query(
-			`CREATE TABLE "providerConfiguration" ("configId" uuid NOT NULL DEFAULT uuid_generate_v4(), "providerId" character varying NOT NULL, "encryptedApiKey" text NOT NULL, "apiEndpoint" text NOT NULL, "webhookUrl" text, "validated" boolean NOT NULL DEFAULT false, "validatedAt" TIMESTAMP WITH TIME ZONE, "lastHealthCheck" TIMESTAMP WITH TIME ZONE, "active" boolean NOT NULL DEFAULT false, "capabilities" json, "defaultSettings" json, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL, "updatedAt" TIMESTAMP WITH TIME ZONE, "customerId" uuid NOT NULL, CONSTRAINT "PK_1d01143cbf3d1bd2dea19d96718" PRIMARY KEY ("configId"))`
+			`CREATE TABLE "providerConfiguration" ("configId" uuid NOT NULL DEFAULT uuid_generate_v4(), "providerId" character varying NOT NULL, "encryptedApiKey" text NOT NULL, "apiEndpoint" text NOT NULL, "webhookUrl" text, "validated" boolean NOT NULL DEFAULT false, "validatedAt" TIMESTAMP WITH TIME ZONE, "active" boolean NOT NULL DEFAULT false, "defaultSettings" json, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL, "updatedAt" TIMESTAMP WITH TIME ZONE, "customerId" uuid NOT NULL, CONSTRAINT "PK_1d01143cbf3d1bd2dea19d96718" PRIMARY KEY ("configId"))`
 		);
 		await queryRunner.query(
 			`CREATE TABLE "credentialProvider" ("providerId" character varying NOT NULL, "name" character varying NOT NULL, "description" text, "providerType" character varying NOT NULL, "supportedFormats" json NOT NULL DEFAULT '[]', "supportedProtocols" json NOT NULL DEFAULT '[]', "capabilities" json NOT NULL DEFAULT '[]', "logoUrl" text, "documentationUrl" text, "apiUrl" text, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL, "updatedAt" TIMESTAMP WITH TIME ZONE, CONSTRAINT "PK_ec7823cec7e4cff1ac995b17ef2" PRIMARY KEY ("providerId"))`

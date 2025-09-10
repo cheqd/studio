@@ -62,11 +62,9 @@ export class ProvidersController {
 				validated: config.validated,
 				validatedAt: config.validatedAt,
 				active: config.active,
-				capabilities: config.capabilities,
 				defaultSettings: config.defaultSettings,
 				createdAt: config.createdAt,
 				updatedAt: config.updatedAt,
-				lastHealthCheck: config.lastHealthCheck,
 			}));
 
 			return res.status(StatusCodes.OK).json({ providers: configuredProviders });
@@ -115,7 +113,6 @@ export class ProvidersController {
 				validated: config.validated,
 				validatedAt: config.validatedAt,
 				active: config.active,
-				capabilities: config.capabilities,
 				defaultSettings: config.defaultSettings,
 				hasApiKey: !!config.encryptedApiKey,
 				provider: {
@@ -173,7 +170,6 @@ export class ProvidersController {
 					providerName: config.provider.name,
 					apiEndpoint: config.apiEndpoint,
 					active: config.active,
-					capabilities: config.capabilities,
 					createdAt: config.createdAt,
 				},
 			});
@@ -281,7 +277,6 @@ export class ProvidersController {
 				validated: updatedConfig.validated,
 				validatedAt: updatedConfig.validatedAt,
 				active: updatedConfig.active,
-				capabilities: updatedConfig.capabilities,
 				defaultSettings: updatedConfig.defaultSettings,
 				hasApiKey: !!updatedConfig.encryptedApiKey,
 				updatedAt: updatedConfig.updatedAt,
