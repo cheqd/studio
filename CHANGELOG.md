@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.12.1](https://github.com/cheqd/studio/compare/3.12.0...3.12.1) (2025-09-11)
+
+### Bug Fixes
+
+* Update did filtering in resources ([#728](https://github.com/cheqd/studio/issues/728)) ([8281b66](https://github.com/cheqd/studio/commit/8281b66fafdf704dd1f0893d4f377ec9bc114dc3))
+
 ## [3.12.1-develop.1](https://github.com/cheqd/studio/compare/3.12.0...3.12.1-develop.1) (2025-09-11)
 
 ### Bug Fixes
