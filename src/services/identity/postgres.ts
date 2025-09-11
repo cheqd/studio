@@ -377,12 +377,12 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			let relations: FindOptionsRelations<ResourceEntity | undefined> = {
 				identifier: true,
 			};
-			if (options.network) {
-				filter.identifier = {
-					did: options.did,
-					provider: `did:cheqd:${options.network}`,
-				};
-			}
+            if (options.did || options.network) {
+                filter.identifier = {
+                    ...(options.did && { did: options.did }),
+                    ...(options.network && { provider: `did:cheqd:${options.network}` }),
+                };
+            }
 
 			const [resources, total] = await ResourceService.instance.find(
 				filter,
