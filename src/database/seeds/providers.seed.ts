@@ -8,7 +8,7 @@ export async function seedProviders() {
 			name: 'cheqd Studio',
 			description: 'Native cheqd credential issuance using Studio API',
 			providerType: 'credential-all',
-			supportedFormats: ['json-ld', 'jwt-vc'],
+			supportedFormats: ['jsonld', 'jwt'],
 			supportedProtocols: ['direct'],
 			metadata: {
 				capabilities: ['issue', 'revoke', 'suspend', 'reinstate', 'verify'],
@@ -22,7 +22,7 @@ export async function seedProviders() {
 			name: 'creds xyz',
 			description: 'Credential issuance using Creds API',
 			providerType: 'credential-all',
-			supportedFormats: ['json-ld', 'jwt-vc'],
+			supportedFormats: ['jsonld', 'jwt'],
 			supportedProtocols: ['direct'],
 			metadata: {
 				capabilities: ['issue', 'revoke', 'suspend', 'reinstate', 'verify'],
@@ -36,7 +36,7 @@ export async function seedProviders() {
 			name: 'Dock Truvera',
 			description: 'Dock Labs Truvera credential issuance platform',
 			providerType: 'credential-all',
-			supportedFormats: ['json-ld', 'sd-jwt-vc'],
+			supportedFormats: ['jsonld', 'sd-jwt-vc'],
 			supportedProtocols: ['direct', 'openid4vc'],
 			metadata: {
 				capabilities: ['issue', 'revoke', 'verify', 'batch-issue'],
@@ -50,7 +50,7 @@ export async function seedProviders() {
 			name: 'HOVI',
 			description: 'HOVI credential issuance and verification platform',
 			providerType: 'credential-all',
-			supportedFormats: ['json-ld', 'jwt-vc', 'sd-jwt-vc'],
+			supportedFormats: ['jsonld', 'jwt', 'sd-jwt-vc'],
 			supportedProtocols: ['direct', 'didcomm', 'openid4vc'],
 			metadata: {
 				capabilities: ['issue', 'revoke', 'suspend', 'reinstate', 'verify', 'batch-issue'],
@@ -64,7 +64,7 @@ export async function seedProviders() {
 			name: 'Paradym',
 			description: 'Animo Paradym credential management platform',
 			providerType: 'credential-all',
-			supportedFormats: ['json-ld', 'anoncreds'],
+			supportedFormats: ['jsonld', 'anoncreds'],
 			supportedProtocols: ['didcomm', 'openid4vc'],
 			metadata: {
 				capabilities: ['issue', 'revoke', 'verify', 'connection-management'],
