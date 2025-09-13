@@ -49,8 +49,8 @@ export abstract class BaseProviderService implements IProviderService {
 		return {
 			apiKey: apiKeyResponse.key,
 			settings: {
-				accountId: account.id,
-				accountName: account.name,
+				tenantId: account.id,
+				tenantName: account.name,
 				apiKeyId: apiKeyResponse.id,
 				...this.getProviderSpecificSettings(account, apiKeyResponse),
 			},
@@ -73,7 +73,7 @@ export abstract class BaseProviderService implements IProviderService {
 	// Helper method to get provider URL
 	protected async getBaseUrl(): Promise<string> {
 		const provider = await ProviderService.instance.getProvider(this.getProviderId());
-		return provider?.apiUrl || this.getDefaultApiUrl();
+		return provider?.metadata.apiUrl || this.getDefaultApiUrl();
 	}
 
 	// Helper method to get base URL with configuration-specific endpoint support

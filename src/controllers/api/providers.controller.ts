@@ -55,6 +55,7 @@ export class ProvidersController {
 			const configuredProviders = configurations.map((config) => ({
 				configId: config.configId,
 				providerId: config.providerId,
+				tenantId: config.tenantId,
 				providerName: config.provider.name,
 				providerType: config.provider.providerType,
 				apiEndpoint: config.apiEndpoint,
@@ -108,6 +109,7 @@ export class ProvidersController {
 			const safeConfig = {
 				configId: config.configId,
 				providerId: config.providerId,
+				tenantId: config.tenantId,
 				apiEndpoint: config.apiEndpoint,
 				webhookUrl: config.webhookUrl,
 				validated: config.validated,
@@ -121,9 +123,7 @@ export class ProvidersController {
 					providerType: config.provider.providerType,
 					supportedFormats: config.provider.supportedFormats,
 					supportedProtocols: config.provider.supportedProtocols,
-					capabilities: config.provider.capabilities,
-					logoUrl: config.provider.logoUrl,
-					documentationUrl: config.provider.documentationUrl,
+					metadata: config.provider.metadata
 				},
 			};
 
@@ -167,6 +167,7 @@ export class ProvidersController {
 				configuration: {
 					configId: config.configId,
 					providerId: config.providerId,
+					tenantId: config.tenantId,
 					providerName: config.provider.name,
 					apiEndpoint: config.apiEndpoint,
 					active: config.active,

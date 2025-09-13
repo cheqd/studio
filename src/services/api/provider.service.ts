@@ -71,11 +71,12 @@ export class ProviderService {
 		const encryptedApiKey = await APIKeyService.instance.encryptAPIKey(apiKey);
 
 		// Determine API endpoint (priority: custom > provider default > fallback)
-		const apiEndpoint = customApiEndpoint || provider.apiUrl || 'http://localhost:3000';
+		const apiEndpoint = customApiEndpoint || provider.metadata.apiUrl || 'http://localhost:3000';
 
 		// Create configuration
 		const config = new ProviderConfigurationEntity(
 			providerId,
+			settings.tenantId,
 			encryptedApiKey,
 			apiEndpoint,
 			customer,

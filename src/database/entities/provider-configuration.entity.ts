@@ -18,6 +18,12 @@ export class ProviderConfigurationEntity {
 	providerId!: string;
 
 	@Column({
+		type: 'varchar',
+		nullable: false,
+	})
+	tenantId!: string;
+
+	@Column({
 		type: 'text',
 		nullable: false,
 	})
@@ -91,6 +97,7 @@ export class ProviderConfigurationEntity {
 
 	constructor(
 		providerId: string,
+		tenantId: string,
 		encryptedApiKey: string,
 		apiEndpoint: string,
 		customer: CustomerEntity,
@@ -99,6 +106,7 @@ export class ProviderConfigurationEntity {
 		defaultSettings?: any
 	) {
 		this.providerId = providerId;
+		this.tenantId = tenantId;
 		this.encryptedApiKey = encryptedApiKey;
 		this.apiEndpoint = apiEndpoint;
 		this.customer = customer;

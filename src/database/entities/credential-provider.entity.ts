@@ -1,5 +1,4 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany } from 'typeorm';
-import { ProviderConfigurationEntity } from './provider-configuration.entity.js';
+import { BeforeInsert, BeforeUpdate, Column, Entity } from 'typeorm';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -47,27 +46,8 @@ export class CredentialProviderEntity {
 	@Column({
 		type: 'json',
 		nullable: false,
-		default: '[]',
 	})
-	capabilities!: string[];
-
-	@Column({
-		type: 'text',
-		nullable: true,
-	})
-	logoUrl?: string;
-
-	@Column({
-		type: 'text',
-		nullable: true,
-	})
-	documentationUrl?: string;
-
-	@Column({
-		type: 'text',
-		nullable: true,
-	})
-	apiUrl?: string;
+	metadata?: any;
 
 	@Column({
 		type: 'timestamptz',
@@ -80,9 +60,6 @@ export class CredentialProviderEntity {
 		nullable: true,
 	})
 	updatedAt?: Date;
-
-	@OneToMany(() => ProviderConfigurationEntity, (config) => config.provider)
-	configurations!: ProviderConfigurationEntity[];
 
 	@BeforeInsert()
 	setCreatedAt() {
@@ -100,21 +77,15 @@ export class CredentialProviderEntity {
 		providerType: string,
 		supportedFormats: string[] = [],
 		supportedProtocols: string[] = [],
-		capabilities: string[] = [],
 		description?: string,
-		logoUrl?: string,
-		documentationUrl?: string,
-		apiUrl?: string
+		metadata?: any
 	) {
 		this.providerId = providerId;
 		this.name = name;
 		this.providerType = providerType;
 		this.supportedFormats = supportedFormats;
 		this.supportedProtocols = supportedProtocols;
-		this.capabilities = capabilities;
 		this.description = description;
-		this.logoUrl = logoUrl;
-		this.documentationUrl = documentationUrl;
-		this.apiUrl = apiUrl;
+		this.metadata = metadata;
 	}
 }
