@@ -50,6 +50,12 @@ export class CredentialProviderEntity {
 	metadata?: any;
 
 	@Column({
+		type: 'boolean',
+		default: false,
+	})
+	deprecated!: boolean;
+
+	@Column({
 		type: 'timestamptz',
 		nullable: false,
 	})

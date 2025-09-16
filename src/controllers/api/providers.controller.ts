@@ -123,7 +123,7 @@ export class ProvidersController {
 					providerType: config.provider.providerType,
 					supportedFormats: config.provider.supportedFormats,
 					supportedProtocols: config.provider.supportedProtocols,
-					metadata: config.provider.metadata
+					metadata: config.provider.metadata,
 				},
 			};
 
