@@ -21,6 +21,7 @@ import { AuthInfoProvider } from './auth/routes/api/auth-user-info.js';
 import type { UnsuccessfulResponseBody } from '../types/shared.js';
 import { AccreditationAuthRuleProvider } from './auth/routes/api/accreditation-auth.js';
 import { EventAuthRuleProvider } from './auth/routes/api/event-auth.js';
+import { ProvidersAuthRuleProvider } from './auth/routes/api/provider-auth.js';
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ export class Authentication {
 		authRuleRepository.push(new EventAuthRuleProvider());
 
 		authRuleRepository.push(new AdminAuthRuleProvider());
+		authRuleRepository.push(new ProvidersAuthRuleProvider());
 
 		this.apiGuardian = new APIGuard(authRuleRepository, this.oauthProvider);
 		// Initial auth handler

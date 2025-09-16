@@ -10,7 +10,7 @@ import type {
 	SuspendAccreditationResponseBody,
 	UnsuspendAccreditationResponseBody,
 	VerifyAccreditationRequestBody,
-    VerfifiableAccreditation,
+	VerfifiableAccreditation,
 } from '../../types/accreditation.js';
 import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '../../types/track.js';
 import type { CredentialRequest, UnsuccesfulRevokeCredentialResponseBody } from '../../types/credential.js';
@@ -152,7 +152,7 @@ export class AccreditationController {
 			.isIn([CheqdNetwork.Mainnet, CheqdNetwork.Testnet])
 			.withMessage('Invalid network')
 			.bail(),
-        query('did').optional().isDID().bail(),
+		query('did').optional().isDID().bail(),
 	];
 
 	/**
@@ -881,8 +881,8 @@ export class AccreditationController {
 				(item) => `${item.did}?resourceName=${item.resourceName}&resourceType=${item.resourceType}`
 			);
 
-            // remove duplicates of resourceUrls
-            const uniqueResourceUrls = Array.from(new Set(resourceUrls));
+			// remove duplicates of resourceUrls
+			const uniqueResourceUrls = Array.from(new Set(resourceUrls));
 
 			// Resolve resources to get full accreditation details
 			const resolvedResources = await Promise.all(

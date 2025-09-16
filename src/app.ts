@@ -31,6 +31,7 @@ import { APIKeyController } from './controllers/admin/api-key.js';
 import { OrganisationController } from './controllers/admin/organisation.js';
 import { AccreditationController } from './controllers/api/accreditation.js';
 import { OperationController } from './controllers/api/operation.js';
+import { ProvidersController } from './controllers/api/providers.controller.js';
 
 dotenv.config();
 
@@ -43,8 +44,15 @@ class App {
 		this.routes();
 		Connection.instance
 			.connect()
-			.then(() => {
+			.then(async () => {
 				console.log('Database connection: successful');
+				// Seed default providers
+				const { seedProviders } = await import('./database/seeds/providers.seed.js');
+				await seedProviders();
+				// initialize provider factory
+				const { initializeProviders } = await import('./services/api/provider.factory.js');
+				await initializeProviders();
+				console.log('Provider factory initialized');
 			})
 			.catch((err) => {
 				console.log('DBConnectorError: ', err);
@@ -245,6 +253,15 @@ class App {
 
 		// LogTo webhooks
 		app.post('/account/bootstrap', LogToWebHook.verifyHookSignature, new AccountController().bootstrap);
+
+		// Provider management routes
+		app.get('/providers', new ProvidersController().getProviders);
+		app.get('/providers/activated', new ProvidersController().getActiveProviders);
+		app.get('/providers/:providerId/configuration', new ProvidersController().getProviderConfiguration);
+		app.put('/providers/:providerId/configuration', new ProvidersController().updateProviderConfiguration);
+		app.post('/providers/:providerId/activate', new ProvidersController().activateProvider);
+		app.post('/providers/:providerId/test', new ProvidersController().testConnection);
+		app.delete('/providers/:providerId', new ProvidersController().removeProvider);
 
 		// LogTo user info
 		app.get('/auth/user-info', async (req, res) => {

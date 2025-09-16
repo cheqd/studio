@@ -37,6 +37,10 @@ jobs:
                 RELEASE: ${{ github.ref_name == 'develop' }}
                 APPLICATION_BASE_URL: ${{ vars.APPLICATION_BASE_URL }}
                 COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
+                PROVIDER_ENCRYPTION_KEY: ${{ secrets.PROVIDER_ENCRYPTION_KEY }}
+                DOCK_MASTER_API_KEY: ${{ secrets.DOCK_MASTER_API_KEY }}
+                HOVI_MASTER_API_KEY: ${{ secrets.HOVI_MASTER_API_KEY }}
+                PARADYM_MASTER_API_KEY: ${{ secrets.PARADYM_MASTER_API_KEY }}
                 ENABLE_AUTHENTICATION: ${{ vars.ENABLE_AUTHENTICATION }}
                 ENABLE_EXTERNAL_DB: ${{ vars.ENABLE_EXTERNAL_DB }}
                 ENABLE_VERIDA_CONNECTOR: ${{ vars.ENABLE_VERIDA_CONNECTOR }}

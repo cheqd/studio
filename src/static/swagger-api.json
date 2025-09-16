@@ -4679,6 +4679,206 @@
         }
       }
     },
+    "/providers": {
+      "get": {
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Get all available credential providers",
+        "description": "Returns list of available credential providers",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "providers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/providers/activated": {
+      "get": {
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Get customer's activated providers",
+        "description": "Returns list of providers activated by the customer",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/providers/{providerId}/configuration": {
+      "get": {
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Get provider configuration",
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider configuration"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Update provider configuration",
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "apiEndpoint": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "API endpoint URL"
+                  },
+                  "webhookUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Webhook URL for notifications"
+                  },
+                  "defaultSettings": {
+                    "type": "object",
+                    "description": "Provider-specific default settings"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Configuration updated successfully"
+          },
+          "400": {
+            "description": "Invalid configuration data"
+          },
+          "404": {
+            "description": "Provider configuration not found"
+          }
+        }
+      }
+    },
+    "/providers/{providerId}/activate": {
+      "post": {
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Activate a provider for the customer",
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider activated successfully"
+          },
+          "400": {
+            "description": "Invalid provider or already activated"
+          },
+          "404": {
+            "description": "Provider not found"
+          }
+        }
+      }
+    },
+    "/providers/{providerId}/test": {
+      "post": {
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Test connection to a provider",
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Connection test completed"
+          },
+          "400": {
+            "description": "Connection test failed"
+          },
+          "404": {
+            "description": "Provider configuration not found"
+          }
+        }
+      }
+    },
+    "/providers/{providerId}": {
+      "delete": {
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Remove provider configuration",
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuration removed successfully"
+          }
+        }
+      }
+    },
     "/resource/create/{did}": {
       "post": {
         "tags": [
