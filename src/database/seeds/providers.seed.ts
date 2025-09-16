@@ -1,4 +1,4 @@
-import { ProviderService } from '../../services/api/providers/provider.service.js';
+import { ProviderService } from '../../services/api/provider.service.js';
 export async function seedProviders() {
 	const providerService = ProviderService.instance;
 

@@ -66,6 +66,12 @@ export class ProviderConfigurationEntity {
 	defaultSettings?: any;
 
 	@Column({
+		type: 'boolean',
+		default: false,
+	})
+	deprecated!: boolean;
+
+	@Column({
 		type: 'timestamptz',
 		nullable: false,
 	})

@@ -1,4 +1,4 @@
-import { IProviderService } from '../../../types/provider.types';
+import { IProviderService } from '../../types/provider.types';
 
 // Provider registry - lazy loading to avoid circular imports
 const providerRegistry = new Map<string, () => Promise<IProviderService>>();
@@ -29,22 +29,22 @@ export class ProviderFactory {
 export async function initializeProviders(): Promise<void> {
 	// Register all providers with lazy loading
 	ProviderFactory.registerProvider('dock', async () => {
-		const { DockApiService } = await import('./dock-api.service.js');
+		const { DockApiService } = await import('./providers/dock-api.service.js');
 		return DockApiService.instance;
 	});
 
 	ProviderFactory.registerProvider('hovi', async () => {
-		const { HoviApiService } = await import('./hovi-api.service.js');
+		const { HoviApiService } = await import('./providers/hovi-api.service.js');
 		return HoviApiService.instance;
 	});
 
 	ProviderFactory.registerProvider('paradym', async () => {
-		const { ParadymApiService } = await import('./paradym-api.service.js');
+		const { ParadymApiService } = await import('./providers/paradym-api.service.js');
 		return ParadymApiService.instance;
 	});
 
 	ProviderFactory.registerProvider('studio', async () => {
-		const { StudioApiService } = await import('./studio-api.service.js');
+		const { StudioApiService } = await import('./providers/studio-api.service.js');
 		return StudioApiService.instance;
 	});
 }
