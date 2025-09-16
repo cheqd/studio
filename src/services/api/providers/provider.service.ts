@@ -1,11 +1,11 @@
 import { Repository } from 'typeorm';
-import { Connection } from '../../database/connection/connection.js';
-import { CredentialProviderEntity } from '../../database/entities/credential-provider.entity.js';
-import { ProviderConfigurationEntity } from '../../database/entities/provider-configuration.entity.js';
-import { CustomerEntity } from '../../database/entities/customer.entity.js';
-import { APIKeyService } from '../admin/api-key.js';
+import { Connection } from '../../../database/connection/connection.js';
+import { CredentialProviderEntity } from '../../../database/entities/credential-provider.entity.js';
+import { ProviderConfigurationEntity } from '../../../database/entities/provider-configuration.entity.js';
+import { CustomerEntity } from '../../../database/entities/customer.entity.js';
+import { APIKeyService } from '../../admin/api-key.js';
 import { ProviderFactory } from './provider.factory.js';
-import { ConnectionTestResult } from '../../types/provider.types.js';
+import { ConnectionTestResult } from '../../../types/provider.types.js';
 
 export class ProviderService {
 	public providerRepository: Repository<CredentialProviderEntity>;

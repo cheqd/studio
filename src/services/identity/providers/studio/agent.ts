@@ -59,17 +59,21 @@ import {
 import { ResourceModule, type CheqdNetwork } from '@cheqd/sdk';
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key';
 import { DIDResolutionResult, Resolver, ResolverRegistry } from 'did-resolver';
-import { DefaultDidUrlPattern, CreateAgentRequest, VeramoAgent } from '../../types/shared.js';
-import type { VerificationOptions } from '../../types/shared.js';
+import { DefaultDidUrlPattern, CreateAgentRequest, VeramoAgent } from '../../../../types/shared.js';
+import type { VerificationOptions } from '../../../../types/shared.js';
 import type {
 	CreateEncryptedBitstringOptions,
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
-} from '../../types/credential-status.js';
-import type { CredentialRequest } from '../../types/credential.js';
-import { BitstringStatusActions, DefaultStatusActions, StatusListType } from '../../types/credential-status.js';
-import type { CheckStatusListOptions } from '../../types/credential-status.js';
-import type { RevocationStatusOptions, StatusOptions, SuspensionStatusOptions } from '../../types/credential-status.js';
+} from '../../../../types/credential-status.js';
+import type { CredentialRequest } from '../../../../types/credential.js';
+import { BitstringStatusActions, DefaultStatusActions, StatusListType } from '../../../../types/credential-status.js';
+import type { CheckStatusListOptions } from '../../../../types/credential-status.js';
+import type {
+	RevocationStatusOptions,
+	StatusOptions,
+	SuspensionStatusOptions,
+} from '../../../../types/credential-status.js';
 import type {
 	BroadcastStatusListOptions,
 	CreateUnencryptedStatusListOptions,
@@ -77,14 +81,14 @@ import type {
 	CreateEncryptedStatusListOptions,
 	UpdateEncryptedStatusListOptions,
 	SearchStatusListResult,
-} from '../../types/credential-status.js';
+} from '../../../../types/credential-status.js';
 import {
 	BitstringStatusListEntry,
 	MINIMAL_DENOM,
 	VC_PROOF_FORMAT,
 	VC_REMOVE_ORIGINAL_FIELDS,
-} from '../../types/constants.js';
-import { toCoin, toDefaultDkg, toMinimalDenom } from '../../helpers/helpers.js';
+} from '../../../../types/constants.js';
+import { toCoin, toDefaultDkg, toMinimalDenom } from '../../../../helpers/helpers.js';
 import { jwtDecode } from 'jwt-decode';
 import type {
 	BitstringStatusValue,

@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as dotenv from 'dotenv';
-import { LocalIdentityService } from './local.js';
-import { PostgresIdentityService } from './postgres.js';
-import { Unauthorized } from './unauthorized.js';
+import { LocalIdentityService, PostgresIdentityService } from './providers/index.js';
+import { Unauthorized } from './providers/studio/unauthorized.js';
 
 import type {
 	CredentialPayload,

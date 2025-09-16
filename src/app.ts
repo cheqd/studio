@@ -50,7 +50,7 @@ class App {
 				const { seedProviders } = await import('./database/seeds/providers.seed.js');
 				await seedProviders();
 				// initialize provider factory
-				const { initializeProviders } = await import('./services/api/provider.factory.js');
+				const { initializeProviders } = await import('./services/api/providers/provider.factory.js');
 				await initializeProviders();
 				console.log('Provider factory initialized');
 			})

@@ -1,7 +1,7 @@
 // src/controllers/api/providers.controller.ts
 import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { ProviderService } from '../../services/api/provider.service.js';
+import { ProviderService } from '../../services/api/providers/provider.service.js';
 import { CustomerEntity } from '../../database/entities/customer.entity.js';
 
 export class ProvidersController {
@@ -123,7 +123,7 @@ export class ProvidersController {
 					providerType: config.provider.providerType,
 					supportedFormats: config.provider.supportedFormats,
 					supportedProtocols: config.provider.supportedProtocols,
-					metadata: config.provider.metadata
+					metadata: config.provider.metadata,
 				},
 			};
 

@@ -59,6 +59,10 @@ import { ListOperationOptions } from '../../types/track';
 export abstract class AbstractIdentityService implements IIdentityService {
 	agent?: VeramoAgent;
 
+	supportedProvider?: string;
+
+	defaultApiUrl?: string;
+
 	initAgent(): VeramoAgent {
 		throw new Error(`Not supported`);
 	}

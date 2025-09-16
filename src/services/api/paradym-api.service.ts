@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv';
-import { BaseProviderService } from './base-provider.service.js';
+import { BaseProviderService } from './providers/base-provider.service.js';
 import { ConnectionTestResult, ProviderAccountResponse, ProviderApiKeyResponse } from '../../types/provider.types.js';
 import { ProviderConfigurationEntity } from '../../database/entities/provider-configuration.entity.js';
 

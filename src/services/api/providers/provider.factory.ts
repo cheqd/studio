@@ -1,4 +1,4 @@
-import { IProviderService } from '../../types/provider.types';
+import { IProviderService } from '../../../types/provider.types';
 
 // Provider registry - lazy loading to avoid circular imports
 const providerRegistry = new Map<string, () => Promise<IProviderService>>();
@@ -39,7 +39,7 @@ export async function initializeProviders(): Promise<void> {
 	});
 
 	ProviderFactory.registerProvider('paradym', async () => {
-		const { ParadymApiService } = await import('./paradym-api.service.js');
+		const { ParadymApiService } = await import('../paradym-api.service.js');
 		return ParadymApiService.instance;
 	});
 

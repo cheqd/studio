@@ -1,13 +1,13 @@
 import { ProviderService } from './provider.service.js';
-import { CustomerEntity } from '../../database/entities/customer.entity.js';
-import { ProviderConfigurationEntity } from '../../database/entities/provider-configuration.entity.js';
+import { CustomerEntity } from '../../../database/entities/customer.entity.js';
+import { ProviderConfigurationEntity } from '../../../database/entities/provider-configuration.entity.js';
 import {
 	IProviderService,
 	ProviderAccountResponse,
 	ProviderApiKeyResponse,
 	ConnectionTestResult,
 	ProviderActivationResult,
-} from '../../types/provider.types.js';
+} from '../../../types/provider.types.js';
 
 export abstract class BaseProviderService implements IProviderService {
 	protected masterApiKey: string;
