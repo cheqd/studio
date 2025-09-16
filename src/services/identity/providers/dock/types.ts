@@ -1,3 +1,5 @@
+import { DIDDocument } from 'did-resolver';
+
 export type DockTrustRegistry = {
 	id: string;
 	name: string;
@@ -82,4 +84,39 @@ export type DockExportDidResponse = {
 			tag: string;
 		};
 	};
+};
+
+export type DockDecryptedKey = {
+	controller: string;
+	type: string;
+	id: string;
+	publicKeyMultibase: string;
+	privateKeyMultibase: string;
+	privateKeyBase58: string;
+	publicKeyBase58: string;
+	'@context': string[];
+};
+
+export type DockDecryptedCredentialContent =
+	| {
+			'@context': string[];
+			id: string;
+			type: string[];
+			tags: string[];
+			correlation: string[];
+			created: string;
+			didDocument: DIDDocument;
+			didDocumentMetadata: {
+				'content-type': string;
+			};
+			didResolutionMetadata: object;
+	  }
+	| DockDecryptedKey;
+
+export type DockDecryptedCredential = {
+	'@context': string[];
+	id: string;
+	type: string[];
+	status: string;
+	contents: DockDecryptedCredentialContent[];
 };

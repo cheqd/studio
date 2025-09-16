@@ -290,7 +290,8 @@ export class Veramo {
 		agent: TAgent<IDIDManager>,
 		did: string,
 		keys: Pick<IKey, 'privateKeyHex' | 'type'>[],
-		controllerKeyId: string | undefined
+		controllerKeyId: string | undefined,
+		provider?: string
 	): Promise<IIdentifier> {
 		const [kms] = await agent.keyManagerGetKeyManagementSystems();
 
@@ -307,6 +308,7 @@ export class Veramo {
 			}),
 			did,
 			controllerKeyId,
+			provider,
 		} as MinimalImportableIdentifier);
 
 		return identifier;

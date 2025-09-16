@@ -88,7 +88,8 @@ export interface IIdentityService {
 		did: string,
 		keys: Pick<IKey, 'privateKeyHex' | 'type'>[],
 		controllerKeyId: string | undefined,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		provider?: string
 	): Promise<IIdentifier>;
 	createResource(
 		network: string,

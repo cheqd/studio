@@ -5,6 +5,8 @@ import { AbstractIdentityService } from '../../abstract';
 import { ListDIDRequestOptions, ListDidsResponseBody } from '../../../../types/did';
 import {
 	DockCreateDidResponse,
+	DockDecryptedCredential,
+	DockDecryptedKey,
 	DockExportDidResponse,
 	DockIssueCredentialRequestBody,
 	DockListDidsResponse,
@@ -13,8 +15,8 @@ import { CredentialRequest } from '../../../../types/credential';
 import { StatusOptions } from '../../../../types/credential-status';
 import { ProviderService } from '../../../api/providers/provider.service';
 import { IdentityServiceStrategySetup } from '../..';
-import { decryptPrivateKey } from '../../../../helpers/helpers';
 import { fromString, toString } from 'uint8arrays';
+import { contentsFromEncryptedWalletCredential } from '@docknetwork/universal-wallet';
 
 export class DockIdentityService extends AbstractIdentityService {
 	supportedProvider = 'dock';
@@ -58,14 +60,25 @@ export class DockIdentityService extends AbstractIdentityService {
 		const exportedDid = await this.exportDid(data.data.did, customer);
 		if (exportedDid) {
 			const identityStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
-			const { iv, recipients, tag } = exportedDid.credentialSubject.encryptedWalletContents;
-			const encryptedKey = recipients[0].encrypted_key;
-			const key = decryptPrivateKey(encryptedKey, iv, tag);
+			const decyptedContent = (await contentsFromEncryptedWalletCredential(
+				exportedDid,
+				process.env.CREDS_DECRYPTION_SECRET
+			)) as DockDecryptedCredential;
+			const keys = decyptedContent.contents
+				.filter((c) => typeof c.type === 'string' && (c as DockDecryptedKey).privateKeyBase58)
+				.map((c) => ({
+					type: 'Ed25519' as any,
+					privateKeyHex: toString(fromString((c as DockDecryptedKey).privateKeyBase58, 'base58btc'), 'hex'),
+				}));
+
+			const didDocument = (decyptedContent.contents.find((c) => (c as any).didDocument) as any)
+				?.didDocument as DIDDocument;
 			await identityStrategySetup.agent.importDid(
 				exportedDid.id,
-				[{ privateKeyHex: toString(fromString(key), 'hex'), type: 'Ed25519' }],
-				undefined,
-				customer
+				keys,
+				Array.isArray(didDocument.controller) ? didDocument.controller[0] : didDocument.controller,
+				customer,
+				'dock'
 			);
 		}
 		return {
@@ -187,8 +200,7 @@ export class DockIdentityService extends AbstractIdentityService {
 				Authorization: `Bearer ${apiKey}`,
 			},
 			body: JSON.stringify({
-				type: 'cheqd',
-				keytype: 'ed25519',
+				password: process.env.CREDS_DECRYPTION_SECRET,
 			}),
 		});
 		if (!response.ok) {
