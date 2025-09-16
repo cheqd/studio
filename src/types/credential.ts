@@ -16,6 +16,8 @@ import type { VerificationOptions } from './shared.js';
 export enum CredentialConnectors {
 	Verida,
 	Resource,
+	Studio,
+	Dock,
 }
 
 export interface CredentialRequest {

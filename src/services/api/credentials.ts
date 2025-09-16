@@ -7,6 +7,7 @@ import * as dotenv from 'dotenv';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { VeridaDIDValidator } from '../../controllers/validator/did.js';
 import { ResourceConnector } from '../connectors/resource.js';
+import { DockIdentityService } from '../identity/providers/index.js';
 dotenv.config();
 
 const { ENABLE_VERIDA_CONNECTOR } = process.env;
@@ -51,43 +52,53 @@ export class Credentials {
 
 		const statusOptions = credentialStatus || null;
 
-		const verifiable_credential = await new IdentityServiceStrategySetup(
-			customer.customerId
-		).agent.createCredential(credential, format, statusOptions, customer);
+		// Handle credential issuance and connector logic
+		switch (connector) {
+			case CredentialConnectors.Dock:
+				const dock = new DockIdentityService();
+				return await dock.createCredential(credential, format, statusOptions, customer);
+			case CredentialConnectors.Resource:
+			case CredentialConnectors.Studio:
+			case CredentialConnectors.Verida:
+			default:
+				const verifiable_credential = await new IdentityServiceStrategySetup(
+					customer.customerId
+				).agent.createCredential(credential, format, statusOptions, customer);
 
-		const isVeridaDid = new VeridaDIDValidator().validate(subjectDid);
-		if (
-			ENABLE_VERIDA_CONNECTOR === 'true' &&
-			connector === CredentialConnectors.Verida &&
-			isVeridaDid.valid &&
-			isVeridaDid.namespace
-		) {
-			if (!credentialSchema) throw new Error('Credential schema is required');
+				const isVeridaDid = new VeridaDIDValidator().validate(subjectDid);
+				if (
+					ENABLE_VERIDA_CONNECTOR === 'true' &&
+					connector === CredentialConnectors.Verida &&
+					isVeridaDid.valid &&
+					isVeridaDid.namespace
+				) {
+					if (!credentialSchema) throw new Error('Credential schema is required');
 
-			// dynamic import to avoid circular dependency
-			const { VeridaService } = await import('../connectors/verida.js');
+					// dynamic import to avoid circular dependency
+					const { VeridaService } = await import('../connectors/verida.js');
 
-			await VeridaService.instance.sendCredential(
-				isVeridaDid.namespace,
-				subjectDid,
-				'New Verifiable Credential',
-				verifiable_credential,
-				credentialName || v4(),
-				credentialSchema,
-				credentialSummary
-			);
-		} else if (connector && connector === CredentialConnectors.Resource) {
-			await ResourceConnector.instance.sendCredential(
-				customer,
-				issuerDid,
-				verifiable_credential,
-				credentialName || v4(),
-				type ? type[0] : 'VerifiableCredential',
-				v4(),
-				undefined,
-				credentialId
-			);
+					await VeridaService.instance.sendCredential(
+						isVeridaDid.namespace,
+						subjectDid,
+						'New Verifiable Credential',
+						verifiable_credential,
+						credentialName || v4(),
+						credentialSchema,
+						credentialSummary
+					);
+				} else if (connector && connector === CredentialConnectors.Resource) {
+					await ResourceConnector.instance.sendCredential(
+						customer,
+						issuerDid,
+						verifiable_credential,
+						credentialName || v4(),
+						type ? type[0] : 'VerifiableCredential',
+						v4(),
+						undefined,
+						credentialId
+					);
+				}
+				return verifiable_credential;
 		}
-		return verifiable_credential;
 	}
 }

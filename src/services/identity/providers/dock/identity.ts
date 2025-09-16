@@ -1,4 +1,4 @@
-import { CredentialPayload, IIdentifier, IKey, VerifiableCredential } from '@veramo/core';
+import { CredentialPayload, IIdentifier, VerifiableCredential } from '@veramo/core';
 import { DIDDocument } from 'did-resolver';
 import { CustomerEntity } from '../../../../database/entities/customer.entity';
 import { AbstractIdentityService } from '../../abstract';

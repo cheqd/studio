@@ -7,7 +7,7 @@ import type { FeePaymentOptions } from '../../types/credential-status.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
 import type { SearchStatusListResult } from '../../types/credential-status.js';
 import type { StatusCheckResult, TransactionResult } from '@cheqd/did-provider-cheqd';
-import { Veramo } from './agent.js';
+import { Veramo } from './providers/studio/agent.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 
 export class DefaultIdentityService extends AbstractIdentityService {
