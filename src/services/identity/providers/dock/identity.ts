@@ -1,8 +1,8 @@
 import { CredentialPayload, IIdentifier, VerifiableCredential } from '@veramo/core';
 import { DIDDocument } from 'did-resolver';
-import { CustomerEntity } from '../../../../database/entities/customer.entity';
-import { AbstractIdentityService } from '../../abstract';
-import { ListDIDRequestOptions, ListDidsResponseBody } from '../../../../types/did';
+import { CustomerEntity } from '../../../../database/entities/customer.entity.js';
+import { AbstractIdentityService } from '../../abstract.js';
+import { ListDIDRequestOptions, ListDidsResponseBody } from '../../../../types/did.js';
 import {
 	DockCreateDidResponse,
 	DockDecryptedCredential,
@@ -10,13 +10,13 @@ import {
 	DockExportDidResponse,
 	DockIssueCredentialRequestBody,
 	DockListDidsResponse,
-} from './types';
-import { CredentialRequest } from '../../../../types/credential';
-import { StatusOptions } from '../../../../types/credential-status';
-import { ProviderService } from '../../../api/providers/provider.service';
-import { IdentityServiceStrategySetup } from '../..';
+} from './types.js';
+import { CredentialRequest } from '../../../../types/credential.js';
+import { StatusOptions } from '../../../../types/credential-status.js';
+import { ProviderService } from '../../../api/providers/provider.service.js';
 import { fromString, toString } from 'uint8arrays';
 import { contentsFromEncryptedWalletCredential } from '@docknetwork/universal-wallet';
+import { IdentityServiceStrategySetup } from '../../index.js';
 
 export class DockIdentityService extends AbstractIdentityService {
 	supportedProvider = 'dock';
