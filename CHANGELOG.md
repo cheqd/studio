@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.13.0-develop.1](https://github.com/cheqd/studio/compare/3.12.1...3.13.0-develop.1) (2025-09-16)
+
+### Features
+
+* external provider support [DEV-5219] ([#725](https://github.com/cheqd/studio/issues/725)) ([3576af0](https://github.com/cheqd/studio/commit/3576af00639e194c942e8378a23790cf0df4bfdb))
+
 ## [3.12.1](https://github.com/cheqd/studio/compare/3.12.0...3.12.1) (2025-09-11)
 
 ### Bug Fixes
