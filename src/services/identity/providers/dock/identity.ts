@@ -5,7 +5,7 @@ import { AbstractIdentityService } from '../../abstract.js';
 import { ListDIDRequestOptions, ListDidsResponseBody } from '../../../../types/did.js';
 import {
 	DockCreateDidResponse,
-	DockDecryptedCredential,
+	DockDecryptedCredentialContent,
 	DockDecryptedKey,
 	DockExportDidResponse,
 	DockIssueCredentialRequestBody,
@@ -15,7 +15,7 @@ import { CredentialRequest } from '../../../../types/credential.js';
 import { StatusOptions } from '../../../../types/credential-status.js';
 import { ProviderService } from '../../../api/providers/provider.service.js';
 import { fromString, toString } from 'uint8arrays';
-import { contentsFromEncryptedWalletCredential } from '@docknetwork/universal-wallet';
+import { contentsFromEncryptedWalletCredential, passwordToKeypair } from '@docknetwork/universal-wallet';
 import { IdentityServiceStrategySetup } from '../../index.js';
 
 export class DockIdentityService extends AbstractIdentityService {
@@ -50,31 +50,32 @@ export class DockIdentityService extends AbstractIdentityService {
 				keytype: 'ed25519',
 			}),
 		});
-
-		if (!response.ok) {
+		const data = (await response.json()) as DockCreateDidResponse;
+		if (response.status != 200) {
 			throw new Error(`Failed to create did with ${this.supportedProvider}: ${response.statusText}`);
 		}
-
-		const data = (await response.json()) as DockCreateDidResponse;
 		// save in db
+		// Add a time delay before exporting
+		await new Promise((resolve) => setTimeout(resolve, 5000));
 		const exportedDid = await this.exportDid(data.data.did, customer);
 		if (exportedDid) {
 			const identityStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
+			const kp = await passwordToKeypair(process.env.CREDS_DECRYPTION_SECRET);
 			const decyptedContent = (await contentsFromEncryptedWalletCredential(
 				exportedDid,
-				process.env.CREDS_DECRYPTION_SECRET
-			)) as DockDecryptedCredential;
-			const keys = decyptedContent.contents
+				kp
+			)) as DockDecryptedCredentialContent[];
+			const keys = decyptedContent
 				.filter((c) => typeof c.type === 'string' && (c as DockDecryptedKey).privateKeyBase58)
 				.map((c) => ({
 					type: 'Ed25519' as any,
 					privateKeyHex: toString(fromString((c as DockDecryptedKey).privateKeyBase58, 'base58btc'), 'hex'),
 				}));
 
-			const didDocument = (decyptedContent.contents.find((c) => (c as any).didDocument) as any)
+			const didDocument = (decyptedContent.find((c) => (c as any).didDocument) as any)
 				?.didDocument as DIDDocument;
-			await identityStrategySetup.agent.importDid(
-				exportedDid.id,
+			return await identityStrategySetup.agent.importDid(
+				didDocument.id,
 				keys,
 				Array.isArray(didDocument.controller) ? didDocument.controller[0] : didDocument.controller,
 				customer,
@@ -203,10 +204,11 @@ export class DockIdentityService extends AbstractIdentityService {
 				password: process.env.CREDS_DECRYPTION_SECRET,
 			}),
 		});
+		const result = await response.json();
 		if (!response.ok) {
 			throw new Error(`Failed to create did with ${this.supportedProvider}: ${response.statusText}`);
 		}
 
-		return (await response.json()) as DockExportDidResponse;
+		return result as DockExportDidResponse;
 	}
 }

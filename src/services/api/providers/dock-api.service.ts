@@ -3,11 +3,9 @@ import { BaseProviderService } from './base-provider.service.js';
 import {
 	ConnectionTestResult,
 	ProviderAccountResponse,
-	ProviderActivationResult,
 	ProviderApiKeyResponse,
 } from '../../../types/provider.types.js';
 import { ProviderConfigurationEntity } from '../../../database/entities/provider-configuration.entity.js';
-import { CustomerEntity } from '../../../database/entities/customer.entity.js';
 import { DockIdentityService } from '../../identity/providers/dock/identity.js';
 
 dotenv.config();
@@ -91,30 +89,6 @@ export class DockApiService extends BaseProviderService {
 		return {
 			id: dockResponse.id,
 			key: dockResponse.token,
-		};
-	}
-
-	async activateProvider(customer: CustomerEntity): Promise<ProviderActivationResult> {
-		// const customerName = customer.name || customer.email || `Customer ${customer.customerId}`;
-
-		// Step 1: Create account
-		const account = await this.createAccount(customer.customerId);
-
-		// Step 2: Create API key for that account
-		const apiKeyResponse = await this.createApiKey(account.id);
-
-		// Step 3: Create and Import DID
-		await this.identityService.createDid('testnet', { id: '' }, customer);
-
-		// Step 4: Return standardized result
-		return {
-			apiKey: apiKeyResponse.key,
-			settings: {
-				tenantId: account.id,
-				tenantName: account.name,
-				apiKeyId: apiKeyResponse.id,
-				...this.getProviderSpecificSettings(account, apiKeyResponse),
-			},
 		};
 	}
 

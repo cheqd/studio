@@ -34,7 +34,7 @@ import type {
 	DeactivateDIDRequestBody,
 } from '../../types/did.js';
 import { check, param } from '../validator/index.js';
-import type { IKey, RequireOnly } from '@veramo/core';
+import type { IIdentifier, IKey, RequireOnly } from '@veramo/core';
 import { SupportedKeyTypes, extractPublicKeyHex } from '@veramo/utils';
 import type { KeyImport } from '../../types/key.js';
 import { eventTracker } from '../../services/track/tracker.js';
@@ -45,6 +45,7 @@ import { CheqdProviderErrorCodes } from '@cheqd/did-provider-cheqd';
 import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
 import { validate } from '../validator/decorator.js';
 import { query } from 'express-validator';
+import { DockIdentityService } from '../../services/identity/providers/index.js';
 
 export class DIDController {
 	public static createDIDValidator = [
@@ -79,13 +80,7 @@ export class DIDController {
 			.isIn([CheqdNetwork.Mainnet, CheqdNetwork.Testnet])
 			.withMessage('Invalid network')
 			.bail(),
-		check('service')
-			.optional()
-			.isArray()
-			.withMessage('Service should be an array of objects for creating DID-Service')
-			.bail()
-			.isCreateDIDDocumentService()
-			.bail(),
+		check('service').optional().isCreateDIDDocumentService().bail(),
 		check('options').optional().isObject().withMessage('options should be an object').bail(),
 		check('options.verificationMethodType')
 			.optional()
@@ -105,18 +100,13 @@ export class DIDController {
 				return true;
 			})
 			.bail(),
+		check('providerId').optional().isString().bail(),
 	];
 
 	public static updateDIDValidator = [
 		check('didDocument').optional().isDIDDocument().bail(),
 		check('did').optional().isDID().bail(),
-		check('service')
-			.optional()
-			.isArray()
-			.withMessage('Service should be an array of objects for updating DID-Service')
-			.bail()
-			.isService()
-			.bail(),
+		check('service').optional().isService().bail(),
 		check('verificationMethod')
 			.optional()
 			.isArray()
@@ -212,7 +202,8 @@ export class DIDController {
 	@validate
 	public async createDid(request: Request, response: Response) {
 		// handle request params
-		const { identifierFormatType, network, service, options } = request.body satisfies CreateDidRequestBody;
+		const { identifierFormatType, network, service, options, providerId } =
+			request.body satisfies CreateDidRequestBody;
 		let didDocument: DIDDocument;
 
 		const key = options?.key || request.body.key;
@@ -314,11 +305,28 @@ export class DIDController {
 				} satisfies UnsuccessfulCreateDidResponseBody);
 			}
 
-			const did = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createDid(
-				network || didDocument.id.split(':')[2],
-				didDocument,
-				response.locals.customer
-			);
+			let did: IIdentifier;
+			switch (providerId) {
+				case 'dock':
+					did = await new DockIdentityService().createDid(
+						network || didDocument.id.split(':')[2],
+						didDocument,
+						response.locals.customer
+					);
+					break;
+				case 'studio':
+				case undefined:
+					did = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createDid(
+						network || didDocument.id.split(':')[2],
+						didDocument,
+						response.locals.customer
+					);
+					break;
+				default:
+					return response.status(StatusCodes.BAD_REQUEST).json({
+						error: `Unsupported provider: ${providerId}`,
+					} satisfies UnsuccessfulCreateDidResponseBody);
+			}
 
 			eventTracker.emit('track', {
 				category: OperationCategoryNameEnum.DID,

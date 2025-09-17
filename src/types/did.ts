@@ -29,6 +29,7 @@ export type CreateDidRequestBody = {
 		verificationMethodType: VerificationMethods;
 		key: string;
 	};
+	providerId?: string;
 };
 
 export type UpdateDidRequestBody = {
