@@ -687,6 +687,12 @@ export class DIDController {
 	 *             - testnet
 	 *         required: false
 	 *       - in: query
+	 *         name: providerId
+	 *         description: Filter DID by the provider.
+	 *         schema:
+	 *           type: string
+	 *         required: false
+	 *       - in: query
 	 *         name: createdAt
 	 *         description: Filter resource by created date
 	 *         schema:
@@ -721,17 +727,24 @@ export class DIDController {
 	 */
 	public async getDids(request: Request, response: Response) {
 		// Extract did from params
-		const { did, network, page, limit } = request.query as GetDIDRequestParams;
+		const { did, network, page, limit, providerId } = request.query as GetDIDRequestParams;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = response.locals.customer
 			? new IdentityServiceStrategySetup(response.locals.customer.customerId)
 			: new IdentityServiceStrategySetup();
 
 		try {
-			const didDocument = did
-				? await identityServiceStrategySetup.agent.resolveDid(did)
-				: await identityServiceStrategySetup.agent.listDids({ network, page, limit }, response.locals.customer);
-
+            let didDocument: ListDidsResponseBody | QueryDidResponseBody
+            switch(providerId) {
+                case 'dock':
+                    didDocument = await new DockIdentityService().listDids({ network, page, limit }, response.locals.customer);
+                    break;
+                case 'studio':
+                default:
+                    didDocument = did
+                    ? await identityServiceStrategySetup.agent.resolveDid(did)
+                    : await identityServiceStrategySetup.agent.listDids({ network, page, limit }, response.locals.customer);
+            }
 			return response
 				.status(StatusCodes.OK)
 				.json(didDocument satisfies ListDidsResponseBody | QueryDidResponseBody);

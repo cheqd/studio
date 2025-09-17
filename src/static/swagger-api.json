@@ -4106,6 +4106,15 @@
           },
           {
             "in": "query",
+            "name": "providerId",
+            "description": "Filter DID by the provider.",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
             "name": "createdAt",
             "description": "Filter resource by created date",
             "schema": {
