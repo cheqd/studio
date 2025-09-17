@@ -17,6 +17,7 @@ import { ProviderService } from '../../../api/providers/provider.service.js';
 import { fromString, toString } from 'uint8arrays';
 import { contentsFromEncryptedWalletCredential, passwordToKeypair } from '@docknetwork/universal-wallet';
 import { IdentityServiceStrategySetup } from '../../index.js';
+import { ProviderConfigurationEntity } from '../../../../database/entities/provider-configuration.entity.js';
 
 export class DockIdentityService extends AbstractIdentityService {
 	supportedProvider = 'dock';
@@ -153,8 +154,9 @@ export class DockIdentityService extends AbstractIdentityService {
 				Authorization: `Bearer ${apiKey}`,
 			},
 			body: JSON.stringify({
-				persist: true,
+				persist: false,
 				format,
+                distribute: true,
 				credential: {
 					...payload,
 					issuer: typeof credential.issuer === 'string' ? credential.issuer : credential.issuer.id,
@@ -166,12 +168,15 @@ export class DockIdentityService extends AbstractIdentityService {
 			} satisfies DockIssueCredentialRequestBody),
 		});
 
-		if (!response.ok) {
+		if (response.status != 200) {
 			throw new Error(`Failed to create credential with ${this.supportedProvider}: ${response.statusText}`);
 		}
 
-		const vc = (await response.json()) as VerifiableCredential;
-
+        const jwt = await response.json();
+        // Decode JWT to VerifiableCredential
+        const [, payloadBase64] = jwt.split('.');
+        const credentialJson = Buffer.from(payloadBase64, 'base64').toString('utf8');
+        const vc: VerifiableCredential = JSON.parse(credentialJson);
 		return vc;
 	}
 
@@ -179,21 +184,25 @@ export class DockIdentityService extends AbstractIdentityService {
 		throw new Error(`Not supported`);
 	}
 
-	async exportDid(did: string, customer: CustomerEntity): Promise<DockExportDidResponse> {
-		const provider = await ProviderService.instance.getProvider(this.supportedProvider!);
-		if (!provider) {
-			throw new Error(`Provider ${this.supportedProvider} not found`);
-		}
+	async exportDid(did: string, customer: CustomerEntity, config?: ProviderConfigurationEntity): Promise<DockExportDidResponse> {
+		if(!config) {
+            const provider = await ProviderService.instance.getProvider(this.supportedProvider!);
+            if (!provider) {
+                throw new Error(`Provider ${this.supportedProvider} not found`);
+            }
 
-		// TODO: fetch api key using customer
-		const providerConfig = await ProviderService.instance.getProviderConfiguration(
-			customer.customerId,
-			provider?.providerId
-		);
-		if (!providerConfig) {
-			throw new Error(`Provider ${this.supportedProvider} not configured for customer ${customer.customerId}`);
-		}
-		const apiKey = await ProviderService.instance.getDecryptedApiKey(providerConfig);
+            // TODO: fetch api key using customer
+            const providerConfig = await ProviderService.instance.getProviderConfiguration(
+                customer.customerId,
+                provider?.providerId
+            );
+            if (!providerConfig) {
+                throw new Error(`Provider ${this.supportedProvider} not configured for customer ${customer.customerId}`);
+            }
+            config = providerConfig
+        }
+
+		const apiKey = await ProviderService.instance.getDecryptedApiKey(config);
 		const response = await fetch(`${this.defaultApiUrl}/dids/${did}/export`, {
 			method: 'POST',
 			headers: {

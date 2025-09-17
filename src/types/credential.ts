@@ -14,10 +14,10 @@ import type {
 import type { VerificationOptions } from './shared.js';
 
 export enum CredentialConnectors {
-	Verida,
-	Resource,
-	Studio,
-	Dock,
+	Verida = 'verida',
+	Resource = 'resource',
+	Studio = 'studio',
+	Dock = 'dock',
 }
 
 export interface CredentialRequest {
