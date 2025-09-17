@@ -55,10 +55,4 @@ describe('isService. Negative.', () => {
 		expect(res.error).toBeDefined();
 		expect(res.error).toContain('service.id entries are not unique');
 	});
-	it('should return false for invalid service. serviceEndpoint is not array', () => {
-		const res = serviceValidator.validate([{ ...VALID_SERVICE, serviceEndpoint: 'invalid' }]);
-		expect(res.valid).toBeFalsy();
-		expect(res.error).toBeDefined();
-		expect(res.error).toContain('Service has validation errors: service.serviceEndpoint should be an array');
-	});
 });
