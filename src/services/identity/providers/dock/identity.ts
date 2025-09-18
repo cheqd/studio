@@ -185,6 +185,10 @@ export class DockIdentityService extends AbstractIdentityService {
 		customer: CustomerEntity,
 		config?: ProviderConfigurationEntity
 	): Promise<DockExportDidResponse> {
+		if (!process.env.PROVIDER_EXPORT_PASSWORD) {
+			throw new Error('Provider export requires a password');
+		}
+
 		if (!config) {
 			const provider = await ProviderService.instance.getProvider(this.supportedProvider!);
 			if (!provider) {
@@ -212,7 +216,7 @@ export class DockIdentityService extends AbstractIdentityService {
 				Authorization: `Bearer ${apiKey}`,
 			},
 			body: JSON.stringify({
-				password: process.env.CREDS_DECRYPTION_SECRET,
+				password: process.env.PROVIDER_EXPORT_PASSWORD,
 			}),
 		});
 		const result = await response.json();
