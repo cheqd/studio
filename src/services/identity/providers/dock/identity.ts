@@ -9,9 +9,11 @@ import {
 	DockDecryptedKey,
 	DockExportDidResponse,
 	DockIssueCredentialRequestBody,
+	DockListCredentialRequestOptions,
+	DockListCredentialResponse,
 	DockListDidsResponse,
 } from './types.js';
-import { CredentialRequest } from '../../../../types/credential.js';
+import { CredentialRequest, ListCredentialResponse } from '../../../../types/credential.js';
 import { StatusOptions } from '../../../../types/credential-status.js';
 import { ProviderService } from '../../../api/provider.service.js';
 import { fromString, toString } from 'uint8arrays';
@@ -26,12 +28,11 @@ export class DockIdentityService extends AbstractIdentityService {
 
 	async createDid(network: string, didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier> {
 		// TODO: add soft delete in provider
-		const provider = await ProviderService.instance.getProvider(this.supportedProvider!);
+		const provider = await ProviderService.instance.getProvider(this.supportedProvider!, { deprecated: false });
 		if (!provider) {
-			throw new Error(`Provider ${this.supportedProvider} not found`);
+			throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
 		}
 
-		// TODO: fetch api key using customer
 		const providerConfig = await ProviderService.instance.getProviderConfiguration(
 			customer.customerId,
 			provider?.providerId
@@ -91,12 +92,11 @@ export class DockIdentityService extends AbstractIdentityService {
 	}
 
 	async listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<ListDidsResponseBody> {
-		const provider = await ProviderService.instance.getProvider(this.supportedProvider!);
+		const provider = await ProviderService.instance.getProvider(this.supportedProvider!, { deprecated: false });
 		if (!provider) {
-			throw new Error(`Provider ${this.supportedProvider} not found`);
+			throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
 		}
 
-		// TODO: fetch api key using customer
 		const providerConfig = await ProviderService.instance.getProviderConfiguration(
 			customer.customerId,
 			provider?.providerId
@@ -132,12 +132,11 @@ export class DockIdentityService extends AbstractIdentityService {
 		statusOptions: StatusOptions | null,
 		customer: CustomerEntity
 	): Promise<VerifiableCredential> {
-		const provider = await ProviderService.instance.getProvider(this.supportedProvider!);
+		const provider = await ProviderService.instance.getProvider(this.supportedProvider!, { deprecated: false });
 		if (!provider) {
-			throw new Error(`Provider ${this.supportedProvider} not found`);
+			throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
 		}
 
-		// TODO: fetch api key using customer
 		const providerConfig = await ProviderService.instance.getProviderConfiguration(
 			customer.customerId,
 			provider?.providerId
@@ -190,12 +189,11 @@ export class DockIdentityService extends AbstractIdentityService {
 		}
 
 		if (!config) {
-			const provider = await ProviderService.instance.getProvider(this.supportedProvider!);
+			const provider = await ProviderService.instance.getProvider(this.supportedProvider!, { deprecated: false });
 			if (!provider) {
-				throw new Error(`Provider ${this.supportedProvider} not found`);
+				throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
 			}
 
-			// TODO: fetch api key using customer
 			const providerConfig = await ProviderService.instance.getProviderConfiguration(
 				customer.customerId,
 				provider?.providerId
@@ -225,5 +223,49 @@ export class DockIdentityService extends AbstractIdentityService {
 		}
 
 		return result as DockExportDidResponse;
+	}
+
+	async listCredentials(
+		options: DockListCredentialRequestOptions,
+		customer: CustomerEntity
+	): Promise<ListCredentialResponse> {
+		const provider = await ProviderService.instance.getProvider(this.supportedProvider!, { deprecated: false });
+		if (!provider) {
+			throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
+		}
+
+		const providerConfig = await ProviderService.instance.getProviderConfiguration(
+			customer.customerId,
+			provider?.providerId
+		);
+		if (!providerConfig) {
+			throw new Error(`Provider ${this.supportedProvider} not configured for customer ${customer.customerId}`);
+		}
+		const apiKey = await ProviderService.instance.getDecryptedApiKey(providerConfig);
+
+		const response = await fetch(`${this.defaultApiUrl}/credentials`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${apiKey}`,
+			},
+		});
+
+		if (!response.ok) {
+			throw new Error(`Failed to fetch DIDs with ${this.supportedProvider}: ${response.statusText}`);
+		}
+
+		const data = (await response.json()) as DockListCredentialResponse;
+
+		return {
+			credentials: data.map((credential) => ({
+				id: credential.id,
+				issuerDid: credential.issuerKey,
+				subjectDid: credential.subjectRef,
+				type: credential.type,
+				createdAt: credential.createdAt,
+			})),
+			total: data.length,
+		};
 	}
 }

@@ -5,6 +5,8 @@ export class CredentialAuthRuleProvider extends AuthRuleProvider {
 		super();
 		this.registerRule('/credential/issue', 'POST', 'issue:credential:testnet');
 		this.registerRule('/credential/issue', 'POST', 'issue:credential:mainnet');
+		this.registerRule('/credential/list', 'GET', 'list:credential:testnet', { skipNamespace: true });
+		this.registerRule('/credential/list', 'GET', 'list:credential:mainnet', { skipNamespace: true });
 		this.registerRule('/credential/revoke', 'POST', 'revoke:credential:testnet');
 		this.registerRule('/credential/revoke', 'POST', 'revoke:credential:mainnet');
 		this.registerRule('/credential/suspend', 'POST', 'suspend:credential:testnet');

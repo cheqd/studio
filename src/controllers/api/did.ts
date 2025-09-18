@@ -46,6 +46,7 @@ import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
 import { validate } from '../validator/decorator.js';
 import { query } from 'express-validator';
 import { DockIdentityService } from '../../services/identity/providers/index.js';
+import { ProviderService } from '../../services/api/provider.service.js';
 
 export class DIDController {
 	public static createDIDValidator = [
@@ -734,6 +735,13 @@ export class DIDController {
 			: new IdentityServiceStrategySetup();
 
 		try {
+			if (providerId) {
+				const provider = await ProviderService.instance.getProvider(providerId, { deprecated: false });
+				if (!provider) {
+					throw new Error(`Provider ${providerId} not found or deprecated`);
+				}
+			}
+
 			let didDocument: ListDidsResponseBody | QueryDidResponseBody;
 			switch (providerId) {
 				case 'dock':

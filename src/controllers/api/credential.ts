@@ -24,6 +24,8 @@ import type {
 	VerifyCredentialRequestBody,
 	VerifyCredentialRequestQuery,
 	VerifyCredentialResponseBody,
+	ListCredentialResponse,
+	ListCredentialQueryParams,
 } from '../../types/credential.js';
 import { VeridaDIDValidator } from '../validator/did.js';
 import { Cheqd } from '@cheqd/did-provider-cheqd';
@@ -32,6 +34,8 @@ import { eventTracker } from '../../services/track/tracker.js';
 import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '../../types/track.js';
 import { validate } from '../validator/decorator.js';
 import { StatusListType } from '../../types/credential-status.js';
+import { DockIdentityService } from '../../services/identity/providers/index.js';
+import { ProviderService } from '../../services/api/provider.service.js';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -606,6 +610,106 @@ export class CredentialController {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccesfulUnsuspendCredentialResponseBody);
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /credential/list:
+	 *   get:
+	 *     tags: [ Verifiable Credentials ]
+	 *     summary: Fetch credentials associated with an account.
+	 *     description: This endpoint returns the list of credentials controlled by the account.
+	 *     parameters:
+	 *       - in: query
+	 *         name: providerId
+	 *         description: Filter credentials by the provider.
+	 *         schema:
+	 *           type: string
+	 *         required: false
+	 *       - in: query
+	 *         name: issuerDid
+	 *         description: Filter credentials by Issuer.
+	 *         schema:
+	 *           type: string
+	 *         required: false
+	 *       - in: query
+	 *         name: createdAt
+	 *         description: Filter resource by created date.
+	 *         schema:
+	 *           type: string
+	 *           format: date
+	 *         required: false
+	 *       - in: query
+	 *         name: page
+	 *         description: Page number.
+	 *         schema:
+	 *           type: number
+	 *         required: false
+	 *       - in: query
+	 *         name: limit
+	 *         description: Number of items to be listed in a single page.
+	 *         schema:
+	 *           type: number
+	 *         required: false
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/ListCredentialResult'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async listCredentials(request: Request, response: Response) {
+		const { page, limit, providerId, ...filter } = request.query as ListCredentialQueryParams;
+
+		try {
+			if (providerId) {
+				const provider = await ProviderService.instance.getProvider(providerId, { deprecated: false });
+				if (!provider) {
+					throw new Error(`Provider ${providerId} not found or deprecated`);
+				}
+			}
+
+			let result: ListCredentialResponse;
+			switch (providerId) {
+				case 'dock':
+					result = await new DockIdentityService().listCredentials(
+						{
+							offset: page && limit ? (page - 1) * limit : 0,
+							limit: limit,
+							filter: {
+								issuerDid: filter.issuerDid,
+								id: filter.id,
+								type: filter.type,
+							},
+						},
+						response.locals.customer
+					);
+					break;
+				default:
+					const identityServiceStrategySetup = new IdentityServiceStrategySetup(
+						response.locals.customer.customerId
+					);
+					result = await identityServiceStrategySetup.agent.listCredentials(
+						{ filter, page, limit },
+						response.locals.customer
+					);
+			}
+			return response.status(StatusCodes.OK).json(result);
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+				{
+					error: `Internal error: ${(error as Error)?.message || error}`,
+				} /* satisfies UnsuccessfulListCredentialResponseBody */
+			);
 		}
 	}
 }

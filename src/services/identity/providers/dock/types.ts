@@ -139,3 +139,13 @@ export type DockListCredentialResponse = {
 	whitelabel: string | null;
 	algorithm: string;
 }[];
+
+export type DockListCredentialRequestOptions = {
+	offset?: number;
+	limit?: number;
+	filter: {
+		id?: string;
+		issuerDid?: string;
+		type?: string;
+	};
+};

@@ -3856,6 +3856,84 @@
         }
       }
     },
+    "/credential/list": {
+      "get": {
+        "tags": [
+          "Verifiable Credentials"
+        ],
+        "summary": "Fetch credentials associated with an account.",
+        "description": "This endpoint returns the list of credentials controlled by the account.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "providerId",
+            "description": "Filter credentials by the provider.",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "issuerDid",
+            "description": "Filter credentials by Issuer.",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "createdAt",
+            "description": "Filter resource by created date.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Page number.",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "description": "Number of items to be listed in a single page.",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListCredentialResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
     "/did/create": {
       "post": {
         "tags": [

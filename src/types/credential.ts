@@ -119,3 +119,32 @@ export type UnsuccesfulSuspendCredentialResponseBody = Pick<SuspensionResult, 's
 export type UnsuccesfulUnsuspendCredentialResponseBody =
 	| Pick<UnsuspensionResult, 'unsuspended'>
 	| UnsuccessfulResponseBody;
+
+export type ListCredentialQueryParams = {
+	providerId?: string;
+	issuerDid?: string;
+	network?: 'mainnet' | 'testnet';
+	createdAt?: string;
+	page?: number;
+	limit?: number;
+	id?: string;
+	type?: string;
+};
+
+export type ListCredentialRequestOptions = {
+	page?: number;
+	limit?: number;
+	filter?: any;
+};
+
+export type ListCredentialResponse = {
+	credentials: {
+		id: string;
+		issuerDid: string;
+		subjectDid: string;
+		type: string | string[];
+		createdAt: string;
+		statusOptions?: any;
+	}[];
+	total: number;
+};

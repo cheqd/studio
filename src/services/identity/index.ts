@@ -39,7 +39,11 @@ import type {
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
 } from '../../types/credential-status.js';
-import type { CredentialRequest } from '../../types/credential.js';
+import type {
+	CredentialRequest,
+	ListCredentialRequestOptions,
+	ListCredentialResponse,
+} from '../../types/credential.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
 import type { StatusOptions } from '../../types/credential-status.js';
 import type {
@@ -109,6 +113,7 @@ export interface IIdentityService {
 		verificationOptions: VerificationOptions,
 		customer: CustomerEntity
 	): Promise<IVerifyResult>;
+	listCredentials(options: ListCredentialRequestOptions, customer: CustomerEntity): Promise<ListCredentialResponse>;
 	createPresentation(
 		presentation: PresentationPayload,
 		verificationOptions: VerificationOptions,
