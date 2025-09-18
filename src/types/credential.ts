@@ -139,12 +139,15 @@ export type ListCredentialRequestOptions = {
 
 export type ListCredentialResponse = {
 	credentials: {
+		status: string;
+		providerId: string;
 		id: string;
 		issuerDid: string;
 		subjectDid: string;
 		type: string | string[];
 		createdAt: string;
-		statusOptions?: any;
+		format: string;
+		credentialStatus?: any;
 	}[];
 	total: number;
 };

@@ -31,7 +31,11 @@ import type {
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
 } from '../../../../types/credential-status.js';
-import type { CredentialRequest } from '../../../../types/credential.js';
+import type {
+	CredentialRequest,
+	ListCredentialRequestOptions,
+	ListCredentialResponse,
+} from '../../../../types/credential.js';
 import type { CheckStatusListOptions } from '../../../../types/credential-status.js';
 import type { StatusOptions } from '../../../../types/credential-status.js';
 import type {
@@ -71,6 +75,7 @@ import { ListResourceOptions, ListResourceResponse } from '../../../../types/res
 import { ResourceEntity } from '../../../../database/entities/resource.entity.js';
 import { OperationService } from '../../../api/operation.js';
 import { ListOperationOptions } from '../../../../types/track.js';
+import { DIDAccreditationTypes } from '../../../../types/accreditation.js';
 
 dotenv.config();
 
@@ -425,6 +430,56 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
+	}
+
+	async listCredentials(
+		options: ListCredentialRequestOptions,
+		customer: CustomerEntity
+	): Promise<ListCredentialResponse> {
+		if (!customer) {
+			throw new Error('Customer not found');
+		}
+		const where: FindOptionsWhere<ResourceEntity>[] = [
+			{ customer, resourceType: 'VerifiableCredential' },
+			{ customer, resourceType: DIDAccreditationTypes.VerifiableAccreditationToAccredit },
+			{ customer, resourceType: DIDAccreditationTypes.VerifiableAccreditationToAttest },
+		];
+
+		if (options.filter.issuerDid) {
+			where.forEach((w) => {
+				w.identifier = options.filter.issuerDid;
+			});
+		}
+
+		const [resources, total] = await ResourceService.instance.find(where, options.page, options.limit, {
+			identifier: true,
+		});
+		console.log(resources);
+
+		const credentials = await Promise.all(
+			resources.map(async (r) => {
+				const res = await this.resolve(`${r.identifier.did}/resources/${r.resourceId}`);
+				return res.json();
+			})
+		);
+
+		return {
+			total,
+			credentials: credentials
+				.filter((c) => c.credentialSubject)
+				.map((credential: VerifiableCredential) => ({
+					status: credential.c ? 'issued' : 'revoked',
+					providerId: 'studio',
+					id: credential.id!,
+					issuerDid: typeof credential.issuer === 'string' ? credential.issuer : credential.issuer.id,
+					subjectDid: credential.credentialSubject.id!,
+					type: credential.type || 'VerifiableCredential',
+					format: 'jwt',
+					createdAt: credential.createdAt,
+					expirationDate: credential.expirationDate,
+					credentialStatus: credential.credentialStatus,
+				})),
+		};
 	}
 
 	async verifyCredential(

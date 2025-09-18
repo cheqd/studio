@@ -35,7 +35,6 @@ import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '
 import { validate } from '../validator/decorator.js';
 import { StatusListType } from '../../types/credential-status.js';
 import { DockIdentityService } from '../../services/identity/providers/index.js';
-import { ProviderService } from '../../services/api/provider.service.js';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -671,20 +670,13 @@ export class CredentialController {
 		const { page, limit, providerId, ...filter } = request.query as ListCredentialQueryParams;
 
 		try {
-			if (providerId) {
-				const provider = await ProviderService.instance.getProvider(providerId, { deprecated: false });
-				if (!provider) {
-					throw new Error(`Provider ${providerId} not found or deprecated`);
-				}
-			}
-
 			let result: ListCredentialResponse;
 			switch (providerId) {
 				case 'dock':
 					result = await new DockIdentityService().listCredentials(
 						{
 							offset: page && limit ? (page - 1) * limit : 0,
-							limit: limit,
+							limit,
 							filter: {
 								issuerDid: filter.issuerDid,
 								id: filter.id,
@@ -694,15 +686,47 @@ export class CredentialController {
 						response.locals.customer
 					);
 					break;
-				default:
-					const identityServiceStrategySetup = new IdentityServiceStrategySetup(
-						response.locals.customer.customerId
-					);
-					result = await identityServiceStrategySetup.agent.listCredentials(
-						{ filter, page, limit },
-						response.locals.customer
-					);
+
+				case 'studio':
+					{
+						const identityServiceStrategySetup = new IdentityServiceStrategySetup(
+							response.locals.customer.customerId
+						);
+						result = await identityServiceStrategySetup.agent.listCredentials(
+							{ filter, page, limit },
+							response.locals.customer
+						);
+					}
+					break;
+
+				default: {
+					const [dockResult, studioResult] = await Promise.all([
+						new DockIdentityService().listCredentials(
+							{
+								offset: page && limit ? ((page - 1) * limit) / 2 : 0,
+								limit: limit ? limit / 2 : 5,
+								filter: {
+									issuerDid: filter.issuerDid,
+									id: filter.id,
+									type: filter.type,
+								},
+							},
+							response.locals.customer
+						),
+						new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.listCredentials(
+							{ filter, page, limit: limit ? limit / 2 : 5 },
+							response.locals.customer
+						),
+					]);
+
+					// merge results — here just concat, but you might need to deduplicate
+					result = {
+						credentials: [...dockResult.credentials, ...studioResult.credentials],
+						total: dockResult.total + studioResult.total,
+					};
+				}
 			}
+
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
