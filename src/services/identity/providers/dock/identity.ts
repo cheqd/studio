@@ -258,10 +258,10 @@ export class DockIdentityService extends AbstractIdentityService {
 		const data = (await response.json()) as DockListCredentialResponse;
 		return {
 			credentials: data.map((credential) => ({
-				status: credential.revoked ? 'issued' : 'revoked',
+				status: credential.revoked ? 'revoked' : 'issued',
 				providerId: provider.providerId,
 				id: credential.id,
-				issuerDid: credential.issuerKey,
+				issuerDid: credential.issuerKey.split('#')[0],
 				subjectDid: credential.subjectRef,
 				type: credential.type,
 				format: 'jwt',

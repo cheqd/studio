@@ -454,7 +454,6 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		const [resources, total] = await ResourceService.instance.find(where, options.page, options.limit, {
 			identifier: true,
 		});
-		console.log(resources);
 
 		const credentials = await Promise.all(
 			resources.map(async (r) => {
@@ -468,7 +467,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			credentials: credentials
 				.filter((c) => c.credentialSubject)
 				.map((credential: VerifiableCredential) => ({
-					status: credential.c ? 'issued' : 'revoked',
+					status: 'issued',
 					providerId: 'studio',
 					id: credential.id!,
 					issuerDid: typeof credential.issuer === 'string' ? credential.issuer : credential.issuer.id,
