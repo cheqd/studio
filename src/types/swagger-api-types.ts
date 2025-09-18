@@ -253,6 +253,34 @@
  *         type:
  *           - VerifiableCredential
  *           - Person
+ *     ListCredentialResult:
+ *       type: object
+ *       properties:
+ *          total:
+ *            type: number
+ *          credentials:
+ *            type: array
+ *            items:
+ *              type: object
+ *              properties:
+ *                status:
+ *                  type: string
+ *                providerId:
+ *                  type: string
+ *                id:
+ *                  type: string
+ *                issuerDid:
+ *                  type: string
+ *                subjectDid:
+ *                  type: string
+ *                type:
+ *                  type: string
+ *                createdAt:
+ *                  type: string
+ *                format:
+ *                  type: string
+ *                credentialStatus:
+ *                  type: object
  *     CredentialRevokeRequest:
  *       type: object
  *       properties:
