@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.13.0-develop.2](https://github.com/cheqd/studio/compare/3.13.0-develop.1...3.13.0-develop.2) (2025-09-18)
+
+### Features
+
+* Init dock integration [DEV-5224] ([#729](https://github.com/cheqd/studio/issues/729)) ([fbdcddd](https://github.com/cheqd/studio/commit/fbdcddd8ba1bcf3051372cfa9900e8942baa766d))
+
 ## [3.13.0-develop.1](https://github.com/cheqd/studio/compare/3.12.1...3.13.0-develop.1) (2025-09-16)
 
 ### Features
