@@ -474,7 +474,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 					subjectDid: credential.credentialSubject.id!,
 					type: credential.type || 'VerifiableCredential',
 					format: 'jwt',
-					createdAt: credential.createdAt,
+					createdAt: credential.issuanceDate,
 					expirationDate: credential.expirationDate,
 					credentialStatus: credential.credentialStatus,
 				})),
