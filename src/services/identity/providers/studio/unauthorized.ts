@@ -1,8 +1,8 @@
 import { MemoryPrivateKeyStore } from '@veramo/key-manager';
 import { KeyManagementSystem } from '@veramo/kms-local';
-import { DefaultIdentityService } from './default.js';
+import { DefaultIdentityService } from '../../default.js';
 
-import { Connection } from '../../database/connection/connection.js';
+import { Connection } from '../../../../database/connection/connection.js';
 import { Veramo } from './agent.js';
 import { CheqdDIDProvider, DefaultRPCUrls } from '@cheqd/did-provider-cheqd';
 import { CheqdNetwork } from '@cheqd/sdk';

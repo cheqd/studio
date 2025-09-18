@@ -140,7 +140,7 @@ class App {
 		app.post(`/credential/revoke`, CredentialController.updateValidator, new CredentialController().revoke);
 		app.post('/credential/suspend', CredentialController.updateValidator, new CredentialController().suspend);
 		app.post('/credential/reinstate', CredentialController.updateValidator, new CredentialController().reinstate);
-
+		app.get('/credential/list', new CredentialController().listCredentials);
 		// Presentation API
 		app.post(
 			`/presentation/verify`,

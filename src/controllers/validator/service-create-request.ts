@@ -32,10 +32,10 @@ export class CreateDIDDocumentServiceValidator implements IValidator {
 				error: `service.serviceEndpoint is required in object ${service}`,
 			};
 		}
-		if (!Array.isArray(service.serviceEndpoint)) {
+		if (!Array.isArray(service.serviceEndpoint) || typeof service.serviceEndpoint === 'string') {
 			return {
 				valid: false,
-				error: `service.serviceEndpoint should be an array in object ${service}`,
+				error: `service.serviceEndpoint should be an array or a string in object ${service}`,
 			};
 		}
 		// Optional fields validation

@@ -22,28 +22,28 @@ import {
 	LitNetworks,
 } from '@cheqd/did-provider-cheqd';
 import { CheqdNetwork } from '@cheqd/sdk';
-import type { VerificationOptions } from '../../types/shared.js';
+import type { VerificationOptions } from '../../../../types/shared.js';
 import type {
 	CreateEncryptedBitstringOptions,
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
-} from '../../types/credential-status.js';
-import type { CredentialRequest } from '../../types/credential.js';
-import type { CheckStatusListOptions } from '../../types/credential-status.js';
-import type { StatusOptions } from '../../types/credential-status.js';
+} from '../../../../types/credential-status.js';
+import type { CredentialRequest } from '../../../../types/credential.js';
+import type { CheckStatusListOptions } from '../../../../types/credential-status.js';
+import type { StatusOptions } from '../../../../types/credential-status.js';
 import type {
 	BroadcastStatusListOptions,
 	CreateEncryptedStatusListOptions,
 	CreateUnencryptedStatusListOptions,
 	UpdateEncryptedStatusListOptions,
 	UpdateUnencryptedStatusListOptions,
-} from '../../types/credential-status.js';
-import { DefaultIdentityService } from './default.js';
-import { Connection } from '../../database/connection/connection.js';
+} from '../../../../types/credential-status.js';
+import { DefaultIdentityService } from '../../default.js';
+import { Connection } from '../../../../database/connection/connection.js';
 import { Veramo } from './agent.js';
 import type { BulkBitstringUpdateResult, CreateStatusListResult, TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
-import type { CustomerEntity } from '../../database/entities/customer.entity.js';
-import { toTPublicKeyEd25519 } from '../helpers.js';
+import type { CustomerEntity } from '../../../../database/entities/customer.entity.js';
+import { toTPublicKeyEd25519 } from '../../../helpers.js';
 
 dotenv.config();
 

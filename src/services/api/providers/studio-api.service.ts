@@ -1,12 +1,16 @@
 import * as dotenv from 'dotenv';
 import { BaseProviderService } from './base-provider.service.js';
-import { ProviderAccountResponse, ProviderApiKeyResponse, ConnectionTestResult } from '../../types/provider.types.js';
-import { CustomerEntity } from '../../database/entities/customer.entity.js';
-import { ProviderConfigurationEntity } from '../../database/entities/provider-configuration.entity.js';
-import { APIServiceOptions } from '../../types/admin.js';
-import { APIKeyService } from '../admin/api-key.js';
-import { UserEntity } from '../../database/entities/user.entity.js';
-import { Connection } from '../../database/connection/connection.js';
+import {
+	ProviderAccountResponse,
+	ProviderApiKeyResponse,
+	ConnectionTestResult,
+} from '../../../types/provider.types.js';
+import { CustomerEntity } from '../../../database/entities/customer.entity.js';
+import { ProviderConfigurationEntity } from '../../../database/entities/provider-configuration.entity.js';
+import { APIServiceOptions } from '../../../types/admin.js';
+import { APIKeyService } from '../../admin/api-key.js';
+import { UserEntity } from '../../../database/entities/user.entity.js';
+import { Connection } from '../../../database/connection/connection.js';
 
 dotenv.config();
 

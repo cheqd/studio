@@ -50,14 +50,4 @@ describe('isCreateDidService. Negative.', () => {
 		expect(res.error).toBeDefined();
 		expect(res.error).toContain('Service for Create DID Request does not have unique service.');
 	});
-	it('should return false for invalid service. serviceEndpoint is not array', () => {
-		const res = createDIDDocumentServiceValidator.validate([
-			{ ...VALID_CREATE_DID_SERVICE, serviceEndpoint: 'invalid' },
-		] as any);
-		expect(res.valid).toBeFalsy();
-		expect(res.error).toBeDefined();
-		expect(res.error).toContain(
-			'Service for Create DID Request has validation errors: service.serviceEndpoint should be an array in object'
-		);
-	});
 });

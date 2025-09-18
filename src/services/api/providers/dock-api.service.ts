@@ -1,7 +1,12 @@
 import * as dotenv from 'dotenv';
 import { BaseProviderService } from './base-provider.service.js';
-import { ConnectionTestResult, ProviderAccountResponse, ProviderApiKeyResponse } from '../../types/provider.types.js';
-import { ProviderConfigurationEntity } from '../../database/entities/provider-configuration.entity.js';
+import {
+	ConnectionTestResult,
+	ProviderAccountResponse,
+	ProviderApiKeyResponse,
+} from '../../../types/provider.types.js';
+import { ProviderConfigurationEntity } from '../../../database/entities/provider-configuration.entity.js';
+import { DockIdentityService } from '../../identity/providers/dock/identity.js';
 
 dotenv.config();
 
@@ -12,6 +17,7 @@ interface DockApiKeyResponse {
 
 export class DockApiService extends BaseProviderService {
 	public static instance = new DockApiService();
+	public identityService = new DockIdentityService();
 
 	constructor() {
 		super('DOCK_MASTER_API_KEY');

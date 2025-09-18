@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as dotenv from 'dotenv';
-import { LocalIdentityService } from './local.js';
-import { PostgresIdentityService } from './postgres.js';
-import { Unauthorized } from './unauthorized.js';
+import { LocalIdentityService, PostgresIdentityService } from './providers/index.js';
+import { Unauthorized } from './providers/studio/unauthorized.js';
 
 import type {
 	CredentialPayload,
@@ -40,7 +39,11 @@ import type {
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
 } from '../../types/credential-status.js';
-import type { CredentialRequest } from '../../types/credential.js';
+import type {
+	CredentialRequest,
+	ListCredentialRequestOptions,
+	ListCredentialResponse,
+} from '../../types/credential.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
 import type { StatusOptions } from '../../types/credential-status.js';
 import type {
@@ -89,7 +92,8 @@ export interface IIdentityService {
 		did: string,
 		keys: Pick<IKey, 'privateKeyHex' | 'type'>[],
 		controllerKeyId: string | undefined,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		provider?: string
 	): Promise<IIdentifier>;
 	createResource(
 		network: string,
@@ -109,6 +113,7 @@ export interface IIdentityService {
 		verificationOptions: VerificationOptions,
 		customer: CustomerEntity
 	): Promise<IVerifyResult>;
+	listCredentials(options: ListCredentialRequestOptions, customer: CustomerEntity): Promise<ListCredentialResponse>;
 	createPresentation(
 		presentation: PresentationPayload,
 		verificationOptions: VerificationOptions,

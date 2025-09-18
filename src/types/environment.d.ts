@@ -60,6 +60,10 @@ declare global {
 			// Creds
 			CREDS_DECRYPTION_SECRET: string;
 
+			// Providers
+			PROVIDER_ENCRYPTION_KEY: string;
+			PROVIDER_EXPORT_PASSWORD: string;
+
 			// Stripe
 			STRIPE_ENABLED: string | 'false';
 			STRIPE_SECRET_KEY: string;

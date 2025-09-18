@@ -24,53 +24,58 @@ import {
 	DefaultRPCUrls,
 	type TransactionResult,
 } from '@cheqd/did-provider-cheqd';
-import { DefaultDidUrlPattern, VeramoAgent } from '../../types/shared.js';
-import type { VerificationOptions } from '../../types/shared.js';
+import { DefaultDidUrlPattern, VeramoAgent } from '../../../../types/shared.js';
+import type { VerificationOptions } from '../../../../types/shared.js';
 import type {
 	CreateEncryptedBitstringOptions,
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
-} from '../../types/credential-status.js';
-import type { CredentialRequest } from '../../types/credential.js';
-import type { CheckStatusListOptions } from '../../types/credential-status.js';
-import type { StatusOptions } from '../../types/credential-status.js';
+} from '../../../../types/credential-status.js';
+import type {
+	CredentialRequest,
+	ListCredentialRequestOptions,
+	ListCredentialResponse,
+} from '../../../../types/credential.js';
+import type { CheckStatusListOptions } from '../../../../types/credential-status.js';
+import type { StatusOptions } from '../../../../types/credential-status.js';
 import type {
 	BroadcastStatusListOptions,
 	CreateUnencryptedStatusListOptions,
 	UpdateUnencryptedStatusListOptions,
 	CreateEncryptedStatusListOptions,
 	UpdateEncryptedStatusListOptions,
-} from '../../types/credential-status.js';
-import { Connection } from '../../database/connection/connection.js';
-import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+} from '../../../../types/credential-status.js';
+import { Connection } from '../../../../database/connection/connection.js';
+import type { CustomerEntity } from '../../../../database/entities/customer.entity.js';
 import { Veramo } from './agent.js';
-import { DefaultIdentityService } from './default.js';
+import { DefaultIdentityService } from '../../default.js';
 import * as dotenv from 'dotenv';
-import { KeyService } from '../api/key.js';
-import { PaymentAccountService } from '../api/payment-account.js';
+import { KeyService } from '../../../api/key.js';
+import { PaymentAccountService } from '../../../api/payment-account.js';
 import { CheqdNetwork } from '@cheqd/sdk';
-import { IdentifierService } from '../api/identifier.js';
-import type { KeyEntity } from '../../database/entities/key.entity.js';
-import type { UserEntity } from '../../database/entities/user.entity.js';
-import { APIKeyService } from '../admin/api-key.js';
-import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
+import { IdentifierService } from '../../../api/identifier.js';
+import type { KeyEntity } from '../../../../database/entities/key.entity.js';
+import type { UserEntity } from '../../../../database/entities/user.entity.js';
+import { APIKeyService } from '../../../admin/api-key.js';
+import type { APIKeyEntity } from '../../../../database/entities/api.key.entity.js';
 import { KeyDIDProvider } from '@veramo/did-provider-key';
 import type { AbstractIdentifierProvider } from '@veramo/did-manager';
 import type { BulkBitstringUpdateResult, CheqdProviderError, CreateStatusListResult } from '@cheqd/did-provider-cheqd';
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
-import { toTPublicKeyEd25519 } from '../helpers.js';
-import type { APIServiceOptions } from '../../types/admin.js';
+import { toTPublicKeyEd25519 } from '../../../helpers.js';
+import type { APIServiceOptions } from '../../../../types/admin.js';
 import { SupportedKeyTypes } from '@veramo/utils';
-import { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
-import { LocalStore } from '../../database/cache/store.js';
-import { ResourceService } from '../api/resource.js';
+import { PaymentAccountEntity } from '../../../../database/entities/payment.account.entity.js';
+import { LocalStore } from '../../../../database/cache/store.js';
+import { ResourceService } from '../../../api/resource.js';
 import { FindOptionsRelations, FindOptionsWhere, LessThanOrEqual } from 'typeorm';
-import { IdentifierEntity } from '../../database/entities/identifier.entity.js';
-import { ListDIDRequestOptions } from '../../types/did.js';
-import { ListResourceOptions, ListResourceResponse } from '../../types/resource.js';
-import { ResourceEntity } from '../../database/entities/resource.entity.js';
-import { OperationService } from '../api/operation.js';
-import { ListOperationOptions } from '../../types/track.js';
+import { IdentifierEntity } from '../../../../database/entities/identifier.entity.js';
+import { ListDIDRequestOptions } from '../../../../types/did.js';
+import { ListResourceOptions, ListResourceResponse } from '../../../../types/resource.js';
+import { ResourceEntity } from '../../../../database/entities/resource.entity.js';
+import { OperationService } from '../../../api/operation.js';
+import { ListOperationOptions } from '../../../../types/track.js';
+import { DIDAccreditationTypes } from '../../../../types/accreditation.js';
 
 dotenv.config();
 
@@ -425,6 +430,55 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		} catch (error) {
 			throw new Error(`${error}`);
 		}
+	}
+
+	async listCredentials(
+		options: ListCredentialRequestOptions,
+		customer: CustomerEntity
+	): Promise<ListCredentialResponse> {
+		if (!customer) {
+			throw new Error('Customer not found');
+		}
+		const where: FindOptionsWhere<ResourceEntity>[] = [
+			{ customer, resourceType: 'VerifiableCredential' },
+			{ customer, resourceType: DIDAccreditationTypes.VerifiableAccreditationToAccredit },
+			{ customer, resourceType: DIDAccreditationTypes.VerifiableAccreditationToAttest },
+		];
+
+		if (options.filter.issuerDid) {
+			where.forEach((w) => {
+				w.identifier = options.filter.issuerDid;
+			});
+		}
+
+		const [resources, total] = await ResourceService.instance.find(where, options.page, options.limit, {
+			identifier: true,
+		});
+
+		const credentials = await Promise.all(
+			resources.map(async (r) => {
+				const res = await this.resolve(`${r.identifier.did}/resources/${r.resourceId}`);
+				return res.json();
+			})
+		);
+
+		return {
+			total,
+			credentials: credentials
+				.filter((c) => c.credentialSubject)
+				.map((credential: VerifiableCredential) => ({
+					status: 'issued',
+					providerId: 'studio',
+					id: credential.id!,
+					issuerDid: typeof credential.issuer === 'string' ? credential.issuer : credential.issuer.id,
+					subjectDid: credential.credentialSubject.id!,
+					type: credential.type || 'VerifiableCredential',
+					format: 'jwt',
+					createdAt: credential.issuanceDate,
+					expirationDate: credential.expirationDate,
+					credentialStatus: credential.credentialStatus,
+				})),
+		};
 	}
 
 	async verifyCredential(

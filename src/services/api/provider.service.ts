@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { Connection } from '../../database/connection/connection.js';
 import { CredentialProviderEntity } from '../../database/entities/credential-provider.entity.js';
 import { ProviderConfigurationEntity } from '../../database/entities/provider-configuration.entity.js';
@@ -25,9 +25,12 @@ export class ProviderService {
 		});
 	}
 
-	async getProvider(providerId: string): Promise<CredentialProviderEntity | null> {
+	async getProvider(
+		providerId: string,
+		filter?: FindOptionsWhere<CredentialProviderEntity>
+	): Promise<CredentialProviderEntity | null> {
 		return await this.providerRepository.findOne({
-			where: { providerId },
+			where: { providerId, ...filter },
 		});
 	}
 

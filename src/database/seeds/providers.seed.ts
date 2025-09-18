@@ -20,7 +20,7 @@ export async function seedProviders() {
 		{
 			providerId: 'creds',
 			name: 'creds xyz',
-			description: 'Credential issuance using Creds API',
+			description: 'Credential issuance using Creds API, powered by cheqd',
 			providerType: 'credential-all',
 			supportedFormats: ['jsonld', 'jwt'],
 			supportedProtocols: ['direct'],
@@ -47,8 +47,8 @@ export async function seedProviders() {
 		},
 		{
 			providerId: 'hovi',
-			name: 'HOVI',
-			description: 'HOVI credential issuance and verification platform',
+			name: 'Hovi Studio',
+			description: 'Hovi credential issuance and verification platform',
 			providerType: 'credential-all',
 			supportedFormats: ['jsonld', 'jwt', 'sd-jwt-vc'],
 			supportedProtocols: ['direct', 'didcomm', 'openid4vc'],
@@ -62,7 +62,7 @@ export async function seedProviders() {
 		{
 			providerId: 'paradym',
 			name: 'Paradym',
-			description: 'Animo Paradym credential management platform',
+			description: 'Paradym credential management platform, powered by Animo Solutions',
 			providerType: 'credential-all',
 			supportedFormats: ['jsonld', 'anoncreds'],
 			supportedProtocols: ['didcomm', 'openid4vc'],

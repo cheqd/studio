@@ -1,4 +1,4 @@
-import type { FindOptionsRelations, Repository } from 'typeorm';
+import type { FindOptionsRelations, FindOptionsWhere, Repository } from 'typeorm';
 import type { IdentifierEntity } from '../../database/entities/identifier.entity.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
@@ -90,7 +90,7 @@ export class ResourceService {
 	}
 
 	public async find(
-		where: Record<string, unknown>,
+		where: FindOptionsWhere<ResourceEntity> | FindOptionsWhere<ResourceEntity>[],
 		page?: number,
 		limit?: number,
 		relations?: FindOptionsRelations<ResourceEntity>

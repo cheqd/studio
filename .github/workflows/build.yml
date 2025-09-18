@@ -38,6 +38,7 @@ jobs:
                 APPLICATION_BASE_URL: ${{ vars.APPLICATION_BASE_URL }}
                 COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
                 PROVIDER_ENCRYPTION_KEY: ${{ secrets.PROVIDER_ENCRYPTION_KEY }}
+                PROVIDER_EXPORT_PASSWORD: ${{ secrets.PROVIDER_EXPORT_PASSWORD }}
                 DOCK_MASTER_API_KEY: ${{ secrets.DOCK_MASTER_API_KEY }}
                 HOVI_MASTER_API_KEY: ${{ secrets.HOVI_MASTER_API_KEY }}
                 PARADYM_MASTER_API_KEY: ${{ secrets.PARADYM_MASTER_API_KEY }}

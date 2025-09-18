@@ -36,7 +36,7 @@ import type {
 	FeePaymentOptions,
 	StatusListType,
 } from '../../types/credential-status';
-import type { CredentialRequest } from '../../types/credential';
+import type { CredentialRequest, ListCredentialRequestOptions, ListCredentialResponse } from '../../types/credential';
 import type { CheckStatusListOptions } from '../../types/credential-status';
 import type { StatusOptions } from '../../types/credential-status';
 import type {
@@ -58,6 +58,10 @@ import { ListOperationOptions } from '../../types/track';
 
 export abstract class AbstractIdentityService implements IIdentityService {
 	agent?: VeramoAgent;
+
+	supportedProvider?: string;
+
+	defaultApiUrl?: string;
 
 	initAgent(): VeramoAgent {
 		throw new Error(`Not supported`);
@@ -202,6 +206,9 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		customer: CustomerEntity
 	): Promise<boolean> {
 		throw new Error(`Not supported`);
+	}
+	listCredentials(options: ListCredentialRequestOptions, customer: CustomerEntity): Promise<ListCredentialResponse> {
+		throw new Error(`Not Supported`);
 	}
 	revokeCredentials(
 		credential: W3CVerifiableCredential | W3CVerifiableCredential[],
