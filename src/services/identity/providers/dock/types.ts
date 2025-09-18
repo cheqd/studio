@@ -120,3 +120,22 @@ export type DockDecryptedCredential = {
 	status: string;
 	contents: DockDecryptedCredentialContent[];
 };
+
+export type DockListCredentialResponse = {
+	id: string;
+	issuerKey: string;
+	subjectRef: string;
+	issuerName: string;
+	type: string;
+	revocationRegistry: string;
+	revoked: boolean;
+	index: string;
+	createdAt: string;
+	expiryDate: string | null;
+	expirationDate: string | null;
+	issuanceDate: string;
+	byteSize: number;
+	persist: boolean;
+	whitelabel: string | null;
+	algorithm: string;
+}[];

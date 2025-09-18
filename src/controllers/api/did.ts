@@ -734,17 +734,23 @@ export class DIDController {
 			: new IdentityServiceStrategySetup();
 
 		try {
-            let didDocument: ListDidsResponseBody | QueryDidResponseBody
-            switch(providerId) {
-                case 'dock':
-                    didDocument = await new DockIdentityService().listDids({ network, page, limit }, response.locals.customer);
-                    break;
-                case 'studio':
-                default:
-                    didDocument = did
-                    ? await identityServiceStrategySetup.agent.resolveDid(did)
-                    : await identityServiceStrategySetup.agent.listDids({ network, page, limit }, response.locals.customer);
-            }
+			let didDocument: ListDidsResponseBody | QueryDidResponseBody;
+			switch (providerId) {
+				case 'dock':
+					didDocument = await new DockIdentityService().listDids(
+						{ network, page, limit },
+						response.locals.customer
+					);
+					break;
+				case 'studio':
+				default:
+					didDocument = did
+						? await identityServiceStrategySetup.agent.resolveDid(did)
+						: await identityServiceStrategySetup.agent.listDids(
+								{ network, page, limit },
+								response.locals.customer
+							);
+			}
 			return response
 				.status(StatusCodes.OK)
 				.json(didDocument satisfies ListDidsResponseBody | QueryDidResponseBody);

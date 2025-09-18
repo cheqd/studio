@@ -1,4 +1,4 @@
-import { ProviderService } from './provider.service.js';
+import { ProviderService } from '../provider.service.js';
 import { CustomerEntity } from '../../../database/entities/customer.entity.js';
 import { ProviderConfigurationEntity } from '../../../database/entities/provider-configuration.entity.js';
 import {

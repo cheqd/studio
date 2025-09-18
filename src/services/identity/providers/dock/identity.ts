@@ -13,7 +13,7 @@ import {
 } from './types.js';
 import { CredentialRequest } from '../../../../types/credential.js';
 import { StatusOptions } from '../../../../types/credential-status.js';
-import { ProviderService } from '../../../api/providers/provider.service.js';
+import { ProviderService } from '../../../api/provider.service.js';
 import { fromString, toString } from 'uint8arrays';
 import { contentsFromEncryptedWalletCredential, passwordToKeypair } from '@docknetwork/universal-wallet';
 import { IdentityServiceStrategySetup } from '../../index.js';
@@ -61,7 +61,7 @@ export class DockIdentityService extends AbstractIdentityService {
 		const exportedDid = await this.exportDid(data.data.did, customer);
 		if (exportedDid) {
 			const identityStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
-			const kp = await passwordToKeypair(process.env.CREDS_DECRYPTION_SECRET);
+			const kp = await passwordToKeypair(process.env.PROVIDER_EXPORT_PASSWORD);
 			const decyptedContent = (await contentsFromEncryptedWalletCredential(
 				exportedDid,
 				kp
@@ -156,7 +156,7 @@ export class DockIdentityService extends AbstractIdentityService {
 			body: JSON.stringify({
 				persist: false,
 				format,
-                distribute: true,
+				distribute: true,
 				credential: {
 					...payload,
 					issuer: typeof credential.issuer === 'string' ? credential.issuer : credential.issuer.id,
@@ -172,35 +172,37 @@ export class DockIdentityService extends AbstractIdentityService {
 			throw new Error(`Failed to create credential with ${this.supportedProvider}: ${response.statusText}`);
 		}
 
-        const jwt = await response.json();
-        // Decode JWT to VerifiableCredential
-        const [, payloadBase64] = jwt.split('.');
-        const credentialJson = Buffer.from(payloadBase64, 'base64').toString('utf8');
-        const vc: VerifiableCredential = JSON.parse(credentialJson);
+		const jwt = await response.json();
+		// Decode JWT to VerifiableCredential
+		const [, payloadBase64] = jwt.split('.');
+		const credentialJson = Buffer.from(payloadBase64, 'base64').toString('utf8');
+		const vc: VerifiableCredential = JSON.parse(credentialJson);
 		return vc;
 	}
 
-	async listCredentials(customer: CustomerEntity): Promise<VerifiableCredential[]> {
-		throw new Error(`Not supported`);
-	}
+	async exportDid(
+		did: string,
+		customer: CustomerEntity,
+		config?: ProviderConfigurationEntity
+	): Promise<DockExportDidResponse> {
+		if (!config) {
+			const provider = await ProviderService.instance.getProvider(this.supportedProvider!);
+			if (!provider) {
+				throw new Error(`Provider ${this.supportedProvider} not found`);
+			}
 
-	async exportDid(did: string, customer: CustomerEntity, config?: ProviderConfigurationEntity): Promise<DockExportDidResponse> {
-		if(!config) {
-            const provider = await ProviderService.instance.getProvider(this.supportedProvider!);
-            if (!provider) {
-                throw new Error(`Provider ${this.supportedProvider} not found`);
-            }
-
-            // TODO: fetch api key using customer
-            const providerConfig = await ProviderService.instance.getProviderConfiguration(
-                customer.customerId,
-                provider?.providerId
-            );
-            if (!providerConfig) {
-                throw new Error(`Provider ${this.supportedProvider} not configured for customer ${customer.customerId}`);
-            }
-            config = providerConfig
-        }
+			// TODO: fetch api key using customer
+			const providerConfig = await ProviderService.instance.getProviderConfiguration(
+				customer.customerId,
+				provider?.providerId
+			);
+			if (!providerConfig) {
+				throw new Error(
+					`Provider ${this.supportedProvider} not configured for customer ${customer.customerId}`
+				);
+			}
+			config = providerConfig;
+		}
 
 		const apiKey = await ProviderService.instance.getDecryptedApiKey(config);
 		const response = await fetch(`${this.defaultApiUrl}/dids/${did}/export`, {
