@@ -474,7 +474,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 					issuerDid: typeof credential.issuer === 'string' ? credential.issuer : credential.issuer.id,
 					subjectDid: credential.credentialSubject.id!,
 					type: credential.type || 'VerifiableCredential',
-					format: credential.proof.type === JWT_PROOF_TYPE ? 'jwt': 'jsonld',
+					format: credential.proof.type === JWT_PROOF_TYPE ? 'jwt' : 'jsonld',
 					createdAt: credential.issuanceDate,
 					expirationDate: credential.expirationDate,
 					credentialStatus: credential.credentialStatus,
