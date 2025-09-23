@@ -35,7 +35,7 @@ export class Credentials {
 
 		const credential: CredentialPayload = {
 			'@context': [...(context || []), ...VC_CONTEXT],
-			type: [...(type || []), VC_TYPE],
+			type: [...new Set([...(type || []), VC_TYPE])],
 			issuer: { id: issuerDid },
 			credentialSchema,
 			credentialSubject: {

@@ -76,6 +76,7 @@ import { ResourceEntity } from '../../../../database/entities/resource.entity.js
 import { OperationService } from '../../../api/operation.js';
 import { ListOperationOptions } from '../../../../types/track.js';
 import { DIDAccreditationTypes } from '../../../../types/accreditation.js';
+import { JWT_PROOF_TYPE } from '../../../../types/constants.js';
 import { toString, fromString } from 'uint8arrays';
 
 dotenv.config();
@@ -535,7 +536,11 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		const credentials = await Promise.all(
 			resources.map(async (r) => {
 				const res = await this.resolve(`${r.identifier.did}/resources/${r.resourceId}`);
-				return res.json();
+				const data = await res.json();
+				return {
+					id: `${r.identifier.did}/resources/${r.resourceId}`,
+					...data,
+				};
 			})
 		);
 
@@ -550,7 +555,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 					issuerDid: typeof credential.issuer === 'string' ? credential.issuer : credential.issuer.id,
 					subjectDid: credential.credentialSubject.id!,
 					type: credential.type || 'VerifiableCredential',
-					format: 'jwt',
+					format: credential.proof.type === JWT_PROOF_TYPE ? 'jwt' : 'jsonld',
 					createdAt: credential.issuanceDate,
 					expirationDate: credential.expirationDate,
 					credentialStatus: credential.credentialStatus,

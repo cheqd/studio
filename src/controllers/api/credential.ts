@@ -35,6 +35,7 @@ import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '
 import { validate } from '../validator/decorator.js';
 import { StatusListType } from '../../types/credential-status.js';
 import { DockIdentityService } from '../../services/identity/providers/index.js';
+import { ProviderService } from '../../services/api/provider.service.js';
 
 export class CredentialController {
 	public static issueValidator = [
@@ -700,30 +701,70 @@ export class CredentialController {
 					break;
 
 				default: {
-					const [dockResult, studioResult] = await Promise.all([
-						new DockIdentityService().listCredentials(
-							{
-								offset: page && limit ? ((page - 1) * limit) / 2 : 0,
-								limit: limit ? limit / 2 : 5,
-								filter: {
-									issuerDid: filter.issuerDid,
-									id: filter.id,
-									type: filter.type,
-								},
-							},
-							response.locals.customer
-						),
-						new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.listCredentials(
-							{ filter, page, limit: limit ? limit / 2 : 5 },
-							response.locals.customer
-						),
-					]);
+					// Get activated providers for the customer
+					const configurations = await ProviderService.instance.getCustomerConfigurations(
+						response.locals.customer.customerId
+					);
 
-					// merge results — here just concat, but you might need to deduplicate
-					result = {
-						credentials: [...dockResult.credentials, ...studioResult.credentials],
-						total: dockResult.total + studioResult.total,
-					};
+					// Filter to only active configurations
+					const activeConfigurations = configurations.filter((config) => config.active);
+					const activeProviderIds = activeConfigurations.map((config) => config.providerId);
+
+					// Prepare parallel calls based on activated providers
+					const promises: Promise<any>[] = [];
+
+					// Only call Dock if it's activated
+					if (activeProviderIds.includes('dock')) {
+						promises.push(
+							new DockIdentityService().listCredentials(
+								{
+									offset: page && limit ? ((page - 1) * limit) / activeProviderIds.length : 0,
+									limit: limit
+										? limit / activeProviderIds.length
+										: Math.floor(10 / activeProviderIds.length),
+									filter: {
+										issuerDid: filter.issuerDid,
+										id: filter.id,
+										type: filter.type,
+									},
+								},
+								response.locals.customer
+							)
+						);
+					}
+
+					// Only call Studio if it's activated
+					if (activeProviderIds.includes('studio')) {
+						promises.push(
+							new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.listCredentials(
+								{
+									filter,
+									page,
+									limit: limit
+										? limit / activeProviderIds.length
+										: Math.floor(10 / activeProviderIds.length),
+								},
+								response.locals.customer
+							)
+						);
+					}
+
+					// If no providers are activated, return empty result
+					if (promises.length === 0) {
+						result = {
+							credentials: [],
+							total: 0,
+						};
+					} else {
+						// Execute all provider calls in parallel
+						const results = await Promise.all(promises);
+
+						// Merge results from all activated providers
+						result = {
+							credentials: results.flatMap((res) => res.credentials),
+							total: results.reduce((sum, res) => sum + res.total, 0),
+						};
+					}
 				}
 			}
 
