@@ -536,7 +536,11 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		const credentials = await Promise.all(
 			resources.map(async (r) => {
 				const res = await this.resolve(`${r.identifier.did}/resources/${r.resourceId}`);
-				return res.json();
+				const data = await res.json();
+				return {
+					id: `${r.identifier.did}/resources/${r.resourceId}`,
+					...data,
+				};
 			})
 		);
 
