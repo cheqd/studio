@@ -1765,6 +1765,11 @@
               "mainnet"
             ]
           },
+          "providerId": {
+            "description": "Identity Provider to create the DID",
+            "type": "string",
+            "required": false
+          },
           "identifierFormatType": {
             "description": "Algorithm to use for generating the method-specific ID. The two styles supported are UUIDs and Indy-style Base58. See <a href=\"https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#cheqd-did-method-did-cheqd\">cheqd DID method documentation</a> for more details.",
             "type": "string",
@@ -1837,6 +1842,11 @@
               "testnet",
               "mainnet"
             ]
+          },
+          "providerId": {
+            "description": "Identity Provider to create the DID",
+            "type": "string",
+            "required": false
           },
           "identifierFormatType": {
             "description": "Algorithm to use for generating the method-specific ID. The two styles supported are UUIDs and Indy-style Base58. See <a href=\"https://docs.cheqd.io/identity/architecture/adr-list/adr-001-cheqd-did-method#cheqd-did-method-did-cheqd\">cheqd DID method documentation</a> for more details.",
@@ -4383,6 +4393,101 @@
           },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/did/export/{did}": {
+      "post": {
+        "tags": [
+          "Decentralized Identifiers (DIDs)"
+        ],
+        "summary": "Export a DID Document.",
+        "description": "This endpoint exports a decentralized identifier associated with the user's account with the custodied keys.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "did",
+            "description": "DID identifier to resolve.",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "required": false
+                  },
+                  "providerId": {
+                    "type": "string",
+                    "required": false
+                  }
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "required": false
+                  },
+                  "providerId": {
+                    "type": "string",
+                    "required": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DidResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "InvalidRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "Internal Error"
+                }
+              }
+            }
           }
         }
       }

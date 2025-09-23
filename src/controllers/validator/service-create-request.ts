@@ -32,7 +32,7 @@ export class CreateDIDDocumentServiceValidator implements IValidator {
 				error: `service.serviceEndpoint is required in object ${service}`,
 			};
 		}
-		if (!Array.isArray(service.serviceEndpoint) || typeof service.serviceEndpoint === 'string') {
+		if (!Array.isArray(service.serviceEndpoint) && typeof service.serviceEndpoint !== 'string') {
 			return {
 				valid: false,
 				error: `service.serviceEndpoint should be an array or a string in object ${service}`,
@@ -67,7 +67,7 @@ export class CreateDIDDocumentServiceValidator implements IValidator {
 	}
 
 	validate(services: Validatable): IValidationResult {
-		services = services as CreateDIDService[];
+		services = (Array.isArray(services) ? services : [services]) as CreateDIDService[];
 		if (!Array.isArray(services)) {
 			return {
 				valid: false,

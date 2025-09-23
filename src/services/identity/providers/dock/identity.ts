@@ -1,13 +1,12 @@
-import { CredentialPayload, IIdentifier, VerifiableCredential } from '@veramo/core';
+import { CredentialPayload, IIdentifier, IKey, VerifiableCredential } from '@veramo/core';
 import { DIDDocument } from 'did-resolver';
 import { CustomerEntity } from '../../../../database/entities/customer.entity.js';
 import { AbstractIdentityService } from '../../abstract.js';
-import { ListDIDRequestOptions, ListDidsResponseBody } from '../../../../types/did.js';
+import { ExportDidResponse, ListDIDRequestOptions, ListDidsResponseBody } from '../../../../types/did.js';
 import {
 	DockCreateDidResponse,
 	DockDecryptedCredentialContent,
 	DockDecryptedKey,
-	DockExportDidResponse,
 	DockIssueCredentialRequestBody,
 	DockListCredentialRequestOptions,
 	DockListCredentialResponse,
@@ -19,7 +18,6 @@ import { ProviderService } from '../../../api/provider.service.js';
 import { fromString, toString } from 'uint8arrays';
 import { contentsFromEncryptedWalletCredential, passwordToKeypair } from '@docknetwork/universal-wallet';
 import { IdentityServiceStrategySetup } from '../../index.js';
-import { ProviderConfigurationEntity } from '../../../../database/entities/provider-configuration.entity.js';
 
 export class DockIdentityService extends AbstractIdentityService {
 	supportedProvider = 'dock';
@@ -27,7 +25,6 @@ export class DockIdentityService extends AbstractIdentityService {
 	defaultApiUrl = 'https://api-testnet.truvera.io';
 
 	async createDid(network: string, didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier> {
-		// TODO: add soft delete in provider
 		const provider = await ProviderService.instance.getProvider(this.supportedProvider!, { deprecated: false });
 		if (!provider) {
 			throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
@@ -59,7 +56,7 @@ export class DockIdentityService extends AbstractIdentityService {
 		// save in db
 		// Add a time delay before exporting
 		await new Promise((resolve) => setTimeout(resolve, 5000));
-		const exportedDid = await this.exportDid(data.data.did, customer);
+		const exportedDid = await this.exportDid(data.data.did, '', customer);
 		if (exportedDid) {
 			const identityStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
 			const kp = await passwordToKeypair(process.env.PROVIDER_EXPORT_PASSWORD);
@@ -76,12 +73,17 @@ export class DockIdentityService extends AbstractIdentityService {
 
 			const didDocument = (decyptedContent.find((c) => (c as any).didDocument) as any)
 				?.didDocument as DIDDocument;
+
+			const vm = didDocument.verificationMethod![0];
+			const pkBase58 = vm.publicKeyBase58;
+			const controllerKeyId = toString(fromString(pkBase58, 'base58btc'), 'hex');
+
 			return await identityStrategySetup.agent.importDid(
 				didDocument.id,
 				keys,
-				Array.isArray(didDocument.controller) ? didDocument.controller[0] : didDocument.controller,
+				controllerKeyId,
 				customer,
-				'dock'
+				`did:cheqd:${network || 'testnet'}`
 			);
 		}
 		return {
@@ -179,34 +181,25 @@ export class DockIdentityService extends AbstractIdentityService {
 		return vc;
 	}
 
-	async exportDid(
-		did: string,
-		customer: CustomerEntity,
-		config?: ProviderConfigurationEntity
-	): Promise<DockExportDidResponse> {
+	async exportDid(did: string, _password: string, customer: CustomerEntity): Promise<ExportDidResponse> {
 		if (!process.env.PROVIDER_EXPORT_PASSWORD) {
 			throw new Error('Provider export requires a password');
 		}
 
-		if (!config) {
-			const provider = await ProviderService.instance.getProvider(this.supportedProvider!, { deprecated: false });
-			if (!provider) {
-				throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
-			}
-
-			const providerConfig = await ProviderService.instance.getProviderConfiguration(
-				customer.customerId,
-				provider?.providerId
-			);
-			if (!providerConfig) {
-				throw new Error(
-					`Provider ${this.supportedProvider} not configured for customer ${customer.customerId}`
-				);
-			}
-			config = providerConfig;
+		const provider = await ProviderService.instance.getProvider(this.supportedProvider!, { deprecated: false });
+		if (!provider) {
+			throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
 		}
 
-		const apiKey = await ProviderService.instance.getDecryptedApiKey(config);
+		const providerConfig = await ProviderService.instance.getProviderConfiguration(
+			customer.customerId,
+			provider?.providerId
+		);
+		if (!providerConfig) {
+			throw new Error(`Provider ${this.supportedProvider} not configured for customer ${customer.customerId}`);
+		}
+
+		const apiKey = await ProviderService.instance.getDecryptedApiKey(providerConfig);
 		const response = await fetch(`${this.defaultApiUrl}/dids/${did}/export`, {
 			method: 'POST',
 			headers: {
@@ -222,7 +215,12 @@ export class DockIdentityService extends AbstractIdentityService {
 			throw new Error(`Failed to create did with ${this.supportedProvider}: ${response.statusText}`);
 		}
 
-		return result as DockExportDidResponse;
+		const [didDocument, ...keys] = result;
+
+		return {
+			...didDocument,
+			keys,
+		};
 	}
 
 	async listCredentials(
@@ -275,6 +273,55 @@ export class DockIdentityService extends AbstractIdentityService {
 					: undefined,
 			})),
 			total: data.length,
+		};
+	}
+
+	async importDid(
+		did: string,
+		keys: Pick<IKey, 'privateKeyHex' | 'type'>[],
+		controllerKeyId: string,
+		customer: CustomerEntity
+	): Promise<IIdentifier & { status: boolean }> {
+		if (!process.env.PROVIDER_EXPORT_PASSWORD) {
+			throw new Error('Provider export requires a password');
+		}
+
+		const provider = await ProviderService.instance.getProvider(this.supportedProvider!, { deprecated: false });
+		if (!provider) {
+			throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
+		}
+
+		const providerConfig = await ProviderService.instance.getProviderConfiguration(
+			customer.customerId,
+			provider?.providerId
+		);
+		if (!providerConfig) {
+			throw new Error(`Provider ${this.supportedProvider} not configured for customer ${customer.customerId}`);
+		}
+
+		const identityStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
+		const exportedDid = await identityStrategySetup.agent.exportDid(did, '', customer);
+		const apiKey = await ProviderService.instance.getDecryptedApiKey(providerConfig);
+		const response = await fetch(`${this.defaultApiUrl}/dids/${did}/import`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${apiKey}`,
+			},
+
+			body: JSON.stringify(exportedDid),
+		});
+		const result = await response.json();
+		if (response.status != 200) {
+			throw new Error(`Failed to create did with ${this.supportedProvider}: ${JSON.stringify(result)}`);
+		}
+
+		return {
+			status: true,
+			did,
+			provider: 'dock',
+			keys: [],
+			services: [],
 		};
 	}
 }

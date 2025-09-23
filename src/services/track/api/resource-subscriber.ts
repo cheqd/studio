@@ -102,7 +102,7 @@ export class ResourceSubscriber extends BaseOperationObserver implements IObserv
 			};
 		}
 
-		const identifier = await IdentifierService.instance.get(did);
+		const identifier = await IdentifierService.instance.get(did, customer);
 		if (!identifier) {
 			throw new Error(`Identifier ${did} not found`);
 		}

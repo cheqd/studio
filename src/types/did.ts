@@ -72,6 +72,22 @@ export type QueryDidResponseBody = DIDResolutionResult;
 
 export type ResolveDidResponseBody = any;
 
+export type ExportDidResponse = DIDResolutionResult & {
+	'@context': string[];
+	id: string;
+	type: string[];
+	keys: {
+		controller: string;
+		type: string;
+		id: string;
+		publicKeyMultibase: string;
+		privateKeyMultibase: string;
+		privateKeyBase58: string;
+		publicKeyBase58: string;
+		'@context'?: string[];
+	}[];
+};
+
 // Negative
 
 export type UnsuccessfulCreateDidResponseBody = UnsuccessfulResponseBody;
