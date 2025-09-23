@@ -25,9 +25,9 @@ export class IdentifierService {
 		return await this.identifierRepository.save(existing);
 	}
 
-	public async get(did?: string, relations?: FindOptionsRelations<IdentifierEntity>) {
+	public async get(did?: string, customer?: CustomerEntity, relations?: FindOptionsRelations<IdentifierEntity>) {
 		return await this.identifierRepository.findOne({
-			where: { did },
+			where: { did, customer },
 			relations,
 		});
 	}

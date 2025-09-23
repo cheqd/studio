@@ -37,7 +37,7 @@ export class ServiceValidator implements IValidator {
 				error: 'service.serviceEndpoint is required',
 			};
 		}
-		if (!Array.isArray(service.serviceEndpoint) || typeof service.serviceEndpoint === 'string') {
+		if (!Array.isArray(service.serviceEndpoint) && typeof service.serviceEndpoint !== 'string') {
 			return {
 				valid: false,
 				error: 'service.serviceEndpoint should be an array or a string',

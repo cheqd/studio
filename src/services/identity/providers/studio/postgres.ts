@@ -9,7 +9,7 @@ import type {
 	VerifiablePresentation,
 	W3CVerifiableCredential,
 } from '@veramo/core';
-import type { AbstractPrivateKeyStore } from '@veramo/key-manager';
+import type { AbstractPrivateKeyStore, ManagedPrivateKey } from '@veramo/key-manager';
 import { KeyManagementSystem, SecretBox } from '@veramo/kms-local';
 import { PrivateKeyStore } from '@veramo/data-store';
 import {
@@ -64,7 +64,7 @@ import type { BulkBitstringUpdateResult, CheqdProviderError, CreateStatusListRes
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { toTPublicKeyEd25519 } from '../../../helpers.js';
 import type { APIServiceOptions } from '../../../../types/admin.js';
-import { SupportedKeyTypes } from '@veramo/utils';
+import { bytesToBase58, bytesToMultibase, SupportedKeyTypes } from '@veramo/utils';
 import { PaymentAccountEntity } from '../../../../database/entities/payment.account.entity.js';
 import { LocalStore } from '../../../../database/cache/store.js';
 import { ResourceService } from '../../../api/resource.js';
@@ -76,6 +76,7 @@ import { ResourceEntity } from '../../../../database/entities/resource.entity.js
 import { OperationService } from '../../../api/operation.js';
 import { ListOperationOptions } from '../../../../types/track.js';
 import { DIDAccreditationTypes } from '../../../../types/accreditation.js';
+import { toString, fromString } from 'uint8arrays';
 
 dotenv.config();
 
@@ -239,8 +240,8 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return await PaymentAccountService.instance.find(where);
 	}
 
-	private async getPrivateKey(kid: string) {
-		return await this.privateStore?.getKey({ alias: kid });
+	private async getPrivateKey(kid: string): Promise<ManagedPrivateKey | null> {
+		return (await this.privateStore?.getKey({ alias: kid })) || null;
 	}
 
 	async createDid(network: string, didDocument: DIDDocument, customer: CustomerEntity): Promise<IIdentifier> {
@@ -333,15 +334,91 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		did: string,
 		keys: Pick<IKey, 'privateKeyHex' | 'type'>[],
 		controllerKeyId: string | undefined,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		provider?: string
 	): Promise<IIdentifier> {
 		if (!did.match(DefaultDidUrlPattern)) {
 			throw new Error('Invalid DID');
 		}
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const identifier: IIdentifier = await Veramo.instance.importDid(this.agent!, did, keys, controllerKeyId);
+		const identifier: IIdentifier = await Veramo.instance.importDid(
+			this.agent!,
+			did,
+			keys,
+			controllerKeyId,
+			provider
+		);
 		await IdentifierService.instance.update(identifier.did, customer);
 		return identifier;
+	}
+
+	async exportDid(did: string, password: string, customer: CustomerEntity): Promise<any> {
+		if (!customer) {
+			throw new Error('Customer not found');
+		}
+		const identifier = await IdentifierService.instance.get(did, customer, { keys: true });
+		if (!identifier) {
+			throw new Error(`${did} not found in wallet`);
+		}
+		const keys = identifier.keys;
+
+		const { didDocument, didDocumentMetadata, didResolutionMetadata } = await this.resolveDid(did);
+		if (!didDocument) {
+			throw new Error(`Error resolving ${did}`);
+		}
+
+		// Step 1: Fetch private keys for each verification method
+		const didKeyDocumentsWithPrivateKey = await Promise.all(
+			(didDocument.verificationMethod || []).map(async (vm: any, index: number) => {
+				// Derive kid from publicKeyBase58
+				const kid = toString(fromString(vm.publicKeyBase58, 'base58btc'), 'hex');
+
+				// Ensure the key exists
+				const existingKey = keys.find(kid);
+				if (!existingKey) {
+					throw new Error(`Key not found in wallet: ${kid}`);
+				}
+
+				// Get private key
+				const keyDoc = await this.getPrivateKey(kid);
+				if (!keyDoc) {
+					throw new Error(`Private key not found for kid: ${kid}`);
+				}
+
+				const publicKeyBytes = fromString(existingKey.publicKeyHex, 'hex');
+				const privateKeyBytes = fromString(keyDoc.privateKeyHex, 'hex');
+
+				// Build DID key document with private key
+				return {
+					'@context': ['https://w3id.org/wallet/v1'],
+					id: vm.id, // keep the same ID as DID Doc
+					type: [keyDoc.type],
+					controller: vm.id,
+					name: keyDoc.alias,
+					correlation: [vm.id],
+					created: new Date().toISOString(),
+					publicKeyMultibase: bytesToMultibase(publicKeyBytes),
+					privateKeyMultibase: bytesToMultibase(privateKeyBytes),
+					publicKeyBase58: bytesToBase58(publicKeyBytes),
+					privateKeyBase58: bytesToBase58(privateKeyBytes),
+				};
+			})
+		);
+
+		// Build DID resolution response
+		const didResolutionResponseDocument = {
+			'@context': ['https://w3id.org/wallet/v1', 'https://w3id.org/did-resolution/v1'],
+			id: did,
+			type: ['DIDResolutionResponse'],
+			didDocument,
+			didDocumentMetadata,
+			didResolutionMetadata,
+		};
+
+		return {
+			...didResolutionResponseDocument,
+			keys: didKeyDocumentsWithPrivateKey,
+		};
 	}
 
 	async createResource(

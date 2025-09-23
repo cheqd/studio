@@ -4,7 +4,6 @@ import {
 	CheqdNetwork,
 	DIDDocument,
 	MethodSpecificIdAlgo,
-	Service,
 	VerificationMethods,
 	createDidVerificationMethod,
 } from '@cheqd/sdk';
@@ -32,6 +31,7 @@ import type {
 	GetDIDRequestParams,
 	ResolveDIDRequestParams,
 	DeactivateDIDRequestBody,
+	ExportDidResponse,
 } from '../../types/did.js';
 import { check, param } from '../validator/index.js';
 import type { IIdentifier, IKey, RequireOnly } from '@veramo/core';
@@ -124,7 +124,7 @@ export class DIDController {
 		check('publicKeyHexs').optional().isArray().withMessage('publicKeyHexs should be an array of strings').bail(),
 	];
 
-	public static deactivateDIDValidator = [param('did').exists().isString().isDID().bail()];
+	public static didPathValidator = [param('did').exists().isString().isDID().bail()];
 
 	public static importDIDValidator = [
 		check('did').isDID().bail(),
@@ -211,112 +211,109 @@ export class DIDController {
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
-			if (request.body.didDocument) {
-				didDocument = request.body.didDocument;
-				if (verificationMethodType) {
-					const publicKeyHex =
-						key ||
-						(
-							await identityServiceStrategySetup.agent.createKey(
-								SupportedKeyTypes.Ed25519,
-								response.locals.customer
-							)
-						).publicKeyHex;
-
-					const pkBase64 = toString(fromString(publicKeyHex, 'hex'), 'base64');
-					didDocument.verificationMethod = createDidVerificationMethod(
-						[verificationMethodType],
-						[
-							{
-								methodSpecificId: bases['base58btc'].encode(base64ToBytes(pkBase64)),
-								didUrl: didDocument.id,
-								keyId: `${didDocument.id}#key-1`,
-								publicKey: pkBase64,
-							},
-						]
-					);
-				} else {
-					return response.status(StatusCodes.BAD_REQUEST).json({
-						error: 'Provide options section to create a DID',
-					} satisfies UnsuccessfulCreateDidResponseBody);
-				}
-			} else if (verificationMethodType) {
-				const publicKeyHex =
-					key ||
-					(
-						await identityServiceStrategySetup.agent.createKey(
-							SupportedKeyTypes.Ed25519,
-							response.locals.customer
-						)
-					).publicKeyHex;
-				didDocument = generateDidDoc({
-					verificationMethod: verificationMethodType,
-					verificationMethodId: 'key-1',
-					methodSpecificIdAlgo: identifierFormatType || MethodSpecificIdAlgo.Uuid,
-					network,
-					publicKey: publicKeyHex,
-				});
-
-				if (Array.isArray(request.body['@context'])) {
-					didDocument['@context'] = request.body['@context'];
-				}
-				if (typeof request.body['@context'] === 'string') {
-					didDocument['@context'] = [request.body['@context']];
-				}
-
-				if (service) {
-					if (Array.isArray(service)) {
-						try {
-							const services = service as Service[];
-							didDocument.service = [];
-							for (const service of services) {
-								didDocument.service.push({
-									id: `${didDocument.id}#${service.idFragment}`,
-									type: service.type,
-									serviceEndpoint: service.serviceEndpoint,
-									recipientKeys: service.recipientKeys,
-									routingKeys: service.routingKeys,
-									priority: service.priority,
-									accept: service.accept,
-								});
-							}
-						} catch (e) {
-							return response.status(StatusCodes.BAD_REQUEST).json({
-								error: 'Provide the correct service section to create a DID',
-							} satisfies UnsuccessfulCreateDidResponseBody);
-						}
-					} else {
-						didDocument.service = [
-							{
-								id: `${didDocument.id}#${service.idFragment}`,
+			let did: IIdentifier;
+			switch (providerId) {
+				case 'dock':
+					did = await new DockIdentityService().createDid(network, { id: '' }, response.locals.customer);
+					const { didDocument: didDoc } = await identityServiceStrategySetup.agent.resolveDid(did.did);
+					console.log(didDoc);
+					if (didDoc && service) {
+						const services = Array.isArray(service) ? service : [service];
+						didDoc.service = didDoc.service || [];
+						// handle overriding
+						const filteredServices = services.filter((s) =>
+							didDoc.service?.every((ds) => s.idFragment != ds.id)
+						);
+						for (const service of filteredServices) {
+							didDoc.service.push({
+								id: `${didDoc.id}#${service.idFragment}`,
 								type: service.type,
 								serviceEndpoint: service.serviceEndpoint,
 								recipientKeys: service.recipientKeys,
 								routingKeys: service.routingKeys,
 								priority: service.priority,
 								accept: service.accept,
-							},
-						];
+							});
+						}
+						did = await identityServiceStrategySetup.agent.updateDid(didDoc, response.locals.customer);
 					}
-				}
-			} else {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: 'Provide a DID Document or the VerificationMethodType to create a DID',
-				} satisfies UnsuccessfulCreateDidResponseBody);
-			}
-
-			let did: IIdentifier;
-			switch (providerId) {
-				case 'dock':
-					did = await new DockIdentityService().createDid(
-						network || didDocument.id.split(':')[2],
-						didDocument,
-						response.locals.customer
-					);
 					break;
 				case 'studio':
 				case undefined:
-					did = await new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.createDid(
+					if (request.body.didDocument) {
+						didDocument = request.body.didDocument;
+						if (verificationMethodType) {
+							const publicKeyHex =
+								key ||
+								(
+									await identityServiceStrategySetup.agent.createKey(
+										SupportedKeyTypes.Ed25519,
+										response.locals.customer
+									)
+								).publicKeyHex;
+
+							const pkBase64 = toString(fromString(publicKeyHex, 'hex'), 'base64');
+							didDocument.verificationMethod = createDidVerificationMethod(
+								[verificationMethodType],
+								[
+									{
+										methodSpecificId: bases['base58btc'].encode(base64ToBytes(pkBase64)),
+										didUrl: didDocument.id,
+										keyId: `${didDocument.id}#key-1`,
+										publicKey: pkBase64,
+									},
+								]
+							);
+						} else {
+							return response.status(StatusCodes.BAD_REQUEST).json({
+								error: 'Provide options section to create a DID',
+							} satisfies UnsuccessfulCreateDidResponseBody);
+						}
+					} else if (verificationMethodType) {
+						const publicKeyHex =
+							key ||
+							(
+								await identityServiceStrategySetup.agent.createKey(
+									SupportedKeyTypes.Ed25519,
+									response.locals.customer
+								)
+							).publicKeyHex;
+
+						didDocument = generateDidDoc({
+							verificationMethod: verificationMethodType,
+							verificationMethodId: 'key-1',
+							methodSpecificIdAlgo: identifierFormatType || MethodSpecificIdAlgo.Uuid,
+							network,
+							publicKey: publicKeyHex,
+						});
+
+						// populate default assertionMethod to support JSON-LD
+						didDocument.assertionMethod = didDocument.authentication;
+
+						if (request.body['@context']) {
+							didDocument['@context'] = Array.isArray(request.body['@context'])
+								? request.body['@context']
+								: [request.body['@context']];
+						}
+
+						if (service) {
+							const services = Array.isArray(service) ? service : [service];
+							didDocument.service = services.map((s) => ({
+								id: `${didDocument.id}#${s.idFragment}`,
+								type: s.type,
+								serviceEndpoint: s.serviceEndpoint,
+								recipientKeys: s.recipientKeys,
+								routingKeys: s.routingKeys,
+								priority: s.priority,
+								accept: s.accept,
+							}));
+						}
+					} else {
+						return response.status(StatusCodes.BAD_REQUEST).json({
+							error: 'Provide a DID Document or the VerificationMethodType to create a DID',
+						} satisfies UnsuccessfulCreateDidResponseBody);
+					}
+					did = await identityServiceStrategySetup.agent.createDid(
 						network || didDocument.id.split(':')[2],
 						didDocument,
 						response.locals.customer
@@ -859,6 +856,106 @@ export class DIDController {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulResolveDidResponseBody);
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /did/export/{did}:
+	 *   post:
+	 *     tags: [ Decentralized Identifiers (DIDs) ]
+	 *     summary: Export a DID Document.
+	 *     description: This endpoint exports a decentralized identifier associated with the user's account with the custodied keys.
+	 *     parameters:
+	 *       - in: path
+	 *         name: did
+	 *         description: DID identifier to resolve.
+	 *         schema:
+	 *           type: string
+	 *         required: true
+	 *     requestBody:
+	 *       content:
+	 *         application/x-www-form-urlencoded:
+	 *           schema:
+	 *             type: object
+	 *             properties:
+	 *               password:
+	 *                 type: string
+	 *                 required: false
+	 *               providerId:
+	 *                 type: string
+	 *                 required: false
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+	 *             properties:
+	 *               password:
+	 *                 type: string
+	 *                 required: false
+	 *               providerId:
+	 *                 type: string
+	 *                 required: false
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/DidResult'
+	 *       400:
+	 *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/InvalidRequest'
+	 *             example:
+	 *               error: InvalidRequest
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/InvalidRequest'
+	 *             example:
+	 *               error: Internal Error
+	 */
+	@validate
+	public async exportDid(request: Request, response: Response) {
+		try {
+			// Get the params from body
+			const { did } = request.params as ResolveDIDRequestParams;
+
+			const { providerId, password } = request.body;
+			let result: ExportDidResponse;
+			switch (providerId) {
+				case 'dock':
+					result = await new DockIdentityService().exportDid(did, password || '', response.locals.customer);
+					break;
+				case 'studio':
+				default:
+					result = await new IdentityServiceStrategySetup(
+						response.locals.customer.customerId
+					).agent.exportDid(did, '', response.locals.customer);
+			}
+			// Track the operation
+			eventTracker.emit('track', {
+				category: OperationCategoryNameEnum.DID,
+				name: OperationNameEnum.DID_EXPORT,
+				data: {
+					did: did,
+				} satisfies IDIDTrack,
+				customer: response.locals.customer,
+				user: response.locals.user,
+			} satisfies ITrackOperation);
+
+			return response.status(StatusCodes.OK).json(result);
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			});
 		}
 	}
 }

@@ -59,7 +59,7 @@ import type { KeyEntity } from '../../database/entities/key.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity.js';
 import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import type { SupportedKeyTypes } from '@veramo/utils';
-import { ListDIDRequestOptions, ListDidsResponseBody } from '../../types/did.js';
+import { ExportDidResponse, ListDIDRequestOptions, ListDidsResponseBody } from '../../types/did.js';
 import { ListResourceOptions, ListResourceResponse } from '../../types/resource.js';
 import { ListOperationOptions } from '../../types/track.js';
 
@@ -86,6 +86,7 @@ export interface IIdentityService {
 	deactivateDid(did: string, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<boolean>;
 	listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<ListDidsResponseBody>;
 	resolveDid(did: string): Promise<DIDResolutionResult>;
+	exportDid(did: string, password: string, customer: CustomerEntity): Promise<ExportDidResponse>;
 	resolve(didUrl: string): Promise<Response>;
 	getDid(did: string, customer: CustomerEntity): Promise<any>;
 	importDid(
@@ -94,7 +95,7 @@ export interface IIdentityService {
 		controllerKeyId: string | undefined,
 		customer: CustomerEntity,
 		provider?: string
-	): Promise<IIdentifier>;
+	): Promise<IIdentifier & { status?: boolean }>;
 	createResource(
 		network: string,
 		payload: ResourcePayload,

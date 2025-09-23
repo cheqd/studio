@@ -13,6 +13,8 @@ export class DidAuthRuleProvider extends AuthRuleProvider {
 		this.registerRule('/did/deactivate', 'POST', 'deactivate:did:mainnet');
 		this.registerRule('/did/import', 'POST', 'import:did:testnet');
 		this.registerRule('/did/import', 'POST', 'import:did:mainnet');
+		this.registerRule('/did/export', 'POST', 'export:did:testnet');
+		this.registerRule('/did/export', 'POST', 'export:did:mainnet');
 		// Unauthorized routes
 		this.registerRule('/did/search/(.*)', 'GET', '', { allowUnauthorized: true, skipNamespace: true });
 	}

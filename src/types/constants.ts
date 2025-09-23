@@ -102,6 +102,7 @@ export enum OperationNameEnum {
 	DID_SEARCH = 'did-search',
 	DID_IMPORT = 'did-import',
 	DID_LIST = 'did-list',
+	DID_EXPORT = 'did-export',
 	// Resource operations
 	RESOURCE_CREATE = 'resource-create',
 	RESOURCE_SEARCH = 'resource-search',

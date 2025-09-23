@@ -194,9 +194,10 @@ class App {
 		app.post('/did/create', DIDController.createDIDValidator, new DIDController().createDid);
 		app.post('/did/update', DIDController.updateDIDValidator, new DIDController().updateDid);
 		app.post('/did/import', DIDController.importDIDValidator, new DIDController().importDid);
-		app.post('/did/deactivate/:did', DIDController.deactivateDIDValidator, new DIDController().deactivateDid);
+		app.post('/did/deactivate/:did', DIDController.didPathValidator, new DIDController().deactivateDid);
 		app.get('/did/list', DIDController.listDIDValidator, new DIDController().getDids);
 		app.get('/did/search/:did', new DIDController().resolveDidUrl);
+		app.post('/did/export', DIDController.didPathValidator, new DIDController().exportDid);
 
 		// Trust Registry API
 		app.post(
