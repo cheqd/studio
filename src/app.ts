@@ -197,7 +197,7 @@ class App {
 		app.post('/did/deactivate/:did', DIDController.didPathValidator, new DIDController().deactivateDid);
 		app.get('/did/list', DIDController.listDIDValidator, new DIDController().getDids);
 		app.get('/did/search/:did', new DIDController().resolveDidUrl);
-		app.post('/did/export', DIDController.didPathValidator, new DIDController().exportDid);
+		app.post('/did/export/:did', DIDController.didPathValidator, new DIDController().exportDid);
 
 		// Trust Registry API
 		app.post(
@@ -263,6 +263,11 @@ class App {
 		app.post('/providers/:providerId/activate', new ProvidersController().activateProvider);
 		app.post('/providers/:providerId/test', new ProvidersController().testConnection);
 		app.delete('/providers/:providerId', new ProvidersController().removeProvider);
+		app.post(
+			'/providers/:providerId/did/import',
+			ProvidersController.importDIDValidator,
+			new ProvidersController().importDid
+		);
 
 		// LogTo user info
 		app.get('/auth/user-info', async (req, res) => {

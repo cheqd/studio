@@ -324,4 +324,58 @@ export class DockIdentityService extends AbstractIdentityService {
 			services: [],
 		};
 	}
+
+	async importDidV2(
+		did: string,
+		exportedDidResult: ExportDidResponse,
+		_password: string,
+		customer: CustomerEntity
+	): Promise<IIdentifier & { status: boolean }> {
+		if (!process.env.PROVIDER_EXPORT_PASSWORD) {
+			throw new Error('Provider export requires a password');
+		}
+
+		// Step 1: Resolve provider
+		const provider = await ProviderService.instance.getProvider(this.supportedProvider!, {
+			deprecated: false,
+		});
+		if (!provider) {
+			throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
+		}
+
+		const providerConfig = await ProviderService.instance.getProviderConfiguration(
+			customer.customerId,
+			provider.providerId
+		);
+		if (!providerConfig) {
+			throw new Error(`Provider ${this.supportedProvider} not configured for customer ${customer.customerId}`);
+		}
+
+		// Step 2: Send export result to provider
+		const apiKey = await ProviderService.instance.getDecryptedApiKey(providerConfig);
+
+		const { keys, ...exportResult } = exportedDidResult;
+		const response = await fetch(`${this.defaultApiUrl}/dids/import`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${apiKey}`,
+			},
+			body: JSON.stringify({ data: [exportResult, ...keys] }),
+		});
+
+		const result = await response.json();
+		if (response.status !== 200) {
+			throw new Error(`Failed to import DID with ${this.supportedProvider}: ${JSON.stringify(result)}`);
+		}
+
+		// Step 3: Return identifier
+		return {
+			status: true,
+			did,
+			provider: this.supportedProvider!,
+			keys: [], // optionally map exportedDidResult -> keys[]
+			services: [],
+		};
+	}
 }
