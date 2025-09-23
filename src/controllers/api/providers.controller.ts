@@ -10,12 +10,12 @@ import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
 import { IDIDTrack, ITrackOperation } from '../../types/track.js';
 import { eventTracker } from '../../services/track/tracker.js';
-import { check } from '../validator/index.js';
+import { check, param } from '../validator/index.js';
 
 export class ProvidersController {
 	public static importDIDValidator = [
 		check('did').exists().isDID().bail(),
-		check('providerId').exists().withMessage('providerId is required').isString().bail(),
+		param('providerId').exists().withMessage('providerId is required').isString().bail(),
 	];
 
 	/**
@@ -394,30 +394,32 @@ export class ProvidersController {
 	 *     tags: [ Providers ]
 	 *     summary: Import a DID into a Provider.
 	 *     description: This endpoint imports a decentralized identifier associated with the user's account with the custodied keys into a provider.
+	 *     parameters:
+	 *       - name: providerId
+	 *         in: path
+	 *         required: true
+	 *         schema:
+	 *           type: string
 	 *     requestBody:
 	 *       content:
 	 *         application/x-www-form-urlencoded:
 	 *           schema:
 	 *             type: object
+     *             required: 
+     *               - did
 	 *             properties:
-	 *               providerId:
-	 *                 type: string
-	 *                 required: true
 	 *               did:
 	 *                 description: DID identifier to resolve.
 	 *                 type: string
-	 *                 required: true
 	 *         application/json:
 	 *           schema:
 	 *             type: object
+     *             required: 
+     *               - did
 	 *             properties:
-	 *               providerId:
-	 *                 type: string
-	 *                 required: true
 	 *               did:
 	 *                 description: DID identifier to resolve.
 	 *                 type: string
-	 *                 required: true
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -447,7 +449,8 @@ export class ProvidersController {
 	@validate
 	public async importDid(request: Request, response: Response) {
 		try {
-			const { providerId, did } = request.body;
+			const { providerId } = request.params;
+			const { did } = request.body;
 			let importedResult: IIdentifier;
 			switch (providerId) {
 				case 'dock':

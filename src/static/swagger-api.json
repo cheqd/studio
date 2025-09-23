@@ -5121,20 +5121,28 @@
         ],
         "summary": "Import a DID into a Provider.",
         "description": "This endpoint imports a decentralized identifier associated with the user's account with the custodied keys into a provider.",
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
                 "type": "object",
+                "required": [
+                  "did"
+                ],
                 "properties": {
-                  "providerId": {
-                    "type": "string",
-                    "required": true
-                  },
                   "did": {
                     "description": "DID identifier to resolve.",
-                    "type": "string",
-                    "required": true
+                    "type": "string"
                   }
                 }
               }
@@ -5142,15 +5150,13 @@
             "application/json": {
               "schema": {
                 "type": "object",
+                "required": [
+                  "did"
+                ],
                 "properties": {
-                  "providerId": {
-                    "type": "string",
-                    "required": true
-                  },
                   "did": {
                     "description": "DID identifier to resolve.",
-                    "type": "string",
-                    "required": true
+                    "type": "string"
                   }
                 }
               }
