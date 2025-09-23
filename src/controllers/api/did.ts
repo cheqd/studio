@@ -216,7 +216,6 @@ export class DIDController {
 				case 'dock':
 					did = await new DockIdentityService().createDid(network, { id: '' }, response.locals.customer);
 					const { didDocument: didDoc } = await identityServiceStrategySetup.agent.resolveDid(did.did);
-					console.log(didDoc);
 					if (didDoc && service) {
 						const services = Array.isArray(service) ? service : [service];
 						didDoc.service = didDoc.service || [];

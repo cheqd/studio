@@ -1,10 +1,23 @@
 // src/controllers/api/providers.controller.ts
 import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
+import { IIdentifier } from '@veramo/core';
 import { ProviderService } from '../../services/api/provider.service.js';
 import { CustomerEntity } from '../../database/entities/customer.entity.js';
+import { validate } from '../validator/decorator.js';
+import { DockIdentityService } from '../../services/identity/providers/index.js';
+import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
+import { IDIDTrack, ITrackOperation } from '../../types/track.js';
+import { eventTracker } from '../../services/track/tracker.js';
+import { check, param } from '../validator/index.js';
 
 export class ProvidersController {
+	public static importDIDValidator = [
+		check('did').exists().isDID().bail(),
+		param('providerId').exists().withMessage('providerId is required').isString().bail(),
+	];
+
 	/**
 	 * @openapi
 	 * /providers:
@@ -368,6 +381,112 @@ export class ProvidersController {
 			});
 		} catch (error) {
 			return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			});
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /providers/{providerId}/did/import:
+	 *   post:
+	 *     tags: [ Providers ]
+	 *     summary: Import a DID into a Provider.
+	 *     description: This endpoint imports a decentralized identifier associated with the user's account with the custodied keys into a provider.
+	 *     parameters:
+	 *       - name: providerId
+	 *         in: path
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *     requestBody:
+	 *       content:
+	 *         application/x-www-form-urlencoded:
+	 *           schema:
+	 *             type: object
+     *             required: 
+     *               - did
+	 *             properties:
+	 *               did:
+	 *                 description: DID identifier to resolve.
+	 *                 type: string
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+     *             required: 
+     *               - did
+	 *             properties:
+	 *               did:
+	 *                 description: DID identifier to resolve.
+	 *                 type: string
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/DidResult'
+	 *       400:
+	 *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/InvalidRequest'
+	 *             example:
+	 *               error: InvalidRequest
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/InvalidRequest'
+	 *             example:
+	 *               error: Internal Error
+	 */
+	@validate
+	public async importDid(request: Request, response: Response) {
+		try {
+			const { providerId } = request.params;
+			const { did } = request.body;
+			let importedResult: IIdentifier;
+			switch (providerId) {
+				case 'dock':
+					const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer);
+					const exportedResult = await identityServiceStrategySetup.agent.exportDid(
+						did,
+						process.env.PROVIDER_EXPORT_PASSWORD || '',
+						response.locals.customer
+					);
+					importedResult = await new DockIdentityService().importDidV2(
+						did,
+						exportedResult,
+						process.env.PROVIDER_EXPORT_PASSWORD || '',
+						response.locals.customer
+					);
+					break;
+				default:
+					throw new Error(`Importing into provider ${providerId || 'studio'} is not supported`);
+			}
+			// Track the operation
+			eventTracker.emit('track', {
+				category: OperationCategoryNameEnum.DID,
+				name: OperationNameEnum.DID_EXPORT,
+				data: {
+					did: did,
+				} satisfies IDIDTrack,
+				customer: response.locals.customer,
+				user: response.locals.user,
+			} satisfies ITrackOperation);
+
+			return response.status(StatusCodes.OK).json({
+				status: true,
+				...importedResult,
+			});
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
 		}

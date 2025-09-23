@@ -375,7 +375,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 				const kid = toString(fromString(vm.publicKeyBase58, 'base58btc'), 'hex');
 
 				// Ensure the key exists
-				const existingKey = keys.find(kid);
+				const existingKey = keys.find((k) => k.kid === kid);
 				if (!existingKey) {
 					throw new Error(`Key not found in wallet: ${kid}`);
 				}

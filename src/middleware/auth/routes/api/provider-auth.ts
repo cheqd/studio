@@ -24,6 +24,8 @@ export class ProvidersAuthRuleProvider extends AuthRuleProvider {
 		this.registerRule('/providers/(.*)/configuration', 'PUT', 'configure:providers:mainnet', {
 			skipNamespace: true,
 		});
+		this.registerRule('/providers/(.*)/did/import', 'POST', 'configure:providers:mainnet');
+		this.registerRule('/providers/(.*)/did/import', 'POST', 'configure:providers:mainnet');
 
 		this.registerRule('/providers/(.*)/test', 'POST', 'configure:providers:testnet', { skipNamespace: true });
 		this.registerRule('/providers/(.*)/test', 'POST', 'configure:providers:mainnet', { skipNamespace: true });
