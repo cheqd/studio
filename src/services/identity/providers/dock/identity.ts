@@ -93,6 +93,41 @@ export class DockIdentityService extends AbstractIdentityService {
 		} as IIdentifier;
 	}
 
+    async getDid(did: string, customer: CustomerEntity): Promise<any> {
+        const provider = await ProviderService.instance.getProvider(this.supportedProvider!, { deprecated: false });
+		if (!provider) {
+			throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
+		}
+
+		const providerConfig = await ProviderService.instance.getProviderConfiguration(
+			customer.customerId,
+			provider?.providerId
+		);
+		if (!providerConfig) {
+			throw new Error(`Provider ${this.supportedProvider} not configured for customer ${customer.customerId}`);
+		}
+		const apiKey = await ProviderService.instance.getDecryptedApiKey(providerConfig);
+
+		const response = await fetch(`${this.defaultApiUrl}/dids`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${apiKey}`,
+			},
+		});
+
+		if (!response.ok) {
+			throw new Error(`Failed to fetch DIDs with ${this.supportedProvider}: ${response.statusText}`);
+		}
+
+		const data = (await response.json()) as DockListDidsResponse;
+
+		return {
+			dids: data.map((item) => item.did),
+			total: data.length,
+		} as ListDidsResponseBody;
+    }
+
 	async listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<ListDidsResponseBody> {
 		const provider = await ProviderService.instance.getProvider(this.supportedProvider!, { deprecated: false });
 		if (!provider) {

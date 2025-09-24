@@ -247,7 +247,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<ListDidsResponseBody> {
 		throw new Error(`Not supported`);
 	}
-	getDid(did: string): Promise<any> {
+	getDid(did: string, customer: CustomerEntity): Promise<any> {
 		throw new Error(`Not supported`);
 	}
 	resolveDid(did: string): Promise<DIDResolutionResult> {
