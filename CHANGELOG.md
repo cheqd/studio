@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.13.0-develop.3](https://github.com/cheqd/studio/compare/3.13.0-develop.2...3.13.0-develop.3) (2025-09-24)
+
+### Features
+
+* Add provider import did api ([#732](https://github.com/cheqd/studio/issues/732)) ([5e06156](https://github.com/cheqd/studio/commit/5e06156136b5bb77c4395411d5f036c09482d649))
+
+### Bug Fixes
+
+* UI bugs and default assertionMethod [DEV-5287] ([#731](https://github.com/cheqd/studio/issues/731)) ([a702c70](https://github.com/cheqd/studio/commit/a702c70067a1296508bf53a4137186a57aeaf9e4))
+
 ## [3.13.0-develop.2](https://github.com/cheqd/studio/compare/3.13.0-develop.1...3.13.0-develop.2) (2025-09-18)
 
 ### Features
