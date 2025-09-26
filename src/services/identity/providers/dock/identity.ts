@@ -93,8 +93,8 @@ export class DockIdentityService extends AbstractIdentityService {
 		} as IIdentifier;
 	}
 
-    async getDid(did: string, customer: CustomerEntity): Promise<any> {
-        const provider = await ProviderService.instance.getProvider(this.supportedProvider!, { deprecated: false });
+	async getDid(did: string, customer: CustomerEntity): Promise<any> {
+		const provider = await ProviderService.instance.getProvider(this.supportedProvider!, { deprecated: false });
 		if (!provider) {
 			throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
 		}
@@ -108,7 +108,7 @@ export class DockIdentityService extends AbstractIdentityService {
 		}
 		const apiKey = await ProviderService.instance.getDecryptedApiKey(providerConfig);
 
-		const response = await fetch(`${this.defaultApiUrl}/dids`, {
+		const response = await fetch(`${this.defaultApiUrl}/dids/${did}`, {
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json',
@@ -126,7 +126,7 @@ export class DockIdentityService extends AbstractIdentityService {
 			dids: data.map((item) => item.did),
 			total: data.length,
 		} as ListDidsResponseBody;
-    }
+	}
 
 	async listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<ListDidsResponseBody> {
 		const provider = await ProviderService.instance.getProvider(this.supportedProvider!, { deprecated: false });

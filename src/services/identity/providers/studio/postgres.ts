@@ -64,7 +64,7 @@ import type { BulkBitstringUpdateResult, CheqdProviderError, CreateStatusListRes
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { toTPublicKeyEd25519 } from '../../../helpers.js';
 import type { APIServiceOptions } from '../../../../types/admin.js';
-import { bytesToBase58, bytesToMultibase, SupportedKeyTypes } from '@veramo/utils';
+import { extractPublicKeyHex, bytesToBase58, bytesToMultibase, SupportedKeyTypes } from '@veramo/utils';
 import { PaymentAccountEntity } from '../../../../database/entities/payment.account.entity.js';
 import { LocalStore } from '../../../../database/cache/store.js';
 import { ResourceService } from '../../../api/resource.js';
@@ -77,7 +77,7 @@ import { OperationService } from '../../../api/operation.js';
 import { ListOperationOptions } from '../../../../types/track.js';
 import { DIDAccreditationTypes } from '../../../../types/accreditation.js';
 import { JWT_PROOF_TYPE } from '../../../../types/constants.js';
-import { toString, fromString } from 'uint8arrays';
+import { fromString } from 'uint8arrays';
 
 dotenv.config();
 
@@ -322,7 +322,26 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			where.saveDate = LessThanOrEqual(new Date(options.createdAt));
 		}
 
-		const [entities, total] = await IdentifierService.instance.find(where, options.page, options.limit);
+		const [entities, total] = await IdentifierService.instance.find(
+			where,
+			options.page,
+			options.limit,
+			options.metadata === 'true'
+				? {
+						services: true,
+					}
+				: undefined
+		);
+		if (options.metadata === 'true') {
+			entities.forEach(
+				(e) =>
+					(e.services = e.services.map((s) => {
+						s.serviceEndpoint = typeof s.serviceEndpoint === 'string' ? JSON.parse(s.serviceEndpoint) : s;
+						return s;
+					}))
+			);
+			return { total, dids: entities };
+		}
 		return { total, dids: entities.map((entity) => entity.did) };
 	}
 
@@ -362,7 +381,6 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			throw new Error(`${did} not found in wallet`);
 		}
 		const keys = identifier.keys;
-
 		const { didDocument, didDocumentMetadata, didResolutionMetadata } = await this.resolveDid(did);
 		if (!didDocument) {
 			throw new Error(`Error resolving ${did}`);
@@ -371,8 +389,11 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		// Step 1: Fetch private keys for each verification method
 		const didKeyDocumentsWithPrivateKey = await Promise.all(
 			(didDocument.verificationMethod || []).map(async (vm: any, index: number) => {
-				// Derive kid from publicKeyBase58
-				const kid = toString(fromString(vm.publicKeyBase58, 'base58btc'), 'hex');
+				// Extract kid (publicKeyHex) from vm
+				const kid = extractPublicKeyHex(vm).publicKeyHex;
+				if (!kid) {
+					throw new Error('Not supported');
+				}
 
 				// Ensure the key exists
 				const existingKey = keys.find((k) => k.kid === kid);
