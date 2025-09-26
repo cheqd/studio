@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.13.0-develop.5](https://github.com/cheqd/studio/compare/3.13.0-develop.4...3.13.0-develop.5) (2025-09-26)
+
+### Features
+
+* Include metadata as option in did/list ([#734](https://github.com/cheqd/studio/issues/734)) ([1287017](https://github.com/cheqd/studio/commit/12870171e46463b9093cb0ccd22b3ba996ce559a))
+
 ## [3.13.0-develop.4](https://github.com/cheqd/studio/compare/3.13.0-develop.3...3.13.0-develop.4) (2025-09-25)
 
 ### Features
