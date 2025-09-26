@@ -155,6 +155,7 @@ export class DIDController {
 			.isIn([CheqdNetwork.Mainnet, CheqdNetwork.Testnet])
 			.withMessage('Invalid network')
 			.bail(),
+		query('metadata').optional().isBoolean().withMessage('metadata should be a boolean value'),
 	];
 
 	/**
@@ -689,6 +690,12 @@ export class DIDController {
 	 *           type: string
 	 *         required: false
 	 *       - in: query
+	 *         name: metadata
+	 *         description: Include metadata in response.
+	 *         schema:
+	 *           type: boolean
+	 *         required: false
+	 *       - in: query
 	 *         name: createdAt
 	 *         description: Filter resource by created date
 	 *         schema:
@@ -723,7 +730,7 @@ export class DIDController {
 	 */
 	public async getDids(request: Request, response: Response) {
 		// Extract did from params
-		const { did, network, page, limit, providerId } = request.query as GetDIDRequestParams;
+		const { did, network, page, limit, providerId, metadata } = request.query as GetDIDRequestParams;
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = response.locals.customer
 			? new IdentityServiceStrategySetup(response.locals.customer.customerId)
@@ -743,7 +750,7 @@ export class DIDController {
 					didDocument = did
 						? await identityServiceStrategySetup.agent.resolveDid(did)
 						: await identityServiceStrategySetup.agent.listDids(
-								{ network, page, limit },
+								{ network, page, limit, metadata },
 								response.locals.customer
 							);
 			}

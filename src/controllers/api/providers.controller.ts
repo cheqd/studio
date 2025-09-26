@@ -405,8 +405,8 @@ export class ProvidersController {
 	 *         application/x-www-form-urlencoded:
 	 *           schema:
 	 *             type: object
-     *             required: 
-     *               - did
+	 *             required:
+	 *               - did
 	 *             properties:
 	 *               did:
 	 *                 description: DID identifier to resolve.
@@ -414,8 +414,8 @@ export class ProvidersController {
 	 *         application/json:
 	 *           schema:
 	 *             type: object
-     *             required: 
-     *               - did
+	 *             required:
+	 *               - did
 	 *             properties:
 	 *               did:
 	 *                 description: DID identifier to resolve.

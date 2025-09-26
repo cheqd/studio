@@ -56,16 +56,18 @@ export class Credentials {
 		switch (connector) {
 			case CredentialConnectors.Dock:
 				const dock = new DockIdentityService();
-                // validate issuerDid in provider
-                const existingIssuer = await dock.getDid(issuerDid, customer);
-                if(!existingIssuer) {
-                    // export from wallet
-                    const exportResult = await new IdentityServiceStrategySetup(
-                        customer.customerId
-                    ).agent.exportDid(issuerDid, process.env.PROVIDER_EXPORT_PASSWORD || '', customer)
-                    // import into provider
-                    await dock.importDidV2(issuerDid, exportResult, process.env.PROVIDER_EXPORT_PASSWORD, customer)
-                }
+				// validate issuerDid in provider
+				const existingIssuer = await dock.getDid(issuerDid, customer).catch(() => undefined);
+				if (!existingIssuer) {
+					// export from wallet
+					const exportResult = await new IdentityServiceStrategySetup(customer.customerId).agent.exportDid(
+						issuerDid,
+						process.env.PROVIDER_EXPORT_PASSWORD || '',
+						customer
+					);
+					// import into provider
+					await dock.importDidV2(issuerDid, exportResult, process.env.PROVIDER_EXPORT_PASSWORD, customer);
+				}
 				return await dock.createCredential(credential, format, statusOptions, customer);
 			case CredentialConnectors.Resource:
 			case CredentialConnectors.Studio:

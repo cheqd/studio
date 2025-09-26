@@ -4246,6 +4246,15 @@
           },
           {
             "in": "query",
+            "name": "metadata",
+            "description": "Include metadata in response.",
+            "schema": {
+              "type": "boolean"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
             "name": "createdAt",
             "description": "Filter resource by created date",
             "schema": {

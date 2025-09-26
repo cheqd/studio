@@ -3,6 +3,7 @@ import type { DIDDocument, DIDResolutionResult, VerificationMethod } from 'did-r
 import type { UnsuccessfulQueryResponseBody, UnsuccessfulResponseBody } from './shared.js';
 import type { KeyImport } from './key.js';
 import type { ICheqdIDentifier } from '@cheqd/did-provider-cheqd';
+import { IdentifierEntity } from '../database/entities/identifier.entity.js';
 
 // Interfaces
 export interface DidImportRequest {
@@ -54,6 +55,7 @@ export type ListDIDRequestOptions = {
 	limit?: number;
 	createdAt?: number;
 	providerId?: string;
+	metadata?: string;
 };
 export type ResolveDIDRequestParams = DIDRequest;
 
@@ -66,7 +68,7 @@ export type UpdateDidResponseBody = ICheqdIDentifier;
 
 export type DeactivateDidResponseBody = DIDResolutionResult;
 
-export type ListDidsResponseBody = { total: number; dids: string[] };
+export type ListDidsResponseBody = { total: number; dids: string[] | IdentifierEntity[] };
 
 export type QueryDidResponseBody = DIDResolutionResult;
 
