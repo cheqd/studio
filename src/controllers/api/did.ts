@@ -747,7 +747,6 @@ export class DIDController {
 					break;
 				case 'studio':
 				default:
-					console.log(typeof metadata);
 					didDocument = did
 						? await identityServiceStrategySetup.agent.resolveDid(did)
 						: await identityServiceStrategySetup.agent.listDids(
