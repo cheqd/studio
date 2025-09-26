@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.13.0-develop.4](https://github.com/cheqd/studio/compare/3.13.0-develop.3...3.13.0-develop.4) (2025-09-25)
+
+### Features
+
+* Auto import did if not found in provider [DEV-5294] ([#733](https://github.com/cheqd/studio/issues/733)) ([36c267d](https://github.com/cheqd/studio/commit/36c267ddcbc6b154d21a2164c347b8f5254678f5))
+
 ## [3.13.0-develop.3](https://github.com/cheqd/studio/compare/3.13.0-develop.2...3.13.0-develop.3) (2025-09-24)
 
 ### Features
