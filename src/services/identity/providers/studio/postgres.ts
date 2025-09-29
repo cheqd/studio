@@ -52,7 +52,7 @@ import { DefaultIdentityService } from '../../default.js';
 import * as dotenv from 'dotenv';
 import { KeyService } from '../../../api/key.js';
 import { PaymentAccountService } from '../../../api/payment-account.js';
-import { CheqdNetwork } from '@cheqd/sdk';
+import { CheqdNetwork, toMultibaseRaw } from '@cheqd/sdk';
 import { IdentifierService } from '../../../api/identifier.js';
 import type { KeyEntity } from '../../../../database/entities/key.entity.js';
 import type { UserEntity } from '../../../../database/entities/user.entity.js';
@@ -64,7 +64,7 @@ import type { BulkBitstringUpdateResult, CheqdProviderError, CreateStatusListRes
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { toTPublicKeyEd25519 } from '../../../helpers.js';
 import type { APIServiceOptions } from '../../../../types/admin.js';
-import { extractPublicKeyHex, bytesToBase58, bytesToMultibase, SupportedKeyTypes } from '@veramo/utils';
+import { extractPublicKeyHex, bytesToBase58, SupportedKeyTypes } from '@veramo/utils';
 import { PaymentAccountEntity } from '../../../../database/entities/payment.account.entity.js';
 import { LocalStore } from '../../../../database/cache/store.js';
 import { ResourceService } from '../../../api/resource.js';
@@ -419,8 +419,8 @@ export class PostgresIdentityService extends DefaultIdentityService {
 					name: keyDoc.alias,
 					correlation: [vm.id],
 					created: new Date().toISOString(),
-					publicKeyMultibase: bytesToMultibase(publicKeyBytes),
-					privateKeyMultibase: bytesToMultibase(privateKeyBytes),
+					publicKeyMultibase: toMultibaseRaw(publicKeyBytes),
+					privateKeyMultibase: toMultibaseRaw(privateKeyBytes),
 					publicKeyBase58: bytesToBase58(publicKeyBytes),
 					privateKeyBase58: bytesToBase58(privateKeyBytes),
 				};
