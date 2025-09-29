@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.13.0-develop.6](https://github.com/cheqd/studio/compare/3.13.0-develop.5...3.13.0-develop.6) (2025-09-29)
+
+### Bug Fixes
+
+* Fix multibase encoding in export ([#735](https://github.com/cheqd/studio/issues/735)) ([5001544](https://github.com/cheqd/studio/commit/50015440a1bfa447e05642fe088594a36613f876))
+
 ## [3.13.0-develop.5](https://github.com/cheqd/studio/compare/3.13.0-develop.4...3.13.0-develop.5) (2025-09-26)
 
 ### Features
