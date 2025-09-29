@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.13.0-develop.7](https://github.com/cheqd/studio/compare/3.13.0-develop.6...3.13.0-develop.7) (2025-09-29)
+
+### Bug Fixes
+
+* Fix vm type in export ([#736](https://github.com/cheqd/studio/issues/736)) ([0a8bbc1](https://github.com/cheqd/studio/commit/0a8bbc1a0aaf32ce2a92d46c7975f88d7f7f67b4))
+
 ## [3.13.0-develop.6](https://github.com/cheqd/studio/compare/3.13.0-develop.5...3.13.0-develop.6) (2025-09-29)
 
 ### Bug Fixes
