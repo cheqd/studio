@@ -52,7 +52,7 @@ import { DefaultIdentityService } from '../../default.js';
 import * as dotenv from 'dotenv';
 import { KeyService } from '../../../api/key.js';
 import { PaymentAccountService } from '../../../api/payment-account.js';
-import { CheqdNetwork, toMultibaseRaw } from '@cheqd/sdk';
+import { CheqdNetwork, toMultibaseRaw, VerificationMethod } from '@cheqd/sdk';
 import { IdentifierService } from '../../../api/identifier.js';
 import type { KeyEntity } from '../../../../database/entities/key.entity.js';
 import type { UserEntity } from '../../../../database/entities/user.entity.js';
@@ -388,7 +388,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 
 		// Step 1: Fetch private keys for each verification method
 		const didKeyDocumentsWithPrivateKey = await Promise.all(
-			(didDocument.verificationMethod || []).map(async (vm: any, index: number) => {
+			(didDocument.verificationMethod || []).map(async (vm: VerificationMethod, index: number) => {
 				// Extract kid (publicKeyHex) from vm
 				const kid = extractPublicKeyHex(vm).publicKeyHex;
 				if (!kid) {
@@ -414,7 +414,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 				return {
 					'@context': ['https://w3id.org/wallet/v1'],
 					id: vm.id, // keep the same ID as DID Doc
-					type: [keyDoc.type],
+					type: [vm.type],
 					controller: vm.id,
 					name: keyDoc.alias,
 					correlation: [vm.id],
