@@ -36,6 +36,7 @@ export interface CredentialRequest {
 	refreshService?: AdditionalData | AdditionalData[];
 	evidence?: AdditionalData | AdditionalData[];
 	connector?: CredentialConnectors;
+	providerId?: string;
 	credentialId?: string;
 
 	[x: string]: any;

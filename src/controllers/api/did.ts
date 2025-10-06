@@ -908,7 +908,7 @@ export class DIDController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/DidResult'
+	 *               $ref: '#/components/schemas/ExportDidResult'
 	 *       400:
 	 *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
 	 *         content:

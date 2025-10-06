@@ -1302,6 +1302,64 @@
  *              type: array
  *              items:
  *                  type: string
+ *     ExportDidResult:
+ *       type: object
+ *       properties:
+ *         '@context':
+ *           type: array
+ *           items:
+ *             type: string
+ *           example:
+ *             - https://w3id.org/wallet/v1
+ *             - https://w3id.org/did-resolution/v1
+ *         id:
+ *           type: string
+ *           example: did:cheqd:testnet:f5101dd8-447f-40a7-a9b8-700abeba389a
+ *         type:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example:
+ *             - DIDResolutionResponse
+ *         didDidResolutionMetadata:
+ *           $ref: '#/components/schemas/DidResolutionMetadata'
+ *         didDocument:
+ *           $ref: '#/components/schemas/DidDocument'
+ *         didDocumentMetadata:
+ *           $ref: '#/components/schemas/DeactivatedDidDocumentMetadata'
+ *         keys:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               '@context':
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               id:
+ *                 type: string
+ *               type:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               controller:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *               correlation:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               created:
+ *                 type: string
+ *               publicKeyMultibase:
+ *                 type: string
+ *               privateKeyMultibase:
+ *                 type: string
+ *               publicKeyBase58:
+ *                 type: string
+ *               privateKeyBase58:
+ *                 type: string
  *     DidUpdateResponse:
  *       type: object
  *       properties:
