@@ -116,16 +116,13 @@ export class DockIdentityService extends AbstractIdentityService {
 			},
 		});
 
-		if (!response.ok) {
+		if (response.status != 200) {
 			throw new Error(`Failed to fetch DIDs with ${this.supportedProvider}: ${response.statusText}`);
 		}
 
-		const data = (await response.json()) as DockListDidsResponse;
+		const data = (await response.json()) as DIDDocument;
 
-		return {
-			dids: data.map((item) => item.did),
-			total: data.length,
-		} as ListDidsResponseBody;
+		return data;
 	}
 
 	async listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<ListDidsResponseBody> {
@@ -208,11 +205,13 @@ export class DockIdentityService extends AbstractIdentityService {
 			throw new Error(`Failed to create credential with ${this.supportedProvider}: ${response.statusText}`);
 		}
 
-		const jwt = await response.json();
+		let credentialJson = await response.json();
 		// Decode JWT to VerifiableCredential
-		const [, payloadBase64] = jwt.split('.');
-		const credentialJson = Buffer.from(payloadBase64, 'base64').toString('utf8');
-		const vc: VerifiableCredential = JSON.parse(credentialJson);
+		if (typeof credential === 'string') {
+			const [, payloadBase64] = credentialJson.split('.');
+			credentialJson = JSON.parse(Buffer.from(payloadBase64, 'base64').toString('utf8'));
+		}
+		const vc: VerifiableCredential = credentialJson;
 		return vc;
 	}
 

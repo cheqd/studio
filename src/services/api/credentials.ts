@@ -30,6 +30,7 @@ export class Credentials {
 			format,
 			connector,
 			credentialId,
+			providerId,
 			...additionalData
 		} = request;
 
@@ -53,7 +54,7 @@ export class Credentials {
 		const statusOptions = credentialStatus || null;
 
 		// Handle credential issuance and connector logic
-		switch (connector) {
+		switch (providerId || connector) {
 			case CredentialConnectors.Dock:
 				const dock = new DockIdentityService();
 				// validate issuerDid in provider
