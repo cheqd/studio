@@ -108,7 +108,7 @@ export class DockIdentityService extends AbstractIdentityService {
 		}
 		const apiKey = await ProviderService.instance.getDecryptedApiKey(providerConfig);
 
-		const response = await fetch(`${this.defaultApiUrl}/dids/${did}`, {
+		const response = await fetch(`${this.defaultApiUrl}/dids/${did}/metadata`, {
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json',
@@ -202,7 +202,8 @@ export class DockIdentityService extends AbstractIdentityService {
 		});
 
 		if (response.status != 200) {
-			throw new Error(`Failed to create credential with ${this.supportedProvider}: ${response.statusText}`);
+			const responseText = await response.text();
+			throw new Error(`Failed to create credential with ${this.supportedProvider}: ${responseText}`);
 		}
 
 		let credentialJson = await response.json();
