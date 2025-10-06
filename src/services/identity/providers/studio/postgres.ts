@@ -336,7 +336,10 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			entities.forEach(
 				(e) =>
 					(e.services = e.services.map((s) => {
-						s.serviceEndpoint = typeof s.serviceEndpoint === 'string' ? JSON.parse(s.serviceEndpoint) : s;
+						s.serviceEndpoint =
+							typeof s.serviceEndpoint === 'string' && /^[{\[]/.test(s.serviceEndpoint.trim())
+								? JSON.parse(s.serviceEndpoint)
+								: s.serviceEndpoint;
 						return s;
 					}))
 			);
