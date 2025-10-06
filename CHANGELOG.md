@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.13.0-develop.9](https://github.com/cheqd/studio/compare/3.13.0-develop.8...3.13.0-develop.9) (2025-10-06)
+
+### Bug Fixes
+
+* Apply encoded uri login in all resourceName queries [DEV-5324] ([#741](https://github.com/cheqd/studio/issues/741)) ([1ebee17](https://github.com/cheqd/studio/commit/1ebee175c2611eae262bd6b266041f21b7d08bf2))
+
 ## [3.13.0-develop.8](https://github.com/cheqd/studio/compare/3.13.0-develop.7...3.13.0-develop.8) (2025-10-06)
 
 ### Bug Fixes
