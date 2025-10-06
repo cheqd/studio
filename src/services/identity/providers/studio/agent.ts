@@ -1101,7 +1101,7 @@ export class Veramo {
 		}
 		// construct url
 		const url = new URL(
-			`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?resourceName=${statusListName}&resourceType=${
+			`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?resourceName=${encodeURIComponent(statusListName)}&resourceType=${
 				resourceType
 			}`
 		);

@@ -354,7 +354,7 @@ export class AccreditationController {
 			return response.status(StatusCodes.OK).json({
 				didUrls: [
 					`${issuerDid}/resources/${resourceId}`,
-					`${issuerDid}?resourceName=${accreditationName}&resourceType=${credentialRequest.type}`,
+					`${issuerDid}?resourceName=${encodeURIComponent(accreditationName)}&resourceType=${credentialRequest.type}`,
 				],
 				accreditation,
 			});
@@ -878,7 +878,7 @@ export class AccreditationController {
 
 			// Build resource URLs for resolution
 			const resourceUrls = resources.map(
-				(item) => `${item.did}?resourceName=${item.resourceName}&resourceType=${item.resourceType}`
+				(item) => `${item.did}?resourceName=${encodeURIComponent(item.resourceName)}&resourceType=${item.resourceType}`
 			);
 
 			// remove duplicates of resourceUrls
