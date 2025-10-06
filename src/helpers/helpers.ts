@@ -265,7 +265,7 @@ export function constructDidUrl(data: DIDUrlParams) {
 	} else if (isDidAndResourceId(data)) {
 		didUrl = `${data.did}/resources/${data.resourceId}`;
 	} else if (isDidAndResourceName(data)) {
-		didUrl = `${data.did}?resourceName=${data.resourceName}&resourceType=${data.resourceType}`;
+		didUrl = `${data.did}?resourceName=${encodeURIComponent(data.resourceName)}&resourceType=${data.resourceType}`;
 	}
 
 	return didUrl;
