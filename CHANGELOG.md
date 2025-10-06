@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.13.0-develop.8](https://github.com/cheqd/studio/compare/3.13.0-develop.7...3.13.0-develop.8) (2025-10-06)
+
+### Bug Fixes
+
+* dock issuance && swagger update ([#737](https://github.com/cheqd/studio/issues/737)) ([7c3650a](https://github.com/cheqd/studio/commit/7c3650a2047af96bc7dc6df7a131cbb435d41f00))
+* parse only escaped JSON in list did ([#740](https://github.com/cheqd/studio/issues/740)) ([d013d3f](https://github.com/cheqd/studio/commit/d013d3f8eb6c374a25fab5108e42905b42fa4aa8))
+
 ## [3.13.0-develop.7](https://github.com/cheqd/studio/compare/3.13.0-develop.6...3.13.0-develop.7) (2025-09-29)
 
 ### Bug Fixes
