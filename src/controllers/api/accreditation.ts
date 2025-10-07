@@ -878,7 +878,8 @@ export class AccreditationController {
 
 			// Build resource URLs for resolution
 			const resourceUrls = resources.map(
-				(item) => `${item.did}?resourceName=${encodeURIComponent(item.resourceName)}&resourceType=${item.resourceType}`
+				(item) =>
+					`${item.did}?resourceName=${encodeURIComponent(item.resourceName)}&resourceType=${item.resourceType}`
 			);
 
 			// remove duplicates of resourceUrls
