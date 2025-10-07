@@ -718,10 +718,8 @@ export class CredentialController {
 						promises.push(
 							new DockIdentityService().listCredentials(
 								{
-									offset: page && limit ? ((page - 1) * limit) / activeProviderIds.length : 0,
-									limit: limit
-										? limit / activeProviderIds.length
-										: Math.floor(10 / activeProviderIds.length),
+									offset: 0,
+									limit: 1000, // Use a large limit to get all data
 									filter: {
 										issuerDid: filter.issuerDid,
 										id: filter.id,
@@ -739,10 +737,8 @@ export class CredentialController {
 							new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.listCredentials(
 								{
 									filter,
-									page,
-									limit: limit
-										? limit / activeProviderIds.length
-										: Math.floor(10 / activeProviderIds.length),
+									page: 1,
+									limit: 1000, // Use a large limit to get all data
 								},
 								response.locals.customer
 							)
@@ -758,11 +754,17 @@ export class CredentialController {
 					} else {
 						// Execute all provider calls in parallel
 						const results = await Promise.all(promises);
-
-						// Merge results from all activated providers
+						// Merge and sort all credentials from all activated providers
+						const allCredentials = results.flatMap((res) => res.credentials)
+							.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+						// Apply pagination to the merged results
+						const safePage = Number(page) ?? 1;
+						const safeLimit = Number(limit) ?? 10;
+						const offset = (safePage - 1) * safeLimit;
+						const paginatedCredentials = allCredentials.slice(offset, offset + safeLimit);
 						result = {
-							credentials: results.flatMap((res) => res.credentials),
-							total: results.reduce((sum, res) => sum + res.total, 0),
+							credentials: paginatedCredentials,
+							total: allCredentials.length,
 						};
 					}
 				}
