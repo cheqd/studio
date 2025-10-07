@@ -170,6 +170,9 @@ export class DockIdentityService extends AbstractIdentityService {
 		if (!provider) {
 			throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
 		}
+		if(format === 'anoncreds') {
+			throw new Error(`Credential format ${format} not supported with provider ${this.supportedProvider}`);
+		}
 
 		const providerConfig = await ProviderService.instance.getProviderConfiguration(
 			customer.customerId,
@@ -188,7 +191,7 @@ export class DockIdentityService extends AbstractIdentityService {
 			},
 			body: JSON.stringify({
 				persist: false,
-				format,
+				format: format === 'sd-jwt-vc' ? 'sdjwt' : format,
 				distribute: true,
 				credential: {
 					...payload,
