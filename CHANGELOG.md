@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.13.0-develop.11](https://github.com/cheqd/studio/compare/3.13.0-develop.10...3.13.0-develop.11) (2025-10-08)
+
+### Bug Fixes
+
+* env vars injection in docker ([#743](https://github.com/cheqd/studio/issues/743)) ([e501c83](https://github.com/cheqd/studio/commit/e501c83fa3fb38d6f8982441050b18fcef4d5baa))
+
 ## [3.13.0-develop.10](https://github.com/cheqd/studio/compare/3.13.0-develop.9...3.13.0-develop.10) (2025-10-08)
 
 ### Bug Fixes
