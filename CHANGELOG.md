@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.13.0-develop.10](https://github.com/cheqd/studio/compare/3.13.0-develop.9...3.13.0-develop.10) (2025-10-08)
+
+### Bug Fixes
+
+* dock credential issuance check ([#742](https://github.com/cheqd/studio/issues/742)) ([787f707](https://github.com/cheqd/studio/commit/787f7076902ff50d4415c026a4dbd44898b78f86))
+
 ## [3.13.0-develop.9](https://github.com/cheqd/studio/compare/3.13.0-develop.8...3.13.0-develop.9) (2025-10-06)
 
 ### Bug Fixes
