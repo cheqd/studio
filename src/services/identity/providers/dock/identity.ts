@@ -108,7 +108,7 @@ export class DockIdentityService extends AbstractIdentityService {
 		}
 		const apiKey = await ProviderService.instance.getDecryptedApiKey(providerConfig);
 
-		const response = await fetch(`${this.defaultApiUrl}/dids/${did}`, {
+		const response = await fetch(`${this.defaultApiUrl}/dids/${did}/metadata`, {
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json',
@@ -170,6 +170,9 @@ export class DockIdentityService extends AbstractIdentityService {
 		if (!provider) {
 			throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
 		}
+		if(format === 'anoncreds') {
+			throw new Error(`Credential format ${format} not supported with provider ${this.supportedProvider}`);
+		}
 
 		const providerConfig = await ProviderService.instance.getProviderConfiguration(
 			customer.customerId,
@@ -188,7 +191,7 @@ export class DockIdentityService extends AbstractIdentityService {
 			},
 			body: JSON.stringify({
 				persist: false,
-				format,
+				format: format === 'sd-jwt-vc' ? 'sdjwt' : format,
 				distribute: true,
 				credential: {
 					...payload,
@@ -202,7 +205,8 @@ export class DockIdentityService extends AbstractIdentityService {
 		});
 
 		if (response.status != 200) {
-			throw new Error(`Failed to create credential with ${this.supportedProvider}: ${response.statusText}`);
+			const responseText = await response.text();
+			throw new Error(`Failed to create credential with ${this.supportedProvider}: ${responseText}`);
 		}
 
 		let credentialJson = await response.json();

@@ -670,14 +670,19 @@ export class CredentialController {
 	public async listCredentials(request: Request, response: Response) {
 		const { page, limit, providerId, ...filter } = request.query as ListCredentialQueryParams;
 
+		// Set defaults
+		const safePage = Number(page) || 1;
+		const safeLimit = Number(limit) || 10;
+		const offset = (safePage - 1) * safeLimit;
+
 		try {
 			let result: ListCredentialResponse;
 			switch (providerId) {
 				case 'dock':
 					result = await new DockIdentityService().listCredentials(
 						{
-							offset: page && limit ? (page - 1) * limit : 0,
-							limit,
+							offset,
+							limit: safeLimit,
 							filter: {
 								issuerDid: filter.issuerDid,
 								id: filter.id,
@@ -694,7 +699,7 @@ export class CredentialController {
 							response.locals.customer.customerId
 						);
 						result = await identityServiceStrategySetup.agent.listCredentials(
-							{ filter, page, limit },
+							{ filter, page: safePage, limit: safeLimit },
 							response.locals.customer
 						);
 					}
@@ -710,18 +715,29 @@ export class CredentialController {
 					const activeConfigurations = configurations.filter((config) => config.active);
 					const activeProviderIds = activeConfigurations.map((config) => config.providerId);
 
+					// No active providers
+					if (activeProviderIds.length === 0) {
+						return response.status(StatusCodes.OK).json({
+							credentials: [],
+							total: 0,
+						});
+					}
+
 					// Prepare parallel calls based on activated providers
 					const promises: Promise<any>[] = [];
+
+					// Fetch extra items to ensure we can properly merge and sort
+					// This multiplier ensures we get enough items to fill the requested page
+					const fetchMultiplier = 3;
+					const fetchLimit = safeLimit * fetchMultiplier;
 
 					// Only call Dock if it's activated
 					if (activeProviderIds.includes('dock')) {
 						promises.push(
 							new DockIdentityService().listCredentials(
 								{
-									offset: page && limit ? ((page - 1) * limit) / activeProviderIds.length : 0,
-									limit: limit
-										? limit / activeProviderIds.length
-										: Math.floor(10 / activeProviderIds.length),
+									offset: 0,
+									limit: fetchLimit,
 									filter: {
 										issuerDid: filter.issuerDid,
 										id: filter.id,
@@ -739,32 +755,27 @@ export class CredentialController {
 							new IdentityServiceStrategySetup(response.locals.customer.customerId).agent.listCredentials(
 								{
 									filter,
-									page,
-									limit: limit
-										? limit / activeProviderIds.length
-										: Math.floor(10 / activeProviderIds.length),
+									page: 1,
+									limit: fetchLimit,
 								},
 								response.locals.customer
 							)
 						);
 					}
-
-					// If no providers are activated, return empty result
-					if (promises.length === 0) {
-						result = {
-							credentials: [],
-							total: 0,
-						};
-					} else {
-						// Execute all provider calls in parallel
-						const results = await Promise.all(promises);
-
-						// Merge results from all activated providers
-						result = {
-							credentials: results.flatMap((res) => res.credentials),
-							total: results.reduce((sum, res) => sum + res.total, 0),
-						};
-					}
+					// Execute all provider calls in parallel
+					const results = await Promise.all(promises);
+					// Merge and sort all credentials from all activated providers
+					const allCredentials = results
+						.flatMap((res) => res.credentials)
+						.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+					// Get total counts from each provider
+					const totalCount = results.reduce((sum, res) => sum + (res.total || 0), 0);
+					// Apply pagination to the merged results
+					const paginatedCredentials = allCredentials.slice(offset, offset + safeLimit);
+					result = {
+						credentials: paginatedCredentials,
+						total: totalCount,
+					};
 				}
 			}
 
