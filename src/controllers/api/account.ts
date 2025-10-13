@@ -477,7 +477,7 @@ export class AccountController {
 			}
 
 			// 3. Check if paymentAccount exists for the customer
-			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity });
+			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
 			const mainnetAccountResponse = await AccountController.provisionCustomerAccount(
 				CheqdNetwork.Mainnet,
 				accounts,

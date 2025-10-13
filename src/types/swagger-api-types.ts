@@ -1718,16 +1718,13 @@
  *                  type: string
  *     AccountCreateRequest:
  *       type: object
+ *       required:
+ *         - primaryEmail
  *       properties:
- *          user:
- *            type: object
- *            required:
- *              - primaryEmail
- *            properties:
- *              name:
- *                type: string
- *              primaryEmail:
- *                type: string
+ *         name:
+ *          type: string
+ *         primaryEmail:
+ *          type: string
  *     SchemaUrl:
  *       type: object
  *       properties:
