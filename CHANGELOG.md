@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.13.0-develop.12](https://github.com/cheqd/studio/compare/3.13.0-develop.11...3.13.0-develop.12) (2025-10-13)
+
+### Bug Fixes
+
+* Add missing relation in account/create [DEV-5360] ([#744](https://github.com/cheqd/studio/issues/744)) ([1d76da2](https://github.com/cheqd/studio/commit/1d76da2782633f792029e50fec6b9ec5a8f41e57))
+
 ## [3.13.0-develop.11](https://github.com/cheqd/studio/compare/3.13.0-develop.10...3.13.0-develop.11) (2025-10-08)
 
 ### Bug Fixes
