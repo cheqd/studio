@@ -70,7 +70,7 @@ export class CheqdDIDValidator extends BaseDidValidator implements IValidator {
 			};
 		}
 		// Check identifier
-		const id = did.split(':')[3];
+		const id = did.split(/[?#]/)[0].split(':')[3];
 		if (!id) {
 			return {
 				valid: false,
