@@ -4800,6 +4800,23 @@
                 "Ed25519VerificationKey2020",
                 "JsonWebKey2020"
               ]
+            },
+            "required": true
+          },
+          {
+            "name": "controller",
+            "description": "Controller DID of the verification method",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "description": "Verification Method Id Fragment",
+            "in": "query",
+            "schema": {
+              "type": "string"
             }
           }
         ],

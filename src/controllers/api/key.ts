@@ -322,6 +322,17 @@ export class KeyController {
 	 *              - Ed25519VerificationKey2018
 	 *              - Ed25519VerificationKey2020
 	 *              - JsonWebKey2020
+	 *         required: true
+	 *       - name: controller
+	 *         description: Controller DID of the verification method
+	 *         in: query
+	 *         schema:
+	 *           type: string
+	 *       - name: id
+	 *         description: Verification Method Id Fragment
+	 *         in: query
+	 *         schema:
+	 *           type: string
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -360,7 +371,11 @@ export class KeyController {
 	public async convertToVerificationMethod(request: Request, response: Response) {
 		const { kid } = request.params as { kid: string };
 
-		const { verificationMethodType } = request.query as { verificationMethodType: VerificationMethods };
+		const { verificationMethodType, id, controller } = request.query as {
+			verificationMethodType: VerificationMethods;
+			id?: `${string}-${number}`;
+			controller?: string;
+		};
 
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
@@ -372,7 +387,14 @@ export class KeyController {
 				});
 			}
 
-			const verificationKeys = createVerificationKeys(key.publicKeyHex, MethodSpecificIdAlgo.Uuid, 'key-1');
+			const verificationKeys = createVerificationKeys(
+				key.publicKeyHex,
+				MethodSpecificIdAlgo.Base58,
+				id || 'key-1',
+				undefined,
+				undefined,
+				controller
+			);
 			if (!verificationKeys) {
 				throw new Error('Invalid DID options');
 			}
