@@ -328,7 +328,7 @@ export class KeyController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/VerificationMethodResult'
+	 *               $ref: '#/components/schemas/VerificationMethod'
 	 *       400:
 	 *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
 	 *         content:

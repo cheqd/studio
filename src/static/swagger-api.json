@@ -4809,7 +4809,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VerificationMethodResult"
+                  "$ref": "#/components/schemas/VerificationMethod"
                 }
               }
             }
