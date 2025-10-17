@@ -170,7 +170,7 @@ export class DockIdentityService extends AbstractIdentityService {
 		if (!provider) {
 			throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
 		}
-		if(format === 'anoncreds') {
+		if (format === 'anoncreds') {
 			throw new Error(`Credential format ${format} not supported with provider ${this.supportedProvider}`);
 		}
 

@@ -19,7 +19,12 @@ import type { IKeyTrack, ITrackOperation } from '../../types/track.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
 import { validate } from '../validator/decorator.js';
 import { SupportedKeyTypes } from '@veramo/utils';
-import { createDidVerificationMethod, createVerificationKeys, MethodSpecificIdAlgo, VerificationMethods } from '@cheqd/sdk';
+import {
+	createDidVerificationMethod,
+	createVerificationKeys,
+	MethodSpecificIdAlgo,
+	VerificationMethods,
+} from '@cheqd/sdk';
 import { query } from 'express-validator';
 
 // ToDo: Make the format of /key/create and /key/read the same
@@ -66,14 +71,14 @@ export class KeyController {
 			.isHexadecimal()
 			.withMessage('keyId should be a hexadecimal string')
 			.bail(),
-        query('verificationMethodType')
-            .optional()
-            .isString()
-            .isIn([VerificationMethods.Ed255192020, VerificationMethods.Ed255192018, VerificationMethods.JWK])
-            .withMessage('Unsupported verificationMethod type')
-            .bail(),
+		query('verificationMethodType')
+			.optional()
+			.isString()
+			.isIn([VerificationMethods.Ed255192020, VerificationMethods.Ed255192018, VerificationMethods.JWK])
+			.withMessage('Unsupported verificationMethod type')
+			.bail(),
 	];
-    
+
 	/**
 	 * @openapi
 	 *
@@ -293,7 +298,7 @@ export class KeyController {
 		}
 	}
 
-    /**
+	/**
 	 * @openapi
 	 *
 	 * /key/{kid}/verification-method:
@@ -316,7 +321,7 @@ export class KeyController {
 	 *           enum:
 	 *              - Ed25519VerificationKey2018
 	 *              - Ed25519VerificationKey2020
-     *              - JsonWebKey2020
+	 *              - JsonWebKey2020
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -355,7 +360,7 @@ export class KeyController {
 	public async convertToVerificationMethod(request: Request, response: Response) {
 		const { kid } = request.params as { kid: string };
 
-        const  { verificationMethodType } = request.query as { verificationMethodType: VerificationMethods };
+		const { verificationMethodType } = request.query as { verificationMethodType: VerificationMethods };
 
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
@@ -367,11 +372,11 @@ export class KeyController {
 				});
 			}
 
-            const verificationKeys = createVerificationKeys(key.publicKeyHex, MethodSpecificIdAlgo.Uuid, 'key-1');
-            if (!verificationKeys) {
-                throw new Error('Invalid DID options');
-            }
-            const verificationMethods = createDidVerificationMethod([verificationMethodType], [verificationKeys]);
+			const verificationKeys = createVerificationKeys(key.publicKeyHex, MethodSpecificIdAlgo.Uuid, 'key-1');
+			if (!verificationKeys) {
+				throw new Error('Invalid DID options');
+			}
+			const verificationMethods = createDidVerificationMethod([verificationMethodType], [verificationKeys]);
 
 			return response.status(StatusCodes.OK).json(verificationMethods[0]);
 		} catch (error) {
