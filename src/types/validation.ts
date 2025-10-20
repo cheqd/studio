@@ -21,9 +21,3 @@ export type JSONLDProofType = {
 	proofValue?: string;
 	jws?: string;
 };
-export type CheqdCredentialStatus = {
-	id: string;
-	type: string;
-	statusPurpose: string;
-	statusListIndex: string;
-};

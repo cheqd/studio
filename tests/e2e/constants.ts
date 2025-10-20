@@ -31,6 +31,7 @@ export const DID_NOT_FOUND_ERROR = 'notFound';
 export const DEFAULT_MAINNET_DID = 'did:cheqd:mainnet:a6ef1d50-a040-4db3-b833-6bb3a0ff1eb6';
 export const DEFAULT_TESTNET_DID = 'did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA';
 export const DEFAULT_TESTNET_DID_IDENTIFIER = '5RpEg66jhhbmASWPXJRWrA';
+export const DEFAULT_TESTNET_CRED_IDENTIFIER = '01fbf3e6-747f-45c7-9cfc-fd430bbce603';
 
 export const DEACTIVATED_TESTNET_DID = 'did:cheqd:testnet:UYBzUsTPHpTEXSnzYGTzUZ';
 

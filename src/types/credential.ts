@@ -135,7 +135,12 @@ export type ListCredentialQueryParams = {
 export type ListCredentialRequestOptions = {
 	page?: number;
 	limit?: number;
-	filter?: any;
+	providerId?: string;
+	issuerId?: string;
+	subjectId?: string;
+	status?: 'issued' | 'suspended' | 'revoked';
+	format?: string;
+	createdAt?: string;
 };
 
 export type ListCredentialResponse = {
@@ -152,3 +157,45 @@ export type ListCredentialResponse = {
 	}[];
 	total: number;
 };
+
+export interface GetIssuedCredentialOptions {
+	includeCredential?: boolean;
+	syncStatus?: boolean;
+	providerId?: string;
+}
+
+export interface IssuedCredentialResponse {
+	// Tracking Information
+	issuedCredentialId: string;
+
+	// Provider Information
+	providerId: string;
+	providerCredentialId?: string;
+
+	// Credential Information
+	issuerId?: string;
+	subjectId?: string;
+	format: string;
+	type: string[];
+
+	// Status Information
+	status: string;
+	statusUpdatedAt?: string;
+
+	// Timestamps
+	issuedAt: string;
+	expiresAt?: string;
+
+	// Credential Status Configuration
+	credentialStatus?: Record<string, any>;
+
+	// Provider-specific metadata
+	providerMetadata?: Record<string, any>;
+
+	// Optional: Full credential
+	credential?: VerifiableCredential;
+
+	// Metadata
+	createdAt?: string;
+	updatedAt?: string;
+}

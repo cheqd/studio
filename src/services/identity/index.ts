@@ -35,6 +35,7 @@ import type {
 import type { VeramoAgent } from '../../types/shared.js';
 import type { VerificationOptions } from '../../types/shared.js';
 import type {
+	CheqdCredentialStatus,
 	CreateEncryptedBitstringOptions,
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
@@ -115,6 +116,7 @@ export interface IIdentityService {
 		customer: CustomerEntity
 	): Promise<IVerifyResult>;
 	listCredentials(options: ListCredentialRequestOptions, customer: CustomerEntity): Promise<ListCredentialResponse>;
+	getCredential(credentialId: string, customer: CustomerEntity): Promise<VerifiableCredential | null>;
 	createPresentation(
 		presentation: PresentationPayload,
 		verificationOptions: VerificationOptions,
@@ -164,6 +166,11 @@ export interface IIdentityService {
 	checkStatusList2021(
 		did: string,
 		statusOptions: CheckStatusListOptions,
+		customer: CustomerEntity
+	): Promise<StatusCheckResult>;
+	//TODO Implement the below method for studio provider
+	checkBitstringStatusList(
+		statusOptions: CheqdCredentialStatus,
 		customer: CustomerEntity
 	): Promise<StatusCheckResult>;
 	searchStatusList(

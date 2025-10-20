@@ -3991,57 +3991,97 @@
         }
       }
     },
-    "/credential/list": {
+    "/credentials/issued": {
       "get": {
         "tags": [
           "Verifiable Credentials"
         ],
-        "summary": "Fetch credentials associated with an account.",
-        "description": "This endpoint returns the list of credentials controlled by the account.",
+        "summary": "List credentials issued from an associated account.",
+        "description": "This endpoint returns the list of issued credentials controlled by the account. It provides a unified view across all providers with filtering and pagination.",
         "parameters": [
           {
             "in": "query",
-            "name": "providerId",
-            "description": "Filter credentials by the provider.",
-            "schema": {
-              "type": "string"
-            },
-            "required": false
-          },
-          {
-            "in": "query",
-            "name": "issuerDid",
-            "description": "Filter credentials by Issuer.",
-            "schema": {
-              "type": "string"
-            },
-            "required": false
-          },
-          {
-            "in": "query",
-            "name": "createdAt",
-            "description": "Filter resource by created date.",
-            "schema": {
-              "type": "string",
-              "format": "date"
-            },
-            "required": false
-          },
-          {
-            "in": "query",
             "name": "page",
-            "description": "Page number.",
+            "description": "Page number for pagination.",
             "schema": {
-              "type": "number"
+              "type": "number",
+              "default": 1
             },
             "required": false
           },
           {
             "in": "query",
             "name": "limit",
-            "description": "Number of items to be listed in a single page.",
+            "description": "Number of items per page.",
             "schema": {
-              "type": "number"
+              "type": "number",
+              "default": 10
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "providerId",
+            "description": "Filter credentials by provider ID (e.g., 'studio', 'dock').",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "issuerId",
+            "description": "Filter credentials by issuer DID or ID.",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "subjectId",
+            "description": "Filter credentials by subject DID or ID.",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "description": "Filter credentials by status.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "issued",
+                "suspended",
+                "revoked"
+              ]
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "description": "Filter credentials by format.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "jwt",
+                "jsonld",
+                "sd-jwt-vc",
+                "anoncreds"
+              ]
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "createdAt",
+            "description": "Filter credentials created before or on this date.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
             },
             "required": false
           }
@@ -4052,7 +4092,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListCredentialResult"
+                  "type": "object",
+                  "properties": {
+                    "credentials": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    }
+                  }
                 }
               }
             }
@@ -4062,6 +4113,91 @@
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credentials/issued/{id}": {
+      "get": {
+        "tags": [
+          "Verifiable Credentials"
+        ],
+        "summary": "Get a single issued credential by ID.",
+        "description": "This endpoint retrieves a single issued credential using multi-strategy lookup. It can search by UUID (issuedCredentialId) or provider-specific credential ID (providerCredentialId).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Credential identifier (UUID or provider-specific ID).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "includeCredential",
+            "description": "If true, fetch and include the full credential payload from the provider.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "syncStatus",
+            "description": "If true, synchronize credential status from the provider API before returning.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "providerId",
+            "description": "Provider hint to optimize lookup when using provider-specific credential ID.",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "Credential not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           },
           "500": {
             "$ref": "#/components/schemas/InternalError"

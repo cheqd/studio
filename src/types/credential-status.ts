@@ -269,3 +269,11 @@ export type FeePaymentOptions = {
 	feePaymentNetwork: CheqdNetwork;
 	memo?: string;
 };
+
+export type CheqdCredentialStatus = {
+	id: string;
+	type: string;
+	statusPurpose: string;
+	statusListIndex: string;
+	[x: string]: any;
+};

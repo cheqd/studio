@@ -140,7 +140,7 @@ export class DockIdentityService extends AbstractIdentityService {
 		}
 		const apiKey = await ProviderService.instance.getDecryptedApiKey(providerConfig);
 
-		const response = await fetch(`${this.defaultApiUrl}/dids`, {
+		const response = await fetch(`${this.defaultApiUrl}/dids?offset=0&limit=${options.limit}`, {
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json',
@@ -170,7 +170,7 @@ export class DockIdentityService extends AbstractIdentityService {
 		if (!provider) {
 			throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
 		}
-		if(format === 'anoncreds') {
+		if (format === 'anoncreds') {
 			throw new Error(`Credential format ${format} not supported with provider ${this.supportedProvider}`);
 		}
 
@@ -182,26 +182,32 @@ export class DockIdentityService extends AbstractIdentityService {
 			throw new Error(`Provider ${this.supportedProvider} not configured for customer ${customer.customerId}`);
 		}
 		const apiKey = await ProviderService.instance.getDecryptedApiKey(providerConfig);
-		const { issuer, subject, issuanceDate, expirationDate, ...payload } = credential;
+
+		const issuerDid = typeof credential.issuer === 'string' ? credential.issuer : credential.issuer.id;
+		const { issuer, subject, issuanceDate, expirationDate, credentialSchema, credentialSubject, ...payload } =
+			credential;
+		const requestBody: DockIssueCredentialRequestBody = {
+			persist: false,
+			// sd-jwt-vc is referred as sdjwt in dock
+			format: format === 'sd-jwt-vc' ? 'sdjwt' : format,
+			distribute: true,
+			credential: {
+				...payload,
+				issuer: issuerDid,
+				subject: credentialSubject || {},
+				schema: credentialSchema || undefined,
+				issuanceDate: issuanceDate?.toLocaleString() || new Date().toISOString(),
+				expirationDate: expirationDate?.toLocaleString() || undefined,
+				status: statusOptions || undefined,
+			},
+		};
 		const response = await fetch(`${this.defaultApiUrl}/credentials`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 				Authorization: `Bearer ${apiKey}`,
 			},
-			body: JSON.stringify({
-				persist: false,
-				format: format === 'sd-jwt-vc' ? 'sdjwt' : format,
-				distribute: true,
-				credential: {
-					...payload,
-					issuer: typeof credential.issuer === 'string' ? credential.issuer : credential.issuer.id,
-					subject: credential.credentialSubject!,
-					issuanceDate: issuanceDate?.toLocaleString() || new Date().toISOString(),
-					expirationDate: expirationDate?.toLocaleString() || undefined,
-					status: statusOptions || undefined,
-				},
-			} satisfies DockIssueCredentialRequestBody),
+			body: JSON.stringify(requestBody),
 		});
 
 		if (response.status != 200) {
@@ -312,6 +318,45 @@ export class DockIdentityService extends AbstractIdentityService {
 			})),
 			total: data.length,
 		};
+	}
+
+	async getCredential(credentialId: string, customer: CustomerEntity): Promise<VerifiableCredential | null> {
+		const provider = await ProviderService.instance.getProvider(this.supportedProvider!, { deprecated: false });
+		if (!provider) {
+			throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
+		}
+
+		const providerConfig = await ProviderService.instance.getProviderConfiguration(
+			customer.customerId,
+			provider?.providerId
+		);
+		if (!providerConfig) {
+			throw new Error(`Provider ${this.supportedProvider} not configured for customer ${customer.customerId}`);
+		}
+		const apiKey = await ProviderService.instance.getDecryptedApiKey(providerConfig);
+		const response = await fetch(`${this.defaultApiUrl}/credentials/${encodeURIComponent(credentialId)}`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${apiKey}`,
+			},
+		});
+		if (response.status === 404) {
+			return null;
+		}
+
+		if (!response.ok) {
+			throw new Error(`Failed to fetch credential with ${this.supportedProvider}: ${response.statusText}`);
+		}
+		const credentialData = await response.json();
+		// Decode JWT to VerifiableCredential if it's a JWT string
+		if (typeof credentialData === 'string') {
+			const [, payloadBase64] = credentialData.split('.');
+			const decodedCredential = JSON.parse(Buffer.from(payloadBase64, 'base64').toString('utf8'));
+			return decodedCredential as VerifiableCredential;
+		}
+
+		return credentialData as VerifiableCredential;
 	}
 
 	async importDid(
