@@ -118,6 +118,7 @@ export class Credentials {
 				).agent.createCredential(credential, format, statusOptions, customer);
 
 				const isVeridaDid = new VeridaDIDValidator().validate(subjectDid);
+				let sendCredentialResponse;
 				if (
 					ENABLE_VERIDA_CONNECTOR === 'true' &&
 					connector === CredentialConnectors.Verida &&
@@ -129,7 +130,7 @@ export class Credentials {
 					// dynamic import to avoid circular dependency
 					const { VeridaService } = await import('../connectors/verida.js');
 
-					await VeridaService.instance.sendCredential(
+					sendCredentialResponse = await VeridaService.instance.sendCredential(
 						isVeridaDid.namespace,
 						subjectDid,
 						'New Verifiable Credential',
@@ -139,7 +140,7 @@ export class Credentials {
 						credentialSummary
 					);
 				} else if (connector && connector === CredentialConnectors.Resource) {
-					await ResourceConnector.instance.sendCredential(
+					sendCredentialResponse = await ResourceConnector.instance.sendCredential(
 						customer,
 						issuerDid,
 						verifiable_credential,
@@ -152,14 +153,12 @@ export class Credentials {
 				}
 
 				// Create IssuedCredentialEntity record for Studio/Resource credentials
-				// Extract resourceId from credential.id if it's a DID URL
+				// Get resourceId from ResourceConnector response if available
 				let providerCredentialId: string | undefined;
-				if (verifiable_credential.id && typeof verifiable_credential.id === 'string') {
-					if (verifiable_credential.id.includes('/resources/')) {
-						providerCredentialId = verifiable_credential.id.split('/resources/')[1];
-					} else {
-						providerCredentialId = verifiable_credential.id;
-					}
+				if (sendCredentialResponse && sendCredentialResponse.resourceId) {
+					providerCredentialId = sendCredentialResponse.resourceId;
+				} else {
+					providerCredentialId = verifiable_credential.id;
 				}
 
 				await this.create({
@@ -182,6 +181,8 @@ export class Credentials {
 					metadata: {
 						schema: verifiable_credential.credentialSchema,
 						proof: verifiable_credential.proof,
+						resourceType: sendCredentialResponse?.resourceType,
+						didUrl: sendCredentialResponse?.didUrl,
 					},
 					customer,
 				});

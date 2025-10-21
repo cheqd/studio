@@ -56,7 +56,7 @@ export class ResourceConnector {
 			resourcePayload,
 			customer
 		);
-
+		const didUrl = `${did}/resources/${resourcePayload.id}`;
 		if (isPublished) {
 			const url = new URL(
 				`${process.env.RESOLVER_URL || DefaultResolverUrl}${did}?` +
@@ -79,5 +79,11 @@ export class ResourceConnector {
 			// track resource creation
 			eventTracker.emit('track', trackResourceInfo);
 		}
+		return {
+			success: isPublished,
+			resourceId: resourcePayload.id,
+			resourceType: resourcePayload.resourceType,
+			didUrl: didUrl,
+		};
 	}
 }
