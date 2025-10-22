@@ -34,7 +34,7 @@ export class KeyController {
 		check('type')
 			.optional()
 			.isString()
-			.isIn([SupportedKeyTypes.Ed25519, SupportedKeyTypes.Secp256k1])
+			.isIn([SupportedKeyTypes.Ed25519])
 			.withMessage('Invalid key type')
 			.bail(),
 	];
@@ -95,7 +95,6 @@ export class KeyController {
 	 *           type: string
 	 *           enum:
 	 *              - Ed25519
-	 *              - Secp256k1
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.

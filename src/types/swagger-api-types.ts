@@ -1725,6 +1725,23 @@
  *          type: string
  *         primaryEmail:
  *          type: string
+ *     AccountCreateResponse:
+ *       type: object
+ *       properties:
+ *         customerId:
+ *           type: string
+ *         name:
+ *           type: string
+ *         email:
+ *           type: string
+ *         description:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *         updatedAt:
+ *           type: string
+ *         paymentProviderId:
+ *           type: string
  *     SchemaUrl:
  *       type: object
  *       properties:
