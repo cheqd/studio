@@ -103,7 +103,7 @@ export class Credentials {
 					metadata: {
 						schema: dockCredential.credentialSchema,
 						proof: dockCredential.proof,
-						termsOfUse: additionalData.termsOfUse
+						termsOfUse: additionalData.termsOfUse,
 					},
 					customer,
 				});
@@ -184,7 +184,7 @@ export class Credentials {
 						proof: verifiable_credential.proof,
 						resourceType: sendCredentialResponse?.resourceType,
 						didUrl: sendCredentialResponse?.didUrl,
-						termsOfUse: additionalData.termsOfUse
+						termsOfUse: additionalData.termsOfUse,
 					},
 					customer,
 				});

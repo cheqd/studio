@@ -2,7 +2,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 import { ResourceEntity } from '../entities/resource.entity.js';
 import { IssuedCredentialEntity } from '../entities/issued-credential.entity.js';
 import { CredentialProviderEntity } from '../entities/credential-provider.entity.js';
-import type { VerifiableCredential } from '@veramo/core';
+import { type VerifiableCredential } from '@veramo/core';
 
 /**
  * Migrates existing Studio (Veramo) credentials from ResourceEntity to IssuedCredentialEntity
@@ -121,9 +121,12 @@ export class MigrateStudioCredentials1760533089389 implements MigrationInterface
 						expiresAt: expiresAt,
 						metadata: {
 							migratedFrom: 'ResourceEntity',
+							schema: credential.credentialSchema,
+							proof: credential.proof,
 							resourceType: resource.resourceType,
 							didUrl: didUrl,
 							encrypted: resource.encrypted,
+							termsOfUse: credential.termsOfUse,
 						},
 					});
 
