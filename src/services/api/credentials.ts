@@ -104,6 +104,7 @@ export class Credentials {
 						schema: dockCredential.credentialSchema,
 						proof: dockCredential.proof,
 						termsOfUse: additionalData.termsOfUse,
+						contexts: [...(context || []), ...VC_CONTEXT],
 					},
 					customer,
 				});
@@ -185,6 +186,7 @@ export class Credentials {
 						resourceType: sendCredentialResponse?.resourceType,
 						didUrl: sendCredentialResponse?.didUrl,
 						termsOfUse: additionalData.termsOfUse,
+						contexts: [...(context || []), ...VC_CONTEXT],
 					},
 					customer,
 				});
