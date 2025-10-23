@@ -437,7 +437,7 @@ export class Credentials {
 					if (entity.credentialStatus) {
 						const status = entity.credentialStatus;
 						const studioService = new IdentityServiceStrategySetup(customer.customerId);
-						// TODO: Implement checkBitstringStatusList as part of cresential Status check
+						// TODO: Implement checkBitstringStatusList as part of credential Status check
 						const currentStatus = await studioService.agent.checkBitstringStatusList(
 							status as CheqdCredentialStatus,
 							customer
