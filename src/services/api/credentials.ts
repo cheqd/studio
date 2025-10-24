@@ -3,6 +3,7 @@ import { VC_CONTEXT, VC_TYPE } from '../../types/constants.js';
 import {
 	CredentialConnectors,
 	GetIssuedCredentialOptions,
+	IssuedCredentialCreateOptions,
 	IssuedCredentialResponse,
 	ListCredentialRequestOptions,
 	type CredentialRequest,
@@ -48,6 +49,7 @@ export class Credentials {
 			connector,
 			credentialId,
 			providerId,
+			category,
 			...additionalData
 		} = request;
 
@@ -90,12 +92,8 @@ export class Credentials {
 				const credentialType = Array.isArray(dockCredential.type)
 					? dockCredential.type
 					: [dockCredential.type || 'VerifiableCredential'];
-				let category: 'credential' | 'accreditation' = 'credential';
-				if (credentialType.some((type) => type.includes('Accreditation'))) {
-					category = 'accreditation';
-				}
 				// Create IssuedCredentialEntity record
-				await this.create({
+				await this.create(customer, {
 					providerId: 'dock',
 					providerCredentialId: dockCredential.id as string,
 					issuerId: issuerDid,
@@ -113,7 +111,6 @@ export class Credentials {
 						termsOfUse: additionalData.termsOfUse,
 						contexts: [...(context || []), ...VC_CONTEXT],
 					},
-					customer,
 				});
 
 				return dockCredential;
@@ -172,23 +169,15 @@ export class Credentials {
 				const credentialType = Array.isArray(verifiable_credential.type)
 					? verifiable_credential.type
 					: [verifiable_credential.type || 'VerifiableCredential'];
-				let category = 'credential';
-				if (
-					credentialType.includes('VerifiableAccreditationToAccredit') ||
-					credentialType.includes('VerifiableAccreditationToAttest') ||
-					credentialType.includes('VerifiableAuthorizationForTrustChain')
-				) {
-					category = 'accreditation';
-				}
 
-				await this.create({
+				await this.create(customer, {
 					providerId: 'studio',
 					providerCredentialId,
 					issuerId: issuerDid,
 					subjectId: subjectDid,
 					format: (format || 'jsonld') as 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds',
 					type: credentialType,
-					category: category as 'credential' | 'accreditation',
+					category: category,
 					status: 'issued',
 					issuedAt: verifiable_credential.issuanceDate
 						? new Date(verifiable_credential.issuanceDate)
@@ -205,7 +194,6 @@ export class Credentials {
 						termsOfUse: additionalData.termsOfUse,
 						contexts: [...(context || []), ...VC_CONTEXT],
 					},
-					customer,
 				});
 
 				return verifiable_credential;
@@ -320,37 +308,22 @@ export class Credentials {
 	/**
 	 * Create a new issued credential record
 	 */
-	async create(data: {
-		providerId: string;
-		providerCredentialId?: string;
-		issuerId?: string;
-		subjectId?: string;
-		format: 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds';
-		category?: 'credential' | 'accreditation';
-		type: string[];
-		status?: 'issued' | 'suspended' | 'revoked';
-		statusUpdatedAt?: Date;
-		issuedAt: Date;
-		expiresAt?: Date;
-		credentialStatus?: Record<string, any>;
-		metadata?: Record<string, any>;
-		customer: CustomerEntity;
-	}): Promise<IssuedCredentialEntity> {
+	async create(customer: CustomerEntity, options: IssuedCredentialCreateOptions): Promise<IssuedCredentialEntity> {
 		const entity = this.repository.create({
-			providerId: data.providerId,
-			providerCredentialId: data.providerCredentialId,
-			issuerId: data.issuerId,
-			subjectId: data.subjectId,
-			format: data.format,
-			category: data.category,
-			type: data.type,
-			status: data.status || 'issued',
-			statusUpdatedAt: data.statusUpdatedAt,
-			issuedAt: data.issuedAt,
-			expiresAt: data.expiresAt,
-			credentialStatus: data.credentialStatus,
-			metadata: data.metadata,
-			customer: data.customer,
+			providerId: options.providerId,
+			providerCredentialId: options.providerCredentialId,
+			issuerId: options.issuerId,
+			subjectId: options.subjectId,
+			format: options.format,
+			category: options.category || 'credential',
+			type: options.type,
+			status: options.status || 'issued',
+			statusUpdatedAt: options.statusUpdatedAt,
+			issuedAt: options.issuedAt,
+			expiresAt: options.expiresAt,
+			credentialStatus: options.credentialStatus,
+			metadata: options.metadata,
+			customer: customer,
 		});
 
 		return await this.repository.save(entity);
