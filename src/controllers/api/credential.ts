@@ -665,6 +665,13 @@ export class CredentialController {
 	 *           enum: [jwt, jsonld, sd-jwt-vc, anoncreds]
 	 *         required: false
 	 *       - in: query
+	 *         name: category
+	 *         description: Filter credentials by category.
+	 *         schema:
+	 *           type: string
+	 *           enum: [credential, accreditation]
+	 *         required: false
+	 *       - in: query
 	 *         name: createdAt
 	 *         description: Filter credentials created before or on this date.
 	 *         schema:
@@ -677,14 +684,7 @@ export class CredentialController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               type: object
-	 *               properties:
-	 *                 credentials:
-	 *                   type: array
-	 *                   items:
-	 *                     type: object
-	 *                 total:
-	 *                   type: number
+	 *               $ref: '#/components/schemas/ListCredentialResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -693,7 +693,7 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async listIssuedCredentials(request: Request, response: Response) {
-		const { page, limit, providerId, issuerId, subjectId, status, format, createdAt } = request.query;
+		const { page, limit, providerId, issuerId, subjectId, status, format, createdAt, category } = request.query;
 
 		try {
 			const result = await Credentials.instance.list(response.locals.customer, {
@@ -705,6 +705,7 @@ export class CredentialController {
 				status: status as 'issued' | 'suspended' | 'revoked' | undefined,
 				format: format as string | undefined,
 				createdAt: createdAt as string | undefined,
+				category: category as string | undefined,
 			});
 
 			return response.status(StatusCodes.OK).json(result);
@@ -756,7 +757,7 @@ export class CredentialController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               type: object
+	 *               $ref: '#/components/schemas/IssuedCredentialResponse'
 	 *       404:
 	 *         description: Credential not found.
 	 *         content:

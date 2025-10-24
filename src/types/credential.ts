@@ -141,6 +141,7 @@ export type ListCredentialRequestOptions = {
 	status?: 'issued' | 'suspended' | 'revoked';
 	format?: string;
 	createdAt?: string;
+	category?: string;
 };
 
 export type ListCredentialResponse = {
@@ -176,6 +177,7 @@ export interface IssuedCredentialResponse {
 	issuerId?: string;
 	subjectId?: string;
 	format: string;
+	category?: string;
 	type: string[];
 
 	// Status Information

@@ -40,6 +40,9 @@ export class IssuedCredentialEntity {
 	@Column({ type: 'text', nullable: false })
 	format!: 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds';
 
+	@Column({ type: 'text', nullable: false })
+	category!: 'credential' | 'accreditation';
+
 	@Column('json', { nullable: false })
 	type!: string[];
 
@@ -89,6 +92,7 @@ export class IssuedCredentialEntity {
 	constructor(
 		providerId: string,
 		format: 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds',
+		category: 'credential' | 'accreditation',
 		type: string[],
 		issuedAt: Date,
 		customer: CustomerEntity,
@@ -113,6 +117,7 @@ export class IssuedCredentialEntity {
 		this.issuerId = options?.issuerId;
 		this.subjectId = options?.subjectId;
 		this.format = format;
+		this.category = category;
 		this.type = type;
 		this.status = options?.status || 'issued';
 		this.statusUpdatedAt = options?.statusUpdatedAt;

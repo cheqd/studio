@@ -18,6 +18,8 @@ import { IssuedCredentialEntity } from '../../database/entities/issued-credentia
 import { FindOptionsWhere, LessThanOrEqual, Repository } from 'typeorm';
 import { Connection } from '../../database/connection/connection.js';
 import { CheqdCredentialStatus } from '../../types/credential-status.js';
+import { validate as uuidValidate } from 'uuid';
+
 dotenv.config();
 
 const { ENABLE_VERIDA_CONNECTOR } = process.env;
@@ -203,7 +205,7 @@ export class Credentials {
 		customer: CustomerEntity,
 		options: ListCredentialRequestOptions = {}
 	): Promise<{ credentials: IssuedCredentialResponse[]; total: number }> {
-		const { page = 1, limit = 10, providerId, issuerId, subjectId, status, format, createdAt } = options;
+		const { page = 1, limit = 10, providerId, issuerId, subjectId, status, format, createdAt, category } = options;
 
 		const where: FindOptionsWhere<IssuedCredentialEntity> = {
 			customer: { customerId: customer.customerId },
@@ -215,6 +217,7 @@ export class Credentials {
 		if (status) where.status = status;
 		if (format) where.format = format as any;
 		if (createdAt) where.createdAt = LessThanOrEqual(new Date(createdAt));
+		if (category) where.category = category as any;
 
 		const [entities, total] = await this.repository.findAndCount({
 			where,
@@ -241,7 +244,7 @@ export class Credentials {
 		let entity: IssuedCredentialEntity | null = null;
 
 		// Strategy 1: Try as issuedCredentialId (UUID)
-		if (this.isUUID(id)) {
+		if (uuidValidate(id)) {
 			entity = await this.repository.findOne({
 				where: {
 					issuedCredentialId: id,
@@ -357,13 +360,7 @@ export class Credentials {
 
 		return (result.affected ?? 0) > 0;
 	}
-	/**
-	 * Check if string is a valid UUID
-	 */
-	private isUUID(str: string): boolean {
-		const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-		return uuidRegex.test(str);
-	}
+
 	/**
 	 * Convert entity to API response format
 	 */
@@ -378,6 +375,7 @@ export class Credentials {
 			issuerId: entity.issuerId,
 			subjectId: entity.subjectId,
 			format: entity.format,
+			category: entity.category,
 			type: entity.type,
 			status: entity.status,
 			statusUpdatedAt: entity.statusUpdatedAt?.toISOString(),

@@ -97,10 +97,16 @@ export class MigrateDockCredentials1760533089589 implements MigrationInterface {
 						const credentialType =
 							credential.type && credential.type.trim() !== '' ? credential.type : 'VerifiableCredential';
 
+						let category: 'credential' | 'accreditation' = 'credential';
+						if (credentialType.includes('Accreditation') || credentialType.includes('accreditation')) {
+							category = 'accreditation';
+						}
+
 						// Create IssuedCredentialEntity (using object initialization to avoid constructor issues)
 						const issuedCredential = queryRunner.manager.create(IssuedCredentialEntity, {
 							providerId: dockProvider.providerId,
-							format: 'jwt', // Dock credentials are JWT format
+							format: 'jsonld', // Dock credentials are JSON-LD format
+							category: category,
 							type: [credentialType],
 							issuedAt: issuedAt,
 							customer: config.customer,

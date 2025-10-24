@@ -88,6 +88,14 @@ export class MigrateStudioCredentials1760533089389 implements MigrationInterface
 							format = credential.proof.type === this.JWT_PROOF_TYPE ? 'jwt' : 'jsonld';
 						}
 					}
+					let category: 'credential' | 'accreditation' = 'credential';
+					if (
+						resource.resourceType === 'VerifiableAccreditationToAccredit' ||
+						resource.resourceType === 'VerifiableAccreditationToAttest' ||
+						resource.resourceType === 'VerifiableAuthorizationForTrustChain'
+					) {
+						category = 'accreditation';
+					}
 
 					// Extract credential type
 					const type = Array.isArray(credential.type)
@@ -110,6 +118,7 @@ export class MigrateStudioCredentials1760533089389 implements MigrationInterface
 					const issuedCredential = queryRunner.manager.create(IssuedCredentialEntity, {
 						providerId: studioProvider.providerId,
 						format: format,
+						category: category,
 						type: type,
 						issuedAt: issuedAt,
 						customer: resource.customer,

@@ -436,12 +436,12 @@ export class AccountController {
 	 *           schema:
 	 *             $ref: '#/components/schemas/AccountCreateRequest'
 	 *     responses:
-	 *       200:
+	 *       201:
 	 *         description: The request was successful.
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/QueryIdTokenResponseBody'
+	 *               $ref: '#/components/schemas/AccountCreateResponse'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
