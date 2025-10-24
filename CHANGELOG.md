@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.14.0-develop.1](https://github.com/cheqd/studio/compare/3.13.1-develop.1...3.14.0-develop.1) (2025-10-24)
+
+### Features
+
+* IssuedCredential table and apis [DEV-5380] [DEV-5356] ([#748](https://github.com/cheqd/studio/issues/748)) ([93a3a7d](https://github.com/cheqd/studio/commit/93a3a7dcebf7ff1662f6bfa0cb03dbe882a6d23c)), closes [#749](https://github.com/cheqd/studio/issues/749)
+
 ## [3.13.1-develop.1](https://github.com/cheqd/studio/compare/3.13.0...3.13.1-develop.1) (2025-10-23)
 
 ## [3.13.0](https://github.com/cheqd/studio/compare/3.12.1...3.13.0) (2025-10-21)
