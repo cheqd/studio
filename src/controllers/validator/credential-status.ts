@@ -1,7 +1,7 @@
 import { BitstringStatusPurposeTypes, DefaultStatusList2021StatusPurposeTypes } from '@cheqd/did-provider-cheqd';
 import { BitstringStatusListEntry } from '../../types/constants.js';
-import type { CheqdCredentialStatus } from '../../types/validation.js';
 import type { IValidationResult, IValidator } from './validator.js';
+import { CheqdCredentialStatus } from '../../types/credential-status.js';
 
 export class CredentialStatusValidator implements IValidator {
 	validate(credentialStatus: CheqdCredentialStatus): IValidationResult {

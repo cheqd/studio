@@ -31,6 +31,7 @@ import type {
 import type { VeramoAgent } from '../../types/shared';
 import type { VerificationOptions } from '../../types/shared';
 import type {
+	CheqdCredentialStatus,
 	CreateEncryptedBitstringOptions,
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
@@ -181,6 +182,12 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<StatusCheckResult> {
 		throw new Error(`Not supported`);
 	}
+	checkBitstringStatusList(
+		statusOptions: CheqdCredentialStatus,
+		customer: CustomerEntity
+	): Promise<StatusCheckResult> {
+		throw new Error(`Not supported`);
+	}
 	searchStatusList(
 		did: string,
 		statusListName: string,
@@ -212,6 +219,9 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 	listCredentials(options: ListCredentialRequestOptions, customer: CustomerEntity): Promise<ListCredentialResponse> {
+		throw new Error(`Not Supported`);
+	}
+	getCredential(credentialId: string, customer: CustomerEntity): Promise<VerifiableCredential | null> {
 		throw new Error(`Not Supported`);
 	}
 	revokeCredentials(

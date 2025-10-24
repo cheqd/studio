@@ -547,9 +547,9 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			{ customer, resourceType: DIDAccreditationTypes.VerifiableAccreditationToAttest },
 		];
 
-		if (options.filter.issuerDid) {
+		if (options.issuerId) {
 			where.forEach((w) => {
-				w.identifier = options.filter.issuerDid;
+				w.identifier = { did: options.issuerId };
 			});
 		}
 
@@ -585,6 +585,45 @@ export class PostgresIdentityService extends DefaultIdentityService {
 					credentialStatus: credential.credentialStatus,
 				})),
 		};
+	}
+
+	async getCredential(credentialId: string, customer: CustomerEntity): Promise<VerifiableCredential | null> {
+		if (!customer) {
+			throw new Error('Customer not found');
+		}
+
+		// credentialId can be either:
+		// 1. Full DID URL: did:cheqd:testnet:xxx/resources/yyy
+		// 2. Just the resourceId: yyy
+
+		let resourceId: string;
+		let didUrl: string;
+
+		if (credentialId.includes('/resources/')) {
+			// Full DID URL provided
+			didUrl = credentialId;
+			resourceId = credentialId.split('/resources/')[1];
+		} else {
+			// Just resourceId provided - need to find the resource first
+			const resource = await ResourceService.instance.get(credentialId, { identifier: true });
+			if (!resource) {
+				return null;
+			}
+			resourceId = resource.resourceId;
+			didUrl = `${resource.identifier.did}/resources/${resourceId}`;
+		}
+
+		try {
+			const res = await this.resolve(didUrl);
+			if (!res.ok) {
+				return null;
+			}
+			const credential = await res.json();
+			return credential as VerifiableCredential;
+		} catch (error) {
+			console.error(`Failed to resolve credential ${didUrl}:`, error);
+			return null;
+		}
 	}
 
 	async verifyCredential(

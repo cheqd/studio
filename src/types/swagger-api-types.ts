@@ -253,6 +253,131 @@
  *         type:
  *           - VerifiableCredential
  *           - Person
+ *     VerifiableCredential:
+ *       type: object
+ *       required:
+ *         - "@context"
+ *         - type
+ *         - issuer
+ *         - issuanceDate
+ *         - credentialSubject
+ *       properties:
+ *         "@context":
+ *           oneOf:
+ *             - type: string
+ *             - type: array
+ *               items:
+ *                 type: string
+ *           description: JSON-LD context
+ *         id:
+ *           type: string
+ *           description: Credential identifier
+ *         type:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Credential types
+ *         issuer:
+ *           oneOf:
+ *             - type: string
+ *             - type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *           description: Credential issuer
+ *         issuanceDate:
+ *           type: string
+ *           format: date-time
+ *           description: Issuance date
+ *         expirationDate:
+ *           type: string
+ *           format: date-time
+ *           description: Expiration date
+ *         credentialSubject:
+ *           type: object
+ *           additionalProperties: true
+ *           description: Credential subject claims
+ *         proof:
+ *           type: object
+ *           additionalProperties: true
+ *           description: Cryptographic proof
+ *         credentialStatus:
+ *           type: object
+ *           additionalProperties: true
+ *           description: Credential status information
+ *     IssuedCredentialResponse:
+ *       type: object
+ *       required:
+ *         - issuedCredentialId
+ *         - providerId
+ *         - format
+ *         - type
+ *         - status
+ *         - issuedAt
+ *       properties:
+ *         issuedCredentialId:
+ *           type: string
+ *           description: Unique identifier for the issued credential
+ *         providerId:
+ *           type: string
+ *           description: Provider identifier
+ *         providerCredentialId:
+ *           type: string
+ *           description: Provider-specific credential ID
+ *         issuerId:
+ *           type: string
+ *           description: DID or identifier of the credential issuer
+ *         subjectId:
+ *           type: string
+ *           description: DID or identifier of the credential subject
+ *         format:
+ *           type: string
+ *           description: Credential format (e.g., jwt_vc, jsonld)
+ *           example: jwt_vc
+ *         category:
+ *           type: string
+ *           description: Credential category
+ *           enum: [credential, accreditation]
+ *         type:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of credential types
+ *           example: ["VerifiableCredential"]
+ *         status:
+ *           type: string
+ *           description: Current status of the credential
+ *           enum: [active, revoked, suspended, expired]
+ *         statusUpdatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when status was last updated
+ *         issuedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when credential was issued
+ *         expiresAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when credential expires
+ *         credentialStatus:
+ *           type: object
+ *           additionalProperties: true
+ *           description: Credential status configuration
+ *         providerMetadata:
+ *           type: object
+ *           additionalProperties: true
+ *           description: Provider-specific metadata
+ *         credential:
+ *           $ref: '#/components/schemas/VerifiableCredential'
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when record was created
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when record was last updated
  *     ListCredentialResult:
  *       type: object
  *       properties:
@@ -261,26 +386,7 @@
  *          credentials:
  *            type: array
  *            items:
- *              type: object
- *              properties:
- *                status:
- *                  type: string
- *                providerId:
- *                  type: string
- *                id:
- *                  type: string
- *                issuerDid:
- *                  type: string
- *                subjectDid:
- *                  type: string
- *                type:
- *                  type: string
- *                createdAt:
- *                  type: string
- *                format:
- *                  type: string
- *                credentialStatus:
- *                  type: object
+ *              $ref: '#/components/schemas/IssuedCredentialResponse'
  *     CredentialRevokeRequest:
  *       type: object
  *       properties:
@@ -1725,6 +1831,23 @@
  *          type: string
  *         primaryEmail:
  *          type: string
+ *     AccountCreateResponse:
+ *       type: object
+ *       properties:
+ *         customerId:
+ *           type: string
+ *         name:
+ *           type: string
+ *         email:
+ *           type: string
+ *         description:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *         updatedAt:
+ *           type: string
+ *         paymentProviderId:
+ *           type: string
  *     SchemaUrl:
  *       type: object
  *       properties:
