@@ -87,7 +87,13 @@ export class Credentials {
 					await dock.importDidV2(issuerDid, exportResult, process.env.PROVIDER_EXPORT_PASSWORD, customer);
 				}
 				const dockCredential = await dock.createCredential(credential, format, statusOptions, customer);
-
+				const credentialType = Array.isArray(dockCredential.type)
+					? dockCredential.type
+					: [dockCredential.type || 'VerifiableCredential'];
+				let category: 'credential' | 'accreditation' = 'credential';
+				if (credentialType.some((type) => type.includes('Accreditation'))) {
+					category = 'accreditation';
+				}
 				// Create IssuedCredentialEntity record
 				await this.create({
 					providerId: 'dock',
@@ -95,9 +101,8 @@ export class Credentials {
 					issuerId: issuerDid,
 					subjectId: subjectDid,
 					format: (format || 'jwt') as 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds',
-					type: Array.isArray(dockCredential.type)
-						? dockCredential.type
-						: [dockCredential.type || 'VerifiableCredential'],
+					type: credentialType,
+					category: category,
 					status: 'issued',
 					issuedAt: dockCredential.issuanceDate ? new Date(dockCredential.issuanceDate) : new Date(),
 					expiresAt: dockCredential.expirationDate ? new Date(dockCredential.expirationDate) : undefined,
@@ -164,6 +169,17 @@ export class Credentials {
 				} else {
 					providerCredentialId = verifiable_credential.id;
 				}
+				const credentialType = Array.isArray(verifiable_credential.type)
+					? verifiable_credential.type
+					: [verifiable_credential.type || 'VerifiableCredential'];
+				let category = 'credential';
+				if (
+					credentialType.includes('VerifiableAccreditationToAccredit') ||
+					credentialType.includes('VerifiableAccreditationToAttest') ||
+					credentialType.includes('VerifiableAuthorizationForTrustChain')
+				) {
+					category = 'accreditation';
+				}
 
 				await this.create({
 					providerId: 'studio',
@@ -171,9 +187,8 @@ export class Credentials {
 					issuerId: issuerDid,
 					subjectId: subjectDid,
 					format: (format || 'jsonld') as 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds',
-					type: Array.isArray(verifiable_credential.type)
-						? verifiable_credential.type
-						: [verifiable_credential.type || 'VerifiableCredential'],
+					type: credentialType,
+					category: category as 'credential' | 'accreditation',
 					status: 'issued',
 					issuedAt: verifiable_credential.issuanceDate
 						? new Date(verifiable_credential.issuanceDate)
@@ -311,6 +326,7 @@ export class Credentials {
 		issuerId?: string;
 		subjectId?: string;
 		format: 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds';
+		category?: 'credential' | 'accreditation';
 		type: string[];
 		status?: 'issued' | 'suspended' | 'revoked';
 		statusUpdatedAt?: Date;
@@ -326,6 +342,7 @@ export class Credentials {
 			issuerId: data.issuerId,
 			subjectId: data.subjectId,
 			format: data.format,
+			category: data.category,
 			type: data.type,
 			status: data.status || 'issued',
 			statusUpdatedAt: data.statusUpdatedAt,
