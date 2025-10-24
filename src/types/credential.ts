@@ -38,6 +38,7 @@ export interface CredentialRequest {
 	connector?: CredentialConnectors;
 	providerId?: string;
 	credentialId?: string;
+	category?: 'credential' | 'accreditation';
 
 	[x: string]: any;
 }
@@ -163,6 +164,22 @@ export interface GetIssuedCredentialOptions {
 	includeCredential?: boolean;
 	syncStatus?: boolean;
 	providerId?: string;
+}
+
+export interface IssuedCredentialCreateOptions {
+	providerId: string;
+	providerCredentialId?: string;
+	issuerId?: string;
+	subjectId?: string;
+	format: 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds';
+	type: string[];
+	status?: 'issued' | 'suspended' | 'revoked';
+	statusUpdatedAt?: Date;
+	issuedAt: Date;
+	expiresAt?: Date;
+	credentialStatus?: Record<string, any>;
+	metadata?: Record<string, any>;
+	category?: 'credential' | 'accreditation';
 }
 
 export interface IssuedCredentialResponse {

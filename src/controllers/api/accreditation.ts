@@ -277,6 +277,7 @@ export class AccreditationController {
 				credentialId: resourceId,
 				credentialName: accreditationName,
 				credentialStatus,
+				category: 'accreditation',
 			};
 
 			let resourceType: string;
