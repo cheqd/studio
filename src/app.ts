@@ -143,6 +143,7 @@ class App {
 		// Issued Credentials Tracking API
 		app.get('/credentials/issued', new CredentialController().listIssuedCredentials);
 		app.get('/credentials/issued/:id', new CredentialController().getIssuedCredential);
+		app.put('/credentials/issued/:id', new CredentialController().updateIssuedCredential);
 		// Presentation API
 		app.post(
 			`/presentation/verify`,
