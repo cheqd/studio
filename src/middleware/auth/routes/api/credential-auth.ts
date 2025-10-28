@@ -16,8 +16,10 @@ export class CredentialAuthRuleProvider extends AuthRuleProvider {
 		// Issued Credentials Tracking API
 		this.registerRule('/credentials/issued', 'GET', 'list:credential:testnet', { skipNamespace: true });
 		this.registerRule('/credentials/issued', 'GET', 'list:credential:mainnet', { skipNamespace: true });
-		this.registerRule('/credentials/issued/:id', 'GET', 'list:credential:testnet', { skipNamespace: true });
-		this.registerRule('/credentials/issued/:id', 'GET', 'list:credential:mainnet', { skipNamespace: true });
+		this.registerRule('/credentials/issued/(.*)', 'GET', 'list:credential:testnet', { skipNamespace: true });
+		this.registerRule('/credentials/issued/(.*)', 'GET', 'list:credential:mainnet', { skipNamespace: true });
+		this.registerRule('/credentials/issued/(.*)', 'PUT', 'update:credential:testnet', { skipNamespace: true });
+		this.registerRule('/credentials/issued/(.*)', 'PUT', 'update:credential:mainnet', { skipNamespace: true });
 		// Unauthorized routes
 		this.registerRule('/credential/verify', 'POST', '', { allowUnauthorized: true, skipNamespace: true });
 	}
