@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.14.0-develop.2](https://github.com/cheqd/studio/compare/3.14.0-develop.1...3.14.0-develop.2) (2025-10-28)
+
+### Features
+
+* add update issued credential api ([#751](https://github.com/cheqd/studio/issues/751)) ([9f93244](https://github.com/cheqd/studio/commit/9f93244af3db1fcbd097bcf50a4503bd7f0f95d7))
+
 ## [3.14.0-develop.1](https://github.com/cheqd/studio/compare/3.13.1-develop.1...3.14.0-develop.1) (2025-10-24)
 
 ### Features
