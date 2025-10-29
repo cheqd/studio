@@ -323,6 +323,12 @@ export class ProvidersController {
 	 *         required: true
 	 *         schema:
 	 *           type: string
+	 *       - name: newAPIUrl
+	 *         in: query
+	 *         required: false
+	 *         default: null
+	 *         schema:
+	 *           type: string
 	 *     responses:
 	 *       200:
 	 *         description: Connection test completed
@@ -335,8 +341,8 @@ export class ProvidersController {
 		try {
 			const customer = res.locals.customer as CustomerEntity;
 			const { providerId } = req.params;
-
-			const result = await ProviderService.instance.testConnection(customer.customerId, providerId);
+			const newAPIUrl = req.query?.newAPIUrl as string | undefined;
+			const result = await ProviderService.instance.testConnection(customer.customerId, providerId, newAPIUrl);
 
 			const statusCode = result.success ? StatusCodes.OK : StatusCodes.BAD_REQUEST;
 

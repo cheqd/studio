@@ -5577,6 +5577,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "newAPIUrl",
+            "in": "query",
+            "required": false,
+            "default": null,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
