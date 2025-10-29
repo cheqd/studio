@@ -180,7 +180,7 @@ export class ProviderService {
 		if (!config) {
 			return { success: false, message: 'Provider not activated for this customer' };
 		}
-		if(newAPIUrl) {
+		if (newAPIUrl) {
 			config.apiEndpoint = newAPIUrl;
 		}
 		try {
