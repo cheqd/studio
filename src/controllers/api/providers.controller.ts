@@ -476,10 +476,10 @@ export class ProvidersController {
 				name: OperationNameEnum.DID_EXPORT,
 				data: {
 					did: did,
-				} satisfies IDIDTrack,
+				},
 				customer: response.locals.customer,
 				user: response.locals.user,
-			} satisfies ITrackOperation);
+			} satisfies ITrackOperation<IDIDTrack>);
 
 			return response.status(StatusCodes.OK).json({
 				status: true,

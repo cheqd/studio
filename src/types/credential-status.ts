@@ -25,6 +25,13 @@ export enum StatusListType {
 	Bitstring = 'BitstringStatusList',
 	StatusList2021 = 'StatusList2021',
 }
+
+export enum StatusListState {
+	Active = 'ACTIVE',
+	Standby = 'STANDBY',
+	Full = 'FULL',
+}
+
 export type CreateUnencryptedStatusListRequestBody = {
 	did: string;
 	statusListName: string;
@@ -36,11 +43,12 @@ export type CreateUnencryptedStatusListRequestBody = {
 	ttl?: number;
 	encoding?: keyof typeof DefaultStatusListEncodings;
 	encodedList?: string;
+	state?: StatusListState;
 };
 
 export type CreateUnencryptedStatusListRequestQuery = {
 	listType: string;
-	statusPurpose: DefaultStatusList2021StatusPurposeType;
+	statusPurpose: DefaultStatusList2021StatusPurposeType | BitstringStatusListPurposeType;
 };
 
 export type CreateUnencryptedStatusListSuccessfulResponseBody = Pick<

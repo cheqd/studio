@@ -1,10 +1,11 @@
-import { OperationCategoryNameEnum } from '../../../types/constants.js';
-import type { ICredentialStatusTrack, ITrackOperation, ITrackResult } from '../../../types/track.js';
+import { OperationCategoryNameEnum, OperationNameEnum } from '../../../types/constants.js';
+import type { ICredentialStatusTrack, ITrackOperation, ITrackResult, TrackData } from '../../../types/track.js';
 import type { IObserver } from '../types.js';
 import { BaseOperationObserver } from '../base.js';
+import { CredentialStatusService } from '../../api/credential-status.js';
 
 export class CredentialStatusSubscriber extends BaseOperationObserver implements IObserver {
-	isReactionNeeded(trackOperation: ITrackOperation): boolean {
+	isReactionNeeded(trackOperation: ITrackOperation<TrackData>): boolean {
 		// Credential tracker reacts on CredentialStatusList, Credential operations like revocation
 		// and Resource operations like create, update, delete
 		return trackOperation.category === OperationCategoryNameEnum.CREDENTIAL_STATUS;
@@ -16,13 +17,30 @@ export class CredentialStatusSubscriber extends BaseOperationObserver implements
 		return `${base_message} | Target DID: ${data.did} | Encrypted: ${data.encrypted} | StatusListName: ${data.resource?.resourceName}`;
 	}
 
-	async update(trackOperation: ITrackOperation): Promise<void> {
+	async update(trackOperation: ITrackOperation<ICredentialStatusTrack>): Promise<void> {
 		if (!this.isReactionNeeded(trackOperation)) {
 			// Just skip this operation
 			return;
 		}
 		// tracking resource creation in database
 		const result = await this.trackCredentialStatusOperation(trackOperation);
+
+		// if credential status is full, activate the standby registry and create a new registry for standby
+		if (trackOperation.name === OperationNameEnum.CREDENTIAL_STATUS_FULL) {
+			await CredentialStatusService.instance.createUnencryptedStatusList(
+				{
+					did: trackOperation.data.did,
+					statusListName: trackOperation.data.statusListName!,
+					statusListVersion: trackOperation.data.statusListVersion!,
+				},
+				{
+					statusPurpose: trackOperation.data.statusPurpose!,
+					listType: trackOperation.data.statusListType!,
+				},
+				trackOperation.customer
+			);
+		}
+
 		// notify about the result of tracking, e.g. log or datadog
 		await this.notify({
 			message: this.compileMessage(result),
@@ -30,7 +48,9 @@ export class CredentialStatusSubscriber extends BaseOperationObserver implements
 		});
 	}
 
-	async trackCredentialStatusOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
+	async trackCredentialStatusOperation(
+		trackOperation: ITrackOperation<ICredentialStatusTrack>
+	): Promise<ITrackResult> {
 		// We don't have specific credential status writes, so we just track credential creation
 		return {
 			operation: trackOperation,

@@ -1,5 +1,5 @@
 import type { CredentialPayload, VerifiableCredential } from '@veramo/core';
-import { VC_CONTEXT, VC_TYPE } from '../../types/constants.js';
+import { OperationCategoryNameEnum, OperationNameEnum, VC_CONTEXT, VC_TYPE } from '../../types/constants.js';
 import {
 	CredentialConnectors,
 	GetIssuedCredentialOptions,
@@ -20,7 +20,9 @@ import { FindOptionsWhere, LessThanOrEqual, Repository } from 'typeorm';
 import { Connection } from '../../database/connection/connection.js';
 import { CheqdCredentialStatus } from '../../types/credential-status.js';
 import { validate as uuidValidate } from 'uuid';
-
+import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
+import { ICredentialStatusTrack, ITrackOperation } from '../../types/track.js';
+import { eventTracker } from '../track/tracker.js';
 dotenv.config();
 
 const { ENABLE_VERIDA_CONNECTOR } = process.env;
@@ -28,9 +30,11 @@ const { ENABLE_VERIDA_CONNECTOR } = process.env;
 export class Credentials {
 	public static instance = new Credentials();
 	public repository: Repository<IssuedCredentialEntity>;
+	public statusRegistryRepository: Repository<StatusRegistryEntity>;
 
 	constructor() {
 		this.repository = Connection.instance.dbConnection.getRepository(IssuedCredentialEntity);
+		this.statusRegistryRepository = Connection.instance.dbConnection.getRepository(StatusRegistryEntity);
 	}
 
 	async issue_credential(request: CredentialRequest, customer: CustomerEntity): Promise<VerifiableCredential> {
@@ -71,6 +75,50 @@ export class Credentials {
 		}
 
 		const statusOptions = credentialStatus || null;
+
+		if (statusOptions) {
+			const statusRegistry = await this.statusRegistryRepository.findOne({
+				where: {
+					registryName: statusOptions?.statusListName,
+					registryType: statusOptions.statusListType,
+					version: statusOptions.statusListVersion,
+					state: 'ACTIVE',
+				},
+				lock: { mode: 'pessimistic_write' },
+			});
+
+			if (!statusRegistry) {
+				throw new Error('Status Registry Not Found');
+			}
+
+			const index = statusRegistry.lastAssignedIndex + 1;
+			statusOptions.statusListIndex = index;
+			statusRegistry.lastAssignedIndex = index;
+
+			if (statusRegistry.lastAssignedIndex === statusRegistry.size) {
+				statusRegistry.state = 'FULL';
+			}
+
+			await this.statusRegistryRepository.save(statusRegistry);
+
+			// emit status full event
+			if (statusRegistry.state === 'FULL') {
+				const trackInfo: ITrackOperation<ICredentialStatusTrack> = {
+					category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
+					name: OperationNameEnum.CREDENTIAL_STATUS_CREATE_UNENCRYPTED,
+					customer: customer,
+					data: {
+						did: statusRegistry.issuerId,
+						statusListName: statusRegistry.registryName,
+						statusListType: statusRegistry.registryType,
+						statusPurpose: statusOptions.statusPurpose,
+					},
+				};
+
+				// Track operation
+				eventTracker.emit('track', trackInfo);
+			}
+		}
 
 		// Handle credential issuance and connector logic
 		switch (providerId || connector) {

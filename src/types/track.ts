@@ -1,4 +1,8 @@
-import type { LinkedResourceMetadataResolutionResult } from '@cheqd/did-provider-cheqd';
+import type {
+	BitstringStatusListPurposeType,
+	DefaultStatusList2021StatusPurposeType,
+	LinkedResourceMetadataResolutionResult,
+} from '@cheqd/did-provider-cheqd';
 import type { CheqdNetwork } from '@cheqd/sdk';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import type { UserEntity } from '../database/entities/user.entity.js';
@@ -16,13 +20,13 @@ export type TrackData =
 	| IPresentationTrack
 	| IKeyTrack;
 
-export interface ITrackOperation {
+export interface ITrackOperation<T extends IBaseTrack> {
 	// function name, e.g. createDid, issueCredential, etc.
 	name: string;
 	// category of the operation, e.g. did, resource, credential, credential-status
 	category: string;
 	// data of the operation, e.g. did, resource, credentialStatus
-	data: TrackData;
+	data: T;
 	// customer who initiated the operation (like organistation)
 	customer: CustomerEntity;
 	// user who initiated the operation
@@ -56,6 +60,10 @@ export interface IResourceTrack extends IBaseTrack {
 
 export interface ICredentialStatusTrack extends IBaseTrack {
 	did: string;
+	statusListName?: string;
+	statusListType?: string;
+	statusPurpose?: DefaultStatusList2021StatusPurposeType | BitstringStatusListPurposeType;
+	statusListVersion?: string;
 	resource?: LinkedResourceMetadataResolutionResult;
 	encrypted?: boolean;
 	symmetricKey?: string;
@@ -77,7 +85,7 @@ export interface IKeyTrack extends IBaseTrack {
 }
 
 export interface ITrackResult {
-	operation: ITrackOperation;
+	operation: ITrackOperation<TrackData>;
 	error?: string;
 }
 
@@ -96,7 +104,7 @@ export interface ListOperationOptions {
 	limit?: number;
 }
 
-export class TrackOperationWithPayment implements ITrackOperation {
+export class TrackOperationWithPayment implements ITrackOperation<TrackData> {
 	name: string;
 	category: string;
 	data: TrackData;
@@ -104,7 +112,7 @@ export class TrackOperationWithPayment implements ITrackOperation {
 	user?: UserEntity;
 	feePaymentOptions: IFeePaymentOptions[];
 
-	constructor(trackOperation: ITrackOperation) {
+	constructor(trackOperation: ITrackOperation<TrackData>) {
 		this.name = trackOperation.name;
 		this.category = trackOperation.category;
 		this.data = trackOperation.data;
