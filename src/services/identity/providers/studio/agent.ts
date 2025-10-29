@@ -62,6 +62,7 @@ import { DIDResolutionResult, Resolver, ResolverRegistry } from 'did-resolver';
 import { DefaultDidUrlPattern, CreateAgentRequest, VeramoAgent } from '../../../../types/shared.js';
 import type { VerificationOptions } from '../../../../types/shared.js';
 import type {
+	CheqdCredentialStatus,
 	CreateEncryptedBitstringOptions,
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
@@ -92,7 +93,9 @@ import { toCoin, toDefaultDkg, toMinimalDenom } from '../../../../helpers/helper
 import { jwtDecode } from 'jwt-decode';
 import type {
 	BitstringStatusValue,
+	BitstringValidationResult,
 	ICheqdBulkUpdateCredentialWithStatusListArgs,
+	ICheqdCheckCredentialStatusWithBitstringArgs,
 	ICheqdCreateBitstringStatusListArgs,
 	ICheqdCreateLinkedResourceArgs,
 	ICheqdUpdateCredentialWithStatusListArgs,
@@ -1085,6 +1088,18 @@ export class Veramo {
 			fetchList: true,
 			dkgOptions: toDefaultDkg(did),
 		} satisfies ICheqdCheckCredentialStatusWithStatusListArgs);
+	}
+
+	async checkBitstringStatusList(
+		agent: VeramoAgent,
+		did: string,
+		statusOptions: CheqdCredentialStatus
+	): Promise<BitstringValidationResult> {
+		return await agent.cheqdCheckBitstringStatus({
+			credentialStatus: statusOptions,
+			fetchList: true,
+			dkgOptions: toDefaultDkg(did),
+		} satisfies ICheqdCheckCredentialStatusWithBitstringArgs);
 	}
 
 	async searchStatusList(

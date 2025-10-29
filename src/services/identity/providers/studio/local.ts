@@ -24,6 +24,7 @@ import {
 import { CheqdNetwork } from '@cheqd/sdk';
 import type { VerificationOptions } from '../../../../types/shared.js';
 import type {
+	CheqdCredentialStatus,
 	CreateEncryptedBitstringOptions,
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
@@ -41,7 +42,12 @@ import type {
 import { DefaultIdentityService } from '../../default.js';
 import { Connection } from '../../../../database/connection/connection.js';
 import { Veramo } from './agent.js';
-import type { BulkBitstringUpdateResult, CreateStatusListResult, TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
+import type {
+	BitstringValidationResult,
+	BulkBitstringUpdateResult,
+	CreateStatusListResult,
+	TPublicKeyEd25519,
+} from '@cheqd/did-provider-cheqd';
 import type { CustomerEntity } from '../../../../database/entities/customer.entity.js';
 import { toTPublicKeyEd25519 } from '../../../helpers.js';
 
@@ -270,12 +276,23 @@ export class LocalIdentityService extends DefaultIdentityService {
 		return await Veramo.instance.checkStatusList2021(this.initAgent(), did, statusOptions);
 	}
 
+	async checkBitstringStatusList(
+		did: string,
+		statusOptions: CheqdCredentialStatus
+	): Promise<BitstringValidationResult> {
+		return await Veramo.instance.checkBitstringStatusList(this.initAgent(), did, statusOptions);
+	}
+
 	async broadcastStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
 		statusOptions: BroadcastStatusListOptions
 	): Promise<boolean> {
 		return await Veramo.instance.broadcastStatusList2021(this.initAgent(), did, resourceOptions, statusOptions);
+	}
+
+	async broadcastBitstringStatusList(did: string, resourceOptions: ResourcePayload): Promise<boolean> {
+		return await Veramo.instance.broadcastBitstringStatusList(this.initAgent(), did, resourceOptions);
 	}
 
 	async remunerateStatusList2021(feePaymentOptions: FeePaymentOptions): Promise<TransactionResult> {
