@@ -8,6 +8,7 @@ import {
 	StatusList2021Suspension,
 } from '@cheqd/did-provider-cheqd';
 import { StatusRegistryState } from '../../types/credential-status.js';
+import { CredentialCategory } from '../../types/credential.js';
 
 /**
  * Migrates existing Status List resources from ResourceEntity to StatusRegistryEntity
@@ -16,8 +17,8 @@ import { StatusRegistryState } from '../../types/credential-status.js';
  * 2. Resolves status list data from DID URLs via resolver
  * 3. Creates corresponding StatusRegistryEntity records'
  */
-export class MigrateStatusLists1760533089689 implements MigrationInterface {
-	private readonly RESOLVER_URL = process.env.RESOLVER_URL || 'https://resolver.cheqd.net';
+export class MigrationsStatusLists1761834657128 implements MigrationInterface {
+	private readonly RESOLVER_URL = 'https://resolver.cheqd.net/1.0/identifiers';
 	private readonly BATCH_SIZE = 50; // Process statuslists in batches to avoid memory issues
 
 	public async up(queryRunner: QueryRunner): Promise<void> {
@@ -34,7 +35,7 @@ export class MigrateStatusLists1760533089689 implements MigrationInterface {
 			relations: ['identifier', 'customer'],
 		});
 
-		console.log(`Found ${statusListResources.length} statuslist resources to migrate`);
+		console.log(`Found ${statusListResources.length} statuslist resources`);
 
 		if (statusListResources.length === 0) {
 			console.log('No statuslist to migrate');
@@ -46,39 +47,28 @@ export class MigrateStatusLists1760533089689 implements MigrationInterface {
 		let errorCount = 0;
 		const errors: Array<{ resourceId: string; error: string }> = [];
 
-		// remove duplicates from statusListResources based on (did, resourceName, resourceType) and keep only latest
-		const grouped = new Map<string, (typeof statusListResources)[number]>();
-
-		for (const res of statusListResources) {
-			const key = `${res?.identifier?.did ?? ''}::${res?.resourceName ?? ''}::${res?.resourceType ?? ''}`;
-			const existing = grouped.get(key);
-			if (!existing) {
-				grouped.set(key, res);
-				continue;
-			}
-
-			const existingTs = existing.createdAt;
-			const currentTs = res.createdAt;
-			// keep the one with the latest timestamp (if equal, prefer current so it overrides)
-			if (new Date(currentTs) >= new Date(existingTs)) {
-				grouped.set(key, res);
-			}
-		}
-
-		const uniqueStatusListResources = Array.from(grouped.values());
+        // Remove duplicates by DID URL (constructed per resource) using a Set to keep first occurrence
+        const seen = new Set<string>();
+        const uniqueStatusLists = statusListResources.filter((res) => {
+        const did = res?.identifier?.did ?? '';
+        const didUrl = `${did}?resourceName=${res.resourceName}&resourceType=${res.resourceType}`;
+        if (seen.has(didUrl)) return false;
+            seen.add(didUrl);
+            return true;
+        });
+        console.log(`${uniqueStatusLists.length} statuslist resources are unique and ready to migrate`);
 
 		// Process statuslist in batches
-		for (let i = 0; i < uniqueStatusListResources.length; i += this.BATCH_SIZE) {
-			const batch = uniqueStatusListResources.slice(i, i + this.BATCH_SIZE);
+		for (let i = 0; i < uniqueStatusLists.length; i += this.BATCH_SIZE) {
+			const batch = uniqueStatusLists.slice(i, i + this.BATCH_SIZE);
 
 			for (const resource of batch) {
 				try {
+                    const didUrl = `${resource.identifier.did}?resourceName=${resource.resourceName}&resourceType=${resource.resourceType}`;
 					// Check if already migrated
 					const existing = await queryRunner.manager.findOne(StatusRegistryEntity, {
 						where: {
-							registryType: resource.resourceType,
-							identifier: { did: resource.identifier.did },
-							uri: `${resource.identifier.did}?resourceName=${resource.resourceName}&resourceType=${resource.resourceType}`,
+							uri: didUrl,
 						},
 					});
 
@@ -88,7 +78,6 @@ export class MigrateStatusLists1760533089689 implements MigrationInterface {
 					}
 
 					// Resolve statuslist from DID URL
-					const didUrl = `${resource.identifier.did}/resources/${resource.resourceId}`;
 					const statuslist = await this.resolveStatusListResource(didUrl);
 
 					if (!statuslist || !statuslist.resource) {
@@ -96,7 +85,7 @@ export class MigrateStatusLists1760533089689 implements MigrationInterface {
 					}
 
 					// Create StatusRegistryEntity
-					const statusRegistryEntity = queryRunner.manager.create(StatusRegistryEntity, {
+					const statusRegistryEntity = new StatusRegistryEntity({
 						registryType: resource.resourceType,
 						storageType: 'cheqd',
 						registryName: resource.resourceName,
@@ -111,6 +100,7 @@ export class MigrateStatusLists1760533089689 implements MigrationInterface {
 						metadata: {
 							migratedFrom: 'ResourceEntity',
 						},
+                        credentialCategory: CredentialCategory.CREDENTIAL
 					});
 
 					await queryRunner.manager.save(StatusRegistryEntity, statusRegistryEntity);
@@ -178,9 +168,9 @@ export class MigrateStatusLists1760533089689 implements MigrationInterface {
 			// Build resolver URL for metadata first
 			const url = new URL(`${this.RESOLVER_URL}/${didUrl}`);
 			url.searchParams.set('resourceMetadata', 'true');
-
+            console.log(`    Resolving statuslist resource from ${url.toString()}`);
 			// Fetch resource metadata (DID resolution profile)
-			const metaResp = await fetch(url.toString(), {
+			const metaResp = await fetch(`${this.RESOLVER_URL}/${didUrl}`, {
 				headers: {
 					Accept: 'application/ld+json;profile=https://w3id.org/did-resolution',
 				},
@@ -218,6 +208,7 @@ export class MigrateStatusLists1760533089689 implements MigrationInterface {
 
 			// Fetch the actual resource (remove resourceMetadata param)
 			url.searchParams.delete('resourceMetadata');
+            console.log(`    Resolving statuslist resource from ${url.toString()}`);
 			const resourceResp = await fetch(url.toString(), {
 				headers: {
 					Accept: 'application/json',

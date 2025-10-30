@@ -11,7 +11,6 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { Identifier } from '@veramo/data-store';
 import { CustomerEntity } from './customer.entity.js';
-import { IdentifierEntity } from './identifier.entity.js';
 import { StatusRegistryState } from '../../types/credential-status.js';
 import { CredentialCategory } from '../../types/credential.js';
 
@@ -78,7 +77,7 @@ export class StatusRegistryEntity {
 		}
 	}
 
-	constructor(options: {
+	constructor(options?: {
 		uri: string;
 		registryType: string;
 		registryName: string;
@@ -87,12 +86,17 @@ export class StatusRegistryEntity {
 		size: number;
 		lastAssignedIndex: number;
 		state: StatusRegistryState;
-		identifier: IdentifierEntity;
+		identifier: Identifier;
 		customer: CustomerEntity;
 		storageType?: 'cheqd' | 'ipfs' | 'dock' | 'paradym';
 		metadata?: Record<string, any>;
 		registryId?: string;
+        deprecated?: boolean;
 	}) {
+        if(!options) {
+            return;
+        }
+
 		if (options.registryId) {
 			this.registryId = options.registryId;
 		}

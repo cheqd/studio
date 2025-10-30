@@ -98,6 +98,11 @@ export class Credentials {
 
 			// assign next index in status list
 			const index = statusRegistry.lastAssignedIndex + 1;
+            // do not allow the issuer to assign a index higher than the next available
+            if(statusOptions.statusListIndex && statusOptions.statusListIndex > index) {
+                throw new Error(`Expected statusListIndex ${index} but got ${statusOptions.statusListIndex}`);
+            }
+
 			statusOptions.statusListIndex = index;
 			statusRegistry.lastAssignedIndex = index;
 

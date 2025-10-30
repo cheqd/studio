@@ -923,7 +923,7 @@ export class CredentialStatusService {
 			...registry,
 			registryId: v4(),
 			state: StatusRegistryState.Standby,
-			version: !isNaN(parseFloat(version)) ? `${parseFloat(version) + 1.0}` : v4(),
+			version: !isNaN(parseFloat(version)) ? `${parseFloat(version) + 1.0}` : '2.0', // if previous was not number set for continuous versioning
 		});
 		promises.push(this.repository.save(newStandbyRegistry));
 

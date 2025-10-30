@@ -19,6 +19,7 @@ import { SubscriptionEntity } from '../entities/subscription.entity.js';
 import { CredentialProviderEntity } from '../entities/credential-provider.entity.js';
 import { ProviderConfigurationEntity } from '../entities/provider-configuration.entity.js';
 import { IssuedCredentialEntity } from '../entities/issued-credential.entity.js';
+import { StatusRegistryEntity } from '../entities/status-registry.entity.js';
 
 import { CreatePaymentTable1695740345977 } from '../migrations/archive/CreatePaymentTable.js';
 import { CreateOperationTable1695740345977 } from '../migrations/archive/CreateOperationTable.js';
@@ -51,6 +52,8 @@ import { StudioMigrations1758011998054 } from '../migrations/1758011998054-studi
 import { StudioMigrations1760533089289 } from '../migrations/1760533089289-studio-migrations.js';
 import { MigrateStudioCredentials1760533089389 } from '../migrations/1760533089389-MigrateStudioCredentials.js';
 import { MigrateDockCredentials1760533089589 } from '../migrations/1760533089589-MigrateDockCredentials.js';
+import { StudioMigrations1761834657128 } from '../migrations/1761834657128-studio-migrations.js';
+import { MigrationsStatusLists1761834657128 } from '../migrations/1761834657128-MigrateStatusLists.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -143,6 +146,8 @@ export class Postgres implements AbstractDatabase {
 				MigrateStudioCredentials1760533089389,
 				// Migrate Dock credentials to IssuedCredential table
 				MigrateDockCredentials1760533089589,
+				StudioMigrations1761834657128,
+                MigrationsStatusLists1761834657128
 			],
 			entities: [
 				...Entities,
@@ -161,6 +166,7 @@ export class Postgres implements AbstractDatabase {
 				CredentialProviderEntity,
 				ProviderConfigurationEntity,
 				IssuedCredentialEntity,
+                StatusRegistryEntity
 			],
 			logging: ['error', 'info', 'warn'],
 		});
