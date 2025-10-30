@@ -20,17 +20,35 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import type { CheqdNetwork } from '@cheqd/sdk';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2';
+import { CredentialCategory } from './credential.js';
 
 export enum StatusListType {
 	Bitstring = 'BitstringStatusList',
 	StatusList2021 = 'StatusList2021',
 }
 
-export enum StatusListState {
+export enum StatusRegistryState {
 	Active = 'ACTIVE',
 	Standby = 'STANDBY',
 	Full = 'FULL',
+	Stale = 'STALE',
 }
+
+export type StatusListRecord = {
+	statusListName: string;
+	statusListVersion: string;
+	statusListId: string;
+	listType: StatusListType | string;
+	createdAt: string;
+	updatedAt: string;
+	uri: string;
+	did: string;
+	state: StatusRegistryState;
+	size: number;
+	lastAssignedIndex: number;
+	credentialCategory: CredentialCategory;
+	deprecated: boolean;
+};
 
 export type CreateUnencryptedStatusListRequestBody = {
 	did: string;
@@ -43,7 +61,8 @@ export type CreateUnencryptedStatusListRequestBody = {
 	ttl?: number;
 	encoding?: keyof typeof DefaultStatusListEncodings;
 	encodedList?: string;
-	state?: StatusListState;
+	state?: StatusRegistryState;
+	credentialCategory?: CredentialCategory;
 };
 
 export type CreateUnencryptedStatusListRequestQuery = {
@@ -89,7 +108,7 @@ export type UpdateUnencryptedStatusListRequestBody = {
 	did: string;
 	indices: number | number[];
 	statusListName: string;
-	statusListVersion?: string;
+	statusListVersion: string;
 };
 
 export type UpdateUnencryptedStatusListRequestQuery = {
@@ -149,6 +168,7 @@ export type UpdateEncryptedStatusListUnsuccessfulResponseBody = UpdateUnencrypte
 export type CheckStatusListRequestBody = {
 	did: string;
 	statusListName: string;
+	statusListVersion: string;
 	index: number;
 	makeFeePayment?: boolean;
 };
@@ -169,8 +189,19 @@ export type CheckStatusListUnsuccessfulResponseBody = {
 export type SearchStatusListQuery = {
 	did: string;
 	statusListName: string;
+	statusListVersion?: string;
 	listType: string;
 	statusPurpose: DefaultStatusList2021StatusPurposeType;
+};
+
+export type ListStatusListQuery = {
+	deprecated?: boolean;
+	did?: string;
+	state?: StatusRegistryState;
+	statusListName?: string;
+	listType?: string;
+	statusListVersion?: string;
+	credentialCategory?: CredentialCategory;
 };
 
 export type SearchStatusListSuccessfulResponseBody = Required<

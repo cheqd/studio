@@ -27,18 +27,15 @@ export class CredentialStatusSubscriber extends BaseOperationObserver implements
 
 		// if credential status is full, activate the standby registry and create a new registry for standby
 		if (trackOperation.name === OperationNameEnum.CREDENTIAL_STATUS_FULL) {
-			await CredentialStatusService.instance.createUnencryptedStatusList(
-				{
-					did: trackOperation.data.did,
-					statusListName: trackOperation.data.statusListName!,
-					statusListVersion: trackOperation.data.statusListVersion!,
-				},
-				{
-					statusPurpose: trackOperation.data.statusPurpose!,
-					listType: trackOperation.data.statusListType!,
-				},
-				trackOperation.customer
-			);
+			// Promote the current standby to active
+
+			// Rotate the status list
+			if (trackOperation.data.registryId) {
+				await CredentialStatusService.instance.rotateStatusList(
+					trackOperation.data.registryId,
+					trackOperation.customer
+				);
+			}
 		}
 
 		// notify about the result of tracking, e.g. log or datadog

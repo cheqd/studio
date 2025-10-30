@@ -1,10 +1,10 @@
 import { OperationCategoryNameEnum } from '../../../types/constants.js';
-import type { IKeyTrack, ITrackOperation, ITrackResult } from '../../../types/track.js';
+import type { IKeyTrack, ITrackOperation, ITrackResult, TrackData } from '../../../types/track.js';
 import type { IObserver } from '../types.js';
 import { BaseOperationObserver } from '../base.js';
 
 export class KeySubscriber extends BaseOperationObserver implements IObserver {
-	isReactionNeeded(trackOperation: ITrackOperation): boolean {
+	isReactionNeeded(trackOperation: ITrackOperation<TrackData>): boolean {
 		// Credential tracker reacts on CredentialStatusList, Credential operations like revocation
 		// and Resource operations like create, update, delete
 		return trackOperation.category === OperationCategoryNameEnum.KEY;
@@ -16,7 +16,7 @@ export class KeySubscriber extends BaseOperationObserver implements IObserver {
 		return `${base_message} | keyRef: ${data.keyRef} | keyType: ${data.keyType}`;
 	}
 
-	async update(trackOperation: ITrackOperation): Promise<void> {
+	async update(trackOperation: ITrackOperation<IKeyTrack>): Promise<void> {
 		if (!this.isReactionNeeded(trackOperation)) {
 			// Just skip this operation
 			return;
@@ -30,7 +30,7 @@ export class KeySubscriber extends BaseOperationObserver implements IObserver {
 		});
 	}
 
-	async trackKeyOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
+	async trackKeyOperation(trackOperation: ITrackOperation<IKeyTrack>): Promise<ITrackResult> {
 		// We don't have specific presentation writes, so we just track presentation creation
 		return {
 			operation: trackOperation,

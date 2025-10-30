@@ -1,6 +1,10 @@
 import type { Request, Response } from 'express';
 import { check, query } from '../validator/index.js';
-import type { SearchStatusListQuery, SearchStatusListUnsuccessfulResponseBody } from '../../types/credential-status.js';
+import type {
+	ListStatusListQuery,
+	SearchStatusListQuery,
+	SearchStatusListUnsuccessfulResponseBody,
+} from '../../types/credential-status.js';
 import { DefaultStatusActions, MinimalPaymentCondition, StatusListType } from '../../types/credential-status.js';
 import type {
 	CheckStatusListRequestBody,
@@ -27,6 +31,7 @@ import {
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
 import { validate } from '../validator/decorator.js';
 import { CredentialStatusService } from '../../services/api/credential-status.js';
+import { param } from 'express-validator';
 
 export class CredentialStatusController {
 	static createUnencryptedValidator = [
@@ -565,6 +570,61 @@ export class CredentialStatusController {
 			.bail(),
 	];
 
+	static listValidator = [
+		query('did').optional().isDID().withMessage('did: should be a valid DID').bail(),
+		query('listType')
+			.optional()
+			.isString()
+			.withMessage('listType: should be a string')
+			.bail()
+			.isIn([StatusListType.Bitstring, StatusListType.StatusList2021])
+			.withMessage(
+				`listType: invalid listType, should be one of [${Object.values(StatusListType)
+					.map((v) => `'${v}'`)
+					.join(', ')}]`
+			)
+			.bail(),
+		query('statusListName')
+			.optional()
+			.isString()
+			.withMessage('statusListName: should be a string')
+			.bail()
+			.notEmpty()
+			.withMessage('statusListName: should be a non-empty string')
+			.bail(),
+		query('statusListVersion').optional().isString().withMessage('statusListVersion: should be a string').bail(),
+		query('state')
+			.optional()
+			.isString()
+			.withMessage('state: should be a string')
+			.bail()
+			.isIn(['ACTIVE', 'STANDBY', 'FULL'])
+			.withMessage("state: invalid state, should be one of ['ACTIVE', 'STANDBY', 'FULL']")
+			.bail(),
+		query('credentialCategory')
+			.optional()
+			.isString()
+			.withMessage('credentialCategory: should be a string')
+			.bail()
+			.isIn(['credential', 'accreditation'])
+			.withMessage("credentialCategory: invalid category, should be one of ['credential', 'accreditation']")
+			.bail(),
+		query('deprecated').optional().isBoolean().withMessage('deprecated: should be a boolean').bail(),
+	];
+
+	static fetchValidator = [
+		param('statusListId')
+			.exists()
+			.withMessage('statusListId: required')
+			.bail()
+			.isString()
+			.withMessage('statusListId: should be a string')
+			.bail()
+			.notEmpty()
+			.withMessage('statusListId: should be a non-empty string')
+			.bail(),
+	];
+
 	/**
 	 * @openapi
 	 *
@@ -984,6 +1044,11 @@ export class CredentialStatusController {
 	 *         required: true
 	 *         schema:
 	 *           type: string
+	 *       - in: query
+	 *         name: statusListVersion
+	 *         description: The version of the Status List DID-Linked Resource.
+	 *         schema:
+	 *           type: string
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -1003,6 +1068,141 @@ export class CredentialStatusController {
 		const credentialStatusService = new CredentialStatusService();
 
 		const result = await credentialStatusService.searchStatusList(request.query as SearchStatusListQuery);
+
+		if (result.success) {
+			return response.status(result.statusCode).json(result.data);
+		} else {
+			return response.status(result.statusCode).json({
+				found: false,
+				error: result.error,
+			} as SearchStatusListUnsuccessfulResponseBody);
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /credential-status/list:
+	 *   get:
+	 *     tags: [ Status Lists ]
+	 *     summary: List StatusList2021 or BitstringStatusList DID-Linked Resources created by the customer.
+	 *     parameters:
+	 *       - in: query
+	 *         name: did
+	 *         description: The DID of the issuer of the status list.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: listType
+	 *         description: The type of Status List.
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - StatusList2021
+	 *             - BitstringStatusList
+	 *       - in: query
+	 *         name: statusListName
+	 *         description: The name of the Status List DID-Linked Resource.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: statusListVersion
+	 *         description: The version of the Status List DID-Linked Resource.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: state
+	 *         description: The state of the Status List DID-Linked Resource.
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *              - ACTIVE
+	 *              - STANDBY
+	 *              - FULL
+	 *       - in: query
+	 *         name: credentialCategory
+	 *         description: Filter status lists by credential category assigned for.
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *              - credential
+	 *              - accreditation
+	 *       - in: query
+	 *         name: deprecated
+	 *         description: Filter status lists by deprecated status.
+	 *         schema:
+	 *           type: boolean
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/CredentialStatusListSearchResult'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	@validate
+	async listStatusList(request: Request, response: Response) {
+		const credentialStatusService = new CredentialStatusService();
+
+		const result = await credentialStatusService.listStatusList(
+			request.query as ListStatusListQuery,
+			response.locals.customer
+		);
+
+		if (result.success) {
+			return response.status(result.statusCode).json(result.data);
+		} else {
+			return response.status(result.statusCode).json({
+				found: false,
+				error: result.error,
+			} as SearchStatusListUnsuccessfulResponseBody);
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /credential-status/{statusListId}:
+	 *   get:
+	 *     tags: [ Status Lists ]
+	 *     summary: Fetch StatusList2021 or BitstringStatusList DID-Linked Resource based on search criteria.
+	 *     parameters:
+	 *       - in: path
+	 *         name: statusListId
+	 *         description: The statusListId of the status list.
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/CredentialStatusRecordResult'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	@validate
+	async fetchStatusList(request: Request, response: Response) {
+		const credentialStatusService = new CredentialStatusService();
+		const { statusListId } = request.params;
+		const result = await credentialStatusService.getStatusList(
+			{
+				statusListId,
+			},
+			response.locals.customer
+		);
 
 		if (result.success) {
 			return response.status(result.statusCode).json(result.data);

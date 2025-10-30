@@ -660,9 +660,6 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
-			throw new Error(`${did} not found in wallet`);
-		}
 		return await Veramo.instance.createUnencryptedStatusList2021(agent, did, resourceOptions, statusOptions);
 	}
 	async createUnencryptedBitstringStatusList(
@@ -672,9 +669,6 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<CreateStatusListResult> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
-			throw new Error(`${did} not found in wallet`);
-		}
 		return await Veramo.instance.createUnencryptedBitstringStatusList(agent, did, resourceOptions, statusOptions);
 	}
 
@@ -685,9 +679,6 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
-			throw new Error(`${did} not found in wallet`);
-		}
 		return await Veramo.instance.createEncryptedStatusList2021(agent, did, resourceOptions, statusOptions);
 	}
 	async createEncryptedBitstringStatusList(
@@ -697,9 +688,6 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<CreateStatusListResult> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
-			throw new Error(`${did} not found in wallet`);
-		}
 		return await Veramo.instance.createEncryptedBitstringStatusList(agent, did, resourceOptions, statusOptions);
 	}
 

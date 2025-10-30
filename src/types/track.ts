@@ -60,10 +60,8 @@ export interface IResourceTrack extends IBaseTrack {
 
 export interface ICredentialStatusTrack extends IBaseTrack {
 	did: string;
-	statusListName?: string;
-	statusListType?: string;
+	registryId?: string;
 	statusPurpose?: DefaultStatusList2021StatusPurposeType | BitstringStatusListPurposeType;
-	statusListVersion?: string;
 	resource?: LinkedResourceMetadataResolutionResult;
 	encrypted?: boolean;
 	symmetricKey?: string;

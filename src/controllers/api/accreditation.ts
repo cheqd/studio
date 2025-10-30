@@ -21,7 +21,7 @@ import {
 	DIDAccreditationPolicyTypes,
 	DIDAccreditationTypes,
 } from '../../types/accreditation.js';
-import { CredentialConnectors, VerifyCredentialRequestQuery } from '../../types/credential.js';
+import { CredentialCategory, CredentialConnectors, VerifyCredentialRequestQuery } from '../../types/credential.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { AccreditationService } from '../../services/api/accreditation.js';
@@ -277,7 +277,7 @@ export class AccreditationController {
 				credentialId: resourceId,
 				credentialName: accreditationName,
 				credentialStatus,
-				category: 'accreditation',
+				category: CredentialCategory.ACCREDITATION,
 			};
 
 			let resourceType: string;

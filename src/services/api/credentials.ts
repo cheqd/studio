@@ -1,6 +1,7 @@
 import type { CredentialPayload, VerifiableCredential } from '@veramo/core';
 import { OperationCategoryNameEnum, OperationNameEnum, VC_CONTEXT, VC_TYPE } from '../../types/constants.js';
 import {
+	CredentialCategory,
 	CredentialConnectors,
 	GetIssuedCredentialOptions,
 	IssuedCredentialCreateOptions,
@@ -18,11 +19,12 @@ import { DockIdentityService } from '../identity/providers/index.js';
 import { IssuedCredentialEntity } from '../../database/entities/issued-credential.entity.js';
 import { FindOptionsWhere, LessThanOrEqual, Repository } from 'typeorm';
 import { Connection } from '../../database/connection/connection.js';
-import { CheqdCredentialStatus } from '../../types/credential-status.js';
+import { CheqdCredentialStatus, StatusRegistryState } from '../../types/credential-status.js';
 import { validate as uuidValidate } from 'uuid';
 import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
 import { ICredentialStatusTrack, ITrackOperation } from '../../types/track.js';
 import { eventTracker } from '../track/tracker.js';
+import { CredentialStatusService } from './credential-status.js';
 dotenv.config();
 
 const { ENABLE_VERIDA_CONNECTOR } = process.env;
@@ -77,41 +79,45 @@ export class Credentials {
 		const statusOptions = credentialStatus || null;
 
 		if (statusOptions) {
-			const statusRegistry = await this.statusRegistryRepository.findOne({
-				where: {
-					registryName: statusOptions?.statusListName,
-					registryType: statusOptions.statusListType,
-					version: statusOptions.statusListVersion,
-					state: 'ACTIVE',
-				},
-				lock: { mode: 'pessimistic_write' },
-			});
-
-			if (!statusRegistry) {
+			const { success, data: statusRegistry } = await CredentialStatusService.instance.getStatusList(
+				statusOptions,
+				customer,
+				true
+			);
+			if (!success || !statusRegistry) {
 				throw new Error('Status Registry Not Found');
 			}
 
+			if (statusRegistry.state === StatusRegistryState.Full) {
+				throw new Error('Status Registry is Full');
+			}
+
+			if (statusRegistry.state !== StatusRegistryState.Active) {
+				throw new Error(`Status Registry is not Active. Current state: ${statusRegistry.state}`);
+			}
+
+			// assign next index in status list
 			const index = statusRegistry.lastAssignedIndex + 1;
 			statusOptions.statusListIndex = index;
 			statusRegistry.lastAssignedIndex = index;
 
+			// check if status list is full
 			if (statusRegistry.lastAssignedIndex === statusRegistry.size) {
-				statusRegistry.state = 'FULL';
+				statusRegistry.state = StatusRegistryState.Full;
 			}
 
+			// save lastAssignedIndex and state
 			await this.statusRegistryRepository.save(statusRegistry);
 
 			// emit status full event
-			if (statusRegistry.state === 'FULL') {
+			if (statusRegistry.state === StatusRegistryState.Full) {
 				const trackInfo: ITrackOperation<ICredentialStatusTrack> = {
 					category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
 					name: OperationNameEnum.CREDENTIAL_STATUS_CREATE_UNENCRYPTED,
 					customer: customer,
 					data: {
-						did: statusRegistry.issuerId,
-						statusListName: statusRegistry.registryName,
-						statusListType: statusRegistry.registryType,
-						statusPurpose: statusOptions.statusPurpose,
+						did: statusRegistry.did,
+						registryId: statusRegistry.statusListId,
 					},
 				};
 
@@ -363,7 +369,7 @@ export class Credentials {
 			issuerId: options.issuerId,
 			subjectId: options.subjectId,
 			format: options.format,
-			category: options.category || 'credential',
+			category: options.category || CredentialCategory.CREDENTIAL,
 			type: options.type,
 			status: options.status || 'issued',
 			statusUpdatedAt: options.statusUpdatedAt,

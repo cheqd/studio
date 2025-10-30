@@ -4,8 +4,10 @@ import type {
 	CreateEncryptedBitstringSuccessfulResponseBody,
 	CreateUnencryptedBitstringSuccessfulResponseBody,
 	FeePaymentOptions,
+	ListStatusListQuery,
+	StatusListRecord,
 } from '../../types/credential-status.js';
-import { DefaultStatusActionPurposeMap, StatusListType } from '../../types/credential-status.js';
+import { DefaultStatusActionPurposeMap, StatusRegistryState, StatusListType } from '../../types/credential-status.js';
 import type {
 	CreateEncryptedStatusListRequestBody,
 	CreateEncryptedStatusListRequestQuery,
@@ -26,6 +28,8 @@ import {
 	BulkUnsuspensionResult,
 	BulkBitstringUpdateResult,
 	DefaultStatusList2021StatusPurposeType,
+	Cheqd,
+	BitstringStatusListResourceType,
 } from '@cheqd/did-provider-cheqd';
 import { toNetwork } from '../../helpers/helpers.js';
 import { eventTracker } from '../track/tracker.js';
@@ -34,10 +38,12 @@ import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/consta
 import { FeeAnalyzer } from '../../helpers/fee-analyzer.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity.js';
-import { Repository } from 'typeorm';
+import { FindOptionsRelations, FindOptionsWhere, Repository } from 'typeorm';
 import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
 import { Connection } from '../../database/connection/connection.js';
 import { v4 } from 'uuid';
+import { IdentifierService } from './identifier.js';
+import { CredentialCategory } from '../../types/credential.js';
 
 export class CredentialStatusService {
 	public static instance = new CredentialStatusService();
@@ -62,13 +68,14 @@ export class CredentialStatusService {
 			encodedList,
 			statusListName,
 			alsoKnownAs,
-			statusListVersion,
+			statusListVersion = '1.0',
 			length,
 			encoding,
 			statusSize: size,
 			ttl,
 			statusMessages,
 			state,
+			credentialCategory = CredentialCategory.CREDENTIAL,
 		} = body;
 
 		const { listType, statusPurpose } = query;
@@ -77,18 +84,38 @@ export class CredentialStatusService {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
 
 		try {
+			// validate identifier
+			const identifier = await IdentifierService.instance.get(did, customer);
+			if (!identifier) {
+				return {
+					success: false,
+					statusCode: 404,
+					error: `Identifier ${did} not found for the customer ${customer.customerId}`,
+				};
+			}
+
 			if (data) {
 				let result;
 				if (listType === StatusListType.Bitstring) {
 					result = await identityServiceStrategySetup.agent.broadcastBitstringStatusList(
 						did,
-						{ data, name: statusListName, alsoKnownAs, version: statusListVersion },
+						{
+							data,
+							name: `${statusListName}-${statusListVersion}`,
+							alsoKnownAs,
+							version: statusListVersion,
+						},
 						customer
 					);
 				} else {
 					result = await identityServiceStrategySetup.agent.broadcastStatusList2021(
 						did,
-						{ data, name: statusListName, alsoKnownAs, version: statusListVersion },
+						{
+							data,
+							name: `${statusListName}-${statusListVersion}`,
+							alsoKnownAs,
+							version: statusListVersion,
+						},
 						{ encoding, statusPurpose: statusPurpose as DefaultStatusList2021StatusPurposeType },
 						customer
 					);
@@ -103,12 +130,13 @@ export class CredentialStatusService {
 			let result:
 				| CreateUnencryptedStatusListSuccessfulResponseBody
 				| CreateUnencryptedBitstringSuccessfulResponseBody;
+			let statusSize: number;
 
 			if (listType === StatusListType.Bitstring) {
 				result = (await identityServiceStrategySetup.agent.createUnencryptedBitstringStatusList(
 					did,
 					{
-						name: statusListName,
+						name: `${statusListName}-${statusListVersion}`,
 						alsoKnownAs,
 						version: statusListVersion,
 					},
@@ -122,11 +150,13 @@ export class CredentialStatusService {
 					},
 					customer
 				)) as CreateUnencryptedBitstringSuccessfulResponseBody;
+
+				statusSize = result.resource.metadata.length;
 			} else {
 				result = (await identityServiceStrategySetup.agent.createUnencryptedStatusList2021(
 					did,
 					{
-						name: statusListName,
+						name: `${statusListName}-${statusListVersion}`,
 						alsoKnownAs,
 						version: statusListVersion,
 					},
@@ -137,6 +167,7 @@ export class CredentialStatusService {
 					},
 					customer
 				)) as CreateUnencryptedStatusListSuccessfulResponseBody;
+				statusSize = length || Cheqd.defaultStatusList2021Length;
 			}
 
 			if (result.error) {
@@ -147,6 +178,23 @@ export class CredentialStatusService {
 				};
 			}
 
+			// persist status list in the db
+			const statusRegistry = new StatusRegistryEntity({
+				registryId: v4(),
+				state: state || StatusRegistryState.Active,
+				storageType: 'cheqd',
+				registryType: listType,
+				registryName: `${statusListName}-${statusListVersion}`,
+				version: statusListVersion || '1.0',
+				uri: `${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
+				identifier,
+				size: statusSize,
+				lastAssignedIndex: 0,
+				customer,
+				credentialCategory,
+			});
+			await this.repository.save(statusRegistry);
+
 			const trackInfo: ITrackOperation<ICredentialStatusTrack> = {
 				category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
 				name: OperationNameEnum.CREDENTIAL_STATUS_CREATE_UNENCRYPTED,
@@ -154,25 +202,12 @@ export class CredentialStatusService {
 				user,
 				data: {
 					did,
+					registryId: statusRegistry.registryId,
 					resource: result.resourceMetadata,
 					encrypted: result.resource?.metadata?.encrypted,
 					symmetricKey: '',
 				},
 			};
-
-			await this.repository.save({
-				registryId: v4(),
-				state: state || 'ACTIVE',
-				statusPurpose: statusPurpose,
-				storageType: 'cheqd',
-				registryType: listType,
-				registryName: statusListName,
-				version: statusListVersion || '1.0',
-				uri: `${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
-				issuerId: did,
-				size: 10,
-				lastAssignedIndex: 0,
-			});
 
 			eventTracker.emit('track', trackInfo);
 
@@ -205,7 +240,7 @@ export class CredentialStatusService {
 			did,
 			statusListName,
 			alsoKnownAs,
-			statusListVersion,
+			statusListVersion = '1.0',
 			length,
 			statusSize: size,
 			ttl,
@@ -216,6 +251,7 @@ export class CredentialStatusService {
 			feePaymentAmount,
 			feePaymentWindow,
 			state,
+			credentialCategory = CredentialCategory.CREDENTIAL,
 		} = body;
 
 		const { listType, statusPurpose } = query;
@@ -225,6 +261,17 @@ export class CredentialStatusService {
 			let result:
 				| CreateEncryptedStatusListSuccessfulResponseBody
 				| CreateEncryptedBitstringSuccessfulResponseBody;
+			let statusSize: number;
+
+			// validate identifier
+			const identifier = await IdentifierService.instance.get(did, customer);
+			if (!identifier) {
+				return {
+					success: false,
+					statusCode: 404,
+					error: `Identifier ${did} not found for the customer ${customer.customerId}`,
+				};
+			}
 
 			if (listType === StatusListType.Bitstring) {
 				result = (await identityServiceStrategySetup.agent.createEncryptedBitstringStatusList(
@@ -248,11 +295,12 @@ export class CredentialStatusService {
 					},
 					customer
 				)) as CreateEncryptedBitstringSuccessfulResponseBody;
+				statusSize = result.resource.metadata.length;
 			} else {
 				result = (await identityServiceStrategySetup.agent.createEncryptedStatusList2021(
 					did,
 					{
-						name: statusListName,
+						name: `${statusListName}-${statusListVersion}`,
 						alsoKnownAs,
 						version: statusListVersion,
 					},
@@ -267,6 +315,7 @@ export class CredentialStatusService {
 					},
 					customer
 				)) as CreateEncryptedStatusListSuccessfulResponseBody;
+				statusSize = size || Cheqd.defaultStatusList2021Length;
 			}
 
 			if (result.error) {
@@ -277,6 +326,22 @@ export class CredentialStatusService {
 				};
 			}
 
+			// persist status list in the db
+			const statusRegistry = new StatusRegistryEntity({
+				registryId: v4(),
+				state: state || StatusRegistryState.Active,
+				storageType: 'cheqd',
+				registryType: listType,
+				registryName: `${statusListName}-${statusListVersion}`,
+				version: statusListVersion || '1.0',
+				uri: `${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
+				identifier,
+				size: statusSize,
+				lastAssignedIndex: 0,
+				customer,
+				credentialCategory,
+			});
+			await this.repository.save(statusRegistry);
 			const trackInfo: ITrackOperation<ICredentialStatusTrack> = {
 				name: OperationNameEnum.CREDENTIAL_STATUS_CREATE_ENCRYPTED,
 				category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
@@ -284,26 +349,13 @@ export class CredentialStatusService {
 				user,
 				data: {
 					did,
+					registryId: statusRegistry.registryId,
 					resource: result.resourceMetadata,
 					encrypted: true,
 					symmetricKey: '',
 				},
 				feePaymentOptions: [],
 			};
-
-			await this.repository.save({
-				registryId: v4(),
-				state: state || 'ACTIVE',
-				statusPurpose: statusPurpose,
-				storageType: 'cheqd',
-				registryType: listType,
-				registryName: statusListName,
-				version: statusListVersion || '1.0',
-				uri: `${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
-				issuerId: did,
-				size: 10,
-				lastAssignedIndex: 0,
-			});
 
 			eventTracker.emit('track', trackInfo);
 
@@ -332,7 +384,7 @@ export class CredentialStatusService {
 		data?: any;
 		error?: string;
 	}> {
-		const { did, statusListName, statusListVersion, indices } = body;
+		const { did, statusListName, statusListVersion = '1.0', indices } = body;
 		const { statusAction, listType } = query;
 
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
@@ -613,7 +665,7 @@ export class CredentialStatusService {
 		error?: string;
 	}> {
 		const feePaymentOptions: IFeePaymentOptions[] = [];
-		const { did, statusListName, index, makeFeePayment } = body;
+		const { did, statusListName, statusListVersion, index, makeFeePayment } = body;
 		const { statusPurpose } = query;
 
 		const trackInfo: ITrackOperation<ICredentialStatusTrack> = {
@@ -624,17 +676,17 @@ export class CredentialStatusService {
 			successful: false,
 			data: {
 				did,
-				statusListName,
-				statusListType: statusPurpose,
+				registryId: '',
 			},
 		};
 
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
 
+		const listType = StatusListType.StatusList2021;
 		const statusList = await identityServiceStrategySetup.agent.searchStatusList(
 			did,
-			statusListName,
-			StatusListType.StatusList2021,
+			`${statusListName}-${statusListVersion}`,
+			listType,
 			statusPurpose
 		);
 
@@ -774,12 +826,14 @@ export class CredentialStatusService {
 		data?: any;
 		error?: string;
 	}> {
-		const { did, statusListName, listType, statusPurpose } = query;
+		const { did, statusListName, statusListVersion, listType, statusPurpose } = query;
 
 		try {
 			const result = await new IdentityServiceStrategySetup().agent.searchStatusList(
 				did,
-				statusListName,
+				statusListVersion && statusListVersion != ''
+					? `${statusListName}-${statusListVersion}`
+					: statusListName,
 				listType,
 				statusPurpose
 			);
@@ -810,6 +864,221 @@ export class CredentialStatusService {
 				statusCode: 500,
 				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
 			};
+		}
+	}
+
+	async rotateStatusList(statusListId: string, customer: CustomerEntity) {
+		const promises = [];
+		const updatedAt = new Date();
+
+		// find existing registry
+		const registry = await this.repository.findOne({
+			where: {
+				registryId: statusListId,
+				customer,
+			},
+		});
+		if (!registry) {
+			throw new Error('Registry not found');
+		}
+
+		// Update current registry state to FULL if not already
+		if (registry.state !== StatusRegistryState.Full) {
+			registry.state = StatusRegistryState.Full;
+			registry.updatedAt = updatedAt;
+			promises.push(this.repository.save(registry));
+		}
+		let version = registry.version;
+
+		// search for standby status lists in the registry
+		const standbyRegistry = await this.repository.findOne({
+			where: {
+				state: StatusRegistryState.Standby,
+				registryName: registry.registryName,
+				registryType: registry.registryType,
+				size: registry.size,
+				storageType: registry.storageType,
+			},
+		});
+
+		// if standby exists promote it to active and create a new registry with standby state
+		if (standbyRegistry) {
+			standbyRegistry.state = StatusRegistryState.Active;
+			standbyRegistry.updatedAt = updatedAt;
+			promises.push(this.repository.save(standbyRegistry));
+		} else {
+			// if no-standby create a new registry with active state
+			version = !isNaN(parseFloat(version)) ? `${parseFloat(version) + 1.0}` : v4();
+			const activeRegistry = this.repository.create({
+				...registry,
+				registryId: v4(),
+				state: StatusRegistryState.Active,
+				version,
+			});
+			promises.push(this.repository.save(activeRegistry));
+		}
+
+		// create new standby registry
+		const newStandbyRegistry = this.repository.create({
+			...registry,
+			registryId: v4(),
+			state: StatusRegistryState.Standby,
+			version: !isNaN(parseFloat(version)) ? `${parseFloat(version) + 1.0}` : v4(),
+		});
+		promises.push(this.repository.save(newStandbyRegistry));
+
+		await Promise.all(promises);
+	}
+
+	async listStatusList(
+		query: ListStatusListQuery,
+		customer: CustomerEntity
+	): Promise<{
+		success: boolean;
+		statusCode: number;
+		data?: { records: StatusListRecord[]; total: number };
+		error?: string;
+	}> {
+		const { deprecated, did, state, statusListName, listType, statusListVersion, credentialCategory } = query;
+
+		try {
+			const where: FindOptionsWhere<StatusRegistryEntity> = {
+				customer: { customerId: customer.customerId },
+			};
+			const relations: FindOptionsRelations<StatusRegistryEntity> = {
+				identifier: true, // Check performance for this JOIN operation
+			};
+			if (deprecated) {
+				where.deprecated = deprecated;
+			}
+
+			if (did) {
+				where.identifier = { did };
+			}
+
+			if (state) {
+				where.state = state;
+			}
+
+			if (listType && listType === StatusListType.Bitstring) {
+				where.registryType = BitstringStatusListResourceType;
+			}
+
+			if (statusListName) {
+				where.registryName = statusListName;
+			}
+
+			if (statusListVersion) {
+				where.version = statusListVersion;
+			}
+
+			if (credentialCategory) {
+				where.credentialCategory = credentialCategory;
+			}
+
+			const [data, count] = await this.repository.findAndCount({ where, relations });
+
+			return {
+				success: true,
+				statusCode: 200,
+				data: {
+					records: data.map((item) => ({
+						statusListName: item.registryName,
+						statusListVersion: item.version,
+						statusListId: item.registryId,
+						listType: item.registryType,
+						createdAt: item.createdAt.toISOString(),
+						updatedAt: item.updatedAt.toISOString(),
+						uri: item.uri,
+						did: item.identifier.did,
+						state: item.state,
+						size: item.size,
+						lastAssignedIndex: item.lastAssignedIndex,
+						credentialCategory: item.credentialCategory,
+						deprecated: item.deprecated,
+					})),
+					total: count,
+				},
+			};
+		} catch (error) {
+			return {
+				success: false,
+				statusCode: 500,
+				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
+			};
+		}
+	}
+
+	async getStatusList(
+		statusOptions: {
+			statusListId?: string;
+			statusListName?: string;
+			statusListVersion?: string;
+			listType?: StatusListType;
+		},
+		customer: CustomerEntity,
+		lock: boolean = false
+	): Promise<{
+		success: boolean;
+		statusCode: number;
+		data?: StatusListRecord;
+		error?: string;
+	}> {
+		const where: FindOptionsWhere<StatusRegistryEntity> = {
+			customer: { customerId: customer.customerId },
+		};
+		if (statusOptions.statusListId) {
+			where.registryId = statusOptions.statusListId;
+		} else if (
+			statusOptions.statusListName &&
+			statusOptions.statusListName &&
+			statusOptions.statusListVersion &&
+			statusOptions.listType
+		) {
+			where.registryName = statusOptions.statusListName!;
+			where.version = statusOptions.statusListVersion!;
+			where.registryType = statusOptions.listType!;
+		} else {
+			return {
+				success: false,
+				statusCode: 400,
+				error: 'Either statusListId or statusListName, statusListVersion and listType must be provided',
+			};
+		}
+		try {
+			const item = await this.repository.findOne({
+				where,
+				lock: lock ? { mode: 'pessimistic_write' } : undefined,
+			});
+			if (!item) {
+				return {
+					success: false,
+					statusCode: 404,
+					error: `Status list not found`,
+				};
+			}
+
+			return {
+				success: true,
+				statusCode: 200,
+				data: {
+					statusListName: item.registryName,
+					statusListVersion: item.version,
+					statusListId: item.registryId,
+					listType: item.registryType,
+					createdAt: item.createdAt.toISOString(),
+					updatedAt: item.updatedAt.toISOString(),
+					uri: item.uri,
+					did: item.identifier.did,
+					state: item.state,
+					size: item.size,
+					lastAssignedIndex: item.lastAssignedIndex,
+					credentialCategory: item.credentialCategory,
+					deprecated: item.deprecated,
+				},
+			};
+		} catch (error) {
+			throw new Error(`Internal error: ${(error as Record<string, unknown>)?.message || error}`);
 		}
 	}
 }

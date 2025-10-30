@@ -28,7 +28,7 @@ export interface CredentialRequest {
 	expirationDate?: DateType;
 	issuerDid: string;
 	format: 'jsonld' | 'jwt' | 'sd-jwt-vc' | 'anoncreds';
-	credentialStatus?: StatusOptions;
+	credentialStatus?: StatusOptions & { statusListId?: string };
 	credentialSchema?: string;
 	credentialName?: string;
 	credentialSummary?: string;
@@ -38,7 +38,7 @@ export interface CredentialRequest {
 	connector?: CredentialConnectors;
 	providerId?: string;
 	credentialId?: string;
-	category?: 'credential' | 'accreditation';
+	category?: CredentialCategory;
 
 	[x: string]: any;
 }
@@ -166,6 +166,11 @@ export interface GetIssuedCredentialOptions {
 	providerId?: string;
 }
 
+export enum CredentialCategory {
+	CREDENTIAL = 'credential',
+	ACCREDITATION = 'accreditation',
+}
+
 export interface IssuedCredentialCreateOptions {
 	providerId: string;
 	providerCredentialId?: string;
@@ -179,7 +184,7 @@ export interface IssuedCredentialCreateOptions {
 	expiresAt?: Date;
 	credentialStatus?: Record<string, any>;
 	metadata?: Record<string, any>;
-	category?: 'credential' | 'accreditation';
+	category?: CredentialCategory;
 }
 
 export interface IssuedCredentialResponse {
