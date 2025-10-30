@@ -92,6 +92,7 @@ import {
 import { toCoin, toDefaultDkg, toMinimalDenom } from '../../../../helpers/helpers.js';
 import { jwtDecode } from 'jwt-decode';
 import type {
+	BitstringStatusListEntry as BitstringStatusListEntryType,
 	BitstringStatusValue,
 	BitstringValidationResult,
 	ICheqdBulkUpdateCredentialWithStatusListArgs,
@@ -1095,8 +1096,15 @@ export class Veramo {
 		did: string,
 		statusOptions: CheqdCredentialStatus
 	): Promise<BitstringValidationResult> {
+		const { type, ...rest } = statusOptions;
+		// ensure required property statusListCredential is present (use empty string as fallback)
+		const formattedStatus: BitstringStatusListEntryType = {
+			type: BitstringStatusListEntry,
+			...rest,
+			statusListCredential: (rest as any).statusListCredential ?? '',
+		};
 		return await agent.cheqdCheckBitstringStatus({
-			credentialStatus: statusOptions,
+			credentialStatus: formattedStatus,
 			fetchList: true,
 			dkgOptions: toDefaultDkg(did),
 		} satisfies ICheqdCheckCredentialStatusWithBitstringArgs);

@@ -276,9 +276,9 @@ export type FeePaymentOptions = {
 
 export type CheqdCredentialStatus = {
 	id: string;
-	type: 'BitstringStatusListEntry';
+	type: 'BitstringStatusListEntry' | 'StatusList2021Entry';
 	statusPurpose: BitstringStatusListPurposeType;
 	statusListIndex: string;
-	statusListCredential: string;
+	statusListCredential?: string;
 	[x: string]: any;
 };
