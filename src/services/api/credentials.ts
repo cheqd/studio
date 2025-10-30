@@ -406,6 +406,60 @@ export class Credentials {
 	}
 
 	/**
+	 * Update credential metadata
+	 */
+	async update(
+		issuedCredentialId: string,
+		updateData: Partial<Pick<IssuedCredentialEntity, 'providerCredentialId' | 'status' | 'metadata'>>,
+		customer: CustomerEntity
+	): Promise<IssuedCredentialResponse | null> {
+		// Ensure the credential belongs to this customer
+		const entity = await this.repository.findOne({
+			where: {
+				issuedCredentialId,
+				customer: { customerId: customer.customerId },
+			},
+		});
+
+		if (!entity) {
+			return null;
+		}
+
+		// Update the entity
+		const updatePayload: any = {
+			...updateData,
+			updatedAt: new Date(),
+		};
+
+		// If status is being updated, also update statusUpdatedAt
+		if (updateData.status) {
+			updatePayload.statusUpdatedAt = new Date();
+		}
+
+		await this.repository.update(
+			{
+				issuedCredentialId,
+				customer: { customerId: customer.customerId },
+			},
+			updatePayload
+		);
+
+		// Fetch and return the updated entity
+		const updatedEntity = await this.repository.findOne({
+			where: {
+				issuedCredentialId,
+				customer: { customerId: customer.customerId },
+			},
+		});
+
+		if (!updatedEntity) {
+			return null;
+		}
+
+		return this.toResponse(updatedEntity, {});
+	}
+
+	/**
 	 * Convert entity to API response format
 	 */
 	private toResponse(

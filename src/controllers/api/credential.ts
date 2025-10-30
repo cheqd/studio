@@ -13,6 +13,8 @@ import type {
 	IssueCredentialResponseBody,
 	UpdateCredentialRequestBody,
 	UpdateCredentialRequestQuery,
+	UpdateIssuedCredentialRequestBody,
+	UpdateIssuedCredentialResponseBody,
 	RevokeCredentialResponseBody,
 	SuspendCredentialResponseBody,
 	UnsuccesfulIssueCredentialResponseBody,
@@ -796,6 +798,93 @@ export class CredentialController {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /credentials/issued/{id}:
+	 *   put:
+	 *     tags: [ Verifiable Credentials ]
+	 *     summary: Update an issued credential metadata.
+	 *     description: This endpoint updates metadata for an issued credential. It allows updating providerCredentialId, status, and providerMetadata fields.
+	 *     parameters:
+	 *       - in: path
+	 *         name: id
+	 *         description: Credential identifier (issuedCredentialId).
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *     requestBody:
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+	 *             properties:
+	 *               providerCredentialId:
+	 *                 type: string
+	 *                 description: Provider-specific credential ID (e.g., resource ID for studio provider).
+	 *               status:
+	 *                 type: string
+	 *                 enum: [issued, suspended, revoked]
+	 *                 description: Credential status.
+	 *               providerMetadata:
+	 *                 type: object
+	 *                 description: Additional provider-specific metadata.
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               type: object
+	 *               properties:
+	 *                 success:
+	 *                   type: boolean
+	 *                 data:
+	 *                   $ref: '#/components/schemas/IssuedCredentialResponse'
+	 *       404:
+	 *         description: Credential not found.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               type: object
+	 *               properties:
+	 *                 success:
+	 *                   type: boolean
+	 *                 error:
+	 *                   type: string
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async updateIssuedCredential(request: Request, response: Response) {
+		const { id } = request.params;
+		const updateData = request.body as UpdateIssuedCredentialRequestBody;
+
+		try {
+			const result = await Credentials.instance.update(id, updateData, response.locals.customer);
+
+			if (!result) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					success: false,
+					error: `Credential with ID ${id} not found`,
+				} satisfies UpdateIssuedCredentialResponseBody);
+			}
+
+			return response.status(StatusCodes.OK).json({
+				success: true,
+				data: result,
+			} satisfies UpdateIssuedCredentialResponseBody);
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				success: false,
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			} satisfies UpdateIssuedCredentialResponseBody);
 		}
 	}
 }

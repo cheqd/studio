@@ -145,6 +145,18 @@ export type ListCredentialRequestOptions = {
 	category?: string;
 };
 
+export type UpdateIssuedCredentialRequestBody = {
+	providerCredentialId?: string;
+	status?: 'issued' | 'suspended' | 'revoked';
+	providerMetadata?: Record<string, any>;
+};
+
+export type UpdateIssuedCredentialResponseBody = {
+	success: boolean;
+	data?: any;
+	error?: string;
+};
+
 export type ListCredentialResponse = {
 	credentials: {
 		status: string;
