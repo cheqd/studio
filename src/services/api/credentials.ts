@@ -453,7 +453,7 @@ export class Credentials {
 				return;
 			}
 
-			let newStatus: string = 'unknown';
+			let newStatus: string = 'issued';
 
 			switch (entity.providerId) {
 				case 'dock': {
