@@ -47,16 +47,16 @@ export class MigrationsStatusLists1761834657128 implements MigrationInterface {
 		let errorCount = 0;
 		const errors: Array<{ resourceId: string; error: string }> = [];
 
-        // Remove duplicates by DID URL (constructed per resource) using a Set to keep first occurrence
-        const seen = new Set<string>();
-        const uniqueStatusLists = statusListResources.filter((res) => {
-        const did = res?.identifier?.did ?? '';
-        const didUrl = `${did}?resourceName=${res.resourceName}&resourceType=${res.resourceType}`;
-        if (seen.has(didUrl)) return false;
-            seen.add(didUrl);
-            return true;
-        });
-        console.log(`${uniqueStatusLists.length} statuslist resources are unique and ready to migrate`);
+		// Remove duplicates by DID URL (constructed per resource) using a Set to keep first occurrence
+		const seen = new Set<string>();
+		const uniqueStatusLists = statusListResources.filter((res) => {
+			const did = res?.identifier?.did ?? '';
+			const didUrl = `${did}?resourceName=${res.resourceName}&resourceType=${res.resourceType}`;
+			if (seen.has(didUrl)) return false;
+			seen.add(didUrl);
+			return true;
+		});
+		console.log(`${uniqueStatusLists.length} statuslist resources are unique and ready to migrate`);
 
 		// Process statuslist in batches
 		for (let i = 0; i < uniqueStatusLists.length; i += this.BATCH_SIZE) {
@@ -64,7 +64,7 @@ export class MigrationsStatusLists1761834657128 implements MigrationInterface {
 
 			for (const resource of batch) {
 				try {
-                    const didUrl = `${resource.identifier.did}?resourceName=${resource.resourceName}&resourceType=${resource.resourceType}`;
+					const didUrl = `${resource.identifier.did}?resourceName=${resource.resourceName}&resourceType=${resource.resourceType}`;
 					// Check if already migrated
 					const existing = await queryRunner.manager.findOne(StatusRegistryEntity, {
 						where: {
@@ -100,7 +100,7 @@ export class MigrationsStatusLists1761834657128 implements MigrationInterface {
 						metadata: {
 							migratedFrom: 'ResourceEntity',
 						},
-                        credentialCategory: CredentialCategory.CREDENTIAL
+						credentialCategory: CredentialCategory.CREDENTIAL,
 					});
 
 					await queryRunner.manager.save(StatusRegistryEntity, statusRegistryEntity);
@@ -168,7 +168,7 @@ export class MigrationsStatusLists1761834657128 implements MigrationInterface {
 			// Build resolver URL for metadata first
 			const url = new URL(`${this.RESOLVER_URL}/${didUrl}`);
 			url.searchParams.set('resourceMetadata', 'true');
-            console.log(`    Resolving statuslist resource from ${url.toString()}`);
+			console.log(`    Resolving statuslist resource from ${url.toString()}`);
 			// Fetch resource metadata (DID resolution profile)
 			const metaResp = await fetch(`${this.RESOLVER_URL}/${didUrl}`, {
 				headers: {
@@ -208,7 +208,7 @@ export class MigrationsStatusLists1761834657128 implements MigrationInterface {
 
 			// Fetch the actual resource (remove resourceMetadata param)
 			url.searchParams.delete('resourceMetadata');
-            console.log(`    Resolving statuslist resource from ${url.toString()}`);
+			console.log(`    Resolving statuslist resource from ${url.toString()}`);
 			const resourceResp = await fetch(url.toString(), {
 				headers: {
 					Accept: 'application/json',

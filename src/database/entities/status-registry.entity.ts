@@ -14,6 +14,13 @@ import { CustomerEntity } from './customer.entity.js';
 import { StatusRegistryState } from '../../types/credential-status.js';
 import { CredentialCategory } from '../../types/credential.js';
 
+export interface StatusRegistryMetadata {
+	encoding?: 'base64url' | 'hex';
+	statusPurpose?: string;
+
+	[x: string]: any;
+}
+
 /**
  * Status Registry entity for managing credential status registries
  */
@@ -58,6 +65,9 @@ export class StatusRegistryEntity {
 	@Column('boolean', { default: false })
 	deprecated!: boolean;
 
+	@Column('boolean', { default: false })
+	encrypted!: boolean;
+
 	@ManyToOne(() => Identifier, (identifier) => identifier.did, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'identifierDid' })
 	identifier!: Identifier;
@@ -68,7 +78,7 @@ export class StatusRegistryEntity {
 	customer!: CustomerEntity;
 
 	@Column('json', { nullable: true })
-	metadata?: Record<string, any>;
+	metadata?: StatusRegistryMetadata;
 
 	@BeforeInsert()
 	addId() {
@@ -89,13 +99,14 @@ export class StatusRegistryEntity {
 		identifier: Identifier;
 		customer: CustomerEntity;
 		storageType?: 'cheqd' | 'ipfs' | 'dock' | 'paradym';
-		metadata?: Record<string, any>;
+		metadata?: StatusRegistryMetadata;
 		registryId?: string;
-        deprecated?: boolean;
+		deprecated?: boolean;
+		encrypted?: boolean;
 	}) {
-        if(!options) {
-            return;
-        }
+		if (!options) {
+			return;
+		}
 
 		if (options.registryId) {
 			this.registryId = options.registryId;
@@ -110,7 +121,8 @@ export class StatusRegistryEntity {
 		this.state = options.state;
 		this.metadata = options.metadata;
 		this.credentialCategory = options.credentialCategory;
-		this.deprecated = false;
+		this.deprecated = options.deprecated || false;
+		this.encrypted = options.encrypted || false;
 
 		this.identifier = options.identifier;
 		this.customer = options.customer;

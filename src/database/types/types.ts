@@ -147,7 +147,7 @@ export class Postgres implements AbstractDatabase {
 				// Migrate Dock credentials to IssuedCredential table
 				MigrateDockCredentials1760533089589,
 				StudioMigrations1761834657128,
-                MigrationsStatusLists1761834657128
+				MigrationsStatusLists1761834657128,
 			],
 			entities: [
 				...Entities,
@@ -166,7 +166,7 @@ export class Postgres implements AbstractDatabase {
 				CredentialProviderEntity,
 				ProviderConfigurationEntity,
 				IssuedCredentialEntity,
-                StatusRegistryEntity
+				StatusRegistryEntity,
 			],
 			logging: ['error', 'info', 'warn'],
 		});

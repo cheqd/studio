@@ -30,6 +30,7 @@ import {
 	DefaultStatusList2021StatusPurposeType,
 	Cheqd,
 	BitstringStatusListResourceType,
+	BitstringStatusListPurposeType,
 } from '@cheqd/did-provider-cheqd';
 import { toNetwork } from '../../helpers/helpers.js';
 import { eventTracker } from '../track/tracker.js';
@@ -192,6 +193,9 @@ export class CredentialStatusService {
 				lastAssignedIndex: 0,
 				customer,
 				credentialCategory,
+				metadata: {
+					statusPurpose,
+				},
 			});
 			await this.repository.save(statusRegistry);
 
@@ -340,6 +344,13 @@ export class CredentialStatusService {
 				lastAssignedIndex: 0,
 				customer,
 				credentialCategory,
+				metadata: {
+					statusPurpose,
+					paymentConditions,
+					feePaymentAddress,
+					feePaymentAmount,
+					feePaymentWindow,
+				},
 			});
 			await this.repository.save(statusRegistry);
 			const trackInfo: ITrackOperation<ICredentialStatusTrack> = {
@@ -829,6 +840,7 @@ export class CredentialStatusService {
 		const { did, statusListName, statusListVersion, listType, statusPurpose } = query;
 
 		try {
+			// find in registry and retreive uri
 			const result = await new IdentityServiceStrategySetup().agent.searchStatusList(
 				did,
 				statusListVersion && statusListVersion != ''
@@ -901,6 +913,24 @@ export class CredentialStatusService {
 			},
 		});
 
+		const newRegistryRequestBody = {
+			...registry.metadata,
+			encoding: registry.metadata?.encoding,
+			did: registry.identifier.did,
+			statusListName: registry.registryName,
+			statusListVersion: version,
+			length: registry.size,
+			state: StatusRegistryState.Active,
+			credentialCategory: registry.credentialCategory,
+		};
+
+		const newRegistryQuery = {
+			listType: registry.registryType,
+			statusPurpose: registry.metadata?.statusPurpose as
+				| DefaultStatusList2021StatusPurposeType
+				| BitstringStatusListPurposeType,
+		};
+
 		// if standby exists promote it to active and create a new registry with standby state
 		if (standbyRegistry) {
 			standbyRegistry.state = StatusRegistryState.Active;
@@ -908,24 +938,21 @@ export class CredentialStatusService {
 			promises.push(this.repository.save(standbyRegistry));
 		} else {
 			// if no-standby create a new registry with active state
-			version = !isNaN(parseFloat(version)) ? `${parseFloat(version) + 1.0}` : v4();
-			const activeRegistry = this.repository.create({
-				...registry,
-				registryId: v4(),
-				state: StatusRegistryState.Active,
-				version,
-			});
-			promises.push(this.repository.save(activeRegistry));
+			version = !isNaN(parseFloat(version)) ? `${parseFloat(version) + 1.0}` : '2.0'; // no-standby, we introduce continuous versioning
+			// publish the registry (not parallelizing this promise as ledger operations cannot be parallelized), records are persisted within the functions
+			registry.encrypted
+				? await this.createEncryptedStatusList(newRegistryRequestBody, newRegistryQuery, customer)
+				: await this.createUnencryptedStatusList(newRegistryRequestBody, newRegistryQuery, customer);
 		}
 
 		// create new standby registry
-		const newStandbyRegistry = this.repository.create({
-			...registry,
-			registryId: v4(),
-			state: StatusRegistryState.Standby,
-			version: !isNaN(parseFloat(version)) ? `${parseFloat(version) + 1.0}` : '2.0', // if previous was not number set for continuous versioning
-		});
-		promises.push(this.repository.save(newStandbyRegistry));
+		newRegistryRequestBody.state = StatusRegistryState.Standby;
+		newRegistryRequestBody.statusListVersion = `${parseFloat(version) + 1.0}`; // continuous versioning as active is created above
+		const newStandbyStatusList = registry.encrypted
+			? this.createEncryptedStatusList(newRegistryRequestBody, newRegistryQuery, customer)
+			: this.createUnencryptedStatusList(newRegistryRequestBody, newRegistryQuery, customer);
+
+		promises.push(newStandbyStatusList);
 
 		await Promise.all(promises);
 	}
