@@ -175,10 +175,13 @@ export class ProviderService {
 	}
 
 	// Test connection functionality
-	async testConnection(customerId: string, providerId: string): Promise<ConnectionTestResult> {
+	async testConnection(customerId: string, providerId: string, newAPIUrl?: string): Promise<ConnectionTestResult> {
 		const config = await this.getProviderConfiguration(customerId, providerId);
 		if (!config) {
 			return { success: false, message: 'Provider not activated for this customer' };
+		}
+		if (newAPIUrl) {
+			config.apiEndpoint = newAPIUrl;
 		}
 		try {
 			if (ProviderFactory.isProviderSupported(providerId)) {

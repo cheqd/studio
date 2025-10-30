@@ -27,6 +27,7 @@ import type {
 	CreateStatusListResult,
 	BulkBitstringUpdateResult,
 	BitstringUpdateResult,
+	BitstringValidationResult,
 } from '@cheqd/did-provider-cheqd';
 import type { VeramoAgent } from '../../types/shared';
 import type { VerificationOptions } from '../../types/shared';
@@ -183,9 +184,10 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 	checkBitstringStatusList(
+		did: string,
 		statusOptions: CheqdCredentialStatus,
 		customer: CustomerEntity
-	): Promise<StatusCheckResult> {
+	): Promise<BitstringValidationResult> {
 		throw new Error(`Not supported`);
 	}
 	searchStatusList(
