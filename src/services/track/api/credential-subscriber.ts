@@ -1,10 +1,10 @@
 import { OperationCategoryNameEnum } from '../../../types/constants.js';
-import type { ICredentialTrack, ITrackOperation, ITrackResult } from '../../../types/track.js';
+import type { ICredentialTrack, ITrackOperation, ITrackResult, TrackData } from '../../../types/track.js';
 import type { IObserver } from '../types.js';
 import { BaseOperationObserver } from '../base.js';
 
 export class CredentialSubscriber extends BaseOperationObserver implements IObserver {
-	isReactionNeeded(trackOperation: ITrackOperation): boolean {
+	isReactionNeeded(trackOperation: ITrackOperation<TrackData>): boolean {
 		// Credential tracker reacts on CredentialStatusList, Credential operations like revocation
 		// and Resource operations like create, update, delete
 		return trackOperation.category === OperationCategoryNameEnum.CREDENTIAL;
@@ -16,7 +16,7 @@ export class CredentialSubscriber extends BaseOperationObserver implements IObse
 		return `${base_message} | Credential holder: ${data.did}`;
 	}
 
-	async update(trackOperation: ITrackOperation): Promise<void> {
+	async update(trackOperation: ITrackOperation<ICredentialTrack>): Promise<void> {
 		if (!this.isReactionNeeded(trackOperation)) {
 			// Just skip this operation
 			return;
@@ -30,7 +30,7 @@ export class CredentialSubscriber extends BaseOperationObserver implements IObse
 		});
 	}
 
-	async trackCredentialOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
+	async trackCredentialOperation(trackOperation: ITrackOperation<ICredentialTrack>): Promise<ITrackResult> {
 		// We don't have specific credential writes, so we just track credential creation
 		return {
 			operation: trackOperation,

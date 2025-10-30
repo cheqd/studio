@@ -1099,6 +1099,86 @@
           }
         }
       },
+      "CredentialStatusRecordResult": {
+        "type": "object",
+        "properties": {
+          "statusListName": {
+            "type": "string"
+          },
+          "statusListVersion": {
+            "type": "string"
+          },
+          "statusListId": {
+            "type": "string"
+          },
+          "listType": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "uri": {
+            "type": "string"
+          },
+          "did": {
+            "type": "string",
+            "format": "uri"
+          },
+          "state": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "lastAssignedIndex": {
+            "type": "integer"
+          },
+          "credentialCategory": {
+            "type": "string",
+            "enum": [
+              "credential",
+              "accreditation"
+            ]
+          },
+          "deprecated": {
+            "type": "boolean"
+          }
+        },
+        "example": {
+          "statusListName": "cheqd-employee-credentials",
+          "statusListVersion": "1.0",
+          "statusListId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
+          "listType": "StatusList2021",
+          "createdAt": "2023-06-26T11:45:19.349Z",
+          "updatedAt": "2023-06-26T11:45:20.000Z",
+          "uri": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc",
+          "did": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+          "state": "active",
+          "size": 131072,
+          "lastAssignedIndex": 130999,
+          "credentialCategory": "credential",
+          "deprecated": false
+        }
+      },
+      "ListCredentialStatusRecordsResult": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CredentialStatusRecordResult"
+            }
+          }
+        }
+      },
       "CredentialStatusCreateBody": {
         "allOf": [
           {
@@ -3821,6 +3901,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "statusListVersion",
+            "description": "The version of the Status List DID-Linked Resource.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -3830,6 +3918,146 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CredentialStatusListSearchResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/list": {
+      "get": {
+        "tags": [
+          "Status Lists"
+        ],
+        "summary": "List StatusList2021 or BitstringStatusList DID-Linked Resources created by the customer.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "did",
+            "description": "The DID of the issuer of the status list.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "statusListName",
+            "description": "The name of the Status List DID-Linked Resource.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "statusListVersion",
+            "description": "The version of the Status List DID-Linked Resource.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "description": "The state of the Status List DID-Linked Resource.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "STANDBY",
+                "FULL"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "credentialCategory",
+            "description": "Filter status lists by credential category assigned for.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "credential",
+                "accreditation"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "deprecated",
+            "description": "Filter status lists by deprecated status.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialStatusListSearchResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/{statusListId}": {
+      "get": {
+        "tags": [
+          "Status Lists"
+        ],
+        "summary": "Fetch StatusList2021 or BitstringStatusList DID-Linked Resource based on search criteria.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "statusListId",
+            "description": "The statusListId of the status list.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialStatusRecordResult"
                 }
               }
             }

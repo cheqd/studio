@@ -1,4 +1,4 @@
-import type { ITrackOperation, INotifyMessage, ITrackResult } from '../../types/track.js';
+import type { ITrackOperation, INotifyMessage, ITrackResult, TrackData } from '../../types/track.js';
 import type { IObserver } from './types.js';
 
 export class BaseOperationObserver implements IObserver {
@@ -8,7 +8,7 @@ export class BaseOperationObserver implements IObserver {
 		this.emitter = emitter;
 	}
 
-	async update(trackOperation: ITrackOperation): Promise<void> {
+	async update(trackOperation: ITrackOperation<TrackData>): Promise<void> {
 		throw new Error('Method not implemented.');
 	}
 

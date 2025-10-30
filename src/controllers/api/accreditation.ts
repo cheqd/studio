@@ -12,7 +12,7 @@ import type {
 	VerifyAccreditationRequestBody,
 	VerfifiableAccreditation,
 } from '../../types/accreditation.js';
-import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '../../types/track.js';
+import type { ICredentialTrack, ITrackOperation } from '../../types/track.js';
 import type { CredentialRequest, UnsuccesfulRevokeCredentialResponseBody } from '../../types/credential.js';
 import { StatusCodes } from 'http-status-codes';
 import { v4 } from 'uuid';
@@ -21,7 +21,7 @@ import {
 	DIDAccreditationPolicyTypes,
 	DIDAccreditationTypes,
 } from '../../types/accreditation.js';
-import { CredentialConnectors, VerifyCredentialRequestQuery } from '../../types/credential.js';
+import { CredentialCategory, CredentialConnectors, VerifyCredentialRequestQuery } from '../../types/credential.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { AccreditationService } from '../../services/api/accreditation.js';
@@ -277,7 +277,7 @@ export class AccreditationController {
 				credentialId: resourceId,
 				credentialName: accreditationName,
 				credentialStatus,
-				category: 'accreditation',
+				category: CredentialCategory.ACCREDITATION,
 			};
 
 			let resourceType: string;
@@ -340,15 +340,15 @@ export class AccreditationController {
 			);
 
 			// Track operation
-			const trackInfo = {
+			const trackInfo: ITrackOperation<ICredentialTrack> = {
 				category: OperationCategoryNameEnum.CREDENTIAL,
 				name: OperationNameEnum.CREDENTIAL_ISSUE,
 				customer: response.locals.customer,
 				user: response.locals.user,
 				data: {
 					did: issuerDid,
-				} satisfies ICredentialTrack,
-			} as ITrackOperation;
+				},
+			};
 
 			eventTracker.emit('track', trackInfo);
 
@@ -441,15 +441,15 @@ export class AccreditationController {
 				policies
 			);
 			// Track operation
-			const trackInfo = {
+			const trackInfo: ITrackOperation<ICredentialTrack> = {
 				category: OperationCategoryNameEnum.CREDENTIAL,
 				name: OperationNameEnum.CREDENTIAL_VERIFY,
 				customer: response.locals.customer,
 				user: response.locals.user,
 				data: {
 					did: parseDidFromDidUrl(didUrl),
-				} satisfies ICredentialTrack,
-			} as ITrackOperation;
+				},
+			};
 
 			eventTracker.emit('track', trackInfo);
 			if (result.success) {
@@ -549,7 +549,7 @@ export class AccreditationController {
 					typeof accreditation.issuer === 'string'
 						? accreditation.issuer
 						: (accreditation.issuer as { id: string }).id;
-				const trackInfo = {
+				const trackInfo: ITrackOperation<ICredentialTrack> = {
 					category: OperationCategoryNameEnum.CREDENTIAL,
 					name: OperationNameEnum.CREDENTIAL_REVOKE,
 					customer: response.locals.customer,
@@ -559,8 +559,8 @@ export class AccreditationController {
 						encrypted: result.statusList?.metadata?.encrypted,
 						resource: result.resourceMetadata,
 						symmetricKey: '',
-					} satisfies ICredentialStatusTrack,
-				} as ITrackOperation;
+					},
+				};
 
 				// Track operation
 				eventTracker.emit('track', trackInfo);
@@ -661,7 +661,7 @@ export class AccreditationController {
 					typeof accreditation.issuer === 'string'
 						? accreditation.issuer
 						: (accreditation.issuer as { id: string }).id;
-				const trackInfo = {
+				const trackInfo: ITrackOperation<ICredentialTrack> = {
 					category: OperationCategoryNameEnum.CREDENTIAL,
 					name: OperationNameEnum.CREDENTIAL_SUSPEND,
 					customer: response.locals.customer,
@@ -672,7 +672,7 @@ export class AccreditationController {
 						resource: result.resourceMetadata,
 						symmetricKey: '',
 					},
-				} as ITrackOperation;
+				};
 
 				// Track operation
 				eventTracker.emit('track', trackInfo);
@@ -773,7 +773,7 @@ export class AccreditationController {
 					typeof accreditation.issuer === 'string'
 						? accreditation.issuer
 						: (accreditation.issuer as { id: string }).id;
-				const trackInfo = {
+				const trackInfo: ITrackOperation<ICredentialTrack> = {
 					category: OperationCategoryNameEnum.CREDENTIAL,
 					name: OperationNameEnum.CREDENTIAL_UNSUSPEND,
 					customer: response.locals.customer,
@@ -783,8 +783,8 @@ export class AccreditationController {
 						encrypted: result.statusList?.metadata?.encrypted || false,
 						resource: result.resourceMetadata,
 						symmetricKey: '',
-					} satisfies ICredentialStatusTrack,
-				} as ITrackOperation;
+					},
+				};
 
 				// Track operation
 				eventTracker.emit('track', trackInfo);

@@ -1,8 +1,8 @@
 import type { CustomerEntity } from '../../database/entities/customer.entity';
-import type { ITrackOperation, INotifyMessage } from '../../types/track';
+import type { ITrackOperation, INotifyMessage, TrackData } from '../../types/track';
 import type { ISubmitOperation } from './submitter';
 
-export type ITrackType = ITrackOperation | INotifyMessage | ISubmitOperation;
+export type ITrackType = ITrackOperation<TrackData> | INotifyMessage | ISubmitOperation;
 
 export interface IObserver {
 	update(operation: ITrackType): Promise<void>;

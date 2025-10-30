@@ -180,13 +180,6 @@ export class PresentationController {
 	public async verifyPresentation(request: Request, response: Response) {
 		// Set fee payment options
 		let feePaymentOptions: IFeePaymentOptions[] = [];
-		// Make the base body for tracking
-		const trackInfo = {
-			name: OperationNameEnum.PRESENTATION_VERIFY,
-			category: OperationCategoryNameEnum.PRESENTATION,
-			customer: response.locals.customer,
-			user: response.locals.user,
-		} as ITrackOperation;
 
 		// Extract request parameters from body
 		const { presentation, verifierDid, policies, makeFeePayment } = request.body as VerifyPresentationRequestBody;
@@ -215,14 +208,18 @@ export class PresentationController {
 					feePaymentOptions = feePaymentResult.data;
 					// handle error
 					if (feePaymentResult.error) {
-						// Fill track info
-						trackInfo.feePaymentOptions = feePaymentOptions;
-						trackInfo.data = {
-							holder: cheqdPresentation.holder,
-						} satisfies IPresentationTrack;
-						trackInfo.successful = false;
 						// Track operation
-						eventTracker.emit('track', trackInfo satisfies ITrackOperation);
+						eventTracker.emit('track', {
+							name: OperationNameEnum.PRESENTATION_VERIFY,
+							category: OperationCategoryNameEnum.PRESENTATION,
+							customer: response.locals.customer,
+							user: response.locals.user,
+							feePaymentOptions,
+							data: {
+								holder: cheqdPresentation.holder,
+							},
+							successful: false,
+						} satisfies ITrackOperation<IPresentationTrack>);
 
 						// Return error
 						return response.status(StatusCodes.BAD_REQUEST).json({
@@ -253,14 +250,17 @@ export class PresentationController {
 					error: `verify: ${result.error.message}`,
 				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			}
-			// track operation
-			trackInfo.data = {
-				holder: cheqdPresentation.holder,
-			} satisfies IPresentationTrack;
-			trackInfo.feePaymentOptions = feePaymentOptions;
-			trackInfo.successful = true;
-
-			eventTracker.emit('track', trackInfo satisfies ITrackOperation);
+			eventTracker.emit('track', {
+				name: OperationNameEnum.PRESENTATION_VERIFY,
+				category: OperationCategoryNameEnum.PRESENTATION,
+				customer: response.locals.customer,
+				user: response.locals.user,
+				feePaymentOptions,
+				data: {
+					holder: cheqdPresentation.holder,
+				},
+				successful: true,
+			} satisfies ITrackOperation<IPresentationTrack>);
 
 			return response.status(StatusCodes.OK).json(result satisfies VerifyPresentationResponseBody);
 		} catch (error) {

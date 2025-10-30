@@ -6,6 +6,7 @@ import type {
 	IResourceTrack,
 	ITrackOperation,
 	ITrackResult,
+	TrackData,
 } from '../../../types/track.js';
 import { isCredentialStatusTrack, isCredentialTrack, isResourceTrack } from '../helpers.js';
 import { IdentifierService } from '../../api/identifier.js';
@@ -27,7 +28,7 @@ export class ResourceSubscriber extends BaseOperationObserver implements IObserv
 		OperationNameEnum.CREDENTIAL_STATUS_UPDATE_ENCRYPTED,
 	];
 
-	isReactionNeeded(trackOperation: ITrackOperation): boolean {
+	isReactionNeeded(trackOperation: ITrackOperation<TrackData>): boolean {
 		// Resource tracker reacts on CredentialStatusList, Credential operations like revocation
 		// and Resource operations like create, update, delete
 		const isCategoryAccepted =
@@ -46,7 +47,7 @@ export class ResourceSubscriber extends BaseOperationObserver implements IObserv
 		return `${base_message} | Resource DID: ${data.did} | ResourceName: ${data.resource.resourceName} | ResourceType: ${data.resource.resourceType} | ResourceId: ${data.resource.resourceId}`;
 	}
 
-	async update(trackOperation: ITrackOperation): Promise<void> {
+	async update(trackOperation: ITrackOperation<TrackData>): Promise<void> {
 		if (!this.isReactionNeeded(trackOperation)) {
 			// Just skip this operation
 			return;
@@ -54,7 +55,9 @@ export class ResourceSubscriber extends BaseOperationObserver implements IObserv
 		trackOperation.category = OperationCategoryNameEnum.RESOURCE;
 		trackOperation.name = OperationNameEnum.RESOURCE_CREATE;
 		// tracking resource creation in database
-		const result = await this.trackResourceOperation(trackOperation);
+		const result = await this.trackResourceOperation(
+			trackOperation as ITrackOperation<IResourceTrack | ICredentialStatusTrack | ICredentialTrack>
+		);
 		// notify about the result of tracking, e.g. log or datadog
 		await this.notify({
 			message: this.compileMessage(result),
@@ -62,11 +65,13 @@ export class ResourceSubscriber extends BaseOperationObserver implements IObserv
 		});
 	}
 
-	async trackResourceOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
+	async trackResourceOperation(
+		trackOperation: ITrackOperation<IResourceTrack | ICredentialStatusTrack | ICredentialTrack>
+	): Promise<ITrackResult> {
 		// Resource operation may be with CredentialStatusList or with Credential operations like revocation
 		// and others and also with Resource operations like create, update, delete
 		const customer = trackOperation.customer;
-		const data = trackOperation.data as IResourceTrack | ICredentialStatusTrack | ICredentialTrack;
+		const data = trackOperation.data;
 		const did = data.did;
 		let encrypted = false;
 		let symmetricKey = '';
