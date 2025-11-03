@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.14.0-develop.3](https://github.com/cheqd/studio/compare/3.14.0-develop.2...3.14.0-develop.3) (2025-11-03)
+
+### Bug Fixes
+
+* additional parameter for provider test  ([#753](https://github.com/cheqd/studio/issues/753)) ([8f40ad5](https://github.com/cheqd/studio/commit/8f40ad5651e4d7441f09797933546df44a24ccf3))
+
 ## [3.14.0-develop.2](https://github.com/cheqd/studio/compare/3.14.0-develop.1...3.14.0-develop.2) (2025-10-28)
 
 ### Features
