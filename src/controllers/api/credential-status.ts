@@ -5,6 +5,7 @@ import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import type {
 	CheckStatusListSuccessfulResponseBody,
+	CheqdCredentialStatus,
 	CreateEncryptedBitstringSuccessfulResponseBody,
 	CreateUnencryptedBitstringSuccessfulResponseBody,
 	FeePaymentOptions,
@@ -518,6 +519,20 @@ export class CredentialStatusController {
 			.notEmpty()
 			.withMessage('statusListName: should be a non-empty string')
 			.bail(),
+		check('listType')
+			.exists()
+			.withMessage('listType: required')
+			.bail()
+			.isString()
+			.withMessage('listType: should be a string')
+			.bail()
+			.isIn([StatusListType.Bitstring, StatusListType.StatusList2021])
+			.withMessage(
+				`listType: invalid listType, should be one of [${Object.values(StatusListType)
+					.map((v) => `'${v}'`)
+					.join(', ')}]`
+			)
+			.bail(),
 		check('statusPurpose')
 			.exists()
 			.withMessage('statusPurpose: required')
@@ -528,12 +543,26 @@ export class CredentialStatusController {
 			.notEmpty()
 			.withMessage('statusPurpose: should be a non-empty string')
 			.bail()
-			.isIn(Object.keys(DefaultStatusList2021StatusPurposeTypes))
-			.withMessage(
-				`statusPurpose: invalid statusPurpose, should be one of ${Object.keys(
-					DefaultStatusList2021StatusPurposeTypes
-				).join(', ')}`
-			)
+			.custom((value, { req }) => {
+				const listType = req.query?.listType || req.body.listType;
+				if (listType === StatusListType.StatusList2021) {
+					const validPurposes = Object.keys(DefaultStatusList2021StatusPurposeTypes);
+					if (validPurposes.indexOf(value) === -1) {
+						throw new Error(
+							`statusPurpose: invalid statusPurpose "${value}", should be one of ${validPurposes.join(', ')}`
+						);
+					}
+				} else {
+					const validPurposes = Object.keys(BitstringStatusPurposeTypes);
+					// Check for valid purposes
+					if (validPurposes.indexOf(value) === -1) {
+						throw new Error(
+							`statusPurpose: invalid statusPurpose(s) "${value}", should be one of ${validPurposes.join(', ')}`
+						);
+					}
+				}
+				return true;
+			})
 			.bail(),
 		check('index')
 			.exists()
@@ -1344,9 +1373,18 @@ export class CredentialStatusController {
 	 * /credential-status/check:
 	 *   post:
 	 *     tags: [ Status Lists ]
-	 *     summary: Check a StatusList2021 index for a given Verifiable Credential.
-	 *     description: This endpoint checks a StatusList2021 index for a given Verifiable Credential and reports whether it is revoked or suspended. It offers a standalone method for checking an index without passing the entire Verifiable Credential or Verifiable Presentation.
+	 *     summary: Check a StatusList2021 or BitstringStatusList index for a given Verifiable Credential.
+	 *     description: This endpoint checks a StatusList2021 or BitstringStatusList index for a given Verifiable Credential and reports whether it is revoked or suspended. It offers a standalone method for checking an index without passing the entire Verifiable Credential or Verifiable Presentation.
 	 *     parameters:
+	 *       - in: query
+	 *         name: listType
+	 *         description: The type of Status List.
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - StatusList2021
+	 *             - BitstringStatusList
 	 *       - in: query
 	 *         name: statusPurpose
 	 *         description: The purpose of the status list. Can be either revocation or suspension.
@@ -1356,6 +1394,8 @@ export class CredentialStatusController {
 	 *           enum:
 	 *             - revocation
 	 *             - suspension
+	 *             - message
+	 *             - refresh
 	 *     requestBody:
 	 *       content:
 	 *         application/x-www-form-urlencoded:
@@ -1392,19 +1432,33 @@ export class CredentialStatusController {
 		} as ITrackOperation;
 
 		// collect request parameters - case: body
-		const { did, statusListName, index, makeFeePayment } = request.body as CheckStatusListRequestBody;
+		const { did, statusListName, index, makeFeePayment, statusListCredential, statusSize, statusMessage } =
+			request.body as CheckStatusListRequestBody;
 
 		// collect request parameters - case: query
-		const { statusPurpose } = request.query as CheckStatusListRequestQuery;
+		const { statusPurpose, listType } = request.query as CheckStatusListRequestQuery;
 
 		// define identity service strategy setup
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
-		// ensure status list
+		if (listType === StatusListType.Bitstring) {
+			if (!statusListCredential)
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					checked: false,
+					error: `check: error: 'statusListCredential' is required for BitstringStatusList type`,
+				} satisfies CheckStatusListUnsuccessfulResponseBody);
+			if (statusSize && statusSize > 1 && !statusMessage)
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					checked: false,
+					error: `check: error: 'statusMessage' is required when 'statusSize' is greater than 1 for BitstringStatusList type`,
+				} satisfies CheckStatusListUnsuccessfulResponseBody);
+		}
+
+		// ensure status list exists
 		const statusList = await identityServiceStrategySetup.agent.searchStatusList(
 			did,
 			statusListName,
-			StatusListType.StatusList2021,
+			listType,
 			statusPurpose
 		);
 
@@ -1475,18 +1529,35 @@ export class CredentialStatusController {
 			}
 
 			// check status list
-			const result = await identityServiceStrategySetup.agent.checkStatusList2021(
-				did,
-				{
-					statusListIndex: index,
-					statusListName,
-					statusPurpose,
-				},
-				response.locals.customer
-			);
+			let result;
+			if (listType === StatusListType.Bitstring) {
+				result = await identityServiceStrategySetup.agent.checkBitstringStatusList(
+					did,
+					{
+						id: statusListCredential + '#' + index,
+						type: 'BitstringStatusListEntry',
+						statusPurpose,
+						statusListIndex: index.toString(),
+						statusListCredential: statusListCredential || '',
+						statusSize: statusSize,
+						statusMessage: statusMessage,
+					} as CheqdCredentialStatus,
+					response.locals.customer
+				);
+			} else {
+				result = await identityServiceStrategySetup.agent.checkStatusList2021(
+					did,
+					{
+						statusListIndex: index,
+						statusListName,
+						statusPurpose,
+					},
+					response.locals.customer
+				);
+			}
 
 			// handle error
-			if (result.error) {
+			if ('error' in result && result.error) {
 				return response.status(StatusCodes.BAD_REQUEST).json(result as CheckStatusListUnsuccessfulResponseBody);
 			}
 

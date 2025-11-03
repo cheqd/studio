@@ -1082,6 +1082,16 @@
  *           type: integer
  *           minimum: 0
  *           exclusiveMinimum: false
+ *         statusListCredential:
+ *           description: Optional Resolvable DID URL of the BistringStatusList credential to be checked.
+ *           type: string
+ *         statusSize:
+ *           description: Optional size of the BistringStatusList.
+ *           type: number
+ *           default: 2
+ *         statusMessage:
+ *           description: Array of status messages for each bit in the BitstringStatusList.
+ *           type: array
  *         makeFeePayment:
  *           description: Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 or BitstringStatusList DID-Linked Resource.
  *           type: boolean
