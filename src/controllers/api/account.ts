@@ -34,7 +34,7 @@ import { KeyService } from '../../services/api/key.js';
 import { LocalStore } from '../../database/cache/store.js';
 import { BootStrapAccountResponse } from '../../types/account.js';
 import { RoleEntity } from '../../database/entities/role.entity.js';
-import { MailchimpHelper } from '../../helpers/mailchimp.js';
+import { MailchimpService } from '../../helpers/mailchimp.js';
 
 dotenv.config();
 
@@ -353,18 +353,14 @@ export class AccountController {
 				process.env.MAILCHIMP_PRODUCT_LIST_ID
 			) {
 				try {
-					const mailchimpResult = await MailchimpHelper.addOrUpdateContact(
+					const mailchimpService = new MailchimpService();
+					await mailchimpService.upsertSubscriber(
+						process.env.MAILCHIMP_PRODUCT_LIST_ID,
 						logToUserEmail,
-						logToFirstName,
-						logToLastName
+						logToFirstName || '',
+						logToLastName || '',
+						['cheqd_Studio']
 					);
-					if (!mailchimpResult.success) {
-						console.error(
-							`Failed to add user to Mailchimp: ${mailchimpResult.error}`,
-							logToUserEmail
-						);
-						status.errors.push(`Mailchimp sync failed: ${mailchimpResult.error}`);
-					}
 				} catch (error) {
 					console.error('Mailchimp integration error:', error);
 					status.errors.push(`Mailchimp sync failed: ${(error as Error).message}`);
