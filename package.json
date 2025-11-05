@@ -61,6 +61,7 @@
 		"@cosmjs/encoding": "^0.33.1",
 		"@docknetwork/universal-wallet": "^3.3.4",
 		"@logto/express": "^3.0.11",
+		"@mailchimp/mailchimp_marketing": "^3.0.80",
 		"@stablelib/ed25519": "^1.0.3",
 		"@veramo/core": "^6.0.0",
 		"@veramo/credential-ld": "^6.0.0",
