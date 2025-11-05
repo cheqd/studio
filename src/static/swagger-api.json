@@ -1636,6 +1636,19 @@
             "minimum": 0,
             "exclusiveMinimum": false
           },
+          "statusListCredential": {
+            "description": "Optional Resolvable DID URL of the BistringStatusList credential to be checked.",
+            "type": "string"
+          },
+          "statusSize": {
+            "description": "Optional size of the BistringStatusList.",
+            "type": "number",
+            "default": 2
+          },
+          "statusMessage": {
+            "description": "Array of status messages for each bit in the BitstringStatusList.",
+            "type": "array"
+          },
           "makeFeePayment": {
             "description": "Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 or BitstringStatusList DID-Linked Resource.",
             "type": "boolean",
@@ -3717,9 +3730,22 @@
         "tags": [
           "Status Lists"
         ],
-        "summary": "Check a StatusList2021 index for a given Verifiable Credential.",
-        "description": "This endpoint checks a StatusList2021 index for a given Verifiable Credential and reports whether it is revoked or suspended. It offers a standalone method for checking an index without passing the entire Verifiable Credential or Verifiable Presentation.",
+        "summary": "Check a StatusList2021 or BitstringStatusList index for a given Verifiable Credential.",
+        "description": "This endpoint checks a StatusList2021 or BitstringStatusList index for a given Verifiable Credential and reports whether it is revoked or suspended. It offers a standalone method for checking an index without passing the entire Verifiable Credential or Verifiable Presentation.",
         "parameters": [
+          {
+            "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
           {
             "in": "query",
             "name": "statusPurpose",
@@ -3729,7 +3755,9 @@
               "type": "string",
               "enum": [
                 "revocation",
-                "suspension"
+                "suspension",
+                "message",
+                "refresh"
               ]
             }
           }
@@ -5574,6 +5602,15 @@
             "name": "providerId",
             "in": "path",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "newAPIUrl",
+            "in": "query",
+            "required": false,
+            "default": null,
             "schema": {
               "type": "string"
             }

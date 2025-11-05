@@ -31,6 +31,7 @@ import type {
 	CreateStatusListResult,
 	BulkBitstringUpdateResult,
 	BitstringUpdateResult,
+	BitstringValidationResult,
 } from '@cheqd/did-provider-cheqd';
 import type { VeramoAgent } from '../../types/shared.js';
 import type { VerificationOptions } from '../../types/shared.js';
@@ -168,11 +169,11 @@ export interface IIdentityService {
 		statusOptions: CheckStatusListOptions,
 		customer: CustomerEntity
 	): Promise<StatusCheckResult>;
-	//TODO Implement the below method for studio provider
 	checkBitstringStatusList(
+		did: string,
 		statusOptions: CheqdCredentialStatus,
 		customer: CustomerEntity
-	): Promise<StatusCheckResult>;
+	): Promise<BitstringValidationResult>;
 	searchStatusList(
 		did: string,
 		statusListName: string,
