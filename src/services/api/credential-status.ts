@@ -1,6 +1,7 @@
 import { fromString } from 'uint8arrays';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
 import type {
+	CheqdCredentialStatus,
 	CreateEncryptedBitstringSuccessfulResponseBody,
 	CreateUnencryptedBitstringSuccessfulResponseBody,
 	FeePaymentOptions,
@@ -45,6 +46,7 @@ import { Connection } from '../../database/connection/connection.js';
 import { v4 } from 'uuid';
 import { IdentifierService } from './identifier.js';
 import { CredentialCategory } from '../../types/credential.js';
+import { StatusCodes } from 'http-status-codes';
 
 export class CredentialStatusService {
 	public static instance = new CredentialStatusService();
@@ -90,7 +92,7 @@ export class CredentialStatusService {
 			if (!identifier) {
 				return {
 					success: false,
-					statusCode: 404,
+					statusCode: StatusCodes.NOT_FOUND,
 					error: `Identifier ${did} not found for the customer ${customer.customerId}`,
 				};
 			}
@@ -123,7 +125,7 @@ export class CredentialStatusService {
 				}
 				return {
 					success: result,
-					statusCode: 200,
+					statusCode: StatusCodes.OK,
 					data,
 				};
 			}
@@ -174,7 +176,7 @@ export class CredentialStatusService {
 			if (result.error) {
 				return {
 					success: false,
-					statusCode: 400,
+					statusCode: StatusCodes.BAD_REQUEST,
 					error: result.error?.message || result.error.toString(),
 				};
 			}
@@ -217,13 +219,13 @@ export class CredentialStatusService {
 
 			return {
 				success: true,
-				statusCode: 200,
+				statusCode: StatusCodes.OK,
 				data: result,
 			};
 		} catch (error) {
 			return {
 				success: false,
-				statusCode: 500,
+				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
 				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
 			};
 		}
@@ -272,7 +274,7 @@ export class CredentialStatusService {
 			if (!identifier) {
 				return {
 					success: false,
-					statusCode: 404,
+					statusCode: StatusCodes.NOT_FOUND,
 					error: `Identifier ${did} not found for the customer ${customer.customerId}`,
 				};
 			}
@@ -325,7 +327,7 @@ export class CredentialStatusService {
 			if (result.error) {
 				return {
 					success: false,
-					statusCode: 400,
+					statusCode: StatusCodes.BAD_REQUEST,
 					error: result.error?.message || result.error.toString(),
 				};
 			}
@@ -372,13 +374,13 @@ export class CredentialStatusService {
 
 			return {
 				success: true,
-				statusCode: 200,
+				statusCode: StatusCodes.OK,
 				data: result,
 			};
 		} catch (error) {
 			return {
 				success: false,
-				statusCode: 500,
+				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
 				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
 			};
 		}
@@ -411,13 +413,13 @@ export class CredentialStatusService {
 			if (unencrypted.error === 'notFound') {
 				return {
 					success: false,
-					statusCode: 404,
+					statusCode: StatusCodes.NOT_FOUND,
 					error: `update: error: status list '${statusListName}' not found`,
 				};
 			}
 			return {
 				success: false,
-				statusCode: 400,
+				statusCode: StatusCodes.BAD_REQUEST,
 				error: `update: error: ${unencrypted.error}`,
 			};
 		}
@@ -425,7 +427,7 @@ export class CredentialStatusService {
 		if (unencrypted.resource?.metadata?.encrypted) {
 			return {
 				success: false,
-				statusCode: 400,
+				statusCode: StatusCodes.BAD_REQUEST,
 				error: `update: error: status list '${statusListName}' is encrypted`,
 			};
 		}
@@ -470,7 +472,7 @@ export class CredentialStatusService {
 			if (result.error) {
 				return {
 					success: false,
-					statusCode: 400,
+					statusCode: StatusCodes.BAD_REQUEST,
 					error: result.error?.message || result.error.toString(),
 				};
 			}
@@ -503,13 +505,13 @@ export class CredentialStatusService {
 
 			return {
 				success: true,
-				statusCode: 200,
+				statusCode: StatusCodes.OK,
 				data: formatted,
 			};
 		} catch (error) {
 			return {
 				success: false,
-				statusCode: 500,
+				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
 				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
 			};
 		}
@@ -553,13 +555,13 @@ export class CredentialStatusService {
 			if (encrypted.error === 'notFound') {
 				return {
 					success: false,
-					statusCode: 404,
+					statusCode: StatusCodes.NOT_FOUND,
 					error: `update: error: status list '${statusListName}' not found`,
 				};
 			}
 			return {
 				success: false,
-				statusCode: 400,
+				statusCode: StatusCodes.BAD_REQUEST,
 				error: `update: error: ${encrypted.error}`,
 			};
 		}
@@ -567,7 +569,7 @@ export class CredentialStatusService {
 		if (!encrypted.resource?.metadata?.encrypted) {
 			return {
 				success: false,
-				statusCode: 400,
+				statusCode: StatusCodes.BAD_REQUEST,
 				error: `update: error: status list '${statusListName}' is unencrypted`,
 			};
 		}
@@ -617,7 +619,7 @@ export class CredentialStatusService {
 			if (result.error) {
 				return {
 					success: false,
-					statusCode: 400,
+					statusCode: StatusCodes.BAD_REQUEST,
 					error: result.error?.message || result.error.toString(),
 				};
 			}
@@ -652,13 +654,13 @@ export class CredentialStatusService {
 
 			return {
 				success: true,
-				statusCode: 200,
+				statusCode: StatusCodes.OK,
 				data: formatted,
 			};
 		} catch (error) {
 			return {
 				success: false,
-				statusCode: 500,
+				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
 				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
 			};
 		}
@@ -676,9 +678,21 @@ export class CredentialStatusService {
 		error?: string;
 	}> {
 		const feePaymentOptions: IFeePaymentOptions[] = [];
-		const { did, statusListName, statusListVersion, index, makeFeePayment } = body;
-		const { statusPurpose } = query;
+		// collect request parameters - case: body
+		const {
+			did,
+			statusListName,
+			statusListVersion,
+			index,
+			makeFeePayment,
+			statusListCredential,
+			statusSize,
+			statusMessage,
+		} = body;
+		// collect request parameters - case: query
+		const { statusPurpose, listType } = query;
 
+		// Make the base body for tracking
 		const trackInfo: ITrackOperation<ICredentialStatusTrack> = {
 			name: OperationNameEnum.CREDENTIAL_STATUS_CHECK,
 			category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
@@ -690,13 +704,26 @@ export class CredentialStatusService {
 				registryId: '',
 			},
 		};
+		if (listType === StatusListType.Bitstring) {
+			if (!statusListCredential)
+				return {
+					statusCode: StatusCodes.BAD_REQUEST,
+					success: false,
+					error: `check: error: 'statusListCredential' is required for BitstringStatusList type`,
+				};
+			if (statusSize && statusSize > 1 && !statusMessage)
+				return {
+					statusCode: StatusCodes.BAD_REQUEST,
+					success: false,
+					error: `check: error: 'statusMessage' is required when 'statusSize' is greater than 1 for BitstringStatusList type`,
+				};
+		}
 
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
 
-		const listType = StatusListType.StatusList2021;
 		const statusList = await identityServiceStrategySetup.agent.searchStatusList(
 			did,
-			`${statusListName}-${statusListVersion}`,
+			`${statusListName}`,
 			listType,
 			statusPurpose
 		);
@@ -705,18 +732,19 @@ export class CredentialStatusService {
 			if (statusList.error === 'notFound') {
 				return {
 					success: false,
-					statusCode: 404,
+					statusCode: StatusCodes.NOT_FOUND,
 					error: `check: error: status list '${statusListName}' not found`,
 				};
 			}
 			return {
 				success: false,
-				statusCode: 400,
+				statusCode: StatusCodes.BAD_REQUEST,
 				error: `check: error: ${statusList.error}`,
 			};
 		}
 
 		try {
+			// make fee payment, if defined
 			if (makeFeePayment && statusList?.resource?.metadata?.encrypted) {
 				const feePaymentResult = await Promise.all(
 					statusList?.resource?.metadata?.paymentConditions?.map(
@@ -734,6 +762,7 @@ export class CredentialStatusService {
 					) || []
 				);
 
+				// Track the operation
 				await Promise.all(
 					feePaymentResult.map(async (result) => {
 						const portion = await FeeAnalyzer.getPaymentTrack(result, toNetwork(did));
@@ -741,6 +770,7 @@ export class CredentialStatusService {
 					})
 				);
 
+				// handle error
 				if (feePaymentResult.some((result) => result.error)) {
 					trackInfo.data = {
 						did: did,
@@ -754,26 +784,44 @@ export class CredentialStatusService {
 
 					return {
 						success: false,
-						statusCode: 400,
+						statusCode: StatusCodes.BAD_REQUEST,
 						error: `check: payment: error: ${feePaymentResult.find((result) => result.error)?.error}`,
 					};
 				}
 			}
 
-			const result = await identityServiceStrategySetup.agent.checkStatusList2021(
-				did,
-				{
-					statusListIndex: index,
-					statusListName,
-					statusPurpose,
-				},
-				customer
-			);
+			// check status list
+			let result;
+			if (listType === StatusListType.Bitstring) {
+				result = await identityServiceStrategySetup.agent.checkBitstringStatusList(
+					did,
+					{
+						id: statusListCredential + '#' + index,
+						type: 'BitstringStatusListEntry',
+						statusPurpose,
+						statusListIndex: index.toString(),
+						statusListCredential: statusListCredential || '',
+						statusSize: statusSize,
+						statusMessage: statusMessage,
+					} as CheqdCredentialStatus,
+					customer
+				);
+			} else {
+				result = await identityServiceStrategySetup.agent.checkStatusList2021(
+					did,
+					{
+						statusListIndex: index,
+						statusListName,
+						statusPurpose,
+					},
+					customer
+				);
+			}
 
-			if (result.error) {
+			if ('error' in result && result.error) {
 				return {
 					success: false,
-					statusCode: 400,
+					statusCode: StatusCodes.BAD_REQUEST,
 					error:
 						typeof result.error === 'string'
 							? result.error
@@ -793,7 +841,7 @@ export class CredentialStatusService {
 
 			return {
 				success: true,
-				statusCode: 200,
+				statusCode: StatusCodes.OK,
 				data: result,
 			};
 		} catch (error) {
@@ -802,7 +850,7 @@ export class CredentialStatusService {
 			if (errorRef?.errorCode === 'NodeAccessControlConditionsReturnedNotAuthorized') {
 				return {
 					success: false,
-					statusCode: 401,
+					statusCode: StatusCodes.UNAUTHORIZED,
 					error: `check: error: ${
 						errorRef?.message
 							? 'unauthorized: decryption conditions are not met'
@@ -814,7 +862,7 @@ export class CredentialStatusService {
 			if (errorRef?.errorCode === 'incorrect_access_control_conditions') {
 				return {
 					success: false,
-					statusCode: 400,
+					statusCode: StatusCodes.BAD_REQUEST,
 					error: `check: error: ${
 						errorRef?.message
 							? 'incorrect access control conditions'
@@ -825,7 +873,7 @@ export class CredentialStatusService {
 
 			return {
 				success: false,
-				statusCode: 500,
+				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
 				error: `Internal error: ${errorRef?.message || errorRef.toString()}`,
 			};
 		}
@@ -854,26 +902,26 @@ export class CredentialStatusService {
 				if (result.error === 'notFound') {
 					return {
 						success: false,
-						statusCode: 404,
+						statusCode: StatusCodes.NOT_FOUND,
 						error: `search: error: status list '${statusListName}' not found`,
 					};
 				}
 				return {
 					success: false,
-					statusCode: 400,
+					statusCode: StatusCodes.BAD_REQUEST,
 					error: `search: error: ${result.error}`,
 				};
 			}
 
 			return {
 				success: true,
-				statusCode: 200,
+				statusCode: StatusCodes.OK,
 				data: result,
 			};
 		} catch (error) {
 			return {
 				success: false,
-				statusCode: 500,
+				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
 				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
 			};
 		}
@@ -1007,7 +1055,7 @@ export class CredentialStatusService {
 
 			return {
 				success: true,
-				statusCode: 200,
+				statusCode: StatusCodes.OK,
 				data: {
 					records: data.map((item) => ({
 						statusListName: item.registryName,
@@ -1030,7 +1078,7 @@ export class CredentialStatusService {
 		} catch (error) {
 			return {
 				success: false,
-				statusCode: 500,
+				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
 				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
 			};
 		}
@@ -1068,7 +1116,7 @@ export class CredentialStatusService {
 		} else {
 			return {
 				success: false,
-				statusCode: 400,
+				statusCode: StatusCodes.BAD_REQUEST,
 				error: 'Either statusListId or statusListName, statusListVersion and listType must be provided',
 			};
 		}
@@ -1080,14 +1128,14 @@ export class CredentialStatusService {
 			if (!item) {
 				return {
 					success: false,
-					statusCode: 404,
+					statusCode: StatusCodes.NOT_FOUND,
 					error: `Status list not found`,
 				};
 			}
 
 			return {
 				success: true,
-				statusCode: 200,
+				statusCode: StatusCodes.OK,
 				data: {
 					statusListName: item.registryName,
 					statusListVersion: item.version,

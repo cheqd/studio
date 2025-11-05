@@ -27,6 +27,7 @@ import {
 import { DefaultDidUrlPattern, VeramoAgent } from '../../../../types/shared.js';
 import type { VerificationOptions } from '../../../../types/shared.js';
 import type {
+	CheqdCredentialStatus,
 	CreateEncryptedBitstringOptions,
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
@@ -60,7 +61,12 @@ import { APIKeyService } from '../../../admin/api-key.js';
 import type { APIKeyEntity } from '../../../../database/entities/api.key.entity.js';
 import { KeyDIDProvider } from '@veramo/did-provider-key';
 import type { AbstractIdentifierProvider } from '@veramo/did-manager';
-import type { BulkBitstringUpdateResult, CheqdProviderError, CreateStatusListResult } from '@cheqd/did-provider-cheqd';
+import type {
+	BitstringValidationResult,
+	BulkBitstringUpdateResult,
+	CheqdProviderError,
+	CreateStatusListResult,
+} from '@cheqd/did-provider-cheqd';
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { toTPublicKeyEd25519 } from '../../../helpers.js';
 import type { APIServiceOptions } from '../../../../types/admin.js';
@@ -730,6 +736,15 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return await Veramo.instance.checkStatusList2021(agent, did, statusOptions);
 	}
 
+	async checkBitstringStatusList(
+		did: string,
+		statusOptions: CheqdCredentialStatus,
+		customer: CustomerEntity
+	): Promise<BitstringValidationResult> {
+		const agent = await this.createAgent(customer);
+		return await Veramo.instance.checkBitstringStatusList(agent, did, statusOptions);
+	}
+
 	async broadcastStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
@@ -741,6 +756,18 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			throw new Error(`${did} not found in wallet`);
 		}
 		return await Veramo.instance.broadcastStatusList2021(agent, did, resourceOptions, statusOptions);
+	}
+
+	async broadcastBitstringStatusList(
+		did: string,
+		resourceOptions: ResourcePayload,
+		customer: CustomerEntity
+	): Promise<boolean> {
+		const agent = await this.createAgent(customer);
+		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
+			throw new Error(`${did} not found in wallet`);
+		}
+		return await Veramo.instance.broadcastBitstringStatusList(agent, did, resourceOptions);
 	}
 
 	async remunerateStatusList2021(

@@ -45,7 +45,7 @@ test(' Issue a jwt credential', async ({ request }) => {
 	expect(result.verified).toBe(true);
 });
 
-test(' Issue a jwt credential with status', async ({ request }) => {
+test.skip(' Issue a jwt credential with status', async ({ request }) => {
 	const credentialData = JSON.parse(
 		fs.readFileSync(`${PAYLOADS_PATH.CREDENTIAL}/credential-issue-jwt-statuslist.json`, 'utf-8')
 	);

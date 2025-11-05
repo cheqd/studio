@@ -19,12 +19,14 @@ import { DockIdentityService } from '../identity/providers/index.js';
 import { IssuedCredentialEntity } from '../../database/entities/issued-credential.entity.js';
 import { FindOptionsWhere, LessThanOrEqual, Repository } from 'typeorm';
 import { Connection } from '../../database/connection/connection.js';
-import { CheqdCredentialStatus, StatusRegistryState } from '../../types/credential-status.js';
-import { validate as uuidValidate } from 'uuid';
 import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
 import { ICredentialStatusTrack, ITrackOperation } from '../../types/track.js';
 import { eventTracker } from '../track/tracker.js';
 import { CredentialStatusService } from './credential-status.js';
+import { CheckStatusListOptions, CheqdCredentialStatus, StatusRegistryState } from '../../types/credential-status.js';
+import { validate as uuidValidate } from 'uuid';
+import { DefaultStatusList2021StatusPurposeTypes } from '@cheqd/did-provider-cheqd';
+
 dotenv.config();
 
 const { ENABLE_VERIDA_CONNECTOR } = process.env;
@@ -391,18 +393,14 @@ export class Credentials {
 	/**
 	 * Update credential status
 	 */
-	async updateStatus(
-		issuedCredentialId: string,
-		status: 'issued' | 'suspended' | 'revoked',
-		customer: CustomerEntity
-	): Promise<boolean> {
+	async updateStatus(issuedCredentialId: string, status: string, customer: CustomerEntity): Promise<boolean> {
 		const result = await this.repository.update(
 			{
 				issuedCredentialId,
 				customer: { customerId: customer.customerId },
 			},
 			{
-				status,
+				status: status as 'issued' | 'suspended' | 'revoked',
 				statusUpdatedAt: new Date(),
 			}
 		);
@@ -515,13 +513,7 @@ export class Credentials {
 				return;
 			}
 
-			const credentialId = entity.providerCredentialId;
-			if (!credentialId) {
-				console.error('Provider credential ID not found', entity.issuedCredentialId);
-				return;
-			}
-
-			let newStatus: 'issued' | 'suspended' | 'revoked' | null = null;
+			let newStatus: string = 'issued';
 
 			switch (entity.providerId) {
 				case 'dock': {
@@ -538,28 +530,44 @@ export class Credentials {
 					if (entity.credentialStatus) {
 						const status = entity.credentialStatus;
 						const studioService = new IdentityServiceStrategySetup(customer.customerId);
-						// TODO: Implement checkBitstringStatusList as part of credential Status check
-						const currentStatus = await studioService.agent.checkBitstringStatusList(
-							status as CheqdCredentialStatus,
-							customer
-						);
-
-						newStatus = currentStatus.revoked
-							? 'revoked'
-							: currentStatus.suspended
-								? 'suspended'
-								: 'issued';
+						if (status.type === 'StatusList2021Entry') {
+							const url = new URL(status.id);
+							const currentStatus = await studioService.agent.checkStatusList2021(
+								entity.issuerId || '',
+								{
+									...status,
+									statusListName: url.searchParams.get('resourceName'),
+								} as CheckStatusListOptions,
+								customer
+							);
+							if (status.statusPurpose === DefaultStatusList2021StatusPurposeTypes.suspension) {
+								newStatus = currentStatus.suspended ? 'suspended' : 'issued';
+							} else {
+								newStatus = currentStatus.revoked ? 'revoked' : 'issued';
+							}
+						} else {
+							const currentStatus = await studioService.agent.checkBitstringStatusList(
+								entity.issuerId || '',
+								status as CheqdCredentialStatus,
+								customer
+							);
+							newStatus = currentStatus.message
+								? currentStatus.message
+								: currentStatus.valid
+									? 'revoked'
+									: 'issued';
+						}
 					}
 					break;
 				}
 				default:
-					console.log(`Status sync not supported for provider: ${entity.providerId}`);
+					console.warn(`Status sync not supported for provider: ${entity.providerId}`);
 					return;
 			}
 
 			// Update the entity status if it changed
 			if (newStatus && newStatus !== entity.status) {
-				console.log(
+				console.warn(
 					`Updating credential ${entity.issuedCredentialId} status from ${entity.status} to ${newStatus}`
 				);
 				await this.updateStatus(entity.issuedCredentialId, newStatus, customer);
@@ -589,7 +597,6 @@ export class Credentials {
 				console.error('Provider credential ID not found', entity.issuedCredentialId);
 				return null;
 			}
-			console.log(`Fetching credential from provider ${entity.providerId} with ID ${credentialId}`);
 			switch (entity.providerId) {
 				case 'dock': {
 					const dockService = new DockIdentityService();
@@ -600,7 +607,7 @@ export class Credentials {
 					return await studioService.agent.getCredential(credentialId, customer);
 				}
 				default:
-					console.log(`Credential fetch not supported for provider: ${entity.providerId}`);
+					console.warn(`Credential fetch not supported for provider: ${entity.providerId}`);
 					return null;
 			}
 		} catch (error) {

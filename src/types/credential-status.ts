@@ -171,10 +171,14 @@ export type CheckStatusListRequestBody = {
 	statusListVersion: string;
 	index: number;
 	makeFeePayment?: boolean;
+	statusListCredential?: string;
+	statusSize?: number;
+	statusMessage?: BitstringStatusMessage;
 };
 
 export type CheckStatusListRequestQuery = {
 	statusPurpose: DefaultStatusList2021StatusPurposeType;
+	listType: string;
 };
 
 export type CheckStatusListSuccessfulResponseBody = {
@@ -311,8 +315,9 @@ export type FeePaymentOptions = {
 
 export type CheqdCredentialStatus = {
 	id: string;
-	type: string;
-	statusPurpose: string;
+	type: 'BitstringStatusListEntry' | 'StatusList2021Entry';
+	statusPurpose: BitstringStatusListPurposeType;
 	statusListIndex: string;
+	statusListCredential?: string;
 	[x: string]: any;
 };
