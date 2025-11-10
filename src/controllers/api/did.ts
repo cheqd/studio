@@ -330,10 +330,10 @@ export class DIDController {
 				name: OperationNameEnum.DID_CREATE,
 				data: {
 					did: did.did,
-				} satisfies IDIDTrack,
+				},
 				customer: response.locals.customer,
 				user: response.locals.user,
-			} satisfies ITrackOperation);
+			} satisfies ITrackOperation<IDIDTrack>);
 
 			return response.status(StatusCodes.OK).json(did satisfies CreateDidResponseBody);
 		} catch (error) {
@@ -439,10 +439,10 @@ export class DIDController {
 				name: OperationNameEnum.DID_UPDATE,
 				data: {
 					did: result.did,
-				} satisfies IDIDTrack,
+				},
 				customer: response.locals.customer,
 				user: response.locals.user,
-			} satisfies ITrackOperation);
+			} satisfies ITrackOperation<IDIDTrack>);
 
 			return response.status(StatusCodes.OK).json(result satisfies UpdateDidResponseBody);
 		} catch (error) {
@@ -571,10 +571,10 @@ export class DIDController {
 				name: OperationNameEnum.DID_IMPORT,
 				data: {
 					did: identifier.did,
-				} satisfies IDIDTrack,
+				},
 				customer: response.locals.customer,
 				user: response.locals.user,
-			} satisfies ITrackOperation);
+			} satisfies ITrackOperation<IDIDTrack>);
 
 			return response.status(StatusCodes.OK).json(identifier);
 		} catch (error) {
@@ -652,10 +652,10 @@ export class DIDController {
 				name: OperationNameEnum.DID_DEACTIVATE,
 				data: {
 					did,
-				} satisfies IDIDTrack,
+				},
 				customer: response.locals.customer,
 				user: response.locals.user,
-			} satisfies ITrackOperation);
+			} satisfies ITrackOperation<IDIDTrack>);
 
 			return response.status(StatusCodes.OK).json(result satisfies DeactivateDidResponseBody);
 		} catch (error) {
@@ -952,10 +952,10 @@ export class DIDController {
 				name: OperationNameEnum.DID_EXPORT,
 				data: {
 					did: did,
-				} satisfies IDIDTrack,
+				},
 				customer: response.locals.customer,
 				user: response.locals.user,
-			} satisfies ITrackOperation);
+			} satisfies ITrackOperation<IDIDTrack>);
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {

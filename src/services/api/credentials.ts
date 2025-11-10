@@ -1,6 +1,7 @@
 import type { CredentialPayload, VerifiableCredential } from '@veramo/core';
-import { VC_CONTEXT, VC_TYPE } from '../../types/constants.js';
+import { OperationCategoryNameEnum, OperationNameEnum, VC_CONTEXT, VC_TYPE } from '../../types/constants.js';
 import {
+	CredentialCategory,
 	CredentialConnectors,
 	GetIssuedCredentialOptions,
 	IssuedCredentialCreateOptions,
@@ -18,7 +19,11 @@ import { DockIdentityService } from '../identity/providers/index.js';
 import { IssuedCredentialEntity } from '../../database/entities/issued-credential.entity.js';
 import { FindOptionsWhere, LessThanOrEqual, Repository } from 'typeorm';
 import { Connection } from '../../database/connection/connection.js';
-import { CheckStatusListOptions, CheqdCredentialStatus } from '../../types/credential-status.js';
+import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
+import { ICredentialStatusTrack, ITrackOperation } from '../../types/track.js';
+import { eventTracker } from '../track/tracker.js';
+import { CredentialStatusService } from './credential-status.js';
+import { CheckStatusListOptions, CheqdCredentialStatus, StatusRegistryState } from '../../types/credential-status.js';
 import { validate as uuidValidate } from 'uuid';
 import { DefaultStatusList2021StatusPurposeTypes } from '@cheqd/did-provider-cheqd';
 
@@ -29,9 +34,11 @@ const { ENABLE_VERIDA_CONNECTOR } = process.env;
 export class Credentials {
 	public static instance = new Credentials();
 	public repository: Repository<IssuedCredentialEntity>;
+	public statusRegistryRepository: Repository<StatusRegistryEntity>;
 
 	constructor() {
 		this.repository = Connection.instance.dbConnection.getRepository(IssuedCredentialEntity);
+		this.statusRegistryRepository = Connection.instance.dbConnection.getRepository(StatusRegistryEntity);
 	}
 
 	async issue_credential(request: CredentialRequest, customer: CustomerEntity): Promise<VerifiableCredential> {
@@ -72,6 +79,59 @@ export class Credentials {
 		}
 
 		const statusOptions = credentialStatus || null;
+
+		if (statusOptions) {
+			const { success, data: statusRegistry } = await CredentialStatusService.instance.getStatusList(
+				statusOptions,
+				customer,
+				true
+			);
+			if (!success || !statusRegistry) {
+				throw new Error('Status Registry Not Found');
+			}
+
+			if (statusRegistry.state === StatusRegistryState.Full) {
+				throw new Error('Status Registry is Full');
+			}
+
+			if (statusRegistry.state !== StatusRegistryState.Active) {
+				throw new Error(`Status Registry is not Active. Current state: ${statusRegistry.state}`);
+			}
+
+			// assign next index in status list
+			const index = statusRegistry.writeCursor + 1;
+			// do not allow the issuer to assign a index higher than the next available
+			if (statusOptions.statusListIndex && statusOptions.statusListIndex > index) {
+				throw new Error(`Expected statusListIndex ${index} but got ${statusOptions.statusListIndex}`);
+			}
+
+			statusOptions.statusListIndex = index;
+			statusRegistry.writeCursor = index;
+
+			// check if status list is full
+			if (statusRegistry.writeCursor === statusRegistry.size) {
+				statusRegistry.state = StatusRegistryState.Full;
+			}
+
+			// save lastAssignedIndex and state
+			await this.statusRegistryRepository.save(statusRegistry);
+
+			// emit status full event
+			if (statusRegistry.state === StatusRegistryState.Full) {
+				const trackInfo: ITrackOperation<ICredentialStatusTrack> = {
+					category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
+					name: OperationNameEnum.CREDENTIAL_STATUS_CREATE_UNENCRYPTED,
+					customer: customer,
+					data: {
+						did: statusRegistry.issuerId,
+						registryId: statusRegistry.statusListId,
+					},
+				};
+
+				// Track operation
+				eventTracker.emit('track', trackInfo);
+			}
+		}
 
 		// Handle credential issuance and connector logic
 		switch (providerId || connector) {
@@ -316,7 +376,7 @@ export class Credentials {
 			issuerId: options.issuerId,
 			subjectId: options.subjectId,
 			format: options.format,
-			category: options.category || 'credential',
+			category: options.category || CredentialCategory.CREDENTIAL,
 			type: options.type,
 			status: options.status || 'issued',
 			statusUpdatedAt: options.statusUpdatedAt,

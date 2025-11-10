@@ -737,6 +737,61 @@
  *               description: Policy to skip the audience check when set to `false`.
  *               type: boolean
  *               default: false
+ *     CredentialStatusRecordResult:
+ *       type: object
+ *       properties:
+ *         statusListName:
+ *           type: string
+ *         statusListId:
+ *           type: string
+ *         listType:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *         uri:
+ *           type: string
+ *         did:
+ *           type: string
+ *           format: uri
+ *         state:
+ *           type: string
+ *         size:
+ *           type: integer
+ *         lastAssignedIndex:
+ *           type: integer
+ *         credentialCategory:
+ *           type: string
+ *           enum:
+ *             - credential
+ *             - accreditation
+ *         deprecated:
+ *           type: boolean
+ *       example:
+ *         statusListName: cheqd-employee-credentials
+ *         statusListId: 5945233a-a4b5-422b-b893-eaed5cedd2dc
+ *         listType: StatusList2021
+ *         createdAt: 2023-06-26T11:45:19.349Z
+ *         updatedAt: 2023-06-26T11:45:20.000Z
+ *         uri: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc
+ *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *         state: active
+ *         size: 131072
+ *         lastAssignedIndex: 130999
+ *         credentialCategory: credential
+ *         deprecated: false
+ *     ListCredentialStatusRecordsResult:
+ *      type: object
+ *      properties:
+ *          total:
+ *              type: number
+ *          records:
+ *              type: array
+ *              items:
+ *                $ref: '#/components/schemas/CredentialStatusRecordResult'
  *     CredentialStatusCreateBody:
  *       allOf:
  *         - type: object

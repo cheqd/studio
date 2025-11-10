@@ -20,11 +20,40 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import type { CheqdNetwork } from '@cheqd/sdk';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2';
+import { CredentialCategory } from './credential.js';
 
 export enum StatusListType {
 	Bitstring = 'BitstringStatusList',
 	StatusList2021 = 'StatusList2021',
 }
+
+export enum StatusRegistryState {
+	Active = 'ACTIVE',
+	Standby = 'STANDBY',
+	Full = 'FULL',
+	Stale = 'STALE',
+}
+
+export type StatusListRecord = {
+	statusListId: string;
+	statusListName: string;
+	uri: string;
+	issuerId: string;
+	previousUri?: string;
+	nextUri?: string;
+	listType: StatusListType | string;
+	storageType: string;
+	encrypted: boolean;
+	credentialCategory: CredentialCategory;
+	size: number;
+	writeCursor: number;
+	state: StatusRegistryState;
+	createdAt: string;
+	updatedAt: string;
+	sealedAt?: string;
+	deprecated: boolean;
+};
+
 export type CreateUnencryptedStatusListRequestBody = {
 	did: string;
 	statusListName: string;
@@ -36,11 +65,13 @@ export type CreateUnencryptedStatusListRequestBody = {
 	ttl?: number;
 	encoding?: keyof typeof DefaultStatusListEncodings;
 	encodedList?: string;
+	state?: StatusRegistryState;
+	credentialCategory?: CredentialCategory;
 };
 
 export type CreateUnencryptedStatusListRequestQuery = {
 	listType: string;
-	statusPurpose: DefaultStatusList2021StatusPurposeType;
+	statusPurpose: DefaultStatusList2021StatusPurposeType | BitstringStatusListPurposeType;
 };
 
 export type CreateUnencryptedStatusListSuccessfulResponseBody = Pick<
@@ -167,6 +198,15 @@ export type SearchStatusListQuery = {
 	statusListName: string;
 	listType: string;
 	statusPurpose: DefaultStatusList2021StatusPurposeType;
+};
+
+export type ListStatusListQuery = {
+	deprecated?: boolean;
+	did?: string;
+	state?: StatusRegistryState;
+	statusListName?: string;
+	listType?: string;
+	credentialCategory?: CredentialCategory;
 };
 
 export type SearchStatusListSuccessfulResponseBody = Required<
