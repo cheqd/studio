@@ -1166,7 +1166,7 @@ export class CredentialStatusController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/CredentialStatusListSearchResult'
+	 *               $ref: '#/components/schemas/ListCredentialStatusRecordsResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:

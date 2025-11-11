@@ -1099,6 +1099,158 @@
           }
         }
       },
+      "CredentialStatusRecordResult": {
+        "type": "object",
+        "properties": {
+          "statusListId": {
+            "type": "string",
+            "description": "Unique identifier for the status registry"
+          },
+          "statusListName": {
+            "type": "string",
+            "description": "Name of the status list resource"
+          },
+          "uri": {
+            "type": "string",
+            "description": "DID URL of the status list resource"
+          },
+          "issuerId": {
+            "type": "string",
+            "format": "uri",
+            "description": "DID of the issuer"
+          },
+          "previousUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "Link to previous registry in the chain (for FULL registries)"
+          },
+          "nextUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "Link to next registry in the chain (STANDBY registry)"
+          },
+          "listType": {
+            "type": "string",
+            "description": "Type of status list (StatusList2021Revocation, StatusList2021Suspension, BitstringStatusListCredential)"
+          },
+          "storageType": {
+            "type": "string",
+            "enum": [
+              "cheqd",
+              "ipfs",
+              "dock",
+              "paradym"
+            ],
+            "description": "Storage provider for the status list"
+          },
+          "encrypted": {
+            "type": "boolean",
+            "description": "Whether the status list is encrypted"
+          },
+          "credentialCategory": {
+            "type": "string",
+            "enum": [
+              "credential",
+              "accreditation"
+            ],
+            "description": "Category of credentials this status list is for"
+          },
+          "size": {
+            "type": "integer",
+            "description": "Maximum capacity of the status list (total number of indices)"
+          },
+          "writeCursor": {
+            "type": "integer",
+            "description": "Current write cursor position (last assigned index)"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "STANDBY",
+              "FULL"
+            ],
+            "description": "Current state of the registry"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the registry was created"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the registry was last updated"
+          },
+          "sealedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp when the registry was sealed (marked as FULL)"
+          },
+          "deprecated": {
+            "type": "boolean",
+            "description": "Whether the registry is deprecated"
+          }
+        },
+        "example": {
+          "statusListId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
+          "statusListName": "cheqd-employee-credentials",
+          "uri": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-employee-credentials&resourceType=StatusList2021Revocation",
+          "issuerId": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+          "previousUri": null,
+          "nextUri": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-employee-credentials-ext1&resourceType=StatusList2021Revocation",
+          "listType": "StatusList2021Revocation",
+          "storageType": "cheqd",
+          "encrypted": false,
+          "credentialCategory": "credential",
+          "size": 131072,
+          "writeCursor": 105432,
+          "state": "ACTIVE",
+          "createdAt": "2023-06-26T11:45:19.349Z",
+          "updatedAt": "2023-06-26T11:45:20.000Z",
+          "sealedAt": null,
+          "deprecated": false
+        }
+      },
+      "ListCredentialStatusRecordsResult": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CredentialStatusRecordResult"
+            }
+          }
+        },
+        "example": {
+          "total": 1,
+          "records": [
+            {
+              "statusListId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
+              "statusListName": "cheqd-employee-credentials",
+              "uri": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-employee-credentials&resourceType=StatusList2021Revocation",
+              "issuerId": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+              "previousUri": null,
+              "nextUri": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-employee-credentials-ext1&resourceType=StatusList2021Revocation",
+              "listType": "StatusList2021Revocation",
+              "storageType": "cheqd",
+              "encrypted": false,
+              "credentialCategory": "credential",
+              "size": 131072,
+              "writeCursor": 105432,
+              "state": "ACTIVE",
+              "createdAt": "2023-06-26T11:45:19.349Z",
+              "updatedAt": "2023-06-26T11:45:20.000Z",
+              "sealedAt": null,
+              "deprecated": false
+            }
+          ]
+        }
+      },
       "CredentialStatusCreateBody": {
         "allOf": [
           {
@@ -1637,11 +1789,11 @@
             "exclusiveMinimum": false
           },
           "statusListCredential": {
-            "description": "Optional Resolvable DID URL of the BistringStatusList credential to be checked.",
+            "description": "Optional Resolvable DID URL of the BitstringStatusList credential to be checked.",
             "type": "string"
           },
           "statusSize": {
-            "description": "Optional size of the BistringStatusList.",
+            "description": "Optional size of the BitstringStatusList.",
             "type": "number",
             "default": 2
           },
@@ -3858,6 +4010,138 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CredentialStatusListSearchResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/list": {
+      "get": {
+        "tags": [
+          "Status Lists"
+        ],
+        "summary": "List StatusList2021 or BitstringStatusList DID-Linked Resources created by the customer.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "did",
+            "description": "The DID of the issuer of the status list.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "statusListName",
+            "description": "The name of the Status List DID-Linked Resource.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "description": "The state of the Status List DID-Linked Resource.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "STANDBY",
+                "FULL"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "credentialCategory",
+            "description": "Filter status lists by credential category assigned for.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "credential",
+                "accreditation"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "deprecated",
+            "description": "Filter status lists by deprecated status.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListCredentialStatusRecordsResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/list/{statusListId}": {
+      "get": {
+        "tags": [
+          "Status Lists"
+        ],
+        "summary": "Fetch StatusList2021 or BitstringStatusList DID-Linked Resource based on search criteria.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "statusListId",
+            "description": "The statusListId of the status list.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialStatusRecordResult"
                 }
               }
             }

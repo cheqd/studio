@@ -740,48 +740,93 @@
  *     CredentialStatusRecordResult:
  *       type: object
  *       properties:
- *         statusListName:
- *           type: string
  *         statusListId:
  *           type: string
- *         listType:
+ *           description: Unique identifier for the status registry
+ *         statusListName:
  *           type: string
- *         createdAt:
- *           type: string
- *           format: date-time
- *         updatedAt:
- *           type: string
- *           format: date-time
+ *           description: Name of the status list resource
  *         uri:
  *           type: string
- *         did:
+ *           description: DID URL of the status list resource
+ *         issuerId:
  *           type: string
  *           format: uri
- *         state:
+ *           description: DID of the issuer
+ *         previousUri:
  *           type: string
- *         size:
- *           type: integer
- *         lastAssignedIndex:
- *           type: integer
+ *           nullable: true
+ *           description: Link to previous registry in the chain (for FULL registries)
+ *         nextUri:
+ *           type: string
+ *           nullable: true
+ *           description: Link to next registry in the chain (STANDBY registry)
+ *         listType:
+ *           type: string
+ *           description: Type of status list (StatusList2021Revocation, StatusList2021Suspension, BitstringStatusListCredential)
+ *         storageType:
+ *           type: string
+ *           enum:
+ *             - cheqd
+ *             - ipfs
+ *             - dock
+ *             - paradym
+ *           description: Storage provider for the status list
+ *         encrypted:
+ *           type: boolean
+ *           description: Whether the status list is encrypted
  *         credentialCategory:
  *           type: string
  *           enum:
  *             - credential
  *             - accreditation
+ *           description: Category of credentials this status list is for
+ *         size:
+ *           type: integer
+ *           description: Maximum capacity of the status list (total number of indices)
+ *         writeCursor:
+ *           type: integer
+ *           description: Current write cursor position (last assigned index)
+ *         state:
+ *           type: string
+ *           enum:
+ *             - ACTIVE
+ *             - STANDBY
+ *             - FULL
+ *           description: Current state of the registry
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when the registry was created
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when the registry was last updated
+ *         sealedAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *           description: Timestamp when the registry was sealed (marked as FULL)
  *         deprecated:
  *           type: boolean
+ *           description: Whether the registry is deprecated
  *       example:
- *         statusListName: cheqd-employee-credentials
  *         statusListId: 5945233a-a4b5-422b-b893-eaed5cedd2dc
- *         listType: StatusList2021
+ *         statusListName: cheqd-employee-credentials
+ *         uri: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-employee-credentials&resourceType=StatusList2021Revocation
+ *         issuerId: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *         previousUri: null
+ *         nextUri: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-employee-credentials-ext1&resourceType=StatusList2021Revocation
+ *         listType: StatusList2021Revocation
+ *         storageType: cheqd
+ *         encrypted: false
+ *         credentialCategory: credential
+ *         size: 131072
+ *         writeCursor: 105432
+ *         state: ACTIVE
  *         createdAt: 2023-06-26T11:45:19.349Z
  *         updatedAt: 2023-06-26T11:45:20.000Z
- *         uri: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e/resources/5945233a-a4b5-422b-b893-eaed5cedd2dc
- *         did: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
- *         state: active
- *         size: 131072
- *         lastAssignedIndex: 130999
- *         credentialCategory: credential
+ *         sealedAt: null
  *         deprecated: false
  *     ListCredentialStatusRecordsResult:
  *      type: object
@@ -792,6 +837,26 @@
  *              type: array
  *              items:
  *                $ref: '#/components/schemas/CredentialStatusRecordResult'
+ *      example:
+ *         total: 1
+ *         records:
+ *           - statusListId: 5945233a-a4b5-422b-b893-eaed5cedd2dc
+ *             statusListName: cheqd-employee-credentials
+ *             uri: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-employee-credentials&resourceType=StatusList2021Revocation
+ *             issuerId: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *             previousUri: null
+ *             nextUri: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-employee-credentials-ext1&resourceType=StatusList2021Revocation
+ *             listType: StatusList2021Revocation
+ *             storageType: cheqd
+ *             encrypted: false
+ *             credentialCategory: credential
+ *             size: 131072
+ *             writeCursor: 105432
+ *             state: ACTIVE
+ *             createdAt: 2023-06-26T11:45:19.349Z
+ *             updatedAt: 2023-06-26T11:45:20.000Z
+ *             sealedAt: null
+ *             deprecated: false
  *     CredentialStatusCreateBody:
  *       allOf:
  *         - type: object
@@ -1138,10 +1203,10 @@
  *           minimum: 0
  *           exclusiveMinimum: false
  *         statusListCredential:
- *           description: Optional Resolvable DID URL of the BistringStatusList credential to be checked.
+ *           description: Optional Resolvable DID URL of the BitstringStatusList credential to be checked.
  *           type: string
  *         statusSize:
- *           description: Optional size of the BistringStatusList.
+ *           description: Optional size of the BitstringStatusList.
  *           type: number
  *           default: 2
  *         statusMessage:

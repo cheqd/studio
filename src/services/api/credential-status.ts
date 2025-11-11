@@ -1209,7 +1209,7 @@ export class CredentialStatusService {
 		};
 		if (statusOptions.statusListId) {
 			where.registryId = statusOptions.statusListId;
-		} else if (statusOptions.statusListName && statusOptions.statusListName && statusOptions.listType) {
+		} else if (statusOptions.statusListName && statusOptions.listType) {
 			where.registryName = statusOptions.statusListName!;
 			where.registryType = statusOptions.listType!;
 		} else {
@@ -1232,7 +1232,7 @@ export class CredentialStatusService {
 					error: `Status list not found`,
 				};
 			}
-			console.log(JSON.stringify(item));
+
 			return {
 				success: true,
 				statusCode: StatusCodes.OK,

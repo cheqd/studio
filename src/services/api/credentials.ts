@@ -1,5 +1,5 @@
 import type { CredentialPayload, VerifiableCredential } from '@veramo/core';
-import { OperationCategoryNameEnum, OperationNameEnum, VC_CONTEXT, VC_TYPE } from '../../types/constants.js';
+import { VC_CONTEXT, VC_TYPE } from '../../types/constants.js';
 import {
 	CredentialCategory,
 	CredentialConnectors,
@@ -20,12 +20,16 @@ import { IssuedCredentialEntity } from '../../database/entities/issued-credentia
 import { FindOptionsWhere, LessThanOrEqual, Repository } from 'typeorm';
 import { Connection } from '../../database/connection/connection.js';
 import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
-import { ICredentialStatusTrack, ITrackOperation } from '../../types/track.js';
-import { eventTracker } from '../track/tracker.js';
 import { CredentialStatusService } from './credential-status.js';
-import { CheckStatusListOptions, CheqdCredentialStatus, StatusRegistryState } from '../../types/credential-status.js';
+import {
+	CheckStatusListOptions,
+	CheqdCredentialStatus,
+	StatusListType,
+	StatusOptions,
+	StatusRegistryState,
+} from '../../types/credential-status.js';
 import { validate as uuidValidate } from 'uuid';
-import { DefaultStatusList2021StatusPurposeTypes } from '@cheqd/did-provider-cheqd';
+import { BitstringStatusListResourceType, DefaultStatusList2021StatusPurposeTypes } from '@cheqd/did-provider-cheqd';
 
 dotenv.config();
 
@@ -80,57 +84,17 @@ export class Credentials {
 
 		const statusOptions = credentialStatus || null;
 
+		// Phase 1: Atomic Index Reservation with CAS
 		if (statusOptions) {
-			const { success, data: statusRegistry } = await CredentialStatusService.instance.getStatusList(
-				statusOptions,
-				customer,
-				true
-			);
-			if (!success || !statusRegistry) {
-				throw new Error('Status Registry Not Found');
+			// Reserve index atomically using CAS pattern
+			const reservedIndex = await this.reserveStatusIndex(statusOptions, customer);
+
+			// Do not allow the issuer to override with a different index
+			if (statusOptions.statusListIndex && statusOptions.statusListIndex !== reservedIndex) {
+				throw new Error(`Expected statusListIndex ${reservedIndex} but got ${statusOptions.statusListIndex}`);
 			}
 
-			if (statusRegistry.state === StatusRegistryState.Full) {
-				throw new Error('Status Registry is Full');
-			}
-
-			if (statusRegistry.state !== StatusRegistryState.Active) {
-				throw new Error(`Status Registry is not Active. Current state: ${statusRegistry.state}`);
-			}
-
-			// assign next index in status list
-			const index = statusRegistry.writeCursor + 1;
-			// do not allow the issuer to assign a index higher than the next available
-			if (statusOptions.statusListIndex && statusOptions.statusListIndex > index) {
-				throw new Error(`Expected statusListIndex ${index} but got ${statusOptions.statusListIndex}`);
-			}
-
-			statusOptions.statusListIndex = index;
-			statusRegistry.writeCursor = index;
-
-			// check if status list is full
-			if (statusRegistry.writeCursor === statusRegistry.size) {
-				statusRegistry.state = StatusRegistryState.Full;
-			}
-
-			// save lastAssignedIndex and state
-			await this.statusRegistryRepository.save(statusRegistry);
-
-			// emit status full event
-			if (statusRegistry.state === StatusRegistryState.Full) {
-				const trackInfo: ITrackOperation<ICredentialStatusTrack> = {
-					category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
-					name: OperationNameEnum.CREDENTIAL_STATUS_CREATE_UNENCRYPTED,
-					customer: customer,
-					data: {
-						did: statusRegistry.issuerId,
-						registryId: statusRegistry.statusListId,
-					},
-				};
-
-				// Track operation
-				eventTracker.emit('track', trackInfo);
-			}
+			statusOptions.statusListIndex = reservedIndex;
 		}
 
 		// Handle credential issuance and connector logic
@@ -260,6 +224,127 @@ export class Credentials {
 				return verifiable_credential;
 			}
 		}
+	}
+	/**
+	 * Phase 1: Atomic Index Reservation with CAS
+	 * Reserves a unique index using Compare-And-Swap pattern
+	 * Implements lock-free allocation with exponential backoff retry
+	 */
+	private async reserveStatusIndex(
+		statusOptions: StatusOptions,
+		customer: CustomerEntity,
+		maxRetries: number = 5
+	): Promise<number> {
+		let attempt = 0;
+		const baseDelay = 5; // ms
+
+		while (attempt < maxRetries) {
+			// Step 1: Read current state (lock-free)
+			// Query entity directly to get version field for CAS
+			let statusRegistry: StatusRegistryEntity | null = null;
+
+			if (statusOptions.statusListName && statusOptions.statusListType) {
+				// Determine registryType based on statusListType and statusPurpose
+				let registryType: string;
+				if (statusOptions.statusListType === StatusListType.Bitstring) {
+					registryType = BitstringStatusListResourceType;
+				} else if (statusOptions.statusListType === StatusListType.StatusList2021) {
+					// Capitalize first letter of statusPurpose (revocation -> Revocation)
+					const capitalizedPurpose = statusOptions.statusPurpose
+						? statusOptions.statusPurpose.charAt(0).toUpperCase() + statusOptions.statusPurpose.slice(1)
+						: '';
+					registryType = `${statusOptions.statusListType}${capitalizedPurpose}`;
+				} else {
+					registryType = statusOptions.statusListType;
+				}
+
+				statusRegistry = await this.statusRegistryRepository.findOne({
+					where: {
+						registryName: statusOptions.statusListName,
+						registryType: registryType,
+						customer: { customerId: customer.customerId },
+					},
+					relations: ['identifier'],
+				});
+			}
+
+			if (!statusRegistry) {
+				throw new Error('Status Registry Not Found');
+			}
+
+			// Validation checks
+			if (statusRegistry.state === StatusRegistryState.Full) {
+				throw new Error('Status Registry is Full');
+			}
+
+			if (statusRegistry.state !== StatusRegistryState.Active) {
+				throw new Error(`Status Registry is not Active. Current state: ${statusRegistry.state}`);
+			}
+
+			// Check capacity
+			if (statusRegistry.writeCursor >= statusRegistry.registrySize) {
+				throw new Error('Status Registry has reached capacity');
+			}
+
+			// Calculate next index
+			const nextIndex = statusRegistry.writeCursor + 1;
+			const currentVersion = statusRegistry.version;
+
+			// Step 2: Reserve via Compare-And-Swap
+			const updates: Partial<StatusRegistryEntity> = {
+				writeCursor: nextIndex,
+			};
+
+			// Check if registry will be FULL after this allocation
+			if (nextIndex >= statusRegistry.registrySize) {
+				updates.state = StatusRegistryState.Full;
+			}
+
+			// Attempt CAS update using QueryBuilder
+			const result = await this.statusRegistryRepository
+				.createQueryBuilder()
+				.update(StatusRegistryEntity)
+				.set({
+					...updates,
+					version: currentVersion + 1,
+					updatedAt: new Date(),
+				})
+				.where('registryId = :registryId', { registryId: statusRegistry.registryId })
+				.andWhere('version = :version', { version: currentVersion })
+				.execute();
+
+			const casSuccess = (result.affected ?? 0) === 1;
+
+			if (casSuccess) {
+				// Success! Return reserved index
+
+				// Check if we need to trigger rotation (threshold or full)
+				const utilizationPercent = (nextIndex / statusRegistry.registrySize) * 100;
+				if (
+					utilizationPercent >= statusRegistry.threshold_percentage ||
+					nextIndex >= statusRegistry.registrySize
+				) {
+					// Trigger async rotation (don't wait)
+					CredentialStatusService.instance
+						.rotateStatusList(statusRegistry.registryId, customer)
+						.catch((err) => {
+							console.error('Failed to rotate status list:', err);
+						});
+				}
+
+				return nextIndex;
+			}
+
+			// CAS failed - concurrent modification detected
+			attempt++;
+			if (attempt < maxRetries) {
+				// Exponential backoff
+				const delay = Math.min(baseDelay * Math.pow(2, attempt), 1000);
+				await new Promise((resolve) => setTimeout(resolve, delay));
+			}
+		}
+
+		throw new Error(`Failed to reserve index after ${maxRetries} attempts - high concurrency`);
 	}
 
 	/**
