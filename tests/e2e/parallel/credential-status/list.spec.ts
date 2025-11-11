@@ -69,7 +69,9 @@ test('[Positive] It can list status registries filtered by state', async ({ requ
 });
 
 test('[Positive] It can list status registries filtered by statusListName', async ({ request }) => {
-	const response = await request.get(`/credential-status/list?statusListName=${DEFAULT_STATUS_LIST_UNENCRYPTED_NAME}`);
+	const response = await request.get(
+		`/credential-status/list?statusListName=${DEFAULT_STATUS_LIST_UNENCRYPTED_NAME}`
+	);
 	expect(response).toBeOK();
 	expect(response.status()).toBe(StatusCodes.OK);
 
