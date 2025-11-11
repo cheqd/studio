@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.15.0-develop.1](https://github.com/cheqd/studio/compare/3.14.0...3.15.0-develop.1) (2025-11-10)
+
+### Features
+
+* Add new users to Mailchimp product list [DEV-5409] ([#754](https://github.com/cheqd/studio/issues/754)) ([e011c3c](https://github.com/cheqd/studio/commit/e011c3c4d69afdc8e628471ffc8fb50c960885cd))
+
+## [3.14.0](https://github.com/cheqd/studio/compare/3.13.0...3.14.0) (2025-11-07)
+
+### Features
+
+* add update issued credential api ([#751](https://github.com/cheqd/studio/issues/751)) ([9f93244](https://github.com/cheqd/studio/commit/9f93244af3db1fcbd097bcf50a4503bd7f0f95d7))
+* IssuedCredential table and apis [DEV-5380] [DEV-5356] ([#748](https://github.com/cheqd/studio/issues/748)) ([93a3a7d](https://github.com/cheqd/studio/commit/93a3a7dcebf7ff1662f6bfa0cb03dbe882a6d23c)), closes [#749](https://github.com/cheqd/studio/issues/749)
+
+### Bug Fixes
+
+* additional parameter for provider test  ([#753](https://github.com/cheqd/studio/issues/753)) ([8f40ad5](https://github.com/cheqd/studio/commit/8f40ad5651e4d7441f09797933546df44a24ccf3))
+
 ## [3.14.0-develop.3](https://github.com/cheqd/studio/compare/3.14.0-develop.2...3.14.0-develop.3) (2025-11-03)
 
 ### Bug Fixes
