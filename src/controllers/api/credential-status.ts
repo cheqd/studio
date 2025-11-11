@@ -620,7 +620,6 @@ export class CredentialStatusController {
 			.notEmpty()
 			.withMessage('statusListName: should be a non-empty string')
 			.bail(),
-		query('statusListVersion').optional().isString().withMessage('statusListVersion: should be a string').bail(),
 		query('state')
 			.optional()
 			.isString()
@@ -1083,11 +1082,6 @@ export class CredentialStatusController {
 	 *         required: true
 	 *         schema:
 	 *           type: string
-	 *       - in: query
-	 *         name: statusListVersion
-	 *         description: The version of the Status List DID-Linked Resource.
-	 *         schema:
-	 *           type: string
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -1145,11 +1139,6 @@ export class CredentialStatusController {
 	 *         schema:
 	 *           type: string
 	 *       - in: query
-	 *         name: statusListVersion
-	 *         description: The version of the Status List DID-Linked Resource.
-	 *         schema:
-	 *           type: string
-	 *       - in: query
 	 *         name: state
 	 *         description: The state of the Status List DID-Linked Resource.
 	 *         schema:
@@ -1177,7 +1166,7 @@ export class CredentialStatusController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/CredentialStatusListSearchResult'
+	 *               $ref: '#/components/schemas/ListCredentialStatusRecordsResult'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -1207,7 +1196,7 @@ export class CredentialStatusController {
 	/**
 	 * @openapi
 	 *
-	 * /credential-status/{statusListId}:
+	 * /credential-status/list/{statusListId}:
 	 *   get:
 	 *     tags: [ Status Lists ]
 	 *     summary: Fetch StatusList2021 or BitstringStatusList DID-Linked Resource based on search criteria.

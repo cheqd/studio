@@ -35,18 +35,22 @@ export enum StatusRegistryState {
 }
 
 export type StatusListRecord = {
-	statusListName: string;
-	statusListVersion: string;
 	statusListId: string;
+	statusListName: string;
+	uri: string;
+	issuerId: string;
+	previousUri?: string;
+	nextUri?: string;
 	listType: StatusListType | string;
+	storageType: string;
+	encrypted: boolean;
+	credentialCategory: CredentialCategory;
+	size: number;
+	writeCursor: number;
+	state: StatusRegistryState;
 	createdAt: string;
 	updatedAt: string;
-	uri: string;
-	did: string;
-	state: StatusRegistryState;
-	size: number;
-	lastAssignedIndex: number;
-	credentialCategory: CredentialCategory;
+	sealedAt?: string;
 	deprecated: boolean;
 };
 
@@ -108,7 +112,7 @@ export type UpdateUnencryptedStatusListRequestBody = {
 	did: string;
 	indices: number | number[];
 	statusListName: string;
-	statusListVersion: string;
+	statusListVersion?: string;
 };
 
 export type UpdateUnencryptedStatusListRequestQuery = {
@@ -168,7 +172,6 @@ export type UpdateEncryptedStatusListUnsuccessfulResponseBody = UpdateUnencrypte
 export type CheckStatusListRequestBody = {
 	did: string;
 	statusListName: string;
-	statusListVersion: string;
 	index: number;
 	makeFeePayment?: boolean;
 	statusListCredential?: string;
@@ -193,7 +196,6 @@ export type CheckStatusListUnsuccessfulResponseBody = {
 export type SearchStatusListQuery = {
 	did: string;
 	statusListName: string;
-	statusListVersion?: string;
 	listType: string;
 	statusPurpose: DefaultStatusList2021StatusPurposeType;
 };
@@ -204,7 +206,6 @@ export type ListStatusListQuery = {
 	state?: StatusRegistryState;
 	statusListName?: string;
 	listType?: string;
-	statusListVersion?: string;
 	credentialCategory?: CredentialCategory;
 };
 

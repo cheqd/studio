@@ -28,7 +28,7 @@ export interface CredentialRequest {
 	expirationDate?: DateType;
 	issuerDid: string;
 	format: 'jsonld' | 'jwt' | 'sd-jwt-vc' | 'anoncreds';
-	credentialStatus?: StatusOptions & { statusListId?: string };
+	credentialStatus?: StatusOptions & { id?: string };
 	credentialSchema?: string;
 	credentialName?: string;
 	credentialSummary?: string;

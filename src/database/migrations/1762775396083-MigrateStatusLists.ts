@@ -17,7 +17,7 @@ import { CredentialCategory } from '../../types/credential.js';
  * 2. Resolves status list data from DID URLs via resolver
  * 3. Creates corresponding StatusRegistryEntity records'
  */
-export class MigrationsStatusLists1761834657128 implements MigrationInterface {
+export class MigrationsStatusLists1762775396083 implements MigrationInterface {
 	private readonly RESOLVER_URL = 'https://resolver.cheqd.net/1.0/identifiers';
 	private readonly BATCH_SIZE = 50; // Process statuslists in batches to avoid memory issues
 
@@ -84,23 +84,29 @@ export class MigrationsStatusLists1761834657128 implements MigrationInterface {
 						throw new Error(`Failed to resolve statuslist from ${didUrl}`);
 					}
 
+					// Calculate registry size from the encoded list
+					const registrySize = this.calculateRegistrySize(statuslist.resource);
+
 					// Create StatusRegistryEntity
 					const statusRegistryEntity = new StatusRegistryEntity({
-						registryType: resource.resourceType,
-						storageType: 'cheqd',
-						registryName: resource.resourceName,
-						identifier: resource.identifier,
-						version: statuslist.resourceMetadata?.resourceVersion || '',
 						uri: `${resource.identifier.did}?resourceName=${resource.resourceName}&resourceType=${resource.resourceType}`,
-						customer: resource.customer,
-						deprecated: false,
+						registryType: resource.resourceType,
+						registryName: resource.resourceName,
+						credentialCategory: CredentialCategory.CREDENTIAL,
+						version: 0, // default version to 0 for migrated lists
+						registrySize: registrySize,
+						writeCursor: 0, // default writeCursor to 0 for migrated lists
 						state: StatusRegistryState.Active,
-						size: 0,
-						lastAssignedIndex: 0,
+						storageType: 'cheqd',
 						metadata: {
 							migratedFrom: 'ResourceEntity',
+							originalResourceId: resource.resourceId,
 						},
-						credentialCategory: CredentialCategory.CREDENTIAL,
+						identifier: resource.identifier,
+						customer: resource.customer,
+						deprecated: false,
+						encrypted: resource.encrypted || false,
+						threshold_percentage: 80,
 					});
 
 					await queryRunner.manager.save(StatusRegistryEntity, statusRegistryEntity);
@@ -155,6 +161,41 @@ export class MigrationsStatusLists1761834657128 implements MigrationInterface {
 			.execute();
 
 		console.log(`Rolled back ${result.affected} migrated statuslists`);
+	}
+
+	/**
+	 * Calculate registry size from the statuslist resource
+	 * The encodedList is base64url encoded, so we decode and calculate bit length
+	 */
+	private calculateRegistrySize(
+		resource: StatusList2021Revocation | StatusList2021Suspension | BitstringStatusList
+	): number {
+		try {
+			// Default size if we can't determine
+			const DEFAULT_SIZE = 131072; // 128KB * 8 bits = 131,072 bits (default from design)
+
+			// Extract encodedList from the credential subject
+			const encodedList =
+				(resource as any)?.credentialSubject?.encodedList ||
+				(resource as any)?.credentialSubject?.statusList?.encodedList;
+
+			if (!encodedList || typeof encodedList !== 'string') {
+				console.warn('    No encodedList found, using default size');
+				return DEFAULT_SIZE;
+			}
+
+			// Decode base64url to get byte length, then convert to bit length
+			// base64url: each character represents 6 bits
+			// Remove padding if present
+			const cleanedEncodedList = encodedList.replace(/=/g, '');
+			const byteLength = Math.ceil((cleanedEncodedList.length * 6) / 8);
+			const bitLength = byteLength * 8;
+
+			return bitLength > 0 ? bitLength : DEFAULT_SIZE;
+		} catch (error) {
+			console.warn('    Error calculating registry size:', error);
+			return 131072; // Default fallback
+		}
 	}
 
 	/**

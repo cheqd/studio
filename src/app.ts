@@ -193,7 +193,7 @@ class App {
 			new CredentialStatusController().listStatusList
 		);
 		app.get(
-			'/credential-status/:statusListId',
+			'/credential-status/list/:statusListId',
 			CredentialStatusController.fetchValidator,
 			new CredentialStatusController().fetchStatusList
 		);

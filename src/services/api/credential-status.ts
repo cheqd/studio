@@ -104,7 +104,7 @@ export class CredentialStatusService {
 						did,
 						{
 							data,
-							name: `${statusListName}-${statusListVersion}`,
+							name: statusListName,
 							alsoKnownAs,
 							version: statusListVersion,
 						},
@@ -115,7 +115,7 @@ export class CredentialStatusService {
 						did,
 						{
 							data,
-							name: `${statusListName}-${statusListVersion}`,
+							name: statusListName,
 							alsoKnownAs,
 							version: statusListVersion,
 						},
@@ -139,7 +139,7 @@ export class CredentialStatusService {
 				result = (await identityServiceStrategySetup.agent.createUnencryptedBitstringStatusList(
 					did,
 					{
-						name: `${statusListName}-${statusListVersion}`,
+						name: statusListName,
 						alsoKnownAs,
 						version: statusListVersion,
 					},
@@ -159,7 +159,7 @@ export class CredentialStatusService {
 				result = (await identityServiceStrategySetup.agent.createUnencryptedStatusList2021(
 					did,
 					{
-						name: `${statusListName}-${statusListVersion}`,
+						name: statusListName,
 						alsoKnownAs,
 						version: statusListVersion,
 					},
@@ -184,17 +184,17 @@ export class CredentialStatusService {
 			// persist status list in the db
 			const statusRegistry = new StatusRegistryEntity({
 				registryId: v4(),
+				uri: `${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
+				registryType: listType,
+				registryName: statusListName,
+				credentialCategory,
+				version: 1,
+				registrySize: statusSize,
+				writeCursor: 0,
 				state: state || StatusRegistryState.Active,
 				storageType: 'cheqd',
-				registryType: listType,
-				registryName: `${statusListName}-${statusListVersion}`,
-				version: statusListVersion || '1.0',
-				uri: `${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
 				identifier,
-				size: statusSize,
-				lastAssignedIndex: 0,
 				customer,
-				credentialCategory,
 				metadata: {
 					statusPurpose,
 				},
@@ -283,7 +283,7 @@ export class CredentialStatusService {
 				result = (await identityServiceStrategySetup.agent.createEncryptedBitstringStatusList(
 					did,
 					{
-						name: `${statusListName}-${statusListVersion}`, // to make it unique
+						name: statusListName,
 						alsoKnownAs,
 						version: statusListVersion,
 					},
@@ -306,7 +306,7 @@ export class CredentialStatusService {
 				result = (await identityServiceStrategySetup.agent.createEncryptedStatusList2021(
 					did,
 					{
-						name: `${statusListName}-${statusListVersion}`,
+						name: statusListName,
 						alsoKnownAs,
 						version: statusListVersion,
 					},
@@ -335,17 +335,18 @@ export class CredentialStatusService {
 			// persist status list in the db
 			const statusRegistry = new StatusRegistryEntity({
 				registryId: v4(),
+				uri: `${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
+				registryType: listType,
+				registryName: statusListName,
+				credentialCategory,
+				version: 1,
+				registrySize: statusSize,
+				writeCursor: 0,
 				state: state || StatusRegistryState.Active,
 				storageType: 'cheqd',
-				registryType: listType,
-				registryName: `${statusListName}-${statusListVersion}`,
-				version: statusListVersion || '1.0',
-				uri: `${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
 				identifier,
-				size: statusSize,
-				lastAssignedIndex: 0,
 				customer,
-				credentialCategory,
+				encrypted: true,
 				metadata: {
 					statusPurpose,
 					paymentConditions,
@@ -679,16 +680,7 @@ export class CredentialStatusService {
 	}> {
 		const feePaymentOptions: IFeePaymentOptions[] = [];
 		// collect request parameters - case: body
-		const {
-			did,
-			statusListName,
-			statusListVersion,
-			index,
-			makeFeePayment,
-			statusListCredential,
-			statusSize,
-			statusMessage,
-		} = body;
+		const { did, statusListName, index, makeFeePayment, statusListCredential, statusSize, statusMessage } = body;
 		// collect request parameters - case: query
 		const { statusPurpose, listType } = query;
 
@@ -723,7 +715,7 @@ export class CredentialStatusService {
 
 		const statusList = await identityServiceStrategySetup.agent.searchStatusList(
 			did,
-			`${statusListName}`,
+			statusListName,
 			listType,
 			statusPurpose
 		);
@@ -885,15 +877,13 @@ export class CredentialStatusService {
 		data?: any;
 		error?: string;
 	}> {
-		const { did, statusListName, statusListVersion, listType, statusPurpose } = query;
+		const { did, statusListName, listType, statusPurpose } = query;
 
 		try {
 			// find in registry and retreive uri
 			const result = await new IdentityServiceStrategySetup().agent.searchStatusList(
 				did,
-				statusListVersion && statusListVersion != ''
-					? `${statusListName}-${statusListVersion}`
-					: statusListName,
+				statusListName,
 				listType,
 				statusPurpose
 			);
@@ -927,82 +917,198 @@ export class CredentialStatusService {
 		}
 	}
 
-	async rotateStatusList(statusListId: string, customer: CustomerEntity) {
-		const promises = [];
-		const updatedAt = new Date();
+	/**
+	 * Helper method to determine the next resource name in the registry chain
+	 * Examples:
+	 *   "test-list" -> "test-list-ext1"
+	 *   "test-list-ext1" -> "test-list-ext2"
+	 *   "test-list-ext5" -> "test-list-ext6"
+	 */
+	private getNextResourceName(currentRegistryName: string): string {
+		// Check if already has extension
+		const extMatch = currentRegistryName.match(/^(.+)-ext(\d+)$/);
 
-		// find existing registry
+		if (extMatch) {
+			// Already has extension, increment it
+			const baseName = extMatch[1];
+			const currentExt = parseInt(extMatch[2], 10);
+			return `${baseName}-ext${currentExt + 1}`;
+		} else {
+			// First extension
+			return `${currentRegistryName}-ext1`;
+		}
+	}
+
+	/**
+	 * Update registry using CAS (Compare-And-Swap) pattern for optimistic locking
+	 * @returns true if update succeeded, false if concurrent modification detected
+	 */
+	private async updateRegistryWithCAS(
+		registryId: string,
+		currentVersion: number,
+		updates: Partial<StatusRegistryEntity>
+	): Promise<boolean> {
+		const result = await this.repository
+			.createQueryBuilder()
+			.update(StatusRegistryEntity)
+			.set({
+				...updates,
+				version: currentVersion + 1,
+				updatedAt: new Date(),
+			})
+			.where('registryId = :registryId', { registryId })
+			.andWhere('version = :version', { version: currentVersion })
+			.execute();
+
+		return (result.affected ?? 0) === 1;
+	}
+
+	/**
+	 * Find registry by URI
+	 */
+	private async findRegistryByUri(uri: string, customer: CustomerEntity): Promise<StatusRegistryEntity | null> {
+		return await this.repository.findOne({
+			where: {
+				uri,
+				customer,
+			},
+			relations: ['identifier'],
+		});
+	}
+
+	/**
+	 * Create STANDBY registry linked to the active registry
+	 */
+	private async createStandbyRegistry(activeRegistry: StatusRegistryEntity, customer: CustomerEntity): Promise<void> {
+		const nextResourceName = this.getNextResourceName(activeRegistry.registryName);
+		const nextUri = `${activeRegistry.identifier.did}?resourceName=${nextResourceName}&resourceType=${activeRegistry.registryType}`;
+
+		// Update current registry with next_uri using CAS
+		const updated = await this.updateRegistryWithCAS(activeRegistry.registryId, activeRegistry.version, {
+			next_uri: nextUri,
+		});
+
+		if (!updated) {
+			throw new Error('Failed to update next_uri - concurrent modification detected');
+		}
+
+		// Create new STANDBY registry
+		const newRegistryRequestBody = {
+			...activeRegistry.metadata,
+			encoding: activeRegistry.metadata?.encoding,
+			did: activeRegistry.identifier.did,
+			statusListName: nextResourceName,
+			statusListVersion: '1',
+			length: activeRegistry.registrySize,
+			state: StatusRegistryState.Standby,
+			credentialCategory: activeRegistry.credentialCategory,
+			prev_uri: activeRegistry.uri,
+		};
+
+		const newRegistryQuery = {
+			listType: activeRegistry.registryType,
+			statusPurpose: activeRegistry.metadata?.statusPurpose as
+				| DefaultStatusList2021StatusPurposeType
+				| BitstringStatusListPurposeType,
+		};
+
+		activeRegistry.encrypted
+			? await this.createEncryptedStatusList(newRegistryRequestBody, newRegistryQuery, customer)
+			: await this.createUnencryptedStatusList(newRegistryRequestBody, newRegistryQuery, customer);
+	}
+
+	/**
+	 * Rotate status list based on capacity threshold
+	 * This function handles:
+	 * 1. Creating STANDBY when threshold is reached
+	 * 2. Promoting STANDBY to ACTIVE when registry is FULL
+	 * 3. Marking current registry as FULL
+	 */
+	async rotateStatusList(statusListId: string, customer: CustomerEntity) {
+		// Find existing registry
 		const registry = await this.repository.findOne({
 			where: {
 				registryId: statusListId,
 				customer,
 			},
+			relations: ['identifier'],
 		});
+
 		if (!registry) {
 			throw new Error('Registry not found');
 		}
 
-		// Update current registry state to FULL if not already
-		if (registry.state !== StatusRegistryState.Full) {
-			registry.state = StatusRegistryState.Full;
-			registry.updatedAt = updatedAt;
-			promises.push(this.repository.save(registry));
-		}
-		let version = registry.version;
+		// Calculate utilization
+		const utilizationPercent = (registry.writeCursor / registry.registrySize) * 100;
+		const isFull = registry.writeCursor >= registry.registrySize;
+		const isAtThreshold = utilizationPercent >= registry.threshold_percentage;
 
-		// search for standby status lists in the registry
-		const standbyRegistry = await this.repository.findOne({
-			where: {
-				state: StatusRegistryState.Standby,
-				registryName: registry.registryName,
-				registryType: registry.registryType,
-				size: registry.size,
-				storageType: registry.storageType,
-			},
+		if (isFull) {
+			// Registry is FULL - promote STANDBY to ACTIVE
+			await this.handleFullRegistry(registry, customer);
+		} else if (isAtThreshold) {
+			// Threshold reached - create STANDBY if not exists
+			await this.handleThresholdReached(registry, customer);
+		} else {
+			throw new Error(
+				`Registry is not at threshold (${utilizationPercent.toFixed(2)}% < ${registry.threshold_percentage}%)`
+			);
+		}
+	}
+
+	/**
+	 * Handle registry that has reached threshold
+	 * Creates STANDBY if one doesn't exist
+	 */
+	private async handleThresholdReached(registry: StatusRegistryEntity, customer: CustomerEntity): Promise<void> {
+		// Check if STANDBY already exists
+		if (registry.next_uri) {
+			// STANDBY already exists, nothing to do
+			console.log(`STANDBY already exists for registry ${registry.registryId}`);
+			return;
+		}
+
+		// Create STANDBY registry
+		await this.createStandbyRegistry(registry, customer);
+	}
+
+	/**
+	 * Handle registry that is FULL
+	 * Promotes STANDBY to ACTIVE and creates new STANDBY
+	 */
+	private async handleFullRegistry(registry: StatusRegistryEntity, customer: CustomerEntity): Promise<void> {
+		// Check if next_uri exists (STANDBY)
+		if (!registry.next_uri) {
+			throw new Error('Registry is FULL but no STANDBY exists. Create STANDBY first.');
+		}
+
+		// Mark current as FULL using CAS
+		const markedFull = await this.updateRegistryWithCAS(registry.registryId, registry.version, {
+			state: StatusRegistryState.Full,
 		});
 
-		const newRegistryRequestBody = {
-			...registry.metadata,
-			encoding: registry.metadata?.encoding,
-			did: registry.identifier.did,
-			statusListName: registry.registryName,
-			statusListVersion: version,
-			length: registry.size,
-			state: StatusRegistryState.Active,
-			credentialCategory: registry.credentialCategory,
-		};
-
-		const newRegistryQuery = {
-			listType: registry.registryType,
-			statusPurpose: registry.metadata?.statusPurpose as
-				| DefaultStatusList2021StatusPurposeType
-				| BitstringStatusListPurposeType,
-		};
-
-		// if standby exists promote it to active and create a new registry with standby state
-		if (standbyRegistry) {
-			standbyRegistry.state = StatusRegistryState.Active;
-			standbyRegistry.updatedAt = updatedAt;
-			promises.push(this.repository.save(standbyRegistry));
-		} else {
-			// if no-standby create a new registry with active state
-			version = !isNaN(parseFloat(version)) ? `${parseFloat(version) + 1.0}` : '2.0'; // no-standby, we introduce continuous versioning
-			// publish the registry (not parallelizing this promise as ledger operations cannot be parallelized), records are persisted within the functions
-			registry.encrypted
-				? await this.createEncryptedStatusList(newRegistryRequestBody, newRegistryQuery, customer)
-				: await this.createUnencryptedStatusList(newRegistryRequestBody, newRegistryQuery, customer);
+		if (!markedFull) {
+			throw new Error('Failed to mark registry as FULL - concurrent modification detected');
 		}
 
-		// create new standby registry
-		newRegistryRequestBody.state = StatusRegistryState.Standby;
-		newRegistryRequestBody.statusListVersion = `${parseFloat(version) + 1.0}`; // continuous versioning as active is created above
-		const newStandbyStatusList = registry.encrypted
-			? this.createEncryptedStatusList(newRegistryRequestBody, newRegistryQuery, customer)
-			: this.createUnencryptedStatusList(newRegistryRequestBody, newRegistryQuery, customer);
+		// Find STANDBY registry by next_uri
+		const standbyRegistry = await this.findRegistryByUri(registry.next_uri, customer);
 
-		promises.push(newStandbyStatusList);
+		if (!standbyRegistry) {
+			throw new Error('STANDBY registry not found at next_uri');
+		}
 
-		await Promise.all(promises);
+		// Promote STANDBY to ACTIVE using CAS
+		const promoted = await this.updateRegistryWithCAS(standbyRegistry.registryId, standbyRegistry.version, {
+			state: StatusRegistryState.Active,
+		});
+
+		if (!promoted) {
+			throw new Error('Failed to promote STANDBY to ACTIVE - concurrent modification detected');
+		}
+
+		// Create new STANDBY for the newly promoted ACTIVE registry
+		await this.createStandbyRegistry(standbyRegistry, customer);
 	}
 
 	async listStatusList(
@@ -1014,7 +1120,7 @@ export class CredentialStatusService {
 		data?: { records: StatusListRecord[]; total: number };
 		error?: string;
 	}> {
-		const { deprecated, did, state, statusListName, listType, statusListVersion, credentialCategory } = query;
+		const { deprecated, did, state, statusListName, listType, credentialCategory } = query;
 
 		try {
 			const where: FindOptionsWhere<StatusRegistryEntity> = {
@@ -1043,10 +1149,6 @@ export class CredentialStatusService {
 				where.registryName = statusListName;
 			}
 
-			if (statusListVersion) {
-				where.version = statusListVersion;
-			}
-
 			if (credentialCategory) {
 				where.credentialCategory = credentialCategory;
 			}
@@ -1058,18 +1160,22 @@ export class CredentialStatusService {
 				statusCode: StatusCodes.OK,
 				data: {
 					records: data.map((item) => ({
-						statusListName: item.registryName,
-						statusListVersion: item.version,
 						statusListId: item.registryId,
+						statusListName: item.registryName,
+						uri: item.uri,
+						issuerId: item.identifier.did,
+						previousUri: item.prev_uri,
+						nextUri: item.next_uri,
 						listType: item.registryType,
+						storageType: item.storageType,
+						encrypted: item.encrypted || false,
+						credentialCategory: item.credentialCategory,
+						size: item.registrySize,
+						writeCursor: item.writeCursor,
+						state: item.state,
 						createdAt: item.createdAt.toISOString(),
 						updatedAt: item.updatedAt.toISOString(),
-						uri: item.uri,
-						did: item.identifier.did,
-						state: item.state,
-						size: item.size,
-						lastAssignedIndex: item.lastAssignedIndex,
-						credentialCategory: item.credentialCategory,
+						sealedAt: item.sealedAt ? item.sealedAt.toISOString() : undefined,
 						deprecated: item.deprecated,
 					})),
 					total: count,
@@ -1088,7 +1194,6 @@ export class CredentialStatusService {
 		statusOptions: {
 			statusListId?: string;
 			statusListName?: string;
-			statusListVersion?: string;
 			listType?: StatusListType;
 		},
 		customer: CustomerEntity,
@@ -1104,25 +1209,20 @@ export class CredentialStatusService {
 		};
 		if (statusOptions.statusListId) {
 			where.registryId = statusOptions.statusListId;
-		} else if (
-			statusOptions.statusListName &&
-			statusOptions.statusListName &&
-			statusOptions.statusListVersion &&
-			statusOptions.listType
-		) {
+		} else if (statusOptions.statusListName && statusOptions.listType) {
 			where.registryName = statusOptions.statusListName!;
-			where.version = statusOptions.statusListVersion!;
 			where.registryType = statusOptions.listType!;
 		} else {
 			return {
 				success: false,
 				statusCode: StatusCodes.BAD_REQUEST,
-				error: 'Either statusListId or statusListName, statusListVersion and listType must be provided',
+				error: 'Either statusListId or statusListName and listType must be provided',
 			};
 		}
 		try {
 			const item = await this.repository.findOne({
 				where,
+				relations: ['identifier'],
 				lock: lock ? { mode: 'pessimistic_write' } : undefined,
 			});
 			if (!item) {
@@ -1137,18 +1237,22 @@ export class CredentialStatusService {
 				success: true,
 				statusCode: StatusCodes.OK,
 				data: {
-					statusListName: item.registryName,
-					statusListVersion: item.version,
 					statusListId: item.registryId,
+					statusListName: item.registryName,
+					uri: item.uri,
+					issuerId: item.identifier.did,
+					previousUri: item.prev_uri,
+					nextUri: item.next_uri,
 					listType: item.registryType,
+					storageType: item.storageType,
+					encrypted: item.encrypted || false,
+					credentialCategory: item.credentialCategory,
+					size: item.registrySize,
+					writeCursor: item.writeCursor,
+					state: item.state,
 					createdAt: item.createdAt.toISOString(),
 					updatedAt: item.updatedAt.toISOString(),
-					uri: item.uri,
-					did: item.identifier.did,
-					state: item.state,
-					size: item.size,
-					lastAssignedIndex: item.lastAssignedIndex,
-					credentialCategory: item.credentialCategory,
+					sealedAt: item.sealedAt ? item.sealedAt.toISOString() : undefined,
 					deprecated: item.deprecated,
 				},
 			};
