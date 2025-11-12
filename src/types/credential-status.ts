@@ -52,6 +52,7 @@ export type StatusListRecord = {
 	updatedAt: string;
 	sealedAt?: string;
 	deprecated: boolean;
+	additionalUsedIndexes?: number[];
 };
 
 export type CreateUnencryptedStatusListRequestBody = {

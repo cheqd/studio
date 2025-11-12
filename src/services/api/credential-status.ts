@@ -1254,6 +1254,7 @@ export class CredentialStatusService {
 					updatedAt: item.updatedAt.toISOString(),
 					sealedAt: item.sealedAt ? item.sealedAt.toISOString() : undefined,
 					deprecated: item.deprecated,
+					additionalUsedIndexes: item.metadata?.additionalUsedIndexes || [],
 				},
 			};
 		} catch (error) {

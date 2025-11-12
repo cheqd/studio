@@ -287,7 +287,18 @@ export class Credentials {
 			}
 
 			// Calculate next index
-			const nextIndex = statusRegistry.writeCursor + 1;
+			let nextIndex = statusRegistry.writeCursor + 1;
+
+			// Check if the next index is already used (from migration of historical credentials)
+			const additionalUsedIndexes = (statusRegistry.metadata?.additionalUsedIndexes as number[]) || [];
+			while (additionalUsedIndexes.includes(nextIndex)) {
+				nextIndex++;
+				// Safety check: ensure we don't exceed registry size
+				if (nextIndex >= statusRegistry.registrySize) {
+					throw new Error('Status Registry has reached capacity (including additional used indexes)');
+				}
+			}
+
 			const currentVersion = statusRegistry.version;
 
 			// Step 2: Reserve via Compare-And-Swap
@@ -319,7 +330,9 @@ export class Credentials {
 				// Success! Return reserved index
 
 				// Check if we need to trigger rotation (threshold or full)
-				const utilizationPercent = (nextIndex / statusRegistry.registrySize) * 100;
+				// Calculate utilization including additional used indexes
+				const totalUsedIndexes = nextIndex + additionalUsedIndexes.length;
+				const utilizationPercent = (totalUsedIndexes / statusRegistry.registrySize) * 100;
 				if (
 					utilizationPercent >= statusRegistry.threshold_percentage ||
 					nextIndex >= statusRegistry.registrySize

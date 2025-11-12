@@ -17,6 +17,7 @@ import { CredentialCategory } from '../../types/credential.js';
 export interface StatusRegistryMetadata {
 	encoding?: 'base64url' | 'hex';
 	statusPurpose?: string;
+	additionalUsedIndexes?: number[];
 
 	[x: string]: any;
 }
@@ -121,6 +122,7 @@ export class StatusRegistryEntity {
 		threshold_percentage?: number;
 		identifier: Identifier;
 		customer: CustomerEntity;
+		createdAt?: Date;
 	}) {
 		if (!options) {
 			return;
@@ -147,5 +149,6 @@ export class StatusRegistryEntity {
 
 		this.identifier = options.identifier;
 		this.customer = options.customer;
+		this.createdAt = options.createdAt || new Date();
 	}
 }

@@ -9,6 +9,7 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import { StatusRegistryState } from '../../types/credential-status.js';
 import { CredentialCategory } from '../../types/credential.js';
+import { gunzipSync } from 'zlib';
 
 /**
  * Migrates existing Status List resources from ResourceEntity to StatusRegistryEntity
@@ -86,6 +87,16 @@ export class MigrationsStatusLists1762775396083 implements MigrationInterface {
 
 					// Calculate registry size from the encoded list
 					const registrySize = this.calculateRegistrySize(statuslist.resource);
+					// Determine issuance/created date depending on the resolved resource shape
+					let createdDate: string;
+					const resAny = statuslist.resource as any;
+					if (resAny?.bitstringStatusListCredential) {
+						createdDate = resAny.bitstringStatusListCredential?.issuanceDate;
+					} else if (resAny?.StatusList2021?.validFrom) {
+						createdDate = resAny.StatusList2021.validFrom;
+					} else {
+						createdDate = new Date().toISOString();
+					}
 
 					// Create StatusRegistryEntity
 					const statusRegistryEntity = new StatusRegistryEntity({
@@ -101,12 +112,14 @@ export class MigrationsStatusLists1762775396083 implements MigrationInterface {
 						metadata: {
 							migratedFrom: 'ResourceEntity',
 							originalResourceId: resource.resourceId,
+							encoding: statuslist.resource.metadata.encoding,
 						},
 						identifier: resource.identifier,
 						customer: resource.customer,
 						deprecated: false,
 						encrypted: resource.encrypted || false,
 						threshold_percentage: 80,
+						createdAt: new Date(createdDate),
 					});
 
 					await queryRunner.manager.save(StatusRegistryEntity, statusRegistryEntity);
@@ -165,7 +178,8 @@ export class MigrationsStatusLists1762775396083 implements MigrationInterface {
 
 	/**
 	 * Calculate registry size from the statuslist resource
-	 * The encodedList is base64url encoded, so we decode and calculate bit length
+	 * For BitstringStatusList: get from metadata.length
+	 * For StatusList2021: calculate from encodedList based on encoding (base64url or hex)
 	 */
 	private calculateRegistrySize(
 		resource: StatusList2021Revocation | StatusList2021Suspension | BitstringStatusList
@@ -174,23 +188,41 @@ export class MigrationsStatusLists1762775396083 implements MigrationInterface {
 			// Default size if we can't determine
 			const DEFAULT_SIZE = 131072; // 128KB * 8 bits = 131,072 bits (default from design)
 
-			// Extract encodedList from the credential subject
-			const encodedList =
-				(resource as any)?.credentialSubject?.encodedList ||
-				(resource as any)?.credentialSubject?.statusList?.encodedList;
+			// Check if BitstringStatusList - has metadata.length property
+			const metadata = (resource as any)?.metadata;
+			if (metadata && metadata.length) {
+				console.log(`    BitstringStatusList size from metadata: ${metadata.length}`);
+				return metadata.length as number;
+			}
+
+			// For StatusList2021, extract encodedList and calculate size based on encoding
+			// The structure is: { StatusList2021: { encodedList: "..." }, metadata: { encoding: "..." } }
+			const encodedList = (resource as any)?.StatusList2021?.encodedList;
+			const encoding = metadata?.encoding || 'base64url'; // Default to base64url
 
 			if (!encodedList || typeof encodedList !== 'string') {
 				console.warn('    No encodedList found, using default size');
 				return DEFAULT_SIZE;
 			}
 
-			// Decode base64url to get byte length, then convert to bit length
-			// base64url: each character represents 6 bits
-			// Remove padding if present
-			const cleanedEncodedList = encodedList.replace(/=/g, '');
-			const byteLength = Math.ceil((cleanedEncodedList.length * 6) / 8);
+			let byteLength: number;
+			let compressed: Buffer;
+
+			if (encoding === 'hex') {
+				compressed = Buffer.from(encodedList, 'hex');
+			} else {
+				const cleaned = encodedList.replace(/-/g, '+').replace(/_/g, '/').replace(/=/g, '');
+				compressed = Buffer.from(cleaned, 'base64');
+			}
+
+			// gunzipSync expects a Uint8Array/DataView in some typings; convert Buffer to Uint8Array to satisfy TS type
+			const decompressed = gunzipSync(Uint8Array.from(compressed));
+			// Determine byte length from decompressed data
+			byteLength = (decompressed as Buffer).length ?? (decompressed as Uint8Array).length;
+
 			const bitLength = byteLength * 8;
 
+			console.log(`    StatusList2021 calculated size (encoding: ${encoding}): ${bitLength}`);
 			return bitLength > 0 ? bitLength : DEFAULT_SIZE;
 		} catch (error) {
 			console.warn('    Error calculating registry size:', error);
@@ -208,12 +240,11 @@ export class MigrationsStatusLists1762775396083 implements MigrationInterface {
 		try {
 			// Build resolver URL for metadata first
 			const url = new URL(`${this.RESOLVER_URL}/${didUrl}`);
-			url.searchParams.set('resourceMetadata', 'true');
 			console.log(`    Resolving statuslist resource from ${url.toString()}`);
-			// Fetch resource metadata (DID resolution profile)
+			// Fetch resource metadata (did-url-dereferencing profile)
 			const metaResp = await fetch(`${this.RESOLVER_URL}/${didUrl}`, {
 				headers: {
-					Accept: 'application/ld+json;profile=https://w3id.org/did-resolution',
+					Accept: 'application/ld+json;profile=https://w3id.org/did-url-dereferencing',
 				},
 			});
 
@@ -224,43 +255,21 @@ export class MigrationsStatusLists1762775396083 implements MigrationInterface {
 			const resourceMetadataVersioned = (await metaResp.json()) as any;
 
 			// Handle resolver-level errors
-			const arbitraryError = resourceMetadataVersioned?.didResolutionMetadata?.error;
+			const arbitraryError = resourceMetadataVersioned?.dereferencingMetadata?.error;
 			if (arbitraryError) {
 				console.error(`  Resolver error for ${didUrl}: ${String(arbitraryError)}`);
 				return null;
 			}
 
 			// If no linked resource metadata, nothing to fetch
-			if (!resourceMetadataVersioned?.didDocumentMetadata?.linkedResourceMetadata) {
-				console.error(`  No linkedResourceMetadata for ${didUrl}`);
+			if (!resourceMetadataVersioned?.contentMetadata) {
+				console.error(` Unable to determine resource metadata for ${didUrl}`);
 				return null;
 			}
 
 			// Choose latest resource metadata: prefer entry without nextVersionId, else most recently created
-			const linked = resourceMetadataVersioned.didDocumentMetadata.linkedResourceMetadata as Array<any>;
-			const resourceMetadata =
-				linked.find((r) => !r.nextVersionId) ||
-				linked.sort((a: any, b: any) => new Date(b.created).getTime() - new Date(a.created).getTime())[0];
-
-			if (!resourceMetadata) {
-				console.error(`  Unable to determine resource metadata for ${didUrl}`);
-				return null;
-			}
-
-			// Fetch the actual resource (remove resourceMetadata param)
-			url.searchParams.delete('resourceMetadata');
-			console.log(`    Resolving statuslist resource from ${url.toString()}`);
-			const resourceResp = await fetch(url.toString(), {
-				headers: {
-					Accept: 'application/json',
-				},
-			});
-
-			if (!resourceResp.ok) {
-				throw new Error(`HTTP ${resourceResp.status}: ${resourceResp.statusText}`);
-			}
-
-			const resource = await resourceResp.json();
+			const resourceMetadata = resourceMetadataVersioned.contentMetadata;
+			const resource = resourceMetadataVersioned.contentStream;
 
 			return {
 				resource,

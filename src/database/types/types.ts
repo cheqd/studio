@@ -54,6 +54,7 @@ import { MigrateStudioCredentials1760533089389 } from '../migrations/17605330893
 import { MigrateDockCredentials1760533089589 } from '../migrations/1760533089589-MigrateDockCredentials.js';
 import { StudioMigrations1761834657128 } from '../migrations/1761834657128-studio-migrations.js';
 import { MigrationsStatusLists1762775396083 } from '../migrations/1762775396083-MigrateStatusLists.js';
+import { UpdateWriteCursors1762775500000 } from '../migrations/1762775500000-UpdateWriteCursors.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -150,6 +151,7 @@ export class Postgres implements AbstractDatabase {
 				StudioMigrations1761834657128,
 				// Migrate status lists to StatusRegistry table
 				MigrationsStatusLists1762775396083,
+				UpdateWriteCursors1762775500000,
 			],
 			entities: [
 				...Entities,

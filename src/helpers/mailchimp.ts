@@ -41,9 +41,7 @@ export class MailchimpService {
 		if (tags && tags.length > 0) {
 			const current = (await mailchimp.lists.getListMemberTags(listId, subscriberHash)) as any;
 			const existingActive = new Set<string>(
-				(current?.tags ?? [])
-					.filter((t: any) => t.status === 'active')
-					.map((t: any) => t.name as string)
+				(current?.tags ?? []).filter((t: any) => t.status === 'active').map((t: any) => t.name as string)
 			);
 
 			const missing = tags.filter((t) => !existingActive.has(t));
@@ -55,4 +53,3 @@ export class MailchimpService {
 		}
 	}
 }
-
