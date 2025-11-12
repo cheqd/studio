@@ -87,7 +87,7 @@ export class Credentials {
 		// Phase 1: Atomic Index Reservation with CAS
 		if (statusOptions) {
 			// Reserve index atomically using CAS pattern
-			const reservedIndex = await this.reserveStatusIndex(statusOptions, customer);
+			const reservedIndex = await this.reserveStatusIndex(statusOptions, issuerDid, customer);
 
 			// Do not allow the issuer to override with a different index
 			if (statusOptions.statusListIndex && statusOptions.statusListIndex !== reservedIndex) {
@@ -232,6 +232,7 @@ export class Credentials {
 	 */
 	private async reserveStatusIndex(
 		statusOptions: StatusOptions,
+		issuerDid: string,
 		customer: CustomerEntity,
 		maxRetries: number = 5
 	): Promise<number> {
@@ -263,6 +264,7 @@ export class Credentials {
 						registryName: statusOptions.statusListName,
 						registryType: registryType,
 						customer: { customerId: customer.customerId },
+						identifier: { did: issuerDid },
 					},
 					relations: ['identifier'],
 				});
