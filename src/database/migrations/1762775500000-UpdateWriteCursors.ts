@@ -15,6 +15,14 @@ import { IssuedCredentialEntity } from '../entities/issued-credential.entity.js'
  */
 export class UpdateWriteCursors1762775500000 implements MigrationInterface {
 	public async up(queryRunner: QueryRunner): Promise<void> {
+		await queryRunner.query(`ALTER TABLE "issuedCredential" ADD "statusIndex" integer`);
+		await queryRunner.query(`ALTER TABLE "issuedCredential" ADD "retryCount" integer NOT NULL DEFAULT '0'`);
+		await queryRunner.query(`ALTER TABLE "issuedCredential" ADD "lastError" text`);
+		await queryRunner.query(`ALTER TABLE "issuedCredential" ADD "statusRegistryId" character varying`);
+		await queryRunner.query(
+			`ALTER TABLE "issuedCredential" ADD CONSTRAINT "FK_6b4613d35ce2050a5f1594bc3d4" FOREIGN KEY ("statusRegistryId") REFERENCES "statusRegistry"("registryId") ON DELETE NO ACTION ON UPDATE NO ACTION`
+		);
+
 		console.log('Starting writeCursor update migration...');
 
 		// Get all status registries
@@ -108,6 +116,30 @@ export class UpdateWriteCursors1762775500000 implements MigrationInterface {
 				);
 
 				console.log(`  ✓ Updated writeCursor to ${writeCursor}`);
+
+				// Update IssuedCredential records to populate new fields
+				let credentialUpdateCount = 0;
+				for (const credential of credentials) {
+					const statusListIndex = credential.credentialStatus?.statusListIndex;
+					if (statusListIndex !== null && statusListIndex !== undefined) {
+						const indexNum = parseInt(String(statusListIndex), 10);
+						if (!isNaN(indexNum) && indexNum >= 0) {
+							await queryRunner.manager.update(
+								IssuedCredentialEntity,
+								{ issuedCredentialId: credential.issuedCredentialId },
+								{
+									statusRegistry: registry,
+									statusIndex: indexNum,
+									retryCount: 0,
+									lastError: undefined,
+								}
+							);
+							credentialUpdateCount++;
+						}
+					}
+				}
+
+				console.log(`  ✓ Updated ${credentialUpdateCount} issued credentials`);
 				updatedCount++;
 			} catch (error) {
 				console.error(`  ✗ Error processing registry ${registry.registryId}:`, error);
@@ -147,6 +179,28 @@ export class UpdateWriteCursors1762775500000 implements MigrationInterface {
 		}
 
 		console.log(`Rolled back ${registries.length} registries`);
+
+		// Reset IssuedCredential fields before dropping columns (if they exist)
+		try {
+			await queryRunner.query(
+				`UPDATE "issuedCredential" SET "statusRegistryId" = NULL, "statusIndex" = NULL, "retryCount" = 0, "lastError" = NULL WHERE "statusRegistryId" IS NOT NULL`
+			);
+			console.log('Cleared IssuedCredential status fields');
+		} catch (error) {
+			// Columns might not exist if migration was partially applied
+			console.log('Skipped clearing IssuedCredential fields (columns may not exist)');
+		}
+
+		// Drop the new columns and foreign key constraint
+		await queryRunner.query(
+			`ALTER TABLE "issuedCredential" DROP CONSTRAINT IF EXISTS "FK_6b4613d35ce2050a5f1594bc3d4"`
+		);
+		await queryRunner.query(`ALTER TABLE "issuedCredential" DROP COLUMN IF EXISTS "statusRegistryId"`);
+		await queryRunner.query(`ALTER TABLE "issuedCredential" DROP COLUMN IF EXISTS "lastError"`);
+		await queryRunner.query(`ALTER TABLE "issuedCredential" DROP COLUMN IF EXISTS "retryCount"`);
+		await queryRunner.query(`ALTER TABLE "issuedCredential" DROP COLUMN IF EXISTS "statusIndex"`);
+
+		console.log('Dropped IssuedCredential columns');
 	}
 
 	/**

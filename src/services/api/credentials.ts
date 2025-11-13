@@ -85,9 +85,13 @@ export class Credentials {
 		const statusOptions = credentialStatus || null;
 
 		// Phase 1: Atomic Index Reservation with CAS
+		let reservedIndex: number | undefined;
+		let statusRegistryId: string | undefined;
 		if (statusOptions) {
 			// Reserve index atomically using CAS pattern
-			const reservedIndex = await this.reserveStatusIndex(statusOptions, issuerDid, customer);
+			const reservation = await this.reserveStatusIndex(statusOptions, issuerDid, customer);
+			reservedIndex = reservation.index;
+			statusRegistryId = reservation.registryId;
 
 			// Do not allow the issuer to override with a different index
 			if (statusOptions.statusListIndex && statusOptions.statusListIndex !== reservedIndex) {
@@ -97,132 +101,158 @@ export class Credentials {
 			statusOptions.statusListIndex = reservedIndex;
 		}
 
-		// Handle credential issuance and connector logic
-		switch (providerId || connector) {
-			case CredentialConnectors.Dock: {
-				const dock = new DockIdentityService();
-				// validate issuerDid in provider
-				const existingIssuer = await dock.getDid(issuerDid, customer).catch(() => undefined);
-				if (!existingIssuer) {
-					// export from wallet
-					const exportResult = await new IdentityServiceStrategySetup(customer.customerId).agent.exportDid(
-						issuerDid,
-						process.env.PROVIDER_EXPORT_PASSWORD || '',
-						customer
-					);
-					// import into provider
-					await dock.importDidV2(issuerDid, exportResult, process.env.PROVIDER_EXPORT_PASSWORD, customer);
-				}
-				const dockCredential = await dock.createCredential(credential, format, statusOptions, customer);
-				const credentialType = Array.isArray(dockCredential.type)
-					? dockCredential.type
-					: [dockCredential.type || 'VerifiableCredential'];
-				// Create IssuedCredentialEntity record
-				await this.create(customer, {
-					providerId: 'dock',
-					providerCredentialId: dockCredential.id as string,
-					issuerId: issuerDid,
-					subjectId: subjectDid,
-					format: (format || 'jwt') as 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds',
-					type: credentialType,
-					category: category,
-					status: 'issued',
-					issuedAt: dockCredential.issuanceDate ? new Date(dockCredential.issuanceDate) : new Date(),
-					expiresAt: dockCredential.expirationDate ? new Date(dockCredential.expirationDate) : undefined,
-					credentialStatus: dockCredential.credentialStatus,
-					metadata: {
+		// Phase 2: Create tracking record immediately to reserve the index
+		// This ensures the index is tracked even if credential creation fails
+		const trackingRecord = await this.create(customer, {
+			providerId: providerId || 'studio',
+			issuerId: issuerDid,
+			subjectId: subjectDid,
+			format: (format || 'jsonld') as 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds',
+			category: category || CredentialCategory.CREDENTIAL,
+			type: type || ['VerifiableCredential'],
+			status: 'issued',
+			issuedAt: new Date(),
+			statusRegistryId: statusRegistryId,
+			statusIndex: reservedIndex,
+			retryCount: 0,
+		});
+
+		// Phase 3: Attempt credential creation with error handling
+		try {
+			let verifiableCredential: VerifiableCredential;
+			let providerCredentialId: string | undefined;
+			let credentialMetadata: Record<string, any> = {};
+
+			switch (providerId || connector) {
+				case CredentialConnectors.Dock: {
+					const dock = new DockIdentityService();
+					// validate issuerDid in provider
+					const existingIssuer = await dock.getDid(issuerDid, customer).catch(() => undefined);
+					if (!existingIssuer) {
+						// export from wallet
+						const exportResult = await new IdentityServiceStrategySetup(
+							customer.customerId
+						).agent.exportDid(issuerDid, process.env.PROVIDER_EXPORT_PASSWORD || '', customer);
+						// import into provider
+						await dock.importDidV2(issuerDid, exportResult, process.env.PROVIDER_EXPORT_PASSWORD, customer);
+					}
+					const dockCredential = await dock.createCredential(credential, format, statusOptions, customer);
+					verifiableCredential = dockCredential;
+					providerCredentialId = dockCredential.id as string;
+					credentialMetadata = {
 						schema: dockCredential.credentialSchema,
 						proof: dockCredential.proof,
 						termsOfUse: additionalData.termsOfUse,
 						contexts: [...(context || []), ...VC_CONTEXT],
-					},
-				});
-
-				return dockCredential;
-			}
-			case CredentialConnectors.Resource:
-			case CredentialConnectors.Studio:
-			case CredentialConnectors.Verida:
-			default: {
-				const verifiable_credential = await new IdentityServiceStrategySetup(
-					customer.customerId
-				).agent.createCredential(credential, format, statusOptions, customer);
-
-				const isVeridaDid = new VeridaDIDValidator().validate(subjectDid);
-				let sendCredentialResponse;
-				if (
-					ENABLE_VERIDA_CONNECTOR === 'true' &&
-					connector === CredentialConnectors.Verida &&
-					isVeridaDid.valid &&
-					isVeridaDid.namespace
-				) {
-					if (!credentialSchema) throw new Error('Credential schema is required');
-
-					// dynamic import to avoid circular dependency
-					const { VeridaService } = await import('../connectors/verida.js');
-
-					sendCredentialResponse = await VeridaService.instance.sendCredential(
-						isVeridaDid.namespace,
-						subjectDid,
-						'New Verifiable Credential',
-						verifiable_credential,
-						credentialName || v4(),
-						credentialSchema,
-						credentialSummary
-					);
-				} else if (connector && connector === CredentialConnectors.Resource) {
-					sendCredentialResponse = await ResourceConnector.instance.sendCredential(
-						customer,
-						issuerDid,
-						verifiable_credential,
-						credentialName || v4(),
-						type ? type[0] : 'VerifiableCredential',
-						v4(),
-						undefined,
-						credentialId
-					);
+					};
+					break;
 				}
+				case CredentialConnectors.Resource:
+				case CredentialConnectors.Studio:
+				case CredentialConnectors.Verida:
+				default: {
+					const verifiable_credential = await new IdentityServiceStrategySetup(
+						customer.customerId
+					).agent.createCredential(credential, format, statusOptions, customer);
 
-				// Create IssuedCredentialEntity record for Studio/Resource credentials
-				// Get resourceId from ResourceConnector response if available
-				let providerCredentialId: string | undefined;
-				if (sendCredentialResponse && sendCredentialResponse.resourceId) {
-					providerCredentialId = sendCredentialResponse.resourceId;
-				} else {
-					providerCredentialId = verifiable_credential.id;
-				}
-				const credentialType = Array.isArray(verifiable_credential.type)
-					? verifiable_credential.type
-					: [verifiable_credential.type || 'VerifiableCredential'];
+					const isVeridaDid = new VeridaDIDValidator().validate(subjectDid);
+					let sendCredentialResponse;
+					if (
+						ENABLE_VERIDA_CONNECTOR === 'true' &&
+						connector === CredentialConnectors.Verida &&
+						isVeridaDid.valid &&
+						isVeridaDid.namespace
+					) {
+						if (!credentialSchema) throw new Error('Credential schema is required');
 
-				await this.create(customer, {
-					providerId: 'studio',
-					providerCredentialId,
-					issuerId: issuerDid,
-					subjectId: subjectDid,
-					format: (format || 'jsonld') as 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds',
-					type: credentialType,
-					category: category,
-					status: 'issued',
-					issuedAt: verifiable_credential.issuanceDate
-						? new Date(verifiable_credential.issuanceDate)
-						: new Date(),
-					expiresAt: verifiable_credential.expirationDate
-						? new Date(verifiable_credential.expirationDate)
-						: undefined,
-					credentialStatus: verifiable_credential.credentialStatus,
-					metadata: {
+						// dynamic import to avoid circular dependency
+						const { VeridaService } = await import('../connectors/verida.js');
+
+						sendCredentialResponse = await VeridaService.instance.sendCredential(
+							isVeridaDid.namespace,
+							subjectDid,
+							'New Verifiable Credential',
+							verifiable_credential,
+							credentialName || v4(),
+							credentialSchema,
+							credentialSummary
+						);
+					} else if (connector && connector === CredentialConnectors.Resource) {
+						sendCredentialResponse = await ResourceConnector.instance.sendCredential(
+							customer,
+							issuerDid,
+							verifiable_credential,
+							credentialName || v4(),
+							type ? type[0] : 'VerifiableCredential',
+							v4(),
+							undefined,
+							credentialId
+						);
+					}
+
+					// Get resourceId from ResourceConnector response if available
+					if (sendCredentialResponse && sendCredentialResponse.resourceId) {
+						providerCredentialId = sendCredentialResponse.resourceId;
+					} else {
+						providerCredentialId = verifiable_credential.id;
+					}
+
+					verifiableCredential = verifiable_credential;
+					credentialMetadata = {
 						schema: verifiable_credential.credentialSchema,
 						proof: verifiable_credential.proof,
 						resourceType: sendCredentialResponse?.resourceType,
 						didUrl: sendCredentialResponse?.didUrl,
 						termsOfUse: additionalData.termsOfUse,
 						contexts: [...(context || []), ...VC_CONTEXT],
-					},
-				});
-
-				return verifiable_credential;
+					};
+					break;
+				}
 			}
+
+			// Phase 4: Update tracking record with success details
+			const credentialType = Array.isArray(verifiableCredential.type)
+				? verifiableCredential.type
+				: [verifiableCredential.type || 'VerifiableCredential'];
+
+			await this.update(
+				trackingRecord.issuedCredentialId,
+				{
+					providerCredentialId: providerCredentialId,
+					metadata: credentialMetadata,
+				},
+				customer
+			);
+
+			// Also update fields not covered by the update() method
+			await this.repository.update(
+				{ issuedCredentialId: trackingRecord.issuedCredentialId },
+				{
+					type: credentialType,
+					issuedAt: verifiableCredential.issuanceDate
+						? new Date(verifiableCredential.issuanceDate)
+						: trackingRecord.issuedAt,
+					expiresAt: verifiableCredential.expirationDate
+						? new Date(verifiableCredential.expirationDate)
+						: undefined,
+					credentialStatus: verifiableCredential.credentialStatus,
+				}
+			);
+
+			return verifiableCredential;
+		} catch (error) {
+			// Phase 5: Update tracking record with failure details
+			// This ensures the reserved index is tracked even when credential creation fails
+			await this.repository.update(
+				{ issuedCredentialId: trackingRecord.issuedCredentialId },
+				{
+					retryCount: trackingRecord.retryCount + 1,
+					lastError: error instanceof Error ? error.message : String(error),
+				}
+			);
+
+			// Re-throw the error so the caller knows the credential creation failed
+			throw error;
 		}
 	}
 	/**
@@ -235,7 +265,7 @@ export class Credentials {
 		issuerDid: string,
 		customer: CustomerEntity,
 		maxRetries: number = 5
-	): Promise<number> {
+	): Promise<{ index: number; registryId: string }> {
 		let attempt = 0;
 		const baseDelay = 5; // ms
 
@@ -329,7 +359,7 @@ export class Credentials {
 			const casSuccess = (result.affected ?? 0) === 1;
 
 			if (casSuccess) {
-				// Success! Return reserved index
+				// Success! Return reserved index and registryId
 
 				// Check if we need to trigger rotation (threshold or full)
 				// Calculate utilization including additional used indexes
@@ -347,7 +377,7 @@ export class Credentials {
 						});
 				}
 
-				return nextIndex;
+				return { index: nextIndex, registryId: statusRegistry.registryId };
 			}
 
 			// CAS failed - concurrent modification detected
@@ -385,6 +415,7 @@ export class Credentials {
 
 		const [entities, total] = await this.repository.findAndCount({
 			where,
+			relations: ['statusRegistry'],
 			order: { createdAt: 'DESC' },
 			skip: (page - 1) * limit,
 			take: limit,
@@ -414,7 +445,7 @@ export class Credentials {
 					issuedCredentialId: id,
 					customer: { customerId: customer.customerId },
 				},
-				relations: ['customer'],
+				relations: ['customer', 'statusRegistry'],
 			});
 		}
 
@@ -470,22 +501,36 @@ export class Credentials {
 	 * Create a new issued credential record
 	 */
 	async create(customer: CustomerEntity, options: IssuedCredentialCreateOptions): Promise<IssuedCredentialEntity> {
-		const entity = this.repository.create({
-			providerId: options.providerId,
-			providerCredentialId: options.providerCredentialId,
-			issuerId: options.issuerId,
-			subjectId: options.subjectId,
-			format: options.format,
-			category: options.category || CredentialCategory.CREDENTIAL,
-			type: options.type,
-			status: options.status || 'issued',
-			statusUpdatedAt: options.statusUpdatedAt,
-			issuedAt: options.issuedAt,
-			expiresAt: options.expiresAt,
-			credentialStatus: options.credentialStatus,
-			metadata: options.metadata,
-			customer: customer,
-		});
+		// Resolve statusRegistry if statusRegistryId is provided
+		let statusRegistry;
+		if (options.statusRegistryId) {
+			statusRegistry = await this.statusRegistryRepository.findOne({
+				where: { registryId: options.statusRegistryId },
+			});
+		}
+
+		const entity = new IssuedCredentialEntity(
+			options.providerId,
+			options.format,
+			options.category || CredentialCategory.CREDENTIAL,
+			options.type,
+			options.issuedAt,
+			customer,
+			{
+				providerCredentialId: options.providerCredentialId,
+				issuerId: options.issuerId,
+				subjectId: options.subjectId,
+				status: options.status,
+				statusUpdatedAt: options.statusUpdatedAt,
+				metadata: options.metadata,
+				credentialStatus: options.credentialStatus,
+				statusRegistry: statusRegistry || undefined,
+				statusIndex: options.statusIndex,
+				retryCount: options.retryCount,
+				lastError: options.lastError,
+				expiresAt: options.expiresAt,
+			}
+		);
 
 		return await this.repository.save(entity);
 	}
@@ -553,6 +598,7 @@ export class Credentials {
 				issuedCredentialId,
 				customer: { customerId: customer.customerId },
 			},
+			relations: ['statusRegistry'],
 		});
 
 		if (!updatedEntity) {
@@ -583,6 +629,10 @@ export class Credentials {
 			issuedAt: entity.issuedAt.toISOString(),
 			expiresAt: entity.expiresAt?.toISOString(),
 			credentialStatus: entity.credentialStatus,
+			statusRegistryId: entity.statusRegistry?.registryId,
+			statusIndex: entity.statusIndex,
+			retryCount: entity.retryCount,
+			lastError: entity.lastError,
 			createdAt: entity.createdAt?.toISOString(),
 			updatedAt: entity.updatedAt?.toISOString(),
 		};

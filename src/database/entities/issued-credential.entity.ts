@@ -11,6 +11,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { CustomerEntity } from './customer.entity.js';
 import { CredentialProviderEntity } from './credential-provider.entity.js';
+import { StatusRegistryEntity } from './status-registry.entity.js';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -58,6 +59,15 @@ export class IssuedCredentialEntity {
 	@Column('json', { nullable: true })
 	credentialStatus?: Record<string, any>;
 
+	@Column({ type: 'integer', nullable: true })
+	statusIndex?: number;
+
+	@Column({ type: 'integer', nullable: false, default: 0 })
+	retryCount!: number;
+
+	@Column({ type: 'text', nullable: true })
+	lastError?: string;
+
 	@Column({ type: 'timestamptz', nullable: false })
 	issuedAt!: Date;
 
@@ -82,6 +92,10 @@ export class IssuedCredentialEntity {
 	@JoinColumn({ name: 'providerId' })
 	provider?: CredentialProviderEntity;
 
+	@ManyToOne(() => StatusRegistryEntity, (registry) => registry.registryId, { nullable: true })
+	@JoinColumn({ name: 'statusRegistryId' })
+	statusRegistry?: StatusRegistryEntity;
+
 	@BeforeInsert()
 	addId() {
 		if (!this.issuedCredentialId) {
@@ -105,6 +119,10 @@ export class IssuedCredentialEntity {
 			statusUpdatedAt?: Date;
 			metadata?: Record<string, any>;
 			credentialStatus?: Record<string, any>;
+			statusRegistry?: StatusRegistryEntity;
+			statusIndex?: number;
+			retryCount?: number;
+			lastError?: string;
 			expiresAt?: Date;
 			deprecated?: boolean;
 		}
@@ -123,6 +141,10 @@ export class IssuedCredentialEntity {
 		this.statusUpdatedAt = options?.statusUpdatedAt;
 		this.metadata = options?.metadata;
 		this.credentialStatus = options?.credentialStatus;
+		this.statusRegistry = options?.statusRegistry;
+		this.statusIndex = options?.statusIndex;
+		this.retryCount = options?.retryCount || 0;
+		this.lastError = options?.lastError;
 		this.issuedAt = issuedAt;
 		this.expiresAt = options?.expiresAt;
 		this.customer = customer;

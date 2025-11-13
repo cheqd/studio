@@ -197,6 +197,10 @@ export interface IssuedCredentialCreateOptions {
 	credentialStatus?: Record<string, any>;
 	metadata?: Record<string, any>;
 	category?: CredentialCategory;
+	statusRegistryId?: string;
+	statusIndex?: number;
+	retryCount?: number;
+	lastError?: string;
 }
 
 export interface IssuedCredentialResponse {
@@ -224,6 +228,10 @@ export interface IssuedCredentialResponse {
 
 	// Credential Status Configuration
 	credentialStatus?: Record<string, any>;
+	statusRegistryId?: string;
+	statusIndex?: number;
+	retryCount?: number;
+	lastError?: string;
 
 	// Provider-specific metadata
 	providerMetadata?: Record<string, any>;

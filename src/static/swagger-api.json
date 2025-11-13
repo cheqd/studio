@@ -577,6 +577,22 @@
             "additionalProperties": true,
             "description": "Credential status configuration"
           },
+          "statusRegistryId": {
+            "type": "string",
+            "description": "UUID of the Status Registry"
+          },
+          "statusIndex": {
+            "type": "number",
+            "description": "Allocated Index of the Status Registry"
+          },
+          "retryCount": {
+            "type": "number",
+            "description": "Retry Count in case of failures"
+          },
+          "lastError": {
+            "type": "string",
+            "description": "Last error message in case of failure"
+          },
           "providerMetadata": {
             "type": "object",
             "additionalProperties": true,
