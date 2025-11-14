@@ -819,6 +819,9 @@
  *           format: date-time
  *           nullable: true
  *           description: Timestamp when the registry was sealed (marked as FULL)
+ *         statusPurpose:
+ *           type: object
+ *           description: Status purpose or list of status purposes
  *         deprecated:
  *           type: boolean
  *           description: Whether the registry is deprecated
@@ -838,6 +841,7 @@
  *         state: ACTIVE
  *         createdAt: 2023-06-26T11:45:19.349Z
  *         updatedAt: 2023-06-26T11:45:20.000Z
+ *         statusPurpose: revocation
  *         sealedAt: null
  *         deprecated: false
  *     ListCredentialStatusRecordsResult:

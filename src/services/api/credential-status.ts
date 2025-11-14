@@ -185,7 +185,7 @@ export class CredentialStatusService {
 			const statusRegistry = new StatusRegistryEntity({
 				registryId: v4(),
 				uri: `${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
-				registryType: listType,
+				registryType: result.resourceMetadata.resourceType,
 				registryName: statusListName,
 				credentialCategory,
 				version: 1,
@@ -336,7 +336,7 @@ export class CredentialStatusService {
 			const statusRegistry = new StatusRegistryEntity({
 				registryId: v4(),
 				uri: `${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
-				registryType: listType,
+				registryType: result.resourceMetadata.resourceType,
 				registryName: statusListName,
 				credentialCategory,
 				version: 1,
@@ -1176,6 +1176,7 @@ export class CredentialStatusService {
 						createdAt: item.createdAt.toISOString(),
 						updatedAt: item.updatedAt.toISOString(),
 						sealedAt: item.sealedAt ? item.sealedAt.toISOString() : undefined,
+						statusPurpose: item.metadata?.statusPurpose,
 						deprecated: item.deprecated,
 					})),
 					total: count,
@@ -1254,6 +1255,7 @@ export class CredentialStatusService {
 					updatedAt: item.updatedAt.toISOString(),
 					sealedAt: item.sealedAt ? item.sealedAt.toISOString() : undefined,
 					deprecated: item.deprecated,
+					statusPurpose: item.metadata?.statusPurpose,
 					additionalUsedIndexes: item.metadata?.additionalUsedIndexes || [],
 				},
 			};

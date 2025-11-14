@@ -246,6 +246,7 @@ export class Credentials {
 			await this.repository.update(
 				{ issuedCredentialId: trackingRecord.issuedCredentialId },
 				{
+					status: 'unknown',
 					retryCount: trackingRecord.retryCount + 1,
 					lastError: error instanceof Error ? error.message : String(error),
 				}

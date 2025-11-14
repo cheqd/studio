@@ -52,6 +52,7 @@ export type StatusListRecord = {
 	updatedAt: string;
 	sealedAt?: string;
 	deprecated: boolean;
+	statusPurpose?: string | string[];
 	additionalUsedIndexes?: number[];
 };
 

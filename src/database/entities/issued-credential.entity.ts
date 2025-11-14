@@ -48,7 +48,7 @@ export class IssuedCredentialEntity {
 	type!: string[];
 
 	@Column({ type: 'text', nullable: false, default: 'issued' })
-	status!: 'issued' | 'suspended' | 'revoked';
+	status!: 'issued' | 'suspended' | 'revoked' | 'unknown';
 
 	@Column({ type: 'timestamptz', nullable: true })
 	statusUpdatedAt?: Date;
