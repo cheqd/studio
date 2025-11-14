@@ -680,6 +680,12 @@ export class CredentialController {
 	 *           type: string
 	 *           format: date-time
 	 *         required: false
+	 *       - in: query
+	 *         name: credentialType
+	 *         description: Filter credentials by type (e.g., 'VerifiableCredential', 'UniversityDegreeCredential').
+	 *         schema:
+	 *           type: string
+	 *         required: false
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -695,7 +701,8 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async listIssuedCredentials(request: Request, response: Response) {
-		const { page, limit, providerId, issuerId, subjectId, status, format, createdAt, category } = request.query;
+		const { page, limit, providerId, issuerId, subjectId, status, format, createdAt, category, credentialType } =
+			request.query;
 
 		try {
 			const result = await Credentials.instance.list(response.locals.customer, {
@@ -708,6 +715,7 @@ export class CredentialController {
 				format: format as string | undefined,
 				createdAt: createdAt as string | undefined,
 				category: category as string | undefined,
+				credentialType: credentialType as string | undefined,
 			});
 
 			return response.status(StatusCodes.OK).json(result);

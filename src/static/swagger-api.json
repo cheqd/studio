@@ -4604,6 +4604,15 @@
               "format": "date-time"
             },
             "required": false
+          },
+          {
+            "in": "query",
+            "name": "credentialType",
+            "description": "Filter credentials by type (e.g., 'VerifiableCredential', 'UniversityDegreeCredential').",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
           }
         ],
         "responses": {

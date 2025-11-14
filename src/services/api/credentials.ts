@@ -17,7 +17,7 @@ import { VeridaDIDValidator } from '../../controllers/validator/did.js';
 import { ResourceConnector } from '../connectors/resource.js';
 import { DockIdentityService } from '../identity/providers/index.js';
 import { IssuedCredentialEntity } from '../../database/entities/issued-credential.entity.js';
-import { FindOptionsWhere, LessThanOrEqual, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Connection } from '../../database/connection/connection.js';
 import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
 import { CredentialStatusService } from './credential-status.js';
@@ -399,27 +399,51 @@ export class Credentials {
 		customer: CustomerEntity,
 		options: ListCredentialRequestOptions = {}
 	): Promise<{ credentials: IssuedCredentialResponse[]; total: number }> {
-		const { page = 1, limit = 10, providerId, issuerId, subjectId, status, format, createdAt, category } = options;
+		const {
+			page = 1,
+			limit = 10,
+			providerId,
+			issuerId,
+			subjectId,
+			status,
+			format,
+			createdAt,
+			category,
+			credentialType,
+		} = options;
 
-		const where: FindOptionsWhere<IssuedCredentialEntity> = {
-			customer: { customerId: customer.customerId },
-		};
+		// Used queryBuilder because of "type" filter which is JSON onject in DB
+		const queryBuilder = this.repository
+			.createQueryBuilder('ic')
+			.leftJoinAndSelect('ic.statusRegistry', 'statusRegistry')
+			.where('ic.customerId = :customerId', { customerId: customer.customerId });
 
-		if (providerId) where.providerId = providerId;
-		if (issuerId) where.issuerId = issuerId;
-		if (subjectId) where.subjectId = subjectId;
-		if (status) where.status = status;
-		if (format) where.format = format as any;
-		if (createdAt) where.createdAt = LessThanOrEqual(new Date(createdAt));
-		if (category) where.category = category as any;
+		if (providerId) queryBuilder.andWhere('ic.providerId = :providerId', { providerId });
+		if (issuerId) queryBuilder.andWhere('ic.issuerId = :issuerId', { issuerId });
+		if (subjectId) queryBuilder.andWhere('ic.subjectId = :subjectId', { subjectId });
+		if (status) queryBuilder.andWhere('ic.status = :status', { status });
+		if (format) queryBuilder.andWhere('ic.format = :format', { format });
+		if (category) queryBuilder.andWhere('ic.category = :category', { category });
+		if (createdAt) queryBuilder.andWhere('ic.createdAt <= :createdAt', { createdAt: new Date(createdAt) });
+		if (credentialType) {
+			if (credentialType === 'VerifiableCredential') {
+				// Exact match for VerifiableCredential (only credentials with type = ["VerifiableCredential"])
+				queryBuilder.andWhere('ic.type::jsonb = :credentialType::jsonb', {
+					credentialType: JSON.stringify(['VerifiableCredential']),
+				});
+			} else {
+				// Contains match for other types
+				queryBuilder.andWhere('ic.type::jsonb @> :credentialType::jsonb', {
+					credentialType: JSON.stringify([credentialType]),
+				});
+			}
+		}
 
-		const [entities, total] = await this.repository.findAndCount({
-			where,
-			relations: ['statusRegistry'],
-			order: { createdAt: 'DESC' },
-			skip: (page - 1) * limit,
-			take: limit,
-		});
+		const [entities, total] = await queryBuilder
+			.orderBy('ic.createdAt', 'DESC')
+			.skip((page - 1) * limit)
+			.take(limit)
+			.getManyAndCount();
 
 		const credentials = entities.map((entity) => this.toResponse(entity, { includeCredential: false }));
 

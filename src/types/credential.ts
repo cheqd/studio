@@ -143,6 +143,7 @@ export type ListCredentialRequestOptions = {
 	format?: string;
 	createdAt?: string;
 	category?: string;
+	credentialType?: string;
 };
 
 export type UpdateIssuedCredentialRequestBody = {
