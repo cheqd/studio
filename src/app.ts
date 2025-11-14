@@ -187,6 +187,16 @@ class App {
 			CredentialStatusController.searchValidator,
 			new CredentialStatusController().searchStatusList
 		);
+		app.get(
+			'/credential-status/list',
+			CredentialStatusController.listValidator,
+			new CredentialStatusController().listStatusList
+		);
+		app.get(
+			'/credential-status/list/:statusListId',
+			CredentialStatusController.fetchValidator,
+			new CredentialStatusController().fetchStatusList
+		);
 
 		// Keys API
 		app.post('/key/create', new KeyController().createKey);

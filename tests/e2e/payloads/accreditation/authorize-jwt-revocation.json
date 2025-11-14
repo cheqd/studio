@@ -4,7 +4,8 @@
 	"format": "jwt",
 	"credentialStatus": {
 		"statusPurpose": "message",
-		"statusListName": "unencrypted-status-list"
+		"statusListName": "unencrypted-status-list",
+		"statusListType": "BitstringStatusList"
 	},
 	"schemas": [
 		{

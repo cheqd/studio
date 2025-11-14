@@ -222,15 +222,15 @@ export class ResourceController {
 				const resource = didDereferencing.contentMetadata.linkedResourceMetadata[0];
 
 				// track resource creation
-				const trackResourceInfo = {
+				const trackResourceInfo: ITrackOperation<IResourceTrack> = {
 					category: OperationCategoryNameEnum.RESOURCE,
 					name: OperationNameEnum.RESOURCE_CREATE,
 					customer: response.locals.customer,
 					data: {
 						did,
 						resource: resource,
-					} satisfies IResourceTrack,
-				} as ITrackOperation;
+					},
+				};
 
 				// track resource creation
 				eventTracker.emit('track', trackResourceInfo);

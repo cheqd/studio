@@ -1,63 +1,37 @@
 import type { Request, Response } from 'express';
 import { check, query } from '../validator/index.js';
-import { fromString } from 'uint8arrays';
-import { StatusCodes } from 'http-status-codes';
-import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import type {
-	CheckStatusListSuccessfulResponseBody,
-	CheqdCredentialStatus,
-	CreateEncryptedBitstringSuccessfulResponseBody,
-	CreateUnencryptedBitstringSuccessfulResponseBody,
-	FeePaymentOptions,
-} from '../../types/credential-status.js';
-import {
-	DefaultStatusActionPurposeMap,
-	DefaultStatusActions,
-	MinimalPaymentCondition,
-	StatusListType,
-} from '../../types/credential-status.js';
-import type {
+	ListStatusListQuery,
 	SearchStatusListQuery,
-	SearchStatusListSuccessfulResponseBody,
 	SearchStatusListUnsuccessfulResponseBody,
 } from '../../types/credential-status.js';
+import { DefaultStatusActions, MinimalPaymentCondition, StatusListType } from '../../types/credential-status.js';
 import type {
 	CheckStatusListRequestBody,
 	CheckStatusListRequestQuery,
 	CheckStatusListUnsuccessfulResponseBody,
 	CreateEncryptedStatusListRequestBody,
 	CreateEncryptedStatusListRequestQuery,
-	CreateEncryptedStatusListSuccessfulResponseBody,
 	CreateEncryptedStatusListUnsuccessfulResponseBody,
 	CreateUnencryptedStatusListRequestBody,
 	CreateUnencryptedStatusListRequestQuery,
-	CreateUnencryptedStatusListSuccessfulResponseBody,
 	CreateUnencryptedStatusListUnsuccessfulResponseBody,
 	UpdateEncryptedStatusListRequestBody,
-	UpdateEncryptedStatusListSuccessfulResponseBody,
 	UpdateEncryptedStatusListUnsuccessfulResponseBody,
 	UpdateUnencryptedStatusListRequestBody,
 	UpdateUnencryptedStatusListRequestQuery,
-	UpdateUnencryptedStatusListSuccessfulResponseBody,
 	UpdateUnencryptedStatusListUnsuccessfulResponseBody,
 } from '../../types/credential-status.js';
 import {
-	BulkRevocationResult,
-	BulkSuspensionResult,
-	BulkUnsuspensionResult,
 	DefaultStatusListEncodings,
 	DefaultStatusList2021StatusPurposeTypes,
 	BitstringStatusPurposeTypes,
 	BitstringStatusMessage,
-	BulkBitstringUpdateResult,
 } from '@cheqd/did-provider-cheqd';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
-import { toNetwork } from '../../helpers/helpers.js';
-import { eventTracker } from '../../services/track/tracker.js';
-import type { ICredentialStatusTrack, ITrackOperation, IFeePaymentOptions } from '../../types/track.js';
-import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
-import { FeeAnalyzer } from '../../helpers/fee-analyzer.js';
 import { validate } from '../validator/decorator.js';
+import { CredentialStatusService } from '../../services/api/credential-status.js';
+import { param } from 'express-validator';
 
 export class CredentialStatusController {
 	static createUnencryptedValidator = [
@@ -624,6 +598,60 @@ export class CredentialStatusController {
 			.bail(),
 	];
 
+	static listValidator = [
+		query('did').optional().isDID().withMessage('did: should be a valid DID').bail(),
+		query('listType')
+			.optional()
+			.isString()
+			.withMessage('listType: should be a string')
+			.bail()
+			.isIn([StatusListType.Bitstring, StatusListType.StatusList2021])
+			.withMessage(
+				`listType: invalid listType, should be one of [${Object.values(StatusListType)
+					.map((v) => `'${v}'`)
+					.join(', ')}]`
+			)
+			.bail(),
+		query('statusListName')
+			.optional()
+			.isString()
+			.withMessage('statusListName: should be a string')
+			.bail()
+			.notEmpty()
+			.withMessage('statusListName: should be a non-empty string')
+			.bail(),
+		query('state')
+			.optional()
+			.isString()
+			.withMessage('state: should be a string')
+			.bail()
+			.isIn(['ACTIVE', 'STANDBY', 'FULL'])
+			.withMessage("state: invalid state, should be one of ['ACTIVE', 'STANDBY', 'FULL']")
+			.bail(),
+		query('credentialCategory')
+			.optional()
+			.isString()
+			.withMessage('credentialCategory: should be a string')
+			.bail()
+			.isIn(['credential', 'accreditation'])
+			.withMessage("credentialCategory: invalid category, should be one of ['credential', 'accreditation']")
+			.bail(),
+		query('deprecated').optional().isBoolean().withMessage('deprecated: should be a boolean').bail(),
+	];
+
+	static fetchValidator = [
+		param('statusListId')
+			.exists()
+			.withMessage('statusListId: required')
+			.bail()
+			.isString()
+			.withMessage('statusListId: should be a string')
+			.bail()
+			.notEmpty()
+			.withMessage('statusListId: should be a non-empty string')
+			.bail(),
+	];
+
 	/**
 	 * @openapi
 	 *
@@ -695,122 +723,22 @@ export class CredentialStatusController {
 	 */
 	@validate
 	async createUnencryptedStatusList(request: Request, response: Response) {
-		// collect request parameters - case: body
-		const {
-			did,
-			encodedList,
-			statusListName,
-			alsoKnownAs,
-			statusListVersion,
-			length,
-			encoding,
-			statusSize: size,
-			ttl,
-			statusMessages,
-		} = request.body as CreateUnencryptedStatusListRequestBody;
+		const credentialStatusService = new CredentialStatusService();
 
-		// collect request parameters - case: query
-		const { listType, statusPurpose } = request.query as CreateUnencryptedStatusListRequestQuery;
+		const result = await credentialStatusService.createUnencryptedStatusList(
+			request.body as CreateUnencryptedStatusListRequestBody,
+			request.query as CreateUnencryptedStatusListRequestQuery,
+			response.locals.customer,
+			response.locals.user
+		);
 
-		// define broadcast mode
-		const data = encodedList ? fromString(encodedList, encoding) : undefined;
-
-		// create agent
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
-
-		try {
-			// broadcast, if applicable
-			if (data) {
-				let result;
-				if (listType === StatusListType.Bitstring) {
-					result = await identityServiceStrategySetup.agent.broadcastBitstringStatusList(
-						did,
-						{ data, name: statusListName, alsoKnownAs, version: statusListVersion },
-						response.locals.customer
-					);
-				} else {
-					result = await identityServiceStrategySetup.agent.broadcastStatusList2021(
-						did,
-						{ data, name: statusListName, alsoKnownAs, version: statusListVersion },
-						{ encoding, statusPurpose },
-						response.locals.customer
-					);
-				}
-				return response.status(StatusCodes.OK).json(result);
-			}
-			let result:
-				| CreateUnencryptedStatusListSuccessfulResponseBody
-				| CreateUnencryptedBitstringSuccessfulResponseBody;
-			// create unencrypted status list
-			if (listType === StatusListType.Bitstring) {
-				// create BitstringStatusList
-				result = (await identityServiceStrategySetup.agent.createUnencryptedBitstringStatusList(
-					did,
-					{
-						name: statusListName,
-						alsoKnownAs,
-						version: statusListVersion,
-					},
-					{
-						length,
-						size,
-						statusMessages,
-						ttl,
-						encoding,
-						statusPurpose,
-					},
-					response.locals.customer
-				)) as CreateUnencryptedBitstringSuccessfulResponseBody;
-			} else {
-				// create StatusList2021
-				result = (await identityServiceStrategySetup.agent.createUnencryptedStatusList2021(
-					did,
-					{
-						name: statusListName,
-						alsoKnownAs,
-						version: statusListVersion,
-					},
-					{
-						length,
-						encoding,
-						statusPurpose,
-					},
-					response.locals.customer
-				)) as CreateUnencryptedStatusListSuccessfulResponseBody;
-			}
-
-			// handle error
-			if (result.error) {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					...result,
-					error: result.error?.message || result.error.toString(),
-				} as CreateUnencryptedStatusListUnsuccessfulResponseBody);
-			}
-
-			// Keep track of resources
-			const trackInfo = {
-				category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
-				name: OperationNameEnum.CREDENTIAL_STATUS_CREATE_UNENCRYPTED,
-				customer: response.locals.customer,
-				user: response.locals.user,
-				data: {
-					did,
-					resource: result.resourceMetadata,
-					encrypted: result.resource?.metadata?.encrypted,
-					symmetricKey: '',
-				} satisfies ICredentialStatusTrack,
-			} as ITrackOperation;
-
-			// Track operation
-			eventTracker.emit('track', trackInfo);
-
-			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined });
-		} catch (error) {
-			// return catch-all error
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+		if (result.success) {
+			return response.status(result.statusCode).json(result.data);
+		} else {
+			return response.status(result.statusCode).json({
 				created: false,
-				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
-			} satisfies CreateUnencryptedStatusListUnsuccessfulResponseBody);
+				error: result.error,
+			} as CreateUnencryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
 
@@ -885,107 +813,22 @@ export class CredentialStatusController {
 	 */
 	@validate
 	async createEncryptedStatusList(request: Request, response: Response) {
-		// collect request parameters - case: body
-		const {
-			did,
-			statusListName,
-			alsoKnownAs,
-			statusListVersion,
-			length,
-			statusSize: size,
-			ttl,
-			statusMessages,
-			encoding,
-			paymentConditions,
-			feePaymentAddress,
-			feePaymentAmount,
-			feePaymentWindow,
-		} = request.body as CreateEncryptedStatusListRequestBody;
+		const credentialStatusService = new CredentialStatusService();
 
-		// collect request parameters - case: query
-		const { listType, statusPurpose } = request.query as CreateEncryptedStatusListRequestQuery;
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
-		let result: CreateEncryptedStatusListSuccessfulResponseBody | CreateEncryptedBitstringSuccessfulResponseBody;
-		try {
-			// create encrypted status list
-			if (listType === StatusListType.Bitstring) {
-				// create BitstringStatusList
-				result = (await identityServiceStrategySetup.agent.createEncryptedBitstringStatusList(
-					did,
-					{
-						name: statusListName,
-						alsoKnownAs,
-						version: statusListVersion,
-					},
-					{
-						length,
-						size,
-						statusMessages,
-						ttl,
-						encoding,
-						statusPurpose,
-						paymentConditions,
-						feePaymentAddress,
-						feePaymentAmount,
-						feePaymentWindow,
-					},
-					response.locals.customer
-				)) as CreateEncryptedBitstringSuccessfulResponseBody;
-			} else {
-				// create StatusList2021
-				result = (await identityServiceStrategySetup.agent.createEncryptedStatusList2021(
-					did,
-					{
-						name: statusListName,
-						alsoKnownAs,
-						version: statusListVersion,
-					},
-					{
-						length,
-						encoding,
-						statusPurpose,
-						paymentConditions,
-						feePaymentAddress,
-						feePaymentAmount,
-						feePaymentWindow,
-					},
-					response.locals.customer
-				)) as CreateEncryptedStatusListSuccessfulResponseBody;
-			}
-			// handle error
-			if (result.error) {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					...result,
-					error: result.error?.message || result.error.toString(),
-				} as CreateEncryptedStatusListUnsuccessfulResponseBody);
-			}
-			// Keep track of resources
-			// For now we decided not to store symmetricKey yet
+		const result = await credentialStatusService.createEncryptedStatusList(
+			request.body as CreateEncryptedStatusListRequestBody,
+			request.query as CreateEncryptedStatusListRequestQuery,
+			response.locals.customer,
+			response.locals.user
+		);
 
-			const trackInfo = {
-				name: OperationNameEnum.CREDENTIAL_STATUS_CREATE_ENCRYPTED,
-				category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
-				customer: response.locals.customer,
-				user: response.locals.user,
-				data: {
-					did,
-					resource: result.resourceMetadata,
-					encrypted: true,
-					symmetricKey: '',
-				} satisfies ICredentialStatusTrack,
-				feePaymentOptions: {},
-			} as ITrackOperation;
-
-			// Track operation
-			eventTracker.emit('track', trackInfo);
-
-			return response.status(StatusCodes.OK).json({ ...result, encrypted: undefined });
-		} catch (error) {
-			// return catch-all error
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+		if (result.success) {
+			return response.status(result.statusCode).json(result.data);
+		} else {
+			return response.status(result.statusCode).json({
 				created: false,
-				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
-			} satisfies CreateEncryptedStatusListUnsuccessfulResponseBody);
+				error: result.error,
+			} as CreateEncryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
 
@@ -1040,133 +883,22 @@ export class CredentialStatusController {
 	 */
 	@validate
 	async updateUnencryptedStatusList(request: Request, response: Response) {
-		// collect request parameters - case: body
-		const { did, statusListName, statusListVersion, indices } =
-			request.body as UpdateUnencryptedStatusListRequestBody;
+		const credentialStatusService = new CredentialStatusService();
 
-		// collect request parameters - case: query
-		const { statusAction, listType } = request.query as UpdateUnencryptedStatusListRequestQuery;
-
-		// define identity service strategy setup
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
-
-		// ensure unencrypted status list
-		const unencrypted = await identityServiceStrategySetup.agent.searchStatusList(
-			did,
-			statusListName,
-			listType,
-			DefaultStatusActionPurposeMap[statusAction]
+		const result = await credentialStatusService.updateUnencryptedStatusList(
+			request.body as UpdateUnencryptedStatusListRequestBody,
+			request.query as UpdateUnencryptedStatusListRequestQuery,
+			response.locals.customer,
+			response.locals.user
 		);
 
-		// handle error
-		if (unencrypted.error) {
-			// handle notFound error
-			if (unencrypted.error === 'notFound') {
-				return response.status(StatusCodes.NOT_FOUND).json({
-					updated: false,
-					error: `update: error: status list '${statusListName}' not found`,
-				} satisfies UpdateUnencryptedStatusListUnsuccessfulResponseBody);
-			}
-
-			// handle generic error
-			return response.status(StatusCodes.BAD_REQUEST).json({
+		if (result.success) {
+			return response.status(result.statusCode).json(result.data);
+		} else {
+			return response.status(result.statusCode).json({
 				updated: false,
-				error: `update: error: ${unencrypted.error}`,
-			} satisfies UpdateUnencryptedStatusListUnsuccessfulResponseBody);
-		}
-
-		// validate unencrypted
-		if (unencrypted.resource?.metadata?.encrypted)
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				updated: false,
-				error: `update: error: status list '${statusListName}' is encrypted`,
-			} satisfies UpdateUnencryptedStatusListUnsuccessfulResponseBody);
-
-		try {
-			// update unencrypted status list
-			const result = (await identityServiceStrategySetup.agent.updateUnencryptedStatusList(
-				did,
-				listType,
-				{
-					indices: typeof indices === 'number' ? [indices] : indices,
-					statusListName,
-					statusListVersion,
-					statusAction,
-				},
-				response.locals.customer
-			)) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult) & {
-				updated?: boolean;
-			};
-
-			// enhance result
-			result.updated = (function (that) {
-				// validate result - case: revocation
-				if (
-					(that as BulkRevocationResult)?.revoked?.every((item) => !!item) &&
-					(that as BulkRevocationResult)?.revoked?.length !== 0
-				)
-					return true;
-
-				// validate result - case: suspension
-				if (
-					(that as BulkSuspensionResult)?.suspended?.every((item) => !!item) &&
-					(that as BulkSuspensionResult)?.suspended?.length !== 0
-				)
-					return true;
-
-				// validate result - case: unsuspension
-				if (
-					(that as BulkUnsuspensionResult)?.unsuspended?.every((item) => !!item) &&
-					(that as BulkUnsuspensionResult)?.unsuspended?.length !== 0
-				)
-					return true;
-
-				return false;
-			})(result);
-
-			// handle error
-			if (result.error) {
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					...result,
-					error: result.error?.message || result.error.toString(),
-				} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
-			}
-			// construct formatted response
-			const formatted = {
-				updated: true,
-				revoked: (result as BulkRevocationResult)?.revoked || undefined,
-				suspended: (result as BulkSuspensionResult)?.suspended || undefined,
-				unsuspended: (result as BulkUnsuspensionResult)?.unsuspended || undefined,
-				resource: result.statusList,
-				resourceMetadata: result.resourceMetadata,
-			} satisfies UpdateUnencryptedStatusListSuccessfulResponseBody;
-
-			// track resource creation
-			if (result.resourceMetadata) {
-				const trackInfo = {
-					category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
-					name: OperationNameEnum.CREDENTIAL_STATUS_UPDATE_UNENCRYPTED,
-					customer: response.locals.customer,
-					user: response.locals.user,
-					data: {
-						did,
-						resource: result.resourceMetadata,
-						encrypted: false,
-						symmetricKey: '',
-					} satisfies ICredentialStatusTrack,
-				} as ITrackOperation;
-
-				// Track operation
-				eventTracker.emit('track', trackInfo);
-			}
-
-			return response.status(StatusCodes.OK).json(formatted);
-		} catch (error) {
-			// return catch-all error
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				updated: false,
-				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
-			} satisfies UpdateUnencryptedStatusListUnsuccessfulResponseBody);
+				error: result.error,
+			} as UpdateUnencryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
 
@@ -1221,149 +953,22 @@ export class CredentialStatusController {
 	 */
 	@validate
 	async updateEncryptedStatusList(request: Request, response: Response) {
-		// collect request parameters - case: body
-		const {
-			did,
-			statusListName,
-			statusListVersion,
-			indices,
-			symmetricKey,
-			paymentConditions,
-			feePaymentAddress,
-			feePaymentAmount,
-			feePaymentWindow,
-		} = request.body as UpdateEncryptedStatusListRequestBody;
+		const credentialStatusService = new CredentialStatusService();
 
-		// collect request parameters - case: query
-		const { statusAction, listType } = request.query as UpdateUnencryptedStatusListRequestQuery;
-
-		// define identity service strategy setup
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
-
-		// ensure encrypted status list
-		const encrypted = await identityServiceStrategySetup.agent.searchStatusList(
-			did,
-			statusListName,
-			listType,
-			DefaultStatusActionPurposeMap[statusAction]
+		const result = await credentialStatusService.updateEncryptedStatusList(
+			request.body as UpdateEncryptedStatusListRequestBody,
+			request.query as UpdateUnencryptedStatusListRequestQuery,
+			response.locals.customer,
+			response.locals.user
 		);
 
-		// handle error
-		if (encrypted.error) {
-			// handle notFound error
-			if (encrypted.error === 'notFound') {
-				return response.status(StatusCodes.NOT_FOUND).json({
-					updated: false,
-					error: `update: error: status list '${statusListName}' not found`,
-				} satisfies UpdateEncryptedStatusListUnsuccessfulResponseBody);
-			}
-
-			// handle generic error
-			return response.status(StatusCodes.BAD_REQUEST).json({
+		if (result.success) {
+			return response.status(result.statusCode).json(result.data);
+		} else {
+			return response.status(result.statusCode).json({
 				updated: false,
-				error: `update: error: ${encrypted.error}`,
-			} satisfies UpdateEncryptedStatusListUnsuccessfulResponseBody);
-		}
-
-		// validate encrypted
-		if (!encrypted.resource?.metadata?.encrypted)
-			return response.status(StatusCodes.BAD_REQUEST).json({
-				updated: false,
-				error: `update: error: status list '${statusListName}' is unencrypted`,
-			} satisfies UpdateEncryptedStatusListUnsuccessfulResponseBody);
-
-		try {
-			// update encrypted status list
-			const result = (await identityServiceStrategySetup.agent.updateEncryptedStatusList(
-				did,
-				listType,
-				{
-					indices: typeof indices === 'number' ? [indices] : indices,
-					statusListName,
-					statusListVersion,
-					statusAction,
-					paymentConditions,
-					symmetricKey,
-					feePaymentAddress,
-					feePaymentAmount,
-					feePaymentWindow,
-				},
-				response.locals.customer
-			)) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult) & {
-				updated: boolean;
-			};
-
-			// enhance result
-			result.updated = (function (that) {
-				// validate result - case: revocation
-				if (
-					(that as BulkRevocationResult)?.revoked?.every((item) => !!item) &&
-					(that as BulkRevocationResult)?.revoked?.length !== 0
-				)
-					return true;
-
-				// validate result - case: suspension
-				if (
-					(that as BulkSuspensionResult)?.suspended?.every((item) => !!item) &&
-					(that as BulkSuspensionResult)?.suspended?.length !== 0
-				)
-					return true;
-
-				// validate result - case: unsuspension
-				if (
-					(that as BulkUnsuspensionResult)?.unsuspended?.every((item) => !!item) &&
-					(that as BulkUnsuspensionResult)?.unsuspended?.length !== 0
-				)
-					return true;
-
-				return false;
-			})(result);
-
-			// handle error
-			if (result.error)
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					...result,
-					error: result.error?.message || result.error.toString(),
-				} as UpdateEncryptedStatusListUnsuccessfulResponseBody);
-
-			// construct formatted response
-			const formatted = {
-				updated: true,
-				revoked: (result as BulkRevocationResult)?.revoked || undefined,
-				suspended: (result as BulkSuspensionResult)?.suspended || undefined,
-				unsuspended: (result as BulkUnsuspensionResult)?.unsuspended || undefined,
-				resource: result.statusList,
-				resourceMetadata: result.resourceMetadata,
-				symmetricKey: result.symmetricKey,
-			} satisfies UpdateEncryptedStatusListSuccessfulResponseBody;
-
-			// track resource creation
-			if (result.resourceMetadata) {
-				const trackInfo = {
-					category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
-					name: OperationNameEnum.CREDENTIAL_STATUS_UPDATE_ENCRYPTED,
-					customer: response.locals.customer,
-					user: response.locals.user,
-					data: {
-						did,
-						resource: result.resourceMetadata,
-						encrypted: true,
-						symmetricKey: '',
-					} satisfies ICredentialStatusTrack,
-					feePaymentOptions: {},
-				} as ITrackOperation;
-
-				// Track operation
-				eventTracker.emit('track', trackInfo);
-			}
-
-			return response.status(StatusCodes.OK).json(formatted);
-		} catch (error) {
-			// return catch-all error
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				updated: false,
-				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
-			} satisfies UpdateEncryptedStatusListUnsuccessfulResponseBody);
+				error: result.error,
+			} as UpdateEncryptedStatusListUnsuccessfulResponseBody);
 		}
 	}
 
@@ -1420,191 +1025,22 @@ export class CredentialStatusController {
 	 */
 	@validate
 	async checkStatusList(request: Request, response: Response) {
-		const feePaymentOptions: IFeePaymentOptions[] = [];
+		const credentialStatusService = new CredentialStatusService();
 
-		// Make the base body for tracking
-		const trackInfo = {
-			name: OperationNameEnum.CREDENTIAL_STATUS_CHECK,
-			category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
-			customer: response.locals.customer,
-			user: response.locals.user,
-			successful: false,
-		} as ITrackOperation;
-
-		// collect request parameters - case: body
-		const { did, statusListName, index, makeFeePayment, statusListCredential, statusSize, statusMessage } =
-			request.body as CheckStatusListRequestBody;
-
-		// collect request parameters - case: query
-		const { statusPurpose, listType } = request.query as CheckStatusListRequestQuery;
-
-		// define identity service strategy setup
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
-
-		if (listType === StatusListType.Bitstring) {
-			if (!statusListCredential)
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					checked: false,
-					error: `check: error: 'statusListCredential' is required for BitstringStatusList type`,
-				} satisfies CheckStatusListUnsuccessfulResponseBody);
-			if (statusSize && statusSize > 1 && !statusMessage)
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					checked: false,
-					error: `check: error: 'statusMessage' is required when 'statusSize' is greater than 1 for BitstringStatusList type`,
-				} satisfies CheckStatusListUnsuccessfulResponseBody);
-		}
-
-		// ensure status list exists
-		const statusList = await identityServiceStrategySetup.agent.searchStatusList(
-			did,
-			statusListName,
-			listType,
-			statusPurpose
+		const result = await credentialStatusService.checkStatusList(
+			request.body as CheckStatusListRequestBody,
+			request.query as CheckStatusListRequestQuery,
+			response.locals.customer,
+			response.locals.user
 		);
 
-		// handle error
-		if (statusList.error) {
-			// handle notFound error
-			if (statusList.error === 'notFound') {
-				return response.status(StatusCodes.NOT_FOUND).json({
-					checked: false,
-					error: `check: error: status list '${statusListName}' not found`,
-				} satisfies CheckStatusListUnsuccessfulResponseBody);
-			}
-
-			// handle generic error
-			return response.status(StatusCodes.BAD_REQUEST).json({
+		if (result.success) {
+			return response.status(result.statusCode).json(result.data);
+		} else {
+			return response.status(result.statusCode).json({
 				checked: false,
-				error: `check: error: ${statusList.error}`,
-			} satisfies CheckStatusListUnsuccessfulResponseBody);
-		}
-
-		try {
-			// make fee payment, if defined
-			if (makeFeePayment && statusList?.resource?.metadata?.encrypted) {
-				// make fee payment
-				const feePaymentResult = await Promise.all(
-					statusList?.resource?.metadata?.paymentConditions?.map(
-						async (condition: { feePaymentAddress: any; feePaymentAmount: any }) => {
-							return await identityServiceStrategySetup.agent.remunerateStatusList2021(
-								{
-									feePaymentAddress: condition.feePaymentAddress,
-									feePaymentAmount: condition.feePaymentAmount,
-									feePaymentNetwork: toNetwork(did),
-									memo: 'Automated status check fee payment, orchestrated by CaaS.',
-								} satisfies FeePaymentOptions,
-								response.locals.customer
-							);
-						}
-					) || []
-				);
-
-				// Track the operation
-				await Promise.all(
-					feePaymentResult.map(async (result) => {
-						const portion = await FeeAnalyzer.getPaymentTrack(result, toNetwork(did));
-						feePaymentOptions.push(...portion);
-					})
-				);
-
-				// handle error
-				if (feePaymentResult.some((result) => result.error)) {
-					// Track payment information even in case of error
-					trackInfo.data = {
-						did: did,
-						resource: statusList.resourceMetadata,
-						encrypted: statusList.resource?.metadata?.encrypted,
-					} satisfies ICredentialStatusTrack;
-					trackInfo.successful = false;
-					trackInfo.feePaymentOptions = feePaymentOptions;
-
-					// Track operation
-					eventTracker.emit('track', trackInfo satisfies ITrackOperation);
-
-					return response.status(StatusCodes.BAD_REQUEST).json({
-						checked: false,
-						error: `check: payment: error: ${feePaymentResult.find((result) => result.error)?.error}`,
-					} satisfies CheckStatusListUnsuccessfulResponseBody);
-				}
-			}
-
-			// check status list
-			let result;
-			if (listType === StatusListType.Bitstring) {
-				result = await identityServiceStrategySetup.agent.checkBitstringStatusList(
-					did,
-					{
-						id: statusListCredential + '#' + index,
-						type: 'BitstringStatusListEntry',
-						statusPurpose,
-						statusListIndex: index.toString(),
-						statusListCredential: statusListCredential || '',
-						statusSize: statusSize,
-						statusMessage: statusMessage,
-					} as CheqdCredentialStatus,
-					response.locals.customer
-				);
-			} else {
-				result = await identityServiceStrategySetup.agent.checkStatusList2021(
-					did,
-					{
-						statusListIndex: index,
-						statusListName,
-						statusPurpose,
-					},
-					response.locals.customer
-				);
-			}
-
-			// handle error
-			if ('error' in result && result.error) {
-				return response.status(StatusCodes.BAD_REQUEST).json(result as CheckStatusListUnsuccessfulResponseBody);
-			}
-
-			(trackInfo.data = {
-				did: did,
-				resource: statusList.resourceMetadata,
-				encrypted: statusList.resource?.metadata?.encrypted,
-			} satisfies ICredentialStatusTrack),
-				(trackInfo.successful = true);
-			trackInfo.feePaymentOptions = feePaymentOptions;
-
-			// Track operation
-			eventTracker.emit('track', trackInfo satisfies ITrackOperation);
-
-			// return result
-			return response.status(StatusCodes.OK).json(result as CheckStatusListSuccessfulResponseBody);
-		} catch (error) {
-			// define error
-			const errorRef = error as Record<string, unknown>;
-
-			// handle doesn't meet condition
-			if (errorRef?.errorCode === 'NodeAccessControlConditionsReturnedNotAuthorized')
-				return response.status(StatusCodes.UNAUTHORIZED).json({
-					checked: false,
-					error: `check: error: ${
-						errorRef?.message
-							? 'unauthorized: decryption conditions are not met'
-							: (error as Record<string, unknown>).toString()
-					}`,
-				} satisfies CheckStatusListUnsuccessfulResponseBody);
-
-			// handle incorrect access control conditions
-			if (errorRef?.errorCode === 'incorrect_access_control_conditions')
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					checked: false,
-					error: `check: error: ${
-						errorRef?.message
-							? 'incorrect access control conditions'
-							: (error as Record<string, unknown>).toString()
-					}`,
-				} satisfies CheckStatusListUnsuccessfulResponseBody);
-
-			// return catch-all error
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				checked: false,
-				error: `Internal error: ${errorRef?.message || errorRef.toString()}`,
-			} satisfies CheckStatusListUnsuccessfulResponseBody);
+				error: result.error,
+			} as CheckStatusListUnsuccessfulResponseBody);
 		}
 	}
 
@@ -1662,43 +1098,147 @@ export class CredentialStatusController {
 	 */
 	@validate
 	async searchStatusList(request: Request, response: Response) {
-		// collect request parameters - case: query
-		const { did, statusListName, listType, statusPurpose } = request.query as SearchStatusListQuery;
+		const credentialStatusService = new CredentialStatusService();
 
-		try {
-			// search status list
-			const result = await new IdentityServiceStrategySetup().agent.searchStatusList(
-				did,
-				statusListName,
-				listType,
-				statusPurpose
-			);
+		const result = await credentialStatusService.searchStatusList(request.query as SearchStatusListQuery);
 
-			// handle error
-			if (result.error) {
-				// handle notFound error
-				if (result.error === 'notFound') {
-					return response.status(StatusCodes.NOT_FOUND).json({
-						found: false,
-						error: `search: error: status list '${statusListName}' not found`,
-					} satisfies SearchStatusListUnsuccessfulResponseBody);
-				}
-
-				// handle generic error
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					found: false,
-					error: `search: error: ${result.error}`,
-				} satisfies SearchStatusListUnsuccessfulResponseBody);
-			}
-
-			// return result
-			return response.status(StatusCodes.OK).json(result as SearchStatusListSuccessfulResponseBody);
-		} catch (error) {
-			// return catch-all error
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+		if (result.success) {
+			return response.status(result.statusCode).json(result.data);
+		} else {
+			return response.status(result.statusCode).json({
 				found: false,
-				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
-			} satisfies SearchStatusListUnsuccessfulResponseBody);
+				error: result.error,
+			} as SearchStatusListUnsuccessfulResponseBody);
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /credential-status/list:
+	 *   get:
+	 *     tags: [ Status Lists ]
+	 *     summary: List StatusList2021 or BitstringStatusList DID-Linked Resources created by the customer.
+	 *     parameters:
+	 *       - in: query
+	 *         name: did
+	 *         description: The DID of the issuer of the status list.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: listType
+	 *         description: The type of Status List.
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - StatusList2021
+	 *             - BitstringStatusList
+	 *       - in: query
+	 *         name: statusListName
+	 *         description: The name of the Status List DID-Linked Resource.
+	 *         schema:
+	 *           type: string
+	 *       - in: query
+	 *         name: state
+	 *         description: The state of the Status List DID-Linked Resource.
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *              - ACTIVE
+	 *              - STANDBY
+	 *              - FULL
+	 *       - in: query
+	 *         name: credentialCategory
+	 *         description: Filter status lists by credential category assigned for.
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *              - credential
+	 *              - accreditation
+	 *       - in: query
+	 *         name: deprecated
+	 *         description: Filter status lists by deprecated status.
+	 *         schema:
+	 *           type: boolean
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/ListCredentialStatusRecordsResult'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	@validate
+	async listStatusList(request: Request, response: Response) {
+		const credentialStatusService = new CredentialStatusService();
+
+		const result = await credentialStatusService.listStatusList(
+			request.query as ListStatusListQuery,
+			response.locals.customer
+		);
+
+		if (result.success) {
+			return response.status(result.statusCode).json(result.data);
+		} else {
+			return response.status(result.statusCode).json({
+				found: false,
+				error: result.error,
+			} as SearchStatusListUnsuccessfulResponseBody);
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /credential-status/list/{statusListId}:
+	 *   get:
+	 *     tags: [ Status Lists ]
+	 *     summary: Fetch StatusList2021 or BitstringStatusList DID-Linked Resource based on search criteria.
+	 *     parameters:
+	 *       - in: path
+	 *         name: statusListId
+	 *         description: The statusListId of the status list.
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/CredentialStatusRecordResult'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	@validate
+	async fetchStatusList(request: Request, response: Response) {
+		const credentialStatusService = new CredentialStatusService();
+		const { statusListId } = request.params;
+		const result = await credentialStatusService.getStatusList(
+			{
+				statusListId,
+			},
+			response.locals.customer
+		);
+
+		if (result.success) {
+			return response.status(result.statusCode).json(result.data);
+		} else {
+			return response.status(result.statusCode).json({
+				found: false,
+				error: result.error,
+			} as SearchStatusListUnsuccessfulResponseBody);
 		}
 	}
 }

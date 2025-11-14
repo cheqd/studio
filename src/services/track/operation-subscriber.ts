@@ -3,6 +3,7 @@ import {
 	type IResourceTrack,
 	type ITrackOperation,
 	type ITrackResult,
+	TrackData,
 	TrackOperationWithPayment,
 } from '../../types/track.js';
 import { toCoin } from './helpers.js';
@@ -20,7 +21,7 @@ import { PaymentAccountService } from '../api/payment-account.js';
 export class DBOperationSubscriber extends BaseOperationObserver implements IObserver {
 	protected logSeverity: LogLevelDesc = 'debug';
 
-	async update(trackOperation: ITrackOperation): Promise<void> {
+	async update(trackOperation: ITrackOperation<TrackData>): Promise<void> {
 		// tracking operation in our DB. It handles all the operations
 		const result = await this.trackOperation(trackOperation);
 		const message = result.error
@@ -83,7 +84,7 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 		} satisfies ITrackResult;
 	}
 
-	async getDefaultFeeCoin(operation: ITrackOperation): Promise<Coin> {
+	async getDefaultFeeCoin(operation: ITrackOperation<TrackData>): Promise<Coin> {
 		const defaultFee = 0;
 		switch (operation.name) {
 			case OperationNameEnum.DID_CREATE:
@@ -115,7 +116,7 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 		return toCoin(BigInt(defaultFee));
 	}
 
-	async trackOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
+	async trackOperation(trackOperation: ITrackOperation<TrackData>): Promise<ITrackResult> {
 		try {
 			// Create Default Fee Coin
 			const defaultFeeCoin = await this.getDefaultFeeCoin(trackOperation);

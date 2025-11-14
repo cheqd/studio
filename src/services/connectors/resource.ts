@@ -73,8 +73,8 @@ export class ResourceConnector {
 				data: {
 					did,
 					resource: resource,
-				} satisfies IResourceTrack,
-			} as ITrackOperation;
+				},
+			} as ITrackOperation<IResourceTrack>;
 
 			// track resource creation
 			eventTracker.emit('track', trackResourceInfo);

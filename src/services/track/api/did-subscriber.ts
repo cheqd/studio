@@ -1,10 +1,10 @@
 import { OperationCategoryNameEnum } from '../../../types/constants.js';
-import type { ITrackOperation, ITrackResult, IDIDTrack } from '../../../types/track.js';
+import type { ITrackOperation, ITrackResult, IDIDTrack, TrackData } from '../../../types/track.js';
 import type { IObserver } from '../types.js';
 import { BaseOperationObserver } from '../base.js';
 
 export class DIDSubscriber extends BaseOperationObserver implements IObserver {
-	isReactionNeeded(trackOperation: ITrackOperation): boolean {
+	isReactionNeeded(trackOperation: ITrackOperation<TrackData>): boolean {
 		return trackOperation.category === OperationCategoryNameEnum.DID;
 	}
 
@@ -14,7 +14,7 @@ export class DIDSubscriber extends BaseOperationObserver implements IObserver {
 		return `${base_message} | Target DID: ${data.did}`;
 	}
 
-	async update(trackOperation: ITrackOperation): Promise<void> {
+	async update(trackOperation: ITrackOperation<IDIDTrack>): Promise<void> {
 		if (!this.isReactionNeeded(trackOperation)) {
 			// Just skip this operation
 			return;
@@ -28,7 +28,7 @@ export class DIDSubscriber extends BaseOperationObserver implements IObserver {
 		});
 	}
 
-	async trackDIDOperation(trackOperation: ITrackOperation): Promise<ITrackResult> {
+	async trackDIDOperation(trackOperation: ITrackOperation<IDIDTrack>): Promise<ITrackResult> {
 		// We don't have specific DID related operations to track
 		return {
 			operation: trackOperation,

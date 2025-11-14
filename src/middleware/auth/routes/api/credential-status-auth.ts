@@ -29,6 +29,9 @@ export class CredentialStatusAuthRuleProvider extends AuthRuleProvider {
 			'POST',
 			'update-unencrypted:credential-status:mainnet'
 		);
+		this.registerRule('/credential-status/list', 'GET', 'list:credential-status:testnet', { skipNamespace: true });
+		this.registerRule('/credential-status/list', 'GET', 'list:credential-status:mainnet', { skipNamespace: true });
+
 		// Unauthorized routes
 		this.registerRule('/credential-status/search', 'GET', '', { allowUnauthorized: true, skipNamespace: true });
 		this.registerRule('/credential-status/check', 'POST', 'check:credential-status', { skipNamespace: true });
