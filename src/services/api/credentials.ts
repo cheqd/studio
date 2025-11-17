@@ -1,5 +1,5 @@
 import type { CredentialPayload, VerifiableCredential } from '@veramo/core';
-import { VC_CONTEXT, VC_TYPE } from '../../types/constants.js';
+import { OperationCategoryNameEnum, OperationNameEnum, VC_CONTEXT, VC_TYPE } from '../../types/constants.js';
 import {
 	CredentialCategory,
 	CredentialConnectors,
@@ -20,7 +20,7 @@ import { IssuedCredentialEntity } from '../../database/entities/issued-credentia
 import { Repository } from 'typeorm';
 import { Connection } from '../../database/connection/connection.js';
 import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
-import { CredentialStatusService } from './credential-status.js';
+
 import {
 	CheckStatusListOptions,
 	CheqdCredentialStatus,
@@ -30,6 +30,8 @@ import {
 } from '../../types/credential-status.js';
 import { validate as uuidValidate } from 'uuid';
 import { BitstringStatusListResourceType, DefaultStatusList2021StatusPurposeTypes } from '@cheqd/did-provider-cheqd';
+import { ICredentialStatusTrack, ITrackOperation } from '../../types/track.js';
+import { eventTracker } from '../track/tracker.js';
 
 dotenv.config();
 
@@ -370,12 +372,21 @@ export class Credentials {
 					utilizationPercent >= statusRegistry.threshold_percentage ||
 					nextIndex >= statusRegistry.registrySize
 				) {
-					// Trigger async rotation (don't wait)
-					CredentialStatusService.instance
-						.rotateStatusList(statusRegistry.registryId, customer)
-						.catch((err) => {
-							console.error('Failed to rotate status list:', err);
-						});
+					const trackInfo: ITrackOperation<ICredentialStatusTrack> = {
+						category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
+						name:
+							nextIndex >= statusRegistry.registrySize
+								? OperationNameEnum.CREDENTIAL_STATUS_FULL
+								: OperationNameEnum.CREDENTIAL_STATUS_THRESHOLD_REACHED,
+						customer: customer,
+						data: {
+							did: issuerDid,
+							registryId: statusRegistry.registryId,
+						},
+					};
+
+					// Track operation
+					eventTracker.emit('track', trackInfo);
 				}
 
 				return { index: nextIndex, registryId: statusRegistry.registryId };
