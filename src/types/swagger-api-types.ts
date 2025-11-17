@@ -919,6 +919,12 @@
  *                   message:
  *                     type: string
  *                     example: valid
+ *             credentialCategory:
+ *              description: Category of credentials this status list is for.
+ *               type: string
+ *              enum:
+ *               - credential
+ *               - accreditation
  *             ttl:
  *               description: "Only for BitstringStatusList: Time to Live in Miliseconds (not expiry)."
  *               type: integer
