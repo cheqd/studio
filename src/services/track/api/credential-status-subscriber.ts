@@ -26,7 +26,10 @@ export class CredentialStatusSubscriber extends BaseOperationObserver implements
 		const result = await this.trackCredentialStatusOperation(trackOperation);
 
 		// if credential status is full, activate the standby registry and create a new registry for standby
-		if (trackOperation.name === OperationNameEnum.CREDENTIAL_STATUS_FULL) {
+		if (
+			trackOperation.name === OperationNameEnum.CREDENTIAL_STATUS_FULL ||
+			trackOperation.name === OperationNameEnum.CREDENTIAL_STATUS_THRESHOLD_REACHED
+		) {
 			// Promote the current standby to active
 
 			// Rotate the status list
