@@ -820,7 +820,9 @@
  *           nullable: true
  *           description: Timestamp when the registry was sealed (marked as FULL)
  *         statusPurpose:
- *           type: object
+ *           type: array
+ *           items:
+ *             type: string
  *           description: Status purpose or list of status purposes
  *         deprecated:
  *           type: boolean
@@ -907,6 +909,12 @@
  *               description: "Only for BitstringStatusList: bits per credential, used to support multiple status in same list."
  *               type: integer
  *               minimum: 1
+ *             credentialCategory:
+ *               description: Category of credentials this status list is for.
+ *               type: string
+ *               enum:
+ *                  - credential
+ *                  - accreditation
  *             statusMessages:
  *               description: "Only for BitstringStatusList (Mandatory if statusSize > 1): Message explaining each bit"
  *               type: array
@@ -919,12 +927,6 @@
  *                   message:
  *                     type: string
  *                     example: valid
- *             credentialCategory:
- *              description: Category of credentials this status list is for.
- *               type: string
- *              enum:
- *               - credential
- *               - accreditation
  *             ttl:
  *               description: "Only for BitstringStatusList: Time to Live in Miliseconds (not expiry)."
  *               type: integer

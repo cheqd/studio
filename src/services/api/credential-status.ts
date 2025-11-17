@@ -30,7 +30,6 @@ import {
 	BulkBitstringUpdateResult,
 	DefaultStatusList2021StatusPurposeType,
 	Cheqd,
-	BitstringStatusListResourceType,
 	BitstringStatusListPurposeType,
 } from '@cheqd/did-provider-cheqd';
 import { toNetwork } from '../../helpers/helpers.js';
@@ -40,7 +39,7 @@ import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/consta
 import { FeeAnalyzer } from '../../helpers/fee-analyzer.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity.js';
-import { FindOptionsRelations, FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsRelations, FindOptionsWhere, Like, Repository } from 'typeorm';
 import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
 import { Connection } from '../../database/connection/connection.js';
 import { v4 } from 'uuid';
@@ -1141,8 +1140,12 @@ export class CredentialStatusService {
 				where.state = state;
 			}
 
-			if (listType && listType === StatusListType.Bitstring) {
-				where.registryType = BitstringStatusListResourceType;
+			if (listType) {
+				if (listType === StatusListType.Bitstring) {
+					where.registryType = Like('%Bitstring%');
+				} else {
+					where.registryType = Like('%StatusList2021%');
+				}
 			}
 
 			if (statusListName) {
