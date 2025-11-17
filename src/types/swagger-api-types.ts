@@ -820,9 +820,11 @@
  *           nullable: true
  *           description: Timestamp when the registry was sealed (marked as FULL)
  *         statusPurpose:
- *           type: array
- *           items:
- *             type: string
+ *           oneOf:
+ *             - type: string
+ *             - type: array
+ *               items:
+ *                 type: string
  *           description: Status purpose or list of status purposes
  *         deprecated:
  *           type: boolean
