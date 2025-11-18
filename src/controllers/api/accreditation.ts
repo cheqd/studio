@@ -906,10 +906,18 @@ export class AccreditationController {
 					);
 
 					if (trackingRecord) {
+						const { issuedCredentialId, providerId, providerCredentialId, status, statusUpdatedAt } =
+							trackingRecord;
 						// Merge tracking metadata with credential
 						accreditations.push({
-							...trackingRecord,
-							credential: credential.contentStream,
+							...credential.contentStream,
+							metadata: {
+								issuedCredentialId: issuedCredentialId,
+								providerId: providerId,
+								providerCredentialId: providerCredentialId,
+								status: status,
+								statusUpdatedAt: statusUpdatedAt,
+							},
 						});
 					} else {
 						// No tracking record, return just the credential (legacy)

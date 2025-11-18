@@ -2111,9 +2111,31 @@
  *           example: 5
  *         accreditations:
  *           type: array
- *           description: List of accreditations. Each item includes full tracking metadata with credential (new format) or just the credential (legacy format for older accreditations).
+ *           description: List of accreditations with credential data and tracking metadata.
  *           items:
- *             oneOf:
- *               - $ref: '#/components/schemas/IssuedCredentialResponse'
+ *             allOf:
  *               - $ref: '#/components/schemas/VerifiableCredential'
+ *               - type: object
+ *                 properties:
+ *                   metadata:
+ *                     type: object
+ *                     description: Tracking metadata from the issued credential database record
+ *                     properties:
+ *                       issuedCredentialId:
+ *                         type: string
+ *                         description: Unique identifier for the issued credential
+ *                       providerId:
+ *                         type: string
+ *                         description: Provider identifier
+ *                       providerCredentialId:
+ *                         type: string
+ *                         description: Provider-specific credential ID (resourceId)
+ *                       status:
+ *                         type: string
+ *                         description: Current status of the credential
+ *                         enum: [issued, suspended, revoked]
+ *                       statusUpdatedAt:
+ *                         type: string
+ *                         format: date-time
+ *                         description: Timestamp when status was last updated
  */
