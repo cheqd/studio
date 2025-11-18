@@ -89,7 +89,7 @@ export interface IIdentityService {
 	listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<ListDidsResponseBody>;
 	resolveDid(did: string): Promise<DIDResolutionResult>;
 	exportDid(did: string, password: string, customer: CustomerEntity): Promise<ExportDidResponse>;
-	resolve(didUrl: string): Promise<Response>;
+	resolve(didUrl: string, dereferencing?: boolean): Promise<Response>;
 	getDid(did: string, customer: CustomerEntity): Promise<any>;
 	importDid(
 		did: string,

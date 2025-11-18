@@ -280,9 +280,17 @@ export class Veramo {
 		return await agent.resolveDid({ didUrl: did });
 	}
 
-	async resolve(didUrl: string): Promise<Response> {
+	async resolve(didUrl: string, dereferencing: boolean = false): Promise<Response> {
+		let header;
+		if (dereferencing) {
+			header = {
+				Accept: 'application/ld+json;profile=https://w3id.org/did-url-dereferencing',
+			};
+		} else {
+			header = { 'Content-Type': '*/*' };
+		}
 		return fetch(`${process.env.RESOLVER_URL || DefaultResolverUrl}/${didUrl}`, {
-			headers: { 'Content-Type': '*/*' },
+			headers: header,
 		});
 	}
 

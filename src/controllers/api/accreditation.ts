@@ -10,7 +10,6 @@ import type {
 	SuspendAccreditationResponseBody,
 	UnsuspendAccreditationResponseBody,
 	VerifyAccreditationRequestBody,
-	VerfifiableAccreditation,
 } from '../../types/accreditation.js';
 import type { ICredentialTrack, ITrackOperation } from '../../types/track.js';
 import type { CredentialRequest, UnsuccesfulRevokeCredentialResponseBody } from '../../types/credential.js';
@@ -886,17 +885,39 @@ export class AccreditationController {
 			// remove duplicates of resourceUrls
 			const uniqueResourceUrls = Array.from(new Set(resourceUrls));
 
-			// Resolve resources to get full accreditation details
-			const resolvedResources = await Promise.all(
-				uniqueResourceUrls.map((url) => identityServiceStrategySetup.agent.resolve(url))
-			);
+			// Resolve resources to get full accreditation details and enhance with tracking metadata
+			const accreditations = [];
+			for (let i = 0; i < uniqueResourceUrls.length; i++) {
+				try {
+					const url = uniqueResourceUrls[i];
 
-			// Collect valid accreditations
-			const accreditations: VerfifiableAccreditation[] = [];
-			for (const res of resolvedResources) {
-				const resource = await res.json();
-				if (!resource.dereferencingMetadata) {
-					accreditations.push(resource as VerfifiableAccreditation);
+					// Resolve the credential
+					const res = await identityServiceStrategySetup.agent.resolve(url, true);
+					const credential = await res.json();
+					if (!credential.contentStream) {
+						continue;
+					}
+
+					// Fetch tracking metadata from issuedCredential table by providerCredentialId
+					const trackingRecord = await Credentials.instance.get(
+						credential.contentMetadata.resourceId,
+						response.locals.customer,
+						{}
+					);
+
+					if (trackingRecord) {
+						// Merge tracking metadata with credential
+						accreditations.push({
+							...trackingRecord,
+							credential: credential.contentStream,
+						});
+					} else {
+						// No tracking record, return just the credential (legacy)
+						accreditations.push(credential.contentStream);
+					}
+				} catch (error) {
+					console.error(`Failed to process accreditation:`, error);
+					continue;
 				}
 			}
 

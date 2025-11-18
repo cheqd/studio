@@ -436,6 +436,7 @@ export class Credentials {
 			createdAt,
 			category,
 			credentialType,
+			network,
 		} = options;
 
 		// Used queryBuilder because of "type" filter which is JSON onject in DB
@@ -451,6 +452,10 @@ export class Credentials {
 		if (format) queryBuilder.andWhere('ic.format = :format', { format });
 		if (category) queryBuilder.andWhere('ic.category = :category', { category });
 		if (createdAt) queryBuilder.andWhere('ic.createdAt <= :createdAt', { createdAt: new Date(createdAt) });
+		if (network) {
+			// Filter by network in the DID (e.g., did:cheqd:mainnet:... or did:cheqd:testnet:...)
+			queryBuilder.andWhere('ic.issuerId LIKE :network', { network: `%:${network}:%` });
+		}
 		if (credentialType) {
 			if (credentialType === 'VerifiableCredential') {
 				// Exact match for VerifiableCredential (only credentials with type = ["VerifiableCredential"])

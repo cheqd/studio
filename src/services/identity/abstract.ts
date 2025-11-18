@@ -265,7 +265,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	resolveDid(did: string): Promise<DIDResolutionResult> {
 		throw new Error(`Not supported`);
 	}
-	resolve(didUrl: string): Promise<Response> {
+	resolve(didUrl: string, dereferencing?: boolean): Promise<Response> {
 		throw new Error(`Not supported`);
 	}
 	createPresentation(
