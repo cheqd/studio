@@ -71,6 +71,11 @@ export type DateType = string | Date;
 
 export type IssueCredentialRequestBody = CredentialRequest;
 
+export type RetryIssuedCredentialRequestBody = Pick<
+	CredentialRequest,
+	'attributes' | 'expirationDate' | 'type' | 'termsOfUse' | 'evidence' | 'refreshService' | '@context'
+>;
+
 export type VerifyCredentialRequestBody = { credential: W3CVerifiableCredential } & VerificationPoliciesRequest;
 
 export type VerifyCredentialRequestQuery = VerificationOptions;

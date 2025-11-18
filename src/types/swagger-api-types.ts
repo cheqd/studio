@@ -447,6 +447,74 @@
  *               description: Policy to skip the audience check when set to `false`.
  *               type: boolean
  *               default: false
+ *     RetryCredentialRequest:
+ *       type: object
+ *       properties:
+ *         attributes:
+ *           description: JSON object containing the attributes to be included in the credential.
+ *           type: object
+ *           example: {
+ *              name: Bob,
+ *              gender: male
+ *           }
+ *         '@context':
+ *           description: Optional properties to be included in the `@context` property of the credential.
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: [https://schema.org/schema.jsonld, https://veramo.io/contexts/profile/v1]
+ *         type:
+ *           description: Optional properties to be included in the `type` property of the credential.
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: [Person]
+ *         expirationDate:
+ *           description: Optional expiration date according to the <a href=https://www.w3.org/TR/vc-data-model/#expiration> VC Data Model specification</a>.
+ *           type: string
+ *           format: date-time
+ *           example: 2023-06-08T13:49:28.000Z
+ *         termsOfUse:
+ *           description: Terms of use can be utilized by an issuer or a holder to communicate the terms under which a verifiable credential was issued.
+ *           type: array
+ *           items:
+ *              type: object
+ *              example: {
+ *                type: IssuerPolicy,
+ *                id: http://example.com/policies/credential/4,
+ *                profile: http://example.com/profiles/credential,
+ *                prohibition: [{
+ *                      assigner: https://example.edu/issuers/14,
+ *                      assignee: AllVerifiers,
+ *                      target: http://example.edu/credentials/3732,
+ *                      action: [ "Archival" ]
+ *                }]
+ *              }
+ *         refreshService:
+ *           description: RefreshService property MUST be one or more refresh services that provides enough information to the recipient's software such that the recipient can refresh the verifiable credential.
+ *           type: array
+ *           items:
+ *              type: object
+ *              example: {
+ *                type: ManualRefreshService2018,
+ *                id: https://example.edu/refresh/3732
+ *              }
+ *         evidence:
+ *           description: Evidence property MUST be one or more evidence schemes providing enough information for a verifier to determine whether the evidence gathered by the issuer meets its confidence requirements for relying on the credential.
+ *           type: array
+ *           items:
+ *              type: object
+ *              example: {
+ *                type: ["DocumentVerification"],
+ *                id: https://example.edu/evidence/f2aeec97-fc0d-42bf-8ca7-0548192d4231,
+ *                verifier: "https://example.edu/issuers/14",
+ *                evidenceDocument: DriversLicense,
+ *                subjectPresence: Physical,
+ *                documentPresence: Physical,
+ *                licenseNumber: 123AB4567
+ *              }
+ *       required:
+ *         - attributes
  *     VerifyPresentationResult:
  *       type: object
  *       properties:
