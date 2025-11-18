@@ -982,15 +982,6 @@ export class CredentialStatusService {
 		const nextResourceName = this.getNextResourceName(activeRegistry.registryName);
 		const nextUri = `${activeRegistry.identifier.did}?resourceName=${nextResourceName}&resourceType=${activeRegistry.registryType}`;
 
-		// Update current registry with next_uri using CAS
-		const updated = await this.updateRegistryWithCAS(activeRegistry.registryId, activeRegistry.version, {
-			next_uri: nextUri,
-		});
-
-		if (!updated) {
-			throw new Error('Failed to update next_uri - concurrent modification detected');
-		}
-
 		// Create new STANDBY registry
 		const newRegistryRequestBody = {
 			...activeRegistry.metadata,
@@ -1011,9 +1002,22 @@ export class CredentialStatusService {
 				| BitstringStatusListPurposeType,
 		};
 
-		activeRegistry.encrypted
+		const res = activeRegistry.encrypted
 			? await this.createEncryptedStatusList(newRegistryRequestBody, newRegistryQuery, customer)
 			: await this.createUnencryptedStatusList(newRegistryRequestBody, newRegistryQuery, customer);
+
+		if (res.error) {
+			throw new Error(`Failed to create STANDBY registry: ${res.error}`);
+		}
+
+		// Update current registry with next_uri using CAS
+		const updated = await this.updateRegistryWithCAS(activeRegistry.registryId, activeRegistry.version, {
+			next_uri: nextUri,
+		});
+
+		if (!updated) {
+			throw new Error('Failed to update next_uri - concurrent modification detected');
+		}
 	}
 
 	/**
@@ -1084,6 +1088,7 @@ export class CredentialStatusService {
 		// Mark current as FULL using CAS
 		const markedFull = await this.updateRegistryWithCAS(registry.registryId, registry.version, {
 			state: StatusRegistryState.Full,
+			sealedAt: new Date(), // TODO include sealed commitment
 		});
 
 		if (!markedFull) {

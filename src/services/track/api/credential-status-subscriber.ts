@@ -31,13 +31,19 @@ export class CredentialStatusSubscriber extends BaseOperationObserver implements
 			trackOperation.name === OperationNameEnum.CREDENTIAL_STATUS_THRESHOLD_REACHED
 		) {
 			// Promote the current standby to active
-
 			// Rotate the status list
 			if (trackOperation.data.registryId) {
-				await CredentialStatusService.instance.rotateStatusList(
-					trackOperation.data.registryId,
-					trackOperation.customer
-				);
+				await CredentialStatusService.instance
+					.rotateStatusList(trackOperation.data.registryId, trackOperation.customer)
+					.catch((error) => {
+						console.error(
+							`Error rotating status list for registry ${trackOperation.data.registryId}: ${error.message}`
+						);
+						result.operation.successful = false;
+						result.error = `Error rotating status list: ${error.message}`;
+					});
+
+				result.operation.successful = true;
 			}
 		}
 
