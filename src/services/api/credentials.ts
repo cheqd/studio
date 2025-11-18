@@ -64,6 +64,7 @@ export class Credentials {
 			credentialId,
 			providerId,
 			category,
+			issuedCredentialId,
 			...additionalData
 		} = request;
 
@@ -89,7 +90,7 @@ export class Credentials {
 		// Phase 1: Atomic Index Reservation with CAS
 		let reservedIndex: number | undefined;
 		let statusRegistryId: string | undefined;
-		if (statusOptions) {
+		if (statusOptions && !issuedCredentialId) {
 			// Reserve index atomically using CAS pattern
 			const reservation = await this.reserveStatusIndex(statusOptions, issuerDid, customer);
 			reservedIndex = reservation.index;
@@ -105,19 +106,31 @@ export class Credentials {
 
 		// Phase 2: Create tracking record immediately to reserve the index
 		// This ensures the index is tracked even if credential creation fails
-		const trackingRecord = await this.create(customer, {
-			providerId: providerId || 'studio',
-			issuerId: issuerDid,
-			subjectId: subjectDid,
-			format: (format || 'jsonld') as 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds',
-			category: category || CredentialCategory.CREDENTIAL,
-			type: type || ['VerifiableCredential'],
-			status: 'issued',
-			issuedAt: new Date(),
-			statusRegistryId: statusRegistryId,
-			statusIndex: reservedIndex,
-			retryCount: 0,
-		});
+		let trackingRecord: IssuedCredentialEntity;
+		if (issuedCredentialId) {
+			const existingRecord = await this.fetch(issuedCredentialId, customer);
+			if (!existingRecord) {
+				throw new Error(
+					`Issued Credential with ID ${issuedCredentialId} not found for customer ${customer.customerId}`
+				);
+			}
+
+			trackingRecord = existingRecord;
+		} else {
+			trackingRecord = await this.create(customer, {
+				providerId: providerId || 'studio',
+				issuerId: issuerDid,
+				subjectId: subjectDid,
+				format: (format || 'jsonld') as 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds',
+				category: category || CredentialCategory.CREDENTIAL,
+				type: type || ['VerifiableCredential'],
+				status: 'issued',
+				issuedAt: new Date(),
+				statusRegistryId: statusRegistryId,
+				statusIndex: reservedIndex,
+				retryCount: 0,
+			});
+		}
 
 		// Phase 3: Attempt credential creation with error handling
 		try {
@@ -222,6 +235,7 @@ export class Credentials {
 				{
 					providerCredentialId: providerCredentialId,
 					metadata: credentialMetadata,
+					status: 'issued',
 				},
 				customer
 			);
@@ -642,6 +656,27 @@ export class Credentials {
 		}
 
 		return this.toResponse(updatedEntity, {});
+	}
+
+	/**
+	 * Fetch a single issued credential record by ID
+	 */
+	async fetch(id: string, customer: CustomerEntity): Promise<IssuedCredentialEntity | null> {
+		// Try multiple lookup strategies
+		let entity: IssuedCredentialEntity | null = null;
+
+		// Strategy 1: Try as issuedCredentialId (UUID)
+		if (uuidValidate(id)) {
+			entity = await this.repository.findOne({
+				where: {
+					issuedCredentialId: id,
+					customer: { customerId: customer.customerId },
+				},
+				relations: ['customer', 'statusRegistry'],
+			});
+		}
+
+		return entity;
 	}
 
 	/**
