@@ -995,16 +995,6 @@ export class CredentialController {
 
 			const result = await Credentials.instance.issue_credential(credentialRequest, response.locals.customer);
 
-			// Update issued credential record with new credential data
-			await Credentials.instance.update(
-				id,
-				{
-					status: 'issued',
-					providerCredentialId: result.id,
-				},
-				response.locals.customer
-			);
-
 			return response.status(StatusCodes.OK).json({
 				success: true,
 				data: result,
