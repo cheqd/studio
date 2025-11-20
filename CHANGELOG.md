@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.15.0-develop.2](https://github.com/cheqd/studio/compare/3.15.0-develop.1...3.15.0-develop.2) (2025-11-20)
+
+### Features
+
+* Add revocation registry management [DEV-5439] ([#752](https://github.com/cheqd/studio/issues/752)) ([a183b58](https://github.com/cheqd/studio/commit/a183b586a9592c567bedd04ad5f6638427cf9fef)), closes [#755](https://github.com/cheqd/studio/issues/755)
+* v3.15.0 beta ([af9d5ec](https://github.com/cheqd/studio/commit/af9d5ec3a2e7fa7244ca04dc7dae077613539c18))
+
 ## [3.15.0-develop.1](https://github.com/cheqd/studio/compare/3.14.0...3.15.0-develop.1) (2025-11-10)
 
 ### Features
