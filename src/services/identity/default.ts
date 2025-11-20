@@ -15,8 +15,8 @@ export class DefaultIdentityService extends AbstractIdentityService {
 		return Veramo.instance.resolveDid(this.initAgent(), did);
 	}
 
-	async resolve(didUrl: string): Promise<Response> {
-		return Veramo.instance.resolve(didUrl);
+	async resolve(didUrl: string, dereferencing?: boolean): Promise<Response> {
+		return Veramo.instance.resolve(didUrl, dereferencing);
 	}
 
 	verifyCredential(

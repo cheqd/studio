@@ -105,6 +105,9 @@ export interface VerfifiableAccreditation extends VerifiableCredential {
 		id: string;
 		accreditedFor: AccreditationSchemaType[];
 	};
+	metadata?: {
+		[x: string]: any;
+	};
 }
 
 export interface UpdateAccreditationRequestBody extends DIDUrlParams {

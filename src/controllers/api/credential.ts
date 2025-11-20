@@ -26,6 +26,7 @@ import type {
 	VerifyCredentialRequestBody,
 	VerifyCredentialRequestQuery,
 	VerifyCredentialResponseBody,
+	RetryIssuedCredentialRequestBody,
 } from '../../types/credential.js';
 import { VeridaDIDValidator } from '../validator/did.js';
 import { Cheqd } from '@cheqd/did-provider-cheqd';
@@ -170,15 +171,15 @@ export class CredentialController {
 			);
 
 			// Track operation
-			const trackInfo = {
+			const trackInfo: ITrackOperation<ICredentialTrack> = {
 				category: OperationCategoryNameEnum.CREDENTIAL,
 				name: OperationNameEnum.CREDENTIAL_ISSUE,
 				customer: response.locals.customer,
 				user: response.locals.user,
 				data: {
 					did: requestBody.issuerDid,
-				} satisfies ICredentialTrack,
-			} as ITrackOperation;
+				},
+			};
 
 			eventTracker.emit('track', trackInfo);
 
@@ -278,7 +279,7 @@ export class CredentialController {
 
 			const did = typeof cheqdCredential.issuer === 'string' ? cheqdCredential.issuer : cheqdCredential.issuer.id;
 			// Track operation
-			const trackInfo = {
+			const trackInfo: ITrackOperation<ICredentialTrack> = {
 				category: OperationCategoryNameEnum.CREDENTIAL,
 				name: OperationNameEnum.CREDENTIAL_VERIFY,
 				customer: response.locals.customer,
@@ -286,8 +287,8 @@ export class CredentialController {
 				data: {
 					did,
 					resource: verifyResult.resourceMetadata,
-				} satisfies ICredentialTrack,
-			} as ITrackOperation;
+				},
+			};
 
 			eventTracker.emit('track', trackInfo);
 
@@ -379,7 +380,7 @@ export class CredentialController {
 					typeof credential.issuer === 'string'
 						? credential.issuer
 						: (credential.issuer as { id: string }).id;
-				const trackInfo = {
+				const trackInfo: ITrackOperation<ICredentialTrack> = {
 					category: OperationCategoryNameEnum.CREDENTIAL,
 					name: OperationNameEnum.CREDENTIAL_REVOKE,
 					customer: response.locals.customer,
@@ -389,8 +390,8 @@ export class CredentialController {
 						encrypted: result.statusList?.metadata?.encrypted,
 						resource: result.resourceMetadata,
 						symmetricKey: '',
-					} satisfies ICredentialStatusTrack,
-				} as ITrackOperation;
+					},
+				};
 
 				// Track operation
 				eventTracker.emit('track', trackInfo);
@@ -483,7 +484,7 @@ export class CredentialController {
 					typeof credential.issuer === 'string'
 						? credential.issuer
 						: (credential.issuer as { id: string }).id;
-				const trackInfo = {
+				const trackInfo: ITrackOperation<ICredentialTrack> = {
 					category: OperationCategoryNameEnum.CREDENTIAL,
 					name: OperationNameEnum.CREDENTIAL_SUSPEND,
 					customer: response.locals.customer,
@@ -494,7 +495,7 @@ export class CredentialController {
 						resource: result.resourceMetadata,
 						symmetricKey: '',
 					},
-				} as ITrackOperation;
+				};
 
 				// Track operation
 				eventTracker.emit('track', trackInfo);
@@ -586,7 +587,7 @@ export class CredentialController {
 					typeof credential.issuer === 'string'
 						? credential.issuer
 						: (credential.issuer as { id: string }).id;
-				const trackInfo = {
+				const trackInfo: ITrackOperation<ICredentialTrack> = {
 					category: OperationCategoryNameEnum.CREDENTIAL,
 					name: OperationNameEnum.CREDENTIAL_UNSUSPEND,
 					customer: response.locals.customer,
@@ -597,7 +598,7 @@ export class CredentialController {
 						resource: result.resourceMetadata,
 						symmetricKey: '',
 					} satisfies ICredentialStatusTrack,
-				} as ITrackOperation;
+				};
 
 				// Track operation
 				eventTracker.emit('track', trackInfo);
@@ -680,6 +681,18 @@ export class CredentialController {
 	 *           type: string
 	 *           format: date-time
 	 *         required: false
+	 *       - in: query
+	 *         name: credentialType
+	 *         description: Filter credentials by type (e.g., 'VerifiableCredential', 'UniversityDegreeCredential').
+	 *         schema:
+	 *           type: string
+	 *         required: false
+	 *       - in: query
+	 *         name: statusRegistryId
+	 *         description: Filter issued credentials using status registry ID.
+	 *         schema:
+	 *           type: string
+	 *         required: false
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -695,7 +708,19 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async listIssuedCredentials(request: Request, response: Response) {
-		const { page, limit, providerId, issuerId, subjectId, status, format, createdAt, category } = request.query;
+		const {
+			page,
+			limit,
+			providerId,
+			issuerId,
+			subjectId,
+			status,
+			format,
+			createdAt,
+			category,
+			credentialType,
+			statusRegistryId,
+		} = request.query;
 
 		try {
 			const result = await Credentials.instance.list(response.locals.customer, {
@@ -708,6 +733,8 @@ export class CredentialController {
 				format: format as string | undefined,
 				createdAt: createdAt as string | undefined,
 				category: category as string | undefined,
+				credentialType: credentialType as string | undefined,
+				statusRegistryId: statusRegistryId as string | undefined,
 			});
 
 			return response.status(StatusCodes.OK).json(result);
@@ -875,6 +902,116 @@ export class CredentialController {
 					error: `Credential with ID ${id} not found`,
 				} satisfies UpdateIssuedCredentialResponseBody);
 			}
+
+			return response.status(StatusCodes.OK).json({
+				success: true,
+				data: result,
+			} satisfies UpdateIssuedCredentialResponseBody);
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				success: false,
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			} satisfies UpdateIssuedCredentialResponseBody);
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /credentials/issued/{id}/re-issue:
+	 *   post:
+	 *     tags: [ Verifiable Credentials ]
+	 *     summary: Reissue an issued credential with failed state.
+	 *     description: This endpoint re-issues the issued credential record in failed state.
+	 *     parameters:
+	 *       - in: path
+	 *         name: id
+	 *         description: Credential identifier (issuedCredentialId).
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *     requestBody:
+	 *       content:
+	 *         application/x-www-form-urlencoded:
+	 *           schema:
+	 *             $ref: '#/components/schemas/RetryCredentialRequest'
+	 *         application/json:
+	 *           schema:
+	 *             $ref: '#/components/schemas/RetryCredentialRequest'
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               type: object
+	 *               properties:
+	 *                 success:
+	 *                   type: boolean
+	 *                 data:
+	 *                   $ref: '#/components/schemas/IssuedCredentialResponse'
+	 *       404:
+	 *         description: Credential not found.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               type: object
+	 *               properties:
+	 *                 success:
+	 *                   type: boolean
+	 *                 error:
+	 *                   type: string
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async retryIssuedCredential(request: Request, response: Response) {
+		const { id } = request.params;
+
+		const requestBody = request.body as RetryIssuedCredentialRequestBody;
+
+		// normalize
+		if (typeof requestBody.type === 'string') {
+			requestBody.type = [requestBody.type];
+		}
+		if (typeof requestBody['@context'] === 'string') {
+			requestBody['@context'] = [requestBody['@context']];
+		}
+
+		try {
+			const issuedCredential = await Credentials.instance.get(id, response.locals.customer);
+
+			if (!issuedCredential) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					success: false,
+					error: `Credential with ID ${id} not found`,
+				} satisfies UpdateIssuedCredentialResponseBody);
+			}
+
+			if (issuedCredential.status !== 'failed') {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					success: false,
+					error: `Only credentials in 'failed' status can be reissued`,
+				} satisfies UpdateIssuedCredentialResponseBody);
+			}
+
+			// issuerDid, subjectDid, credentialStatus, provider are fetched from the existing issued credential record
+			const credentialRequest = {
+				// can be overriden by request body
+				type: issuedCredential.type,
+				format: issuedCredential.format as any,
+				...requestBody,
+				issuerDid: issuedCredential.issuerId!,
+				subjectDid: issuedCredential.subjectId!,
+				credentialStatus: issuedCredential.credentialStatus as any,
+				category: issuedCredential.category as any,
+				providerId: issuedCredential.providerId,
+			};
+
+			const result = await Credentials.instance.issue_credential(credentialRequest, response.locals.customer);
 
 			return response.status(StatusCodes.OK).json({
 				success: true,

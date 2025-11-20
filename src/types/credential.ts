@@ -28,7 +28,7 @@ export interface CredentialRequest {
 	expirationDate?: DateType;
 	issuerDid: string;
 	format: 'jsonld' | 'jwt' | 'sd-jwt-vc' | 'anoncreds';
-	credentialStatus?: StatusOptions;
+	credentialStatus?: StatusOptions & { id?: string };
 	credentialSchema?: string;
 	credentialName?: string;
 	credentialSummary?: string;
@@ -38,7 +38,7 @@ export interface CredentialRequest {
 	connector?: CredentialConnectors;
 	providerId?: string;
 	credentialId?: string;
-	category?: 'credential' | 'accreditation';
+	category?: CredentialCategory;
 
 	[x: string]: any;
 }
@@ -70,6 +70,11 @@ export type DateType = string | Date;
 // Request bodies and queries
 
 export type IssueCredentialRequestBody = CredentialRequest;
+
+export type RetryIssuedCredentialRequestBody = Pick<
+	CredentialRequest,
+	'attributes' | 'expirationDate' | 'type' | 'termsOfUse' | 'evidence' | 'refreshService' | '@context'
+>;
 
 export type VerifyCredentialRequestBody = { credential: W3CVerifiableCredential } & VerificationPoliciesRequest;
 
@@ -143,6 +148,9 @@ export type ListCredentialRequestOptions = {
 	format?: string;
 	createdAt?: string;
 	category?: string;
+	credentialType?: string;
+	network?: 'mainnet' | 'testnet';
+	statusRegistryId?: string;
 };
 
 export type UpdateIssuedCredentialRequestBody = {
@@ -178,6 +186,11 @@ export interface GetIssuedCredentialOptions {
 	providerId?: string;
 }
 
+export enum CredentialCategory {
+	CREDENTIAL = 'credential',
+	ACCREDITATION = 'accreditation',
+}
+
 export interface IssuedCredentialCreateOptions {
 	providerId: string;
 	providerCredentialId?: string;
@@ -191,7 +204,11 @@ export interface IssuedCredentialCreateOptions {
 	expiresAt?: Date;
 	credentialStatus?: Record<string, any>;
 	metadata?: Record<string, any>;
-	category?: 'credential' | 'accreditation';
+	category?: CredentialCategory;
+	statusRegistryId?: string;
+	statusIndex?: number;
+	retryCount?: number;
+	lastError?: string;
 }
 
 export interface IssuedCredentialResponse {
@@ -219,6 +236,10 @@ export interface IssuedCredentialResponse {
 
 	// Credential Status Configuration
 	credentialStatus?: Record<string, any>;
+	statusRegistryId?: string;
+	statusIndex?: number;
+	retryCount?: number;
+	lastError?: string;
 
 	// Provider-specific metadata
 	providerMetadata?: Record<string, any>;

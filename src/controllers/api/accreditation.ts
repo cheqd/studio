@@ -10,9 +10,8 @@ import type {
 	SuspendAccreditationResponseBody,
 	UnsuspendAccreditationResponseBody,
 	VerifyAccreditationRequestBody,
-	VerfifiableAccreditation,
 } from '../../types/accreditation.js';
-import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '../../types/track.js';
+import type { ICredentialTrack, ITrackOperation } from '../../types/track.js';
 import type { CredentialRequest, UnsuccesfulRevokeCredentialResponseBody } from '../../types/credential.js';
 import { StatusCodes } from 'http-status-codes';
 import { v4 } from 'uuid';
@@ -21,7 +20,7 @@ import {
 	DIDAccreditationPolicyTypes,
 	DIDAccreditationTypes,
 } from '../../types/accreditation.js';
-import { CredentialConnectors, VerifyCredentialRequestQuery } from '../../types/credential.js';
+import { CredentialCategory, CredentialConnectors, VerifyCredentialRequestQuery } from '../../types/credential.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { AccreditationService } from '../../services/api/accreditation.js';
@@ -277,7 +276,7 @@ export class AccreditationController {
 				credentialId: resourceId,
 				credentialName: accreditationName,
 				credentialStatus,
-				category: 'accreditation',
+				category: CredentialCategory.ACCREDITATION,
 			};
 
 			let resourceType: string;
@@ -340,15 +339,15 @@ export class AccreditationController {
 			);
 
 			// Track operation
-			const trackInfo = {
+			const trackInfo: ITrackOperation<ICredentialTrack> = {
 				category: OperationCategoryNameEnum.CREDENTIAL,
 				name: OperationNameEnum.CREDENTIAL_ISSUE,
 				customer: response.locals.customer,
 				user: response.locals.user,
 				data: {
 					did: issuerDid,
-				} satisfies ICredentialTrack,
-			} as ITrackOperation;
+				},
+			};
 
 			eventTracker.emit('track', trackInfo);
 
@@ -441,15 +440,15 @@ export class AccreditationController {
 				policies
 			);
 			// Track operation
-			const trackInfo = {
+			const trackInfo: ITrackOperation<ICredentialTrack> = {
 				category: OperationCategoryNameEnum.CREDENTIAL,
 				name: OperationNameEnum.CREDENTIAL_VERIFY,
 				customer: response.locals.customer,
 				user: response.locals.user,
 				data: {
 					did: parseDidFromDidUrl(didUrl),
-				} satisfies ICredentialTrack,
-			} as ITrackOperation;
+				},
+			};
 
 			eventTracker.emit('track', trackInfo);
 			if (result.success) {
@@ -549,7 +548,7 @@ export class AccreditationController {
 					typeof accreditation.issuer === 'string'
 						? accreditation.issuer
 						: (accreditation.issuer as { id: string }).id;
-				const trackInfo = {
+				const trackInfo: ITrackOperation<ICredentialTrack> = {
 					category: OperationCategoryNameEnum.CREDENTIAL,
 					name: OperationNameEnum.CREDENTIAL_REVOKE,
 					customer: response.locals.customer,
@@ -559,8 +558,8 @@ export class AccreditationController {
 						encrypted: result.statusList?.metadata?.encrypted,
 						resource: result.resourceMetadata,
 						symmetricKey: '',
-					} satisfies ICredentialStatusTrack,
-				} as ITrackOperation;
+					},
+				};
 
 				// Track operation
 				eventTracker.emit('track', trackInfo);
@@ -661,7 +660,7 @@ export class AccreditationController {
 					typeof accreditation.issuer === 'string'
 						? accreditation.issuer
 						: (accreditation.issuer as { id: string }).id;
-				const trackInfo = {
+				const trackInfo: ITrackOperation<ICredentialTrack> = {
 					category: OperationCategoryNameEnum.CREDENTIAL,
 					name: OperationNameEnum.CREDENTIAL_SUSPEND,
 					customer: response.locals.customer,
@@ -672,7 +671,7 @@ export class AccreditationController {
 						resource: result.resourceMetadata,
 						symmetricKey: '',
 					},
-				} as ITrackOperation;
+				};
 
 				// Track operation
 				eventTracker.emit('track', trackInfo);
@@ -773,7 +772,7 @@ export class AccreditationController {
 					typeof accreditation.issuer === 'string'
 						? accreditation.issuer
 						: (accreditation.issuer as { id: string }).id;
-				const trackInfo = {
+				const trackInfo: ITrackOperation<ICredentialTrack> = {
 					category: OperationCategoryNameEnum.CREDENTIAL,
 					name: OperationNameEnum.CREDENTIAL_UNSUSPEND,
 					customer: response.locals.customer,
@@ -783,8 +782,8 @@ export class AccreditationController {
 						encrypted: result.statusList?.metadata?.encrypted || false,
 						resource: result.resourceMetadata,
 						symmetricKey: '',
-					} satisfies ICredentialStatusTrack,
-				} as ITrackOperation;
+					},
+				};
 
 				// Track operation
 				eventTracker.emit('track', trackInfo);
@@ -886,17 +885,47 @@ export class AccreditationController {
 			// remove duplicates of resourceUrls
 			const uniqueResourceUrls = Array.from(new Set(resourceUrls));
 
-			// Resolve resources to get full accreditation details
-			const resolvedResources = await Promise.all(
-				uniqueResourceUrls.map((url) => identityServiceStrategySetup.agent.resolve(url))
-			);
+			// Resolve resources to get full accreditation details and enhance with tracking metadata
+			const accreditations = [];
+			for (let i = 0; i < uniqueResourceUrls.length; i++) {
+				try {
+					const url = uniqueResourceUrls[i];
 
-			// Collect valid accreditations
-			const accreditations: VerfifiableAccreditation[] = [];
-			for (const res of resolvedResources) {
-				const resource = await res.json();
-				if (!resource.dereferencingMetadata) {
-					accreditations.push(resource as VerfifiableAccreditation);
+					// Resolve the credential
+					const res = await identityServiceStrategySetup.agent.resolve(url, true);
+					const credential = await res.json();
+					if (!credential.contentStream) {
+						continue;
+					}
+
+					// Fetch tracking metadata from issuedCredential table by providerCredentialId
+					const trackingRecord = await Credentials.instance.get(
+						credential.contentMetadata.resourceId,
+						response.locals.customer,
+						{}
+					);
+
+					if (trackingRecord) {
+						const { issuedCredentialId, providerId, providerCredentialId, status, statusUpdatedAt } =
+							trackingRecord;
+						// Merge tracking metadata with credential
+						accreditations.push({
+							...credential.contentStream,
+							metadata: {
+								issuedCredentialId: issuedCredentialId,
+								providerId: providerId,
+								providerCredentialId: providerCredentialId,
+								status: status,
+								statusUpdatedAt: statusUpdatedAt,
+							},
+						});
+					} else {
+						// No tracking record, return just the credential (legacy)
+						accreditations.push(credential.contentStream);
+					}
+				} catch (error) {
+					console.error(`Failed to process accreditation:`, error);
+					continue;
 				}
 			}
 
