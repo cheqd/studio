@@ -440,7 +440,7 @@ export class Credentials {
 			statusRegistryId,
 		} = options;
 
-		// Used queryBuilder because of "type" filter which is JSON onject in DB
+		// Used queryBuilder because of "type" filter which is JSON object in DB
 		const queryBuilder = this.repository
 			.createQueryBuilder('ic')
 			.leftJoinAndSelect('ic.statusRegistry', 'statusRegistry')
