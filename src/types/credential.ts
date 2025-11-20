@@ -150,6 +150,7 @@ export type ListCredentialRequestOptions = {
 	category?: string;
 	credentialType?: string;
 	network?: 'mainnet' | 'testnet';
+	statusRegistryId?: string;
 };
 
 export type UpdateIssuedCredentialRequestBody = {

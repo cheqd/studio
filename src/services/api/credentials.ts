@@ -437,6 +437,7 @@ export class Credentials {
 			category,
 			credentialType,
 			network,
+			statusRegistryId,
 		} = options;
 
 		// Used queryBuilder because of "type" filter which is JSON onject in DB
@@ -468,6 +469,9 @@ export class Credentials {
 					credentialType: JSON.stringify([credentialType]),
 				});
 			}
+		}
+		if (statusRegistryId) {
+			queryBuilder.andWhere('statusRegistry.registryId = :statusRegistryId', { statusRegistryId });
 		}
 
 		const [entities, total] = await queryBuilder

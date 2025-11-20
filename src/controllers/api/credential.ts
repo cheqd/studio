@@ -687,6 +687,12 @@ export class CredentialController {
 	 *         schema:
 	 *           type: string
 	 *         required: false
+	 *       - in: query
+	 *         name: statusRegistryId
+	 *         description: Filter issued credentials using status registry ID.
+	 *         schema:
+	 *           type: string
+	 *         required: false
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -702,8 +708,19 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async listIssuedCredentials(request: Request, response: Response) {
-		const { page, limit, providerId, issuerId, subjectId, status, format, createdAt, category, credentialType } =
-			request.query;
+		const {
+			page,
+			limit,
+			providerId,
+			issuerId,
+			subjectId,
+			status,
+			format,
+			createdAt,
+			category,
+			credentialType,
+			statusRegistryId,
+		} = request.query;
 
 		try {
 			const result = await Credentials.instance.list(response.locals.customer, {
@@ -717,6 +734,7 @@ export class CredentialController {
 				createdAt: createdAt as string | undefined,
 				category: category as string | undefined,
 				credentialType: credentialType as string | undefined,
+				statusRegistryId: statusRegistryId as string | undefined,
 			});
 
 			return response.status(StatusCodes.OK).json(result);

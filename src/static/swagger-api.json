@@ -4728,6 +4728,15 @@
               "type": "string"
             },
             "required": false
+          },
+          {
+            "in": "query",
+            "name": "statusRegistryId",
+            "description": "Filter issued credentials using status registry ID.",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
           }
         ],
         "responses": {
