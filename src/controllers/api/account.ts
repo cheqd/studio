@@ -342,7 +342,7 @@ export class AccountController {
 			// 8. Update LogTo custom data and Top‑up Testnet in parallel (non-blocking)
 			await Promise.all([
 				updateCustomData(userEntity.logToId, customerEntity, mainnetResp, testnetResp, logToHelper, status),
-				topupTestnet(customerEntity, testnetResp, status),
+				topupTestnet(customerEntity, testnetResp, status, logToFirstName, logToLastName),
 			]);
 
 			// 9. Add user to Mailchimp with "cheqd_Studio" tag (feature-flagged)
@@ -487,14 +487,16 @@ export class AccountController {
 		// 4. Check the token balance for Testnet account
 
 		// 1. Get logTo UserId from request body
-		const { name, primaryEmail } = request.body;
+		const { firstName, lastName, primaryEmail } = request.body;
+		const logToFirstName = request.body.user?.profile?.givenName;
+		const logToLastName = request.body.user?.profile?.familyName;
 
 		try {
 			// 2. Check if the customer exists
 			const customerEntity = response.locals.customer
 				? (response.locals.customer as CustomerEntity)
 				: // 2.1 Create customer
-					((await CustomerService.instance.create(name || primaryEmail, primaryEmail)) as CustomerEntity);
+					((await CustomerService.instance.create(firstName || lastName || primaryEmail, primaryEmail)) as CustomerEntity);
 
 			if (!customerEntity) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
@@ -534,9 +536,13 @@ export class AccountController {
 				const balance = balances[0];
 				if (!balance || +balance.amount < TESTNET_MINIMUM_BALANCE * Math.pow(10, DEFAULT_DENOM_EXPONENT)) {
 					// 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
+					// Handle case where firstName or lastName is not set
+					const faucetFirstName = logToFirstName || customerEntity.name;
+					const faucetLastName = logToLastName || 'n/a';
 					const resp = await FaucetHelper.delegateTokens(
 						testnetAccount.address,
-						customerEntity.name,
+						faucetFirstName,
+						faucetLastName,
 						customerEntity.email
 					);
 
@@ -648,7 +654,13 @@ async function updateCustomData(
 	}
 }
 
-async function topupTestnet(customer: CustomerEntity, testnetResp: any, status: BootStrapAccountResponse) {
+async function topupTestnet(
+	customer: CustomerEntity,
+	testnetResp: any,
+	status: BootStrapAccountResponse,
+	firstName?: string | null,
+	lastName?: string | null
+) {
 	if (!testnetResp.data?.address || process.env.ENABLE_ACCOUNT_TOPUP !== 'true') {
 		return;
 	}
@@ -656,7 +668,15 @@ async function topupTestnet(customer: CustomerEntity, testnetResp: any, status: 
 		const balances = await checkBalance(testnetResp.data.address, process.env.TESTNET_RPC_URL);
 		const bal = balances[0];
 		if (!bal || +bal.amount < TESTNET_MINIMUM_BALANCE * 10 ** DEFAULT_DENOM_EXPONENT) {
-			const faucet = await FaucetHelper.delegateTokens(testnetResp.data.address, customer.name, customer.email);
+			// Handle case where firstName or lastName is not set
+			const faucetFirstName = firstName || customer.name;
+			const faucetLastName = lastName || 'n/a';
+			const faucet = await FaucetHelper.delegateTokens(
+				testnetResp.data.address,
+				faucetFirstName,
+				faucetLastName,
+				customer.email
+			);
 			if (faucet.status === StatusCodes.OK) {
 				status.testnetMinimumBalance = true;
 			} else {
