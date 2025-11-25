@@ -114,6 +114,9 @@ export enum OperationNameEnum {
 	CREDENTIAL_STATUS_UPDATE_ENCRYPTED = 'credential-status-update-encrypted',
 	CREDENTIAL_STATUS_CHECK = 'credential-status-check',
 	CREDENTIAL_STATUS_SEARCH = 'credential-status-search',
+	CREDENTIAL_STATUS_FULL = 'credential-status-full',
+	CREDENTIAL_STATUS_THRESHOLD_REACHED = 'credential-status-threshold-reached',
+
 	// Credential operations
 	CREDENTIAL_ISSUE = 'credential-issue',
 	CREDENTIAL_VERIFY = 'credential-verify',

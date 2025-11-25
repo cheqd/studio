@@ -253,6 +253,143 @@
  *         type:
  *           - VerifiableCredential
  *           - Person
+ *     VerifiableCredential:
+ *       type: object
+ *       required:
+ *         - "@context"
+ *         - type
+ *         - issuer
+ *         - issuanceDate
+ *         - credentialSubject
+ *       properties:
+ *         "@context":
+ *           oneOf:
+ *             - type: string
+ *             - type: array
+ *               items:
+ *                 type: string
+ *           description: JSON-LD context
+ *         id:
+ *           type: string
+ *           description: Credential identifier
+ *         type:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Credential types
+ *         issuer:
+ *           oneOf:
+ *             - type: string
+ *             - type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *           description: Credential issuer
+ *         issuanceDate:
+ *           type: string
+ *           format: date-time
+ *           description: Issuance date
+ *         expirationDate:
+ *           type: string
+ *           format: date-time
+ *           description: Expiration date
+ *         credentialSubject:
+ *           type: object
+ *           additionalProperties: true
+ *           description: Credential subject claims
+ *         proof:
+ *           type: object
+ *           additionalProperties: true
+ *           description: Cryptographic proof
+ *         credentialStatus:
+ *           type: object
+ *           additionalProperties: true
+ *           description: Credential status information
+ *     IssuedCredentialResponse:
+ *       type: object
+ *       required:
+ *         - issuedCredentialId
+ *         - providerId
+ *         - format
+ *         - type
+ *         - status
+ *         - issuedAt
+ *       properties:
+ *         issuedCredentialId:
+ *           type: string
+ *           description: Unique identifier for the issued credential
+ *         providerId:
+ *           type: string
+ *           description: Provider identifier
+ *         providerCredentialId:
+ *           type: string
+ *           description: Provider-specific credential ID
+ *         issuerId:
+ *           type: string
+ *           description: DID or identifier of the credential issuer
+ *         subjectId:
+ *           type: string
+ *           description: DID or identifier of the credential subject
+ *         format:
+ *           type: string
+ *           description: Credential format (e.g., jwt_vc, jsonld)
+ *           example: jwt_vc
+ *         category:
+ *           type: string
+ *           description: Credential category
+ *           enum: [credential, accreditation]
+ *         type:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Array of credential types
+ *           example: ["VerifiableCredential"]
+ *         status:
+ *           type: string
+ *           description: Current status of the credential
+ *           enum: [active, revoked, suspended, expired]
+ *         statusUpdatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when status was last updated
+ *         issuedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when credential was issued
+ *         expiresAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when credential expires
+ *         credentialStatus:
+ *           type: object
+ *           additionalProperties: true
+ *           description: Credential status configuration
+ *         statusRegistryId:
+ *           type: string
+ *           description: UUID of the Status Registry
+ *         statusIndex:
+ *           type: number
+ *           description: Allocated Index of the Status Registry
+ *         retryCount:
+ *           type: number
+ *           description: Retry Count in case of failures
+ *         lastError:
+ *           type: string
+ *           description: Last error message in case of failure
+ *         providerMetadata:
+ *           type: object
+ *           additionalProperties: true
+ *           description: Provider-specific metadata
+ *         credential:
+ *           $ref: '#/components/schemas/VerifiableCredential'
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when record was created
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when record was last updated
  *     ListCredentialResult:
  *       type: object
  *       properties:
@@ -261,26 +398,7 @@
  *          credentials:
  *            type: array
  *            items:
- *              type: object
- *              properties:
- *                status:
- *                  type: string
- *                providerId:
- *                  type: string
- *                id:
- *                  type: string
- *                issuerDid:
- *                  type: string
- *                subjectDid:
- *                  type: string
- *                type:
- *                  type: string
- *                createdAt:
- *                  type: string
- *                format:
- *                  type: string
- *                credentialStatus:
- *                  type: object
+ *              $ref: '#/components/schemas/IssuedCredentialResponse'
  *     CredentialRevokeRequest:
  *       type: object
  *       properties:
@@ -329,6 +447,74 @@
  *               description: Policy to skip the audience check when set to `false`.
  *               type: boolean
  *               default: false
+ *     RetryCredentialRequest:
+ *       type: object
+ *       properties:
+ *         attributes:
+ *           description: JSON object containing the attributes to be included in the credential.
+ *           type: object
+ *           example: {
+ *              name: Bob,
+ *              gender: male
+ *           }
+ *         '@context':
+ *           description: Optional properties to be included in the `@context` property of the credential.
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: [https://schema.org/schema.jsonld, https://veramo.io/contexts/profile/v1]
+ *         type:
+ *           description: Optional properties to be included in the `type` property of the credential.
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: [Person]
+ *         expirationDate:
+ *           description: Optional expiration date according to the <a href=https://www.w3.org/TR/vc-data-model/#expiration> VC Data Model specification</a>.
+ *           type: string
+ *           format: date-time
+ *           example: 2023-06-08T13:49:28.000Z
+ *         termsOfUse:
+ *           description: Terms of use can be utilized by an issuer or a holder to communicate the terms under which a verifiable credential was issued.
+ *           type: array
+ *           items:
+ *              type: object
+ *              example: {
+ *                type: IssuerPolicy,
+ *                id: http://example.com/policies/credential/4,
+ *                profile: http://example.com/profiles/credential,
+ *                prohibition: [{
+ *                      assigner: https://example.edu/issuers/14,
+ *                      assignee: AllVerifiers,
+ *                      target: http://example.edu/credentials/3732,
+ *                      action: [ "Archival" ]
+ *                }]
+ *              }
+ *         refreshService:
+ *           description: RefreshService property MUST be one or more refresh services that provides enough information to the recipient's software such that the recipient can refresh the verifiable credential.
+ *           type: array
+ *           items:
+ *              type: object
+ *              example: {
+ *                type: ManualRefreshService2018,
+ *                id: https://example.edu/refresh/3732
+ *              }
+ *         evidence:
+ *           description: Evidence property MUST be one or more evidence schemes providing enough information for a verifier to determine whether the evidence gathered by the issuer meets its confidence requirements for relying on the credential.
+ *           type: array
+ *           items:
+ *              type: object
+ *              example: {
+ *                type: ["DocumentVerification"],
+ *                id: https://example.edu/evidence/f2aeec97-fc0d-42bf-8ca7-0548192d4231,
+ *                verifier: "https://example.edu/issuers/14",
+ *                evidenceDocument: DriversLicense,
+ *                subjectPresence: Physical,
+ *                documentPresence: Physical,
+ *                licenseNumber: 123AB4567
+ *              }
+ *       required:
+ *         - attributes
  *     VerifyPresentationResult:
  *       type: object
  *       properties:
@@ -631,6 +817,134 @@
  *               description: Policy to skip the audience check when set to `false`.
  *               type: boolean
  *               default: false
+ *     CredentialStatusRecordResult:
+ *       type: object
+ *       properties:
+ *         statusListId:
+ *           type: string
+ *           description: Unique identifier for the status registry
+ *         statusListName:
+ *           type: string
+ *           description: Name of the status list resource
+ *         uri:
+ *           type: string
+ *           description: DID URL of the status list resource
+ *         issuerId:
+ *           type: string
+ *           format: uri
+ *           description: DID of the issuer
+ *         previousUri:
+ *           type: string
+ *           nullable: true
+ *           description: Link to previous registry in the chain (for FULL registries)
+ *         nextUri:
+ *           type: string
+ *           nullable: true
+ *           description: Link to next registry in the chain (STANDBY registry)
+ *         listType:
+ *           type: string
+ *           description: Type of status list (StatusList2021Revocation, StatusList2021Suspension, BitstringStatusListCredential)
+ *         storageType:
+ *           type: string
+ *           enum:
+ *             - cheqd
+ *             - ipfs
+ *             - dock
+ *             - paradym
+ *           description: Storage provider for the status list
+ *         encrypted:
+ *           type: boolean
+ *           description: Whether the status list is encrypted
+ *         credentialCategory:
+ *           type: string
+ *           enum:
+ *             - credential
+ *             - accreditation
+ *           description: Category of credentials this status list is for
+ *         size:
+ *           type: integer
+ *           description: Maximum capacity of the status list (total number of indices)
+ *         writeCursor:
+ *           type: integer
+ *           description: Current write cursor position (last assigned index)
+ *         state:
+ *           type: string
+ *           enum:
+ *             - ACTIVE
+ *             - STANDBY
+ *             - FULL
+ *           description: Current state of the registry
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when the registry was created
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when the registry was last updated
+ *         sealedAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *           description: Timestamp when the registry was sealed (marked as FULL)
+ *         statusPurpose:
+ *           oneOf:
+ *             - type: string
+ *             - type: array
+ *               items:
+ *                 type: string
+ *           description: Status purpose or list of status purposes
+ *         deprecated:
+ *           type: boolean
+ *           description: Whether the registry is deprecated
+ *       example:
+ *         statusListId: 5945233a-a4b5-422b-b893-eaed5cedd2dc
+ *         statusListName: cheqd-employee-credentials
+ *         uri: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-employee-credentials&resourceType=StatusList2021Revocation
+ *         issuerId: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *         previousUri: null
+ *         nextUri: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-employee-credentials-ext1&resourceType=StatusList2021Revocation
+ *         listType: StatusList2021Revocation
+ *         storageType: cheqd
+ *         encrypted: false
+ *         credentialCategory: credential
+ *         size: 131072
+ *         writeCursor: 105432
+ *         state: ACTIVE
+ *         createdAt: 2023-06-26T11:45:19.349Z
+ *         updatedAt: 2023-06-26T11:45:20.000Z
+ *         statusPurpose: ["revocation"]
+ *         sealedAt: null
+ *         deprecated: false
+ *     ListCredentialStatusRecordsResult:
+ *      type: object
+ *      properties:
+ *          total:
+ *              type: number
+ *          records:
+ *              type: array
+ *              items:
+ *                $ref: '#/components/schemas/CredentialStatusRecordResult'
+ *      example:
+ *         total: 1
+ *         records:
+ *           - statusListId: 5945233a-a4b5-422b-b893-eaed5cedd2dc
+ *             statusListName: cheqd-employee-credentials
+ *             uri: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-employee-credentials&resourceType=StatusList2021Revocation
+ *             issuerId: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e
+ *             previousUri: null
+ *             nextUri: did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-employee-credentials-ext1&resourceType=StatusList2021Revocation
+ *             listType: StatusList2021Revocation
+ *             storageType: cheqd
+ *             encrypted: false
+ *             credentialCategory: credential
+ *             size: 131072
+ *             writeCursor: 105432
+ *             state: ACTIVE
+ *             createdAt: 2023-06-26T11:45:19.349Z
+ *             updatedAt: 2023-06-26T11:45:20.000Z
+ *             sealedAt: null
+ *             deprecated: false
  *     CredentialStatusCreateBody:
  *       allOf:
  *         - type: object
@@ -665,6 +979,12 @@
  *               description: "Only for BitstringStatusList: bits per credential, used to support multiple status in same list."
  *               type: integer
  *               minimum: 1
+ *             credentialCategory:
+ *               description: Category of credentials this status list is for.
+ *               type: string
+ *               enum:
+ *                  - credential
+ *                  - accreditation
  *             statusMessages:
  *               description: "Only for BitstringStatusList (Mandatory if statusSize > 1): Message explaining each bit"
  *               type: array
@@ -976,6 +1296,16 @@
  *           type: integer
  *           minimum: 0
  *           exclusiveMinimum: false
+ *         statusListCredential:
+ *           description: Optional Resolvable DID URL of the BitstringStatusList credential to be checked.
+ *           type: string
+ *         statusSize:
+ *           description: Optional size of the BitstringStatusList.
+ *           type: number
+ *           default: 2
+ *         statusMessage:
+ *           description: Array of status messages for each bit in the BitstringStatusList.
+ *           type: array
  *         makeFeePayment:
  *           description: Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 or BitstringStatusList DID-Linked Resource.
  *           type: boolean
@@ -1781,42 +2111,31 @@
  *           example: 5
  *         accreditations:
  *           type: array
- *           description: List of accreditations.
+ *           description: List of accreditations with credential data and tracking metadata.
  *           items:
- *             type: object
- *             properties:
- *               id:
- *                 type: string
- *                 description: Unique identifier of the accreditation.
- *                 example: did:cheqd:testnet:12345678-90ab-cdef-1234-567890abcdef
- *               name:
- *                 type: string
- *                 description: Name of the accreditation.
- *                 example: MuseumPassAccreditation
- *               issuerDid:
- *                 type: string
- *                 description: DID of the accreditation issuer.
- *                 example: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0
- *               subjectDid:
- *                 type: string
- *                 description: DID of the accreditation holder/subject.
- *                 example: did:cheqd:testnet:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
- *               schemas:
- *                 type: array
- *                 description: List of schemas associated with the accreditation.
- *                 items:
- *                   $ref: '#/components/schemas/SchemaUrl'
- *               expirationDate:
- *                 type: string
- *                 format: date-time
- *                 description: Expiration date of the accreditation.
- *                 example: 2025-12-31T23:59:59Z
- *               status:
- *                 type: string
- *                 description: Current status of the accreditation.
- *                 enum:
- *                   - active
- *                   - revoked
- *                   - expired
- *                 example: active
+ *             allOf:
+ *               - $ref: '#/components/schemas/VerifiableCredential'
+ *               - type: object
+ *                 properties:
+ *                   metadata:
+ *                     type: object
+ *                     description: Tracking metadata from the issued credential database record
+ *                     properties:
+ *                       issuedCredentialId:
+ *                         type: string
+ *                         description: Unique identifier for the issued credential
+ *                       providerId:
+ *                         type: string
+ *                         description: Provider identifier
+ *                       providerCredentialId:
+ *                         type: string
+ *                         description: Provider-specific credential ID (resourceId)
+ *                       status:
+ *                         type: string
+ *                         description: Current status of the credential
+ *                         enum: [issued, suspended, revoked]
+ *                       statusUpdatedAt:
+ *                         type: string
+ *                         format: date-time
+ *                         description: Timestamp when status was last updated
  */

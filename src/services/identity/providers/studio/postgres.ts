@@ -27,6 +27,7 @@ import {
 import { DefaultDidUrlPattern, VeramoAgent } from '../../../../types/shared.js';
 import type { VerificationOptions } from '../../../../types/shared.js';
 import type {
+	CheqdCredentialStatus,
 	CreateEncryptedBitstringOptions,
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
@@ -60,7 +61,12 @@ import { APIKeyService } from '../../../admin/api-key.js';
 import type { APIKeyEntity } from '../../../../database/entities/api.key.entity.js';
 import { KeyDIDProvider } from '@veramo/did-provider-key';
 import type { AbstractIdentifierProvider } from '@veramo/did-manager';
-import type { BulkBitstringUpdateResult, CheqdProviderError, CreateStatusListResult } from '@cheqd/did-provider-cheqd';
+import type {
+	BitstringValidationResult,
+	BulkBitstringUpdateResult,
+	CheqdProviderError,
+	CreateStatusListResult,
+} from '@cheqd/did-provider-cheqd';
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { toTPublicKeyEd25519 } from '../../../helpers.js';
 import type { APIServiceOptions } from '../../../../types/admin.js';
@@ -547,9 +553,9 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			{ customer, resourceType: DIDAccreditationTypes.VerifiableAccreditationToAttest },
 		];
 
-		if (options.filter.issuerDid) {
+		if (options.issuerId) {
 			where.forEach((w) => {
-				w.identifier = options.filter.issuerDid;
+				w.identifier = { did: options.issuerId };
 			});
 		}
 
@@ -587,6 +593,45 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		};
 	}
 
+	async getCredential(credentialId: string, customer: CustomerEntity): Promise<VerifiableCredential | null> {
+		if (!customer) {
+			throw new Error('Customer not found');
+		}
+
+		// credentialId can be either:
+		// 1. Full DID URL: did:cheqd:testnet:xxx/resources/yyy
+		// 2. Just the resourceId: yyy
+
+		let resourceId: string;
+		let didUrl: string;
+
+		if (credentialId.includes('/resources/')) {
+			// Full DID URL provided
+			didUrl = credentialId;
+			resourceId = credentialId.split('/resources/')[1];
+		} else {
+			// Just resourceId provided - need to find the resource first
+			const resource = await ResourceService.instance.get(credentialId, { identifier: true });
+			if (!resource) {
+				return null;
+			}
+			resourceId = resource.resourceId;
+			didUrl = `${resource.identifier.did}/resources/${resourceId}`;
+		}
+
+		try {
+			const res = await this.resolve(didUrl);
+			if (!res.ok) {
+				return null;
+			}
+			const credential = await res.json();
+			return credential as VerifiableCredential;
+		} catch (error) {
+			console.error(`Failed to resolve credential ${didUrl}:`, error);
+			return null;
+		}
+	}
+
 	async verifyCredential(
 		credential: string | VerifiableCredential,
 		verificationOptions: VerificationOptions,
@@ -621,9 +666,6 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
-			throw new Error(`${did} not found in wallet`);
-		}
 		return await Veramo.instance.createUnencryptedStatusList2021(agent, did, resourceOptions, statusOptions);
 	}
 	async createUnencryptedBitstringStatusList(
@@ -633,9 +675,6 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<CreateStatusListResult> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
-			throw new Error(`${did} not found in wallet`);
-		}
 		return await Veramo.instance.createUnencryptedBitstringStatusList(agent, did, resourceOptions, statusOptions);
 	}
 
@@ -646,9 +685,6 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<CreateStatusList2021Result> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
-			throw new Error(`${did} not found in wallet`);
-		}
 		return await Veramo.instance.createEncryptedStatusList2021(agent, did, resourceOptions, statusOptions);
 	}
 	async createEncryptedBitstringStatusList(
@@ -658,9 +694,6 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		customer: CustomerEntity
 	): Promise<CreateStatusListResult> {
 		const agent = await this.createAgent(customer);
-		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
-			throw new Error(`${did} not found in wallet`);
-		}
 		return await Veramo.instance.createEncryptedBitstringStatusList(agent, did, resourceOptions, statusOptions);
 	}
 
@@ -703,6 +736,15 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		return await Veramo.instance.checkStatusList2021(agent, did, statusOptions);
 	}
 
+	async checkBitstringStatusList(
+		did: string,
+		statusOptions: CheqdCredentialStatus,
+		customer: CustomerEntity
+	): Promise<BitstringValidationResult> {
+		const agent = await this.createAgent(customer);
+		return await Veramo.instance.checkBitstringStatusList(agent, did, statusOptions);
+	}
+
 	async broadcastStatusList2021(
 		did: string,
 		resourceOptions: ResourcePayload,
@@ -714,6 +756,18 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			throw new Error(`${did} not found in wallet`);
 		}
 		return await Veramo.instance.broadcastStatusList2021(agent, did, resourceOptions, statusOptions);
+	}
+
+	async broadcastBitstringStatusList(
+		did: string,
+		resourceOptions: ResourcePayload,
+		customer: CustomerEntity
+	): Promise<boolean> {
+		const agent = await this.createAgent(customer);
+		if (!(await IdentifierService.instance.find({ did: did, customer: customer }))) {
+			throw new Error(`${did} not found in wallet`);
+		}
+		return await Veramo.instance.broadcastBitstringStatusList(agent, did, resourceOptions);
 	}
 
 	async remunerateStatusList2021(

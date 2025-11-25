@@ -34,6 +34,7 @@ import { KeyService } from '../../services/api/key.js';
 import { LocalStore } from '../../database/cache/store.js';
 import { BootStrapAccountResponse } from '../../types/account.js';
 import { RoleEntity } from '../../database/entities/role.entity.js';
+import { MailchimpService } from '../../helpers/mailchimp.js';
 
 dotenv.config();
 
@@ -192,6 +193,9 @@ export class AccountController {
 		}
 		const logToUserId = request.body.user.id;
 		const logToUserEmail = request.body.user.primaryEmail;
+		const logToFirstName = request.body.user.profile?.givenName;
+		const logToLastName = request.body.user.profile?.familyName;
+
 		// use email as name, because "name" is unique in the current db setup.
 		const logToName = request.body.user.name || logToUserEmail;
 
@@ -341,6 +345,28 @@ export class AccountController {
 				topupTestnet(customerEntity, testnetResp, status),
 			]);
 
+			// 9. Add user to Mailchimp with "cheqd_Studio" tag (feature-flagged)
+			if (
+				process.env.MAILCHIMP_ENABLED === 'true' &&
+				process.env.MAILCHIMP_API_KEY &&
+				process.env.MAILCHIMP_SERVER_PREFIX &&
+				process.env.MAILCHIMP_PRODUCT_LIST_ID
+			) {
+				try {
+					const mailchimpService = new MailchimpService();
+					await mailchimpService.upsertSubscriber(
+						process.env.MAILCHIMP_PRODUCT_LIST_ID,
+						logToUserEmail,
+						logToFirstName || '',
+						logToLastName || '',
+						['cheqd_Studio']
+					);
+				} catch (error) {
+					console.error('Mailchimp integration error:', error);
+					status.errors.push(`Mailchimp sync failed: ${(error as Error).message}`);
+				}
+			}
+
 			// 9. Send response with full status
 			const allOK = status.errors.length === 0;
 			return response
@@ -436,7 +462,7 @@ export class AccountController {
 	 *           schema:
 	 *             $ref: '#/components/schemas/AccountCreateRequest'
 	 *     responses:
-	 *       200:
+	 *       201:
 	 *         description: The request was successful.
 	 *         content:
 	 *           application/json:

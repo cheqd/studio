@@ -139,8 +139,8 @@ export class KeyController {
 				data: {
 					keyRef: key.kid,
 					keyType: key.type,
-				} satisfies IKeyTrack,
-			} satisfies ITrackOperation);
+				},
+			} satisfies ITrackOperation<IKeyTrack>);
 			// Return the response
 			return response.status(StatusCodes.OK).json(key satisfies CreateKeyResponseBody);
 		} catch (error) {
@@ -225,8 +225,8 @@ export class KeyController {
 				data: {
 					keyRef: key.kid,
 					keyType: key.type,
-				} satisfies IKeyTrack,
-			} satisfies ITrackOperation);
+				},
+			} satisfies ITrackOperation<IKeyTrack>);
 			// Return the response
 			return response.status(StatusCodes.OK).json(key satisfies ImportKeyResponseBody);
 		} catch (error) {

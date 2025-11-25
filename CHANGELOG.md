@@ -1,5 +1,71 @@
 # Changelog
 
+## [3.15.0-develop.2](https://github.com/cheqd/studio/compare/3.15.0-develop.1...3.15.0-develop.2) (2025-11-20)
+
+### Features
+
+* Add revocation registry management [DEV-5439] ([#752](https://github.com/cheqd/studio/issues/752)) ([a183b58](https://github.com/cheqd/studio/commit/a183b586a9592c567bedd04ad5f6638427cf9fef)), closes [#755](https://github.com/cheqd/studio/issues/755)
+* v3.15.0 beta ([af9d5ec](https://github.com/cheqd/studio/commit/af9d5ec3a2e7fa7244ca04dc7dae077613539c18))
+
+## [3.15.0-develop.1](https://github.com/cheqd/studio/compare/3.14.0...3.15.0-develop.1) (2025-11-10)
+
+### Features
+
+* Add new users to Mailchimp product list [DEV-5409] ([#754](https://github.com/cheqd/studio/issues/754)) ([e011c3c](https://github.com/cheqd/studio/commit/e011c3c4d69afdc8e628471ffc8fb50c960885cd))
+
+## [3.14.0](https://github.com/cheqd/studio/compare/3.13.0...3.14.0) (2025-11-07)
+
+### Features
+
+* add update issued credential api ([#751](https://github.com/cheqd/studio/issues/751)) ([9f93244](https://github.com/cheqd/studio/commit/9f93244af3db1fcbd097bcf50a4503bd7f0f95d7))
+* IssuedCredential table and apis [DEV-5380] [DEV-5356] ([#748](https://github.com/cheqd/studio/issues/748)) ([93a3a7d](https://github.com/cheqd/studio/commit/93a3a7dcebf7ff1662f6bfa0cb03dbe882a6d23c)), closes [#749](https://github.com/cheqd/studio/issues/749)
+
+### Bug Fixes
+
+* additional parameter for provider test  ([#753](https://github.com/cheqd/studio/issues/753)) ([8f40ad5](https://github.com/cheqd/studio/commit/8f40ad5651e4d7441f09797933546df44a24ccf3))
+
+## [3.14.0-develop.3](https://github.com/cheqd/studio/compare/3.14.0-develop.2...3.14.0-develop.3) (2025-11-03)
+
+### Bug Fixes
+
+* additional parameter for provider test  ([#753](https://github.com/cheqd/studio/issues/753)) ([8f40ad5](https://github.com/cheqd/studio/commit/8f40ad5651e4d7441f09797933546df44a24ccf3))
+
+## [3.14.0-develop.2](https://github.com/cheqd/studio/compare/3.14.0-develop.1...3.14.0-develop.2) (2025-10-28)
+
+### Features
+
+* add update issued credential api ([#751](https://github.com/cheqd/studio/issues/751)) ([9f93244](https://github.com/cheqd/studio/commit/9f93244af3db1fcbd097bcf50a4503bd7f0f95d7))
+
+## [3.14.0-develop.1](https://github.com/cheqd/studio/compare/3.13.1-develop.1...3.14.0-develop.1) (2025-10-24)
+
+### Features
+
+* IssuedCredential table and apis [DEV-5380] [DEV-5356] ([#748](https://github.com/cheqd/studio/issues/748)) ([93a3a7d](https://github.com/cheqd/studio/commit/93a3a7dcebf7ff1662f6bfa0cb03dbe882a6d23c)), closes [#749](https://github.com/cheqd/studio/issues/749)
+
+## [3.13.1-develop.1](https://github.com/cheqd/studio/compare/3.13.0...3.13.1-develop.1) (2025-10-23)
+
+## [3.13.0](https://github.com/cheqd/studio/compare/3.12.1...3.13.0) (2025-10-21)
+
+### Features
+
+* Add provider import did api ([#732](https://github.com/cheqd/studio/issues/732)) ([5e06156](https://github.com/cheqd/studio/commit/5e06156136b5bb77c4395411d5f036c09482d649))
+* Auto import did if not found in provider [DEV-5294] ([#733](https://github.com/cheqd/studio/issues/733)) ([36c267d](https://github.com/cheqd/studio/commit/36c267ddcbc6b154d21a2164c347b8f5254678f5))
+* external provider support [DEV-5219] ([#725](https://github.com/cheqd/studio/issues/725)) ([3576af0](https://github.com/cheqd/studio/commit/3576af00639e194c942e8378a23790cf0df4bfdb))
+* Include metadata as option in did/list ([#734](https://github.com/cheqd/studio/issues/734)) ([1287017](https://github.com/cheqd/studio/commit/12870171e46463b9093cb0ccd22b3ba996ce559a))
+* Init dock integration [DEV-5224] ([#729](https://github.com/cheqd/studio/issues/729)) ([fbdcddd](https://github.com/cheqd/studio/commit/fbdcddd8ba1bcf3051372cfa9900e8942baa766d))
+
+### Bug Fixes
+
+* Add missing relation in account/create [DEV-5360] ([#744](https://github.com/cheqd/studio/issues/744)) ([1d76da2](https://github.com/cheqd/studio/commit/1d76da2782633f792029e50fec6b9ec5a8f41e57))
+* Apply encoded uri login in all resourceName queries [DEV-5324] ([#741](https://github.com/cheqd/studio/issues/741)) ([1ebee17](https://github.com/cheqd/studio/commit/1ebee175c2611eae262bd6b266041f21b7d08bf2))
+* dock credential issuance check ([#742](https://github.com/cheqd/studio/issues/742)) ([787f707](https://github.com/cheqd/studio/commit/787f7076902ff50d4415c026a4dbd44898b78f86))
+* dock issuance && swagger update ([#737](https://github.com/cheqd/studio/issues/737)) ([7c3650a](https://github.com/cheqd/studio/commit/7c3650a2047af96bc7dc6df7a131cbb435d41f00))
+* env vars injection in docker ([#743](https://github.com/cheqd/studio/issues/743)) ([e501c83](https://github.com/cheqd/studio/commit/e501c83fa3fb38d6f8982441050b18fcef4d5baa))
+* Fix multibase encoding in export ([#735](https://github.com/cheqd/studio/issues/735)) ([5001544](https://github.com/cheqd/studio/commit/50015440a1bfa447e05642fe088594a36613f876))
+* Fix vm type in export ([#736](https://github.com/cheqd/studio/issues/736)) ([0a8bbc1](https://github.com/cheqd/studio/commit/0a8bbc1a0aaf32ce2a92d46c7975f88d7f7f67b4))
+* parse only escaped JSON in list did ([#740](https://github.com/cheqd/studio/issues/740)) ([d013d3f](https://github.com/cheqd/studio/commit/d013d3f8eb6c374a25fab5108e42905b42fa4aa8))
+* UI bugs and default assertionMethod [DEV-5287] ([#731](https://github.com/cheqd/studio/issues/731)) ([a702c70](https://github.com/cheqd/studio/commit/a702c70067a1296508bf53a4137186a57aeaf9e4))
+
 ## [3.13.0-develop.12](https://github.com/cheqd/studio/compare/3.13.0-develop.11...3.13.0-develop.12) (2025-10-13)
 
 ### Bug Fixes

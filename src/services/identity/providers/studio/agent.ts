@@ -62,6 +62,7 @@ import { DIDResolutionResult, Resolver, ResolverRegistry } from 'did-resolver';
 import { DefaultDidUrlPattern, CreateAgentRequest, VeramoAgent } from '../../../../types/shared.js';
 import type { VerificationOptions } from '../../../../types/shared.js';
 import type {
+	CheqdCredentialStatus,
 	CreateEncryptedBitstringOptions,
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
@@ -91,8 +92,11 @@ import {
 import { toCoin, toDefaultDkg, toMinimalDenom } from '../../../../helpers/helpers.js';
 import { jwtDecode } from 'jwt-decode';
 import type {
+	BitstringStatusListEntry as BitstringStatusListEntryType,
 	BitstringStatusValue,
+	BitstringValidationResult,
 	ICheqdBulkUpdateCredentialWithStatusListArgs,
+	ICheqdCheckCredentialStatusWithBitstringArgs,
 	ICheqdCreateBitstringStatusListArgs,
 	ICheqdCreateLinkedResourceArgs,
 	ICheqdUpdateCredentialWithStatusListArgs,
@@ -276,9 +280,17 @@ export class Veramo {
 		return await agent.resolveDid({ didUrl: did });
 	}
 
-	async resolve(didUrl: string): Promise<Response> {
+	async resolve(didUrl: string, dereferencing: boolean = false): Promise<Response> {
+		let header;
+		if (dereferencing) {
+			header = {
+				Accept: 'application/ld+json;profile=https://w3id.org/did-url-dereferencing',
+			};
+		} else {
+			header = { 'Content-Type': '*/*' };
+		}
 		return fetch(`${process.env.RESOLVER_URL || DefaultResolverUrl}/${didUrl}`, {
-			headers: { 'Content-Type': '*/*' },
+			headers: header,
 		});
 	}
 
@@ -1085,6 +1097,25 @@ export class Veramo {
 			fetchList: true,
 			dkgOptions: toDefaultDkg(did),
 		} satisfies ICheqdCheckCredentialStatusWithStatusListArgs);
+	}
+
+	async checkBitstringStatusList(
+		agent: VeramoAgent,
+		did: string,
+		statusOptions: CheqdCredentialStatus
+	): Promise<BitstringValidationResult> {
+		const { type, ...rest } = statusOptions;
+		// ensure required property statusListCredential is present (use empty string as fallback)
+		const formattedStatus: BitstringStatusListEntryType = {
+			type: BitstringStatusListEntry,
+			...rest,
+			statusListCredential: (rest as any).statusListCredential ?? '',
+		};
+		return await agent.cheqdCheckBitstringStatus({
+			credentialStatus: formattedStatus,
+			fetchList: true,
+			dkgOptions: toDefaultDkg(did),
+		} satisfies ICheqdCheckCredentialStatusWithBitstringArgs);
 	}
 
 	async searchStatusList(

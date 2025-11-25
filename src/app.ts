@@ -140,7 +140,11 @@ class App {
 		app.post(`/credential/revoke`, CredentialController.updateValidator, new CredentialController().revoke);
 		app.post('/credential/suspend', CredentialController.updateValidator, new CredentialController().suspend);
 		app.post('/credential/reinstate', CredentialController.updateValidator, new CredentialController().reinstate);
-		app.get('/credential/list', new CredentialController().listCredentials);
+		// Issued Credentials Tracking API
+		app.get('/credentials/issued', new CredentialController().listIssuedCredentials);
+		app.get('/credentials/issued/:id', new CredentialController().getIssuedCredential);
+		app.put('/credentials/issued/:id', new CredentialController().updateIssuedCredential);
+		app.post('/credentials/issued/:id', new CredentialController().retryIssuedCredential);
 		// Presentation API
 		app.post(
 			`/presentation/verify`,
@@ -183,6 +187,16 @@ class App {
 			'/credential-status/search',
 			CredentialStatusController.searchValidator,
 			new CredentialStatusController().searchStatusList
+		);
+		app.get(
+			'/credential-status/list',
+			CredentialStatusController.listValidator,
+			new CredentialStatusController().listStatusList
+		);
+		app.get(
+			'/credential-status/list/:statusListId',
+			CredentialStatusController.fetchValidator,
+			new CredentialStatusController().fetchStatusList
 		);
 
 		// Keys API

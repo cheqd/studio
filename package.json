@@ -1,6 +1,6 @@
 {
 	"name": "@cheqd/studio",
-	"version": "3.13.0-develop.12",
+	"version": "3.15.0-develop.2",
 	"description": "cheqd Studio Backend",
 	"source": "src/index.ts",
 	"main": "dist/index.js",
@@ -54,13 +54,14 @@
 		"README.md"
 	],
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "4.6.2-develop.4",
-		"@cheqd/sdk": "5.3.6-develop.1",
+		"@cheqd/did-provider-cheqd": "^4.6.3",
+		"@cheqd/sdk": "^5.3.7",
 		"@cheqd/ts-proto": "^4.0.2",
 		"@cosmjs/amino": "^0.33.1",
 		"@cosmjs/encoding": "^0.33.1",
 		"@docknetwork/universal-wallet": "^3.3.4",
 		"@logto/express": "^3.0.11",
+		"@mailchimp/mailchimp_marketing": "^3.0.80",
 		"@stablelib/ed25519": "^1.0.3",
 		"@veramo/core": "^6.0.0",
 		"@veramo/credential-ld": "^6.0.0",
@@ -126,6 +127,7 @@
 		"@types/helmet": "^4.0.0",
 		"@types/json-stringify-safe": "^5.0.3",
 		"@types/jsonwebtoken": "^9.0.9",
+		"@types/mailchimp__mailchimp_marketing": "^3.0.21",
 		"@types/node": "^20.17.32",
 		"@types/secp256k1": "^4.0.6",
 		"@types/swagger-jsdoc": "^6.0.4",

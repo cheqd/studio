@@ -18,6 +18,8 @@ import { CoinEntity } from '../entities/coin.entity.js';
 import { SubscriptionEntity } from '../entities/subscription.entity.js';
 import { CredentialProviderEntity } from '../entities/credential-provider.entity.js';
 import { ProviderConfigurationEntity } from '../entities/provider-configuration.entity.js';
+import { IssuedCredentialEntity } from '../entities/issued-credential.entity.js';
+import { StatusRegistryEntity } from '../entities/status-registry.entity.js';
 
 import { CreatePaymentTable1695740345977 } from '../migrations/archive/CreatePaymentTable.js';
 import { CreateOperationTable1695740345977 } from '../migrations/archive/CreateOperationTable.js';
@@ -47,6 +49,12 @@ import { InsertFingerprintAPIKeyTable1746780465032 } from '../migrations/archive
 import { Cleanup1748331341024 } from '../migrations/custom/1748331341024-Cleanup.js';
 import { StudioMigrations1750427001486 } from '../migrations/1750427001486-studio-migrations.js';
 import { StudioMigrations1758011998054 } from '../migrations/1758011998054-studio-migrations.js';
+import { StudioMigrations1760533089289 } from '../migrations/1760533089289-studio-migrations.js';
+import { MigrateStudioCredentials1760533089389 } from '../migrations/1760533089389-MigrateStudioCredentials.js';
+import { MigrateDockCredentials1760533089589 } from '../migrations/1760533089589-MigrateDockCredentials.js';
+import { StudioMigrations1761834657128 } from '../migrations/1761834657128-studio-migrations.js';
+import { MigrationsStatusLists1762775396083 } from '../migrations/1762775396083-MigrateStatusLists.js';
+import { UpdateWriteCursors1762775500000 } from '../migrations/1762775500000-UpdateWriteCursors.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -133,6 +141,17 @@ export class Postgres implements AbstractDatabase {
 				Cleanup1748331341024,
 				StudioMigrations1750427001486,
 				StudioMigrations1758011998054,
+				// Add IssuedCredential table
+				StudioMigrations1760533089289,
+				// Migrate Studio credentials to IssuedCredential table
+				MigrateStudioCredentials1760533089389,
+				// Migrate Dock credentials to IssuedCredential table
+				MigrateDockCredentials1760533089589,
+				// Add StatusRegistry table
+				StudioMigrations1761834657128,
+				// Migrate status lists to StatusRegistry table
+				MigrationsStatusLists1762775396083,
+				UpdateWriteCursors1762775500000,
 			],
 			entities: [
 				...Entities,
@@ -150,6 +169,8 @@ export class Postgres implements AbstractDatabase {
 				SubscriptionEntity,
 				CredentialProviderEntity,
 				ProviderConfigurationEntity,
+				IssuedCredentialEntity,
+				StatusRegistryEntity,
 			],
 			logging: ['error', 'info', 'warn'],
 		});

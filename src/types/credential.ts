@@ -28,7 +28,7 @@ export interface CredentialRequest {
 	expirationDate?: DateType;
 	issuerDid: string;
 	format: 'jsonld' | 'jwt' | 'sd-jwt-vc' | 'anoncreds';
-	credentialStatus?: StatusOptions;
+	credentialStatus?: StatusOptions & { id?: string };
 	credentialSchema?: string;
 	credentialName?: string;
 	credentialSummary?: string;
@@ -38,6 +38,7 @@ export interface CredentialRequest {
 	connector?: CredentialConnectors;
 	providerId?: string;
 	credentialId?: string;
+	category?: CredentialCategory;
 
 	[x: string]: any;
 }
@@ -69,6 +70,11 @@ export type DateType = string | Date;
 // Request bodies and queries
 
 export type IssueCredentialRequestBody = CredentialRequest;
+
+export type RetryIssuedCredentialRequestBody = Pick<
+	CredentialRequest,
+	'attributes' | 'expirationDate' | 'type' | 'termsOfUse' | 'evidence' | 'refreshService' | '@context'
+>;
 
 export type VerifyCredentialRequestBody = { credential: W3CVerifiableCredential } & VerificationPoliciesRequest;
 
@@ -135,7 +141,28 @@ export type ListCredentialQueryParams = {
 export type ListCredentialRequestOptions = {
 	page?: number;
 	limit?: number;
-	filter?: any;
+	providerId?: string;
+	issuerId?: string;
+	subjectId?: string;
+	status?: 'issued' | 'suspended' | 'revoked';
+	format?: string;
+	createdAt?: string;
+	category?: string;
+	credentialType?: string;
+	network?: 'mainnet' | 'testnet';
+	statusRegistryId?: string;
+};
+
+export type UpdateIssuedCredentialRequestBody = {
+	providerCredentialId?: string;
+	status?: 'issued' | 'suspended' | 'revoked';
+	providerMetadata?: Record<string, any>;
+};
+
+export type UpdateIssuedCredentialResponseBody = {
+	success: boolean;
+	data?: any;
+	error?: string;
 };
 
 export type ListCredentialResponse = {
@@ -152,3 +179,75 @@ export type ListCredentialResponse = {
 	}[];
 	total: number;
 };
+
+export interface GetIssuedCredentialOptions {
+	includeCredential?: boolean;
+	syncStatus?: boolean;
+	providerId?: string;
+}
+
+export enum CredentialCategory {
+	CREDENTIAL = 'credential',
+	ACCREDITATION = 'accreditation',
+}
+
+export interface IssuedCredentialCreateOptions {
+	providerId: string;
+	providerCredentialId?: string;
+	issuerId?: string;
+	subjectId?: string;
+	format: 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds';
+	type: string[];
+	status?: 'issued' | 'suspended' | 'revoked';
+	statusUpdatedAt?: Date;
+	issuedAt: Date;
+	expiresAt?: Date;
+	credentialStatus?: Record<string, any>;
+	metadata?: Record<string, any>;
+	category?: CredentialCategory;
+	statusRegistryId?: string;
+	statusIndex?: number;
+	retryCount?: number;
+	lastError?: string;
+}
+
+export interface IssuedCredentialResponse {
+	// Tracking Information
+	issuedCredentialId: string;
+
+	// Provider Information
+	providerId: string;
+	providerCredentialId?: string;
+
+	// Credential Information
+	issuerId?: string;
+	subjectId?: string;
+	format: string;
+	category?: string;
+	type: string[];
+
+	// Status Information
+	status: string;
+	statusUpdatedAt?: string;
+
+	// Timestamps
+	issuedAt: string;
+	expiresAt?: string;
+
+	// Credential Status Configuration
+	credentialStatus?: Record<string, any>;
+	statusRegistryId?: string;
+	statusIndex?: number;
+	retryCount?: number;
+	lastError?: string;
+
+	// Provider-specific metadata
+	providerMetadata?: Record<string, any>;
+
+	// Optional: Full credential
+	credential?: VerifiableCredential;
+
+	// Metadata
+	createdAt?: string;
+	updatedAt?: string;
+}

@@ -31,10 +31,12 @@ import type {
 	CreateStatusListResult,
 	BulkBitstringUpdateResult,
 	BitstringUpdateResult,
+	BitstringValidationResult,
 } from '@cheqd/did-provider-cheqd';
 import type { VeramoAgent } from '../../types/shared.js';
 import type { VerificationOptions } from '../../types/shared.js';
 import type {
+	CheqdCredentialStatus,
 	CreateEncryptedBitstringOptions,
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
@@ -87,7 +89,7 @@ export interface IIdentityService {
 	listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<ListDidsResponseBody>;
 	resolveDid(did: string): Promise<DIDResolutionResult>;
 	exportDid(did: string, password: string, customer: CustomerEntity): Promise<ExportDidResponse>;
-	resolve(didUrl: string): Promise<Response>;
+	resolve(didUrl: string, dereferencing?: boolean): Promise<Response>;
 	getDid(did: string, customer: CustomerEntity): Promise<any>;
 	importDid(
 		did: string,
@@ -115,6 +117,7 @@ export interface IIdentityService {
 		customer: CustomerEntity
 	): Promise<IVerifyResult>;
 	listCredentials(options: ListCredentialRequestOptions, customer: CustomerEntity): Promise<ListCredentialResponse>;
+	getCredential(credentialId: string, customer: CustomerEntity): Promise<VerifiableCredential | null>;
 	createPresentation(
 		presentation: PresentationPayload,
 		verificationOptions: VerificationOptions,
@@ -166,6 +169,11 @@ export interface IIdentityService {
 		statusOptions: CheckStatusListOptions,
 		customer: CustomerEntity
 	): Promise<StatusCheckResult>;
+	checkBitstringStatusList(
+		did: string,
+		statusOptions: CheqdCredentialStatus,
+		customer: CustomerEntity
+	): Promise<BitstringValidationResult>;
 	searchStatusList(
 		did: string,
 		statusListName: string,

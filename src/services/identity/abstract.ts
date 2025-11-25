@@ -27,10 +27,12 @@ import type {
 	CreateStatusListResult,
 	BulkBitstringUpdateResult,
 	BitstringUpdateResult,
+	BitstringValidationResult,
 } from '@cheqd/did-provider-cheqd';
 import type { VeramoAgent } from '../../types/shared';
 import type { VerificationOptions } from '../../types/shared';
 import type {
+	CheqdCredentialStatus,
 	CreateEncryptedBitstringOptions,
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
@@ -181,6 +183,13 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	): Promise<StatusCheckResult> {
 		throw new Error(`Not supported`);
 	}
+	checkBitstringStatusList(
+		did: string,
+		statusOptions: CheqdCredentialStatus,
+		customer: CustomerEntity
+	): Promise<BitstringValidationResult> {
+		throw new Error(`Not supported`);
+	}
 	searchStatusList(
 		did: string,
 		statusListName: string,
@@ -212,6 +221,9 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 	listCredentials(options: ListCredentialRequestOptions, customer: CustomerEntity): Promise<ListCredentialResponse> {
+		throw new Error(`Not Supported`);
+	}
+	getCredential(credentialId: string, customer: CustomerEntity): Promise<VerifiableCredential | null> {
 		throw new Error(`Not Supported`);
 	}
 	revokeCredentials(
@@ -253,7 +265,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	resolveDid(did: string): Promise<DIDResolutionResult> {
 		throw new Error(`Not supported`);
 	}
-	resolve(didUrl: string): Promise<Response> {
+	resolve(didUrl: string, dereferencing?: boolean): Promise<Response> {
 		throw new Error(`Not supported`);
 	}
 	createPresentation(

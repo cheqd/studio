@@ -13,6 +13,13 @@ export class CredentialAuthRuleProvider extends AuthRuleProvider {
 		this.registerRule('/credential/suspend', 'POST', 'suspend:credential:mainnet');
 		this.registerRule('/credential/reinstate', 'POST', 'reinstate:credential:testnet');
 		this.registerRule('/credential/reinstate', 'POST', 'reinstate:credential:mainnet');
+		// Issued Credentials Tracking API
+		this.registerRule('/credentials/issued', 'GET', 'list:credential:testnet', { skipNamespace: true });
+		this.registerRule('/credentials/issued', 'GET', 'list:credential:mainnet', { skipNamespace: true });
+		this.registerRule('/credentials/issued/(.*)', 'GET', 'list:credential:testnet', { skipNamespace: true });
+		this.registerRule('/credentials/issued/(.*)', 'GET', 'list:credential:mainnet', { skipNamespace: true });
+		this.registerRule('/credentials/issued/(.*)', 'PUT', 'update:credential:testnet', { skipNamespace: true });
+		this.registerRule('/credentials/issued/(.*)', 'PUT', 'update:credential:mainnet', { skipNamespace: true });
 		// Unauthorized routes
 		this.registerRule('/credential/verify', 'POST', '', { allowUnauthorized: true, skipNamespace: true });
 	}

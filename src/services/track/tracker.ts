@@ -1,5 +1,5 @@
 import EventEmitter from 'node:events';
-import type { INotifyMessage, ITrackOperation } from '../../types/track.js';
+import type { INotifyMessage, ITrackOperation, TrackData } from '../../types/track.js';
 import { LoggerNotifier } from './notifiers.js';
 import { DBOperationSubscriber } from './operation-subscriber.js';
 import { ResourceSubscriber } from './api/resource-subscriber.js';
@@ -63,7 +63,7 @@ export class EventTracker {
 		this.emitter.on('submit', this.submit.bind(this));
 	}
 
-	async track(trackOperation: ITrackOperation): Promise<void> {
+	async track(trackOperation: ITrackOperation<TrackData>): Promise<void> {
 		await this.tracker.notify(trackOperation);
 	}
 
