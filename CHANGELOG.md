@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.15.0-develop.3](https://github.com/cheqd/studio/compare/3.15.0-develop.2...3.15.0-develop.3) (2025-11-25)
+
+### Bug Fixes
+
+* DidArray validation & Add key/verification-method helper api [DEV-5088] ([#745](https://github.com/cheqd/studio/issues/745)) ([c8ede21](https://github.com/cheqd/studio/commit/c8ede214df6a982d83d469a786e69a2a63f6aa73))
+
 ## [3.15.0-develop.2](https://github.com/cheqd/studio/compare/3.15.0-develop.1...3.15.0-develop.2) (2025-11-20)
 
 ### Features
