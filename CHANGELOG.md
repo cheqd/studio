@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.15.0-develop.4](https://github.com/cheqd/studio/compare/3.15.0-develop.3...3.15.0-develop.4) (2025-11-26)
+
+### Features
+
+* Update issued credential status on statuslist updates ([#759](https://github.com/cheqd/studio/issues/759)) ([5e781e0](https://github.com/cheqd/studio/commit/5e781e067345ac2e6777ebc9902d5ab6a781d000))
+
 ## [3.15.0-develop.3](https://github.com/cheqd/studio/compare/3.15.0-develop.2...3.15.0-develop.3) (2025-11-25)
 
 ### Bug Fixes
