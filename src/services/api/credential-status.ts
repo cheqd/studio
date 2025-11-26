@@ -505,25 +505,30 @@ export class CredentialStatusService {
 
 				eventTracker.emit('track', trackInfo);
 
-				await this.issuedCredentialRepository
-					.update(
-						{
-							statusRegistry: {
-								uri: `${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
+				const statusRegistry = await this.findRegistryByUri(
+					`${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
+					customer
+				);
+
+				if (statusRegistry) {
+					await this.issuedCredentialRepository
+						.update(
+							{
+								statusRegistry: statusRegistry,
+								statusIndex: In(Array.isArray(indices) ? indices : [indices]),
 							},
-							statusIndex: In(Array.isArray(indices) ? indices : [indices]),
-						},
-						{
-							status:
-								statusAction === 'reinstate'
-									? 'issued'
-									: statusAction === 'revoke'
+							{
+								status:
+									statusAction === 'revoke'
 										? 'revoked'
-										: 'suspended',
-                            updatedAt: new Date()
-						}
-					)
-					.catch(() => console.error('Failed to update issued credentials'));
+										: statusAction === 'suspend'
+											? 'suspended'
+											: 'issued',
+								updatedAt: new Date(),
+							}
+						)
+						.catch(() => console.error('Failed to update issued credentials'));
+				}
 			}
 
 			return {
@@ -673,25 +678,30 @@ export class CredentialStatusService {
 
 				eventTracker.emit('track', trackInfo);
 
-				await this.issuedCredentialRepository
-					.update(
-						{
-							statusRegistry: {
-								uri: `${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
+				const statusRegistry = await this.findRegistryByUri(
+					`${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
+					customer
+				);
+
+				if (statusRegistry) {
+					await this.issuedCredentialRepository
+						.update(
+							{
+								statusRegistry: statusRegistry,
+								statusIndex: In(Array.isArray(indices) ? indices : [indices]),
 							},
-							statusIndex: In(Array.isArray(indices) ? indices : [indices]),
-						},
-						{
-							status:
-								statusAction === 'reinstate'
-									? 'issued'
-									: statusAction === 'revoke'
+							{
+								status:
+									statusAction === 'revoke'
 										? 'revoked'
-										: 'suspended',
-                            updatedAt: new Date()
-						}
-					)
-					.catch(() => console.error('Failed to update issued credentials'));
+										: statusAction === 'suspend'
+											? 'suspended'
+											: 'issued',
+								updatedAt: new Date(),
+							}
+						)
+						.catch(() => console.error('Failed to update issued credentials'));
+				}
 			}
 
 			return {
