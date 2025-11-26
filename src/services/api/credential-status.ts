@@ -520,6 +520,7 @@ export class CredentialStatusService {
 									: statusAction === 'revoke'
 										? 'revoked'
 										: 'suspended',
+                            updatedAt: new Date()
 						}
 					)
 					.catch(() => console.error('Failed to update issued credentials'));
@@ -687,6 +688,7 @@ export class CredentialStatusService {
 									: statusAction === 'revoke'
 										? 'revoked'
 										: 'suspended',
+                            updatedAt: new Date()
 						}
 					)
 					.catch(() => console.error('Failed to update issued credentials'));
