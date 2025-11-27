@@ -1,6 +1,6 @@
 {
 	"name": "@cheqd/studio",
-	"version": "3.15.0-develop.2",
+	"version": "3.15.0-develop.4",
 	"description": "cheqd Studio Backend",
 	"source": "src/index.ts",
 	"main": "dist/index.js",
@@ -55,7 +55,7 @@
 	],
 	"dependencies": {
 		"@cheqd/did-provider-cheqd": "^4.6.3",
-		"@cheqd/sdk": "^5.3.6",
+		"@cheqd/sdk": "^5.3.7",
 		"@cheqd/ts-proto": "^4.0.2",
 		"@cosmjs/amino": "^0.33.1",
 		"@cosmjs/encoding": "^0.33.1",

@@ -39,20 +39,23 @@ import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/consta
 import { FeeAnalyzer } from '../../helpers/fee-analyzer.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity.js';
-import { FindOptionsRelations, FindOptionsWhere, Like, Repository } from 'typeorm';
+import { FindOptionsRelations, FindOptionsWhere, In, Like, Repository } from 'typeorm';
 import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
 import { Connection } from '../../database/connection/connection.js';
 import { v4 } from 'uuid';
 import { IdentifierService } from './identifier.js';
 import { CredentialCategory } from '../../types/credential.js';
 import { StatusCodes } from 'http-status-codes';
+import { IssuedCredentialEntity } from '../../database/entities/issued-credential.entity.js';
 
 export class CredentialStatusService {
 	public static instance = new CredentialStatusService();
 	public repository: Repository<StatusRegistryEntity>;
+	public issuedCredentialRepository: Repository<IssuedCredentialEntity>;
 
 	constructor() {
 		this.repository = Connection.instance.dbConnection.getRepository(StatusRegistryEntity);
+		this.issuedCredentialRepository = Connection.instance.dbConnection.getRepository(IssuedCredentialEntity);
 	}
 	async createUnencryptedStatusList(
 		body: CreateUnencryptedStatusListRequestBody,
@@ -402,37 +405,37 @@ export class CredentialStatusService {
 
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
 
-		const unencrypted = await identityServiceStrategySetup.agent.searchStatusList(
-			did,
-			statusListName,
-			listType,
-			DefaultStatusActionPurposeMap[statusAction]
-		);
+		try {
+			const unencrypted = await identityServiceStrategySetup.agent.searchStatusList(
+				did,
+				statusListName,
+				listType,
+				DefaultStatusActionPurposeMap[statusAction]
+			);
 
-		if (unencrypted.error) {
-			if (unencrypted.error === 'notFound') {
+			if (unencrypted.error) {
+				if (unencrypted.error === 'notFound') {
+					return {
+						success: false,
+						statusCode: StatusCodes.NOT_FOUND,
+						error: `update: error: status list '${statusListName}' not found`,
+					};
+				}
 				return {
 					success: false,
-					statusCode: StatusCodes.NOT_FOUND,
-					error: `update: error: status list '${statusListName}' not found`,
+					statusCode: StatusCodes.BAD_REQUEST,
+					error: `update: error: ${unencrypted.error}`,
 				};
 			}
-			return {
-				success: false,
-				statusCode: StatusCodes.BAD_REQUEST,
-				error: `update: error: ${unencrypted.error}`,
-			};
-		}
 
-		if (unencrypted.resource?.metadata?.encrypted) {
-			return {
-				success: false,
-				statusCode: StatusCodes.BAD_REQUEST,
-				error: `update: error: status list '${statusListName}' is encrypted`,
-			};
-		}
+			if (unencrypted.resource?.metadata?.encrypted) {
+				return {
+					success: false,
+					statusCode: StatusCodes.BAD_REQUEST,
+					error: `update: error: status list '${statusListName}' is encrypted`,
+				};
+			}
 
-		try {
 			const result = (await identityServiceStrategySetup.agent.updateUnencryptedStatusList(
 				did,
 				listType,
@@ -501,6 +504,31 @@ export class CredentialStatusService {
 				};
 
 				eventTracker.emit('track', trackInfo);
+
+				const statusRegistry = await this.findRegistryByUri(
+					`${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
+					customer
+				);
+
+				if (statusRegistry) {
+					await this.issuedCredentialRepository
+						.update(
+							{
+								statusRegistry: statusRegistry,
+								statusIndex: In(Array.isArray(indices) ? indices : [indices]),
+							},
+							{
+								status:
+									statusAction === 'revoke'
+										? 'revoked'
+										: statusAction === 'suspend'
+											? 'suspended'
+											: 'issued',
+								updatedAt: new Date(),
+							}
+						)
+						.catch(() => console.error('Failed to update issued credentials'));
+				}
 			}
 
 			return {
@@ -543,38 +571,37 @@ export class CredentialStatusService {
 		const { statusAction, listType } = query;
 
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
+		try {
+			const encrypted = await identityServiceStrategySetup.agent.searchStatusList(
+				did,
+				statusListName,
+				listType,
+				DefaultStatusActionPurposeMap[statusAction]
+			);
 
-		const encrypted = await identityServiceStrategySetup.agent.searchStatusList(
-			did,
-			statusListName,
-			listType,
-			DefaultStatusActionPurposeMap[statusAction]
-		);
-
-		if (encrypted.error) {
-			if (encrypted.error === 'notFound') {
+			if (encrypted.error) {
+				if (encrypted.error === 'notFound') {
+					return {
+						success: false,
+						statusCode: StatusCodes.NOT_FOUND,
+						error: `update: error: status list '${statusListName}' not found`,
+					};
+				}
 				return {
 					success: false,
-					statusCode: StatusCodes.NOT_FOUND,
-					error: `update: error: status list '${statusListName}' not found`,
+					statusCode: StatusCodes.BAD_REQUEST,
+					error: `update: error: ${encrypted.error}`,
 				};
 			}
-			return {
-				success: false,
-				statusCode: StatusCodes.BAD_REQUEST,
-				error: `update: error: ${encrypted.error}`,
-			};
-		}
 
-		if (!encrypted.resource?.metadata?.encrypted) {
-			return {
-				success: false,
-				statusCode: StatusCodes.BAD_REQUEST,
-				error: `update: error: status list '${statusListName}' is unencrypted`,
-			};
-		}
+			if (!encrypted.resource?.metadata?.encrypted) {
+				return {
+					success: false,
+					statusCode: StatusCodes.BAD_REQUEST,
+					error: `update: error: status list '${statusListName}' is unencrypted`,
+				};
+			}
 
-		try {
 			const result = (await identityServiceStrategySetup.agent.updateEncryptedStatusList(
 				did,
 				listType,
@@ -650,6 +677,31 @@ export class CredentialStatusService {
 				};
 
 				eventTracker.emit('track', trackInfo);
+
+				const statusRegistry = await this.findRegistryByUri(
+					`${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
+					customer
+				);
+
+				if (statusRegistry) {
+					await this.issuedCredentialRepository
+						.update(
+							{
+								statusRegistry: statusRegistry,
+								statusIndex: In(Array.isArray(indices) ? indices : [indices]),
+							},
+							{
+								status:
+									statusAction === 'revoke'
+										? 'revoked'
+										: statusAction === 'suspend'
+											? 'suspended'
+											: 'issued',
+								updatedAt: new Date(),
+							}
+						)
+						.catch(() => console.error('Failed to update issued credentials'));
+				}
 			}
 
 			return {
