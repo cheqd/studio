@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.15.0](https://github.com/cheqd/studio/compare/3.14.0...3.15.0) (2025-11-27)
+
+### Features
+
+* Add new users to Mailchimp product list [DEV-5409] ([#754](https://github.com/cheqd/studio/issues/754)) ([e011c3c](https://github.com/cheqd/studio/commit/e011c3c4d69afdc8e628471ffc8fb50c960885cd))
+* Add revocation registry management [DEV-5439] ([#752](https://github.com/cheqd/studio/issues/752)) ([a183b58](https://github.com/cheqd/studio/commit/a183b586a9592c567bedd04ad5f6638427cf9fef)), closes [#755](https://github.com/cheqd/studio/issues/755)
+* Update issued credential status on statuslist updates ([#759](https://github.com/cheqd/studio/issues/759)) ([5e781e0](https://github.com/cheqd/studio/commit/5e781e067345ac2e6777ebc9902d5ab6a781d000))
+* v3.15.0 beta ([af9d5ec](https://github.com/cheqd/studio/commit/af9d5ec3a2e7fa7244ca04dc7dae077613539c18))
+
+### Bug Fixes
+
+* DidArray validation & Add key/verification-method helper api [DEV-5088] ([#745](https://github.com/cheqd/studio/issues/745)) ([c8ede21](https://github.com/cheqd/studio/commit/c8ede214df6a982d83d469a786e69a2a63f6aa73))
+* Resolve faucet requests errors ([#760](https://github.com/cheqd/studio/issues/760)) ([ab55e7c](https://github.com/cheqd/studio/commit/ab55e7cfd9fa8ffdedd4c222de9f05895dee4050))
+
 ## [3.15.0-develop.5](https://github.com/cheqd/studio/compare/3.15.0-develop.4...3.15.0-develop.5) (2025-11-27)
 
 ### Bug Fixes
