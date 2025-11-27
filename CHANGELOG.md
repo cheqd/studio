@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.15.0-develop.5](https://github.com/cheqd/studio/compare/3.15.0-develop.4...3.15.0-develop.5) (2025-11-27)
+
+### Bug Fixes
+
+* Resolve faucet requests errors ([#760](https://github.com/cheqd/studio/issues/760)) ([ab55e7c](https://github.com/cheqd/studio/commit/ab55e7cfd9fa8ffdedd4c222de9f05895dee4050))
+
 ## [3.15.0-develop.4](https://github.com/cheqd/studio/compare/3.15.0-develop.3...3.15.0-develop.4) (2025-11-26)
 
 ### Features
