@@ -8,9 +8,9 @@ export class FaucetHelper {
 		const faucetBody = {
 			denom: MINIMAL_DENOM,
 			address: address,
-			email,
-			firstName,
-			lastName,
+			email: email,
+			first_name: firstName,
+			last_name: lastName,
 			company: 'Requested via cheqd Studio',
 			amount: FAUCET_AMOUNT,
 			marketing_optin: false,
