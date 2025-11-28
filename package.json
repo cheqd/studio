@@ -54,11 +54,11 @@
 		"README.md"
 	],
 	"dependencies": {
-		"@cheqd/did-provider-cheqd": "^4.6.3",
+		"@cheqd/did-provider-cheqd": "^4.6.4",
 		"@cheqd/sdk": "^5.3.7",
 		"@cheqd/ts-proto": "^4.0.2",
-		"@cosmjs/amino": "^0.33.1",
-		"@cosmjs/encoding": "^0.33.1",
+		"@cosmjs/amino": "^0.36.2",
+		"@cosmjs/encoding": "^0.36.2",
 		"@docknetwork/universal-wallet": "^3.3.4",
 		"@logto/express": "^3.0.11",
 		"@mailchimp/mailchimp_marketing": "^3.0.80",
@@ -138,7 +138,7 @@
 		"@typescript-eslint/parser": "^8.31.1",
 		"buffer": "6.0.3",
 		"conventional-changelog-conventionalcommits": "^8.0.0",
-		"eslint": "^9.25.1",
+		"eslint": "^9.38.0",
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-config-typescript": "^3.0.0",
 		"jest": "^29.7.0",
@@ -150,7 +150,7 @@
 		"ts-loader": "^9.5.2",
 		"ts-node": "^10.9.2",
 		"tsx": "^4.19.4",
-		"typescript": "^5.8.3",
+		"typescript": "^5.9.3",
 		"uint8arrays": "^5.1.0"
 	},
 	"publishConfig": {
