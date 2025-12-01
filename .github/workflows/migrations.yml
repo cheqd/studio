@@ -31,7 +31,7 @@ jobs:
 
       - name: Install dependencies and build
         run: |
-          npm ci
+          npm ci --force
           npm run build
 
       - name: "Execute migrations"
@@ -71,7 +71,7 @@ jobs:
 
       - name: Install dependencies and build
         run: |
-          npm ci
+          npm ci --force
           npm run build
 
       - name: Get runner public IP

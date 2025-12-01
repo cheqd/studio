@@ -11,7 +11,7 @@ WORKDIR /home/node/app
 COPY . .
 
 # Installing dependencies
-RUN npm ci
+RUN npm ci --force
 
 # Build the app
 RUN npm run build
@@ -38,7 +38,7 @@ COPY --from=builder --chown=node:node /home/node/app/*.json /home/node/app/*.md 
 COPY --from=builder --chown=node:node /home/node/app/dist ./dist
 
 # Install production dependencies
-RUN npm ci
+RUN npm ci --force
 
 # Base arguments: build-time
 ARG NPM_CONFIG_LOGLEVEL=warn

@@ -19,7 +19,7 @@ jobs:
                   cache: 'npm'
 
             - name: 'Clean install dependencies'
-              run: npm ci
+              run: npm ci --force
 
             - name: 'Run npm build'
               run: npm run build

@@ -34,7 +34,7 @@ jobs:
                   private_key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
 
             - name: 'Clean install dependencies'
-              run: npm ci
+              run: npm ci --force
 
             - name: 'Build'
               run: npm run build
