@@ -1,5 +1,7 @@
 # Changelog
 
+## [3.15.1](https://github.com/cheqd/studio/compare/3.15.0...3.15.1) (2025-12-01)
+
 ## [3.15.1-develop.1](https://github.com/cheqd/studio/compare/3.15.0...3.15.1-develop.1) (2025-12-01)
 
 ## [3.15.0](https://github.com/cheqd/studio/compare/3.14.0...3.15.0) (2025-11-27)
