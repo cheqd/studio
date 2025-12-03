@@ -740,7 +740,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		did: string,
 		statusOptions: CheqdCredentialStatus,
 		customer: CustomerEntity
-	): Promise<BitstringValidationResult> {
+	): Promise<BitstringValidationResult | BitstringValidationResult[]> {
 		const agent = await this.createAgent(customer);
 		return await Veramo.instance.checkBitstringStatusList(agent, did, statusOptions);
 	}

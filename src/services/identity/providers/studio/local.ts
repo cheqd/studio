@@ -279,7 +279,7 @@ export class LocalIdentityService extends DefaultIdentityService {
 	async checkBitstringStatusList(
 		did: string,
 		statusOptions: CheqdCredentialStatus
-	): Promise<BitstringValidationResult> {
+	): Promise<BitstringValidationResult | BitstringValidationResult[]> {
 		return await Veramo.instance.checkBitstringStatusList(this.initAgent(), did, statusOptions);
 	}
 

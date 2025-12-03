@@ -174,7 +174,10 @@ export type UpdateEncryptedStatusListUnsuccessfulResponseBody = UpdateUnencrypte
 export type CheckStatusListRequestBody = {
 	did: string;
 	statusListName: string;
-	index: number;
+	index?: number;
+	indices?: number[];
+	indexRangeStart?: number;
+	indexRangeEnd?: number;
 	makeFeePayment?: boolean;
 	statusListCredential?: string;
 	statusSize?: number;

@@ -539,8 +539,7 @@ export class CredentialStatusController {
 			})
 			.bail(),
 		check('index')
-			.exists()
-			.withMessage('index: required')
+			.optional()
 			.bail()
 			.isNumeric()
 			.withMessage('index: should be a number')
@@ -551,6 +550,76 @@ export class CredentialStatusController {
 			.custom((value) => Number.isInteger(value))
 			.withMessage('index: should be an integer')
 			.bail(),
+
+		// indices: optional array of non-negative integers
+		check('indices')
+			.if((_v, { req }) => typeof req.body?.indices !== 'undefined')
+			.custom((value) => {
+				return (
+					Array.isArray(value) &&
+					value.length > 0 &&
+					value.every((item) => typeof item === 'number' && item >= 0 && Number.isInteger(item))
+				);
+			})
+			.withMessage('indices: should be an array of non-negative integers')
+			.bail(),
+
+		// indexRangeStart: optional non-negative integer
+		check('indexRangeStart')
+			.optional()
+			.isNumeric()
+			.withMessage('indexRangeStart: should be a number')
+			.bail()
+			.custom((value) => value >= 0)
+			.withMessage('indexRangeStart: should be a non-negative number')
+			.bail(),
+
+		// indexRangeEnd: optional non-negative integer and >= indexRangeStart (if provided)
+		check('indexRangeEnd')
+			.optional()
+			.isNumeric()
+			.withMessage('indexRangeEnd: should be a number')
+			.bail()
+			.custom((value) => value >= 0)
+			.withMessage('indexRangeEnd: should be a non-negative number')
+			.bail()
+			.custom((value, { req }) => {
+				const rawStart = req.body?.indexRangeStart;
+				if (typeof rawStart === 'undefined' || rawStart === null) {
+					return true; // no start provided, nothing to compare
+				}
+				const start = parseInt(rawStart.toString(), 10);
+				if (Number.isNaN(start)) return true; // other validators will catch numeric issues
+				return value >= start;
+			})
+			.withMessage('indexRangeEnd: should be an integer greater than or equal to indexRangeStart')
+			.bail(),
+
+		// require at least one of: index OR indices OR (indexRangeStart AND indexRangeEnd)
+		check('indexOrIndicesOrRange')
+			.custom((_value, { req }) => {
+				const index = req.body?.index;
+				const indices = req.body?.indices;
+				const start = req.body?.indexRangeStart;
+				const end = req.body?.indexRangeEnd;
+
+				const hasIndex = typeof index !== 'undefined' && index !== null && index !== '';
+				const hasIndices = Array.isArray(indices) && indices.length > 0;
+				const hasRange =
+					typeof start !== 'undefined' &&
+					start !== null &&
+					start !== '' &&
+					typeof end !== 'undefined' &&
+					end !== null &&
+					end !== '';
+
+				if (hasIndex || hasIndices || hasRange) {
+					return true;
+				}
+				throw new Error('one of index, indices, or both indexRangeStart and indexRangeEnd must be provided');
+			})
+			.bail(),
+
 		check('makeFeePayment').optional().isBoolean().withMessage('makeFeePayment: should be a boolean').bail(),
 	];
 

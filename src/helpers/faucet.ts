@@ -3,7 +3,12 @@ import { MINIMAL_DENOM, FAUCET_URI, FAUCET_AMOUNT, FAUCET_API_KEY } from '../typ
 
 export class FaucetHelper {
 	// ...
-	static async delegateTokens(address: string, firstName: string, lastName: string, email: string): Promise<ICommonErrorResponse> {
+	static async delegateTokens(
+		address: string,
+		firstName: string,
+		lastName: string,
+		email: string
+	): Promise<ICommonErrorResponse> {
 		const faucetURI = FAUCET_URI;
 		const faucetBody = {
 			denom: MINIMAL_DENOM,

@@ -731,7 +731,18 @@ export class CredentialStatusService {
 	}> {
 		const feePaymentOptions: IFeePaymentOptions[] = [];
 		// collect request parameters - case: body
-		const { did, statusListName, index, makeFeePayment, statusListCredential, statusSize, statusMessage } = body;
+		const {
+			did,
+			statusListName,
+			index,
+			indices,
+			indexRangeEnd,
+			indexRangeStart,
+			makeFeePayment,
+			statusListCredential,
+			statusSize,
+			statusMessage,
+		} = body;
 		// collect request parameters - case: query
 		const { statusPurpose, listType } = query;
 
@@ -842,7 +853,10 @@ export class CredentialStatusService {
 						id: statusListCredential + '#' + index,
 						type: 'BitstringStatusListEntry',
 						statusPurpose,
-						statusListIndex: index.toString(),
+						statusListIndex: index?.toString(),
+						statusListIndices: indices,
+						statusListIndexRangeStart: indexRangeStart,
+						statusListIndexRangeEnd: indexRangeEnd,
 						statusListCredential: statusListCredential || '',
 						statusSize: statusSize,
 						statusMessage: statusMessage,
@@ -853,7 +867,7 @@ export class CredentialStatusService {
 				result = await identityServiceStrategySetup.agent.checkStatusList2021(
 					did,
 					{
-						statusListIndex: index,
+						statusListIndex: index!,
 						statusListName,
 						statusPurpose,
 					},
