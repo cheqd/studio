@@ -31,12 +31,7 @@ import { query } from 'express-validator';
 // ToDo: Add valdiation for /key/import
 export class KeyController {
 	public static keyCreateValidator = [
-		check('type')
-			.optional()
-			.isString()
-			.isIn([SupportedKeyTypes.Ed25519])
-			.withMessage('Invalid key type')
-			.bail(),
+		check('type').optional().isString().isIn([SupportedKeyTypes.Ed25519]).withMessage('Invalid key type').bail(),
 	];
 	public static keyGetValidator = [
 		check('kid')

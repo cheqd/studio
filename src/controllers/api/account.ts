@@ -496,7 +496,10 @@ export class AccountController {
 			const customerEntity = response.locals.customer
 				? (response.locals.customer as CustomerEntity)
 				: // 2.1 Create customer
-					((await CustomerService.instance.create(firstName || lastName || primaryEmail, primaryEmail)) as CustomerEntity);
+					((await CustomerService.instance.create(
+						firstName || lastName || primaryEmail,
+						primaryEmail
+					)) as CustomerEntity);
 
 			if (!customerEntity) {
 				return response.status(StatusCodes.BAD_REQUEST).json({

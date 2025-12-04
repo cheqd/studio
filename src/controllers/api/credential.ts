@@ -1010,7 +1010,7 @@ export class CredentialController {
 				credentialStatus: issuedCredential.credentialStatus as any,
 				category: issuedCredential.category as any,
 				providerId: issuedCredential.providerId,
-				issuedCredentialId: issuedCredential.issuedCredentialId
+				issuedCredentialId: issuedCredential.issuedCredentialId,
 			};
 
 			const result = await Credentials.instance.issue_credential(credentialRequest, response.locals.customer);
