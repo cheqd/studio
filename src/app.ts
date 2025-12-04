@@ -144,7 +144,7 @@ class App {
 		app.get('/credentials/issued', new CredentialController().listIssuedCredentials);
 		app.get('/credentials/issued/:id', new CredentialController().getIssuedCredential);
 		app.put('/credentials/issued/:id', new CredentialController().updateIssuedCredential);
-		app.post('/credentials/issued/:id', new CredentialController().retryIssuedCredential);
+		app.post('/credentials/issued/:id/re-issue', new CredentialController().retryIssuedCredential);
 		// Presentation API
 		app.post(
 			`/presentation/verify`,
