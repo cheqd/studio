@@ -27,6 +27,7 @@ import type {
 	VerifyCredentialRequestQuery,
 	VerifyCredentialResponseBody,
 	RetryIssuedCredentialRequestBody,
+	CredentialRequest,
 } from '../../types/credential.js';
 import { VeridaDIDValidator } from '../validator/did.js';
 import { Cheqd } from '@cheqd/did-provider-cheqd';
@@ -999,7 +1000,7 @@ export class CredentialController {
 			}
 
 			// issuerDid, subjectDid, credentialStatus, provider are fetched from the existing issued credential record
-			const credentialRequest = {
+			const credentialRequest: CredentialRequest = {
 				// can be overriden by request body
 				type: issuedCredential.type,
 				format: issuedCredential.format as any,
@@ -1009,6 +1010,7 @@ export class CredentialController {
 				credentialStatus: issuedCredential.credentialStatus as any,
 				category: issuedCredential.category as any,
 				providerId: issuedCredential.providerId,
+				issuedCredentialId: issuedCredential.issuedCredentialId,
 			};
 
 			const result = await Credentials.instance.issue_credential(credentialRequest, response.locals.customer);
