@@ -173,7 +173,7 @@ export interface IIdentityService {
 		did: string,
 		statusOptions: CheqdCredentialStatus,
 		customer: CustomerEntity
-	): Promise<BitstringValidationResult>;
+	): Promise<BitstringValidationResult | BitstringValidationResult[]>;
 	searchStatusList(
 		did: string,
 		statusListName: string,

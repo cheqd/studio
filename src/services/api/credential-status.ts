@@ -731,7 +731,18 @@ export class CredentialStatusService {
 	}> {
 		const feePaymentOptions: IFeePaymentOptions[] = [];
 		// collect request parameters - case: body
-		const { did, statusListName, index, makeFeePayment, statusListCredential, statusSize, statusMessage } = body;
+		const {
+			did,
+			statusListName,
+			index,
+			indices,
+			indexRangeEnd,
+			indexRangeStart,
+			makeFeePayment,
+			statusListCredential,
+			statusSize,
+			statusMessage,
+		} = body;
 		// collect request parameters - case: query
 		const { statusPurpose, listType } = query;
 
@@ -754,7 +765,7 @@ export class CredentialStatusService {
 					success: false,
 					error: `check: error: 'statusListCredential' is required for BitstringStatusList type`,
 				};
-			if (statusSize && statusSize > 1 && !statusMessage)
+			if (statusSize && statusSize > 2 && !statusMessage)
 				return {
 					statusCode: StatusCodes.BAD_REQUEST,
 					success: false,
@@ -835,15 +846,21 @@ export class CredentialStatusService {
 
 			// check status list
 			let result;
+			let statusListUrl = statusListCredential?.startsWith('did:cheqd:')
+				? `${process.env.RESOLVER_URL}${statusListCredential}`
+				: statusListCredential;
 			if (listType === StatusListType.Bitstring) {
 				result = await identityServiceStrategySetup.agent.checkBitstringStatusList(
 					did,
 					{
-						id: statusListCredential + '#' + index,
+						id: index ? statusListUrl + '#' + index : undefined,
 						type: 'BitstringStatusListEntry',
 						statusPurpose,
-						statusListIndex: index.toString(),
-						statusListCredential: statusListCredential || '',
+						statusListIndex: index?.toString(),
+						statusListIndices: indices,
+						statusListRangeStart: indexRangeStart,
+						statusListRangeEnd: indexRangeEnd,
+						statusListCredential: statusListUrl || '',
 						statusSize: statusSize,
 						statusMessage: statusMessage,
 					} as CheqdCredentialStatus,
@@ -853,7 +870,7 @@ export class CredentialStatusService {
 				result = await identityServiceStrategySetup.agent.checkStatusList2021(
 					did,
 					{
-						statusListIndex: index,
+						statusListIndex: index!,
 						statusListName,
 						statusPurpose,
 					},

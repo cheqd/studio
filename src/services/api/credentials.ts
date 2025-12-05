@@ -29,7 +29,11 @@ import {
 	StatusRegistryState,
 } from '../../types/credential-status.js';
 import { validate as uuidValidate } from 'uuid';
-import { BitstringStatusListResourceType, DefaultStatusList2021StatusPurposeTypes } from '@cheqd/did-provider-cheqd';
+import {
+	BitstringStatusListResourceType,
+	BitstringValidationResult,
+	DefaultStatusList2021StatusPurposeTypes,
+} from '@cheqd/did-provider-cheqd';
 import { ICredentialStatusTrack, ITrackOperation } from '../../types/track.js';
 import { eventTracker } from '../track/tracker.js';
 
@@ -776,11 +780,11 @@ export class Credentials {
 								newStatus = currentStatus.revoked ? 'revoked' : 'issued';
 							}
 						} else {
-							const currentStatus = await studioService.agent.checkBitstringStatusList(
+							const currentStatus = (await studioService.agent.checkBitstringStatusList(
 								entity.issuerId || '',
 								status as CheqdCredentialStatus,
 								customer
-							);
+							)) as BitstringValidationResult;
 							newStatus = currentStatus.message
 								? currentStatus.message
 								: currentStatus.valid

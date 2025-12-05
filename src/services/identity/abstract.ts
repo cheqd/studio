@@ -187,7 +187,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		did: string,
 		statusOptions: CheqdCredentialStatus,
 		customer: CustomerEntity
-	): Promise<BitstringValidationResult> {
+	): Promise<BitstringValidationResult | BitstringValidationResult[]> {
 		throw new Error(`Not supported`);
 	}
 	searchStatusList(

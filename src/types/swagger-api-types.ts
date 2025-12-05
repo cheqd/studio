@@ -1282,7 +1282,6 @@
  *       required:
  *         - did
  *         - statusListName
- *         - index
  *       properties:
  *         did:
  *           description: DID of the StatusList2021 publisher.
@@ -1296,6 +1295,17 @@
  *           type: integer
  *           minimum: 0
  *           exclusiveMinimum: false
+ *         indices:
+ *           description: List of credential status indices to be checked for revocation or suspension.
+ *           type: array
+ *           items:
+ *            type: integer
+ *         indexRangeStart:
+ *           description: Start of the credential status index range to be checked for revocation or suspension.
+ *           type: integer
+ *         indexRangeEnd:
+ *          description: End of the credential status index range to be checked for revocation or suspension.
+ *          type: integer
  *         statusListCredential:
  *           description: Optional Resolvable DID URL of the BitstringStatusList credential to be checked.
  *           type: string

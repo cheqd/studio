@@ -47,7 +47,7 @@ export class DefaultIdentityService extends AbstractIdentityService {
 		did: string,
 		statusOptions: CheqdCredentialStatus,
 		customer: CustomerEntity
-	): Promise<BitstringValidationResult> {
+	): Promise<BitstringValidationResult | BitstringValidationResult[]> {
 		return Veramo.instance.checkBitstringStatusList(this.initAgent(), did, statusOptions);
 	}
 

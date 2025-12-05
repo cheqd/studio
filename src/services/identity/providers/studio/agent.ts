@@ -1103,7 +1103,7 @@ export class Veramo {
 		agent: VeramoAgent,
 		did: string,
 		statusOptions: CheqdCredentialStatus
-	): Promise<BitstringValidationResult> {
+	): Promise<BitstringValidationResult | BitstringValidationResult[]> {
 		const { type, ...rest } = statusOptions;
 		// ensure required property statusListCredential is present (use empty string as fallback)
 		const formattedStatus: BitstringStatusListEntryType = {
