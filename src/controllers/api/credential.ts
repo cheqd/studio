@@ -992,14 +992,14 @@ export class CredentialController {
 				} satisfies UpdateIssuedCredentialResponseBody);
 			}
 
-			if (issuedCredential.status !== 'failed') {
+			if (issuedCredential.status !== 'unknown') {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					success: false,
-					error: `Only credentials in 'failed' status can be reissued`,
+					error: `Only credentials in 'unknown' status can be reissued`,
 				} satisfies UpdateIssuedCredentialResponseBody);
 			}
 
-			// issuerDid, subjectDid, credentialStatus, provider are fetched from the existing issued credential record
+			// issuerDid, subjectDid, provider are fetched from the existing issued credential record
 			const credentialRequest: CredentialRequest = {
 				// can be overriden by request body
 				type: issuedCredential.type,
@@ -1007,7 +1007,6 @@ export class CredentialController {
 				...requestBody,
 				issuerDid: issuedCredential.issuerId!,
 				subjectDid: issuedCredential.subjectId!,
-				credentialStatus: issuedCredential.credentialStatus as any,
 				category: issuedCredential.category as any,
 				providerId: issuedCredential.providerId,
 				issuedCredentialId: issuedCredential.issuedCredentialId,
