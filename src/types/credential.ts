@@ -74,7 +74,14 @@ export type IssueCredentialRequestBody = CredentialRequest;
 
 export type RetryIssuedCredentialRequestBody = Pick<
 	CredentialRequest,
-	'attributes' | 'expirationDate' | 'type' | 'termsOfUse' | 'evidence' | 'refreshService' | '@context' | 'credentialStatus'
+	| 'attributes'
+	| 'expirationDate'
+	| 'type'
+	| 'termsOfUse'
+	| 'evidence'
+	| 'refreshService'
+	| '@context'
+	| 'credentialStatus'
 >;
 
 export type VerifyCredentialRequestBody = { credential: W3CVerifiableCredential } & VerificationPoliciesRequest;

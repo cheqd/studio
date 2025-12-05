@@ -846,12 +846,14 @@ export class CredentialStatusService {
 
 			// check status list
 			let result;
-			let statusListUrl =  statusListCredential?.startsWith('did:cheqd:') ? `${process.env.RESOLVER_URL}${statusListCredential}` : statusListCredential;
+			let statusListUrl = statusListCredential?.startsWith('did:cheqd:')
+				? `${process.env.RESOLVER_URL}${statusListCredential}`
+				: statusListCredential;
 			if (listType === StatusListType.Bitstring) {
 				result = await identityServiceStrategySetup.agent.checkBitstringStatusList(
 					did,
 					{
-						id:  index ? statusListUrl + '#' + index : undefined,
+						id: index ? statusListUrl + '#' + index : undefined,
 						type: 'BitstringStatusListEntry',
 						statusPurpose,
 						statusListIndex: index?.toString(),
