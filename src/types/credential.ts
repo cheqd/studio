@@ -37,7 +37,8 @@ export interface CredentialRequest {
 	evidence?: AdditionalData | AdditionalData[];
 	connector?: CredentialConnectors;
 	providerId?: string;
-	credentialId?: string;
+	credentialId?: string; // id within credential
+	issuedCredentialId?: string; // id in issued credentials
 	category?: CredentialCategory;
 
 	[x: string]: any;
