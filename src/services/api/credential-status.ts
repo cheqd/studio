@@ -765,7 +765,7 @@ export class CredentialStatusService {
 					success: false,
 					error: `check: error: 'statusListCredential' is required for BitstringStatusList type`,
 				};
-			if (statusSize && statusSize > 1 && !statusMessage)
+			if (statusSize && statusSize > 2 && !statusMessage)
 				return {
 					statusCode: StatusCodes.BAD_REQUEST,
 					success: false,
@@ -846,18 +846,19 @@ export class CredentialStatusService {
 
 			// check status list
 			let result;
+			let statusListUrl =  statusListCredential?.startsWith('did:cheqd:') ? `${process.env.RESOLVER_URL}${statusListCredential}` : statusListCredential;
 			if (listType === StatusListType.Bitstring) {
 				result = await identityServiceStrategySetup.agent.checkBitstringStatusList(
 					did,
 					{
-						id: statusListCredential + '#' + index,
+						id: statusListUrl + '#' + index,
 						type: 'BitstringStatusListEntry',
 						statusPurpose,
 						statusListIndex: index?.toString(),
 						statusListIndices: indices,
 						statusListIndexRangeStart: indexRangeStart,
 						statusListIndexRangeEnd: indexRangeEnd,
-						statusListCredential: statusListCredential || '',
+						statusListCredential: statusListUrl || '',
 						statusSize: statusSize,
 						statusMessage: statusMessage,
 					} as CheqdCredentialStatus,
