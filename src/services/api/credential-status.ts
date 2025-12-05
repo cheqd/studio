@@ -851,13 +851,13 @@ export class CredentialStatusService {
 				result = await identityServiceStrategySetup.agent.checkBitstringStatusList(
 					did,
 					{
-						id: statusListUrl + '#' + index,
+						id:  index ? statusListUrl + '#' + index : undefined,
 						type: 'BitstringStatusListEntry',
 						statusPurpose,
 						statusListIndex: index?.toString(),
 						statusListIndices: indices,
-						statusListIndexRangeStart: indexRangeStart,
-						statusListIndexRangeEnd: indexRangeEnd,
+						statusListRangeStart: indexRangeStart,
+						statusListRangeEnd: indexRangeEnd,
 						statusListCredential: statusListUrl || '',
 						statusSize: statusSize,
 						statusMessage: statusMessage,
