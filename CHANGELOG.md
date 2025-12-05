@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.0-develop.1](https://github.com/cheqd/studio/compare/3.15.2-develop.1...3.16.0-develop.1) (2025-12-05)
+
+### Features
+
+* Add bulk status validation support [DEV-5538] ([#761](https://github.com/cheqd/studio/issues/761)) ([01ba23e](https://github.com/cheqd/studio/commit/01ba23ea82a89bb6cc1941975a7cc68e9d26e395))
+
 ## [3.15.2-develop.1](https://github.com/cheqd/studio/compare/3.15.1...3.15.2-develop.1) (2025-12-05)
 
 ### Bug Fixes
