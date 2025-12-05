@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.15.2-develop.1](https://github.com/cheqd/studio/compare/3.15.1...3.15.2-develop.1) (2025-12-05)
+
+### Bug Fixes
+
+* Provide issuedCredentialId for re-issuance ([#762](https://github.com/cheqd/studio/issues/762)) ([02add4f](https://github.com/cheqd/studio/commit/02add4fb5b6b7ab81b5bc325e6bc3bde573a6045))
+
 ## [3.15.1](https://github.com/cheqd/studio/compare/3.15.0...3.15.1) (2025-12-01)
 
 ## [3.15.1-develop.1](https://github.com/cheqd/studio/compare/3.15.0...3.15.1-develop.1) (2025-12-01)
