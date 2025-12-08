@@ -1,4 +1,4 @@
-import type { CredentialPayload, VerifiableCredential } from '@veramo/core';
+import type { CredentialPayload, IVerifyResult, VerifiableCredential } from '@veramo/core';
 import { OperationCategoryNameEnum, OperationNameEnum, VC_CONTEXT, VC_TYPE } from '../../types/constants.js';
 import {
 	CredentialCategory,
@@ -16,6 +16,7 @@ import type { CustomerEntity } from '../../database/entities/customer.entity.js'
 import { VeridaDIDValidator } from '../../controllers/validator/did.js';
 import { ResourceConnector } from '../connectors/resource.js';
 import { DockIdentityService } from '../identity/providers/index.js';
+import { ProviderService } from './provider.service.js';
 import { IssuedCredentialEntity } from '../../database/entities/issued-credential.entity.js';
 import { Repository } from 'typeorm';
 import { Connection } from '../../database/connection/connection.js';
@@ -36,6 +37,7 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import { ICredentialStatusTrack, ITrackOperation } from '../../types/track.js';
 import { eventTracker } from '../track/tracker.js';
+import { VerificationOptions } from '../../types/shared.js';
 
 dotenv.config();
 
@@ -851,5 +853,61 @@ export class Credentials {
 			);
 			return null;
 		}
+	}
+
+	async verify_credential(
+		credential: VerifiableCredential | string,
+		verificationOptions: VerificationOptions,
+		customer: CustomerEntity
+	): Promise<IVerifyResult> {
+		let verificationResult: IVerifyResult;
+
+		const studioService = new IdentityServiceStrategySetup(customer.customerId);
+		verificationResult = await studioService.agent.verifyCredential(credential, verificationOptions, customer);
+
+		// Only check external providers if customer is authenticated
+		if (verificationOptions.policies?.checkExternalProvider) {
+			// Get all active provider configurations for the customer
+			const providerConfigs = await ProviderService.instance.getCustomerConfigurations(customer.customerId);
+			const activeProviders = providerConfigs.filter((config) => config.active && config.providerId !== 'studio');
+
+			// Verify with each activated external provider
+			for (const providerConfig of activeProviders) {
+				try {
+					let externalResult: IVerifyResult | undefined;
+
+					switch (providerConfig.providerId) {
+						case 'dock': {
+							const dockService = new DockIdentityService();
+							externalResult = await dockService.verifyCredential(
+								credential,
+								verificationOptions,
+								customer
+							);
+							break;
+						}
+						// TODO: Add other providers here as they implement verifyCredential
+						default:
+							console.warn(
+								`Credential verification not supported for provider: ${providerConfig.providerId}`
+							);
+							continue;
+					}
+
+					// If external verification succeeds, use that result
+					if (externalResult) {
+						verificationResult = externalResult;
+					}
+				} catch (error) {
+					console.error(
+						`Failed to verify credential with provider ${providerConfig.providerId}:`,
+						error instanceof Error ? error.message : error
+					);
+					// Don't fail the entire verification if one provider fails
+					// Just log the error and continue
+				}
+			}
+		}
+		return verificationResult;
 	}
 }
