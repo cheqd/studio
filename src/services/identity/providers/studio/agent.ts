@@ -86,6 +86,7 @@ import type {
 import {
 	BitstringStatusListEntry,
 	MINIMAL_DENOM,
+	StatusList2021Entry,
 	VC_PROOF_FORMAT,
 	VC_REMOVE_ORIGINAL_FIELDS,
 } from '../../../../types/constants.js';
@@ -104,6 +105,7 @@ import type {
 } from '@cheqd/did-provider-cheqd';
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { SupportedKeyTypes } from '@veramo/utils';
+import { CheqdW3CVerifiableCredential } from '../../../w3c-credential.js';
 
 // dynamic import to avoid circular dependency
 const VeridaResolver =
@@ -401,23 +403,26 @@ export class Veramo {
 	): Promise<IVerifyResult> {
 		let result: IVerifyResult;
 		if (verificationOptions.verifyStatus) {
-			const cred = credential as VerifiableCredential;
-			if (cred.credentialStatus?.type === BitstringStatusListEntry) {
-				result = await agent.cheqdVerifyCredentialWithStatusList({
-					credential: cred,
-					fetchList: true,
-					verificationArgs: {
-						...verificationOptions,
-					},
-				} as ICheqdVerifyCredentialWithBitstringArgs);
-			} else {
+			const cred =
+				typeof credential === 'string'
+					? new CheqdW3CVerifiableCredential(credential)
+					: (credential as VerifiableCredential);
+			if (cred.credentialStatus?.type === StatusList2021Entry) {
 				result = await agent.cheqdVerifyCredential({
-					credential: cred,
+					credential,
 					fetchList: true,
 					verificationArgs: {
 						...verificationOptions,
 					},
 				} as ICheqdVerifyCredentialWithStatusListArgs);
+			} else {
+				result = await agent.cheqdVerifyCredentialWithStatusList({
+					credential,
+					fetchList: true,
+					verificationArgs: {
+						...verificationOptions,
+					},
+				} as ICheqdVerifyCredentialWithBitstringArgs);
 			}
 		} else {
 			result = await agent.verifyCredential({
