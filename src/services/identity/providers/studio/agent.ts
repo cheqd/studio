@@ -401,30 +401,35 @@ export class Veramo {
 		credential: string | VerifiableCredential,
 		verificationOptions: VerificationOptions = {}
 	): Promise<IVerifyResult> {
-		let result: IVerifyResult;
+		let result: IVerifyResult = null as unknown as IVerifyResult;
 		if (verificationOptions.verifyStatus) {
 			const cred =
 				typeof credential === 'string'
 					? new CheqdW3CVerifiableCredential(credential)
 					: (credential as VerifiableCredential);
-			if (cred.credentialStatus?.type === StatusList2021Entry) {
-				result = await agent.cheqdVerifyCredential({
-					credential,
-					fetchList: true,
-					verificationArgs: {
-						...verificationOptions,
-					},
-				} as ICheqdVerifyCredentialWithStatusListArgs);
-			} else {
-				result = await agent.cheqdVerifyCredentialWithStatusList({
-					credential,
-					fetchList: true,
-					verificationArgs: {
-						...verificationOptions,
-					},
-				} as ICheqdVerifyCredentialWithBitstringArgs);
+			if (cred.credentialStatus) {
+				if (cred.credentialStatus.type === StatusList2021Entry) {
+					console.log('HERE');
+					result = await agent.cheqdVerifyCredential({
+						credential,
+						fetchList: true,
+						verificationArgs: {
+							...verificationOptions,
+						},
+					} as ICheqdVerifyCredentialWithStatusListArgs);
+				} else {
+					console.log('Verifying credential with Bitstring status list');
+					result = await agent.cheqdVerifyCredentialWithStatusList({
+						credential,
+						fetchList: true,
+						verificationArgs: {
+							...verificationOptions,
+						},
+					} as ICheqdVerifyCredentialWithBitstringArgs);
+				}
 			}
-		} else {
+		}
+		if (!result) { 	// fall back to default verification
 			result = await agent.verifyCredential({
 				credential,
 				...verificationOptions,
