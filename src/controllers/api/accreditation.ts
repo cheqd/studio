@@ -886,34 +886,29 @@ export class AccreditationController {
 			const uniqueResourceUrls = Array.from(new Set(resourceUrls));
 
 			// 1. Fetch all tracking records from the issued credentials table
-			// NOTE: Ensure CredentialCategory.ACCREDITATION is defined and correct.
 			const { credentials: trackingRecords } = await Credentials.instance.list(response.locals.customer, {
 				category: CredentialCategory.ACCREDITATION,
 			});
 
 			// 2. OPTIMIZATION: Create a Map for O(1) tracking record lookup by issuedCredentialId
-			// This replaces the O(n) Array.find() inside the subsequent loop.
 			const trackingMap = new Map();
 			for (const record of trackingRecords) {
-				// We key the map by the credential's resource ID for quick lookup later
 				trackingMap.set(record.issuedCredentialId, record);
 			}
 
 			// 3. Resolve resources and enhance with tracking metadata in parallel
 			const accreditationPromises = uniqueResourceUrls.map(async (url) => {
 				try {
-					// Resolve the credential (high-latency external call)
 					const res = await identityServiceStrategySetup.agent.resolve(url, true);
 					const credential = await res.json();
 
 					// Skip if the credential doesn't have contentStream
 					if (!credential.contentStream) {
-						return null; // Return null/undefined to be filtered out later
+						return null;
 					}
 
 					const resourceId = credential.contentMetadata.resourceId;
 
-					// OPTIMIZATION: O(1) lookup using the pre-built Map
 					const trackingRecord = trackingMap.get(resourceId);
 
 					if (trackingRecord) {
@@ -937,7 +932,7 @@ export class AccreditationController {
 					}
 				} catch (error) {
 					console.error(`Failed to process accreditation for URL: ${url}`, error);
-					return null; // Return null/undefined on error
+					return null;
 				}
 			});
 
