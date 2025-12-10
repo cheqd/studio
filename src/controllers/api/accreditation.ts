@@ -303,7 +303,7 @@ export class AccreditationController {
 					resourceType = DIDAccreditationTypes.VerifiableAccreditationToAttest;
 					credentialRequest.type = [...(type || []), resourceType];
 					credentialRequest.termsOfUse = {
-						type: DIDAccreditationPolicyTypes.Accredit,
+						type: DIDAccreditationPolicyTypes.Attest,
 						parentAccreditation,
 						rootAuthorization,
 					};

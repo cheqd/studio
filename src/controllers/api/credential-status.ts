@@ -920,14 +920,10 @@ export class CredentialStatusController {
 	 *             - BitstringStatusList
 	 *       - in: query
 	 *         name: statusAction
-	 *         description: The update action to be performed on the unencrypted status list, can be revoke, suspend or reinstate
+	 *         description: The update action to be performed on the unencrypted status list, can be revoke, suspend, reinstate or custom states
 	 *         required: true
 	 *         schema:
 	 *           type: string
-	 *           enum:
-	 *             - revoke
-	 *             - suspend
-	 *             - reinstate
 	 *     requestBody:
 	 *       content:
 	 *         application/x-www-form-urlencoded:
