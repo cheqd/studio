@@ -3971,12 +3971,7 @@
             "description": "The update action to be performed on the encrypted status list, can be revoke, suspend or reinstate",
             "required": true,
             "schema": {
-              "type": "string",
-              "enum": [
-                "revoke",
-                "suspend",
-                "reinstate"
-              ]
+              "type": "string"
             }
           }
         ],
