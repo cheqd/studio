@@ -3635,6 +3635,26 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Page number for pagination.",
+            "schema": {
+              "type": "number",
+              "default": 1
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "description": "Number of items per page.",
+            "schema": {
+              "type": "number",
+              "default": 10
+            },
+            "required": false
           }
         ],
         "responses": {

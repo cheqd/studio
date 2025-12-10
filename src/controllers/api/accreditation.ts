@@ -830,6 +830,20 @@ export class AccreditationController {
 	 *         description: Filter accreditations published by a DID
 	 *         schema:
 	 *           type: string
+	 *       - in: query
+	 *         name: page
+	 *         description: Page number for pagination.
+	 *         schema:
+	 *           type: number
+	 *           default: 1
+	 *         required: false
+	 *       - in: query
+	 *         name: limit
+	 *         description: Number of items per page.
+	 *         schema:
+	 *           type: number
+	 *           default: 10
+	 *         required: false
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -845,7 +859,7 @@ export class AccreditationController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async listAccreditations(request: Request, response: Response) {
-		const { network, accreditationType, did } = request.query as any;
+		const { network, accreditationType, did, page, limit } = request.query as any;
 
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = response.locals.customer
@@ -872,7 +886,7 @@ export class AccreditationController {
 		try {
 			// Fetch resources of accreditation resourceType associated with the account
 			const { resources } = await identityServiceStrategySetup.agent.listResources(
-				{ network, resourceType, did },
+				{ network, resourceType, did, page, limit },
 				response.locals.customer
 			);
 
