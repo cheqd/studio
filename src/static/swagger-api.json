@@ -3635,6 +3635,26 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Page number for pagination.",
+            "schema": {
+              "type": "number",
+              "default": 1
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "description": "Number of items per page.",
+            "schema": {
+              "type": "number",
+              "default": 10
+            },
+            "required": false
           }
         ],
         "responses": {
@@ -3901,15 +3921,10 @@
           {
             "in": "query",
             "name": "statusAction",
-            "description": "The update action to be performed on the unencrypted status list, can be revoke, suspend or reinstate",
+            "description": "The update action to be performed on the unencrypted status list, can be revoke, suspend, reinstate or custom states",
             "required": true,
             "schema": {
-              "type": "string",
-              "enum": [
-                "revoke",
-                "suspend",
-                "reinstate"
-              ]
+              "type": "string"
             }
           }
         ],
@@ -3976,12 +3991,7 @@
             "description": "The update action to be performed on the encrypted status list, can be revoke, suspend or reinstate",
             "required": true,
             "schema": {
-              "type": "string",
-              "enum": [
-                "revoke",
-                "suspend",
-                "reinstate"
-              ]
+              "type": "string"
             }
           }
         ],

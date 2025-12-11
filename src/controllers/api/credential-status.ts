@@ -5,7 +5,7 @@ import type {
 	SearchStatusListQuery,
 	SearchStatusListUnsuccessfulResponseBody,
 } from '../../types/credential-status.js';
-import { DefaultStatusActions, MinimalPaymentCondition, StatusListType } from '../../types/credential-status.js';
+import { MinimalPaymentCondition, StatusListType } from '../../types/credential-status.js';
 import type {
 	CheckStatusListRequestBody,
 	CheckStatusListRequestQuery,
@@ -330,15 +330,7 @@ export class CredentialStatusController {
 					.join(', ')}]`
 			)
 			.bail(),
-		check('statusAction')
-			.exists()
-			.withMessage('statusAction: required')
-			.bail()
-			.isIn(Object.keys(DefaultStatusActions))
-			.withMessage(
-				`statusAction: invalid statusAction, should be one of ${Object.keys(DefaultStatusActions).join(', ')}`
-			)
-			.bail(),
+		check('statusAction').exists().withMessage('statusAction: required').bail(),
 		check('indices')
 			.exists()
 			.withMessage('indices: required')
@@ -920,14 +912,10 @@ export class CredentialStatusController {
 	 *             - BitstringStatusList
 	 *       - in: query
 	 *         name: statusAction
-	 *         description: The update action to be performed on the unencrypted status list, can be revoke, suspend or reinstate
+	 *         description: The update action to be performed on the unencrypted status list, can be revoke, suspend, reinstate or custom states
 	 *         required: true
 	 *         schema:
 	 *           type: string
-	 *           enum:
-	 *             - revoke
-	 *             - suspend
-	 *             - reinstate
 	 *     requestBody:
 	 *       content:
 	 *         application/x-www-form-urlencoded:
@@ -994,10 +982,6 @@ export class CredentialStatusController {
 	 *         required: true
 	 *         schema:
 	 *           type: string
-	 *           enum:
-	 *             - revoke
-	 *             - suspend
-	 *             - reinstate
 	 *     requestBody:
 	 *       content:
 	 *         application/x-www-form-urlencoded:

@@ -830,6 +830,20 @@ export class AccreditationController {
 	 *         description: Filter accreditations published by a DID
 	 *         schema:
 	 *           type: string
+	 *       - in: query
+	 *         name: page
+	 *         description: Page number for pagination.
+	 *         schema:
+	 *           type: number
+	 *           default: 1
+	 *         required: false
+	 *       - in: query
+	 *         name: limit
+	 *         description: Number of items per page.
+	 *         schema:
+	 *           type: number
+	 *           default: 10
+	 *         required: false
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -845,7 +859,7 @@ export class AccreditationController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async listAccreditations(request: Request, response: Response) {
-		const { network, accreditationType, did } = request.query as any;
+		const { network, accreditationType, did, page, limit } = request.query as any;
 
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = response.locals.customer
@@ -872,7 +886,7 @@ export class AccreditationController {
 		try {
 			// Fetch resources of accreditation resourceType associated with the account
 			const { resources } = await identityServiceStrategySetup.agent.listResources(
-				{ network, resourceType, did },
+				{ network, resourceType, did, page, limit },
 				response.locals.customer
 			);
 
@@ -885,50 +899,59 @@ export class AccreditationController {
 			// remove duplicates of resourceUrls
 			const uniqueResourceUrls = Array.from(new Set(resourceUrls));
 
-			// Resolve resources to get full accreditation details and enhance with tracking metadata
-			const accreditations = [];
-			for (let i = 0; i < uniqueResourceUrls.length; i++) {
-				try {
-					const url = uniqueResourceUrls[i];
+			// 1. Fetch all tracking records from the issued credentials table
+			const { credentials: trackingRecords } = await Credentials.instance.list(response.locals.customer, {
+				category: CredentialCategory.ACCREDITATION,
+			});
 
-					// Resolve the credential
+			// 2. OPTIMIZATION: Create a Map for O(1) tracking record lookup by issuedCredentialId
+			const trackingMap = new Map();
+			for (const record of trackingRecords) {
+				trackingMap.set(record.issuedCredentialId, record);
+			}
+
+			// 3. Resolve resources and enhance with tracking metadata in parallel
+			const accreditationPromises = uniqueResourceUrls.map(async (url) => {
+				try {
 					const res = await identityServiceStrategySetup.agent.resolve(url, true);
 					const credential = await res.json();
+
+					// Skip if the credential doesn't have contentStream
 					if (!credential.contentStream) {
-						continue;
+						return null;
 					}
 
-					// Fetch tracking metadata from issuedCredential table by providerCredentialId
-					const trackingRecord = await Credentials.instance.get(
-						credential.contentMetadata.resourceId,
-						response.locals.customer,
-						{}
-					);
+					const resourceId = credential.contentMetadata.resourceId;
+
+					const trackingRecord = trackingMap.get(resourceId);
 
 					if (trackingRecord) {
 						const { issuedCredentialId, providerId, providerCredentialId, status, statusUpdatedAt } =
 							trackingRecord;
+
 						// Merge tracking metadata with credential
-						accreditations.push({
+						return {
 							...credential.contentStream,
 							metadata: {
-								issuedCredentialId: issuedCredentialId,
-								providerId: providerId,
-								providerCredentialId: providerCredentialId,
-								status: status,
-								statusUpdatedAt: statusUpdatedAt,
+								issuedCredentialId,
+								providerId,
+								providerCredentialId,
+								status,
+								statusUpdatedAt,
 							},
-						});
+						};
 					} else {
 						// No tracking record, return just the credential (legacy)
-						accreditations.push(credential.contentStream);
+						return credential.contentStream;
 					}
 				} catch (error) {
-					console.error(`Failed to process accreditation:`, error);
-					continue;
+					console.error(`Failed to process accreditation for URL: ${url}`, error);
+					return null;
 				}
-			}
+			});
 
+			// 4. Wait for all resolutions to complete and filter out any failed/skipped ones (null)
+			const accreditations = (await Promise.all(accreditationPromises)).filter(Boolean);
 			return response.status(StatusCodes.OK).json({
 				total: accreditations.length,
 				accreditations: accreditations,
