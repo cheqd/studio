@@ -1,4 +1,4 @@
-import { CredentialPayload, IIdentifier, IKey, VerifiableCredential } from '@veramo/core';
+import { CredentialPayload, IIdentifier, IKey, IVerifyResult, VerifiableCredential } from '@veramo/core';
 import { DIDDocument } from 'did-resolver';
 import { CustomerEntity } from '../../../../database/entities/customer.entity.js';
 import { AbstractIdentityService } from '../../abstract.js';
@@ -18,6 +18,7 @@ import { ProviderService } from '../../../api/provider.service.js';
 import { fromString, toString } from 'uint8arrays';
 import { contentsFromEncryptedWalletCredential, passwordToKeypair } from '@docknetwork/universal-wallet';
 import { IdentityServiceStrategySetup } from '../../index.js';
+import { VerificationOptions } from '../../../../types/shared.js';
 
 export class DockIdentityService extends AbstractIdentityService {
 	supportedProvider = 'dock';
@@ -460,5 +461,40 @@ export class DockIdentityService extends AbstractIdentityService {
 			keys: [], // optionally map exportedDidResult -> keys[]
 			services: [],
 		};
+	}
+
+	async verifyCredential(
+		credential: VerifiableCredential | string,
+		verificationOptions: VerificationOptions,
+		customer: CustomerEntity
+	): Promise<IVerifyResult> {
+		const provider = await ProviderService.instance.getProvider(this.supportedProvider!, { deprecated: false });
+		if (!provider) {
+			throw new Error(`Provider ${this.supportedProvider} not found or deprecated`);
+		}
+
+		const providerConfig = await ProviderService.instance.getProviderConfiguration(
+			customer.customerId,
+			provider?.providerId
+		);
+		if (!providerConfig) {
+			throw new Error(`Provider ${this.supportedProvider} not configured for customer ${customer.customerId}`);
+		}
+		const apiKey = await ProviderService.instance.getDecryptedApiKey(providerConfig);
+		const response = await fetch(`${this.defaultApiUrl}/verify`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${apiKey}`,
+			},
+			body: JSON.stringify(credential),
+		});
+
+		if (!response.ok) {
+			throw new Error(`Failed to verify credential with ${this.supportedProvider}: ${response.statusText}`);
+		}
+		const credentialData = await response.json();
+
+		return credentialData as IVerifyResult;
 	}
 }

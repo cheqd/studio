@@ -26,7 +26,7 @@ export class CredentialAuthRuleProvider extends AuthRuleProvider {
 		this.registerRule('/credentials/issued/(.*)/re-issue', 'POST', 'update:credential:mainnet', {
 			skipNamespace: true,
 		});
-		// Unauthorized routes
-		this.registerRule('/credential/verify', 'POST', '', { allowUnauthorized: true, skipNamespace: true });
+		this.registerRule('/credential/verify', 'POST', 'verify:credential:testnet', { skipNamespace: true });
+		this.registerRule('/credential/verify', 'POST', 'verify:credential:mainnet', { skipNamespace: true });
 	}
 }

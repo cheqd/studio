@@ -251,8 +251,6 @@ export class CredentialController {
 
 		// Create credential object
 		const cheqdCredential = new CheqdW3CVerifiableCredential(credential);
-		// Get strategy e.g. postgres or local
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 
 		try {
 			if (!allowDeactivatedDid && (await isCredentialIssuerDidDeactivated(cheqdCredential))) {
@@ -260,8 +258,7 @@ export class CredentialController {
 					error: `Credential issuer DID is deactivated`,
 				} satisfies UnsuccesfulVerifyCredentialResponseBody);
 			}
-
-			const verifyResult = await identityServiceStrategySetup.agent.verifyCredential(
+			const verifyResult = await Credentials.instance.verify_credential(
 				credential,
 				{
 					verifyStatus,
