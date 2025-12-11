@@ -5,7 +5,6 @@ defaults:
     run:
         shell: bash
 permissions:
-    id-token: write # Required for OIDC authentication
     contents: write
     packages: write
 
@@ -44,6 +43,7 @@ jobs:
               run: npx semantic-release
               env:
                   GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
             - name: Set release version number
               id: set-version
