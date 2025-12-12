@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.16.0-develop.2](https://github.com/cheqd/studio/compare/3.16.0-develop.1...3.16.0-develop.2) (2025-12-12)
+
+### Bug Fixes
+
+* add verification for dock credentials [DEV-5539] ([#764](https://github.com/cheqd/studio/issues/764)) ([169cc5c](https://github.com/cheqd/studio/commit/169cc5c01698b3afaf9c92eb430675b066a094ab))
+* Parse credential jwt in verifyCredential for statuslist ([#763](https://github.com/cheqd/studio/issues/763)) ([db1efe5](https://github.com/cheqd/studio/commit/db1efe5e8c1ede8d6a6b5a377404a028b896bd72))
+
+### Performance Improvements
+
+* Optimise list accreditations ([#766](https://github.com/cheqd/studio/issues/766)) ([c703554](https://github.com/cheqd/studio/commit/c703554b1806726baf82df8e13e62c4c25864683))
+
 ## [3.16.0-develop.1](https://github.com/cheqd/studio/compare/3.15.2-develop.1...3.16.0-develop.1) (2025-12-05)
 
 ### Features
