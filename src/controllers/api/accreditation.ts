@@ -988,20 +988,32 @@ export class AccreditationController {
 			const resolvedAccreditations: Array<
 				Awaited<ReturnType<typeof resolveAccreditationWithCache>> | null | undefined
 			> = new Array(uniqueResourceUrls.length);
-			let currentIndex = 0;
 
+			// Pre-fill cache hits synchronously to avoid putting them on the worker queue
+			const cacheMisses: Array<{ url: string; index: number }> = [];
+			uniqueResourceUrls.forEach((url, index) => {
+				const cached = getCachedAccreditation(url);
+				if (cached) {
+					resolvedAccreditations[index] = cached as Awaited<ReturnType<typeof resolveAccreditationWithCache>>;
+				} else {
+					cacheMisses.push({ url, index });
+				}
+			});
+
+			let currentIndex = 0;
 			const workers = Array.from(
-				{ length: Math.min(ACCREDITATION_RESOLVE_CONCURRENCY, uniqueResourceUrls.length) },
+				{ length: Math.min(ACCREDITATION_RESOLVE_CONCURRENCY, cacheMisses.length) },
 				async () => {
 					// eslint-disable-next-line no-constant-condition
 					while (true) {
 						const index = currentIndex++;
-						if (index >= uniqueResourceUrls.length) {
+						if (index >= cacheMisses.length) {
 							break;
 						}
-						const accreditation = await resolveAccreditationWithCache(uniqueResourceUrls[index]);
+						const { url, index: targetIndex } = cacheMisses[index];
+						const accreditation = await resolveAccreditationWithCache(url);
 						if (accreditation) {
-							resolvedAccreditations[index] = accreditation;
+							resolvedAccreditations[targetIndex] = accreditation;
 						}
 					}
 				}
