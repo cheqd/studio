@@ -919,13 +919,22 @@ export class AccreditationController {
 			);
 
 			// Build resource URLs for resolution
-			const resourceUrls = resources.map(
-				(item) =>
-					`${item.did}?resourceName=${encodeURIComponent(item.resourceName)}&resourceType=${item.resourceType}`
-			);
+			// const resourceUrls = resources.map(
+			// 	(item) =>
+			// 		`${item.did}?resourceName=${encodeURIComponent(item.resourceName)}&resourceType=${item.resourceType}`
+			// );
+			const resourceUrls = resources.map((item) => `${item.did}/resources/${item.resourceId}`);
 
 			// remove duplicates of resourceUrls
 			const uniqueResourceUrls = Array.from(new Set(resourceUrls));
+
+			// No resources to resolve, return early
+			if (uniqueResourceUrls.length === 0) {
+				return response.status(StatusCodes.OK).json({
+					total: 0,
+					accreditations: [],
+				});
+			}
 
 			// 1. Fetch all tracking records from the issued credentials table
 			const { credentials: trackingRecords } = await Credentials.instance.list(response.locals.customer, {
