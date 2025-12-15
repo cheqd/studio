@@ -227,33 +227,39 @@ export class AccreditationController {
 		} = request.body as DIDAccreditationRequestBody;
 
 		try {
-			// Validate issuer DID
-			const resolvedResult = await identityServiceStrategySetup.agent.resolve(issuerDid);
-			// check if DID-Document is resolved
-			const body = await resolvedResult.json();
-			if (!body?.didDocument) {
-				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `DID ${issuerDid} is not resolved because of error from resolver: ${body.didResolutionMetadata.error}.`,
-				});
-			}
-			if (body.didDocumentMetadata.deactivated) {
-				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `${issuerDid} is deactivated`,
-				});
-			}
+			// Validate issuer and subject DIDs in parallel only for authorize
+			// For attest, accredit they are validated in verify_accreditation
+			if (accreditationType === AccreditationRequestType.authorize) {
+				const [resolvedResult, res] = await Promise.all([
+					identityServiceStrategySetup.agent.resolve(issuerDid),
+					identityServiceStrategySetup.agent.resolve(subjectDid),
+				]);
 
-			// Validate subject DID
-			const res = await identityServiceStrategySetup.agent.resolve(subjectDid);
-			const subjectDidRes = await res.json();
-			if (!subjectDidRes?.didDocument) {
-				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `DID ${subjectDid} is not resolved because of error from resolver: ${body.didResolutionMetadata.error}.`,
-				});
-			}
-			if (subjectDidRes.didDocumentMetadata.deactivated) {
-				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `${subjectDid} is deactivated`,
-				});
+				const [body, subjectDidRes] = await Promise.all([resolvedResult.json(), res.json()]);
+
+				// Validate issuer DID
+				if (!body?.didDocument) {
+					return response.status(StatusCodes.BAD_REQUEST).send({
+						error: `DID ${issuerDid} is not resolved because of error from resolver: ${body.didResolutionMetadata.error}.`,
+					});
+				}
+				if (body.didDocumentMetadata.deactivated) {
+					return response.status(StatusCodes.BAD_REQUEST).send({
+						error: `${issuerDid} is deactivated`,
+					});
+				}
+
+				// Validate subject DID
+				if (!subjectDidRes?.didDocument) {
+					return response.status(StatusCodes.BAD_REQUEST).send({
+						error: `DID ${subjectDid} is not resolved because of error from resolver: ${body.didResolutionMetadata.error}.`,
+					});
+				}
+				if (subjectDidRes.didDocumentMetadata.deactivated) {
+					return response.status(StatusCodes.BAD_REQUEST).send({
+						error: `${subjectDid} is deactivated`,
+					});
+				}
 			}
 
 			const resourceId = v4();

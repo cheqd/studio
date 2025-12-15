@@ -26,6 +26,7 @@ export class AccreditationService {
 		let accreditationUrl = didUrl;
 		let accreditedSubject = subjectDid;
 		let initialVerifyResult: IVerifyResult | undefined = undefined;
+		let accreditorDids: string[] = [];
 
 		while (true) {
 			const res = await identityServiceStrategySetup.agent.resolve(accreditationUrl);
@@ -43,6 +44,8 @@ export class AccreditationService {
 
 			// Create credential object
 			const accreditation: VerfifiableAccreditation = result;
+			const accreditorDid =
+				typeof accreditation.issuer === 'string' ? accreditation.issuer : accreditation.issuer.id;
 
 			if (
 				!allowDeactivatedDid &&
@@ -145,8 +148,9 @@ export class AccreditationService {
 					};
 				}
 
-				const accreditorDid =
-					typeof accreditation.issuer === 'string' ? accreditation.issuer : accreditation.issuer.id;
+				if (isTypeAccreditation === DIDAccreditationTypes.VerifiableAccreditationToAccredit) {
+					accreditorDids.push(accreditorDid);
+				}
 
 				accreditationUrl = termsOfUse.parentAccreditation;
 				accreditedSubject = accreditorDid;
