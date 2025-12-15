@@ -447,6 +447,10 @@
  *               description: Policy to skip the audience check when set to `false`.
  *               type: boolean
  *               default: false
+ *             checkExternalProvider:
+ *               description: Policy to also check other providers when set to `true`.
+ *               type: boolean
+ *               default: false
  *     RetryCredentialRequest:
  *       type: object
  *       properties:
