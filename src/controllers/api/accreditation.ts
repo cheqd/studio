@@ -919,11 +919,10 @@ export class AccreditationController {
 			);
 
 			// Build resource URLs for resolution
-			// const resourceUrls = resources.map(
-			// 	(item) =>
-			// 		`${item.did}?resourceName=${encodeURIComponent(item.resourceName)}&resourceType=${item.resourceType}`
-			// );
-			const resourceUrls = resources.map((item) => `${item.did}/resources/${item.resourceId}`);
+			const resourceUrls = resources.map(
+				(item) =>
+					`${item.did}?resourceName=${encodeURIComponent(item.resourceName)}&resourceType=${item.resourceType}`
+			);
 
 			// remove duplicates of resourceUrls
 			const uniqueResourceUrls = Array.from(new Set(resourceUrls));
