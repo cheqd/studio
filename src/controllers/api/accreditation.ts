@@ -993,35 +993,23 @@ export class AccreditationController {
 			};
 
 			// 3. Resolve resources and enhance with tracking metadata with bounded concurrency
-			const resolvedAccreditations: Array<
-				Awaited<ReturnType<typeof resolveAccreditationWithCache>> | null | undefined
-			> = new Array(uniqueResourceUrls.length);
-
-			// Pre-fill cache hits synchronously to avoid putting them on the worker queue
-			const cacheMisses: Array<{ url: string; index: number }> = [];
-			uniqueResourceUrls.forEach((url, index) => {
-				const cached = getCachedAccreditation(url);
-				if (cached) {
-					resolvedAccreditations[index] = cached as Awaited<ReturnType<typeof resolveAccreditationWithCache>>;
-				} else {
-					cacheMisses.push({ url, index });
-				}
-			});
-
+			const resolvedAccreditations: Array<ReturnType<typeof resolveAccreditationWithCache>> = new Array(
+				uniqueResourceUrls.length
+			);
 			let currentIndex = 0;
+
 			const workers = Array.from(
-				{ length: Math.min(ACCREDITATION_RESOLVE_CONCURRENCY, cacheMisses.length) },
+				{ length: Math.min(ACCREDITATION_RESOLVE_CONCURRENCY, uniqueResourceUrls.length) },
 				async () => {
 					// eslint-disable-next-line no-constant-condition
 					while (true) {
 						const index = currentIndex++;
-						if (index >= cacheMisses.length) {
+						if (index >= uniqueResourceUrls.length) {
 							break;
 						}
-						const { url, index: targetIndex } = cacheMisses[index];
-						const accreditation = await resolveAccreditationWithCache(url);
+						const accreditation = await resolveAccreditationWithCache(uniqueResourceUrls[index]);
 						if (accreditation) {
-							resolvedAccreditations[targetIndex] = accreditation;
+							resolvedAccreditations[index] = accreditation;
 						}
 					}
 				}
