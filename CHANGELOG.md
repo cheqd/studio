@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.0-develop.4](https://github.com/cheqd/studio/compare/3.16.0-develop.3...3.16.0-develop.4) (2025-12-16)
+
+### Bug Fixes
+
+* Use providerCredentialId for trackingMap ([#770](https://github.com/cheqd/studio/issues/770)) ([0300aca](https://github.com/cheqd/studio/commit/0300acafdf7493c9312b16fcb009b97fcf1515c0))
+
 ## [3.16.0-develop.3](https://github.com/cheqd/studio/compare/3.16.0-develop.2...3.16.0-develop.3) (2025-12-16)
 
 ### Performance Improvements
