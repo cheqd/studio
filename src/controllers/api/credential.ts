@@ -722,8 +722,8 @@ export class CredentialController {
 
 		try {
 			const result = await Credentials.instance.list(response.locals.customer, {
-				page: page ? Number(page) : undefined,
-				limit: limit ? Number(limit) : undefined,
+				page: page ? Number(page) : 1,
+				limit: limit ? Number(limit) : 10,
 				providerId: providerId as string | undefined,
 				issuerId: issuerId as string | undefined,
 				subjectId: subjectId as string | undefined,
