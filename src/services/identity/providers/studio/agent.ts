@@ -294,8 +294,11 @@ export class Veramo {
 		} else {
 			header = { 'Content-Type': '*/*' };
 		}
+
+		// TODO replace with CheqdDidResolver.resolve() after new release
 		return fetch(`${process.env.RESOLVER_URL || DefaultResolverUrl}/${didUrl}`, {
 			headers: header,
+			keepalive: true,
 		});
 	}
 
