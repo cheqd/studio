@@ -134,29 +134,25 @@ export class ResourceService {
 		}
 
 		const ranked = this.resourceRepository
-			.createQueryBuilder('ranked')
+			.createQueryBuilder()
 			.select([
 				'ranked."resourceId" AS "resourceId"',
 				'ranked."sortTimestamp" AS "sortTimestamp"',
 				'ranked."createdAt" AS "createdAt"',
 			])
-			.from(() => baseQuery, 'ranked')
-			.where('ranked.rn = 1')
+			.from('(' + baseQuery.getQuery() + ')', 'ranked')
+			.setParameters(baseQuery.getParameters())
+			.where('rn = 1')
 			.orderBy('ranked."sortTimestamp"', 'DESC')
 			.addOrderBy('ranked."createdAt"', 'DESC');
 
 		const totalResult = await this.resourceRepository
-			.createQueryBuilder('ranked')
+			.createQueryBuilder()
 			.select('COUNT(1)', 'count')
-			.from(() => baseQuery, 'ranked')
-			.where('ranked.rn = 1')
+			.from('(' + baseQuery.getQuery() + ')', 'ranked')
+			.setParameters(baseQuery.getParameters())
+			.where('rn = 1')
 			.getRawOne<{ count: string }>();
-
-		const pageNumber = Number(page);
-		const limitNumber = Number(limit);
-		if (Number.isFinite(pageNumber) && Number.isFinite(limitNumber) && pageNumber > 0 && limitNumber > 0) {
-			ranked.offset((pageNumber - 1) * limitNumber).limit(limitNumber);
-		}
 
 		const latestRows = await ranked.getRawMany<{ resourceId: string }>();
 		const resourceIds = latestRows.map((row) => row.resourceId);
@@ -166,6 +162,9 @@ export class ResourceService {
 
 		const resources = await this.resourceRepository.find({
 			where: { resourceId: In(resourceIds) },
+			order: { updatedAt: 'DESC', createdAt: 'DESC' },
+			skip: page && limit ? (page - 1) * limit : 0,
+			take: limit,
 			relations,
 		});
 
