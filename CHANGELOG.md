@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.0-develop.3](https://github.com/cheqd/studio/compare/3.16.0-develop.2...3.16.0-develop.3) (2025-12-16)
+
+### Performance Improvements
+
+* Optimize accreditation issue and verify api ([#769](https://github.com/cheqd/studio/issues/769)) ([a485831](https://github.com/cheqd/studio/commit/a4858316e5eea2968699901ce6c2d812280c85dd))
+
 ## [3.16.0-develop.2](https://github.com/cheqd/studio/compare/3.16.0-develop.1...3.16.0-develop.2) (2025-12-12)
 
 ### Bug Fixes
