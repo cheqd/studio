@@ -134,24 +134,22 @@ export class ResourceService {
 		}
 
 		const ranked = this.resourceRepository
-			.createQueryBuilder()
+			.createQueryBuilder('ranked')
 			.select([
 				'ranked."resourceId" AS "resourceId"',
 				'ranked."sortTimestamp" AS "sortTimestamp"',
 				'ranked."createdAt" AS "createdAt"',
 			])
-			.from('(' + baseQuery.getQuery() + ')', 'ranked')
-			.setParameters(baseQuery.getParameters())
-			.where('rn = 1')
+			.from(() => baseQuery, 'ranked')
+			.where('ranked.rn = 1')
 			.orderBy('ranked."sortTimestamp"', 'DESC')
 			.addOrderBy('ranked."createdAt"', 'DESC');
 
 		const totalResult = await this.resourceRepository
-			.createQueryBuilder()
+			.createQueryBuilder('ranked')
 			.select('COUNT(1)', 'count')
-			.from('(' + baseQuery.getQuery() + ')', 'ranked')
-			.setParameters(baseQuery.getParameters())
-			.where('rn = 1')
+			.from(() => baseQuery, 'ranked')
+			.where('ranked.rn = 1')
 			.getRawOne<{ count: string }>();
 
 		const pageNumber = Number(page);
