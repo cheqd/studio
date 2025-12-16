@@ -135,7 +135,7 @@ export class ResourceService {
 
 		const ranked = this.resourceRepository
 			.createQueryBuilder()
-			.select(['resourceId', '"sortTimestamp"', '"createdAt"'])
+			.select(['"resourceId"', '"sortTimestamp"', '"createdAt"'])
 			.from('(' + baseQuery.getQuery() + ')', 'ranked')
 			.setParameters(baseQuery.getParameters())
 			.where('rn = 1')
