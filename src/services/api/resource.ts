@@ -116,21 +116,21 @@ export class ResourceService {
 		const baseQuery = this.resourceRepository
 			.createQueryBuilder('r')
 			.select([
-				'r.resourceId AS "resourceId"',
-				'ROW_NUMBER() OVER (PARTITION BY r.identifierDid, r.resourceName, r.resourceType ORDER BY COALESCE(r.updatedAt, r.createdAt) DESC, r.createdAt DESC, r.resourceId DESC) AS rn',
-				'COALESCE(r.updatedAt, r.createdAt) AS "sortTimestamp"',
-				'r.createdAt AS "createdAt"',
+				'r."resourceId" AS "resourceId"',
+				'ROW_NUMBER() OVER (PARTITION BY r."identifierDid", r."resourceName", r."resourceType" ORDER BY COALESCE(r."updatedAt", r."createdAt") DESC, r."createdAt" DESC, r."resourceId" DESC) AS rn',
+				'COALESCE(r."updatedAt", r."createdAt") AS "sortTimestamp"',
+				'r."createdAt" AS "createdAt"',
 			])
-			.where('r.customerId = :customerId', { customerId: customer.customerId })
-			.andWhere('r.resourceType = :resourceType', { resourceType })
-			.andWhere('r.nextVersionId IS NULL');
+			.where('r."customerId" = :customerId', { customerId: customer.customerId })
+			.andWhere('r."resourceType" = :resourceType', { resourceType })
+			.andWhere('r."nextVersionId" IS NULL');
 
 		if (did) {
-			baseQuery.andWhere('r.identifierDid = :did', { did });
+			baseQuery.andWhere('r."identifierDid" = :did', { did });
 		}
 
 		if (network) {
-			baseQuery.andWhere('r.identifierDid LIKE :networkPattern', { networkPattern: `%did:cheqd:${network}:%` });
+			baseQuery.andWhere('r."identifierDid" LIKE :networkPattern', { networkPattern: `%did:cheqd:${network}:%` });
 		}
 
 		const ranked = this.resourceRepository
