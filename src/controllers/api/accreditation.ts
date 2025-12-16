@@ -930,15 +930,7 @@ export class AccreditationController {
 			);
 
 			// Build resource URLs for resolution
-			/*
-			const resourceUrls = resources.map(
-				(item) =>
-					`${item.did}?resourceName=${encodeURIComponent(item.resourceName)}&resourceType=${item.resourceType}`
-			); */
 			const resourceUrls = resources.map((item) => `${item.did}/resources/${item.resourceId}`);
-
-			// remove duplicates of resourceUrls
-			/* const uniqueResourceUrls = Array.from(new Set(resourceUrls)); */
 
 			// No resources to resolve, return early
 			if (resourceUrls.length === 0) {
@@ -952,6 +944,7 @@ export class AccreditationController {
 			const { credentials: trackingRecords } = await Credentials.instance.list(response.locals.customer, {
 				category: CredentialCategory.ACCREDITATION,
 				providerCredentialId: resources.map((item) => item.resourceId),
+				credentialType: resourceType,
 			});
 
 			// 2. OPTIMIZATION: Create a Map for O(1) tracking record lookup by providerCredentialId
