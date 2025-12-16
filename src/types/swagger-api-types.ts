@@ -554,6 +554,34 @@
  *           id: did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1
  *           publicKeyBase58: BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt
  *           type: Ed25519VerificationKey2018
+ *     AccreditationVerifyResponse:
+ *       type: object
+ *       properties:
+ *         verified:
+ *           type: boolean
+ *         issuer:
+ *           type: string
+ *         signer:
+ *           type: object
+ *         jwt:
+ *           type: string
+ *         verifiableCredential:
+ *           type: object
+ *         accreditorDids:
+ *           type: array
+ *           items:
+ *              type: string
+ *         rootAuthorization:
+ *           type: object
+ *         termsOfUse:
+ *          type: object
+ *          properties:
+ *           type:
+ *             type: string
+ *           trustFrameworkId:
+ *              type: string
+ *           trustFramework:
+ *             type: string
  *     AccreditationIssueRequest:
  *       description: Input fields for the creating a Verifiable Accreditation.
  *       type: object

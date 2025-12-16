@@ -403,7 +403,7 @@ export class AccreditationController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/Credential'
+	 *               $ref: '#/components/schemas/AccreditationVerifyResponse'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
