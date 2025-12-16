@@ -938,10 +938,10 @@ export class AccreditationController {
 			const resourceUrls = resources.map((item) => `${item.did}/resources/${item.resourceId}`);
 
 			// remove duplicates of resourceUrls
-			const uniqueResourceUrls = Array.from(new Set(resourceUrls));
+			/* const uniqueResourceUrls = Array.from(new Set(resourceUrls)); */
 
 			// No resources to resolve, return early
-			if (uniqueResourceUrls.length === 0) {
+			if (resourceUrls.length === 0) {
 				return response.status(StatusCodes.OK).json({
 					total: 0,
 					accreditations: [],
@@ -951,12 +951,13 @@ export class AccreditationController {
 			// 1. Fetch all tracking records from the issued credentials table
 			const { credentials: trackingRecords } = await Credentials.instance.list(response.locals.customer, {
 				category: CredentialCategory.ACCREDITATION,
+				providerCredentialId: resources.map((item) => item.resourceId),
 			});
 
-			// 2. OPTIMIZATION: Create a Map for O(1) tracking record lookup by issuedCredentialId
+			// 2. OPTIMIZATION: Create a Map for O(1) tracking record lookup by providerCredentialId
 			const trackingMap = new Map();
 			for (const record of trackingRecords) {
-				trackingMap.set(record.issuedCredentialId, record);
+				trackingMap.set(record.providerCredentialId, record);
 			}
 
 			const resolveAccreditationWithCache = async (url: string) => {
@@ -1007,20 +1008,20 @@ export class AccreditationController {
 
 			// 3. Resolve resources and enhance with tracking metadata with bounded concurrency
 			const resolvedAccreditations: Array<ReturnType<typeof resolveAccreditationWithCache>> = new Array(
-				uniqueResourceUrls.length
+				resourceUrls.length
 			);
 			let currentIndex = 0;
 
 			const workers = Array.from(
-				{ length: Math.min(ACCREDITATION_RESOLVE_CONCURRENCY, uniqueResourceUrls.length) },
+				{ length: Math.min(ACCREDITATION_RESOLVE_CONCURRENCY, resourceUrls.length) },
 				async () => {
 					// eslint-disable-next-line no-constant-condition
 					while (true) {
 						const index = currentIndex++;
-						if (index >= uniqueResourceUrls.length) {
+						if (index >= resourceUrls.length) {
 							break;
 						}
-						const accreditation = await resolveAccreditationWithCache(uniqueResourceUrls[index]);
+						const accreditation = await resolveAccreditationWithCache(resourceUrls[index]);
 						if (accreditation) {
 							resolvedAccreditations[index] = accreditation;
 						}
