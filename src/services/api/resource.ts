@@ -117,6 +117,7 @@ export class ResourceService {
 			.createQueryBuilder('r')
 			.select([
 				'r."resourceId" AS "resourceId"',
+				'ROW_NUMBER() OVER (PARTITION BY r."identifierDid", r."resourceName", r."resourceType" ORDER BY COALESCE(r."updatedAt", r."createdAt") DESC, r."createdAt" DESC, r."resourceId" DESC) AS rn',
 				'COALESCE(r."updatedAt", r."createdAt") AS "sortTimestamp"',
 				'r."createdAt" AS "createdAt"',
 			])
@@ -134,17 +135,23 @@ export class ResourceService {
 
 		const ranked = this.resourceRepository
 			.createQueryBuilder()
-			.select(['base."resourceId" AS "resourceId"', 'base."sortTimestamp" AS "sortTimestamp"', 'base."createdAt" AS "createdAt"'])
-			.from('(' + baseQuery.getQuery() + ')', 'base')
+			.select([
+				'ranked."resourceId" AS "resourceId"',
+				'ranked."sortTimestamp" AS "sortTimestamp"',
+				'ranked."createdAt" AS "createdAt"',
+			])
+			.from('(' + baseQuery.getQuery() + ')', 'ranked')
 			.setParameters(baseQuery.getParameters())
-			.orderBy('base."sortTimestamp"', 'DESC')
-			.addOrderBy('base."createdAt"', 'DESC');
+			.where('rn = 1')
+			.orderBy('ranked."sortTimestamp"', 'DESC')
+			.addOrderBy('ranked."createdAt"', 'DESC');
 
 		const totalResult = await this.resourceRepository
 			.createQueryBuilder()
 			.select('COUNT(1)', 'count')
-			.from('(' + baseQuery.getQuery() + ')', 'base')
+			.from('(' + baseQuery.getQuery() + ')', 'ranked')
 			.setParameters(baseQuery.getParameters())
+			.where('rn = 1')
 			.getRawOne<{ count: string }>();
 
 		if (page && limit) {
