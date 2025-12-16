@@ -154,8 +154,10 @@ export class ResourceService {
 			.where('rn = 1')
 			.getRawOne<{ count: string }>();
 
-		if (page && limit) {
-			ranked.skip((page - 1) * limit).take(limit);
+		const pageNumber = Number(page);
+		const limitNumber = Number(limit);
+		if (Number.isFinite(pageNumber) && Number.isFinite(limitNumber) && pageNumber > 0 && limitNumber > 0) {
+			ranked.offset((pageNumber - 1) * limitNumber).limit(limitNumber);
 		}
 
 		const latestRows = await ranked.getRawMany<{ resourceId: string }>();
