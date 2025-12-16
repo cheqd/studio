@@ -20,7 +20,9 @@ export class AccreditationService {
 		customer: CustomerEntity,
 		rootAuthorization?: string,
 		policies?: VerificationPolicies
-	): Promise<SafeAPIResponse<{ verified: boolean; accreditorDids: string[]; rootAuthorization: string }>> {
+	): Promise<
+		SafeAPIResponse<IVerifyResult & { accreditorDids: string[]; rootAuthorization: string; termsOfUse?: any }>
+	> {
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 
@@ -178,6 +180,7 @@ export class AccreditationService {
 							...initialVerifyResult,
 							accreditorDids,
 							rootAuthorization: accreditation.credentialSubject.id,
+							termsOfUse: accreditation.termsOfUse,
 						},
 						error: `Error on verifying accreditation ${accreditationUrl}: Expected accreditation to be linked to root accreditation ${rootAuthorization}, but found it linked to DID ${accreditation.credentialSubject.id} instead`,
 					};
@@ -198,6 +201,7 @@ export class AccreditationService {
 						...initialVerifyResult,
 						accreditorDids,
 						rootAuthorization: accreditation.credentialSubject.id,
+						termsOfUse: accreditation.termsOfUse,
 					},
 				};
 			}

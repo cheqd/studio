@@ -1,4 +1,4 @@
-import { VerifiableCredential } from '@veramo/core';
+import { IVerifyResult, VerifiableCredential } from '@veramo/core';
 import type { CredentialRequest, PublishRequest, VerifyCredentialRequestBody } from './credential';
 import {
 	BitstringUpdateResult,
@@ -69,6 +69,12 @@ export interface DIDUrlParams {
 export interface VerifyAccreditationRequestBody extends Pick<VerifyCredentialRequestBody, 'policies'>, DIDUrlParams {
 	subjectDid: string;
 	schemas?: SchemaUrlType[];
+}
+
+export interface VerifyAccreditationResponse extends IVerifyResult {
+	accreditorDids: string[];
+	rootAuthorizationDid: string;
+	termsOfUse?: any;
 }
 
 type DidUrl = Pick<VerifyAccreditationRequestBody, 'policies' | 'subjectDid' | 'schemas'> & {
