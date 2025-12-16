@@ -6,6 +6,7 @@ import { IdentityServiceStrategySetup } from '../identity/index.js';
 import type { IVerifyResult, VerificationPolicies } from '@veramo/core';
 import { CheqdW3CVerifiableCredential } from '../w3c-credential.js';
 import { StatusCodes } from 'http-status-codes';
+import { parseDidFromDidUrl } from '../../helpers/helpers.js';
 
 export class AccreditationService {
 	public static instance = new AccreditationService();
@@ -19,13 +20,18 @@ export class AccreditationService {
 		customer: CustomerEntity,
 		rootAuthorization?: string,
 		policies?: VerificationPolicies
-	): Promise<SafeAPIResponse<{ verified: boolean }>> {
+	): Promise<
+		SafeAPIResponse<IVerifyResult & { accreditorDids: string[]; rootAuthorization: string; termsOfUse?: any }>
+	> {
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
 
 		let accreditationUrl = didUrl;
 		let accreditedSubject = subjectDid;
 		let initialVerifyResult: IVerifyResult | undefined = undefined;
+		let accreditorDids: string[] = [];
+
+		let deactivatedDidsCheckPromises: Promise<boolean>[] = [];
 
 		while (true) {
 			const res = await identityServiceStrategySetup.agent.resolve(accreditationUrl);
@@ -43,17 +49,16 @@ export class AccreditationService {
 
 			// Create credential object
 			const accreditation: VerfifiableAccreditation = result;
+			const accreditorDid =
+				typeof accreditation.issuer === 'string' ? accreditation.issuer : accreditation.issuer.id;
 
-			if (
-				!allowDeactivatedDid &&
-				(await isCredentialIssuerDidDeactivated(accreditation as unknown as CheqdW3CVerifiableCredential))
-			) {
-				return {
-					success: false,
-					status: StatusCodes.BAD_REQUEST,
-					data: initialVerifyResult,
-					error: `Error on verifying accreditation ${accreditationUrl}: Issuer DID is deactivated`,
-				};
+			accreditorDids.push(accreditorDid);
+
+			// Check if issuer DID is deactivated
+			if (!allowDeactivatedDid) {
+				deactivatedDidsCheckPromises.push(
+					isCredentialIssuerDidDeactivated(accreditation as unknown as CheqdW3CVerifiableCredential)
+				);
 			}
 
 			// Check if the accreditation is provided for the subjectDid
@@ -145,8 +150,9 @@ export class AccreditationService {
 					};
 				}
 
-				const accreditorDid =
-					typeof accreditation.issuer === 'string' ? accreditation.issuer : accreditation.issuer.id;
+				if (isTypeAccreditation === DIDAccreditationTypes.VerifiableAccreditationToAccredit) {
+					accreditorDids.push(accreditorDid);
+				}
 
 				accreditationUrl = termsOfUse.parentAccreditation;
 				accreditedSubject = accreditorDid;
@@ -163,10 +169,40 @@ export class AccreditationService {
 
 				rootAuthorization = termsOfUse.rootAuthorization;
 			} else {
+				const results = await Promise.all(deactivatedDidsCheckPromises);
+				const deactivatedDids = results.filter((r) => r);
+
+				if (rootAuthorization && parseDidFromDidUrl(rootAuthorization) !== accreditation.credentialSubject.id) {
+					return {
+						status: StatusCodes.OK,
+						success: false,
+						data: {
+							...initialVerifyResult,
+							accreditorDids,
+							rootAuthorization: accreditation.credentialSubject.id,
+							termsOfUse: accreditation.termsOfUse,
+						},
+						error: `Error on verifying accreditation ${accreditationUrl}: Expected accreditation to be linked to root accreditation ${rootAuthorization}, but found it linked to DID ${accreditation.credentialSubject.id} instead`,
+					};
+				}
+				if (deactivatedDids.length > 0) {
+					return {
+						status: StatusCodes.OK,
+						success: false,
+						data: initialVerifyResult,
+						error: `Error on verifying accreditation ${accreditationUrl}: DIDs ${deactivatedDids.join(', ')} are deactivated in the trust chain`,
+					};
+				}
+
 				return {
 					status: StatusCodes.OK,
 					success: true,
-					data: initialVerifyResult,
+					data: {
+						...initialVerifyResult,
+						accreditorDids,
+						rootAuthorization: accreditation.credentialSubject.id,
+						termsOfUse: accreditation.termsOfUse,
+					},
 				};
 			}
 		}

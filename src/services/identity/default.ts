@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { DIDResolutionResult } from 'did-resolver';
+import type { DIDResolutionOptions, DIDResolutionResult } from 'did-resolver';
 import { AbstractIdentityService } from './abstract.js';
 import type { IVerifyResult, VerifiableCredential, VerifiablePresentation } from '@veramo/core';
 import type { VerificationOptions } from '../../types/shared.js';
@@ -11,8 +11,8 @@ import { Veramo } from './providers/studio/agent.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 
 export class DefaultIdentityService extends AbstractIdentityService {
-	async resolveDid(did: string): Promise<DIDResolutionResult> {
-		return Veramo.instance.resolveDid(this.initAgent(), did);
+	async resolveDid(did: string, options?: DIDResolutionOptions): Promise<DIDResolutionResult> {
+		return Veramo.instance.resolveDid(this.initAgent(), did, options);
 	}
 
 	async resolve(didUrl: string, dereferencing?: boolean): Promise<Response> {

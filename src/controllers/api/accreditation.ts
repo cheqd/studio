@@ -255,10 +255,14 @@ export class AccreditationController {
 		} = request.body as DIDAccreditationRequestBody;
 
 		try {
+			// Validate issuer and subject DIDs in parallel only for authorize
+			// For attest, accredit they are validated in verify_accreditation
+			const [body, subjectDidRes] = await Promise.all([
+				identityServiceStrategySetup.agent.resolveDid(issuerDid),
+				identityServiceStrategySetup.agent.resolveDid(subjectDid),
+			]);
+
 			// Validate issuer DID
-			const resolvedResult = await identityServiceStrategySetup.agent.resolve(issuerDid);
-			// check if DID-Document is resolved
-			const body = await resolvedResult.json();
 			if (!body?.didDocument) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
 					error: `DID ${issuerDid} is not resolved because of error from resolver: ${body.didResolutionMetadata.error}.`,
@@ -271,8 +275,6 @@ export class AccreditationController {
 			}
 
 			// Validate subject DID
-			const res = await identityServiceStrategySetup.agent.resolve(subjectDid);
-			const subjectDidRes = await res.json();
 			if (!subjectDidRes?.didDocument) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
 					error: `DID ${subjectDid} is not resolved because of error from resolver: ${body.didResolutionMetadata.error}.`,
@@ -429,7 +431,7 @@ export class AccreditationController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/Credential'
+	 *               $ref: '#/components/schemas/AccreditationVerifyResponse'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:

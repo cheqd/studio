@@ -3,6 +3,7 @@
 import type {
 	CredentialPayload,
 	DIDDocument,
+	DIDResolutionOptions,
 	DIDResolutionResult,
 	IIdentifier,
 	IKey,
@@ -262,7 +263,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	getDid(did: string, customer: CustomerEntity): Promise<any> {
 		throw new Error(`Not supported`);
 	}
-	resolveDid(did: string): Promise<DIDResolutionResult> {
+	resolveDid(did: string, options?: DIDResolutionOptions): Promise<DIDResolutionResult> {
 		throw new Error(`Not supported`);
 	}
 	resolve(didUrl: string, dereferencing?: boolean): Promise<Response> {
