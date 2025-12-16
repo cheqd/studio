@@ -230,8 +230,8 @@ export class AccreditationController {
 			// Validate issuer and subject DIDs in parallel only for authorize
 			// For attest, accredit they are validated in verify_accreditation
 			const [body, subjectDidRes] = await Promise.all([
-				identityServiceStrategySetup.agent.resolveDid(issuerDid, { resourceMetadata: false }),
-				identityServiceStrategySetup.agent.resolveDid(subjectDid, { resourceMetadata: false }),
+				identityServiceStrategySetup.agent.resolveDid(issuerDid),
+				identityServiceStrategySetup.agent.resolveDid(subjectDid),
 			]);
 
 			// Validate issuer DID
