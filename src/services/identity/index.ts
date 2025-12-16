@@ -6,6 +6,7 @@ import { Unauthorized } from './providers/studio/unauthorized.js';
 import type {
 	CredentialPayload,
 	DIDDocument,
+	DIDResolutionOptions,
 	DIDResolutionResult,
 	IIdentifier,
 	IKey,
@@ -87,7 +88,7 @@ export interface IIdentityService {
 	updateDid(didDocument: DIDDocument, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<IIdentifier>;
 	deactivateDid(did: string, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<boolean>;
 	listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<ListDidsResponseBody>;
-	resolveDid(did: string): Promise<DIDResolutionResult>;
+	resolveDid(did: string, options?: DIDResolutionOptions): Promise<DIDResolutionResult>;
 	exportDid(did: string, password: string, customer: CustomerEntity): Promise<ExportDidResponse>;
 	resolve(didUrl: string, dereferencing?: boolean): Promise<Response>;
 	getDid(did: string, customer: CustomerEntity): Promise<any>;
