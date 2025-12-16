@@ -106,7 +106,7 @@ export interface IIdentityService {
 		publicKeyHexs?: string[]
 	): Promise<any>;
 	listResources(options: ListResourceOptions, customer: CustomerEntity): Promise<ListResourceResponse>;
-	findLatestResourceVersionsByType?(
+	findLatestResourcesVersionsByType?(
 		resourceType: string,
 		customer: CustomerEntity,
 		network?: string,

@@ -920,7 +920,7 @@ export class AccreditationController {
 				response.locals.customer
 			); */
 
-			const { resources } = await identityServiceStrategySetup.agent.findLatestResourceVersionsByType!(
+			const { resources } = await identityServiceStrategySetup.agent.findLatestResourcesVersionsByType!(
 				resourceType,
 				response.locals.customer,
 				network,
