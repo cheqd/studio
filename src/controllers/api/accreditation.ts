@@ -888,7 +888,7 @@ export class AccreditationController {
 		try {
 			// Fetch resources of accreditation resourceType associated with the account
 			const { resources } = await identityServiceStrategySetup.agent.listResources(
-				{ network, resourceType, did, page, limit },
+				{ network, resourceType, did },
 				response.locals.customer
 			);
 
@@ -899,17 +899,21 @@ export class AccreditationController {
 			);
 
 			// remove duplicates of resourceUrls
-			const uniqueResourceUrls = Array.from(new Set(resourceUrls));
+			const uniqueResourceUrls = [...new Set(resourceUrls)].slice(
+				limit ? (page - 1) * limit : 0,
+				limit ? page * limit : undefined
+			);
 
 			// 1. Fetch all tracking records from the issued credentials table
 			const { credentials: trackingRecords } = await Credentials.instance.list(response.locals.customer, {
 				category: CredentialCategory.ACCREDITATION,
+				credentialType: resourceType,
 			});
 
-			// 2. OPTIMIZATION: Create a Map for O(1) tracking record lookup by issuedCredentialId
+			// 2. OPTIMIZATION: Create a Map for O(1) tracking record lookup by providerCredentialId
 			const trackingMap = new Map();
 			for (const record of trackingRecords) {
-				trackingMap.set(record.issuedCredentialId, record);
+				trackingMap.set(record.providerCredentialId, record);
 			}
 
 			// 3. Resolve resources and enhance with tracking metadata in parallel

@@ -432,8 +432,8 @@ export class Credentials {
 		options: ListCredentialRequestOptions = {}
 	): Promise<{ credentials: IssuedCredentialResponse[]; total: number }> {
 		const {
-			page = 1,
-			limit = 10,
+			page,
+			limit,
 			providerId,
 			issuerId,
 			subjectId,
@@ -482,8 +482,8 @@ export class Credentials {
 
 		const [entities, total] = await queryBuilder
 			.orderBy('ic.createdAt', 'DESC')
-			.skip((page - 1) * limit)
-			.take(limit)
+			.skip(page && limit ? (page - 1) * limit : 0)
+			.take(limit || undefined)
 			.getManyAndCount();
 
 		const credentials = entities.map((entity) => this.toResponse(entity, { includeCredential: false }));
