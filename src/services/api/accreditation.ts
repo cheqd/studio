@@ -28,6 +28,8 @@ export class AccreditationService {
 		let initialVerifyResult: IVerifyResult | undefined = undefined;
 		let accreditorDids: string[] = [];
 
+		let deactivatedDidsCheckPromises: Promise<boolean>[] = [];
+
 		while (true) {
 			const res = await identityServiceStrategySetup.agent.resolve(accreditationUrl);
 
@@ -47,16 +49,13 @@ export class AccreditationService {
 			const accreditorDid =
 				typeof accreditation.issuer === 'string' ? accreditation.issuer : accreditation.issuer.id;
 
-			if (
-				!allowDeactivatedDid &&
-				(await isCredentialIssuerDidDeactivated(accreditation as unknown as CheqdW3CVerifiableCredential))
-			) {
-				return {
-					success: false,
-					status: StatusCodes.BAD_REQUEST,
-					data: initialVerifyResult,
-					error: `Error on verifying accreditation ${accreditationUrl}: Issuer DID is deactivated`,
-				};
+			accreditorDids.push(accreditorDid);
+
+			// Check if issuer DID is deactivated
+			if (!allowDeactivatedDid) {
+				deactivatedDidsCheckPromises.push(
+					isCredentialIssuerDidDeactivated(accreditation as unknown as CheqdW3CVerifiableCredential)
+				);
 			}
 
 			// Check if the accreditation is provided for the subjectDid
@@ -167,6 +166,17 @@ export class AccreditationService {
 
 				rootAuthorization = termsOfUse.rootAuthorization;
 			} else {
+				const results = await Promise.all(deactivatedDidsCheckPromises);
+				const deactivatedDids = results.filter((r) => r);
+				if (deactivatedDids.length > 0) {
+					return {
+						status: StatusCodes.OK,
+						success: false,
+						data: initialVerifyResult,
+						error: `Error on verifying accreditation ${accreditationUrl}: DIDs ${deactivatedDids.join(', ')} are deactivated in the trust chain`,
+					};
+				}
+
 				return {
 					status: StatusCodes.OK,
 					success: true,

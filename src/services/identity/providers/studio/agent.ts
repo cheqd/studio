@@ -58,7 +58,7 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import { ResourceModule, type CheqdNetwork } from '@cheqd/sdk';
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key';
-import { DIDResolutionResult, Resolver, ResolverRegistry } from 'did-resolver';
+import { DIDResolutionOptions, DIDResolutionResult, Resolver, ResolverRegistry } from 'did-resolver';
 import { DefaultDidUrlPattern, CreateAgentRequest, VeramoAgent } from '../../../../types/shared.js';
 import type { VerificationOptions } from '../../../../types/shared.js';
 import type {
@@ -278,8 +278,11 @@ export class Veramo {
 		return (await agent.didManagerFind()).map((res) => res.did);
 	}
 
-	async resolveDid(agent: TAgent<IResolver>, did: string) {
-		return await agent.resolveDid({ didUrl: did });
+	async resolveDid(agent: TAgent<IResolver>, did: string, options?: DIDResolutionOptions) {
+		if (options?.resourceMetadata != undefined) {
+			did = `${did}?resourceMetadata=${options.resourceMetadata}`;
+		}
+		return await agent.resolveDid({ didUrl: did, options });
 	}
 
 	async resolve(didUrl: string, dereferencing: boolean = false): Promise<Response> {
@@ -429,7 +432,8 @@ export class Veramo {
 				}
 			}
 		}
-		if (!result) { 	// fall back to default verification
+		if (!result) {
+			// fall back to default verification
 			result = await agent.verifyCredential({
 				credential,
 				...verificationOptions,
