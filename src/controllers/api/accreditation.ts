@@ -915,16 +915,27 @@ export class AccreditationController {
 
 		try {
 			// Fetch resources of accreditation resourceType associated with the account
-			const { resources } = await identityServiceStrategySetup.agent.listResources(
+			/* const { resources } = await identityServiceStrategySetup.agent.listResources(
 				{ network, resourceType, did, page, limit },
 				response.locals.customer
+			); */
+
+			const { resources } = await identityServiceStrategySetup.agent.findLatestResourceVersionsByType!(
+				resourceType,
+				response.locals.customer,
+				network,
+				did,
+				page,
+				limit
 			);
 
 			// Build resource URLs for resolution
+			/*
 			const resourceUrls = resources.map(
 				(item) =>
 					`${item.did}?resourceName=${encodeURIComponent(item.resourceName)}&resourceType=${item.resourceType}`
-			);
+			); */
+			const resourceUrls = resources.map((item) => `${item.did}/resources/${item.resourceId}`);
 
 			// remove duplicates of resourceUrls
 			const uniqueResourceUrls = Array.from(new Set(resourceUrls));

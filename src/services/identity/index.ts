@@ -106,6 +106,14 @@ export interface IIdentityService {
 		publicKeyHexs?: string[]
 	): Promise<any>;
 	listResources(options: ListResourceOptions, customer: CustomerEntity): Promise<ListResourceResponse>;
+	findLatestResourceVersionsByType?(
+		resourceType: string,
+		customer: CustomerEntity,
+		network?: string,
+		did?: string,
+		page?: number,
+		limit?: number
+	): Promise<ListResourceResponse>;
 	createCredential(
 		credential: CredentialPayload,
 		format: CredentialRequest['format'],
