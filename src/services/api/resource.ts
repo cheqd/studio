@@ -135,12 +135,12 @@ export class ResourceService {
 
 		const ranked = this.resourceRepository
 			.createQueryBuilder()
-			.select(['"resourceId"', '"sortTimestamp"', '"createdAt"'])
+			.select(['ranked."resourceId" AS "resourceId"', 'ranked."sortTimestamp" AS "sortTimestamp"', 'ranked."createdAt" AS "createdAt"'])
 			.from('(' + baseQuery.getQuery() + ')', 'ranked')
 			.setParameters(baseQuery.getParameters())
 			.where('rn = 1')
-			.orderBy('"sortTimestamp"', 'DESC')
-			.addOrderBy('"createdAt"', 'DESC');
+			.orderBy('ranked."sortTimestamp"', 'DESC')
+			.addOrderBy('ranked."createdAt"', 'DESC');
 
 		const totalResult = await this.resourceRepository
 			.createQueryBuilder()
