@@ -301,7 +301,7 @@ export class WebhookController {
 		product: Stripe.Response<Stripe.Product>
 	) {
 		const roleAssignmentResponse = await logToHelper.assignCustomerPlanRoles(userLogtoId, product);
-		if (roleAssignmentResponse.status !== 201) {
+		if (roleAssignmentResponse.status !== 201 && roleAssignmentResponse.status !== 200) {
 			const message = EventTracker.compileBasicNotification(
 				`Failed to assign roles to user for planType ${product.name}: ${roleAssignmentResponse.error}`,
 				operation
