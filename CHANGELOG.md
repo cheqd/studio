@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.0-develop.8](https://github.com/cheqd/studio/compare/3.16.0-develop.7...3.16.0-develop.8) (2025-12-17)
+
+### Bug Fixes
+
+* stripe webhook condition ([#771](https://github.com/cheqd/studio/issues/771)) ([f47cd4d](https://github.com/cheqd/studio/commit/f47cd4df4f732b07f7629853c296872f858e77e7))
+
 ## [3.16.0-develop.7](https://github.com/cheqd/studio/compare/3.16.0-develop.6...3.16.0-develop.7) (2025-12-17)
 
 ### Features
