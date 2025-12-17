@@ -139,6 +139,7 @@ export class ResourceService {
 				'ranked."resourceId" AS "resourceId"',
 				'ranked."sortTimestamp" AS "sortTimestamp"',
 				'ranked."createdAt" AS "createdAt"',
+				'COUNT(1) OVER () AS "total"',
 			])
 			.from('(' + baseQuery.getQuery() + ')', 'ranked')
 			.setParameters(baseQuery.getParameters())
@@ -146,18 +147,11 @@ export class ResourceService {
 			.orderBy('ranked."sortTimestamp"', 'DESC')
 			.addOrderBy('ranked."createdAt"', 'DESC');
 
-		const totalResult = await this.resourceRepository
-			.createQueryBuilder()
-			.select('COUNT(1)', 'count')
-			.from('(' + baseQuery.getQuery() + ')', 'ranked')
-			.setParameters(baseQuery.getParameters())
-			.where('rn = 1')
-			.getRawOne<{ count: string }>();
-
-		const latestRows = await ranked.getRawMany<{ resourceId: string }>();
+		const latestRows = await ranked.getRawMany<{ resourceId: string; total: string }>();
+		const total = Number(latestRows[0]?.total ?? 0);
 		const resourceIds = latestRows.map((row) => row.resourceId);
 		if (resourceIds.length === 0) {
-			return { resources: [], total: Number(totalResult?.count || 0) };
+			return { resources: [], total };
 		}
 
 		const resources = await this.resourceRepository.find({
@@ -172,7 +166,7 @@ export class ResourceService {
 		const order = new Map(resourceIds.map((id, index) => [id, index]));
 		return {
 			resources: resources.sort((a, b) => (order.get(a.resourceId) ?? 0) - (order.get(b.resourceId) ?? 0)),
-			total: Number(totalResult?.count || 0),
+			total,
 		};
 	}
 

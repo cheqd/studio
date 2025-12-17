@@ -915,11 +915,6 @@ export class AccreditationController {
 
 		try {
 			// Fetch resources of accreditation resourceType associated with the account
-			/* const { resources } = await identityServiceStrategySetup.agent.listResources(
-				{ network, resourceType, did, page, limit },
-				response.locals.customer
-			); */
-
 			const { resources } = await identityServiceStrategySetup.agent.findLatestResourcesVersionsByType!(
 				resourceType,
 				response.locals.customer,
