@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.0-develop.6](https://github.com/cheqd/studio/compare/3.16.0-develop.5...3.16.0-develop.6) (2025-12-17)
+
+### Features
+
+* Add account analytics ([#773](https://github.com/cheqd/studio/issues/773)) ([3eee28c](https://github.com/cheqd/studio/commit/3eee28c79f6588078466eeedb0306e2a946969c7))
+
 ## [3.16.0-develop.5](https://github.com/cheqd/studio/compare/3.16.0-develop.4...3.16.0-develop.5) (2025-12-17)
 
 ### Bug Fixes
