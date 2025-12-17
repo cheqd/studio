@@ -38,6 +38,10 @@ const ACCREDITATION_RESOLVE_CACHE_TTL_MS = 30_000;
 const ACCREDITATION_RESOLVE_CACHE_MAX_ENTRIES = 200;
 const ACCREDITATION_RESOLVE_CONCURRENCY = 8;
 
+function buildCacheKey(url: string, customerId?: string) {
+	return `${customerId ?? 'anonymous'}::${url}`;
+}
+
 const accreditationResolveCache = new NodeCache({
 	stdTTL: ACCREDITATION_RESOLVE_CACHE_TTL_MS / 1000,
 	checkperiod: 0,
@@ -47,12 +51,12 @@ const accreditationResolveCache = new NodeCache({
 });
 const inFlightAccreditations = new Map<string, Promise<unknown>>();
 
-function getCachedAccreditation(url: string) {
-	return accreditationResolveCache.get(url) ?? null;
+function getCachedAccreditation(key: string) {
+	return accreditationResolveCache.get(key) ?? null;
 }
 
-function setCachedAccreditation(url: string, value: unknown) {
-	accreditationResolveCache.set(url, value);
+function setCachedAccreditation(key: string, value: unknown) {
+	accreditationResolveCache.set(key, value);
 }
 
 export class AccreditationController {
@@ -943,11 +947,12 @@ export class AccreditationController {
 			}
 
 			const resolveAccreditationWithCache = async (url: string) => {
-				const cached = getCachedAccreditation(url);
+				const cacheKey = buildCacheKey(url, response.locals.customer?.customerId);
+				const cached = getCachedAccreditation(cacheKey);
 				if (cached) {
 					return cached;
 				}
-				const inFlight = inFlightAccreditations.get(url);
+				const inFlight = inFlightAccreditations.get(cacheKey);
 				if (inFlight) {
 					return inFlight;
 				}
@@ -980,22 +985,22 @@ export class AccreditationController {
 									statusUpdatedAt,
 								},
 							};
-							setCachedAccreditation(url, accreditation);
+							setCachedAccreditation(cacheKey, accreditation);
 							return accreditation;
 						} else {
 							// No tracking record, return just the credential (legacy)
-							setCachedAccreditation(url, credential.contentStream);
+							setCachedAccreditation(cacheKey, credential.contentStream);
 							return credential.contentStream;
 						}
 					} catch (error) {
 						console.error(`Failed to process accreditation for URL: ${url}`, error);
 						return null;
 					} finally {
-						inFlightAccreditations.delete(url);
+						inFlightAccreditations.delete(cacheKey);
 					}
 				})();
 
-				inFlightAccreditations.set(url, resolverPromise);
+				inFlightAccreditations.set(cacheKey, resolverPromise);
 				return resolverPromise;
 			};
 
