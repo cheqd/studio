@@ -39,6 +39,7 @@ import { IdentifierService } from '../../services/api/identifier.js';
 import { Credentials } from '../../services/api/credentials.js';
 import { ResourceService } from '../../services/api/resource.js';
 import { CredentialCategory } from '../../types/credential.js';
+import { Like } from 'typeorm';
 
 dotenv.config();
 
@@ -587,6 +588,15 @@ export class AccountController {
 	 *     tags: [Account]
 	 *     summary: Fetch Account Analytics.
 	 *     description: This endpoint returns analytics data for the account usage.
+	 *     parameters:
+	 *       - in: query
+	 *         name: network
+	 *         description: Filter DID by the network published.
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - mainnet
+	 *             - testnet
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -601,19 +611,34 @@ export class AccountController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
-	public async getAnalytics(_request: Request, response: Response) {
+	public async getAnalytics(request: Request, response: Response) {
+		const { network } = request.query;
 		try {
 			const [dids, credentials, accreditations, resources] = await Promise.all([
-				IdentifierService.instance.count(response.locals.customer, {}),
+				IdentifierService.instance.count(response.locals.customer, {
+					...(network && {
+						provider: `did:cheqd:${network}`,
+					}),
+				}),
 				Credentials.instance.count(response.locals.customer, {
 					category: CredentialCategory.CREDENTIAL,
 					deprecated: false,
+					...(network && {
+						issuerId: Like(`did:cheqd:${network}%`),
+					}),
 				}),
 				Credentials.instance.count(response.locals.customer, {
 					category: CredentialCategory.ACCREDITATION,
 					deprecated: false,
+					...(network && {
+						issuerId: Like(`did:cheqd:${network}%`),
+					}),
 				}),
-				ResourceService.instance.count(response.locals.customer, {}),
+				ResourceService.instance.count(response.locals.customer, {
+					...(network && {
+						identifier: Like(`did:cheqd:${network}%`),
+					}),
+				}),
 			]);
 			return response.status(StatusCodes.OK).json({
 				dids,
