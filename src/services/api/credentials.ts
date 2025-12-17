@@ -916,4 +916,13 @@ export class Credentials {
 		}
 		return verificationResult;
 	}
+
+	public async count(customer: CustomerEntity, where: Record<string, unknown>) {
+		return await this.repository.count({
+			where: {
+				...where,
+				customer: { customerId: customer.customerId },
+			},
+		});
+	}
 }
