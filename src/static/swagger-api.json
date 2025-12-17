@@ -3368,6 +3368,20 @@
         ],
         "summary": "Fetch Account Analytics.",
         "description": "This endpoint returns analytics data for the account usage.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "network",
+            "description": "Filter DID by the network published.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "The request was successful.",
