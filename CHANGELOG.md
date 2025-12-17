@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.0-develop.5](https://github.com/cheqd/studio/compare/3.16.0-develop.4...3.16.0-develop.5) (2025-12-17)
+
+### Bug Fixes
+
+* Optimise accreditation permutations ([#772](https://github.com/cheqd/studio/issues/772)) ([4b70360](https://github.com/cheqd/studio/commit/4b70360a969837d41ecb82e6243f6fedff5cc204))
+
 ## [3.16.0-develop.4](https://github.com/cheqd/studio/compare/3.16.0-develop.3...3.16.0-develop.4) (2025-12-16)
 
 ### Bug Fixes
