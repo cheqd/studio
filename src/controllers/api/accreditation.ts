@@ -29,6 +29,7 @@ import { eventTracker } from '../../services/track/tracker.js';
 import { body, query } from '../validator/index.js';
 import { validate } from '../validator/decorator.js';
 import { constructDidUrl, parseDidFromDidUrl } from '../../helpers/helpers.js';
+import NodeCache from 'node-cache';
 import { CheqdW3CVerifiableCredential } from '../../services/w3c-credential.js';
 import { StatusListType } from '../../types/credential-status.js';
 import { CheqdNetwork } from '@cheqd/sdk';
@@ -37,28 +38,21 @@ const ACCREDITATION_RESOLVE_CACHE_TTL_MS = 30_000;
 const ACCREDITATION_RESOLVE_CACHE_MAX_ENTRIES = 200;
 const ACCREDITATION_RESOLVE_CONCURRENCY = 8;
 
-const accreditationResolveCache = new Map<string, { value: unknown; expiresAt: number }>();
+const accreditationResolveCache = new NodeCache({
+	stdTTL: ACCREDITATION_RESOLVE_CACHE_TTL_MS / 1000,
+	checkperiod: 0,
+	useClones: false,
+	deleteOnExpire: true,
+	maxKeys: ACCREDITATION_RESOLVE_CACHE_MAX_ENTRIES,
+});
+const inFlightAccreditations = new Map<string, Promise<unknown>>();
 
 function getCachedAccreditation(url: string) {
-	const cached = accreditationResolveCache.get(url);
-	if (!cached) {
-		return null;
-	}
-	if (cached.expiresAt <= Date.now()) {
-		accreditationResolveCache.delete(url);
-		return null;
-	}
-	return cached.value;
+	return accreditationResolveCache.get(url) ?? null;
 }
 
 function setCachedAccreditation(url: string, value: unknown) {
-	if (accreditationResolveCache.size >= ACCREDITATION_RESOLVE_CACHE_MAX_ENTRIES) {
-		const firstKey = accreditationResolveCache.keys().next().value;
-		if (firstKey) {
-			accreditationResolveCache.delete(firstKey);
-		}
-	}
-	accreditationResolveCache.set(url, { value, expiresAt: Date.now() + ACCREDITATION_RESOLVE_CACHE_TTL_MS });
+	accreditationResolveCache.set(url, value);
 }
 
 export class AccreditationController {
@@ -953,45 +947,56 @@ export class AccreditationController {
 				if (cached) {
 					return cached;
 				}
-				try {
-					const res = await identityServiceStrategySetup.agent.resolve(url, true);
-					const credential = await res.json();
-
-					// Skip if the credential doesn't have contentStream
-					if (!credential.contentStream) {
-						return null;
-					}
-
-					const resourceId = credential.contentMetadata.resourceId;
-
-					const trackingRecord = trackingMap.get(resourceId);
-
-					if (trackingRecord) {
-						const { issuedCredentialId, providerId, providerCredentialId, status, statusUpdatedAt } =
-							trackingRecord;
-
-						// Merge tracking metadata with credential
-						const accreditation = {
-							...credential.contentStream,
-							metadata: {
-								issuedCredentialId,
-								providerId,
-								providerCredentialId,
-								status,
-								statusUpdatedAt,
-							},
-						};
-						setCachedAccreditation(url, accreditation);
-						return accreditation;
-					} else {
-						// No tracking record, return just the credential (legacy)
-						setCachedAccreditation(url, credential.contentStream);
-						return credential.contentStream;
-					}
-				} catch (error) {
-					console.error(`Failed to process accreditation for URL: ${url}`, error);
-					return null;
+				const inFlight = inFlightAccreditations.get(url);
+				if (inFlight) {
+					return inFlight;
 				}
+				const resolverPromise = (async () => {
+					try {
+						const res = await identityServiceStrategySetup.agent.resolve(url, true);
+						const credential = await res.json();
+
+						// Skip if the credential doesn't have contentStream
+						if (!credential.contentStream) {
+							return null;
+						}
+
+						const resourceId = credential.contentMetadata.resourceId;
+
+						const trackingRecord = trackingMap.get(resourceId);
+
+						if (trackingRecord) {
+							const { issuedCredentialId, providerId, providerCredentialId, status, statusUpdatedAt } =
+								trackingRecord;
+
+							// Merge tracking metadata with credential
+							const accreditation = {
+								...credential.contentStream,
+								metadata: {
+									issuedCredentialId,
+									providerId,
+									providerCredentialId,
+									status,
+									statusUpdatedAt,
+								},
+							};
+							setCachedAccreditation(url, accreditation);
+							return accreditation;
+						} else {
+							// No tracking record, return just the credential (legacy)
+							setCachedAccreditation(url, credential.contentStream);
+							return credential.contentStream;
+						}
+					} catch (error) {
+						console.error(`Failed to process accreditation for URL: ${url}`, error);
+						return null;
+					} finally {
+						inFlightAccreditations.delete(url);
+					}
+				})();
+
+				inFlightAccreditations.set(url, resolverPromise);
+				return resolverPromise;
 			};
 
 			// 3. Resolve resources and enhance with tracking metadata with bounded concurrency
