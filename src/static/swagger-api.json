@@ -3129,6 +3129,23 @@
           }
         }
       },
+      "AccountAnalyticsResponse": {
+        "type": "object",
+        "properties": {
+          "dids": {
+            "type": "integer"
+          },
+          "credentials": {
+            "type": "integer"
+          },
+          "accreditations": {
+            "type": "integer"
+          },
+          "resources": {
+            "type": "integer"
+          }
+        }
+      },
       "SchemaUrl": {
         "type": "object",
         "properties": {
@@ -3328,6 +3345,50 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AccountCreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/account/analytics": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Fetch Account Analytics.",
+        "description": "This endpoint returns analytics data for the account usage.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "network",
+            "description": "Filter DID by the network published.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountAnalyticsResponse"
                 }
               }
             }

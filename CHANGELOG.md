@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.16.0-develop.7](https://github.com/cheqd/studio/compare/3.16.0-develop.6...3.16.0-develop.7) (2025-12-17)
+
+### Features
+
+* Add network query param in analytics ([#774](https://github.com/cheqd/studio/issues/774)) ([ebc1742](https://github.com/cheqd/studio/commit/ebc1742c38f5b59aa2cc4f4f7d48f093683fd827))
+
+## [3.16.0-develop.6](https://github.com/cheqd/studio/compare/3.16.0-develop.5...3.16.0-develop.6) (2025-12-17)
+
+### Features
+
+* Add account analytics ([#773](https://github.com/cheqd/studio/issues/773)) ([3eee28c](https://github.com/cheqd/studio/commit/3eee28c79f6588078466eeedb0306e2a946969c7))
+
+## [3.16.0-develop.5](https://github.com/cheqd/studio/compare/3.16.0-develop.4...3.16.0-develop.5) (2025-12-17)
+
+### Bug Fixes
+
+* Optimise accreditation permutations ([#772](https://github.com/cheqd/studio/issues/772)) ([4b70360](https://github.com/cheqd/studio/commit/4b70360a969837d41ecb82e6243f6fedff5cc204))
+
 ## [3.16.0-develop.4](https://github.com/cheqd/studio/compare/3.16.0-develop.3...3.16.0-develop.4) (2025-12-16)
 
 ### Bug Fixes

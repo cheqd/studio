@@ -522,6 +522,45 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		}
 	}
 
+	async findLatestResourcesVersionsByType(
+		resourceType: string,
+		customer: CustomerEntity,
+		network?: string,
+		did?: string,
+		page?: number,
+		limit?: number
+	) {
+		try {
+			const { resources, total } = await ResourceService.instance.findLatestVersionsByType(
+				resourceType,
+				customer,
+				network,
+				did,
+				page,
+				limit,
+				{
+					identifier: true,
+				}
+			);
+
+			return {
+				total,
+				resources: resources.map((r) => ({
+					resourceId: r.resourceId,
+					resourceName: r.resourceName,
+					resourceType: r.resourceType,
+					mediaType: r.mediaType,
+					previousVersionId: r.previousVersionId,
+					nextVersionId: r.nextVersionId,
+					did: r.identifier.did,
+					encrypted: r.encrypted,
+				})),
+			};
+		} catch (error) {
+			throw new Error(`${error}`);
+		}
+	}
+
 	async createCredential(
 		credential: CredentialPayload,
 		format: CredentialRequest['format'],

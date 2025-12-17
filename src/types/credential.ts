@@ -150,6 +150,7 @@ export type ListCredentialRequestOptions = {
 	page?: number;
 	limit?: number;
 	providerId?: string;
+	providerCredentialId?: string[];
 	issuerId?: string;
 	subjectId?: string;
 	status?: 'issued' | 'suspended' | 'revoked';

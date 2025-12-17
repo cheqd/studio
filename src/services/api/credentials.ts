@@ -435,6 +435,7 @@ export class Credentials {
 			page,
 			limit,
 			providerId,
+			providerCredentialId,
 			issuerId,
 			subjectId,
 			status,
@@ -453,6 +454,11 @@ export class Credentials {
 			.where('ic.customerId = :customerId', { customerId: customer.customerId });
 
 		if (providerId) queryBuilder.andWhere('ic.providerId = :providerId', { providerId });
+		if (providerCredentialId && providerCredentialId.length > 0) {
+			queryBuilder.andWhere('ic.providerCredentialId IN (:...providerCredentialId)', {
+				providerCredentialId,
+			});
+		}
 		if (issuerId) queryBuilder.andWhere('ic.issuerId = :issuerId', { issuerId });
 		if (subjectId) queryBuilder.andWhere('ic.subjectId = :subjectId', { subjectId });
 		if (status) queryBuilder.andWhere('ic.status = :status', { status });
@@ -909,5 +915,14 @@ export class Credentials {
 			}
 		}
 		return verificationResult;
+	}
+
+	public async count(customer: CustomerEntity, where: Record<string, unknown>) {
+		return await this.repository.count({
+			where: {
+				...where,
+				customer: { customerId: customer.customerId },
+			},
+		});
 	}
 }

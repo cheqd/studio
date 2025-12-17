@@ -270,6 +270,7 @@ class App {
 		app.post('/account/create', AccountController.createValidator, new AccountController().create);
 		app.get('/account', new AccountController().get);
 		app.get('/account/idtoken', new AccountController().getIdToken);
+		app.get('/account/analytics', new AccountController().getAnalytics);
 
 		// LogTo webhooks
 		app.post('/account/bootstrap', LogToWebHook.verifyHookSignature, new AccountController().bootstrap);
