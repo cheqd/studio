@@ -1,4 +1,5 @@
 import type { FindOptionsRelations, FindOptionsWhere, Repository } from 'typeorm';
+import { In } from 'typeorm';
 import type { IdentifierEntity } from '../../database/entities/identifier.entity.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
@@ -101,6 +102,72 @@ export class ResourceService {
 			skip: page && limit ? (page - 1) * limit : 0,
 			take: limit,
 		});
+	}
+
+	public async findLatestVersionsByType(
+		resourceType: string,
+		customer: CustomerEntity,
+		network?: string,
+		did?: string,
+		page?: number,
+		limit?: number,
+		relations?: FindOptionsRelations<ResourceEntity>
+	): Promise<{ resources: ResourceEntity[]; total: number }> {
+		const baseQuery = this.resourceRepository
+			.createQueryBuilder('r')
+			.select([
+				'r."resourceId" AS "resourceId"',
+				'ROW_NUMBER() OVER (PARTITION BY r."identifierDid", r."resourceName", r."resourceType" ORDER BY COALESCE(r."updatedAt", r."createdAt") DESC, r."createdAt" DESC, r."resourceId" DESC) AS rn',
+				'COALESCE(r."updatedAt", r."createdAt") AS "sortTimestamp"',
+				'r."createdAt" AS "createdAt"',
+			])
+			.where('r."customerId" = :customerId', { customerId: customer.customerId })
+			.andWhere('r."resourceType" = :resourceType', { resourceType })
+			.andWhere('r."nextVersionId" IS NULL');
+
+		if (did) {
+			baseQuery.andWhere('r."identifierDid" = :did', { did });
+		}
+
+		if (network) {
+			baseQuery.andWhere('r."identifierDid" LIKE :networkPattern', { networkPattern: `%did:cheqd:${network}:%` });
+		}
+
+		const ranked = this.resourceRepository
+			.createQueryBuilder()
+			.select([
+				'ranked."resourceId" AS "resourceId"',
+				'ranked."sortTimestamp" AS "sortTimestamp"',
+				'ranked."createdAt" AS "createdAt"',
+				'COUNT(1) OVER () AS "total"',
+			])
+			.from('(' + baseQuery.getQuery() + ')', 'ranked')
+			.setParameters(baseQuery.getParameters())
+			.where('rn = 1')
+			.orderBy('ranked."sortTimestamp"', 'DESC')
+			.addOrderBy('ranked."createdAt"', 'DESC');
+
+		const latestRows = await ranked.getRawMany<{ resourceId: string; total: string }>();
+		const total = Number(latestRows[0]?.total ?? 0);
+		const resourceIds = latestRows.map((row) => row.resourceId);
+		if (resourceIds.length === 0) {
+			return { resources: [], total };
+		}
+
+		const resources = await this.resourceRepository.find({
+			where: { resourceId: In(resourceIds) },
+			order: { updatedAt: 'DESC', createdAt: 'DESC' },
+			skip: page && limit ? (page - 1) * limit : 0,
+			take: limit,
+			relations,
+		});
+
+		// preserve ordering from ranked query
+		const order = new Map(resourceIds.map((id, index) => [id, index]));
+		return {
+			resources: resources.sort((a, b) => (order.get(a.resourceId) ?? 0) - (order.get(b.resourceId) ?? 0)),
+			total,
+		};
 	}
 
 	public async createFromLinkedResource(

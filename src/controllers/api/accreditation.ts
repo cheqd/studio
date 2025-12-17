@@ -29,9 +29,35 @@ import { eventTracker } from '../../services/track/tracker.js';
 import { body, query } from '../validator/index.js';
 import { validate } from '../validator/decorator.js';
 import { constructDidUrl, parseDidFromDidUrl } from '../../helpers/helpers.js';
+import NodeCache from 'node-cache';
 import { CheqdW3CVerifiableCredential } from '../../services/w3c-credential.js';
 import { StatusListType } from '../../types/credential-status.js';
 import { CheqdNetwork } from '@cheqd/sdk';
+
+const ACCREDITATION_RESOLVE_CACHE_TTL_MS = 30_000;
+const ACCREDITATION_RESOLVE_CACHE_MAX_ENTRIES = 200;
+const ACCREDITATION_RESOLVE_CONCURRENCY = 8;
+
+function buildCacheKey(url: string, customerId?: string) {
+	return `${customerId ?? 'anonymous'}::${url}`;
+}
+
+const accreditationResolveCache = new NodeCache({
+	stdTTL: ACCREDITATION_RESOLVE_CACHE_TTL_MS / 1000,
+	checkperiod: 0,
+	useClones: false,
+	deleteOnExpire: true,
+	maxKeys: ACCREDITATION_RESOLVE_CACHE_MAX_ENTRIES,
+});
+const inFlightAccreditations = new Map<string, Promise<unknown>>();
+
+function getCachedAccreditation(key: string) {
+	return accreditationResolveCache.get(key) ?? null;
+}
+
+function setCachedAccreditation(key: string, value: unknown) {
+	accreditationResolveCache.set(key, value);
+}
 
 export class AccreditationController {
 	public static issueValidator = [
@@ -887,26 +913,30 @@ export class AccreditationController {
 
 		try {
 			// Fetch resources of accreditation resourceType associated with the account
-			const { resources } = await identityServiceStrategySetup.agent.listResources(
-				{ network, resourceType, did },
-				response.locals.customer
+			const { resources } = await identityServiceStrategySetup.agent.findLatestResourcesVersionsByType!(
+				resourceType,
+				response.locals.customer,
+				network,
+				did,
+				page,
+				limit
 			);
 
 			// Build resource URLs for resolution
-			const resourceUrls = resources.map(
-				(item) =>
-					`${item.did}?resourceName=${encodeURIComponent(item.resourceName)}&resourceType=${item.resourceType}`
-			);
+			const resourceUrls = resources.map((item) => `${item.did}/resources/${item.resourceId}`);
 
-			// remove duplicates of resourceUrls
-			const uniqueResourceUrls = [...new Set(resourceUrls)].slice(
-				limit ? (page - 1) * limit : 0,
-				limit ? page * limit : undefined
-			);
+			// No resources to resolve, return early
+			if (resourceUrls.length === 0) {
+				return response.status(StatusCodes.OK).json({
+					total: 0,
+					accreditations: [],
+				});
+			}
 
 			// 1. Fetch all tracking records from the issued credentials table
 			const { credentials: trackingRecords } = await Credentials.instance.list(response.locals.customer, {
 				category: CredentialCategory.ACCREDITATION,
+				providerCredentialId: resources.map((item) => item.resourceId),
 				credentialType: resourceType,
 			});
 
@@ -916,48 +946,92 @@ export class AccreditationController {
 				trackingMap.set(record.providerCredentialId, record);
 			}
 
-			// 3. Resolve resources and enhance with tracking metadata in parallel
-			const accreditationPromises = uniqueResourceUrls.map(async (url) => {
-				try {
-					const res = await identityServiceStrategySetup.agent.resolve(url, true);
-					const credential = await res.json();
-
-					// Skip if the credential doesn't have contentStream
-					if (!credential.contentStream) {
-						return null;
-					}
-
-					const resourceId = credential.contentMetadata.resourceId;
-
-					const trackingRecord = trackingMap.get(resourceId);
-
-					if (trackingRecord) {
-						const { issuedCredentialId, providerId, providerCredentialId, status, statusUpdatedAt } =
-							trackingRecord;
-
-						// Merge tracking metadata with credential
-						return {
-							...credential.contentStream,
-							metadata: {
-								issuedCredentialId,
-								providerId,
-								providerCredentialId,
-								status,
-								statusUpdatedAt,
-							},
-						};
-					} else {
-						// No tracking record, return just the credential (legacy)
-						return credential.contentStream;
-					}
-				} catch (error) {
-					console.error(`Failed to process accreditation for URL: ${url}`, error);
-					return null;
+			const resolveAccreditationWithCache = async (url: string) => {
+				const cacheKey = buildCacheKey(url, response.locals.customer?.customerId);
+				const cached = getCachedAccreditation(cacheKey);
+				if (cached) {
+					return cached;
 				}
-			});
+				const inFlight = inFlightAccreditations.get(cacheKey);
+				if (inFlight) {
+					return inFlight;
+				}
+				const resolverPromise = (async () => {
+					try {
+						const res = await identityServiceStrategySetup.agent.resolve(url, true);
+						const credential = await res.json();
+
+						// Skip if the credential doesn't have contentStream
+						if (!credential.contentStream) {
+							return null;
+						}
+
+						const resourceId = credential.contentMetadata.resourceId;
+
+						const trackingRecord = trackingMap.get(resourceId);
+
+						if (trackingRecord) {
+							const { issuedCredentialId, providerId, providerCredentialId, status, statusUpdatedAt } =
+								trackingRecord;
+
+							// Merge tracking metadata with credential
+							const accreditation = {
+								...credential.contentStream,
+								metadata: {
+									issuedCredentialId,
+									providerId,
+									providerCredentialId,
+									status,
+									statusUpdatedAt,
+								},
+							};
+							setCachedAccreditation(cacheKey, accreditation);
+							return accreditation;
+						} else {
+							// No tracking record, return just the credential (legacy)
+							setCachedAccreditation(cacheKey, credential.contentStream);
+							return credential.contentStream;
+						}
+					} catch (error) {
+						console.error(`Failed to process accreditation for URL: ${url}`, error);
+						return null;
+					} finally {
+						inFlightAccreditations.delete(cacheKey);
+					}
+				})();
+
+				inFlightAccreditations.set(cacheKey, resolverPromise);
+				return resolverPromise;
+			};
+
+			// 3. Resolve resources and enhance with tracking metadata with bounded concurrency
+			const resolvedAccreditations: Array<ReturnType<typeof resolveAccreditationWithCache>> = new Array(
+				resourceUrls.length
+			);
+			let currentIndex = 0;
+
+			const workers = Array.from(
+				{ length: Math.min(ACCREDITATION_RESOLVE_CONCURRENCY, resourceUrls.length) },
+				async () => {
+					// eslint-disable-next-line no-constant-condition
+					while (true) {
+						const index = currentIndex++;
+						if (index >= resourceUrls.length) {
+							break;
+						}
+						const accreditation = await resolveAccreditationWithCache(resourceUrls[index]);
+						if (accreditation) {
+							resolvedAccreditations[index] = accreditation;
+						}
+					}
+				}
+			);
 
 			// 4. Wait for all resolutions to complete and filter out any failed/skipped ones (null)
-			const accreditations = (await Promise.all(accreditationPromises)).filter(Boolean);
+			await Promise.all(workers);
+			const accreditations = resolvedAccreditations.filter(Boolean) as NonNullable<
+				Awaited<ReturnType<typeof resolveAccreditationWithCache>>
+			>[];
 			return response.status(StatusCodes.OK).json({
 				total: accreditations.length,
 				accreditations: accreditations,
