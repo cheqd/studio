@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.0-develop.7](https://github.com/cheqd/studio/compare/3.16.0-develop.6...3.16.0-develop.7) (2025-12-17)
+
+### Features
+
+* Add network query param in analytics ([#774](https://github.com/cheqd/studio/issues/774)) ([ebc1742](https://github.com/cheqd/studio/commit/ebc1742c38f5b59aa2cc4f4f7d48f093683fd827))
+
 ## [3.16.0-develop.6](https://github.com/cheqd/studio/compare/3.16.0-develop.5...3.16.0-develop.6) (2025-12-17)
 
 ### Features
