@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import type { IObserver } from '../types.js';
-import { MaxAllowedTrialPeriodDays, OperationNameEnum } from '../../../types/constants.js';
+import { OperationNameEnum } from '../../../types/constants.js';
 import type { INotifyMessage } from '../../../types/track.js';
 import { EventTracker } from '../tracker.js';
 import { StatusCodes } from 'http-status-codes';
@@ -66,9 +66,10 @@ export class PortalAccountCreateSubmitter implements IObserver {
 					paymentProviderId: stripeCustomer.id,
 				});
 
-				if (process.env.STRIPE_TRIAL_PLAN_PRICING_ID) {
-					// Start a trial for the user
-					await this.startTrialForPlan(stripe, stripeCustomer.id, MaxAllowedTrialPeriodDays);
+				// Replace trial plan with default plan (with the STRIPE_TEST_PLAN_ID env var set)
+				if (process.env.STRIPE_TEST_PLAN_ID) {
+					// Assign default plan to the user
+					await this.assignDefaultPlan(stripe, stripeCustomer.id);
 				}
 			}
 		} catch (error) {
@@ -82,6 +83,7 @@ export class PortalAccountCreateSubmitter implements IObserver {
 		}
 	}
 
+	// Note: This function is not currently used, but kept for future reference in case trial plans are to be reintroduced.
 	async startTrialForPlan(stripe: Stripe, paymentProviderId: string, trialPeriodDays: number = 30) {
 		const subscriptionResponse = await stripe.subscriptions.create({
 			customer: paymentProviderId,
@@ -99,6 +101,33 @@ export class PortalAccountCreateSubmitter implements IObserver {
 
 		if (subscriptionResponse.lastResponse.statusCode !== StatusCodes.OK) {
 			throw new Error(`Failed to start trial plan`);
+		}
+	}
+
+	async assignDefaultPlan(stripe: Stripe, paymentProviderId: string) {
+		// Get the product to find its default price
+		const product = await stripe.products.retrieve(process.env.STRIPE_TEST_PLAN_ID as string);
+
+		if (!product.default_price) {
+			throw new Error(`Product ${process.env.STRIPE_TEST_PLAN_ID} has no default price set`);
+		}
+
+		// Get the price ID (could be string or Price object)
+		const priceId = typeof product.default_price === 'string'
+			? product.default_price
+			: product.default_price.id;
+
+		// Create subscription with the default price
+		const subscriptionResponse = await stripe.subscriptions.create({
+			customer: paymentProviderId,
+			items: [{ price: priceId, quantity: 1 }],
+			payment_settings: {
+				save_default_payment_method: 'on_subscription',
+			},
+		});
+
+		if (subscriptionResponse.lastResponse.statusCode !== StatusCodes.OK) {
+			throw new Error(`Failed to assign default plan`);
 		}
 	}
 }
