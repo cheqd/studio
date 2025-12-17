@@ -2114,6 +2114,17 @@
  *           type: string
  *         paymentProviderId:
  *           type: string
+ *     AccountAnalyticsResponse:
+ *       type: object
+ *       properties:
+ *        dids:
+ *         type: integer
+ *        credentials:
+ *          type: integer
+ *        accreditations:
+ *          type: integer
+ *        resources:
+ *          type: integer
  *     SchemaUrl:
  *       type: object
  *       properties:

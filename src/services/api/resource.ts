@@ -196,4 +196,13 @@ export class ResourceService {
 		if (!result) throw new Error(`Cannot create a new resource`);
 		return resourceEntity;
 	}
+
+	public async count(customer: CustomerEntity, where: Record<string, unknown>) {
+		return await this.resourceRepository.count({
+			where: {
+				...where,
+				customer: { customerId: customer.customerId },
+			},
+		});
+	}
 }

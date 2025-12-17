@@ -35,6 +35,10 @@ import { LocalStore } from '../../database/cache/store.js';
 import { BootStrapAccountResponse } from '../../types/account.js';
 import { RoleEntity } from '../../database/entities/role.entity.js';
 import { MailchimpService } from '../../helpers/mailchimp.js';
+import { IdentifierService } from '../../services/api/identifier.js';
+import { Credentials } from '../../services/api/credentials.js';
+import { ResourceService } from '../../services/api/resource.js';
+import { CredentialCategory } from '../../types/credential.js';
 
 dotenv.config();
 
@@ -571,6 +575,55 @@ export class AccountController {
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal Error: ${(error as Error)?.message || error}`,
+			});
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /account/analytics:
+	 *   get:
+	 *     tags: [Account]
+	 *     summary: Fetch Account Analytics.
+	 *     description: This endpoint returns analytics data for the account usage.
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/AccountAnalyticsResponse'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async getAnalytics(_request: Request, response: Response) {
+		try {
+			const [dids, credentials, accreditations, resources] = await Promise.all([
+				IdentifierService.instance.count(response.locals.customer, {}),
+				Credentials.instance.count(response.locals.customer, {
+					category: CredentialCategory.CREDENTIAL,
+					deprecated: false,
+				}),
+				Credentials.instance.count(response.locals.customer, {
+					category: CredentialCategory.ACCREDITATION,
+					deprecated: false,
+				}),
+				ResourceService.instance.count(response.locals.customer, {}),
+			]);
+			return response.status(StatusCodes.OK).json({
+				dids,
+				credentials,
+				accreditations,
+				resources,
+			});
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
 		}
 	}
