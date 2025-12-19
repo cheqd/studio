@@ -1,63 +1,23 @@
 import type { Request, Response } from 'express';
-import type { VerifiableCredential } from '@veramo/core';
 import type {
 	DIDAccreditationRequestBody,
 	DIDAccreditationRequestParams,
 	UpdateAccreditationRequestBody,
 	UpdateAccreditationRequestQuery,
-	RevokeAccreditationResponseBody,
 	SchemaUrlType,
-	SuspendAccreditationResponseBody,
-	UnsuspendAccreditationResponseBody,
 	VerifyAccreditationRequestBody,
 } from '../../types/accreditation.js';
 import type { ICredentialTrack, ITrackOperation } from '../../types/track.js';
-import type { CredentialRequest, UnsuccesfulRevokeCredentialResponseBody } from '../../types/credential.js';
 import { StatusCodes } from 'http-status-codes';
-import { v4 } from 'uuid';
-import {
-	AccreditationRequestType,
-	DIDAccreditationPolicyTypes,
-	DIDAccreditationTypes,
-} from '../../types/accreditation.js';
-import { CredentialCategory, CredentialConnectors, VerifyCredentialRequestQuery } from '../../types/credential.js';
+import { AccreditationRequestType } from '../../types/accreditation.js';
+import { UnsuccesfulRevokeCredentialResponseBody, VerifyCredentialRequestQuery } from '../../types/credential.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
-import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { AccreditationService } from '../../services/api/accreditation.js';
-import { Credentials } from '../../services/api/credentials.js';
 import { eventTracker } from '../../services/track/tracker.js';
 import { body, query } from '../validator/index.js';
 import { validate } from '../validator/decorator.js';
 import { constructDidUrl, parseDidFromDidUrl } from '../../helpers/helpers.js';
-import NodeCache from 'node-cache';
-import { CheqdW3CVerifiableCredential } from '../../services/w3c-credential.js';
-import { StatusListType } from '../../types/credential-status.js';
 import { CheqdNetwork } from '@cheqd/sdk';
-
-const ACCREDITATION_RESOLVE_CACHE_TTL_MS = 30_000;
-const ACCREDITATION_RESOLVE_CACHE_MAX_ENTRIES = 200;
-const ACCREDITATION_RESOLVE_CONCURRENCY = 8;
-
-function buildCacheKey(url: string, customerId?: string) {
-	return `${customerId ?? 'anonymous'}::${url}`;
-}
-
-const accreditationResolveCache = new NodeCache({
-	stdTTL: ACCREDITATION_RESOLVE_CACHE_TTL_MS / 1000,
-	checkperiod: 0,
-	useClones: false,
-	deleteOnExpire: true,
-	maxKeys: ACCREDITATION_RESOLVE_CACHE_MAX_ENTRIES,
-});
-const inFlightAccreditations = new Map<string, Promise<unknown>>();
-
-function getCachedAccreditation(key: string) {
-	return accreditationResolveCache.get(key) ?? null;
-}
-
-function setCachedAccreditation(key: string, value: unknown) {
-	accreditationResolveCache.set(key, value);
-}
 
 export class AccreditationController {
 	public static issueValidator = [
@@ -224,10 +184,8 @@ export class AccreditationController {
 	 */
 	@validate
 	public async issue(request: Request, response: Response) {
-		// Get strategy e.g. postgres or local
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
-		// Extract did from params
 		const { accreditationType } = request.query as DIDAccreditationRequestParams;
+		const { schemas, issuerDid, subjectDid } = request.body as DIDAccreditationRequestBody;
 
 		// Handles string input instead of an array
 		if (typeof request.body.type === 'string') {
@@ -237,155 +195,36 @@ export class AccreditationController {
 			request.body['@context'] = [request.body['@context']];
 		}
 
-		const {
-			issuerDid,
-			subjectDid,
-			schemas,
-			type,
-			parentAccreditation,
-			rootAuthorization,
-			trustFramework,
-			trustFrameworkId,
-			attributes,
-			accreditationName,
-			format,
-			credentialStatus,
-		} = request.body as DIDAccreditationRequestBody;
-
 		try {
-			// Validate issuer and subject DIDs in parallel only for authorize
-			// For attest, accredit they are validated in verify_accreditation
-			const [body, subjectDidRes] = await Promise.all([
-				identityServiceStrategySetup.agent.resolveDid(issuerDid),
-				identityServiceStrategySetup.agent.resolveDid(subjectDid),
-			]);
-
-			// Validate issuer DID
-			if (!body?.didDocument) {
-				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `DID ${issuerDid} is not resolved because of error from resolver: ${body.didResolutionMetadata.error}.`,
-				});
-			}
-			if (body.didDocumentMetadata.deactivated) {
-				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `${issuerDid} is deactivated`,
-				});
-			}
-
-			// Validate subject DID
-			if (!subjectDidRes?.didDocument) {
-				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `DID ${subjectDid} is not resolved because of error from resolver: ${body.didResolutionMetadata.error}.`,
-				});
-			}
-			if (subjectDidRes.didDocumentMetadata.deactivated) {
-				return response.status(StatusCodes.BAD_REQUEST).send({
-					error: `${subjectDid} is deactivated`,
-				});
-			}
-
-			const resourceId = v4();
-			const accreditedFor = schemas.map(({ url, types }: SchemaUrlType) => ({
-				schemaId: url,
-				types: Array.isArray(types) ? types : [types],
-			}));
-
-			// construct credential request
-			const credentialRequest: CredentialRequest = {
-				subjectDid,
-				attributes: {
-					...attributes,
-					accreditedFor,
-					id: subjectDid,
-				},
+			const result = await AccreditationService.instance.issue_accreditation(
+				accreditationType,
 				issuerDid,
-				format: format || 'jwt',
-				connector: CredentialConnectors.Resource, // resource connector
-				credentialId: resourceId,
-				credentialName: accreditationName,
-				credentialStatus,
-				category: CredentialCategory.ACCREDITATION,
-			};
-
-			let resourceType: string;
-			switch (accreditationType) {
-				case AccreditationRequestType.authorize:
-					resourceType = DIDAccreditationTypes.VerifiableAuthorizationForTrustChain;
-					credentialRequest.type = [...(type || []), resourceType];
-					credentialRequest.termsOfUse = {
-						type: DIDAccreditationPolicyTypes.Authorize,
-						trustFramework,
-						trustFrameworkId,
-					};
-					break;
-				case AccreditationRequestType.accredit:
-					resourceType = DIDAccreditationTypes.VerifiableAccreditationToAccredit;
-					credentialRequest.type = [...(type || []), resourceType];
-					credentialRequest.termsOfUse = {
-						type: DIDAccreditationPolicyTypes.Accredit,
-						parentAccreditation,
-						rootAuthorization,
-					};
-					break;
-				case AccreditationRequestType.attest:
-					resourceType = DIDAccreditationTypes.VerifiableAccreditationToAttest;
-					credentialRequest.type = [...(type || []), resourceType];
-					credentialRequest.termsOfUse = {
-						type: DIDAccreditationPolicyTypes.Accredit,
-						parentAccreditation,
-						rootAuthorization,
-					};
-					break;
-			}
-
-			// validate parent and root accreditations
-			if (
-				accreditationType === AccreditationRequestType.accredit ||
-				accreditationType === AccreditationRequestType.attest
-			) {
-				const result = await AccreditationService.instance.verify_accreditation(
-					issuerDid,
-					parentAccreditation!,
-					accreditedFor,
-					true,
-					false,
-					response.locals.customer,
-					rootAuthorization
-				);
-
-				if (result.success === false) {
-					return response.status(result.status).send({
-						error: `Invalid Request: Root Authorization or parent Accreditation is not valid: ${result.error}`,
-					});
-				}
-			}
-
-			// issue accreditation
-			const accreditation: VerifiableCredential = await Credentials.instance.issue_credential(
-				credentialRequest,
+				subjectDid,
+				schemas,
+				request.body,
 				response.locals.customer
 			);
 
-			// Track operation
-			const trackInfo: ITrackOperation<ICredentialTrack> = {
-				category: OperationCategoryNameEnum.CREDENTIAL,
-				name: OperationNameEnum.CREDENTIAL_ISSUE,
-				customer: response.locals.customer,
-				user: response.locals.user,
-				data: {
-					did: issuerDid,
-				},
-			};
+			if (result.success) {
+				// Track operation
+				const trackInfo: ITrackOperation<ICredentialTrack> = {
+					category: OperationCategoryNameEnum.CREDENTIAL,
+					name: OperationNameEnum.CREDENTIAL_ISSUE,
+					customer: response.locals.customer,
+					user: response.locals.user,
+					data: {
+						did: issuerDid,
+					},
+				};
 
-			eventTracker.emit('track', trackInfo);
+				eventTracker.emit('track', trackInfo);
 
-			return response.status(StatusCodes.OK).json({
-				didUrls: [
-					`${issuerDid}/resources/${resourceId}`,
-					`${issuerDid}?resourceName=${encodeURIComponent(accreditationName)}&resourceType=${credentialRequest.type}`,
-				],
-				accreditation,
-			});
+				return response.status(StatusCodes.OK).json(result.data);
+			} else {
+				return response.status(result.status).json({
+					error: result.error,
+				});
+			}
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -439,7 +278,6 @@ export class AccreditationController {
 	 */
 	@validate
 	public async verify(request: Request, response: Response) {
-		// Extract did from params
 		let { verifyStatus = false, allowDeactivatedDid = false } = request.query as VerifyCredentialRequestQuery;
 		const { policies, subjectDid, schemas } = request.body as VerifyAccreditationRequestBody;
 
@@ -467,6 +305,7 @@ export class AccreditationController {
 				undefined,
 				policies
 			);
+
 			// Track operation
 			const trackInfo: ITrackOperation<ICredentialTrack> = {
 				category: OperationCategoryNameEnum.CREDENTIAL,
@@ -479,6 +318,7 @@ export class AccreditationController {
 			};
 
 			eventTracker.emit('track', trackInfo);
+
 			if (result.success) {
 				return response.status(StatusCodes.OK).json(result.data);
 			} else {
@@ -532,12 +372,8 @@ export class AccreditationController {
 	 */
 	@validate
 	public async revoke(request: Request, response: Response) {
-		// Get publish flag
 		const { publish } = request.query as UpdateAccreditationRequestQuery;
-		// Get symmetric key
 		const { symmetricKey, ...didUrlParams } = request.body as UpdateAccreditationRequestBody;
-		// Get strategy e.g. postgres or local
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		const didUrl = constructDidUrl(didUrlParams);
 		if (!didUrl) {
@@ -547,53 +383,42 @@ export class AccreditationController {
 		}
 
 		try {
-			const res = await identityServiceStrategySetup.agent.resolve(didUrl);
-
-			const resource = await res.json();
-
-			if (resource.dereferencingMetadata) {
-				return response.status(StatusCodes.NOT_FOUND).json({
-					error: `DID URL ${didUrl} is not found`,
-				});
-			}
-
-			const accreditation: CheqdW3CVerifiableCredential = resource;
-
-			const result = await identityServiceStrategySetup.agent.revokeCredentials(
-				accreditation,
-				StatusListType.Bitstring, // default to BitstringStatusList for accreditation
+			const result = await AccreditationService.instance.revoke_accreditation(
+				didUrl,
 				publish as boolean,
-				response.locals.customer,
-				symmetricKey as string
+				symmetricKey as string,
+				response.locals.customer
 			);
 
-			// Track operation if revocation was successful and publish is true
-			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
-			// and it will be tracked there
-			if (!result.error && result.resourceMetadata && publish) {
-				// get issuer did
-				const issuerDid =
-					typeof accreditation.issuer === 'string'
-						? accreditation.issuer
-						: (accreditation.issuer as { id: string }).id;
-				const trackInfo: ITrackOperation<ICredentialTrack> = {
-					category: OperationCategoryNameEnum.CREDENTIAL,
-					name: OperationNameEnum.CREDENTIAL_REVOKE,
-					customer: response.locals.customer,
-					user: response.locals.user,
-					data: {
-						did: issuerDid,
-						encrypted: result.statusList?.metadata?.encrypted,
-						resource: result.resourceMetadata,
-						symmetricKey: '',
-					},
-				};
+			if (result.success) {
+				// Track operation if revocation was successful and publish is true
+				// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
+				// and it will be tracked there
+				if (result.data.resourceMetadata && publish) {
+					// get issuer did
+					const issuerDid = parseDidFromDidUrl(didUrl);
+					const trackInfo: ITrackOperation<ICredentialTrack> = {
+						category: OperationCategoryNameEnum.CREDENTIAL,
+						name: OperationNameEnum.CREDENTIAL_REVOKE,
+						customer: response.locals.customer,
+						user: response.locals.user,
+						data: {
+							did: issuerDid,
+							encrypted: result.data.statusList?.metadata?.encrypted,
+							resource: result.data.resourceMetadata,
+							symmetricKey: '',
+						},
+					};
 
-				// Track operation
-				eventTracker.emit('track', trackInfo);
+					// Track operation
+					eventTracker.emit('track', trackInfo);
+				}
+				return response.status(StatusCodes.OK).json(result.data);
+			} else {
+				return response.status(result.status).json({
+					error: result.error,
+				});
 			}
-			// Return Ok response
-			return response.status(StatusCodes.OK).json(result satisfies RevokeAccreditationResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -642,12 +467,8 @@ export class AccreditationController {
 	 */
 	@validate
 	public async suspend(request: Request, response: Response) {
-		// Get publish flag
 		const { publish } = request.query as UpdateAccreditationRequestQuery;
-		// Get symmetric key
 		const { symmetricKey, ...didUrlParams } = request.body as UpdateAccreditationRequestBody;
-		// Get strategy e.g. postgres or local
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		const didUrl = constructDidUrl(didUrlParams);
 		if (!didUrl) {
@@ -657,55 +478,43 @@ export class AccreditationController {
 		}
 
 		try {
-			const res = await identityServiceStrategySetup.agent.resolve(didUrl);
-
-			const resource = await res.json();
-
-			if (resource.dereferencingMetadata) {
-				return {
-					success: false,
-					status: 404,
-					error: `DID URL ${didUrl} is not found`,
-				};
-			}
-
-			const accreditation: CheqdW3CVerifiableCredential = resource;
-
-			const result = await identityServiceStrategySetup.agent.suspendCredentials(
-				accreditation,
-				StatusListType.Bitstring, // default to BitstringStatusList for accreditation
+			const result = await AccreditationService.instance.suspend_accreditation(
+				didUrl,
 				publish as boolean,
-				response.locals.customer,
-				symmetricKey as string
+				symmetricKey as string,
+				response.locals.customer
 			);
 
-			// Track operation if revocation was successful and publish is true
-			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
-			// and it will be tracked there
-			if (!result.error && result.resourceMetadata && publish) {
-				// get issuer did
-				const issuerDid =
-					typeof accreditation.issuer === 'string'
-						? accreditation.issuer
-						: (accreditation.issuer as { id: string }).id;
-				const trackInfo: ITrackOperation<ICredentialTrack> = {
-					category: OperationCategoryNameEnum.CREDENTIAL,
-					name: OperationNameEnum.CREDENTIAL_SUSPEND,
-					customer: response.locals.customer,
-					user: response.locals.user,
-					data: {
-						did: issuerDid,
-						encrypted: result.statusList?.metadata?.encrypted,
-						resource: result.resourceMetadata,
-						symmetricKey: '',
-					},
-				};
+			if (result.success) {
+				// Track operation if suspension was successful and publish is true
+				// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
+				// and it will be tracked there
+				if (result.data.resourceMetadata && publish) {
+					// get issuer did
+					const issuerDid = parseDidFromDidUrl(didUrl);
 
-				// Track operation
-				eventTracker.emit('track', trackInfo);
+					const trackInfo: ITrackOperation<ICredentialTrack> = {
+						category: OperationCategoryNameEnum.CREDENTIAL,
+						name: OperationNameEnum.CREDENTIAL_SUSPEND,
+						customer: response.locals.customer,
+						user: response.locals.user,
+						data: {
+							did: issuerDid,
+							encrypted: result.data.statusList?.metadata?.encrypted,
+							resource: result.data.resourceMetadata,
+							symmetricKey: '',
+						},
+					};
+
+					// Track operation
+					eventTracker.emit('track', trackInfo);
+				}
+				return response.status(StatusCodes.OK).json(result.data);
+			} else {
+				return response.status(result.status).json({
+					error: result.error,
+				});
 			}
-			// Return Ok response
-			return response.status(StatusCodes.OK).json(result satisfies SuspendAccreditationResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -754,12 +563,8 @@ export class AccreditationController {
 	 */
 	@validate
 	public async reinstate(request: Request, response: Response) {
-		// Get publish flag
 		const { publish } = request.query as UpdateAccreditationRequestQuery;
-		// Get symmetric key
 		const { symmetricKey, ...didUrlParams } = request.body as UpdateAccreditationRequestBody;
-		// Get strategy e.g. postgres or local
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		const didUrl = constructDidUrl(didUrlParams);
 		if (!didUrl) {
@@ -769,55 +574,43 @@ export class AccreditationController {
 		}
 
 		try {
-			const res = await identityServiceStrategySetup.agent.resolve(didUrl);
-
-			const resource = await res.json();
-
-			if (resource.dereferencingMetadata) {
-				return {
-					success: false,
-					status: 404,
-					error: `DID URL ${didUrl} is not found`,
-				};
-			}
-
-			const accreditation: CheqdW3CVerifiableCredential = resource;
-
-			const result = await identityServiceStrategySetup.agent.reinstateCredentials(
-				accreditation,
-				StatusListType.Bitstring, // default to BitstringStatusList for accreditation
+			const result = await AccreditationService.instance.reinstate_accreditation(
+				didUrl,
 				publish as boolean,
-				response.locals.customer,
-				symmetricKey as string
+				symmetricKey as string,
+				response.locals.customer
 			);
 
-			// Track operation if revocation was successful and publish is true
-			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
-			// and it will be tracked there
-			if (!result.error && result.resourceMetadata && publish) {
-				// get issuer did
-				const issuerDid =
-					typeof accreditation.issuer === 'string'
-						? accreditation.issuer
-						: (accreditation.issuer as { id: string }).id;
-				const trackInfo: ITrackOperation<ICredentialTrack> = {
-					category: OperationCategoryNameEnum.CREDENTIAL,
-					name: OperationNameEnum.CREDENTIAL_UNSUSPEND,
-					customer: response.locals.customer,
-					user: response.locals.user,
-					data: {
-						did: issuerDid,
-						encrypted: result.statusList?.metadata?.encrypted || false,
-						resource: result.resourceMetadata,
-						symmetricKey: '',
-					},
-				};
+			if (result.success) {
+				// Track operation if reinstatement was successful and publish is true
+				// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
+				// and it will be tracked there
+				if (result.data.resourceMetadata && publish) {
+					// get issuer did
+					const issuerDid = parseDidFromDidUrl(didUrl);
 
-				// Track operation
-				eventTracker.emit('track', trackInfo);
+					const trackInfo: ITrackOperation<ICredentialTrack> = {
+						category: OperationCategoryNameEnum.CREDENTIAL,
+						name: OperationNameEnum.CREDENTIAL_UNSUSPEND,
+						customer: response.locals.customer,
+						user: response.locals.user,
+						data: {
+							did: issuerDid,
+							encrypted: result.data.statusList?.metadata?.encrypted || false,
+							resource: result.data.resourceMetadata,
+							symmetricKey: '',
+						},
+					};
+
+					// Track operation
+					eventTracker.emit('track', trackInfo);
+				}
+				return response.status(StatusCodes.OK).json(result.data);
+			} else {
+				return response.status(result.status).json({
+					error: result.error,
+				});
 			}
-			// Return Ok response
-			return response.status(StatusCodes.OK).json(result satisfies UnsuspendAccreditationResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -889,153 +682,23 @@ export class AccreditationController {
 	public async listAccreditations(request: Request, response: Response) {
 		const { network, accreditationType, did, page, limit } = request.query as any;
 
-		// Get strategy e.g. postgres or local
-		const identityServiceStrategySetup = response.locals.customer
-			? new IdentityServiceStrategySetup(response.locals.customer.customerId)
-			: new IdentityServiceStrategySetup();
-
-		let resourceType: string;
-		switch (accreditationType) {
-			case AccreditationRequestType.authorize:
-				resourceType = DIDAccreditationTypes.VerifiableAuthorizationForTrustChain;
-				break;
-			case AccreditationRequestType.accredit:
-				resourceType = DIDAccreditationTypes.VerifiableAccreditationToAccredit;
-				break;
-			case AccreditationRequestType.attest:
-				resourceType = DIDAccreditationTypes.VerifiableAccreditationToAttest;
-				break;
-			default:
-				return response.status(StatusCodes.BAD_REQUEST).json({
-					error: `Invalid accreditationType: ${accreditationType}. Must be one of: authorize, accredit, attest.`,
-				});
-		}
-
 		try {
-			// Fetch resources of accreditation resourceType associated with the account
-			const { resources } = await identityServiceStrategySetup.agent.findLatestResourcesVersionsByType!(
-				resourceType,
-				response.locals.customer,
+			const result = await AccreditationService.instance.list_accreditations(
+				accreditationType,
 				network,
 				did,
 				page,
-				limit
+				limit,
+				response.locals.customer
 			);
 
-			// Build resource URLs for resolution
-			const resourceUrls = resources.map((item) => `${item.did}/resources/${item.resourceId}`);
-
-			// No resources to resolve, return early
-			if (resourceUrls.length === 0) {
-				return response.status(StatusCodes.OK).json({
-					total: 0,
-					accreditations: [],
+			if (result.success) {
+				return response.status(StatusCodes.OK).json(result.data);
+			} else {
+				return response.status(result.status).json({
+					error: result.error,
 				});
 			}
-
-			// 1. Fetch all tracking records from the issued credentials table
-			const { credentials: trackingRecords } = await Credentials.instance.list(response.locals.customer, {
-				category: CredentialCategory.ACCREDITATION,
-				providerCredentialId: resources.map((item) => item.resourceId),
-				credentialType: resourceType,
-			});
-
-			// 2. OPTIMIZATION: Create a Map for O(1) tracking record lookup by providerCredentialId
-			const trackingMap = new Map();
-			for (const record of trackingRecords) {
-				trackingMap.set(record.providerCredentialId, record);
-			}
-
-			const resolveAccreditationWithCache = async (url: string) => {
-				const cacheKey = buildCacheKey(url, response.locals.customer?.customerId);
-				const cached = getCachedAccreditation(cacheKey);
-				if (cached) {
-					return cached;
-				}
-				const inFlight = inFlightAccreditations.get(cacheKey);
-				if (inFlight) {
-					return inFlight;
-				}
-				const resolverPromise = (async () => {
-					try {
-						const res = await identityServiceStrategySetup.agent.resolve(url, true);
-						const credential = await res.json();
-
-						// Skip if the credential doesn't have contentStream
-						if (!credential.contentStream) {
-							return null;
-						}
-
-						const resourceId = credential.contentMetadata.resourceId;
-
-						const trackingRecord = trackingMap.get(resourceId);
-
-						if (trackingRecord) {
-							const { issuedCredentialId, providerId, providerCredentialId, status, statusUpdatedAt } =
-								trackingRecord;
-
-							// Merge tracking metadata with credential
-							const accreditation = {
-								...credential.contentStream,
-								metadata: {
-									issuedCredentialId,
-									providerId,
-									providerCredentialId,
-									status,
-									statusUpdatedAt,
-								},
-							};
-							setCachedAccreditation(cacheKey, accreditation);
-							return accreditation;
-						} else {
-							// No tracking record, return just the credential (legacy)
-							setCachedAccreditation(cacheKey, credential.contentStream);
-							return credential.contentStream;
-						}
-					} catch (error) {
-						console.error(`Failed to process accreditation for URL: ${url}`, error);
-						return null;
-					} finally {
-						inFlightAccreditations.delete(cacheKey);
-					}
-				})();
-
-				inFlightAccreditations.set(cacheKey, resolverPromise);
-				return resolverPromise;
-			};
-
-			// 3. Resolve resources and enhance with tracking metadata with bounded concurrency
-			const resolvedAccreditations: Array<ReturnType<typeof resolveAccreditationWithCache>> = new Array(
-				resourceUrls.length
-			);
-			let currentIndex = 0;
-
-			const workers = Array.from(
-				{ length: Math.min(ACCREDITATION_RESOLVE_CONCURRENCY, resourceUrls.length) },
-				async () => {
-					// eslint-disable-next-line no-constant-condition
-					while (true) {
-						const index = currentIndex++;
-						if (index >= resourceUrls.length) {
-							break;
-						}
-						const accreditation = await resolveAccreditationWithCache(resourceUrls[index]);
-						if (accreditation) {
-							resolvedAccreditations[index] = accreditation;
-						}
-					}
-				}
-			);
-
-			// 4. Wait for all resolutions to complete and filter out any failed/skipped ones (null)
-			await Promise.all(workers);
-			const accreditations = resolvedAccreditations.filter(Boolean) as NonNullable<
-				Awaited<ReturnType<typeof resolveAccreditationWithCache>>
-			>[];
-			return response.status(StatusCodes.OK).json({
-				total: accreditations.length,
-				accreditations: accreditations,
-			});
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,

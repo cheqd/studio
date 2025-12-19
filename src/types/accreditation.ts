@@ -55,7 +55,7 @@ export type DIDAccreditationRequestBody = Omit<
 };
 
 export type DIDAccreditationRequestParams = {
-	accreditationType: 'authorize' | 'accredit' | 'attest';
+	accreditationType: AccreditationRequestType;
 };
 
 export interface DIDUrlParams {
