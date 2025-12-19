@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.0-develop.9](https://github.com/cheqd/studio/compare/3.16.0-develop.8...3.16.0-develop.9) (2025-12-19)
+
+### Bug Fixes
+
+* Verify status in accreditation at each trust level ([#775](https://github.com/cheqd/studio/issues/775)) ([dc230e1](https://github.com/cheqd/studio/commit/dc230e1de0da366e6d990345378ea1de16a67758))
+
 ## [3.16.0-develop.8](https://github.com/cheqd/studio/compare/3.16.0-develop.7...3.16.0-develop.8) (2025-12-17)
 
 ### Bug Fixes
