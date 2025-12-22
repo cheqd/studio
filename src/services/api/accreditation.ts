@@ -467,7 +467,7 @@ export class AccreditationService {
 				};
 			}
 
-			if (verifyStatus && !verifyResult.valid) {
+			if (verifyStatus && verifyResult.valid === false) {
 				return {
 					success: false,
 					status: StatusCodes.OK,
