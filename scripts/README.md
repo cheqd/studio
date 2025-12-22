@@ -224,12 +224,14 @@ Used by `create-stripe-subscriptions.sh`:
 Before running any migration:
 
 1. **Stripe CLI** - Install and authenticate
+
    ```bash
    # Install: https://stripe.com/docs/stripe-cli
    stripe login
    ```
 
 2. **jq** - JSON processor
+
    ```bash
    # macOS
    brew install jq
@@ -239,12 +241,14 @@ Before running any migration:
    ```
 
 3. **Database Access** - For running SQL queries
+
    ```bash
    export EXTERNAL_DB_CONNECTION_URL="postgresql://..."
    export EXTERNAL_DB_CERT="..."
    ```
 
 4. **Price ID** - Get your target plan's price ID
+
    ```bash
    stripe prices list --product prod_EXPLORER_PLAN_ID
    ```
@@ -267,26 +271,26 @@ Before running any migration:
 
 ### Common Issues
 
-**"Price ID not found"**
+#### Price ID not found
 
 ```bash
 # Verify price exists
 stripe prices retrieve price_123
 ```
 
-**"Subscription not found"**
+#### Subscription not found
 
 ```bash
 # Check if subscription exists in Stripe
 stripe subscriptions retrieve sub_123
 ```
 
-**"No default payment method"**
+#### No default payment method
 
 - Customer needs to add payment method
 - Cannot activate subscription without payment method
 
-**"jq not found"**
+#### jq not found
 
 ```bash
 # Install jq
@@ -315,7 +319,7 @@ cat scripts/subscription-creation-*.log | grep SUCCESS
 
 ## Migration Workflow Summary
 
-```
+```bash
 ┌─────────────────────────────────────────────────────┐
 │                  Customer Status                     │
 └─────────────────────────────────────────────────────┘
@@ -361,6 +365,7 @@ All scripts generate timestamped log files:
 - `subscription-creation-YYYYMMDD-HHMMSS.log` - From create-stripe-subscriptions.sh
 
 These logs contain:
+
 - Timestamp of execution
 - Success/failure for each customer
 - Detailed error messages

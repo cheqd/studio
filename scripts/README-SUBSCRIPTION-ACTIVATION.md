@@ -145,6 +145,7 @@ Run the SQL query to find subscriptions that need activation:
 3. Save to: `scripts/subscriptions-to-activate.json`
 
 **JSON Format Example:**
+
 ```json
 [
   {
@@ -209,6 +210,7 @@ Once you're confident with the dry run results:
 ```
 
 You'll be asked to confirm before proceeding. The script will:
+
 - Show a summary of subscriptions to be processed
 - Ask for confirmation (type "yes" to proceed)
 - Process each subscription with detailed logging
@@ -219,6 +221,7 @@ You'll be asked to confirm before proceeding. The script will:
 ### Trialing Subscriptions
 
 **Before:**
+
 - Status: `trialing`
 - Customer is in trial period
 - May have old/different price
@@ -308,7 +311,7 @@ You'll be asked to confirm before proceeding. The script will:
 
 ### Dry Run Output
 
-```
+```bash
 Running in DRY RUN mode - no subscriptions will be updated
 
 Verifying price exists in Stripe...
@@ -354,7 +357,7 @@ Total subscriptions that would be processed: 156
 
 ### Real Execution Output
 
-```
+```bash
 Verifying price exists in Stripe...
 ✓ Price verified
 
@@ -451,18 +454,22 @@ Log file: scripts/subscription-activation-20250122-154530.log
 ## Troubleshooting
 
 ### "Subscription not found"
+
 - The subscription may have been deleted from Stripe
 - Verify: `stripe subscriptions retrieve sub_xxx`
 
 ### "Invalid status transition"
+
 - Subscription may already be active
 - Check current status in Stripe dashboard
 
 ### "No default payment method"
+
 - Customer needs to add a payment method first
 - Cannot activate without payment method
 
 ### Database Connection Issues
+
 - Verify `EXTERNAL_DB_CONNECTION_URL` is correct
 - Check `EXTERNAL_DB_CERT` if using SSL
 - Ensure database is accessible
@@ -543,23 +550,23 @@ stripe subscriptions cancel sub_newxyz789
 ### SQL Queries
 
 1. `find-subscriptions-to-activate.sql` - Finds existing subscriptions (trialing/canceled)
-2. `find-customers-without-subscriptions.sql` - Finds customers needing new subscriptions
+1. `find-customers-without-subscriptions.sql` - Finds customers needing new subscriptions
 
 ### Shell Scripts
 
-3. `activate-subscriptions.sh` - Migrates and activates existing subscriptions
-4. `create-stripe-subscriptions.sh` - Creates subscriptions for customers without any
+1. `activate-subscriptions.sh` - Migrates and activates existing subscriptions
+1. `create-stripe-subscriptions.sh` - Creates subscriptions for customers without any
 
 ### Data Files (Created During Migration)
 
-5. `subscriptions-to-activate.json` - Manually created from DB query results
-6. `customers-without-subscriptions.json` - Manually created from DB query results
-7. `subscription-activation-*.log` - Execution logs with timestamps
+1. `subscriptions-to-activate.json` - Manually created from DB query results
+1. `customers-without-subscriptions.json` - Manually created from DB query results
+1. `subscription-activation-*.log` - Execution logs with timestamps
 
 ### Documentation
 
-8. `README-SUBSCRIPTION-ACTIVATION.md` - This file
-9. `README-SUBSCRIPTION-MIGRATION.md` - Guide for creating new subscriptions
+1. `README-SUBSCRIPTION-ACTIVATION.md` - This file
+1. `README-SUBSCRIPTION-MIGRATION.md` - Guide for creating new subscriptions
 
 ## Complete Migration Workflow
 

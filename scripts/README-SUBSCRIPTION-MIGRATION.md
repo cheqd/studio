@@ -59,6 +59,7 @@ The query will return customers who don't have any subscription.
 3. Save to: `scripts/customers-without-subscriptions.json`
 
 **JSON Format Example:**
+
 ```json
 [
   {
@@ -122,34 +123,38 @@ cat scripts/subscription-creation-YYYYMMDD-HHMMSS.log
 
 ### Shell Scripts
 
-2. **create-stripe-subscriptions.sh** - Creates subscriptions via Stripe CLI
+1. **create-stripe-subscriptions.sh** - Creates subscriptions via Stripe CLI
 
 ### Data Files (Created During Migration)
 
-3. **customers-without-subscriptions.json** - Manually created from DB query results
-4. **subscription-creation-*.log** - Execution logs with timestamps
+1. **customers-without-subscriptions.json** - Manually created from DB query results
+1. **subscription-creation-*.log** - Execution logs with timestamps
 
 ### Documentation
 
-5. **README-SUBSCRIPTION-MIGRATION.md** - This file (for creating NEW subscriptions)
-6. **README-SUBSCRIPTION-ACTIVATION.md** - Guide for migrating/activating EXISTING subscriptions
-7. **MIGRATION-EXPLORER-PLAN.md** - Quick reference for Explorer plan migration
+1. **README-SUBSCRIPTION-MIGRATION.md** - This file (for creating NEW subscriptions)
+1. **README-SUBSCRIPTION-ACTIVATION.md** - Guide for migrating/activating EXISTING subscriptions
+1. **MIGRATION-EXPLORER-PLAN.md** - Quick reference for Explorer plan migration
 
 ## Troubleshooting
 
 ### "Price ID not found"
+
 - Verify the price exists: `stripe prices retrieve price_YOUR_PRICE_ID`
 - Ensure you're authenticated to the correct Stripe account
 
 ### "Customer not found"
+
 - The `paymentProviderId` in your database might not match the Stripe customer ID
 - Check: `stripe customers retrieve cus_XXXXX`
 
 ### "Rate limit exceeded"
+
 - The script includes a 0.5s delay between requests
 - For large batches, consider increasing the delay in the bash script
 
 ### Database Connection Issues
+
 - Verify `DATABASE_URL` is set correctly
 - Check database permissions
 - Ensure the database is accessible from your machine
@@ -174,6 +179,7 @@ Edit `create-stripe-subscriptions.sh` and add to the `stripe subscriptions creat
 ### Change Payment Behavior
 
 Change `--payment-behavior=default_incomplete` to:
+
 - `default_incomplete` - Requires payment method (recommended)
 - `allow_incomplete` - Creates subscription even without payment
 - `error_if_incomplete` - Fails if payment method missing
@@ -230,6 +236,7 @@ stripe subscriptions list --status active --limit 20
 ## Support
 
 If you encounter issues:
+
 1. Check the log files for detailed error messages
 2. Verify your Stripe API keys and permissions
 3. Ensure all prerequisites are installed
