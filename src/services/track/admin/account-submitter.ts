@@ -113,9 +113,7 @@ export class PortalAccountCreateSubmitter implements IObserver {
 		}
 
 		// Get the price ID (could be string or Price object)
-		const priceId = typeof product.default_price === 'string'
-			? product.default_price
-			: product.default_price.id;
+		const priceId = typeof product.default_price === 'string' ? product.default_price : product.default_price.id;
 
 		// Create subscription with the default price
 		const subscriptionResponse = await stripe.subscriptions.create({

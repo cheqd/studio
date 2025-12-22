@@ -684,12 +684,12 @@ export class AccreditationController {
 
 		try {
 			const result = await AccreditationService.instance.list_accreditations(
+				response.locals.customer,
 				accreditationType,
 				network,
 				did,
 				page,
-				limit,
-				response.locals.customer
+				limit
 			);
 
 			if (result.success) {
