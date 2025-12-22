@@ -48,6 +48,7 @@ Run the SQL query in your database:
 The query will return customers who don't have any subscription.
 
 **Manual Export:**
+
 1. Copy the query results from your database client
 2. Convert to JSON format with required fields:
    - `customerId`: Internal customer ID
@@ -79,6 +80,7 @@ cat scripts/customers-without-subscriptions.json | jq .
 ```
 
 Check:
+
 - Number of customers
 - Customer emails are correct
 - Payment provider IDs (Stripe customer IDs) are valid
@@ -115,16 +117,20 @@ cat scripts/subscription-creation-YYYYMMDD-HHMMSS.log
 ## Files in This System
 
 ### SQL Queries
+
 1. **find-customers-without-subscriptions.sql** - SQL query to find customers without subscriptions
 
 ### Shell Scripts
+
 2. **create-stripe-subscriptions.sh** - Creates subscriptions via Stripe CLI
 
 ### Data Files (Created During Migration)
+
 3. **customers-without-subscriptions.json** - Manually created from DB query results
 4. **subscription-creation-*.log** - Execution logs with timestamps
 
 ### Documentation
+
 5. **README-SUBSCRIPTION-MIGRATION.md** - This file (for creating NEW subscriptions)
 6. **README-SUBSCRIPTION-ACTIVATION.md** - Guide for migrating/activating EXISTING subscriptions
 7. **MIGRATION-EXPLORER-PLAN.md** - Quick reference for Explorer plan migration

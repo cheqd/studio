@@ -5,6 +5,7 @@ This guide provides step-by-step instructions for migrating all customers to the
 ## Overview
 
 The migration happens in **3 stages**:
+
 1. **Stage 1:** Migrate canceled subscriptions
 2. **Stage 2:** Migrate trialing subscriptions
 3. **Stage 3:** Create subscriptions for customers without any
@@ -73,6 +74,7 @@ cd /Users/sownakroy/project/studio
 ```
 
 **Review the output carefully:**
+
 - Check number of subscriptions
 - Verify customer emails
 - Confirm actions that will be performed
@@ -242,18 +244,22 @@ Monitor Studio's webhook logs to ensure all subscription events were processed c
 ## Troubleshooting
 
 ### "Subscription not found"
+
 - Subscription may have been deleted from Stripe
 - Verify with: `stripe subscriptions retrieve sub_xxx`
 
 ### "No default payment method"
+
 - Customer needs to add payment method
 - Cannot activate without payment method
 
 ### "Invalid status transition"
+
 - Subscription may already be active
 - Check current status in Stripe dashboard
 
 ### Failed Payments
+
 - Some customers may have expired cards
 - Monitor Stripe dashboard for failed payment attempts
 - Consider sending payment update reminders
@@ -265,11 +271,13 @@ Monitor Studio's webhook logs to ensure all subscription events were processed c
 ### What Happens During Migration
 
 **Canceled Subscriptions:**
+
 - NEW subscription created (new subscription ID)
 - Old canceled subscription remains in history
 - Customer charged at Explorer plan price
 
 **Trialing Subscriptions:**
+
 - SAME subscription ID (updated in place)
 - Trial ends immediately
 - Price changed to Explorer plan
@@ -277,6 +285,7 @@ Monitor Studio's webhook logs to ensure all subscription events were processed c
 - Customer charged immediately
 
 **New Subscriptions:**
+
 - Brand new subscription created
 - Explorer plan price applied
 - Customers charged based on billing cycle
@@ -284,6 +293,7 @@ Monitor Studio's webhook logs to ensure all subscription events were processed c
 ### Communication
 
 Consider notifying customers before migration:
+
 - Email about plan changes
 - Explain new pricing
 - Provide support contact
@@ -292,6 +302,7 @@ Consider notifying customers before migration:
 ### Rollback Considerations
 
 Full rollback is difficult because:
+
 - Canceled subscriptions get new IDs
 - Trialing subscriptions have price changed and trial ended
 - Customers may have been charged

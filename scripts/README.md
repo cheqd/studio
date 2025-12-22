@@ -32,20 +32,24 @@ This folder contains scripts and documentation for managing Stripe subscription 
 ## Understanding the Migration Types
 
 ### Type 1: Activate/Migrate Existing Subscriptions
+
 **Script:** `activate-subscriptions.sh`
 **Documentation:** `README-SUBSCRIPTION-ACTIVATION.md`
 
 **Use when:**
+
 - Customers have existing subscriptions (trialing or canceled)
 - You want to migrate them to a new price/plan
 - You need to activate trialing subscriptions (end trial)
 - You need to reactivate canceled subscriptions
 
 **What it does:**
+
 - **Trialing subscriptions:** Updates to new price, ends trial immediately, keeps same subscription ID
 - **Canceled subscriptions:** Creates NEW subscription with new price (new subscription ID)
 
 **Example:**
+
 ```bash
 ./scripts/activate-subscriptions.sh price_1QYqCEBuiFnKBR8qNnOoP123 --status trialing --dry-run
 ```
@@ -53,20 +57,24 @@ This folder contains scripts and documentation for managing Stripe subscription 
 ---
 
 ### Type 2: Create New Subscriptions
+
 **Script:** `create-stripe-subscriptions.sh`
 **Documentation:** `README-SUBSCRIPTION-MIGRATION.md`
 
 **Use when:**
+
 - Customers exist in your system but have NO subscription at all
 - New customers who never had a subscription
 - Customers whose subscriptions were deleted
 
 **What it does:**
+
 - Creates brand new subscriptions
 - Assigns the specified price/plan
 - Sets up payment settings
 
 **Example:**
+
 ```bash
 ./scripts/create-stripe-subscriptions.sh price_1QYqCEBuiFnKBR8qNnOoP123 --dry-run
 ```
@@ -78,16 +86,19 @@ This folder contains scripts and documentation for managing Stripe subscription 
 For a complete migration to the Explorer plan, follow this 3-stage process:
 
 ### Stage 1: Migrate Canceled Subscriptions
+
 1. Run `find-subscriptions-to-activate.sql` with `WHERE status='canceled'`
 2. Save results to `scripts/subscriptions-to-activate.json`
 3. Run: `./scripts/activate-subscriptions.sh price_EXPLORER --status canceled`
 
 ### Stage 2: Migrate Trialing Subscriptions
+
 1. Run `find-subscriptions-to-activate.sql` with `WHERE status='trialing'`
 2. Save results to `scripts/subscriptions-to-activate.json`
 3. Run: `./scripts/activate-subscriptions.sh price_EXPLORER --status trialing`
 
 ### Stage 3: Create Subscriptions for New Customers
+
 1. Run `find-customers-without-subscriptions.sql`
 2. Save results to `scripts/customers-without-subscriptions.json`
 3. Run: `./scripts/create-stripe-subscriptions.sh price_EXPLORER`
@@ -105,11 +116,13 @@ For a complete migration to the Explorer plan, follow this 3-stage process:
 ```
 
 **Arguments:**
+
 - `price_id` (required): Target Stripe price ID
 - `--dry-run` (optional): Preview changes without executing
 - `--status` (optional): Filter by status (`trialing` or `canceled`)
 
 **Examples:**
+
 ```bash
 # Dry run for all subscriptions
 ./scripts/activate-subscriptions.sh price_123 --dry-run
@@ -133,10 +146,12 @@ For a complete migration to the Explorer plan, follow this 3-stage process:
 ```
 
 **Arguments:**
+
 - `price_id` (required): Target Stripe price ID
 - `--dry-run` (optional): Preview changes without executing
 
 **Examples:**
+
 ```bash
 # Dry run
 ./scripts/create-stripe-subscriptions.sh price_123 --dry-run
@@ -170,6 +185,7 @@ Used by `activate-subscriptions.sh`:
 ```
 
 **Required fields:**
+
 - `subscriptionId`: Stripe subscription ID
 - `customerId`: Internal customer ID
 - `status`: Subscription status (trialing/canceled)
@@ -195,6 +211,7 @@ Used by `create-stripe-subscriptions.sh`:
 ```
 
 **Required fields:**
+
 - `customerId`: Internal customer ID
 - `name`: Customer name
 - `email`: Customer email
@@ -251,22 +268,26 @@ Before running any migration:
 ### Common Issues
 
 **"Price ID not found"**
+
 ```bash
 # Verify price exists
 stripe prices retrieve price_123
 ```
 
 **"Subscription not found"**
+
 ```bash
 # Check if subscription exists in Stripe
 stripe subscriptions retrieve sub_123
 ```
 
 **"No default payment method"**
+
 - Customer needs to add payment method
 - Cannot activate subscription without payment method
 
 **"jq not found"**
+
 ```bash
 # Install jq
 brew install jq  # macOS
@@ -371,6 +392,7 @@ stripe prices list --product prod_EXPLORER_PLAN_ID
 ---
 
 **For detailed instructions, see:**
+
 - **MIGRATION-EXPLORER-PLAN.md** - Complete walkthrough
 - **README-SUBSCRIPTION-ACTIVATION.md** - Detailed activation guide
 - **README-SUBSCRIPTION-MIGRATION.md** - Detailed creation guide

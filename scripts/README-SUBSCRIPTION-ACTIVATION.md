@@ -1,6 +1,7 @@
 # Subscription Activation & Migration Guide
 
 This guide helps you migrate and activate subscriptions by:
+
 - Moving existing subscriptions to a new Stripe price/plan
 - Activating trialing subscriptions (ending trial immediately)
 - Reactivating canceled subscriptions (creating new subscriptions)
@@ -68,6 +69,7 @@ stripe prices list --product prod_EXPLORER_PLAN_ID
 ```
 
 **What happens:**
+
 - Creates NEW subscriptions for canceled customers
 - Uses Explorer plan price ID
 - Old canceled subscriptions remain canceled (new subscription IDs created)
@@ -90,6 +92,7 @@ stripe prices list --product prod_EXPLORER_PLAN_ID
 ```
 
 **What happens:**
+
 - Updates EXISTING subscriptions to new price
 - Ends trials immediately (trialing → active)
 - No prorations applied
@@ -112,6 +115,7 @@ stripe prices list --product prod_EXPLORER_PLAN_ID
 ```
 
 **What happens:**
+
 - Creates brand new subscriptions for customers with no subscription history
 - Uses Explorer plan price ID
 
@@ -129,6 +133,7 @@ Run the SQL query to find subscriptions that need activation:
 ```
 
 **Manual Export:**
+
 1. Copy the query results from your database client
 2. Convert to JSON format with required fields:
    - `subscriptionId`: Stripe subscription ID
@@ -183,6 +188,7 @@ Always test first to preview what will happen:
 ```
 
 Review the dry run output carefully to ensure:
+
 - Correct subscriptions are targeted
 - Actions match your expectations
 - No unexpected errors
@@ -218,6 +224,7 @@ You'll be asked to confirm before proceeding. The script will:
 - May have old/different price
 
 **Actions Performed:**
+
 1. Retrieve subscription to get all item IDs
 2. Delete all existing subscription items
 3. Add new subscription item with target price
@@ -225,6 +232,7 @@ You'll be asked to confirm before proceeding. The script will:
 5. Set `proration_behavior=none` (no prorations)
 
 **After:**
+
 - Status: `active`
 - Trial ended immediately
 - New price applied
@@ -234,17 +242,20 @@ You'll be asked to confirm before proceeding. The script will:
 ### Canceled Subscriptions
 
 **Before:**
+
 - Status: `canceled`
 - Subscription already canceled
 - Cannot be updated (Stripe limitation)
 
 **Actions Performed:**
+
 1. Create NEW subscription for the customer
 2. Use target price for the new subscription
 3. Set `payment_behavior=default_incomplete`
 4. Old canceled subscription remains canceled
 
 **After:**
+
 - Status: `active` (NEW subscription)
 - New subscription ID created
 - New price applied
@@ -402,6 +413,7 @@ Log file: scripts/subscription-activation-20250122-154530.log
 ### ⚠️ Billing Impact
 
 **Trialing → Active with New Price:**
+
 - Customers will be charged immediately at the NEW price
 - Trial ends instantly - no grace period
 - Make sure payment methods are on file
@@ -409,6 +421,7 @@ Log file: scripts/subscription-activation-20250122-154530.log
 - No prorations applied (clean switch to new price)
 
 **Canceled → Active with New Price:**
+
 - Creates NEW subscription with new price
 - Customers will be charged at the new price
 - They may have canceled intentionally - review carefully
@@ -520,6 +533,7 @@ stripe subscriptions cancel sub_newxyz789
 ```
 
 **Note:** Full rollback is difficult because:
+
 - Trialing subscriptions had their price changed and trial ended
 - Canceled subscriptions got NEW subscription IDs
 - Always test with dry-run and small batches first!
@@ -527,19 +541,23 @@ stripe subscriptions cancel sub_newxyz789
 ## Files in This Migration System
 
 ### SQL Queries
+
 1. `find-subscriptions-to-activate.sql` - Finds existing subscriptions (trialing/canceled)
 2. `find-customers-without-subscriptions.sql` - Finds customers needing new subscriptions
 
 ### Shell Scripts
+
 3. `activate-subscriptions.sh` - Migrates and activates existing subscriptions
 4. `create-stripe-subscriptions.sh` - Creates subscriptions for customers without any
 
 ### Data Files (Created During Migration)
+
 5. `subscriptions-to-activate.json` - Manually created from DB query results
 6. `customers-without-subscriptions.json` - Manually created from DB query results
 7. `subscription-activation-*.log` - Execution logs with timestamps
 
 ### Documentation
+
 8. `README-SUBSCRIPTION-ACTIVATION.md` - This file
 9. `README-SUBSCRIPTION-MIGRATION.md` - Guide for creating new subscriptions
 
