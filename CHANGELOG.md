@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.0-develop.10](https://github.com/cheqd/studio/compare/3.16.0-develop.9...3.16.0-develop.10) (2025-12-22)
+
+### Bug Fixes
+
+* Invalid param in list accreditation ([#776](https://github.com/cheqd/studio/issues/776)) ([74eec7b](https://github.com/cheqd/studio/commit/74eec7bf62b2584bd15b76058869d05264b78bca))
+
 ## [3.16.0-develop.9](https://github.com/cheqd/studio/compare/3.16.0-develop.8...3.16.0-develop.9) (2025-12-19)
 
 ### Bug Fixes
