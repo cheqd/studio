@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.0-develop.11](https://github.com/cheqd/studio/compare/3.16.0-develop.10...3.16.0-develop.11) (2025-12-22)
+
+### Bug Fixes
+
+* Stop loop at invalid accreditor status ([#777](https://github.com/cheqd/studio/issues/777)) ([109d312](https://github.com/cheqd/studio/commit/109d312dadd753f10a1480eaa14d7031b255a14e))
+
 ## [3.16.0-develop.10](https://github.com/cheqd/studio/compare/3.16.0-develop.9...3.16.0-develop.10) (2025-12-22)
 
 ### Bug Fixes
