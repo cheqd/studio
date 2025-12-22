@@ -410,8 +410,6 @@ export class AccreditationService {
 			const accreditorDid =
 				typeof accreditation.issuer === 'string' ? accreditation.issuer : accreditation.issuer.id;
 
-			accreditorDids.push(accreditorDid);
-
 			// Check if issuer DID is deactivated
 			if (!allowDeactivatedDid) {
 				deactivatedDidsCheckPromises.push(
@@ -466,6 +464,15 @@ export class AccreditationService {
 					status: StatusCodes.OK,
 					data: initialVerifyResult,
 					error: `Error on verifying accreditation ${accreditationUrl}: ${verifyResult.error.message}`,
+				};
+			}
+
+			if (verifyStatus && verifyResult.valid === false) {
+				return {
+					success: false,
+					status: StatusCodes.OK,
+					data: initialVerifyResult,
+					error: `Error on verifying accreditation ${accreditationUrl}: ${accreditorDid} is ${verifyResult.message} in the trust chain`,
 				};
 			}
 
