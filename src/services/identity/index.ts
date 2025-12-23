@@ -246,7 +246,7 @@ export interface IIdentityService {
 	 * @param customer - Customer entity
 	 * @returns The hash of the saved credential
 	 */
-	saveCredentialToDataStore(credential: VerifiableCredential, customer: CustomerEntity): Promise<string>;
+	saveCredential(credential: VerifiableCredential, customer: CustomerEntity): Promise<string>;
 }
 
 export class IdentityServiceStrategySetup {

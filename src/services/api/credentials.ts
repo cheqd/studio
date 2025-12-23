@@ -230,10 +230,7 @@ export class Credentials {
 					// If subject DID is in database, store credential in Veramo's dataStore
 					if (isSubjectInDatabase) {
 						// Store credential in Veramo's dataStore and get the hash
-						veramoHash = await studioService.agent.saveCredentialToDataStore(
-							verifiable_credential,
-							customer
-						);
+						veramoHash = await studioService.agent.saveCredential(verifiable_credential, customer);
 
 						// Calculate offer expiration (e.g., 30 days from now)
 						const offerExpiresAt = new Date();

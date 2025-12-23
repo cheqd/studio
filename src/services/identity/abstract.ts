@@ -306,4 +306,10 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	listOperations(where: ListOperationOptions, customer: CustomerEntity): Promise<any> {
 		throw new Error(`Not supported`);
 	}
+	didExists(did: string, customer: CustomerEntity): Promise<boolean> {
+		throw new Error(`Not supported`);
+	}
+	saveCredential(credential: VerifiableCredential, customer: CustomerEntity): Promise<string> {
+		throw new Error(`Not supported`);
+	}
 }

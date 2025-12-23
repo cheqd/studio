@@ -1211,4 +1211,31 @@ export class Veramo {
 			} satisfies SearchStatusListResult;
 		}
 	}
+
+	/**
+	 * Check if a DID exists in the agent's identifier store
+	 */
+	async didExists(agent: VeramoAgent, did: string): Promise<boolean> {
+		try {
+			await agent.didManagerGet({ did });
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * Save a verifiable credential to Veramo's dataStore
+	 * Returns the hash of the saved credential for reference
+	 */
+	async saveCredentialToDataStore(agent: VeramoAgent, credential: VerifiableCredential): Promise<string> {
+		try {
+			const saved = await agent.dataStoreSaveVerifiableCredential({
+				verifiableCredential: credential,
+			});
+			return saved;
+		} catch (error) {
+			throw new Error(`Failed to save credential to dataStore: ${error}`);
+		}
+	}
 }
