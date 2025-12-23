@@ -322,4 +322,31 @@ export class LocalIdentityService extends DefaultIdentityService {
 	) {
 		return await Veramo.instance.unsuspendCredentials(this.initAgent(), credentials, listType, publish);
 	}
+
+	/**
+	 * Check if a DID exists in the agent's identifier store
+	 */
+	async didExists(did: string): Promise<boolean> {
+		try {
+			await this.initAgent().didManagerGet({ did });
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * Save a verifiable credential to Veramo's dataStore
+	 * Returns the hash of the saved credential for reference
+	 */
+	async saveCredentialToDataStore(credential: VerifiableCredential): Promise<string> {
+		try {
+			const saved = await this.initAgent().dataStoreSaveVerifiableCredential({
+				verifiableCredential: credential,
+			});
+			return saved;
+		} catch (error) {
+			throw new Error(`Failed to save credential to dataStore: ${error}`);
+		}
+	}
 }

@@ -19,7 +19,7 @@ import {
 	W3CVerifiableCredential,
 } from '@veramo/core';
 import { KeyManager } from '@veramo/key-manager';
-import { DIDStore, KeyStore } from '@veramo/data-store';
+import { DIDStore, KeyStore, DataStore, DataStoreORM } from '@veramo/data-store';
 import { DIDManager } from '@veramo/did-manager';
 import { DIDResolverPlugin, getUniversalResolver as UniversalResolver } from '@veramo/did-resolver';
 import { CredentialPlugin } from '@veramo/credential-w3c';
@@ -184,7 +184,9 @@ export class Veramo {
 						new VeramoEd25519Signature2018(),
 						new VeramoEd25519Signature2020(),
 					],
-				})
+				}),
+				new DataStore(dbConnection),
+				new DataStoreORM(dbConnection)
 			);
 		}
 		return createAgent({ plugins });
@@ -415,7 +417,6 @@ export class Veramo {
 					: (credential as VerifiableCredential);
 			if (cred.credentialStatus) {
 				if (cred.credentialStatus.type === StatusList2021Entry) {
-					console.log('HERE');
 					result = await agent.cheqdVerifyCredential({
 						credential,
 						fetchList: true,
@@ -424,7 +425,6 @@ export class Veramo {
 						},
 					} as ICheqdVerifyCredentialWithStatusListArgs);
 				} else {
-					console.log('Verifying credential with Bitstring status list');
 					result = await agent.cheqdVerifyCredentialWithStatusList({
 						credential,
 						fetchList: true,

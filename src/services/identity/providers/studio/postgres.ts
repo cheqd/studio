@@ -945,4 +945,33 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			events: operations,
 		};
 	}
+
+	/**
+	 * Check if a DID exists in the agent's identifier store
+	 */
+	async didExists(did: string, customer: CustomerEntity): Promise<boolean> {
+		try {
+			const agent = await this.createAgent(customer);
+			await agent.didManagerGet({ did });
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * Save a verifiable credential to Veramo's dataStore
+	 * Returns the hash of the saved credential for reference
+	 */
+	async saveCredentialToDataStore(credential: VerifiableCredential, customer: CustomerEntity): Promise<string> {
+		try {
+			const agent = await this.createAgent(customer);
+			const saved = await agent.dataStoreSaveVerifiableCredential({
+				verifiableCredential: credential,
+			});
+			return saved;
+		} catch (error) {
+			throw new Error(`Failed to save credential to dataStore: ${error}`);
+		}
+	}
 }

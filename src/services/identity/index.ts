@@ -231,6 +231,22 @@ export interface IIdentityService {
 	getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | null>;
 	decryptAPIKey(apiKey: string): Promise<string>;
 	listOperations(options: ListOperationOptions, customer: CustomerEntity): Promise<any>;
+
+	/**
+	 * Check if a DID exists in the agent's identifier store
+	 * @param did - The DID to check
+	 * @param customer - Customer entity
+	 * @returns true if DID exists, false otherwise
+	 */
+	didExists(did: string, customer: CustomerEntity): Promise<boolean>;
+
+	/**
+	 * Save a verifiable credential to Veramo's dataStore
+	 * @param credential - The verifiable credential to save
+	 * @param customer - Customer entity
+	 * @returns The hash of the saved credential
+	 */
+	saveCredentialToDataStore(credential: VerifiableCredential, customer: CustomerEntity): Promise<string>;
 }
 
 export class IdentityServiceStrategySetup {

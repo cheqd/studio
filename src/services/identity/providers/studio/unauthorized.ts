@@ -6,6 +6,8 @@ import { Connection } from '../../../../database/connection/connection.js';
 import { Veramo } from './agent.js';
 import { CheqdDIDProvider, DefaultRPCUrls } from '@cheqd/did-provider-cheqd';
 import { CheqdNetwork } from '@cheqd/sdk';
+import type { VerifiableCredential } from '@veramo/core';
+import type { CustomerEntity } from '../../../../database/entities/customer.entity.js';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -49,5 +51,21 @@ export class Unauthorized extends DefaultIdentityService {
 			enableResolver: true,
 		});
 		return this.agent;
+	}
+
+	/**
+	 * Check if a DID exists in the agent's identifier store
+	 * Throws error as unauthorized access
+	 */
+	async didExists(_did: string, _customer: CustomerEntity): Promise<boolean> {
+		throw new Error('Unauthorized: Cannot check DID existence without proper authentication');
+	}
+
+	/**
+	 * Save a verifiable credential to Veramo's dataStore
+	 * Throws error as unauthorized access
+	 */
+	async saveCredentialToDataStore(_credential: VerifiableCredential, _customer: CustomerEntity): Promise<string> {
+		throw new Error('Unauthorized: Cannot save credential to dataStore without proper authentication');
 	}
 }
