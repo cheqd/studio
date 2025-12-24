@@ -958,4 +958,13 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		const agent = await this.createAgent(customer);
 		return await Veramo.instance.saveCredentialToDataStore(agent, credential);
 	}
+
+	async deleteCredential(hash: string, customer: CustomerEntity): Promise<boolean> {
+		const agent = await this.createAgent(customer);
+		return await Veramo.instance.deleteCredentialFromDataStore(agent, hash);
+	}
+	async retrieveCredential(hash: string, customer: CustomerEntity): Promise<VerifiableCredential | null> {
+		const agent = await this.createAgent(customer);
+		return await Veramo.instance.retrieveCredentialFromDataStore(agent, hash);
+	}
 }

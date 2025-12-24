@@ -7,6 +7,7 @@ import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { StatusCodes } from 'http-status-codes';
 import { CredentialController } from './controllers/api/credential.js';
+import { ReceivedCredentialController } from './controllers/api/received-credential.js';
 import { AccountController } from './controllers/api/account.js';
 import { Authentication } from './middleware/authentication.js';
 import { Connection } from './database/connection/connection.js';
@@ -145,6 +146,44 @@ class App {
 		app.get('/credentials/issued/:id', new CredentialController().getIssuedCredential);
 		app.put('/credentials/issued/:id', new CredentialController().updateIssuedCredential);
 		app.post('/credentials/issued/:id/re-issue', new CredentialController().retryIssuedCredential);
+		// Import External Credentials
+		app.post(
+			'/credentials/import',
+			ReceivedCredentialController.importValidator,
+			new ReceivedCredentialController().importCredential
+		);
+		// Received Credentials API
+		app.get(
+			'/credentials/received',
+			ReceivedCredentialController.listReceivedValidator,
+			new ReceivedCredentialController().listReceivedCredentials
+		);
+		app.get(
+			'/credentials/received/:credentialHash',
+			ReceivedCredentialController.getReceivedValidator,
+			new ReceivedCredentialController().getReceivedCredential
+		);
+		// Credential Offers API
+		app.get(
+			'/credentials/offers',
+			ReceivedCredentialController.listOffersValidator,
+			new ReceivedCredentialController().listOffers
+		);
+		app.get(
+			'/credentials/offers/:credentialId',
+			ReceivedCredentialController.getOfferValidator,
+			new ReceivedCredentialController().getOfferDetails
+		);
+		app.post(
+			'/credentials/offers/:credentialId/accept',
+			ReceivedCredentialController.acceptOfferValidator,
+			new ReceivedCredentialController().acceptOffer
+		);
+		app.post(
+			'/credentials/offers/:credentialId/reject',
+			ReceivedCredentialController.rejectOfferValidator,
+			new ReceivedCredentialController().rejectOffer
+		);
 		// Presentation API
 		app.post(
 			`/presentation/verify`,

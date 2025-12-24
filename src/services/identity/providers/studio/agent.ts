@@ -1238,4 +1238,26 @@ export class Veramo {
 			throw new Error(`Failed to save credential to dataStore: ${error}`);
 		}
 	}
+
+	/**
+	 * Delete a verifiable credential from Veramo's dataStore
+	 * Returns true if deleted successfully
+	 */
+	async deleteCredentialFromDataStore(agent: VeramoAgent, hash: string): Promise<boolean> {
+		try {
+			await agent.dataStoreDeleteVerifiableCredential({ hash });
+			return true;
+		} catch (error) {
+			throw new Error(`Failed to delete credential from dataStore: ${error}`);
+		}
+	}
+
+	async retrieveCredentialFromDataStore(agent: VeramoAgent, hash: string): Promise<VerifiableCredential | null> {
+		try {
+			const credential = await agent.dataStoreGetVerifiableCredential({ hash });
+			return credential || null;
+		} catch (error) {
+			throw new Error(`Failed to retrieve credential from dataStore: ${error}`);
+		}
+	}
 }

@@ -312,4 +312,10 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	saveCredential(credential: VerifiableCredential, customer: CustomerEntity): Promise<string> {
 		throw new Error(`Not supported`);
 	}
+	deleteCredential(hash: string, customer: CustomerEntity): Promise<boolean> {
+		throw new Error(`Not supported`);
+	}
+	retrieveCredential(hash: string, customer: CustomerEntity): Promise<VerifiableCredential | null> {
+		throw new Error(`Not supported`);
+	}
 }

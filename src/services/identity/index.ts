@@ -247,6 +247,16 @@ export interface IIdentityService {
 	 * @returns The hash of the saved credential
 	 */
 	saveCredential(credential: VerifiableCredential, customer: CustomerEntity): Promise<string>;
+
+	/**
+	 * Delete a verifiable credential from Veramo's dataStore
+	 * @param hash - The hash of the credential to delete
+	 * @param customer - Customer entity
+	 * @returns true if deleted successfully
+	 */
+	deleteCredential(hash: string, customer: CustomerEntity): Promise<boolean>;
+
+	retrieveCredential(hash: string, customer: CustomerEntity): Promise<VerifiableCredential | null>;
 }
 
 export class IdentityServiceStrategySetup {

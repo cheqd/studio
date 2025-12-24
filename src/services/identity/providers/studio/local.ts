@@ -330,4 +330,11 @@ export class LocalIdentityService extends DefaultIdentityService {
 	async saveCredential(credential: VerifiableCredential): Promise<string> {
 		return await Veramo.instance.saveCredentialToDataStore(this.initAgent(), credential);
 	}
+
+	async deleteCredential(hash: string): Promise<boolean> {
+		return await Veramo.instance.deleteCredentialFromDataStore(this.initAgent(), hash);
+	}
+	async retrieveCredential(hash: string): Promise<VerifiableCredential | null> {
+		return await Veramo.instance.retrieveCredentialFromDataStore(this.initAgent(), hash);
+	}
 }
