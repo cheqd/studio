@@ -4810,7 +4810,11 @@
               "enum": [
                 "issued",
                 "suspended",
-                "revoked"
+                "revoked",
+                "offered",
+                "rejected",
+                "unknown",
+                "valid"
               ]
             },
             "required": false
