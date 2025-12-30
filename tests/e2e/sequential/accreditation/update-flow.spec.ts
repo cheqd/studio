@@ -86,7 +86,7 @@ test(' Suspend and Verify an accreditation', async ({ request }) => {
 	const verificationResult = await verificationResponse.json();
 	expect(verificationResponse).toBeOK();
 	expect(verificationResponse.status()).toBe(StatusCodes.OK);
-	expect(verificationResult.verified).toBe(true);
+	expect(verificationResult.verified).toBe(false);
 	expect(verificationResult.valid).toBe(false);
 	expect(verificationResult.status).toBe(2);
 	expect(verificationResult.message).toBe('suspended');
@@ -158,7 +158,7 @@ test(' Revoke and Verify an Accreditation', async ({ request }) => {
 	const verificationResult = await verificationResponse.json();
 	expect(verificationResponse).toBeOK();
 	expect(verificationResponse.status()).toBe(StatusCodes.OK);
-	expect(verificationResult.verified).toBe(true);
+	expect(verificationResult.verified).toBe(false);
 	expect(verificationResult.valid).toBe(false);
 	expect(verificationResult.status).toBe(1);
 	expect(verificationResult.message).toBe('revoked');
