@@ -13,6 +13,7 @@ dotenv.config();
 
 export interface ListOffersOptions {
 	holderDid?: string;
+	category?: 'credential' | 'accreditation';
 	page?: number;
 	limit?: number;
 }
@@ -56,7 +57,7 @@ export class ReceivedCredentials {
 	 */
 	async listPendingOffers(options: ListOffersOptions, customer: CustomerEntity): Promise<ListOffersResponse> {
 		try {
-			const { holderDid, page = 1, limit = 10 } = options;
+			const { holderDid, category, page = 1, limit = 10 } = options;
 			let subjectDids: string[] = [];
 
 			// If holderDid not provided, get all DIDs for this customer
@@ -87,7 +88,14 @@ export class ReceivedCredentials {
 				.leftJoinAndSelect('credential.statusRegistry', 'statusRegistry')
 				.leftJoinAndSelect('credential.veramoCredential', 'veramoCredential')
 				.where('credential.status = :status', { status: 'offered' })
-				.andWhere('credential.subjectId IN (:...subjectDids)', { subjectDids })
+				.andWhere('credential.subjectId IN (:...subjectDids)', { subjectDids });
+
+			// Add category filter if provided
+			if (category) {
+				queryBuilder.andWhere('credential.category = :category', { category });
+			}
+
+			queryBuilder
 				.orderBy('credential.createdAt', 'DESC')
 				.skip((page - 1) * limit)
 				.take(limit);
@@ -468,11 +476,13 @@ export class ReceivedCredentials {
 	 * List received credentials (accepted offers + imported credentials)
 	 * @param customer - Customer entity
 	 * @param holderDid - Optional DID to filter by subject
+	 * @param category - Optional category to filter by ('credential' or 'accreditation')
 	 * @returns List of received credentials with their hashes
 	 */
 	async listReceivedCredentials(
 		customer: CustomerEntity,
-		holderDid?: string
+		holderDid?: string,
+		category?: 'credential' | 'accreditation'
 	): Promise<Array<{ hash: string; credential: VerifiableCredential }>> {
 		try {
 			// Get all DIDs owned by this customer
@@ -503,6 +513,13 @@ export class ReceivedCredentials {
 				.andWhere('(issued.status NOT IN (:...excludedStatuses) OR issued.status IS NULL)', {
 					excludedStatuses: ['offered', 'rejected'],
 				});
+
+			// Add category filter if provided
+			// Note: This will exclude imported credentials (which have issued.category = NULL)
+			// Only credentials with IssuedCredentialEntity matching the category will be returned
+			if (category) {
+				queryBuilder.andWhere('issued.category = :category', { category });
+			}
 
 			const credentialRecords = await queryBuilder.getMany();
 

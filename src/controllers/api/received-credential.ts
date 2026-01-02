@@ -7,6 +7,11 @@ import { ReceivedCredentials } from '../../services/api/received-credentials.js'
 export class ReceivedCredentialController {
 	public static listOffersValidator = [
 		query('holderDid').optional().isDID().withMessage('Invalid holderDid format').bail(),
+		query('category')
+			.optional()
+			.isIn(['credential', 'accreditation'])
+			.withMessage('category must be either "credential" or "accreditation"')
+			.bail(),
 		query('page').optional().isInt({ min: 1 }).withMessage('page must be a positive integer').toInt().bail(),
 		query('limit')
 			.optional()
@@ -100,6 +105,11 @@ export class ReceivedCredentialController {
 	];
 	public static listReceivedValidator = [
 		query('holderDid').optional().isDID().withMessage('Invalid holderDid format').bail(),
+		query('category')
+			.optional()
+			.isIn(['credential', 'accreditation'])
+			.withMessage('category must be either "credential" or "accreditation"')
+			.bail(),
 	];
 	public static getReceivedValidator = [
 		check('credentialHash')
@@ -126,6 +136,13 @@ export class ReceivedCredentialController {
 	 *         schema:
 	 *           type: string
 	 *         description: Optional DID of the credential holder. If not provided, returns offers for all customer DIDs.
+	 *       - in: query
+	 *         name: category
+	 *         required: false
+	 *         schema:
+	 *           type: string
+	 *           enum: [credential, accreditation]
+	 *         description: Optional category to filter by credential type
 	 *       - in: query
 	 *         name: page
 	 *         schema:
@@ -169,12 +186,13 @@ export class ReceivedCredentialController {
 	@validate
 	public async listOffers(request: Request, response: Response) {
 		try {
-			const { holderDid, page, limit } = request.query;
+			const { holderDid, category, page, limit } = request.query;
 			const customer = response.locals.customer;
 
 			const result = await ReceivedCredentials.instance.listPendingOffers(
 				{
 					holderDid: holderDid as string | undefined,
+					category: category as 'credential' | 'accreditation' | undefined,
 					page: page ? Number(page) : undefined,
 					limit: limit ? Number(limit) : undefined,
 				},
@@ -507,6 +525,13 @@ export class ReceivedCredentialController {
 	 *         schema:
 	 *           type: string
 	 *         description: Optional DID to filter credentials by subject
+	 *       - in: query
+	 *         name: category
+	 *         required: false
+	 *         schema:
+	 *           type: string
+	 *           enum: [credential, accreditation]
+	 *         description: Optional category to filter by credential type. Note that imported credentials without IssuedCredentialEntity will be excluded when filtering by category.
 	 *     responses:
 	 *       200:
 	 *         description: List of received credentials
@@ -525,12 +550,13 @@ export class ReceivedCredentialController {
 	@validate
 	public async listReceivedCredentials(request: Request, response: Response) {
 		try {
-			const { holderDid } = request.query;
+			const { holderDid, category } = request.query;
 			const customer = response.locals.customer;
 
 			const credentials = await ReceivedCredentials.instance.listReceivedCredentials(
 				customer,
-				holderDid as string | undefined
+				holderDid as string | undefined,
+				category as 'credential' | 'accreditation' | undefined
 			);
 
 			return response.status(StatusCodes.OK).json(credentials);

@@ -6517,6 +6517,19 @@
           },
           {
             "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "credential",
+                "accreditation"
+              ]
+            },
+            "description": "Optional category to filter by credential type"
+          },
+          {
+            "in": "query",
             "name": "page",
             "schema": {
               "type": "integer",
@@ -6878,6 +6891,19 @@
               "type": "string"
             },
             "description": "Optional DID to filter credentials by subject"
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "credential",
+                "accreditation"
+              ]
+            },
+            "description": "Optional category to filter by credential type. Note that imported credentials without IssuedCredentialEntity will be excluded when filtering by category."
           }
         ],
         "responses": {
