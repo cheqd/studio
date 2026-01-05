@@ -9,6 +9,7 @@ import {
 	PrimaryColumn,
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { Credential } from '@veramo/data-store';
 import { CustomerEntity } from './customer.entity.js';
 import { CredentialProviderEntity } from './credential-provider.entity.js';
 import { StatusRegistryEntity } from './status-registry.entity.js';
@@ -48,7 +49,7 @@ export class IssuedCredentialEntity {
 	type!: string[];
 
 	@Column({ type: 'text', nullable: false, default: 'issued' })
-	status!: 'issued' | 'suspended' | 'revoked' | 'unknown';
+	status!: 'issued' | 'suspended' | 'revoked' | 'unknown' | 'offered' | 'rejected';
 
 	@Column({ type: 'timestamptz', nullable: true })
 	statusUpdatedAt?: Date;
@@ -74,6 +75,12 @@ export class IssuedCredentialEntity {
 	@Column({ type: 'timestamptz', nullable: true })
 	expiresAt?: Date;
 
+	@Column({ type: 'timestamptz', nullable: true })
+	subjectAcceptedAt?: Date;
+
+	@Column({ type: 'timestamptz', nullable: true })
+	offerExpiresAt?: Date;
+
 	@CreateDateColumn()
 	createdAt?: Date;
 
@@ -96,6 +103,21 @@ export class IssuedCredentialEntity {
 	@JoinColumn({ name: 'statusRegistryId' })
 	statusRegistry?: StatusRegistryEntity;
 
+	/**
+	 * Hash of the credential stored in Veramo's data store
+	 * This is the foreign key that references the 'hash' column in Veramo's credential table
+	 */
+	@Column({ type: 'varchar', nullable: true })
+	veramoHash?: string;
+
+	/**
+	 * Reference to Veramo's credential table
+	 * This links to the credential stored in Veramo's data store
+	 */
+	@ManyToOne(() => Credential, { nullable: true, onDelete: 'SET NULL' })
+	@JoinColumn({ name: 'veramoHash', referencedColumnName: 'hash' })
+	veramoCredential?: Credential;
+
 	@BeforeInsert()
 	addId() {
 		if (!this.issuedCredentialId) {
@@ -115,7 +137,7 @@ export class IssuedCredentialEntity {
 			providerCredentialId?: string;
 			issuerId?: string;
 			subjectId?: string;
-			status?: 'issued' | 'suspended' | 'revoked';
+			status?: 'issued' | 'suspended' | 'revoked' | 'unknown' | 'offered' | 'rejected';
 			statusUpdatedAt?: Date;
 			metadata?: Record<string, any>;
 			credentialStatus?: Record<string, any>;
@@ -124,6 +146,9 @@ export class IssuedCredentialEntity {
 			retryCount?: number;
 			lastError?: string;
 			expiresAt?: Date;
+			subjectAcceptedAt?: Date;
+			offerExpiresAt?: Date;
+			veramoCredential?: Credential;
 			deprecated?: boolean;
 		}
 	) {
@@ -147,6 +172,9 @@ export class IssuedCredentialEntity {
 		this.lastError = options?.lastError;
 		this.issuedAt = issuedAt;
 		this.expiresAt = options?.expiresAt;
+		this.subjectAcceptedAt = options?.subjectAcceptedAt;
+		this.offerExpiresAt = options?.offerExpiresAt;
+		this.veramoCredential = options?.veramoCredential;
 		this.customer = customer;
 		this.deprecated = options?.deprecated || false;
 	}

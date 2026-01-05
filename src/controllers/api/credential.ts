@@ -656,7 +656,7 @@ export class CredentialController {
 	 *         description: Filter credentials by status.
 	 *         schema:
 	 *           type: string
-	 *           enum: [issued, suspended, revoked]
+	 *           enum: [issued, suspended, revoked, offered, rejected, unknown, valid]
 	 *         required: false
 	 *       - in: query
 	 *         name: format

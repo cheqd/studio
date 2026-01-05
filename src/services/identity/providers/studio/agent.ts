@@ -19,7 +19,7 @@ import {
 	W3CVerifiableCredential,
 } from '@veramo/core';
 import { KeyManager } from '@veramo/key-manager';
-import { DIDStore, KeyStore } from '@veramo/data-store';
+import { DIDStore, KeyStore, DataStore, DataStoreORM } from '@veramo/data-store';
 import { DIDManager } from '@veramo/did-manager';
 import { DIDResolverPlugin, getUniversalResolver as UniversalResolver } from '@veramo/did-resolver';
 import { CredentialPlugin } from '@veramo/credential-w3c';
@@ -184,7 +184,9 @@ export class Veramo {
 						new VeramoEd25519Signature2018(),
 						new VeramoEd25519Signature2020(),
 					],
-				})
+				}),
+				new DataStore(dbConnection),
+				new DataStoreORM(dbConnection)
 			);
 		}
 		return createAgent({ plugins });
@@ -415,7 +417,6 @@ export class Veramo {
 					: (credential as VerifiableCredential);
 			if (cred.credentialStatus) {
 				if (cred.credentialStatus.type === StatusList2021Entry) {
-					console.log('HERE');
 					result = await agent.cheqdVerifyCredential({
 						credential,
 						fetchList: true,
@@ -424,7 +425,6 @@ export class Veramo {
 						},
 					} as ICheqdVerifyCredentialWithStatusListArgs);
 				} else {
-					console.log('Verifying credential with Bitstring status list');
 					result = await agent.cheqdVerifyCredentialWithStatusList({
 						credential,
 						fetchList: true,
@@ -1209,6 +1209,55 @@ export class Veramo {
 				found: false,
 				error: (error as Record<string, unknown>).toString(),
 			} satisfies SearchStatusListResult;
+		}
+	}
+
+	/**
+	 * Check if a DID exists in the agent's identifier store
+	 */
+	async didExists(agent: VeramoAgent, did: string): Promise<boolean> {
+		try {
+			await agent.didManagerGet({ did });
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * Save a verifiable credential to Veramo's dataStore
+	 * Returns the hash of the saved credential for reference
+	 */
+	async saveCredentialToDataStore(agent: VeramoAgent, credential: VerifiableCredential): Promise<string> {
+		try {
+			const saved = await agent.dataStoreSaveVerifiableCredential({
+				verifiableCredential: credential,
+			});
+			return saved;
+		} catch (error) {
+			throw new Error(`Failed to save credential to dataStore: ${error}`);
+		}
+	}
+
+	/**
+	 * Delete a verifiable credential from Veramo's dataStore
+	 * Returns true if deleted successfully
+	 */
+	async deleteCredentialFromDataStore(agent: VeramoAgent, hash: string): Promise<boolean> {
+		try {
+			await agent.dataStoreDeleteVerifiableCredential({ hash });
+			return true;
+		} catch (error) {
+			throw new Error(`Failed to delete credential from dataStore: ${error}`);
+		}
+	}
+
+	async retrieveCredentialFromDataStore(agent: VeramoAgent, hash: string): Promise<VerifiableCredential | null> {
+		try {
+			const credential = await agent.dataStoreGetVerifiableCredential({ hash });
+			return credential || null;
+		} catch (error) {
+			throw new Error(`Failed to retrieve credential from dataStore: ${error}`);
 		}
 	}
 }

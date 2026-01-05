@@ -945,4 +945,26 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			events: operations,
 		};
 	}
+
+	/**
+	 * Check if a DID exists in the agent's identifier store
+	 */
+	async didExists(did: string, customer: CustomerEntity): Promise<boolean> {
+		const agent = await this.createAgent(customer);
+		return await Veramo.instance.didExists(agent, did);
+	}
+
+	async saveCredential(credential: VerifiableCredential, customer: CustomerEntity): Promise<string> {
+		const agent = await this.createAgent(customer);
+		return await Veramo.instance.saveCredentialToDataStore(agent, credential);
+	}
+
+	async deleteCredential(hash: string, customer: CustomerEntity): Promise<boolean> {
+		const agent = await this.createAgent(customer);
+		return await Veramo.instance.deleteCredentialFromDataStore(agent, hash);
+	}
+	async retrieveCredential(hash: string, customer: CustomerEntity): Promise<VerifiableCredential | null> {
+		const agent = await this.createAgent(customer);
+		return await Veramo.instance.retrieveCredentialFromDataStore(agent, hash);
+	}
 }

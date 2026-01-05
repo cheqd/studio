@@ -4810,7 +4810,11 @@
               "enum": [
                 "issued",
                 "suspended",
-                "revoked"
+                "revoked",
+                "offered",
+                "rejected",
+                "unknown",
+                "valid"
               ]
             },
             "required": false
@@ -6490,6 +6494,480 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/credentials/offers": {
+      "get": {
+        "tags": [
+          "Credential Offers"
+        ],
+        "summary": "List pending credential offers",
+        "description": "Retrieves a list of pending credential offers. If holderDid is not provided, returns all offers for all DIDs owned by the customer.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "holderDid",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional DID of the credential holder. If not provided, returns offers for all customer DIDs."
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "credential",
+                "accreditation"
+              ]
+            },
+            "description": "Optional category to filter by credential type"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Page number for pagination"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            },
+            "description": "Number of results per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of pending credential offers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": {
+                      "type": "integer"
+                    },
+                    "offers": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/IssuedCredentialResponse"
+                      }
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "limit": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credentials/offers/{credentialId}": {
+      "get": {
+        "tags": [
+          "Credential Offers"
+        ],
+        "summary": "Get credential offer details",
+        "description": "Retrieves detailed information about a specific credential offer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "credentialId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID of the credential offer"
+          },
+          {
+            "in": "query",
+            "name": "holderDid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "DID of the credential holder"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Credential offer details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedCredentialResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "Credential offer not found"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credentials/offers/{credentialId}/accept": {
+      "post": {
+        "tags": [
+          "Credential Offers"
+        ],
+        "summary": "Accept a credential offer",
+        "description": "Accepts a pending credential offer. The credential is verified and status is updated to issued.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "credentialId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID of the credential offer to accept"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "holderDid"
+                ],
+                "properties": {
+                  "holderDid": {
+                    "type": "string",
+                    "description": "DID of the credential holder"
+                  },
+                  "createPresentation": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to create a verifiable presentation"
+                  },
+                  "presentationDomain": {
+                    "type": "string",
+                    "description": "Optional domain for the presentation"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credential offer accepted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "credential": {
+                      "type": "object"
+                    },
+                    "presentation": {
+                      "type": "string",
+                      "description": "JWT presentation (if createPresentation was true)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "Credential offer not found"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credentials/offers/{credentialId}/reject": {
+      "post": {
+        "tags": [
+          "Credential Offers"
+        ],
+        "summary": "Reject a credential offer",
+        "description": "Rejects a pending credential offer. The credential is deleted and status is updated to rejected.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "credentialId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID of the credential offer to reject"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "holderDid"
+                ],
+                "properties": {
+                  "holderDid": {
+                    "type": "string",
+                    "description": "DID of the credential holder"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credential offer rejected successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "Credential offer not found"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credentials/import": {
+      "post": {
+        "tags": [
+          "Verifiable Credentials"
+        ],
+        "summary": "Import an externally issued credential",
+        "description": "Imports a credential issued by a third party (not in Studio) and stores it in the holder's dataStore",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "credential",
+                  "holderDid"
+                ],
+                "properties": {
+                  "credential": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "description": "Verifiable credential as JSON object"
+                      },
+                      {
+                        "type": "string",
+                        "description": "Verifiable credential as JWT string"
+                      }
+                    ]
+                  },
+                  "holderDid": {
+                    "type": "string",
+                    "description": "DID of the credential holder"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credential imported successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "credentialHash": {
+                      "type": "string",
+                      "description": "Hash of the stored credential"
+                    },
+                    "credential": {
+                      "type": "object",
+                      "description": "The imported credential"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credentials/received": {
+      "get": {
+        "tags": [
+          "Verifiable Credentials"
+        ],
+        "summary": "List received credentials",
+        "description": "Retrieves all credentials stored in the holder's dataStore (accepted offers + imported credentials)",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "holderDid",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional DID to filter credentials by subject"
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "credential",
+                "accreditation"
+              ]
+            },
+            "description": "Optional category to filter by credential type. Note that imported credentials without IssuedCredentialEntity will be excluded when filtering by category."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of received credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Verifiable Credential"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credentials/received/{credentialHash}": {
+      "get": {
+        "tags": [
+          "Verifiable Credentials"
+        ],
+        "summary": "Get a specific received credential",
+        "description": "Retrieves a specific credential from the holder's dataStore by its hash",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "credentialHash",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Hash of the credential"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Received credential",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Verifiable Credential"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "Credential not found"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
           }
         }
       }

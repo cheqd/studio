@@ -143,6 +143,8 @@ export class Credentials {
 			let verifiableCredential: VerifiableCredential;
 			let providerCredentialId: string | undefined;
 			let credentialMetadata: Record<string, any> = {};
+			let isSubjectInDatabase = false;
+			let veramoHash: string | undefined;
 
 			switch (providerId || connector) {
 				case CredentialConnectors.Dock: {
@@ -172,9 +174,13 @@ export class Credentials {
 				case CredentialConnectors.Studio:
 				case CredentialConnectors.Verida:
 				default: {
-					const verifiable_credential = await new IdentityServiceStrategySetup(
-						customer.customerId
-					).agent.createCredential(credential, format, statusOptions, customer);
+					const studioService = new IdentityServiceStrategySetup(customer.customerId);
+					const verifiable_credential = await studioService.agent.createCredential(
+						credential,
+						format,
+						statusOptions,
+						customer
+					);
 
 					const isVeridaDid = new VeridaDIDValidator().validate(subjectDid);
 					let sendCredentialResponse;
@@ -218,7 +224,18 @@ export class Credentials {
 						providerCredentialId = verifiable_credential.id;
 					}
 
-					verifiableCredential = verifiable_credential;
+					// Check if subject DID exists in Veramo's identifier store
+					isSubjectInDatabase = await studioService.agent.didExists(subjectDid, customer);
+
+					// If subject DID is in database, store credential in Veramo's dataStore
+					if (isSubjectInDatabase) {
+						// Store credential in Veramo's dataStore and get the hash
+						veramoHash = await studioService.agent.saveCredential(verifiable_credential, customer);
+
+						// Calculate offer expiration (e.g., 30 days from now)
+						const offerExpiresAt = new Date();
+						offerExpiresAt.setDate(offerExpiresAt.getDate() + 30);
+					}
 					credentialMetadata = {
 						schema: verifiable_credential.credentialSchema,
 						proof: verifiable_credential.proof,
@@ -227,6 +244,7 @@ export class Credentials {
 						termsOfUse: additionalData.termsOfUse,
 						contexts: [...(context || []), ...VC_CONTEXT],
 					};
+					verifiableCredential = verifiable_credential;
 					break;
 				}
 			}
@@ -236,30 +254,51 @@ export class Credentials {
 				? verifiableCredential.type
 				: [verifiableCredential.type || 'VerifiableCredential'];
 
+			// Determine status based on whether subject DID is in database
+			const currentStatus = isSubjectInDatabase ? 'offered' : 'issued';
+
+			// Calculate offer expiration if credential is offered
+			let offerExpiresAt: Date | undefined;
+			if (isSubjectInDatabase) {
+				offerExpiresAt = new Date();
+				offerExpiresAt.setDate(offerExpiresAt.getDate() + 30); // 30 days from now
+			}
+
 			await this.update(
 				trackingRecord.issuedCredentialId,
 				{
 					providerCredentialId: providerCredentialId,
 					metadata: credentialMetadata,
-					status: 'issued',
+					status: currentStatus as 'issued' | 'offered',
 				},
 				customer
 			);
 
+			// Build update payload for fields not covered by the update() method
+			const updatePayload: any = {
+				type: credentialType,
+				issuedAt: verifiableCredential.issuanceDate
+					? new Date(verifiableCredential.issuanceDate)
+					: trackingRecord.issuedAt,
+				expiresAt: verifiableCredential.expirationDate
+					? new Date(verifiableCredential.expirationDate)
+					: undefined,
+				credentialStatus: verifiableCredential.credentialStatus,
+			};
+
+			// Add offer-specific fields if credential is offered
+			if (isSubjectInDatabase && offerExpiresAt) {
+				updatePayload.offerExpiresAt = offerExpiresAt;
+			}
+
+			// Set veramoHash if credential was stored in Veramo
+			if (veramoHash) {
+				// We need to set the FK column directly since we have the hash
+				updatePayload.veramoHash = veramoHash;
+			}
+
 			// Also update fields not covered by the update() method
-			await this.repository.update(
-				{ issuedCredentialId: trackingRecord.issuedCredentialId },
-				{
-					type: credentialType,
-					issuedAt: verifiableCredential.issuanceDate
-						? new Date(verifiableCredential.issuanceDate)
-						: trackingRecord.issuedAt,
-					expiresAt: verifiableCredential.expirationDate
-						? new Date(verifiableCredential.expirationDate)
-						: undefined,
-					credentialStatus: verifiableCredential.credentialStatus,
-				}
-			);
+			await this.repository.update({ issuedCredentialId: trackingRecord.issuedCredentialId }, updatePayload);
 
 			return verifiableCredential;
 		} catch (error) {

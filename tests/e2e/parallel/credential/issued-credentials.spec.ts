@@ -264,7 +264,7 @@ test('List response structure validation', async ({ request }) => {
 		expect(credential).toHaveProperty('type');
 		expect(Array.isArray(credential.type)).toBe(true);
 		expect(credential).toHaveProperty('status');
-		expect(['issued', 'suspended', 'revoked']).toContain(credential.status);
+		expect(['issued', 'suspended', 'revoked', 'offered', 'rejected']).toContain(credential.status);
 		expect(credential).toHaveProperty('issuedAt');
 		expect(credential).toHaveProperty('createdAt');
 		expect(credential).toHaveProperty('updatedAt');
