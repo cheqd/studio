@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.0-develop.12](https://github.com/cheqd/studio/compare/3.16.0-develop.11...3.16.0-develop.12) (2026-01-05)
+
+### Features
+
+* Store received creds [DEV-5606] ([#778](https://github.com/cheqd/studio/issues/778)) ([9e00829](https://github.com/cheqd/studio/commit/9e00829011ffaf66052d5390daf6b73218033f55))
+
 ## [3.16.0-develop.11](https://github.com/cheqd/studio/compare/3.16.0-develop.10...3.16.0-develop.11) (2025-12-22)
 
 ### Bug Fixes
