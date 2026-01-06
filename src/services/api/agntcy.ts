@@ -1,119 +1,86 @@
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-import { writeFile, unlink } from 'fs/promises';
+import { Client, Config, models } from 'agntcy-dir';
+import { create } from '@bufbuild/protobuf';
 import { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { PublishRecordRequestBody, SearchRecordQuery, VerificationResult } from '../../types/record.js';
 
-const execFileAsync = promisify(execFile);
-
 /**
- * AgntcyService - Wraps dirctl CLI for self-hosted AGNTCY Directory
+ * AgntcyService - Uses official agntcy-dir npm package
+ * Based on official examples from agntcy/dir repository
+ *
+ * Installation:
+ * npm install agntcy-dir @bufbuild/protobuf
  */
 export class AgntcyService {
-	private directoryUrl: string;
+	private client: Client;
 	private oasfSchemaUrl: string;
-	private dirctlCommand: string;
 
 	constructor() {
-		this.directoryUrl = process.env.DIRECTORY_SERVER_URL || 'localhost:8888';
+		const serverAddress = process.env.DIRECTORY_SERVER_URL || 'localhost:8888';
+		const dirctlPath = process.env.DIRCTL_PATH || '/usr/local/bin/dirctl';
+
 		this.oasfSchemaUrl = process.env.OASF_SCHEMA_SERVER_URL || 'https://schema.oasf.outshift.com';
-		this.dirctlCommand = process.env.DIRCTL_COMMAND || 'dirctl';
-	}
 
-	/**
-	 * Execute dirctl command with proper flags
-	 */
-	private async execDirctl(args: string[]): Promise<string> {
-		try {
-			const fullArgs = ['--server', this.directoryUrl, ...args];
-
-			const { stdout, stderr } = await execFileAsync(this.dirctlCommand, fullArgs, {
-				maxBuffer: 10 * 1024 * 1024,
-			});
-
-			if (stderr && !stderr.includes('[Info]') && !stderr.includes('INFO')) {
-				console.warn('dirctl stderr:', stderr);
-			}
-
-			return stdout;
-		} catch (error: any) {
-			console.error('dirctl error:', error);
-			const errorMsg = error.stderr || error.message || 'Unknown error';
-			throw new Error(`dirctl command failed: ${errorMsg}`);
-		}
+		const config = new Config(serverAddress, dirctlPath);
+		this.client = new Client(config);
 	}
 
 	/**
 	 * Convert request body to OASF record format
-	 * Uses data from request instead of hardcoding
+	 * Must match the exact structure from the official example
 	 */
 	private toOASFRecord(body: PublishRecordRequestBody): any {
 		const { data } = body;
 
+		// Return the exact structure from the example - just the data wrapper
 		return {
-			metadata: {
-				version: data.schema_version || '1.0.0',
-				uid: data.uid || data.name, // Use uid if provided, fallback to name
-				product: {
-					name: data.name,
-					vendor_name: data.authors?.[0] || 'Unknown',
-					version: data.version,
-					lang: 'en',
-					url: data.locators?.find((l) => l.type === 'api_endpoint')?.url,
-				},
-				labels: data.type ? [data.type] : [],
+			data: {
+				name: data.name,
+				version: data.version,
+				schema_version: data.schema_version || '0.7.0',
+				description: data.description || '',
+				authors: data.authors || [],
+				created_at: data.created_at || new Date().toISOString(),
+				uid: data.uid, // Include identity if provided
+				type: data.type,
+				skills: data.skills || [],
+				locators: data.locators || [],
+				domains: data.domains || [],
+				modules: data.modules || [],
 			},
-			record: {
-				type_uid: '100001',
-				type_name: data.type === 'mcp-server' ? 'MCP Server' : 'AI Agent',
-				category_uid: '1',
-				category_name: 'Agent',
-				class_uid: '1001',
-				class_name: data.type || 'Agent',
-				severity_id: 1,
-				time: data.created_at || new Date().toISOString(),
-			},
-			// Use data directly from request
-			skills: data.skills?.map((skill) => ({
-				skill_id: skill.name,
-				skill_name: skill.name,
-				confidence: 1.0,
-			})) || [],
-			domains: data.domains?.map((domain) => ({
-				domain_id: domain.name,
-				domain_name: domain.name,
-			})) || [],
-			locators: data.locators || [],
-			modules: data.modules || [],
 		};
 	}
 
 	/**
 	 * Convert OASF record back to response format
 	 */
-	private fromOASFRecord(oasf: any): PublishRecordRequestBody {
+	private fromOASFRecord(record: any): PublishRecordRequestBody {
+		const data = record.data || record;
+
 		return {
 			data: {
-				name: oasf.metadata.product.name,
-				version: oasf.metadata.product.version,
-				schema_version: oasf.metadata.version,
-				uid: oasf.metadata.uid, // Preserve identity
-				description: oasf.metadata.product.url,
-				authors: [oasf.metadata.product.vendor_name],
-				created_at: oasf.record.time,
-				type: oasf.metadata.labels?.[0] as any,
-				skills: oasf.skills?.map((s: any) => ({
-					name: s.skill_name || s.skill_id,
-					id: 0,
-				})) || [],
-				domains: oasf.domains?.map((d: any) => ({
-					name: d.domain_name || d.domain_id,
-					id: 0,
-				})) || [],
-				locators: oasf.locators || [],
-				modules: oasf.modules || [],
+				name: data.name,
+				version: data.version,
+				schema_version: data.schema_version,
+				uid: data.uid,
+				description: data.description,
+				authors: data.authors,
+				created_at: data.created_at,
+				type: data.type,
+				skills: data.skills || [],
+				locators: data.locators || [],
+				domains: data.domains || [],
+				modules: data.modules || [],
 			},
 		};
+	}
+
+	/**
+	 * Create a RecordRef protobuf message
+	 */
+	private createRecordRef(cid: string) {
+		return create(models.core_v1.RecordRefSchema, {
+			cid: cid,
+		});
 	}
 
 	/**
@@ -129,7 +96,7 @@ export class AgntcyService {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					schema_version: record.metadata.version,
+					schema_version: record.data?.schema_version || '0.7.0',
 					record: record,
 				}),
 				signal: AbortSignal.timeout(10000),
@@ -158,39 +125,54 @@ export class AgntcyService {
 	 */
 	async publish(customer: CustomerEntity, record: PublishRecordRequestBody): Promise<{ cid: string }> {
 		try {
-			// Convert request body to OASF format
+			// Convert to OASF format (match example structure exactly)
 			const oasfRecord = this.toOASFRecord(record);
 
-			// Validate
-			const isValid = await this.validateOASFSchema(oasfRecord);
-			if (!isValid) {
-				throw new Error('OASF validation failed');
+			// Remove undefined/null fields to avoid protobuf errors
+			const cleanRecord = JSON.parse(
+				JSON.stringify(oasfRecord, (key, value) => {
+					// Remove undefined and null values
+					if (value === undefined || value === null) {
+						return undefined;
+					}
+					// Remove empty strings for optional fields
+					if (value === '' && key !== 'description') {
+						return undefined;
+					}
+					return value;
+				})
+			);
+
+			console.log('Publishing record:', JSON.stringify(cleanRecord, null, 2));
+
+			// Push records
+			const pushed_refs = await this.client.push([cleanRecord]);
+
+			if (!pushed_refs || pushed_refs.length === 0) {
+				throw new Error('No CID returned from directory server');
 			}
 
-			// Write to temp file
-			const tempFile = `/tmp/agntcy-record-${Date.now()}.json`;
-			await writeFile(tempFile, JSON.stringify(oasfRecord, null, 2));
+			const cid = pushed_refs[0].cid;
 
+			// Auto-publish to DHT for discovery
 			try {
-				// Push to directory
-				const output = await this.execDirctl(['push', tempFile, '--output', 'raw']);
-				const cid = output.trim();
+				const recordRefs = create(models.routing_v1.RecordRefsSchema, {
+					refs: pushed_refs,
+				});
 
-				if (!cid) {
-					throw new Error('No CID returned from directory server');
-				}
+				const publishRequest = create(models.routing_v1.PublishRequestSchema, {
+					request: {
+						case: 'recordRefs',
+						value: recordRefs,
+					},
+				});
 
-				// Auto-publish to DHT
-				try {
-					await this.execDirctl(['routing', 'publish', cid]);
-				} catch (err) {
-					console.warn('Failed to publish to DHT:', err);
-				}
-
-				return { cid };
-			} finally {
-				await unlink(tempFile).catch(() => {});
+				await this.client.publish(publishRequest);
+			} catch (err) {
+				console.warn('Failed to publish to DHT:', err);
 			}
+
+			return { cid };
 		} catch (error) {
 			console.error('Error publishing record:', error);
 			throw new Error(`Failed to publish record: ${(error as Error).message}`);
@@ -200,36 +182,76 @@ export class AgntcyService {
 	/**
 	 * Search for records in directory
 	 */
-	async search(customer: CustomerEntity, query: SearchRecordQuery): Promise<{ records: PublishRecordRequestBody[]; total: number }> {
+	async search(
+		customer: CustomerEntity,
+		query: SearchRecordQuery
+	): Promise<{ records: PublishRecordRequestBody[]; total: number }> {
 		try {
-			const args = ['search', '--output', 'json'];
+			// Build search queries array
+			const queries: any[] = [];
 
-			if (query.name) args.push('--name', query.name);
-			if (query.version) args.push('--version', query.version);
-			if (query.skill) args.push('--skill', query.skill);
-			if (query.domain) args.push('--domain', query.domain);
-			if (query.locator) args.push('--locator', query.locator);
-			if (query.type) args.push('--type', query.type);
+			if (query.skill) {
+				queries.push({
+					type: models.search_v1.RecordQueryType.SKILL_NAME,
+					value: query.skill,
+				});
+			}
 
-			const output = await this.execDirctl(args);
+			if (query.skill_id) {
+				queries.push({
+					type: models.search_v1.RecordQueryType.SKILL_ID,
+					value: query.skill_id.toString(),
+				});
+			}
 
-			if (!output || output.trim() === '') {
+			if (query.name) {
+				queries.push({
+					type: models.search_v1.RecordQueryType.NAME,
+					value: query.name,
+				});
+			}
+
+			if (query.domain) {
+				queries.push({
+					type: models.search_v1.RecordQueryType.DOMAIN_NAME,
+					value: query.domain,
+				});
+			}
+
+			// Create search request using protobuf
+			const searchRequest = create(models.search_v1.SearchRecordsRequestSchema, {
+				queries: queries.length > 0 ? queries : [],
+				limit: query.limit || 20,
+				offset: query.page ? (query.page - 1) * (query.limit || 20) : 0,
+			});
+
+			console.log('Search request:', JSON.stringify(searchRequest, null, 2));
+
+			// Search using SDK
+			const results = await this.client.searchRecords(searchRequest);
+
+			console.log('Search results:', results);
+
+			if (!results || results.length === 0) {
 				return { records: [], total: 0 };
 			}
 
-			const results = JSON.parse(output);
-
-			const records = (results.records || results || [])
-				.map((item: any) => {
+			// Convert records to response format
+			const records = results
+				.map((response: any) => {
 					try {
-						const oasf = typeof item.data === 'string' ? JSON.parse(item.data) : item;
-						return this.fromOASFRecord(oasf);
+						// SearchRecordsResponse contains an optional 'record' field
+						if (!response || !response.record) {
+							console.warn('Response missing record field:', response);
+							return null;
+						}
+						return this.fromOASFRecord(response.record);
 					} catch (e) {
 						console.error('Error parsing record:', e);
 						return null;
 					}
 				})
-				.filter(Boolean);
+				.filter(Boolean) as PublishRecordRequestBody[];
 
 			return {
 				records,
@@ -246,14 +268,20 @@ export class AgntcyService {
 	 */
 	async getRecord(customer: CustomerEntity, cid: string): Promise<PublishRecordRequestBody | null> {
 		try {
-			const output = await this.execDirctl(['pull', cid, '--output', 'json']);
-			const data = JSON.parse(output);
-			const oasf = typeof data.data === 'string' ? JSON.parse(data.data) : data;
+			// Create RecordRef using protobuf constructor
+			const recordRef = this.createRecordRef(cid);
 
-			return this.fromOASFRecord(oasf);
+			// Pull record using SDK
+			const results = await this.client.pull([recordRef]);
+
+			if (!results || results.length === 0) {
+				return null;
+			}
+
+			return this.fromOASFRecord(results[0]);
 		} catch (error) {
 			const errorMsg = (error as Error).message.toLowerCase();
-			if (errorMsg.includes('not_found') || errorMsg.includes('not found') || errorMsg.includes('no such')) {
+			if (errorMsg.includes('not found') || errorMsg.includes('not_found')) {
 				return null;
 			}
 			console.error('Error getting record:', error);
@@ -266,14 +294,13 @@ export class AgntcyService {
 	 */
 	async verifyRecord(customer: CustomerEntity, cid: string): Promise<VerificationResult> {
 		try {
-			const output = await this.execDirctl(['verify', cid, '--output', 'json']);
-			const result = JSON.parse(output);
+			// Note: The SDK might have a different verify API
+			// For now, return unverified since we don't have signature in the example
+			console.warn('Verify not implemented in example - returning unverified');
 
 			return {
-				verified: result.verified || false,
-				signature: result.signature,
-				signer: result.signer,
-				timestamp: result.timestamp,
+				verified: false,
+				error: 'Verification not implemented',
 			};
 		} catch (error) {
 			console.error('Error verifying record:', error);
@@ -286,16 +313,15 @@ export class AgntcyService {
 
 	/**
 	 * Sign a record using Sigstore
+	 * Note: Requires dirctl binary for OIDC signing
 	 */
 	async signRecord(customer: CustomerEntity, cid: string): Promise<{ signed: boolean; signature?: string }> {
 		try {
-			const output = await this.execDirctl(['sign', cid, '--output', 'json']);
-			const result = JSON.parse(output);
+			// Note: Sign not shown in example
+			// This would require dirctl and OIDC flow
+			console.warn('Sign requires dirctl and OIDC - not implemented');
 
-			return {
-				signed: result.signed || true,
-				signature: result.signature,
-			};
+			throw new Error('Signing requires dirctl binary and OIDC authentication');
 		} catch (error) {
 			console.error('Error signing record:', error);
 			throw new Error(`Failed to sign record: ${(error as Error).message}`);
@@ -305,24 +331,40 @@ export class AgntcyService {
 	/**
 	 * Search across distributed network
 	 */
-	async searchNetwork(customer: CustomerEntity, query: SearchRecordQuery): Promise<{ records: any[]; total: number }> {
+	async searchNetwork(
+		customer: CustomerEntity,
+		query: SearchRecordQuery
+	): Promise<{ records: any[]; total: number }> {
 		try {
-			const args = ['routing', 'search', '--output', 'json'];
+			// Build routing queries
+			const queries: any[] = [];
 
-			if (query.skill) args.push('--skill', query.skill);
-			if (query.domain) args.push('--domain', query.domain);
-
-			const output = await this.execDirctl(args);
-
-			if (!output || output.trim() === '') {
-				return { records: [], total: 0 };
+			if (query.skill) {
+				queries.push({
+					type: models.routing_v1.RecordQueryType.SKILL,
+					value: query.skill,
+				});
 			}
 
-			const results = JSON.parse(output);
+			if (query.domain) {
+				queries.push({
+					type: models.routing_v1.RecordQueryType.DOMAIN,
+					value: query.domain,
+				});
+			}
+
+			// Create ListRequest using protobuf constructor
+			const listRequest = create(models.routing_v1.ListRequestSchema, {
+				queries: queries.length > 0 ? queries : [],
+				limit: query.limit || 20,
+			});
+
+			// List published records
+			const results = await this.client.list(listRequest);
 
 			return {
-				records: results.results || [],
-				total: results.results?.length || 0,
+				records: results || [],
+				total: results?.length || 0,
 			};
 		} catch (error) {
 			console.error('Error searching network:', error);
@@ -333,20 +375,18 @@ export class AgntcyService {
 	/**
 	 * Sync records from remote directory
 	 */
-	async syncFromRemote(customer: CustomerEntity, remoteUrl: string, cids?: string[]): Promise<{ synced: number; errors: string[] }> {
+	async syncFromRemote(
+		customer: CustomerEntity,
+		remoteUrl: string,
+		cids?: string[]
+	): Promise<{ synced: number; errors: string[] }> {
 		try {
-			const args = ['sync', 'create', remoteUrl, '--output', 'json'];
-
-			if (cids && cids.length > 0) {
-				args.push('--cids', cids.join(','));
-			}
-
-			const output = await this.execDirctl(args);
-			const result = JSON.parse(output);
+			// Note: Sync not shown in example
+			console.warn('Sync not implemented in example');
 
 			return {
-				synced: result.synced || 0,
-				errors: result.errors || [],
+				synced: 0,
+				errors: ['Sync not implemented'],
 			};
 		} catch (error) {
 			console.error('Error syncing records:', error);
@@ -451,7 +491,28 @@ export class AgntcyService {
 	 */
 	async deleteRecord(customer: CustomerEntity, cid: string): Promise<{ deleted: boolean }> {
 		try {
-			await this.execDirctl(['routing', 'unpublish', cid]);
+			// Create RecordRef using protobuf constructor
+			const recordRef = this.createRecordRef(cid);
+
+			// Create RecordRefs using protobuf constructor
+			const recordRefs = create(models.routing_v1.RecordRefsSchema, {
+				refs: [recordRef],
+			});
+
+			// Create UnpublishRequest using protobuf constructor
+			const unpublishRequest = create(models.routing_v1.UnpublishRequestSchema, {
+				request: {
+					case: 'recordRefs',
+					value: recordRefs,
+				},
+			});
+
+			// Unpublish from DHT
+			await this.client.unpublish(unpublishRequest);
+
+			// Delete from storage
+			await this.client.delete([recordRef]);
+
 			return { deleted: true };
 		} catch (error) {
 			console.error('Error deleting record:', error);
@@ -462,17 +523,13 @@ export class AgntcyService {
 	/**
 	 * Update a record (creates new version with new CID)
 	 */
-	async updateRecord(customer: CustomerEntity, oldCid: string, record: PublishRecordRequestBody): Promise<{ cid: string }> {
+	async updateRecord(
+		customer: CustomerEntity,
+		oldCid: string,
+		record: PublishRecordRequestBody
+	): Promise<{ cid: string }> {
 		try {
-			const oasfRecord = this.toOASFRecord(record);
-
-			// Add reference to previous version
-			if (!oasfRecord.metadata.labels) {
-				oasfRecord.metadata.labels = [];
-			}
-			oasfRecord.metadata.labels.push(`prev_version:${oldCid}`);
-
-			// Unpublish old version
+			// Delete old version
 			await this.deleteRecord(customer, oldCid);
 
 			// Publish new version
@@ -488,8 +545,17 @@ export class AgntcyService {
 	 */
 	async getRecordInfo(customer: CustomerEntity, cid: string): Promise<any> {
 		try {
-			const output = await this.execDirctl(['info', cid, '--output', 'json']);
-			return JSON.parse(output);
+			// Create RecordRef using protobuf constructor
+			const recordRef = this.createRecordRef(cid);
+
+			// Lookup metadata
+			const results = await this.client.lookup([recordRef]);
+
+			if (!results || results.length === 0) {
+				throw new Error('Record not found');
+			}
+
+			return results[0];
 		} catch (error) {
 			console.error('Error getting record info:', error);
 			throw new Error(`Failed to get record info: ${(error as Error).message}`);

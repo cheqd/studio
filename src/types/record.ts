@@ -13,7 +13,7 @@ export interface SearchRecordResponseBody {
 		total: number;
 		total_pages: number;
 	};
-	filters_applied: Record<string, any>;
+	filters_applied?: Record<string, any>;
 }
 
 export interface UnsuccessfulSearchRecordResponseBody {
@@ -86,7 +86,6 @@ export interface OASFRecord {
 	modules?: any[];
 }
 
-
 /**
  * Updated interfaces for AGNTCY Directory with identity support
  */
@@ -97,35 +96,35 @@ export interface PublishRecordRequestBody {
 		name: string;
 		version: string;
 		schema_version: string;
-		
+
 		// Identity field - NEW! ✨
 		uid?: string; // DID, OAuth2 client_id, URL, or any unique identifier
-		
+
 		// Optional metadata
 		description?: string;
 		authors?: string[];
 		created_at?: string;
 		type?: 'agent' | 'organization' | 'service' | 'mcp-server';
-		
+
 		// Capabilities
 		skills?: Array<{
 			name: string;
 			id: number;
 		}>;
-		
+
 		// Deployment info
 		locators?: Array<{
 			type: string;
 			url: string;
 			description?: string; // Optional description
 		}>;
-		
+
 		// Industry/domain
 		domains?: Array<{
 			name: string;
 			id: number;
 		}>;
-		
+
 		// Extensions
 		modules?: any[];
 	};
@@ -152,20 +151,20 @@ export interface SearchRecordQuery {
 	name?: string;
 	version?: string;
 	description?: string;
-	
+
 	// Identity search - NEW! ✨
 	uid?: string; // Search by identity
-	
+
 	// Capability search
 	skill?: string;
 	skill_id?: number;
 	domain?: string;
-	
+
 	// Deployment search
 	locator?: string;
 	module?: string;
 	type?: 'agent' | 'organization' | 'service' | 'mcp-server';
-	
+
 	// Pagination
 	page?: number;
 	limit?: number;
@@ -236,48 +235,48 @@ export interface OASFRecord {
 export const exampleWithIdentity: PublishRecordRequestBody = {
 	data: {
 		// Core fields
-		name: "Customer Support Agent",
-		version: "1.0.0",
-		schema_version: "1.0.0",
-		
+		name: 'Customer Support Agent',
+		version: '1.0.0',
+		schema_version: '1.0.0',
+
 		// Identity - DID from cheqd, Okta, etc.
-		uid: "did:cheqd:testnet:7bf81a20-1bfe-4584-9a66-2c4a6b1d5e3f",
-		
+		uid: 'did:cheqd:testnet:7bf81a20-1bfe-4584-9a66-2c4a6b1d5e3f',
+
 		// Metadata
-		description: "AI agent for customer support queries",
-		authors: ["ACME Corp"],
-		type: "agent",
-		
+		description: 'AI agent for customer support queries',
+		authors: ['ACME Corp'],
+		type: 'agent',
+
 		// Capabilities
 		skills: [
-			{ name: "customer_support.query_handling", id: 1 },
-			{ name: "e_commerce.order_tracking", id: 2 }
+			{ name: 'customer_support.query_handling', id: 1 },
+			{ name: 'e_commerce.order_tracking', id: 2 },
 		],
-		
+
 		// Deployment
 		locators: [
 			{
-				type: "api_endpoint",
-				url: "https://api.acme.com/agents/support"
+				type: 'api_endpoint',
+				url: 'https://api.acme.com/agents/support',
 			},
 			{
-				type: "did",
-				url: "did:cheqd:testnet:7bf81a20-1bfe-4584-9a66-2c4a6b1d5e3f",
-				description: "Agent DID"
+				type: 'did',
+				url: 'did:cheqd:testnet:7bf81a20-1bfe-4584-9a66-2c4a6b1d5e3f',
+				description: 'Agent DID',
 			},
 			{
-				type: "badge",
-				url: "https://identity.acme.com/v1alpha1/vc/abc123/.well-known/vcs.json",
-				description: "Verifiable credential badge"
-			}
+				type: 'badge',
+				url: 'https://identity.acme.com/v1alpha1/vc/abc123/.well-known/vcs.json',
+				description: 'Verifiable credential badge',
+			},
 		],
-		
+
 		// Industry
 		domains: [
-			{ name: "e_commerce", id: 1 },
-			{ name: "customer_service", id: 2 }
-		]
-	}
+			{ name: 'e_commerce', id: 1 },
+			{ name: 'customer_service', id: 2 },
+		],
+	},
 };
 
 /**
@@ -285,14 +284,12 @@ export const exampleWithIdentity: PublishRecordRequestBody = {
  */
 export const exampleWithoutIdentity: PublishRecordRequestBody = {
 	data: {
-		name: "Simple Agent",
-		version: "1.0.0",
-		schema_version: "1.0.0",
+		name: 'Simple Agent',
+		version: '1.0.0',
+		schema_version: '1.0.0',
 		// uid is optional - will use name as identifier if not provided
-		skills: [
-			{ name: "text_generation", id: 1 }
-		]
-	}
+		skills: [{ name: 'text_generation', id: 1 }],
+	},
 };
 
 /**

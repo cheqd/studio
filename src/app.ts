@@ -409,7 +409,7 @@ class App {
 		app.post('/record/publish', AgntcyController.recordPublishValidator, new AgntcyController().publishRecord);
 		app.get('/record/search', AgntcyController.recordSearchValidator, new AgntcyController().searchRecord);
 		app.get('/record/:cid', AgntcyController.recordGetValidator, new AgntcyController().getRecord);
-		
+
 		// 404 for all other requests
 		app.all('*', (_req, res) => res.status(StatusCodes.BAD_REQUEST).send('Bad request'));
 	}

@@ -20,7 +20,12 @@ export class AgntcyController {
 	// Validators
 	public static recordPublishValidator = [
 		check('data').exists().withMessage('data field is required').bail(),
-		check('data.name').exists().withMessage('name is required').isString().withMessage('name must be a string').bail(),
+		check('data.name')
+			.exists()
+			.withMessage('name is required')
+			.isString()
+			.withMessage('name must be a string')
+			.bail(),
 		check('data.version')
 			.exists()
 			.withMessage('version is required')
@@ -62,11 +67,7 @@ export class AgntcyController {
 			.withMessage('Invalid record type')
 			.bail(),
 		query('page').optional().isInt({ min: 1 }).withMessage('page must be a positive integer').bail(),
-		query('limit')
-			.optional()
-			.isInt({ min: 1, max: 100 })
-			.withMessage('limit must be between 1 and 100')
-			.bail(),
+		query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('limit must be between 1 and 100').bail(),
 	];
 
 	public static recordGetValidator = [
@@ -263,12 +264,10 @@ export class AgntcyController {
 
 		try {
 			// Set defaults for pagination
-            const { page = 1, limit = 20 } = request.query as SearchRecordQuery;
+			const { page = 1, limit = 20 } = request.query as SearchRecordQuery;
 
 			// Search directory
-			const results = await agntcyService.search(
-                response.locals.customer,
-                {
+			const results = await agntcyService.search(response.locals.customer, {
 				...query,
 				page,
 				limit,
@@ -284,7 +283,6 @@ export class AgntcyController {
 					total: results.total,
 					total_pages: Math.ceil(results.total / limit),
 				},
-				filters_applied: this.getAppliedFilters(query),
 			} satisfies SearchRecordResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -387,23 +385,5 @@ export class AgntcyController {
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulGetRecordResponseBody);
 		}
-	}
-
-	/**
-	 * Helper method to extract applied filters from query
-	 */
-	private getAppliedFilters(query: SearchRecordQuery): Record<string, any> {
-		const filters: Record<string, any> = {};
-
-		if (query.name) filters.name = query.name;
-		if (query.version) filters.version = query.version;
-		if (query.skill) filters.skill = query.skill;
-		if (query.skill_id) filters.skill_id = query.skill_id;
-		if (query.domain) filters.domain = query.domain;
-		if (query.locator) filters.locator = query.locator;
-		if (query.module) filters.module = query.module;
-		if (query.type) filters.type = query.type;
-
-		return filters;
 	}
 }
