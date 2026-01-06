@@ -33,6 +33,7 @@ import { OrganisationController } from './controllers/admin/organisation.js';
 import { AccreditationController } from './controllers/api/accreditation.js';
 import { OperationController } from './controllers/api/operation.js';
 import { ProvidersController } from './controllers/api/providers.controller.js';
+import { AgntcyController } from './controllers/api/agntcy.js';
 
 dotenv.config();
 
@@ -405,6 +406,10 @@ class App {
 			app.get('/admin/organisation/get', new OrganisationController().get);
 		}
 
+		app.post('/record/publish', AgntcyController.recordPublishValidator, new AgntcyController().publishRecord);
+		app.get('/record/search', AgntcyController.recordSearchValidator, new AgntcyController().searchRecord);
+		app.get('/record/:cid', AgntcyController.recordGetValidator, new AgntcyController().getRecord);
+		
 		// 404 for all other requests
 		app.all('*', (_req, res) => res.status(StatusCodes.BAD_REQUEST).send('Bad request'));
 	}
