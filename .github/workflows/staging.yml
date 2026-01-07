@@ -32,7 +32,7 @@ jobs:
                   password: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Download docker image
-              uses: actions/download-artifact@v6
+              uses: actions/download-artifact@v7
               with:
                   name: studio-staging
 
