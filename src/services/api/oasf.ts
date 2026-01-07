@@ -1,16 +1,14 @@
 import { Client, Config, models } from 'agntcy-dir';
 import { create } from '@bufbuild/protobuf';
 import { CustomerEntity } from '../../database/entities/customer.entity.js';
-import type { PublishRecordRequestBody, SearchRecordQuery, VerificationResult } from '../../types/record.js';
+import {
+	queryTypeMap,
+	type PublishRecordRequestBody,
+	type SearchRecordQuery,
+	type VerificationResult,
+} from '../../types/oasf.js';
 
-/**
- * AgntcyService - Uses official agntcy-dir npm package
- * Based on official examples from agntcy/dir repository
- *
- * Installation:
- * npm install agntcy-dir @bufbuild/protobuf
- */
-export class AgntcyService {
+export class OasfService {
 	private client: Client;
 	private oasfSchemaUrl: string;
 
@@ -22,65 +20,6 @@ export class AgntcyService {
 
 		const config = new Config(serverAddress, dirctlPath);
 		this.client = new Client(config);
-	}
-
-	/**
-	 * Convert request body to OASF record format
-	 * Must match the exact structure from the official example
-	 */
-	private toOASFRecord(body: PublishRecordRequestBody): any {
-		const { data } = body;
-
-		// Return the exact structure from the example - just the data wrapper
-		return {
-			data: {
-				name: data.name,
-				version: data.version,
-				schema_version: data.schema_version || '0.7.0',
-				description: data.description || '',
-				authors: data.authors || [],
-				created_at: data.created_at || new Date().toISOString(),
-				uid: data.uid, // Include identity if provided
-				type: data.type,
-				skills: data.skills || [],
-				locators: data.locators || [],
-				domains: data.domains || [],
-				modules: data.modules || [],
-			},
-		};
-	}
-
-	/**
-	 * Convert OASF record back to response format
-	 */
-	private fromOASFRecord(record: any): PublishRecordRequestBody {
-		const data = record.data || record;
-
-		return {
-			data: {
-				name: data.name,
-				version: data.version,
-				schema_version: data.schema_version,
-				uid: data.uid,
-				description: data.description,
-				authors: data.authors,
-				created_at: data.created_at,
-				type: data.type,
-				skills: data.skills || [],
-				locators: data.locators || [],
-				domains: data.domains || [],
-				modules: data.modules || [],
-			},
-		};
-	}
-
-	/**
-	 * Create a RecordRef protobuf message
-	 */
-	private createRecordRef(cid: string) {
-		return create(models.core_v1.RecordRefSchema, {
-			cid: cid,
-		});
 	}
 
 	/**
@@ -182,40 +121,16 @@ export class AgntcyService {
 	/**
 	 * Search for records in directory
 	 */
-	async search(
-		customer: CustomerEntity,
-		query: SearchRecordQuery
-	): Promise<{ records: PublishRecordRequestBody[]; total: number }> {
+	async search(query: SearchRecordQuery): Promise<{ records: PublishRecordRequestBody[]; total: number }> {
 		try {
 			// Build search queries array
 			const queries: any[] = [];
 
-			if (query.skill) {
-				queries.push({
-					type: models.search_v1.RecordQueryType.SKILL_NAME,
-					value: query.skill,
-				});
-			}
-
-			if (query.skill_id) {
-				queries.push({
-					type: models.search_v1.RecordQueryType.SKILL_ID,
-					value: query.skill_id.toString(),
-				});
-			}
-
-			if (query.name) {
-				queries.push({
-					type: models.search_v1.RecordQueryType.NAME,
-					value: query.name,
-				});
-			}
-
-			if (query.domain) {
-				queries.push({
-					type: models.search_v1.RecordQueryType.DOMAIN_NAME,
-					value: query.domain,
-				});
+			for (const [field, queryType] of Object.entries(queryTypeMap)) {
+				const value = query[field as keyof SearchRecordQuery];
+				if (value !== undefined) {
+					queries.push({ type: queryType, value: String(value) });
+				}
 			}
 
 			// Create search request using protobuf
@@ -266,7 +181,7 @@ export class AgntcyService {
 	/**
 	 * Get specific record by CID
 	 */
-	async getRecord(customer: CustomerEntity, cid: string): Promise<PublishRecordRequestBody | null> {
+	async getRecord(cid: string): Promise<PublishRecordRequestBody | null> {
 		try {
 			// Create RecordRef using protobuf constructor
 			const recordRef = this.createRecordRef(cid);
@@ -292,7 +207,7 @@ export class AgntcyService {
 	/**
 	 * Verify record signature
 	 */
-	async verifyRecord(customer: CustomerEntity, cid: string): Promise<VerificationResult> {
+	async verifyRecord(cid: string): Promise<VerificationResult> {
 		try {
 			// Note: The SDK might have a different verify API
 			// For now, return unverified since we don't have signature in the example
@@ -308,23 +223,6 @@ export class AgntcyService {
 				verified: false,
 				error: (error as Error).message,
 			};
-		}
-	}
-
-	/**
-	 * Sign a record using Sigstore
-	 * Note: Requires dirctl binary for OIDC signing
-	 */
-	async signRecord(customer: CustomerEntity, cid: string): Promise<{ signed: boolean; signature?: string }> {
-		try {
-			// Note: Sign not shown in example
-			// This would require dirctl and OIDC flow
-			console.warn('Sign requires dirctl and OIDC - not implemented');
-
-			throw new Error('Signing requires dirctl binary and OIDC authentication');
-		} catch (error) {
-			console.error('Error signing record:', error);
-			throw new Error(`Failed to sign record: ${(error as Error).message}`);
 		}
 	}
 
@@ -369,28 +267,6 @@ export class AgntcyService {
 		} catch (error) {
 			console.error('Error searching network:', error);
 			throw new Error(`Failed to search network: ${(error as Error).message}`);
-		}
-	}
-
-	/**
-	 * Sync records from remote directory
-	 */
-	async syncFromRemote(
-		customer: CustomerEntity,
-		remoteUrl: string,
-		cids?: string[]
-	): Promise<{ synced: number; errors: string[] }> {
-		try {
-			// Note: Sync not shown in example
-			console.warn('Sync not implemented in example');
-
-			return {
-				synced: 0,
-				errors: ['Sync not implemented'],
-			};
-		} catch (error) {
-			console.error('Error syncing records:', error);
-			throw new Error(`Failed to sync records: ${(error as Error).message}`);
 		}
 	}
 
@@ -560,5 +436,64 @@ export class AgntcyService {
 			console.error('Error getting record info:', error);
 			throw new Error(`Failed to get record info: ${(error as Error).message}`);
 		}
+	}
+
+	/**
+	 * Convert request body to OASF record format
+	 * Must match the exact structure from the official example
+	 */
+	private toOASFRecord(body: PublishRecordRequestBody): any {
+		const { data } = body;
+
+		// Return the exact structure from the example - just the data wrapper
+		return {
+			data: {
+				name: data.name,
+				version: data.version,
+				schema_version: data.schema_version || '0.7.0',
+				description: data.description || '',
+				authors: data.authors || [],
+				created_at: data.created_at || new Date().toISOString(),
+				uid: data.uid, // Include identity if provided
+				type: data.type,
+				skills: data.skills || [],
+				locators: data.locators || [],
+				domains: data.domains || [],
+				modules: data.modules || [],
+			},
+		};
+	}
+
+	/**
+	 * Convert OASF record back to response format
+	 */
+	private fromOASFRecord(record: any): PublishRecordRequestBody {
+		const data = record.data || record;
+
+		return {
+			data: {
+				name: data.name,
+				version: data.version,
+				schema_version: data.schema_version,
+				uid: data.uid,
+				description: data.description,
+				authors: data.authors,
+				created_at: data.created_at,
+				type: data.type,
+				skills: data.skills || [],
+				locators: data.locators || [],
+				domains: data.domains || [],
+				modules: data.modules || [],
+			},
+		};
+	}
+
+	/**
+	 * Create a RecordRef protobuf message
+	 */
+	private createRecordRef(cid: string) {
+		return create(models.core_v1.RecordRefSchema, {
+			cid: cid,
+		});
 	}
 }

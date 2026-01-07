@@ -3927,293 +3927,6 @@
         }
       }
     },
-    "/record/publish": {
-      "post": {
-        "tags": [
-          "Records"
-        ],
-        "summary": "Publish an OASF record to the directory.",
-        "description": "This endpoint publishes an OASF-compliant record to the Agent Directory. The record can represent an agent, organization, service, or MCP server.",
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/PublishRecordRequest"
-              }
-            },
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PublishRecordRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "The record was successfully published.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PublishRecordResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "InvalidRequest"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "Internal Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/record/search": {
-      "get": {
-        "tags": [
-          "Records"
-        ],
-        "summary": "Search for records in the directory.",
-        "description": "This endpoint searches for OASF records in the Agent Directory based on various criteria such as name, version, skills, domains, and more.",
-        "parameters": [
-          {
-            "name": "name",
-            "description": "Name of the record to search for.",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "version",
-            "description": "Version of the record to search for.",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "skill",
-            "description": "Skill name to filter by.",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "skill_id",
-            "description": "Skill ID to filter by.",
-            "in": "query",
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "name": "domain",
-            "description": "Domain to filter by.",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "locator",
-            "description": "Locator type to filter by.",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "module",
-            "description": "Module name to filter by.",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "type",
-            "description": "Type of record to filter by.",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "agent",
-                "organization",
-                "service",
-                "mcp-server"
-              ]
-            }
-          },
-          {
-            "name": "page",
-            "description": "Page number for pagination (default 1).",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          },
-          {
-            "name": "limit",
-            "description": "Number of results per page (default 20, max 100).",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchRecordResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "InvalidRequest"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "500": {
-            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "Internal Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/record/{cid}": {
-      "get": {
-        "tags": [
-          "Records"
-        ],
-        "summary": "Fetch a record by CID.",
-        "description": "This endpoint fetches a specific OASF record from the Agent Directory using its Content Identifier (CID). Optionally, the record's signature can be verified.",
-        "parameters": [
-          {
-            "name": "cid",
-            "description": "Content Identifier (CID) of the record to fetch.",
-            "in": "path",
-            "schema": {
-              "type": "string"
-            },
-            "required": true
-          },
-          {
-            "name": "verify",
-            "description": "Whether to verify the record's signature.",
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The request was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetRecordResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "InvalidRequest"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "404": {
-            "description": "The record was not found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "Record not found"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "Internal Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/credential-status/create/unencrypted": {
       "post": {
         "tags": [
@@ -6369,6 +6082,293 @@
                 },
                 "example": {
                   "error": "Key not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "Internal Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oasf/publish": {
+      "post": {
+        "tags": [
+          "Records"
+        ],
+        "summary": "Publish an OASF record to the directory.",
+        "description": "This endpoint publishes an OASF-compliant record to the Agent Directory. The record can represent an agent, organization, service, or MCP server.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishRecordRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishRecordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The record was successfully published.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishRecordResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "InvalidRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "Internal Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oasf/search": {
+      "get": {
+        "tags": [
+          "Records"
+        ],
+        "summary": "Search for records in the directory.",
+        "description": "This endpoint searches for OASF records in the Agent Directory based on various criteria such as name, version, skills, domains, and more.",
+        "parameters": [
+          {
+            "name": "name",
+            "description": "Name of the record to search for.",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "description": "Version of the record to search for.",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "skill",
+            "description": "Skill name to filter by.",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "skill_id",
+            "description": "Skill ID to filter by.",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "domain",
+            "description": "Domain to filter by.",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "locator",
+            "description": "Locator type to filter by.",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "module",
+            "description": "Module name to filter by.",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "description": "Type of record to filter by.",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "agent",
+                "organization",
+                "service",
+                "mcp-server"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "description": "Page number for pagination (default 1).",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "description": "Number of results per page (default 20, max 100).",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchRecordResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "InvalidRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "Internal Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oasf/{cid}": {
+      "get": {
+        "tags": [
+          "Records"
+        ],
+        "summary": "Fetch a record by CID.",
+        "description": "This endpoint fetches a specific OASF record from the Agent Directory using its Content Identifier (CID). Optionally, the record's signature can be verified.",
+        "parameters": [
+          {
+            "name": "cid",
+            "description": "Content Identifier (CID) of the record to fetch.",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "verify",
+            "description": "Whether to verify the record's signature.",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetRecordResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "InvalidRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "The record was not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "Record not found"
                 }
               }
             }

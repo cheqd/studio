@@ -1,5 +1,7 @@
 // Request/Response types for OASF records
 
+import { models } from 'agntcy-dir';
+
 export interface UnsuccessfulPublishRecordResponseBody {
 	error: string;
 }
@@ -150,9 +152,10 @@ export interface SearchRecordQuery {
 	// Text search
 	name?: string;
 	version?: string;
+	schema_version?: string;
 	description?: string;
 
-	// Identity search - NEW! ✨
+	// Identity search
 	uid?: string; // Search by identity
 
 	// Capability search
@@ -229,104 +232,11 @@ export interface OASFRecord {
 	};
 }
 
-/**
- * Example usage with identity:
- */
-export const exampleWithIdentity: PublishRecordRequestBody = {
-	data: {
-		// Core fields
-		name: 'Customer Support Agent',
-		version: '1.0.0',
-		schema_version: '1.0.0',
-
-		// Identity - DID from cheqd, Okta, etc.
-		uid: 'did:cheqd:testnet:7bf81a20-1bfe-4584-9a66-2c4a6b1d5e3f',
-
-		// Metadata
-		description: 'AI agent for customer support queries',
-		authors: ['ACME Corp'],
-		type: 'agent',
-
-		// Capabilities
-		skills: [
-			{ name: 'customer_support.query_handling', id: 1 },
-			{ name: 'e_commerce.order_tracking', id: 2 },
-		],
-
-		// Deployment
-		locators: [
-			{
-				type: 'api_endpoint',
-				url: 'https://api.acme.com/agents/support',
-			},
-			{
-				type: 'did',
-				url: 'did:cheqd:testnet:7bf81a20-1bfe-4584-9a66-2c4a6b1d5e3f',
-				description: 'Agent DID',
-			},
-			{
-				type: 'badge',
-				url: 'https://identity.acme.com/v1alpha1/vc/abc123/.well-known/vcs.json',
-				description: 'Verifiable credential badge',
-			},
-		],
-
-		// Industry
-		domains: [
-			{ name: 'e_commerce', id: 1 },
-			{ name: 'customer_service', id: 2 },
-		],
-	},
+export const queryTypeMap: Partial<Record<keyof SearchRecordQuery, models.search_v1.RecordQueryType>> = {
+	name: models.search_v1.RecordQueryType.NAME,
+	version: models.search_v1.RecordQueryType.VERSION,
+	skill: models.search_v1.RecordQueryType.SKILL_NAME,
+	domain: models.search_v1.RecordQueryType.DOMAIN_NAME,
+	locator: models.search_v1.RecordQueryType.LOCATOR,
+	schema_version: models.search_v1.RecordQueryType.SCHEMA_VERSION,
 };
-
-/**
- * Example without identity (fallback to name):
- */
-export const exampleWithoutIdentity: PublishRecordRequestBody = {
-	data: {
-		name: 'Simple Agent',
-		version: '1.0.0',
-		schema_version: '1.0.0',
-		// uid is optional - will use name as identifier if not provided
-		skills: [{ name: 'text_generation', id: 1 }],
-	},
-};
-
-/**
- * Type guard to check if record has identity
- */
-export function hasIdentity(record: PublishRecordRequestBody): boolean {
-	return !!record.data.uid && record.data.uid !== record.data.name;
-}
-
-/**
- * Extract identity from record
- */
-export function getIdentity(record: PublishRecordRequestBody): string {
-	return record.data.uid || record.data.name;
-}
-
-/**
- * Check if identity is a DID
- */
-export function isDID(uid: string): boolean {
-	return uid.startsWith('did:');
-}
-
-/**
- * Check if identity is a URL
- */
-export function isURL(uid: string): boolean {
-	return uid.startsWith('http://') || uid.startsWith('https://');
-}
-
-/**
- * Parse identity type
- */
-export function getIdentityType(uid: string): 'did' | 'url' | 'oauth2' | 'uuid' | 'name' {
-	if (uid.startsWith('did:')) return 'did';
-	if (uid.startsWith('http://') || uid.startsWith('https://')) return 'url';
-	if (uid.startsWith('urn:uuid:')) return 'uuid';
-	if (uid.includes('okta') || uid.includes('auth0') || uid.includes('client')) return 'oauth2';
-	return 'name';
-}

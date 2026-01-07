@@ -13,10 +13,10 @@ import type {
 	GetRecordQuery,
 	GetRecordResponseBody,
 	UnsuccessfulGetRecordResponseBody,
-} from '../../types/record.js';
-import { AgntcyService } from '../../services/api/agntcy.js';
+} from '../../types/oasf.js';
+import { OasfService } from '../../services/api/oasf.js';
 
-export class AgntcyController {
+export class OasfController {
 	// Validators
 	public static recordPublishValidator = [
 		check('data').exists().withMessage('data field is required').bail(),
@@ -85,7 +85,7 @@ export class AgntcyController {
 	/**
 	 * @openapi
 	 *
-	 * /record/publish:
+	 * /oasf/publish:
 	 *   post:
 	 *     tags: [ Records ]
 	 *     summary: Publish an OASF record to the directory.
@@ -129,11 +129,11 @@ export class AgntcyController {
 		const record = request.body as PublishRecordRequestBody;
 
 		// Get directory service
-		const agntcyService = new AgntcyService();
+		const oasfService = new OasfService();
 
 		try {
 			// Validate against OASF schema (optional)
-			const isValid = await agntcyService.validateOASFSchema(record);
+			const isValid = await oasfService.validateOASFSchema(record);
 			if (!isValid) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'Record does not conform to OASF schema',
@@ -141,7 +141,7 @@ export class AgntcyController {
 			}
 
 			// Publish to directory
-			const result = await agntcyService.publish(response.locals.customer, record);
+			const result = await oasfService.publish(response.locals.customer, record);
 
 			// Return the response
 			return response.status(StatusCodes.CREATED).json({
@@ -165,7 +165,7 @@ export class AgntcyController {
 	/**
 	 * @openapi
 	 *
-	 * /record/search:
+	 * /oasf/search:
 	 *   get:
 	 *     tags: [ Records ]
 	 *     summary: Search for records in the directory.
@@ -260,14 +260,14 @@ export class AgntcyController {
 		const query = request.query as SearchRecordQuery;
 
 		// Get directory service
-		const agntcyService = new AgntcyService();
+		const oasfService = new OasfService();
 
 		try {
 			// Set defaults for pagination
 			const { page = 1, limit = 20 } = request.query as SearchRecordQuery;
 
 			// Search directory
-			const results = await agntcyService.search(response.locals.customer, {
+			const results = await oasfService.search({
 				...query,
 				page,
 				limit,
@@ -294,7 +294,7 @@ export class AgntcyController {
 	/**
 	 * @openapi
 	 *
-	 * /record/{cid}:
+	 * /oasf/{cid}:
 	 *   get:
 	 *     tags: [ Records ]
 	 *     summary: Fetch a record by CID.
@@ -351,11 +351,11 @@ export class AgntcyController {
 		const { verify } = request.query as GetRecordQuery;
 
 		// Get directory service
-		const agntcyService = new AgntcyService();
+		const oasfService = new OasfService();
 
 		try {
 			// Fetch record from directory
-			const record = await agntcyService.getRecord(response.locals.customer, cid);
+			const record = await oasfService.getRecord(cid);
 
 			if (!record) {
 				return response.status(StatusCodes.NOT_FOUND).json({
@@ -366,7 +366,7 @@ export class AgntcyController {
 			// Optional: Verify signature
 			let verificationResult = null;
 			if (verify === 'true' || verify === true) {
-				verificationResult = await agntcyService.verifyRecord(response.locals.customer, cid);
+				verificationResult = await oasfService.verifyRecord(cid);
 			}
 
 			// Return record with metadata
