@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.16.0-develop.13](https://github.com/cheqd/studio/compare/3.16.0-develop.12...3.16.0-develop.13) (2026-01-07)
+
+### Bug Fixes
+
+* add pagination to credentials/received ([#781](https://github.com/cheqd/studio/issues/781)) ([dfa9817](https://github.com/cheqd/studio/commit/dfa981786569b1a7467709a97296c1013848163d)), closes [#780](https://github.com/cheqd/studio/issues/780)
+* emergency:  test case ([24ee626](https://github.com/cheqd/studio/commit/24ee6267b558bfa1559247be114e2d6e7671f1d2))
+
 ## [3.16.0-develop.12](https://github.com/cheqd/studio/compare/3.16.0-develop.11...3.16.0-develop.12) (2026-01-05)
 
 ### Features
