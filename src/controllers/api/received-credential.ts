@@ -110,6 +110,13 @@ export class ReceivedCredentialController {
 			.isIn(['credential', 'accreditation'])
 			.withMessage('category must be either "credential" or "accreditation"')
 			.bail(),
+		query('page').optional().isInt({ min: 1 }).withMessage('page must be a positive integer').toInt().bail(),
+		query('limit')
+			.optional()
+			.isInt({ min: 1, max: 100 })
+			.withMessage('limit must be between 1 and 100')
+			.toInt()
+			.bail(),
 	];
 	public static getReceivedValidator = [
 		check('credentialHash')
@@ -532,16 +539,49 @@ export class ReceivedCredentialController {
 	 *           type: string
 	 *           enum: [credential, accreditation]
 	 *         description: Optional category to filter by credential type. Note that imported credentials without IssuedCredentialEntity will be excluded when filtering by category.
+	 *       - in: query
+	 *         name: page
+	 *         schema:
+	 *           type: integer
+	 *           minimum: 1
+	 *           default: 1
+	 *         description: Page number for pagination
+	 *       - in: query
+	 *         name: limit
+	 *         schema:
+	 *           type: integer
+	 *           minimum: 1
+	 *           maximum: 100
+	 *           default: 10
+	 *         description: Number of results per page
 	 *     responses:
 	 *       200:
 	 *         description: List of received credentials
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               type: array
-	 *               items:
-	 *                 type: object
-	 *                 description: Verifiable Credential
+	 *               type: object
+	 *               properties:
+	 *                 total:
+	 *                   type: integer
+	 *                   description: Total number of credentials
+	 *                 credentials:
+	 *                   type: array
+	 *                   items:
+	 *                     type: object
+	 *                     properties:
+	 *                       hash:
+	 *                         type: string
+	 *                         description: Hash of the credential
+	 *                       credential:
+	 *                         type: object
+	 *                         description: Verifiable Credential
+	 *                 page:
+	 *                   type: integer
+	 *                   description: Current page number
+	 *                 limit:
+	 *                   type: integer
+	 *                   description: Number of results per page
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       500:
@@ -550,16 +590,18 @@ export class ReceivedCredentialController {
 	@validate
 	public async listReceivedCredentials(request: Request, response: Response) {
 		try {
-			const { holderDid, category } = request.query;
+			const { holderDid, category, page, limit } = request.query;
 			const customer = response.locals.customer;
 
-			const credentials = await ReceivedCredentials.instance.listReceivedCredentials(
+			const result = await ReceivedCredentials.instance.listReceivedCredentials(
 				customer,
 				holderDid as string | undefined,
-				category as 'credential' | 'accreditation' | undefined
+				category as 'credential' | 'accreditation' | undefined,
+				page ? Number(page) : undefined,
+				limit ? Number(limit) : undefined
 			);
 
-			return response.status(StatusCodes.OK).json(credentials);
+			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,

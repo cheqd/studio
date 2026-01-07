@@ -459,18 +459,22 @@ test.describe.serial('Credential Offers & Received Credentials - Complete Lifecy
 		expect(listResponse.status()).toBe(StatusCodes.OK);
 
 		const receivedData = await listResponse.json();
-		expect(Array.isArray(receivedData)).toBe(true);
-		expect(receivedData.length).toBeGreaterThanOrEqual(1); // At least imported credential
+		expect(receivedData).toHaveProperty('total');
+		expect(receivedData).toHaveProperty('credentials');
+		expect(receivedData).toHaveProperty('page');
+		expect(receivedData).toHaveProperty('limit');
+		expect(Array.isArray(receivedData.credentials)).toBe(true);
+		expect(receivedData.credentials.length).toBeGreaterThanOrEqual(1); // At least imported credential
 
 		// Verify all credentials have hash and credential properties
-		receivedData.forEach((item: any) => {
+		receivedData.credentials.forEach((item: any) => {
 			expect(item).toHaveProperty('hash');
 			expect(item).toHaveProperty('credential');
 			expect(item.credential).toHaveProperty('credentialSubject');
 		});
 
 		// Verify imported credential is in the list
-		const importedInList = receivedData.find((item: any) => item.hash === importedCredentialHash);
+		const importedInList = receivedData.credentials.find((item: any) => item.hash === importedCredentialHash);
 		expect(importedInList).toBeDefined();
 	});
 
@@ -485,10 +489,11 @@ test.describe.serial('Credential Offers & Received Credentials - Complete Lifecy
 		expect(listResponse.status()).toBe(StatusCodes.OK);
 
 		const receivedData = await listResponse.json();
-		expect(Array.isArray(receivedData)).toBe(true);
+		expect(receivedData).toHaveProperty('credentials');
+		expect(Array.isArray(receivedData.credentials)).toBe(true);
 
 		// All credentials should have the filtered holderDid as subject
-		receivedData.forEach((item: any) => {
+		receivedData.credentials.forEach((item: any) => {
 			const subjectId =
 				typeof item.credential.credentialSubject === 'object' ? item.credential.credentialSubject.id : null;
 			expect(subjectId).toBe(holderDid);
@@ -556,7 +561,8 @@ test.describe.serial('Credential Offers & Received Credentials - Complete Lifecy
 		});
 
 		const receivedData = await listResponse.json();
-		expect(Array.isArray(receivedData)).toBe(true);
+		expect(receivedData).toHaveProperty('credentials');
+		expect(Array.isArray(receivedData.credentials)).toBe(true);
 		// Received credentials only include accepted/issued, not offers
 	});
 
@@ -569,7 +575,8 @@ test.describe.serial('Credential Offers & Received Credentials - Complete Lifecy
 		});
 
 		const receivedData = await listResponse.json();
-		expect(Array.isArray(receivedData)).toBe(true);
+		expect(receivedData).toHaveProperty('credentials');
+		expect(Array.isArray(receivedData.credentials)).toBe(true);
 		// Rejected credentials should not appear in received list
 	});
 
