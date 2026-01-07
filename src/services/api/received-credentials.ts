@@ -11,6 +11,13 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
+// Accreditation types for category inference
+const ACCREDITATION_TYPES = [
+	'VerifiableAccreditationToAccredit',
+	'VerifiableAccreditationToAttest',
+	'VerifiableAuthorizationForTrustChain',
+];
+
 export interface ListOffersOptions {
 	holderDid?: string;
 	category?: 'credential' | 'accreditation';
@@ -477,13 +484,22 @@ export class ReceivedCredentials {
 	 * @param customer - Customer entity
 	 * @param holderDid - Optional DID to filter by subject
 	 * @param category - Optional category to filter by ('credential' or 'accreditation')
-	 * @returns List of received credentials with their hashes
+	 * @param page - Page number for pagination (default: 1)
+	 * @param limit - Number of results per page (default: 10)
+	 * @returns Paginated list of received credentials with their hashes
 	 */
 	async listReceivedCredentials(
 		customer: CustomerEntity,
 		holderDid?: string,
-		category?: 'credential' | 'accreditation'
-	): Promise<Array<{ hash: string; credential: VerifiableCredential }>> {
+		category?: 'credential' | 'accreditation',
+		page: number = 1,
+		limit: number = 10
+	): Promise<{
+		total: number;
+		credentials: Array<{ hash: string; credential: VerifiableCredential }>;
+		page: number;
+		limit: number;
+	}> {
 		try {
 			// Get all DIDs owned by this customer
 			let subjectDids: string[] = [];
@@ -491,7 +507,12 @@ export class ReceivedCredentials {
 				subjectDids = await this.getHolderDids(customer);
 				if (subjectDids.length === 0) {
 					// No DIDs found for customer, return empty result
-					return [];
+					return {
+						total: 0,
+						credentials: [],
+						page,
+						limit,
+					};
 				}
 			} else {
 				// Verify the provided holderDid belongs to this customer
@@ -509,27 +530,83 @@ export class ReceivedCredentials {
 			const queryBuilder = credentialRepository
 				.createQueryBuilder('credential')
 				.leftJoin(IssuedCredentialEntity, 'issued', 'issued.veramoHash = credential.hash')
-				.where('credential.subject IN (:...subjectDids)', { subjectDids })
+				.addSelect('issued.category')
+				.where('credential.subjectDid IN (:...subjectDids)', { subjectDids })
 				.andWhere('(issued.status NOT IN (:...excludedStatuses) OR issued.status IS NULL)', {
 					excludedStatuses: ['offered', 'rejected'],
 				});
 
 			// Add category filter if provided
-			// Note: This will exclude imported credentials (which have issued.category = NULL)
-			// Only credentials with IssuedCredentialEntity matching the category will be returned
+			// Include both credentials matching the category AND imported credentials (which have issued.category = NULL)
 			if (category) {
-				queryBuilder.andWhere('issued.category = :category', { category });
+				queryBuilder.andWhere('(issued.category = :category OR issued.category IS NULL)', { category });
 			}
 
-			const credentialRecords = await queryBuilder.getMany();
+			let total: number;
+			let finalCredentials: Array<{ hash: string; credential: VerifiableCredential }>;
 
-			// Extract and parse the verifiableCredential field from each record along with hash
-			const credentials = credentialRecords.map((record) => ({
-				hash: record.hash,
-				credential: record.raw as unknown as VerifiableCredential,
-			}));
+			// Handle two cases differently for correct pagination and total count
+			if (!category) {
+				// No category filter: Use efficient SQL pagination with count
+				queryBuilder.skip((page - 1) * limit).take(limit);
+				const [credentialRecords, count] = await queryBuilder.getManyAndCount();
 
-			return credentials;
+				total = count;
+				finalCredentials = credentialRecords.map((record) => ({
+					hash: record.hash,
+					credential: record.raw as unknown as VerifiableCredential,
+				}));
+			} else {
+				// Category filter applied: Fetch all records to filter by type in TypeScript, then manually paginate
+				const credentialRecords = await queryBuilder.getRawAndEntities();
+
+				// Extract credentials with category information from the join
+				let credentials = credentialRecords.entities.map((record, index) => {
+					const rawRecord = credentialRecords.raw[index];
+					return {
+						hash: record.hash,
+						credential: record.raw as unknown as VerifiableCredential,
+						issuedCategory: rawRecord.issued_category as 'credential' | 'accreditation' | null,
+					};
+				});
+
+				// Filter imported credentials by their type
+				credentials = credentials.filter((item) => {
+					// If credential has IssuedCredentialEntity with category, it's already filtered by SQL
+					if (item.issuedCategory !== null) {
+						return true;
+					}
+
+					// For imported credentials (issuedCategory = null), check the credential type
+					const credentialType = Array.isArray(item.credential.type)
+						? item.credential.type
+						: [item.credential.type];
+
+					const isAccreditation = credentialType.some(
+						(type) => typeof type === 'string' && ACCREDITATION_TYPES.includes(type)
+					);
+
+					// Keep credential if category matches
+					return category === 'accreditation' ? isAccreditation : !isAccreditation;
+				});
+
+				// Get total count after filtering
+				total = credentials.length;
+
+				// Apply manual pagination
+				const startIndex = (page - 1) * limit;
+				credentials = credentials.slice(startIndex, startIndex + limit);
+
+				// Remove the temporary issuedCategory field
+				finalCredentials = credentials.map(({ hash, credential }) => ({ hash, credential }));
+			}
+
+			return {
+				total,
+				credentials: finalCredentials,
+				page,
+				limit,
+			};
 		} catch (error) {
 			throw new Error(`Failed to list received credentials: ${error}`);
 		}
