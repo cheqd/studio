@@ -449,7 +449,7 @@ test.describe.serial('Credential Offers & Received Credentials - Complete Lifecy
 	// ================================================================================
 
 	test(' List received credentials', async ({ request }) => {
-		const listResponse = await request.get(`/credentials/received`, {
+		const listResponse = await request.get(`/credentials/received?holderDid=${DEFAULT_TESTNET_DID}`, {
 			headers: {
 				'Content-Type': CONTENT_TYPE.APPLICATION_JSON,
 			},
