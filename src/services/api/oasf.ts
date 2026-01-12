@@ -14,12 +14,10 @@ export class OasfService {
 
 	constructor() {
 		const serverAddress = process.env.DIRECTORY_SERVER_URL || 'localhost:8888';
-		const dirctlPath = process.env.DIRCTL_PATH || '/usr/local/bin/dirctl';
 
 		this.oasfSchemaUrl = process.env.OASF_SCHEMA_SERVER_URL || 'https://schema.oasf.outshift.com';
 
-		const config = new Config(serverAddress, dirctlPath);
-		this.client = new Client(config);
+		this.client = new Client(new Config(serverAddress));
 	}
 
 	/**
