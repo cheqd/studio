@@ -2191,4 +2191,99 @@
  *                         type: string
  *                         format: date-time
  *                         description: Timestamp when status was last updated
+ *     PublishRecordRequest:
+ *          type: object
+ *          required:
+ *            - data
+ *          properties:
+ *            data:
+ *              type: object
+ *              required:
+ *                - name
+ *                - version
+ *                - schema_version
+ *              properties:
+ *                name:
+ *                  type: string
+ *                  description: Name of the record
+ *                version:
+ *                  type: string
+ *                  description: Version of the record
+ *                schema_version:
+ *                  type: string
+ *                  description: Schema version
+ *                description:
+ *                  type: string
+ *                  description: Optional description
+ *                authors:
+ *                  type: array
+ *                  items:
+ *                    type: string
+ *                  description: Optional list of authors
+ *                created_at:
+ *                  type: string
+ *                  format: date-time
+ *                  description: Optional creation timestamp
+ *                type:
+ *                  type: string
+ *                  enum:
+ *                    - agent
+ *                    - organization
+ *                    - service
+ *                    - mcp-server
+ *                  description: Optional record type
+ *                skills:
+ *                  type: array
+ *                  items:
+ *                    type: object
+ *                    properties:
+ *                      name:
+ *                        type: string
+ *                      id:
+ *                        type: number
+ *                      locators:
+ *                        type: array
+ *                      items:
+ *                        type: object
+ *                        properties:
+ *                          type:
+ *                            type: string
+ *                          url:
+ *                            type: string
+ *                          domains:
+ *                            type: array
+ *                            items:
+ *                              type: object
+ *                            properties:
+ *                              name:
+ *                                type: string
+ *                              id:
+ *                                type: number
+ *                              modules:
+ *                                type: array
+ *                                items:
+ *                                  type: object
+ *     PublishRecordResult:
+ *      type: object
+ *      properties:
+ *        success:
+ *          type: boolean
+ *          example: true
+ *        cid:
+ *          type: string
+ *          description: Content identifier of the published record
+ *        message:
+ *          type: string
+ *        data:
+ *          type: object
+ *          properties:
+ *            name:
+ *              type: string
+ *            version:
+ *              type: string
+ *            cid:
+ *              type: string
+ *            published_at:
+ *              type: string
+ *              format: date-time
  */
