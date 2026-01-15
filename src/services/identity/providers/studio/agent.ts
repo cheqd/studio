@@ -105,6 +105,7 @@ import type {
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { SupportedKeyTypes } from '@veramo/utils';
 import { CheqdW3CVerifiableCredential } from '../../../w3c-credential.js';
+import { CheqdNetwork } from '@cheqd/sdk';
 
 // dynamic import to avoid circular dependency
 const VeridaResolver =
