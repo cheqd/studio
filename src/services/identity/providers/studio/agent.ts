@@ -350,10 +350,6 @@ export class Veramo {
 				payload,
 				network: network as CheqdNetwork,
 				signInputs: publicKeyHexs,
-				fee: {
-					amount: [ResourceModule.fees.DefaultCreateResourceJsonFee],
-					gas: '2000000',
-				},
 			} satisfies ICheqdCreateLinkedResourceArgs);
 			return result;
 		} catch (error) {
