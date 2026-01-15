@@ -12,7 +12,10 @@ import type { CustomerEntity } from '../../database/entities/customer.entity.js'
 
 export class DefaultIdentityService extends AbstractIdentityService {
 	async resolveDid(did: string, options?: DIDResolutionOptions): Promise<DIDResolutionResult> {
-		return Veramo.instance.resolveDid(this.initAgent(), did, options);
+		return Veramo.instance.resolveDid(this.initAgent(), did, {
+			...options,
+			accept: options?.accept ?? 'application/ld+json;profile="https://w3id.org/did-resolution"',
+		});
 	}
 
 	async resolve(didUrl: string, dereferencing?: boolean): Promise<Response> {
