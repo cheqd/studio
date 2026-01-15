@@ -56,7 +56,6 @@ import {
 	BitstringStatusPurposeTypes,
 	DefaultStatusList2021ResourceTypes,
 } from '@cheqd/did-provider-cheqd';
-import { ResourceModule, type CheqdNetwork } from '@cheqd/sdk';
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key';
 import { DIDResolutionOptions, DIDResolutionResult, Resolver, ResolverRegistry } from 'did-resolver';
 import { DefaultDidUrlPattern, CreateAgentRequest, VeramoAgent } from '../../../../types/shared.js';
