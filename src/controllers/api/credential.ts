@@ -155,6 +155,9 @@ export class CredentialController {
 			const body = await identityServiceStrategySetup.agent.resolveDid(requestBody.issuerDid, {
 				resourceMetadata: false,
 			});
+
+			console.warn('/credential/issue: body:', body)
+
 			if (!body?.didDocument) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
 					error: `DID ${requestBody.issuerDid} is not resolved because of error from resolver: ${body.didResolutionMetadata.error}.`,
