@@ -154,6 +154,7 @@ export class CredentialController {
 			// resolve issuer DID-Document
 			const body = await identityServiceStrategySetup.agent.resolveDid(requestBody.issuerDid, {
 				resourceMetadata: false,
+				accept: 'application/ld+json;profile=https://w3id.org/did-resolution'
 			});
 
 			console.warn('/credential/issue: body:', body)
