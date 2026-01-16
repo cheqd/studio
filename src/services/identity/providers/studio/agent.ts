@@ -284,11 +284,7 @@ export class Veramo {
 		if (options?.resourceMetadata != undefined) {
 			did = `${did}?resourceMetadata=${options.resourceMetadata}`;
 		}
-		const resolvedOptions: DIDResolutionOptions = {
-			...options,
-			accept: options?.accept ?? 'application/ld+json;profile="https://w3id.org/did-resolution"',
-		};
-		return await agent.resolveDid({ didUrl: did, options: resolvedOptions });
+		return await agent.resolveDid({ didUrl: did, options });
 	}
 
 	async resolve(didUrl: string, dereferencing: boolean = false): Promise<Response> {
