@@ -157,8 +157,6 @@ export class CredentialController {
 				accept: 'application/ld+json;profile=https://w3id.org/did-resolution'
 			});
 
-			console.warn('/credential/issue: body:', body)
-
 			if (!body?.didDocument) {
 				return response.status(StatusCodes.BAD_REQUEST).send({
 					error: `DID ${requestBody.issuerDid} is not resolved because of error from resolver: ${body.didResolutionMetadata.error}.`,
