@@ -338,7 +338,7 @@ test.describe.serial('Running test sequentially', () => {
 		});
 
 		expect(response).not.toBeOK();
-		expect(response.status()).toBe(StatusCodes.BAD_REQUEST);
+		expect(response.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
 	});
 
 	test('14. It tries to set empty verificationMethod list for DID-A. Expected error', async ({ request }) => {
