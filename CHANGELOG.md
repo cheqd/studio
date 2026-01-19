@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.16.0-develop.14](https://github.com/cheqd/studio/compare/3.16.0-develop.13...3.16.0-develop.14) (2026-01-19)
+
+### Bug Fixes
+
+* pass accept header for issuance ([e33c7c4](https://github.com/cheqd/studio/commit/e33c7c4a16499c0b58ee9a8b3a7cc4afa85da8fc))
+* Update status code for deactivated controller ([#782](https://github.com/cheqd/studio/issues/782)) ([ddf5d5f](https://github.com/cheqd/studio/commit/ddf5d5f59d0e10f5f5cff2b86ae9b95df732a420))
+
 ## [3.16.0-develop.13](https://github.com/cheqd/studio/compare/3.16.0-develop.12...3.16.0-develop.13) (2026-01-07)
 
 ### Bug Fixes
