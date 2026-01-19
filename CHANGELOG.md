@@ -1,5 +1,7 @@
 # Changelog
 
+## [3.16.0-develop.15](https://github.com/cheqd/studio/compare/3.16.0-develop.14...3.16.0-develop.15) (2026-01-19)
+
 ## [3.16.0-develop.14](https://github.com/cheqd/studio/compare/3.16.0-develop.13...3.16.0-develop.14) (2026-01-19)
 
 ### Bug Fixes
