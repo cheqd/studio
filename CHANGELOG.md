@@ -1,5 +1,35 @@
 # Changelog
 
+## [3.16.0](https://github.com/cheqd/studio/compare/3.15.1...3.16.0) (2026-01-20)
+
+### Features
+
+* Add account analytics ([#773](https://github.com/cheqd/studio/issues/773)) ([3eee28c](https://github.com/cheqd/studio/commit/3eee28c79f6588078466eeedb0306e2a946969c7))
+* Add bulk status validation support [DEV-5538] ([#761](https://github.com/cheqd/studio/issues/761)) ([01ba23e](https://github.com/cheqd/studio/commit/01ba23ea82a89bb6cc1941975a7cc68e9d26e395))
+* Add network query param in analytics ([#774](https://github.com/cheqd/studio/issues/774)) ([ebc1742](https://github.com/cheqd/studio/commit/ebc1742c38f5b59aa2cc4f4f7d48f093683fd827))
+* Store received creds [DEV-5606] ([#778](https://github.com/cheqd/studio/issues/778)) ([9e00829](https://github.com/cheqd/studio/commit/9e00829011ffaf66052d5390daf6b73218033f55))
+
+### Bug Fixes
+
+* add pagination to credentials/received ([#781](https://github.com/cheqd/studio/issues/781)) ([dfa9817](https://github.com/cheqd/studio/commit/dfa981786569b1a7467709a97296c1013848163d)), closes [#780](https://github.com/cheqd/studio/issues/780)
+* add verification for dock credentials [DEV-5539] ([#764](https://github.com/cheqd/studio/issues/764)) ([169cc5c](https://github.com/cheqd/studio/commit/169cc5c01698b3afaf9c92eb430675b066a094ab))
+* emergency:  test case ([24ee626](https://github.com/cheqd/studio/commit/24ee6267b558bfa1559247be114e2d6e7671f1d2))
+* Invalid param in list accreditation ([#776](https://github.com/cheqd/studio/issues/776)) ([74eec7b](https://github.com/cheqd/studio/commit/74eec7bf62b2584bd15b76058869d05264b78bca))
+* Optimise accreditation permutations ([#772](https://github.com/cheqd/studio/issues/772)) ([4b70360](https://github.com/cheqd/studio/commit/4b70360a969837d41ecb82e6243f6fedff5cc204))
+* Parse credential jwt in verifyCredential for statuslist ([#763](https://github.com/cheqd/studio/issues/763)) ([db1efe5](https://github.com/cheqd/studio/commit/db1efe5e8c1ede8d6a6b5a377404a028b896bd72))
+* pass accept header for issuance ([e33c7c4](https://github.com/cheqd/studio/commit/e33c7c4a16499c0b58ee9a8b3a7cc4afa85da8fc))
+* Provide issuedCredentialId for re-issuance ([#762](https://github.com/cheqd/studio/issues/762)) ([02add4f](https://github.com/cheqd/studio/commit/02add4fb5b6b7ab81b5bc325e6bc3bde573a6045))
+* Stop loop at invalid accreditor status ([#777](https://github.com/cheqd/studio/issues/777)) ([109d312](https://github.com/cheqd/studio/commit/109d312dadd753f10a1480eaa14d7031b255a14e))
+* stripe webhook condition ([#771](https://github.com/cheqd/studio/issues/771)) ([f47cd4d](https://github.com/cheqd/studio/commit/f47cd4df4f732b07f7629853c296872f858e77e7))
+* Update status code for deactivated controller ([#782](https://github.com/cheqd/studio/issues/782)) ([ddf5d5f](https://github.com/cheqd/studio/commit/ddf5d5f59d0e10f5f5cff2b86ae9b95df732a420))
+* Use providerCredentialId for trackingMap ([#770](https://github.com/cheqd/studio/issues/770)) ([0300aca](https://github.com/cheqd/studio/commit/0300acafdf7493c9312b16fcb009b97fcf1515c0))
+* Verify status in accreditation at each trust level ([#775](https://github.com/cheqd/studio/issues/775)) ([dc230e1](https://github.com/cheqd/studio/commit/dc230e1de0da366e6d990345378ea1de16a67758))
+
+### Performance Improvements
+
+* Optimise list accreditations ([#766](https://github.com/cheqd/studio/issues/766)) ([c703554](https://github.com/cheqd/studio/commit/c703554b1806726baf82df8e13e62c4c25864683))
+* Optimize accreditation issue and verify api ([#769](https://github.com/cheqd/studio/issues/769)) ([a485831](https://github.com/cheqd/studio/commit/a4858316e5eea2968699901ce6c2d812280c85dd))
+
 ## [3.16.0-develop.15](https://github.com/cheqd/studio/compare/3.16.0-develop.14...3.16.0-develop.15) (2026-01-19)
 
 ## [3.16.0-develop.14](https://github.com/cheqd/studio/compare/3.16.0-develop.13...3.16.0-develop.14) (2026-01-19)
