@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.1-develop.1](https://github.com/cheqd/studio/compare/3.16.0...3.16.1-develop.1) (2026-02-03)
+
+### Bug Fixes
+
+* Multipurpose status value validation ([#783](https://github.com/cheqd/studio/issues/783)) ([235a34b](https://github.com/cheqd/studio/commit/235a34b600ecee80cd4805eddcbf9dcf265f4a30))
+
 ## [3.16.0](https://github.com/cheqd/studio/compare/3.15.1...3.16.0) (2026-01-20)
 
 ### Features
