@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.1-develop.2](https://github.com/cheqd/studio/compare/3.16.1-develop.1...3.16.1-develop.2) (2026-02-04)
+
+### Bug Fixes
+
+* Multipurpose status max value ([#784](https://github.com/cheqd/studio/issues/784)) ([613665a](https://github.com/cheqd/studio/commit/613665acda0c88843ec0d4ffbcc29044c9147884))
+
 ## [3.16.1-develop.1](https://github.com/cheqd/studio/compare/3.16.0...3.16.1-develop.1) (2026-02-03)
 
 ### Bug Fixes
