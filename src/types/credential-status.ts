@@ -118,7 +118,7 @@ export type UpdateUnencryptedStatusListRequestBody = {
 };
 
 export type UpdateUnencryptedStatusListRequestQuery = {
-	statusAction: DefaultStatusAction | number;
+	statusAction: DefaultStatusAction | string;
 	listType: string;
 };
 
@@ -307,6 +307,9 @@ export const DefaultStatusActionPurposeMap = {
 } as const;
 
 export type DefaultStatusAction = keyof typeof DefaultStatusActions;
+export function isDefaultStatusAction(action: string): action is DefaultStatusAction {
+    return Object.values(DefaultStatusActions).includes(action as DefaultStatusAction);
+}
 
 export type MinimalPaymentCondition = {
 	feePaymentAddress: string;
