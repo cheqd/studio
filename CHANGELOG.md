@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.1-develop.5](https://github.com/cheqd/studio/compare/3.16.1-develop.4...3.16.1-develop.5) (2026-02-05)
+
+### Bug Fixes
+
+* parse statusAction ([#787](https://github.com/cheqd/studio/issues/787)) ([d00eef7](https://github.com/cheqd/studio/commit/d00eef77fcb7d3c3ca1768b4cc1b02a01ee77949))
+
 ## [3.16.1-develop.4](https://github.com/cheqd/studio/compare/3.16.1-develop.3...3.16.1-develop.4) (2026-02-05)
 
 ### Bug Fixes
