@@ -55,8 +55,8 @@ export class DefaultIdentityService extends AbstractIdentityService {
 		did: string,
 		statusListName: string,
 		listType: string,
-		statusPurpose: 'revocation' | 'suspension',
-		customer: CustomerEntity
+		statusPurpose?: 'revocation' | 'suspension',
+		customer?: CustomerEntity
 	): Promise<SearchStatusListResult> {
 		return Veramo.instance.searchStatusList(did, statusListName, listType, statusPurpose);
 	}

@@ -8,7 +8,7 @@ import type {
 	ListStatusListQuery,
 	StatusListRecord,
 } from '../../types/credential-status.js';
-import { DefaultStatusActionPurposeMap, StatusRegistryState, StatusListType } from '../../types/credential-status.js';
+import { DefaultStatusActionPurposeMap, StatusRegistryState, StatusListType, StatusActions } from '../../types/credential-status.js';
 import type {
 	CreateEncryptedStatusListRequestBody,
 	CreateEncryptedStatusListRequestQuery,
@@ -412,7 +412,7 @@ export class CredentialStatusService {
 				did,
 				statusListName,
 				listType,
-				DefaultStatusActionPurposeMap[statusAction]
+				typeof statusAction === 'number' ? undefined : DefaultStatusActionPurposeMap[statusAction],
 			);
 
 			if (unencrypted.error) {
@@ -445,7 +445,7 @@ export class CredentialStatusService {
 					indices: typeof indices === 'number' ? [indices] : indices,
 					statusListName,
 					statusListVersion,
-					statusAction,
+					statusAction: typeof statusAction === 'number' ? statusAction : StatusActions[statusAction],
 				},
 				customer
 			)) as (BulkRevocationResult | BulkSuspensionResult | BulkUnsuspensionResult | BulkBitstringUpdateResult) & {
@@ -578,7 +578,7 @@ export class CredentialStatusService {
 				did,
 				statusListName,
 				listType,
-				DefaultStatusActionPurposeMap[statusAction]
+				typeof statusAction === 'number' ? undefined : DefaultStatusActionPurposeMap[statusAction]
 			);
 
 			if (encrypted.error) {
@@ -611,7 +611,7 @@ export class CredentialStatusService {
 					indices: typeof indices === 'number' ? [indices] : indices,
 					statusListName,
 					statusListVersion,
-					statusAction,
+					statusAction: typeof statusAction === 'number' ? statusAction : StatusActions[statusAction],
 					paymentConditions,
 					symmetricKey,
 					feePaymentAddress,
