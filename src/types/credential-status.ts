@@ -79,11 +79,11 @@ export type CreateUnencryptedStatusListRequestQuery = {
 export type CreateUnencryptedStatusListSuccessfulResponseBody = Pick<
 	CreateStatusList2021Result,
 	'created' | 'error' | 'resource' | 'resourceMetadata'
->;
+> & { statusListId: string };
 export type CreateUnencryptedBitstringSuccessfulResponseBody = Pick<
 	CreateStatusListResult,
 	'created' | 'error' | 'resource' | 'resourceMetadata'
->;
+> & { statusListId: string };
 
 export type CreateUnencryptedStatusListUnsuccessfulResponseBody = {
 	created: false;

@@ -219,6 +219,8 @@ export class CredentialStatusService {
 
 			eventTracker.emit('track', trackInfo);
 
+			result.statusListId = statusRegistry.registryId;
+
 			return {
 				success: true,
 				statusCode: StatusCodes.OK,
