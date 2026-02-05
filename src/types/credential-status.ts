@@ -118,7 +118,7 @@ export type UpdateUnencryptedStatusListRequestBody = {
 };
 
 export type UpdateUnencryptedStatusListRequestQuery = {
-	statusAction: DefaultStatusAction;
+	statusAction: DefaultStatusAction | number;
 	listType: string;
 };
 
@@ -255,7 +255,7 @@ export type UpdateUnencryptedStatusListOptions = {
 	indices: number[];
 	statusListName: string;
 	statusListVersion?: string;
-	statusAction: DefaultStatusAction;
+	statusAction: number;
 };
 
 export type UpdateEncryptedStatusListOptions = UpdateUnencryptedStatusListOptions & {
@@ -293,7 +293,8 @@ export const DefaultStatusActions = {
 	suspend: 'suspend',
 	reinstate: 'reinstate',
 } as const;
-export enum BitstringStatusActions {
+
+export enum StatusActions {
 	revoke = BitstringStatusValue.REVOKED, // "revoke" -> 1
 	suspend = BitstringStatusValue.SUSPENDED, // "suspend" -> 2
 	reinstate = BitstringStatusValue.VALID, // "reinstate" -> 0

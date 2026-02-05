@@ -187,7 +187,7 @@ export interface IIdentityService {
 		did: string,
 		statusListName: string,
 		listType: string,
-		statusPurpose: 'revocation' | 'suspension',
+		statusPurpose?: 'revocation' | 'suspension',
 		customer?: CustomerEntity
 	): Promise<SearchStatusListResult>;
 	broadcastStatusList2021(

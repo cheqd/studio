@@ -195,7 +195,7 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		did: string,
 		statusListName: string,
 		listType: StatusListType,
-		statusPurpose: 'revocation' | 'suspension',
+		statusPurpose?: 'revocation' | 'suspension',
 		customer?: CustomerEntity
 	): Promise<any> {
 		throw new Error(`Not supported`);

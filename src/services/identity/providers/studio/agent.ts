@@ -67,7 +67,7 @@ import type {
 	FeePaymentOptions,
 } from '../../../../types/credential-status.js';
 import type { CredentialRequest } from '../../../../types/credential.js';
-import { BitstringStatusActions, DefaultStatusActions, StatusListType } from '../../../../types/credential-status.js';
+import { StatusActions, StatusListType } from '../../../../types/credential-status.js';
 import type { CheckStatusListOptions } from '../../../../types/credential-status.js';
 import type {
 	RevocationStatusOptions,
@@ -795,14 +795,14 @@ export class Veramo {
 			if (Array.isArray(credentials)) {
 				return await agent.cheqdBulkUpdateCredentialsWithStatusList({
 					credentials,
-					newStatus: BitstringStatusActions.revoke as unknown as BitstringStatusValue,
+					newStatus: StatusActions.revoke as unknown as BitstringStatusValue,
 					fetchList: true,
 					publish,
 				} satisfies ICheqdBulkUpdateCredentialWithStatusListArgs);
 			}
 			return await agent.cheqdUpdateCredentialWithStatusList({
 				credential: credentials,
-				newStatus: BitstringStatusActions.revoke as unknown as BitstringStatusValue,
+				newStatus: StatusActions.revoke as unknown as BitstringStatusValue,
 				fetchList: true,
 				publish,
 				symmetricKey,
@@ -838,14 +838,14 @@ export class Veramo {
 			if (Array.isArray(credentials)) {
 				return await agent.cheqdBulkUpdateCredentialsWithStatusList({
 					credentials,
-					newStatus: BitstringStatusActions.suspend as unknown as BitstringStatusValue,
+					newStatus: StatusActions.suspend as unknown as BitstringStatusValue,
 					fetchList: true,
 					publish,
 				} satisfies ICheqdBulkUpdateCredentialWithStatusListArgs);
 			}
 			return await agent.cheqdUpdateCredentialWithStatusList({
 				credential: credentials,
-				newStatus: BitstringStatusActions.suspend as unknown as BitstringStatusValue,
+				newStatus: StatusActions.suspend as unknown as BitstringStatusValue,
 				fetchList: true,
 				publish,
 				symmetricKey,
@@ -877,14 +877,14 @@ export class Veramo {
 			if (Array.isArray(credentials)) {
 				return await agent.cheqdBulkUpdateCredentialsWithStatusList({
 					credentials,
-					newStatus: BitstringStatusActions.reinstate as unknown as BitstringStatusValue,
+					newStatus: StatusActions.reinstate as unknown as BitstringStatusValue,
 					fetchList: true,
 					publish,
 				} satisfies ICheqdBulkUpdateCredentialWithStatusListArgs);
 			}
 			return await agent.cheqdUpdateCredentialWithStatusList({
 				credential: credentials,
-				newStatus: BitstringStatusActions.reinstate as unknown as BitstringStatusValue,
+				newStatus: StatusActions.reinstate as unknown as BitstringStatusValue,
 				fetchList: true,
 				publish,
 				symmetricKey,
@@ -913,7 +913,7 @@ export class Veramo {
 	) {
 		if (listType === StatusListType.Bitstring) {
 			return await agent.cheqdBulkUpdateCredentialsWithStatusList({
-				newStatus: BitstringStatusActions[statusOptions.statusAction] as unknown as BitstringStatusValue,
+				newStatus: statusOptions.statusAction,
 				updateOptions: {
 					issuerDid: did,
 					statusListIndices: statusOptions.indices,
@@ -928,7 +928,7 @@ export class Veramo {
 			} satisfies ICheqdBulkUpdateCredentialWithStatusListArgs);
 		} else {
 			switch (statusOptions.statusAction) {
-				case DefaultStatusActions.revoke:
+				case StatusActions.revoke:
 					return await agent.cheqdRevokeCredentials({
 						revocationOptions: {
 							issuerDid: did,
@@ -942,7 +942,7 @@ export class Veramo {
 						returnUpdatedStatusList: true,
 						returnStatusListMetadata: true,
 					} satisfies ICheqdRevokeBulkCredentialsWithStatusListArgs);
-				case DefaultStatusActions.suspend:
+				case StatusActions.suspend:
 					return await agent.cheqdSuspendCredentials({
 						suspensionOptions: {
 							issuerDid: did,
@@ -956,7 +956,7 @@ export class Veramo {
 						returnUpdatedStatusList: true,
 						returnStatusListMetadata: true,
 					} satisfies ICheqdSuspendBulkCredentialsWithStatusListArgs);
-				case DefaultStatusActions.reinstate:
+				case StatusActions.reinstate:
 					return await agent.cheqdUnsuspendCredentials({
 						unsuspensionOptions: {
 							issuerDid: did,
@@ -970,6 +970,8 @@ export class Veramo {
 						returnUpdatedStatusList: true,
 						returnStatusListMetadata: true,
 					} satisfies ICheqdUnsuspendBulkCredentialsWithStatusListArgs);
+				default:
+					throw new Error("Status Action not supported")
 			}
 		}
 	}
@@ -1024,8 +1026,8 @@ export class Veramo {
 		) satisfies PaymentCondition[] | undefined;
 		if (listType === StatusListType.Bitstring) {
 			return await agent.cheqdBulkUpdateCredentialsWithStatusList({
-				newStatus: BitstringStatusActions[statusOptions.statusAction] as unknown as BitstringStatusValue,
-				updateOptions: {
+				newStatus: statusOptions.statusAction,
+   				updateOptions: {
 					issuerDid: did,
 					statusListIndices: statusOptions.indices,
 					statusListName: statusOptions.statusListName,
@@ -1043,7 +1045,7 @@ export class Veramo {
 			} satisfies ICheqdBulkUpdateCredentialWithStatusListArgs);
 		} else {
 			switch (statusOptions.statusAction) {
-				case DefaultStatusActions.revoke:
+				case StatusActions.revoke:
 					return await agent.cheqdRevokeCredentials({
 						revocationOptions: {
 							issuerDid: did,
@@ -1061,7 +1063,7 @@ export class Veramo {
 						returnStatusListMetadata: true,
 						dkgOptions: toDefaultDkg(did),
 					} satisfies ICheqdRevokeBulkCredentialsWithStatusListArgs);
-				case DefaultStatusActions.suspend:
+				case StatusActions.suspend:
 					return await agent.cheqdSuspendCredentials({
 						suspensionOptions: {
 							issuerDid: did,
@@ -1079,7 +1081,7 @@ export class Veramo {
 						returnStatusListMetadata: true,
 						dkgOptions: toDefaultDkg(did),
 					} satisfies ICheqdSuspendBulkCredentialsWithStatusListArgs);
-				case DefaultStatusActions.reinstate:
+				case StatusActions.reinstate:
 					return await agent.cheqdUnsuspendCredentials({
 						unsuspensionOptions: {
 							issuerDid: did,
@@ -1097,6 +1099,8 @@ export class Veramo {
 						returnStatusListMetadata: true,
 						dkgOptions: toDefaultDkg(did),
 					} satisfies ICheqdUnsuspendBulkCredentialsWithStatusListArgs);
+				default:
+					throw new Error("Status Action not supported")
 			}
 		}
 	}
@@ -1135,12 +1139,15 @@ export class Veramo {
 		did: string,
 		statusListName: string,
 		listType: string,
-		statusPurpose: DefaultStatusList2021StatusPurposeType
+		statusPurpose?: DefaultStatusList2021StatusPurposeType
 	): Promise<SearchStatusListResult> {
 		let resourceType: string;
 		if (listType === StatusListType.Bitstring) {
 			resourceType = BitstringStatusListResourceType;
 		} else {
+			if(!statusPurpose) {
+				throw new Error("Status Purpose is required")
+			}
 			resourceType = DefaultStatusList2021ResourceTypes[statusPurpose];
 		}
 		// construct url
