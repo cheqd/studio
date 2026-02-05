@@ -4,11 +4,12 @@ import type {
 	CheqdCredentialStatus,
 	CreateEncryptedBitstringSuccessfulResponseBody,
 	CreateUnencryptedBitstringSuccessfulResponseBody,
+	DefaultStatusAction,
 	FeePaymentOptions,
 	ListStatusListQuery,
 	StatusListRecord,
 } from '../../types/credential-status.js';
-import { DefaultStatusActionPurposeMap, StatusRegistryState, StatusListType, StatusActions } from '../../types/credential-status.js';
+import { DefaultStatusActionPurposeMap, StatusRegistryState, StatusListType, StatusActions, isDefaultStatusAction } from '../../types/credential-status.js';
 import type {
 	CreateEncryptedStatusListRequestBody,
 	CreateEncryptedStatusListRequestQuery,
@@ -403,11 +404,21 @@ export class CredentialStatusService {
 		error?: string;
 	}> {
 		const { did, statusListName, statusListVersion = '1.0', indices } = body;
-		const { statusAction, listType } = query;
+		let { statusAction: statusActionString, listType } = query;
 
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
-
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(customer.customerId);	
 		try {
+			let statusAction: number | DefaultStatusAction;
+			const parsedInt = parseInt(statusActionString, 10);
+
+			if (!isNaN(parsedInt)) {
+				statusAction = parsedInt;
+			} else if (isDefaultStatusAction(statusActionString)) {
+				statusAction = statusActionString;
+			} else {
+				throw new Error(`[did-provider-cheqd]: Invalid statusAction provided: ${statusActionString}`);
+			}
+
 			const unencrypted = await identityServiceStrategySetup.agent.searchStatusList(
 				did,
 				statusListName,
@@ -570,10 +581,21 @@ export class CredentialStatusService {
 			feePaymentWindow,
 		} = body;
 
-		const { statusAction, listType } = query;
+		const { statusAction: statusActionString, listType } = query;
 
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
 		try {
+			let statusAction: number | DefaultStatusAction;
+			const parsedInt = parseInt(statusActionString, 10);
+
+			if (!isNaN(parsedInt)) {
+				statusAction = parsedInt;
+			} else if (isDefaultStatusAction(statusActionString)) {
+				statusAction = statusActionString;
+			} else {
+				throw new Error(`[did-provider-cheqd]: Invalid statusAction provided: ${statusActionString}`);
+			}
+	
 			const encrypted = await identityServiceStrategySetup.agent.searchStatusList(
 				did,
 				statusListName,
