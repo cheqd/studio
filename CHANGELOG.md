@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.1-develop.3](https://github.com/cheqd/studio/compare/3.16.1-develop.2...3.16.1-develop.3) (2026-02-05)
+
+### Bug Fixes
+
+* Include statuslistId in create api ([#785](https://github.com/cheqd/studio/issues/785)) ([c2acb32](https://github.com/cheqd/studio/commit/c2acb325a049226e750a01e2984b1c2807b29092))
+
 ## [3.16.1-develop.2](https://github.com/cheqd/studio/compare/3.16.1-develop.1...3.16.1-develop.2) (2026-02-04)
 
 ### Bug Fixes
