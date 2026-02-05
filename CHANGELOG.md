@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.1-develop.4](https://github.com/cheqd/studio/compare/3.16.1-develop.3...3.16.1-develop.4) (2026-02-05)
+
+### Bug Fixes
+
+* Support number for status action ([#786](https://github.com/cheqd/studio/issues/786)) ([ca74860](https://github.com/cheqd/studio/commit/ca74860db21d7bb224a7f7f7b6115d83ecd6526d))
+
 ## [3.16.1-develop.3](https://github.com/cheqd/studio/compare/3.16.1-develop.2...3.16.1-develop.3) (2026-02-05)
 
 ### Bug Fixes
