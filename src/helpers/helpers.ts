@@ -156,10 +156,10 @@ export function getQueryParams(queryParams: ParsedQs) {
 	return queryParamsText.length == 0 ? queryParamsText : '?' + queryParamsText;
 }
 
-export async function generateSaltFromConstantInput(constant: string): Promise<Uint8Array> {
+export async function generateSaltFromConstantInput(constant: string): Promise<ArrayBuffer> {
 	const derivedSource = await crypto.subtle.importKey(
 		'raw',
-		Buffer.from(constant),
+		fromString(constant),
 		{ name: 'PBKDF2', hash: 'SHA-256' },
 		false,
 		['deriveBits', 'deriveKey']
@@ -168,7 +168,7 @@ export async function generateSaltFromConstantInput(constant: string): Promise<U
 	const salt = await crypto.subtle.deriveBits(
 		{
 			name: 'PBKDF2',
-			salt: Buffer.from(constant),
+			salt: fromString(constant),
 			iterations: 100_000,
 			hash: 'SHA-256',
 		},
@@ -176,7 +176,7 @@ export async function generateSaltFromConstantInput(constant: string): Promise<U
 		256
 	);
 
-	return new Uint8Array(salt);
+	return salt;
 }
 
 export async function deriveSymmetricKeyFromSecret(
@@ -221,8 +221,8 @@ export async function decryptPrivateKey(encryptedPrivateKeyHex: string, ivHex: s
 	const derivedKey = await deriveSymmetricKeyFromSecret(process.env.CREDS_DECRYPTION_SECRET, salt);
 
 	// unwrap encrypted key with iv
-	const encryptedKey = Buffer.from(encryptedPrivateKeyHex, 'hex');
-	const iv = Buffer.from(ivHex, 'hex');
+	const encryptedKey = fromString(encryptedPrivateKeyHex, 'hex');
+	const iv = fromString(ivHex, 'hex');
 
 	// decrypt private key with derived key
 	const decrypted = await crypto.subtle.decrypt(
