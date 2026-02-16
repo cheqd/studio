@@ -53,6 +53,7 @@ export const configLogToExpress = {
 // Faucet constants
 export const MINIMAL_DENOM = 'ncheq';
 export const FAUCET_URI = process.env.FAUCET_URI || 'https://faucet-api.cheqd.network/credit';
+export const FAUCET_API_KEY = process.env.FAUCET_API_KEY || 'default-api-key';
 export const DEFAULT_DENOM_EXPONENT = 9;
 export const TESTNET_MINIMUM_BALANCE = process.env.TESTNET_MINIMUM_BALANCE || 1000;
 export const FAUCET_AMOUNT = process.env.FAUCET_AMOUNT || 100000000000000;
@@ -114,6 +115,9 @@ export enum OperationNameEnum {
 	CREDENTIAL_STATUS_UPDATE_ENCRYPTED = 'credential-status-update-encrypted',
 	CREDENTIAL_STATUS_CHECK = 'credential-status-check',
 	CREDENTIAL_STATUS_SEARCH = 'credential-status-search',
+	CREDENTIAL_STATUS_FULL = 'credential-status-full',
+	CREDENTIAL_STATUS_THRESHOLD_REACHED = 'credential-status-threshold-reached',
+
 	// Credential operations
 	CREDENTIAL_ISSUE = 'credential-issue',
 	CREDENTIAL_VERIFY = 'credential-verify',

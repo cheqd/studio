@@ -19,7 +19,7 @@ jobs:
             security-events: write
 
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
               with:
                   fetch-depth: 0
 
@@ -31,7 +31,7 @@ jobs:
 
             - name: Build
               run: |
-                  npm ci
+                  npm ci --force
                   npm run build
 
             - name: Perform CodeQL Analysis

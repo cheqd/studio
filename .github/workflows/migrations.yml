@@ -22,16 +22,16 @@ jobs:
       url: https://studio-api-staging.cheqd.net/swagger/
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: "npm"
 
       - name: Install dependencies and build
         run: |
-          npm ci
+          npm ci --force
           npm run build
 
       - name: "Execute migrations"
@@ -57,9 +57,9 @@ jobs:
       ENABLE_EXTERNAL_DB: true
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: "npm"
@@ -71,7 +71,7 @@ jobs:
 
       - name: Install dependencies and build
         run: |
-          npm ci
+          npm ci --force
           npm run build
 
       - name: Get runner public IP

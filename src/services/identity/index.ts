@@ -6,6 +6,7 @@ import { Unauthorized } from './providers/studio/unauthorized.js';
 import type {
 	CredentialPayload,
 	DIDDocument,
+	DIDResolutionOptions,
 	DIDResolutionResult,
 	IIdentifier,
 	IKey,
@@ -31,6 +32,7 @@ import type {
 	CreateStatusListResult,
 	BulkBitstringUpdateResult,
 	BitstringUpdateResult,
+	BitstringValidationResult,
 } from '@cheqd/did-provider-cheqd';
 import type { VeramoAgent } from '../../types/shared.js';
 import type { VerificationOptions } from '../../types/shared.js';
@@ -86,9 +88,9 @@ export interface IIdentityService {
 	updateDid(didDocument: DIDDocument, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<IIdentifier>;
 	deactivateDid(did: string, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<boolean>;
 	listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<ListDidsResponseBody>;
-	resolveDid(did: string): Promise<DIDResolutionResult>;
+	resolveDid(did: string, options?: DIDResolutionOptions): Promise<DIDResolutionResult>;
 	exportDid(did: string, password: string, customer: CustomerEntity): Promise<ExportDidResponse>;
-	resolve(didUrl: string): Promise<Response>;
+	resolve(didUrl: string, dereferencing?: boolean): Promise<Response>;
 	getDid(did: string, customer: CustomerEntity): Promise<any>;
 	importDid(
 		did: string,
@@ -104,6 +106,14 @@ export interface IIdentityService {
 		publicKeyHexs?: string[]
 	): Promise<any>;
 	listResources(options: ListResourceOptions, customer: CustomerEntity): Promise<ListResourceResponse>;
+	findLatestResourcesVersionsByType?(
+		resourceType: string,
+		customer: CustomerEntity,
+		network?: string,
+		did?: string,
+		page?: number,
+		limit?: number
+	): Promise<ListResourceResponse>;
 	createCredential(
 		credential: CredentialPayload,
 		format: CredentialRequest['format'],
@@ -168,16 +178,16 @@ export interface IIdentityService {
 		statusOptions: CheckStatusListOptions,
 		customer: CustomerEntity
 	): Promise<StatusCheckResult>;
-	//TODO Implement the below method for studio provider
 	checkBitstringStatusList(
+		did: string,
 		statusOptions: CheqdCredentialStatus,
 		customer: CustomerEntity
-	): Promise<StatusCheckResult>;
+	): Promise<BitstringValidationResult | BitstringValidationResult[]>;
 	searchStatusList(
 		did: string,
 		statusListName: string,
 		listType: string,
-		statusPurpose: 'revocation' | 'suspension',
+		statusPurpose?: 'revocation' | 'suspension',
 		customer?: CustomerEntity
 	): Promise<SearchStatusListResult>;
 	broadcastStatusList2021(
@@ -221,6 +231,32 @@ export interface IIdentityService {
 	getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | null>;
 	decryptAPIKey(apiKey: string): Promise<string>;
 	listOperations(options: ListOperationOptions, customer: CustomerEntity): Promise<any>;
+
+	/**
+	 * Check if a DID exists in the agent's identifier store
+	 * @param did - The DID to check
+	 * @param customer - Customer entity
+	 * @returns true if DID exists, false otherwise
+	 */
+	didExists(did: string, customer: CustomerEntity): Promise<boolean>;
+
+	/**
+	 * Save a verifiable credential to Veramo's dataStore
+	 * @param credential - The verifiable credential to save
+	 * @param customer - Customer entity
+	 * @returns The hash of the saved credential
+	 */
+	saveCredential(credential: VerifiableCredential, customer: CustomerEntity): Promise<string>;
+
+	/**
+	 * Delete a verifiable credential from Veramo's dataStore
+	 * @param hash - The hash of the credential to delete
+	 * @param customer - Customer entity
+	 * @returns true if deleted successfully
+	 */
+	deleteCredential(hash: string, customer: CustomerEntity): Promise<boolean>;
+
+	retrieveCredential(hash: string, customer: CustomerEntity): Promise<VerifiableCredential | null>;
 }
 
 export class IdentityServiceStrategySetup {

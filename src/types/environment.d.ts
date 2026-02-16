@@ -71,6 +71,12 @@ declare global {
 			STRIPE_WEBHOOK_SECRET: string;
 			STRIPE_BUILD_PLAN_ID: string;
 			STRIPE_TEST_PLAN_ID: string;
+
+			// Mailchimp
+			MAILCHIMP_ENABLED: string | 'false';
+			MAILCHIMP_API_KEY: string | undefined;
+			MAILCHIMP_LIST_ID: string | undefined;
+			MAILCHIMP_SERVER_PREFIX: string | undefined;
 		}
 	}
 

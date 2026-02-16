@@ -49,4 +49,13 @@ export class IdentifierService {
 			return [];
 		}
 	}
+
+	public async count(customer: CustomerEntity, where: Record<string, unknown>) {
+		return await this.identifierRepository.count({
+			where: {
+				...where,
+				customer: { customerId: customer.customerId },
+			},
+		});
+	}
 }

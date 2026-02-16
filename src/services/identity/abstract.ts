@@ -3,6 +3,7 @@
 import type {
 	CredentialPayload,
 	DIDDocument,
+	DIDResolutionOptions,
 	DIDResolutionResult,
 	IIdentifier,
 	IKey,
@@ -27,6 +28,7 @@ import type {
 	CreateStatusListResult,
 	BulkBitstringUpdateResult,
 	BitstringUpdateResult,
+	BitstringValidationResult,
 } from '@cheqd/did-provider-cheqd';
 import type { VeramoAgent } from '../../types/shared';
 import type { VerificationOptions } from '../../types/shared';
@@ -183,16 +185,17 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 	checkBitstringStatusList(
+		did: string,
 		statusOptions: CheqdCredentialStatus,
 		customer: CustomerEntity
-	): Promise<StatusCheckResult> {
+	): Promise<BitstringValidationResult | BitstringValidationResult[]> {
 		throw new Error(`Not supported`);
 	}
 	searchStatusList(
 		did: string,
 		statusListName: string,
 		listType: StatusListType,
-		statusPurpose: 'revocation' | 'suspension',
+		statusPurpose?: 'revocation' | 'suspension',
 		customer?: CustomerEntity
 	): Promise<any> {
 		throw new Error(`Not supported`);
@@ -260,10 +263,10 @@ export abstract class AbstractIdentityService implements IIdentityService {
 	getDid(did: string, customer: CustomerEntity): Promise<any> {
 		throw new Error(`Not supported`);
 	}
-	resolveDid(did: string): Promise<DIDResolutionResult> {
+	resolveDid(did: string, options?: DIDResolutionOptions): Promise<DIDResolutionResult> {
 		throw new Error(`Not supported`);
 	}
-	resolve(didUrl: string): Promise<Response> {
+	resolve(didUrl: string, dereferencing?: boolean): Promise<Response> {
 		throw new Error(`Not supported`);
 	}
 	createPresentation(
@@ -301,6 +304,18 @@ export abstract class AbstractIdentityService implements IIdentityService {
 		throw new Error(`Not supported`);
 	}
 	listOperations(where: ListOperationOptions, customer: CustomerEntity): Promise<any> {
+		throw new Error(`Not supported`);
+	}
+	didExists(did: string, customer: CustomerEntity): Promise<boolean> {
+		throw new Error(`Not supported`);
+	}
+	saveCredential(credential: VerifiableCredential, customer: CustomerEntity): Promise<string> {
+		throw new Error(`Not supported`);
+	}
+	deleteCredential(hash: string, customer: CustomerEntity): Promise<boolean> {
+		throw new Error(`Not supported`);
+	}
+	retrieveCredential(hash: string, customer: CustomerEntity): Promise<VerifiableCredential | null> {
 		throw new Error(`Not supported`);
 	}
 }

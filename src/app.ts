@@ -7,6 +7,7 @@ import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { StatusCodes } from 'http-status-codes';
 import { CredentialController } from './controllers/api/credential.js';
+import { ReceivedCredentialController } from './controllers/api/received-credential.js';
 import { AccountController } from './controllers/api/account.js';
 import { Authentication } from './middleware/authentication.js';
 import { Connection } from './database/connection/connection.js';
@@ -143,6 +144,46 @@ class App {
 		// Issued Credentials Tracking API
 		app.get('/credentials/issued', new CredentialController().listIssuedCredentials);
 		app.get('/credentials/issued/:id', new CredentialController().getIssuedCredential);
+		app.put('/credentials/issued/:id', new CredentialController().updateIssuedCredential);
+		app.post('/credentials/issued/:id/re-issue', new CredentialController().retryIssuedCredential);
+		// Import External Credentials
+		app.post(
+			'/credentials/import',
+			ReceivedCredentialController.importValidator,
+			new ReceivedCredentialController().importCredential
+		);
+		// Received Credentials API
+		app.get(
+			'/credentials/received',
+			ReceivedCredentialController.listReceivedValidator,
+			new ReceivedCredentialController().listReceivedCredentials
+		);
+		app.get(
+			'/credentials/received/:credentialHash',
+			ReceivedCredentialController.getReceivedValidator,
+			new ReceivedCredentialController().getReceivedCredential
+		);
+		// Credential Offers API
+		app.get(
+			'/credentials/offers',
+			ReceivedCredentialController.listOffersValidator,
+			new ReceivedCredentialController().listOffers
+		);
+		app.get(
+			'/credentials/offers/:credentialId',
+			ReceivedCredentialController.getOfferValidator,
+			new ReceivedCredentialController().getOfferDetails
+		);
+		app.post(
+			'/credentials/offers/:credentialId/accept',
+			ReceivedCredentialController.acceptOfferValidator,
+			new ReceivedCredentialController().acceptOffer
+		);
+		app.post(
+			'/credentials/offers/:credentialId/reject',
+			ReceivedCredentialController.rejectOfferValidator,
+			new ReceivedCredentialController().rejectOffer
+		);
 		// Presentation API
 		app.post(
 			`/presentation/verify`,
@@ -186,11 +227,26 @@ class App {
 			CredentialStatusController.searchValidator,
 			new CredentialStatusController().searchStatusList
 		);
+		app.get(
+			'/credential-status/list',
+			CredentialStatusController.listValidator,
+			new CredentialStatusController().listStatusList
+		);
+		app.get(
+			'/credential-status/list/:statusListId',
+			CredentialStatusController.fetchValidator,
+			new CredentialStatusController().fetchStatusList
+		);
 
 		// Keys API
 		app.post('/key/create', new KeyController().createKey);
 		app.post('/key/import', KeyController.keyImportValidator, new KeyController().importKey);
 		app.get('/key/read/:kid', KeyController.keyGetValidator, new KeyController().getKey);
+		app.get(
+			'/key/:kid/verification-method',
+			KeyController.keyGetValidator,
+			new KeyController().convertToVerificationMethod
+		);
 
 		// DIDs API
 		app.post('/did/create', DIDController.createDIDValidator, new DIDController().createDid);
@@ -253,6 +309,7 @@ class App {
 		app.post('/account/create', AccountController.createValidator, new AccountController().create);
 		app.get('/account', new AccountController().get);
 		app.get('/account/idtoken', new AccountController().getIdToken);
+		app.get('/account/analytics', new AccountController().getAnalytics);
 
 		// LogTo webhooks
 		app.post('/account/bootstrap', LogToWebHook.verifyHookSignature, new AccountController().bootstrap);

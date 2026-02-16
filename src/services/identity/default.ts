@@ -1,22 +1,22 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { DIDResolutionResult } from 'did-resolver';
+import type { DIDResolutionOptions, DIDResolutionResult } from 'did-resolver';
 import { AbstractIdentityService } from './abstract.js';
 import type { IVerifyResult, VerifiableCredential, VerifiablePresentation } from '@veramo/core';
 import type { VerificationOptions } from '../../types/shared.js';
-import type { FeePaymentOptions } from '../../types/credential-status.js';
+import type { CheqdCredentialStatus, FeePaymentOptions } from '../../types/credential-status.js';
 import type { CheckStatusListOptions } from '../../types/credential-status.js';
 import type { SearchStatusListResult } from '../../types/credential-status.js';
-import type { StatusCheckResult, TransactionResult } from '@cheqd/did-provider-cheqd';
+import type { BitstringValidationResult, StatusCheckResult, TransactionResult } from '@cheqd/did-provider-cheqd';
 import { Veramo } from './providers/studio/agent.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 
 export class DefaultIdentityService extends AbstractIdentityService {
-	async resolveDid(did: string): Promise<DIDResolutionResult> {
-		return Veramo.instance.resolveDid(this.initAgent(), did);
+	async resolveDid(did: string, options?: DIDResolutionOptions): Promise<DIDResolutionResult> {
+		return Veramo.instance.resolveDid(this.initAgent(), did, options);
 	}
 
-	async resolve(didUrl: string): Promise<Response> {
-		return Veramo.instance.resolve(didUrl);
+	async resolve(didUrl: string, dereferencing?: boolean): Promise<Response> {
+		return Veramo.instance.resolve(didUrl, dereferencing);
 	}
 
 	verifyCredential(
@@ -43,12 +43,20 @@ export class DefaultIdentityService extends AbstractIdentityService {
 		return Veramo.instance.checkStatusList2021(this.initAgent(), did, statusOptions);
 	}
 
+	checkBitstringStatusList(
+		did: string,
+		statusOptions: CheqdCredentialStatus,
+		customer: CustomerEntity
+	): Promise<BitstringValidationResult | BitstringValidationResult[]> {
+		return Veramo.instance.checkBitstringStatusList(this.initAgent(), did, statusOptions);
+	}
+
 	searchStatusList(
 		did: string,
 		statusListName: string,
 		listType: string,
-		statusPurpose: 'revocation' | 'suspension',
-		customer: CustomerEntity
+		statusPurpose?: 'revocation' | 'suspension',
+		customer?: CustomerEntity
 	): Promise<SearchStatusListResult> {
 		return Veramo.instance.searchStatusList(did, statusListName, listType, statusPurpose);
 	}

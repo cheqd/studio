@@ -19,7 +19,7 @@ import {
 	W3CVerifiableCredential,
 } from '@veramo/core';
 import { KeyManager } from '@veramo/key-manager';
-import { DIDStore, KeyStore } from '@veramo/data-store';
+import { DIDStore, KeyStore, DataStore, DataStoreORM } from '@veramo/data-store';
 import { DIDManager } from '@veramo/did-manager';
 import { DIDResolverPlugin, getUniversalResolver as UniversalResolver } from '@veramo/did-resolver';
 import { CredentialPlugin } from '@veramo/credential-w3c';
@@ -56,18 +56,18 @@ import {
 	BitstringStatusPurposeTypes,
 	DefaultStatusList2021ResourceTypes,
 } from '@cheqd/did-provider-cheqd';
-import { ResourceModule, type CheqdNetwork } from '@cheqd/sdk';
 import { getDidKeyResolver as KeyDidResolver } from '@veramo/did-provider-key';
-import { DIDResolutionResult, Resolver, ResolverRegistry } from 'did-resolver';
+import { DIDResolutionOptions, DIDResolutionResult, Resolver, ResolverRegistry } from 'did-resolver';
 import { DefaultDidUrlPattern, CreateAgentRequest, VeramoAgent } from '../../../../types/shared.js';
 import type { VerificationOptions } from '../../../../types/shared.js';
 import type {
+	CheqdCredentialStatus,
 	CreateEncryptedBitstringOptions,
 	CreateUnencryptedBitstringOptions,
 	FeePaymentOptions,
 } from '../../../../types/credential-status.js';
 import type { CredentialRequest } from '../../../../types/credential.js';
-import { BitstringStatusActions, DefaultStatusActions, StatusListType } from '../../../../types/credential-status.js';
+import { StatusActions, StatusListType } from '../../../../types/credential-status.js';
 import type { CheckStatusListOptions } from '../../../../types/credential-status.js';
 import type {
 	RevocationStatusOptions,
@@ -85,14 +85,18 @@ import type {
 import {
 	BitstringStatusListEntry,
 	MINIMAL_DENOM,
+	StatusList2021Entry,
 	VC_PROOF_FORMAT,
 	VC_REMOVE_ORIGINAL_FIELDS,
 } from '../../../../types/constants.js';
 import { toCoin, toDefaultDkg, toMinimalDenom } from '../../../../helpers/helpers.js';
 import { jwtDecode } from 'jwt-decode';
 import type {
+	BitstringStatusListEntry as BitstringStatusListEntryType,
 	BitstringStatusValue,
+	BitstringValidationResult,
 	ICheqdBulkUpdateCredentialWithStatusListArgs,
+	ICheqdCheckCredentialStatusWithBitstringArgs,
 	ICheqdCreateBitstringStatusListArgs,
 	ICheqdCreateLinkedResourceArgs,
 	ICheqdUpdateCredentialWithStatusListArgs,
@@ -100,6 +104,8 @@ import type {
 } from '@cheqd/did-provider-cheqd';
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { SupportedKeyTypes } from '@veramo/utils';
+import { CheqdW3CVerifiableCredential } from '../../../w3c-credential.js';
+import { CheqdNetwork } from '@cheqd/sdk';
 
 // dynamic import to avoid circular dependency
 const VeridaResolver =
@@ -178,7 +184,9 @@ export class Veramo {
 						new VeramoEd25519Signature2018(),
 						new VeramoEd25519Signature2020(),
 					],
-				})
+				}),
+				new DataStore(dbConnection),
+				new DataStoreORM(dbConnection)
 			);
 		}
 		return createAgent({ plugins });
@@ -272,13 +280,27 @@ export class Veramo {
 		return (await agent.didManagerFind()).map((res) => res.did);
 	}
 
-	async resolveDid(agent: TAgent<IResolver>, did: string) {
-		return await agent.resolveDid({ didUrl: did });
+	async resolveDid(agent: TAgent<IResolver>, did: string, options?: DIDResolutionOptions) {
+		if (options?.resourceMetadata != undefined) {
+			did = `${did}?resourceMetadata=${options.resourceMetadata}`;
+		}
+		return await agent.resolveDid({ didUrl: did, options });
 	}
 
-	async resolve(didUrl: string): Promise<Response> {
+	async resolve(didUrl: string, dereferencing: boolean = false): Promise<Response> {
+		let header;
+		if (dereferencing) {
+			header = {
+				Accept: 'application/ld+json;profile=https://w3id.org/did-url-dereferencing',
+			};
+		} else {
+			header = { 'Content-Type': '*/*' };
+		}
+
+		// TODO replace with CheqdDidResolver.resolve() after new release
 		return fetch(`${process.env.RESOLVER_URL || DefaultResolverUrl}/${didUrl}`, {
-			headers: { 'Content-Type': '*/*' },
+			headers: header,
+			keepalive: true,
 		});
 	}
 
@@ -328,10 +350,6 @@ export class Veramo {
 				payload,
 				network: network as CheqdNetwork,
 				signInputs: publicKeyHexs,
-				fee: {
-					amount: [ResourceModule.fees.DefaultCreateResourceJsonFee],
-					gas: '2000000',
-				},
 			} satisfies ICheqdCreateLinkedResourceArgs);
 			return result;
 		} catch (error) {
@@ -387,27 +405,34 @@ export class Veramo {
 		credential: string | VerifiableCredential,
 		verificationOptions: VerificationOptions = {}
 	): Promise<IVerifyResult> {
-		let result: IVerifyResult;
+		let result: IVerifyResult = null as unknown as IVerifyResult;
 		if (verificationOptions.verifyStatus) {
-			const cred = credential as VerifiableCredential;
-			if (cred.credentialStatus?.type === BitstringStatusListEntry) {
-				result = await agent.cheqdVerifyCredentialWithStatusList({
-					credential: cred,
-					fetchList: true,
-					verificationArgs: {
-						...verificationOptions,
-					},
-				} as ICheqdVerifyCredentialWithBitstringArgs);
-			} else {
-				result = await agent.cheqdVerifyCredential({
-					credential: cred,
-					fetchList: true,
-					verificationArgs: {
-						...verificationOptions,
-					},
-				} as ICheqdVerifyCredentialWithStatusListArgs);
+			const cred =
+				typeof credential === 'string'
+					? new CheqdW3CVerifiableCredential(credential)
+					: (credential as VerifiableCredential);
+			if (cred.credentialStatus) {
+				if (cred.credentialStatus.type === StatusList2021Entry) {
+					result = await agent.cheqdVerifyCredential({
+						credential,
+						fetchList: true,
+						verificationArgs: {
+							...verificationOptions,
+						},
+					} as ICheqdVerifyCredentialWithStatusListArgs);
+				} else {
+					result = await agent.cheqdVerifyCredentialWithStatusList({
+						credential,
+						fetchList: true,
+						verificationArgs: {
+							...verificationOptions,
+						},
+					} as ICheqdVerifyCredentialWithBitstringArgs);
+				}
 			}
-		} else {
+		}
+		if (!result) {
+			// fall back to default verification
 			result = await agent.verifyCredential({
 				credential,
 				...verificationOptions,
@@ -770,14 +795,14 @@ export class Veramo {
 			if (Array.isArray(credentials)) {
 				return await agent.cheqdBulkUpdateCredentialsWithStatusList({
 					credentials,
-					newStatus: BitstringStatusActions.revoke as unknown as BitstringStatusValue,
+					newStatus: StatusActions.revoke as unknown as BitstringStatusValue,
 					fetchList: true,
 					publish,
 				} satisfies ICheqdBulkUpdateCredentialWithStatusListArgs);
 			}
 			return await agent.cheqdUpdateCredentialWithStatusList({
 				credential: credentials,
-				newStatus: BitstringStatusActions.revoke as unknown as BitstringStatusValue,
+				newStatus: StatusActions.revoke as unknown as BitstringStatusValue,
 				fetchList: true,
 				publish,
 				symmetricKey,
@@ -813,14 +838,14 @@ export class Veramo {
 			if (Array.isArray(credentials)) {
 				return await agent.cheqdBulkUpdateCredentialsWithStatusList({
 					credentials,
-					newStatus: BitstringStatusActions.suspend as unknown as BitstringStatusValue,
+					newStatus: StatusActions.suspend as unknown as BitstringStatusValue,
 					fetchList: true,
 					publish,
 				} satisfies ICheqdBulkUpdateCredentialWithStatusListArgs);
 			}
 			return await agent.cheqdUpdateCredentialWithStatusList({
 				credential: credentials,
-				newStatus: BitstringStatusActions.suspend as unknown as BitstringStatusValue,
+				newStatus: StatusActions.suspend as unknown as BitstringStatusValue,
 				fetchList: true,
 				publish,
 				symmetricKey,
@@ -852,14 +877,14 @@ export class Veramo {
 			if (Array.isArray(credentials)) {
 				return await agent.cheqdBulkUpdateCredentialsWithStatusList({
 					credentials,
-					newStatus: BitstringStatusActions.reinstate as unknown as BitstringStatusValue,
+					newStatus: StatusActions.reinstate as unknown as BitstringStatusValue,
 					fetchList: true,
 					publish,
 				} satisfies ICheqdBulkUpdateCredentialWithStatusListArgs);
 			}
 			return await agent.cheqdUpdateCredentialWithStatusList({
 				credential: credentials,
-				newStatus: BitstringStatusActions.reinstate as unknown as BitstringStatusValue,
+				newStatus: StatusActions.reinstate as unknown as BitstringStatusValue,
 				fetchList: true,
 				publish,
 				symmetricKey,
@@ -888,7 +913,7 @@ export class Veramo {
 	) {
 		if (listType === StatusListType.Bitstring) {
 			return await agent.cheqdBulkUpdateCredentialsWithStatusList({
-				newStatus: BitstringStatusActions[statusOptions.statusAction] as unknown as BitstringStatusValue,
+				newStatus: statusOptions.statusAction,
 				updateOptions: {
 					issuerDid: did,
 					statusListIndices: statusOptions.indices,
@@ -903,7 +928,7 @@ export class Veramo {
 			} satisfies ICheqdBulkUpdateCredentialWithStatusListArgs);
 		} else {
 			switch (statusOptions.statusAction) {
-				case DefaultStatusActions.revoke:
+				case StatusActions.revoke:
 					return await agent.cheqdRevokeCredentials({
 						revocationOptions: {
 							issuerDid: did,
@@ -917,7 +942,7 @@ export class Veramo {
 						returnUpdatedStatusList: true,
 						returnStatusListMetadata: true,
 					} satisfies ICheqdRevokeBulkCredentialsWithStatusListArgs);
-				case DefaultStatusActions.suspend:
+				case StatusActions.suspend:
 					return await agent.cheqdSuspendCredentials({
 						suspensionOptions: {
 							issuerDid: did,
@@ -931,7 +956,7 @@ export class Veramo {
 						returnUpdatedStatusList: true,
 						returnStatusListMetadata: true,
 					} satisfies ICheqdSuspendBulkCredentialsWithStatusListArgs);
-				case DefaultStatusActions.reinstate:
+				case StatusActions.reinstate:
 					return await agent.cheqdUnsuspendCredentials({
 						unsuspensionOptions: {
 							issuerDid: did,
@@ -945,6 +970,8 @@ export class Veramo {
 						returnUpdatedStatusList: true,
 						returnStatusListMetadata: true,
 					} satisfies ICheqdUnsuspendBulkCredentialsWithStatusListArgs);
+				default:
+					throw new Error("Status Action not supported")
 			}
 		}
 	}
@@ -999,8 +1026,8 @@ export class Veramo {
 		) satisfies PaymentCondition[] | undefined;
 		if (listType === StatusListType.Bitstring) {
 			return await agent.cheqdBulkUpdateCredentialsWithStatusList({
-				newStatus: BitstringStatusActions[statusOptions.statusAction] as unknown as BitstringStatusValue,
-				updateOptions: {
+				newStatus: statusOptions.statusAction,
+   				updateOptions: {
 					issuerDid: did,
 					statusListIndices: statusOptions.indices,
 					statusListName: statusOptions.statusListName,
@@ -1018,7 +1045,7 @@ export class Veramo {
 			} satisfies ICheqdBulkUpdateCredentialWithStatusListArgs);
 		} else {
 			switch (statusOptions.statusAction) {
-				case DefaultStatusActions.revoke:
+				case StatusActions.revoke:
 					return await agent.cheqdRevokeCredentials({
 						revocationOptions: {
 							issuerDid: did,
@@ -1036,7 +1063,7 @@ export class Veramo {
 						returnStatusListMetadata: true,
 						dkgOptions: toDefaultDkg(did),
 					} satisfies ICheqdRevokeBulkCredentialsWithStatusListArgs);
-				case DefaultStatusActions.suspend:
+				case StatusActions.suspend:
 					return await agent.cheqdSuspendCredentials({
 						suspensionOptions: {
 							issuerDid: did,
@@ -1054,7 +1081,7 @@ export class Veramo {
 						returnStatusListMetadata: true,
 						dkgOptions: toDefaultDkg(did),
 					} satisfies ICheqdSuspendBulkCredentialsWithStatusListArgs);
-				case DefaultStatusActions.reinstate:
+				case StatusActions.reinstate:
 					return await agent.cheqdUnsuspendCredentials({
 						unsuspensionOptions: {
 							issuerDid: did,
@@ -1072,6 +1099,8 @@ export class Veramo {
 						returnStatusListMetadata: true,
 						dkgOptions: toDefaultDkg(did),
 					} satisfies ICheqdUnsuspendBulkCredentialsWithStatusListArgs);
+				default:
+					throw new Error("Status Action not supported")
 			}
 		}
 	}
@@ -1087,16 +1116,38 @@ export class Veramo {
 		} satisfies ICheqdCheckCredentialStatusWithStatusListArgs);
 	}
 
+	async checkBitstringStatusList(
+		agent: VeramoAgent,
+		did: string,
+		statusOptions: CheqdCredentialStatus
+	): Promise<BitstringValidationResult | BitstringValidationResult[]> {
+		const { type, ...rest } = statusOptions;
+		// ensure required property statusListCredential is present (use empty string as fallback)
+		const formattedStatus: BitstringStatusListEntryType = {
+			type: BitstringStatusListEntry,
+			...rest,
+			statusListCredential: (rest as any).statusListCredential ?? '',
+		};
+		return await agent.cheqdCheckBitstringStatus({
+			credentialStatus: formattedStatus,
+			fetchList: true,
+			dkgOptions: toDefaultDkg(did),
+		} satisfies ICheqdCheckCredentialStatusWithBitstringArgs);
+	}
+
 	async searchStatusList(
 		did: string,
 		statusListName: string,
 		listType: string,
-		statusPurpose: DefaultStatusList2021StatusPurposeType
+		statusPurpose?: DefaultStatusList2021StatusPurposeType
 	): Promise<SearchStatusListResult> {
 		let resourceType: string;
 		if (listType === StatusListType.Bitstring) {
 			resourceType = BitstringStatusListResourceType;
 		} else {
+			if(!statusPurpose) {
+				throw new Error("Status Purpose is required")
+			}
 			resourceType = DefaultStatusList2021ResourceTypes[statusPurpose];
 		}
 		// construct url
@@ -1161,6 +1212,55 @@ export class Veramo {
 				found: false,
 				error: (error as Record<string, unknown>).toString(),
 			} satisfies SearchStatusListResult;
+		}
+	}
+
+	/**
+	 * Check if a DID exists in the agent's identifier store
+	 */
+	async didExists(agent: VeramoAgent, did: string): Promise<boolean> {
+		try {
+			await agent.didManagerGet({ did });
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * Save a verifiable credential to Veramo's dataStore
+	 * Returns the hash of the saved credential for reference
+	 */
+	async saveCredentialToDataStore(agent: VeramoAgent, credential: VerifiableCredential): Promise<string> {
+		try {
+			const saved = await agent.dataStoreSaveVerifiableCredential({
+				verifiableCredential: credential,
+			});
+			return saved;
+		} catch (error) {
+			throw new Error(`Failed to save credential to dataStore: ${error}`);
+		}
+	}
+
+	/**
+	 * Delete a verifiable credential from Veramo's dataStore
+	 * Returns true if deleted successfully
+	 */
+	async deleteCredentialFromDataStore(agent: VeramoAgent, hash: string): Promise<boolean> {
+		try {
+			await agent.dataStoreDeleteVerifiableCredential({ hash });
+			return true;
+		} catch (error) {
+			throw new Error(`Failed to delete credential from dataStore: ${error}`);
+		}
+	}
+
+	async retrieveCredentialFromDataStore(agent: VeramoAgent, hash: string): Promise<VerifiableCredential | null> {
+		try {
+			const credential = await agent.dataStoreGetVerifiableCredential({ hash });
+			return credential || null;
+		} catch (error) {
+			throw new Error(`Failed to retrieve credential from dataStore: ${error}`);
 		}
 	}
 }

@@ -16,9 +16,29 @@ export class CredentialAuthRuleProvider extends AuthRuleProvider {
 		// Issued Credentials Tracking API
 		this.registerRule('/credentials/issued', 'GET', 'list:credential:testnet', { skipNamespace: true });
 		this.registerRule('/credentials/issued', 'GET', 'list:credential:mainnet', { skipNamespace: true });
-		this.registerRule('/credentials/issued/:id', 'GET', 'list:credential:testnet', { skipNamespace: true });
-		this.registerRule('/credentials/issued/:id', 'GET', 'list:credential:mainnet', { skipNamespace: true });
-		// Unauthorized routes
-		this.registerRule('/credential/verify', 'POST', '', { allowUnauthorized: true, skipNamespace: true });
+		this.registerRule('/credentials/issued/(.*)', 'GET', 'list:credential:testnet', { skipNamespace: true });
+		this.registerRule('/credentials/issued/(.*)', 'GET', 'list:credential:mainnet', { skipNamespace: true });
+		this.registerRule('/credentials/issued/(.*)', 'PUT', 'update:credential:testnet', { skipNamespace: true });
+		this.registerRule('/credentials/issued/(.*)', 'PUT', 'update:credential:mainnet', { skipNamespace: true });
+		this.registerRule('/credentials/issued/(.*)/re-issue', 'POST', 'update:credential:testnet', {
+			skipNamespace: true,
+		});
+		this.registerRule('/credentials/issued/(.*)/re-issue', 'POST', 'update:credential:mainnet', {
+			skipNamespace: true,
+		});
+		this.registerRule('/credentials/offers', 'GET', 'list:credential:testnet', { skipNamespace: true });
+		this.registerRule('/credentials/offers', 'GET', 'list:credential:mainnet', { skipNamespace: true });
+		this.registerRule('/credentials/offers/(.*)', 'GET', 'list:credential:testnet', { skipNamespace: true });
+		this.registerRule('/credentials/offers/(.*)', 'GET', 'list:credential:mainnet', { skipNamespace: true });
+		this.registerRule('/credentials/received', 'GET', 'list:credential:testnet', { skipNamespace: true });
+		this.registerRule('/credentials/received', 'GET', 'list:credential:mainnet', { skipNamespace: true });
+		this.registerRule('/credentials/received/(.*)', 'GET', 'list:credential:testnet', { skipNamespace: true });
+		this.registerRule('/credentials/received/(.*)', 'GET', 'list:credential:mainnet', { skipNamespace: true });
+		this.registerRule('/credentials/offers/(.*)', 'POST', 'update:credential:testnet', { skipNamespace: true });
+		this.registerRule('/credentials/offers/(.*)', 'POST', 'update:credential:mainnet', { skipNamespace: true });
+		this.registerRule('/credentials/import', 'POST', 'update:credential:testnet', { skipNamespace: true });
+		this.registerRule('/credentials/import', 'POST', 'update:credential:mainnet', { skipNamespace: true });
+		this.registerRule('/credential/verify', 'POST', 'verify:credential:testnet', { skipNamespace: true });
+		this.registerRule('/credential/verify', 'POST', 'verify:credential:mainnet', { skipNamespace: true });
 	}
 }

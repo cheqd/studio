@@ -34,6 +34,12 @@ import { KeyService } from '../../services/api/key.js';
 import { LocalStore } from '../../database/cache/store.js';
 import { BootStrapAccountResponse } from '../../types/account.js';
 import { RoleEntity } from '../../database/entities/role.entity.js';
+import { MailchimpService } from '../../helpers/mailchimp.js';
+import { IdentifierService } from '../../services/api/identifier.js';
+import { Credentials } from '../../services/api/credentials.js';
+import { ResourceService } from '../../services/api/resource.js';
+import { CredentialCategory } from '../../types/credential.js';
+import { Like } from 'typeorm';
 
 dotenv.config();
 
@@ -192,6 +198,9 @@ export class AccountController {
 		}
 		const logToUserId = request.body.user.id;
 		const logToUserEmail = request.body.user.primaryEmail;
+		const logToFirstName = request.body.user.profile?.givenName;
+		const logToLastName = request.body.user.profile?.familyName;
+
 		// use email as name, because "name" is unique in the current db setup.
 		const logToName = request.body.user.name || logToUserEmail;
 
@@ -338,8 +347,30 @@ export class AccountController {
 			// 8. Update LogTo custom data and Top‑up Testnet in parallel (non-blocking)
 			await Promise.all([
 				updateCustomData(userEntity.logToId, customerEntity, mainnetResp, testnetResp, logToHelper, status),
-				topupTestnet(customerEntity, testnetResp, status),
+				topupTestnet(customerEntity, testnetResp, status, logToFirstName, logToLastName),
 			]);
+
+			// 9. Add user to Mailchimp with "cheqd_Studio" tag (feature-flagged)
+			if (
+				process.env.MAILCHIMP_ENABLED === 'true' &&
+				process.env.MAILCHIMP_API_KEY &&
+				process.env.MAILCHIMP_SERVER_PREFIX &&
+				process.env.MAILCHIMP_PRODUCT_LIST_ID
+			) {
+				try {
+					const mailchimpService = new MailchimpService();
+					await mailchimpService.upsertSubscriber(
+						process.env.MAILCHIMP_PRODUCT_LIST_ID,
+						logToUserEmail,
+						logToFirstName || '',
+						logToLastName || '',
+						['cheqd_Studio']
+					);
+				} catch (error) {
+					console.error('Mailchimp integration error:', error);
+					status.errors.push(`Mailchimp sync failed: ${(error as Error).message}`);
+				}
+			}
 
 			// 9. Send response with full status
 			const allOK = status.errors.length === 0;
@@ -461,14 +492,19 @@ export class AccountController {
 		// 4. Check the token balance for Testnet account
 
 		// 1. Get logTo UserId from request body
-		const { name, primaryEmail } = request.body;
+		const { firstName, lastName, primaryEmail } = request.body;
+		const logToFirstName = request.body.user?.profile?.givenName;
+		const logToLastName = request.body.user?.profile?.familyName;
 
 		try {
 			// 2. Check if the customer exists
 			const customerEntity = response.locals.customer
 				? (response.locals.customer as CustomerEntity)
 				: // 2.1 Create customer
-					((await CustomerService.instance.create(name || primaryEmail, primaryEmail)) as CustomerEntity);
+					((await CustomerService.instance.create(
+						firstName || lastName || primaryEmail,
+						primaryEmail
+					)) as CustomerEntity);
 
 			if (!customerEntity) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
@@ -508,9 +544,13 @@ export class AccountController {
 				const balance = balances[0];
 				if (!balance || +balance.amount < TESTNET_MINIMUM_BALANCE * Math.pow(10, DEFAULT_DENOM_EXPONENT)) {
 					// 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
+					// Handle case where firstName or lastName is not set
+					const faucetFirstName = logToFirstName || customerEntity.name;
+					const faucetLastName = logToLastName || 'n/a';
 					const resp = await FaucetHelper.delegateTokens(
 						testnetAccount.address,
-						customerEntity.name,
+						faucetFirstName,
+						faucetLastName,
 						customerEntity.email
 					);
 
@@ -536,6 +576,79 @@ export class AccountController {
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal Error: ${(error as Error)?.message || error}`,
+			});
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /account/analytics:
+	 *   get:
+	 *     tags: [Account]
+	 *     summary: Fetch Account Analytics.
+	 *     description: This endpoint returns analytics data for the account usage.
+	 *     parameters:
+	 *       - in: query
+	 *         name: network
+	 *         description: Filter DID by the network published.
+	 *         schema:
+	 *           type: string
+	 *           enum:
+	 *             - mainnet
+	 *             - testnet
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/AccountAnalyticsResponse'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async getAnalytics(request: Request, response: Response) {
+		const { network } = request.query;
+		try {
+			const [dids, credentials, accreditations, resources] = await Promise.all([
+				IdentifierService.instance.count(response.locals.customer, {
+					...(network && {
+						provider: `did:cheqd:${network}`,
+					}),
+				}),
+				Credentials.instance.count(response.locals.customer, {
+					category: CredentialCategory.CREDENTIAL,
+					deprecated: false,
+					...(network && {
+						issuerId: Like(`did:cheqd:${network}%`),
+					}),
+				}),
+				Credentials.instance.count(response.locals.customer, {
+					category: CredentialCategory.ACCREDITATION,
+					deprecated: false,
+					...(network && {
+						issuerId: Like(`did:cheqd:${network}%`),
+					}),
+				}),
+				ResourceService.instance.count(response.locals.customer, {
+					...(network && {
+						identifier: Like(`did:cheqd:${network}%`),
+					}),
+				}),
+			]);
+			return response.status(StatusCodes.OK).json({
+				dids,
+				credentials,
+				accreditations,
+				resources,
+			});
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
 		}
 	}
@@ -622,7 +735,13 @@ async function updateCustomData(
 	}
 }
 
-async function topupTestnet(customer: CustomerEntity, testnetResp: any, status: BootStrapAccountResponse) {
+async function topupTestnet(
+	customer: CustomerEntity,
+	testnetResp: any,
+	status: BootStrapAccountResponse,
+	firstName?: string | null,
+	lastName?: string | null
+) {
 	if (!testnetResp.data?.address || process.env.ENABLE_ACCOUNT_TOPUP !== 'true') {
 		return;
 	}
@@ -630,7 +749,15 @@ async function topupTestnet(customer: CustomerEntity, testnetResp: any, status: 
 		const balances = await checkBalance(testnetResp.data.address, process.env.TESTNET_RPC_URL);
 		const bal = balances[0];
 		if (!bal || +bal.amount < TESTNET_MINIMUM_BALANCE * 10 ** DEFAULT_DENOM_EXPONENT) {
-			const faucet = await FaucetHelper.delegateTokens(testnetResp.data.address, customer.name, customer.email);
+			// Handle case where firstName or lastName is not set
+			const faucetFirstName = firstName || customer.name;
+			const faucetLastName = lastName || 'n/a';
+			const faucet = await FaucetHelper.delegateTokens(
+				testnetResp.data.address,
+				faucetFirstName,
+				faucetLastName,
+				customer.email
+			);
 			if (faucet.status === StatusCodes.OK) {
 				status.testnetMinimumBalance = true;
 			} else {

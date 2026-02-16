@@ -11,7 +11,7 @@ WORKDIR /home/node/app
 COPY . .
 
 # Installing dependencies
-RUN npm ci
+RUN npm ci --force
 
 # Build the app
 RUN npm run build
@@ -38,7 +38,7 @@ COPY --from=builder --chown=node:node /home/node/app/*.json /home/node/app/*.md 
 COPY --from=builder --chown=node:node /home/node/app/dist ./dist
 
 # Install production dependencies
-RUN npm ci
+RUN npm ci --force
 
 # Base arguments: build-time
 ARG NPM_CONFIG_LOGLEVEL=warn
@@ -82,6 +82,7 @@ ARG VERIDA_PRIVATE_KEY
 ARG POLYGON_PRIVATE_KEY
 ARG ENABLE_ACCOUNT_TOPUP=false
 ARG FAUCET_URI=https://faucet-api.cheqd.network/credit
+ARG FAUCET_API_KEY
 ARG TESTNET_MINIMUM_BALANCE=1000
 
 # Stripe
@@ -136,6 +137,7 @@ ENV API_KEY_EXPIRATION=${API_KEY_EXPIRATION}
 # Faucet setup
 ENV ENABLE_ACCOUNT_TOPUP=${ENABLE_ACCOUNT_TOPUP}
 ENV FAUCET_URI=${FAUCET_URI}
+ENV FAUCET_API_KEY=${FAUCET_API_KEY}
 ENV TESTNET_MINIMUM_BALANCE=${TESTNET_MINIMUM_BALANCE}
 
 # Environment variables: Verida connector

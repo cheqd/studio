@@ -20,11 +20,42 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import type { CheqdNetwork } from '@cheqd/sdk';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2';
+import { CredentialCategory } from './credential.js';
 
 export enum StatusListType {
 	Bitstring = 'BitstringStatusList',
 	StatusList2021 = 'StatusList2021',
 }
+
+export enum StatusRegistryState {
+	Active = 'ACTIVE',
+	Standby = 'STANDBY',
+	Full = 'FULL',
+	Stale = 'STALE',
+}
+
+export type StatusListRecord = {
+	statusListId: string;
+	statusListName: string;
+	uri: string;
+	issuerId: string;
+	previousUri?: string;
+	nextUri?: string;
+	listType: StatusListType | string;
+	storageType: string;
+	encrypted: boolean;
+	credentialCategory: CredentialCategory;
+	size: number;
+	writeCursor: number;
+	state: StatusRegistryState;
+	createdAt: string;
+	updatedAt: string;
+	sealedAt?: string;
+	deprecated: boolean;
+	statusPurpose?: string | string[];
+	additionalUsedIndexes?: number[];
+};
+
 export type CreateUnencryptedStatusListRequestBody = {
 	did: string;
 	statusListName: string;
@@ -36,21 +67,23 @@ export type CreateUnencryptedStatusListRequestBody = {
 	ttl?: number;
 	encoding?: keyof typeof DefaultStatusListEncodings;
 	encodedList?: string;
+	state?: StatusRegistryState;
+	credentialCategory?: CredentialCategory;
 };
 
 export type CreateUnencryptedStatusListRequestQuery = {
 	listType: string;
-	statusPurpose: DefaultStatusList2021StatusPurposeType;
+	statusPurpose: DefaultStatusList2021StatusPurposeType | BitstringStatusListPurposeType;
 };
 
 export type CreateUnencryptedStatusListSuccessfulResponseBody = Pick<
 	CreateStatusList2021Result,
 	'created' | 'error' | 'resource' | 'resourceMetadata'
->;
+> & { statusListId: string };
 export type CreateUnencryptedBitstringSuccessfulResponseBody = Pick<
 	CreateStatusListResult,
 	'created' | 'error' | 'resource' | 'resourceMetadata'
->;
+> & { statusListId: string };
 
 export type CreateUnencryptedStatusListUnsuccessfulResponseBody = {
 	created: false;
@@ -85,7 +118,7 @@ export type UpdateUnencryptedStatusListRequestBody = {
 };
 
 export type UpdateUnencryptedStatusListRequestQuery = {
-	statusAction: DefaultStatusAction;
+	statusAction: DefaultStatusAction | string;
 	listType: string;
 };
 
@@ -141,12 +174,19 @@ export type UpdateEncryptedStatusListUnsuccessfulResponseBody = UpdateUnencrypte
 export type CheckStatusListRequestBody = {
 	did: string;
 	statusListName: string;
-	index: number;
+	index?: number;
+	indices?: number[];
+	indexRangeStart?: number;
+	indexRangeEnd?: number;
 	makeFeePayment?: boolean;
+	statusListCredential?: string;
+	statusSize?: number;
+	statusMessage?: BitstringStatusMessage;
 };
 
 export type CheckStatusListRequestQuery = {
 	statusPurpose: DefaultStatusList2021StatusPurposeType;
+	listType: string;
 };
 
 export type CheckStatusListSuccessfulResponseBody = {
@@ -163,6 +203,15 @@ export type SearchStatusListQuery = {
 	statusListName: string;
 	listType: string;
 	statusPurpose: DefaultStatusList2021StatusPurposeType;
+};
+
+export type ListStatusListQuery = {
+	deprecated?: boolean;
+	did?: string;
+	state?: StatusRegistryState;
+	statusListName?: string;
+	listType?: string;
+	credentialCategory?: CredentialCategory;
 };
 
 export type SearchStatusListSuccessfulResponseBody = Required<
@@ -206,7 +255,7 @@ export type UpdateUnencryptedStatusListOptions = {
 	indices: number[];
 	statusListName: string;
 	statusListVersion?: string;
-	statusAction: DefaultStatusAction;
+	statusAction: number;
 };
 
 export type UpdateEncryptedStatusListOptions = UpdateUnencryptedStatusListOptions & {
@@ -244,7 +293,8 @@ export const DefaultStatusActions = {
 	suspend: 'suspend',
 	reinstate: 'reinstate',
 } as const;
-export enum BitstringStatusActions {
+
+export enum StatusActions {
 	revoke = BitstringStatusValue.REVOKED, // "revoke" -> 1
 	suspend = BitstringStatusValue.SUSPENDED, // "suspend" -> 2
 	reinstate = BitstringStatusValue.VALID, // "reinstate" -> 0
@@ -257,6 +307,9 @@ export const DefaultStatusActionPurposeMap = {
 } as const;
 
 export type DefaultStatusAction = keyof typeof DefaultStatusActions;
+export function isDefaultStatusAction(action: string): action is DefaultStatusAction {
+    return Object.values(DefaultStatusActions).includes(action as DefaultStatusAction);
+}
 
 export type MinimalPaymentCondition = {
 	feePaymentAddress: string;
@@ -272,8 +325,9 @@ export type FeePaymentOptions = {
 
 export type CheqdCredentialStatus = {
 	id: string;
-	type: string;
-	statusPurpose: string;
+	type: 'BitstringStatusListEntry' | 'StatusList2021Entry';
+	statusPurpose: BitstringStatusListPurposeType;
 	statusListIndex: string;
+	statusListCredential?: string;
 	[x: string]: any;
 };

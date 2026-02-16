@@ -577,6 +577,22 @@
             "additionalProperties": true,
             "description": "Credential status configuration"
           },
+          "statusRegistryId": {
+            "type": "string",
+            "description": "UUID of the Status Registry"
+          },
+          "statusIndex": {
+            "type": "number",
+            "description": "Allocated Index of the Status Registry"
+          },
+          "retryCount": {
+            "type": "number",
+            "description": "Retry Count in case of failures"
+          },
+          "lastError": {
+            "type": "string",
+            "description": "Last error message in case of failure"
+          },
           "providerMetadata": {
             "type": "object",
             "additionalProperties": true,
@@ -680,10 +696,109 @@
                 "description": "Policy to skip the audience check when set to `false`.",
                 "type": "boolean",
                 "default": false
+              },
+              "checkExternalProvider": {
+                "description": "Policy to also check other providers when set to `true`.",
+                "type": "boolean",
+                "default": false
               }
             }
           }
         }
+      },
+      "RetryCredentialRequest": {
+        "type": "object",
+        "properties": {
+          "attributes": {
+            "description": "JSON object containing the attributes to be included in the credential.",
+            "type": "object",
+            "example": {
+              "name": "Bob",
+              "gender": "male"
+            }
+          },
+          "@context": {
+            "description": "Optional properties to be included in the `@context` property of the credential.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "https://schema.org/schema.jsonld",
+              "https://veramo.io/contexts/profile/v1"
+            ]
+          },
+          "type": {
+            "description": "Optional properties to be included in the `type` property of the credential.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Person"
+            ]
+          },
+          "expirationDate": {
+            "description": "Optional expiration date according to the <a href=https://www.w3.org/TR/vc-data-model/#expiration> VC Data Model specification</a>.",
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-06-08T13:49:28.000Z"
+          },
+          "termsOfUse": {
+            "description": "Terms of use can be utilized by an issuer or a holder to communicate the terms under which a verifiable credential was issued.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "example": {
+                "type": "IssuerPolicy",
+                "id": "http://example.com/policies/credential/4",
+                "profile": "http://example.com/profiles/credential",
+                "prohibition": [
+                  {
+                    "assigner": "https://example.edu/issuers/14",
+                    "assignee": "AllVerifiers",
+                    "target": "http://example.edu/credentials/3732",
+                    "action": [
+                      "Archival"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "refreshService": {
+            "description": "RefreshService property MUST be one or more refresh services that provides enough information to the recipient's software such that the recipient can refresh the verifiable credential.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "example": {
+                "type": "ManualRefreshService2018",
+                "id": "https://example.edu/refresh/3732"
+              }
+            }
+          },
+          "evidence": {
+            "description": "Evidence property MUST be one or more evidence schemes providing enough information for a verifier to determine whether the evidence gathered by the issuer meets its confidence requirements for relying on the credential.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "example": {
+                "type": [
+                  "DocumentVerification"
+                ],
+                "id": "https://example.edu/evidence/f2aeec97-fc0d-42bf-8ca7-0548192d4231",
+                "verifier": "https://example.edu/issuers/14",
+                "evidenceDocument": "DriversLicense",
+                "subjectPresence": "Physical",
+                "documentPresence": "Physical",
+                "licenseNumber": "123AB4567"
+              }
+            }
+          }
+        },
+        "required": [
+          "attributes"
+        ]
       },
       "VerifyPresentationResult": {
         "type": "object",
@@ -733,6 +848,49 @@
             "id": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0#key-1",
             "publicKeyBase58": "BTJiso1S4iSiReP6wGksSneGfiKHxz9SYcm2KknpqBJt",
             "type": "Ed25519VerificationKey2018"
+          }
+        }
+      },
+      "AccreditationVerifyResponse": {
+        "type": "object",
+        "properties": {
+          "verified": {
+            "type": "boolean"
+          },
+          "issuer": {
+            "type": "string"
+          },
+          "signer": {
+            "type": "object"
+          },
+          "jwt": {
+            "type": "string"
+          },
+          "verifiableCredential": {
+            "type": "object"
+          },
+          "accreditorDids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rootAuthorization": {
+            "type": "object"
+          },
+          "termsOfUse": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "trustFrameworkId": {
+                "type": "string"
+              },
+              "trustFramework": {
+                "type": "string"
+              }
+            }
           }
         }
       },
@@ -1099,6 +1257,175 @@
           }
         }
       },
+      "CredentialStatusRecordResult": {
+        "type": "object",
+        "properties": {
+          "statusListId": {
+            "type": "string",
+            "description": "Unique identifier for the status registry"
+          },
+          "statusListName": {
+            "type": "string",
+            "description": "Name of the status list resource"
+          },
+          "uri": {
+            "type": "string",
+            "description": "DID URL of the status list resource"
+          },
+          "issuerId": {
+            "type": "string",
+            "format": "uri",
+            "description": "DID of the issuer"
+          },
+          "previousUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "Link to previous registry in the chain (for FULL registries)"
+          },
+          "nextUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "Link to next registry in the chain (STANDBY registry)"
+          },
+          "listType": {
+            "type": "string",
+            "description": "Type of status list (StatusList2021Revocation, StatusList2021Suspension, BitstringStatusListCredential)"
+          },
+          "storageType": {
+            "type": "string",
+            "enum": [
+              "cheqd",
+              "ipfs",
+              "dock",
+              "paradym"
+            ],
+            "description": "Storage provider for the status list"
+          },
+          "encrypted": {
+            "type": "boolean",
+            "description": "Whether the status list is encrypted"
+          },
+          "credentialCategory": {
+            "type": "string",
+            "enum": [
+              "credential",
+              "accreditation"
+            ],
+            "description": "Category of credentials this status list is for"
+          },
+          "size": {
+            "type": "integer",
+            "description": "Maximum capacity of the status list (total number of indices)"
+          },
+          "writeCursor": {
+            "type": "integer",
+            "description": "Current write cursor position (last assigned index)"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "STANDBY",
+              "FULL"
+            ],
+            "description": "Current state of the registry"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the registry was created"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the registry was last updated"
+          },
+          "sealedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp when the registry was sealed (marked as FULL)"
+          },
+          "statusPurpose": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Status purpose or list of status purposes"
+          },
+          "deprecated": {
+            "type": "boolean",
+            "description": "Whether the registry is deprecated"
+          }
+        },
+        "example": {
+          "statusListId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
+          "statusListName": "cheqd-employee-credentials",
+          "uri": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-employee-credentials&resourceType=StatusList2021Revocation",
+          "issuerId": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+          "previousUri": null,
+          "nextUri": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-employee-credentials-ext1&resourceType=StatusList2021Revocation",
+          "listType": "StatusList2021Revocation",
+          "storageType": "cheqd",
+          "encrypted": false,
+          "credentialCategory": "credential",
+          "size": 131072,
+          "writeCursor": 105432,
+          "state": "ACTIVE",
+          "createdAt": "2023-06-26T11:45:19.349Z",
+          "updatedAt": "2023-06-26T11:45:20.000Z",
+          "statusPurpose": [
+            "revocation"
+          ],
+          "sealedAt": null,
+          "deprecated": false
+        }
+      },
+      "ListCredentialStatusRecordsResult": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CredentialStatusRecordResult"
+            }
+          }
+        },
+        "example": {
+          "total": 1,
+          "records": [
+            {
+              "statusListId": "5945233a-a4b5-422b-b893-eaed5cedd2dc",
+              "statusListName": "cheqd-employee-credentials",
+              "uri": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-employee-credentials&resourceType=StatusList2021Revocation",
+              "issuerId": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e",
+              "previousUri": null,
+              "nextUri": "did:cheqd:testnet:7c2b990c-3d05-4ebf-91af-f4f4d0091d2e?resourceName=cheqd-employee-credentials-ext1&resourceType=StatusList2021Revocation",
+              "listType": "StatusList2021Revocation",
+              "storageType": "cheqd",
+              "encrypted": false,
+              "credentialCategory": "credential",
+              "size": 131072,
+              "writeCursor": 105432,
+              "state": "ACTIVE",
+              "createdAt": "2023-06-26T11:45:19.349Z",
+              "updatedAt": "2023-06-26T11:45:20.000Z",
+              "sealedAt": null,
+              "deprecated": false
+            }
+          ]
+        }
+      },
       "CredentialStatusCreateBody": {
         "allOf": [
           {
@@ -1141,6 +1468,14 @@
                 "description": "Only for BitstringStatusList: bits per credential, used to support multiple status in same list.",
                 "type": "integer",
                 "minimum": 1
+              },
+              "credentialCategory": {
+                "description": "Category of credentials this status list is for.",
+                "type": "string",
+                "enum": [
+                  "credential",
+                  "accreditation"
+                ]
               },
               "statusMessages": {
                 "description": "Only for BitstringStatusList (Mandatory if statusSize > 1): Message explaining each bit",
@@ -1617,8 +1952,7 @@
         "type": "object",
         "required": [
           "did",
-          "statusListName",
-          "index"
+          "statusListName"
         ],
         "properties": {
           "did": {
@@ -1635,6 +1969,34 @@
             "type": "integer",
             "minimum": 0,
             "exclusiveMinimum": false
+          },
+          "indices": {
+            "description": "List of credential status indices to be checked for revocation or suspension.",
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "indexRangeStart": {
+            "description": "Start of the credential status index range to be checked for revocation or suspension.",
+            "type": "integer"
+          },
+          "indexRangeEnd": {
+            "description": "End of the credential status index range to be checked for revocation or suspension.",
+            "type": "integer"
+          },
+          "statusListCredential": {
+            "description": "Optional Resolvable DID URL of the BitstringStatusList credential to be checked.",
+            "type": "string"
+          },
+          "statusSize": {
+            "description": "Optional size of the BitstringStatusList.",
+            "type": "number",
+            "default": 2
+          },
+          "statusMessage": {
+            "description": "Array of status messages for each bit in the BitstringStatusList.",
+            "type": "array"
           },
           "makeFeePayment": {
             "description": "Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 or BitstringStatusList DID-Linked Resource.",
@@ -2767,6 +3129,23 @@
           }
         }
       },
+      "AccountAnalyticsResponse": {
+        "type": "object",
+        "properties": {
+          "dids": {
+            "type": "integer"
+          },
+          "credentials": {
+            "type": "integer"
+          },
+          "accreditations": {
+            "type": "integer"
+          },
+          "resources": {
+            "type": "integer"
+          }
+        }
+      },
       "SchemaUrl": {
         "type": "object",
         "properties": {
@@ -2821,54 +3200,50 @@
           },
           "accreditations": {
             "type": "array",
-            "description": "List of accreditations.",
+            "description": "List of accreditations with credential data and tracking metadata.",
             "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "description": "Unique identifier of the accreditation.",
-                  "example": "did:cheqd:testnet:12345678-90ab-cdef-1234-567890abcdef"
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/VerifiableCredential"
                 },
-                "name": {
-                  "type": "string",
-                  "description": "Name of the accreditation.",
-                  "example": "MuseumPassAccreditation"
-                },
-                "issuerDid": {
-                  "type": "string",
-                  "description": "DID of the accreditation issuer.",
-                  "example": "did:cheqd:testnet:7bf81a20-633c-4cc7-bc4a-5a45801005e0"
-                },
-                "subjectDid": {
-                  "type": "string",
-                  "description": "DID of the accreditation holder/subject.",
-                  "example": "did:cheqd:testnet:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
-                },
-                "schemas": {
-                  "type": "array",
-                  "description": "List of schemas associated with the accreditation.",
-                  "items": {
-                    "$ref": "#/components/schemas/SchemaUrl"
+                {
+                  "type": "object",
+                  "properties": {
+                    "metadata": {
+                      "type": "object",
+                      "description": "Tracking metadata from the issued credential database record",
+                      "properties": {
+                        "issuedCredentialId": {
+                          "type": "string",
+                          "description": "Unique identifier for the issued credential"
+                        },
+                        "providerId": {
+                          "type": "string",
+                          "description": "Provider identifier"
+                        },
+                        "providerCredentialId": {
+                          "type": "string",
+                          "description": "Provider-specific credential ID (resourceId)"
+                        },
+                        "status": {
+                          "type": "string",
+                          "description": "Current status of the credential",
+                          "enum": [
+                            "issued",
+                            "suspended",
+                            "revoked"
+                          ]
+                        },
+                        "statusUpdatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Timestamp when status was last updated"
+                        }
+                      }
+                    }
                   }
-                },
-                "expirationDate": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "Expiration date of the accreditation.",
-                  "example": "2025-12-31T23:59:59Z"
-                },
-                "status": {
-                  "type": "string",
-                  "description": "Current status of the accreditation.",
-                  "enum": [
-                    "active",
-                    "revoked",
-                    "expired"
-                  ],
-                  "example": "active"
                 }
-              }
+              ]
             }
           }
         }
@@ -2970,6 +3345,50 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AccountCreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/account/analytics": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Fetch Account Analytics.",
+        "description": "This endpoint returns analytics data for the account usage.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "network",
+            "description": "Filter DID by the network published.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mainnet",
+                "testnet"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountAnalyticsResponse"
                 }
               }
             }
@@ -3095,7 +3514,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Credential"
+                  "$ref": "#/components/schemas/AccreditationVerifyResponse"
                 }
               }
             }
@@ -3325,6 +3744,26 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Page number for pagination.",
+            "schema": {
+              "type": "number",
+              "default": 1
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "description": "Number of items per page.",
+            "schema": {
+              "type": "number",
+              "default": 10
+            },
+            "required": false
           }
         ],
         "responses": {
@@ -3591,15 +4030,10 @@
           {
             "in": "query",
             "name": "statusAction",
-            "description": "The update action to be performed on the unencrypted status list, can be revoke, suspend or reinstate",
+            "description": "The update action to be performed on the unencrypted status list, can be revoke, suspend, reinstate or custom states",
             "required": true,
             "schema": {
-              "type": "string",
-              "enum": [
-                "revoke",
-                "suspend",
-                "reinstate"
-              ]
+              "type": "string"
             }
           }
         ],
@@ -3666,12 +4100,7 @@
             "description": "The update action to be performed on the encrypted status list, can be revoke, suspend or reinstate",
             "required": true,
             "schema": {
-              "type": "string",
-              "enum": [
-                "revoke",
-                "suspend",
-                "reinstate"
-              ]
+              "type": "string"
             }
           }
         ],
@@ -3717,9 +4146,22 @@
         "tags": [
           "Status Lists"
         ],
-        "summary": "Check a StatusList2021 index for a given Verifiable Credential.",
-        "description": "This endpoint checks a StatusList2021 index for a given Verifiable Credential and reports whether it is revoked or suspended. It offers a standalone method for checking an index without passing the entire Verifiable Credential or Verifiable Presentation.",
+        "summary": "Check a StatusList2021 or BitstringStatusList index for a given Verifiable Credential.",
+        "description": "This endpoint checks a StatusList2021 or BitstringStatusList index for a given Verifiable Credential and reports whether it is revoked or suspended. It offers a standalone method for checking an index without passing the entire Verifiable Credential or Verifiable Presentation.",
         "parameters": [
+          {
+            "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
           {
             "in": "query",
             "name": "statusPurpose",
@@ -3729,7 +4171,9 @@
               "type": "string",
               "enum": [
                 "revocation",
-                "suspension"
+                "suspension",
+                "message",
+                "refresh"
               ]
             }
           }
@@ -3830,6 +4274,138 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CredentialStatusListSearchResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/list": {
+      "get": {
+        "tags": [
+          "Status Lists"
+        ],
+        "summary": "List StatusList2021 or BitstringStatusList DID-Linked Resources created by the customer.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "did",
+            "description": "The DID of the issuer of the status list.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "listType",
+            "description": "The type of Status List.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "StatusList2021",
+                "BitstringStatusList"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "statusListName",
+            "description": "The name of the Status List DID-Linked Resource.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "description": "The state of the Status List DID-Linked Resource.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "STANDBY",
+                "FULL"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "credentialCategory",
+            "description": "Filter status lists by credential category assigned for.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "credential",
+                "accreditation"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "deprecated",
+            "description": "Filter status lists by deprecated status.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListCredentialStatusRecordsResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credential-status/list/{statusListId}": {
+      "get": {
+        "tags": [
+          "Status Lists"
+        ],
+        "summary": "Fetch StatusList2021 or BitstringStatusList DID-Linked Resource based on search criteria.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "statusListId",
+            "description": "The statusListId of the status list.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialStatusRecordResult"
                 }
               }
             }
@@ -4234,7 +4810,11 @@
               "enum": [
                 "issued",
                 "suspended",
-                "revoked"
+                "revoked",
+                "offered",
+                "rejected",
+                "unknown",
+                "valid"
               ]
             },
             "required": false
@@ -4274,6 +4854,24 @@
             "schema": {
               "type": "string",
               "format": "date-time"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "credentialType",
+            "description": "Filter credentials by type (e.g., 'VerifiableCredential', 'UniversityDegreeCredential').",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "statusRegistryId",
+            "description": "Filter issued credentials using status registry ID.",
+            "schema": {
+              "type": "string"
             },
             "required": false
           }
@@ -4372,6 +4970,180 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Verifiable Credentials"
+        ],
+        "summary": "Update an issued credential metadata.",
+        "description": "This endpoint updates metadata for an issued credential. It allows updating providerCredentialId, status, and providerMetadata fields.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Credential identifier (issuedCredentialId).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "providerCredentialId": {
+                    "type": "string",
+                    "description": "Provider-specific credential ID (e.g., resource ID for studio provider)."
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "issued",
+                      "suspended",
+                      "revoked"
+                    ],
+                    "description": "Credential status."
+                  },
+                  "providerMetadata": {
+                    "type": "object",
+                    "description": "Additional provider-specific metadata."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/IssuedCredentialResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "Credential not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credentials/issued/{id}/re-issue": {
+      "post": {
+        "tags": [
+          "Verifiable Credentials"
+        ],
+        "summary": "Reissue an issued credential with failed state.",
+        "description": "This endpoint re-issues the issued credential record in failed state.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Credential identifier (issuedCredentialId).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/RetryCredentialRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetryCredentialRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/IssuedCredentialResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "Credential not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
                     "error": {
                       "type": "string"
                     }
@@ -4915,8 +5687,7 @@
             "schema": {
               "type": "string",
               "enum": [
-                "Ed25519",
-                "Secp256k1"
+                "Ed25519"
               ]
             }
           }
@@ -5072,6 +5843,110 @@
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "Internal Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/key/{kid}/verification-method": {
+      "get": {
+        "tags": [
+          "Keys"
+        ],
+        "summary": "Convert a key to a W3C Verification Method.",
+        "description": "This endpoint converts a stored key (by key ID) into a [W3C Verification Method](https://www.w3.org/TR/did-core/#verification-methods) format.",
+        "parameters": [
+          {
+            "name": "kid",
+            "description": "Key ID of the identity key pair to convert.",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "verificationMethodType",
+            "description": "Type of verification method to use for the DID. See <a href=\"https://www.w3.org/TR/did-core/#verification-methods\">DID Core specification</a> for more details. Only the types listed below are supported.",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Ed25519VerificationKey2018",
+                "Ed25519VerificationKey2020",
+                "JsonWebKey2020"
+              ]
+            },
+            "required": true
+          },
+          {
+            "name": "controller",
+            "description": "Controller DID of the verification method",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "description": "Verification Method Id Fragment",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationMethod"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "InvalidRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "The key was not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                },
+                "example": {
+                  "error": "Key not found"
+                }
+              }
+            }
           },
           "500": {
             "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
@@ -5484,6 +6359,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "newAPIUrl",
+            "in": "query",
+            "required": false,
+            "default": null,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -5610,6 +6494,527 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/credentials/offers": {
+      "get": {
+        "tags": [
+          "Credential Offers"
+        ],
+        "summary": "List pending credential offers",
+        "description": "Retrieves a list of pending credential offers. If holderDid is not provided, returns all offers for all DIDs owned by the customer.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "holderDid",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional DID of the credential holder. If not provided, returns offers for all customer DIDs."
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "credential",
+                "accreditation"
+              ]
+            },
+            "description": "Optional category to filter by credential type"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Page number for pagination"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            },
+            "description": "Number of results per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of pending credential offers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": {
+                      "type": "integer"
+                    },
+                    "offers": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/IssuedCredentialResponse"
+                      }
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "limit": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credentials/offers/{credentialId}": {
+      "get": {
+        "tags": [
+          "Credential Offers"
+        ],
+        "summary": "Get credential offer details",
+        "description": "Retrieves detailed information about a specific credential offer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "credentialId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID of the credential offer"
+          },
+          {
+            "in": "query",
+            "name": "holderDid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "DID of the credential holder"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Credential offer details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedCredentialResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "Credential offer not found"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credentials/offers/{credentialId}/accept": {
+      "post": {
+        "tags": [
+          "Credential Offers"
+        ],
+        "summary": "Accept a credential offer",
+        "description": "Accepts a pending credential offer. The credential is verified and status is updated to issued.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "credentialId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID of the credential offer to accept"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "holderDid"
+                ],
+                "properties": {
+                  "holderDid": {
+                    "type": "string",
+                    "description": "DID of the credential holder"
+                  },
+                  "createPresentation": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to create a verifiable presentation"
+                  },
+                  "presentationDomain": {
+                    "type": "string",
+                    "description": "Optional domain for the presentation"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credential offer accepted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "credential": {
+                      "type": "object"
+                    },
+                    "presentation": {
+                      "type": "string",
+                      "description": "JWT presentation (if createPresentation was true)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "Credential offer not found"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credentials/offers/{credentialId}/reject": {
+      "post": {
+        "tags": [
+          "Credential Offers"
+        ],
+        "summary": "Reject a credential offer",
+        "description": "Rejects a pending credential offer. The credential is deleted and status is updated to rejected.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "credentialId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID of the credential offer to reject"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "holderDid"
+                ],
+                "properties": {
+                  "holderDid": {
+                    "type": "string",
+                    "description": "DID of the credential holder"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credential offer rejected successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "Credential offer not found"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credentials/import": {
+      "post": {
+        "tags": [
+          "Verifiable Credentials"
+        ],
+        "summary": "Import an externally issued credential",
+        "description": "Imports a credential issued by a third party (not in Studio) and stores it in the holder's dataStore",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "credential",
+                  "holderDid"
+                ],
+                "properties": {
+                  "credential": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "description": "Verifiable credential as JSON object"
+                      },
+                      {
+                        "type": "string",
+                        "description": "Verifiable credential as JWT string"
+                      }
+                    ]
+                  },
+                  "holderDid": {
+                    "type": "string",
+                    "description": "DID of the credential holder"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credential imported successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "credentialHash": {
+                      "type": "string",
+                      "description": "Hash of the stored credential"
+                    },
+                    "credential": {
+                      "type": "object",
+                      "description": "The imported credential"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credentials/received": {
+      "get": {
+        "tags": [
+          "Verifiable Credentials"
+        ],
+        "summary": "List received credentials",
+        "description": "Retrieves all credentials stored in the holder's dataStore (accepted offers + imported credentials)",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "holderDid",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional DID to filter credentials by subject"
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "credential",
+                "accreditation"
+              ]
+            },
+            "description": "Optional category to filter by credential type. Note that imported credentials without IssuedCredentialEntity will be excluded when filtering by category."
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Page number for pagination"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            },
+            "description": "Number of results per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of received credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": {
+                      "type": "integer",
+                      "description": "Total number of credentials"
+                    },
+                    "credentials": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "hash": {
+                            "type": "string",
+                            "description": "Hash of the credential"
+                          },
+                          "credential": {
+                            "type": "object",
+                            "description": "Verifiable Credential"
+                          }
+                        }
+                      }
+                    },
+                    "page": {
+                      "type": "integer",
+                      "description": "Current page number"
+                    },
+                    "limit": {
+                      "type": "integer",
+                      "description": "Number of results per page"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/credentials/received/{credentialHash}": {
+      "get": {
+        "tags": [
+          "Verifiable Credentials"
+        ],
+        "summary": "Get a specific received credential",
+        "description": "Retrieves a specific credential from the holder's dataStore by its hash",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "credentialHash",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Hash of the credential"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Received credential",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Verifiable Credential"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "Credential not found"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
           }
         }
       }
