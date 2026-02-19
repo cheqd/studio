@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.16.1](https://github.com/cheqd/studio/compare/3.16.0...3.16.1) (2026-02-19)
+
+### Bug Fixes
+
+* Include statuslistId in create api ([#785](https://github.com/cheqd/studio/issues/785)) ([c2acb32](https://github.com/cheqd/studio/commit/c2acb325a049226e750a01e2984b1c2807b29092))
+* Multipurpose status max value ([#784](https://github.com/cheqd/studio/issues/784)) ([613665a](https://github.com/cheqd/studio/commit/613665acda0c88843ec0d4ffbcc29044c9147884))
+* Multipurpose status value validation ([#783](https://github.com/cheqd/studio/issues/783)) ([235a34b](https://github.com/cheqd/studio/commit/235a34b600ecee80cd4805eddcbf9dcf265f4a30))
+* parse statusAction ([#787](https://github.com/cheqd/studio/issues/787)) ([d00eef7](https://github.com/cheqd/studio/commit/d00eef77fcb7d3c3ca1768b4cc1b02a01ee77949))
+* Support number for status action ([#786](https://github.com/cheqd/studio/issues/786)) ([ca74860](https://github.com/cheqd/studio/commit/ca74860db21d7bb224a7f7f7b6115d83ecd6526d))
+
 ## [3.16.1-develop.6](https://github.com/cheqd/studio/compare/3.16.1-develop.5...3.16.1-develop.6) (2026-02-16)
 
 ## [3.16.1-develop.5](https://github.com/cheqd/studio/compare/3.16.1-develop.4...3.16.1-develop.5) (2026-02-05)
