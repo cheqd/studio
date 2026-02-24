@@ -644,7 +644,7 @@ export class DIDController {
 			// Deactivate DID
 			await identityServiceStrategySetup.agent.deactivateDid(did, response.locals.customer, publicKeyHexs);
 			// Send the deactivated DID as result
-			const result = await identityServiceStrategySetup.agent.resolveDid(request.params.did);
+			const result = await identityServiceStrategySetup.agent.resolveDid(did);
 
 			// Track the operation
 			eventTracker.emit('track', {

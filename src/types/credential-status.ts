@@ -308,7 +308,7 @@ export const DefaultStatusActionPurposeMap = {
 
 export type DefaultStatusAction = keyof typeof DefaultStatusActions;
 export function isDefaultStatusAction(action: string): action is DefaultStatusAction {
-    return Object.values(DefaultStatusActions).includes(action as DefaultStatusAction);
+	return Object.values(DefaultStatusActions).includes(action as DefaultStatusAction);
 }
 
 export type MinimalPaymentCondition = {

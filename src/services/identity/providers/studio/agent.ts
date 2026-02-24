@@ -971,7 +971,7 @@ export class Veramo {
 						returnStatusListMetadata: true,
 					} satisfies ICheqdUnsuspendBulkCredentialsWithStatusListArgs);
 				default:
-					throw new Error("Status Action not supported")
+					throw new Error('Status Action not supported');
 			}
 		}
 	}
@@ -1027,7 +1027,7 @@ export class Veramo {
 		if (listType === StatusListType.Bitstring) {
 			return await agent.cheqdBulkUpdateCredentialsWithStatusList({
 				newStatus: statusOptions.statusAction,
-   				updateOptions: {
+				updateOptions: {
 					issuerDid: did,
 					statusListIndices: statusOptions.indices,
 					statusListName: statusOptions.statusListName,
@@ -1100,7 +1100,7 @@ export class Veramo {
 						dkgOptions: toDefaultDkg(did),
 					} satisfies ICheqdUnsuspendBulkCredentialsWithStatusListArgs);
 				default:
-					throw new Error("Status Action not supported")
+					throw new Error('Status Action not supported');
 			}
 		}
 	}
@@ -1145,8 +1145,8 @@ export class Veramo {
 		if (listType === StatusListType.Bitstring) {
 			resourceType = BitstringStatusListResourceType;
 		} else {
-			if(!statusPurpose) {
-				throw new Error("Status Purpose is required")
+			if (!statusPurpose) {
+				throw new Error('Status Purpose is required');
 			}
 			resourceType = DefaultStatusList2021ResourceTypes[statusPurpose];
 		}
