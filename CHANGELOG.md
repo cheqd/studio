@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.16.2-develop.1](https://github.com/cheqd/studio/compare/3.16.1...3.16.2-develop.1) (2026-02-24)
+
+### Bug Fixes
+
+* revert semantic-release version for node 20 ([0915874](https://github.com/cheqd/studio/commit/09158742ef0136db91caa92b55fc4ee7e3dae577))
+
 ## [3.16.1](https://github.com/cheqd/studio/compare/3.16.0...3.16.1) (2026-02-19)
 
 ### Bug Fixes
