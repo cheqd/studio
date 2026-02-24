@@ -118,7 +118,7 @@
 		"@semantic-release/npm": "^13.1.2",
 		"@semantic-release/release-notes-generator": "^14.0.3",
 		"@types/bcrypt": "^5.0.2",
-		"@types/bs58": "^4.0.4",
+		"@types/bs58": "^5.0.0",
 		"@types/cookie-parser": "^1.4.8",
 		"@types/cors": "^2.8.17",
 		"@types/debug": "^4.1.12",
