@@ -9,7 +9,13 @@ import type {
 	ListStatusListQuery,
 	StatusListRecord,
 } from '../../types/credential-status.js';
-import { DefaultStatusActionPurposeMap, StatusRegistryState, StatusListType, StatusActions, isDefaultStatusAction } from '../../types/credential-status.js';
+import {
+	DefaultStatusActionPurposeMap,
+	StatusRegistryState,
+	StatusListType,
+	StatusActions,
+	isDefaultStatusAction,
+} from '../../types/credential-status.js';
 import type {
 	CreateEncryptedStatusListRequestBody,
 	CreateEncryptedStatusListRequestQuery,
@@ -406,7 +412,7 @@ export class CredentialStatusService {
 		const { did, statusListName, statusListVersion = '1.0', indices } = body;
 		let { statusAction: statusActionString, listType } = query;
 
-		const identityServiceStrategySetup = new IdentityServiceStrategySetup(customer.customerId);	
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
 		try {
 			let statusAction: number | DefaultStatusAction;
 			const parsedInt = parseInt(statusActionString, 10);
@@ -423,7 +429,7 @@ export class CredentialStatusService {
 				did,
 				statusListName,
 				listType,
-				typeof statusAction === 'number' ? undefined : DefaultStatusActionPurposeMap[statusAction],
+				typeof statusAction === 'number' ? undefined : DefaultStatusActionPurposeMap[statusAction]
 			);
 
 			if (unencrypted.error) {
@@ -595,7 +601,7 @@ export class CredentialStatusService {
 			} else {
 				throw new Error(`[did-provider-cheqd]: Invalid statusAction provided: ${statusActionString}`);
 			}
-	
+
 			const encrypted = await identityServiceStrategySetup.agent.searchStatusList(
 				did,
 				statusListName,

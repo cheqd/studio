@@ -610,7 +610,9 @@ export class SubscriptionController {
 	// @validate
 	async getCheckoutSession(request: Request, response: Response) {
 		const stripe = response.locals.stripe as Stripe;
-		const checkoutSessionId = request.params.id;
+		const checkoutSessionId = Array.isArray(request.params.id)
+			? request.params.id[0]
+			: (request.params.id as string);
 		try {
 			// retrieve the checkout session
 			const checkoutSession = await stripe.checkout.sessions.retrieve(checkoutSessionId);

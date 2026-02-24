@@ -108,7 +108,9 @@ export class ProvidersController {
 	async getProviderConfiguration(req: Request, res: Response) {
 		try {
 			const customer = res.locals.customer as CustomerEntity;
-			const { providerId } = req.params;
+			let providerId = Array.isArray(req.params.providerId)
+				? req.params.providerId[0]
+				: (req.params.providerId as string);
 
 			const config = await ProviderService.instance.getProviderConfiguration(customer.customerId, providerId);
 
@@ -171,7 +173,9 @@ export class ProvidersController {
 	async activateProvider(req: Request, res: Response) {
 		try {
 			const customer = res.locals.customer as CustomerEntity;
-			const { providerId } = req.params;
+			let providerId = Array.isArray(req.params.providerId)
+				? req.params.providerId[0]
+				: (req.params.providerId as string);
 
 			const config = await ProviderService.instance.activateProvider(customer.customerId, providerId);
 
@@ -241,7 +245,9 @@ export class ProvidersController {
 	async updateProviderConfiguration(req: Request, res: Response) {
 		try {
 			const customer = res.locals.customer as CustomerEntity;
-			const { providerId } = req.params;
+			let providerId = Array.isArray(req.params.providerId)
+				? req.params.providerId[0]
+				: (req.params.providerId as string);
 			const { apiEndpoint, webhookUrl, defaultSettings } = req.body;
 
 			// Validate input
@@ -340,7 +346,9 @@ export class ProvidersController {
 	async testConnection(req: Request, res: Response) {
 		try {
 			const customer = res.locals.customer as CustomerEntity;
-			const { providerId } = req.params;
+			let providerId = Array.isArray(req.params.providerId)
+				? req.params.providerId[0]
+				: (req.params.providerId as string);
 			const newAPIUrl = req.query?.newAPIUrl as string | undefined;
 			const result = await ProviderService.instance.testConnection(customer.customerId, providerId, newAPIUrl);
 
@@ -378,7 +386,9 @@ export class ProvidersController {
 	async removeProvider(req: Request, res: Response) {
 		try {
 			const customer = res.locals.customer as CustomerEntity;
-			const { providerId } = req.params;
+			let providerId = Array.isArray(req.params.providerId)
+				? req.params.providerId[0]
+				: (req.params.providerId as string);
 
 			await ProviderService.instance.deleteConfiguration(customer.customerId, providerId);
 
