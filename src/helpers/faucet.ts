@@ -1,5 +1,12 @@
 import type { ICommonErrorResponse } from '../types/authentication.js';
-import { MINIMAL_DENOM, FAUCET_URI, FAUCET_AMOUNT, FAUCET_API_KEY } from '../types/constants.js';
+import { 
+	MINIMAL_DENOM, 
+	FAUCET_URI, 
+	FAUCET_AMOUNT, 
+	FAUCET_API_KEY, 
+	FAUCET_ACCESS_CLIENT_ID, 
+	FAUCET_ACCESS_CLIENT_SECRET 
+} from '../types/constants.js';
 
 export class FaucetHelper {
 	// ...
@@ -24,6 +31,8 @@ export class FaucetHelper {
 			headers: {
 				'Content-Type': 'application/json',
 				'X-API-Key': FAUCET_API_KEY,
+				'CF-Access-Client-Id': FAUCET_ACCESS_CLIENT_ID,
+				'CF-Access-Client-Secret': FAUCET_ACCESS_CLIENT_SECRET,
 			},
 			body: JSON.stringify(faucetBody),
 			method: 'POST',
