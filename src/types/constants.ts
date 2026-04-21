@@ -57,6 +57,8 @@ export const FAUCET_API_KEY = process.env.FAUCET_API_KEY || 'default-api-key';
 export const DEFAULT_DENOM_EXPONENT = 9;
 export const TESTNET_MINIMUM_BALANCE = process.env.TESTNET_MINIMUM_BALANCE || 1000;
 export const FAUCET_AMOUNT = process.env.FAUCET_AMOUNT || 100000000000000;
+export const FAUCET_ACCESS_CLIENT_ID = process.env.FAUCET_ACCESS_CLIENT_ID || '';
+export const FAUCET_ACCESS_CLIENT_SECRET = process.env.FAUCET_ACCESS_CLIENT_SECRET || '';
 
 // Verifiable Credential constants
 export const VC_CONTEXT = ['https://www.w3.org/2018/credentials/v1'];

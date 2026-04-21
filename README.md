@@ -108,6 +108,9 @@ some tokens on the testnet for making the process simpler.
 1. `ENABLE_ACCOUNT_TOPUP`: Enable/disable such functionality (`false` by default)
 2. `FAUCET_URI`: Faucet service API endpoint (Default: `https://faucet-api.cheqd.network/credit`)
 3. `TESTNET_MINIMUM_BALANCE`: Minimum balance on account before it is automatically topped up from the faucet. This value should be expressed as an integer in `CHEQ` tokens, which will then be converted in the background to `ncheq` denomination. Account balance check is carried out on every account creation/login. (Default: 10,000 CHEQ testnet tokens)
+4. `FAUCET_API_KEY`: API key for faucet service authentication
+5. `FAUCET_ACCESS_CLIENT_ID`: Cloudflare Access client ID for accessing the Testnet Faucet API
+6. `FAUCET_ACCESS_CLIENT_SECRET`: Cloudflare Access client secret for accessing the Testnet Faucet API
 
 #### Stripe integration
 
