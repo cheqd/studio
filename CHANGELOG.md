@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.17.0-develop.1](https://github.com/cheqd/studio/compare/3.16.2-develop.1...3.17.0-develop.1) (2026-04-21)
+
+### Features
+
+* Add Faucet API access headers ([#810](https://github.com/cheqd/studio/issues/810)) ([59d9f7e](https://github.com/cheqd/studio/commit/59d9f7e1de9d6a7290c4fa5a3232f404559a1985))
+
 ## [3.16.2-develop.1](https://github.com/cheqd/studio/compare/3.16.1...3.16.2-develop.1) (2026-02-24)
 
 ### Bug Fixes
