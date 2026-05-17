@@ -8,7 +8,7 @@ This folder contains scripts and documentation for managing Stripe subscription 
 
 | File | Purpose | When to Use |
 |------|---------|-------------|
-| **MIGRATION-EXPLORER-PLAN.md** | Quick reference for Explorer plan migration | Start here for complete migration walkthrough |
+| **MIGRATION-EXPLORER-PLAN.md** | Quick reference for Basic plan migration | Start here for complete migration walkthrough |
 | **README-SUBSCRIPTION-ACTIVATION.md** | Detailed guide for migrating/activating existing subscriptions | When you have trialing or canceled subscriptions to migrate |
 | **README-SUBSCRIPTION-MIGRATION.md** | Guide for creating new subscriptions | When customers have NO subscription at all |
 | **README.md** | This file - overview of all scripts | Navigation and understanding the system |
@@ -45,7 +45,7 @@ This folder contains scripts and documentation for managing Stripe subscription 
 
 **What it does:**
 
-- **Trialing subscriptions:** Updates to new price, ends trial immediately, keeps same subscription ID
+- **Active/trialing subscriptions:** Updates to new price without prorations, keeps same subscription ID
 - **Canceled subscriptions:** Creates NEW subscription with new price (new subscription ID)
 
 **Example:**
@@ -81,27 +81,27 @@ This folder contains scripts and documentation for managing Stripe subscription 
 
 ---
 
-## Complete Explorer Plan Migration
+## Complete Basic Plan Migration
 
-For a complete migration to the Explorer plan, follow this 3-stage process:
+For a complete migration to the Basic plan, follow this 3-stage process:
 
 ### Stage 1: Migrate Canceled Subscriptions
 
 1. Run `find-subscriptions-to-activate.sql` with `WHERE status='canceled'`
 2. Save results to `scripts/subscriptions-to-activate.json`
-3. Run: `./scripts/activate-subscriptions.sh price_EXPLORER --status canceled`
+3. Run: `./scripts/activate-subscriptions.sh price_BASIC --status canceled`
 
 ### Stage 2: Migrate Trialing Subscriptions
 
 1. Run `find-subscriptions-to-activate.sql` with `WHERE status='trialing'`
 2. Save results to `scripts/subscriptions-to-activate.json`
-3. Run: `./scripts/activate-subscriptions.sh price_EXPLORER --status trialing`
+3. Run: `./scripts/activate-subscriptions.sh price_BASIC --status trialing`
 
 ### Stage 3: Create Subscriptions for New Customers
 
 1. Run `find-customers-without-subscriptions.sql`
 2. Save results to `scripts/customers-without-subscriptions.json`
-3. Run: `./scripts/create-stripe-subscriptions.sh price_EXPLORER`
+3. Run: `./scripts/create-stripe-subscriptions.sh price_BASIC`
 
 **See MIGRATION-EXPLORER-PLAN.md for detailed step-by-step instructions.**
 
@@ -250,7 +250,7 @@ Before running any migration:
 4. **Price ID** - Get your target plan's price ID
 
    ```bash
-   stripe prices list --product prod_EXPLORER_PLAN_ID
+   stripe prices list --product prod_BASIC_PLAN_ID
    ```
 
 ---
@@ -378,8 +378,8 @@ These logs contain:
 ## Quick Start Commands
 
 ```bash
-# Get Explorer plan price ID
-stripe prices list --product prod_EXPLORER_PLAN_ID
+# Get Basic plan price ID
+stripe prices list --product prod_BASIC_PLAN_ID
 
 # Stage 1: Migrate canceled subscriptions
 ./scripts/activate-subscriptions.sh price_XXX --status canceled --dry-run

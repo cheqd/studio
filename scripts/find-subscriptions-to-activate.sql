@@ -1,4 +1,4 @@
--- Find subscriptions with status 'trialing' or 'canceled' that need to be activated
+-- Find subscriptions with status 'active', 'trialing', or 'canceled' that need to be migrated
 SELECT
     s."subscriptionId",
     s."customerId",
@@ -11,7 +11,7 @@ SELECT
     c."name"
 FROM "subscription" s
 INNER JOIN "customer" c ON s."customerId" = c."customerId"
-WHERE s."status" IN ('trialing', 'canceled')
+WHERE s."status" IN ('active', 'trialing', 'canceled')
 ORDER BY s."status", c."email";
 
 -- Summary counts by status
@@ -19,5 +19,5 @@ ORDER BY s."status", c."email";
 --     s."status",
 --     COUNT(*) as count
 -- FROM "subscription" s
--- WHERE s."status" IN ('trialing', 'canceled')
+-- WHERE s."status" IN ('active', 'trialing', 'canceled')
 -- GROUP BY s."status";

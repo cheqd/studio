@@ -134,7 +134,7 @@ cat scripts/subscription-creation-YYYYMMDD-HHMMSS.log
 
 1. **README-SUBSCRIPTION-MIGRATION.md** - This file (for creating NEW subscriptions)
 1. **README-SUBSCRIPTION-ACTIVATION.md** - Guide for migrating/activating EXISTING subscriptions
-1. **MIGRATION-EXPLORER-PLAN.md** - Quick reference for Explorer plan migration
+1. **MIGRATION-EXPLORER-PLAN.md** - Quick reference for Basic plan migration
 
 ## Troubleshooting
 
@@ -199,8 +199,8 @@ Add custom metadata to subscriptions:
 # 1. Authenticate with Stripe
 stripe login
 
-# 2. Get your Explorer plan price ID
-stripe prices list --product prod_EXPLORER_PLAN_ID
+# 2. Get your Basic plan price ID
+stripe prices list --product prod_BASIC_PLAN_ID
 
 # 3. Run SQL query in your database
 # Run: scripts/find-customers-without-subscriptions.sql
@@ -231,7 +231,7 @@ stripe subscriptions list --status active --limit 20
 ## Related Guides
 
 - **README-SUBSCRIPTION-ACTIVATION.md** - For migrating/activating EXISTING subscriptions (trialing/canceled)
-- **MIGRATION-EXPLORER-PLAN.md** - Quick reference for complete Explorer plan migration (all 3 stages)
+- **MIGRATION-EXPLORER-PLAN.md** - Quick reference for complete Basic plan migration (all 3 stages)
 
 ## Support
 

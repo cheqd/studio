@@ -1,6 +1,6 @@
-# Explorer Plan Migration - Quick Reference
+# Basic Plan Migration - Quick Reference
 
-This guide provides step-by-step instructions for migrating all customers to the new Explorer plan.
+This guide provides step-by-step instructions for migrating all customers to the new Basic plan.
 
 ## Overview
 
@@ -17,8 +17,8 @@ The migration happens in **3 stages**:
 brew install jq  # or: apt-get install jq
 stripe login     # Authenticate Stripe CLI
 
-# 2. Get your Explorer plan price ID
-stripe prices list --product prod_EXPLORER_PLAN_ID
+# 2. Get your Basic plan price ID
+stripe prices list --product prod_BASIC_PLAN_ID
 # Copy the price ID (e.g., price_1QYqCEBuiFnKBR8qNnOoP123)
 
 # 3. Set up database access (if not already set)
@@ -70,7 +70,7 @@ Convert query results to JSON format and save to `scripts/subscriptions-to-activ
 
 ```bash
 cd /Users/sownakroy/project/studio
-./scripts/activate-subscriptions.sh price_YOUR_EXPLORER_PRICE_ID --status canceled --dry-run
+./scripts/activate-subscriptions.sh price_YOUR_BASIC_PRICE_ID --status canceled --dry-run
 ```
 
 **Review the output carefully:**
@@ -82,7 +82,7 @@ cd /Users/sownakroy/project/studio
 ### Step 1.4: Execute Migration
 
 ```bash
-./scripts/activate-subscriptions.sh price_YOUR_EXPLORER_PRICE_ID --status canceled
+./scripts/activate-subscriptions.sh price_YOUR_BASIC_PRICE_ID --status canceled
 ```
 
 Type `yes` when prompted to confirm.
@@ -135,13 +135,13 @@ Save results to `scripts/subscriptions-to-activate.json` (same file, overwrite).
 ### Step 2.3: Dry Run
 
 ```bash
-./scripts/activate-subscriptions.sh price_YOUR_EXPLORER_PRICE_ID --status trialing --dry-run
+./scripts/activate-subscriptions.sh price_YOUR_BASIC_PRICE_ID --status trialing --dry-run
 ```
 
 ### Step 2.4: Execute Migration
 
 ```bash
-./scripts/activate-subscriptions.sh price_YOUR_EXPLORER_PRICE_ID --status trialing
+./scripts/activate-subscriptions.sh price_YOUR_BASIC_PRICE_ID --status trialing
 ```
 
 Type `yes` when prompted.
@@ -195,13 +195,13 @@ Save results to `scripts/customers-without-subscriptions.json`:
 ### Step 3.3: Dry Run
 
 ```bash
-./scripts/create-stripe-subscriptions.sh price_YOUR_EXPLORER_PRICE_ID --dry-run
+./scripts/create-stripe-subscriptions.sh price_YOUR_BASIC_PRICE_ID --dry-run
 ```
 
 ### Step 3.4: Execute Creation
 
 ```bash
-./scripts/create-stripe-subscriptions.sh price_YOUR_EXPLORER_PRICE_ID
+./scripts/create-stripe-subscriptions.sh price_YOUR_BASIC_PRICE_ID
 ```
 
 Type `yes` when prompted.
@@ -274,20 +274,20 @@ Monitor Studio's webhook logs to ensure all subscription events were processed c
 
 - NEW subscription created (new subscription ID)
 - Old canceled subscription remains in history
-- Customer charged at Explorer plan price
+- Customer charged at Basic plan price
 
 **Trialing Subscriptions:**
 
 - SAME subscription ID (updated in place)
 - Trial ends immediately
-- Price changed to Explorer plan
+- Price changed to Basic plan
 - No prorations applied
 - Customer charged immediately
 
 **New Subscriptions:**
 
 - Brand new subscription created
-- Explorer plan price applied
+- Basic plan price applied
 - Customers charged based on billing cycle
 
 ### Communication

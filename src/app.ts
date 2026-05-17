@@ -307,6 +307,7 @@ class App {
 
 		// Account API
 		app.post('/account/create', AccountController.createValidator, new AccountController().create);
+		app.post('/account/faucet', AccountController.faucetValidator, new AccountController().requestFaucetTokens);
 		app.get('/account', new AccountController().get);
 		app.get('/account/idtoken', new AccountController().getIdToken);
 		app.get('/account/analytics', new AccountController().getAnalytics);

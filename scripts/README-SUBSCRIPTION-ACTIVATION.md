@@ -3,12 +3,12 @@
 This guide helps you migrate and activate subscriptions by:
 
 - Moving existing subscriptions to a new Stripe price/plan
-- Activating trialing subscriptions (ending trial immediately)
+- Updating active/trialing subscriptions without prorations
 - Reactivating canceled subscriptions (creating new subscriptions)
 
 ## What This Does
 
-- **Trialing subscriptions**: Migrates to new price AND ends trial immediately, making them active
+- **Active/trialing subscriptions**: Migrates to new price with `proration_behavior=none`
 - **Canceled subscriptions**: Creates NEW subscription with new price (cannot update canceled subscriptions)
 
 ## Prerequisites
@@ -25,7 +25,7 @@ This guide helps you migrate and activate subscriptions by:
 # Copy results from database and save to: scripts/subscriptions-to-activate.json
 
 # 2. Get your target Stripe price ID
-stripe prices list --product prod_EXPLORER_PLAN_ID
+stripe prices list --product prod_BASIC_PLAN_ID
 
 # 3. Dry run to see what would happen
 ./scripts/activate-subscriptions.sh price_1234567890 --dry-run
@@ -35,12 +35,13 @@ stripe prices list --product prod_EXPLORER_PLAN_ID
 
 # 5. Or activate only specific status
 ./scripts/activate-subscriptions.sh price_1234567890 --status trialing
+./scripts/activate-subscriptions.sh price_1234567890 --status active
 ./scripts/activate-subscriptions.sh price_1234567890 --status canceled
 ```
 
-## 2-Stage Migration to Explorer Plan
+## 2-Stage Migration to Basic Plan
 
-When migrating all customers to a new plan (e.g., "Explorer" plan), use this 2-stage approach:
+When migrating all customers to a new plan (e.g., "Basic" plan), use this 2-stage approach:
 
 ### Why 2 Stages?
 
@@ -58,20 +59,20 @@ When migrating all customers to a new plan (e.g., "Explorer" plan), use this 2-s
 # Step 2: Save results manually to JSON
 # Copy query results and save to: scripts/subscriptions-to-activate.json
 
-# Step 3: Get your Explorer plan price ID
-stripe prices list --product prod_EXPLORER_PLAN_ID
+# Step 3: Get your Basic plan price ID
+stripe prices list --product prod_BASIC_PLAN_ID
 
 # Step 4: Dry run first
-./scripts/activate-subscriptions.sh price_EXPLORER_PLAN_ID --status canceled --dry-run
+./scripts/activate-subscriptions.sh price_BASIC_PRICE_ID --status canceled --dry-run
 
 # Step 5: Execute migration
-./scripts/activate-subscriptions.sh price_EXPLORER_PLAN_ID --status canceled
+./scripts/activate-subscriptions.sh price_BASIC_PRICE_ID --status canceled
 ```
 
 **What happens:**
 
 - Creates NEW subscriptions for canceled customers
-- Uses Explorer plan price ID
+- Uses Basic plan price ID
 - Old canceled subscriptions remain canceled (new subscription IDs created)
 
 ### Stage 2: Migrate Trialing/Active Subscriptions
@@ -85,10 +86,10 @@ stripe prices list --product prod_EXPLORER_PLAN_ID
 # Copy query results and save to: scripts/subscriptions-to-activate.json
 
 # Step 3: Dry run first
-./scripts/activate-subscriptions.sh price_EXPLORER_PLAN_ID --status trialing --dry-run
+./scripts/activate-subscriptions.sh price_BASIC_PRICE_ID --status trialing --dry-run
 
 # Step 4: Execute migration
-./scripts/activate-subscriptions.sh price_EXPLORER_PLAN_ID --status trialing
+./scripts/activate-subscriptions.sh price_BASIC_PRICE_ID --status trialing
 ```
 
 **What happens:**
@@ -108,16 +109,16 @@ stripe prices list --product prod_EXPLORER_PLAN_ID
 # Copy query results and save to: scripts/customers-without-subscriptions.json
 
 # Step 3: Dry run first
-./scripts/create-stripe-subscriptions.sh price_EXPLORER_PLAN_ID --dry-run
+./scripts/create-stripe-subscriptions.sh price_BASIC_PRICE_ID --dry-run
 
 # Step 4: Execute creation
-./scripts/create-stripe-subscriptions.sh price_EXPLORER_PLAN_ID
+./scripts/create-stripe-subscriptions.sh price_BASIC_PRICE_ID
 ```
 
 **What happens:**
 
 - Creates brand new subscriptions for customers with no subscription history
-- Uses Explorer plan price ID
+- Uses Basic plan price ID
 
 ## Detailed Steps
 
@@ -165,7 +166,7 @@ Find the price ID for your target plan:
 
 ```bash
 # List prices for a product
-stripe prices list --product prod_EXPLORER_PLAN_ID
+stripe prices list --product prod_BASIC_PLAN_ID
 
 # Or retrieve a specific price
 stripe prices retrieve price_1234567890
@@ -231,8 +232,7 @@ You'll be asked to confirm before proceeding. The script will:
 1. Retrieve subscription to get all item IDs
 2. Delete all existing subscription items
 3. Add new subscription item with target price
-4. End trial immediately (`trial_end=now`)
-5. Set `proration_behavior=none` (no prorations)
+4. Set `proration_behavior=none` (no prorations)
 
 **After:**
 
@@ -334,8 +334,7 @@ Processing: user1@example.com (Status: trialing)
     1. Retrieve subscription to get all item IDs
     2. Delete all existing subscription items
     3. Add new subscription item with price: price_1QYqCEBuiFnKBR8qNnOoP123
-    4. End trial: trial_end=now
-    5. Set proration_behavior=none (no prorations)
+    4. Set proration_behavior=none (no prorations)
 
 Processing: user2@example.com (Status: canceled)
   Stripe Subscription ID: sub_def456
@@ -371,7 +370,8 @@ canceled: 58
 This will update 156 subscriptions in Stripe
 Actions:
   - Migrate all subscriptions to price: price_1QYqCEBuiFnKBR8qNnOoP123
-  - Trialing: End trial immediately (make active)
+  - Active: Update price with proration_behavior=none
+  - Trialing: Update price with proration_behavior=none
   - Canceled: Reactivate subscription
 
 Are you sure you want to continue? (yes/no): yes
@@ -386,7 +386,7 @@ Processing: user1@example.com (Status: trialing)
   Current Status: trialing
   Step 1/3: Retrieving subscription details...
   Found 1 subscription item(s)
-  Step 2/3: Updating subscription to new price and ending trial...
+  Step 2/3: Updating subscription to new price...
   Step 3/3: Executing update...
   ✓ Successfully migrated subscription to price_1QYqCEBuiFnKBR8qNnOoP123
 
@@ -480,15 +480,15 @@ Log file: scripts/subscription-activation-20250122-154530.log
 
 ```bash
 # Stage 1: Migrate canceled subscriptions first
-./scripts/activate-subscriptions.sh price_EXPLORER_PLAN_ID --status canceled
+./scripts/activate-subscriptions.sh price_BASIC_PRICE_ID --status canceled
 
 # Wait and monitor for issues in Stripe dashboard and logs
 
 # Stage 2: Migrate trialing subscriptions
-./scripts/activate-subscriptions.sh price_EXPLORER_PLAN_ID --status trialing
+./scripts/activate-subscriptions.sh price_BASIC_PRICE_ID --status trialing
 
 # Stage 3: Handle customers without any subscriptions
-./scripts/create-stripe-subscriptions.sh price_EXPLORER_PLAN_ID
+./scripts/create-stripe-subscriptions.sh price_BASIC_PRICE_ID
 ```
 
 ### Verify Changes in Stripe
@@ -570,7 +570,7 @@ stripe subscriptions cancel sub_newxyz789
 
 ## Complete Migration Workflow
 
-### For Explorer Plan Migration (Full Process)
+### For Basic Plan Migration (Full Process)
 
 ```bash
 # ============================================
@@ -581,14 +581,14 @@ stripe subscriptions cancel sub_newxyz789
 # Run in DB: SELECT * FROM find-subscriptions-to-activate.sql WHERE status='canceled'
 # Save to: scripts/subscriptions-to-activate.json
 
-# 2. Get Explorer price ID
-stripe prices list --product prod_EXPLORER_PLAN_ID
+# 2. Get Basic price ID
+stripe prices list --product prod_BASIC_PLAN_ID
 
 # 3. Dry run
-./scripts/activate-subscriptions.sh price_EXPLORER_ID --status canceled --dry-run
+./scripts/activate-subscriptions.sh price_BASIC_ID --status canceled --dry-run
 
 # 4. Execute
-./scripts/activate-subscriptions.sh price_EXPLORER_ID --status canceled
+./scripts/activate-subscriptions.sh price_BASIC_ID --status canceled
 
 # 5. Monitor and verify
 # - Check Stripe dashboard
@@ -604,10 +604,10 @@ stripe prices list --product prod_EXPLORER_PLAN_ID
 # Save to: scripts/subscriptions-to-activate.json
 
 # 2. Dry run
-./scripts/activate-subscriptions.sh price_EXPLORER_ID --status trialing --dry-run
+./scripts/activate-subscriptions.sh price_BASIC_ID --status trialing --dry-run
 
 # 3. Execute
-./scripts/activate-subscriptions.sh price_EXPLORER_ID --status trialing
+./scripts/activate-subscriptions.sh price_BASIC_ID --status trialing
 
 # 4. Monitor and verify
 
@@ -620,10 +620,10 @@ stripe prices list --product prod_EXPLORER_PLAN_ID
 # Save to: scripts/customers-without-subscriptions.json
 
 # 2. Dry run
-./scripts/create-stripe-subscriptions.sh price_EXPLORER_ID --dry-run
+./scripts/create-stripe-subscriptions.sh price_BASIC_ID --dry-run
 
 # 3. Execute
-./scripts/create-stripe-subscriptions.sh price_EXPLORER_ID
+./scripts/create-stripe-subscriptions.sh price_BASIC_ID
 
 # 4. Monitor and verify
 

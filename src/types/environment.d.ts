@@ -55,7 +55,12 @@ declare global {
 			// Faucet
 			ENABLE_ACCOUNT_TOPUP: string | 'false';
 			FAUCET_URI: string;
-			TESTNET_MINIMUM_BALANCE: number;
+			FAUCET_API_KEY: string;
+			FAUCET_AMOUNT: string;
+			FAUCET_ACCESS_CLIENT_ID: string;
+			FAUCET_ACCESS_CLIENT_SECRET: string;
+			TESTNET_MINIMUM_BALANCE: string;
+			TESTNET_FAUCET_UPPER_CAP_CHEQ: string;
 
 			// Creds
 			CREDS_DECRYPTION_SECRET: string;
@@ -70,6 +75,7 @@ declare global {
 			STRIPE_PUBLISHABLE_KEY: string;
 			STRIPE_WEBHOOK_SECRET: string;
 			STRIPE_BUILD_PLAN_ID: string;
+			STRIPE_BASIC_PLAN_ID: string | undefined;
 			STRIPE_TEST_PLAN_ID: string;
 
 			// Mailchimp

@@ -7,6 +7,7 @@ import { OAuthProvider } from './oauth/abstract.js';
 import { EventTracker, eventTracker } from '../../services/track/tracker.js';
 import { env } from 'node:process';
 import Stripe from 'stripe';
+import { productHasCapability, StudioPlanCapability } from '../../services/admin/plan-capabilities.js';
 
 dotenv.config();
 
@@ -280,17 +281,17 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		const assignedRoleIds = (userRoles.data as { id: string; name: string }[]).map((role) => role.id);
 
 		// INFO: Context
-		// We currently have two plans, Build and Test.
+		// We currently have two paid plan families: Build and Basic.
 		// All of our users get a "Portal" role which let's them work with our Studio Portal (UI)
-		// Test plan lets you operate with our Testnet so we assign the "Testnet" role
-		// Build plan lets you work with our Testnet and Mainnet, so we assign "Testnet" and "Mainnet" roles
+		// Basic lets you operate with our Testnet so we assign the "Testnet" role.
+		// Build lets you work with our Testnet and Mainnet, so we assign "Testnet" and "Mainnet" roles.
 		// "build" is the superset of all the roles (testnet + mainnet)
 		const buildPlanRoleIds = [env.LOGTO_MAINNET_ROLE_ID.trim(), env.LOGTO_TESTNET_ROLE_ID.trim()];
 		const testPlanRoleId = env.LOGTO_TESTNET_ROLE_ID.trim();
 		const hasDefaultPortalRole = assignedRoleIds.findIndex((roleId) => roleId === env.LOGTO_DEFAULT_ROLE_ID) != -1;
 
 		const planRoleIds = hasDefaultPortalRole ? [] : [env.LOGTO_DEFAULT_ROLE_ID.trim()];
-		if (product.id === process.env.STRIPE_BUILD_PLAN_ID) {
+		if (productHasCapability(product.id, StudioPlanCapability.Mainnet)) {
 			const buildRoleIsAssigned = buildPlanRoleIds.every((roleId) => assignedRoleIds.includes(roleId));
 			if (buildRoleIsAssigned) {
 				return {
@@ -304,7 +305,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 
 			const billingPlanRoleIds = buildPlanRoleIds.filter((id) => !assignedRoleIds.includes(id));
 			planRoleIds.push(...billingPlanRoleIds);
-		} else if (product.id === process.env.STRIPE_TEST_PLAN_ID) {
+		} else if (productHasCapability(product.id, StudioPlanCapability.Testnet)) {
 			// "build" plan is a superset of "test" plan
 
 			// check the user has mainnet role, remove it
