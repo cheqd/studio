@@ -279,10 +279,10 @@ Monitor Studio's webhook logs to ensure all subscription events were processed c
 **Trialing Subscriptions:**
 
 - SAME subscription ID (updated in place)
-- Trial ends immediately
 - Price changed to Basic plan
+- Existing trial end date is preserved
 - No prorations applied
-- Customer charged immediately
+- No immediate charge is created by the migration
 
 **New Subscriptions:**
 
@@ -304,8 +304,8 @@ Consider notifying customers before migration:
 Full rollback is difficult because:
 
 - Canceled subscriptions get new IDs
-- Trialing subscriptions have price changed and trial ended
-- Customers may have been charged
+- Trialing subscriptions have price changed in place
+- Customers with newly created paid subscriptions may have been charged
 
 **Always use dry-run first and test with small batches!**
 

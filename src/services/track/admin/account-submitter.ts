@@ -106,11 +106,16 @@ export class PortalAccountCreateSubmitter implements IObserver {
 	}
 
 	async assignDefaultPlan(stripe: Stripe, paymentProviderId: string) {
+		const basicPlanId = getBasicPlanId();
+		if (!basicPlanId) {
+			throw new Error('STRIPE_BASIC_PLAN_ID or STRIPE_TEST_PLAN_ID must be configured to assign default plan');
+		}
+
 		// Get the product to find its default price
-		const product = await stripe.products.retrieve(getBasicPlanId());
+		const product = await stripe.products.retrieve(basicPlanId);
 
 		if (!product.default_price) {
-			throw new Error(`Product ${getBasicPlanId()} has no default price set`);
+			throw new Error(`Product ${basicPlanId} has no default price set`);
 		}
 
 		// Get the price ID (could be string or Price object)

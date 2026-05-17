@@ -4,8 +4,14 @@ export enum StudioPlanCapability {
 	Faucet = 'faucet',
 }
 
+export function getBasicPlanIds(): string[] {
+	return Array.from(
+		new Set([process.env.STRIPE_BASIC_PLAN_ID, process.env.STRIPE_TEST_PLAN_ID].filter((id): id is string => !!id))
+	);
+}
+
 export function getBasicPlanId(): string {
-	return process.env.STRIPE_BASIC_PLAN_ID || process.env.STRIPE_TEST_PLAN_ID || '';
+	return getBasicPlanIds()[0] || '';
 }
 
 export function getBuildPlanId(): string {
@@ -13,8 +19,7 @@ export function getBuildPlanId(): string {
 }
 
 export function isBasicPlan(productId: string): boolean {
-	const basicPlanId = getBasicPlanId();
-	return Boolean(basicPlanId && productId === basicPlanId);
+	return getBasicPlanIds().includes(productId);
 }
 
 export function isBuildPlan(productId: string): boolean {

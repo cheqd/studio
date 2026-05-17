@@ -541,7 +541,7 @@ stripe subscriptions cancel sub_newxyz789
 
 **Note:** Full rollback is difficult because:
 
-- Trialing subscriptions had their price changed and trial ended
+- Trialing subscriptions had their price changed in place while preserving the trial end date
 - Canceled subscriptions got NEW subscription IDs
 - Always test with dry-run and small batches first!
 

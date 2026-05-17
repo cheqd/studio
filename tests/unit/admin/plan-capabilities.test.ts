@@ -40,6 +40,12 @@ describe('plan capabilities', () => {
 		expect(productHasCapability('prod_basic', StudioPlanCapability.Mainnet)).toBe(false);
 	});
 
+	it('allows legacy Test plan testnet and faucet capabilities during migration', () => {
+		expect(productHasCapability('prod_test', StudioPlanCapability.Testnet)).toBe(true);
+		expect(productHasCapability('prod_test', StudioPlanCapability.Faucet)).toBe(true);
+		expect(productHasCapability('prod_test', StudioPlanCapability.Mainnet)).toBe(false);
+	});
+
 	it('allows Build all capabilities', () => {
 		expect(productHasCapability('prod_build', StudioPlanCapability.Testnet)).toBe(true);
 		expect(productHasCapability('prod_build', StudioPlanCapability.Faucet)).toBe(true);

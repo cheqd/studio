@@ -282,7 +282,7 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 
 		// INFO: Context
 		// We currently have two paid plan families: Build and Basic.
-		// All of our users get a "Portal" role which let's them work with our Studio Portal (UI)
+		// All of our users get a "Portal" role which lets them work with our Studio Portal (UI)
 		// Basic lets you operate with our Testnet so we assign the "Testnet" role.
 		// Build lets you work with our Testnet and Mainnet, so we assign "Testnet" and "Mainnet" roles.
 		// "build" is the superset of all the roles (testnet + mainnet)

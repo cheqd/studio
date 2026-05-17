@@ -551,10 +551,8 @@ export class AccountController {
 
 			// 4. Check the token balance for Testnet account
 			if (testnetAccount.address && process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
-				const balances = await checkBalance(testnetAccount.address, process.env.TESTNET_RPC_URL);
-				const balance = balances[0];
 				const topupAmountNcheq =
-					cheqToNcheq(TESTNET_FAUCET_UPPER_CAP_CHEQ) - BigInt(balance?.amount || '0');
+					cheqToNcheq(TESTNET_FAUCET_UPPER_CAP_CHEQ) - (await getTestnetBalanceNcheq(testnetAccount.address));
 				if (topupAmountNcheq > 0n) {
 					// 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
 					// Handle case where firstName or lastName is not set
@@ -565,7 +563,7 @@ export class AccountController {
 						faucetFirstName,
 						faucetLastName,
 						customerEntity.email,
-						Number(topupAmountNcheq)
+						toSafeFaucetAmount(topupAmountNcheq)
 					);
 
 					if (resp.status !== StatusCodes.OK) {
@@ -623,6 +621,12 @@ export class AccountController {
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       403:
 	 *         description: Forbidden.
+	 *       404:
+	 *         description: No Studio testnet payment account was found for this customer.
+	 *       502:
+	 *         description: Upstream faucet request failed.
+	 *       503:
+	 *         description: Stripe subscription checks are disabled.
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
@@ -649,8 +653,7 @@ export class AccountController {
 		const customer = response.locals.customer as CustomerEntity;
 		const stripe = response.locals.stripe as Stripe;
 		const requestedAddress = request.body.address as string | undefined;
-		const requestedAmountCheq =
-			request.body.amount !== undefined ? Number(request.body.amount) : undefined;
+		const requestedAmountCheq = request.body.amount !== undefined ? Number(request.body.amount) : undefined;
 
 		try {
 			const subscription = await SubscriptionService.instance.findCurrent(customer);
@@ -727,7 +730,7 @@ export class AccountController {
 				customer.name,
 				'n/a',
 				customer.email,
-				Number(amountToRequestNcheq)
+				toSafeFaucetAmount(amountToRequestNcheq)
 			);
 			if (faucet.status !== StatusCodes.OK) {
 				return response.status(StatusCodes.BAD_GATEWAY).json({
@@ -836,6 +839,14 @@ function ncheqToCheq(amountNcheq: bigint): number {
 	return Number(amountNcheq) / 10 ** DEFAULT_DENOM_EXPONENT;
 }
 
+function toSafeFaucetAmount(amountNcheq: bigint): number {
+	if (amountNcheq > BigInt(Number.MAX_SAFE_INTEGER)) {
+		throw new Error('Faucet amount exceeds JavaScript safe integer range.');
+	}
+
+	return Number(amountNcheq);
+}
+
 function buildFaucetBalanceResponse(currentBalanceNcheq: bigint, capNcheq: bigint, maxAllowedNcheq: bigint) {
 	const remainingNcheq = maxAllowedNcheq > 0n ? maxAllowedNcheq : 0n;
 	return {
@@ -857,7 +868,7 @@ function buildFaucetBalanceResponse(currentBalanceNcheq: bigint, capNcheq: bigin
 
 async function getTestnetBalanceNcheq(address: string): Promise<bigint> {
 	const balances = await checkBalance(address, process.env.TESTNET_RPC_URL);
-	const balance = balances.find((coin) => coin.denom === MINIMAL_DENOM) || balances[0];
+	const balance = balances.find((coin) => coin.denom === MINIMAL_DENOM);
 	return BigInt(balance?.amount || '0');
 }
 
@@ -1003,9 +1014,8 @@ async function topupTestnet(
 		return;
 	}
 	try {
-		const balances = await checkBalance(testnetResp.data.address, process.env.TESTNET_RPC_URL);
-		const bal = balances[0];
-		const topupAmountNcheq = cheqToNcheq(TESTNET_FAUCET_UPPER_CAP_CHEQ) - BigInt(bal?.amount || '0');
+		const topupAmountNcheq =
+			cheqToNcheq(TESTNET_FAUCET_UPPER_CAP_CHEQ) - (await getTestnetBalanceNcheq(testnetResp.data.address));
 		if (topupAmountNcheq > 0n) {
 			// Handle case where firstName or lastName is not set
 			const faucetFirstName = firstName || customer.name;
@@ -1015,7 +1025,7 @@ async function topupTestnet(
 				faucetFirstName,
 				faucetLastName,
 				customer.email,
-				Number(topupAmountNcheq)
+				toSafeFaucetAmount(topupAmountNcheq)
 			);
 			if (faucet.status === StatusCodes.OK) {
 				status.testnetMinimumBalance = true;
