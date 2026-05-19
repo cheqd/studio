@@ -3361,6 +3361,60 @@
         }
       }
     },
+    "/account/faucet": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Request cheqd testnet CHEQ tokens for a Studio payment account.",
+        "description": "Funds an authenticated Studio user's owned testnet payment account up to the configured faucet cap.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "address": {
+                    "type": "string",
+                    "description": "Optional owned Studio testnet payment account address. Defaults to the authenticated customer's testnet account."
+                  },
+                  "amount": {
+                    "type": "number",
+                    "description": "Optional amount in CHEQ. Defaults to the amount needed to top up to the configured cap."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was processed."
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "403": {
+            "description": "Forbidden."
+          },
+          "404": {
+            "description": "No Studio testnet payment account was found for this customer."
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          },
+          "502": {
+            "description": "Upstream faucet request failed."
+          },
+          "503": {
+            "description": "Stripe subscription checks are disabled."
+          }
+        }
+      }
+    },
     "/account/analytics": {
       "get": {
         "tags": [

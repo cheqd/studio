@@ -9,7 +9,7 @@
 # Arguments:
 #   price_id: The Stripe price ID to migrate subscriptions to (e.g., price_xxx)
 #   --dry-run: Optional flag to preview actions without updating subscriptions
-#   --status: Optional filter for specific status (trialing|canceled). Default: both
+#   --status: Optional filter for specific status (active|trialing|canceled). Default: all
 #
 # Requirements:
 #   - Stripe CLI installed (https://stripe.com/docs/stripe-cli)
@@ -19,6 +19,7 @@
 #
 # Examples:
 #   ./scripts/activate-subscriptions.sh price_1234567890 --dry-run
+#   ./scripts/activate-subscriptions.sh price_1234567890 --status active
 #   ./scripts/activate-subscriptions.sh price_1234567890 --status trialing
 #   ./scripts/activate-subscriptions.sh price_1234567890 --status canceled --dry-run
 #   ./scripts/activate-subscriptions.sh price_1234567890
@@ -125,7 +126,8 @@ if [ "$DRY_RUN" = false ]; then
   echo -e "${YELLOW}This will update $TOTAL_SUBS subscriptions in Stripe${NC}"
   echo -e "${YELLOW}Actions:${NC}"
   echo -e "  - Migrate all subscriptions to price: $PRICE_ID"
-  echo -e "  - Trialing: End trial immediately (make active)"
+  echo -e "  - Active: Update price with proration_behavior=none"
+  echo -e "  - Trialing: Update price with proration_behavior=none"
   echo -e "  - Canceled: Reactivate subscription"
   echo ""
   read -p "Are you sure you want to continue? (yes/no): " -r
@@ -162,12 +164,11 @@ while read -r subscription; do
 
   if [ "$DRY_RUN" = true ]; then
     echo -e "${YELLOW}  [DRY RUN] Would execute:${NC}"
-    if [ "$STATUS" == "trialing" ]; then
+    if [ "$STATUS" == "active" ] || [ "$STATUS" == "trialing" ]; then
       echo "    1. Retrieve subscription to get all item IDs"
       echo "    2. Delete all existing subscription items"
       echo "    3. Add new subscription item with price: $PRICE_ID"
-      echo "    4. End trial: trial_end=now"
-      echo "    5. Set proration_behavior=none (no prorations)"
+      echo "    4. Set proration_behavior=none (no prorations)"
     elif [ "$STATUS" == "canceled" ]; then
       echo "    1. Create NEW subscription for customer: $STRIPE_CUSTOMER_ID"
       echo "    2. Use price: $PRICE_ID"
@@ -204,8 +205,8 @@ while read -r subscription; do
       ((ERROR_COUNT++))
     fi
 
-  elif [ "$STATUS" == "trialing" ]; then
-    # For trialing subscriptions, update and end trial
+  elif [ "$STATUS" == "active" ] || [ "$STATUS" == "trialing" ]; then
+    # For active/trialing subscriptions, update the subscription price without prorations.
     echo "  Step 1/3: Retrieving subscription details..."
     if ! SUB_DATA=$(stripe subscriptions retrieve "$STRIPE_SUB_ID" 2>&1); then
       echo -e "${RED}  ✗ Failed to retrieve subscription${NC}"
@@ -228,7 +229,7 @@ while read -r subscription; do
     fi
 
     echo "  Found ${#ITEM_IDS[@]} subscription item(s)"
-    echo "  Step 2/3: Updating subscription to new price and ending trial..."
+    echo "  Step 2/3: Updating subscription to new price..."
 
     # Build the command to update subscription
     STRIPE_CMD="stripe subscriptions update $STRIPE_SUB_ID"
@@ -243,12 +244,11 @@ while read -r subscription; do
     NEXT_INDEX=${#ITEM_IDS[@]}
     STRIPE_CMD="$STRIPE_CMD -d \"items[$NEXT_INDEX][price]=$PRICE_ID\""
     STRIPE_CMD="$STRIPE_CMD -d proration_behavior=none"
-    STRIPE_CMD="$STRIPE_CMD -d trial_end=now"
 
     echo "  Step 3/3: Executing update..."
     if RESULT=$(eval "$STRIPE_CMD" 2>&1); then
       echo -e "${GREEN}  ✓ Successfully migrated subscription to $PRICE_ID${NC}"
-      echo "SUCCESS: $EMAIL ($STRIPE_SUB_ID) - Migrated from trialing to active with price $PRICE_ID" >> "$LOG_FILE"
+      echo "SUCCESS: $EMAIL ($STRIPE_SUB_ID) - Migrated $STATUS subscription to price $PRICE_ID with no proration" >> "$LOG_FILE"
       ((SUCCESS_COUNT++))
     else
       echo -e "${RED}  ✗ Failed to update subscription${NC}"

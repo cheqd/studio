@@ -6,6 +6,7 @@ import { EventTracker } from '../tracker.js';
 import { StatusCodes } from 'http-status-codes';
 import { CustomerService } from '../../api/customer.js';
 import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../submitter.js';
+import { getBasicPlanId } from '../../admin/plan-capabilities.js';
 
 export class PortalAccountCreateSubmitter implements IObserver {
 	private emitter: EventEmitter;
@@ -66,8 +67,8 @@ export class PortalAccountCreateSubmitter implements IObserver {
 					paymentProviderId: stripeCustomer.id,
 				});
 
-				// Replace trial plan with default plan (with the STRIPE_TEST_PLAN_ID env var set)
-				if (process.env.STRIPE_TEST_PLAN_ID) {
+				// Assign Basic as the default paid plan, keeping STRIPE_TEST_PLAN_ID as a one-release fallback.
+				if (getBasicPlanId()) {
 					// Assign default plan to the user
 					await this.assignDefaultPlan(stripe, stripeCustomer.id);
 				}
@@ -105,11 +106,16 @@ export class PortalAccountCreateSubmitter implements IObserver {
 	}
 
 	async assignDefaultPlan(stripe: Stripe, paymentProviderId: string) {
+		const basicPlanId = getBasicPlanId();
+		if (!basicPlanId) {
+			throw new Error('STRIPE_BASIC_PLAN_ID or STRIPE_TEST_PLAN_ID must be configured to assign default plan');
+		}
+
 		// Get the product to find its default price
-		const product = await stripe.products.retrieve(process.env.STRIPE_TEST_PLAN_ID as string);
+		const product = await stripe.products.retrieve(basicPlanId);
 
 		if (!product.default_price) {
-			throw new Error(`Product ${process.env.STRIPE_TEST_PLAN_ID} has no default price set`);
+			throw new Error(`Product ${basicPlanId} has no default price set`);
 		}
 
 		// Get the price ID (could be string or Price object)

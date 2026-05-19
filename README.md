@@ -107,10 +107,13 @@ some tokens on the testnet for making the process simpler.
 
 1. `ENABLE_ACCOUNT_TOPUP`: Enable/disable such functionality (`false` by default)
 2. `FAUCET_URI`: Faucet service API endpoint (Default: `https://faucet-api.cheqd.network/credit`)
-3. `TESTNET_MINIMUM_BALANCE`: Minimum balance on account before it is automatically topped up from the faucet. This value should be expressed as an integer in `CHEQ` tokens, which will then be converted in the background to `ncheq` denomination. Account balance check is carried out on every account creation/login. (Default: 10,000 CHEQ testnet tokens)
-4. `FAUCET_API_KEY`: API key for faucet service authentication
-5. `FAUCET_ACCESS_CLIENT_ID`: Cloudflare Access client ID for accessing the Testnet Faucet API
-6. `FAUCET_ACCESS_CLIENT_SECRET`: Cloudflare Access client secret for accessing the Testnet Faucet API
+3. `TESTNET_FAUCET_UPPER_CAP_CHEQ`: Upper cap for Studio-managed testnet faucet top-ups, expressed in `CHEQ` and converted to `ncheq` internally. This controls both automatic top-up and `POST /account/faucet`. (Default: `TESTNET_MINIMUM_BALANCE`, or 10,000 CHEQ)
+4. `TESTNET_MINIMUM_BALANCE`: Backward-compatible fallback for the faucet upper cap if `TESTNET_FAUCET_UPPER_CAP_CHEQ` is not set. (Default: 10,000 CHEQ testnet tokens)
+5. `FAUCET_API_KEY`: API key for faucet service authentication
+6. `FAUCET_ACCESS_CLIENT_ID`: Cloudflare Access client ID for accessing the Testnet Faucet API
+7. `FAUCET_ACCESS_CLIENT_SECRET`: Cloudflare Access client secret for accessing the Testnet Faucet API
+
+Studio exposes `POST /account/faucet` for authenticated Studio users on Basic-or-higher subscriptions. The endpoint accepts optional `address` and `amount` fields; `amount` is expressed in CHEQ. If `address` is omitted, Studio uses the customer's testnet payment account. If `amount` is omitted, Studio tops the address up to `TESTNET_FAUCET_UPPER_CAP_CHEQ`. Requests that exceed the remaining cap return a `requestMore.mailtoHref` for contacting `product@cheqd.io`.
 
 #### Stripe integration
 
@@ -120,8 +123,9 @@ The application supports Stripe integration for payment processing.
 2. `STRIPE_SECRET_KEY` - Secret key for Stripe API. Please, keep it secret on deploying
 3. `STRIPE_PUBLISHABLE_KEY` - Publishable key for Stripe API.
 4. `STRIPE_WEBHOOK_SECRET` - Secret for Stripe Webhook.
-5. `STRIPE_BUILD_PLAN_ID` - Subscription planId of Build plan
-6. `STRIPE_TEST_PLAN_ID` -  Subscription planId of Test plan
+5. `STRIPE_BUILD_PLAN_ID` - Subscription product ID of the Build plan
+6. `STRIPE_BASIC_PLAN_ID` - Subscription product ID of the Basic plan. This replaces the former Explorer/Test plan.
+7. `STRIPE_TEST_PLAN_ID` - Backward-compatible fallback product ID for the former Test/Explorer plan. Keep for one release while migrating to `STRIPE_BASIC_PLAN_ID`.
 
 ### 3rd Party Connectors
 

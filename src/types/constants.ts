@@ -51,12 +51,22 @@ export const configLogToExpress = {
 };
 
 // Faucet constants
+const parseNumberEnv = (value: string | undefined, fallback: number): number => {
+	if (!value?.trim()) return fallback;
+	const parsed = Number(value);
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
 export const MINIMAL_DENOM = 'ncheq';
 export const FAUCET_URI = process.env.FAUCET_URI || 'https://faucet-api.cheqd.network/credit';
 export const FAUCET_API_KEY = process.env.FAUCET_API_KEY || 'default-api-key';
 export const DEFAULT_DENOM_EXPONENT = 9;
-export const TESTNET_MINIMUM_BALANCE = process.env.TESTNET_MINIMUM_BALANCE || 1000;
-export const FAUCET_AMOUNT = process.env.FAUCET_AMOUNT || 100000000000000;
+export const TESTNET_MINIMUM_BALANCE = parseNumberEnv(process.env.TESTNET_MINIMUM_BALANCE, 10000);
+export const TESTNET_FAUCET_UPPER_CAP_CHEQ = parseNumberEnv(
+	process.env.TESTNET_FAUCET_UPPER_CAP_CHEQ,
+	TESTNET_MINIMUM_BALANCE
+);
+export const FAUCET_AMOUNT = parseNumberEnv(process.env.FAUCET_AMOUNT, 100000000000000);
 export const FAUCET_ACCESS_CLIENT_ID = process.env.FAUCET_ACCESS_CLIENT_ID || '';
 export const FAUCET_ACCESS_CLIENT_SECRET = process.env.FAUCET_ACCESS_CLIENT_SECRET || '';
 

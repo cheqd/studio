@@ -13,7 +13,12 @@ import type Stripe from 'stripe';
 import type { SafeAPIResponse } from '../../types/common.js';
 
 import { CheqdNetwork, checkBalance } from '@cheqd/sdk';
-import { TESTNET_MINIMUM_BALANCE, DEFAULT_DENOM_EXPONENT, OperationNameEnum } from '../../types/constants.js';
+import {
+	DEFAULT_DENOM_EXPONENT,
+	MINIMAL_DENOM,
+	OperationNameEnum,
+	TESTNET_FAUCET_UPPER_CAP_CHEQ,
+} from '../../types/constants.js';
 import { CustomerService } from '../../services/api/customer.js';
 import { LogToHelper } from '../../middleware/auth/logto-helper.js';
 import { FaucetHelper } from '../../helpers/faucet.js';
@@ -40,6 +45,7 @@ import { Credentials } from '../../services/api/credentials.js';
 import { ResourceService } from '../../services/api/resource.js';
 import { CredentialCategory } from '../../types/credential.js';
 import { Like } from 'typeorm';
+import { productHasCapability, StudioPlanCapability } from '../../services/admin/plan-capabilities.js';
 
 dotenv.config();
 
@@ -53,6 +59,11 @@ export class AccountController {
 			.withMessage('Invalid email id')
 			.bail(),
 		check('name').optional().isString().withMessage('name should be a valid string'),
+	];
+
+	public static faucetValidator = [
+		check('address').optional().isString().notEmpty().withMessage('address should be a valid string').bail(),
+		check('amount').optional().isFloat({ gt: 0 }).withMessage('amount should be a positive number').bail(),
 	];
 	/**
 	 * @openapi
@@ -540,9 +551,9 @@ export class AccountController {
 
 			// 4. Check the token balance for Testnet account
 			if (testnetAccount.address && process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
-				const balances = await checkBalance(testnetAccount.address, process.env.TESTNET_RPC_URL);
-				const balance = balances[0];
-				if (!balance || +balance.amount < TESTNET_MINIMUM_BALANCE * Math.pow(10, DEFAULT_DENOM_EXPONENT)) {
+				const topupAmountNcheq =
+					cheqToNcheq(TESTNET_FAUCET_UPPER_CAP_CHEQ) - (await getTestnetBalanceNcheq(testnetAccount.address));
+				if (topupAmountNcheq > 0n) {
 					// 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
 					// Handle case where firstName or lastName is not set
 					const faucetFirstName = logToFirstName || customerEntity.name;
@@ -551,7 +562,8 @@ export class AccountController {
 						testnetAccount.address,
 						faucetFirstName,
 						faucetLastName,
-						customerEntity.email
+						customerEntity.email,
+						toSafeFaucetAmount(topupAmountNcheq)
 					);
 
 					if (resp.status !== StatusCodes.OK) {
@@ -577,6 +589,168 @@ export class AccountController {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal Error: ${(error as Error)?.message || error}`,
 			});
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /account/faucet:
+	 *   post:
+	 *     tags: [Account]
+	 *     summary: Request cheqd testnet CHEQ tokens for a Studio payment account.
+	 *     description: Funds an authenticated Studio user's owned testnet payment account up to the configured faucet cap.
+	 *     requestBody:
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+	 *             properties:
+	 *               address:
+	 *                 type: string
+	 *                 description: Optional owned Studio testnet payment account address. Defaults to the authenticated customer's testnet account.
+	 *               amount:
+	 *                 type: number
+	 *                 description: Optional amount in CHEQ. Defaults to the amount needed to top up to the configured cap.
+	 *     responses:
+	 *       200:
+	 *         description: The request was processed.
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       403:
+	 *         description: Forbidden.
+	 *       404:
+	 *         description: No Studio testnet payment account was found for this customer.
+	 *       502:
+	 *         description: Upstream faucet request failed.
+	 *       503:
+	 *         description: Stripe subscription checks are disabled.
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	@validate
+	public async requestFaucetTokens(request: Request, response: Response) {
+		if (request.headers['x-api-key'] || request.headers['customer-id']) {
+			return response.status(StatusCodes.FORBIDDEN).json({
+				error: 'Faucet requests are only available to authenticated Studio users.',
+			} satisfies UnsuccessfulResponseBody);
+		}
+
+		if (!response.locals.user || !response.locals.customer) {
+			return response.status(StatusCodes.UNAUTHORIZED).json({
+				error: 'Unauthorized error: Studio user context was not found.',
+			} satisfies UnsuccessfulResponseBody);
+		}
+
+		if (process.env.STRIPE_ENABLED !== 'true') {
+			return response.status(StatusCodes.SERVICE_UNAVAILABLE).json({
+				error: 'Faucet requests require Stripe subscription checks to be enabled.',
+			} satisfies UnsuccessfulResponseBody);
+		}
+
+		const customer = response.locals.customer as CustomerEntity;
+		const stripe = response.locals.stripe as Stripe;
+		const requestedAddress = request.body.address as string | undefined;
+		const requestedAmountCheq = request.body.amount !== undefined ? Number(request.body.amount) : undefined;
+
+		try {
+			const subscription = await SubscriptionService.instance.findCurrent(customer);
+			if (!subscription) {
+				return response.status(StatusCodes.FORBIDDEN).json({
+					error: 'An active Basic or higher subscription is required to request testnet CHEQ tokens.',
+				} satisfies UnsuccessfulResponseBody);
+			}
+
+			const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscriptionId);
+			if (!['active', 'trialing'].includes(stripeSubscription.status)) {
+				return response.status(StatusCodes.FORBIDDEN).json({
+					error: 'An active Basic or higher subscription is required to request testnet CHEQ tokens.',
+				} satisfies UnsuccessfulResponseBody);
+			}
+
+			const productId = getStripeObjectKey(stripeSubscription.items.data[0].plan.product);
+			if (!productHasCapability(productId, StudioPlanCapability.Faucet)) {
+				return response.status(StatusCodes.FORBIDDEN).json({
+					error: 'The current subscription does not include testnet faucet access.',
+				} satisfies UnsuccessfulResponseBody);
+			}
+
+			const testnetAccount = await resolveFaucetAccount(customer, requestedAddress);
+			if (!testnetAccount) {
+				return response.status(requestedAddress ? StatusCodes.FORBIDDEN : StatusCodes.NOT_FOUND).json({
+					error: requestedAddress
+						? 'The requested address is not an owned Studio testnet payment account.'
+						: 'No Studio testnet payment account was found for this customer.',
+				} satisfies UnsuccessfulResponseBody);
+			}
+
+			const capNcheq = cheqToNcheq(TESTNET_FAUCET_UPPER_CAP_CHEQ);
+			if (capNcheq <= 0n) {
+				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+					error: 'Invalid TESTNET_FAUCET_UPPER_CAP_CHEQ configuration.',
+				} satisfies UnsuccessfulResponseBody);
+			}
+
+			const currentBalanceNcheq = await getTestnetBalanceNcheq(testnetAccount.address);
+			const maxAllowedNcheq = capNcheq - currentBalanceNcheq;
+			const balance = buildFaucetBalanceResponse(currentBalanceNcheq, capNcheq, maxAllowedNcheq);
+
+			if (maxAllowedNcheq <= 0n) {
+				return response.status(StatusCodes.OK).json({
+					funded: false,
+					reason: 'cap_reached',
+					address: testnetAccount.address,
+					balance,
+					requestMore: buildRequestMore(customer, testnetAccount.address, balance, requestedAmountCheq),
+				});
+			}
+
+			const amountToRequestNcheq =
+				requestedAmountCheq === undefined ? maxAllowedNcheq : cheqToNcheq(requestedAmountCheq);
+
+			if (amountToRequestNcheq <= 0n) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: 'amount is too small to request.',
+				} satisfies UnsuccessfulResponseBody);
+			}
+
+			if (amountToRequestNcheq > maxAllowedNcheq) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: 'Requested amount exceeds the maximum available top-up for this address.',
+					address: testnetAccount.address,
+					balance,
+					requestMore: buildRequestMore(customer, testnetAccount.address, balance, requestedAmountCheq),
+				});
+			}
+
+			const faucet = await FaucetHelper.delegateTokens(
+				testnetAccount.address,
+				customer.name,
+				'n/a',
+				customer.email,
+				toSafeFaucetAmount(amountToRequestNcheq)
+			);
+			if (faucet.status !== StatusCodes.OK) {
+				return response.status(StatusCodes.BAD_GATEWAY).json({
+					error: 'Faucet request failed.',
+				} satisfies UnsuccessfulResponseBody);
+			}
+
+			return response.status(StatusCodes.OK).json({
+				funded: true,
+				address: testnetAccount.address,
+				amount: {
+					cheq: ncheqToCheq(amountToRequestNcheq),
+					ncheq: amountToRequestNcheq.toString(),
+				},
+				balance,
+			});
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			} satisfies UnsuccessfulResponseBody);
 		}
 	}
 
@@ -654,6 +828,100 @@ export class AccountController {
 	}
 }
 
+const FAUCET_REQUEST_MORE_EMAIL = 'product@cheqd.io';
+const FAUCET_REQUEST_MORE_SUBJECT = 'Request more cheqd testnet CHEQ tokens';
+
+function cheqToNcheq(amountCheq: number): bigint {
+	return BigInt(Math.floor(amountCheq * 10 ** DEFAULT_DENOM_EXPONENT));
+}
+
+function ncheqToCheq(amountNcheq: bigint): number {
+	return Number(amountNcheq) / 10 ** DEFAULT_DENOM_EXPONENT;
+}
+
+function toSafeFaucetAmount(amountNcheq: bigint): number {
+	if (amountNcheq > BigInt(Number.MAX_SAFE_INTEGER)) {
+		throw new Error('Faucet amount exceeds JavaScript safe integer range.');
+	}
+
+	return Number(amountNcheq);
+}
+
+function buildFaucetBalanceResponse(currentBalanceNcheq: bigint, capNcheq: bigint, maxAllowedNcheq: bigint) {
+	const remainingNcheq = maxAllowedNcheq > 0n ? maxAllowedNcheq : 0n;
+	return {
+		denom: MINIMAL_DENOM,
+		current: {
+			cheq: ncheqToCheq(currentBalanceNcheq),
+			ncheq: currentBalanceNcheq.toString(),
+		},
+		cap: {
+			cheq: ncheqToCheq(capNcheq),
+			ncheq: capNcheq.toString(),
+		},
+		maxRequestable: {
+			cheq: ncheqToCheq(remainingNcheq),
+			ncheq: remainingNcheq.toString(),
+		},
+	};
+}
+
+async function getTestnetBalanceNcheq(address: string): Promise<bigint> {
+	const balances = await checkBalance(address, process.env.TESTNET_RPC_URL);
+	const balance = balances.find((coin) => coin.denom === MINIMAL_DENOM);
+	return BigInt(balance?.amount || '0');
+}
+
+async function resolveFaucetAccount(
+	customer: CustomerEntity,
+	requestedAddress?: string
+): Promise<PaymentAccountEntity | null> {
+	if (requestedAddress) {
+		return PaymentAccountService.instance.findOne({
+			address: requestedAddress,
+			namespace: CheqdNetwork.Testnet,
+			customer,
+		});
+	}
+
+	return PaymentAccountService.instance.findOne({
+		namespace: CheqdNetwork.Testnet,
+		customer,
+	});
+}
+
+function buildRequestMore(
+	customer: CustomerEntity,
+	address: string,
+	balance: ReturnType<typeof buildFaucetBalanceResponse>,
+	requestedAmountCheq?: number
+) {
+	const requestedAmount = requestedAmountCheq === undefined ? 'Not provided' : `${requestedAmountCheq} CHEQ`;
+	const body = [
+		'Hello cheqd Product team,',
+		'',
+		'I would like to request more cheqd testnet CHEQ tokens.',
+		'',
+		`Full name: ${customer.name}`,
+		`Email: ${customer.email}`,
+		`Requesting address: ${address}`,
+		`Current balance: ${balance.current.cheq} CHEQ`,
+		`Configured cap: ${balance.cap.cheq} CHEQ`,
+		`Requested amount: ${requestedAmount}`,
+		'',
+		'Reason:',
+		'[Please add your reason here]',
+	].join('\n');
+
+	return {
+		email: FAUCET_REQUEST_MORE_EMAIL,
+		subject: FAUCET_REQUEST_MORE_SUBJECT,
+		mailtoHref: `mailto:${FAUCET_REQUEST_MORE_EMAIL}?subject=${encodeURIComponent(
+			FAUCET_REQUEST_MORE_SUBJECT
+		)}&body=${encodeURIComponent(body)}`,
+	};
+}
+
 async function syncLogtoUserRoles(
 	logToHelper: LogToHelper,
 	stripe: Stripe,
@@ -679,7 +947,7 @@ async function syncLogtoUserRoles(
 		);
 
 		const roleResponse = await logToHelper.assignCustomerPlanRoles(logToUserId, stripeProduct);
-		if (roleResponse.status !== StatusCodes.OK) {
+		if (roleResponse.status !== StatusCodes.OK && roleResponse.status !== StatusCodes.CREATED) {
 			return {
 				success: false,
 				status: roleResponse.status,
@@ -746,9 +1014,9 @@ async function topupTestnet(
 		return;
 	}
 	try {
-		const balances = await checkBalance(testnetResp.data.address, process.env.TESTNET_RPC_URL);
-		const bal = balances[0];
-		if (!bal || +bal.amount < TESTNET_MINIMUM_BALANCE * 10 ** DEFAULT_DENOM_EXPONENT) {
+		const topupAmountNcheq =
+			cheqToNcheq(TESTNET_FAUCET_UPPER_CAP_CHEQ) - (await getTestnetBalanceNcheq(testnetResp.data.address));
+		if (topupAmountNcheq > 0n) {
 			// Handle case where firstName or lastName is not set
 			const faucetFirstName = firstName || customer.name;
 			const faucetLastName = lastName || 'n/a';
@@ -756,7 +1024,8 @@ async function topupTestnet(
 				testnetResp.data.address,
 				faucetFirstName,
 				faucetLastName,
-				customer.email
+				customer.email,
+				toSafeFaucetAmount(topupAmountNcheq)
 			);
 			if (faucet.status === StatusCodes.OK) {
 				status.testnetMinimumBalance = true;
