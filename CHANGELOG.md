@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.17.0-develop.2](https://github.com/cheqd/studio/compare/3.17.0-develop.1...3.17.0-develop.2) (2026-05-19)
+
+### Features
+
+* Align Basic/Build plans and add testnet faucet API ([#811](https://github.com/cheqd/studio/issues/811)) ([7b00c1f](https://github.com/cheqd/studio/commit/7b00c1f3a6f6bb6cf2c9492a1c56dc0628de8b75))
+
 ## [3.17.0-develop.1](https://github.com/cheqd/studio/compare/3.16.2-develop.1...3.17.0-develop.1) (2026-04-21)
 
 ### Features
