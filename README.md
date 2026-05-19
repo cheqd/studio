@@ -127,6 +127,8 @@ The application supports Stripe integration for payment processing.
 6. `STRIPE_BASIC_PLAN_ID` - Subscription product ID of the Basic plan. This replaces the former Explorer/Test plan.
 7. `STRIPE_TEST_PLAN_ID` - Backward-compatible fallback product ID for the former Test/Explorer plan. Keep for one release while migrating to `STRIPE_BASIC_PLAN_ID`.
 
+When a new Studio customer is created with Stripe enabled, Studio creates a Stripe customer and starts the Basic plan as a 30-day trial subscription. This makes the customer immediately `trialing` for subscription checks without requiring a payment method at signup.
+
 ### 3rd Party Connectors
 
 The app supports 3rd party connectors for credential storage and delivery.

@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import type { IObserver } from '../types.js';
-import { OperationNameEnum } from '../../../types/constants.js';
+import { MaxAllowedTrialPeriodDays, OperationNameEnum } from '../../../types/constants.js';
 import type { INotifyMessage } from '../../../types/track.js';
 import { EventTracker } from '../tracker.js';
 import { StatusCodes } from 'http-status-codes';
@@ -67,7 +67,7 @@ export class PortalAccountCreateSubmitter implements IObserver {
 					paymentProviderId: stripeCustomer.id,
 				});
 
-				// Assign Basic as the default paid plan, keeping STRIPE_TEST_PLAN_ID as a one-release fallback.
+				// Assign Basic as the default trialing plan, keeping STRIPE_TEST_PLAN_ID as a one-release fallback.
 				if (getBasicPlanId()) {
 					// Assign default plan to the user
 					await this.assignDefaultPlan(stripe, stripeCustomer.id);
@@ -128,10 +128,16 @@ export class PortalAccountCreateSubmitter implements IObserver {
 			payment_settings: {
 				save_default_payment_method: 'on_subscription',
 			},
+			trial_period_days: MaxAllowedTrialPeriodDays,
+			trial_settings: {
+				end_behavior: {
+					missing_payment_method: 'cancel',
+				},
+			},
 		});
 
 		if (subscriptionResponse.lastResponse.statusCode !== StatusCodes.OK) {
-			throw new Error(`Failed to assign default plan`);
+			throw new Error(`Failed to assign default Basic trial plan`);
 		}
 	}
 }
