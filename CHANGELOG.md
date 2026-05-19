@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.17.0-develop.3](https://github.com/cheqd/studio/compare/3.17.0-develop.2...3.17.0-develop.3) (2026-05-19)
+
+### Features
+
+* Start Basic plan as trial for new Studio accounts ([#812](https://github.com/cheqd/studio/issues/812)) ([52c2249](https://github.com/cheqd/studio/commit/52c224953b05addb9e3375064a4bd0151c39d689))
+
 ## [3.17.0-develop.2](https://github.com/cheqd/studio/compare/3.17.0-develop.1...3.17.0-develop.2) (2026-05-19)
 
 ### Features
