@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.17.0-develop.4](https://github.com/cheqd/studio/compare/3.17.0-develop.3...3.17.0-develop.4) (2026-09-03)
+
+### Bug Fixes
+
+* Add missing body parameters for faucet topup requests ([#813](https://github.com/cheqd/studio/issues/813)) ([a61bfd5](https://github.com/cheqd/studio/commit/a61bfd5048ae8aea9a433f82f378fbc8c5c6ff90))
+
 ## [3.17.0-develop.3](https://github.com/cheqd/studio/compare/3.17.0-develop.2...3.17.0-develop.3) (2026-05-19)
 
 ### Features
