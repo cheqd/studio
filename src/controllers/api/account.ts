@@ -727,9 +727,9 @@ export class AccountController {
 
 			const faucet = await FaucetHelper.delegateTokens(
 				testnetAccount.address,
-				customer.name,
-				'n/a',
 				customer.email,
+				customer.name,
+				customer.customerId,
 				toSafeFaucetAmount(amountToRequestNcheq)
 			);
 			if (faucet.status !== StatusCodes.OK) {
