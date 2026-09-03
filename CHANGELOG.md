@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.17.0-develop.5](https://github.com/cheqd/studio/compare/3.17.0-develop.4...3.17.0-develop.5) (2026-09-03)
+
+### Bug Fixes
+
+* Improve error-handling for faucet requests ([89ed790](https://github.com/cheqd/studio/commit/89ed79048ecf71ef91b9e3537d166f8ae2d615da))
+
 ## [3.17.0-develop.4](https://github.com/cheqd/studio/compare/3.17.0-develop.3...3.17.0-develop.4) (2026-09-03)
 
 ### Bug Fixes
