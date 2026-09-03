@@ -727,14 +727,20 @@ export class AccountController {
 
 			const faucet = await FaucetHelper.delegateTokens(
 				testnetAccount.address,
-				customer.email,
 				customer.name,
-				customer.customerId,
+				'n/a',
+				customer.email,
 				toSafeFaucetAmount(amountToRequestNcheq)
 			);
 			if (faucet.status !== StatusCodes.OK) {
+				console.error('Faucet request failed:', faucet.status, faucet.error);
+				if (faucet.status === StatusCodes.TOO_MANY_REQUESTS) {
+					return response.status(StatusCodes.TOO_MANY_REQUESTS).json({
+						error: 'Testnet faucet requests are rate-limited for this address. Please wait a while before trying again.',
+					} satisfies UnsuccessfulResponseBody);
+				}
 				return response.status(StatusCodes.BAD_GATEWAY).json({
-					error: 'Faucet request failed.',
+					error: 'The testnet faucet is temporarily unavailable. Please try again later.',
 				} satisfies UnsuccessfulResponseBody);
 			}
 
