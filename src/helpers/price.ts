@@ -19,7 +19,7 @@ export class PriceHelper {
 	private static cache = new NodeCache();
 
 	/**
-	 * Returns the current CHEQ→USD spot rate from CoinGecko, cached for
+	 * Returns the current CHEQ to USD spot rate from CoinGecko, cached for
 	 * `CHEQ_USD_RATE_CACHE_TTL` seconds.
 	 *
 	 * Never throws: any failure (network, timeout, non-2xx, unexpected body) is
