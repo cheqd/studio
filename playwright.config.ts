@@ -76,7 +76,11 @@ export default defineConfig({
 					},
 					{
 						name: 'Parallel Logged In User Tests',
-						...(process.env.RELEASE === 'true' ? {} : { testIgnore: /.*\.release\.spec\.ts/ }),
+						testIgnore: [
+							// These run exclusively under "Non-Logged In User Tests" below.
+							/.*-no-auth\.spec\.ts$/,
+							...(process.env.RELEASE === 'true' ? [] : [/.*\.release\.spec\.ts/]),
+						],
 						use: {
 							...devices['Desktop Chrome'],
 							// Use prepared auth state.
@@ -91,7 +95,7 @@ export default defineConfig({
 					},
 					{
 						name: 'Non-Logged In User Tests',
-						testMatch: /.*\.no-auth.spec.ts/,
+						testMatch: /.*-no-auth\.spec\.ts$/,
 						use: {
 							...devices['Desktop Chrome'],
 							storageState: STORAGE_STATE_UNAUTHENTICATED,
