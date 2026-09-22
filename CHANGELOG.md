@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.17.0-develop.6](https://github.com/cheqd/studio/compare/3.17.0-develop.5...3.17.0-develop.6) (2026-09-22)
+
+### Features
+
+* **account:** add GET /account/balances with CHEQ/USD conversion ([bfc013e](https://github.com/cheqd/studio/commit/bfc013e27fbc08a8b0cfa5a6b5882e2ca7ec953b))
+* **account:** add GET /account/balances with CHEQ/USD conversion ([#814](https://github.com/cheqd/studio/issues/814)) ([6a2510e](https://github.com/cheqd/studio/commit/6a2510e853deee87fe871fedf9a11cab27a12bb1))
+
+### Bug Fixes
+
+* **test:** correct no-auth spec matching in Playwright projects ([348251a](https://github.com/cheqd/studio/commit/348251a1309a05497a0b85d04c12ef7d0118675c))
+* **test:** move credential verify test out of no-auth suite ([36bae65](https://github.com/cheqd/studio/commit/36bae6588d2269fc955b29c8df31a87b80642687))
+
 ## [3.17.0-develop.5](https://github.com/cheqd/studio/compare/3.17.0-develop.4...3.17.0-develop.5) (2026-09-03)
 
 ### Bug Fixes
