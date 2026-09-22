@@ -1,7 +1,10 @@
-import { CONTENT_TYPE, INVALID_JWT_TOKEN, GENERATED_PATH, STORAGE_STATE_UNAUTHENTICATED } from '../../constants';
+import { CONTENT_TYPE, INVALID_JWT_TOKEN, GENERATED_PATH } from '../../constants';
 import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
+
+// /credential/verify requires the verify:credential:testnet/mainnet scope, so this runs
+// under the authenticated project (see playwright.config.ts) rather than as a no-auth spec.
 
 async function check_verify_response(response: any, issuer: string) {
 	expect(response).toBeOK();
@@ -12,8 +15,6 @@ async function check_verify_response(response: any, issuer: string) {
 	expect(body.credentialStatus).not.toBeNull();
 	expect(body.credentialSubject).not.toBeNull();
 }
-
-test.use({ storageState: STORAGE_STATE_UNAUTHENTICATED });
 
 test('[Positive] It can verify credential with a valid JWT body', async ({ request }) => {
 	const json = JSON.parse(fs.readFileSync(`${GENERATED_PATH.CREDENTIAL}/valid_credential.json`, 'utf-8'));
