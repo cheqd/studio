@@ -16,6 +16,7 @@ tmp
 
 # General
 .env
+.env.production
 .snyk
 **/docker-compose-no-db-local.yml
 *.sqlite
@@ -119,6 +120,7 @@ go.work
 # Logs
 logs
 *.log
+/scripts/output/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

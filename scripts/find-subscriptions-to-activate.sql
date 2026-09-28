@@ -1,4 +1,5 @@
--- Find subscriptions with status 'active', 'trialing', or 'canceled' that need to be migrated
+-- Audit only: local Studio subscription rows are not migration input.
+-- The authoritative migration plan is built from Stripe by migrate-studio-plans.ts.
 SELECT
     s."subscriptionId",
     s."customerId",
