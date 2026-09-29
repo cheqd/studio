@@ -1,4 +1,5 @@
--- Find customers without subscriptions who exist in Logto
+-- Audit only: the Stripe migration deliberately does not create paid subscriptions
+-- for customers who do not already have a current Stripe subscription.
 SELECT
       c."customerId",
       c."name",

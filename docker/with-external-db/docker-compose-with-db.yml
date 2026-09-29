@@ -39,7 +39,7 @@ services:
                 condition: service_healthy
         env_file:
             - with-db.env
-        entrypoint: ['npm', 'run', 'migration']
+        entrypoint: ['npm', 'run', 'migrate']
         profiles:
             - app-setup
             - external-kms

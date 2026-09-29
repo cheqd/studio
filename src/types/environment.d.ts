@@ -82,7 +82,9 @@ declare global {
 			STRIPE_WEBHOOK_SECRET: string;
 			STRIPE_BUILD_PLAN_ID: string;
 			STRIPE_BASIC_PLAN_ID: string | undefined;
+			STRIPE_EXPLORER_PLAN_ID: string | undefined;
 			STRIPE_TEST_PLAN_ID: string;
+			STRIPE_MIGRATION_EXPECTED_ACCOUNT_ID: string | undefined;
 
 			// Mailchimp
 			MAILCHIMP_ENABLED: string | 'false';
