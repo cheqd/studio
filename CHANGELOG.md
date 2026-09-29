@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.17.0-develop.7](https://github.com/cheqd/studio/compare/3.17.0-develop.6...3.17.0-develop.7) (2026-09-29)
+
+### Features
+
+* add guarded Stripe plan migration ([#816](https://github.com/cheqd/studio/issues/816)) ([e4e495d](https://github.com/cheqd/studio/commit/e4e495dbb51d6432c6389a66aab807412f304a9b))
+
 ## [3.17.0-develop.6](https://github.com/cheqd/studio/compare/3.17.0-develop.5...3.17.0-develop.6) (2026-09-22)
 
 ### Features
