@@ -68,12 +68,12 @@ Annual prices are not used by this migration.
 9. Rerun the full dry run. The canary should now appear under `alreadyOnTarget`.
 10. Execute the complete migration:
 
-   ```bash
-   npm run migrate:stripe-plans -- --execute \
-     --env-file .env.production \
-     --expected-account acct_... \
-     --confirm APPLY_STUDIO_PLAN_MIGRATION
-   ```
+    ```bash
+    npm run migrate:stripe-plans -- --execute \
+      --env-file .env.production \
+      --expected-account acct_... \
+      --confirm APPLY_STUDIO_PLAN_MIGRATION
+    ```
 
 11. Rerun the dry run. `affectedCustomers` should be `0`; only no-op or explicitly blocked records should remain.
 
