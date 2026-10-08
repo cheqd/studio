@@ -62,8 +62,10 @@ export const FAUCET_URI = process.env.FAUCET_URI || 'https://faucet-api.cheqd.ne
 export const FAUCET_API_KEY = process.env.FAUCET_API_KEY || 'default-api-key';
 export const DEFAULT_DENOM_EXPONENT = 9;
 export const TESTNET_MINIMUM_BALANCE = parseNumberEnv(process.env.TESTNET_MINIMUM_BALANCE, 10000);
-export const TESTNET_FAUCET_UPPER_CAP_CHEQ = parseNumberEnv(
-	process.env.TESTNET_FAUCET_UPPER_CAP_CHEQ,
+// Amount, in CHEQ, a new account's testnet address is topped up to when it is bootstrapped (ENABLE_ACCOUNT_TOPUP).
+// TESTNET_FAUCET_UPPER_CAP_CHEQ is the previous name and is still honoured as a fallback.
+export const TESTNET_INITIAL_TOPUP_CHEQ = parseNumberEnv(
+	process.env.TESTNET_INITIAL_TOPUP_CHEQ || process.env.TESTNET_FAUCET_UPPER_CAP_CHEQ,
 	TESTNET_MINIMUM_BALANCE
 );
 // Single faucet cap for POST /account/faucet: the most CHEQ an address can hold and the most a customer can request per calendar month (UTC)

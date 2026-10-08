@@ -60,6 +60,7 @@ declare global {
 			FAUCET_ACCESS_CLIENT_ID: string;
 			FAUCET_ACCESS_CLIENT_SECRET: string;
 			TESTNET_MINIMUM_BALANCE: string;
+			TESTNET_INITIAL_TOPUP_CHEQ: string;
 			TESTNET_FAUCET_UPPER_CAP_CHEQ: string;
 
 			// CHEQ market data (CoinGecko)

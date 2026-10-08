@@ -17,7 +17,7 @@ import {
 	FAUCET_MONTHLY_LIMIT_CHEQ,
 	MINIMAL_DENOM,
 	OperationNameEnum,
-	TESTNET_FAUCET_UPPER_CAP_CHEQ,
+	TESTNET_INITIAL_TOPUP_CHEQ,
 } from '../../types/constants.js';
 import { CustomerService } from '../../services/api/customer.js';
 import { LogToHelper } from '../../middleware/auth/logto-helper.js';
@@ -557,7 +557,7 @@ export class AccountController {
 			// 4. Check the token balance for Testnet account
 			if (testnetAccount.address && process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
 				const topupAmountNcheq =
-					cheqToNcheq(TESTNET_FAUCET_UPPER_CAP_CHEQ) - (await getTestnetBalanceNcheq(testnetAccount.address));
+					cheqToNcheq(TESTNET_INITIAL_TOPUP_CHEQ) - (await getTestnetBalanceNcheq(testnetAccount.address));
 				if (topupAmountNcheq > 0n) {
 					// 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
 					// Handle case where firstName or lastName is not set
@@ -1163,7 +1163,7 @@ async function topupTestnet(
 	}
 	try {
 		const topupAmountNcheq =
-			cheqToNcheq(TESTNET_FAUCET_UPPER_CAP_CHEQ) - (await getTestnetBalanceNcheq(testnetResp.data.address));
+			cheqToNcheq(TESTNET_INITIAL_TOPUP_CHEQ) - (await getTestnetBalanceNcheq(testnetResp.data.address));
 		if (topupAmountNcheq > 0n) {
 			// Handle case where firstName or lastName is not set
 			const faucetFirstName = firstName || customer.name;
