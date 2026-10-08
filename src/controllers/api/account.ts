@@ -13,7 +13,12 @@ import type Stripe from 'stripe';
 import type { SafeAPIResponse } from '../../types/common.js';
 
 import { CheqdNetwork, checkBalance } from '@cheqd/sdk';
-import { MINIMAL_DENOM, OperationNameEnum, TESTNET_FAUCET_UPPER_CAP_CHEQ } from '../../types/constants.js';
+import {
+	FAUCET_MONTHLY_LIMIT_CHEQ,
+	MINIMAL_DENOM,
+	OperationNameEnum,
+	TESTNET_FAUCET_UPPER_CAP_CHEQ,
+} from '../../types/constants.js';
 import { CustomerService } from '../../services/api/customer.js';
 import { LogToHelper } from '../../middleware/auth/logto-helper.js';
 import { FaucetHelper } from '../../helpers/faucet.js';
@@ -44,6 +49,8 @@ import { ResourceService } from '../../services/api/resource.js';
 import { CredentialCategory } from '../../types/credential.js';
 import { Like } from 'typeorm';
 import { productHasCapability, StudioPlanCapability } from '../../services/admin/plan-capabilities.js';
+import { FaucetRequestService } from '../../services/api/faucet-request.js';
+import { remainingQuota, secondsUntilReset, type FaucetQuotaWindow } from '../../helpers/faucet-quota.js';
 
 dotenv.config();
 
@@ -597,7 +604,7 @@ export class AccountController {
 	 *   post:
 	 *     tags: [Account]
 	 *     summary: Request cheqd testnet CHEQ tokens for a Studio payment account.
-	 *     description: Funds an authenticated Studio user's owned testnet payment account up to the configured faucet cap.
+	 *     description: Funds an authenticated Studio user's owned testnet payment account up to the configured faucet cap. Works with a Studio user session or an API key. Each customer can request up to a monthly quota of CHEQ (calendar month, UTC); the response includes the remaining quota.
 	 *     requestBody:
 	 *       content:
 	 *         application/json:
@@ -621,6 +628,8 @@ export class AccountController {
 	 *         description: Forbidden.
 	 *       404:
 	 *         description: No Studio testnet payment account was found for this customer.
+	 *       429:
+	 *         description: The customer's monthly faucet quota is exhausted. The Retry-After header gives the seconds until it resets, and the body includes the quota details.
 	 *       502:
 	 *         description: Upstream faucet request failed.
 	 *       503:
@@ -630,12 +639,6 @@ export class AccountController {
 	 */
 	@validate
 	public async requestFaucetTokens(request: Request, response: Response) {
-		if (request.headers['x-api-key'] || request.headers['customer-id']) {
-			return response.status(StatusCodes.FORBIDDEN).json({
-				error: 'Faucet requests are only available to authenticated Studio users.',
-			} satisfies UnsuccessfulResponseBody);
-		}
-
 		if (!response.locals.user || !response.locals.customer) {
 			return response.status(StatusCodes.UNAUTHORIZED).json({
 				error: 'Unauthorized error: Studio user context was not found.',
@@ -723,14 +726,40 @@ export class AccountController {
 				});
 			}
 
-			const faucet = await FaucetHelper.delegateTokens(
+			const safeAmount = toSafeFaucetAmount(amountToRequestNcheq);
+			const quotaLimitNcheq = cheqToNcheq(FAUCET_MONTHLY_LIMIT_CHEQ);
+			const reservation = await FaucetRequestService.instance.reserve(
+				customer,
 				testnetAccount.address,
-				customer.name,
-				'n/a',
-				customer.email,
-				toSafeFaucetAmount(amountToRequestNcheq)
+				amountToRequestNcheq,
+				quotaLimitNcheq
 			);
+			if (!reservation.reserved) {
+				return response
+					.status(StatusCodes.TOO_MANY_REQUESTS)
+					.set('Retry-After', String(secondsUntilReset(reservation.window)))
+					.json({
+						error: 'Monthly testnet faucet quota exceeded for this account.',
+						quota: buildFaucetQuotaResponse(reservation.usedNcheq, quotaLimitNcheq, reservation.window),
+					});
+			}
+
+			let faucet: Awaited<ReturnType<typeof FaucetHelper.delegateTokens>>;
+			try {
+				faucet = await FaucetHelper.delegateTokens(
+					testnetAccount.address,
+					customer.name,
+					'n/a',
+					customer.email,
+					safeAmount
+				);
+			} catch (error) {
+				await FaucetRequestService.instance.release(reservation.faucetRequestId);
+				throw error;
+			}
 			if (faucet.status !== StatusCodes.OK) {
+				// the upstream faucet did not credit the account, so give the quota back
+				await FaucetRequestService.instance.release(reservation.faucetRequestId);
 				console.error('Faucet request failed:', faucet.status, faucet.error);
 				if (faucet.status === StatusCodes.TOO_MANY_REQUESTS) {
 					return response.status(StatusCodes.TOO_MANY_REQUESTS).json({
@@ -750,6 +779,11 @@ export class AccountController {
 					ncheq: amountToRequestNcheq.toString(),
 				},
 				balance,
+				quota: buildFaucetQuotaResponse(
+					reservation.usedNcheq + amountToRequestNcheq,
+					quotaLimitNcheq,
+					reservation.window
+				),
 			});
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -944,6 +978,17 @@ function buildFaucetBalanceResponse(currentBalanceNcheq: bigint, capNcheq: bigin
 			cheq: ncheqToCheq(remainingNcheq),
 			ncheq: remainingNcheq.toString(),
 		},
+	};
+}
+
+function buildFaucetQuotaResponse(usedNcheq: bigint, limitNcheq: bigint, window: FaucetQuotaWindow) {
+	const remainingNcheq = remainingQuota(usedNcheq, limitNcheq);
+	return {
+		period: 'month',
+		limit: { cheq: ncheqToCheq(limitNcheq), ncheq: limitNcheq.toString() },
+		used: { cheq: ncheqToCheq(usedNcheq), ncheq: usedNcheq.toString() },
+		remaining: { cheq: ncheqToCheq(remainingNcheq), ncheq: remainingNcheq.toString() },
+		resetsAt: window.resetsAt.toISOString(),
 	};
 }
 

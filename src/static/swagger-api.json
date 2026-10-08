@@ -3433,7 +3433,7 @@
           "Account"
         ],
         "summary": "Request cheqd testnet CHEQ tokens for a Studio payment account.",
-        "description": "Funds an authenticated Studio user's owned testnet payment account up to the configured faucet cap.",
+        "description": "Funds an authenticated Studio user's owned testnet payment account up to the configured faucet cap. Works with a Studio user session or an API key. Each customer can request up to a monthly quota of CHEQ (calendar month, UTC); the response includes the remaining quota.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3468,6 +3468,9 @@
           },
           "404": {
             "description": "No Studio testnet payment account was found for this customer."
+          },
+          "429": {
+            "description": "The customer's monthly faucet quota is exhausted. The Retry-After header gives the seconds until it resets, and the body includes the quota details."
           },
           "500": {
             "$ref": "#/components/schemas/InternalError"
