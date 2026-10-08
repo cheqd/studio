@@ -50,12 +50,7 @@ import { CredentialCategory } from '../../types/credential.js';
 import { Like } from 'typeorm';
 import { productHasCapability, StudioPlanCapability } from '../../services/admin/plan-capabilities.js';
 import { FaucetRequestService } from '../../services/api/faucet-request.js';
-import {
-	remainingQuota,
-	resolveFaucetAmount,
-	secondsUntilReset,
-	type FaucetQuotaWindow,
-} from '../../helpers/faucet-quota.js';
+import { remainingQuota, secondsUntilReset, type FaucetQuotaWindow } from '../../helpers/faucet-quota.js';
 
 dotenv.config();
 
@@ -609,7 +604,7 @@ export class AccountController {
 	 *   post:
 	 *     tags: [Account]
 	 *     summary: Request cheqd testnet CHEQ tokens for a Studio payment account.
-	 *     description: Funds an authenticated Studio user's owned testnet payment account. Without an amount it tops the account up to the configured faucet cap; with an amount the only limit is the monthly quota. Works with a Studio user session or an API key. Each customer can request up to a monthly quota of CHEQ (calendar month, UTC); the response includes the remaining quota.
+	 *     description: Funds an authenticated Studio user's owned testnet payment account. A single cap (FAUCET_MONTHLY_LIMIT_CHEQ, 100,000 CHEQ by default) is both the most an address can hold and the most a customer can request in a calendar month (UTC), across all their addresses. Works with a Studio user session or an API key; the response includes the remaining quota.
 	 *     requestBody:
 	 *       content:
 	 *         application/json:
@@ -621,7 +616,7 @@ export class AccountController {
 	 *                 description: Optional owned Studio testnet payment account address. Defaults to the authenticated customer's testnet account.
 	 *               amount:
 	 *                 type: number
-	 *                 description: Optional amount in CHEQ, up to the customer's remaining monthly quota. Defaults to the amount needed to top up the account to the configured per-account cap.
+	 *                 description: Optional amount in CHEQ. Defaults to the amount needed to top up to the configured cap.
 	 *     responses:
 	 *       200:
 	 *         description: The request was processed.
@@ -692,10 +687,11 @@ export class AccountController {
 				} satisfies UnsuccessfulResponseBody);
 			}
 
-			const capNcheq = cheqToNcheq(TESTNET_FAUCET_UPPER_CAP_CHEQ);
+			// One cap: the same figure is the most an address can hold and the most a customer can request per month
+			const capNcheq = cheqToNcheq(FAUCET_MONTHLY_LIMIT_CHEQ);
 			if (capNcheq <= 0n) {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-					error: 'Invalid TESTNET_FAUCET_UPPER_CAP_CHEQ configuration.',
+					error: 'Invalid FAUCET_MONTHLY_LIMIT_CHEQ configuration.',
 				} satisfies UnsuccessfulResponseBody);
 			}
 
@@ -703,11 +699,7 @@ export class AccountController {
 			const maxAllowedNcheq = capNcheq - currentBalanceNcheq;
 			const balance = buildFaucetBalanceResponse(currentBalanceNcheq, capNcheq, maxAllowedNcheq);
 
-			const resolution = resolveFaucetAmount(
-				requestedAmountCheq === undefined ? undefined : cheqToNcheq(requestedAmountCheq),
-				maxAllowedNcheq
-			);
-			if (resolution.status === 'cap_reached') {
+			if (maxAllowedNcheq <= 0n) {
 				return response.status(StatusCodes.OK).json({
 					funded: false,
 					reason: 'cap_reached',
@@ -716,14 +708,27 @@ export class AccountController {
 					requestMore: buildRequestMore(customer, testnetAccount.address, balance, requestedAmountCheq),
 				});
 			}
-			if (resolution.status === 'invalid') {
+
+			const amountToRequestNcheq =
+				requestedAmountCheq === undefined ? maxAllowedNcheq : cheqToNcheq(requestedAmountCheq);
+
+			if (amountToRequestNcheq <= 0n) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'amount is too small to request.',
 				} satisfies UnsuccessfulResponseBody);
 			}
-			const amountToRequestNcheq = resolution.amountNcheq;
 
-			const quotaLimitNcheq = cheqToNcheq(FAUCET_MONTHLY_LIMIT_CHEQ);
+			if (amountToRequestNcheq > maxAllowedNcheq) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: 'Requested amount exceeds the maximum available top-up for this address.',
+					address: testnetAccount.address,
+					balance,
+					requestMore: buildRequestMore(customer, testnetAccount.address, balance, requestedAmountCheq),
+				});
+			}
+
+			const safeAmount = toSafeFaucetAmount(amountToRequestNcheq);
+			const quotaLimitNcheq = capNcheq;
 			const reservation = await FaucetRequestService.instance.reserve(
 				customer,
 				testnetAccount.address,
@@ -747,7 +752,7 @@ export class AccountController {
 					customer.name,
 					'n/a',
 					customer.email,
-					toSafeFaucetAmount(amountToRequestNcheq)
+					safeAmount
 				);
 			} catch (error) {
 				await FaucetRequestService.instance.release(reservation.faucetRequestId);

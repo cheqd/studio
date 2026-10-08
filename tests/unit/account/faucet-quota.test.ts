@@ -3,7 +3,6 @@ import {
 	fitsInQuota,
 	getFaucetQuotaWindow,
 	remainingQuota,
-	resolveFaucetAmount,
 	secondsUntilReset,
 } from '../../../src/helpers/faucet-quota.js';
 
@@ -61,28 +60,5 @@ describe('quota arithmetic', () => {
 	it('reports remaining quota and clamps at zero', () => {
 		expect(remainingQuota(40_000n * 1_000_000_000n, limit)).toBe(60_000n * 1_000_000_000n);
 		expect(remainingQuota(limit + 5n, limit)).toBe(0n);
-	});
-});
-
-describe('resolveFaucetAmount', () => {
-	const cheq = (n: number) => BigInt(n) * 1_000_000_000n;
-
-	it('tops up to the balance cap when no amount is requested', () => {
-		expect(resolveFaucetAmount(undefined, cheq(4_000))).toEqual({ status: 'ok', amountNcheq: cheq(4_000) });
-	});
-
-	it('reports cap_reached when no amount is requested and the account is at the cap', () => {
-		expect(resolveFaucetAmount(undefined, 0n)).toEqual({ status: 'cap_reached' });
-		expect(resolveFaucetAmount(undefined, -5n)).toEqual({ status: 'cap_reached' });
-	});
-
-	it('does not apply the balance cap to an explicit amount', () => {
-		expect(resolveFaucetAmount(cheq(50_000), cheq(4_000))).toEqual({ status: 'ok', amountNcheq: cheq(50_000) });
-		expect(resolveFaucetAmount(cheq(50_000), 0n)).toEqual({ status: 'ok', amountNcheq: cheq(50_000) });
-	});
-
-	it('rejects a zero or negative explicit amount', () => {
-		expect(resolveFaucetAmount(0n, cheq(4_000))).toEqual({ status: 'invalid' });
-		expect(resolveFaucetAmount(-1n, cheq(4_000))).toEqual({ status: 'invalid' });
 	});
 });
