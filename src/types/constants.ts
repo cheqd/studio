@@ -66,6 +66,8 @@ export const TESTNET_FAUCET_UPPER_CAP_CHEQ = parseNumberEnv(
 	process.env.TESTNET_FAUCET_UPPER_CAP_CHEQ,
 	TESTNET_MINIMUM_BALANCE
 );
+// Maximum CHEQ a single customer can request through POST /account/faucet per calendar month (UTC)
+export const FAUCET_MONTHLY_LIMIT_CHEQ = parseNumberEnv(process.env.FAUCET_MONTHLY_LIMIT_CHEQ, 100000);
 export const FAUCET_AMOUNT = parseNumberEnv(process.env.FAUCET_AMOUNT, 100000000000000);
 export const FAUCET_ACCESS_CLIENT_ID = process.env.FAUCET_ACCESS_CLIENT_ID || '';
 export const FAUCET_ACCESS_CLIENT_SECRET = process.env.FAUCET_ACCESS_CLIENT_SECRET || '';
