@@ -32,3 +32,24 @@ export function fitsInQuota(usedNcheq: bigint, requestedNcheq: bigint, limitNche
 export function remainingQuota(usedNcheq: bigint, limitNcheq: bigint): bigint {
 	return usedNcheq >= limitNcheq ? 0n : limitNcheq - usedNcheq;
 }
+
+export type FaucetAmountResolution =
+	| { status: 'ok'; amountNcheq: bigint }
+	| { status: 'cap_reached' }
+	| { status: 'invalid' };
+
+/**
+ * Decides how much to fund.
+ * - No amount requested: top the account up to the per-account balance cap (`capRemainingNcheq`).
+ * - Amount requested: the per-request maximum is the monthly quota, so the balance cap is not applied
+ *   and the quota check at reservation time is the only upper bound.
+ */
+export function resolveFaucetAmount(
+	requestedNcheq: bigint | undefined,
+	capRemainingNcheq: bigint
+): FaucetAmountResolution {
+	if (requestedNcheq === undefined) {
+		return capRemainingNcheq > 0n ? { status: 'ok', amountNcheq: capRemainingNcheq } : { status: 'cap_reached' };
+	}
+	return requestedNcheq > 0n ? { status: 'ok', amountNcheq: requestedNcheq } : { status: 'invalid' };
+}

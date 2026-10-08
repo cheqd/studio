@@ -109,7 +109,7 @@ some tokens on the testnet for making the process simpler.
 2. `FAUCET_URI`: Faucet service API endpoint (Default: `https://faucet-api.cheqd.network/credit`)
 3. `TESTNET_FAUCET_UPPER_CAP_CHEQ`: Upper cap for Studio-managed testnet faucet top-ups, expressed in `CHEQ` and converted to `ncheq` internally. This controls both automatic top-up and `POST /account/faucet`. (Default: `TESTNET_MINIMUM_BALANCE`, or 10,000 CHEQ)
 4. `TESTNET_MINIMUM_BALANCE`: Backward-compatible fallback for the faucet upper cap if `TESTNET_FAUCET_UPPER_CAP_CHEQ` is not set. (Default: 10,000 CHEQ testnet tokens)
-5. `FAUCET_MONTHLY_LIMIT_CHEQ`: Maximum amount of testnet `CHEQ` a single customer can request through `POST /account/faucet` per calendar month (UTC), usable with a Studio session or an API key. Requests that would exceed it return `429` with a `Retry-After` header. Automatic top-ups at account creation do not count. (Default: 100,000 CHEQ)
+5. `FAUCET_MONTHLY_LIMIT_CHEQ`: Maximum amount of testnet `CHEQ` a single customer can request through `POST /account/faucet` per calendar month (UTC), usable with a Studio session or an API key. Requests that would exceed it return `429` with a `Retry-After` header. Automatic top-ups at account creation do not count. This is also the effective per-request maximum for an explicit `amount`; without an `amount` the request tops the account up to `TESTNET_FAUCET_UPPER_CAP_CHEQ`. (Default: 100,000 CHEQ)
 6. `FAUCET_API_KEY`: API key for faucet service authentication
 7. `FAUCET_ACCESS_CLIENT_ID`: Cloudflare Access client ID for accessing the Testnet Faucet API
 8. `FAUCET_ACCESS_CLIENT_SECRET`: Cloudflare Access client secret for accessing the Testnet Faucet API

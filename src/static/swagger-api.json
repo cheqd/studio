@@ -3433,7 +3433,7 @@
           "Account"
         ],
         "summary": "Request cheqd testnet CHEQ tokens for a Studio payment account.",
-        "description": "Funds an authenticated Studio user's owned testnet payment account up to the configured faucet cap. Works with a Studio user session or an API key. Each customer can request up to a monthly quota of CHEQ (calendar month, UTC); the response includes the remaining quota.",
+        "description": "Funds an authenticated Studio user's owned testnet payment account. Without an amount it tops the account up to the configured faucet cap; with an amount the only limit is the monthly quota. Works with a Studio user session or an API key. Each customer can request up to a monthly quota of CHEQ (calendar month, UTC); the response includes the remaining quota.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3446,7 +3446,7 @@
                   },
                   "amount": {
                     "type": "number",
-                    "description": "Optional amount in CHEQ. Defaults to the amount needed to top up to the configured cap."
+                    "description": "Optional amount in CHEQ, up to the customer's remaining monthly quota. Defaults to the amount needed to top up the account to the configured per-account cap."
                   }
                 }
               }
