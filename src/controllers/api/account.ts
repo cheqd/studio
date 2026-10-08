@@ -40,7 +40,11 @@ import { getStripeObjectKey } from '../../utils/index.js';
 import { KeyService } from '../../services/api/key.js';
 import { LocalStore } from '../../database/cache/store.js';
 import { BootStrapAccountResponse } from '../../types/account.js';
-import type { AccountNetworkBalance, QueryAccountBalancesResponseBody } from '../../types/account.js';
+import type {
+	AccountFaucetInfo,
+	AccountNetworkBalance,
+	QueryAccountBalancesResponseBody,
+} from '../../types/account.js';
 import { RoleEntity } from '../../database/entities/role.entity.js';
 import { MailchimpService } from '../../helpers/mailchimp.js';
 import { IdentifierService } from '../../services/api/identifier.js';
@@ -50,7 +54,12 @@ import { CredentialCategory } from '../../types/credential.js';
 import { Like } from 'typeorm';
 import { productHasCapability, StudioPlanCapability } from '../../services/admin/plan-capabilities.js';
 import { FaucetRequestService } from '../../services/api/faucet-request.js';
-import { remainingQuota, secondsUntilReset, type FaucetQuotaWindow } from '../../helpers/faucet-quota.js';
+import {
+	getFaucetQuotaWindow,
+	remainingQuota,
+	secondsUntilReset,
+	type FaucetQuotaWindow,
+} from '../../helpers/faucet-quota.js';
 
 dotenv.config();
 
@@ -882,7 +891,8 @@ export class AccountController {
 	 *       Returns the on-chain balance of the authenticated customer's mainnet and testnet payment
 	 *       accounts, expressed in ncheq, CHEQ and USD. The CHEQ/USD rate is sourced from CoinGecko and
 	 *       cached; if it (or a network's RPC endpoint) is unavailable the response still returns 200 with
-	 *       the affected `usd`/`rate`/`balance` fields set to `null`.
+	 *       the affected `usd`/`rate`/`balance` fields set to `null`. Also returns the testnet faucet cap and
+	 *       the customer's monthly faucet quota usage under `faucet`.
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -952,9 +962,24 @@ export class AccountController {
 				};
 			};
 
+			let faucet: AccountFaucetInfo | null = null;
+			if (testnetAddress) {
+				try {
+					const capNcheq = cheqToNcheq(FAUCET_MONTHLY_LIMIT_CHEQ);
+					const usedNcheq = await FaucetRequestService.instance.getUsedNcheq(response.locals.customer);
+					faucet = {
+						cap: { cheq: ncheqToCheq(capNcheq), ncheq: capNcheq.toString() },
+						quota: buildFaucetQuotaResponse(usedNcheq, capNcheq, getFaucetQuotaWindow()),
+					};
+				} catch (error) {
+					console.error('getBalances: faucet quota lookup failed:', (error as Error)?.message || error);
+				}
+			}
+
 			return response.status(StatusCodes.OK).json({
 				mainnet: toNetworkBalance(mainnetAddress, mainnetNcheq),
 				testnet: toNetworkBalance(testnetAddress, testnetNcheq),
+				faucet,
 				rate,
 			} satisfies QueryAccountBalancesResponseBody);
 		} catch (error) {
@@ -990,7 +1015,7 @@ function buildFaucetBalanceResponse(currentBalanceNcheq: bigint, capNcheq: bigin
 function buildFaucetQuotaResponse(usedNcheq: bigint, limitNcheq: bigint, window: FaucetQuotaWindow) {
 	const remainingNcheq = remainingQuota(usedNcheq, limitNcheq);
 	return {
-		period: 'month',
+		period: 'month' as const,
 		limit: { cheq: ncheqToCheq(limitNcheq), ncheq: limitNcheq.toString() },
 		used: { cheq: ncheqToCheq(usedNcheq), ncheq: usedNcheq.toString() },
 		remaining: { cheq: ncheqToCheq(remainingNcheq), ncheq: remainingNcheq.toString() },

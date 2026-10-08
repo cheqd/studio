@@ -3182,6 +3182,19 @@
           }
         }
       },
+      "FaucetAmount": {
+        "type": "object",
+        "properties": {
+          "cheq": {
+            "type": "number",
+            "example": 10000
+          },
+          "ncheq": {
+            "type": "string",
+            "example": "10000000000000"
+          }
+        }
+      },
       "AccountBalancesResponse": {
         "type": "object",
         "properties": {
@@ -3190,6 +3203,49 @@
           },
           "testnet": {
             "$ref": "#/components/schemas/AccountNetworkBalance"
+          },
+          "faucet": {
+            "type": "object",
+            "nullable": true,
+            "description": "Testnet faucet cap and the customer's monthly faucet quota usage. `null` when there is no testnet account or it could not be read.",
+            "properties": {
+              "cap": {
+                "type": "object",
+                "description": "Most CHEQ the testnet address can hold, and the most the customer can request per calendar month (UTC).",
+                "properties": {
+                  "cheq": {
+                    "type": "number",
+                    "example": 100000
+                  },
+                  "ncheq": {
+                    "type": "string",
+                    "example": "100000000000000"
+                  }
+                }
+              },
+              "quota": {
+                "type": "object",
+                "properties": {
+                  "period": {
+                    "type": "string",
+                    "example": "month"
+                  },
+                  "limit": {
+                    "$ref": "#/components/schemas/FaucetAmount"
+                  },
+                  "used": {
+                    "$ref": "#/components/schemas/FaucetAmount"
+                  },
+                  "remaining": {
+                    "$ref": "#/components/schemas/FaucetAmount"
+                  },
+                  "resetsAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
           },
           "rate": {
             "type": "object",
@@ -3534,7 +3590,7 @@
           "Account"
         ],
         "summary": "Fetch payment account balances.",
-        "description": "Returns the on-chain balance of the authenticated customer's mainnet and testnet payment accounts, expressed in ncheq, CHEQ and USD. The CHEQ/USD rate is sourced from CoinGecko and cached; if it (or a network's RPC endpoint) is unavailable the response still returns 200 with the affected `usd`/`rate`/`balance` fields set to `null`.",
+        "description": "Returns the on-chain balance of the authenticated customer's mainnet and testnet payment accounts, expressed in ncheq, CHEQ and USD. The CHEQ/USD rate is sourced from CoinGecko and cached; if it (or a network's RPC endpoint) is unavailable the response still returns 200 with the affected `usd`/`rate`/`balance` fields set to `null`. Also returns the testnet faucet cap and the customer's monthly faucet quota usage under `faucet`.",
         "responses": {
           "200": {
             "description": "The request was successful.",

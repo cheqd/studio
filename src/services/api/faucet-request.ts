@@ -17,6 +17,18 @@ export class FaucetRequestService {
 		this.faucetRequestRepository = Connection.instance.dbConnection.getRepository(FaucetRequestEntity);
 	}
 
+	/** Total ncheq requested by the customer in the current quota window. */
+	public async getUsedNcheq(customer: CustomerEntity, now: Date = new Date()): Promise<bigint> {
+		const { start } = getFaucetQuotaWindow(now);
+		const row = await this.faucetRequestRepository
+			.createQueryBuilder('request')
+			.select('COALESCE(SUM(request.amountNcheq), 0)', 'total')
+			.where('request.customerId = :customerId', { customerId: customer.customerId })
+			.andWhere('request.createdAt >= :start', { start })
+			.getRawOne<{ total: string }>();
+		return BigInt(row?.total ?? '0');
+	}
+
 	/**
 	 * Atomically checks the customer's monthly quota and, if the amount fits, records it.
 	 * A per-customer advisory lock serialises concurrent requests so they cannot overshoot the limit.

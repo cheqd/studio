@@ -2152,6 +2152,15 @@
  *           nullable: true
  *           description: balance.cheq multiplied by the CHEQ/USD rate. `null` when the balance or the rate is unavailable.
  *           example: 3.03
+ *     FaucetAmount:
+ *       type: object
+ *       properties:
+ *         cheq:
+ *           type: number
+ *           example: 10000
+ *         ncheq:
+ *           type: string
+ *           example: "10000000000000"
  *     AccountBalancesResponse:
  *       type: object
  *       properties:
@@ -2159,6 +2168,36 @@
  *           $ref: '#/components/schemas/AccountNetworkBalance'
  *         testnet:
  *           $ref: '#/components/schemas/AccountNetworkBalance'
+ *         faucet:
+ *           type: object
+ *           nullable: true
+ *           description: Testnet faucet cap and the customer's monthly faucet quota usage. `null` when there is no testnet account or it could not be read.
+ *           properties:
+ *             cap:
+ *               type: object
+ *               description: Most CHEQ the testnet address can hold, and the most the customer can request per calendar month (UTC).
+ *               properties:
+ *                 cheq:
+ *                   type: number
+ *                   example: 100000
+ *                 ncheq:
+ *                   type: string
+ *                   example: "100000000000000"
+ *             quota:
+ *               type: object
+ *               properties:
+ *                 period:
+ *                   type: string
+ *                   example: month
+ *                 limit:
+ *                   $ref: '#/components/schemas/FaucetAmount'
+ *                 used:
+ *                   $ref: '#/components/schemas/FaucetAmount'
+ *                 remaining:
+ *                   $ref: '#/components/schemas/FaucetAmount'
+ *                 resetsAt:
+ *                   type: string
+ *                   format: date-time
  *         rate:
  *           type: object
  *           nullable: true
