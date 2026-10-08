@@ -563,15 +563,20 @@ export class AccountController {
 					// Handle case where firstName or lastName is not set
 					const faucetFirstName = logToFirstName || customerEntity.name;
 					const faucetLastName = logToLastName || 'n/a';
-					const resp = await FaucetHelper.delegateTokens(
+					const resp = await delegateWithinQuota(
+						customerEntity,
 						testnetAccount.address,
 						faucetFirstName,
 						faucetLastName,
-						customerEntity.email,
-						toSafeFaucetAmount(topupAmountNcheq)
+						topupAmountNcheq
 					);
 
-					if (resp.status !== StatusCodes.OK) {
+					if (resp.quotaExceeded) {
+						// Account creation must not fail because the monthly faucet quota is used up
+						console.warn(
+							`Initial testnet top-up skipped, monthly faucet quota exceeded: ${customerEntity.customerId}`
+						);
+					} else if (resp.status !== StatusCodes.OK) {
 						return response.status(StatusCodes.BAD_GATEWAY).json({
 							error: resp.error,
 						});
@@ -1151,6 +1156,49 @@ async function updateCustomData(
 	}
 }
 
+/**
+ * Credits an address from the faucet and debits the amount from the customer's monthly faucet quota.
+ * The quota is released again if the faucet does not credit the account.
+ */
+async function delegateWithinQuota(
+	customer: CustomerEntity,
+	address: string,
+	firstName: string,
+	lastName: string,
+	amountNcheq: bigint
+): Promise<{ status: number; error: string; quotaExceeded?: boolean }> {
+	const reservation = await FaucetRequestService.instance.reserve(
+		customer,
+		address,
+		amountNcheq,
+		cheqToNcheq(FAUCET_MONTHLY_LIMIT_CHEQ)
+	);
+	if (!reservation.reserved) {
+		return {
+			status: StatusCodes.TOO_MANY_REQUESTS,
+			error: 'Monthly testnet faucet quota exceeded for this account.',
+			quotaExceeded: true,
+		};
+	}
+
+	try {
+		const faucet = await FaucetHelper.delegateTokens(
+			address,
+			firstName,
+			lastName,
+			customer.email,
+			toSafeFaucetAmount(amountNcheq)
+		);
+		if (faucet.status !== StatusCodes.OK) {
+			await FaucetRequestService.instance.release(reservation.faucetRequestId);
+		}
+		return { status: faucet.status, error: faucet.error };
+	} catch (error) {
+		await FaucetRequestService.instance.release(reservation.faucetRequestId);
+		throw error;
+	}
+}
+
 async function topupTestnet(
 	customer: CustomerEntity,
 	testnetResp: any,
@@ -1168,12 +1216,12 @@ async function topupTestnet(
 			// Handle case where firstName or lastName is not set
 			const faucetFirstName = firstName || customer.name;
 			const faucetLastName = lastName || 'n/a';
-			const faucet = await FaucetHelper.delegateTokens(
+			const faucet = await delegateWithinQuota(
+				customer,
 				testnetResp.data.address,
 				faucetFirstName,
 				faucetLastName,
-				customer.email,
-				toSafeFaucetAmount(topupAmountNcheq)
+				topupAmountNcheq
 			);
 			if (faucet.status === StatusCodes.OK) {
 				status.testnetMinimumBalance = true;
