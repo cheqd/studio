@@ -24,7 +24,7 @@ import {
 } from '../../types/constants.js';
 import { CustomerService } from '../../services/api/customer.js';
 import { LogToHelper } from '../../middleware/auth/logto-helper.js';
-import { FaucetHelper } from '../../helpers/faucet.js';
+import { FaucetHelper, isFaucetTimeout } from '../../helpers/faucet.js';
 import { PriceHelper } from '../../helpers/price.js';
 import { cheqToNcheq, ncheqToCheq, toSafeFaucetAmount } from '../../helpers/denom.js';
 import { StatusCodes } from 'http-status-codes';
@@ -651,6 +651,8 @@ export class AccountController {
 	 *         description: Too many requests. Either the customer's monthly faucet quota is exhausted (the body includes the quota details), or a request was made too soon after the previous one (FAUCET_MIN_INTERVAL_SECONDS). The Retry-After header gives the seconds to wait.
 	 *       502:
 	 *         description: Upstream faucet request failed.
+	 *       504:
+	 *         description: The faucet did not respond within FAUCET_REQUEST_TIMEOUT_SECONDS. The request may or may not have been processed.
 	 *       503:
 	 *         description: Stripe subscription checks are disabled.
 	 *       500:
@@ -825,6 +827,12 @@ export class AccountController {
 				quota: buildFaucetQuotaSummary(credit.usedNcheq, quotaLimitNcheq, credit.window),
 			});
 		} catch (error) {
+			if (isFaucetTimeout(error)) {
+				// The faucet may still have credited the account, so say so rather than suggesting a plain failure
+				return response.status(StatusCodes.GATEWAY_TIMEOUT).json({
+					error: 'The testnet faucet did not respond in time. The request may or may not have been processed, so check the address balance before trying again.',
+				} satisfies UnsuccessfulResponseBody);
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulResponseBody);

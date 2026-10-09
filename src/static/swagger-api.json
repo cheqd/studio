@@ -3536,6 +3536,9 @@
           },
           "503": {
             "description": "Stripe subscription checks are disabled."
+          },
+          "504": {
+            "description": "The faucet did not respond within FAUCET_REQUEST_TIMEOUT_SECONDS. The request may or may not have been processed."
           }
         }
       }

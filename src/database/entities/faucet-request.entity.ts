@@ -1,4 +1,4 @@
-import { BeforeInsert, Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { BeforeInsert, Check, Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import * as dotenv from 'dotenv';
 import { CustomerEntity } from './customer.entity.js';
@@ -10,13 +10,15 @@ dotenv.config();
  * - unknown: the faucet call threw (e.g. a timeout), so tokens may have been sent. Always counts.
  * - abandoned: stayed pending past the timeout (e.g. the process died). No longer counts.
  */
-export type FaucetRequestStatus = 'pending' | 'completed' | 'unknown' | 'abandoned';
+export const FAUCET_REQUEST_STATUSES = ['pending', 'completed', 'unknown', 'abandoned'] as const;
+export type FaucetRequestStatus = (typeof FAUCET_REQUEST_STATUSES)[number];
 
 /**
  * One row per testnet faucet request made through `POST /account/faucet` or the account bootstrap top-up.
  * Summed per customer to enforce the monthly faucet quota.
  */
 @Entity('faucetRequest')
+@Check('CHK_faucetRequest_status', `"status" IN (${FAUCET_REQUEST_STATUSES.map((status) => `'${status}'`).join(', ')})`)
 @Index(['customer', 'createdAt'])
 export class FaucetRequestEntity {
 	@PrimaryGeneratedColumn('uuid')
