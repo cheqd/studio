@@ -59,9 +59,28 @@ export function buildFaucetQuotaSummary(
 	};
 }
 
+/** Seconds the customer still has to wait before their next faucet request; 0 if one is allowed now. */
+export function secondsUntilNextRequest(
+	lastRequestAt: Date | null,
+	minIntervalSeconds: number,
+	now: Date = new Date()
+): number {
+	if (!lastRequestAt || minIntervalSeconds <= 0) return 0;
+	const remainingMs = minIntervalSeconds * 1000 - (now.getTime() - lastRequestAt.getTime());
+	return remainingMs > 0 ? Math.ceil(remainingMs / 1000) : 0;
+}
+
+export interface FaucetReserveOptions {
+	// Most the customer can request per quota window
+	limitNcheq: bigint;
+	// Minimum gap between two requests from the customer; 0 or undefined disables the check
+	minIntervalSeconds?: number;
+}
+
 export type FaucetReservation =
 	| { reserved: true; faucetRequestId: string; usedNcheq: bigint; window: FaucetQuotaWindow }
-	| { reserved: false; usedNcheq: bigint; window: FaucetQuotaWindow };
+	| { reserved: false; reason: 'quota_exceeded'; usedNcheq: bigint; window: FaucetQuotaWindow }
+	| { reserved: false; reason: 'too_frequent'; retryAfterSeconds: number; window: FaucetQuotaWindow };
 
 /** Storage for quota reservations; implemented by `FaucetRequestService` and faked in tests. */
 export interface FaucetQuotaLedger {
@@ -69,13 +88,14 @@ export interface FaucetQuotaLedger {
 		customer: CustomerEntity,
 		address: string,
 		amountNcheq: bigint,
-		limitNcheq: bigint
+		options: FaucetReserveOptions
 	): Promise<FaucetReservation>;
 	release(faucetRequestId: string): Promise<void>;
 }
 
 export type FaucetCreditResult =
 	| { outcome: 'quota_exceeded'; usedNcheq: bigint; window: FaucetQuotaWindow }
+	| { outcome: 'too_frequent'; retryAfterSeconds: number; window: FaucetQuotaWindow }
 	// `usedNcheq` already includes the amount just credited.
 	| { outcome: 'credited'; usedNcheq: bigint; window: FaucetQuotaWindow }
 	| { outcome: 'faucet_failed'; status: number; error: string };
@@ -90,11 +110,22 @@ export type FaucetCreditResult =
 export async function creditWithinQuota(
 	ledger: FaucetQuotaLedger,
 	delegate: () => Promise<{ status: number; error: string }>,
-	params: { customer: CustomerEntity; address: string; amountNcheq: bigint; limitNcheq: bigint }
+	params: {
+		customer: CustomerEntity;
+		address: string;
+		amountNcheq: bigint;
+		limitNcheq: bigint;
+		minIntervalSeconds?: number;
+	}
 ): Promise<FaucetCreditResult> {
-	const reservation = await ledger.reserve(params.customer, params.address, params.amountNcheq, params.limitNcheq);
+	const reservation = await ledger.reserve(params.customer, params.address, params.amountNcheq, {
+		limitNcheq: params.limitNcheq,
+		minIntervalSeconds: params.minIntervalSeconds,
+	});
 	if (!reservation.reserved) {
-		return { outcome: 'quota_exceeded', usedNcheq: reservation.usedNcheq, window: reservation.window };
+		return reservation.reason === 'too_frequent'
+			? { outcome: 'too_frequent', retryAfterSeconds: reservation.retryAfterSeconds, window: reservation.window }
+			: { outcome: 'quota_exceeded', usedNcheq: reservation.usedNcheq, window: reservation.window };
 	}
 
 	const faucet = await delegate();

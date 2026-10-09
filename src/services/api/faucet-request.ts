@@ -5,8 +5,10 @@ import { Connection } from '../../database/connection/connection.js';
 import {
 	fitsInQuota,
 	getFaucetQuotaWindow,
+	secondsUntilNextRequest,
 	type FaucetQuotaLedger,
 	type FaucetReservation,
+	type FaucetReserveOptions,
 } from '../../helpers/faucet-quota.js';
 
 export class FaucetRequestService implements FaucetQuotaLedger {
@@ -30,6 +32,33 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 		return BigInt(row?.total ?? '0');
 	}
 
+	/** When the customer last made a faucet request, or null if never. */
+	private static async lastRequestAt(manager: EntityManager, customerId: string): Promise<Date | null> {
+		const row = await manager
+			.createQueryBuilder(FaucetRequestEntity, 'request')
+			.select('MAX(request.createdAt)', 'last')
+			.where('request.customerId = :customerId', { customerId })
+			.getRawOne<{ last: Date | string | null }>();
+		return row?.last ? new Date(row.last) : null;
+	}
+
+	/**
+	 * Seconds the customer must still wait before their next request (0 if allowed). This is a cheap read taken
+	 * before any expensive work; `reserve` repeats the check under the lock so concurrent requests cannot slip through.
+	 */
+	public async getSecondsUntilNextAllowed(
+		customer: CustomerEntity,
+		minIntervalSeconds: number,
+		now: Date = new Date()
+	): Promise<number> {
+		if (minIntervalSeconds <= 0) return 0;
+		const last = await FaucetRequestService.lastRequestAt(
+			this.faucetRequestRepository.manager,
+			customer.customerId
+		);
+		return secondsUntilNextRequest(last, minIntervalSeconds, now);
+	}
+
 	/** Total ncheq requested by the customer in the current quota window. */
 	public async getUsedNcheq(customer: CustomerEntity, now: Date = new Date()): Promise<bigint> {
 		const { start } = getFaucetQuotaWindow(now);
@@ -45,7 +74,7 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 		customer: CustomerEntity,
 		address: string,
 		amountNcheq: bigint,
-		limitNcheq: bigint,
+		{ limitNcheq, minIntervalSeconds = 0 }: FaucetReserveOptions,
 		now: Date = new Date()
 	): Promise<FaucetReservation> {
 		const window = getFaucetQuotaWindow(now);
@@ -56,9 +85,20 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 				]);
 			}
 
+			if (minIntervalSeconds > 0) {
+				const retryAfterSeconds = secondsUntilNextRequest(
+					await FaucetRequestService.lastRequestAt(manager, customer.customerId),
+					minIntervalSeconds,
+					now
+				);
+				if (retryAfterSeconds > 0) {
+					return { reserved: false, reason: 'too_frequent', retryAfterSeconds, window } as const;
+				}
+			}
+
 			const usedNcheq = await FaucetRequestService.sumRequestedNcheq(manager, customer.customerId, window.start);
 			if (!fitsInQuota(usedNcheq, amountNcheq, limitNcheq)) {
-				return { reserved: false, usedNcheq, window } as const;
+				return { reserved: false, reason: 'quota_exceeded', usedNcheq, window } as const;
 			}
 
 			const entity = await manager.save(new FaucetRequestEntity(customer, address, amountNcheq));

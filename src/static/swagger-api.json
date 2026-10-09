@@ -3526,7 +3526,7 @@
             "description": "No Studio testnet payment account was found for this customer."
           },
           "429": {
-            "description": "The customer's monthly faucet quota is exhausted. The Retry-After header gives the seconds until it resets, and the body includes the quota details."
+            "description": "Too many requests. Either the customer's monthly faucet quota is exhausted (the body includes the quota details), or a request was made too soon after the previous one (FAUCET_MIN_INTERVAL_SECONDS). The Retry-After header gives the seconds to wait."
           },
           "500": {
             "$ref": "#/components/schemas/InternalError"

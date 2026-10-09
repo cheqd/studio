@@ -6,6 +6,7 @@ import {
 	getFaucetQuotaWindow,
 	maxRequestableNcheq,
 	remainingQuota,
+	secondsUntilNextRequest,
 	secondsUntilReset,
 	type FaucetQuotaLedger,
 	type FaucetReservation,
@@ -69,6 +70,25 @@ describe('quota arithmetic', () => {
 	});
 });
 
+describe('secondsUntilNextRequest', () => {
+	const last = new Date('2026-10-08T12:00:00Z');
+
+	it('is 0 when there was no previous request or the interval is disabled', () => {
+		expect(secondsUntilNextRequest(null, 10, last)).toBe(0);
+		expect(secondsUntilNextRequest(last, 0, last)).toBe(0);
+	});
+
+	it('counts the seconds left, rounded up', () => {
+		expect(secondsUntilNextRequest(last, 10, new Date('2026-10-08T12:00:04Z'))).toBe(6);
+		expect(secondsUntilNextRequest(last, 10, new Date('2026-10-08T12:00:09.200Z'))).toBe(1);
+	});
+
+	it('is 0 once the interval has passed', () => {
+		expect(secondsUntilNextRequest(last, 10, new Date('2026-10-08T12:00:10Z'))).toBe(0);
+		expect(secondsUntilNextRequest(last, 10, new Date('2026-10-08T12:05:00Z'))).toBe(0);
+	});
+});
+
 describe('maxRequestableNcheq', () => {
 	it('is limited by the room under the address cap when that is lower', () => {
 		expect(maxRequestableNcheq(10n, 50n)).toBe(10n);
@@ -121,10 +141,24 @@ describe('creditWithinQuota', () => {
 	const reserved: FaucetReservation = { reserved: true, faucetRequestId: 'r1', usedNcheq: 40n, window };
 
 	it('does not call the faucet when the quota does not fit', async () => {
-		const { ledger, released } = makeLedger({ reserved: false, usedNcheq: 95n, window });
+		const { ledger, released } = makeLedger({ reserved: false, reason: 'quota_exceeded', usedNcheq: 95n, window });
 		let calls = 0;
 		const result = await creditWithinQuota(ledger, async () => (calls++, { status: 200, error: '' }), params);
 		expect(result).toEqual({ outcome: 'quota_exceeded', usedNcheq: 95n, window });
+		expect(calls).toBe(0);
+		expect(released).toEqual([]);
+	});
+
+	it('does not call the faucet and reports the wait when requests are too frequent', async () => {
+		const { ledger, released } = makeLedger({
+			reserved: false,
+			reason: 'too_frequent',
+			retryAfterSeconds: 7,
+			window,
+		});
+		let calls = 0;
+		const result = await creditWithinQuota(ledger, async () => (calls++, { status: 200, error: '' }), params);
+		expect(result).toEqual({ outcome: 'too_frequent', retryAfterSeconds: 7, window });
 		expect(calls).toBe(0);
 		expect(released).toEqual([]);
 	});

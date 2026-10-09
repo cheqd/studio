@@ -85,6 +85,9 @@ export const FAUCET_SUBSCRIPTION_CACHE_SECONDS = parseNonNegativeIntEnv(
 	process.env.FAUCET_SUBSCRIPTION_CACHE_SECONDS,
 	60
 );
+// Minimum gap, in seconds, between two faucet requests from the same customer (0 disables), so a script using an
+// API key cannot hammer the endpoint (and Stripe, the RPC node and the faucet behind it) in a tight loop.
+export const FAUCET_MIN_INTERVAL_SECONDS = parseNonNegativeIntEnv(process.env.FAUCET_MIN_INTERVAL_SECONDS, 10);
 export const FAUCET_AMOUNT = parseNumberEnv(process.env.FAUCET_AMOUNT, 100000000000000);
 export const FAUCET_ACCESS_CLIENT_ID = process.env.FAUCET_ACCESS_CLIENT_ID || '';
 export const FAUCET_ACCESS_CLIENT_SECRET = process.env.FAUCET_ACCESS_CLIENT_SECRET || '';

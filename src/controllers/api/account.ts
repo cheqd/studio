@@ -15,6 +15,7 @@ import type { SafeAPIResponse } from '../../types/common.js';
 import { CheqdNetwork, checkBalance } from '@cheqd/sdk';
 import {
 	FAUCET_ADDRESS_CAP_CHEQ,
+	FAUCET_MIN_INTERVAL_SECONDS,
 	FAUCET_MONTHLY_LIMIT_CHEQ,
 	FAUCET_SUBSCRIPTION_CACHE_SECONDS,
 	MINIMAL_DENOM,
@@ -647,7 +648,7 @@ export class AccountController {
 	 *       404:
 	 *         description: No Studio testnet payment account was found for this customer.
 	 *       429:
-	 *         description: The customer's monthly faucet quota is exhausted. The Retry-After header gives the seconds until it resets, and the body includes the quota details.
+	 *         description: Too many requests. Either the customer's monthly faucet quota is exhausted (the body includes the quota details), or a request was made too soon after the previous one (FAUCET_MIN_INTERVAL_SECONDS). The Retry-After header gives the seconds to wait.
 	 *       502:
 	 *         description: Upstream faucet request failed.
 	 *       503:
@@ -675,6 +676,15 @@ export class AccountController {
 		const requestedAmountCheq = request.body.amount !== undefined ? Number(request.body.amount) : undefined;
 
 		try {
+			// Cheap check first, so a tight loop of requests does not reach Stripe, the RPC node or the faucet
+			const waitSeconds = await FaucetRequestService.instance.getSecondsUntilNextAllowed(
+				customer,
+				FAUCET_MIN_INTERVAL_SECONDS
+			);
+			if (waitSeconds > 0) {
+				return tooManyFaucetRequests(response, waitSeconds);
+			}
+
 			const subscription = await SubscriptionService.instance.findCurrent(customer);
 			if (!subscription) {
 				return response.status(StatusCodes.FORBIDDEN).json({
@@ -777,8 +787,12 @@ export class AccountController {
 					address: testnetAccount.address,
 					amountNcheq: amountToRequestNcheq,
 					limitNcheq: quotaLimitNcheq,
+					minIntervalSeconds: FAUCET_MIN_INTERVAL_SECONDS,
 				}
 			);
+			if (credit.outcome === 'too_frequent') {
+				return tooManyFaucetRequests(response, credit.retryAfterSeconds);
+			}
 			if (credit.outcome === 'quota_exceeded') {
 				return response
 					.status(StatusCodes.TOO_MANY_REQUESTS)
@@ -1184,6 +1198,15 @@ async function updateCustomData(
 	}
 }
 
+function tooManyFaucetRequests(response: Response, retryAfterSeconds: number) {
+	return response
+		.status(StatusCodes.TOO_MANY_REQUESTS)
+		.set('Retry-After', String(retryAfterSeconds))
+		.json({
+			error: `Too many faucet requests. Please wait ${retryAfterSeconds} seconds before trying again.`,
+		} satisfies UnsuccessfulResponseBody);
+}
+
 /**
  * Status and plan of a Stripe subscription, cached briefly so repeated (e.g. API-key) faucet requests do not
  * call Stripe every time. Only active/trialing results are cached, and the stored subscription status is still
@@ -1231,6 +1254,9 @@ async function delegateWithinQuota(
 				error: 'Monthly testnet faucet quota exceeded for this account.',
 				quotaExceeded: true,
 			};
+		case 'too_frequent':
+			// not requested here: the bootstrap top-up does not apply a minimum interval
+			return { status: StatusCodes.TOO_MANY_REQUESTS, error: 'Too many faucet requests.' };
 		case 'faucet_failed':
 			return { status: credit.status, error: credit.error };
 	}

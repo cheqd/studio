@@ -74,8 +74,8 @@ describeWithDatabase('FaucetRequestService (Postgres)', () => {
 		const customer = await newCustomer();
 		expect(await service.getUsedNcheq(customer)).toBe(0n);
 
-		const first = await service.reserve(customer, 'cheqd1a', cheq(10_000), LIMIT);
-		const second = await service.reserve(customer, 'cheqd1a', cheq(5_000), LIMIT);
+		const first = await service.reserve(customer, 'cheqd1a', cheq(10_000), { limitNcheq: LIMIT });
+		const second = await service.reserve(customer, 'cheqd1a', cheq(5_000), { limitNcheq: LIMIT });
 
 		expect(first).toMatchObject({ reserved: true, usedNcheq: 0n });
 		expect(second).toMatchObject({ reserved: true, usedNcheq: cheq(10_000) });
@@ -84,9 +84,9 @@ describeWithDatabase('FaucetRequestService (Postgres)', () => {
 
 	it('rejects a reservation that would exceed the limit and leaves usage unchanged', async () => {
 		const customer = await newCustomer();
-		await service.reserve(customer, 'cheqd1a', cheq(95_000), LIMIT);
+		await service.reserve(customer, 'cheqd1a', cheq(95_000), { limitNcheq: LIMIT });
 
-		const result = await service.reserve(customer, 'cheqd1a', cheq(5_001), LIMIT);
+		const result = await service.reserve(customer, 'cheqd1a', cheq(5_001), { limitNcheq: LIMIT });
 
 		expect(result).toMatchObject({ reserved: false, usedNcheq: cheq(95_000) });
 		expect(await service.getUsedNcheq(customer)).toBe(cheq(95_000));
@@ -94,33 +94,43 @@ describeWithDatabase('FaucetRequestService (Postgres)', () => {
 
 	it('accepts a reservation that exactly reaches the limit', async () => {
 		const customer = await newCustomer();
-		await service.reserve(customer, 'cheqd1a', cheq(95_000), LIMIT);
-		expect(await service.reserve(customer, 'cheqd1a', cheq(5_000), LIMIT)).toMatchObject({ reserved: true });
+		await service.reserve(customer, 'cheqd1a', cheq(95_000), { limitNcheq: LIMIT });
+		expect(await service.reserve(customer, 'cheqd1a', cheq(5_000), { limitNcheq: LIMIT })).toMatchObject({
+			reserved: true,
+		});
 	});
 
 	it('gives quota back when a reservation is released', async () => {
 		const customer = await newCustomer();
-		const reservation = await service.reserve(customer, 'cheqd1a', cheq(60_000), LIMIT);
+		const reservation = await service.reserve(customer, 'cheqd1a', cheq(60_000), { limitNcheq: LIMIT });
 		if (!reservation.reserved) throw new Error('expected a reservation');
 
 		await service.release(reservation.faucetRequestId);
 
 		expect(await service.getUsedNcheq(customer)).toBe(0n);
-		expect(await service.reserve(customer, 'cheqd1a', cheq(100_000), LIMIT)).toMatchObject({ reserved: true });
+		expect(await service.reserve(customer, 'cheqd1a', cheq(100_000), { limitNcheq: LIMIT })).toMatchObject({
+			reserved: true,
+		});
 	});
 
 	it('keeps customers independent', async () => {
 		const a = await newCustomer();
 		const b = await newCustomer();
-		await service.reserve(a, 'cheqd1a', cheq(100_000), LIMIT);
+		await service.reserve(a, 'cheqd1a', cheq(100_000), { limitNcheq: LIMIT });
 
 		expect(await service.getUsedNcheq(b)).toBe(0n);
-		expect(await service.reserve(b, 'cheqd1b', cheq(1), LIMIT)).toMatchObject({ reserved: true });
+		expect(await service.reserve(b, 'cheqd1b', cheq(1), { limitNcheq: LIMIT })).toMatchObject({ reserved: true });
 	});
 
 	it('only counts requests made in the current calendar month (UTC)', async () => {
 		const customer = await newCustomer();
-		const old = await service.reserve(customer, 'cheqd1a', cheq(90_000), LIMIT, new Date('2026-09-15T12:00:00Z'));
+		const old = await service.reserve(
+			customer,
+			'cheqd1a',
+			cheq(90_000),
+			{ limitNcheq: LIMIT },
+			new Date('2026-09-15T12:00:00Z')
+		);
 		if (!old.reserved) throw new Error('expected a reservation');
 		// Back-date the row, as the entity sets createdAt itself on insert
 		await dataSource.query(`UPDATE "faucetRequest" SET "createdAt" = $1 WHERE "faucetRequestId" = $2`, [
@@ -130,16 +140,49 @@ describeWithDatabase('FaucetRequestService (Postgres)', () => {
 
 		const now = new Date('2026-10-08T12:00:00Z');
 		expect(await service.getUsedNcheq(customer, now)).toBe(0n);
-		expect(await service.reserve(customer, 'cheqd1a', cheq(100_000), LIMIT, now)).toMatchObject({
+		expect(await service.reserve(customer, 'cheqd1a', cheq(100_000), { limitNcheq: LIMIT }, now)).toMatchObject({
 			reserved: true,
 		});
+	});
+
+	it('rejects a request made too soon after the previous one, and allows it afterwards', async () => {
+		const customer = await newCustomer();
+		const options = { limitNcheq: LIMIT, minIntervalSeconds: 60 };
+		expect(await service.getSecondsUntilNextAllowed(customer, 60)).toBe(0);
+		await service.reserve(customer, 'cheqd1a', cheq(1), options);
+
+		const wait = await service.getSecondsUntilNextAllowed(customer, 60);
+		expect(wait).toBeGreaterThan(0);
+		expect(wait).toBeLessThanOrEqual(60);
+		expect(await service.reserve(customer, 'cheqd1a', cheq(1), options)).toMatchObject({
+			reserved: false,
+			reason: 'too_frequent',
+		});
+		expect(await service.getUsedNcheq(customer)).toBe(cheq(1));
+
+		// once the interval has passed (as seen from a later clock) the next request is allowed
+		const later = new Date(Date.now() + 61_000);
+		expect(await service.getSecondsUntilNextAllowed(customer, 60, later)).toBe(0);
+		expect(await service.reserve(customer, 'cheqd1a', cheq(1), options, later)).toMatchObject({ reserved: true });
+	});
+
+	it('lets only one of several simultaneous requests through when an interval is set', async () => {
+		const customer = await newCustomer();
+		const options = { limitNcheq: LIMIT, minIntervalSeconds: 60 };
+
+		const results = await Promise.all(
+			Array.from({ length: 5 }, () => service.reserve(customer, 'cheqd1a', cheq(1), options))
+		);
+
+		expect(results.filter((r) => r.reserved)).toHaveLength(1);
+		expect(results.filter((r) => !r.reserved && r.reason === 'too_frequent')).toHaveLength(4);
 	});
 
 	it('never lets concurrent reservations exceed the limit', async () => {
 		const customer = await newCustomer();
 
 		const results = await Promise.all(
-			Array.from({ length: 20 }, () => service.reserve(customer, 'cheqd1a', cheq(10_000), LIMIT))
+			Array.from({ length: 20 }, () => service.reserve(customer, 'cheqd1a', cheq(10_000), { limitNcheq: LIMIT }))
 		);
 
 		expect(results.filter((r) => r.reserved)).toHaveLength(10);
