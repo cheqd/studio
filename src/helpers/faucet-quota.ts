@@ -59,9 +59,30 @@ export function buildFaucetQuotaSummary(
 	};
 }
 
+/** Seconds the customer still has to wait before their next faucet request; 0 if one is allowed now. */
+export function secondsUntilNextRequest(
+	lastRequestAt: Date | null,
+	minIntervalSeconds: number,
+	now: Date = new Date()
+): number {
+	if (!lastRequestAt || minIntervalSeconds <= 0) return 0;
+	const remainingMs = minIntervalSeconds * 1000 - (now.getTime() - lastRequestAt.getTime());
+	return remainingMs > 0 ? Math.ceil(remainingMs / 1000) : 0;
+}
+
+export interface FaucetReserveOptions {
+	// Most the customer can request per quota window
+	limitNcheq: bigint;
+	// How long an unconfirmed reservation keeps counting before it is treated as abandoned
+	pendingTimeoutSeconds?: number;
+	// Minimum gap between two requests from the customer; 0 or undefined disables the check
+	minIntervalSeconds?: number;
+}
+
 export type FaucetReservation =
 	| { reserved: true; faucetRequestId: string; usedNcheq: bigint; window: FaucetQuotaWindow }
-	| { reserved: false; usedNcheq: bigint; window: FaucetQuotaWindow };
+	| { reserved: false; reason: 'quota_exceeded'; usedNcheq: bigint; window: FaucetQuotaWindow }
+	| { reserved: false; reason: 'too_frequent'; retryAfterSeconds: number; window: FaucetQuotaWindow };
 
 /** Storage for quota reservations; implemented by `FaucetRequestService` and faked in tests. */
 export interface FaucetQuotaLedger {
@@ -69,13 +90,26 @@ export interface FaucetQuotaLedger {
 		customer: CustomerEntity,
 		address: string,
 		amountNcheq: bigint,
-		limitNcheq: bigint
+		options: FaucetReserveOptions
 	): Promise<FaucetReservation>;
 	release(faucetRequestId: string): Promise<void>;
+	/** The faucet confirmed the credit. */
+	complete(faucetRequestId: string): Promise<void>;
+	/** The faucet call threw, so tokens may have been sent: keep counting this reservation permanently. */
+	markUnknown(faucetRequestId: string): Promise<void>;
+}
+
+async function markUnknownBestEffort(ledger: FaucetQuotaLedger, faucetRequestId: string): Promise<void> {
+	try {
+		await ledger.markUnknown(faucetRequestId);
+	} catch (error) {
+		console.error(`Failed to mark faucet request ${faucetRequestId} as unknown:`, error);
+	}
 }
 
 export type FaucetCreditResult =
 	| { outcome: 'quota_exceeded'; usedNcheq: bigint; window: FaucetQuotaWindow }
+	| { outcome: 'too_frequent'; retryAfterSeconds: number; window: FaucetQuotaWindow }
 	// `usedNcheq` already includes the amount just credited.
 	| { outcome: 'credited'; usedNcheq: bigint; window: FaucetQuotaWindow }
 	| { outcome: 'faucet_failed'; status: number; error: string };
@@ -85,22 +119,48 @@ export type FaucetCreditResult =
  * - Quota does not fit: the faucet is not called.
  * - Faucet answers with an error status: it definitely did not credit the account, so the quota is released.
  * - Faucet call throws (e.g. a timeout): the outcome is unknown and tokens may have been sent, so the
- *   reservation is kept (over-counting is safer than refunding quota for tokens that were credited).
+ *   reservation is marked unknown and keeps counting for good (over-counting is safer than refunding quota
+ *   for tokens that were credited).
+ * - Faucet confirms: the reservation is marked completed.
  */
 export async function creditWithinQuota(
 	ledger: FaucetQuotaLedger,
 	delegate: () => Promise<{ status: number; error: string }>,
-	params: { customer: CustomerEntity; address: string; amountNcheq: bigint; limitNcheq: bigint }
+	params: {
+		customer: CustomerEntity;
+		address: string;
+		amountNcheq: bigint;
+		limitNcheq: bigint;
+		minIntervalSeconds?: number;
+	}
 ): Promise<FaucetCreditResult> {
-	const reservation = await ledger.reserve(params.customer, params.address, params.amountNcheq, params.limitNcheq);
+	const reservation = await ledger.reserve(params.customer, params.address, params.amountNcheq, {
+		limitNcheq: params.limitNcheq,
+		minIntervalSeconds: params.minIntervalSeconds,
+	});
 	if (!reservation.reserved) {
-		return { outcome: 'quota_exceeded', usedNcheq: reservation.usedNcheq, window: reservation.window };
+		return reservation.reason === 'too_frequent'
+			? { outcome: 'too_frequent', retryAfterSeconds: reservation.retryAfterSeconds, window: reservation.window }
+			: { outcome: 'quota_exceeded', usedNcheq: reservation.usedNcheq, window: reservation.window };
 	}
 
-	const faucet = await delegate();
+	let faucet: { status: number; error: string };
+	try {
+		faucet = await delegate();
+	} catch (error) {
+		await markUnknownBestEffort(ledger, reservation.faucetRequestId);
+		throw error;
+	}
 	if (faucet.status !== 200) {
 		await ledger.release(reservation.faucetRequestId);
 		return { outcome: 'faucet_failed', status: faucet.status, error: faucet.error };
+	}
+	try {
+		await ledger.complete(reservation.faucetRequestId);
+	} catch (error) {
+		// The tokens were sent, so do not fail the request. The reservation stays pending and keeps counting
+		// until it times out.
+		console.error(`Failed to mark faucet request ${reservation.faucetRequestId} as completed:`, error);
 	}
 	return {
 		outcome: 'credited',

@@ -63,6 +63,21 @@ export const parseNumberEnv = (value: string | undefined, fallback: number, name
 	return fallback;
 };
 
+/** Like `parseNumberEnv`, but for whole numbers where 0 is meaningful (usually "disabled"). */
+export const parseNonNegativeIntEnv = (
+	value: string | undefined,
+	fallback: number,
+	name = 'environment variable'
+): number => {
+	if (!value?.trim()) return fallback;
+	const parsed = Number(value);
+	if (Number.isInteger(parsed) && parsed >= 0) return parsed;
+	console.warn(
+		`Ignoring invalid ${name}="${value}": expected a whole number, 0 or more. Using the default, ${fallback}.`
+	);
+	return fallback;
+};
+
 export const MINIMAL_DENOM = 'ncheq';
 export const FAUCET_URI = process.env.FAUCET_URI || 'https://faucet-api.cheqd.network/credit';
 export const FAUCET_API_KEY = process.env.FAUCET_API_KEY || 'default-api-key';
@@ -91,6 +106,28 @@ export const FAUCET_ADDRESS_CAP_CHEQ = parseNumberEnv(
 	process.env.FAUCET_ADDRESS_CAP_CHEQ,
 	FAUCET_MONTHLY_LIMIT_CHEQ,
 	'FAUCET_ADDRESS_CAP_CHEQ'
+);
+// How long, in seconds, the faucet endpoint caches a customer's Stripe subscription status and plan, so API-key
+// use does not call Stripe on every request. 0 disables the cache.
+export const FAUCET_SUBSCRIPTION_CACHE_SECONDS = parseNonNegativeIntEnv(
+	process.env.FAUCET_SUBSCRIPTION_CACHE_SECONDS,
+	60,
+	'FAUCET_SUBSCRIPTION_CACHE_SECONDS'
+);
+// Minimum gap, in seconds, between two faucet requests from the same customer (0 disables), so a script using an
+// API key cannot hammer the endpoint (and Stripe, the RPC node and the faucet behind it) in a tight loop.
+export const FAUCET_MIN_INTERVAL_SECONDS = parseNonNegativeIntEnv(
+	process.env.FAUCET_MIN_INTERVAL_SECONDS,
+	10,
+	'FAUCET_MIN_INTERVAL_SECONDS'
+);
+// How long, in seconds, a faucet quota reservation that has not been confirmed keeps counting towards the quota
+// before it is treated as abandoned (e.g. the process died before calling the faucet). Must be longer than the
+// longest time a faucet call can take. Reservations whose faucet call threw (outcome unknown) always keep counting.
+export const FAUCET_PENDING_TIMEOUT_SECONDS = parseNonNegativeIntEnv(
+	process.env.FAUCET_PENDING_TIMEOUT_SECONDS,
+	600,
+	'FAUCET_PENDING_TIMEOUT_SECONDS'
 );
 // How long, in seconds, to wait for the faucet service to answer before giving up. Without a limit a hung faucet
 // holds the caller (and a quota reservation) for as long as Node's own default, several minutes.

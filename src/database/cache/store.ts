@@ -5,6 +5,12 @@ import { PaymentAccountEntity } from '../entities/payment.account.entity.js';
 
 dotenv.config();
 
+/** The parts of a Stripe subscription that the faucet endpoint needs, as last read from Stripe. */
+export interface SubscriptionPlanSnapshot {
+	status: string;
+	productId: string;
+}
+
 let { LOCAL_STORE_TTL = 600 } = process.env;
 
 export class LocalStore {
@@ -22,5 +28,13 @@ export class LocalStore {
 
 	getCustomerAccounts(key: string) {
 		return this.cache.get(key) as PaymentAccountEntity[] | undefined;
+	}
+
+	setSubscriptionPlan(subscriptionId: string, plan: SubscriptionPlanSnapshot, ttlSeconds: number) {
+		this.cache.set(`subscription-plan:${subscriptionId}`, plan, ttlSeconds);
+	}
+
+	getSubscriptionPlan(subscriptionId: string) {
+		return this.cache.get(`subscription-plan:${subscriptionId}`) as SubscriptionPlanSnapshot | undefined;
 	}
 }
