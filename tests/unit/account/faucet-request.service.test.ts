@@ -93,6 +93,18 @@ describeWithDatabase('FaucetRequestService (Postgres)', () => {
 		expect(Number(drift)).toBeLessThan(5);
 	});
 
+	it('refuses a status the code does not know about', async () => {
+		const customer = await newCustomer();
+		const reservation = await service.reserve(customer, 'cheqd1a', cheq(1), { limitNcheq: LIMIT });
+		if (!reservation.reserved) throw new Error('expected a reservation');
+
+		await expect(
+			dataSource.query(`UPDATE "faucetRequest" SET status = 'refunded' WHERE "faucetRequestId" = $1`, [
+				reservation.faucetRequestId,
+			])
+		).rejects.toMatchObject({ code: '23514' }); // check_violation
+	});
+
 	it('starts at zero and counts what has been reserved', async () => {
 		const customer = await newCustomer();
 		expect(await service.getUsedNcheq(customer)).toBe(0n);

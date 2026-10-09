@@ -51,55 +51,107 @@ export const configLogToExpress = {
 };
 
 // Faucet constants
-const parseNumberEnv = (value: string | undefined, fallback: number): number => {
+/**
+ * Reads a positive number from an environment variable. An unset variable uses the fallback silently; a variable that
+ * is set but invalid also uses the fallback but says so loudly, so a typo in a limit is not mistaken for the default.
+ */
+export const parseNumberEnv = (value: string | undefined, fallback: number, name = 'environment variable'): number => {
 	if (!value?.trim()) return fallback;
 	const parsed = Number(value);
-	return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+	if (Number.isFinite(parsed) && parsed > 0) return parsed;
+	console.warn(`Ignoring invalid ${name}="${value}": expected a positive number. Using the default, ${fallback}.`);
+	return fallback;
 };
 
-export const parseNonNegativeIntEnv = (value: string | undefined, fallback: number): number => {
+/** Like `parseNumberEnv`, but for whole numbers where 0 is meaningful (usually "disabled"). */
+export const parseNonNegativeIntEnv = (
+	value: string | undefined,
+	fallback: number,
+	name = 'environment variable'
+): number => {
 	if (!value?.trim()) return fallback;
 	const parsed = Number(value);
-	return Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
+	if (Number.isInteger(parsed) && parsed >= 0) return parsed;
+	console.warn(
+		`Ignoring invalid ${name}="${value}": expected a whole number, 0 or more. Using the default, ${fallback}.`
+	);
+	return fallback;
 };
 
 export const MINIMAL_DENOM = 'ncheq';
 export const FAUCET_URI = process.env.FAUCET_URI || 'https://faucet-api.cheqd.network/credit';
 export const FAUCET_API_KEY = process.env.FAUCET_API_KEY || 'default-api-key';
 export const DEFAULT_DENOM_EXPONENT = 9;
-export const TESTNET_MINIMUM_BALANCE = parseNumberEnv(process.env.TESTNET_MINIMUM_BALANCE, 10000);
+export const TESTNET_MINIMUM_BALANCE = parseNumberEnv(
+	process.env.TESTNET_MINIMUM_BALANCE,
+	10000,
+	'TESTNET_MINIMUM_BALANCE'
+);
 // Amount, in CHEQ, a new account's testnet address is topped up to when it is bootstrapped (ENABLE_ACCOUNT_TOPUP).
 // TESTNET_FAUCET_UPPER_CAP_CHEQ is the previous name and is still honoured as a fallback.
 export const TESTNET_INITIAL_TOPUP_CHEQ = parseNumberEnv(
 	process.env.TESTNET_INITIAL_TOPUP_CHEQ || process.env.TESTNET_FAUCET_UPPER_CAP_CHEQ,
-	TESTNET_MINIMUM_BALANCE
+	TESTNET_MINIMUM_BALANCE,
+	process.env.TESTNET_INITIAL_TOPUP_CHEQ ? 'TESTNET_INITIAL_TOPUP_CHEQ' : 'TESTNET_FAUCET_UPPER_CAP_CHEQ'
 );
 // Most CHEQ a customer can request through POST /account/faucet per calendar month (UTC)
-export const FAUCET_MONTHLY_LIMIT_CHEQ = parseNumberEnv(process.env.FAUCET_MONTHLY_LIMIT_CHEQ, 100000);
+export const FAUCET_MONTHLY_LIMIT_CHEQ = parseNumberEnv(
+	process.env.FAUCET_MONTHLY_LIMIT_CHEQ,
+	100000,
+	'FAUCET_MONTHLY_LIMIT_CHEQ'
+);
 // Most CHEQ a single testnet address can hold before POST /account/faucet stops topping it up.
 // Defaults to the monthly limit, so there is one figure unless this is set explicitly.
-export const FAUCET_ADDRESS_CAP_CHEQ = parseNumberEnv(process.env.FAUCET_ADDRESS_CAP_CHEQ, FAUCET_MONTHLY_LIMIT_CHEQ);
+export const FAUCET_ADDRESS_CAP_CHEQ = parseNumberEnv(
+	process.env.FAUCET_ADDRESS_CAP_CHEQ,
+	FAUCET_MONTHLY_LIMIT_CHEQ,
+	'FAUCET_ADDRESS_CAP_CHEQ'
+);
 // How long, in seconds, the faucet endpoint caches a customer's Stripe subscription status and plan, so API-key
 // use does not call Stripe on every request. 0 disables the cache.
 export const FAUCET_SUBSCRIPTION_CACHE_SECONDS = parseNonNegativeIntEnv(
 	process.env.FAUCET_SUBSCRIPTION_CACHE_SECONDS,
-	60
+	60,
+	'FAUCET_SUBSCRIPTION_CACHE_SECONDS'
 );
 // Minimum gap, in seconds, between two faucet requests from the same customer (0 disables), so a script using an
 // API key cannot hammer the endpoint (and Stripe, the RPC node and the faucet behind it) in a tight loop.
-export const FAUCET_MIN_INTERVAL_SECONDS = parseNonNegativeIntEnv(process.env.FAUCET_MIN_INTERVAL_SECONDS, 10);
+export const FAUCET_MIN_INTERVAL_SECONDS = parseNonNegativeIntEnv(
+	process.env.FAUCET_MIN_INTERVAL_SECONDS,
+	10,
+	'FAUCET_MIN_INTERVAL_SECONDS'
+);
 // How long, in seconds, a faucet quota reservation that has not been confirmed keeps counting towards the quota
 // before it is treated as abandoned (e.g. the process died before calling the faucet). Must be longer than the
 // longest time a faucet call can take. Reservations whose faucet call threw (outcome unknown) always keep counting.
-export const FAUCET_PENDING_TIMEOUT_SECONDS = parseNonNegativeIntEnv(process.env.FAUCET_PENDING_TIMEOUT_SECONDS, 600);
+export const FAUCET_PENDING_TIMEOUT_SECONDS = parseNonNegativeIntEnv(
+	process.env.FAUCET_PENDING_TIMEOUT_SECONDS,
+	600,
+	'FAUCET_PENDING_TIMEOUT_SECONDS'
+);
 // A faucet transfer takes a few blocks to show up in an address's on-chain balance. For this many seconds, requests
 // already made for the same address are subtracted from the room left under the address cap, so simultaneous
 // requests cannot each be allowed the full room. Over-subtracting briefly is the safe direction.
-export const FAUCET_BALANCE_SETTLE_SECONDS = parseNonNegativeIntEnv(process.env.FAUCET_BALANCE_SETTLE_SECONDS, 20);
+export const FAUCET_BALANCE_SETTLE_SECONDS = parseNonNegativeIntEnv(
+	process.env.FAUCET_BALANCE_SETTLE_SECONDS,
+	20,
+	'FAUCET_BALANCE_SETTLE_SECONDS'
+);
 // Faucet request rows older than this many calendar months are deleted (0 keeps them forever). Only the current
 // month is needed to enforce the quota; older rows are kept for a while for support.
-export const FAUCET_REQUEST_RETENTION_MONTHS = parseNonNegativeIntEnv(process.env.FAUCET_REQUEST_RETENTION_MONTHS, 13);
-export const FAUCET_AMOUNT = parseNumberEnv(process.env.FAUCET_AMOUNT, 100000000000000);
+export const FAUCET_REQUEST_RETENTION_MONTHS = parseNonNegativeIntEnv(
+	process.env.FAUCET_REQUEST_RETENTION_MONTHS,
+	13,
+	'FAUCET_REQUEST_RETENTION_MONTHS'
+);
+// How long, in seconds, to wait for the faucet service to answer before giving up. Without a limit a hung faucet
+// holds the caller (and a quota reservation) for as long as Node's own default, several minutes.
+export const FAUCET_REQUEST_TIMEOUT_SECONDS = parseNumberEnv(
+	process.env.FAUCET_REQUEST_TIMEOUT_SECONDS,
+	30,
+	'FAUCET_REQUEST_TIMEOUT_SECONDS'
+);
+export const FAUCET_AMOUNT = parseNumberEnv(process.env.FAUCET_AMOUNT, 100000000000000, 'FAUCET_AMOUNT');
 export const FAUCET_ACCESS_CLIENT_ID = process.env.FAUCET_ACCESS_CLIENT_ID || '';
 export const FAUCET_ACCESS_CLIENT_SECRET = process.env.FAUCET_ACCESS_CLIENT_SECRET || '';
 
