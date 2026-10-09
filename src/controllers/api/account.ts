@@ -62,6 +62,7 @@ import {
 	buildFaucetQuotaSummary,
 	creditWithinQuota,
 	getFaucetQuotaWindow,
+	logFaucetEvent,
 	maxRequestableNcheq,
 	remainingQuota,
 	secondsUntilReset,
@@ -588,9 +589,10 @@ export class AccountController {
 
 					if (resp.quotaExceeded) {
 						// Account creation must not fail because the monthly faucet quota is used up
-						console.warn(
-							`Initial testnet top-up skipped, monthly faucet quota exceeded: ${customerEntity.customerId}`
-						);
+						logFaucetEvent('warn', 'faucet.bootstrap_topup_skipped', {
+							customerId: customerEntity.customerId,
+							reason: 'quota_exceeded',
+						});
 					} else if (resp.status !== StatusCodes.OK) {
 						return response.status(StatusCodes.BAD_GATEWAY).json({
 							error: resp.error,
@@ -683,6 +685,11 @@ export class AccountController {
 				FAUCET_MIN_INTERVAL_SECONDS
 			);
 			if (waitSeconds > 0) {
+				logFaucetEvent('warn', 'faucet.too_frequent', {
+					customerId: customer.customerId,
+					retryAfterSeconds: waitSeconds,
+					stage: 'precheck',
+				});
 				return tooManyFaucetRequests(response, waitSeconds);
 			}
 
@@ -722,6 +729,13 @@ export class AccountController {
 			const usedNcheq = await FaucetRequestService.instance.getUsedNcheq(customer);
 			const quotaRemainingNcheq = remainingQuota(usedNcheq, quotaLimitNcheq);
 			if (quotaRemainingNcheq <= 0n) {
+				logFaucetEvent('warn', 'faucet.quota_exceeded', {
+					customerId: customer.customerId,
+					address: testnetAccount.address,
+					usedNcheq: usedNcheq.toString(),
+					limitNcheq: quotaLimitNcheq.toString(),
+					stage: 'precheck',
+				});
 				const window = getFaucetQuotaWindow();
 				return response
 					.status(StatusCodes.TOO_MANY_REQUESTS)
@@ -764,6 +778,13 @@ export class AccountController {
 			}
 
 			if (amountToRequestNcheq > roomUnderCapNcheq) {
+				logFaucetEvent('warn', 'faucet.address_cap_exceeded', {
+					customerId: customer.customerId,
+					address: testnetAccount.address,
+					amountNcheq: amountToRequestNcheq.toString(),
+					roomNcheq: roomUnderCapNcheq.toString(),
+					stage: 'precheck',
+				});
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'Requested amount exceeds the maximum available top-up for this address.',
 					address: testnetAccount.address,

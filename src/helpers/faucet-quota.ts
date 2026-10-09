@@ -122,11 +122,18 @@ export interface FaucetQuotaLedger {
 	markUnknown(faucetRequestId: string): Promise<void>;
 }
 
-async function markUnknownBestEffort(ledger: FaucetQuotaLedger, faucetRequestId: string): Promise<void> {
+async function markUnknownBestEffort(
+	ledger: FaucetQuotaLedger,
+	faucetRequestId: string,
+	log: FaucetLogger
+): Promise<void> {
 	try {
 		await ledger.markUnknown(faucetRequestId);
 	} catch (error) {
-		console.error(`Failed to mark faucet request ${faucetRequestId} as unknown:`, error);
+		log('error', 'faucet.mark_unknown_failed', {
+			reservationId: faucetRequestId,
+			error: (error as Error)?.message ?? String(error),
+		});
 	}
 }
 
@@ -138,14 +145,29 @@ export type FaucetCreditResult =
 	| { outcome: 'credited'; usedNcheq: bigint; window: FaucetQuotaWindow }
 	| { outcome: 'faucet_failed'; status: number; error: string };
 
+export type FaucetLogLevel = 'info' | 'warn' | 'error';
+export type FaucetLogger = (level: FaucetLogLevel, event: string, fields: Record<string, unknown>) => void;
+
+/**
+ * Writes one structured log line per faucet decision, e.g. `{"event":"faucet.quota_exceeded","customerId":"..."}`,
+ * so "why was this customer blocked?" and "where did this month's quota go?" can be answered from the logs.
+ * Amounts are ncheq strings. Pass another logger to creditWithinQuota to capture events in tests.
+ */
+export const logFaucetEvent: FaucetLogger = (level, event, fields) => {
+	console[level](JSON.stringify({ event, ...fields }));
+};
+
+const shorten = (text: string) => (text.length > 200 ? `${text.slice(0, 200)}...` : text);
+
 /**
  * Reserves quota, calls the faucet, and settles the reservation.
- * - Quota does not fit: the faucet is not called.
+ * - Quota, minimum interval or address cap does not allow it: the faucet is not called.
  * - Faucet answers with an error status: it definitely did not credit the account, so the quota is released.
  * - Faucet call throws (e.g. a timeout): the outcome is unknown and tokens may have been sent, so the
  *   reservation is marked unknown and keeps counting for good (over-counting is safer than refunding quota
  *   for tokens that were credited).
  * - Faucet confirms: the reservation is marked completed.
+ * Every outcome is logged through `log`.
  */
 export async function creditWithinQuota(
 	ledger: FaucetQuotaLedger,
@@ -157,8 +179,14 @@ export async function creditWithinQuota(
 		limitNcheq: bigint;
 		minIntervalSeconds?: number;
 		addressCap?: FaucetAddressCap;
-	}
+	},
+	log: FaucetLogger = logFaucetEvent
 ): Promise<FaucetCreditResult> {
+	const base = {
+		customerId: params.customer.customerId,
+		address: params.address,
+		amountNcheq: params.amountNcheq.toString(),
+	};
 	const reservation = await ledger.reserve(params.customer, params.address, params.amountNcheq, {
 		limitNcheq: params.limitNcheq,
 		minIntervalSeconds: params.minIntervalSeconds,
@@ -167,35 +195,63 @@ export async function creditWithinQuota(
 	if (!reservation.reserved) {
 		switch (reservation.reason) {
 			case 'too_frequent':
+				log('warn', 'faucet.too_frequent', { ...base, retryAfterSeconds: reservation.retryAfterSeconds });
 				return {
 					outcome: 'too_frequent',
 					retryAfterSeconds: reservation.retryAfterSeconds,
 					window: reservation.window,
 				};
 			case 'address_cap_exceeded':
+				log('warn', 'faucet.address_cap_exceeded', { ...base, roomNcheq: reservation.roomNcheq.toString() });
 				return { outcome: 'address_cap_exceeded', roomNcheq: reservation.roomNcheq };
 			default:
+				log('warn', 'faucet.quota_exceeded', {
+					...base,
+					usedNcheq: reservation.usedNcheq.toString(),
+					limitNcheq: params.limitNcheq.toString(),
+				});
 				return { outcome: 'quota_exceeded', usedNcheq: reservation.usedNcheq, window: reservation.window };
 		}
 	}
+
+	const withReservation = { ...base, reservationId: reservation.faucetRequestId };
+	log('info', 'faucet.reserved', {
+		...withReservation,
+		usedNcheq: reservation.usedNcheq.toString(),
+		limitNcheq: params.limitNcheq.toString(),
+	});
 
 	let faucet: { status: number; error: string };
 	try {
 		faucet = await delegate();
 	} catch (error) {
-		await markUnknownBestEffort(ledger, reservation.faucetRequestId);
+		log('warn', 'faucet.unknown', {
+			...withReservation,
+			error: shorten((error as Error)?.message ?? String(error)),
+			note: 'faucet call threw; tokens may have been sent, so the reservation keeps counting',
+		});
+		await markUnknownBestEffort(ledger, reservation.faucetRequestId, log);
 		throw error;
 	}
 	if (faucet.status !== 200) {
 		await ledger.release(reservation.faucetRequestId);
+		log('warn', 'faucet.released', {
+			...withReservation,
+			faucetStatus: faucet.status,
+			error: shorten(faucet.error),
+		});
 		return { outcome: 'faucet_failed', status: faucet.status, error: faucet.error };
 	}
 	try {
 		await ledger.complete(reservation.faucetRequestId);
+		log('info', 'faucet.completed', withReservation);
 	} catch (error) {
 		// The tokens were sent, so do not fail the request. The reservation stays pending and keeps counting
 		// until it times out.
-		console.error(`Failed to mark faucet request ${reservation.faucetRequestId} as completed:`, error);
+		log('error', 'faucet.complete_failed', {
+			...withReservation,
+			error: shorten((error as Error)?.message ?? String(error)),
+		});
 	}
 	return {
 		outcome: 'credited',

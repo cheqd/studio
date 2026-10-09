@@ -120,6 +120,8 @@ some tokens on the testnet for making the process simpler.
 13. `FAUCET_ACCESS_CLIENT_ID`: Cloudflare Access client ID for accessing the Testnet Faucet API
 14. `FAUCET_ACCESS_CLIENT_SECRET`: Cloudflare Access client secret for accessing the Testnet Faucet API
 
+Faucet decisions are logged as one JSON line each, with an `event` name, so a blocked or refunded request can be traced: `faucet.reserved`, `faucet.completed`, `faucet.released` (the faucet reported a failure, quota given back), `faucet.unknown` (the faucet call threw, quota kept), `faucet.quota_exceeded`, `faucet.too_frequent`, `faucet.address_cap_exceeded`, `faucet.reservations_abandoned`, `faucet.bootstrap_topup_skipped`, `faucet.retention_deleted` and the `*_failed` errors. Rejections are warnings and carry the customer, address, amount and the relevant figures (`usedNcheq`, `limitNcheq`, `roomNcheq`, `retryAfterSeconds`); the early checks that run before Stripe are marked `"stage":"precheck"`. A customer's history is also in the `faucetRequest` table: `SELECT "createdAt", address, "amountNcheq", status FROM "faucetRequest" WHERE "customerId" = '<id>' ORDER BY "createdAt" DESC;`.
+
 Studio exposes `POST /account/faucet` for authenticated Studio users on Basic-or-higher subscriptions. The endpoint accepts optional `address` and `amount` fields; `amount` is expressed in CHEQ. If `address` is omitted, Studio uses the customer's testnet payment account. If `amount` is omitted, Studio tops the address up to `FAUCET_ADDRESS_CAP_CHEQ`, or by whatever monthly quota is left if that is lower. Requests that exceed the address cap return a `requestMore.mailtoHref` for contacting `product@cheqd.io`.
 
 #### Account balances & CHEQ pricing

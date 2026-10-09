@@ -1,4 +1,4 @@
-import { describe, it, expect, jest } from '@jest/globals';
+import { afterEach, beforeEach, describe, it, expect, jest } from '@jest/globals';
 import {
 	addressRoomNcheq,
 	buildFaucetQuotaSummary,
@@ -10,6 +10,7 @@ import {
 	retentionCutoff,
 	secondsUntilNextRequest,
 	secondsUntilReset,
+	type FaucetLogger,
 	type FaucetQuotaLedger,
 	type FaucetReservation,
 } from '../../../src/helpers/faucet-quota.js';
@@ -145,6 +146,16 @@ describe('buildFaucetQuotaSummary', () => {
 });
 
 describe('creditWithinQuota', () => {
+	// creditWithinQuota logs through console by default; keep the test output clean
+	beforeEach(() => {
+		for (const level of ['info', 'warn', 'error'] as const) {
+			jest.spyOn(console, level).mockImplementation(() => undefined);
+		}
+	});
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
 	const customer = { customerId: 'c1' } as CustomerEntity;
 	const window = getFaucetQuotaWindow(new Date('2026-10-08T12:00:00Z'));
 	const params = { customer, address: 'cheqd1abc', amountNcheq: 10n, limitNcheq: 100n };
@@ -247,5 +258,111 @@ describe('creditWithinQuota', () => {
 			)
 		).rejects.toThrow('network timeout');
 		expect(ledgerCalls).toEqual({ released: [], completed: [], unknown: ['r1'] });
+	});
+
+	describe('logging', () => {
+		const capture = () => {
+			const events: { level: string; event: string; fields: Record<string, unknown> }[] = [];
+			const log: FaucetLogger = (level, event, fields) => events.push({ level, event, fields });
+			return { events, log };
+		};
+		const names = (events: { event: string }[]) => events.map((e) => e.event);
+
+		it('logs reserved then completed on success, with the customer, address and amount', async () => {
+			const { ledger } = makeLedger(reserved);
+			const { events, log } = capture();
+			await creditWithinQuota(ledger, async () => ok(), params, log);
+			expect(names(events)).toEqual(['faucet.reserved', 'faucet.completed']);
+			expect(events[0]).toMatchObject({
+				level: 'info',
+				fields: {
+					customerId: 'c1',
+					address: 'cheqd1abc',
+					amountNcheq: '10',
+					reservationId: 'r1',
+					usedNcheq: '40',
+					limitNcheq: '100',
+				},
+			});
+		});
+
+		it('logs each rejection reason as a warning without reserving', async () => {
+			const cases: [FaucetReservation, string, Record<string, unknown>][] = [
+				[
+					{ reserved: false, reason: 'quota_exceeded', usedNcheq: 95n, window },
+					'faucet.quota_exceeded',
+					{ usedNcheq: '95', limitNcheq: '100' },
+				],
+				[
+					{ reserved: false, reason: 'too_frequent', retryAfterSeconds: 7, window },
+					'faucet.too_frequent',
+					{ retryAfterSeconds: 7 },
+				],
+				[
+					{ reserved: false, reason: 'address_cap_exceeded', roomNcheq: 5n, window },
+					'faucet.address_cap_exceeded',
+					{ roomNcheq: '5' },
+				],
+			];
+			for (const [reservation, event, fields] of cases) {
+				const { ledger } = makeLedger(reservation);
+				const { events, log } = capture();
+				await creditWithinQuota(ledger, async () => ok(), params, log);
+				expect(events).toHaveLength(1);
+				expect(events[0]).toMatchObject({
+					level: 'warn',
+					event,
+					fields: { customerId: 'c1', amountNcheq: '10', ...fields },
+				});
+			}
+		});
+
+		it('logs released with the faucet status when the faucet reports a failure', async () => {
+			const { ledger } = makeLedger(reserved);
+			const { events, log } = capture();
+			await creditWithinQuota(ledger, async () => ({ status: 500, error: 'boom' }), params, log);
+			expect(names(events)).toEqual(['faucet.reserved', 'faucet.released']);
+			expect(events[1]).toMatchObject({
+				level: 'warn',
+				fields: { reservationId: 'r1', faucetStatus: 500, error: 'boom' },
+			});
+		});
+
+		it('logs unknown, with the error, when the faucet call throws', async () => {
+			const { ledger } = makeLedger(reserved);
+			const { events, log } = capture();
+			await expect(
+				creditWithinQuota(
+					ledger,
+					async () => {
+						throw new Error('network timeout');
+					},
+					params,
+					log
+				)
+			).rejects.toThrow();
+			expect(names(events)).toEqual(['faucet.reserved', 'faucet.unknown']);
+			expect(events[1]).toMatchObject({
+				level: 'warn',
+				fields: { reservationId: 'r1', error: 'network timeout' },
+			});
+		});
+
+		it('logs an error when marking the reservation completed fails', async () => {
+			const { ledger } = makeLedger(reserved, { completeFails: true });
+			const { events, log } = capture();
+			await creditWithinQuota(ledger, async () => ok(), params, log);
+			expect(names(events)).toEqual(['faucet.reserved', 'faucet.complete_failed']);
+			expect(events[1].level).toBe('error');
+		});
+
+		it('writes a single JSON line per event by default', async () => {
+			const { ledger } = makeLedger(reserved);
+			const info = jest.spyOn(console, 'info').mockImplementation(() => undefined);
+			await creditWithinQuota(ledger, async () => ok(), params);
+			const lines = info.mock.calls.map((c) => JSON.parse(String(c[0])));
+			info.mockRestore();
+			expect(lines.map((l) => l.event)).toEqual(['faucet.reserved', 'faucet.completed']);
+		});
 	});
 });

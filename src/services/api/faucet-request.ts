@@ -7,6 +7,7 @@ import {
 	addressRoomNcheq,
 	fitsInQuota,
 	getFaucetQuotaWindow,
+	logFaucetEvent,
 	retentionCutoff,
 	secondsUntilNextRequest,
 	type FaucetQuotaLedger,
@@ -156,7 +157,7 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 
 			// Reservations that were never confirmed stop counting; mark them so the history shows why
 			const pendingCutoff = FaucetRequestService.pendingCutoff(now, pendingTimeoutSeconds);
-			await manager
+			const swept = await manager
 				.createQueryBuilder()
 				.update(FaucetRequestEntity)
 				.set({ status: 'abandoned' })
@@ -164,6 +165,13 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 				.andWhere(`status = 'pending'`)
 				.andWhere('createdAt < :pendingCutoff', { pendingCutoff })
 				.execute();
+			if (swept.affected) {
+				logFaucetEvent('warn', 'faucet.reservations_abandoned', {
+					customerId: customer.customerId,
+					count: swept.affected,
+					pendingTimeoutSeconds,
+				});
+			}
 
 			const usedNcheq = await FaucetRequestService.sumRequestedNcheq(
 				manager,
@@ -222,9 +230,13 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 		this.lastRetentionCleanupAt = now.getTime();
 		this.runRetentionCleanup(now)
 			.then((deleted) => {
-				if (deleted > 0) console.info(`Faucet request retention: deleted ${deleted} rows past retention`);
+				if (deleted > 0) logFaucetEvent('info', 'faucet.retention_deleted', { deleted });
 			})
-			.catch((error) => console.error('Faucet request retention cleanup failed:', error));
+			.catch((error) =>
+				logFaucetEvent('error', 'faucet.retention_failed', {
+					error: (error as Error)?.message ?? String(error),
+				})
+			);
 	}
 
 	/** Releases a reservation, e.g. when the upstream faucet reported that it did not credit the account. */
