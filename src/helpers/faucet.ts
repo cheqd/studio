@@ -6,7 +6,14 @@ import {
 	FAUCET_API_KEY,
 	FAUCET_ACCESS_CLIENT_ID,
 	FAUCET_ACCESS_CLIENT_SECRET,
+	FAUCET_REQUEST_TIMEOUT_SECONDS,
 } from '../types/constants.js';
+
+/** True if the error is the faucet call timing out or being aborted, as opposed to the faucet answering. */
+export function isFaucetTimeout(error: unknown): boolean {
+	const name = (error as { name?: string } | null)?.name;
+	return name === 'TimeoutError' || name === 'AbortError';
+}
 
 export class FaucetHelper {
 	// ...
@@ -15,7 +22,8 @@ export class FaucetHelper {
 		firstName: string,
 		lastName: string,
 		email: string,
-		amount = FAUCET_AMOUNT
+		amount = FAUCET_AMOUNT,
+		timeoutMs = FAUCET_REQUEST_TIMEOUT_SECONDS * 1000
 	): Promise<ICommonErrorResponse> {
 		const faucetURI = FAUCET_URI;
 		const faucetBody = {
@@ -37,6 +45,8 @@ export class FaucetHelper {
 			},
 			body: JSON.stringify(faucetBody),
 			method: 'POST',
+			// Covers waiting for the response and reading its body. On expiry fetch rejects with a TimeoutError.
+			signal: AbortSignal.timeout(timeoutMs),
 		});
 		return {
 			status: response.status,
