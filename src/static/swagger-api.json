@@ -3483,63 +3483,6 @@
         }
       }
     },
-    "/account/faucet": {
-      "post": {
-        "tags": [
-          "Account"
-        ],
-        "summary": "Request cheqd testnet CHEQ tokens for a Studio payment account.",
-        "description": "Funds an authenticated Studio user's owned testnet payment account. An address can hold at most FAUCET_ADDRESS_CAP_CHEQ, and a customer can request at most FAUCET_MONTHLY_LIMIT_CHEQ per calendar month (UTC) across all their addresses; both default to 100,000 CHEQ. Without an amount the address is topped up to the cap, or by the quota left if that is lower. Works with a Studio user session or an API key; the response includes the remaining quota.",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "address": {
-                    "type": "string",
-                    "description": "Optional owned Studio testnet payment account address. Defaults to the authenticated customer's testnet account."
-                  },
-                  "amount": {
-                    "type": "number",
-                    "description": "Optional amount in CHEQ. Defaults to the most that can be requested now (the lower of the room under the address cap and the monthly quota left)."
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The request was processed."
-          },
-          "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
-          },
-          "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
-          },
-          "403": {
-            "description": "Forbidden."
-          },
-          "404": {
-            "description": "No Studio testnet payment account was found for this customer."
-          },
-          "429": {
-            "description": "Too many requests. Either the customer's monthly faucet quota is exhausted (the body includes the quota details), or a request was made too soon after the previous one (FAUCET_MIN_INTERVAL_SECONDS). The Retry-After header gives the seconds to wait."
-          },
-          "500": {
-            "$ref": "#/components/schemas/InternalError"
-          },
-          "502": {
-            "description": "Upstream faucet request failed."
-          },
-          "503": {
-            "description": "Stripe subscription checks are disabled."
-          }
-        }
-      }
-    },
     "/account/analytics": {
       "get": {
         "tags": [
