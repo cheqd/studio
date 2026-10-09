@@ -1,13 +1,16 @@
-import { describe, it, expect, jest } from '@jest/globals';
+import { afterEach, beforeEach, describe, it, expect, jest } from '@jest/globals';
 import {
+	addressRoomNcheq,
 	buildFaucetQuotaSummary,
 	creditWithinQuota,
 	fitsInQuota,
 	getFaucetQuotaWindow,
 	maxRequestableNcheq,
 	remainingQuota,
+	retentionCutoff,
 	secondsUntilNextRequest,
 	secondsUntilReset,
+	type FaucetLogger,
 	type FaucetQuotaLedger,
 	type FaucetReservation,
 } from '../../../src/helpers/faucet-quota.js';
@@ -89,6 +92,25 @@ describe('secondsUntilNextRequest', () => {
 	});
 });
 
+describe('retentionCutoff', () => {
+	it('is the start of the month N months before the current one (UTC)', () => {
+		expect(retentionCutoff(new Date('2026-10-09T12:00:00Z'), 13).toISOString()).toBe('2025-09-01T00:00:00.000Z');
+		expect(retentionCutoff(new Date('2026-01-31T23:59:59Z'), 1).toISOString()).toBe('2025-12-01T00:00:00.000Z');
+		expect(retentionCutoff(new Date('2026-10-09T12:00:00Z'), 0).toISOString()).toBe('2026-10-01T00:00:00.000Z');
+	});
+});
+
+describe('addressRoomNcheq', () => {
+	it('subtracts the balance and requests still in flight from the cap', () => {
+		expect(addressRoomNcheq(100n, 30n, 20n)).toBe(50n);
+	});
+
+	it('is never negative', () => {
+		expect(addressRoomNcheq(100n, 90n, 20n)).toBe(0n);
+		expect(addressRoomNcheq(100n, 150n, 0n)).toBe(0n);
+	});
+});
+
 describe('maxRequestableNcheq', () => {
 	it('is limited by the room under the address cap when that is lower', () => {
 		expect(maxRequestableNcheq(10n, 50n)).toBe(10n);
@@ -124,6 +146,16 @@ describe('buildFaucetQuotaSummary', () => {
 });
 
 describe('creditWithinQuota', () => {
+	// creditWithinQuota logs through console by default; keep the test output clean
+	beforeEach(() => {
+		for (const level of ['info', 'warn', 'error'] as const) {
+			jest.spyOn(console, level).mockImplementation(() => undefined);
+		}
+	});
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
 	const customer = { customerId: 'c1' } as CustomerEntity;
 	const window = getFaucetQuotaWindow(new Date('2026-10-08T12:00:00Z'));
 	const params = { customer, address: 'cheqd1abc', amountNcheq: 10n, limitNcheq: 100n };
@@ -177,6 +209,20 @@ describe('creditWithinQuota', () => {
 		expect(ledgerCalls).toEqual(untouched);
 	});
 
+	it('does not call the faucet and reports the room left when the address cap would be exceeded', async () => {
+		const { ledger, ledgerCalls } = makeLedger({
+			reserved: false,
+			reason: 'address_cap_exceeded',
+			roomNcheq: 5n,
+			window,
+		});
+		let faucetCalls = 0;
+		const result = await creditWithinQuota(ledger, async () => (faucetCalls++, ok()), params);
+		expect(result).toEqual({ outcome: 'address_cap_exceeded', roomNcheq: 5n });
+		expect(faucetCalls).toBe(0);
+		expect(ledgerCalls).toEqual(untouched);
+	});
+
 	it('marks the reservation completed and reports usage including this credit on success', async () => {
 		const { ledger, ledgerCalls } = makeLedger(reserved);
 		const result = await creditWithinQuota(ledger, async () => ok(), params);
@@ -212,5 +258,111 @@ describe('creditWithinQuota', () => {
 			)
 		).rejects.toThrow('network timeout');
 		expect(ledgerCalls).toEqual({ released: [], completed: [], unknown: ['r1'] });
+	});
+
+	describe('logging', () => {
+		const capture = () => {
+			const events: { level: string; event: string; fields: Record<string, unknown> }[] = [];
+			const log: FaucetLogger = (level, event, fields) => events.push({ level, event, fields });
+			return { events, log };
+		};
+		const names = (events: { event: string }[]) => events.map((e) => e.event);
+
+		it('logs reserved then completed on success, with the customer, address and amount', async () => {
+			const { ledger } = makeLedger(reserved);
+			const { events, log } = capture();
+			await creditWithinQuota(ledger, async () => ok(), params, log);
+			expect(names(events)).toEqual(['faucet.reserved', 'faucet.completed']);
+			expect(events[0]).toMatchObject({
+				level: 'info',
+				fields: {
+					customerId: 'c1',
+					address: 'cheqd1abc',
+					amountNcheq: '10',
+					reservationId: 'r1',
+					usedNcheq: '40',
+					limitNcheq: '100',
+				},
+			});
+		});
+
+		it('logs each rejection reason as a warning without reserving', async () => {
+			const cases: [FaucetReservation, string, Record<string, unknown>][] = [
+				[
+					{ reserved: false, reason: 'quota_exceeded', usedNcheq: 95n, window },
+					'faucet.quota_exceeded',
+					{ usedNcheq: '95', limitNcheq: '100' },
+				],
+				[
+					{ reserved: false, reason: 'too_frequent', retryAfterSeconds: 7, window },
+					'faucet.too_frequent',
+					{ retryAfterSeconds: 7 },
+				],
+				[
+					{ reserved: false, reason: 'address_cap_exceeded', roomNcheq: 5n, window },
+					'faucet.address_cap_exceeded',
+					{ roomNcheq: '5' },
+				],
+			];
+			for (const [reservation, event, fields] of cases) {
+				const { ledger } = makeLedger(reservation);
+				const { events, log } = capture();
+				await creditWithinQuota(ledger, async () => ok(), params, log);
+				expect(events).toHaveLength(1);
+				expect(events[0]).toMatchObject({
+					level: 'warn',
+					event,
+					fields: { customerId: 'c1', amountNcheq: '10', ...fields },
+				});
+			}
+		});
+
+		it('logs released with the faucet status when the faucet reports a failure', async () => {
+			const { ledger } = makeLedger(reserved);
+			const { events, log } = capture();
+			await creditWithinQuota(ledger, async () => ({ status: 500, error: 'boom' }), params, log);
+			expect(names(events)).toEqual(['faucet.reserved', 'faucet.released']);
+			expect(events[1]).toMatchObject({
+				level: 'warn',
+				fields: { reservationId: 'r1', faucetStatus: 500, error: 'boom' },
+			});
+		});
+
+		it('logs unknown, with the error, when the faucet call throws', async () => {
+			const { ledger } = makeLedger(reserved);
+			const { events, log } = capture();
+			await expect(
+				creditWithinQuota(
+					ledger,
+					async () => {
+						throw new Error('network timeout');
+					},
+					params,
+					log
+				)
+			).rejects.toThrow();
+			expect(names(events)).toEqual(['faucet.reserved', 'faucet.unknown']);
+			expect(events[1]).toMatchObject({
+				level: 'warn',
+				fields: { reservationId: 'r1', error: 'network timeout' },
+			});
+		});
+
+		it('logs an error when marking the reservation completed fails', async () => {
+			const { ledger } = makeLedger(reserved, { completeFails: true });
+			const { events, log } = capture();
+			await creditWithinQuota(ledger, async () => ok(), params, log);
+			expect(names(events)).toEqual(['faucet.reserved', 'faucet.complete_failed']);
+			expect(events[1].level).toBe('error');
+		});
+
+		it('writes a single JSON line per event by default', async () => {
+			const { ledger } = makeLedger(reserved);
+			const info = jest.spyOn(console, 'info').mockImplementation(() => undefined);
+			await creditWithinQuota(ledger, async () => ok(), params);
+			const lines = info.mock.calls.map((c) => JSON.parse(String(c[0])));
+			info.mockRestore();
+			expect(lines.map((l) => l.event)).toEqual(['faucet.reserved', 'faucet.completed']);
+		});
 	});
 });

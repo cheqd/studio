@@ -129,6 +129,21 @@ export const FAUCET_PENDING_TIMEOUT_SECONDS = parseNonNegativeIntEnv(
 	600,
 	'FAUCET_PENDING_TIMEOUT_SECONDS'
 );
+// A faucet transfer takes a few blocks to show up in an address's on-chain balance. For this many seconds, requests
+// already made for the same address are subtracted from the room left under the address cap, so simultaneous
+// requests cannot each be allowed the full room. Over-subtracting briefly is the safe direction.
+export const FAUCET_BALANCE_SETTLE_SECONDS = parseNonNegativeIntEnv(
+	process.env.FAUCET_BALANCE_SETTLE_SECONDS,
+	20,
+	'FAUCET_BALANCE_SETTLE_SECONDS'
+);
+// Faucet request rows older than this many calendar months are deleted (0 keeps them forever). Only the current
+// month is needed to enforce the quota; older rows are kept for a while for support.
+export const FAUCET_REQUEST_RETENTION_MONTHS = parseNonNegativeIntEnv(
+	process.env.FAUCET_REQUEST_RETENTION_MONTHS,
+	13,
+	'FAUCET_REQUEST_RETENTION_MONTHS'
+);
 // How long, in seconds, to wait for the faucet service to answer before giving up. Without a limit a hung faucet
 // holds the caller (and a quota reservation) for as long as Node's own default, several minutes.
 export const FAUCET_REQUEST_TIMEOUT_SECONDS = parseNumberEnv(

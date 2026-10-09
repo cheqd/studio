@@ -15,6 +15,7 @@ import type { SafeAPIResponse } from '../../types/common.js';
 import { CheqdNetwork, checkBalance } from '@cheqd/sdk';
 import {
 	FAUCET_ADDRESS_CAP_CHEQ,
+	FAUCET_BALANCE_SETTLE_SECONDS,
 	FAUCET_MIN_INTERVAL_SECONDS,
 	FAUCET_MONTHLY_LIMIT_CHEQ,
 	FAUCET_SUBSCRIPTION_CACHE_SECONDS,
@@ -60,7 +61,7 @@ import { FaucetRequestService } from '../../services/api/faucet-request.js';
 import {
 	buildFaucetQuotaSummary,
 	creditWithinQuota,
-	getFaucetQuotaWindow,
+	logFaucetEvent,
 	maxRequestableNcheq,
 	remainingQuota,
 	secondsUntilReset,
@@ -587,9 +588,10 @@ export class AccountController {
 
 					if (resp.quotaExceeded) {
 						// Account creation must not fail because the monthly faucet quota is used up
-						console.warn(
-							`Initial testnet top-up skipped, monthly faucet quota exceeded: ${customerEntity.customerId}`
-						);
+						logFaucetEvent('warn', 'faucet.bootstrap_topup_skipped', {
+							customerId: customerEntity.customerId,
+							reason: 'quota_exceeded',
+						});
 					} else if (resp.status !== StatusCodes.OK) {
 						return response.status(StatusCodes.BAD_GATEWAY).json({
 							error: resp.error,
@@ -623,7 +625,7 @@ export class AccountController {
 	 *   post:
 	 *     tags: [Account]
 	 *     summary: Request cheqd testnet CHEQ tokens for a Studio payment account.
-	 *     description: Funds an authenticated Studio user's owned testnet payment account. An address can hold at most FAUCET_ADDRESS_CAP_CHEQ, and a customer can request at most FAUCET_MONTHLY_LIMIT_CHEQ per calendar month (UTC) across all their addresses; both default to 100,000 CHEQ. Without an amount the address is topped up to the cap, or by the quota left if that is lower. Works with a Studio user session or an API key; the response includes the remaining quota.
+	 *     description: Funds an authenticated Studio user's owned testnet payment account. An address can hold at most FAUCET_ADDRESS_CAP_CHEQ, and a customer can request at most FAUCET_MONTHLY_LIMIT_CHEQ per calendar month (UTC) across all their addresses; both default to 100,000 CHEQ. Without an amount the address is topped up to the cap, or by the quota left if that is lower. Authentication: a Studio user session (bearer token), an API key (`x-api-key`) or a machine-to-machine token (bearer token plus a `customer-id` header); whichever is used, the credential must carry the `request:faucet:testnet` scope. The response includes the remaining quota.
 	 *     requestBody:
 	 *       content:
 	 *         application/json:
@@ -684,6 +686,11 @@ export class AccountController {
 				FAUCET_MIN_INTERVAL_SECONDS
 			);
 			if (waitSeconds > 0) {
+				logFaucetEvent('warn', 'faucet.too_frequent', {
+					customerId: customer.customerId,
+					retryAfterSeconds: waitSeconds,
+					stage: 'precheck',
+				});
 				return tooManyFaucetRequests(response, waitSeconds);
 			}
 
@@ -720,10 +727,16 @@ export class AccountController {
 			const quotaLimitNcheq = cheqToNcheq(FAUCET_MONTHLY_LIMIT_CHEQ);
 
 			// Nothing can be requested once the quota is used up, so answer before the (slow) balance query
-			const usedNcheq = await FaucetRequestService.instance.getUsedNcheq(customer);
+			const { usedNcheq, window } = await FaucetRequestService.instance.getQuotaStatus(customer);
 			const quotaRemainingNcheq = remainingQuota(usedNcheq, quotaLimitNcheq);
 			if (quotaRemainingNcheq <= 0n) {
-				const window = getFaucetQuotaWindow();
+				logFaucetEvent('warn', 'faucet.quota_exceeded', {
+					customerId: customer.customerId,
+					address: testnetAccount.address,
+					usedNcheq: usedNcheq.toString(),
+					limitNcheq: quotaLimitNcheq.toString(),
+					stage: 'precheck',
+				});
 				return response
 					.status(StatusCodes.TOO_MANY_REQUESTS)
 					.set('Retry-After', String(secondsUntilReset(window)))
@@ -765,6 +778,13 @@ export class AccountController {
 			}
 
 			if (amountToRequestNcheq > roomUnderCapNcheq) {
+				logFaucetEvent('warn', 'faucet.address_cap_exceeded', {
+					customerId: customer.customerId,
+					address: testnetAccount.address,
+					amountNcheq: amountToRequestNcheq.toString(),
+					roomNcheq: roomUnderCapNcheq.toString(),
+					stage: 'precheck',
+				});
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'Requested amount exceeds the maximum available top-up for this address.',
 					address: testnetAccount.address,
@@ -790,10 +810,24 @@ export class AccountController {
 					amountNcheq: amountToRequestNcheq,
 					limitNcheq: quotaLimitNcheq,
 					minIntervalSeconds: FAUCET_MIN_INTERVAL_SECONDS,
+					addressCap: {
+						capNcheq: addressCapNcheq,
+						currentBalanceNcheq,
+						settleSeconds: FAUCET_BALANCE_SETTLE_SECONDS,
+					},
 				}
 			);
 			if (credit.outcome === 'too_frequent') {
 				return tooManyFaucetRequests(response, credit.retryAfterSeconds);
+			}
+			if (credit.outcome === 'address_cap_exceeded') {
+				// Requests made moments ago for this address have not reached its balance yet
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: 'Requested amount exceeds the maximum available top-up for this address.',
+					address: testnetAccount.address,
+					balance,
+					requestMore: buildRequestMore(customer, testnetAccount.address, balance, requestedAmountCheq),
+				});
 			}
 			if (credit.outcome === 'quota_exceeded') {
 				return response
@@ -998,14 +1032,12 @@ export class AccountController {
 			if (testnetAddress) {
 				try {
 					const addressCapNcheq = cheqToNcheq(FAUCET_ADDRESS_CAP_CHEQ);
-					const usedNcheq = await FaucetRequestService.instance.getUsedNcheq(response.locals.customer);
+					const { usedNcheq, window } = await FaucetRequestService.instance.getQuotaStatus(
+						response.locals.customer
+					);
 					faucet = {
 						cap: { cheq: ncheqToCheq(addressCapNcheq), ncheq: addressCapNcheq.toString() },
-						quota: buildFaucetQuotaSummary(
-							usedNcheq,
-							cheqToNcheq(FAUCET_MONTHLY_LIMIT_CHEQ),
-							getFaucetQuotaWindow()
-						),
+						quota: buildFaucetQuotaSummary(usedNcheq, cheqToNcheq(FAUCET_MONTHLY_LIMIT_CHEQ), window),
 					};
 				} catch (error) {
 					console.error('getBalances: faucet quota lookup failed:', (error as Error)?.message || error);
@@ -1263,7 +1295,8 @@ async function delegateWithinQuota(
 				quotaExceeded: true,
 			};
 		case 'too_frequent':
-			// not requested here: the bootstrap top-up does not apply a minimum interval
+		case 'address_cap_exceeded':
+			// not requested here: the bootstrap top-up applies neither a minimum interval nor the address cap
 			return { status: StatusCodes.TOO_MANY_REQUESTS, error: 'Too many faucet requests.' };
 		case 'faucet_failed':
 			return { status: credit.status, error: credit.error };
