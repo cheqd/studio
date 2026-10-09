@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import { CustomerEntity } from '../../../src/database/entities/customer.entity.js';
 import { FaucetRequestEntity } from '../../../src/database/entities/faucet-request.entity.js';
 import { StudioMigrations1791500000000 } from '../../../src/database/migrations/1791500000000-studio-migrations.js';
+import { StudioMigrations1791500000001 } from '../../../src/database/migrations/1791500000001-studio-migrations.js';
 import type { FaucetRequestService } from '../../../src/services/api/faucet-request.js';
 
 /**
@@ -54,6 +55,7 @@ describeWithDatabase('FaucetRequestService (Postgres)', () => {
 		});
 		await dataSource.initialize();
 		await new StudioMigrations1791500000000().up(dataSource.createQueryRunner());
+		await new StudioMigrations1791500000001().up(dataSource.createQueryRunner());
 		// Imported here, not at the top: the service pulls in the database connection, whose entities require
 		// ENABLE_EXTERNAL_DB to be defined at import time, and a skipped run should not load any of that.
 		process.env.ENABLE_EXTERNAL_DB ??= 'false';
@@ -176,6 +178,98 @@ describeWithDatabase('FaucetRequestService (Postgres)', () => {
 
 		expect(results.filter((r) => r.reserved)).toHaveLength(1);
 		expect(results.filter((r) => !r.reserved && r.reason === 'too_frequent')).toHaveLength(4);
+	});
+
+	describe('reservation status', () => {
+		const statusOf = async (id: string) =>
+			(
+				await dataSource.query(
+					`SELECT status, "completedAt" FROM "faucetRequest" WHERE "faucetRequestId" = $1`,
+					[id]
+				)
+			)[0];
+		const backdate = (id: string, minutesAgo: number) =>
+			dataSource.query(
+				`UPDATE "faucetRequest" SET "createdAt" = now() - ($1 || ' minutes')::interval WHERE "faucetRequestId" = $2`,
+				[String(minutesAgo), id]
+			);
+		const reserveOne = async (customer: CustomerEntity, amount: number) => {
+			const result = await service.reserve(customer, 'cheqd1a', cheq(amount), { limitNcheq: LIMIT });
+			if (!result.reserved) throw new Error('expected a reservation');
+			return result.faucetRequestId;
+		};
+
+		it('records a new reservation as pending and counts it', async () => {
+			const customer = await newCustomer();
+			const id = await reserveOne(customer, 10_000);
+			expect((await statusOf(id)).status).toBe('pending');
+			expect(await service.getUsedNcheq(customer)).toBe(cheq(10_000));
+		});
+
+		it('marks a reservation completed with a completion time', async () => {
+			const customer = await newCustomer();
+			const id = await reserveOne(customer, 10_000);
+			await service.complete(id);
+			const row = await statusOf(id);
+			expect(row.status).toBe('completed');
+			expect(row.completedAt).not.toBeNull();
+			expect(await service.getUsedNcheq(customer)).toBe(cheq(10_000));
+		});
+
+		it('stops counting a pending reservation once it is older than the timeout, and marks it abandoned on the next reserve', async () => {
+			const customer = await newCustomer();
+			const id = await reserveOne(customer, 90_000);
+			await backdate(id, 11); // default timeout is 10 minutes
+
+			expect(await service.getUsedNcheq(customer)).toBe(0n);
+			expect((await statusOf(id)).status).toBe('pending'); // reads do not write
+
+			expect(await service.reserve(customer, 'cheqd1a', cheq(100_000), { limitNcheq: LIMIT })).toMatchObject({
+				reserved: true,
+			});
+			expect((await statusOf(id)).status).toBe('abandoned');
+		});
+
+		it('keeps counting a pending reservation that is still within the timeout', async () => {
+			const customer = await newCustomer();
+			const id = await reserveOne(customer, 90_000);
+			await backdate(id, 5);
+			expect(await service.getUsedNcheq(customer)).toBe(cheq(90_000));
+		});
+
+		it('keeps counting an unknown reservation however old it is', async () => {
+			const customer = await newCustomer();
+			const id = await reserveOne(customer, 90_000);
+			await service.markUnknown(id);
+			await backdate(id, 60 * 24);
+			expect(await service.getUsedNcheq(customer)).toBe(cheq(90_000));
+			expect(await service.reserve(customer, 'cheqd1a', cheq(10_001), { limitNcheq: LIMIT })).toMatchObject({
+				reserved: false,
+				reason: 'quota_exceeded',
+			});
+		});
+
+		it('counts an abandoned reservation again if the faucet confirms it late', async () => {
+			const customer = await newCustomer();
+			const id = await reserveOne(customer, 40_000);
+			await backdate(id, 30);
+			await service.reserve(customer, 'cheqd1a', cheq(1), { limitNcheq: LIMIT }); // sweeps it to abandoned
+			expect((await statusOf(id)).status).toBe('abandoned');
+			expect(await service.getUsedNcheq(customer)).toBe(cheq(1));
+
+			await service.complete(id);
+			expect(await service.getUsedNcheq(customer)).toBe(cheq(40_001));
+		});
+
+		it('does not let an abandoned reservation block the minimum interval', async () => {
+			const customer = await newCustomer();
+			const id = await reserveOne(customer, 1);
+			await dataSource.query(
+				`UPDATE "faucetRequest" SET status = 'abandoned', "createdAt" = now() - interval '1 second' WHERE "faucetRequestId" = $1`,
+				[id]
+			);
+			expect(await service.getSecondsUntilNextAllowed(customer, 60)).toBe(0);
+		});
 	});
 
 	it('never lets concurrent reservations exceed the limit', async () => {

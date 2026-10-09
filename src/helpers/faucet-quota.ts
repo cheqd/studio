@@ -73,6 +73,8 @@ export function secondsUntilNextRequest(
 export interface FaucetReserveOptions {
 	// Most the customer can request per quota window
 	limitNcheq: bigint;
+	// How long an unconfirmed reservation keeps counting before it is treated as abandoned
+	pendingTimeoutSeconds?: number;
 	// Minimum gap between two requests from the customer; 0 or undefined disables the check
 	minIntervalSeconds?: number;
 }
@@ -91,6 +93,18 @@ export interface FaucetQuotaLedger {
 		options: FaucetReserveOptions
 	): Promise<FaucetReservation>;
 	release(faucetRequestId: string): Promise<void>;
+	/** The faucet confirmed the credit. */
+	complete(faucetRequestId: string): Promise<void>;
+	/** The faucet call threw, so tokens may have been sent: keep counting this reservation permanently. */
+	markUnknown(faucetRequestId: string): Promise<void>;
+}
+
+async function markUnknownBestEffort(ledger: FaucetQuotaLedger, faucetRequestId: string): Promise<void> {
+	try {
+		await ledger.markUnknown(faucetRequestId);
+	} catch (error) {
+		console.error(`Failed to mark faucet request ${faucetRequestId} as unknown:`, error);
+	}
 }
 
 export type FaucetCreditResult =
@@ -105,7 +119,9 @@ export type FaucetCreditResult =
  * - Quota does not fit: the faucet is not called.
  * - Faucet answers with an error status: it definitely did not credit the account, so the quota is released.
  * - Faucet call throws (e.g. a timeout): the outcome is unknown and tokens may have been sent, so the
- *   reservation is kept (over-counting is safer than refunding quota for tokens that were credited).
+ *   reservation is marked unknown and keeps counting for good (over-counting is safer than refunding quota
+ *   for tokens that were credited).
+ * - Faucet confirms: the reservation is marked completed.
  */
 export async function creditWithinQuota(
 	ledger: FaucetQuotaLedger,
@@ -128,10 +144,23 @@ export async function creditWithinQuota(
 			: { outcome: 'quota_exceeded', usedNcheq: reservation.usedNcheq, window: reservation.window };
 	}
 
-	const faucet = await delegate();
+	let faucet: { status: number; error: string };
+	try {
+		faucet = await delegate();
+	} catch (error) {
+		await markUnknownBestEffort(ledger, reservation.faucetRequestId);
+		throw error;
+	}
 	if (faucet.status !== 200) {
 		await ledger.release(reservation.faucetRequestId);
 		return { outcome: 'faucet_failed', status: faucet.status, error: faucet.error };
+	}
+	try {
+		await ledger.complete(reservation.faucetRequestId);
+	} catch (error) {
+		// The tokens were sent, so do not fail the request. The reservation stays pending and keeps counting
+		// until it times out.
+		console.error(`Failed to mark faucet request ${reservation.faucetRequestId} as completed:`, error);
 	}
 	return {
 		outcome: 'credited',

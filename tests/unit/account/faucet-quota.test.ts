@@ -1,4 +1,4 @@
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, jest } from '@jest/globals';
 import {
 	buildFaucetQuotaSummary,
 	creditWithinQuota,
@@ -127,58 +127,81 @@ describe('creditWithinQuota', () => {
 	const customer = { customerId: 'c1' } as CustomerEntity;
 	const window = getFaucetQuotaWindow(new Date('2026-10-08T12:00:00Z'));
 	const params = { customer, address: 'cheqd1abc', amountNcheq: 10n, limitNcheq: 100n };
+	const untouched = { released: [], completed: [], unknown: [] };
 
-	const makeLedger = (reservation: FaucetReservation) => {
-		const released: string[] = [];
+	const makeLedger = (reservation: FaucetReservation, options: { completeFails?: boolean } = {}) => {
+		const ledgerCalls = { released: [] as string[], completed: [] as string[], unknown: [] as string[] };
 		const ledger: FaucetQuotaLedger = {
 			reserve: async () => reservation,
 			release: async (id) => {
-				released.push(id);
+				ledgerCalls.released.push(id);
+			},
+			complete: async (id) => {
+				if (options.completeFails) throw new Error('db down');
+				ledgerCalls.completed.push(id);
+			},
+			markUnknown: async (id) => {
+				ledgerCalls.unknown.push(id);
 			},
 		};
-		return { ledger, released };
+		return { ledger, ledgerCalls };
 	};
 	const reserved: FaucetReservation = { reserved: true, faucetRequestId: 'r1', usedNcheq: 40n, window };
+	const ok = () => ({ status: 200, error: '' });
 
 	it('does not call the faucet when the quota does not fit', async () => {
-		const { ledger, released } = makeLedger({ reserved: false, reason: 'quota_exceeded', usedNcheq: 95n, window });
-		let calls = 0;
-		const result = await creditWithinQuota(ledger, async () => (calls++, { status: 200, error: '' }), params);
+		const { ledger, ledgerCalls } = makeLedger({
+			reserved: false,
+			reason: 'quota_exceeded',
+			usedNcheq: 95n,
+			window,
+		});
+		let faucetCalls = 0;
+		const result = await creditWithinQuota(ledger, async () => (faucetCalls++, ok()), params);
 		expect(result).toEqual({ outcome: 'quota_exceeded', usedNcheq: 95n, window });
-		expect(calls).toBe(0);
-		expect(released).toEqual([]);
+		expect(faucetCalls).toBe(0);
+		expect(ledgerCalls).toEqual(untouched);
 	});
 
 	it('does not call the faucet and reports the wait when requests are too frequent', async () => {
-		const { ledger, released } = makeLedger({
+		const { ledger, ledgerCalls } = makeLedger({
 			reserved: false,
 			reason: 'too_frequent',
 			retryAfterSeconds: 7,
 			window,
 		});
-		let calls = 0;
-		const result = await creditWithinQuota(ledger, async () => (calls++, { status: 200, error: '' }), params);
+		let faucetCalls = 0;
+		const result = await creditWithinQuota(ledger, async () => (faucetCalls++, ok()), params);
 		expect(result).toEqual({ outcome: 'too_frequent', retryAfterSeconds: 7, window });
-		expect(calls).toBe(0);
-		expect(released).toEqual([]);
+		expect(faucetCalls).toBe(0);
+		expect(ledgerCalls).toEqual(untouched);
 	});
 
-	it('keeps the reservation and reports usage including this credit on success', async () => {
-		const { ledger, released } = makeLedger(reserved);
-		const result = await creditWithinQuota(ledger, async () => ({ status: 200, error: '' }), params);
+	it('marks the reservation completed and reports usage including this credit on success', async () => {
+		const { ledger, ledgerCalls } = makeLedger(reserved);
+		const result = await creditWithinQuota(ledger, async () => ok(), params);
 		expect(result).toEqual({ outcome: 'credited', usedNcheq: 50n, window });
-		expect(released).toEqual([]);
+		expect(ledgerCalls).toEqual({ released: [], completed: ['r1'], unknown: [] });
+	});
+
+	it('still reports success if marking the reservation completed fails, because the tokens were sent', async () => {
+		const { ledger, ledgerCalls } = makeLedger(reserved, { completeFails: true });
+		const errors = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+		const result = await creditWithinQuota(ledger, async () => ok(), params);
+		errors.mockRestore();
+		expect(result).toEqual({ outcome: 'credited', usedNcheq: 50n, window });
+		expect(ledgerCalls).toEqual(untouched);
 	});
 
 	it('releases the reservation when the faucet answers with an error status', async () => {
-		const { ledger, released } = makeLedger(reserved);
+		const { ledger, ledgerCalls } = makeLedger(reserved);
 		const result = await creditWithinQuota(ledger, async () => ({ status: 500, error: 'boom' }), params);
 		expect(result).toEqual({ outcome: 'faucet_failed', status: 500, error: 'boom' });
-		expect(released).toEqual(['r1']);
+		expect(ledgerCalls).toEqual({ released: ['r1'], completed: [], unknown: [] });
 	});
 
-	it('keeps the reservation when the faucet call throws, because tokens may have been sent', async () => {
-		const { ledger, released } = makeLedger(reserved);
+	it('marks the reservation unknown, never releasing it, when the faucet call throws', async () => {
+		const { ledger, ledgerCalls } = makeLedger(reserved);
 		await expect(
 			creditWithinQuota(
 				ledger,
@@ -188,6 +211,6 @@ describe('creditWithinQuota', () => {
 				params
 			)
 		).rejects.toThrow('network timeout');
-		expect(released).toEqual([]);
+		expect(ledgerCalls).toEqual({ released: [], completed: [], unknown: ['r1'] });
 	});
 });

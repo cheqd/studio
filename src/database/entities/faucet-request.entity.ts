@@ -5,7 +5,15 @@ import { CustomerEntity } from './customer.entity.js';
 dotenv.config();
 
 /**
- * One row per successful (or in-flight) testnet faucet request made through `POST /account/faucet`.
+ * - pending: reserved, faucet call in flight. Counts towards the quota until it times out.
+ * - completed: the faucet confirmed the credit.
+ * - unknown: the faucet call threw (e.g. a timeout), so tokens may have been sent. Always counts.
+ * - abandoned: stayed pending past the timeout (e.g. the process died). No longer counts.
+ */
+export type FaucetRequestStatus = 'pending' | 'completed' | 'unknown' | 'abandoned';
+
+/**
+ * One row per testnet faucet request made through `POST /account/faucet` or the account bootstrap top-up.
  * Summed per customer to enforce the monthly faucet quota.
  */
 @Entity('faucetRequest')
@@ -32,10 +40,23 @@ export class FaucetRequestEntity {
 	amountNcheq!: string;
 
 	@Column({
+		type: 'text',
+		nullable: false,
+		default: 'completed',
+	})
+	status!: FaucetRequestStatus;
+
+	@Column({
 		type: 'timestamptz',
 		nullable: false,
 	})
 	createdAt!: Date;
+
+	@Column({
+		type: 'timestamptz',
+		nullable: true,
+	})
+	completedAt?: Date;
 
 	@BeforeInsert()
 	setCreatedAt() {
@@ -47,5 +68,6 @@ export class FaucetRequestEntity {
 		this.address = address;
 		// TypeORM instantiates entities without arguments when building metadata
 		this.amountNcheq = amountNcheq?.toString();
+		this.status = 'pending';
 	}
 }
