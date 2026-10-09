@@ -57,6 +57,12 @@ const parseNumberEnv = (value: string | undefined, fallback: number): number => 
 	return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
+export const parseNonNegativeIntEnv = (value: string | undefined, fallback: number): number => {
+	if (!value?.trim()) return fallback;
+	const parsed = Number(value);
+	return Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
+};
+
 export const MINIMAL_DENOM = 'ncheq';
 export const FAUCET_URI = process.env.FAUCET_URI || 'https://faucet-api.cheqd.network/credit';
 export const FAUCET_API_KEY = process.env.FAUCET_API_KEY || 'default-api-key';
@@ -73,6 +79,12 @@ export const FAUCET_MONTHLY_LIMIT_CHEQ = parseNumberEnv(process.env.FAUCET_MONTH
 // Most CHEQ a single testnet address can hold before POST /account/faucet stops topping it up.
 // Defaults to the monthly limit, so there is one figure unless this is set explicitly.
 export const FAUCET_ADDRESS_CAP_CHEQ = parseNumberEnv(process.env.FAUCET_ADDRESS_CAP_CHEQ, FAUCET_MONTHLY_LIMIT_CHEQ);
+// How long, in seconds, the faucet endpoint caches a customer's Stripe subscription status and plan, so API-key
+// use does not call Stripe on every request. 0 disables the cache.
+export const FAUCET_SUBSCRIPTION_CACHE_SECONDS = parseNonNegativeIntEnv(
+	process.env.FAUCET_SUBSCRIPTION_CACHE_SECONDS,
+	60
+);
 export const FAUCET_AMOUNT = parseNumberEnv(process.env.FAUCET_AMOUNT, 100000000000000);
 export const FAUCET_ACCESS_CLIENT_ID = process.env.FAUCET_ACCESS_CLIENT_ID || '';
 export const FAUCET_ACCESS_CLIENT_SECRET = process.env.FAUCET_ACCESS_CLIENT_SECRET || '';

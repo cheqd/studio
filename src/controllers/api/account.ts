@@ -16,6 +16,7 @@ import { CheqdNetwork, checkBalance } from '@cheqd/sdk';
 import {
 	FAUCET_ADDRESS_CAP_CHEQ,
 	FAUCET_MONTHLY_LIMIT_CHEQ,
+	FAUCET_SUBSCRIPTION_CACHE_SECONDS,
 	MINIMAL_DENOM,
 	OperationNameEnum,
 	TESTNET_INITIAL_TOPUP_CHEQ,
@@ -681,15 +682,14 @@ export class AccountController {
 				} satisfies UnsuccessfulResponseBody);
 			}
 
-			const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscriptionId);
-			if (!['active', 'trialing'].includes(stripeSubscription.status)) {
+			const plan = await getSubscriptionPlan(stripe, subscription.subscriptionId);
+			if (!['active', 'trialing'].includes(plan.status)) {
 				return response.status(StatusCodes.FORBIDDEN).json({
 					error: 'An active Basic or higher subscription is required to request testnet CHEQ tokens.',
 				} satisfies UnsuccessfulResponseBody);
 			}
 
-			const productId = getStripeObjectKey(stripeSubscription.items.data[0].plan.product);
-			if (!productHasCapability(productId, StudioPlanCapability.Faucet)) {
+			if (!productHasCapability(plan.productId, StudioPlanCapability.Faucet)) {
 				return response.status(StatusCodes.FORBIDDEN).json({
 					error: 'The current subscription does not include testnet faucet access.',
 				} satisfies UnsuccessfulResponseBody);
@@ -707,12 +707,22 @@ export class AccountController {
 			const addressCapNcheq = cheqToNcheq(FAUCET_ADDRESS_CAP_CHEQ);
 			const quotaLimitNcheq = cheqToNcheq(FAUCET_MONTHLY_LIMIT_CHEQ);
 
+			// Nothing can be requested once the quota is used up, so answer before the (slow) balance query
+			const usedNcheq = await FaucetRequestService.instance.getUsedNcheq(customer);
+			const quotaRemainingNcheq = remainingQuota(usedNcheq, quotaLimitNcheq);
+			if (quotaRemainingNcheq <= 0n) {
+				const window = getFaucetQuotaWindow();
+				return response
+					.status(StatusCodes.TOO_MANY_REQUESTS)
+					.set('Retry-After', String(secondsUntilReset(window)))
+					.json({
+						error: 'Monthly testnet faucet quota exceeded for this account.',
+						quota: buildFaucetQuotaSummary(usedNcheq, quotaLimitNcheq, window),
+					});
+			}
+
 			const currentBalanceNcheq = await getTestnetBalanceNcheq(testnetAccount.address);
 			const roomUnderCapNcheq = addressCapNcheq - currentBalanceNcheq;
-			const quotaRemainingNcheq = remainingQuota(
-				await FaucetRequestService.instance.getUsedNcheq(customer),
-				quotaLimitNcheq
-			);
 			// What can be requested right now: limited by both the room under the address cap and the monthly quota
 			const maxRequestable = maxRequestableNcheq(roomUnderCapNcheq, quotaRemainingNcheq);
 			const balance = buildFaucetBalanceResponse(currentBalanceNcheq, addressCapNcheq, maxRequestable);
@@ -1172,6 +1182,27 @@ async function updateCustomData(
 		status.errors.push((err as Error)?.message || err);
 		console.warn('Logto Custom Data Update failed:', err);
 	}
+}
+
+/**
+ * Status and plan of a Stripe subscription, cached briefly so repeated (e.g. API-key) faucet requests do not
+ * call Stripe every time. Only active/trialing results are cached, and the stored subscription status is still
+ * checked in the database on every request, so a cancellation takes effect immediately; a plan change can take
+ * up to FAUCET_SUBSCRIPTION_CACHE_SECONDS to be seen.
+ */
+async function getSubscriptionPlan(stripe: Stripe, subscriptionId: string) {
+	const cached = LocalStore.instance.getSubscriptionPlan(subscriptionId);
+	if (cached) return cached;
+
+	const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+	const plan = {
+		status: subscription.status,
+		productId: getStripeObjectKey(subscription.items.data[0].plan.product),
+	};
+	if (FAUCET_SUBSCRIPTION_CACHE_SECONDS > 0 && ['active', 'trialing'].includes(plan.status)) {
+		LocalStore.instance.setSubscriptionPlan(subscriptionId, plan, FAUCET_SUBSCRIPTION_CACHE_SECONDS);
+	}
+	return plan;
 }
 
 /**
