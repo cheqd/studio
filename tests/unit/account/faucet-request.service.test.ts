@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
+import { afterAll, afterEach, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { DataSource } from 'typeorm';
 import { CustomerEntity } from '../../../src/database/entities/customer.entity.js';
 import { FaucetRequestEntity } from '../../../src/database/entities/faucet-request.entity.js';
@@ -429,6 +429,77 @@ describeWithDatabase('FaucetRequestService (Postgres)', () => {
 			const before = await service.getUsedNcheq(customer);
 			await service.runRetentionCleanup(new Date(), 13);
 			expect(await service.getUsedNcheq(customer)).toBe(before);
+		});
+	});
+
+	describe('clock', () => {
+		// Fake only the application clock (Date); timers must keep working for the database driver
+		const skewApplicationClock = (hoursAhead: number) =>
+			jest.useFakeTimers({
+				now: Date.now() + hoursAhead * 3600 * 1000,
+				doNotFake: [
+					'hrtime',
+					'nextTick',
+					'performance',
+					'queueMicrotask',
+					'setImmediate',
+					'clearImmediate',
+					'setInterval',
+					'clearInterval',
+					'setTimeout',
+					'clearTimeout',
+				],
+			});
+		afterEach(() => {
+			jest.useRealTimers();
+		});
+
+		it('judges how old a request is by the database clock, not the application clock', async () => {
+			const customer = await newCustomer();
+			const options = { limitNcheq: LIMIT, minIntervalSeconds: 60 };
+			const first = await service.reserve(customer, 'cheqd1a', cheq(90_000), options);
+			if (!first.reserved) throw new Error('expected a reservation');
+
+			skewApplicationClock(3); // this instance's clock is three hours fast
+
+			// by the database clock the reservation is seconds old: still pending, still inside the interval
+			expect(await service.getUsedNcheq(customer)).toBe(cheq(90_000));
+			expect(await service.getSecondsUntilNextAllowed(customer, 60)).toBeGreaterThan(0);
+			expect(await service.reserve(customer, 'cheqd1a', cheq(1), options)).toMatchObject({
+				reserved: false,
+				reason: 'too_frequent',
+			});
+			const status = await dataSource.query(`SELECT status FROM "faucetRequest" WHERE "faucetRequestId" = $1`, [
+				first.faucetRequestId,
+			]);
+			expect(status[0].status).toBe('pending'); // not swept as abandoned
+		});
+
+		it('takes the quota window from the database clock', async () => {
+			const customer = await newCustomer();
+			const [{ month }] = await dataSource.query(
+				`SELECT to_char(clock_timestamp() AT TIME ZONE 'UTC', 'YYYY-MM') AS month`
+			);
+
+			skewApplicationClock(24 * 62); // two months ahead on this instance
+
+			const { window } = await service.getQuotaStatus(customer);
+			expect(window.start.toISOString().slice(0, 7)).toBe(month);
+		});
+
+		it('records the completion time from the database clock', async () => {
+			const customer = await newCustomer();
+			const reservation = await service.reserve(customer, 'cheqd1a', cheq(1), { limitNcheq: LIMIT });
+			if (!reservation.reserved) throw new Error('expected a reservation');
+
+			skewApplicationClock(3);
+			await service.complete(reservation.faucetRequestId);
+
+			const [{ drift }] = await dataSource.query(
+				`SELECT abs(extract(epoch from (now() - "completedAt"))) AS drift FROM "faucetRequest" WHERE "faucetRequestId" = $1`,
+				[reservation.faucetRequestId]
+			);
+			expect(Number(drift)).toBeLessThan(5);
 		});
 	});
 

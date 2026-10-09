@@ -11,6 +11,7 @@ import {
 	retentionCutoff,
 	secondsUntilNextRequest,
 	type FaucetQuotaLedger,
+	type FaucetQuotaWindow,
 	type FaucetReservation,
 	type FaucetReserveOptions,
 } from '../../helpers/faucet-quota.js';
@@ -27,6 +28,18 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 	constructor(repository?: Repository<FaucetRequestEntity>) {
 		this.faucetRequestRepository =
 			repository ?? Connection.instance.dbConnection.getRepository(FaucetRequestEntity);
+	}
+
+	/**
+	 * The database's clock. `createdAt` is set by the database, so every comparison (month window, minimum interval,
+	 * pending timeout, settle window, retention) must use its clock too, not the application's: instances with
+	 * slightly different clocks would otherwise disagree about how old a row is. `clock_timestamp()` rather than
+	 * `now()`, because inside a transaction `now()` stays at the start of the transaction, before any wait for the lock.
+	 */
+	private static async databaseNow(manager: EntityManager): Promise<Date> {
+		if (manager.connection.options.type !== 'postgres') return new Date();
+		const [row] = await manager.query('SELECT clock_timestamp() AS now');
+		return new Date(row.now);
 	}
 
 	private static pendingCutoff(now: Date, pendingTimeoutSeconds: number): Date {
@@ -93,29 +106,43 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 	public async getSecondsUntilNextAllowed(
 		customer: CustomerEntity,
 		minIntervalSeconds: number,
-		now: Date = new Date()
+		now?: Date
 	): Promise<number> {
 		if (minIntervalSeconds <= 0) return 0;
-		const last = await FaucetRequestService.lastRequestAt(
-			this.faucetRequestRepository.manager,
-			customer.customerId
+		const manager = this.faucetRequestRepository.manager;
+		const last = await FaucetRequestService.lastRequestAt(manager, customer.customerId);
+		return secondsUntilNextRequest(
+			last,
+			minIntervalSeconds,
+			now ?? (await FaucetRequestService.databaseNow(manager))
 		);
-		return secondsUntilNextRequest(last, minIntervalSeconds, now);
+	}
+
+	/** What the customer has requested in the current quota window, and the window itself (both on the database clock). */
+	public async getQuotaStatus(
+		customer: CustomerEntity,
+		now?: Date,
+		pendingTimeoutSeconds: number = FAUCET_PENDING_TIMEOUT_SECONDS
+	): Promise<{ usedNcheq: bigint; window: FaucetQuotaWindow }> {
+		const manager = this.faucetRequestRepository.manager;
+		const at = now ?? (await FaucetRequestService.databaseNow(manager));
+		const window = getFaucetQuotaWindow(at);
+		const usedNcheq = await FaucetRequestService.sumRequestedNcheq(
+			manager,
+			customer.customerId,
+			window.start,
+			FaucetRequestService.pendingCutoff(at, pendingTimeoutSeconds)
+		);
+		return { usedNcheq, window };
 	}
 
 	/** Total ncheq requested by the customer in the current quota window. */
 	public async getUsedNcheq(
 		customer: CustomerEntity,
-		now: Date = new Date(),
+		now?: Date,
 		pendingTimeoutSeconds: number = FAUCET_PENDING_TIMEOUT_SECONDS
 	): Promise<bigint> {
-		const { start } = getFaucetQuotaWindow(now);
-		return FaucetRequestService.sumRequestedNcheq(
-			this.faucetRequestRepository.manager,
-			customer.customerId,
-			start,
-			FaucetRequestService.pendingCutoff(now, pendingTimeoutSeconds)
-		);
+		return (await this.getQuotaStatus(customer, now, pendingTimeoutSeconds)).usedNcheq;
 	}
 
 	/**
@@ -134,15 +161,18 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 			pendingTimeoutSeconds = FAUCET_PENDING_TIMEOUT_SECONDS,
 			addressCap,
 		}: FaucetReserveOptions,
-		now: Date = new Date()
+		nowOverride?: Date
 	): Promise<FaucetReservation> {
-		const window = getFaucetQuotaWindow(now);
 		const reservation = await this.faucetRequestRepository.manager.transaction(async (manager) => {
 			if (manager.connection.options.type === 'postgres') {
 				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
 					`faucet-quota:${customer.customerId}`,
 				]);
 			}
+
+			// Taken after the lock, so it is current even if this request had to wait for another one
+			const now = nowOverride ?? (await FaucetRequestService.databaseNow(manager));
+			const window = getFaucetQuotaWindow(now);
 
 			if (minIntervalSeconds > 0) {
 				const retryAfterSeconds = secondsUntilNextRequest(
@@ -201,16 +231,17 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 			const entity = await manager.save(new FaucetRequestEntity(customer, address, amountNcheq));
 			return { reserved: true, faucetRequestId: entity.faucetRequestId, usedNcheq, window } as const;
 		});
-		this.maybeRunRetentionCleanup(now);
+		this.maybeRunRetentionCleanup();
 		return reservation;
 	}
 
 	/** Deletes faucet request rows older than the retention period. Returns how many were deleted. */
 	public async runRetentionCleanup(
-		now: Date = new Date(),
+		now?: Date,
 		retentionMonths: number = FAUCET_REQUEST_RETENTION_MONTHS
 	): Promise<number> {
 		if (retentionMonths <= 0) return 0;
+		now ??= await FaucetRequestService.databaseNow(this.faucetRequestRepository.manager);
 		const result = await this.faucetRequestRepository
 			.createQueryBuilder()
 			.delete()
@@ -224,11 +255,13 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 	 * Runs the retention cleanup in the background, at most once an hour per process. Called from normal requests
 	 * because Studio has no scheduler; it never delays or fails the request that triggered it.
 	 */
-	private maybeRunRetentionCleanup(now: Date): void {
+	private maybeRunRetentionCleanup(): void {
 		if (FAUCET_REQUEST_RETENTION_MONTHS <= 0) return;
-		if (now.getTime() - this.lastRetentionCleanupAt < RETENTION_CLEANUP_INTERVAL_MS) return;
-		this.lastRetentionCleanupAt = now.getTime();
-		this.runRetentionCleanup(now)
+		// This only throttles how often this process runs the cleanup, so the process clock is the right one here
+		const processNow = Date.now();
+		if (processNow - this.lastRetentionCleanupAt < RETENTION_CLEANUP_INTERVAL_MS) return;
+		this.lastRetentionCleanupAt = processNow;
+		this.runRetentionCleanup()
 			.then((deleted) => {
 				if (deleted > 0) logFaucetEvent('info', 'faucet.retention_deleted', { deleted });
 			})
@@ -248,7 +281,7 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 	public async complete(faucetRequestId: string): Promise<void> {
 		await this.faucetRequestRepository.update(
 			{ faucetRequestId },
-			{ status: 'completed', completedAt: new Date() }
+			{ status: 'completed', completedAt: () => 'now()' }
 		);
 	}
 

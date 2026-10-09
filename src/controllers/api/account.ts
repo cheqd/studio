@@ -61,7 +61,6 @@ import { FaucetRequestService } from '../../services/api/faucet-request.js';
 import {
 	buildFaucetQuotaSummary,
 	creditWithinQuota,
-	getFaucetQuotaWindow,
 	logFaucetEvent,
 	maxRequestableNcheq,
 	remainingQuota,
@@ -728,7 +727,7 @@ export class AccountController {
 			const quotaLimitNcheq = cheqToNcheq(FAUCET_MONTHLY_LIMIT_CHEQ);
 
 			// Nothing can be requested once the quota is used up, so answer before the (slow) balance query
-			const usedNcheq = await FaucetRequestService.instance.getUsedNcheq(customer);
+			const { usedNcheq, window } = await FaucetRequestService.instance.getQuotaStatus(customer);
 			const quotaRemainingNcheq = remainingQuota(usedNcheq, quotaLimitNcheq);
 			if (quotaRemainingNcheq <= 0n) {
 				logFaucetEvent('warn', 'faucet.quota_exceeded', {
@@ -738,7 +737,6 @@ export class AccountController {
 					limitNcheq: quotaLimitNcheq.toString(),
 					stage: 'precheck',
 				});
-				const window = getFaucetQuotaWindow();
 				return response
 					.status(StatusCodes.TOO_MANY_REQUESTS)
 					.set('Retry-After', String(secondsUntilReset(window)))
@@ -1034,14 +1032,12 @@ export class AccountController {
 			if (testnetAddress) {
 				try {
 					const addressCapNcheq = cheqToNcheq(FAUCET_ADDRESS_CAP_CHEQ);
-					const usedNcheq = await FaucetRequestService.instance.getUsedNcheq(response.locals.customer);
+					const { usedNcheq, window } = await FaucetRequestService.instance.getQuotaStatus(
+						response.locals.customer
+					);
 					faucet = {
 						cap: { cheq: ncheqToCheq(addressCapNcheq), ncheq: addressCapNcheq.toString() },
-						quota: buildFaucetQuotaSummary(
-							usedNcheq,
-							cheqToNcheq(FAUCET_MONTHLY_LIMIT_CHEQ),
-							getFaucetQuotaWindow()
-						),
+						quota: buildFaucetQuotaSummary(usedNcheq, cheqToNcheq(FAUCET_MONTHLY_LIMIT_CHEQ), window),
 					};
 				} catch (error) {
 					console.error('getBalances: faucet quota lookup failed:', (error as Error)?.message || error);
