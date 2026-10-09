@@ -33,16 +33,24 @@ export interface AccountNetworkBalance {
 	usd: number | null;
 }
 
+export interface FaucetAmountSummary {
+	cheq: number;
+	ncheq: string;
+}
+
+export interface FaucetQuotaSummary {
+	period: 'month';
+	limit: FaucetAmountSummary;
+	used: FaucetAmountSummary;
+	remaining: FaucetAmountSummary;
+	// ISO timestamp at which the monthly quota resets.
+	resetsAt: string;
+}
+
 export interface AccountFaucetInfo {
-	// Most CHEQ the testnet address can hold, and the most the customer can request per month.
-	cap: { cheq: number; ncheq: string };
-	quota: {
-		period: 'month';
-		limit: { cheq: number; ncheq: string };
-		used: { cheq: number; ncheq: string };
-		remaining: { cheq: number; ncheq: string };
-		resetsAt: string;
-	};
+	// Most CHEQ a testnet address can hold.
+	cap: FaucetAmountSummary;
+	quota: FaucetQuotaSummary;
 }
 
 export interface QueryAccountBalancesResponseBody {

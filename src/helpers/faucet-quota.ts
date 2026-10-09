@@ -1,3 +1,7 @@
+import type { CustomerEntity } from '../database/entities/customer.entity.js';
+import type { FaucetAmountSummary, FaucetQuotaSummary } from '../types/account.js';
+import { ncheqToCheq } from './denom.js';
+
 /**
  * Helpers for the per-customer monthly faucet quota.
  * The quota window is the current calendar month in UTC.
@@ -28,7 +32,79 @@ export function fitsInQuota(usedNcheq: bigint, requestedNcheq: bigint, limitNche
 	return usedNcheq + requestedNcheq <= limitNcheq;
 }
 
+/** Most that can be requested now: the lower of the room under the address cap and the quota left, never negative. */
+export function maxRequestableNcheq(roomUnderCapNcheq: bigint, quotaRemainingNcheq: bigint): bigint {
+	const lowest = roomUnderCapNcheq < quotaRemainingNcheq ? roomUnderCapNcheq : quotaRemainingNcheq;
+	return lowest > 0n ? lowest : 0n;
+}
+
 /** Remaining quota, never negative. */
 export function remainingQuota(usedNcheq: bigint, limitNcheq: bigint): bigint {
 	return usedNcheq >= limitNcheq ? 0n : limitNcheq - usedNcheq;
+}
+
+export function buildFaucetQuotaSummary(
+	usedNcheq: bigint,
+	limitNcheq: bigint,
+	window: FaucetQuotaWindow
+): FaucetQuotaSummary {
+	const remainingNcheq = remainingQuota(usedNcheq, limitNcheq);
+	const amount = (ncheq: bigint): FaucetAmountSummary => ({ cheq: ncheqToCheq(ncheq), ncheq: ncheq.toString() });
+	return {
+		period: 'month',
+		limit: amount(limitNcheq),
+		used: amount(usedNcheq),
+		remaining: amount(remainingNcheq),
+		resetsAt: window.resetsAt.toISOString(),
+	};
+}
+
+export type FaucetReservation =
+	| { reserved: true; faucetRequestId: string; usedNcheq: bigint; window: FaucetQuotaWindow }
+	| { reserved: false; usedNcheq: bigint; window: FaucetQuotaWindow };
+
+/** Storage for quota reservations; implemented by `FaucetRequestService` and faked in tests. */
+export interface FaucetQuotaLedger {
+	reserve(
+		customer: CustomerEntity,
+		address: string,
+		amountNcheq: bigint,
+		limitNcheq: bigint
+	): Promise<FaucetReservation>;
+	release(faucetRequestId: string): Promise<void>;
+}
+
+export type FaucetCreditResult =
+	| { outcome: 'quota_exceeded'; usedNcheq: bigint; window: FaucetQuotaWindow }
+	// `usedNcheq` already includes the amount just credited.
+	| { outcome: 'credited'; usedNcheq: bigint; window: FaucetQuotaWindow }
+	| { outcome: 'faucet_failed'; status: number; error: string };
+
+/**
+ * Reserves quota, calls the faucet, and settles the reservation.
+ * - Quota does not fit: the faucet is not called.
+ * - Faucet answers with an error status: it definitely did not credit the account, so the quota is released.
+ * - Faucet call throws (e.g. a timeout): the outcome is unknown and tokens may have been sent, so the
+ *   reservation is kept (over-counting is safer than refunding quota for tokens that were credited).
+ */
+export async function creditWithinQuota(
+	ledger: FaucetQuotaLedger,
+	delegate: () => Promise<{ status: number; error: string }>,
+	params: { customer: CustomerEntity; address: string; amountNcheq: bigint; limitNcheq: bigint }
+): Promise<FaucetCreditResult> {
+	const reservation = await ledger.reserve(params.customer, params.address, params.amountNcheq, params.limitNcheq);
+	if (!reservation.reserved) {
+		return { outcome: 'quota_exceeded', usedNcheq: reservation.usedNcheq, window: reservation.window };
+	}
+
+	const faucet = await delegate();
+	if (faucet.status !== 200) {
+		await ledger.release(reservation.faucetRequestId);
+		return { outcome: 'faucet_failed', status: faucet.status, error: faucet.error };
+	}
+	return {
+		outcome: 'credited',
+		usedNcheq: reservation.usedNcheq + params.amountNcheq,
+		window: reservation.window,
+	};
 }

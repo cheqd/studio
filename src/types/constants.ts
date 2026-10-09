@@ -68,8 +68,11 @@ export const TESTNET_INITIAL_TOPUP_CHEQ = parseNumberEnv(
 	process.env.TESTNET_INITIAL_TOPUP_CHEQ || process.env.TESTNET_FAUCET_UPPER_CAP_CHEQ,
 	TESTNET_MINIMUM_BALANCE
 );
-// Single faucet cap for POST /account/faucet: the most CHEQ an address can hold and the most a customer can request per calendar month (UTC)
+// Most CHEQ a customer can request through POST /account/faucet per calendar month (UTC)
 export const FAUCET_MONTHLY_LIMIT_CHEQ = parseNumberEnv(process.env.FAUCET_MONTHLY_LIMIT_CHEQ, 100000);
+// Most CHEQ a single testnet address can hold before POST /account/faucet stops topping it up.
+// Defaults to the monthly limit, so there is one figure unless this is set explicitly.
+export const FAUCET_ADDRESS_CAP_CHEQ = parseNumberEnv(process.env.FAUCET_ADDRESS_CAP_CHEQ, FAUCET_MONTHLY_LIMIT_CHEQ);
 export const FAUCET_AMOUNT = parseNumberEnv(process.env.FAUCET_AMOUNT, 100000000000000);
 export const FAUCET_ACCESS_CLIENT_ID = process.env.FAUCET_ACCESS_CLIENT_ID || '';
 export const FAUCET_ACCESS_CLIENT_SECRET = process.env.FAUCET_ACCESS_CLIENT_SECRET || '';

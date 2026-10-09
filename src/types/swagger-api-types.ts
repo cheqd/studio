@@ -2175,7 +2175,7 @@
  *           properties:
  *             cap:
  *               type: object
- *               description: Most CHEQ the testnet address can hold, and the most the customer can request per calendar month (UTC).
+ *               description: Most CHEQ a testnet address can hold before the faucet stops topping it up.
  *               properties:
  *                 cheq:
  *                   type: number
