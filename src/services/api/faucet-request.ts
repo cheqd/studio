@@ -2,19 +2,24 @@ import type { EntityManager, Repository } from 'typeorm';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { FaucetRequestEntity } from '../../database/entities/faucet-request.entity.js';
 import { Connection } from '../../database/connection/connection.js';
-import { FAUCET_PENDING_TIMEOUT_SECONDS } from '../../types/constants.js';
+import { FAUCET_PENDING_TIMEOUT_SECONDS, FAUCET_REQUEST_RETENTION_MONTHS } from '../../types/constants.js';
 import {
 	addressRoomNcheq,
 	fitsInQuota,
 	getFaucetQuotaWindow,
+	retentionCutoff,
 	secondsUntilNextRequest,
 	type FaucetQuotaLedger,
 	type FaucetReservation,
 	type FaucetReserveOptions,
 } from '../../helpers/faucet-quota.js';
 
+// Retention cleanup runs inside normal requests (Studio has no scheduler), at most this often per process
+const RETENTION_CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
+
 export class FaucetRequestService implements FaucetQuotaLedger {
 	public faucetRequestRepository: Repository<FaucetRequestEntity>;
+	private lastRetentionCleanupAt = 0;
 
 	public static instance = new FaucetRequestService();
 
@@ -131,7 +136,7 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 		now: Date = new Date()
 	): Promise<FaucetReservation> {
 		const window = getFaucetQuotaWindow(now);
-		return this.faucetRequestRepository.manager.transaction(async (manager) => {
+		const reservation = await this.faucetRequestRepository.manager.transaction(async (manager) => {
 			if (manager.connection.options.type === 'postgres') {
 				await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
 					`faucet-quota:${customer.customerId}`,
@@ -188,6 +193,38 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 			const entity = await manager.save(new FaucetRequestEntity(customer, address, amountNcheq));
 			return { reserved: true, faucetRequestId: entity.faucetRequestId, usedNcheq, window } as const;
 		});
+		this.maybeRunRetentionCleanup(now);
+		return reservation;
+	}
+
+	/** Deletes faucet request rows older than the retention period. Returns how many were deleted. */
+	public async runRetentionCleanup(
+		now: Date = new Date(),
+		retentionMonths: number = FAUCET_REQUEST_RETENTION_MONTHS
+	): Promise<number> {
+		if (retentionMonths <= 0) return 0;
+		const result = await this.faucetRequestRepository
+			.createQueryBuilder()
+			.delete()
+			.from(FaucetRequestEntity)
+			.where('createdAt < :cutoff', { cutoff: retentionCutoff(now, retentionMonths) })
+			.execute();
+		return result.affected ?? 0;
+	}
+
+	/**
+	 * Runs the retention cleanup in the background, at most once an hour per process. Called from normal requests
+	 * because Studio has no scheduler; it never delays or fails the request that triggered it.
+	 */
+	private maybeRunRetentionCleanup(now: Date): void {
+		if (FAUCET_REQUEST_RETENTION_MONTHS <= 0) return;
+		if (now.getTime() - this.lastRetentionCleanupAt < RETENTION_CLEANUP_INTERVAL_MS) return;
+		this.lastRetentionCleanupAt = now.getTime();
+		this.runRetentionCleanup(now)
+			.then((deleted) => {
+				if (deleted > 0) console.info(`Faucet request retention: deleted ${deleted} rows past retention`);
+			})
+			.catch((error) => console.error('Faucet request retention cleanup failed:', error));
 	}
 
 	/** Releases a reservation, e.g. when the upstream faucet reported that it did not credit the account. */

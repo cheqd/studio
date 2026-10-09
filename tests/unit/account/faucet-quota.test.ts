@@ -7,6 +7,7 @@ import {
 	getFaucetQuotaWindow,
 	maxRequestableNcheq,
 	remainingQuota,
+	retentionCutoff,
 	secondsUntilNextRequest,
 	secondsUntilReset,
 	type FaucetQuotaLedger,
@@ -87,6 +88,14 @@ describe('secondsUntilNextRequest', () => {
 	it('is 0 once the interval has passed', () => {
 		expect(secondsUntilNextRequest(last, 10, new Date('2026-10-08T12:00:10Z'))).toBe(0);
 		expect(secondsUntilNextRequest(last, 10, new Date('2026-10-08T12:05:00Z'))).toBe(0);
+	});
+});
+
+describe('retentionCutoff', () => {
+	it('is the start of the month N months before the current one (UTC)', () => {
+		expect(retentionCutoff(new Date('2026-10-09T12:00:00Z'), 13).toISOString()).toBe('2025-09-01T00:00:00.000Z');
+		expect(retentionCutoff(new Date('2026-01-31T23:59:59Z'), 1).toISOString()).toBe('2025-12-01T00:00:00.000Z');
+		expect(retentionCutoff(new Date('2026-10-09T12:00:00Z'), 0).toISOString()).toBe('2026-10-01T00:00:00.000Z');
 	});
 });
 

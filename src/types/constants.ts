@@ -96,6 +96,9 @@ export const FAUCET_PENDING_TIMEOUT_SECONDS = parseNonNegativeIntEnv(process.env
 // already made for the same address are subtracted from the room left under the address cap, so simultaneous
 // requests cannot each be allowed the full room. Over-subtracting briefly is the safe direction.
 export const FAUCET_BALANCE_SETTLE_SECONDS = parseNonNegativeIntEnv(process.env.FAUCET_BALANCE_SETTLE_SECONDS, 20);
+// Faucet request rows older than this many calendar months are deleted (0 keeps them forever). Only the current
+// month is needed to enforce the quota; older rows are kept for a while for support.
+export const FAUCET_REQUEST_RETENTION_MONTHS = parseNonNegativeIntEnv(process.env.FAUCET_REQUEST_RETENTION_MONTHS, 13);
 export const FAUCET_AMOUNT = parseNumberEnv(process.env.FAUCET_AMOUNT, 100000000000000);
 export const FAUCET_ACCESS_CLIENT_ID = process.env.FAUCET_ACCESS_CLIENT_ID || '';
 export const FAUCET_ACCESS_CLIENT_SECRET = process.env.FAUCET_ACCESS_CLIENT_SECRET || '';

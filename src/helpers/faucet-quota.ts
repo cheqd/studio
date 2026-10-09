@@ -59,6 +59,11 @@ export function buildFaucetQuotaSummary(
 	};
 }
 
+/** Rows older than this are past retention: the start of the calendar month `retentionMonths` months ago (UTC). */
+export function retentionCutoff(now: Date, retentionMonths: number): Date {
+	return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - retentionMonths, 1));
+}
+
 /** Seconds the customer still has to wait before their next faucet request; 0 if one is allowed now. */
 export function secondsUntilNextRequest(
 	lastRequestAt: Date | null,

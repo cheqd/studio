@@ -368,6 +368,58 @@ describeWithDatabase('FaucetRequestService (Postgres)', () => {
 		});
 	});
 
+	describe('retention', () => {
+		const idsFor = async (customer: CustomerEntity) =>
+			(
+				await dataSource.query(`SELECT "faucetRequestId" FROM "faucetRequest" WHERE "customerId" = $1`, [
+					customer.customerId,
+				])
+			).length;
+		const backdateMonths = (id: string, months: number) =>
+			dataSource.query(
+				`UPDATE "faucetRequest" SET "createdAt" = now() - ($1 || ' months')::interval WHERE "faucetRequestId" = $2`,
+				[String(months), id]
+			);
+
+		it('deletes rows past the retention period and keeps recent ones', async () => {
+			const customer = await newCustomer();
+			const old = await service.reserve(customer, 'cheqd1a', cheq(1), { limitNcheq: LIMIT });
+			const recent = await service.reserve(customer, 'cheqd1a', cheq(2), { limitNcheq: LIMIT });
+			const borderline = await service.reserve(customer, 'cheqd1a', cheq(3), { limitNcheq: LIMIT });
+			if (!old.reserved || !recent.reserved || !borderline.reserved) throw new Error('expected reservations');
+			await backdateMonths(old.faucetRequestId, 14);
+			await backdateMonths(recent.faucetRequestId, 2);
+			await backdateMonths(borderline.faucetRequestId, 12);
+
+			await service.runRetentionCleanup(new Date(), 13);
+
+			const remaining = (
+				await dataSource.query(`SELECT "faucetRequestId" FROM "faucetRequest" WHERE "customerId" = $1`, [
+					customer.customerId,
+				])
+			).map((r: { faucetRequestId: string }) => r.faucetRequestId);
+			expect(remaining.sort()).toEqual([recent.faucetRequestId, borderline.faucetRequestId].sort());
+		});
+
+		it('keeps everything when retention is 0', async () => {
+			const customer = await newCustomer();
+			const old = await service.reserve(customer, 'cheqd1a', cheq(1), { limitNcheq: LIMIT });
+			if (!old.reserved) throw new Error('expected a reservation');
+			await backdateMonths(old.faucetRequestId, 36);
+
+			expect(await service.runRetentionCleanup(new Date(), 0)).toBe(0);
+			expect(await idsFor(customer)).toBe(1);
+		});
+
+		it('does not change the current quota usage', async () => {
+			const customer = await newCustomer();
+			await service.reserve(customer, 'cheqd1a', cheq(5_000), { limitNcheq: LIMIT });
+			const before = await service.getUsedNcheq(customer);
+			await service.runRetentionCleanup(new Date(), 13);
+			expect(await service.getUsedNcheq(customer)).toBe(before);
+		});
+	});
+
 	it('never lets concurrent reservations exceed the limit', async () => {
 		const customer = await newCustomer();
 
