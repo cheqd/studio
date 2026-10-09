@@ -4,6 +4,7 @@ import { CustomerEntity } from '../../../src/database/entities/customer.entity.j
 import { FaucetRequestEntity } from '../../../src/database/entities/faucet-request.entity.js';
 import { StudioMigrations1791500000000 } from '../../../src/database/migrations/1791500000000-studio-migrations.js';
 import { StudioMigrations1791500000001 } from '../../../src/database/migrations/1791500000001-studio-migrations.js';
+import { StudioMigrations1791500000002 } from '../../../src/database/migrations/1791500000002-studio-migrations.js';
 import type { FaucetRequestService } from '../../../src/services/api/faucet-request.js';
 
 /**
@@ -56,6 +57,7 @@ describeWithDatabase('FaucetRequestService (Postgres)', () => {
 		await dataSource.initialize();
 		await new StudioMigrations1791500000000().up(dataSource.createQueryRunner());
 		await new StudioMigrations1791500000001().up(dataSource.createQueryRunner());
+		await new StudioMigrations1791500000002().up(dataSource.createQueryRunner());
 		// Imported here, not at the top: the service pulls in the database connection, whose entities require
 		// ENABLE_EXTERNAL_DB to be defined at import time, and a skipped run should not load any of that.
 		process.env.ENABLE_EXTERNAL_DB ??= 'false';
@@ -70,6 +72,25 @@ describeWithDatabase('FaucetRequestService (Postgres)', () => {
 	it('creates a table that matches the entity (no schema drift)', async () => {
 		const { upQueries } = await dataSource.driver.createSchemaBuilder().log();
 		expect(upQueries.map((q) => q.query).filter((q) => q.includes('faucetRequest'))).toEqual([]);
+	});
+
+	it('exposes amounts as bigint and lets the database set createdAt', async () => {
+		const customer = await newCustomer();
+		const reservation = await service.reserve(customer, 'cheqd1a', cheq(12_345), { limitNcheq: LIMIT });
+		if (!reservation.reserved) throw new Error('expected a reservation');
+
+		const row = await dataSource
+			.getRepository(FaucetRequestEntity)
+			.findOneByOrFail({ faucetRequestId: reservation.faucetRequestId });
+
+		expect(row.amountNcheq).toBe(cheq(12_345));
+		expect(typeof row.amountNcheq).toBe('bigint');
+		expect(row.createdAt).toBeInstanceOf(Date);
+		const [{ drift }] = await dataSource.query(
+			`SELECT abs(extract(epoch from (now() - "createdAt"))) AS drift FROM "faucetRequest" WHERE "faucetRequestId" = $1`,
+			[reservation.faucetRequestId]
+		);
+		expect(Number(drift)).toBeLessThan(5);
 	});
 
 	it('starts at zero and counts what has been reserved', async () => {
