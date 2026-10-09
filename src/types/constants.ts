@@ -92,6 +92,10 @@ export const FAUCET_MIN_INTERVAL_SECONDS = parseNonNegativeIntEnv(process.env.FA
 // before it is treated as abandoned (e.g. the process died before calling the faucet). Must be longer than the
 // longest time a faucet call can take. Reservations whose faucet call threw (outcome unknown) always keep counting.
 export const FAUCET_PENDING_TIMEOUT_SECONDS = parseNonNegativeIntEnv(process.env.FAUCET_PENDING_TIMEOUT_SECONDS, 600);
+// A faucet transfer takes a few blocks to show up in an address's on-chain balance. For this many seconds, requests
+// already made for the same address are subtracted from the room left under the address cap, so simultaneous
+// requests cannot each be allowed the full room. Over-subtracting briefly is the safe direction.
+export const FAUCET_BALANCE_SETTLE_SECONDS = parseNonNegativeIntEnv(process.env.FAUCET_BALANCE_SETTLE_SECONDS, 20);
 export const FAUCET_AMOUNT = parseNumberEnv(process.env.FAUCET_AMOUNT, 100000000000000);
 export const FAUCET_ACCESS_CLIENT_ID = process.env.FAUCET_ACCESS_CLIENT_ID || '';
 export const FAUCET_ACCESS_CLIENT_SECRET = process.env.FAUCET_ACCESS_CLIENT_SECRET || '';

@@ -1,5 +1,6 @@
 import { describe, it, expect, jest } from '@jest/globals';
 import {
+	addressRoomNcheq,
 	buildFaucetQuotaSummary,
 	creditWithinQuota,
 	fitsInQuota,
@@ -89,6 +90,17 @@ describe('secondsUntilNextRequest', () => {
 	});
 });
 
+describe('addressRoomNcheq', () => {
+	it('subtracts the balance and requests still in flight from the cap', () => {
+		expect(addressRoomNcheq(100n, 30n, 20n)).toBe(50n);
+	});
+
+	it('is never negative', () => {
+		expect(addressRoomNcheq(100n, 90n, 20n)).toBe(0n);
+		expect(addressRoomNcheq(100n, 150n, 0n)).toBe(0n);
+	});
+});
+
 describe('maxRequestableNcheq', () => {
 	it('is limited by the room under the address cap when that is lower', () => {
 		expect(maxRequestableNcheq(10n, 50n)).toBe(10n);
@@ -173,6 +185,20 @@ describe('creditWithinQuota', () => {
 		let faucetCalls = 0;
 		const result = await creditWithinQuota(ledger, async () => (faucetCalls++, ok()), params);
 		expect(result).toEqual({ outcome: 'too_frequent', retryAfterSeconds: 7, window });
+		expect(faucetCalls).toBe(0);
+		expect(ledgerCalls).toEqual(untouched);
+	});
+
+	it('does not call the faucet and reports the room left when the address cap would be exceeded', async () => {
+		const { ledger, ledgerCalls } = makeLedger({
+			reserved: false,
+			reason: 'address_cap_exceeded',
+			roomNcheq: 5n,
+			window,
+		});
+		let faucetCalls = 0;
+		const result = await creditWithinQuota(ledger, async () => (faucetCalls++, ok()), params);
+		expect(result).toEqual({ outcome: 'address_cap_exceeded', roomNcheq: 5n });
 		expect(faucetCalls).toBe(0);
 		expect(ledgerCalls).toEqual(untouched);
 	});

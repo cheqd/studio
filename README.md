@@ -114,9 +114,10 @@ some tokens on the testnet for making the process simpler.
 7. `FAUCET_SUBSCRIPTION_CACHE_SECONDS`: How long `POST /account/faucet` caches a customer's Stripe subscription status and plan, so API-key use does not call Stripe on every request. The stored subscription status is still checked on every request, so a cancellation takes effect immediately; a plan change can take this long to be seen. `0` disables the cache. (Default: 60)
 8. `FAUCET_MIN_INTERVAL_SECONDS`: Minimum gap between two `POST /account/faucet` requests from the same customer, so a script cannot hammer the endpoint in a tight loop. A request made too soon returns `429` with a `Retry-After` header and does not reach Stripe, the RPC node or the faucet. `0` disables it. Does not apply to the automatic top-up at account creation. (Default: 10)
 9. `FAUCET_PENDING_TIMEOUT_SECONDS`: How long a faucet quota reservation that has not been confirmed counts towards the quota before it is treated as abandoned (for example because the process died before calling the faucet). Keep it longer than the longest faucet call. A reservation whose faucet call threw (outcome unknown, so tokens may have been sent) always keeps counting. (Default: 600)
-10. `FAUCET_API_KEY`: API key for faucet service authentication
-11. `FAUCET_ACCESS_CLIENT_ID`: Cloudflare Access client ID for accessing the Testnet Faucet API
-12. `FAUCET_ACCESS_CLIENT_SECRET`: Cloudflare Access client secret for accessing the Testnet Faucet API
+10. `FAUCET_BALANCE_SETTLE_SECONDS`: A faucet transfer takes a few blocks to show up in an address's on-chain balance. For this many seconds, requests already made for the same address are subtracted from the room left under `FAUCET_ADDRESS_CAP_CHEQ`, so simultaneous requests cannot each be allowed the full room. (Default: 20)
+11. `FAUCET_API_KEY`: API key for faucet service authentication
+12. `FAUCET_ACCESS_CLIENT_ID`: Cloudflare Access client ID for accessing the Testnet Faucet API
+13. `FAUCET_ACCESS_CLIENT_SECRET`: Cloudflare Access client secret for accessing the Testnet Faucet API
 
 Studio exposes `POST /account/faucet` for authenticated Studio users on Basic-or-higher subscriptions. The endpoint accepts optional `address` and `amount` fields; `amount` is expressed in CHEQ. If `address` is omitted, Studio uses the customer's testnet payment account. If `amount` is omitted, Studio tops the address up to `FAUCET_ADDRESS_CAP_CHEQ`, or by whatever monthly quota is left if that is lower. Requests that exceed the address cap return a `requestMore.mailtoHref` for contacting `product@cheqd.io`.
 

@@ -70,6 +70,21 @@ export function secondsUntilNextRequest(
 	return remainingMs > 0 ? Math.ceil(remainingMs / 1000) : 0;
 }
 
+/** Room left under an address cap once its balance and requests still in flight are accounted for; never negative. */
+export function addressRoomNcheq(capNcheq: bigint, currentBalanceNcheq: bigint, inFlightNcheq: bigint): bigint {
+	const room = capNcheq - currentBalanceNcheq - inFlightNcheq;
+	return room > 0n ? room : 0n;
+}
+
+export interface FaucetAddressCap {
+	// Most the address may hold
+	capNcheq: bigint;
+	// Balance read from the chain before the reservation; it may not yet include recent transfers
+	currentBalanceNcheq: bigint;
+	// Requests for the address made in the last this-many seconds are assumed not to be in the balance yet
+	settleSeconds: number;
+}
+
 export interface FaucetReserveOptions {
 	// Most the customer can request per quota window
 	limitNcheq: bigint;
@@ -77,12 +92,15 @@ export interface FaucetReserveOptions {
 	pendingTimeoutSeconds?: number;
 	// Minimum gap between two requests from the customer; 0 or undefined disables the check
 	minIntervalSeconds?: number;
+	// Enforce the address cap under the lock, counting requests still in flight for the same address
+	addressCap?: FaucetAddressCap;
 }
 
 export type FaucetReservation =
 	| { reserved: true; faucetRequestId: string; usedNcheq: bigint; window: FaucetQuotaWindow }
 	| { reserved: false; reason: 'quota_exceeded'; usedNcheq: bigint; window: FaucetQuotaWindow }
-	| { reserved: false; reason: 'too_frequent'; retryAfterSeconds: number; window: FaucetQuotaWindow };
+	| { reserved: false; reason: 'too_frequent'; retryAfterSeconds: number; window: FaucetQuotaWindow }
+	| { reserved: false; reason: 'address_cap_exceeded'; roomNcheq: bigint; window: FaucetQuotaWindow };
 
 /** Storage for quota reservations; implemented by `FaucetRequestService` and faked in tests. */
 export interface FaucetQuotaLedger {
@@ -110,6 +128,7 @@ async function markUnknownBestEffort(ledger: FaucetQuotaLedger, faucetRequestId:
 export type FaucetCreditResult =
 	| { outcome: 'quota_exceeded'; usedNcheq: bigint; window: FaucetQuotaWindow }
 	| { outcome: 'too_frequent'; retryAfterSeconds: number; window: FaucetQuotaWindow }
+	| { outcome: 'address_cap_exceeded'; roomNcheq: bigint }
 	// `usedNcheq` already includes the amount just credited.
 	| { outcome: 'credited'; usedNcheq: bigint; window: FaucetQuotaWindow }
 	| { outcome: 'faucet_failed'; status: number; error: string };
@@ -132,16 +151,27 @@ export async function creditWithinQuota(
 		amountNcheq: bigint;
 		limitNcheq: bigint;
 		minIntervalSeconds?: number;
+		addressCap?: FaucetAddressCap;
 	}
 ): Promise<FaucetCreditResult> {
 	const reservation = await ledger.reserve(params.customer, params.address, params.amountNcheq, {
 		limitNcheq: params.limitNcheq,
 		minIntervalSeconds: params.minIntervalSeconds,
+		addressCap: params.addressCap,
 	});
 	if (!reservation.reserved) {
-		return reservation.reason === 'too_frequent'
-			? { outcome: 'too_frequent', retryAfterSeconds: reservation.retryAfterSeconds, window: reservation.window }
-			: { outcome: 'quota_exceeded', usedNcheq: reservation.usedNcheq, window: reservation.window };
+		switch (reservation.reason) {
+			case 'too_frequent':
+				return {
+					outcome: 'too_frequent',
+					retryAfterSeconds: reservation.retryAfterSeconds,
+					window: reservation.window,
+				};
+			case 'address_cap_exceeded':
+				return { outcome: 'address_cap_exceeded', roomNcheq: reservation.roomNcheq };
+			default:
+				return { outcome: 'quota_exceeded', usedNcheq: reservation.usedNcheq, window: reservation.window };
+		}
 	}
 
 	let faucet: { status: number; error: string };

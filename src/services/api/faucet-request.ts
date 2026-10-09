@@ -4,6 +4,7 @@ import { FaucetRequestEntity } from '../../database/entities/faucet-request.enti
 import { Connection } from '../../database/connection/connection.js';
 import { FAUCET_PENDING_TIMEOUT_SECONDS } from '../../types/constants.js';
 import {
+	addressRoomNcheq,
 	fitsInQuota,
 	getFaucetQuotaWindow,
 	secondsUntilNextRequest,
@@ -46,6 +47,24 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 				`(request.status IN ('completed', 'unknown') OR (request.status = 'pending' AND request.createdAt >= :pendingCutoff))`,
 				{ pendingCutoff }
 			)
+			.getRawOne<{ total: string }>();
+		return BigInt(row?.total ?? '0');
+	}
+
+	/** Total ncheq requested for one address since `since`, excluding abandoned reservations. */
+	private static async sumRecentForAddress(
+		manager: EntityManager,
+		customerId: string,
+		address: string,
+		since: Date
+	): Promise<bigint> {
+		const row = await manager
+			.createQueryBuilder(FaucetRequestEntity, 'request')
+			.select('COALESCE(SUM(request.amountNcheq), 0)', 'total')
+			.where('request.customerId = :customerId', { customerId })
+			.andWhere('request.address = :address', { address })
+			.andWhere('request.createdAt >= :since', { since })
+			.andWhere(`request.status <> 'abandoned'`)
 			.getRawOne<{ total: string }>();
 		return BigInt(row?.total ?? '0');
 	}
@@ -107,6 +126,7 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 			limitNcheq,
 			minIntervalSeconds = 0,
 			pendingTimeoutSeconds = FAUCET_PENDING_TIMEOUT_SECONDS,
+			addressCap,
 		}: FaucetReserveOptions,
 		now: Date = new Date()
 	): Promise<FaucetReservation> {
@@ -148,6 +168,21 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 			);
 			if (!fitsInQuota(usedNcheq, amountNcheq, limitNcheq)) {
 				return { reserved: false, reason: 'quota_exceeded', usedNcheq, window } as const;
+			}
+
+			// The balance the caller read may not include transfers still on their way, so subtract recent requests
+			// for this address. Done under the lock, this stops simultaneous requests each getting the full room.
+			if (addressCap) {
+				const inFlightNcheq = await FaucetRequestService.sumRecentForAddress(
+					manager,
+					customer.customerId,
+					address,
+					new Date(now.getTime() - addressCap.settleSeconds * 1000)
+				);
+				const roomNcheq = addressRoomNcheq(addressCap.capNcheq, addressCap.currentBalanceNcheq, inFlightNcheq);
+				if (amountNcheq > roomNcheq) {
+					return { reserved: false, reason: 'address_cap_exceeded', roomNcheq, window } as const;
+				}
 			}
 
 			const entity = await manager.save(new FaucetRequestEntity(customer, address, amountNcheq));

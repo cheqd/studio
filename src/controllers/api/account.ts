@@ -15,6 +15,7 @@ import type { SafeAPIResponse } from '../../types/common.js';
 import { CheqdNetwork, checkBalance } from '@cheqd/sdk';
 import {
 	FAUCET_ADDRESS_CAP_CHEQ,
+	FAUCET_BALANCE_SETTLE_SECONDS,
 	FAUCET_MIN_INTERVAL_SECONDS,
 	FAUCET_MONTHLY_LIMIT_CHEQ,
 	FAUCET_SUBSCRIPTION_CACHE_SECONDS,
@@ -788,10 +789,24 @@ export class AccountController {
 					amountNcheq: amountToRequestNcheq,
 					limitNcheq: quotaLimitNcheq,
 					minIntervalSeconds: FAUCET_MIN_INTERVAL_SECONDS,
+					addressCap: {
+						capNcheq: addressCapNcheq,
+						currentBalanceNcheq,
+						settleSeconds: FAUCET_BALANCE_SETTLE_SECONDS,
+					},
 				}
 			);
 			if (credit.outcome === 'too_frequent') {
 				return tooManyFaucetRequests(response, credit.retryAfterSeconds);
+			}
+			if (credit.outcome === 'address_cap_exceeded') {
+				// Requests made moments ago for this address have not reached its balance yet
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: 'Requested amount exceeds the maximum available top-up for this address.',
+					address: testnetAccount.address,
+					balance,
+					requestMore: buildRequestMore(customer, testnetAccount.address, balance, requestedAmountCheq),
+				});
 			}
 			if (credit.outcome === 'quota_exceeded') {
 				return response
@@ -1255,7 +1270,8 @@ async function delegateWithinQuota(
 				quotaExceeded: true,
 			};
 		case 'too_frequent':
-			// not requested here: the bootstrap top-up does not apply a minimum interval
+		case 'address_cap_exceeded':
+			// not requested here: the bootstrap top-up applies neither a minimum interval nor the address cap
 			return { status: StatusCodes.TOO_MANY_REQUESTS, error: 'Too many faucet requests.' };
 		case 'faucet_failed':
 			return { status: credit.status, error: credit.error };

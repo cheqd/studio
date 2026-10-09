@@ -293,6 +293,81 @@ describeWithDatabase('FaucetRequestService (Postgres)', () => {
 		});
 	});
 
+	describe('address cap', () => {
+		// A monthly limit well above the address cap, so the cap is the limit that binds
+		const HIGH_LIMIT = cheq(1_000_000);
+		const capOptions = (balance: number, settleSeconds = 20) => ({
+			limitNcheq: HIGH_LIMIT,
+			addressCap: { capNcheq: cheq(100_000), currentBalanceNcheq: cheq(balance), settleSeconds },
+		});
+
+		it('accepts a request that fits under the cap and rejects one that does not', async () => {
+			const customer = await newCustomer();
+			expect(await service.reserve(customer, 'cheqd1a', cheq(40_000), capOptions(60_000))).toMatchObject({
+				reserved: true,
+			});
+
+			const second = await service.reserve(customer, 'cheqd1b', cheq(40_001), capOptions(60_000));
+			expect(second).toMatchObject({ reserved: false, reason: 'address_cap_exceeded', roomNcheq: cheq(40_000) });
+		});
+
+		it('counts requests still in flight for the same address, so simultaneous requests cannot overshoot', async () => {
+			const customer = await newCustomer();
+
+			const results = await Promise.all(
+				Array.from({ length: 4 }, () => service.reserve(customer, 'cheqd1a', cheq(30_000), capOptions(60_000)))
+			);
+
+			// 60,000 held + 40,000 of room: only one 30,000 request fits
+			expect(results.filter((r) => r.reserved)).toHaveLength(1);
+			expect(results.filter((r) => !r.reserved && r.reason === 'address_cap_exceeded')).toHaveLength(3);
+		});
+
+		it('stops subtracting a request once it is older than the settle window', async () => {
+			const customer = await newCustomer();
+			const first = await service.reserve(customer, 'cheqd1a', cheq(30_000), capOptions(60_000));
+			if (!first.reserved) throw new Error('expected a reservation');
+			expect(await service.reserve(customer, 'cheqd1a', cheq(30_000), capOptions(60_000))).toMatchObject({
+				reserved: false,
+			});
+
+			await dataSource.query(
+				`UPDATE "faucetRequest" SET "createdAt" = now() - interval '1 minute' WHERE "faucetRequestId" = $1`,
+				[first.faucetRequestId]
+			);
+
+			expect(await service.reserve(customer, 'cheqd1a', cheq(30_000), capOptions(60_000))).toMatchObject({
+				reserved: true,
+			});
+		});
+
+		it('does not count requests for other addresses or abandoned reservations', async () => {
+			const customer = await newCustomer();
+			const other = await service.reserve(customer, 'cheqd1other', cheq(40_000), capOptions(60_000));
+			if (!other.reserved) throw new Error('expected a reservation');
+			expect(await service.reserve(customer, 'cheqd1a', cheq(40_000), capOptions(60_000))).toMatchObject({
+				reserved: true,
+			});
+
+			const stale = await newCustomer();
+			const abandoned = await service.reserve(stale, 'cheqd1a', cheq(40_000), capOptions(60_000));
+			if (!abandoned.reserved) throw new Error('expected a reservation');
+			await dataSource.query(`UPDATE "faucetRequest" SET status = 'abandoned' WHERE "faucetRequestId" = $1`, [
+				abandoned.faucetRequestId,
+			]);
+			expect(await service.reserve(stale, 'cheqd1a', cheq(40_000), capOptions(60_000))).toMatchObject({
+				reserved: true,
+			});
+		});
+
+		it('is not applied when no address cap is given', async () => {
+			const customer = await newCustomer();
+			expect(await service.reserve(customer, 'cheqd1a', cheq(500_000), { limitNcheq: HIGH_LIMIT })).toMatchObject(
+				{ reserved: true }
+			);
+		});
+	});
+
 	it('never lets concurrent reservations exceed the limit', async () => {
 		const customer = await newCustomer();
 
