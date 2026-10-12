@@ -363,6 +363,7 @@ export class AccountController {
 
 			// 7. Provision Mainnet & Testnet accounts in parallel
 			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
+			const isNewTestnetAccount = !accounts.some((acc) => acc.namespace === CheqdNetwork.Testnet);
 			const [mainnetResp, testnetResp] = await Promise.all([
 				AccountController.provisionCustomerAccount(CheqdNetwork.Mainnet, accounts, customerEntity),
 				AccountController.provisionCustomerAccount(CheqdNetwork.Testnet, accounts, customerEntity),
@@ -379,7 +380,7 @@ export class AccountController {
 			// 8. Update LogTo custom data and Top‑up Testnet in parallel (non-blocking)
 			await Promise.all([
 				updateCustomData(userEntity.logToId, customerEntity, mainnetResp, testnetResp, logToHelper, status),
-				topupTestnet(customerEntity, testnetResp, status, logToFirstName, logToLastName),
+				topupTestnet(customerEntity, testnetResp, status, isNewTestnetAccount, logToFirstName, logToLastName),
 			]);
 
 			// 9. Add user to Mailchimp with "cheqd_Studio" tag (feature-flagged)
@@ -546,6 +547,8 @@ export class AccountController {
 
 			// 3. Check if paymentAccount exists for the customer
 			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
+			// The initial top-up is only for a testnet account created by this call, not for an existing one
+			const isNewTestnetAccount = !accounts.some((acc) => acc.namespace === CheqdNetwork.Testnet);
 			const mainnetAccountResponse = await AccountController.provisionCustomerAccount(
 				CheqdNetwork.Mainnet,
 				accounts,
@@ -571,7 +574,7 @@ export class AccountController {
 			const testnetAccount = testnetAccountResponse.data;
 
 			// 4. Check the token balance for Testnet account
-			if (testnetAccount.address && process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
+			if (isNewTestnetAccount && testnetAccount.address && process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
 				const topupAmountNcheq =
 					cheqToNcheq(TESTNET_INITIAL_TOPUP_CHEQ) - (await getTestnetBalanceNcheq(testnetAccount.address));
 				if (topupAmountNcheq > 0n) {
@@ -1320,10 +1323,11 @@ async function topupTestnet(
 	customer: CustomerEntity,
 	testnetResp: any,
 	status: BootStrapAccountResponse,
+	isNewTestnetAccount: boolean,
 	firstName?: string | null,
 	lastName?: string | null
 ) {
-	if (!testnetResp.data?.address || process.env.ENABLE_ACCOUNT_TOPUP !== 'true') {
+	if (!isNewTestnetAccount || !testnetResp.data?.address || process.env.ENABLE_ACCOUNT_TOPUP !== 'true') {
 		return;
 	}
 	try {
@@ -1342,6 +1346,12 @@ async function topupTestnet(
 			);
 			if (faucet.status === StatusCodes.OK) {
 				status.testnetMinimumBalance = true;
+			} else if (faucet.quotaExceeded) {
+				// Account bootstrap must not fail because the monthly faucet quota is used up
+				logFaucetEvent('warn', 'faucet.bootstrap_topup_skipped', {
+					customerId: customer.customerId,
+					reason: 'quota_exceeded',
+				});
 			} else {
 				status.errors.push(faucet.error);
 			}
