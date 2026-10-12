@@ -1,6 +1,5 @@
 import type { Request, Response } from 'express';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
-import { fromBech32 } from '@cosmjs/encoding';
 import type { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
 import type {
 	QueryCustomerResponseBody,
@@ -26,7 +25,7 @@ import {
 } from '../../types/constants.js';
 import { CustomerService } from '../../services/api/customer.js';
 import { LogToHelper } from '../../middleware/auth/logto-helper.js';
-import { FaucetHelper, isFaucetTimeout } from '../../helpers/faucet.js';
+import { FaucetHelper, isFaucetTimeout, isValidFaucetAddress } from '../../helpers/faucet.js';
 import { PriceHelper } from '../../helpers/price.js';
 import { cheqToNcheq, ncheqToCheq, toSafeFaucetAmount } from '../../helpers/denom.js';
 import { StatusCodes } from 'http-status-codes';
@@ -84,6 +83,10 @@ export class AccountController {
 
 	public static faucetValidator = [
 		check('address').optional().isString().notEmpty().withMessage('address should be a valid string').bail(),
+		check('address')
+			.optional()
+			.custom((address: string) => isValidFaucetAddress(address))
+			.withMessage('address should be a valid lowercase cheqd bech32 account address'),
 		check('amount').optional().isFloat({ gt: 0 }).withMessage('amount should be a positive number').bail(),
 	];
 	/**
@@ -718,12 +721,10 @@ export class AccountController {
 				} satisfies UnsuccessfulResponseBody);
 			}
 
-			const testnetAccount = await resolveFaucetAccount(customer, requestedAddress);
+			const testnetAccount = await resolveFaucetTarget(customer, requestedAddress);
 			if (!testnetAccount) {
-				return response.status(requestedAddress ? StatusCodes.BAD_REQUEST : StatusCodes.NOT_FOUND).json({
-					error: requestedAddress
-						? 'address should be a valid lowercase cheqd bech32 address.'
-						: 'No Studio testnet payment account was found for this customer.',
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: 'No Studio testnet payment account was found for this customer.',
 				} satisfies UnsuccessfulResponseBody);
 			}
 
@@ -1111,28 +1112,17 @@ async function getTestnetBalanceNcheq(address: string): Promise<bigint> {
 	return getBalanceNcheq(address, process.env.TESTNET_RPC_URL);
 }
 
-const FAUCET_ADDRESS_PREFIX = 'cheqd';
-
-function isValidFaucetAddress(address: string): boolean {
-	try {
-		return fromBech32(address).prefix === FAUCET_ADDRESS_PREFIX && address === address.toLowerCase();
-	} catch {
-		return false;
-	}
-}
-
 /**
- * Resolves the address the faucet should fund. With no address this is the customer's own testnet payment account.
- * A supplied address may be any valid cheqd address, owned by the customer or not; quota and interval limits are
- * charged to the calling customer either way. Returns null when no address was given and no account exists, or when
- * the supplied address is malformed.
+ * Resolves the address the faucet should fund. A supplied address was already validated by `faucetValidator` and may
+ * belong to anyone; quota and interval limits are charged to the calling customer either way. With no address this is
+ * the customer's own testnet payment account, or null if they have none.
  */
-async function resolveFaucetAccount(
+async function resolveFaucetTarget(
 	customer: CustomerEntity,
 	requestedAddress?: string
 ): Promise<{ address: string } | null> {
 	if (requestedAddress) {
-		return isValidFaucetAddress(requestedAddress) ? { address: requestedAddress } : null;
+		return { address: requestedAddress };
 	}
 
 	return PaymentAccountService.instance.findOne({

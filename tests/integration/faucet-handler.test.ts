@@ -99,7 +99,10 @@ describe('POST /account/faucet and GET /account/balances (Postgres, faked extern
 				return res;
 			},
 		};
-		await controller.requestFaucetTokens({ headers, body }, res);
+		const req = { headers, body };
+		// the router runs the validators before the handler; do the same so the handler's 400s are exercised
+		for (const chain of AccountControllerRef.faucetValidator) await chain.run(req);
+		await controller.requestFaucetTokens(req, res);
 		return { status, json, headers: responseHeaders };
 	};
 
@@ -371,11 +374,12 @@ describe('POST /account/faucet and GET /account/balances (Postgres, faked extern
 			assert.equal(await used(customer), cheq(1000));
 		});
 
-		it('answers 400 for a malformed, wrong-prefix or uppercase address, without calling the faucet', async () => {
+		it('answers 400 for a malformed, wrong-prefix, non-account or uppercase address, without calling the faucet', async () => {
 			reset();
 			const customer = await newCustomer();
 			const wrongPrefix = toBech32('cosmos', new Uint8Array(20).fill(7));
-			for (const address of ['cheqd1someoneelse', wrongPrefix, OTHER_ADDRESS.toUpperCase()]) {
+			const contractAddress = toBech32('cheqd', new Uint8Array(32).fill(7));
+			for (const address of ['cheqd1someoneelse', wrongPrefix, contractAddress, OTHER_ADDRESS.toUpperCase()]) {
 				assert.equal((await call(customer, { address, amount: 1 })).status, 400, address);
 			}
 			assert.equal(faucetCalls, 0);
