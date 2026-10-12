@@ -82,6 +82,18 @@ export const MINIMAL_DENOM = 'ncheq';
 export const FAUCET_URI = process.env.FAUCET_URI || 'https://faucet-api.cheqd.network/credit';
 export const FAUCET_API_KEY = process.env.FAUCET_API_KEY || 'default-api-key';
 export const DEFAULT_DENOM_EXPONENT = 9;
+export const TESTNET_MINIMUM_BALANCE = parseNumberEnv(
+	process.env.TESTNET_MINIMUM_BALANCE,
+	10000,
+	'TESTNET_MINIMUM_BALANCE'
+);
+// Amount, in CHEQ, a new account's testnet address is topped up to when it is bootstrapped (ENABLE_ACCOUNT_TOPUP).
+// TESTNET_FAUCET_UPPER_CAP_CHEQ is the previous name and is still honoured as a fallback.
+export const TESTNET_INITIAL_TOPUP_CHEQ = parseNumberEnv(
+	process.env.TESTNET_INITIAL_TOPUP_CHEQ || process.env.TESTNET_FAUCET_UPPER_CAP_CHEQ,
+	TESTNET_MINIMUM_BALANCE,
+	process.env.TESTNET_INITIAL_TOPUP_CHEQ ? 'TESTNET_INITIAL_TOPUP_CHEQ' : 'TESTNET_FAUCET_UPPER_CAP_CHEQ'
+);
 // Most CHEQ a customer can request through POST /account/faucet per calendar month (UTC)
 export const FAUCET_MONTHLY_LIMIT_CHEQ = parseNumberEnv(
 	process.env.FAUCET_MONTHLY_LIMIT_CHEQ,
