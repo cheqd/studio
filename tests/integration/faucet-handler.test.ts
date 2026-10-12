@@ -2,6 +2,7 @@ import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { DataSource } from 'typeorm';
+import { toBech32 } from '@cosmjs/encoding';
 
 /**
  * Handler-level tests for POST /account/faucet and GET /account/balances. They call the real controller methods
@@ -22,6 +23,7 @@ import { DataSource } from 'typeorm';
 const databaseUrl = process.env.FAUCET_TEST_DATABASE_URL;
 const cheq = (amount: number) => BigInt(amount) * 1_000_000_000n;
 const ADDRESS = 'cheqd1testaddress';
+const OTHER_ADDRESS = toBech32('cheqd', new Uint8Array(20).fill(7));
 
 /** Asserts that every field in `expected` is present, recursively, with the same value. */
 function assertSubset(actual: any, expected: any, path = 'value'): void {
@@ -49,6 +51,7 @@ describe('POST /account/faucet and GET /account/balances (Postgres, faked extern
 	let balanceCalls = 0;
 	let stripeCalls = 0;
 	let faucetCalls = 0;
+	let lastFaucetAddress: string | undefined;
 	const resetCounters = () => {
 		balanceCalls = 0;
 		stripeCalls = 0;
@@ -163,8 +166,9 @@ describe('POST /account/faucet and GET /account/balances (Postgres, faked extern
 		const { PaymentAccountService } = await import('../../src/services/api/payment-account.js');
 		const { FaucetRequestService } = await import('../../src/services/api/faucet-request.js');
 
-		(FaucetHelper as any).delegateTokens = async () => {
+		(FaucetHelper as any).delegateTokens = async (address: string) => {
 			faucetCalls++;
+			lastFaucetAddress = address;
 			if (faucetMode === 'throw') throw new Error('network timeout');
 			return { status: faucetMode === 'ok' ? 200 : 500, error: faucetMode === 'ok' ? '' : 'boom', data: {} };
 		};
@@ -341,13 +345,33 @@ describe('POST /account/faucet and GET /account/balances (Postgres, faked extern
 		});
 	});
 
-	describe('input and ownership', () => {
-		it('answers 400 for an absurd amount and a sub-ncheq amount, and 403 for an address the customer does not own', async () => {
+	describe('input and address', () => {
+		it('answers 400 for an absurd amount and a sub-ncheq amount', async () => {
 			reset();
 			const customer = await newCustomer();
 			assert.equal((await call(customer, { amount: 1e30 })).status, 400);
 			assert.equal((await call(customer, { amount: 0.0000000001 })).status, 400);
-			assert.equal((await call(customer, { address: 'cheqd1someoneelse', amount: 1 })).status, 403);
+		});
+
+		it('funds a valid cheqd address the customer does not own, and charges the customer quota', async () => {
+			reset();
+			const customer = await newCustomer();
+			const result = await call(customer, { address: OTHER_ADDRESS, amount: 1000 });
+			assert.equal(result.status, 200);
+			assert.equal(result.json.funded, true);
+			assert.equal(result.json.address, OTHER_ADDRESS);
+			assert.equal(lastFaucetAddress, OTHER_ADDRESS);
+			assert.equal(await used(customer), cheq(1000));
+		});
+
+		it('answers 400 for a malformed, wrong-prefix or uppercase address, without calling the faucet', async () => {
+			reset();
+			const customer = await newCustomer();
+			const wrongPrefix = toBech32('cosmos', new Uint8Array(20).fill(7));
+			for (const address of ['cheqd1someoneelse', wrongPrefix, OTHER_ADDRESS.toUpperCase()]) {
+				assert.equal((await call(customer, { address, amount: 1 })).status, 400, address);
+			}
+			assert.equal(faucetCalls, 0);
 		});
 	});
 

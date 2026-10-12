@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import { fromBech32 } from '@cosmjs/encoding';
 import type { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
 import type {
 	QueryCustomerResponseBody,
@@ -625,7 +626,7 @@ export class AccountController {
 	 *   post:
 	 *     tags: [Account]
 	 *     summary: Request cheqd testnet CHEQ tokens for a Studio payment account.
-	 *     description: Funds an authenticated Studio user's owned testnet payment account. An address can hold at most FAUCET_ADDRESS_CAP_CHEQ, and a customer can request at most FAUCET_MONTHLY_LIMIT_CHEQ per calendar month (UTC) across all their addresses; both default to 100,000 CHEQ. Without an amount the address is topped up to the cap, or by the quota left if that is lower. Authentication: a Studio user session (bearer token), an API key (`x-api-key`) or a machine-to-machine token (bearer token plus a `customer-id` header); whichever is used, the credential must carry the `request:faucet:testnet` scope. The response includes the remaining quota.
+	 *     description: Funds a cheqd testnet address: the customer's own payment account by default, or any valid cheqd address supplied. An address can hold at most FAUCET_ADDRESS_CAP_CHEQ, and a customer can request at most FAUCET_MONTHLY_LIMIT_CHEQ per calendar month (UTC) across all their addresses; both default to 100,000 CHEQ. Without an amount the address is topped up to the cap, or by the quota left if that is lower. Authentication: a Studio user session (bearer token), an API key (`x-api-key`) or a machine-to-machine token (bearer token plus a `customer-id` header); whichever is used, the credential must carry the `request:faucet:testnet` scope. The response includes the remaining quota.
 	 *     requestBody:
 	 *       content:
 	 *         application/json:
@@ -634,7 +635,7 @@ export class AccountController {
 	 *             properties:
 	 *               address:
 	 *                 type: string
-	 *                 description: Optional owned Studio testnet payment account address. Defaults to the authenticated customer's testnet account.
+	 *                 description: Optional cheqd testnet address to fund; it does not have to belong to the customer. Requests count against the calling customer's quota. Defaults to the authenticated customer's testnet account.
 	 *               amount:
 	 *                 type: number
 	 *                 description: Optional amount in CHEQ. Defaults to the most that can be requested now (the lower of the room under the address cap and the monthly quota left).
@@ -716,9 +717,9 @@ export class AccountController {
 
 			const testnetAccount = await resolveFaucetAccount(customer, requestedAddress);
 			if (!testnetAccount) {
-				return response.status(requestedAddress ? StatusCodes.FORBIDDEN : StatusCodes.NOT_FOUND).json({
+				return response.status(requestedAddress ? StatusCodes.BAD_REQUEST : StatusCodes.NOT_FOUND).json({
 					error: requestedAddress
-						? 'The requested address is not an owned Studio testnet payment account.'
+						? 'address should be a valid lowercase cheqd bech32 address.'
 						: 'No Studio testnet payment account was found for this customer.',
 				} satisfies UnsuccessfulResponseBody);
 			}
@@ -1107,16 +1108,28 @@ async function getTestnetBalanceNcheq(address: string): Promise<bigint> {
 	return getBalanceNcheq(address, process.env.TESTNET_RPC_URL);
 }
 
+const FAUCET_ADDRESS_PREFIX = 'cheqd';
+
+function isValidFaucetAddress(address: string): boolean {
+	try {
+		return fromBech32(address).prefix === FAUCET_ADDRESS_PREFIX && address === address.toLowerCase();
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Resolves the address the faucet should fund. With no address this is the customer's own testnet payment account.
+ * A supplied address may be any valid cheqd address, owned by the customer or not; quota and interval limits are
+ * charged to the calling customer either way. Returns null when no address was given and no account exists, or when
+ * the supplied address is malformed.
+ */
 async function resolveFaucetAccount(
 	customer: CustomerEntity,
 	requestedAddress?: string
-): Promise<PaymentAccountEntity | null> {
+): Promise<{ address: string } | null> {
 	if (requestedAddress) {
-		return PaymentAccountService.instance.findOne({
-			address: requestedAddress,
-			namespace: CheqdNetwork.Testnet,
-			customer,
-		});
+		return isValidFaucetAddress(requestedAddress) ? { address: requestedAddress } : null;
 	}
 
 	return PaymentAccountService.instance.findOne({
