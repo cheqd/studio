@@ -1319,7 +1319,8 @@ async function delegateWithinQuota(
 	}
 }
 
-async function topupTestnet(
+// Exported for the handler tests only
+export async function topupTestnet(
 	customer: CustomerEntity,
 	testnetResp: any,
 	status: BootStrapAccountResponse,
