@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.18.0-develop.1](https://github.com/cheqd/studio/compare/3.17.0...3.18.0-develop.1) (2026-10-13)
+
+### Features
+
+* add monthly faucet quota service and helpers ([7eef4f7](https://github.com/cheqd/studio/commit/7eef4f751c2c3be17d22d83938bf1d171e747934)), closes [#818](https://github.com/cheqd/studio/issues/818)
+* allow API keys on POST /account/faucet with monthly quota ([6ed02c8](https://github.com/cheqd/studio/commit/6ed02c8a0fb7e33209d416acf7bde69c55f9d9d3)), closes [#818](https://github.com/cheqd/studio/issues/818)
+* allow API keys on the faucet endpoint with a monthly CHEQ quota ([#819](https://github.com/cheqd/studio/issues/819)) ([17dcb04](https://github.com/cheqd/studio/commit/17dcb049b6c958b1155ebece689383945c05669b)), closes [cheqd/studio-portal#258](https://github.com/cheqd/studio-portal/issues/258)
+* apply monthly quota as the per-request limit for explicit faucet amounts ([6979f42](https://github.com/cheqd/studio/commit/6979f428a3204931cc13ccd64ef92e7396b15649)), closes [#818](https://github.com/cheqd/studio/issues/818)
+* **db:** add faucetRequest table for monthly faucet quota ([ef43cb1](https://github.com/cheqd/studio/commit/ef43cb1293083ee63971d276d8ea07788d1e9b96)), closes [#818](https://github.com/cheqd/studio/issues/818)
+* debit the initial testnet top-up from the monthly faucet quota ([15c8d8c](https://github.com/cheqd/studio/commit/15c8d8c75b3b56e949b4479974d450459972dfc5)), closes [#818](https://github.com/cheqd/studio/issues/818)
+* return faucet cap and monthly quota usage from GET /account/balances ([3ba590d](https://github.com/cheqd/studio/commit/3ba590db2409967ac7352d36fd65e5e7625574c9)), closes [#818](https://github.com/cheqd/studio/issues/818)
+* use a single 100k CHEQ cap for faucet balance and monthly quota ([4612b1f](https://github.com/cheqd/studio/commit/4612b1f8cbea0dc11134aaf8335c0c1c66df49fa)), closes [#818](https://github.com/cheqd/studio/issues/818)
+
+### Bug Fixes
+
+* time out the faucet call and warn on invalid faucet config ([9b14df1](https://github.com/cheqd/studio/commit/9b14df18fa1e7e9254c52b9d3af3ca8033d477aa)), closes [#818](https://github.com/cheqd/studio/issues/818)
+
 ## [3.17.0](https://github.com/cheqd/studio/compare/3.16.1...3.17.0) (2026-09-29)
 
 ### Features
