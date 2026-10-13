@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.17.0](https://github.com/cheqd/studio/compare/3.16.1...3.17.0) (2026-09-29)
+
+### Features
+
+* **account:** add GET /account/balances with CHEQ/USD conversion ([bfc013e](https://github.com/cheqd/studio/commit/bfc013e27fbc08a8b0cfa5a6b5882e2ca7ec953b))
+* **account:** add GET /account/balances with CHEQ/USD conversion ([#814](https://github.com/cheqd/studio/issues/814)) ([6a2510e](https://github.com/cheqd/studio/commit/6a2510e853deee87fe871fedf9a11cab27a12bb1))
+* Add Faucet API access headers ([#810](https://github.com/cheqd/studio/issues/810)) ([59d9f7e](https://github.com/cheqd/studio/commit/59d9f7e1de9d6a7290c4fa5a3232f404559a1985))
+* add guarded Stripe plan migration ([#816](https://github.com/cheqd/studio/issues/816)) ([e4e495d](https://github.com/cheqd/studio/commit/e4e495dbb51d6432c6389a66aab807412f304a9b))
+* Align Basic/Build plans and add testnet faucet API ([#811](https://github.com/cheqd/studio/issues/811)) ([7b00c1f](https://github.com/cheqd/studio/commit/7b00c1f3a6f6bb6cf2c9492a1c56dc0628de8b75))
+* Start Basic plan as trial for new Studio accounts ([#812](https://github.com/cheqd/studio/issues/812)) ([52c2249](https://github.com/cheqd/studio/commit/52c224953b05addb9e3375064a4bd0151c39d689))
+
+### Bug Fixes
+
+* Add missing body parameters for faucet topup requests ([#813](https://github.com/cheqd/studio/issues/813)) ([a61bfd5](https://github.com/cheqd/studio/commit/a61bfd5048ae8aea9a433f82f378fbc8c5c6ff90))
+* Improve error-handling for faucet requests ([89ed790](https://github.com/cheqd/studio/commit/89ed79048ecf71ef91b9e3537d166f8ae2d615da))
+* revert semantic-release version for node 20 ([0915874](https://github.com/cheqd/studio/commit/09158742ef0136db91caa92b55fc4ee7e3dae577))
+* **test:** correct no-auth spec matching in Playwright projects ([348251a](https://github.com/cheqd/studio/commit/348251a1309a05497a0b85d04c12ef7d0118675c))
+* **test:** move credential verify test out of no-auth suite ([36bae65](https://github.com/cheqd/studio/commit/36bae6588d2269fc955b29c8df31a87b80642687))
+
 ## [3.17.0-develop.7](https://github.com/cheqd/studio/compare/3.17.0-develop.6...3.17.0-develop.7) (2026-09-29)
 
 ### Features
