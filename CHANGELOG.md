@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.18.0-develop.3](https://github.com/cheqd/studio/compare/3.18.0-develop.2...3.18.0-develop.3) (2026-10-13)
+
+### Features
+
+* delete faucet request history past a retention period ([038a079](https://github.com/cheqd/studio/commit/038a079107ba9eb17e0ec326319fd9847ea65c81)), closes [#824](https://github.com/cheqd/studio/issues/824)
+* faucet address-cap race, retention, logging, tests and entity tidy-ups (follow-ups to [#829](https://github.com/cheqd/studio/issues/829)) ([#830](https://github.com/cheqd/studio/issues/830)) ([766b1cd](https://github.com/cheqd/studio/commit/766b1cdee697aa84e57e4892cf18d361b5825bed)), closes [#823](https://github.com/cheqd/studio/issues/823) [#824](https://github.com/cheqd/studio/issues/824) [#825](https://github.com/cheqd/studio/issues/825) [#826](https://github.com/cheqd/studio/issues/826) [#827](https://github.com/cheqd/studio/issues/827) [#823](https://github.com/cheqd/studio/issues/823) [#824](https://github.com/cheqd/studio/issues/824) [#825](https://github.com/cheqd/studio/issues/825) [#826](https://github.com/cheqd/studio/issues/826) [#827](https://github.com/cheqd/studio/issues/827) [#828](https://github.com/cheqd/studio/issues/828) [#819](https://github.com/cheqd/studio/issues/819)
+* log faucet quota decisions as structured events ([b21176b](https://github.com/cheqd/studio/commit/b21176b0e9db6af4c966ded1f77102cbfa1162a1)), closes [#825](https://github.com/cheqd/studio/issues/825)
+
+### Bug Fixes
+
+* enforce the faucet address cap under the quota lock ([eed180b](https://github.com/cheqd/studio/commit/eed180bc8db908c77db300b254697a78f58b19b6)), closes [#823](https://github.com/cheqd/studio/issues/823)
+* use the database clock for every faucet quota decision ([cb6c856](https://github.com/cheqd/studio/commit/cb6c856fb8fbc803c344454eeea9178442821ebb)), closes [#827](https://github.com/cheqd/studio/issues/827)
+
 ## [3.18.0-develop.2](https://github.com/cheqd/studio/compare/3.18.0-develop.1...3.18.0-develop.2) (2026-10-13)
 
 ### Features
