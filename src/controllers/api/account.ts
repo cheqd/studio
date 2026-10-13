@@ -632,7 +632,7 @@ export class AccountController {
 	 *   post:
 	 *     tags: [Account]
 	 *     summary: Request cheqd testnet CHEQ tokens for a Studio payment account.
-	 *     description: Funds a cheqd testnet address: the customer's own payment account by default, or any valid cheqd address supplied. An address can hold at most FAUCET_ADDRESS_CAP_CHEQ, and a customer can request at most FAUCET_MONTHLY_LIMIT_CHEQ per calendar month (UTC) across all their addresses; both default to 100,000 CHEQ. Without an amount the address is topped up to the cap, or by the quota left if that is lower. Authentication: a Studio user session (bearer token), an API key (`x-api-key`) or a machine-to-machine token (bearer token plus a `customer-id` header); whichever is used, the credential must carry the `request:faucet:testnet` scope. The response includes the remaining quota.
+	 *     description: Funds a cheqd testnet address, by default the customer's own payment account, or any valid cheqd address supplied. An address can hold at most FAUCET_ADDRESS_CAP_CHEQ, and a customer can request at most FAUCET_MONTHLY_LIMIT_CHEQ per calendar month (UTC) across all their addresses; both default to 100,000 CHEQ. Without an amount the address is topped up to the cap, or by the quota left if that is lower. Authentication is by a Studio user session (bearer token), an API key (`x-api-key`) or a machine-to-machine token (bearer token plus a `customer-id` header); whichever is used, the credential must carry the `request:faucet:testnet` scope. The response includes the remaining quota.
 	 *     requestBody:
 	 *       content:
 	 *         application/json:
