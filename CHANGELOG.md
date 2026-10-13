@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.18.0-develop.4](https://github.com/cheqd/studio/compare/3.18.0-develop.3...3.18.0-develop.4) (2026-10-13)
+
+### Features
+
+* **faucet:** allow funding any valid cheqd testnet address ([7a95c5d](https://github.com/cheqd/studio/commit/7a95c5d3a70d96f8ac3f46f67b1b8b174a8be188))
+* **faucet:** fund any cheqd address; top up new testnet accounts once (follow-up to [#830](https://github.com/cheqd/studio/issues/830)) ([#839](https://github.com/cheqd/studio/issues/839)) ([1558ccf](https://github.com/cheqd/studio/commit/1558ccfb14c251e886d80d3dc9facca69bbcdef9)), closes [#819](https://github.com/cheqd/studio/issues/819) [#829](https://github.com/cheqd/studio/issues/829)
+
+### Bug Fixes
+
+* **faucet:** keep the initial top-up at 10,000 CHEQ by default ([dc2c0c6](https://github.com/cheqd/studio/commit/dc2c0c66b81049f5a0c0f8be6b343b62bbfdc415))
+* **faucet:** top up only newly created testnet accounts; skip on quota ([56d3f25](https://github.com/cheqd/studio/commit/56d3f251484f0ebf16e4203596ec824bb9860f53))
+* **swagger:** make the faucet description valid YAML so the endpoint is documented ([7f2f6ac](https://github.com/cheqd/studio/commit/7f2f6ac22568eaecf4773982acb40e677dedd3fb))
+
 ## [3.18.0-develop.3](https://github.com/cheqd/studio/compare/3.18.0-develop.2...3.18.0-develop.3) (2026-10-13)
 
 ### Features
