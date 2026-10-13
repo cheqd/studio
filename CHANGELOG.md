@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.18.0-develop.2](https://github.com/cheqd/studio/compare/3.18.0-develop.1...3.18.0-develop.2) (2026-10-13)
+
+### Features
+
+* add a minimum interval between faucet requests per customer ([2d3ebf5](https://github.com/cheqd/studio/commit/2d3ebf55c7503d7fea16da6d9a8b5367ef1b1d87)), closes [#821](https://github.com/cheqd/studio/issues/821)
+* faucet cost, burst limiting and reservation status (follow-ups to [#819](https://github.com/cheqd/studio/issues/819)) ([#829](https://github.com/cheqd/studio/issues/829)) ([e7d7b67](https://github.com/cheqd/studio/commit/e7d7b6712b065b7695d1204cb350016a5f7969cb)), closes [#820](https://github.com/cheqd/studio/issues/820) [#821](https://github.com/cheqd/studio/issues/821) [#820](https://github.com/cheqd/studio/issues/820) [#821](https://github.com/cheqd/studio/issues/821) [#822](https://github.com/cheqd/studio/issues/822) [#828](https://github.com/cheqd/studio/issues/828)
+* track whether each faucet quota reservation completed ([a371bec](https://github.com/cheqd/studio/commit/a371becd0b6f3af23219535b175a8dde226a8b44)), closes [#822](https://github.com/cheqd/studio/issues/822)
+
+### Performance Improvements
+
+* cache the Stripe subscription lookup and skip the balance read when quota is used up ([dd408e2](https://github.com/cheqd/studio/commit/dd408e2204ab5b7bcaad70b3ac5c5f07a333ea84)), closes [#820](https://github.com/cheqd/studio/issues/820)
+
 ## [3.18.0-develop.1](https://github.com/cheqd/studio/compare/3.17.0...3.18.0-develop.1) (2026-10-13)
 
 ### Features
