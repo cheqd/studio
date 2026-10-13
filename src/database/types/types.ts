@@ -59,6 +59,7 @@ import { UpdateWriteCursors1762775500000 } from '../migrations/1762775500000-Upd
 import { StudioMigrations1766408271347 } from '../migrations/1766408271347-studio-migrations.js';
 import { StudioMigrations1791500000000 } from '../migrations/1791500000000-studio-migrations.js';
 import { StudioMigrations1791500000001 } from '../migrations/1791500000001-studio-migrations.js';
+import { StudioMigrations1791500000002 } from '../migrations/1791500000002-studio-migrations.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -161,6 +162,8 @@ export class Postgres implements AbstractDatabase {
 				StudioMigrations1791500000000,
 				// Track whether each faucet request completed, so abandoned reservations can stop counting
 				StudioMigrations1791500000001,
+				// Let the database set faucetRequest.createdAt
+				StudioMigrations1791500000002,
 			],
 			entities: [
 				...Entities,

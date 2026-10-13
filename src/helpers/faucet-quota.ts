@@ -59,6 +59,11 @@ export function buildFaucetQuotaSummary(
 	};
 }
 
+/** Rows older than this are past retention: the start of the calendar month `retentionMonths` months ago (UTC). */
+export function retentionCutoff(now: Date, retentionMonths: number): Date {
+	return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - retentionMonths, 1));
+}
+
 /** Seconds the customer still has to wait before their next faucet request; 0 if one is allowed now. */
 export function secondsUntilNextRequest(
 	lastRequestAt: Date | null,
@@ -70,6 +75,21 @@ export function secondsUntilNextRequest(
 	return remainingMs > 0 ? Math.ceil(remainingMs / 1000) : 0;
 }
 
+/** Room left under an address cap once its balance and requests still in flight are accounted for; never negative. */
+export function addressRoomNcheq(capNcheq: bigint, currentBalanceNcheq: bigint, inFlightNcheq: bigint): bigint {
+	const room = capNcheq - currentBalanceNcheq - inFlightNcheq;
+	return room > 0n ? room : 0n;
+}
+
+export interface FaucetAddressCap {
+	// Most the address may hold
+	capNcheq: bigint;
+	// Balance read from the chain before the reservation; it may not yet include recent transfers
+	currentBalanceNcheq: bigint;
+	// Requests for the address made in the last this-many seconds are assumed not to be in the balance yet
+	settleSeconds: number;
+}
+
 export interface FaucetReserveOptions {
 	// Most the customer can request per quota window
 	limitNcheq: bigint;
@@ -77,12 +97,15 @@ export interface FaucetReserveOptions {
 	pendingTimeoutSeconds?: number;
 	// Minimum gap between two requests from the customer; 0 or undefined disables the check
 	minIntervalSeconds?: number;
+	// Enforce the address cap under the lock, counting requests still in flight for the same address
+	addressCap?: FaucetAddressCap;
 }
 
 export type FaucetReservation =
 	| { reserved: true; faucetRequestId: string; usedNcheq: bigint; window: FaucetQuotaWindow }
 	| { reserved: false; reason: 'quota_exceeded'; usedNcheq: bigint; window: FaucetQuotaWindow }
-	| { reserved: false; reason: 'too_frequent'; retryAfterSeconds: number; window: FaucetQuotaWindow };
+	| { reserved: false; reason: 'too_frequent'; retryAfterSeconds: number; window: FaucetQuotaWindow }
+	| { reserved: false; reason: 'address_cap_exceeded'; roomNcheq: bigint; window: FaucetQuotaWindow };
 
 /** Storage for quota reservations; implemented by `FaucetRequestService` and faked in tests. */
 export interface FaucetQuotaLedger {
@@ -99,29 +122,52 @@ export interface FaucetQuotaLedger {
 	markUnknown(faucetRequestId: string): Promise<void>;
 }
 
-async function markUnknownBestEffort(ledger: FaucetQuotaLedger, faucetRequestId: string): Promise<void> {
+async function markUnknownBestEffort(
+	ledger: FaucetQuotaLedger,
+	faucetRequestId: string,
+	log: FaucetLogger
+): Promise<void> {
 	try {
 		await ledger.markUnknown(faucetRequestId);
 	} catch (error) {
-		console.error(`Failed to mark faucet request ${faucetRequestId} as unknown:`, error);
+		log('error', 'faucet.mark_unknown_failed', {
+			reservationId: faucetRequestId,
+			error: (error as Error)?.message ?? String(error),
+		});
 	}
 }
 
 export type FaucetCreditResult =
 	| { outcome: 'quota_exceeded'; usedNcheq: bigint; window: FaucetQuotaWindow }
 	| { outcome: 'too_frequent'; retryAfterSeconds: number; window: FaucetQuotaWindow }
+	| { outcome: 'address_cap_exceeded'; roomNcheq: bigint }
 	// `usedNcheq` already includes the amount just credited.
 	| { outcome: 'credited'; usedNcheq: bigint; window: FaucetQuotaWindow }
 	| { outcome: 'faucet_failed'; status: number; error: string };
 
+export type FaucetLogLevel = 'info' | 'warn' | 'error';
+export type FaucetLogger = (level: FaucetLogLevel, event: string, fields: Record<string, unknown>) => void;
+
+/**
+ * Writes one structured log line per faucet decision, e.g. `{"event":"faucet.quota_exceeded","customerId":"..."}`,
+ * so "why was this customer blocked?" and "where did this month's quota go?" can be answered from the logs.
+ * Amounts are ncheq strings. Pass another logger to creditWithinQuota to capture events in tests.
+ */
+export const logFaucetEvent: FaucetLogger = (level, event, fields) => {
+	console[level](JSON.stringify({ event, ...fields }));
+};
+
+const shorten = (text: string) => (text.length > 200 ? `${text.slice(0, 200)}...` : text);
+
 /**
  * Reserves quota, calls the faucet, and settles the reservation.
- * - Quota does not fit: the faucet is not called.
+ * - Quota, minimum interval or address cap does not allow it: the faucet is not called.
  * - Faucet answers with an error status: it definitely did not credit the account, so the quota is released.
  * - Faucet call throws (e.g. a timeout): the outcome is unknown and tokens may have been sent, so the
  *   reservation is marked unknown and keeps counting for good (over-counting is safer than refunding quota
  *   for tokens that were credited).
  * - Faucet confirms: the reservation is marked completed.
+ * Every outcome is logged through `log`.
  */
 export async function creditWithinQuota(
 	ledger: FaucetQuotaLedger,
@@ -132,35 +178,80 @@ export async function creditWithinQuota(
 		amountNcheq: bigint;
 		limitNcheq: bigint;
 		minIntervalSeconds?: number;
-	}
+		addressCap?: FaucetAddressCap;
+	},
+	log: FaucetLogger = logFaucetEvent
 ): Promise<FaucetCreditResult> {
+	const base = {
+		customerId: params.customer.customerId,
+		address: params.address,
+		amountNcheq: params.amountNcheq.toString(),
+	};
 	const reservation = await ledger.reserve(params.customer, params.address, params.amountNcheq, {
 		limitNcheq: params.limitNcheq,
 		minIntervalSeconds: params.minIntervalSeconds,
+		addressCap: params.addressCap,
 	});
 	if (!reservation.reserved) {
-		return reservation.reason === 'too_frequent'
-			? { outcome: 'too_frequent', retryAfterSeconds: reservation.retryAfterSeconds, window: reservation.window }
-			: { outcome: 'quota_exceeded', usedNcheq: reservation.usedNcheq, window: reservation.window };
+		switch (reservation.reason) {
+			case 'too_frequent':
+				log('warn', 'faucet.too_frequent', { ...base, retryAfterSeconds: reservation.retryAfterSeconds });
+				return {
+					outcome: 'too_frequent',
+					retryAfterSeconds: reservation.retryAfterSeconds,
+					window: reservation.window,
+				};
+			case 'address_cap_exceeded':
+				log('warn', 'faucet.address_cap_exceeded', { ...base, roomNcheq: reservation.roomNcheq.toString() });
+				return { outcome: 'address_cap_exceeded', roomNcheq: reservation.roomNcheq };
+			default:
+				log('warn', 'faucet.quota_exceeded', {
+					...base,
+					usedNcheq: reservation.usedNcheq.toString(),
+					limitNcheq: params.limitNcheq.toString(),
+				});
+				return { outcome: 'quota_exceeded', usedNcheq: reservation.usedNcheq, window: reservation.window };
+		}
 	}
+
+	const withReservation = { ...base, reservationId: reservation.faucetRequestId };
+	log('info', 'faucet.reserved', {
+		...withReservation,
+		usedNcheq: reservation.usedNcheq.toString(),
+		limitNcheq: params.limitNcheq.toString(),
+	});
 
 	let faucet: { status: number; error: string };
 	try {
 		faucet = await delegate();
 	} catch (error) {
-		await markUnknownBestEffort(ledger, reservation.faucetRequestId);
+		log('warn', 'faucet.unknown', {
+			...withReservation,
+			error: shorten((error as Error)?.message ?? String(error)),
+			note: 'faucet call threw; tokens may have been sent, so the reservation keeps counting',
+		});
+		await markUnknownBestEffort(ledger, reservation.faucetRequestId, log);
 		throw error;
 	}
 	if (faucet.status !== 200) {
 		await ledger.release(reservation.faucetRequestId);
+		log('warn', 'faucet.released', {
+			...withReservation,
+			faucetStatus: faucet.status,
+			error: shorten(faucet.error),
+		});
 		return { outcome: 'faucet_failed', status: faucet.status, error: faucet.error };
 	}
 	try {
 		await ledger.complete(reservation.faucetRequestId);
+		log('info', 'faucet.completed', withReservation);
 	} catch (error) {
 		// The tokens were sent, so do not fail the request. The reservation stays pending and keeps counting
 		// until it times out.
-		console.error(`Failed to mark faucet request ${reservation.faucetRequestId} as completed:`, error);
+		log('error', 'faucet.complete_failed', {
+			...withReservation,
+			error: shorten((error as Error)?.message ?? String(error)),
+		});
 	}
 	return {
 		outcome: 'credited',

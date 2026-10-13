@@ -1,9 +1,10 @@
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
+import { afterAll, afterEach, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { DataSource } from 'typeorm';
 import { CustomerEntity } from '../../../src/database/entities/customer.entity.js';
 import { FaucetRequestEntity } from '../../../src/database/entities/faucet-request.entity.js';
 import { StudioMigrations1791500000000 } from '../../../src/database/migrations/1791500000000-studio-migrations.js';
 import { StudioMigrations1791500000001 } from '../../../src/database/migrations/1791500000001-studio-migrations.js';
+import { StudioMigrations1791500000002 } from '../../../src/database/migrations/1791500000002-studio-migrations.js';
 import type { FaucetRequestService } from '../../../src/services/api/faucet-request.js';
 
 /**
@@ -56,6 +57,7 @@ describeWithDatabase('FaucetRequestService (Postgres)', () => {
 		await dataSource.initialize();
 		await new StudioMigrations1791500000000().up(dataSource.createQueryRunner());
 		await new StudioMigrations1791500000001().up(dataSource.createQueryRunner());
+		await new StudioMigrations1791500000002().up(dataSource.createQueryRunner());
 		// Imported here, not at the top: the service pulls in the database connection, whose entities require
 		// ENABLE_EXTERNAL_DB to be defined at import time, and a skipped run should not load any of that.
 		process.env.ENABLE_EXTERNAL_DB ??= 'false';
@@ -70,6 +72,25 @@ describeWithDatabase('FaucetRequestService (Postgres)', () => {
 	it('creates a table that matches the entity (no schema drift)', async () => {
 		const { upQueries } = await dataSource.driver.createSchemaBuilder().log();
 		expect(upQueries.map((q) => q.query).filter((q) => q.includes('faucetRequest'))).toEqual([]);
+	});
+
+	it('exposes amounts as bigint and lets the database set createdAt', async () => {
+		const customer = await newCustomer();
+		const reservation = await service.reserve(customer, 'cheqd1a', cheq(12_345), { limitNcheq: LIMIT });
+		if (!reservation.reserved) throw new Error('expected a reservation');
+
+		const row = await dataSource
+			.getRepository(FaucetRequestEntity)
+			.findOneByOrFail({ faucetRequestId: reservation.faucetRequestId });
+
+		expect(row.amountNcheq).toBe(cheq(12_345));
+		expect(typeof row.amountNcheq).toBe('bigint');
+		expect(row.createdAt).toBeInstanceOf(Date);
+		const [{ drift }] = await dataSource.query(
+			`SELECT abs(extract(epoch from (now() - "createdAt"))) AS drift FROM "faucetRequest" WHERE "faucetRequestId" = $1`,
+			[reservation.faucetRequestId]
+		);
+		expect(Number(drift)).toBeLessThan(5);
 	});
 
 	it('refuses a status the code does not know about', async () => {
@@ -281,6 +302,204 @@ describeWithDatabase('FaucetRequestService (Postgres)', () => {
 				[id]
 			);
 			expect(await service.getSecondsUntilNextAllowed(customer, 60)).toBe(0);
+		});
+	});
+
+	describe('address cap', () => {
+		// A monthly limit well above the address cap, so the cap is the limit that binds
+		const HIGH_LIMIT = cheq(1_000_000);
+		const capOptions = (balance: number, settleSeconds = 20) => ({
+			limitNcheq: HIGH_LIMIT,
+			addressCap: { capNcheq: cheq(100_000), currentBalanceNcheq: cheq(balance), settleSeconds },
+		});
+
+		it('accepts a request that fits under the cap and rejects one that does not', async () => {
+			const customer = await newCustomer();
+			expect(await service.reserve(customer, 'cheqd1a', cheq(40_000), capOptions(60_000))).toMatchObject({
+				reserved: true,
+			});
+
+			const second = await service.reserve(customer, 'cheqd1b', cheq(40_001), capOptions(60_000));
+			expect(second).toMatchObject({ reserved: false, reason: 'address_cap_exceeded', roomNcheq: cheq(40_000) });
+		});
+
+		it('counts requests still in flight for the same address, so simultaneous requests cannot overshoot', async () => {
+			const customer = await newCustomer();
+
+			const results = await Promise.all(
+				Array.from({ length: 4 }, () => service.reserve(customer, 'cheqd1a', cheq(30_000), capOptions(60_000)))
+			);
+
+			// 60,000 held + 40,000 of room: only one 30,000 request fits
+			expect(results.filter((r) => r.reserved)).toHaveLength(1);
+			expect(results.filter((r) => !r.reserved && r.reason === 'address_cap_exceeded')).toHaveLength(3);
+		});
+
+		it('stops subtracting a request once it is older than the settle window', async () => {
+			const customer = await newCustomer();
+			const first = await service.reserve(customer, 'cheqd1a', cheq(30_000), capOptions(60_000));
+			if (!first.reserved) throw new Error('expected a reservation');
+			expect(await service.reserve(customer, 'cheqd1a', cheq(30_000), capOptions(60_000))).toMatchObject({
+				reserved: false,
+			});
+
+			await dataSource.query(
+				`UPDATE "faucetRequest" SET "createdAt" = now() - interval '1 minute' WHERE "faucetRequestId" = $1`,
+				[first.faucetRequestId]
+			);
+
+			expect(await service.reserve(customer, 'cheqd1a', cheq(30_000), capOptions(60_000))).toMatchObject({
+				reserved: true,
+			});
+		});
+
+		it('does not count requests for other addresses or abandoned reservations', async () => {
+			const customer = await newCustomer();
+			const other = await service.reserve(customer, 'cheqd1other', cheq(40_000), capOptions(60_000));
+			if (!other.reserved) throw new Error('expected a reservation');
+			expect(await service.reserve(customer, 'cheqd1a', cheq(40_000), capOptions(60_000))).toMatchObject({
+				reserved: true,
+			});
+
+			const stale = await newCustomer();
+			const abandoned = await service.reserve(stale, 'cheqd1a', cheq(40_000), capOptions(60_000));
+			if (!abandoned.reserved) throw new Error('expected a reservation');
+			await dataSource.query(`UPDATE "faucetRequest" SET status = 'abandoned' WHERE "faucetRequestId" = $1`, [
+				abandoned.faucetRequestId,
+			]);
+			expect(await service.reserve(stale, 'cheqd1a', cheq(40_000), capOptions(60_000))).toMatchObject({
+				reserved: true,
+			});
+		});
+
+		it('is not applied when no address cap is given', async () => {
+			const customer = await newCustomer();
+			expect(await service.reserve(customer, 'cheqd1a', cheq(500_000), { limitNcheq: HIGH_LIMIT })).toMatchObject(
+				{ reserved: true }
+			);
+		});
+	});
+
+	describe('retention', () => {
+		const idsFor = async (customer: CustomerEntity) =>
+			(
+				await dataSource.query(`SELECT "faucetRequestId" FROM "faucetRequest" WHERE "customerId" = $1`, [
+					customer.customerId,
+				])
+			).length;
+		const backdateMonths = (id: string, months: number) =>
+			dataSource.query(
+				`UPDATE "faucetRequest" SET "createdAt" = now() - ($1 || ' months')::interval WHERE "faucetRequestId" = $2`,
+				[String(months), id]
+			);
+
+		it('deletes rows past the retention period and keeps recent ones', async () => {
+			const customer = await newCustomer();
+			const old = await service.reserve(customer, 'cheqd1a', cheq(1), { limitNcheq: LIMIT });
+			const recent = await service.reserve(customer, 'cheqd1a', cheq(2), { limitNcheq: LIMIT });
+			const borderline = await service.reserve(customer, 'cheqd1a', cheq(3), { limitNcheq: LIMIT });
+			if (!old.reserved || !recent.reserved || !borderline.reserved) throw new Error('expected reservations');
+			await backdateMonths(old.faucetRequestId, 14);
+			await backdateMonths(recent.faucetRequestId, 2);
+			await backdateMonths(borderline.faucetRequestId, 12);
+
+			await service.runRetentionCleanup(new Date(), 13);
+
+			const remaining = (
+				await dataSource.query(`SELECT "faucetRequestId" FROM "faucetRequest" WHERE "customerId" = $1`, [
+					customer.customerId,
+				])
+			).map((r: { faucetRequestId: string }) => r.faucetRequestId);
+			expect(remaining.sort()).toEqual([recent.faucetRequestId, borderline.faucetRequestId].sort());
+		});
+
+		it('keeps everything when retention is 0', async () => {
+			const customer = await newCustomer();
+			const old = await service.reserve(customer, 'cheqd1a', cheq(1), { limitNcheq: LIMIT });
+			if (!old.reserved) throw new Error('expected a reservation');
+			await backdateMonths(old.faucetRequestId, 36);
+
+			expect(await service.runRetentionCleanup(new Date(), 0)).toBe(0);
+			expect(await idsFor(customer)).toBe(1);
+		});
+
+		it('does not change the current quota usage', async () => {
+			const customer = await newCustomer();
+			await service.reserve(customer, 'cheqd1a', cheq(5_000), { limitNcheq: LIMIT });
+			const before = await service.getUsedNcheq(customer);
+			await service.runRetentionCleanup(new Date(), 13);
+			expect(await service.getUsedNcheq(customer)).toBe(before);
+		});
+	});
+
+	describe('clock', () => {
+		// Fake only the application clock (Date); timers must keep working for the database driver
+		const skewApplicationClock = (hoursAhead: number) =>
+			jest.useFakeTimers({
+				now: Date.now() + hoursAhead * 3600 * 1000,
+				doNotFake: [
+					'hrtime',
+					'nextTick',
+					'performance',
+					'queueMicrotask',
+					'setImmediate',
+					'clearImmediate',
+					'setInterval',
+					'clearInterval',
+					'setTimeout',
+					'clearTimeout',
+				],
+			});
+		afterEach(() => {
+			jest.useRealTimers();
+		});
+
+		it('judges how old a request is by the database clock, not the application clock', async () => {
+			const customer = await newCustomer();
+			const options = { limitNcheq: LIMIT, minIntervalSeconds: 60 };
+			const first = await service.reserve(customer, 'cheqd1a', cheq(90_000), options);
+			if (!first.reserved) throw new Error('expected a reservation');
+
+			skewApplicationClock(3); // this instance's clock is three hours fast
+
+			// by the database clock the reservation is seconds old: still pending, still inside the interval
+			expect(await service.getUsedNcheq(customer)).toBe(cheq(90_000));
+			expect(await service.getSecondsUntilNextAllowed(customer, 60)).toBeGreaterThan(0);
+			expect(await service.reserve(customer, 'cheqd1a', cheq(1), options)).toMatchObject({
+				reserved: false,
+				reason: 'too_frequent',
+			});
+			const status = await dataSource.query(`SELECT status FROM "faucetRequest" WHERE "faucetRequestId" = $1`, [
+				first.faucetRequestId,
+			]);
+			expect(status[0].status).toBe('pending'); // not swept as abandoned
+		});
+
+		it('takes the quota window from the database clock', async () => {
+			const customer = await newCustomer();
+			const [{ month }] = await dataSource.query(
+				`SELECT to_char(clock_timestamp() AT TIME ZONE 'UTC', 'YYYY-MM') AS month`
+			);
+
+			skewApplicationClock(24 * 62); // two months ahead on this instance
+
+			const { window } = await service.getQuotaStatus(customer);
+			expect(window.start.toISOString().slice(0, 7)).toBe(month);
+		});
+
+		it('records the completion time from the database clock', async () => {
+			const customer = await newCustomer();
+			const reservation = await service.reserve(customer, 'cheqd1a', cheq(1), { limitNcheq: LIMIT });
+			if (!reservation.reserved) throw new Error('expected a reservation');
+
+			skewApplicationClock(3);
+			await service.complete(reservation.faucetRequestId);
+
+			const [{ drift }] = await dataSource.query(
+				`SELECT abs(extract(epoch from (now() - "completedAt"))) AS drift FROM "faucetRequest" WHERE "faucetRequestId" = $1`,
+				[reservation.faucetRequestId]
+			);
+			expect(Number(drift)).toBeLessThan(5);
 		});
 	});
 

@@ -1,4 +1,4 @@
-import { BeforeInsert, Check, Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Check, Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import * as dotenv from 'dotenv';
 import { CustomerEntity } from './customer.entity.js';
@@ -12,6 +12,12 @@ dotenv.config();
  */
 export const FAUCET_REQUEST_STATUSES = ['pending', 'completed', 'unknown', 'abandoned'] as const;
 export type FaucetRequestStatus = (typeof FAUCET_REQUEST_STATUSES)[number];
+
+// `bigint` columns come back from the driver as strings; expose them as bigint instead
+const bigintTransformer = {
+	to: (value?: bigint | null) => value?.toString(),
+	from: (value?: string | null) => (value === null || value === undefined ? value : BigInt(value)),
+};
 
 /**
  * One row per testnet faucet request made through `POST /account/faucet` or the account bootstrap top-up.
@@ -34,12 +40,13 @@ export class FaucetRequestEntity {
 	})
 	address!: string;
 
-	// ncheq amount, stored as bigint and surfaced as a string by the driver
+	// ncheq amount
 	@Column({
 		type: 'bigint',
 		nullable: false,
+		transformer: bigintTransformer,
 	})
-	amountNcheq!: string;
+	amountNcheq!: bigint;
 
 	@Column({
 		type: 'text',
@@ -48,9 +55,9 @@ export class FaucetRequestEntity {
 	})
 	status!: FaucetRequestStatus;
 
-	@Column({
+	// Set by the database (DEFAULT now()), so every instance agrees on when a request was made
+	@CreateDateColumn({
 		type: 'timestamptz',
-		nullable: false,
 	})
 	createdAt!: Date;
 
@@ -60,16 +67,10 @@ export class FaucetRequestEntity {
 	})
 	completedAt?: Date;
 
-	@BeforeInsert()
-	setCreatedAt() {
-		this.createdAt = new Date();
-	}
-
 	constructor(customer: CustomerEntity, address: string, amountNcheq: bigint) {
 		this.customer = customer;
 		this.address = address;
-		// TypeORM instantiates entities without arguments when building metadata
-		this.amountNcheq = amountNcheq?.toString();
+		this.amountNcheq = amountNcheq;
 		this.status = 'pending';
 	}
 }
