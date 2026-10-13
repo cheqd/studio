@@ -20,6 +20,7 @@ import { CredentialProviderEntity } from '../entities/credential-provider.entity
 import { ProviderConfigurationEntity } from '../entities/provider-configuration.entity.js';
 import { IssuedCredentialEntity } from '../entities/issued-credential.entity.js';
 import { StatusRegistryEntity } from '../entities/status-registry.entity.js';
+import { FaucetRequestEntity } from '../entities/faucet-request.entity.js';
 
 import { CreatePaymentTable1695740345977 } from '../migrations/archive/CreatePaymentTable.js';
 import { CreateOperationTable1695740345977 } from '../migrations/archive/CreateOperationTable.js';
@@ -56,6 +57,7 @@ import { StudioMigrations1761834657128 } from '../migrations/1761834657128-studi
 import { MigrationsStatusLists1762775396083 } from '../migrations/1762775396083-MigrateStatusLists.js';
 import { UpdateWriteCursors1762775500000 } from '../migrations/1762775500000-UpdateWriteCursors.js';
 import { StudioMigrations1766408271347 } from '../migrations/1766408271347-studio-migrations.js';
+import { StudioMigrations1791500000000 } from '../migrations/1791500000000-studio-migrations.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -154,6 +156,8 @@ export class Postgres implements AbstractDatabase {
 				MigrationsStatusLists1762775396083,
 				UpdateWriteCursors1762775500000,
 				StudioMigrations1766408271347,
+				// Add faucetRequest table for the monthly faucet quota
+				StudioMigrations1791500000000,
 			],
 			entities: [
 				...Entities,
@@ -173,6 +177,7 @@ export class Postgres implements AbstractDatabase {
 				ProviderConfigurationEntity,
 				IssuedCredentialEntity,
 				StatusRegistryEntity,
+				FaucetRequestEntity,
 			],
 			logging: ['error', 'info', 'warn'],
 		});

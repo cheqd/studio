@@ -33,10 +33,32 @@ export interface AccountNetworkBalance {
 	usd: number | null;
 }
 
+export interface FaucetAmountSummary {
+	cheq: number;
+	ncheq: string;
+}
+
+export interface FaucetQuotaSummary {
+	period: 'month';
+	limit: FaucetAmountSummary;
+	used: FaucetAmountSummary;
+	remaining: FaucetAmountSummary;
+	// ISO timestamp at which the monthly quota resets.
+	resetsAt: string;
+}
+
+export interface AccountFaucetInfo {
+	// Most CHEQ a testnet address can hold.
+	cap: FaucetAmountSummary;
+	quota: FaucetQuotaSummary;
+}
+
 export interface QueryAccountBalancesResponseBody {
 	// `null` when the customer has no payment account on that network.
 	mainnet: AccountNetworkBalance | null;
 	testnet: AccountNetworkBalance | null;
+	// Faucet cap and the customer's monthly quota usage; `null` when there is no testnet account or it could not be read.
+	faucet: AccountFaucetInfo | null;
 	// `null` when the CHEQ/USD rate could not be fetched.
 	rate: { cheqUsd: number; source: 'coingecko'; asOf: string } | null;
 }
