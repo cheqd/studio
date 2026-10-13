@@ -15,7 +15,9 @@ import type { SafeAPIResponse } from '../../types/common.js';
 import { CheqdNetwork, checkBalance } from '@cheqd/sdk';
 import {
 	FAUCET_ADDRESS_CAP_CHEQ,
+	FAUCET_MIN_INTERVAL_SECONDS,
 	FAUCET_MONTHLY_LIMIT_CHEQ,
+	FAUCET_SUBSCRIPTION_CACHE_SECONDS,
 	MINIMAL_DENOM,
 	OperationNameEnum,
 	TESTNET_INITIAL_TOPUP_CHEQ,
@@ -646,7 +648,7 @@ export class AccountController {
 	 *       404:
 	 *         description: No Studio testnet payment account was found for this customer.
 	 *       429:
-	 *         description: The customer's monthly faucet quota is exhausted. The Retry-After header gives the seconds until it resets, and the body includes the quota details.
+	 *         description: Too many requests. Either the customer's monthly faucet quota is exhausted (the body includes the quota details), or a request was made too soon after the previous one (FAUCET_MIN_INTERVAL_SECONDS). The Retry-After header gives the seconds to wait.
 	 *       502:
 	 *         description: Upstream faucet request failed.
 	 *       504:
@@ -676,6 +678,15 @@ export class AccountController {
 		const requestedAmountCheq = request.body.amount !== undefined ? Number(request.body.amount) : undefined;
 
 		try {
+			// Cheap check first, so a tight loop of requests does not reach Stripe, the RPC node or the faucet
+			const waitSeconds = await FaucetRequestService.instance.getSecondsUntilNextAllowed(
+				customer,
+				FAUCET_MIN_INTERVAL_SECONDS
+			);
+			if (waitSeconds > 0) {
+				return tooManyFaucetRequests(response, waitSeconds);
+			}
+
 			const subscription = await SubscriptionService.instance.findCurrent(customer);
 			if (!subscription) {
 				return response.status(StatusCodes.FORBIDDEN).json({
@@ -683,15 +694,14 @@ export class AccountController {
 				} satisfies UnsuccessfulResponseBody);
 			}
 
-			const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscriptionId);
-			if (!['active', 'trialing'].includes(stripeSubscription.status)) {
+			const plan = await getSubscriptionPlan(stripe, subscription.subscriptionId);
+			if (!['active', 'trialing'].includes(plan.status)) {
 				return response.status(StatusCodes.FORBIDDEN).json({
 					error: 'An active Basic or higher subscription is required to request testnet CHEQ tokens.',
 				} satisfies UnsuccessfulResponseBody);
 			}
 
-			const productId = getStripeObjectKey(stripeSubscription.items.data[0].plan.product);
-			if (!productHasCapability(productId, StudioPlanCapability.Faucet)) {
+			if (!productHasCapability(plan.productId, StudioPlanCapability.Faucet)) {
 				return response.status(StatusCodes.FORBIDDEN).json({
 					error: 'The current subscription does not include testnet faucet access.',
 				} satisfies UnsuccessfulResponseBody);
@@ -709,12 +719,22 @@ export class AccountController {
 			const addressCapNcheq = cheqToNcheq(FAUCET_ADDRESS_CAP_CHEQ);
 			const quotaLimitNcheq = cheqToNcheq(FAUCET_MONTHLY_LIMIT_CHEQ);
 
+			// Nothing can be requested once the quota is used up, so answer before the (slow) balance query
+			const usedNcheq = await FaucetRequestService.instance.getUsedNcheq(customer);
+			const quotaRemainingNcheq = remainingQuota(usedNcheq, quotaLimitNcheq);
+			if (quotaRemainingNcheq <= 0n) {
+				const window = getFaucetQuotaWindow();
+				return response
+					.status(StatusCodes.TOO_MANY_REQUESTS)
+					.set('Retry-After', String(secondsUntilReset(window)))
+					.json({
+						error: 'Monthly testnet faucet quota exceeded for this account.',
+						quota: buildFaucetQuotaSummary(usedNcheq, quotaLimitNcheq, window),
+					});
+			}
+
 			const currentBalanceNcheq = await getTestnetBalanceNcheq(testnetAccount.address);
 			const roomUnderCapNcheq = addressCapNcheq - currentBalanceNcheq;
-			const quotaRemainingNcheq = remainingQuota(
-				await FaucetRequestService.instance.getUsedNcheq(customer),
-				quotaLimitNcheq
-			);
 			// What can be requested right now: limited by both the room under the address cap and the monthly quota
 			const maxRequestable = maxRequestableNcheq(roomUnderCapNcheq, quotaRemainingNcheq);
 			const balance = buildFaucetBalanceResponse(currentBalanceNcheq, addressCapNcheq, maxRequestable);
@@ -769,8 +789,12 @@ export class AccountController {
 					address: testnetAccount.address,
 					amountNcheq: amountToRequestNcheq,
 					limitNcheq: quotaLimitNcheq,
+					minIntervalSeconds: FAUCET_MIN_INTERVAL_SECONDS,
 				}
 			);
+			if (credit.outcome === 'too_frequent') {
+				return tooManyFaucetRequests(response, credit.retryAfterSeconds);
+			}
 			if (credit.outcome === 'quota_exceeded') {
 				return response
 					.status(StatusCodes.TOO_MANY_REQUESTS)
@@ -1182,6 +1206,36 @@ async function updateCustomData(
 	}
 }
 
+function tooManyFaucetRequests(response: Response, retryAfterSeconds: number) {
+	return response
+		.status(StatusCodes.TOO_MANY_REQUESTS)
+		.set('Retry-After', String(retryAfterSeconds))
+		.json({
+			error: `Too many faucet requests. Please wait ${retryAfterSeconds} seconds before trying again.`,
+		} satisfies UnsuccessfulResponseBody);
+}
+
+/**
+ * Status and plan of a Stripe subscription, cached briefly so repeated (e.g. API-key) faucet requests do not
+ * call Stripe every time. Only active/trialing results are cached, and the stored subscription status is still
+ * checked in the database on every request, so a cancellation takes effect immediately; a plan change can take
+ * up to FAUCET_SUBSCRIPTION_CACHE_SECONDS to be seen.
+ */
+async function getSubscriptionPlan(stripe: Stripe, subscriptionId: string) {
+	const cached = LocalStore.instance.getSubscriptionPlan(subscriptionId);
+	if (cached) return cached;
+
+	const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+	const plan = {
+		status: subscription.status,
+		productId: getStripeObjectKey(subscription.items.data[0].plan.product),
+	};
+	if (FAUCET_SUBSCRIPTION_CACHE_SECONDS > 0 && ['active', 'trialing'].includes(plan.status)) {
+		LocalStore.instance.setSubscriptionPlan(subscriptionId, plan, FAUCET_SUBSCRIPTION_CACHE_SECONDS);
+	}
+	return plan;
+}
+
 /**
  * Credits an address from the faucet and debits the amount from the customer's monthly faucet quota.
  * See `creditWithinQuota` for how the reservation is settled.
@@ -1208,6 +1262,9 @@ async function delegateWithinQuota(
 				error: 'Monthly testnet faucet quota exceeded for this account.',
 				quotaExceeded: true,
 			};
+		case 'too_frequent':
+			// not requested here: the bootstrap top-up does not apply a minimum interval
+			return { status: StatusCodes.TOO_MANY_REQUESTS, error: 'Too many faucet requests.' };
 		case 'faucet_failed':
 			return { status: credit.status, error: credit.error };
 	}
