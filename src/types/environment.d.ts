@@ -69,7 +69,6 @@ declare global {
 			FAUCET_REQUEST_RETENTION_MONTHS: string;
 			FAUCET_REQUEST_TIMEOUT_SECONDS: string;
 			TESTNET_INITIAL_TOPUP_CHEQ: string;
-			TESTNET_FAUCET_UPPER_CAP_CHEQ: string;
 
 			// CHEQ market data (CoinGecko)
 			COINGECKO_API_URL: string;

@@ -1,3 +1,4 @@
+import { fromBech32 } from '@cosmjs/encoding';
 import type { ICommonErrorResponse } from '../types/authentication.js';
 import {
 	MINIMAL_DENOM,
@@ -8,6 +9,26 @@ import {
 	FAUCET_ACCESS_CLIENT_SECRET,
 	FAUCET_REQUEST_TIMEOUT_SECONDS,
 } from '../types/constants.js';
+
+const FAUCET_ADDRESS_PREFIX = 'cheqd';
+const ACCOUNT_ADDRESS_BYTES = 20;
+
+/**
+ * True for a lowercase cheqd bech32 account address (20 bytes, valid checksum). Other bech32 strings with the cheqd
+ * prefix, such as 32-byte contract addresses, are not ordinary accounts and are rejected.
+ */
+export function isValidFaucetAddress(address: string): boolean {
+	try {
+		const { prefix, data } = fromBech32(address);
+		return (
+			prefix === FAUCET_ADDRESS_PREFIX &&
+			data.length === ACCOUNT_ADDRESS_BYTES &&
+			address === address.toLowerCase()
+		);
+	} catch {
+		return false;
+	}
+}
 
 /** True if the error is the faucet call timing out or being aborted, as opposed to the faucet answering. */
 export function isFaucetTimeout(error: unknown): boolean {

@@ -88,11 +88,12 @@ export const TESTNET_MINIMUM_BALANCE = parseNumberEnv(
 	'TESTNET_MINIMUM_BALANCE'
 );
 // Amount, in CHEQ, a new account's testnet address is topped up to when it is bootstrapped (ENABLE_ACCOUNT_TOPUP).
-// TESTNET_FAUCET_UPPER_CAP_CHEQ is the previous name and is still honoured as a fallback.
+// Always 10,000 unless TESTNET_INITIAL_TOPUP_CHEQ is set. The old TESTNET_FAUCET_UPPER_CAP_CHEQ name is no longer a
+// fallback: it was the faucet cap (often 100,000), so honouring it would inflate the initial top-up.
 export const TESTNET_INITIAL_TOPUP_CHEQ = parseNumberEnv(
-	process.env.TESTNET_INITIAL_TOPUP_CHEQ || process.env.TESTNET_FAUCET_UPPER_CAP_CHEQ,
+	process.env.TESTNET_INITIAL_TOPUP_CHEQ,
 	TESTNET_MINIMUM_BALANCE,
-	process.env.TESTNET_INITIAL_TOPUP_CHEQ ? 'TESTNET_INITIAL_TOPUP_CHEQ' : 'TESTNET_FAUCET_UPPER_CAP_CHEQ'
+	'TESTNET_INITIAL_TOPUP_CHEQ'
 );
 // Most CHEQ a customer can request through POST /account/faucet per calendar month (UTC)
 export const FAUCET_MONTHLY_LIMIT_CHEQ = parseNumberEnv(

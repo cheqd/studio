@@ -2,6 +2,7 @@ import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { DataSource } from 'typeorm';
+import { toBech32 } from '@cosmjs/encoding';
 
 /**
  * Handler-level tests for POST /account/faucet and GET /account/balances. They call the real controller methods
@@ -22,6 +23,7 @@ import { DataSource } from 'typeorm';
 const databaseUrl = process.env.FAUCET_TEST_DATABASE_URL;
 const cheq = (amount: number) => BigInt(amount) * 1_000_000_000n;
 const ADDRESS = 'cheqd1testaddress';
+const OTHER_ADDRESS = toBech32('cheqd', new Uint8Array(20).fill(7));
 
 /** Asserts that every field in `expected` is present, recursively, with the same value. */
 function assertSubset(actual: any, expected: any, path = 'value'): void {
@@ -42,6 +44,9 @@ describe('POST /account/faucet and GET /account/balances (Postgres, faked extern
 	let controller: any;
 	let ledger: any;
 	let CustomerEntityClass: any;
+	let AccountControllerRef: any;
+	let PaymentAccountServiceRef: any;
+	let topupTestnet: any;
 
 	// Controls and counters for the faked externals
 	let balanceNcheq = '0';
@@ -49,6 +54,7 @@ describe('POST /account/faucet and GET /account/balances (Postgres, faked extern
 	let balanceCalls = 0;
 	let stripeCalls = 0;
 	let faucetCalls = 0;
+	let lastFaucetAddress: string | undefined;
 	const resetCounters = () => {
 		balanceCalls = 0;
 		stripeCalls = 0;
@@ -93,7 +99,10 @@ describe('POST /account/faucet and GET /account/balances (Postgres, faked extern
 				return res;
 			},
 		};
-		await controller.requestFaucetTokens({ headers, body }, res);
+		const req = { headers, body };
+		// the router runs the validators before the handler; do the same so the handler's 400s are exercised
+		for (const chain of AccountControllerRef.faucetValidator) await chain.run(req);
+		await controller.requestFaucetTokens(req, res);
 		return { status, json, headers: responseHeaders };
 	};
 
@@ -157,18 +166,23 @@ describe('POST /account/faucet and GET /account/balances (Postgres, faked extern
 		dataSource = Connection.instance.dbConnection;
 		for (const Migration of migrations) await new Migration().up(dataSource.createQueryRunner());
 
-		const { AccountController } = await import('../../src/controllers/api/account.js');
+		const accountModule = await import('../../src/controllers/api/account.js');
+		const { AccountController } = accountModule;
+		AccountControllerRef = AccountController;
+		topupTestnet = accountModule.topupTestnet;
 		const { FaucetHelper } = await import('../../src/helpers/faucet.js');
 		const { SubscriptionService } = await import('../../src/services/admin/subscription.js');
 		const { PaymentAccountService } = await import('../../src/services/api/payment-account.js');
 		const { FaucetRequestService } = await import('../../src/services/api/faucet-request.js');
 
-		(FaucetHelper as any).delegateTokens = async () => {
+		(FaucetHelper as any).delegateTokens = async (address: string) => {
 			faucetCalls++;
+			lastFaucetAddress = address;
 			if (faucetMode === 'throw') throw new Error('network timeout');
 			return { status: faucetMode === 'ok' ? 200 : 500, error: faucetMode === 'ok' ? '' : 'boom', data: {} };
 		};
 		(SubscriptionService.instance as any).findCurrent = async () => ({ subscriptionId: 'sub_1' });
+		PaymentAccountServiceRef = PaymentAccountService;
 		(PaymentAccountService.instance as any).findOne = async (query: { address?: string }) =>
 			!query.address || query.address === ADDRESS ? { address: ADDRESS } : null;
 		(PaymentAccountService.instance as any).find = async () => [{ namespace: 'testnet', address: ADDRESS }];
@@ -341,13 +355,34 @@ describe('POST /account/faucet and GET /account/balances (Postgres, faked extern
 		});
 	});
 
-	describe('input and ownership', () => {
-		it('answers 400 for an absurd amount and a sub-ncheq amount, and 403 for an address the customer does not own', async () => {
+	describe('input and address', () => {
+		it('answers 400 for an absurd amount and a sub-ncheq amount', async () => {
 			reset();
 			const customer = await newCustomer();
 			assert.equal((await call(customer, { amount: 1e30 })).status, 400);
 			assert.equal((await call(customer, { amount: 0.0000000001 })).status, 400);
-			assert.equal((await call(customer, { address: 'cheqd1someoneelse', amount: 1 })).status, 403);
+		});
+
+		it('funds a valid cheqd address the customer does not own, and charges the customer quota', async () => {
+			reset();
+			const customer = await newCustomer();
+			const result = await call(customer, { address: OTHER_ADDRESS, amount: 1000 });
+			assert.equal(result.status, 200);
+			assert.equal(result.json.funded, true);
+			assert.equal(result.json.address, OTHER_ADDRESS);
+			assert.equal(lastFaucetAddress, OTHER_ADDRESS);
+			assert.equal(await used(customer), cheq(1000));
+		});
+
+		it('answers 400 for a malformed, wrong-prefix, non-account or uppercase address, without calling the faucet', async () => {
+			reset();
+			const customer = await newCustomer();
+			const wrongPrefix = toBech32('cosmos', new Uint8Array(20).fill(7));
+			const contractAddress = toBech32('cheqd', new Uint8Array(32).fill(7));
+			for (const address of ['cheqd1someoneelse', wrongPrefix, contractAddress, OTHER_ADDRESS.toUpperCase()]) {
+				assert.equal((await call(customer, { address, amount: 1 })).status, 400, address);
+			}
+			assert.equal(faucetCalls, 0);
 		});
 	});
 
@@ -422,6 +457,193 @@ describe('POST /account/faucet and GET /account/balances (Postgres, faked extern
 
 			assert.equal((await call(customer, { amount: 20000 })).status, 200);
 			assert.deepEqual((await rows(customer)).map((r) => r.status).sort(), ['abandoned', 'completed']);
+		});
+	});
+
+	describe('initial top-up for a new testnet account', () => {
+		const originalTopup = process.env.ENABLE_ACCOUNT_TOPUP;
+		let originalFind: any;
+		let originalProvision: any;
+
+		before(() => {
+			process.env.ENABLE_ACCOUNT_TOPUP = 'true';
+			originalFind = PaymentAccountServiceRef.instance.find;
+			originalProvision = AccountControllerRef.provisionCustomerAccount;
+			AccountControllerRef.provisionCustomerAccount = async () => ({
+				success: true,
+				status: 200,
+				data: { address: ADDRESS },
+			});
+		});
+
+		after(() => {
+			if (originalTopup === undefined) delete process.env.ENABLE_ACCOUNT_TOPUP;
+			else process.env.ENABLE_ACCOUNT_TOPUP = originalTopup;
+			PaymentAccountServiceRef.instance.find = originalFind;
+			AccountControllerRef.provisionCustomerAccount = originalProvision;
+		});
+
+		// POST /account. `existingTestnet` is whether the customer already had a testnet payment account before the call
+		const createAccount = async (customer: any, existingTestnet: boolean) => {
+			PaymentAccountServiceRef.instance.find = async () =>
+				existingTestnet ? [{ namespace: 'testnet', address: ADDRESS }] : [];
+			// a customer that already has a payment provider id skips the Stripe account step
+			customer.paymentProviderId = 'cus_test';
+			let status = 0;
+			const res: any = {
+				locals: { customer },
+				status(code: number) {
+					status = code;
+					return res;
+				},
+				json() {
+					return res;
+				},
+			};
+			await controller.create({ headers: {}, body: { primaryEmail: customer.email } }, res);
+			return status;
+		};
+
+		const bootstrapStatus = () => ({ errors: [] as string[], testnetMinimumBalance: false });
+		const runBootstrapTopup = async (customer: any, isNew: boolean, status: any) => {
+			await topupTestnet(customer, { data: { address: ADDRESS } }, status, isNew, 'Test', 'User');
+		};
+
+		describe('POST /account', () => {
+			it('tops a newly created testnet account up to 10,000 CHEQ, counted against the quota', async () => {
+				reset();
+				const customer = await newCustomer();
+
+				assert.equal(await createAccount(customer, false), 201);
+
+				assert.equal(faucetCalls, 1);
+				assert.equal(lastFaucetAddress, ADDRESS);
+				assert.equal(await used(customer), cheq(10000));
+			});
+
+			it('requests only the difference when the new account already holds some CHEQ', async () => {
+				reset();
+				balanceNcheq = String(cheq(4000));
+				const customer = await newCustomer();
+
+				assert.equal(await createAccount(customer, false), 201);
+
+				assert.equal(await used(customer), cheq(6000));
+			});
+
+			it('does not call the faucet when the new account already holds 10,000 CHEQ or more', async () => {
+				reset();
+				balanceNcheq = String(cheq(10000));
+				const customer = await newCustomer();
+
+				assert.equal(await createAccount(customer, false), 201);
+
+				assert.equal(faucetCalls, 0);
+			});
+
+			it('does not top up a testnet account that already existed, and does not read its balance', async () => {
+				reset();
+				const customer = await newCustomer();
+
+				assert.equal(await createAccount(customer, true), 201);
+
+				assert.deepEqual({ faucetCalls, balanceCalls }, { faucetCalls: 0, balanceCalls: 0 });
+				assert.equal(await used(customer), 0n);
+			});
+
+			it('does not top up when ENABLE_ACCOUNT_TOPUP is not true', async () => {
+				reset();
+				process.env.ENABLE_ACCOUNT_TOPUP = 'false';
+				try {
+					const customer = await newCustomer();
+					assert.equal(await createAccount(customer, false), 201);
+					assert.equal(faucetCalls, 0);
+				} finally {
+					process.env.ENABLE_ACCOUNT_TOPUP = 'true';
+				}
+			});
+
+			it('still creates the account, without calling the faucet, when the monthly quota is used up', async () => {
+				reset();
+				const customer = await newCustomer();
+				await ledger.reserve(customer, ADDRESS, cheq(95000), { limitNcheq: cheq(100000) });
+
+				assert.equal(await createAccount(customer, false), 201);
+
+				assert.equal(faucetCalls, 0);
+			});
+
+			it('answers 502 and gives the quota back when the faucet reports a failure', async () => {
+				reset();
+				faucetMode = 'fail500';
+				const customer = await newCustomer();
+
+				assert.equal(await createAccount(customer, false), 502);
+				assert.equal(await used(customer), 0n);
+			});
+		});
+
+		describe('bootstrap', () => {
+			it('tops a newly created testnet account up to 10,000 CHEQ and reports the minimum balance', async () => {
+				reset();
+				const customer = await newCustomer();
+				const status = bootstrapStatus();
+
+				await runBootstrapTopup(customer, true, status);
+
+				assert.equal(faucetCalls, 1);
+				assert.equal(await used(customer), cheq(10000));
+				assert.deepEqual(status, { errors: [], testnetMinimumBalance: true });
+			});
+
+			it('does nothing for a testnet account that already existed', async () => {
+				reset();
+				const customer = await newCustomer();
+				const status = bootstrapStatus();
+
+				await runBootstrapTopup(customer, false, status);
+
+				assert.deepEqual({ faucetCalls, balanceCalls }, { faucetCalls: 0, balanceCalls: 0 });
+				assert.deepEqual(status, { errors: [], testnetMinimumBalance: false });
+			});
+
+			it('skips the top-up without recording an error when the monthly quota is used up', async () => {
+				reset();
+				const customer = await newCustomer();
+				await ledger.reserve(customer, ADDRESS, cheq(95000), { limitNcheq: cheq(100000) });
+				const status = bootstrapStatus();
+
+				await runBootstrapTopup(customer, true, status);
+
+				assert.equal(faucetCalls, 0);
+				assert.deepEqual(status, { errors: [], testnetMinimumBalance: false });
+			});
+
+			it('records an error when the faucet reports a failure', async () => {
+				reset();
+				faucetMode = 'fail500';
+				const customer = await newCustomer();
+				const status = bootstrapStatus();
+
+				await runBootstrapTopup(customer, true, status);
+
+				assert.equal(status.errors.length, 1);
+				assert.equal(status.testnetMinimumBalance, false);
+			});
+
+			it('does nothing when ENABLE_ACCOUNT_TOPUP is not true', async () => {
+				reset();
+				process.env.ENABLE_ACCOUNT_TOPUP = 'false';
+				try {
+					const customer = await newCustomer();
+					const status = bootstrapStatus();
+					await runBootstrapTopup(customer, true, status);
+					assert.equal(faucetCalls, 0);
+					assert.deepEqual(status, { errors: [], testnetMinimumBalance: false });
+				} finally {
+					process.env.ENABLE_ACCOUNT_TOPUP = 'true';
+				}
+			});
 		});
 	});
 

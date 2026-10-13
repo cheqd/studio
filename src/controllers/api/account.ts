@@ -25,7 +25,7 @@ import {
 } from '../../types/constants.js';
 import { CustomerService } from '../../services/api/customer.js';
 import { LogToHelper } from '../../middleware/auth/logto-helper.js';
-import { FaucetHelper, isFaucetTimeout } from '../../helpers/faucet.js';
+import { FaucetHelper, isFaucetTimeout, isValidFaucetAddress } from '../../helpers/faucet.js';
 import { PriceHelper } from '../../helpers/price.js';
 import { cheqToNcheq, ncheqToCheq, toSafeFaucetAmount } from '../../helpers/denom.js';
 import { StatusCodes } from 'http-status-codes';
@@ -83,6 +83,10 @@ export class AccountController {
 
 	public static faucetValidator = [
 		check('address').optional().isString().notEmpty().withMessage('address should be a valid string').bail(),
+		check('address')
+			.optional()
+			.custom((address: string) => isValidFaucetAddress(address))
+			.withMessage('address should be a valid lowercase cheqd bech32 account address'),
 		check('amount').optional().isFloat({ gt: 0 }).withMessage('amount should be a positive number').bail(),
 	];
 	/**
@@ -362,6 +366,7 @@ export class AccountController {
 
 			// 7. Provision Mainnet & Testnet accounts in parallel
 			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
+			const isNewTestnetAccount = !accounts.some((acc) => acc.namespace === CheqdNetwork.Testnet);
 			const [mainnetResp, testnetResp] = await Promise.all([
 				AccountController.provisionCustomerAccount(CheqdNetwork.Mainnet, accounts, customerEntity),
 				AccountController.provisionCustomerAccount(CheqdNetwork.Testnet, accounts, customerEntity),
@@ -378,7 +383,7 @@ export class AccountController {
 			// 8. Update LogTo custom data and Top‑up Testnet in parallel (non-blocking)
 			await Promise.all([
 				updateCustomData(userEntity.logToId, customerEntity, mainnetResp, testnetResp, logToHelper, status),
-				topupTestnet(customerEntity, testnetResp, status, logToFirstName, logToLastName),
+				topupTestnet(customerEntity, testnetResp, status, isNewTestnetAccount, logToFirstName, logToLastName),
 			]);
 
 			// 9. Add user to Mailchimp with "cheqd_Studio" tag (feature-flagged)
@@ -545,6 +550,8 @@ export class AccountController {
 
 			// 3. Check if paymentAccount exists for the customer
 			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
+			// The initial top-up is only for a testnet account created by this call, not for an existing one
+			const isNewTestnetAccount = !accounts.some((acc) => acc.namespace === CheqdNetwork.Testnet);
 			const mainnetAccountResponse = await AccountController.provisionCustomerAccount(
 				CheqdNetwork.Mainnet,
 				accounts,
@@ -570,7 +577,7 @@ export class AccountController {
 			const testnetAccount = testnetAccountResponse.data;
 
 			// 4. Check the token balance for Testnet account
-			if (testnetAccount.address && process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
+			if (isNewTestnetAccount && testnetAccount.address && process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
 				const topupAmountNcheq =
 					cheqToNcheq(TESTNET_INITIAL_TOPUP_CHEQ) - (await getTestnetBalanceNcheq(testnetAccount.address));
 				if (topupAmountNcheq > 0n) {
@@ -625,7 +632,7 @@ export class AccountController {
 	 *   post:
 	 *     tags: [Account]
 	 *     summary: Request cheqd testnet CHEQ tokens for a Studio payment account.
-	 *     description: Funds an authenticated Studio user's owned testnet payment account. An address can hold at most FAUCET_ADDRESS_CAP_CHEQ, and a customer can request at most FAUCET_MONTHLY_LIMIT_CHEQ per calendar month (UTC) across all their addresses; both default to 100,000 CHEQ. Without an amount the address is topped up to the cap, or by the quota left if that is lower. Authentication: a Studio user session (bearer token), an API key (`x-api-key`) or a machine-to-machine token (bearer token plus a `customer-id` header); whichever is used, the credential must carry the `request:faucet:testnet` scope. The response includes the remaining quota.
+	 *     description: Funds a cheqd testnet address, by default the customer's own payment account, or any valid cheqd address supplied. An address can hold at most FAUCET_ADDRESS_CAP_CHEQ, and a customer can request at most FAUCET_MONTHLY_LIMIT_CHEQ per calendar month (UTC) across all their addresses; both default to 100,000 CHEQ. Without an amount the address is topped up to the cap, or by the quota left if that is lower. Authentication is by a Studio user session (bearer token), an API key (`x-api-key`) or a machine-to-machine token (bearer token plus a `customer-id` header); whichever is used, the credential must carry the `request:faucet:testnet` scope. The response includes the remaining quota.
 	 *     requestBody:
 	 *       content:
 	 *         application/json:
@@ -634,7 +641,7 @@ export class AccountController {
 	 *             properties:
 	 *               address:
 	 *                 type: string
-	 *                 description: Optional owned Studio testnet payment account address. Defaults to the authenticated customer's testnet account.
+	 *                 description: Optional cheqd testnet address to fund; it does not have to belong to the customer. Requests count against the calling customer's quota. Defaults to the authenticated customer's testnet account.
 	 *               amount:
 	 *                 type: number
 	 *                 description: Optional amount in CHEQ. Defaults to the most that can be requested now (the lower of the room under the address cap and the monthly quota left).
@@ -714,12 +721,10 @@ export class AccountController {
 				} satisfies UnsuccessfulResponseBody);
 			}
 
-			const testnetAccount = await resolveFaucetAccount(customer, requestedAddress);
+			const testnetAccount = await resolveFaucetTarget(customer, requestedAddress);
 			if (!testnetAccount) {
-				return response.status(requestedAddress ? StatusCodes.FORBIDDEN : StatusCodes.NOT_FOUND).json({
-					error: requestedAddress
-						? 'The requested address is not an owned Studio testnet payment account.'
-						: 'No Studio testnet payment account was found for this customer.',
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: 'No Studio testnet payment account was found for this customer.',
 				} satisfies UnsuccessfulResponseBody);
 			}
 
@@ -1107,16 +1112,17 @@ async function getTestnetBalanceNcheq(address: string): Promise<bigint> {
 	return getBalanceNcheq(address, process.env.TESTNET_RPC_URL);
 }
 
-async function resolveFaucetAccount(
+/**
+ * Resolves the address the faucet should fund. A supplied address was already validated by `faucetValidator` and may
+ * belong to anyone; quota and interval limits are charged to the calling customer either way. With no address this is
+ * the customer's own testnet payment account, or null if they have none.
+ */
+async function resolveFaucetTarget(
 	customer: CustomerEntity,
 	requestedAddress?: string
-): Promise<PaymentAccountEntity | null> {
+): Promise<{ address: string } | null> {
 	if (requestedAddress) {
-		return PaymentAccountService.instance.findOne({
-			address: requestedAddress,
-			namespace: CheqdNetwork.Testnet,
-			customer,
-		});
+		return { address: requestedAddress };
 	}
 
 	return PaymentAccountService.instance.findOne({
@@ -1303,14 +1309,16 @@ async function delegateWithinQuota(
 	}
 }
 
-async function topupTestnet(
+// Exported for the handler tests only
+export async function topupTestnet(
 	customer: CustomerEntity,
 	testnetResp: any,
 	status: BootStrapAccountResponse,
+	isNewTestnetAccount: boolean,
 	firstName?: string | null,
 	lastName?: string | null
 ) {
-	if (!testnetResp.data?.address || process.env.ENABLE_ACCOUNT_TOPUP !== 'true') {
+	if (!isNewTestnetAccount || !testnetResp.data?.address || process.env.ENABLE_ACCOUNT_TOPUP !== 'true') {
 		return;
 	}
 	try {
@@ -1329,6 +1337,12 @@ async function topupTestnet(
 			);
 			if (faucet.status === StatusCodes.OK) {
 				status.testnetMinimumBalance = true;
+			} else if (faucet.quotaExceeded) {
+				// Account bootstrap must not fail because the monthly faucet quota is used up
+				logFaucetEvent('warn', 'faucet.bootstrap_topup_skipped', {
+					customerId: customer.customerId,
+					reason: 'quota_exceeded',
+				});
 			} else {
 				status.errors.push(faucet.error);
 			}
