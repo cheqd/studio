@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.18.0-develop.5](https://github.com/cheqd/studio/compare/3.18.0-develop.4...3.18.0-develop.5) (2026-10-14)
+
+### Features
+
+* **faucet:** send a default amount when none is requested ([#841](https://github.com/cheqd/studio/issues/841)) ([7864611](https://github.com/cheqd/studio/commit/78646113fc9b3342df3b7206ca1dcd3de928ca51))
+* **faucet:** send a default amount when none is requested ([#841](https://github.com/cheqd/studio/issues/841)) ([#842](https://github.com/cheqd/studio/issues/842)) ([18223ce](https://github.com/cheqd/studio/commit/18223ceec25604642c9bc35477c207995df568c1))
+
 ## [3.18.0-develop.4](https://github.com/cheqd/studio/compare/3.18.0-develop.3...3.18.0-develop.4) (2026-10-13)
 
 ### Features
