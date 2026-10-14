@@ -1,3 +1,4 @@
+import { fromBech32 } from '@cosmjs/encoding';
 import type { ICommonErrorResponse } from '../types/authentication.js';
 import {
 	MINIMAL_DENOM,
@@ -6,7 +7,34 @@ import {
 	FAUCET_API_KEY,
 	FAUCET_ACCESS_CLIENT_ID,
 	FAUCET_ACCESS_CLIENT_SECRET,
+	FAUCET_REQUEST_TIMEOUT_SECONDS,
 } from '../types/constants.js';
+
+const FAUCET_ADDRESS_PREFIX = 'cheqd';
+const ACCOUNT_ADDRESS_BYTES = 20;
+
+/**
+ * True for a lowercase cheqd bech32 account address (20 bytes, valid checksum). Other bech32 strings with the cheqd
+ * prefix, such as 32-byte contract addresses, are not ordinary accounts and are rejected.
+ */
+export function isValidFaucetAddress(address: string): boolean {
+	try {
+		const { prefix, data } = fromBech32(address);
+		return (
+			prefix === FAUCET_ADDRESS_PREFIX &&
+			data.length === ACCOUNT_ADDRESS_BYTES &&
+			address === address.toLowerCase()
+		);
+	} catch {
+		return false;
+	}
+}
+
+/** True if the error is the faucet call timing out or being aborted, as opposed to the faucet answering. */
+export function isFaucetTimeout(error: unknown): boolean {
+	const name = (error as { name?: string } | null)?.name;
+	return name === 'TimeoutError' || name === 'AbortError';
+}
 
 export class FaucetHelper {
 	// ...
@@ -15,7 +43,8 @@ export class FaucetHelper {
 		firstName: string,
 		lastName: string,
 		email: string,
-		amount = FAUCET_AMOUNT
+		amount = FAUCET_AMOUNT,
+		timeoutMs = FAUCET_REQUEST_TIMEOUT_SECONDS * 1000
 	): Promise<ICommonErrorResponse> {
 		const faucetURI = FAUCET_URI;
 		const faucetBody = {
@@ -37,6 +66,8 @@ export class FaucetHelper {
 			},
 			body: JSON.stringify(faucetBody),
 			method: 'POST',
+			// Covers waiting for the response and reading its body. On expiry fetch rejects with a TimeoutError.
+			signal: AbortSignal.timeout(timeoutMs),
 		});
 		return {
 			status: response.status,

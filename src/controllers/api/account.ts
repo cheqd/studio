@@ -13,10 +13,20 @@ import type Stripe from 'stripe';
 import type { SafeAPIResponse } from '../../types/common.js';
 
 import { CheqdNetwork, checkBalance } from '@cheqd/sdk';
-import { MINIMAL_DENOM, OperationNameEnum, TESTNET_FAUCET_UPPER_CAP_CHEQ } from '../../types/constants.js';
+import {
+	FAUCET_ADDRESS_CAP_CHEQ,
+	FAUCET_DEFAULT_REQUEST_CHEQ,
+	FAUCET_BALANCE_SETTLE_SECONDS,
+	FAUCET_MIN_INTERVAL_SECONDS,
+	FAUCET_MONTHLY_LIMIT_CHEQ,
+	FAUCET_SUBSCRIPTION_CACHE_SECONDS,
+	MINIMAL_DENOM,
+	OperationNameEnum,
+	TESTNET_INITIAL_TOPUP_CHEQ,
+} from '../../types/constants.js';
 import { CustomerService } from '../../services/api/customer.js';
 import { LogToHelper } from '../../middleware/auth/logto-helper.js';
-import { FaucetHelper } from '../../helpers/faucet.js';
+import { FaucetHelper, isFaucetTimeout, isValidFaucetAddress } from '../../helpers/faucet.js';
 import { PriceHelper } from '../../helpers/price.js';
 import { cheqToNcheq, ncheqToCheq, toSafeFaucetAmount } from '../../helpers/denom.js';
 import { StatusCodes } from 'http-status-codes';
@@ -35,7 +45,11 @@ import { getStripeObjectKey } from '../../utils/index.js';
 import { KeyService } from '../../services/api/key.js';
 import { LocalStore } from '../../database/cache/store.js';
 import { BootStrapAccountResponse } from '../../types/account.js';
-import type { AccountNetworkBalance, QueryAccountBalancesResponseBody } from '../../types/account.js';
+import type {
+	AccountFaucetInfo,
+	AccountNetworkBalance,
+	QueryAccountBalancesResponseBody,
+} from '../../types/account.js';
 import { RoleEntity } from '../../database/entities/role.entity.js';
 import { MailchimpService } from '../../helpers/mailchimp.js';
 import { IdentifierService } from '../../services/api/identifier.js';
@@ -44,6 +58,16 @@ import { ResourceService } from '../../services/api/resource.js';
 import { CredentialCategory } from '../../types/credential.js';
 import { Like } from 'typeorm';
 import { productHasCapability, StudioPlanCapability } from '../../services/admin/plan-capabilities.js';
+import { FaucetRequestService } from '../../services/api/faucet-request.js';
+import {
+	buildFaucetQuotaSummary,
+	creditWithinQuota,
+	defaultRequestNcheq,
+	logFaucetEvent,
+	maxRequestableNcheq,
+	remainingQuota,
+	secondsUntilReset,
+} from '../../helpers/faucet-quota.js';
 
 dotenv.config();
 
@@ -61,6 +85,10 @@ export class AccountController {
 
 	public static faucetValidator = [
 		check('address').optional().isString().notEmpty().withMessage('address should be a valid string').bail(),
+		check('address')
+			.optional()
+			.custom((address: string) => isValidFaucetAddress(address))
+			.withMessage('address should be a valid lowercase cheqd bech32 account address'),
 		check('amount').optional().isFloat({ gt: 0 }).withMessage('amount should be a positive number').bail(),
 	];
 	/**
@@ -340,6 +368,7 @@ export class AccountController {
 
 			// 7. Provision Mainnet & Testnet accounts in parallel
 			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
+			const isNewTestnetAccount = !accounts.some((acc) => acc.namespace === CheqdNetwork.Testnet);
 			const [mainnetResp, testnetResp] = await Promise.all([
 				AccountController.provisionCustomerAccount(CheqdNetwork.Mainnet, accounts, customerEntity),
 				AccountController.provisionCustomerAccount(CheqdNetwork.Testnet, accounts, customerEntity),
@@ -356,7 +385,7 @@ export class AccountController {
 			// 8. Update LogTo custom data and Top‑up Testnet in parallel (non-blocking)
 			await Promise.all([
 				updateCustomData(userEntity.logToId, customerEntity, mainnetResp, testnetResp, logToHelper, status),
-				topupTestnet(customerEntity, testnetResp, status, logToFirstName, logToLastName),
+				topupTestnet(customerEntity, testnetResp, status, isNewTestnetAccount, logToFirstName, logToLastName),
 			]);
 
 			// 9. Add user to Mailchimp with "cheqd_Studio" tag (feature-flagged)
@@ -523,6 +552,8 @@ export class AccountController {
 
 			// 3. Check if paymentAccount exists for the customer
 			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
+			// The initial top-up is only for a testnet account created by this call, not for an existing one
+			const isNewTestnetAccount = !accounts.some((acc) => acc.namespace === CheqdNetwork.Testnet);
 			const mainnetAccountResponse = await AccountController.provisionCustomerAccount(
 				CheqdNetwork.Mainnet,
 				accounts,
@@ -548,23 +579,29 @@ export class AccountController {
 			const testnetAccount = testnetAccountResponse.data;
 
 			// 4. Check the token balance for Testnet account
-			if (testnetAccount.address && process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
+			if (isNewTestnetAccount && testnetAccount.address && process.env.ENABLE_ACCOUNT_TOPUP === 'true') {
 				const topupAmountNcheq =
-					cheqToNcheq(TESTNET_FAUCET_UPPER_CAP_CHEQ) - (await getTestnetBalanceNcheq(testnetAccount.address));
+					cheqToNcheq(TESTNET_INITIAL_TOPUP_CHEQ) - (await getTestnetBalanceNcheq(testnetAccount.address));
 				if (topupAmountNcheq > 0n) {
 					// 3.1 If it's less then required for DID creation - assign new portion from testnet-faucet
 					// Handle case where firstName or lastName is not set
 					const faucetFirstName = logToFirstName || customerEntity.name;
 					const faucetLastName = logToLastName || 'n/a';
-					const resp = await FaucetHelper.delegateTokens(
+					const resp = await delegateWithinQuota(
+						customerEntity,
 						testnetAccount.address,
 						faucetFirstName,
 						faucetLastName,
-						customerEntity.email,
-						toSafeFaucetAmount(topupAmountNcheq)
+						topupAmountNcheq
 					);
 
-					if (resp.status !== StatusCodes.OK) {
+					if (resp.quotaExceeded) {
+						// Account creation must not fail because the monthly faucet quota is used up
+						logFaucetEvent('warn', 'faucet.bootstrap_topup_skipped', {
+							customerId: customerEntity.customerId,
+							reason: 'quota_exceeded',
+						});
+					} else if (resp.status !== StatusCodes.OK) {
 						return response.status(StatusCodes.BAD_GATEWAY).json({
 							error: resp.error,
 						});
@@ -597,7 +634,7 @@ export class AccountController {
 	 *   post:
 	 *     tags: [Account]
 	 *     summary: Request cheqd testnet CHEQ tokens for a Studio payment account.
-	 *     description: Funds an authenticated Studio user's owned testnet payment account up to the configured faucet cap.
+	 *     description: Funds a cheqd testnet address, by default the customer's own payment account, or any valid cheqd address supplied. An address can hold at most FAUCET_ADDRESS_CAP_CHEQ, and a customer can request at most FAUCET_MONTHLY_LIMIT_CHEQ per calendar month (UTC) across all their addresses; both default to 100,000 CHEQ. Without an amount, FAUCET_DEFAULT_REQUEST_CHEQ (default 10,000 CHEQ) is sent, or less if the room under the address cap or the quota left is lower. Authentication is by a Studio user session (bearer token), an API key (`x-api-key`) or a machine-to-machine token (bearer token plus a `customer-id` header); whichever is used, the credential must carry the `request:faucet:testnet` scope. The response includes the remaining quota.
 	 *     requestBody:
 	 *       content:
 	 *         application/json:
@@ -606,10 +643,10 @@ export class AccountController {
 	 *             properties:
 	 *               address:
 	 *                 type: string
-	 *                 description: Optional owned Studio testnet payment account address. Defaults to the authenticated customer's testnet account.
+	 *                 description: Optional cheqd testnet address to fund; it does not have to belong to the customer. Requests count against the calling customer's quota. Defaults to the authenticated customer's testnet account.
 	 *               amount:
 	 *                 type: number
-	 *                 description: Optional amount in CHEQ. Defaults to the amount needed to top up to the configured cap.
+	 *                 description: Optional amount in CHEQ. If omitted, FAUCET_DEFAULT_REQUEST_CHEQ (default 10,000) is sent, or less if the room under the address cap or the monthly quota left is lower. Set it to ask for more; the response shows the amount sent.
 	 *     responses:
 	 *       200:
 	 *         description: The request was processed.
@@ -621,8 +658,12 @@ export class AccountController {
 	 *         description: Forbidden.
 	 *       404:
 	 *         description: No Studio testnet payment account was found for this customer.
+	 *       429:
+	 *         description: Too many requests. Either the customer's monthly faucet quota is exhausted (the body includes the quota details), or a request was made too soon after the previous one (FAUCET_MIN_INTERVAL_SECONDS). The Retry-After header gives the seconds to wait.
 	 *       502:
 	 *         description: Upstream faucet request failed.
+	 *       504:
+	 *         description: The faucet did not respond within FAUCET_REQUEST_TIMEOUT_SECONDS. The request may or may not have been processed.
 	 *       503:
 	 *         description: Stripe subscription checks are disabled.
 	 *       500:
@@ -630,12 +671,6 @@ export class AccountController {
 	 */
 	@validate
 	public async requestFaucetTokens(request: Request, response: Response) {
-		if (request.headers['x-api-key'] || request.headers['customer-id']) {
-			return response.status(StatusCodes.FORBIDDEN).json({
-				error: 'Faucet requests are only available to authenticated Studio users.',
-			} satisfies UnsuccessfulResponseBody);
-		}
-
 		if (!response.locals.user || !response.locals.customer) {
 			return response.status(StatusCodes.UNAUTHORIZED).json({
 				error: 'Unauthorized error: Studio user context was not found.',
@@ -654,6 +689,20 @@ export class AccountController {
 		const requestedAmountCheq = request.body.amount !== undefined ? Number(request.body.amount) : undefined;
 
 		try {
+			// Cheap check first, so a tight loop of requests does not reach Stripe, the RPC node or the faucet
+			const waitSeconds = await FaucetRequestService.instance.getSecondsUntilNextAllowed(
+				customer,
+				FAUCET_MIN_INTERVAL_SECONDS
+			);
+			if (waitSeconds > 0) {
+				logFaucetEvent('warn', 'faucet.too_frequent', {
+					customerId: customer.customerId,
+					retryAfterSeconds: waitSeconds,
+					stage: 'precheck',
+				});
+				return tooManyFaucetRequests(response, waitSeconds);
+			}
+
 			const subscription = await SubscriptionService.instance.findCurrent(customer);
 			if (!subscription) {
 				return response.status(StatusCodes.FORBIDDEN).json({
@@ -661,41 +710,56 @@ export class AccountController {
 				} satisfies UnsuccessfulResponseBody);
 			}
 
-			const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscriptionId);
-			if (!['active', 'trialing'].includes(stripeSubscription.status)) {
+			const plan = await getSubscriptionPlan(stripe, subscription.subscriptionId);
+			if (!['active', 'trialing'].includes(plan.status)) {
 				return response.status(StatusCodes.FORBIDDEN).json({
 					error: 'An active Basic or higher subscription is required to request testnet CHEQ tokens.',
 				} satisfies UnsuccessfulResponseBody);
 			}
 
-			const productId = getStripeObjectKey(stripeSubscription.items.data[0].plan.product);
-			if (!productHasCapability(productId, StudioPlanCapability.Faucet)) {
+			if (!productHasCapability(plan.productId, StudioPlanCapability.Faucet)) {
 				return response.status(StatusCodes.FORBIDDEN).json({
 					error: 'The current subscription does not include testnet faucet access.',
 				} satisfies UnsuccessfulResponseBody);
 			}
 
-			const testnetAccount = await resolveFaucetAccount(customer, requestedAddress);
+			const testnetAccount = await resolveFaucetTarget(customer, requestedAddress);
 			if (!testnetAccount) {
-				return response.status(requestedAddress ? StatusCodes.FORBIDDEN : StatusCodes.NOT_FOUND).json({
-					error: requestedAddress
-						? 'The requested address is not an owned Studio testnet payment account.'
-						: 'No Studio testnet payment account was found for this customer.',
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: 'No Studio testnet payment account was found for this customer.',
 				} satisfies UnsuccessfulResponseBody);
 			}
 
-			const capNcheq = cheqToNcheq(TESTNET_FAUCET_UPPER_CAP_CHEQ);
-			if (capNcheq <= 0n) {
-				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-					error: 'Invalid TESTNET_FAUCET_UPPER_CAP_CHEQ configuration.',
-				} satisfies UnsuccessfulResponseBody);
+			const addressCapNcheq = cheqToNcheq(FAUCET_ADDRESS_CAP_CHEQ);
+			const quotaLimitNcheq = cheqToNcheq(FAUCET_MONTHLY_LIMIT_CHEQ);
+
+			// Nothing can be requested once the quota is used up, so answer before the (slow) balance query
+			const { usedNcheq, window } = await FaucetRequestService.instance.getQuotaStatus(customer);
+			const quotaRemainingNcheq = remainingQuota(usedNcheq, quotaLimitNcheq);
+			if (quotaRemainingNcheq <= 0n) {
+				logFaucetEvent('warn', 'faucet.quota_exceeded', {
+					customerId: customer.customerId,
+					address: testnetAccount.address,
+					usedNcheq: usedNcheq.toString(),
+					limitNcheq: quotaLimitNcheq.toString(),
+					stage: 'precheck',
+				});
+				return response
+					.status(StatusCodes.TOO_MANY_REQUESTS)
+					.set('Retry-After', String(secondsUntilReset(window)))
+					.json({
+						error: 'Monthly testnet faucet quota exceeded for this account.',
+						quota: buildFaucetQuotaSummary(usedNcheq, quotaLimitNcheq, window),
+					});
 			}
 
 			const currentBalanceNcheq = await getTestnetBalanceNcheq(testnetAccount.address);
-			const maxAllowedNcheq = capNcheq - currentBalanceNcheq;
-			const balance = buildFaucetBalanceResponse(currentBalanceNcheq, capNcheq, maxAllowedNcheq);
+			const roomUnderCapNcheq = addressCapNcheq - currentBalanceNcheq;
+			// What can be requested right now: limited by both the room under the address cap and the monthly quota
+			const maxRequestable = maxRequestableNcheq(roomUnderCapNcheq, quotaRemainingNcheq);
+			const balance = buildFaucetBalanceResponse(currentBalanceNcheq, addressCapNcheq, maxRequestable);
 
-			if (maxAllowedNcheq <= 0n) {
+			if (roomUnderCapNcheq <= 0n) {
 				return response.status(StatusCodes.OK).json({
 					funded: false,
 					reason: 'cap_reached',
@@ -705,8 +769,18 @@ export class AccountController {
 				});
 			}
 
+			// With no amount, send the default (FAUCET_DEFAULT_REQUEST_CHEQ), lowered to what is allowed now. If the
+			// quota is used up this falls through to the reservation below, which answers 429 with the quota details.
 			const amountToRequestNcheq =
-				requestedAmountCheq === undefined ? maxAllowedNcheq : cheqToNcheq(requestedAmountCheq);
+				requestedAmountCheq !== undefined
+					? cheqToNcheq(requestedAmountCheq)
+					: maxRequestable > 0n
+						? defaultRequestNcheq(
+								cheqToNcheq(FAUCET_DEFAULT_REQUEST_CHEQ),
+								roomUnderCapNcheq,
+								quotaRemainingNcheq
+							)
+						: roomUnderCapNcheq;
 
 			if (amountToRequestNcheq <= 0n) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
@@ -714,7 +788,14 @@ export class AccountController {
 				} satisfies UnsuccessfulResponseBody);
 			}
 
-			if (amountToRequestNcheq > maxAllowedNcheq) {
+			if (amountToRequestNcheq > roomUnderCapNcheq) {
+				logFaucetEvent('warn', 'faucet.address_cap_exceeded', {
+					customerId: customer.customerId,
+					address: testnetAccount.address,
+					amountNcheq: amountToRequestNcheq.toString(),
+					roomNcheq: roomUnderCapNcheq.toString(),
+					stage: 'precheck',
+				});
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: 'Requested amount exceeds the maximum available top-up for this address.',
 					address: testnetAccount.address,
@@ -723,16 +804,54 @@ export class AccountController {
 				});
 			}
 
-			const faucet = await FaucetHelper.delegateTokens(
-				testnetAccount.address,
-				customer.name,
-				'n/a',
-				customer.email,
-				toSafeFaucetAmount(amountToRequestNcheq)
+			const safeAmount = toSafeFaucetAmount(amountToRequestNcheq);
+			const credit = await creditWithinQuota(
+				FaucetRequestService.instance,
+				() =>
+					FaucetHelper.delegateTokens(
+						testnetAccount.address,
+						customer.name,
+						'n/a',
+						customer.email,
+						safeAmount
+					),
+				{
+					customer,
+					address: testnetAccount.address,
+					amountNcheq: amountToRequestNcheq,
+					limitNcheq: quotaLimitNcheq,
+					minIntervalSeconds: FAUCET_MIN_INTERVAL_SECONDS,
+					addressCap: {
+						capNcheq: addressCapNcheq,
+						currentBalanceNcheq,
+						settleSeconds: FAUCET_BALANCE_SETTLE_SECONDS,
+					},
+				}
 			);
-			if (faucet.status !== StatusCodes.OK) {
-				console.error('Faucet request failed:', faucet.status, faucet.error);
-				if (faucet.status === StatusCodes.TOO_MANY_REQUESTS) {
+			if (credit.outcome === 'too_frequent') {
+				return tooManyFaucetRequests(response, credit.retryAfterSeconds);
+			}
+			if (credit.outcome === 'address_cap_exceeded') {
+				// Requests made moments ago for this address have not reached its balance yet
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					error: 'Requested amount exceeds the maximum available top-up for this address.',
+					address: testnetAccount.address,
+					balance,
+					requestMore: buildRequestMore(customer, testnetAccount.address, balance, requestedAmountCheq),
+				});
+			}
+			if (credit.outcome === 'quota_exceeded') {
+				return response
+					.status(StatusCodes.TOO_MANY_REQUESTS)
+					.set('Retry-After', String(secondsUntilReset(credit.window)))
+					.json({
+						error: 'Monthly testnet faucet quota exceeded for this account.',
+						quota: buildFaucetQuotaSummary(credit.usedNcheq, quotaLimitNcheq, credit.window),
+					});
+			}
+			if (credit.outcome === 'faucet_failed') {
+				console.error('Faucet request failed:', credit.status, credit.error);
+				if (credit.status === StatusCodes.TOO_MANY_REQUESTS) {
 					return response.status(StatusCodes.TOO_MANY_REQUESTS).json({
 						error: 'Testnet faucet requests are rate-limited for this address. Please wait a while before trying again.',
 					} satisfies UnsuccessfulResponseBody);
@@ -750,8 +869,15 @@ export class AccountController {
 					ncheq: amountToRequestNcheq.toString(),
 				},
 				balance,
+				quota: buildFaucetQuotaSummary(credit.usedNcheq, quotaLimitNcheq, credit.window),
 			});
 		} catch (error) {
+			if (isFaucetTimeout(error)) {
+				// The faucet may still have credited the account, so say so rather than suggesting a plain failure
+				return response.status(StatusCodes.GATEWAY_TIMEOUT).json({
+					error: 'The testnet faucet did not respond in time. The request may or may not have been processed, so check the address balance before trying again.',
+				} satisfies UnsuccessfulResponseBody);
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulResponseBody);
@@ -842,7 +968,8 @@ export class AccountController {
 	 *       Returns the on-chain balance of the authenticated customer's mainnet and testnet payment
 	 *       accounts, expressed in ncheq, CHEQ and USD. The CHEQ/USD rate is sourced from CoinGecko and
 	 *       cached; if it (or a network's RPC endpoint) is unavailable the response still returns 200 with
-	 *       the affected `usd`/`rate`/`balance` fields set to `null`.
+	 *       the affected `usd`/`rate`/`balance` fields set to `null`. Also returns the testnet faucet cap and
+	 *       the customer's monthly faucet quota usage under `faucet`.
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -912,9 +1039,26 @@ export class AccountController {
 				};
 			};
 
+			let faucet: AccountFaucetInfo | null = null;
+			if (testnetAddress) {
+				try {
+					const addressCapNcheq = cheqToNcheq(FAUCET_ADDRESS_CAP_CHEQ);
+					const { usedNcheq, window } = await FaucetRequestService.instance.getQuotaStatus(
+						response.locals.customer
+					);
+					faucet = {
+						cap: { cheq: ncheqToCheq(addressCapNcheq), ncheq: addressCapNcheq.toString() },
+						quota: buildFaucetQuotaSummary(usedNcheq, cheqToNcheq(FAUCET_MONTHLY_LIMIT_CHEQ), window),
+					};
+				} catch (error) {
+					console.error('getBalances: faucet quota lookup failed:', (error as Error)?.message || error);
+				}
+			}
+
 			return response.status(StatusCodes.OK).json({
 				mainnet: toNetworkBalance(mainnetAddress, mainnetNcheq),
 				testnet: toNetworkBalance(testnetAddress, testnetNcheq),
+				faucet,
 				rate,
 			} satisfies QueryAccountBalancesResponseBody);
 		} catch (error) {
@@ -928,8 +1072,8 @@ export class AccountController {
 const FAUCET_REQUEST_MORE_EMAIL = 'product@cheqd.io';
 const FAUCET_REQUEST_MORE_SUBJECT = 'Request more cheqd testnet CHEQ tokens';
 
-function buildFaucetBalanceResponse(currentBalanceNcheq: bigint, capNcheq: bigint, maxAllowedNcheq: bigint) {
-	const remainingNcheq = maxAllowedNcheq > 0n ? maxAllowedNcheq : 0n;
+function buildFaucetBalanceResponse(currentBalanceNcheq: bigint, capNcheq: bigint, maxRequestableNcheq: bigint) {
+	const remainingNcheq = maxRequestableNcheq > 0n ? maxRequestableNcheq : 0n;
 	return {
 		denom: MINIMAL_DENOM,
 		current: {
@@ -974,16 +1118,17 @@ async function getTestnetBalanceNcheq(address: string): Promise<bigint> {
 	return getBalanceNcheq(address, process.env.TESTNET_RPC_URL);
 }
 
-async function resolveFaucetAccount(
+/**
+ * Resolves the address the faucet should fund. A supplied address was already validated by `faucetValidator` and may
+ * belong to anyone; quota and interval limits are charged to the calling customer either way. With no address this is
+ * the customer's own testnet payment account, or null if they have none.
+ */
+async function resolveFaucetTarget(
 	customer: CustomerEntity,
 	requestedAddress?: string
-): Promise<PaymentAccountEntity | null> {
+): Promise<{ address: string } | null> {
 	if (requestedAddress) {
-		return PaymentAccountService.instance.findOne({
-			address: requestedAddress,
-			namespace: CheqdNetwork.Testnet,
-			customer,
-		});
+		return { address: requestedAddress };
 	}
 
 	return PaymentAccountService.instance.findOne({
@@ -1105,32 +1250,105 @@ async function updateCustomData(
 	}
 }
 
-async function topupTestnet(
+function tooManyFaucetRequests(response: Response, retryAfterSeconds: number) {
+	return response
+		.status(StatusCodes.TOO_MANY_REQUESTS)
+		.set('Retry-After', String(retryAfterSeconds))
+		.json({
+			error: `Too many faucet requests. Please wait ${retryAfterSeconds} seconds before trying again.`,
+		} satisfies UnsuccessfulResponseBody);
+}
+
+/**
+ * Status and plan of a Stripe subscription, cached briefly so repeated (e.g. API-key) faucet requests do not
+ * call Stripe every time. Only active/trialing results are cached, and the stored subscription status is still
+ * checked in the database on every request, so a cancellation takes effect immediately; a plan change can take
+ * up to FAUCET_SUBSCRIPTION_CACHE_SECONDS to be seen.
+ */
+async function getSubscriptionPlan(stripe: Stripe, subscriptionId: string) {
+	const cached = LocalStore.instance.getSubscriptionPlan(subscriptionId);
+	if (cached) return cached;
+
+	const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+	const plan = {
+		status: subscription.status,
+		productId: getStripeObjectKey(subscription.items.data[0].plan.product),
+	};
+	if (FAUCET_SUBSCRIPTION_CACHE_SECONDS > 0 && ['active', 'trialing'].includes(plan.status)) {
+		LocalStore.instance.setSubscriptionPlan(subscriptionId, plan, FAUCET_SUBSCRIPTION_CACHE_SECONDS);
+	}
+	return plan;
+}
+
+/**
+ * Credits an address from the faucet and debits the amount from the customer's monthly faucet quota.
+ * See `creditWithinQuota` for how the reservation is settled.
+ */
+async function delegateWithinQuota(
+	customer: CustomerEntity,
+	address: string,
+	firstName: string,
+	lastName: string,
+	amountNcheq: bigint
+): Promise<{ status: number; error: string; quotaExceeded?: boolean }> {
+	const safeAmount = toSafeFaucetAmount(amountNcheq);
+	const credit = await creditWithinQuota(
+		FaucetRequestService.instance,
+		() => FaucetHelper.delegateTokens(address, firstName, lastName, customer.email, safeAmount),
+		{ customer, address, amountNcheq, limitNcheq: cheqToNcheq(FAUCET_MONTHLY_LIMIT_CHEQ) }
+	);
+	switch (credit.outcome) {
+		case 'credited':
+			return { status: StatusCodes.OK, error: '' };
+		case 'quota_exceeded':
+			return {
+				status: StatusCodes.TOO_MANY_REQUESTS,
+				error: 'Monthly testnet faucet quota exceeded for this account.',
+				quotaExceeded: true,
+			};
+		case 'too_frequent':
+		case 'address_cap_exceeded':
+			// not requested here: the bootstrap top-up applies neither a minimum interval nor the address cap
+			return { status: StatusCodes.TOO_MANY_REQUESTS, error: 'Too many faucet requests.' };
+		case 'faucet_failed':
+			return { status: credit.status, error: credit.error };
+	}
+}
+
+// Exported for the handler tests only
+export async function topupTestnet(
 	customer: CustomerEntity,
 	testnetResp: any,
 	status: BootStrapAccountResponse,
+	isNewTestnetAccount: boolean,
 	firstName?: string | null,
 	lastName?: string | null
 ) {
-	if (!testnetResp.data?.address || process.env.ENABLE_ACCOUNT_TOPUP !== 'true') {
+	if (!isNewTestnetAccount || !testnetResp.data?.address || process.env.ENABLE_ACCOUNT_TOPUP !== 'true') {
 		return;
 	}
 	try {
 		const topupAmountNcheq =
-			cheqToNcheq(TESTNET_FAUCET_UPPER_CAP_CHEQ) - (await getTestnetBalanceNcheq(testnetResp.data.address));
+			cheqToNcheq(TESTNET_INITIAL_TOPUP_CHEQ) - (await getTestnetBalanceNcheq(testnetResp.data.address));
 		if (topupAmountNcheq > 0n) {
 			// Handle case where firstName or lastName is not set
 			const faucetFirstName = firstName || customer.name;
 			const faucetLastName = lastName || 'n/a';
-			const faucet = await FaucetHelper.delegateTokens(
+			const faucet = await delegateWithinQuota(
+				customer,
 				testnetResp.data.address,
 				faucetFirstName,
 				faucetLastName,
-				customer.email,
-				toSafeFaucetAmount(topupAmountNcheq)
+				topupAmountNcheq
 			);
 			if (faucet.status === StatusCodes.OK) {
 				status.testnetMinimumBalance = true;
+			} else if (faucet.quotaExceeded) {
+				// Account bootstrap must not fail because the monthly faucet quota is used up
+				logFaucetEvent('warn', 'faucet.bootstrap_topup_skipped', {
+					customerId: customer.customerId,
+					reason: 'quota_exceeded',
+				});
 			} else {
 				status.errors.push(faucet.error);
 			}
