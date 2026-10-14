@@ -322,11 +322,33 @@ describe('POST /account/faucet and GET /account/balances (Postgres, faked extern
 			assert.ok(String(result.json.requestMore.mailtoHref).startsWith('mailto:'));
 		});
 
-		it('tops up to the cap with no amount, then answers cap_reached without using quota', async () => {
+		it('with no amount, sends the default and leaves the rest of the quota unused', async () => {
+			reset();
+			const customer = await newCustomer();
+
+			const result = await call(customer, {});
+
+			assert.equal(result.status, 200);
+			assertSubset(result.json, {
+				funded: true,
+				amount: { cheq: 10000 },
+				quota: { used: { cheq: 10000 }, remaining: { cheq: 90000 } },
+			});
+		});
+
+		it('with no amount, sends only the room under the cap when that is below the default', async () => {
+			reset();
+			balanceNcheq = String(cheq(95000));
+			const result = await call(await newCustomer(), {});
+			assert.equal(result.status, 200);
+			assert.equal(result.json.amount.cheq, 5000);
+		});
+
+		it('tops up to the cap with an explicit amount, then answers cap_reached without using quota', async () => {
 			reset();
 			balanceNcheq = String(cheq(60000));
 			const customer = await newCustomer();
-			assert.equal((await call(customer, {})).json.amount.cheq, 40000);
+			assert.equal((await call(customer, { amount: 40000 })).json.amount.cheq, 40000);
 			await settle(customer);
 
 			balanceNcheq = String(cheq(100000));

@@ -15,6 +15,7 @@ import type { SafeAPIResponse } from '../../types/common.js';
 import { CheqdNetwork, checkBalance } from '@cheqd/sdk';
 import {
 	FAUCET_ADDRESS_CAP_CHEQ,
+	FAUCET_DEFAULT_REQUEST_CHEQ,
 	FAUCET_BALANCE_SETTLE_SECONDS,
 	FAUCET_MIN_INTERVAL_SECONDS,
 	FAUCET_MONTHLY_LIMIT_CHEQ,
@@ -61,6 +62,7 @@ import { FaucetRequestService } from '../../services/api/faucet-request.js';
 import {
 	buildFaucetQuotaSummary,
 	creditWithinQuota,
+	defaultRequestNcheq,
 	logFaucetEvent,
 	maxRequestableNcheq,
 	remainingQuota,
@@ -632,7 +634,7 @@ export class AccountController {
 	 *   post:
 	 *     tags: [Account]
 	 *     summary: Request cheqd testnet CHEQ tokens for a Studio payment account.
-	 *     description: Funds a cheqd testnet address, by default the customer's own payment account, or any valid cheqd address supplied. An address can hold at most FAUCET_ADDRESS_CAP_CHEQ, and a customer can request at most FAUCET_MONTHLY_LIMIT_CHEQ per calendar month (UTC) across all their addresses; both default to 100,000 CHEQ. Without an amount the address is topped up to the cap, or by the quota left if that is lower. Authentication is by a Studio user session (bearer token), an API key (`x-api-key`) or a machine-to-machine token (bearer token plus a `customer-id` header); whichever is used, the credential must carry the `request:faucet:testnet` scope. The response includes the remaining quota.
+	 *     description: Funds a cheqd testnet address, by default the customer's own payment account, or any valid cheqd address supplied. An address can hold at most FAUCET_ADDRESS_CAP_CHEQ, and a customer can request at most FAUCET_MONTHLY_LIMIT_CHEQ per calendar month (UTC) across all their addresses; both default to 100,000 CHEQ. Without an amount, FAUCET_DEFAULT_REQUEST_CHEQ (default 10,000 CHEQ) is sent, or less if the room under the address cap or the quota left is lower. Authentication is by a Studio user session (bearer token), an API key (`x-api-key`) or a machine-to-machine token (bearer token plus a `customer-id` header); whichever is used, the credential must carry the `request:faucet:testnet` scope. The response includes the remaining quota.
 	 *     requestBody:
 	 *       content:
 	 *         application/json:
@@ -644,7 +646,7 @@ export class AccountController {
 	 *                 description: Optional cheqd testnet address to fund; it does not have to belong to the customer. Requests count against the calling customer's quota. Defaults to the authenticated customer's testnet account.
 	 *               amount:
 	 *                 type: number
-	 *                 description: Optional amount in CHEQ. Defaults to the most that can be requested now (the lower of the room under the address cap and the monthly quota left).
+	 *                 description: Optional amount in CHEQ. If omitted, FAUCET_DEFAULT_REQUEST_CHEQ (default 10,000) is sent, or less if the room under the address cap or the monthly quota left is lower. Set it to ask for more; the response shows the amount sent.
 	 *     responses:
 	 *       200:
 	 *         description: The request was processed.
@@ -767,13 +769,17 @@ export class AccountController {
 				});
 			}
 
-			// With no amount, top up as much as is allowed now. If the quota is used up this falls through
-			// to the reservation below, which answers 429 with the quota details.
+			// With no amount, send the default (FAUCET_DEFAULT_REQUEST_CHEQ), lowered to what is allowed now. If the
+			// quota is used up this falls through to the reservation below, which answers 429 with the quota details.
 			const amountToRequestNcheq =
 				requestedAmountCheq !== undefined
 					? cheqToNcheq(requestedAmountCheq)
 					: maxRequestable > 0n
-						? maxRequestable
+						? defaultRequestNcheq(
+								cheqToNcheq(FAUCET_DEFAULT_REQUEST_CHEQ),
+								roomUnderCapNcheq,
+								quotaRemainingNcheq
+							)
 						: roomUnderCapNcheq;
 
 			if (amountToRequestNcheq <= 0n) {

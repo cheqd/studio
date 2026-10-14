@@ -3489,7 +3489,7 @@
           "Account"
         ],
         "summary": "Request cheqd testnet CHEQ tokens for a Studio payment account.",
-        "description": "Funds a cheqd testnet address, by default the customer's own payment account, or any valid cheqd address supplied. An address can hold at most FAUCET_ADDRESS_CAP_CHEQ, and a customer can request at most FAUCET_MONTHLY_LIMIT_CHEQ per calendar month (UTC) across all their addresses; both default to 100,000 CHEQ. Without an amount the address is topped up to the cap, or by the quota left if that is lower. Authentication is by a Studio user session (bearer token), an API key (`x-api-key`) or a machine-to-machine token (bearer token plus a `customer-id` header); whichever is used, the credential must carry the `request:faucet:testnet` scope. The response includes the remaining quota.",
+        "description": "Funds a cheqd testnet address, by default the customer's own payment account, or any valid cheqd address supplied. An address can hold at most FAUCET_ADDRESS_CAP_CHEQ, and a customer can request at most FAUCET_MONTHLY_LIMIT_CHEQ per calendar month (UTC) across all their addresses; both default to 100,000 CHEQ. Without an amount, FAUCET_DEFAULT_REQUEST_CHEQ (default 10,000 CHEQ) is sent, or less if the room under the address cap or the quota left is lower. Authentication is by a Studio user session (bearer token), an API key (`x-api-key`) or a machine-to-machine token (bearer token plus a `customer-id` header); whichever is used, the credential must carry the `request:faucet:testnet` scope. The response includes the remaining quota.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3502,7 +3502,7 @@
                   },
                   "amount": {
                     "type": "number",
-                    "description": "Optional amount in CHEQ. Defaults to the most that can be requested now (the lower of the room under the address cap and the monthly quota left)."
+                    "description": "Optional amount in CHEQ. If omitted, FAUCET_DEFAULT_REQUEST_CHEQ (default 10,000) is sent, or less if the room under the address cap or the monthly quota left is lower. Set it to ask for more; the response shows the amount sent."
                   }
                 }
               }

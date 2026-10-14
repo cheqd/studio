@@ -108,6 +108,13 @@ export const FAUCET_ADDRESS_CAP_CHEQ = parseNumberEnv(
 	FAUCET_MONTHLY_LIMIT_CHEQ,
 	'FAUCET_ADDRESS_CAP_CHEQ'
 );
+// CHEQ sent by POST /account/faucet when the caller omits `amount`, so a first call with only an address does not
+// take the whole monthly quota. Still limited by the room under the address cap and the quota left.
+export const FAUCET_DEFAULT_REQUEST_CHEQ = parseNumberEnv(
+	process.env.FAUCET_DEFAULT_REQUEST_CHEQ,
+	10000,
+	'FAUCET_DEFAULT_REQUEST_CHEQ'
+);
 // How long, in seconds, the faucet endpoint caches a customer's Stripe subscription status and plan, so API-key
 // use does not call Stripe on every request. 0 disables the cache.
 export const FAUCET_SUBSCRIPTION_CACHE_SECONDS = parseNonNegativeIntEnv(

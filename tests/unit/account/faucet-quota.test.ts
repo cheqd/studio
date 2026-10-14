@@ -3,6 +3,7 @@ import {
 	addressRoomNcheq,
 	buildFaucetQuotaSummary,
 	creditWithinQuota,
+	defaultRequestNcheq,
 	fitsInQuota,
 	getFaucetQuotaWindow,
 	maxRequestableNcheq,
@@ -108,6 +109,26 @@ describe('addressRoomNcheq', () => {
 	it('is never negative', () => {
 		expect(addressRoomNcheq(100n, 90n, 20n)).toBe(0n);
 		expect(addressRoomNcheq(100n, 150n, 0n)).toBe(0n);
+	});
+});
+
+describe('defaultRequestNcheq', () => {
+	it('sends the default when it is below the room under the cap and the quota left', () => {
+		expect(defaultRequestNcheq(10n, 100n, 100n)).toBe(10n);
+	});
+
+	it('sends the quota left when that is below the default', () => {
+		expect(defaultRequestNcheq(10n, 100n, 4n)).toBe(4n);
+	});
+
+	it('sends the room under the cap when that is below the default', () => {
+		expect(defaultRequestNcheq(10n, 3n, 100n)).toBe(3n);
+	});
+
+	it('sends nothing when there is no room or no quota', () => {
+		expect(defaultRequestNcheq(10n, 0n, 100n)).toBe(0n);
+		expect(defaultRequestNcheq(10n, -5n, 100n)).toBe(0n);
+		expect(defaultRequestNcheq(10n, 100n, 0n)).toBe(0n);
 	});
 });
 
