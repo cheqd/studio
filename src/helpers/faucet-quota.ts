@@ -38,6 +38,19 @@ export function maxRequestableNcheq(roomUnderCapNcheq: bigint, quotaRemainingNch
 	return lowest > 0n ? lowest : 0n;
 }
 
+/**
+ * Amount to send when the caller gave no amount: the configured default, lowered to what can be requested now
+ * (the room under the address cap and the quota left). Zero if nothing can be requested.
+ */
+export function defaultRequestNcheq(
+	defaultNcheq: bigint,
+	roomUnderCapNcheq: bigint,
+	quotaRemainingNcheq: bigint
+): bigint {
+	const maxNcheq = maxRequestableNcheq(roomUnderCapNcheq, quotaRemainingNcheq);
+	return defaultNcheq < maxNcheq ? defaultNcheq : maxNcheq;
+}
+
 /** Remaining quota, never negative. */
 export function remainingQuota(usedNcheq: bigint, limitNcheq: bigint): bigint {
 	return usedNcheq >= limitNcheq ? 0n : limitNcheq - usedNcheq;
