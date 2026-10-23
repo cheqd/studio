@@ -97,7 +97,10 @@ export type UpdateCredentialRequestQuery = PublishRequest;
 
 export type IssueCredentialResponseBody = VerifiableCredential;
 
-export type VerifyCredentialResponseBody = IVerifyResult;
+export type VerifyCredentialResponseBody = IVerifyResult & {
+	// Set when a check was skipped that callers may assume was done, e.g. credential status
+	warnings?: string[];
+};
 
 export type RevokeCredentialResponseBody =
 	| RevocationResult

@@ -537,6 +537,11 @@
  *       properties:
  *         verified:
  *           type: boolean
+ *         warnings:
+ *           type: array
+ *           description: Present when a check was skipped, for example when the credential has a `credentialStatus` but `verifyStatus` was not set to `true`, so its revocation or suspension was not checked.
+ *           items:
+ *             type: string
  *         issuer:
  *           type: string
  *         signer:

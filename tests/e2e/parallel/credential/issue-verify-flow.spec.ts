@@ -43,6 +43,8 @@ test(' Issue a jwt credential', async ({ request }) => {
 	expect(verifyResponse).toBeOK();
 	expect(verifyResponse.status()).toBe(StatusCodes.OK);
 	expect(result.verified).toBe(true);
+	// No credentialStatus, so nothing was skipped
+	expect(result.warnings).toBeUndefined();
 });
 
 test(' Issue a jwt credential with status', async ({ request }) => {
@@ -84,6 +86,8 @@ test(' Issue a jwt credential with status', async ({ request }) => {
 	expect(verifyResponse).toBeOK();
 	expect(verifyResponse.status()).toBe(StatusCodes.OK);
 	expect(result.verified).toBe(true);
+	// Status present but verifyStatus not requested, so the response must say status was not checked
+	expect(result.warnings).toEqual([expect.stringContaining('verifyStatus')]);
 });
 
 test(' Issue a jwt credential with a deactivated DID', async ({ request }) => {
