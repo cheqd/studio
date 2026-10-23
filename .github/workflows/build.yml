@@ -73,9 +73,9 @@ jobs:
               if: always()
               with:
                 name: playwright-report
-                path: | 
+                # test-results/ is not uploaded: it can hold traces and page snapshots containing credentials
+                path: |
                   playwright-report/
-                  test-results/
                 retention-days: 14
                 if-no-files-found: ignore
 
