@@ -36,6 +36,8 @@ RUN apk add --no-cache --upgrade bash ca-certificates && \
 # Copy files from builder
 COPY --from=builder --chown=node:node /home/node/app/*.json /home/node/app/*.md ./
 COPY --from=builder --chown=node:node /home/node/app/dist ./dist
+# Dependency patches, applied by the postinstall script during npm ci
+COPY --from=builder --chown=node:node /home/node/app/patches ./patches
 
 # Install production dependencies
 RUN npm ci --force
