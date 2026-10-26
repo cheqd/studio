@@ -12,6 +12,42 @@
 * make Studio start on Node 22 ([86be5d6](https://github.com/cheqd/studio/commit/86be5d6a8d958d04d08baf497a7e423597cb1b5a))
 * make Studio start on Node 22 ([#849](https://github.com/cheqd/studio/issues/849)) ([3ecb65d](https://github.com/cheqd/studio/commit/3ecb65d5eee9eb561c1f00d89fc2fe6ee9396a2a)), closes [#848](https://github.com/cheqd/studio/issues/848)
 
+## [3.18.0](https://github.com/cheqd/studio/compare/3.17.0...3.18.0) (2026-10-14)
+
+### Features
+
+* add a minimum interval between faucet requests per customer ([2d3ebf5](https://github.com/cheqd/studio/commit/2d3ebf55c7503d7fea16da6d9a8b5367ef1b1d87)), closes [#821](https://github.com/cheqd/studio/issues/821)
+* add monthly faucet quota service and helpers ([7eef4f7](https://github.com/cheqd/studio/commit/7eef4f751c2c3be17d22d83938bf1d171e747934)), closes [#818](https://github.com/cheqd/studio/issues/818)
+* allow API keys on POST /account/faucet with monthly quota ([6ed02c8](https://github.com/cheqd/studio/commit/6ed02c8a0fb7e33209d416acf7bde69c55f9d9d3)), closes [#818](https://github.com/cheqd/studio/issues/818)
+* allow API keys on the faucet endpoint with a monthly CHEQ quota ([#819](https://github.com/cheqd/studio/issues/819)) ([17dcb04](https://github.com/cheqd/studio/commit/17dcb049b6c958b1155ebece689383945c05669b)), closes [cheqd/studio-portal#258](https://github.com/cheqd/studio-portal/issues/258)
+* apply monthly quota as the per-request limit for explicit faucet amounts ([6979f42](https://github.com/cheqd/studio/commit/6979f428a3204931cc13ccd64ef92e7396b15649)), closes [#818](https://github.com/cheqd/studio/issues/818)
+* **db:** add faucetRequest table for monthly faucet quota ([ef43cb1](https://github.com/cheqd/studio/commit/ef43cb1293083ee63971d276d8ea07788d1e9b96)), closes [#818](https://github.com/cheqd/studio/issues/818)
+* debit the initial testnet top-up from the monthly faucet quota ([15c8d8c](https://github.com/cheqd/studio/commit/15c8d8c75b3b56e949b4479974d450459972dfc5)), closes [#818](https://github.com/cheqd/studio/issues/818)
+* delete faucet request history past a retention period ([038a079](https://github.com/cheqd/studio/commit/038a079107ba9eb17e0ec326319fd9847ea65c81)), closes [#824](https://github.com/cheqd/studio/issues/824)
+* faucet address-cap race, retention, logging, tests and entity tidy-ups (follow-ups to [#829](https://github.com/cheqd/studio/issues/829)) ([#830](https://github.com/cheqd/studio/issues/830)) ([766b1cd](https://github.com/cheqd/studio/commit/766b1cdee697aa84e57e4892cf18d361b5825bed)), closes [#823](https://github.com/cheqd/studio/issues/823) [#824](https://github.com/cheqd/studio/issues/824) [#825](https://github.com/cheqd/studio/issues/825) [#826](https://github.com/cheqd/studio/issues/826) [#827](https://github.com/cheqd/studio/issues/827) [#823](https://github.com/cheqd/studio/issues/823) [#824](https://github.com/cheqd/studio/issues/824) [#825](https://github.com/cheqd/studio/issues/825) [#826](https://github.com/cheqd/studio/issues/826) [#827](https://github.com/cheqd/studio/issues/827) [#828](https://github.com/cheqd/studio/issues/828) [#819](https://github.com/cheqd/studio/issues/819)
+* faucet cost, burst limiting and reservation status (follow-ups to [#819](https://github.com/cheqd/studio/issues/819)) ([#829](https://github.com/cheqd/studio/issues/829)) ([e7d7b67](https://github.com/cheqd/studio/commit/e7d7b6712b065b7695d1204cb350016a5f7969cb)), closes [#820](https://github.com/cheqd/studio/issues/820) [#821](https://github.com/cheqd/studio/issues/821) [#820](https://github.com/cheqd/studio/issues/820) [#821](https://github.com/cheqd/studio/issues/821) [#822](https://github.com/cheqd/studio/issues/822) [#828](https://github.com/cheqd/studio/issues/828)
+* **faucet:** allow funding any valid cheqd testnet address ([7a95c5d](https://github.com/cheqd/studio/commit/7a95c5d3a70d96f8ac3f46f67b1b8b174a8be188))
+* **faucet:** fund any cheqd address; top up new testnet accounts once (follow-up to [#830](https://github.com/cheqd/studio/issues/830)) ([#839](https://github.com/cheqd/studio/issues/839)) ([1558ccf](https://github.com/cheqd/studio/commit/1558ccfb14c251e886d80d3dc9facca69bbcdef9)), closes [#819](https://github.com/cheqd/studio/issues/819) [#829](https://github.com/cheqd/studio/issues/829)
+* **faucet:** send a default amount when none is requested ([#841](https://github.com/cheqd/studio/issues/841)) ([7864611](https://github.com/cheqd/studio/commit/78646113fc9b3342df3b7206ca1dcd3de928ca51))
+* **faucet:** send a default amount when none is requested ([#841](https://github.com/cheqd/studio/issues/841)) ([#842](https://github.com/cheqd/studio/issues/842)) ([18223ce](https://github.com/cheqd/studio/commit/18223ceec25604642c9bc35477c207995df568c1))
+* log faucet quota decisions as structured events ([b21176b](https://github.com/cheqd/studio/commit/b21176b0e9db6af4c966ded1f77102cbfa1162a1)), closes [#825](https://github.com/cheqd/studio/issues/825)
+* return faucet cap and monthly quota usage from GET /account/balances ([3ba590d](https://github.com/cheqd/studio/commit/3ba590db2409967ac7352d36fd65e5e7625574c9)), closes [#818](https://github.com/cheqd/studio/issues/818)
+* track whether each faucet quota reservation completed ([a371bec](https://github.com/cheqd/studio/commit/a371becd0b6f3af23219535b175a8dde226a8b44)), closes [#822](https://github.com/cheqd/studio/issues/822)
+* use a single 100k CHEQ cap for faucet balance and monthly quota ([4612b1f](https://github.com/cheqd/studio/commit/4612b1f8cbea0dc11134aaf8335c0c1c66df49fa)), closes [#818](https://github.com/cheqd/studio/issues/818)
+
+### Bug Fixes
+
+* enforce the faucet address cap under the quota lock ([eed180b](https://github.com/cheqd/studio/commit/eed180bc8db908c77db300b254697a78f58b19b6)), closes [#823](https://github.com/cheqd/studio/issues/823)
+* **faucet:** keep the initial top-up at 10,000 CHEQ by default ([dc2c0c6](https://github.com/cheqd/studio/commit/dc2c0c66b81049f5a0c0f8be6b343b62bbfdc415))
+* **faucet:** top up only newly created testnet accounts; skip on quota ([56d3f25](https://github.com/cheqd/studio/commit/56d3f251484f0ebf16e4203596ec824bb9860f53))
+* **swagger:** make the faucet description valid YAML so the endpoint is documented ([7f2f6ac](https://github.com/cheqd/studio/commit/7f2f6ac22568eaecf4773982acb40e677dedd3fb))
+* time out the faucet call and warn on invalid faucet config ([9b14df1](https://github.com/cheqd/studio/commit/9b14df18fa1e7e9254c52b9d3af3ca8033d477aa)), closes [#818](https://github.com/cheqd/studio/issues/818)
+* use the database clock for every faucet quota decision ([cb6c856](https://github.com/cheqd/studio/commit/cb6c856fb8fbc803c344454eeea9178442821ebb)), closes [#827](https://github.com/cheqd/studio/issues/827)
+
+### Performance Improvements
+
+* cache the Stripe subscription lookup and skip the balance read when quota is used up ([dd408e2](https://github.com/cheqd/studio/commit/dd408e2204ab5b7bcaad70b3ac5c5f07a333ea84)), closes [#820](https://github.com/cheqd/studio/issues/820)
+
 ## [3.18.0-develop.5](https://github.com/cheqd/studio/compare/3.18.0-develop.4...3.18.0-develop.5) (2026-10-14)
 
 ### Features
