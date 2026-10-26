@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.19.0-develop.1](https://github.com/cheqd/studio/compare/3.18.0...3.19.0-develop.1) (2026-10-26)
+
+### Features
+
+* warn when credential status is not checked on verify ([4cb33fe](https://github.com/cheqd/studio/commit/4cb33feaf2917eafee19cea7be7aba3073b291a8))
+* warn when credential status is not checked on verify ([#850](https://github.com/cheqd/studio/issues/850)) ([5c9c9d1](https://github.com/cheqd/studio/commit/5c9c9d1cf71594756399d032718e90b1203d4c50))
+
+### Bug Fixes
+
+* make Studio start on Node 22 ([86be5d6](https://github.com/cheqd/studio/commit/86be5d6a8d958d04d08baf497a7e423597cb1b5a))
+* make Studio start on Node 22 ([#849](https://github.com/cheqd/studio/issues/849)) ([3ecb65d](https://github.com/cheqd/studio/commit/3ecb65d5eee9eb561c1f00d89fc2fe6ee9396a2a)), closes [#848](https://github.com/cheqd/studio/issues/848)
+
 ## [3.18.0-develop.6](https://github.com/cheqd/studio/compare/3.18.0-develop.5...3.18.0-develop.6) (2026-10-23)
 
 ### Features
