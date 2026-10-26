@@ -5,6 +5,7 @@ import type { IOAuthProvider } from '../oauth/abstract.js';
 
 import * as dotenv from 'dotenv';
 import { APIKeyService } from '../../../services/admin/api-key.js';
+import { apiKeyVerificationFailure } from '../../../services/admin/api-key-errors.js';
 import type { UnsuccessfulResponseBody } from '../../../types/shared.js';
 dotenv.config();
 
@@ -61,8 +62,12 @@ export class APITokenUserInfoFetcher extends UserInfoHelper implements IUserInfo
 			response.locals.customer = customerEntity;
 			return;
 		} catch (error) {
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `Unexpected error: While verifying API key: ${error}`,
+			const failure = apiKeyVerificationFailure(error);
+			if (failure.status === StatusCodes.INTERNAL_SERVER_ERROR) {
+				console.error('While verifying API key:', error);
+			}
+			return response.status(failure.status).json({
+				error: failure.error,
 			} satisfies UnsuccessfulResponseBody);
 		}
 	}
