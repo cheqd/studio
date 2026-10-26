@@ -37,6 +37,9 @@ import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '
 import { validate } from '../validator/decorator.js';
 import { StatusListType } from '../../types/credential-status.js';
 
+export const CREDENTIAL_STATUS_NOT_CHECKED_WARNING =
+	'Credential status was not checked: the credential has a credentialStatus but verifyStatus was not set to true, so a revoked or suspended credential can still return verified: true. Set verifyStatus=true to check it.';
+
 export class CredentialController {
 	public static issueValidator = [
 		check(['subjectDid', 'issuerDid']).exists().withMessage('DID is required').bail().isDID().bail(),
@@ -201,12 +204,12 @@ export class CredentialController {
 	 *   post:
 	 *     tags: [ Verifiable Credentials ]
 	 *     summary: Verify a Verifiable Credential.
-	 *     description: This endpoint verifies a Verifiable Credential passed to it. As input, it can take the VC-JWT as a string or the entire credential itself.
+	 *     description: This endpoint verifies a Verifiable Credential passed to it. As input, it can take the VC-JWT as a string or the entire credential itself. Revocation and suspension are only checked when `verifyStatus=true`. Without it, a revoked or suspended credential can still return `verified true`; the response then includes a `warnings` entry saying the status was not checked.
 	 *     operationId: verify
 	 *     parameters:
 	 *       - in: query
 	 *         name: verifyStatus
-	 *         description: If set to `true` the verification will also check the status of the credential. Requires the VC to have a `credentialStatus` property.
+	 *         description: If set to `true` the verification will also check the status of the credential (revocation or suspension). Requires the VC to have a `credentialStatus` property. Defaults to `false`, in which case a revoked or suspended credential can still return `verified true`. Set it to `true` whenever the credential has a `credentialStatus`.
 	 *         schema:
 	 *           type: boolean
 	 *           default: false
@@ -291,6 +294,14 @@ export class CredentialController {
 			};
 
 			eventTracker.emit('track', trackInfo);
+
+			// Status is only checked on request, so flag credentials whose revocation or suspension was not checked
+			if (cheqdCredential.credentialStatus && !verifyStatus) {
+				return response.status(StatusCodes.OK).json({
+					...verifyResult,
+					warnings: [CREDENTIAL_STATUS_NOT_CHECKED_WARNING],
+				} satisfies VerifyCredentialResponseBody);
+			}
 
 			return response.status(StatusCodes.OK).json(verifyResult satisfies VerifyCredentialResponseBody);
 		} catch (error) {

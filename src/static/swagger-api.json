@@ -826,6 +826,13 @@
           "verified": {
             "type": "boolean"
           },
+          "warnings": {
+            "type": "array",
+            "description": "Present when a check was skipped, for example when the credential has a `credentialStatus` but `verifyStatus` was not set to `true`, so its revocation or suspension was not checked.",
+            "items": {
+              "type": "string"
+            }
+          },
           "issuer": {
             "type": "string"
           },
@@ -4681,13 +4688,13 @@
           "Verifiable Credentials"
         ],
         "summary": "Verify a Verifiable Credential.",
-        "description": "This endpoint verifies a Verifiable Credential passed to it. As input, it can take the VC-JWT as a string or the entire credential itself.",
+        "description": "This endpoint verifies a Verifiable Credential passed to it. As input, it can take the VC-JWT as a string or the entire credential itself. Revocation and suspension are only checked when `verifyStatus=true`. Without it, a revoked or suspended credential can still return `verified true`; the response then includes a `warnings` entry saying the status was not checked.",
         "operationId": "verify",
         "parameters": [
           {
             "in": "query",
             "name": "verifyStatus",
-            "description": "If set to `true` the verification will also check the status of the credential. Requires the VC to have a `credentialStatus` property.",
+            "description": "If set to `true` the verification will also check the status of the credential (revocation or suspension). Requires the VC to have a `credentialStatus` property. Defaults to `false`, in which case a revoked or suspended credential can still return `verified true`. Set it to `true` whenever the credential has a `credentialStatus`.",
             "schema": {
               "type": "boolean",
               "default": false

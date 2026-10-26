@@ -23,7 +23,9 @@ export default defineConfig({
 
 		// Set whether to record traces
 		// Docs: https://playwright.dev/docs/api/class-testoptions#test-options-trace
-		trace: 'retain-on-failure',
+		// Off on CI: traces record request headers, including the test user's x-api-key,
+		// and CI artifacts on this public repository can be downloaded by any GitHub user
+		trace: process.env.CI ? 'off' : 'retain-on-failure',
 
 		// Set whether to record screenshots
 		// Docs: https://playwright.dev/docs/api/class-testoptions#test-options-screenshot

@@ -1,6 +1,6 @@
 {
 	"name": "@cheqd/studio",
-	"version": "3.18.0",
+	"version": "3.19.0-develop.1",
 	"description": "cheqd Studio Backend",
 	"source": "src/index.ts",
 	"main": "dist/index.js",
@@ -38,7 +38,8 @@
 		"add:to:types": "tsx src/database/scripts/add-migration-to-types.ts",
 		"generate": "npm run typeorm migration:generate ./src/database/migrations/studio-migrations && npm run add:to:types",
 		"migrate": "npm run typeorm migration:run",
-		"migrate:stripe-plans": "tsx scripts/migrate-studio-plans.ts"
+		"migrate:stripe-plans": "tsx scripts/migrate-studio-plans.ts",
+		"postinstall": "patch-package"
 	},
 	"eslintConfig": {
 		"root": true,
@@ -99,6 +100,7 @@
 		"loglevel": "^1.9.2",
 		"multiformats": "^13.3.2",
 		"node-cache": "^5.1.2",
+		"patch-package": "^8.0.1",
 		"pg": "^8.15.6",
 		"pg-connection-string": "^2.8.5",
 		"secp256k1": "^5.0.1",
@@ -159,5 +161,10 @@
 	},
 	"engines": {
 		"node": ">=20.0.0"
+	},
+	"overrides": {
+		"@transmute/jsonld": {
+			"@digitalbazaar/http-client": "^3.4.1"
+		}
 	}
 }
