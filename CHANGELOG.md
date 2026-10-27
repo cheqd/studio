@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.19.0-develop.2](https://github.com/cheqd/studio/compare/3.19.0-develop.1...3.19.0-develop.2) (2026-10-27)
+
+### Features
+
+* **account:** remove the automatic testnet top-up on sign-up ([2c34509](https://github.com/cheqd/studio/commit/2c345097287ad386935db49b9aad31fb3e3fcbae))
+* **account:** remove the automatic testnet top-up on sign-up ([#858](https://github.com/cheqd/studio/issues/858)) ([a2023a0](https://github.com/cheqd/studio/commit/a2023a0d71d73d1c22acb559b4be426a0281a2c0))
+
 ## [3.19.0-develop.1](https://github.com/cheqd/studio/compare/3.18.0...3.19.0-develop.1) (2026-10-26)
 
 ### Features
