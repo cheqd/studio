@@ -27,6 +27,7 @@ import {
 import { CustomerService } from '../../services/api/customer.js';
 import { LogToHelper } from '../../middleware/auth/logto-helper.js';
 import { FaucetHelper, isFaucetTimeout, isValidFaucetAddress } from '../../helpers/faucet.js';
+import { isNewTestnetAccount as isNewTestnetAccountFor } from '../../helpers/testnet-topup.js';
 import { PriceHelper } from '../../helpers/price.js';
 import { cheqToNcheq, ncheqToCheq, toSafeFaucetAmount } from '../../helpers/denom.js';
 import { StatusCodes } from 'http-status-codes';
@@ -243,6 +244,8 @@ export class AccountController {
 
 		const stripe = response.locals.stripe as Stripe;
 		const logToHelper = new LogToHelper();
+		// Set when this call creates the customer: only then does the initial testnet top-up apply
+		let customerCreatedNow = false;
 		// 2. Check if such row exists in the DB
 		// eslint-disable-next-line prefer-const
 		let [userEntity, [customerEntity], logtoHelperSetup] = await Promise.all([
@@ -272,6 +275,7 @@ export class AccountController {
 						logToName,
 						logToUserEmail
 					)) as CustomerEntity;
+					customerCreatedNow = !!customerEntity;
 					if (!customerEntity) {
 						return response.status(StatusCodes.BAD_REQUEST).json({
 							error: 'User is not found in database: Customer was not created',
@@ -328,6 +332,7 @@ export class AccountController {
 			//4. Check if there is customer associated with such user
 			if (!userEntity.customer) {
 				customerEntity = (await CustomerService.instance.create(logToName, logToUserEmail)) as CustomerEntity;
+				customerCreatedNow = !!customerEntity;
 				if (!customerEntity) {
 					return response.status(StatusCodes.BAD_REQUEST).json({
 						error: 'User exists in database: Customer was not created',
@@ -368,7 +373,10 @@ export class AccountController {
 
 			// 7. Provision Mainnet & Testnet accounts in parallel
 			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
-			const isNewTestnetAccount = !accounts.some((acc) => acc.namespace === CheqdNetwork.Testnet);
+			const isNewTestnetAccount = isNewTestnetAccountFor(
+				customerCreatedNow,
+				accounts.some((acc) => acc.namespace === CheqdNetwork.Testnet)
+			);
 			const [mainnetResp, testnetResp] = await Promise.all([
 				AccountController.provisionCustomerAccount(CheqdNetwork.Mainnet, accounts, customerEntity),
 				AccountController.provisionCustomerAccount(CheqdNetwork.Testnet, accounts, customerEntity),
@@ -536,6 +544,7 @@ export class AccountController {
 
 		try {
 			// 2. Check if the customer exists
+			const customerCreatedNow = !response.locals.customer;
 			const customerEntity = response.locals.customer
 				? (response.locals.customer as CustomerEntity)
 				: // 2.1 Create customer
@@ -552,8 +561,11 @@ export class AccountController {
 
 			// 3. Check if paymentAccount exists for the customer
 			const accounts = await PaymentAccountService.instance.find({ customer: customerEntity }, { key: true });
-			// The initial top-up is only for a testnet account created by this call, not for an existing one
-			const isNewTestnetAccount = !accounts.some((acc) => acc.namespace === CheqdNetwork.Testnet);
+			// The initial top-up is only for a customer created by this call, not for an existing one
+			const isNewTestnetAccount = isNewTestnetAccountFor(
+				customerCreatedNow,
+				accounts.some((acc) => acc.namespace === CheqdNetwork.Testnet)
+			);
 			const mainnetAccountResponse = await AccountController.provisionCustomerAccount(
 				CheqdNetwork.Mainnet,
 				accounts,
