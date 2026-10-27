@@ -53,13 +53,11 @@ declare global {
 			ISSUER_DID: string;
 
 			// Faucet
-			ENABLE_ACCOUNT_TOPUP: string | 'false';
 			FAUCET_URI: string;
 			FAUCET_API_KEY: string;
 			FAUCET_AMOUNT: string;
 			FAUCET_ACCESS_CLIENT_ID: string;
 			FAUCET_ACCESS_CLIENT_SECRET: string;
-			TESTNET_MINIMUM_BALANCE: string;
 			FAUCET_MONTHLY_LIMIT_CHEQ: string;
 			FAUCET_ADDRESS_CAP_CHEQ: string;
 			FAUCET_DEFAULT_REQUEST_CHEQ: string;
@@ -69,7 +67,6 @@ declare global {
 			FAUCET_BALANCE_SETTLE_SECONDS: string;
 			FAUCET_REQUEST_RETENTION_MONTHS: string;
 			FAUCET_REQUEST_TIMEOUT_SECONDS: string;
-			TESTNET_INITIAL_TOPUP_CHEQ: string;
 
 			// CHEQ market data (CoinGecko)
 			COINGECKO_API_URL: string;
