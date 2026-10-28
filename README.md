@@ -86,6 +86,10 @@ By default, `ENABLE_AUTHENTICATION` is set to off/`false`. To enable external Ve
     1. `LOGTO_APP_ID`: Application ID for the cheqd Studio application in LogTo. This can be set up as type
        "Traditional Web"
     2. `LOGTO_APP_SECRET`: Application secret associated with App ID above.
+    3. `LOGTO_CLI_APP_IDS` (optional): Comma-separated IDs of LogTo applications of type "Native" whose ID tokens
+       Studio also accepts as a bearer token, for command-line logins such as `npm run 00:login` in the
+       [cheqd SDK quickstart](https://github.com/cheqd/cheqd-sdk-quickstart). The user's scopes still come from their
+       roles.
 3. **Machine-to-machine backend APIs**
     1. `LOGTO_M2M_APP_ID`: Application ID for machine-to-machine application in LogTo. This is used for elevated
        management APIs within LogTo.
