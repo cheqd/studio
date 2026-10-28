@@ -10,6 +10,7 @@ import { Connection } from '../../database/connection/connection.js';
 import { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import { API_SECRET_KEY_LENGTH, API_KEY_PREFIX, API_KEY_EXPIRATION } from '../../types/constants.js';
 import { sha256 } from '../../utils/index.js';
+import { InvalidAPIKeyError } from './api-key-errors.js';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -154,17 +155,17 @@ export class APIKeyService {
 			options
 		);
 		if (!apiKeyEntity) {
-			throw new Error('Invalid API key');
+			throw new InvalidAPIKeyError();
 		}
 
 		// validate expiry
 		if (apiKeyEntity.revoked) {
-			throw new Error('API Key is expired');
+			throw new InvalidAPIKeyError('API key is revoked');
 		}
 
 		// bcrypt comparison
 		const isValid = await APIKeyService.compareAPIKey(apiKey, apiKeyEntity.apiKeyHash);
-		if (!isValid) throw new Error('Invalid API key');
+		if (!isValid) throw new InvalidAPIKeyError();
 
 		return apiKeyEntity;
 	}
