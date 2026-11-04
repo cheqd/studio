@@ -8,7 +8,9 @@ defaults:
 jobs:
     build-node:
         name: 'Build Node.js'
-        runs-on: ubuntu-latest
+        # Pinned below ubuntu-latest: Playwright 1.58.2 doesn't support ubuntu26.04-x64 yet. Bump back to
+        # ubuntu-latest once Playwright adds support (tracked separately).
+        runs-on: ubuntu-24.04
 
         steps:
             - uses: actions/checkout@v6
