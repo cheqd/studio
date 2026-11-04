@@ -23,6 +23,7 @@ import { arePublicKeyHexsInWallet } from '../../services/helpers.js';
 import { validate } from '../validator/decorator.js';
 import { UnsuccessfulGetDidResponseBody } from '../../types/did.js';
 import { CheqdNetwork } from '@cheqd/sdk';
+import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
 
 export class ResourceController {
 	public static createResourceValidator = [
@@ -163,6 +164,8 @@ export class ResourceController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       402:
+	 *         description: The payer account has no CHEQ, or too little to pay the fee. The message says how to fund it.
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
@@ -244,6 +247,13 @@ export class ResourceController {
 				} satisfies UnsuccessfulCreateResourceResponseBody);
 			}
 		} catch (error) {
+			const unfunded = unfundedPayerFailure(error);
+			if (unfunded) {
+				return response.status(unfunded.status).json({
+					error: unfunded.error,
+				} satisfies UnsuccessfulCreateResourceResponseBody);
+			}
+
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
 			} satisfies UnsuccessfulCreateResourceResponseBody);

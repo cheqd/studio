@@ -46,6 +46,7 @@ import type { CheqdProviderError } from '@cheqd/did-provider-cheqd';
 import { validate } from '../validator/decorator.js';
 import { query } from 'express-validator';
 import { DockIdentityService } from '../../services/identity/providers/index.js';
+import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
 
 export class DIDController {
 	public static createDIDValidator = [
@@ -191,6 +192,8 @@ export class DIDController {
 	 *               error: InvalidRequest
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       402:
+	 *         description: The payer account has no CHEQ, or too little to pay the fee. The message says how to fund it.
 	 *       500:
 	 *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
 	 *         content:
@@ -337,6 +340,13 @@ export class DIDController {
 
 			return response.status(StatusCodes.OK).json(did satisfies CreateDidResponseBody);
 		} catch (error) {
+			const unfunded = unfundedPayerFailure(error);
+			if (unfunded) {
+				return response.status(unfunded.status).json({
+					error: unfunded.error,
+				} satisfies UnsuccessfulCreateDidResponseBody);
+			}
+
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulCreateDidResponseBody);
@@ -370,6 +380,8 @@ export class DIDController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       402:
+	 *         description: The payer account has no CHEQ, or too little to pay the fee. The message says how to fund it.
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
@@ -455,6 +467,13 @@ export class DIDController {
 			) {
 				return response.status(StatusCodes.BAD_REQUEST).json({
 					error: `updateDID: error: ${(error as CheqdProviderError).message}`,
+				} satisfies UnsuccessfulUpdateDidResponseBody);
+			}
+
+			const unfunded = unfundedPayerFailure(error);
+			if (unfunded) {
+				return response.status(unfunded.status).json({
+					error: unfunded.error,
 				} satisfies UnsuccessfulUpdateDidResponseBody);
 			}
 
@@ -618,6 +637,8 @@ export class DIDController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       402:
+	 *         description: The payer account has no CHEQ, or too little to pay the fee. The message says how to fund it.
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
@@ -659,6 +680,13 @@ export class DIDController {
 
 			return response.status(StatusCodes.OK).json(result satisfies DeactivateDidResponseBody);
 		} catch (error) {
+			const unfunded = unfundedPayerFailure(error);
+			if (unfunded) {
+				return response.status(unfunded.status).json({
+					error: unfunded.error,
+				} satisfies UnsuccessfulDeactivateDidResponseBody);
+			}
+
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulDeactivateDidResponseBody);

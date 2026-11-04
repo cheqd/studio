@@ -1,6 +1,6 @@
 {
 	"name": "@cheqd/studio",
-	"version": "3.19.0",
+	"version": "3.19.0-develop.3",
 	"description": "cheqd Studio Backend",
 	"source": "src/index.ts",
 	"main": "dist/index.js",
@@ -113,7 +113,7 @@
 		"uri-js": "^4.4.1"
 	},
 	"devDependencies": {
-		"@playwright/test": "^1.52.0",
+		"@playwright/test": "^1.64.1",
 		"@semantic-release/changelog": "^6.0.3",
 		"@semantic-release/commit-analyzer": "^13.0.1",
 		"@semantic-release/git": "^10.0.1",

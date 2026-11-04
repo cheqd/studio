@@ -1,16 +1,25 @@
 # Changelog
 
-## [3.19.0](https://github.com/cheqd/studio/compare/3.18.0...3.19.0) (2026-10-26)
+## [3.19.0-develop.3](https://github.com/cheqd/studio/compare/3.19.0-develop.2...3.19.0-develop.3) (2026-11-04)
 
 ### Features
 
-* warn when credential status is not checked on verify ([4cb33fe](https://github.com/cheqd/studio/commit/4cb33feaf2917eafee19cea7be7aba3073b291a8))
-* warn when credential status is not checked on verify ([#850](https://github.com/cheqd/studio/issues/850)) ([5c9c9d1](https://github.com/cheqd/studio/commit/5c9c9d1cf71594756399d032718e90b1203d4c50))
+* **auth:** accept ID tokens from CLI apps listed in LOGTO_CLI_APP_IDS ([b34ff96](https://github.com/cheqd/studio/commit/b34ff96e1e7e22174881ad175ba10b9fc006fe38))
+* **auth:** accept ID tokens from CLI apps listed in LOGTO_CLI_APP_IDS ([#854](https://github.com/cheqd/studio/issues/854)) ([84c4209](https://github.com/cheqd/studio/commit/84c4209589d07c84bdfede931c272fdd708c8c01))
 
 ### Bug Fixes
 
-* make Studio start on Node 22 ([86be5d6](https://github.com/cheqd/studio/commit/86be5d6a8d958d04d08baf497a7e423597cb1b5a))
-* make Studio start on Node 22 ([#849](https://github.com/cheqd/studio/issues/849)) ([3ecb65d](https://github.com/cheqd/studio/commit/3ecb65d5eee9eb561c1f00d89fc2fe6ee9396a2a)), closes [#848](https://github.com/cheqd/studio/issues/848)
+* **auth:** return 401 for an invalid or revoked API key ([#843](https://github.com/cheqd/studio/issues/843)) ([7681987](https://github.com/cheqd/studio/commit/76819874415f80b243e8548519109a05eb8ab685))
+* **auth:** return 401 for an invalid or revoked API key ([#852](https://github.com/cheqd/studio/issues/852)) ([70320e8](https://github.com/cheqd/studio/commit/70320e82c6bc9a107c0bf3bb29ed98cb8274b309))
+* **ledger:** return 402 with a funding hint for an unfunded payer ([#844](https://github.com/cheqd/studio/issues/844)) ([ded2d9e](https://github.com/cheqd/studio/commit/ded2d9e95b5491a4c5582d8c6be23ba69ef33d84))
+* **ledger:** return 402 with a funding hint for an unfunded payer ([#853](https://github.com/cheqd/studio/issues/853)) ([1c4111a](https://github.com/cheqd/studio/commit/1c4111addd9a0018feafc39a20010cab669f337a)), closes [#839](https://github.com/cheqd/studio/issues/839)
+
+## [3.19.0-develop.2](https://github.com/cheqd/studio/compare/3.19.0-develop.1...3.19.0-develop.2) (2026-10-27)
+
+### Features
+
+* **account:** remove the automatic testnet top-up on sign-up ([2c34509](https://github.com/cheqd/studio/commit/2c345097287ad386935db49b9aad31fb3e3fcbae))
+* **account:** remove the automatic testnet top-up on sign-up ([#858](https://github.com/cheqd/studio/issues/858)) ([a2023a0](https://github.com/cheqd/studio/commit/a2023a0d71d73d1c22acb559b4be426a0281a2c0))
 
 ## [3.19.0-develop.1](https://github.com/cheqd/studio/compare/3.18.0...3.19.0-develop.1) (2026-10-26)
 

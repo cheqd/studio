@@ -5422,6 +5422,9 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "402": {
+            "description": "The payer account has no CHEQ, or too little to pay the fee. The message says how to fund it."
+          },
           "500": {
             "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
             "content": {
@@ -5475,6 +5478,9 @@
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "402": {
+            "description": "The payer account has no CHEQ, or too little to pay the fee. The message says how to fund it."
           },
           "500": {
             "$ref": "#/components/schemas/InternalError"
@@ -5594,6 +5600,9 @@
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "402": {
+            "description": "The payer account has no CHEQ, or too little to pay the fee. The message says how to fund it."
           },
           "500": {
             "$ref": "#/components/schemas/InternalError"
@@ -7283,6 +7292,9 @@
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "402": {
+            "description": "The payer account has no CHEQ, or too little to pay the fee. The message says how to fund it."
           },
           "500": {
             "$ref": "#/components/schemas/InternalError"

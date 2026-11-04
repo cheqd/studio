@@ -46,7 +46,6 @@ describe('POST /account/faucet and GET /account/balances (Postgres, faked extern
 	let CustomerEntityClass: any;
 	let AccountControllerRef: any;
 	let PaymentAccountServiceRef: any;
-	let topupTestnet: any;
 
 	// Controls and counters for the faked externals
 	let balanceNcheq = '0';
@@ -169,7 +168,6 @@ describe('POST /account/faucet and GET /account/balances (Postgres, faked extern
 		const accountModule = await import('../../src/controllers/api/account.js');
 		const { AccountController } = accountModule;
 		AccountControllerRef = AccountController;
-		topupTestnet = accountModule.topupTestnet;
 		const { FaucetHelper } = await import('../../src/helpers/faucet.js');
 		const { SubscriptionService } = await import('../../src/services/admin/subscription.js');
 		const { PaymentAccountService } = await import('../../src/services/api/payment-account.js');
@@ -479,193 +477,6 @@ describe('POST /account/faucet and GET /account/balances (Postgres, faked extern
 
 			assert.equal((await call(customer, { amount: 20000 })).status, 200);
 			assert.deepEqual((await rows(customer)).map((r) => r.status).sort(), ['abandoned', 'completed']);
-		});
-	});
-
-	describe('initial top-up for a new testnet account', () => {
-		const originalTopup = process.env.ENABLE_ACCOUNT_TOPUP;
-		let originalFind: any;
-		let originalProvision: any;
-
-		before(() => {
-			process.env.ENABLE_ACCOUNT_TOPUP = 'true';
-			originalFind = PaymentAccountServiceRef.instance.find;
-			originalProvision = AccountControllerRef.provisionCustomerAccount;
-			AccountControllerRef.provisionCustomerAccount = async () => ({
-				success: true,
-				status: 200,
-				data: { address: ADDRESS },
-			});
-		});
-
-		after(() => {
-			if (originalTopup === undefined) delete process.env.ENABLE_ACCOUNT_TOPUP;
-			else process.env.ENABLE_ACCOUNT_TOPUP = originalTopup;
-			PaymentAccountServiceRef.instance.find = originalFind;
-			AccountControllerRef.provisionCustomerAccount = originalProvision;
-		});
-
-		// POST /account. `existingTestnet` is whether the customer already had a testnet payment account before the call
-		const createAccount = async (customer: any, existingTestnet: boolean) => {
-			PaymentAccountServiceRef.instance.find = async () =>
-				existingTestnet ? [{ namespace: 'testnet', address: ADDRESS }] : [];
-			// a customer that already has a payment provider id skips the Stripe account step
-			customer.paymentProviderId = 'cus_test';
-			let status = 0;
-			const res: any = {
-				locals: { customer },
-				status(code: number) {
-					status = code;
-					return res;
-				},
-				json() {
-					return res;
-				},
-			};
-			await controller.create({ headers: {}, body: { primaryEmail: customer.email } }, res);
-			return status;
-		};
-
-		const bootstrapStatus = () => ({ errors: [] as string[], testnetMinimumBalance: false });
-		const runBootstrapTopup = async (customer: any, isNew: boolean, status: any) => {
-			await topupTestnet(customer, { data: { address: ADDRESS } }, status, isNew, 'Test', 'User');
-		};
-
-		describe('POST /account', () => {
-			it('tops a newly created testnet account up to 10,000 CHEQ, counted against the quota', async () => {
-				reset();
-				const customer = await newCustomer();
-
-				assert.equal(await createAccount(customer, false), 201);
-
-				assert.equal(faucetCalls, 1);
-				assert.equal(lastFaucetAddress, ADDRESS);
-				assert.equal(await used(customer), cheq(10000));
-			});
-
-			it('requests only the difference when the new account already holds some CHEQ', async () => {
-				reset();
-				balanceNcheq = String(cheq(4000));
-				const customer = await newCustomer();
-
-				assert.equal(await createAccount(customer, false), 201);
-
-				assert.equal(await used(customer), cheq(6000));
-			});
-
-			it('does not call the faucet when the new account already holds 10,000 CHEQ or more', async () => {
-				reset();
-				balanceNcheq = String(cheq(10000));
-				const customer = await newCustomer();
-
-				assert.equal(await createAccount(customer, false), 201);
-
-				assert.equal(faucetCalls, 0);
-			});
-
-			it('does not top up a testnet account that already existed, and does not read its balance', async () => {
-				reset();
-				const customer = await newCustomer();
-
-				assert.equal(await createAccount(customer, true), 201);
-
-				assert.deepEqual({ faucetCalls, balanceCalls }, { faucetCalls: 0, balanceCalls: 0 });
-				assert.equal(await used(customer), 0n);
-			});
-
-			it('does not top up when ENABLE_ACCOUNT_TOPUP is not true', async () => {
-				reset();
-				process.env.ENABLE_ACCOUNT_TOPUP = 'false';
-				try {
-					const customer = await newCustomer();
-					assert.equal(await createAccount(customer, false), 201);
-					assert.equal(faucetCalls, 0);
-				} finally {
-					process.env.ENABLE_ACCOUNT_TOPUP = 'true';
-				}
-			});
-
-			it('still creates the account, without calling the faucet, when the monthly quota is used up', async () => {
-				reset();
-				const customer = await newCustomer();
-				await ledger.reserve(customer, ADDRESS, cheq(95000), { limitNcheq: cheq(100000) });
-
-				assert.equal(await createAccount(customer, false), 201);
-
-				assert.equal(faucetCalls, 0);
-			});
-
-			it('answers 502 and gives the quota back when the faucet reports a failure', async () => {
-				reset();
-				faucetMode = 'fail500';
-				const customer = await newCustomer();
-
-				assert.equal(await createAccount(customer, false), 502);
-				assert.equal(await used(customer), 0n);
-			});
-		});
-
-		describe('bootstrap', () => {
-			it('tops a newly created testnet account up to 10,000 CHEQ and reports the minimum balance', async () => {
-				reset();
-				const customer = await newCustomer();
-				const status = bootstrapStatus();
-
-				await runBootstrapTopup(customer, true, status);
-
-				assert.equal(faucetCalls, 1);
-				assert.equal(await used(customer), cheq(10000));
-				assert.deepEqual(status, { errors: [], testnetMinimumBalance: true });
-			});
-
-			it('does nothing for a testnet account that already existed', async () => {
-				reset();
-				const customer = await newCustomer();
-				const status = bootstrapStatus();
-
-				await runBootstrapTopup(customer, false, status);
-
-				assert.deepEqual({ faucetCalls, balanceCalls }, { faucetCalls: 0, balanceCalls: 0 });
-				assert.deepEqual(status, { errors: [], testnetMinimumBalance: false });
-			});
-
-			it('skips the top-up without recording an error when the monthly quota is used up', async () => {
-				reset();
-				const customer = await newCustomer();
-				await ledger.reserve(customer, ADDRESS, cheq(95000), { limitNcheq: cheq(100000) });
-				const status = bootstrapStatus();
-
-				await runBootstrapTopup(customer, true, status);
-
-				assert.equal(faucetCalls, 0);
-				assert.deepEqual(status, { errors: [], testnetMinimumBalance: false });
-			});
-
-			it('records an error when the faucet reports a failure', async () => {
-				reset();
-				faucetMode = 'fail500';
-				const customer = await newCustomer();
-				const status = bootstrapStatus();
-
-				await runBootstrapTopup(customer, true, status);
-
-				assert.equal(status.errors.length, 1);
-				assert.equal(status.testnetMinimumBalance, false);
-			});
-
-			it('does nothing when ENABLE_ACCOUNT_TOPUP is not true', async () => {
-				reset();
-				process.env.ENABLE_ACCOUNT_TOPUP = 'false';
-				try {
-					const customer = await newCustomer();
-					const status = bootstrapStatus();
-					await runBootstrapTopup(customer, true, status);
-					assert.equal(faucetCalls, 0);
-					assert.deepEqual(status, { errors: [], testnetMinimumBalance: false });
-				} finally {
-					process.env.ENABLE_ACCOUNT_TOPUP = 'true';
-				}
-			});
 		});
 	});
 
