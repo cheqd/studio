@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.19.0-develop.3](https://github.com/cheqd/studio/compare/3.19.0-develop.2...3.19.0-develop.3) (2026-11-04)
+
+### Features
+
+* **auth:** accept ID tokens from CLI apps listed in LOGTO_CLI_APP_IDS ([b34ff96](https://github.com/cheqd/studio/commit/b34ff96e1e7e22174881ad175ba10b9fc006fe38))
+* **auth:** accept ID tokens from CLI apps listed in LOGTO_CLI_APP_IDS ([#854](https://github.com/cheqd/studio/issues/854)) ([84c4209](https://github.com/cheqd/studio/commit/84c4209589d07c84bdfede931c272fdd708c8c01))
+
+### Bug Fixes
+
+* **auth:** return 401 for an invalid or revoked API key ([#843](https://github.com/cheqd/studio/issues/843)) ([7681987](https://github.com/cheqd/studio/commit/76819874415f80b243e8548519109a05eb8ab685))
+* **auth:** return 401 for an invalid or revoked API key ([#852](https://github.com/cheqd/studio/issues/852)) ([70320e8](https://github.com/cheqd/studio/commit/70320e82c6bc9a107c0bf3bb29ed98cb8274b309))
+* **ledger:** return 402 with a funding hint for an unfunded payer ([#844](https://github.com/cheqd/studio/issues/844)) ([ded2d9e](https://github.com/cheqd/studio/commit/ded2d9e95b5491a4c5582d8c6be23ba69ef33d84))
+* **ledger:** return 402 with a funding hint for an unfunded payer ([#853](https://github.com/cheqd/studio/issues/853)) ([1c4111a](https://github.com/cheqd/studio/commit/1c4111addd9a0018feafc39a20010cab669f337a)), closes [#839](https://github.com/cheqd/studio/issues/839)
+
 ## [3.19.0-develop.2](https://github.com/cheqd/studio/compare/3.19.0-develop.1...3.19.0-develop.2) (2026-10-27)
 
 ### Features
