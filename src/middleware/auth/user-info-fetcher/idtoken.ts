@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import { UserInfoHelper, type IUserInfoFetcher } from './base.js';
 import type { IOAuthProvider } from '../oauth/abstract.js';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { idTokenAudiences } from '../id-token-audiences.js';
 
 import * as dotenv from 'dotenv';
 import type { UnsuccessfulResponseBody } from '../../../types/shared.js';
@@ -37,8 +38,8 @@ export class IdTokenUserInfoFetcher extends UserInfoHelper implements IUserInfoF
 				{
 					// expected issuer of the token, should be issued by the Logto server
 					issuer: this.oauthProvider.endpoint_issuer,
-					// expected audience token, should be the resource indicator of the current API
-					audience: process.env.LOGTO_APP_ID,
+					// expected audience: cheqd Studio's LogTo application, or a CLI application in LOGTO_CLI_APP_IDS
+					audience: idTokenAudiences(),
 				}
 			);
 			// Setup the scopes from the token

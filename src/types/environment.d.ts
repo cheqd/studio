@@ -26,6 +26,7 @@ declare global {
 			LOGTO_ENDPOINT: string;
 			LOGTO_APP_ID: string;
 			LOGTO_APP_SECRET: string;
+			LOGTO_CLI_APP_IDS?: string;
 			LOGTO_DEFAULT_RESOURCE_URL: string;
 			LOGTO_M2M_APP_ID: string;
 			LOGTO_M2M_APP_SECRET: string;
