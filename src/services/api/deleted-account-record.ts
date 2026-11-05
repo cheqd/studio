@@ -23,10 +23,35 @@ export class DeletedAccountRecordService {
 	 * Records that an account for this email was deleted, so a later signup with the same email never gets a
 	 * fresh free trial. Upserts on email: repeated deletions of the same email (delete, resignup, delete
 	 * again) just update the one record rather than erroring on a duplicate key.
+	 *
+	 * Returns whatever record existed for this email before this call (or null), so a caller that needs to
+	 * roll this write back -- e.g. because the deletion it was recording turned out not to actually happen --
+	 * can restore exactly that prior state instead of just deleting the row. That distinction matters: this
+	 * email may have been blocked already by a genuinely earlier deletion, and a naive rollback would
+	 * incorrectly erase that real block.
 	 */
-	public async record(email: string, previousCustomerId: string, stripeCustomerId?: string): Promise<void> {
+	public async record(
+		email: string,
+		previousCustomerId: string,
+		stripeCustomerId?: string
+	): Promise<DeletedAccountRecordEntity | null> {
+		const normalizedEmail = normalizeEmail(email);
+		const existing = await this.repository.findOneBy({ email: normalizedEmail });
 		const record = new DeletedAccountRecordEntity(email, previousCustomerId, stripeCustomerId);
 		await this.repository.save(record);
+		return existing;
+	}
+
+	/**
+	 * Undoes a record() call: restores whatever record() reported as having existed before it ran (re-saving
+	 * it, since record()'s upsert will have overwritten it), or deletes the row entirely if there was none.
+	 */
+	public async restore(email: string, previous: DeletedAccountRecordEntity | null): Promise<void> {
+		if (previous) {
+			await this.repository.save(previous);
+		} else {
+			await this.repository.delete({ email: normalizeEmail(email) });
+		}
 	}
 
 	/**

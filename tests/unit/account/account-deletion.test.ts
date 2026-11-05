@@ -18,7 +18,8 @@ function makeDeps(overrides: Partial<AccountDeletionDeps> = {}): AccountDeletion
 		cancelSubscription: jest.fn(async () => ({})),
 		findUserForCustomer: jest.fn(async () => ({ logToId: 'logto-user-1' })),
 		deleteLogtoUser: jest.fn(async () => ({ status: 200, error: '', data: {} })),
-		recordAccountDeletion: jest.fn(async () => undefined),
+		recordAccountDeletion: jest.fn(async () => ({ marker: 'prior-record' })),
+		restorePriorDeletionRecord: jest.fn(async () => undefined),
 		deleteCustomer: jest.fn(async () => true),
 		...overrides,
 	};
@@ -185,7 +186,7 @@ describe('deleteCustomerAccount', () => {
 		expect(deps.deleteCustomer).not.toHaveBeenCalled();
 	});
 
-	it('reports failure without throwing if the DB delete fails', async () => {
+	it('reports failure without throwing if the DB delete fails, and rolls back the deletion record', async () => {
 		const deps = makeDeps({
 			deleteCustomer: jest.fn(async () => {
 				throw new Error('connection reset');
@@ -196,15 +197,52 @@ describe('deleteCustomerAccount', () => {
 
 		expect(result.dbDelete).toBe('failed: connection reset');
 		expect(result.success).toBe(false);
+		// The account wasn't actually deleted, so it must not be left permanently blocked from a free trial.
+		expect(deps.restorePriorDeletionRecord).toHaveBeenCalledWith(customerWithStripe, { marker: 'prior-record' });
 	});
 
-	it('reports failure if the customer row was already gone (delete affected nothing)', async () => {
+	it('reports failure if the customer row was already gone (delete affected nothing), and rolls back the deletion record', async () => {
 		const deps = makeDeps({ deleteCustomer: jest.fn(async () => false) });
 
 		const result = await deleteCustomerAccount(customerWithStripe, stripe, deps);
 
 		expect(result.dbDelete).toBe('failed: customer row was not found');
 		expect(result.success).toBe(false);
+		expect(deps.restorePriorDeletionRecord).toHaveBeenCalledWith(customerWithStripe, { marker: 'prior-record' });
+	});
+
+	it('passes through whatever recordAccountDeletion reports as having existed before it, including null, for an exact rollback', async () => {
+		const deps = makeDeps({
+			recordAccountDeletion: jest.fn(async () => null),
+			deleteCustomer: jest.fn(async () => false),
+		});
+
+		await deleteCustomerAccount(customerWithStripe, stripe, deps);
+
+		expect(deps.restorePriorDeletionRecord).toHaveBeenCalledWith(customerWithStripe, null);
+	});
+
+	it('still reports the DB failure, with a note, if the rollback itself also fails', async () => {
+		const deps = makeDeps({
+			deleteCustomer: jest.fn(async () => false),
+			restorePriorDeletionRecord: jest.fn(async () => {
+				throw new Error('rollback db is down');
+			}),
+		});
+
+		const result = await deleteCustomerAccount(customerWithStripe, stripe, deps);
+
+		expect(result.dbDelete).toBe(
+			'failed: customer row was not found (also failed to roll back the deletion record: rollback db is down)'
+		);
+		expect(result.success).toBe(false);
+	});
+
+	it('does not attempt a rollback when the DB delete succeeds', async () => {
+		const deps = makeDeps();
+		await deleteCustomerAccount(customerWithStripe, stripe, deps);
+
+		expect(deps.restorePriorDeletionRecord).not.toHaveBeenCalled();
 	});
 });
 

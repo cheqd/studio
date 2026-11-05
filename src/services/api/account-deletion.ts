@@ -23,7 +23,13 @@ export interface AccountDeletionDeps {
 	cancelSubscription: (stripe: Stripe, subscriptionId: string) => Promise<unknown>;
 	findUserForCustomer: (customer: CustomerEntity) => Promise<{ logToId: string } | null>;
 	deleteLogtoUser: (logToId: string) => Promise<ICommonErrorResponse>;
-	recordAccountDeletion: (customer: CustomerEntity) => Promise<void>;
+	// Returns whatever was there before (or null), to pass to restorePriorDeletionRecord if the DB delete
+	// that's supposed to follow this doesn't actually happen.
+	recordAccountDeletion: (customer: CustomerEntity) => Promise<unknown>;
+	// Rolls back recordAccountDeletion's write, restoring exactly what was there before rather than just
+	// deleting the row (this email may already have been blocked by a genuinely earlier deletion). Only
+	// ever called if the DB delete that follows step 3 fails.
+	restorePriorDeletionRecord: (customer: CustomerEntity, previous: unknown) => Promise<void>;
 	deleteCustomer: (customer: CustomerEntity) => Promise<boolean>;
 }
 
@@ -90,26 +96,54 @@ export async function deleteCustomerAccount(
 	// 3. Record the deletion against this email, so a later signup with the same email never gets a fresh
 	// free trial (see DeletedAccountRecordService). Done before the DB delete, and aborts the pipeline if it
 	// fails, so this can never be silently skipped by a step that runs after it.
+	let priorDeletionRecord: unknown;
 	try {
-		await deps.recordAccountDeletion(customer);
+		priorDeletionRecord = await deps.recordAccountDeletion(customer);
 		result.recordDeletion = 'ok';
 	} catch (error) {
 		result.recordDeletion = `failed: ${(error as Error)?.message || error}`;
 		return result;
 	}
 
-	// 4. DB — delete the customer row; FK cascades remove everything else owned by it.
+	// 4. DB — delete the customer row; FK cascades remove everything else owned by it. If this step doesn't
+	// actually succeed, the account was never really deleted, so step 3's record is rolled back -- otherwise
+	// a still-intact account would be left permanently blocked from ever getting a free trial.
 	try {
 		const deleted = await deps.deleteCustomer(customer);
-		result.dbDelete = deleted ? 'ok' : 'failed: customer row was not found';
-		if (!deleted) return result;
+		if (!deleted) {
+			result.dbDelete = 'failed: customer row was not found';
+			await rollBackDeletionRecord(deps, customer, priorDeletionRecord, result);
+			return result;
+		}
+		result.dbDelete = 'ok';
 	} catch (error) {
 		result.dbDelete = `failed: ${(error as Error)?.message || error}`;
+		await rollBackDeletionRecord(deps, customer, priorDeletionRecord, result);
 		return result;
 	}
 
 	result.success = true;
 	return result;
+}
+
+/**
+ * Best-effort rollback of the step-3 deletion record, called when the DB delete that was supposed to follow
+ * it didn't actually happen. Failure here is appended to the dbDelete message (rather than thrown) so it
+ * surfaces to whoever reads the result, since a failed rollback means the free-trial block is now incorrect
+ * for an account that still exists.
+ */
+async function rollBackDeletionRecord(
+	deps: AccountDeletionDeps,
+	customer: CustomerEntity,
+	priorDeletionRecord: unknown,
+	result: AccountDeletionResult
+): Promise<void> {
+	try {
+		await deps.restorePriorDeletionRecord(customer, priorDeletionRecord);
+	} catch (rollbackError) {
+		result.dbDelete =
+			`${result.dbDelete} (also failed to roll back the deletion record: ${(rollbackError as Error)?.message || rollbackError})` as AccountDeletionStepOutcome;
+	}
 }
 
 /**

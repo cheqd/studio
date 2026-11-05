@@ -18,5 +18,10 @@ export const liveAccountDeletionDeps: AccountDeletionDeps = {
 	deleteLogtoUser: (logToId) => new LogToHelper().deleteUser(logToId),
 	recordAccountDeletion: (customer) =>
 		DeletedAccountRecordService.instance.record(customer.email, customer.customerId, customer.paymentProviderId),
+	restorePriorDeletionRecord: (customer, previous) =>
+		DeletedAccountRecordService.instance.restore(
+			customer.email,
+			previous as Awaited<ReturnType<typeof DeletedAccountRecordService.instance.record>>
+		),
 	deleteCustomer: (customer) => CustomerService.instance.delete(customer),
 };
