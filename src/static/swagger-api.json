@@ -3413,6 +3413,44 @@
             "$ref": "#/components/schemas/InternalError"
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Permanently delete the authenticated user's Studio account.",
+        "description": "Hard-deletes the account: cancels any active Stripe subscription, deletes the Logto user, then deletes the customer row and everything it owns (DIDs, credentials, resources, keys, API keys, payment accounts). This cannot be undone, and DID documents or resources already published on-chain are not removed from the ledger. Requires `{ \"confirm\": true }` in the request body.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "confirm"
+                ],
+                "properties": {
+                  "confirm": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The account was deleted."
+          },
+          "400": {
+            "description": "Missing confirmation, or a problem with the input fields."
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "description": "The deletion pipeline failed partway through; the response body records which steps completed."
+          }
+        }
       }
     },
     "/account/idtoken": {
@@ -3611,6 +3649,26 @@
                 }
               }
             }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/account/export-keys": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Export the authenticated user's private key material.",
+        "description": "Returns the private keys for every DID the customer owns (via the same mechanism as `/did/export/{did}`) and the two cosmos payment-account private keys (mainnet and testnet fee-payer wallets). Returned as plaintext JSON over HTTPS; the caller is expected to encrypt it (e.g. client-side, with a user-supplied password) before writing it to disk. A DID that fails to export (e.g. one custodied by an external provider rather than Studio) is reported per-DID under `error` rather than failing the whole export.",
+        "responses": {
+          "200": {
+            "description": "The request was successful."
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"

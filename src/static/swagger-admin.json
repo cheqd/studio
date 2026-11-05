@@ -828,6 +828,49 @@
         }
       }
     },
+    "/admin/organisation/delete": {
+      "delete": {
+        "summary": "Permanently delete the organisation identified by the `customer-id` header.",
+        "description": "For support-triggered deletions (e.g. a customer emailing in to ask for their account to be deleted) rather than self-service. Runs the same hard-delete pipeline as `DELETE /account`: cancels any active Stripe subscription, deletes the Logto user, then deletes the customer row and everything it owns. Does not export keys on the customer's behalf. Requires `{ \"confirm\": true }` in the request body.",
+        "tags": [
+          "Organisation"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "confirm"
+                ],
+                "properties": {
+                  "confirm": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The organisation was deleted."
+          },
+          "400": {
+            "description": "Missing confirmation."
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "description": "The deletion pipeline failed partway through; the response body records which steps completed."
+          }
+        }
+      }
+    },
     "/admin/price/list": {
       "get": {
         "summary": "Get a list of prices",
