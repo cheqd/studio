@@ -90,3 +90,14 @@ export async function deleteCustomerAccount(
 	result.success = true;
 	return result;
 }
+
+/**
+ * Summarises a failed AccountDeletionResult as a single error string, for callers (e.g. GenericErrorResponse
+ * consumers) that want one message rather than inspecting all three step outcomes themselves.
+ */
+export function describeAccountDeletionFailure(result: AccountDeletionResult): string {
+	if (result.stripeCancel.startsWith('failed')) return `Stripe: ${result.stripeCancel}`;
+	if (result.logtoDelete.startsWith('failed')) return `Logto: ${result.logtoDelete}`;
+	if (result.dbDelete.startsWith('failed')) return `Database: ${result.dbDelete}`;
+	return 'Account deletion failed for an unknown reason.';
+}

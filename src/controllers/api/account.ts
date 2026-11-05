@@ -69,7 +69,7 @@ import {
 	remainingQuota,
 	secondsUntilReset,
 } from '../../helpers/faucet-quota.js';
-import { deleteCustomerAccount } from '../../services/api/account-deletion.js';
+import { deleteCustomerAccount, describeAccountDeletionFailure } from '../../services/api/account-deletion.js';
 import { liveAccountDeletionDeps } from '../../services/api/account-deletion-live-deps.js';
 
 dotenv.config();
@@ -1137,7 +1137,9 @@ export class AccountController {
 
 		const result = await deleteCustomerAccount(customer, stripe, liveAccountDeletionDeps);
 		if (!result.success) {
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(result);
+			return response
+				.status(StatusCodes.INTERNAL_SERVER_ERROR)
+				.json({ error: describeAccountDeletionFailure(result), ...result });
 		}
 		return response.status(StatusCodes.OK).json(result);
 	}

@@ -16,7 +16,7 @@ import { LocalStore } from '../../database/cache/store.js';
 import { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type Stripe from 'stripe';
-import { deleteCustomerAccount } from '../../services/api/account-deletion.js';
+import { deleteCustomerAccount, describeAccountDeletionFailure } from '../../services/api/account-deletion.js';
 import { liveAccountDeletionDeps } from '../../services/api/account-deletion-live-deps.js';
 import type { UnsuccessfulResponseBody } from '../../types/shared.js';
 
@@ -224,7 +224,9 @@ export class OrganisationController {
 		const stripe = response.locals.stripe as Stripe | undefined;
 		const result = await deleteCustomerAccount(customer, stripe, liveAccountDeletionDeps);
 		if (!result.success) {
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(result);
+			return response
+				.status(StatusCodes.INTERNAL_SERVER_ERROR)
+				.json({ error: describeAccountDeletionFailure(result), ...result });
 		}
 		return response.status(StatusCodes.OK).json(result);
 	}

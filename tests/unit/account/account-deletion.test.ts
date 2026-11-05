@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { deleteCustomerAccount, type AccountDeletionDeps } from '../../../src/services/api/account-deletion.js';
+import {
+	deleteCustomerAccount,
+	describeAccountDeletionFailure,
+	type AccountDeletionDeps,
+	type AccountDeletionResult,
+} from '../../../src/services/api/account-deletion.js';
 import type { CustomerEntity } from '../../../src/database/entities/customer.entity.js';
 import type Stripe from 'stripe';
 
@@ -158,5 +163,29 @@ describe('deleteCustomerAccount', () => {
 
 		expect(result.dbDelete).toBe('failed: customer row was not found');
 		expect(result.success).toBe(false);
+	});
+});
+
+describe('describeAccountDeletionFailure', () => {
+	const ok: AccountDeletionResult = { stripeCancel: 'ok', logtoDelete: 'ok', dbDelete: 'ok', success: true };
+
+	it('reports the Stripe failure first, even if later steps also show failures', () => {
+		const result: AccountDeletionResult = {
+			...ok,
+			success: false,
+			stripeCancel: 'failed: stripe is down',
+			logtoDelete: 'failed: logto is down',
+		};
+		expect(describeAccountDeletionFailure(result)).toBe('Stripe: failed: stripe is down');
+	});
+
+	it('reports the Logto failure when Stripe succeeded or was skipped', () => {
+		const result: AccountDeletionResult = { ...ok, success: false, logtoDelete: 'failed: logto is down' };
+		expect(describeAccountDeletionFailure(result)).toBe('Logto: failed: logto is down');
+	});
+
+	it('reports the DB failure when the earlier steps succeeded', () => {
+		const result: AccountDeletionResult = { ...ok, success: false, dbDelete: 'failed: connection reset' };
+		expect(describeAccountDeletionFailure(result)).toBe('Database: failed: connection reset');
 	});
 });
