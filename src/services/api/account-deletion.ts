@@ -8,25 +8,33 @@ export type AccountDeletionStepOutcome = 'ok' | 'skipped' | `failed: ${string}`;
 export interface AccountDeletionResult {
 	stripeCancel: AccountDeletionStepOutcome;
 	logtoDelete: AccountDeletionStepOutcome;
+	recordDeletion: AccountDeletionStepOutcome;
 	dbDelete: AccountDeletionStepOutcome;
 	success: boolean;
 }
 
 /**
- * The parts of SubscriptionService, UserService, CustomerService and LogToHelper that deleteCustomerAccount
- * needs. Narrowed to an interface (rather than importing the singletons directly) so tests can pass fakes
- * instead of hitting Stripe, Logto or the database.
+ * The parts of SubscriptionService, UserService, CustomerService, LogToHelper and DeletedAccountRecordService
+ * that deleteCustomerAccount needs. Narrowed to an interface (rather than importing the singletons directly)
+ * so tests can pass fakes instead of hitting Stripe, Logto or the database.
  */
 export interface AccountDeletionDeps {
 	findCurrentSubscription: (customer: CustomerEntity) => Promise<{ subscriptionId: string } | null>;
 	cancelSubscription: (stripe: Stripe, subscriptionId: string) => Promise<unknown>;
 	findUserForCustomer: (customer: CustomerEntity) => Promise<{ logToId: string } | null>;
 	deleteLogtoUser: (logToId: string) => Promise<ICommonErrorResponse>;
+	recordAccountDeletion: (customer: CustomerEntity) => Promise<void>;
 	deleteCustomer: (customer: CustomerEntity) => Promise<boolean>;
 }
 
 function initialResult(): AccountDeletionResult {
-	return { stripeCancel: 'skipped', logtoDelete: 'skipped', dbDelete: 'skipped', success: false };
+	return {
+		stripeCancel: 'skipped',
+		logtoDelete: 'skipped',
+		recordDeletion: 'skipped',
+		dbDelete: 'skipped',
+		success: false,
+	};
 }
 
 /**
@@ -34,10 +42,12 @@ function initialResult(): AccountDeletionResult {
  * `DELETE /admin/organisation/delete` endpoint so support-triggered deletions go through the same pipeline
  * as self-service ones.
  *
- * Steps run in a fixed order — Stripe cancel, then Logto user delete, then the DB row (which cascades
- * through every customer-owned table) — so a mid-pipeline failure never leaves a still-billable
- * subscription attached to a gone or half-gone account. Stops at the first failing step; the returned
- * result records which steps completed so a retry can be informed about what's already done.
+ * Steps run in a fixed order — Stripe cancel, then Logto user delete, then recording the deletion against
+ * this email (so a later signup can't get a fresh free trial), then the DB row (which cascades through
+ * every customer-owned table) — so a mid-pipeline failure never leaves a still-billable subscription
+ * attached to a gone or half-gone account, and the deletion is always recorded before it's irreversible.
+ * Stops at the first failing step; the returned result records which steps completed so a retry can be
+ * informed about what's already done.
  */
 export async function deleteCustomerAccount(
 	customer: CustomerEntity,
@@ -77,7 +87,18 @@ export async function deleteCustomerAccount(
 		return result;
 	}
 
-	// 3. DB — delete the customer row; FK cascades remove everything else owned by it.
+	// 3. Record the deletion against this email, so a later signup with the same email never gets a fresh
+	// free trial (see DeletedAccountRecordService). Done before the DB delete, and aborts the pipeline if it
+	// fails, so this can never be silently skipped by a step that runs after it.
+	try {
+		await deps.recordAccountDeletion(customer);
+		result.recordDeletion = 'ok';
+	} catch (error) {
+		result.recordDeletion = `failed: ${(error as Error)?.message || error}`;
+		return result;
+	}
+
+	// 4. DB — delete the customer row; FK cascades remove everything else owned by it.
 	try {
 		const deleted = await deps.deleteCustomer(customer);
 		result.dbDelete = deleted ? 'ok' : 'failed: customer row was not found';
@@ -98,6 +119,7 @@ export async function deleteCustomerAccount(
 export function describeAccountDeletionFailure(result: AccountDeletionResult): string {
 	if (result.stripeCancel.startsWith('failed')) return `Stripe: ${result.stripeCancel}`;
 	if (result.logtoDelete.startsWith('failed')) return `Logto: ${result.logtoDelete}`;
+	if (result.recordDeletion.startsWith('failed')) return `Deletion record: ${result.recordDeletion}`;
 	if (result.dbDelete.startsWith('failed')) return `Database: ${result.dbDelete}`;
 	return 'Account deletion failed for an unknown reason.';
 }

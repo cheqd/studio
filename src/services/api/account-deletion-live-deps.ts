@@ -2,6 +2,7 @@ import { SubscriptionService } from '../admin/subscription.js';
 import { UserService } from './user.js';
 import { CustomerService } from './customer.js';
 import { LogToHelper } from '../../middleware/auth/logto-helper.js';
+import { DeletedAccountRecordService } from './deleted-account-record.js';
 import type { AccountDeletionDeps } from './account-deletion.js';
 
 /**
@@ -15,5 +16,7 @@ export const liveAccountDeletionDeps: AccountDeletionDeps = {
 	cancelSubscription: (stripe, subscriptionId) => SubscriptionService.instance.cancel(stripe, subscriptionId),
 	findUserForCustomer: (customer) => UserService.instance.findOne({ customer: { customerId: customer.customerId } }),
 	deleteLogtoUser: (logToId) => new LogToHelper().deleteUser(logToId),
+	recordAccountDeletion: (customer) =>
+		DeletedAccountRecordService.instance.record(customer.email, customer.customerId, customer.paymentProviderId),
 	deleteCustomer: (customer) => CustomerService.instance.delete(customer),
 };

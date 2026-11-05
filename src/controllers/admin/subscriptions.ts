@@ -24,6 +24,7 @@ import type {
 import { StatusCodes } from 'http-status-codes';
 import { check } from '../validator/index.js';
 import { SubscriptionService } from '../../services/admin/subscription.js';
+import { DeletedAccountRecordService } from '../../services/api/deleted-account-record.js';
 import { stripeService } from '../../services/admin/stripe.js';
 import type { UnsuccessfulResponseBody } from '../../types/shared.js';
 import { validate } from '../validator/decorator.js';
@@ -237,6 +238,12 @@ export class SubscriptionController {
 
 	async startTrialForPlan(response: Response, body: SubscriptionCreateRequestBody): Promise<Response> {
 		const stripe = response.locals.stripe as Stripe;
+
+		if (await DeletedAccountRecordService.instance.hasPriorDeletedAccount(response.locals.customer.email)) {
+			return response.status(StatusCodes.FORBIDDEN).json({
+				error: 'This email previously had a cheqd Studio account. New free trials are not available for this email -- please choose a paid plan to continue.',
+			} satisfies SubscriptionCreateUnsuccessfulResponseBody);
+		}
 
 		const { price, quantity = 1, trialPeriodDays } = body;
 		const subscriptionResponse = await stripe.subscriptions.create({

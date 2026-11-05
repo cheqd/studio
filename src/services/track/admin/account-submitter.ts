@@ -5,6 +5,7 @@ import type { INotifyMessage } from '../../../types/track.js';
 import { EventTracker } from '../tracker.js';
 import { StatusCodes } from 'http-status-codes';
 import { CustomerService } from '../../api/customer.js';
+import { DeletedAccountRecordService } from '../../api/deleted-account-record.js';
 import type { ISubmitOperation, ISubmitStripeCustomerCreateData } from '../submitter.js';
 import { getBasicPlanId } from '../../admin/plan-capabilities.js';
 
@@ -67,9 +68,21 @@ export class PortalAccountCreateSubmitter implements IObserver {
 					paymentProviderId: stripeCustomer.id,
 				});
 
-				// Assign Basic as the default trialing plan, keeping STRIPE_TEST_PLAN_ID as a one-release fallback.
-				if (getBasicPlanId()) {
-					// Assign default plan to the user
+				// This email has had a Studio account before and deleted it: no fresh free trial. Leave them
+				// with a Stripe customer but no subscription -- the same state as any new customer who
+				// hasn't picked a plan yet -- so they land on the normal "choose a plan" flow, which only
+				// offers a paid subscription for them (see the equivalent check in subscriptions.ts's
+				// startTrialForPlan).
+				if (data.email && (await DeletedAccountRecordService.instance.hasPriorDeletedAccount(data.email))) {
+					this.notify({
+						message: EventTracker.compileBasicNotification(
+							`Skipped automatic trial for ${data.email}: this email previously had a Studio account that was deleted.`,
+							operation.operation
+						),
+						severity: 'info',
+					} as INotifyMessage);
+				} else if (getBasicPlanId()) {
+					// Assign Basic as the default trialing plan, keeping STRIPE_TEST_PLAN_ID as a one-release fallback.
 					await this.assignDefaultPlan(stripe, stripeCustomer.id);
 				}
 			}
