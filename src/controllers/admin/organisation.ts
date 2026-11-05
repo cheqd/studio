@@ -19,6 +19,7 @@ import type Stripe from 'stripe';
 import { deleteCustomerAccount, describeAccountDeletionFailure } from '../../services/api/account-deletion.js';
 import { liveAccountDeletionDeps } from '../../services/api/account-deletion-live-deps.js';
 import type { UnsuccessfulResponseBody } from '../../types/shared.js';
+import { EventTracker, eventTracker } from '../../services/track/tracker.js';
 
 dotenv.config();
 
@@ -223,6 +224,20 @@ export class OrganisationController {
 
 		const stripe = response.locals.stripe as Stripe | undefined;
 		const result = await deleteCustomerAccount(customer, stripe, liveAccountDeletionDeps);
+
+		// Audit trail for a destructive, irreversible, support-triggered action: who (which M2M scopes) did
+		// what (customerId/email) and whether it succeeded. scopes identify the calling credential's grant,
+		// since the M2M auth strategy doesn't currently surface a caller identity beyond that (see #874).
+		const callerScopes = (response.locals.scopes as string[] | undefined)?.join(' ') ?? 'unknown';
+		await eventTracker.notify({
+			message: EventTracker.compileBasicNotification(
+				result.success
+					? `Admin-triggered deletion succeeded for customerId: ${customer.customerId} (email: ${customer.email}). Caller scopes: ${callerScopes}.`
+					: `Admin-triggered deletion failed for customerId: ${customer.customerId} (email: ${customer.email}). Caller scopes: ${callerScopes}. ${describeAccountDeletionFailure(result)}`
+			),
+			severity: result.success ? 'info' : 'error',
+		});
+
 		if (!result.success) {
 			return response
 				.status(StatusCodes.INTERNAL_SERVER_ERROR)
