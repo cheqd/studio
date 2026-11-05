@@ -312,6 +312,7 @@ class App {
 		app.get('/account/idtoken', new AccountController().getIdToken);
 		app.get('/account/analytics', new AccountController().getAnalytics);
 		app.get('/account/balances', new AccountController().getBalances);
+		app.post('/account/export-keys', new AccountController().exportKeys);
 		app.delete('/account', new AccountController().delete);
 
 		// LogTo webhooks

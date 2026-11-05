@@ -51,6 +51,29 @@ export interface AccountFaucetInfo {
 	quota: FaucetQuotaSummary;
 }
 
+// POST /account/export-keys
+
+export interface ExportedPaymentAccountKey {
+	network: string;
+	address: string;
+	type: string;
+	privateKeyHex: string;
+}
+
+export interface ExportedDidKeys {
+	did: string;
+	// Present when this DID's keys were exported successfully; the DID resolution document plus custodied keys.
+	export?: unknown;
+	// Present when export failed for this DID (e.g. it's not custodied by this provider), so one bad DID
+	// doesn't block exporting the rest.
+	error?: string;
+}
+
+export interface AccountExportKeysResponseBody {
+	dids: ExportedDidKeys[];
+	paymentAccounts: ExportedPaymentAccountKey[];
+}
+
 export interface QueryAccountBalancesResponseBody {
 	// `null` when the customer has no payment account on that network.
 	mainnet: AccountNetworkBalance | null;

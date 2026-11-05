@@ -45,8 +45,10 @@ import { KeyService } from '../../services/api/key.js';
 import { LocalStore } from '../../database/cache/store.js';
 import { BootStrapAccountResponse } from '../../types/account.js';
 import type {
+	AccountExportKeysResponseBody,
 	AccountFaucetInfo,
 	AccountNetworkBalance,
+	ExportedDidKeys,
 	QueryAccountBalancesResponseBody,
 } from '../../types/account.js';
 import { RoleEntity } from '../../database/entities/role.entity.js';
@@ -1021,6 +1023,64 @@ export class AccountController {
 				faucet,
 				rate,
 			} satisfies QueryAccountBalancesResponseBody);
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			} satisfies UnsuccessfulResponseBody);
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /account/export-keys:
+	 *   post:
+	 *     tags: [Account]
+	 *     summary: Export the authenticated user's private key material.
+	 *     description: >-
+	 *       Returns the private keys for every DID the customer owns (via the same mechanism as
+	 *       `/did/export/{did}`) and the two cosmos payment-account private keys (mainnet and testnet fee-payer
+	 *       wallets). Returned as plaintext JSON over HTTPS; the caller is expected to encrypt it (e.g.
+	 *       client-side, with a user-supplied password) before writing it to disk. A DID that fails to export
+	 *       (e.g. one custodied by an external provider rather than Studio) is reported per-DID under `error`
+	 *       rather than failing the whole export.
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async exportKeys(_request: Request, response: Response) {
+		if (!response.locals.customer) {
+			return response.status(StatusCodes.UNAUTHORIZED).json({
+				error: 'Unauthorized error: Studio user context was not found.',
+			} satisfies UnsuccessfulResponseBody);
+		}
+		const customer = response.locals.customer as CustomerEntity;
+
+		try {
+			const identityStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
+
+			const [dids] = await IdentifierService.instance.find({ customer });
+			const exportedDids: ExportedDidKeys[] = await Promise.all(
+				dids.map(async (identifier): Promise<ExportedDidKeys> => {
+					try {
+						const didExport = await identityStrategySetup.agent.exportDid(identifier.did, '', customer);
+						return { did: identifier.did, export: didExport };
+					} catch (error) {
+						return { did: identifier.did, error: (error as Error)?.message || String(error) };
+					}
+				})
+			);
+
+			const paymentAccounts = await identityStrategySetup.agent.exportPaymentAccountKeys(customer);
+
+			return response.status(StatusCodes.OK).json({
+				dids: exportedDids,
+				paymentAccounts,
+			} satisfies AccountExportKeysResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
