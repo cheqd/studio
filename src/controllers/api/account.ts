@@ -67,6 +67,8 @@ import {
 	remainingQuota,
 	secondsUntilReset,
 } from '../../helpers/faucet-quota.js';
+import { deleteCustomerAccount } from '../../services/api/account-deletion.js';
+import { liveAccountDeletionDeps } from '../../services/api/account-deletion-live-deps.js';
 
 dotenv.config();
 
@@ -1024,6 +1026,60 @@ export class AccountController {
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulResponseBody);
 		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /account:
+	 *   delete:
+	 *     tags: [Account]
+	 *     summary: Permanently delete the authenticated user's Studio account.
+	 *     description: >-
+	 *       Hard-deletes the account: cancels any active Stripe subscription, deletes the Logto user, then
+	 *       deletes the customer row and everything it owns (DIDs, credentials, resources, keys, API keys,
+	 *       payment accounts). This cannot be undone, and DID documents or resources already published
+	 *       on-chain are not removed from the ledger. Requires `{ "confirm": true }` in the request body.
+	 *     requestBody:
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+	 *             required: [confirm]
+	 *             properties:
+	 *               confirm:
+	 *                 type: boolean
+	 *     responses:
+	 *       200:
+	 *         description: The account was deleted.
+	 *       400:
+	 *         description: Missing confirmation, or a problem with the input fields.
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         description: The deletion pipeline failed partway through; the response body records which steps completed.
+	 */
+	public async delete(request: Request, response: Response) {
+		if (request.body?.confirm !== true) {
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: 'confirm must be set to true to delete the account.',
+			} satisfies UnsuccessfulResponseBody);
+		}
+
+		if (!response.locals.customer) {
+			return response.status(StatusCodes.UNAUTHORIZED).json({
+				error: 'Unauthorized error: Studio user context was not found.',
+			} satisfies UnsuccessfulResponseBody);
+		}
+
+		const customer = response.locals.customer as CustomerEntity;
+		const stripe = response.locals.stripe as Stripe | undefined;
+
+		const result = await deleteCustomerAccount(customer, stripe, liveAccountDeletionDeps);
+		if (!result.success) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(result);
+		}
+		return response.status(StatusCodes.OK).json(result);
 	}
 }
 

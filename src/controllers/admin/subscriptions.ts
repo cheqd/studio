@@ -500,9 +500,11 @@ export class SubscriptionController {
 
 		try {
 			// Cancel the subscription
-			const subscription = await stripe.subscriptions.cancel(subscriptionId as string, {
-				idempotencyKey: idempotencyKey,
-			});
+			const subscription = await SubscriptionService.instance.cancel(
+				stripe,
+				subscriptionId as string,
+				idempotencyKey
+			);
 
 			// Check if the subscription was cancelled
 			if (subscription.lastResponse?.statusCode !== StatusCodes.OK) {

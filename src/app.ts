@@ -312,6 +312,7 @@ class App {
 		app.get('/account/idtoken', new AccountController().getIdToken);
 		app.get('/account/analytics', new AccountController().getAnalytics);
 		app.get('/account/balances', new AccountController().getBalances);
+		app.delete('/account', new AccountController().delete);
 
 		// LogTo webhooks
 		app.post('/account/bootstrap', LogToWebHook.verifyHookSignature, new AccountController().bootstrap);
@@ -405,6 +406,7 @@ class App {
 				new OrganisationController().update
 			);
 			app.get('/admin/organisation/get', new OrganisationController().get);
+			app.delete('/admin/organisation/delete', new OrganisationController().delete);
 		}
 
 		// 404 for all other requests

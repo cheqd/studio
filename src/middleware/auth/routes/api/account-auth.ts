@@ -9,5 +9,6 @@ export class AccountAuthProvider extends AuthRuleProvider {
 		this.registerRule('/account/idtoken', 'GET', 'read:account', { skipNamespace: true });
 		this.registerRule('/account/analytics', 'GET', 'read:account', { skipNamespace: true });
 		this.registerRule('/account/balances', 'GET', 'read:account', { skipNamespace: true });
+		this.registerRule('/account', 'DELETE', 'delete:account', { skipNamespace: true });
 	}
 }

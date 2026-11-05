@@ -83,6 +83,18 @@ export class SubscriptionService {
 		});
 	}
 
+	/**
+	 * Cancels a Stripe subscription. Shared by the admin subscription-cancel endpoint and the account-deletion
+	 * pipeline so both go through the same Stripe call.
+	 */
+	public async cancel(
+		stripe: Stripe,
+		subscriptionId: string,
+		idempotencyKey?: string
+	): Promise<Stripe.Response<Stripe.Subscription>> {
+		return await stripe.subscriptions.cancel(subscriptionId, { idempotencyKey });
+	}
+
 	public equals(subscriptionEntity: SubscriptionEntity, subscription: Stripe.Subscription): boolean {
 		const required =
 			subscriptionEntity.subscriptionId === subscription.id &&

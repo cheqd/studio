@@ -14,6 +14,11 @@ import { PaymentAccountService } from '../../services/api/payment-account.js';
 import { CheqdNetwork } from '@cheqd/sdk';
 import { LocalStore } from '../../database/cache/store.js';
 import { PaymentAccountEntity } from '../../database/entities/payment.account.entity.js';
+import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import type Stripe from 'stripe';
+import { deleteCustomerAccount } from '../../services/api/account-deletion.js';
+import { liveAccountDeletionDeps } from '../../services/api/account-deletion-live-deps.js';
+import type { UnsuccessfulResponseBody } from '../../types/shared.js';
 
 dotenv.config();
 
@@ -166,5 +171,61 @@ export class OrganisationController {
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies AdminOrganisationGetUnsuccessfulResponseBody);
 		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /admin/organisation/delete:
+	 *   delete:
+	 *     summary: Permanently delete the organisation identified by the `customer-id` header.
+	 *     description: >-
+	 *       For support-triggered deletions (e.g. a customer emailing in to ask for their account to be
+	 *       deleted) rather than self-service. Runs the same hard-delete pipeline as `DELETE /account`:
+	 *       cancels any active Stripe subscription, deletes the Logto user, then deletes the customer row
+	 *       and everything it owns. Does not export keys on the customer's behalf. Requires
+	 *       `{ "confirm": true }` in the request body.
+	 *     tags: [Organisation]
+	 *     requestBody:
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+	 *             required: [confirm]
+	 *             properties:
+	 *               confirm:
+	 *                 type: boolean
+	 *     responses:
+	 *       200:
+	 *         description: The organisation was deleted.
+	 *       400:
+	 *         description: Missing confirmation.
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         $ref: '#/components/schemas/NotFoundError'
+	 *       500:
+	 *         description: The deletion pipeline failed partway through; the response body records which steps completed.
+	 */
+	async delete(request: Request, response: Response) {
+		if (request.body?.confirm !== true) {
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: 'confirm must be set to true to delete the organisation.',
+			} satisfies UnsuccessfulResponseBody);
+		}
+
+		const customer = response.locals.customer as CustomerEntity | undefined;
+		if (!customer) {
+			return response.status(StatusCodes.NOT_FOUND).json({
+				error: 'No organisation found for the customer-id header supplied.',
+			} satisfies UnsuccessfulResponseBody);
+		}
+
+		const stripe = response.locals.stripe as Stripe | undefined;
+		const result = await deleteCustomerAccount(customer, stripe, liveAccountDeletionDeps);
+		if (!result.success) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json(result);
+		}
+		return response.status(StatusCodes.OK).json(result);
 	}
 }
