@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.21.0-develop.2](https://github.com/cheqd/studio/compare/3.21.0-develop.1...3.21.0-develop.2) (2026-11-06)
+
+### Bug Fixes
+
+* **auth:** pass the bearer token, not customer-id, to the M2M JWT verifier ([#875](https://github.com/cheqd/studio/issues/875)) ([11cd7aa](https://github.com/cheqd/studio/commit/11cd7aa14fd2e81ffa848e48cd85f603f6ee5bbc)), closes [#873](https://github.com/cheqd/studio/issues/873) [#874](https://github.com/cheqd/studio/issues/874)
+* **auth:** pass the bearer token, not the customer-id header, to the M2M JWT verifier ([942070b](https://github.com/cheqd/studio/commit/942070bd72ae9b8a2ced1b2b2ff2ca4df3cf6a1a)), closes [#873](https://github.com/cheqd/studio/issues/873) [cheqd/studio#874](https://github.com/cheqd/studio/issues/874)
+
 ## [3.21.0-develop.1](https://github.com/cheqd/studio/compare/3.20.1-develop.1...3.21.0-develop.1) (2026-11-06)
 
 ### Features
