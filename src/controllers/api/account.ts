@@ -45,8 +45,10 @@ import { KeyService } from '../../services/api/key.js';
 import { LocalStore } from '../../database/cache/store.js';
 import { BootStrapAccountResponse } from '../../types/account.js';
 import type {
+	AccountExportKeysResponseBody,
 	AccountFaucetInfo,
 	AccountNetworkBalance,
+	ExportedDidKeys,
 	QueryAccountBalancesResponseBody,
 } from '../../types/account.js';
 import { RoleEntity } from '../../database/entities/role.entity.js';
@@ -67,6 +69,8 @@ import {
 	remainingQuota,
 	secondsUntilReset,
 } from '../../helpers/faucet-quota.js';
+import { deleteCustomerAccount, describeAccountDeletionFailure } from '../../services/api/account-deletion.js';
+import { liveAccountDeletionDeps } from '../../services/api/account-deletion-live-deps.js';
 
 dotenv.config();
 
@@ -1024,6 +1028,120 @@ export class AccountController {
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulResponseBody);
 		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /account/export-keys:
+	 *   post:
+	 *     tags: [Account]
+	 *     summary: Export the authenticated user's private key material.
+	 *     description: >-
+	 *       Returns the private keys for every DID the customer owns (via the same mechanism as
+	 *       `/did/export/{did}`) and the two cosmos payment-account private keys (mainnet and testnet fee-payer
+	 *       wallets). Returned as plaintext JSON over HTTPS; the caller is expected to encrypt it (e.g.
+	 *       client-side, with a user-supplied password) before writing it to disk. A DID that fails to export
+	 *       (e.g. one custodied by an external provider rather than Studio) is reported per-DID under `error`
+	 *       rather than failing the whole export.
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async exportKeys(_request: Request, response: Response) {
+		if (!response.locals.customer) {
+			return response.status(StatusCodes.UNAUTHORIZED).json({
+				error: 'Unauthorized error: Studio user context was not found.',
+			} satisfies UnsuccessfulResponseBody);
+		}
+		const customer = response.locals.customer as CustomerEntity;
+
+		try {
+			const identityStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
+
+			const [dids] = await IdentifierService.instance.find({ customer });
+			const exportedDids: ExportedDidKeys[] = await Promise.all(
+				dids.map(async (identifier): Promise<ExportedDidKeys> => {
+					try {
+						const didExport = await identityStrategySetup.agent.exportDid(identifier.did, '', customer);
+						return { did: identifier.did, export: didExport };
+					} catch (error) {
+						return { did: identifier.did, error: (error as Error)?.message || String(error) };
+					}
+				})
+			);
+
+			const paymentAccounts = await identityStrategySetup.agent.exportPaymentAccountKeys(customer);
+
+			return response.status(StatusCodes.OK).json({
+				dids: exportedDids,
+				paymentAccounts,
+			} satisfies AccountExportKeysResponseBody);
+		} catch (error) {
+			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+				error: `Internal error: ${(error as Error)?.message || error}`,
+			} satisfies UnsuccessfulResponseBody);
+		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /account:
+	 *   delete:
+	 *     tags: [Account]
+	 *     summary: Permanently delete the authenticated user's Studio account.
+	 *     description: >-
+	 *       Hard-deletes the account: cancels any active Stripe subscription, deletes the Logto user, then
+	 *       deletes the customer row and everything it owns (DIDs, credentials, resources, keys, API keys,
+	 *       payment accounts). This cannot be undone, and DID documents or resources already published
+	 *       on-chain are not removed from the ledger. Requires `{ "confirm": true }` in the request body.
+	 *     requestBody:
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+	 *             required: [confirm]
+	 *             properties:
+	 *               confirm:
+	 *                 type: boolean
+	 *     responses:
+	 *       200:
+	 *         description: The account was deleted.
+	 *       400:
+	 *         description: Missing confirmation, or a problem with the input fields.
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         description: The deletion pipeline failed partway through; the response body records which steps completed.
+	 */
+	public async delete(request: Request, response: Response) {
+		if (request.body?.confirm !== true) {
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: 'confirm must be set to true to delete the account.',
+			} satisfies UnsuccessfulResponseBody);
+		}
+
+		if (!response.locals.customer) {
+			return response.status(StatusCodes.UNAUTHORIZED).json({
+				error: 'Unauthorized error: Studio user context was not found.',
+			} satisfies UnsuccessfulResponseBody);
+		}
+
+		const customer = response.locals.customer as CustomerEntity;
+		const stripe = response.locals.stripe as Stripe | undefined;
+
+		const result = await deleteCustomerAccount(customer, stripe, liveAccountDeletionDeps);
+		if (!result.success) {
+			return response
+				.status(StatusCodes.INTERNAL_SERVER_ERROR)
+				.json({ error: describeAccountDeletionFailure(result), ...result });
+		}
+		return response.status(StatusCodes.OK).json(result);
 	}
 }
 
