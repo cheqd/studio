@@ -102,4 +102,16 @@ export class CustomerService {
 			return false;
 		}
 	}
+
+	/**
+	 * Permanently deletes a customer and, via FK cascade, every row owned by it (user, paymentAccount, key,
+	 * subscription, identifier, issuedCredential, resource, statusRegistry, payment, operation, apiKey, claim,
+	 * faucetRequest, providerConfiguration). Does not touch Stripe or Logto — callers are responsible for
+	 * cancelling any subscription and deleting the Logto user before calling this, since neither can be
+	 * undone by re-inserting the row.
+	 */
+	public async delete(customer: CustomerEntity): Promise<boolean> {
+		const result = await this.customerRepository.delete({ customerId: customer.customerId });
+		return (result.affected ?? 0) > 0;
+	}
 }

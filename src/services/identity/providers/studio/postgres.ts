@@ -84,6 +84,7 @@ import { ListOperationOptions } from '../../../../types/track.js';
 import { DIDAccreditationTypes } from '../../../../types/accreditation.js';
 import { JWT_PROOF_TYPE } from '../../../../types/constants.js';
 import { fromString } from 'uint8arrays';
+import type { ExportedPaymentAccountKey } from '../../../../types/account.js';
 
 dotenv.config();
 
@@ -450,6 +451,34 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			...didResolutionResponseDocument,
 			keys: didKeyDocumentsWithPrivateKey,
 		};
+	}
+
+	/**
+	 * Decrypts and returns the customer's mainnet/testnet payment-account private keys (the cosmos
+	 * fee-payer wallets), for the account-deletion key-export flow. These are not DID keys and aren't
+	 * reachable through exportDid.
+	 */
+	async exportPaymentAccountKeys(customer: CustomerEntity): Promise<ExportedPaymentAccountKey[]> {
+		if (!customer) {
+			throw new Error('Customer not found');
+		}
+		const paymentAccounts = await PaymentAccountService.instance.find({ customer }, { key: true });
+
+		const keys = await Promise.all(
+			paymentAccounts.map(async (account) => {
+				const keyDoc = await this.getPrivateKey(account.key.kid);
+				if (!keyDoc) {
+					throw new Error(`Private key not found for payment account ${account.address}`);
+				}
+				return {
+					network: account.namespace,
+					address: account.address,
+					type: account.key.type,
+					privateKeyHex: keyDoc.privateKeyHex,
+				};
+			})
+		);
+		return keys;
 	}
 
 	async createResource(
