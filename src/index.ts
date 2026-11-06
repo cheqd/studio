@@ -1,5 +1,5 @@
 import * as http from 'http';
-import App from './app.js';
+import App, { dbReady } from './app.js';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -8,6 +8,7 @@ const port = process.env.PORT || 3000;
 App.set('port', port);
 
 const server = http.createServer(App);
+await dbReady;
 server.listen(port);
 
 server.on('listening', () => {

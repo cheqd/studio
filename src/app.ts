@@ -38,12 +38,16 @@ dotenv.config();
 
 class App {
 	public express: express.Application;
+	// Resolves once the DB connect attempt (success or failure) has settled, so index.ts can hold off
+	// listening until then — otherwise requests can arrive before the connection is up, failing with
+	// TypeORM's "Driver not Connected" instead of a clean retry.
+	public dbReady: Promise<void>;
 
 	constructor() {
 		this.express = express();
 		this.middleware();
 		this.routes();
-		Connection.instance
+		this.dbReady = Connection.instance
 			.connect()
 			.then(async () => {
 				console.log('Database connection: successful');
@@ -415,4 +419,7 @@ class App {
 	}
 }
 
-export default new App().express;
+const app = new App();
+
+export default app.express;
+export const dbReady = app.dbReady;
