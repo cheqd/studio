@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.21.0-develop.1](https://github.com/cheqd/studio/compare/3.20.1-develop.1...3.21.0-develop.1) (2026-11-06)
+
+### Features
+
+* **account:** add an audit log entry for admin-triggered account deletion ([892e3b7](https://github.com/cheqd/studio/commit/892e3b72b6341698710ddab5424bc43a24ced602)), closes [#874](https://github.com/cheqd/studio/issues/874) [cheqd/studio#872](https://github.com/cheqd/studio/issues/872)
+* **account:** add POST /account/export-keys for DID and payment-account private keys ([3fae1ab](https://github.com/cheqd/studio/commit/3fae1ab0a4cb3a783aca4ee51b4954fad36a75a3)), closes [cheqd/studio#872](https://github.com/cheqd/studio/issues/872)
+* **account:** block a fresh free trial for an email with a prior deleted account ([d2c3a6c](https://github.com/cheqd/studio/commit/d2c3a6c1eefb93039ba92bb4506c470f1caa3207)), closes [cheqd/studio#872](https://github.com/cheqd/studio/issues/872)
+* **account:** hard-delete pipeline for self-service and admin account deletion ([0b65196](https://github.com/cheqd/studio/commit/0b65196de40c5e8409bdf5f0da0b2f12e4db62c7)), closes [cheqd/studio#872](https://github.com/cheqd/studio/issues/872)
+* **account:** include a summary error string on failed deletion responses ([cc54f44](https://github.com/cheqd/studio/commit/cc54f44d718b9ea6812642fe4c67134915dd1ed8)), closes [cheqd/studio#872](https://github.com/cheqd/studio/issues/872)
+* **account:** self-service + admin account deletion, key export, trial-abuse prevention ([#873](https://github.com/cheqd/studio/issues/873)) ([ee327fd](https://github.com/cheqd/studio/commit/ee327fd06d2b5adfc4806849dbf9b4e3013f2967)), closes [#872](https://github.com/cheqd/studio/issues/872)
+
+### Bug Fixes
+
+* **account:** don't call a method on the entity constructor's own argument ([f0ce30e](https://github.com/cheqd/studio/commit/f0ce30e80950b0ebd9acb6a63a0e25df1ba5db85))
+* **account:** roll back the deletion record if the DB delete doesn't succeed ([145a907](https://github.com/cheqd/studio/commit/145a9070963719bc3a566c0d4e6c1f4b09cb8e57)), closes [cheqd/studio#872](https://github.com/cheqd/studio/issues/872)
+* **server:** log the DB connect failure to stderr, not stdout ([0c906d1](https://github.com/cheqd/studio/commit/0c906d1745fb2da33ee9b50f774b2f6c550be0eb))
+* **server:** wait for the DB connection before accepting requests ([118e714](https://github.com/cheqd/studio/commit/118e7149e6b205856754e0638d62e4a8be8e15d8))
+
 ## [3.20.1-develop.1](https://github.com/cheqd/studio/compare/3.20.0...3.20.1-develop.1) (2026-11-06)
 
 ## [3.20.0](https://github.com/cheqd/studio/compare/3.19.0...3.20.0) (2026-11-04)
