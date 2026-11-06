@@ -37,7 +37,7 @@ export class DeletedAccountRecordService {
 	): Promise<DeletedAccountRecordEntity | null> {
 		const normalizedEmail = normalizeEmail(email);
 		const existing = await this.repository.findOneBy({ email: normalizedEmail });
-		const record = new DeletedAccountRecordEntity(email, previousCustomerId, stripeCustomerId);
+		const record = new DeletedAccountRecordEntity(normalizedEmail, previousCustomerId, stripeCustomerId);
 		await this.repository.save(record);
 		return existing;
 	}

@@ -43,8 +43,13 @@ export class DeletedAccountRecordEntity {
 		this.deletedAt = new Date();
 	}
 
+	// Plain assignment only: TypeORM instantiates entity classes with no arguments while building metadata
+	// (e.g. during DataSource.initialize()), so a constructor that calls a method on its parameters -- like
+	// the email.trim() this used to do -- throws on that undefined call and aborts initialize() entirely.
+	// Callers are expected to pass an already-normalized email; see normalizeEmail() in
+	// DeletedAccountRecordService, which is the only thing that constructs this entity.
 	constructor(email: string, previousCustomerId: string, stripeCustomerId?: string) {
-		this.email = email.trim().toLowerCase();
+		this.email = email;
 		this.previousCustomerId = previousCustomerId;
 		this.stripeCustomerId = stripeCustomerId;
 	}
