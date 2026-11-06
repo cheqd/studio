@@ -1,5 +1,7 @@
 # Changelog
 
+## [3.20.1-develop.1](https://github.com/cheqd/studio/compare/3.20.0...3.20.1-develop.1) (2026-11-06)
+
 ## [3.20.0](https://github.com/cheqd/studio/compare/3.19.0...3.20.0) (2026-11-04)
 
 ### Features
