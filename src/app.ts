@@ -60,7 +60,9 @@ class App {
 				console.log('Provider factory initialized');
 			})
 			.catch((err) => {
-				console.log('DBConnectorError: ', err);
+				// console.error, not console.log: this is the only place a DB-connect failure surfaces, and
+				// some log collectors (including Playwright's webServer by default) only capture stderr.
+				console.error('DBConnectorError: ', err);
 			});
 	}
 
