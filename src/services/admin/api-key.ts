@@ -11,6 +11,7 @@ import { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import { API_SECRET_KEY_LENGTH, API_KEY_PREFIX, API_KEY_EXPIRATION } from '../../types/constants.js';
 import { sha256 } from '../../utils/index.js';
 import { InvalidAPIKeyError } from './api-key-errors.js';
+import { defaultApiKeyExpiry } from './api-key-expiry.js';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -55,8 +56,7 @@ export class APIKeyService {
 			throw new Error('API key user is not specified');
 		}
 		if (!expiresAt) {
-			expiresAt = new Date();
-			expiresAt.setMonth(expiresAt.getDay() + API_KEY_EXPIRATION);
+			expiresAt = defaultApiKeyExpiry(new Date(), API_KEY_EXPIRATION);
 		}
 
 		// encrypt the key
