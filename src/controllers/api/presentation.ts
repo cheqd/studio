@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 
 import { check, query } from '../validator/index.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
+import { OwnershipError } from '../../services/identity/ownership-error.js';
 import { CheqdW3CVerifiablePresentation } from '../../services/w3c-presentation.js';
 import type {
 	CreatePresentationRequestBody,
@@ -142,6 +143,11 @@ export class PresentationController {
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.FORBIDDEN).json({
+					error: error.message,
+				} satisfies UnsuccessfulCreatePresentationResponseBody);
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulCreatePresentationResponseBody);
