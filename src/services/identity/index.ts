@@ -255,6 +255,14 @@ export interface IIdentityService extends StudioAccountServices {
 	retrieveCredential(hash: string, customer: CustomerEntity): Promise<VerifiableCredential | null>;
 }
 
+/**
+ * The engine methods, typed the way the controllers and services still read them (Veramo-shaped results).
+ * The Veramo engine delegates unchanged, so these are the types it returns. Another engine returns the
+ * engine-neutral equivalents, which carry the same fields. Only methods that exist on `IdentityEngine` are
+ * included, so a call to a Studio-only method (API keys, operations) does not compile through this type.
+ */
+export type RoutedService = Pick<IIdentityService, Exclude<keyof IdentityEngine & keyof IIdentityService, 'name'>>;
+
 export class IdentityServiceStrategySetup {
 	agent: IIdentityService;
 	static unauthorized = new Unauthorized();
@@ -271,8 +279,33 @@ export class IdentityServiceStrategySetup {
 	 * exists, otherwise the one the feature flags select for this customer and route. Veramo unless a flag says
 	 * otherwise, and no flag does today.
 	 */
-	public async engine(route: EngineRoute, artifact?: ArtifactRef): Promise<IdentityEngine> {
-		return engineRouter.engineFor({ customerId: this.customerId, route, artifact }, this.agent);
+	public async engine(
+		route: EngineRoute,
+		artifact?: ArtifactRef,
+		hints?: { keyType?: string; encryptedStatusList?: boolean }
+	): Promise<IdentityEngine> {
+		return engineRouter.engineFor(
+			{
+				customerId: this.customerId,
+				route,
+				artifact,
+				keyType: hints?.keyType,
+				encryptedStatusList: hints?.encryptedStatusList,
+			},
+			this.agent
+		);
+	}
+
+	/**
+	 * `engine()`, typed as `RoutedService` for call sites that read Veramo-shaped results. Same routing, same
+	 * engine; only the static type differs.
+	 */
+	public async routed(
+		route: EngineRoute,
+		artifact?: ArtifactRef,
+		hints?: { keyType?: string; encryptedStatusList?: boolean }
+	): Promise<RoutedService> {
+		return (await this.engine(route, artifact, hints)) as unknown as RoutedService;
 	}
 
 	private setStrategy(strategy: IIdentityService) {

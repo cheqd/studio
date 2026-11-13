@@ -384,7 +384,9 @@ export class DockIdentityService extends AbstractIdentityService {
 		}
 
 		const identityStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
-		const exportedDid = await identityStrategySetup.agent.exportDid(did, '', customer);
+		const exportedDid = await (
+			await identityStrategySetup.routed('did', { kind: 'did', id: did })
+		).exportDid(did, '', customer);
 		const apiKey = await ProviderService.instance.getDecryptedApiKey(providerConfig);
 		const response = await fetch(`${this.defaultApiUrl}/dids/${did}/import`, {
 			method: 'POST',

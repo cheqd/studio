@@ -238,7 +238,9 @@ export class DIDController {
 								accept: service.accept,
 							});
 						}
-						did = await identityServiceStrategySetup.agent.updateDid(didDoc, response.locals.customer);
+						did = (await (
+							await identityServiceStrategySetup.engine('did', { kind: 'did', id: didDoc.id })
+						).updateDid(didDoc, response.locals.customer)) as unknown as IIdentifier;
 					}
 					break;
 				case 'studio':
@@ -249,10 +251,11 @@ export class DIDController {
 							const publicKeyHex =
 								key ||
 								(
-									await identityServiceStrategySetup.agent.createKey(
-										SupportedKeyTypes.Ed25519,
-										response.locals.customer
-									)
+									await (
+										await identityServiceStrategySetup.engine('key', undefined, {
+											keyType: SupportedKeyTypes.Ed25519,
+										})
+									).createKey(SupportedKeyTypes.Ed25519, response.locals.customer)
 								).publicKeyHex;
 
 							const pkBase64 = toString(fromString(publicKeyHex, 'hex'), 'base64');
@@ -276,10 +279,11 @@ export class DIDController {
 						const publicKeyHex =
 							key ||
 							(
-								await identityServiceStrategySetup.agent.createKey(
-									SupportedKeyTypes.Ed25519,
-									response.locals.customer
-								)
+								await (
+									await identityServiceStrategySetup.engine('key', undefined, {
+										keyType: SupportedKeyTypes.Ed25519,
+									})
+								).createKey(SupportedKeyTypes.Ed25519, response.locals.customer)
 							).publicKeyHex;
 
 						didDocument = generateDidDoc({
@@ -580,9 +584,10 @@ export class DIDController {
 				});
 			}
 
-			const identifier = await new IdentityServiceStrategySetup(
-				response.locals.customer.customerId
-			).agent.importDid(did, keys, controllerKeyId, response.locals.customer);
+			const identifier = await // A new artifact for Studio: no recorded engine yet, so the feature flag decides
+			(
+				await new IdentityServiceStrategySetup(response.locals.customer.customerId).engine('did')
+			).importDid(did, keys as never, controllerKeyId, response.locals.customer);
 
 			// Track the operation
 			eventTracker.emit('track', {
@@ -779,10 +784,9 @@ export class DIDController {
 				default:
 					didDocument = did
 						? await identityServiceStrategySetup.agent.resolveDid(did)
-						: await identityServiceStrategySetup.agent.listDids(
-								{ network, page, limit, metadata },
-								response.locals.customer
-							);
+						: await (
+								await identityServiceStrategySetup.engine('did')
+							).listDids({ network, page, limit, metadata }, response.locals.customer);
 			}
 			return response
 				.status(StatusCodes.OK)
@@ -972,9 +976,12 @@ export class DIDController {
 					break;
 				case 'studio':
 				default:
-					result = await new IdentityServiceStrategySetup(
-						response.locals.customer.customerId
-					).agent.exportDid(did, '', response.locals.customer);
+					result = await (
+						await new IdentityServiceStrategySetup(response.locals.customer.customerId).engine('did', {
+							kind: 'did',
+							id: did,
+						})
+					).exportDid(did, '', response.locals.customer);
 			}
 			// Track the operation
 			eventTracker.emit('track', {

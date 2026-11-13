@@ -9,6 +9,7 @@ import {
 } from '../../types/accreditation.js';
 import { isCredentialIssuerDidDeactivated } from '../helpers.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
+import { statusListArtifactFromCredential } from '../identity/engine/artifact-refs.js';
 import type { IVerifyResult, VerificationPolicies, VerifiableCredential } from '@veramo/core';
 import { CheqdW3CVerifiableCredential } from '../w3c-credential.js';
 import { StatusCodes } from 'http-status-codes';
@@ -247,13 +248,12 @@ export class AccreditationService {
 
 			const accreditation: CheqdW3CVerifiableCredential = resource;
 
-			const result = await identityServiceStrategySetup.agent.revokeCredentials(
-				accreditation,
-				StatusListType.Bitstring,
-				publish,
-				customer,
-				symmetricKey
-			);
+			const result = await (
+				await identityServiceStrategySetup.routed(
+					'status-list',
+					await statusListArtifactFromCredential(accreditation, customer.customerId)
+				)
+			).revokeCredentials(accreditation, StatusListType.Bitstring, publish, customer, symmetricKey);
 
 			return {
 				success: true,
@@ -292,13 +292,12 @@ export class AccreditationService {
 
 			const accreditation: CheqdW3CVerifiableCredential = resource;
 
-			const result = await identityServiceStrategySetup.agent.suspendCredentials(
-				accreditation,
-				StatusListType.Bitstring,
-				publish,
-				customer,
-				symmetricKey
-			);
+			const result = await (
+				await identityServiceStrategySetup.routed(
+					'status-list',
+					await statusListArtifactFromCredential(accreditation, customer.customerId)
+				)
+			).suspendCredentials(accreditation, StatusListType.Bitstring, publish, customer, symmetricKey);
 
 			return {
 				success: true,
@@ -337,13 +336,12 @@ export class AccreditationService {
 
 			const accreditation: CheqdW3CVerifiableCredential = resource;
 
-			const result = await identityServiceStrategySetup.agent.reinstateCredentials(
-				accreditation,
-				StatusListType.Bitstring,
-				publish,
-				customer,
-				symmetricKey
-			);
+			const result = await (
+				await identityServiceStrategySetup.routed(
+					'status-list',
+					await statusListArtifactFromCredential(accreditation, customer.customerId)
+				)
+			).reinstateCredentials(accreditation, StatusListType.Bitstring, publish, customer, symmetricKey);
 
 			return {
 				success: true,
@@ -445,7 +443,9 @@ export class AccreditationService {
 				};
 			}
 
-			const verifyResult = await identityServiceStrategySetup.agent.verifyCredential(
+			const verifyResult = await (
+				await identityServiceStrategySetup.routed('credential')
+			).verifyCredential(
 				accreditation,
 				{
 					verifyStatus,

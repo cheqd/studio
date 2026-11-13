@@ -209,12 +209,10 @@ export class ResourceController {
 				version,
 				alsoKnownAs,
 			};
-			const result = await identityServiceStrategySetup.agent.createResource(
-				network || did.split(':')[2],
-				resourcePayload,
-				response.locals.customer,
-				publicKeyHexs
-			);
+			// A resource is written under an existing DID, so the DID's recorded engine decides
+			const result = await (
+				await identityServiceStrategySetup.routed('resource', { kind: 'did', id: did })
+			).createResource(network || did.split(':')[2], resourcePayload, response.locals.customer, publicKeyHexs);
 
 			if (result) {
 				const url = new URL(
@@ -445,7 +443,9 @@ export class ResourceController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await identityServiceStrategySetup.agent.listResources(
+			const result = await (
+				await identityServiceStrategySetup.routed('resource', did ? { kind: 'did', id: did } : undefined)
+			).listResources(
 				{
 					did,
 					encrypted,

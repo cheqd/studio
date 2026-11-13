@@ -6,6 +6,7 @@ import { check, query } from '../validator/index.js';
 
 import { Credentials } from '../../services/api/credentials.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
+import { statusListArtifactFromCredential } from '../../services/identity/engine/artifact-refs.js';
 import { CheqdW3CVerifiableCredential } from '../../services/w3c-credential.js';
 import { isCredentialIssuerDidDeactivated } from '../../services/helpers.js';
 import type {
@@ -369,7 +370,12 @@ export class CredentialController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await identityServiceStrategySetup.agent.revokeCredentials(
+			const result = await (
+				await identityServiceStrategySetup.routed(
+					'status-list',
+					await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
+				)
+			).revokeCredentials(
 				credential,
 				listType || StatusListType.Bitstring,
 				publish as boolean,
@@ -473,7 +479,12 @@ export class CredentialController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await identityServiceStrategySetup.agent.suspendCredentials(
+			const result = await (
+				await identityServiceStrategySetup.routed(
+					'status-list',
+					await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
+				)
+			).suspendCredentials(
 				credential,
 				listType || StatusListType.Bitstring,
 				publish as boolean,
@@ -576,7 +587,12 @@ export class CredentialController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await identityServiceStrategySetup.agent.reinstateCredentials(
+			const result = await (
+				await identityServiceStrategySetup.routed(
+					'status-list',
+					await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
+				)
+			).reinstateCredentials(
 				credential,
 				listType || StatusListType.Bitstring,
 				publish as boolean,
