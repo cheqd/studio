@@ -28,16 +28,13 @@ describe('Stripe customer scoping', () => {
 		expect(touched(h.tenantA)).toEqual([]);
 	});
 
-	itFor(it, 'ISO-005')(
-		`[GET /admin/subscription/list] a customer with no Stripe id never lists other customers' subscriptions${bugLabel('ISO-005')}`,
-		async () => {
-			const res = await h.request('GET', '/admin/subscription/list', { as: h.tenantC });
-			const unscoped = stripeLedger.callsTo('subscriptions.list').filter((c) => !(c.args[0] as any)?.customer);
-			expect({ unscopedListCalls: unscoped.length }).toEqual({ unscopedListCalls: 0 });
-			expectNoLeak(res, h.tenantA);
-			expectNoLeak(res, h.tenantB);
-		}
-	);
+	it(`[GET /admin/subscription/list] a customer with no Stripe id never lists other customers' subscriptions`, async () => {
+		const res = await h.request('GET', '/admin/subscription/list', { as: h.tenantC });
+		const unscoped = stripeLedger.callsTo('subscriptions.list').filter((c) => !(c.args[0] as any)?.customer);
+		expect({ unscopedListCalls: unscoped.length }).toEqual({ unscopedListCalls: 0 });
+		expectNoLeak(res, h.tenantA);
+		expectNoLeak(res, h.tenantB);
+	});
 
 	it('[GET /admin/subscription/get] reads the caller’s subscription and never another customer’s Stripe object', async () => {
 		const res = await h.request('GET', '/admin/subscription/get', {
@@ -106,18 +103,15 @@ describe('Stripe customer scoping', () => {
 		).toEqual([]);
 	});
 
-	itFor(it, 'ISO-006')(
-		`[POST /admin/subscription/resume] never resumes another customer's subscription${bugLabel('ISO-006')}`,
-		async () => {
-			await h.request('POST', '/admin/subscription/resume', {
-				as: h.tenantB,
-				body: { subscriptionId: h.tenantA.subscriptionId, idempotencyKey: 'k4' },
-			});
-			expect(
-				stripeLedger.callsTo('subscriptions.resume').filter((c) => c.args[0] === h.tenantA.subscriptionId)
-			).toEqual([]);
-		}
-	);
+	it(`[POST /admin/subscription/resume] never resumes another customer's subscription`, async () => {
+		await h.request('POST', '/admin/subscription/resume', {
+			as: h.tenantB,
+			body: { subscriptionId: h.tenantA.subscriptionId, idempotencyKey: 'k4' },
+		});
+		expect(
+			stripeLedger.callsTo('subscriptions.resume').filter((c) => c.args[0] === h.tenantA.subscriptionId)
+		).toEqual([]);
+	});
 
 	it('[POST /admin/subscription/resume] resumes the caller’s own subscription (control)', async () => {
 		await h.request('POST', '/admin/subscription/resume', {
@@ -129,21 +123,18 @@ describe('Stripe customer scoping', () => {
 		).not.toEqual([]);
 	});
 
-	itFor(it, 'ISO-006')(
-		`[GET /admin/checkout/session/:id] never returns another customer's checkout session${bugLabel('ISO-006')}`,
-		async () => {
-			const res = await h.request('GET', `/admin/checkout/session/${h.tenantA.checkoutSessionId}`, {
-				as: h.tenantB,
-			});
-			expect({
-				status: res.status,
-				leaked: mentions(res.text, h.tenantA).filter((m) => m !== h.tenantA.checkoutSessionId),
-			}).toEqual({
-				status: expect.not.stringMatching(/^2/) as unknown as number,
-				leaked: [],
-			});
-		}
-	);
+	it(`[GET /admin/checkout/session/:id] never returns another customer's checkout session`, async () => {
+		const res = await h.request('GET', `/admin/checkout/session/${h.tenantA.checkoutSessionId}`, {
+			as: h.tenantB,
+		});
+		expect({
+			status: res.status,
+			leaked: mentions(res.text, h.tenantA).filter((m) => m !== h.tenantA.checkoutSessionId),
+		}).toEqual({
+			status: expect.not.stringMatching(/^2/) as unknown as number,
+			leaked: [],
+		});
+	});
 
 	it('[GET /admin/checkout/session/:id] returns the caller’s own checkout session (control)', async () => {
 		const res = await h.request('GET', `/admin/checkout/session/${h.tenantB.checkoutSessionId}`, { as: h.tenantB });

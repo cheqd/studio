@@ -33,7 +33,6 @@ export const extraCases: Case[] = [
 		}),
 		prepare: (h, t) => h.stubVeramo('resolve', fakeResponse(accreditationFor(t))),
 		oracle: { kind: 'ledger', reach: ['revokeCredentials'] },
-		knownBug: 'A-056',
 	},
 	{
 		route: 'POST /trust-registry/accreditation/suspend',
@@ -46,7 +45,6 @@ export const extraCases: Case[] = [
 		}),
 		prepare: (h, t) => h.stubVeramo('resolve', fakeResponse(accreditationFor(t))),
 		oracle: { kind: 'ledger', reach: ['suspendCredentials'] },
-		knownBug: 'A-056',
 	},
 	{
 		route: 'POST /trust-registry/accreditation/reinstate',
@@ -59,7 +57,6 @@ export const extraCases: Case[] = [
 		}),
 		prepare: (h, t) => h.stubVeramo('resolve', fakeResponse(accreditationFor(t))),
 		oracle: { kind: 'ledger', reach: ['unsuspendCredentials'] },
-		knownBug: 'A-056',
 	},
 	{
 		route: 'POST /trust-registry/accreditation/issue',
@@ -85,7 +82,6 @@ export const extraCases: Case[] = [
 				didResolutionMetadata: {},
 			}),
 		oracle: { kind: 'ledger', reach: ['issueCredential'] },
-		knownBug: 'ISO-001',
 	},
 	{
 		route: 'GET /credentials/offers/:credentialId',
@@ -181,7 +177,6 @@ export const extraCases: Case[] = [
 			h.stubVeramo('importDid', { did: t.did, provider: 'did:cheqd:testnet', keys: [], services: [] });
 		},
 		oracle: { kind: 'read-one' },
-		knownBug: 'ISO-003',
 		extraAssert: async (h: Harness, _attacker: Tenant, victim: Tenant) => {
 			const [row] = await h.query('SELECT "customerId" FROM "identifier" WHERE "did" = $1', [victim.did]);
 			expect(row.customerId).toBe(victim.customerId);
@@ -198,7 +193,6 @@ export const extraCases: Case[] = [
 		prepare: (h, t) =>
 			h.stubVeramo('importKey', { kid: t.kid, kms: 'postgres', type: 'Ed25519', publicKeyHex: t.publicKeyHex }),
 		oracle: { kind: 'read-one' },
-		knownBug: 'ISO-003',
 		extraAssert: async (h: Harness, _attacker: Tenant, victim: Tenant) => {
 			const [row] = await h.query('SELECT "customerId" FROM "key" WHERE "kid" = $1', [victim.kid]);
 			expect(row.customerId).toBe(victim.customerId);
@@ -213,13 +207,11 @@ export const extraCases: Case[] = [
 			body: { apiKey: t.spareApiKey, name: 'renamed-by-attacker' },
 		}),
 		oracle: { kind: 'read-one' },
-		knownBug: 'ISO-004',
 	},
 	{
 		route: 'DELETE /admin/api-key/revoke',
 		title: "revoke another tenant's API key",
 		request: (t) => ({ method: 'DELETE', path: '/admin/api-key/revoke', body: { apiKey: t.spareApiKey } }),
 		oracle: { kind: 'read-one' },
-		knownBug: 'ISO-004',
 	},
 ];
