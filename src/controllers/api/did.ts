@@ -316,11 +316,13 @@ export class DIDController {
 							error: 'Provide a DID Document or the VerificationMethodType to create a DID',
 						} satisfies UnsuccessfulCreateDidResponseBody);
 					}
-					did = await identityServiceStrategySetup.agent.createDid(
+					did = (await (
+						await identityServiceStrategySetup.engine('did')
+					).createDid(
 						network || didDocument.id.split(':')[2],
 						didDocument,
 						response.locals.customer
-					);
+					)) as unknown as IIdentifier;
 					break;
 				default:
 					return response.status(StatusCodes.BAD_REQUEST).json({
@@ -439,11 +441,9 @@ export class DIDController {
 				} satisfies UnsuccessfulUpdateDidResponseBody);
 			}
 
-			const result = await identityServiceStrategySetup.agent.updateDid(
-				updatedDocument,
-				response.locals.customer,
-				publicKeyHexs
-			);
+			const result = (await (
+				await identityServiceStrategySetup.engine('did', { kind: 'did', id: updatedDocument.id })
+			).updateDid(updatedDocument, response.locals.customer, publicKeyHexs)) as unknown as IIdentifier;
 
 			// Track the operation
 			eventTracker.emit('track', {
@@ -663,7 +663,9 @@ export class DIDController {
 
 		try {
 			// Deactivate DID
-			await identityServiceStrategySetup.agent.deactivateDid(did, response.locals.customer, publicKeyHexs);
+			await (
+				await identityServiceStrategySetup.engine('did', { kind: 'did', id: did })
+			).deactivateDid(did, response.locals.customer, publicKeyHexs);
 			// Send the deactivated DID as result
 			const result = await identityServiceStrategySetup.agent.resolveDid(did);
 

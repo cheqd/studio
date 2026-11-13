@@ -39,6 +39,8 @@ export class AdminAuthRuleProvider extends AuthRuleProvider {
 		this.registerRule('/admin/api-key/revoke', 'DELETE', 'admin:api-key:revoke', { skipNamespace: true });
 		this.registerRule('/admin/api-key/get', 'GET', 'admin:api-key:get', { skipNamespace: true });
 		this.registerRule('/admin/api-key/list', 'GET', 'admin:api-key:list', { skipNamespace: true });
+		// Feature flags (staff only). Anchored so that no other rule can match this path.
+		this.registerRule('^/admin/flags$', 'PUT', 'admin:flags:update', { skipNamespace: true });
 		// Customer
 		this.registerRule('/admin/organisation/update', 'POST', 'admin:organisation:update', { skipNamespace: true });
 		this.registerRule('/admin/organisation/get', 'GET', 'admin:organisation:get', { skipNamespace: true });

@@ -8,6 +8,7 @@ import { LogToHelper } from './auth/logto-helper.js';
 import { configLogToExpress } from '../types/constants.js';
 import { handleAuthRoutes, withLogto } from '@logto/express';
 import { LogToProvider } from './auth/oauth/logto-provider.js';
+import { FlagsAuthRuleProvider } from './auth/routes/api/flags-auth.js';
 import { AdminAuthRuleProvider } from './auth/routes/admin/admin-auth.js';
 import { APIGuard } from './auth/auth-gaurd.js';
 import { AuthRuleRepository } from './auth/routes/auth-rule-repository.js';
@@ -50,6 +51,7 @@ export class Authentication {
 		authRuleRepository.push(new AccreditationAuthRuleProvider());
 		authRuleRepository.push(new EventAuthRuleProvider());
 
+		authRuleRepository.push(new FlagsAuthRuleProvider());
 		authRuleRepository.push(new AdminAuthRuleProvider());
 		authRuleRepository.push(new ProvidersAuthRuleProvider());
 
