@@ -61,13 +61,13 @@
 		"@cheqd/ts-proto": "^4.2.0",
 		"@cosmjs/amino": "^0.36.2",
 		"@cosmjs/encoding": "^0.36.2",
-		"@credo-ts/anoncreds": "file:vendor/credo/credo-ts-anoncreds-0.7.1-cheqd.7a0cff0.tgz",
-		"@credo-ts/askar": "file:vendor/credo/credo-ts-askar-0.7.1-cheqd.7a0cff0.tgz",
-		"@credo-ts/cheqd": "file:vendor/credo/credo-ts-cheqd-0.7.1-cheqd.7a0cff0.tgz",
-		"@credo-ts/core": "file:vendor/credo/credo-ts-core-0.7.1-cheqd.7a0cff0.tgz",
-		"@credo-ts/didcomm": "file:vendor/credo/credo-ts-didcomm-0.7.1-cheqd.7a0cff0.tgz",
-		"@credo-ts/node": "file:vendor/credo/credo-ts-node-0.7.1-cheqd.7a0cff0.tgz",
-		"@credo-ts/tenants": "file:vendor/credo/credo-ts-tenants-0.7.1-cheqd.7a0cff0.tgz",
+		"@credo-ts/anoncreds": "file:vendor/credo/credo-ts-anoncreds-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/askar": "file:vendor/credo/credo-ts-askar-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/cheqd": "file:vendor/credo/credo-ts-cheqd-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/core": "file:vendor/credo/credo-ts-core-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/didcomm": "file:vendor/credo/credo-ts-didcomm-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/node": "file:vendor/credo/credo-ts-node-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/tenants": "file:vendor/credo/credo-ts-tenants-0.7.1-cheqd.09ad0fb.tgz",
 		"@docknetwork/universal-wallet": "^3.3.4",
 		"@hyperledger/anoncreds-nodejs": "0.4.1",
 		"@hyperledger/anoncreds-shared": "0.4.1",
@@ -178,12 +178,12 @@
 		"@transmute/jsonld": {
 			"@digitalbazaar/http-client": "^3.4.1"
 		},
-		"@credo-ts/core": "file:vendor/credo/credo-ts-core-0.7.1-cheqd.7a0cff0.tgz",
-		"@credo-ts/node": "file:vendor/credo/credo-ts-node-0.7.1-cheqd.7a0cff0.tgz",
-		"@credo-ts/askar": "file:vendor/credo/credo-ts-askar-0.7.1-cheqd.7a0cff0.tgz",
-		"@credo-ts/anoncreds": "file:vendor/credo/credo-ts-anoncreds-0.7.1-cheqd.7a0cff0.tgz",
-		"@credo-ts/cheqd": "file:vendor/credo/credo-ts-cheqd-0.7.1-cheqd.7a0cff0.tgz",
-		"@credo-ts/tenants": "file:vendor/credo/credo-ts-tenants-0.7.1-cheqd.7a0cff0.tgz",
-		"@credo-ts/didcomm": "file:vendor/credo/credo-ts-didcomm-0.7.1-cheqd.7a0cff0.tgz"
+		"@credo-ts/core": "file:vendor/credo/credo-ts-core-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/node": "file:vendor/credo/credo-ts-node-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/askar": "file:vendor/credo/credo-ts-askar-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/anoncreds": "file:vendor/credo/credo-ts-anoncreds-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/cheqd": "file:vendor/credo/credo-ts-cheqd-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/tenants": "file:vendor/credo/credo-ts-tenants-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/didcomm": "file:vendor/credo/credo-ts-didcomm-0.7.1-cheqd.09ad0fb.tgz"
 	}
 }
