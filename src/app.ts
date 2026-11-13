@@ -15,6 +15,7 @@ import { CredentialStatusController } from './controllers/api/credential-status.
 import { CORS_ALLOWED_ORIGINS, CORS_ERROR_MSG } from './types/constants.js';
 import { LogToWebHook } from './middleware/hook.js';
 import { Middleware } from './middleware/middleware.js';
+import { deprecateEncryptedStatusListCreation } from './middleware/deprecation.js';
 import * as dotenv from 'dotenv';
 // Define Swagger file
 import swaggerAPIDocument from './static/swagger-api.json' with { type: 'json' };
@@ -210,6 +211,7 @@ class App {
 		);
 		app.post(
 			'/credential-status/create/encrypted',
+			deprecateEncryptedStatusListCreation,
 			CredentialStatusController.createEncryptedValidator,
 			new CredentialStatusController().createEncryptedStatusList
 		);
