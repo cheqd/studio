@@ -6,8 +6,14 @@ defaults:
         shell: bash
 
 jobs:
+    migrations:
+        name: 'Database migrations'
+        uses: ./.github/workflows/migrations.yml
+        secrets: inherit
+
     deploy-staging:
         name: 'Staging Deploy'
+        needs: migrations
         runs-on: ubuntu-latest
         env:
             IMAGE_NAME: ${{ github.repository }}
@@ -17,7 +23,7 @@ jobs:
 
         steps:
             - name: Install DigitalOcean CLI
-              uses: digitalocean/action-doctl@v2
+              uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2 (v2.5.2)
               with:
                   token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
@@ -25,14 +31,14 @@ jobs:
               run: doctl registry login --expiry-seconds 600
 
             - name: Login to GitHub Container Registry
-              uses: docker/login-action@v3
+              uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
               with:
                   registry: ghcr.io
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Download docker image
-              uses: actions/download-artifact@v7
+              uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
               with:
                   name: studio-staging
 

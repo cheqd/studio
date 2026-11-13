@@ -12,4 +12,4 @@ jobs:
 
         steps:
             - name: 'Wipe Github Actions cache'
-              uses: easimon/wipe-cache@v2
+              uses: easimon/wipe-cache@e7ab82e64c328fd39c2e96933d426cd72ac2beba # v2
