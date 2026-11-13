@@ -255,6 +255,18 @@ export interface IIdentityService extends StudioAccountServices {
 	retrieveCredential(hash: string, customer: CustomerEntity): Promise<VerifiableCredential | null>;
 }
 
+/**
+ * What a method of `IIdentityService` resolves to. The engines return engine-neutral types; the Veramo engine
+ * returns exactly what the service did, and the controllers still read the Veramo shapes. Routed call sites use
+ * this to say so in one place instead of casting to `any`.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type LegacyServiceResult<K extends keyof IIdentityService> = IIdentityService[K] extends (
+	...args: any[]
+) => infer R
+	? Awaited<R>
+	: never;
+
 export class IdentityServiceStrategySetup {
 	agent: IIdentityService;
 	static unauthorized = new Unauthorized();
@@ -271,8 +283,21 @@ export class IdentityServiceStrategySetup {
 	 * exists, otherwise the one the feature flags select for this customer and route. Veramo unless a flag says
 	 * otherwise, and no flag does today.
 	 */
-	public async engine(route: EngineRoute, artifact?: ArtifactRef): Promise<IdentityEngine> {
-		return engineRouter.engineFor({ customerId: this.customerId, route, artifact }, this.agent);
+	public async engine(
+		route: EngineRoute,
+		artifact?: ArtifactRef,
+		hints?: { keyType?: string; encryptedStatusList?: boolean }
+	): Promise<IdentityEngine> {
+		return engineRouter.engineFor(
+			{
+				customerId: this.customerId,
+				route,
+				artifact,
+				keyType: hints?.keyType,
+				encryptedStatusList: hints?.encryptedStatusList,
+			},
+			this.agent
+		);
 	}
 
 	private setStrategy(strategy: IIdentityService) {
