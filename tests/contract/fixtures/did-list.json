@@ -1,0 +1,29 @@
+{
+	"schema": 1,
+	"stepId": "did-list",
+	"routeId": "GET /did/list",
+	"tier": 2,
+	"effect": "read-only",
+	"recorded": {
+		"at": "2026-11-13T13:31:19.694Z",
+		"engine": "veramo",
+		"gitRef": "d5ad7ad"
+	},
+	"exchange": {
+		"request": {
+			"method": "GET",
+			"path": "/did/list",
+			"query": {
+				"network": "<string>"
+			}
+		},
+		"response": {
+			"status": 200,
+			"contentType": "application/json",
+			"body": {
+				"dids": "<array>",
+				"total": "<number>"
+			}
+		}
+	}
+}

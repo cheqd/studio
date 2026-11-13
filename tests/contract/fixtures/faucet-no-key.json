@@ -1,0 +1,26 @@
+{
+	"schema": 1,
+	"stepId": "faucet-no-key",
+	"routeId": "POST /account/faucet",
+	"tier": 1,
+	"effect": "read-only",
+	"recorded": {
+		"at": "2026-11-13T13:31:19.695Z",
+		"engine": "veramo",
+		"gitRef": "d5ad7ad"
+	},
+	"exchange": {
+		"request": {
+			"method": "POST",
+			"path": "/account/faucet",
+			"body": {}
+		},
+		"response": {
+			"status": 401,
+			"contentType": "application/json",
+			"body": {
+				"error": "Unauthorized error: Seems like you are not authenticated. Please follow the authentication process using 'Authorize' button"
+			}
+		}
+	}
+}

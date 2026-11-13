@@ -17,6 +17,7 @@
  *  5. `did:cheqd:<network>:<non-uuid id>` ids become `did:cheqd:<network>:<did-id:N>`.
  *  6. 64-character hex strings (transaction and content hashes) become `<hash:N>`.
  *  7. cheqd bech32 account addresses become `<address:N>`.
+ *  7a. Email addresses become `<email>` (no personal data in fixtures).
  * Then, by key name (case-insensitive) irrespective of value:
  *  - signature material (`proofValue`, `signature`, `signatureValue`, `jws`) becomes `<signature>`
  *    (`proofValue` keeps its multibase prefix character, e.g. `<signature:z>`);
@@ -45,6 +46,8 @@ const UUID = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-
 const DID_CHEQD_SHORT = /did:cheqd:(testnet|mainnet):(?![0-9a-fA-F]{8}-)([A-Za-z0-9]{16,32})/g;
 const HEX64 = /\b[0-9a-fA-F]{64}\b/g;
 const CHEQD_ADDRESS = /\bcheqd1[a-z0-9]{38}\b/g;
+// Personal data must never reach a committed fixture, so email addresses are replaced.
+const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
 const JWT = /^eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$/;
 
 const SIGNATURE_KEYS = new Set(['proofvalue', 'signature', 'signaturevalue', 'jws']);
@@ -126,6 +129,7 @@ export class Normaliser {
 		);
 		s = s.replace(HEX64, (m) => `<hash:${this.ordinal('hash', m.toLowerCase())}>`);
 		s = s.replace(CHEQD_ADDRESS, (m) => `<address:${this.ordinal('address', m)}>`);
+		s = s.replace(EMAIL, '<email>');
 		return s;
 	}
 

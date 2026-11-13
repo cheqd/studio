@@ -1,0 +1,25 @@
+{
+	"schema": 1,
+	"stepId": "did-list-no-key",
+	"routeId": "GET /did/list",
+	"tier": 2,
+	"effect": "read-only",
+	"recorded": {
+		"at": "2026-11-13T13:31:19.695Z",
+		"engine": "veramo",
+		"gitRef": "d5ad7ad"
+	},
+	"exchange": {
+		"request": {
+			"method": "GET",
+			"path": "/did/list"
+		},
+		"response": {
+			"status": 401,
+			"contentType": "application/json",
+			"body": {
+				"error": "Unauthorized error: Seems like you are not authenticated. Please follow the authentication process using 'Authorize' button"
+			}
+		}
+	}
+}

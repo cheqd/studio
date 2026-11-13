@@ -1,0 +1,25 @@
+{
+	"schema": 1,
+	"stepId": "providers-activated",
+	"routeId": "GET /providers/activated",
+	"tier": 2,
+	"effect": "read-only",
+	"recorded": {
+		"at": "2026-11-13T13:31:19.695Z",
+		"engine": "veramo",
+		"gitRef": "d5ad7ad"
+	},
+	"exchange": {
+		"request": {
+			"method": "GET",
+			"path": "/providers/activated"
+		},
+		"response": {
+			"status": 200,
+			"contentType": "application/json",
+			"body": {
+				"providers": "<array>"
+			}
+		}
+	}
+}

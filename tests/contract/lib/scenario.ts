@@ -221,6 +221,7 @@ export function buildScenario(): Step[] {
 			routeId: 'GET /trust-registry/accreditation/list',
 			method: 'GET',
 			path: '/trust-registry/accreditation/list',
+			query: { accreditationType: 'authorize', network: 'testnet' },
 			auth: 'api-key',
 			normalise: { shapeOnlyPaths: ['*'] },
 		},

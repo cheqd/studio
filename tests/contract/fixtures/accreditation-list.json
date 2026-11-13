@@ -1,0 +1,30 @@
+{
+	"schema": 1,
+	"stepId": "accreditation-list",
+	"routeId": "GET /trust-registry/accreditation/list",
+	"tier": 2,
+	"effect": "read-only",
+	"recorded": {
+		"at": "2026-11-13T13:31:19.695Z",
+		"engine": "veramo",
+		"gitRef": "d5ad7ad"
+	},
+	"exchange": {
+		"request": {
+			"method": "GET",
+			"path": "/trust-registry/accreditation/list",
+			"query": {
+				"accreditationType": "<string>",
+				"network": "<string>"
+			}
+		},
+		"response": {
+			"status": 200,
+			"contentType": "application/json",
+			"body": {
+				"accreditations": "<array>",
+				"total": "<number>"
+			}
+		}
+	}
+}

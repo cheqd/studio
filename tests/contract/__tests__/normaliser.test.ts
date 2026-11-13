@@ -50,6 +50,15 @@ describe('normaliser: identifiers', () => {
 	});
 });
 
+describe('normaliser: personal data', () => {
+	it('replaces email addresses wherever they appear', () => {
+		expect(normalise({ name: 'someone+tag@example.org', note: 'contact a.b@sub.example.com now' })).toEqual({
+			name: '<email>',
+			note: 'contact <email> now',
+		});
+	});
+});
+
 describe('normaliser: time', () => {
 	it('replaces ISO timestamps wherever they appear', () => {
 		expect(

@@ -1,0 +1,26 @@
+{
+	"schema": 1,
+	"stepId": "resource-list",
+	"routeId": "GET /resource/list",
+	"tier": 2,
+	"effect": "read-only",
+	"recorded": {
+		"at": "2026-11-13T13:31:19.694Z",
+		"engine": "veramo",
+		"gitRef": "d5ad7ad"
+	},
+	"exchange": {
+		"request": {
+			"method": "GET",
+			"path": "/resource/list"
+		},
+		"response": {
+			"status": 200,
+			"contentType": "application/json",
+			"body": {
+				"resources": "<array>",
+				"total": "<number>"
+			}
+		}
+	}
+}
