@@ -21,6 +21,7 @@ import { VeramoKeyManagementStorage } from '../../credo/VeramoKeyManagementStora
 import type { EngineDidDocument, EngineDidResolution } from '../types.js';
 import { credentialSession } from './credential-session.js';
 import { publicKeyHexFromJwk, veramoTypeFromJwk } from './key-material.js';
+import { createStatusListSession } from './status-lists-session.js';
 import type { CredoRuntime, CredoTenantSession, DidOperationResult } from './ports.js';
 import type { CredoStorageConfig } from './config.js';
 import { CredoConfigurationError } from './errors.js';
@@ -170,6 +171,7 @@ function session(tenantAgent: TenantAgentLike): CredoTenantSession {
 			const found = await record(did);
 			return (found?.didDocument?.toJSON().service as Record<string, unknown>[] | undefined) ?? [];
 		},
+		statusLists: createStatusListSession(tenantAgent as never),
 	};
 }
 
@@ -267,6 +269,16 @@ export async function createCredoRuntime(options: CredoRuntimeOptions): Promise<
 				didResolutionMetadata: (result.didResolutionMetadata ??
 					{}) as EngineDidResolution['didResolutionMetadata'],
 			};
+		},
+		async readResource(didUrl) {
+			// biome-ignore lint/suspicious/noExplicitAny: the cheqd API is typed on the module set built above
+			const result = await (agent as any).modules.cheqd.resolveResource(didUrl);
+			if (result.error) return { error: result.error, message: result.message };
+			return { resource: result.resource, resourceMetadata: result.resourceMetadata };
+		},
+		async readTokenStatusList(did, name) {
+			// biome-ignore lint/suspicious/noExplicitAny: ditto
+			return (agent as any).modules.cheqd.fetchTokenStatusList(did, name).catch(() => null);
 		},
 		async shutdown() {
 			await agent.shutdown();

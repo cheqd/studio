@@ -515,21 +515,9 @@ describe('methods another agent will build', () => {
 		'importKey',
 		'importDid',
 		'exportDid',
-		'createUnencryptedStatusList2021',
-		'createUnencryptedBitstringStatusList',
-		'createEncryptedStatusList2021',
-		'createEncryptedBitstringStatusList',
-		'updateUnencryptedStatusList',
-		'updateEncryptedStatusList',
-		'checkStatusList2021',
-		'checkBitstringStatusList',
-		'searchStatusList',
 		'broadcastStatusList2021',
 		'broadcastBitstringStatusList',
 		'remunerateStatusList2021',
-		'revokeCredentials',
-		'suspendCredentials',
-		'reinstateCredentials',
 	];
 
 	it.each(methods)('%s rejects with NotImplementedByEngine naming the method', async (method) => {
@@ -567,6 +555,22 @@ describe('methods another agent will build', () => {
 			'retrieveCredential',
 			'deleteCredential',
 			'signWithDidKey',
+			// status lists (credo/status-lists.ts)
+			'createUnencryptedStatusList2021',
+			'createUnencryptedBitstringStatusList',
+			'createEncryptedStatusList2021',
+			'createEncryptedBitstringStatusList',
+			'updateUnencryptedStatusList',
+			'updateEncryptedStatusList',
+			'checkStatusList2021',
+			'checkBitstringStatusList',
+			'searchStatusList',
+			'revokeCredentials',
+			'suspendCredentials',
+			'reinstateCredentials',
+			'createTokenStatusList',
+			'setTokenStatus',
+			'getTokenStatus',
 		];
 		const proto = Object.getOwnPropertyNames(Object.getPrototypeOf(engine)).filter(
 			(name) =>

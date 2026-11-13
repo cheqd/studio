@@ -41,6 +41,14 @@ import {
 } from './key-material.js';
 import type { CredoEngineStore, CredoRuntime, DidKeyLink, StoredKey } from './ports.js';
 import { CredoSigner } from './signing.js';
+import { safeFetch as defaultSafeFetch, type SafeFetch } from '../../../../helpers/safe-fetch.js';
+import { CredoStatusLists, type StatusListOwnership } from './status-lists.js';
+import type {
+	EngineTokenStatusList,
+	EngineTokenStatusListOptions,
+	EngineTokenStatusReading,
+	EngineTokenStatusUpdate,
+} from '../types.js';
 
 const ENGINE = 'credo';
 const NETWORKS = ['mainnet', 'testnet'];
@@ -53,6 +61,9 @@ export interface CredoEngineDependencies {
 	withPayerLock: <T>(payerAddress: string, work: () => Promise<T>) => Promise<T>;
 	resolverUrl?: string;
 	fetch?: typeof fetch;
+	/** The shared internal-destination block; for status lists hosted outside did:cheqd and Token Status Lists */
+	safeFetch?: SafeFetch;
+	statusListOwnership?: StatusListOwnership;
 }
 
 function didNetwork(did: string): string {
@@ -92,6 +103,7 @@ export class CredoEngine implements IdentityEngine {
 	private readonly fetchImpl: typeof fetch;
 	private readonly signer: CredoSigner;
 	private readonly credentials: CredoCredentials;
+	private readonly statusLists: CredoStatusLists;
 
 	constructor(dependencies: CredoEngineDependencies) {
 		this.store = dependencies.store;
@@ -106,6 +118,15 @@ export class CredoEngine implements IdentityEngine {
 			signer: this.signer,
 			ensureTenant: (customerId) => this.ensureTenant(customerId),
 			resolveUrl: (didUrl) => this.resolve(didUrl),
+		});
+		this.statusLists = new CredoStatusLists({
+			store: dependencies.store,
+			runtime: dependencies.runtime,
+			ownership: dependencies.statusListOwnership,
+			withPayerLock: dependencies.withPayerLock,
+			ensureTenant: (customerId) => this.ensureTenant(customerId),
+			safeFetch: dependencies.safeFetch ?? defaultSafeFetch,
+			resolverUrl: this.resolverUrl,
 		});
 	}
 
@@ -474,75 +495,75 @@ export class CredoEngine implements IdentityEngine {
 		return this.signer.signWithDidKey(request, customer);
 	}
 	createUnencryptedStatusList2021(
-		_did: string,
-		_resource: EngineResourcePayload,
-		_options: EngineStatusListOptions,
-		_customer: CustomerEntity
+		did: string,
+		resource: EngineResourcePayload,
+		options: EngineStatusListOptions,
+		customer: CustomerEntity
 	): Promise<EngineStatusResult> {
-		return this.notImplemented('createUnencryptedStatusList2021');
+		return this.statusLists.createUnencryptedStatusList2021(did, resource, options, customer);
 	}
 	createUnencryptedBitstringStatusList(
-		_did: string,
-		_resource: EngineResourcePayload,
-		_options: EngineStatusListOptions,
-		_customer: CustomerEntity
+		did: string,
+		resource: EngineResourcePayload,
+		options: EngineStatusListOptions,
+		customer: CustomerEntity
 	): Promise<EngineStatusResult> {
-		return this.notImplemented('createUnencryptedBitstringStatusList');
+		return this.statusLists.createUnencryptedBitstringStatusList(did, resource, options, customer);
 	}
 	createEncryptedStatusList2021(
-		_did: string,
-		_resource: EngineResourcePayload,
-		_options: EngineStatusListOptions,
-		_customer: CustomerEntity
+		did: string,
+		resource: EngineResourcePayload,
+		options: EngineStatusListOptions,
+		customer: CustomerEntity
 	): Promise<EngineStatusResult> {
-		return this.notImplemented('createEncryptedStatusList2021');
+		return this.statusLists.createEncryptedStatusList2021();
 	}
 	createEncryptedBitstringStatusList(
-		_did: string,
-		_resource: EngineResourcePayload,
-		_options: EngineStatusListOptions,
-		_customer: CustomerEntity
+		did: string,
+		resource: EngineResourcePayload,
+		options: EngineStatusListOptions,
+		customer: CustomerEntity
 	): Promise<EngineStatusResult> {
-		return this.notImplemented('createEncryptedBitstringStatusList');
+		return this.statusLists.createEncryptedBitstringStatusList();
 	}
 	updateUnencryptedStatusList(
-		_did: string,
-		_listType: string,
-		_options: EngineStatusListOptions,
-		_customer: CustomerEntity
+		did: string,
+		listType: string,
+		options: EngineStatusListOptions,
+		customer: CustomerEntity
 	): Promise<EngineStatusResult> {
-		return this.notImplemented('updateUnencryptedStatusList');
+		return this.statusLists.updateUnencryptedStatusList(did, listType, options, customer);
 	}
 	updateEncryptedStatusList(
-		_did: string,
-		_listType: string,
-		_options: EngineStatusListOptions,
-		_customer: CustomerEntity
+		did: string,
+		listType: string,
+		options: EngineStatusListOptions,
+		customer: CustomerEntity
 	): Promise<EngineStatusResult> {
-		return this.notImplemented('updateEncryptedStatusList');
+		return this.statusLists.updateEncryptedStatusList();
 	}
 	checkStatusList2021(
-		_did: string,
-		_options: EngineStatusListOptions,
-		_customer: CustomerEntity
+		did: string,
+		options: EngineStatusListOptions,
+		customer: CustomerEntity
 	): Promise<EngineStatusResult> {
-		return this.notImplemented('checkStatusList2021');
+		return this.statusLists.checkStatusList2021(did, options, customer);
 	}
 	checkBitstringStatusList(
-		_did: string,
-		_options: EngineStatusListOptions,
-		_customer: CustomerEntity
+		did: string,
+		options: EngineStatusListOptions,
+		customer: CustomerEntity
 	): Promise<EngineStatusResult | EngineStatusResult[]> {
-		return this.notImplemented('checkBitstringStatusList');
+		return this.statusLists.checkBitstringStatusList(did, options, customer);
 	}
 	searchStatusList(
-		_did: string,
-		_statusListName: string,
-		_listType: string,
-		_statusPurpose?: 'revocation' | 'suspension',
-		_customer?: CustomerEntity
+		did: string,
+		statusListName: string,
+		listType: string,
+		statusPurpose?: 'revocation' | 'suspension',
+		customer?: CustomerEntity
 	): Promise<EngineStatusResult> {
-		return this.notImplemented('searchStatusList');
+		return this.statusLists.searchStatusList(did, statusListName, listType, statusPurpose);
 	}
 	broadcastStatusList2021(
 		_did: string,
@@ -559,6 +580,24 @@ export class CredoEngine implements IdentityEngine {
 	): Promise<boolean> {
 		return this.notImplemented('broadcastBitstringStatusList');
 	}
+	createTokenStatusList(
+		did: string,
+		options: EngineTokenStatusListOptions,
+		customer: CustomerEntity
+	): Promise<EngineTokenStatusList> {
+		return this.statusLists.createTokenStatusList(did, options, customer);
+	}
+	setTokenStatus(
+		did: string,
+		listUri: string,
+		updates: EngineTokenStatusUpdate[],
+		customer: CustomerEntity
+	): Promise<void> {
+		return this.statusLists.setTokenStatus(did, listUri, updates, customer);
+	}
+	getTokenStatus(listUri: string, index: number): Promise<EngineTokenStatusReading> {
+		return this.statusLists.getTokenStatus(listUri, index);
+	}
 	remunerateStatusList2021(
 		_options: EngineFeePaymentOptions,
 		_customer?: CustomerEntity
@@ -566,31 +605,31 @@ export class CredoEngine implements IdentityEngine {
 		return this.notImplemented('remunerateStatusList2021');
 	}
 	revokeCredentials(
-		_credential: EngineSignedInput | EngineSignedInput[],
-		_listType: string,
-		_publish: boolean,
-		_customer: CustomerEntity,
-		_symmetricKey: string
+		credential: EngineSignedInput | EngineSignedInput[],
+		listType: string,
+		publish: boolean,
+		customer: CustomerEntity,
+		symmetricKey: string
 	): Promise<EngineStatusResult> {
-		return this.notImplemented('revokeCredentials');
+		return this.statusLists.revokeCredentials(credential, listType, publish, customer, symmetricKey);
 	}
 	suspendCredentials(
-		_credential: EngineSignedInput | EngineSignedInput[],
-		_listType: string,
-		_publish: boolean,
-		_customer: CustomerEntity,
-		_symmetricKey: string
+		credential: EngineSignedInput | EngineSignedInput[],
+		listType: string,
+		publish: boolean,
+		customer: CustomerEntity,
+		symmetricKey: string
 	): Promise<EngineStatusResult> {
-		return this.notImplemented('suspendCredentials');
+		return this.statusLists.suspendCredentials(credential, listType, publish, customer, symmetricKey);
 	}
 	reinstateCredentials(
-		_credential: EngineSignedInput | EngineSignedInput[],
-		_listType: string,
-		_publish: boolean,
-		_customer: CustomerEntity,
-		_symmetricKey: string
+		credential: EngineSignedInput | EngineSignedInput[],
+		listType: string,
+		publish: boolean,
+		customer: CustomerEntity,
+		symmetricKey: string
 	): Promise<EngineStatusResult> {
-		return this.notImplemented('reinstateCredentials');
+		return this.statusLists.reinstateCredentials(credential, listType, publish, customer, symmetricKey);
 	}
 }
 
