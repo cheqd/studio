@@ -456,5 +456,280 @@ describe('CredoEngine on Postgres', { skip }, () => {
 		} finally {
 			process.env.CREDO_DB_NAME = saved;
 		}
+
+	// ---- Ledger write serialisation (engine spec 3.4) and idempotency --------------------------------------
+
+	/** Connections checked out of Studio's pool right now (busy, not idle). */
+	const checkedOut = (): number => {
+		const pool = studio.Connection.instance.dbConnection.driver.master;
+		return pool.totalCount - pool.idleCount;
+	};
+	const advisoryHeld = async (observer: Client): Promise<number> =>
+		(await observer.query(`SELECT count(*)::int AS n FROM pg_locks WHERE locktype = 'advisory' AND granted`))
+			.rows[0].n;
+	const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+	it('same-payer writes run one at a time, other payers are not blocked, and waiters hold no pooled connection', async () => {
+		const dataSource = studio.Connection.instance.dbConnection;
+		const observer = new Client({ connectionString: process.env.EXTERNAL_DB_CONNECTION_URL });
+		await observer.connect();
+		try {
+			const baseline = checkedOut();
+			const events: string[] = [];
+			let running = 0;
+			let maxRunningSamePayer = 0;
+			const samples: { running: number; checkedOut: number; advisory: number }[] = [];
+			const write = (payer: string, name: string) =>
+				studio.withPayerLock(dataSource, payer, async () => {
+					events.push(`${name}:start`);
+					if (payer === 'cheqd1serial') {
+						running++;
+						maxRunningSamePayer = Math.max(maxRunningSamePayer, running);
+					}
+					samples.push({
+						running,
+						checkedOut: checkedOut() - baseline,
+						advisory: await advisoryHeld(observer),
+					});
+					await pause(120);
+					if (payer === 'cheqd1serial') running--;
+					events.push(`${name}:end`);
+				});
+
+			// Eight writers for one payer and one for another, all started together. If waiters held connections the
+			// pool (default size 10) would be drained and the other payer's write would starve.
+			await Promise.all([
+				...Array.from({ length: 8 }, (_, i) => write('cheqd1serial', `s${i}`)),
+				write('cheqd1independent', 'other'),
+			]);
+
+			assert.equal(maxRunningSamePayer, 1, 'one write at a time for a payer');
+			const serial = events.filter((e) => e.startsWith('s'));
+			for (let i = 0; i < 8; i++)
+				assert.deepEqual(serial.slice(i * 2, i * 2 + 2), [`s${i}:start`, `s${i}:end`], 'FIFO order');
+			assert.ok(
+				events.indexOf('other:start') < events.indexOf('s0:end'),
+				`a different payer is not held up: ${events.join(' ')}`
+			);
+			// At most one connection per payer that is writing: two payers, so two at the very most
+			for (const sample of samples) {
+				assert.ok(sample.checkedOut <= 2, `waiters hold no connection: ${JSON.stringify(sample)}`);
+				assert.ok(sample.advisory <= 2);
+			}
+			assert.equal(checkedOut(), baseline, 'every connection is back in the pool');
+			assert.equal(await advisoryHeld(observer), 0, 'no lock is left behind');
+		} finally {
+			await observer.end();
+		}
+	});
+
+	it('a failing write releases the lock and the connection, and the next write proceeds', async () => {
+		const dataSource = studio.Connection.instance.dbConnection;
+		const observer = new Client({ connectionString: process.env.EXTERNAL_DB_CONNECTION_URL });
+		await observer.connect();
+		try {
+			const baseline = checkedOut();
+			await assert.rejects(
+				studio.withPayerLock(dataSource, 'cheqd1failing', async () => {
+					assert.equal(await advisoryHeld(observer), 1);
+					throw new Error('broadcast failed');
+				}),
+				/broadcast failed/
+			);
+			assert.equal(await advisoryHeld(observer), 0);
+			assert.equal(checkedOut(), baseline);
+			assert.equal(await studio.withPayerLock(dataSource, 'cheqd1failing', async () => 'next'), 'next');
+		} finally {
+			await observer.end();
+		}
+	});
+
+	it('another instance holding the payer lock makes the write wait with retries, then fail with LedgerUnavailable', async () => {
+		const dataSource = studio.Connection.instance.dbConnection;
+		// A second "instance": its own session takes the same lock the payer lock uses
+		const other = new Client({ connectionString: process.env.EXTERNAL_DB_CONNECTION_URL });
+		await other.connect();
+		try {
+			await other.query(`SELECT pg_advisory_lock(hashtext($1))`, ['cheqd1elsewhere']);
+			const baseline = checkedOut();
+			let ran = false;
+			const started = Date.now();
+			await assert.rejects(
+				studio.withPayerLock(
+					dataSource,
+					'cheqd1elsewhere',
+					async () => {
+						ran = true;
+					},
+					{ lockTimeoutMs: 400 }
+				),
+				(error: Error & { code?: string }) => error.code === 'LedgerUnavailable'
+			);
+			assert.equal(ran, false);
+			assert.ok(Date.now() - started >= 350, 'it retried until the bound');
+			assert.equal(checkedOut(), baseline, 'the retrying write held no connection afterwards');
+
+			// Once the other instance lets go, the write goes through
+			await other.query(`SELECT pg_advisory_unlock(hashtext($1))`, ['cheqd1elsewhere']);
+			assert.equal(
+				await studio.withPayerLock(dataSource, 'cheqd1elsewhere', async () => 'ok', { lockTimeoutMs: 400 }),
+				'ok'
+			);
+		} finally {
+			await other.end();
+		}
+	});
+
+	it('idempotency: a retry with the same key returns the first result and writes once', async () => {
+		const service = new studio.IdempotencyService({ store: new studio.TypeormIdempotencyStore() });
+		const input = (key: string, overrides: Record<string, unknown> = {}) => ({
+			customerId: customers.alice,
+			key,
+			route: 'POST /agents',
+			requestHash: studio.hashRequest({ name: 'x' }),
+			...overrides,
+		});
+		let writes = 0;
+		const write = async () => {
+			writes++;
+			return { status: 201, body: { agentId: `agent-${writes}` }, txHash: 'TXHASH' };
+		};
+
+		const first = await service.execute(input('it-key-1'), write);
+		assert.equal(first.replayed, false);
+		// The row was committed and settled on its own connection
+		const [row] = await query<{ state: string; txHash: string; response: { body: { agentId: string } } }>(
+			`SELECT "state", "txHash", "response" FROM "idempotencyKey" WHERE "key" = 'it-key-1'`
+		);
+		assert.equal(row.state, 'succeeded');
+		assert.equal(row.txHash, 'TXHASH');
+
+		const retry = await service.execute(input('it-key-1'), write);
+		assert.equal(retry.replayed, true);
+		assert.deepEqual(retry.result.body, { agentId: 'agent-1' });
+		assert.equal(writes, 1);
+
+		await assert.rejects(
+			service.execute(input('it-key-1', { requestHash: studio.hashRequest({ name: 'y' }) }), write),
+			(error: { status: number }) => error.status === 422
+		);
+
+		// Two concurrent first attempts: exactly one writes, the other is told it is in flight (409)
+		const results = await Promise.allSettled([
+			service.execute(input('it-key-2'), async () => (await pause(100), write())),
+			service.execute(input('it-key-2'), write),
+		]);
+		assert.equal(writes, 2, 'only one of the concurrent calls wrote');
+		assert.equal(results.filter((r) => r.status === 'rejected').length, 1);
+	});
+
+	it('idempotency: the row is committed before the write runs, and an unknown outcome never writes again', async () => {
+		const service = new studio.IdempotencyService({ store: new studio.TypeormIdempotencyStore() });
+		const base = { customerId: customers.alice, route: 'POST /agents', requestHash: studio.hashRequest({ n: 1 }) };
+
+		let seenDuringWrite: string | undefined;
+		await assert.rejects(
+			service.execute({ ...base, key: 'it-key-unknown' }, async () => {
+				// Read from a different connection: it must already be committed as `submitting`
+				seenDuringWrite = (
+					await query<{ state: string }>(
+						`SELECT "state" FROM "idempotencyKey" WHERE "key" = 'it-key-unknown'`
+					)
+				)[0]?.state;
+				throw Object.assign(new Error('Transaction was submitted but was not included in a block'), {
+					name: 'TimeoutError',
+				});
+			}),
+			(error: Error & { code?: string; idempotencyKey?: string }) =>
+				error.code === 'LedgerUnavailable' && error.idempotencyKey === 'it-key-unknown'
+		);
+		assert.equal(seenDuringWrite, 'submitting');
+		assert.equal(
+			(await query<{ state: string }>(`SELECT "state" FROM "idempotencyKey" WHERE "key" = 'it-key-unknown'`))[0]
+				.state,
+			'unknown'
+		);
+
+		let writes = 0;
+		await assert.rejects(
+			service.execute({ ...base, key: 'it-key-unknown' }, async () => (writes++, { status: 201, body: {} })),
+			(error: { code?: string }) => error.code === 'LedgerUnavailable'
+		);
+		assert.equal(writes, 0);
+	});
+
+	it('idempotency: keys belong to a customer, and deleting the customer deletes them', async () => {
+		const dave = randomUUID();
+		await db.insertCustomer(dave, 'dave');
+		const service = new studio.IdempotencyService({ store: new studio.TypeormIdempotencyStore() });
+		await service.execute(
+			{ customerId: dave, key: 'it-key-1', route: 'POST /agents', requestHash: studio.hashRequest({}) },
+			async () => ({ status: 201, body: {} })
+		);
+		const count = async () =>
+			Number(
+				(
+					await query<{ n: string }>(`SELECT count(*) AS n FROM "idempotencyKey" WHERE "customerId" = $1`, [
+						dave,
+					])
+				)[0].n
+			);
+		assert.equal(count !== undefined && (await count()), 1);
+		await assert.rejects(
+			query(
+				`INSERT INTO "idempotencyKey" ("customerId", "key", "route", "requestHash", "expiresAt") VALUES (NULL, 'k', 'r', 'h', now())`
+			),
+			/null value|not-null/
+		);
+		await query(`DELETE FROM "customer" WHERE "customerId" = $1`, [dave]);
+		assert.equal(await count(), 0);
+	});
+
+	it('PUT /admin/flags: the flag and its adminAuditLog row commit together, and a failed audit rolls the flag back', async () => {
+		const flags = (await import('../../src/services/api/feature-flag.js')).FeatureFlagService.instance;
+		// `synchronize()` builds tables from entities and cannot express this expression index: the migration adds it
+		await query(
+			`CREATE UNIQUE INDEX IF NOT EXISTS "UQ_featureFlag_key_customer_route" ON "featureFlag" ("flagKey", COALESCE("customerId"::text, ''), COALESCE("route", ''))`
+		);
+		const write = {
+			flagKey: 'engine' as const,
+			customerId: customers.alice,
+			route: 'did' as const,
+			value: { engine: 'credo' },
+			reason: 'integration test',
+		};
+		await flags.setFlag({ ...write, value: { engine: 'veramo' } }, 'staff-a');
+		await flags.setFlag(write, 'staff-b');
+
+		const audit = await query<{
+			actorUserId: string;
+			action: string;
+			reason: string;
+			targetCustomerId: string;
+			metadata: { oldValue: unknown; newValue: unknown };
+		}>(`SELECT * FROM "adminAuditLog" WHERE "targetCustomerId" = $1 ORDER BY "createdAt"`, [customers.alice]);
+		assert.equal(audit.length, 2);
+		assert.equal(audit[1].actorUserId, 'staff-b');
+		assert.equal(audit[1].action, 'flag.set');
+		assert.equal(audit[1].reason, 'integration test');
+		assert.deepEqual(audit[1].metadata.oldValue, { engine: 'veramo' });
+		assert.deepEqual(audit[1].metadata.newValue, { engine: 'credo' });
+
+		// The cache was invalidated by the write: the next read on this instance sees the new row at once
+		const rows = await flags.rowsFor(customers.alice);
+		assert.deepEqual(rows.find((row: { route: string }) => row.route === 'did')?.value, { engine: 'credo' });
+
+		// An audit row that cannot be written (no actor) aborts the whole transaction: the flag keeps its value
+		await assert.rejects(flags.setFlag({ ...write, value: { engine: 'veramo' } }, null as never));
+		const [{ value }] = await query<{ value: { engine: string } }>(
+			`SELECT "value" FROM "featureFlag" WHERE "customerId" = $1 AND "route" = 'did'`,
+			[customers.alice]
+		);
+		assert.deepEqual(value, { engine: 'credo' });
+		const [{ n }] = await query<{ n: string }>(
+			`SELECT count(*) AS n FROM "adminAuditLog" WHERE "targetCustomerId" = $1`,
+			[customers.alice]
+		);
+		assert.equal(Number(n), 2);
 	});
 });

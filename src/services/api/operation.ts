@@ -9,6 +9,14 @@ import type { CoinEntity } from '../../database/entities/coin.entity.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 dotenv.config();
 
+/** The routing columns of an `operation` row. All optional: a request that never reached the router has none. */
+export interface OperationRouting {
+	engine?: string;
+	network?: string;
+	outcome?: string;
+	durationMs?: number;
+}
+
 export class OperationService {
 	public operationRepository: Repository<OperationEntity>;
 
@@ -24,7 +32,8 @@ export class OperationService {
 		defaultFee: CoinEntity,
 		deprecated = false,
 		successful = true,
-		customer: CustomerEntity
+		customer: CustomerEntity,
+		routing: OperationRouting = {}
 	): Promise<OperationEntity> {
 		if (!category) {
 			throw new Error('Operation category is not specified');
@@ -42,6 +51,11 @@ export class OperationService {
 			successful,
 			customer
 		);
+		// Filled when the request went through the engine router (engine spec 4.3); null otherwise
+		operationEntity.engine = routing.engine;
+		operationEntity.network = routing.network;
+		operationEntity.outcome = routing.outcome;
+		operationEntity.durationMs = routing.durationMs;
 		const operation = (await this.operationRepository.insert(operationEntity)).identifiers[0];
 		if (!operation) throw new Error(`Cannot create a new operation`);
 

@@ -17,6 +17,7 @@ import type { CustomerEntity } from '../../database/entities/customer.entity.js'
 import type { Coin } from '@cosmjs/amino';
 import { CoinService } from '../api/coin.js';
 import { PaymentAccountService } from '../api/payment-account.js';
+import { operationRouting } from './operation-routing.js';
 
 export class DBOperationSubscriber extends BaseOperationObserver implements IObserver {
 	protected logSeverity: LogLevelDesc = 'debug';
@@ -128,7 +129,8 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 				defaultFee,
 				false,
 				trackOperation.successful,
-				trackOperation.customer
+				trackOperation.customer,
+				operationRouting(trackOperation)
 			);
 
 			if (!operationEntity) {

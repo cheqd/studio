@@ -1,8 +1,10 @@
 import validator from 'validator';
 import { Connection } from '../../database/connection/connection.js';
 import { FeatureFlagEntity } from '../../database/entities/feature-flag.entity.js';
+import { AdminAuditLogEntity } from '../../database/entities/admin-audit-log.entity.js';
 import { DEFAULT_ENGINE, ENGINE_NAMES, ENGINE_ROUTES, isEngineName } from '../identity/engine/types.js';
 import type { EngineName, EngineRoute } from '../identity/engine/types.js';
+import { FlagCache } from './flag-cache.js';
 
 export const FLAG_KEYS = ['engine', 'ui'] as const;
 export type FlagKey = (typeof FLAG_KEYS)[number];
@@ -132,8 +134,29 @@ export function validateFlagWrite(body: unknown): FlagWriteValidation {
 export class FeatureFlagService {
 	static instance = new FeatureFlagService();
 
-	/** Global rows plus the caller's own. Throws if the table is unavailable; callers that must not fail catch it. */
+	/** Cached reads (engine spec 4.2): 5 second TTL, last-known value on a failed read, never throws. */
+	readonly cache = new FlagCache<FeatureFlagEntity[]>({
+		onFailure: (key, error, usedLastKnown) =>
+			console.warn(
+				JSON.stringify({
+					event: 'flag-read-failed',
+					customerScoped: key !== '',
+					usedLastKnown,
+					error: error instanceof Error ? error.message : String(error),
+				})
+			),
+	});
+
+	/**
+	 * Global rows plus the caller's own, from the cache. A failed read returns the last known rows, or no rows
+	 * (the compiled defaults) when there is none: it never throws, so flags can never fail a request.
+	 */
 	async rowsFor(customerId: string | undefined): Promise<FeatureFlagEntity[]> {
+		return this.cache.get(customerId ?? '', () => this.readRows(customerId), []);
+	}
+
+	/** One database read of the rows that apply to a caller. Throws if the table is unavailable. */
+	async readRows(customerId: string | undefined): Promise<FeatureFlagEntity[]> {
 		const query = Connection.instance.dbConnection
 			.getRepository(FeatureFlagEntity)
 			.createQueryBuilder('flag')
@@ -146,17 +169,68 @@ export class FeatureFlagService {
 		return resolveFlags(await this.rowsFor(customerId), customerId);
 	}
 
-	/** Insert or update on (flagKey, customerId, route), counting NULLs as equal. Returns the stored row. */
-	async upsert(write: FlagWrite, updatedBy: string): Promise<FeatureFlagEntity> {
-		const repository = Connection.instance.dbConnection.getRepository(FeatureFlagEntity);
-		const rows = await repository.query(
+	/**
+	 * Changes a flag and writes the audit record in ONE transaction: either both are stored or neither. The
+	 * audit row holds actor, action, the old and the new value and the reason. The cache is invalidated after the
+	 * commit, so this instance serves the new value at once and the others within the TTL.
+	 */
+	async setFlag(write: FlagWrite, actorUserId: string): Promise<{ flag: FeatureFlagEntity; previous: unknown }> {
+		const result = await Connection.instance.dbConnection.transaction(async (manager) => {
+			const existing: { value: unknown }[] = await manager.query(
+				`SELECT "value" FROM "featureFlag"
+				 WHERE "flagKey" = $1 AND COALESCE("customerId"::text, '') = $2 AND COALESCE("route", '') = $3
+				 FOR UPDATE`,
+				[write.flagKey, write.customerId ?? '', write.route ?? '']
+			);
+			const previous = existing[0]?.value ?? null;
+			const flag = await this.upsert(write, actorUserId, manager);
+			await manager.getRepository(AdminAuditLogEntity).insert({
+				actorUserId,
+				action: 'flag.set',
+				targetCustomerId: write.customerId ?? undefined,
+				reason: write.reason,
+				metadata: {
+					flagKey: write.flagKey,
+					route: write.route,
+					oldValue: previous,
+					newValue: write.value,
+				} as never,
+			});
+			return { flag, previous };
+		});
+		this.cache.invalidate();
+		// Visible in the logs with the old and new value (engine spec 4.2). No request body beyond the flag itself.
+		console.info(
+			JSON.stringify({
+				event: 'flag-changed',
+				actorUserId,
+				flagKey: write.flagKey,
+				route: write.route,
+				customerId: write.customerId,
+				oldValue: result.previous,
+				newValue: write.value,
+			})
+		);
+		return result;
+	}
+
+	/**
+	 * Insert or update on (flagKey, customerId, route), counting NULLs as equal. Returns the stored row. Does not
+	 * audit or invalidate the cache: callers go through `setFlag`.
+	 */
+	async upsert(
+		write: FlagWrite,
+		updatedBy: string,
+		manager: { query(sql: string, parameters?: unknown[]): Promise<unknown> } = Connection.instance.dbConnection
+	): Promise<FeatureFlagEntity> {
+		const rows = (await manager.query(
 			`INSERT INTO "featureFlag" ("flagKey", "customerId", "route", "value", "updatedBy", "updatedAt")
 			 VALUES ($1, $2, $3, $4::jsonb, $5, now())
 			 ON CONFLICT ("flagKey", COALESCE("customerId"::text, ''), COALESCE("route", ''))
 			 DO UPDATE SET "value" = EXCLUDED."value", "updatedBy" = EXCLUDED."updatedBy", "updatedAt" = now()
 			 RETURNING *`,
 			[write.flagKey, write.customerId, write.route, JSON.stringify(write.value), updatedBy]
-		);
-		return rows[0] as FeatureFlagEntity;
+		)) as FeatureFlagEntity[];
+		return rows[0];
 	}
 }

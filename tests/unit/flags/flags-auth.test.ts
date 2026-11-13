@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { Request, Response } from 'express';
 
-const upsert = jest.fn(async (write: unknown) => ({ id: 'row', ...(write as object) }));
+const upsert = jest.fn(async (write: unknown) => ({ flag: { id: 'row', ...(write as object) }, previous: null }));
 const flagsFor = jest.fn(async () => ({ ui: 'classic' }));
 const rowsFor = jest.fn();
 
@@ -10,7 +10,7 @@ jest.unstable_mockModule('../../../src/database/connection/connection.js', () =>
 }));
 
 const { FeatureFlagService } = await import('../../../src/services/api/feature-flag.js');
-FeatureFlagService.instance.upsert = upsert as never;
+FeatureFlagService.instance.setFlag = upsert as never;
 FeatureFlagService.instance.flagsFor = flagsFor as never;
 FeatureFlagService.instance.rowsFor = rowsFor as never;
 
@@ -93,24 +93,23 @@ describe('PUT /admin/flags controller', () => {
 		expect(upsert).not.toHaveBeenCalled();
 	});
 
-	it('stores a valid change for staff and logs an audit record', async () => {
+	it('stores a valid change for staff through setFlag, which audits in the same transaction', async () => {
 		process.env.ENABLE_AUTHENTICATION = 'true';
-		const info = jest.spyOn(console, 'info').mockImplementation(() => undefined);
 		const res = fakeResponse({ scopes: ['admin:flags:update'], user: { logToId: 'staff-1' } });
 		await new FlagsAdminController().putFlag(requestFor('PUT', '/admin/flags', body), res as unknown as Response);
 		expect(res.statusCode).toBe(200);
 		expect(upsert).toHaveBeenCalledWith(
-			expect.objectContaining({ flagKey: 'engine', customerId: null }),
+			expect.objectContaining({ flagKey: 'engine', customerId: null, reason: 'reset' }),
 			'staff-1'
 		);
-		const audit = JSON.parse(info.mock.calls[0][0] as string);
-		expect(audit).toMatchObject({
-			event: 'admin-audit',
-			action: 'flag.set',
-			actorUserId: 'staff-1',
-			reason: 'reset',
-		});
-		info.mockRestore();
+	});
+
+	it('answers 500 and stores nothing when the transactional write fails', async () => {
+		process.env.ENABLE_AUTHENTICATION = 'true';
+		upsert.mockRejectedValueOnce(new Error('audit insert failed'));
+		const res = fakeResponse({ scopes: ['admin:flags:update'], user: { logToId: 'staff-1' } });
+		await new FlagsAdminController().putFlag(requestFor('PUT', '/admin/flags', body), res as unknown as Response);
+		expect(res.statusCode).toBe(500);
 	});
 });
 

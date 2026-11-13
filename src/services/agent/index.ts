@@ -10,9 +10,8 @@ export { AgentVerificationService } from './agent-verification-service.js';
 export type { AgentStore } from './agent-store.js';
 
 /**
- * The engine for a customer's agent calls, chosen by the `EngineRouter` on the `did` route family. With no flag
- * that is Veramo, which has none of the agent methods, so the routes answer 501 until the customer's `did` route
- * is switched to Credo. Imported lazily so loading this module does not load the identity services.
+ * The engine for a customer's agent calls. The `EngineRouter` always answers Credo for the `agent` route family
+ * (engine spec 4.1): no flag applies, and Veramo has none of the agent methods. Imported lazily so loading this module does not load the identity services.
  */
 export const routedEngine: AgentEngineProvider = async (customer: CustomerEntity) => {
 	const [{ IdentityServiceStrategySetup }, { engineRouter }] = await Promise.all([
@@ -20,7 +19,7 @@ export const routedEngine: AgentEngineProvider = async (customer: CustomerEntity
 		import('../identity/engine/index.js'),
 	]);
 	const service = new IdentityServiceStrategySetup(customer.customerId).agent;
-	return engineRouter.engineFor({ customerId: customer.customerId, route: 'did' }, service);
+	return engineRouter.engineFor({ customerId: customer.customerId, route: 'agent' }, service);
 };
 
 export interface AgentServices {
