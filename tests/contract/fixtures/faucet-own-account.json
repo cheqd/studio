@@ -1,0 +1,49 @@
+{
+	"schema": 1,
+	"stepId": "faucet-own-account",
+	"routeId": "POST /account/faucet",
+	"tier": 1,
+	"effect": "faucet",
+	"recorded": {
+		"at": "2026-11-13T13:36:24.236Z",
+		"engine": "veramo",
+		"gitRef": "715d81d"
+	},
+	"exchange": {
+		"request": {
+			"method": "POST",
+			"path": "/account/faucet",
+			"body": {
+				"amount": 10000
+			}
+		},
+		"response": {
+			"status": 200,
+			"contentType": "application/json",
+			"body": {
+				"address": "<address:1>",
+				"amount": {
+					"cheq": 10000,
+					"ncheq": "10000000000000"
+				},
+				"balance": {
+					"cap": {
+						"cheq": 100000,
+						"ncheq": "100000000000000"
+					},
+					"current": {
+						"cheq": 201,
+						"ncheq": "201000000000"
+					},
+					"denom": "ncheq",
+					"maxRequestable": {
+						"cheq": 99799,
+						"ncheq": "99799000000000"
+					}
+				},
+				"funded": true,
+				"quota": "<object>"
+			}
+		}
+	}
+}

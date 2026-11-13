@@ -308,7 +308,9 @@ export function buildScenario(): Step[] {
 			routeId: 'POST /account/faucet',
 			method: 'POST',
 			path: '/account/faucet',
-			body: { amount: 1 },
+			// 10,000 CHEQ (the faucet default): ledger fees are priced in USD, so at about 0.0009 USD per CHEQ a DID create alone
+			// costs thousands of CHEQ, and the later ledger steps need headroom. 200 CHEQ returned 402.
+			body: { amount: 10000 },
 			auth: 'api-key',
 			normalise: { shapeOnlyPaths: ['quota', 'remaining'] },
 		},
@@ -359,7 +361,7 @@ export function buildScenario(): Step[] {
 			path: '/did/create',
 			body: {
 				identifierFormatType: 'uuid',
-				verificationMethodType: 'Ed255192018',
+				verificationMethodType: 'Ed25519VerificationKey2018',
 				assertionMethod: true,
 				network: '{network}',
 			},
@@ -376,7 +378,7 @@ export function buildScenario(): Step[] {
 			path: '/did/update',
 			body: {
 				did: '{did}',
-				service: [{ idFragment: 'service-1', type: 'LinkedDomains', serviceEndpoint: ['https://example.com'] }],
+				service: [{ id: '{did}#service-1', type: 'LinkedDomains', serviceEndpoint: ['https://example.com'] }],
 			},
 			auth: 'api-key',
 			requires: ['did'],
@@ -460,7 +462,7 @@ export function buildScenario(): Step[] {
 			routeId: 'POST /presentation/create',
 			method: 'POST',
 			path: '/presentation/create',
-			body: { credentials: ['{credentialJwt}'], holderDid: '{subjectDid}' },
+			body: { credentials: ['{credentialJwt}'], holderDid: '{did}' },
 			auth: 'api-key',
 			requires: ['credentialJwt'],
 			capture: { presentationJwt: 'vp' },

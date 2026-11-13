@@ -97,7 +97,7 @@ with `CONTRACT_KNOWN_DID`, `CONTRACT_KNOWN_STATUS_LIST_NAME`, `CONTRACT_SUBJECT_
 |---|---|---|
 | `CONTRACT_ALLOW_MUTATIONS=true` | `key-create`, `key-read`, `key-verification-method`, `credential-issue-jwt`, `credential-verify-jwt`, `presentation-create` | Writes to Studio's database on that account (a key, an issued credential record). No ledger fee. |
 | `CONTRACT_ALLOW_LEDGER_WRITES=true` | `did-create`, `did-update`, `resource-create`, `status-list-create-unencrypted`, `status-list-update-unencrypted`, `did-deactivate` | Ledger writes on testnet. **Each pays a network fee from the account's testnet balance**, and the DID created is permanently deactivated at the end. Fund the account via the faucet first. |
-| `CONTRACT_ALLOW_FAUCET=true` | `faucet-own-account` (tier 1) | Sends 1 testnet CHEQ to the account. Counts against the per-customer monthly faucet quota and per-address cap. |
+| `CONTRACT_ALLOW_FAUCET=true` | `faucet-own-account` (tier 1) | Sends 10,000 testnet CHEQ to the account. Counts against the per-customer monthly faucet quota and per-address cap. |
 
 The chain is ordered: `did-create` captures `did`, later steps use it. If you enable the credential steps without the ledger
 steps they are skipped (missing variable `did`). Run the ledger and database flags together for the full chain:
