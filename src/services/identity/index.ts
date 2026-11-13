@@ -63,6 +63,7 @@ import type { UserEntity } from '../../database/entities/user.entity.js';
 import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import type { SupportedKeyTypes } from '@veramo/utils';
 import { ExportDidResponse, ListDIDRequestOptions, ListDidsResponseBody } from '../../types/did.js';
+import type { ExportedPaymentAccountKey } from '../../types/account.js';
 import { ListResourceOptions, ListResourceResponse } from '../../types/resource.js';
 import { ListOperationOptions } from '../../types/track.js';
 
@@ -90,6 +91,7 @@ export interface IIdentityService {
 	listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<ListDidsResponseBody>;
 	resolveDid(did: string, options?: DIDResolutionOptions): Promise<DIDResolutionResult>;
 	exportDid(did: string, password: string, customer: CustomerEntity): Promise<ExportDidResponse>;
+	exportPaymentAccountKeys(customer: CustomerEntity): Promise<ExportedPaymentAccountKey[]>;
 	resolve(didUrl: string, dereferencing?: boolean): Promise<Response>;
 	getDid(did: string, customer: CustomerEntity): Promise<any>;
 	importDid(

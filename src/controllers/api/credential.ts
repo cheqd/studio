@@ -815,7 +815,7 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async getIssuedCredential(request: Request, response: Response) {
-		let id = Array.isArray(request.params.id) ? request.params.id[0] : (request.params.id as string);
+		const id = Array.isArray(request.params.id) ? request.params.id[0] : (request.params.id as string);
 		const { includeCredential, syncStatus, providerId } = request.query;
 
 		try {
@@ -901,7 +901,7 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async updateIssuedCredential(request: Request, response: Response) {
-		let id = Array.isArray(request.params.id) ? request.params.id[0] : (request.params.id as string);
+		const id = Array.isArray(request.params.id) ? request.params.id[0] : (request.params.id as string);
 		const updateData = request.body as UpdateIssuedCredentialRequestBody;
 
 		try {
@@ -980,7 +980,7 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
 	public async retryIssuedCredential(request: Request, response: Response) {
-		let id = Array.isArray(request.params.id) ? request.params.id[0] : (request.params.id as string);
+		const id = Array.isArray(request.params.id) ? request.params.id[0] : (request.params.id as string);
 		const requestBody = request.body as RetryIssuedCredentialRequestBody;
 
 		// normalize

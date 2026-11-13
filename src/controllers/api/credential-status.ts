@@ -1277,7 +1277,7 @@ export class CredentialStatusController {
 	@validate
 	async fetchStatusList(request: Request, response: Response) {
 		const credentialStatusService = new CredentialStatusService();
-		let statusListId = Array.isArray(request.params.statusListId)
+		const statusListId = Array.isArray(request.params.statusListId)
 			? request.params.statusListId[0]
 			: (request.params.statusListId as string);
 		const result = await credentialStatusService.getStatusList(

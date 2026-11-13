@@ -397,6 +397,19 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 		}
 	}
 
+	/**
+	 * Deletes a Logto user. Treats a 404 (user already gone) as success, not a failure, so a retry after a
+	 * first call that timed out but actually succeeded doesn't get stuck.
+	 */
+	public async deleteUser(userId: string): Promise<ICommonErrorResponse> {
+		const uri = new URL(`/api/users/${userId}`, process.env.LOGTO_ENDPOINT);
+		try {
+			return await this.deleteFromLogto(uri);
+		} catch (err) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, `deleteUser ${err}`);
+		}
+	}
+
 	private async getUserInfo(userId: string): Promise<ICommonErrorResponse> {
 		const uri = new URL(`/api/users/${userId}`, process.env.LOGTO_ENDPOINT);
 		try {
@@ -469,6 +482,24 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 
 		if (!response.ok) {
 			return this.returnError(StatusCodes.BAD_GATEWAY, await response.json());
+		}
+		return this.returnOk({});
+	}
+
+	private async deleteFromLogto(uri: URL, headers: any = {}): Promise<ICommonErrorResponse> {
+		const response = await fetch(uri, {
+			headers: {
+				...headers,
+				Authorization: 'Bearer ' + (await this.getM2MToken()),
+			},
+			method: 'DELETE',
+		});
+
+		if (response.status === StatusCodes.NOT_FOUND) {
+			return this.returnOk({ alreadyDeleted: true });
+		}
+		if (!response.ok) {
+			return this.returnError(response.status, await response.text());
 		}
 		return this.returnOk({});
 	}

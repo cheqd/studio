@@ -84,6 +84,7 @@ import { ListOperationOptions } from '../../../../types/track.js';
 import { DIDAccreditationTypes } from '../../../../types/accreditation.js';
 import { JWT_PROOF_TYPE } from '../../../../types/constants.js';
 import { fromString } from 'uint8arrays';
+import type { ExportedPaymentAccountKey } from '../../../../types/account.js';
 
 dotenv.config();
 
@@ -343,6 +344,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 				(e) =>
 					(e.services = e.services.map((s) => {
 						s.serviceEndpoint =
+							// eslint-disable-next-line no-useless-escape -- harmless escape in a regex character class; left untouched in A-067
 							typeof s.serviceEndpoint === 'string' && /^[{\[]/.test(s.serviceEndpoint.trim())
 								? JSON.parse(s.serviceEndpoint)
 								: s.serviceEndpoint;
@@ -452,6 +454,34 @@ export class PostgresIdentityService extends DefaultIdentityService {
 		};
 	}
 
+	/**
+	 * Decrypts and returns the customer's mainnet/testnet payment-account private keys (the cosmos
+	 * fee-payer wallets), for the account-deletion key-export flow. These are not DID keys and aren't
+	 * reachable through exportDid.
+	 */
+	async exportPaymentAccountKeys(customer: CustomerEntity): Promise<ExportedPaymentAccountKey[]> {
+		if (!customer) {
+			throw new Error('Customer not found');
+		}
+		const paymentAccounts = await PaymentAccountService.instance.find({ customer }, { key: true });
+
+		const keys = await Promise.all(
+			paymentAccounts.map(async (account) => {
+				const keyDoc = await this.getPrivateKey(account.key.kid);
+				if (!keyDoc) {
+					throw new Error(`Private key not found for payment account ${account.address}`);
+				}
+				return {
+					network: account.namespace,
+					address: account.address,
+					type: account.key.type,
+					privateKeyHex: keyDoc.privateKeyHex,
+				};
+			})
+		);
+		return keys;
+	}
+
 	async createResource(
 		network: string,
 		payload: ResourcePayload,
@@ -487,7 +517,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 				encrypted: options.encrypted,
 			};
 
-			let relations: FindOptionsRelations<ResourceEntity | undefined> = {
+			const relations: FindOptionsRelations<ResourceEntity | undefined> = {
 				identifier: true,
 			};
 			if (options.did || options.network) {
@@ -869,9 +899,10 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			const issuerId =
 				typeof decodedCredential.issuer === 'string' ? decodedCredential.issuer : decodedCredential.issuer.id;
 
-			const existsInWallet = await IdentifierService.instance.find({ did: issuerId, customer: customer });
+			// find() returns findAndCount's [rows, count] tuple, or [] on error: both are truthy, so test the count.
+			const [, ownedCount = 0] = await IdentifierService.instance.find({ did: issuerId, customer: customer });
 
-			if (!existsInWallet) {
+			if (ownedCount < 1) {
 				throw new Error(`${issuerId} not found in wallet`);
 			}
 		}

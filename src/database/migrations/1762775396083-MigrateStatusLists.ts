@@ -218,6 +218,7 @@ export class MigrationsStatusLists1762775396083 implements MigrationInterface {
 			// gunzipSync expects a Uint8Array/DataView in some typings; convert Buffer to Uint8Array to satisfy TS type
 			const decompressed = gunzipSync(Uint8Array.from(compressed));
 			// Determine byte length from decompressed data
+			// eslint-disable-next-line prefer-const -- declared separately from its single assignment; not auto-fixable
 			byteLength = (decompressed as Buffer).length ?? (decompressed as Uint8Array).length;
 
 			const bitLength = byteLength * 8;

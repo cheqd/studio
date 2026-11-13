@@ -82,7 +82,9 @@ export class APIGuard {
 		}
 
 		if (m2mCreds) {
-			this.setUserInfoStrategy(new M2MCredsTokenUserInfoFetcher(m2mCreds, this.oauthProvider));
+			// bearerToken, not m2mCreds: the fetcher verifies this as a JWT, and reads the customer-id header
+			// separately itself. Passing the customer-id string here made every M2M request fail (see #874).
+			this.setUserInfoStrategy(new M2MCredsTokenUserInfoFetcher(bearerToken, this.oauthProvider));
 			return;
 		}
 

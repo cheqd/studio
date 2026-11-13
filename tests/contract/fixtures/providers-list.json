@@ -1,0 +1,25 @@
+{
+	"schema": 1,
+	"stepId": "providers-list",
+	"routeId": "GET /providers",
+	"tier": 2,
+	"effect": "read-only",
+	"recorded": {
+		"at": "2026-11-13T13:34:47.133Z",
+		"engine": "veramo",
+		"gitRef": "715d81d"
+	},
+	"exchange": {
+		"request": {
+			"method": "GET",
+			"path": "/providers"
+		},
+		"response": {
+			"status": 200,
+			"contentType": "application/json",
+			"body": {
+				"providers": "<array>"
+			}
+		}
+	}
+}
