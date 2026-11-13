@@ -117,6 +117,10 @@ const resolverTimestamp = (created: LedgerResourceMetadata['created']): string =
 
 /** The resolver's `linkedResourceMetadata` shape, which is what `resourceMetadata` has always been on these routes. */
 export function toResolverMetadata(did: string, meta: LedgerResourceMetadata): JsonObject {
+	// The ledger adds the resource's own DID URL as an alternative; the resolver (and so the recorded responses) leave it out
+	const extraAlternatives = (meta.alsoKnownAs ?? []).filter(
+		(a) => a.description !== 'did-url' || a.uri !== `${did}/resources/${meta.id}`
+	);
 	return {
 		resourceURI: `${did}/resources/${meta.id}`,
 		resourceCollectionId: meta.collectionId,
@@ -129,7 +133,7 @@ export function toResolverMetadata(did: string, meta: LedgerResourceMetadata): J
 		checksum: meta.checksum ?? null,
 		previousVersionId: meta.previousVersionId || null,
 		nextVersionId: meta.nextVersionId || null,
-		...(meta.alsoKnownAs?.length ? { alsoKnownAs: meta.alsoKnownAs as unknown as JsonObject[] } : {}),
+		...(extraAlternatives.length ? { alsoKnownAs: extraAlternatives as unknown as JsonObject[] } : {}),
 	};
 }
 
