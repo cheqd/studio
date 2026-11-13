@@ -6,7 +6,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { startHarness, type Harness } from './harness/app.js';
 import { ledgerCases, readCases, type Case } from './cases.js';
 import { extraCases } from './cases-extra.js';
-import { bugLabel, callsTo, expectNoLeak, expectNotSuccessful, itFor, mentions } from './helpers.js';
+import { bugLabel, callsTo, expectNoLeak, expectNotSuccessful, itFor, mentions, normaliseEchoes } from './helpers.js';
 
 let h: Harness;
 
@@ -74,8 +74,37 @@ describe.each([...ledgerCases, ...readCases, ...extraCases])('$route: $title', (
 			}
 			await c.extraAssert?.(h, attacker, victim);
 			if (c.oracle.kind !== 'implicit') expectNotSuccessful(res);
+			// Not yours looks like not found: 404, never 403 (authn-authz 4.1 rule 3).
+			if (c.oracle.kind !== 'implicit')
+				expect({ route: c.route, status: res.status }).toEqual({ route: c.route, status: 404 });
 			expectNoLeak(res, victim, req);
 			expect(await h.snapshot(victim)).toEqual(before);
 		}
 	);
+
+	// "Not found" and "not yours" must be indistinguishable: same status, same body (identifiers the caller sent aside).
+	if (c.oracle.kind !== 'implicit' && c.twin !== false) {
+		itFor(it, c.knownBug)(
+			`[${c.route}] a missing artefact and another tenant's artefact get the same 404 and body${bugLabel(c.knownBug)}`,
+			async () => {
+				const victim = h.tenantA;
+				const attacker = h.tenantB;
+				const ghost = h.ghost();
+
+				c.prepare?.(h, victim);
+				const notYours = c.request(victim, h);
+				const refused = await h.request(notYours.method, notYours.path, { ...notYours, as: attacker });
+
+				h.resetRecorders();
+				c.prepare?.(h, ghost);
+				const missing = c.request(ghost, h);
+				const absent = await h.request(missing.method, missing.path, { ...missing, as: attacker });
+
+				expect(absent.status).toBe(404);
+				expect(refused.status).toBe(absent.status);
+				expect(normaliseEchoes(absent.text, ghost, victim)).toEqual(refused.text);
+				expect(absent.headers.get('content-type')).toEqual(refused.headers.get('content-type'));
+			}
+		);
+	}
 });

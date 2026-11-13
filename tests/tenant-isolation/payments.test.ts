@@ -158,4 +158,50 @@ describe('Stripe public surface', () => {
 		expect(res.status).toBeLessThan(600);
 		expectNoLeak(res, h.tenantA);
 	});
+
+	describe('not found and not yours look the same (404, same body)', () => {
+		const ghostSubscription = () => `sub_ghost${Date.now()}`;
+		const ghostSession = () => `cs_test_ghost${Date.now()}`;
+
+		itFor(it, 'ISO-009')(
+			`[DELETE /admin/subscription/cancel] another customer’s and an unknown subscription answer alike${bugLabel('ISO-009')}`,
+			async () => {
+				const notYours = await h.request('DELETE', '/admin/subscription/cancel', {
+					as: h.tenantB,
+					body: { subscriptionId: h.tenantA.subscriptionId, idempotencyKey: 'k-twin-1' },
+				});
+				const missing = await h.request('DELETE', '/admin/subscription/cancel', {
+					as: h.tenantB,
+					body: { subscriptionId: ghostSubscription(), idempotencyKey: 'k-twin-2' },
+				});
+				expect(notYours.status).toBe(404);
+				expect(missing.status).toBe(404);
+				expect(missing.text).toEqual(notYours.text);
+			}
+		);
+
+		it('[POST /admin/subscription/resume] another customer’s and an unknown subscription answer alike', async () => {
+			const notYours = await h.request('POST', '/admin/subscription/resume', {
+				as: h.tenantB,
+				body: { subscriptionId: h.tenantA.subscriptionId, idempotencyKey: 'k-twin-3' },
+			});
+			const missing = await h.request('POST', '/admin/subscription/resume', {
+				as: h.tenantB,
+				body: { subscriptionId: ghostSubscription(), idempotencyKey: 'k-twin-4' },
+			});
+			expect(notYours.status).toBe(404);
+			expect(missing.status).toBe(404);
+			expect(missing.text).toEqual(notYours.text);
+		});
+
+		it('[GET /admin/checkout/session/:id] another customer’s and an unknown session answer alike', async () => {
+			const notYours = await h.request('GET', `/admin/checkout/session/${h.tenantA.checkoutSessionId}`, {
+				as: h.tenantB,
+			});
+			const missing = await h.request('GET', `/admin/checkout/session/${ghostSession()}`, { as: h.tenantB });
+			expect(notYours.status).toBe(404);
+			expect(missing.status).toBe(404);
+			expect(missing.text).toEqual(notYours.text);
+		});
+	});
 });

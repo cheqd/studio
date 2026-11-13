@@ -1,4 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it, jest } from '@jest/globals';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../../../src/services/identity/ownership-error.js';
 import type { CustomerEntity } from '../../../src/database/entities/customer.entity.js';
 
 const issuerDid = 'did:cheqd:testnet:6a8a9c6c-8e30-4b5c-a5d0-0b8f5a6f9c11';
@@ -30,16 +31,12 @@ describe('validateCredentialAccess (issuer ownership on revoke, suspend and rein
 
 	it('rejects when the customer does not own the issuer DID (findAndCount returns [[], 0])', async () => {
 		mockFind([[], 0]);
-		await expect(service.validateCredentialAccess(credential, customer)).rejects.toThrow(
-			`${issuerDid} not found in wallet`
-		);
+		await expect(service.validateCredentialAccess(credential, customer)).rejects.toThrow(OwnershipError);
 	});
 
 	it('rejects when the lookup fails (find returns [] on error)', async () => {
 		mockFind([]);
-		await expect(service.validateCredentialAccess(credential, customer)).rejects.toThrow(
-			`${issuerDid} not found in wallet`
-		);
+		await expect(service.validateCredentialAccess(credential, customer)).rejects.toThrow(OwnershipError);
 	});
 
 	it('allows when the customer owns the issuer DID', async () => {
@@ -51,9 +48,7 @@ describe('validateCredentialAccess (issuer ownership on revoke, suspend and rein
 		jest.spyOn(IdentifierService.instance, 'find').mockImplementation((async (where: { did: string }) =>
 			where.did === issuerDid ? [[{ did: issuerDid }], 1] : [[], 0]) as never);
 		const other = { issuer: 'did:cheqd:testnet:other' } as never;
-		await expect(service.validateCredentialAccess([credential, other], customer)).rejects.toThrow(
-			'did:cheqd:testnet:other not found in wallet'
-		);
+		await expect(service.validateCredentialAccess([credential, other], customer)).rejects.toThrow(OwnershipError);
 	});
 });
 
@@ -78,26 +73,40 @@ describe('assertCustomerOwnsDid (shared ownership guard for DID-scoped writes)',
 		jest.restoreAllMocks();
 	});
 
-	it('rejects when the count is zero, with the existing message', async () => {
+	it('rejects when the count is zero', async () => {
 		mockFind([[], 0]);
-		await expect(guarded.assertCustomerOwnsDid(issuerDid, customer)).rejects.toThrow(
-			`${issuerDid} not found in wallet`
-		);
+		await expect(guarded.assertCustomerOwnsDid(issuerDid, customer)).rejects.toThrow(OwnershipError);
 	});
 
 	it('rejects when the lookup fails (find returns [])', async () => {
 		mockFind([]);
-		await expect(guarded.assertCustomerOwnsDid(issuerDid, customer)).rejects.toThrow(
-			`${issuerDid} not found in wallet`
-		);
+		await expect(guarded.assertCustomerOwnsDid(issuerDid, customer)).rejects.toThrow(OwnershipError);
 	});
 
 	it('rejects without querying when there is no customer', async () => {
 		const find = mockFind([[{ did: issuerDid }], 1]);
-		await expect(guarded.assertCustomerOwnsDid(issuerDid, undefined as never)).rejects.toThrow(
-			`${issuerDid} not found in wallet`
-		);
+		await expect(guarded.assertCustomerOwnsDid(issuerDid, undefined as never)).rejects.toThrow(OwnershipError);
 		expect(find).not.toHaveBeenCalled();
+	});
+
+	it('gives a missing DID and a DID owned by someone else the same error, with no identifier in it', async () => {
+		const thrown: Error[] = [];
+		for (const did of [issuerDid, 'did:cheqd:testnet:00000000-0000-4000-8000-000000000000']) {
+			mockFind([[], 0]);
+			thrown.push(
+				await guarded.assertCustomerOwnsDid(did, customer).then(
+					() => new Error('expected a rejection'),
+					(error: Error) => error
+				)
+			);
+		}
+		expect(thrown[0]).toBeInstanceOf(OwnershipError);
+		expect({ name: thrown[0].name, message: thrown[0].message }).toEqual({
+			name: thrown[1].name,
+			message: thrown[1].message,
+		});
+		expect(thrown[0].message).toBe(NOT_FOUND_MESSAGE);
+		expect(thrown[0].message).not.toContain('did:');
 	});
 
 	it('allows when the customer owns the DID', async () => {
@@ -107,11 +116,9 @@ describe('assertCustomerOwnsDid (shared ownership guard for DID-scoped writes)',
 
 	it('is used by updateDid, deactivateDid and createPresentation before any signing', async () => {
 		mockFind([[], 0]);
-		await expect(guarded.updateDid({ id: issuerDid }, customer)).rejects.toThrow('not found in wallet');
-		await expect(guarded.deactivateDid(issuerDid, customer)).rejects.toThrow('not found in wallet');
-		await expect(guarded.createPresentation({ holder: issuerDid }, {}, customer)).rejects.toThrow(
-			'not found in wallet'
-		);
-		await expect(guarded.createPresentation({}, {}, customer)).rejects.toThrow('not found in wallet');
+		await expect(guarded.updateDid({ id: issuerDid }, customer)).rejects.toThrow(OwnershipError);
+		await expect(guarded.deactivateDid(issuerDid, customer)).rejects.toThrow(OwnershipError);
+		await expect(guarded.createPresentation({ holder: issuerDid }, {}, customer)).rejects.toThrow(OwnershipError);
+		await expect(guarded.createPresentation({}, {}, customer)).rejects.toThrow(OwnershipError);
 	});
 });

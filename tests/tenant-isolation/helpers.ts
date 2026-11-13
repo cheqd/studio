@@ -83,3 +83,16 @@ export async function send(h: Harness, spec: { method: string; path: string } & 
 export function sameRows(before: Record<string, unknown>, after: Record<string, unknown>) {
 	expect(after).toEqual(before);
 }
+
+/** The caller's own identifiers swapped for the target's, so a "not found" reply can be compared with a "not yours" one. */
+export function normaliseEchoes(text: string, from: Tenant, to: Tenant): string {
+	const pairs = (Object.keys(from) as (keyof Tenant)[])
+		.filter((key) => typeof from[key] === 'string' && from[key] !== '')
+		.map((key) => [from[key] as string, to[key] as string] as const)
+		.sort((a, b) => b[0].length - a[0].length);
+	let result = text;
+	for (const [ghost, real] of pairs) {
+		result = result.split(ghost).join(real).split(encodeURIComponent(ghost)).join(encodeURIComponent(real));
+	}
+	return result;
+}
