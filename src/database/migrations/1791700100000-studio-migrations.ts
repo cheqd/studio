@@ -1,39 +1,30 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
- * Create the `credo` schema for Credo's Askar storage.
+ * Intentionally a no-op: Credo's Askar store does not live in Studio's database.
  *
- * Phase 1 of the Studio Credo migration, expand step (migration plan sections 4, 6.1 and 6.4).
- * Expand-only safety: CREATE SCHEMA IF NOT EXISTS and nothing else. No tables are created, because Credo creates
- * and migrates its own storage there and only the CredoEngine reads it. No existing object is touched, so the
- * previous and the next application version both work against this schema.
+ * This migration was first written to create a `credo` schema here. The design (knowledge-base, Credo tenancy and
+ * storage, section 4) puts Credo's store in a database of its own on the same cluster (`CREDO_DB_NAME`, for
+ * example `studio_credo`), with its own app role, because Askar's store id is the database name and it keeps its
+ * tables in a schema named after the connecting role. A schema in Studio's database would never be used.
  *
- * Role handling: if the `studio_api` role exists it gets USAGE and CREATE on the schema (Credo runs in the same
- * process). Where the role does not exist (for example local Postgres) the grant is skipped.
+ * The database and role are provisioned once, by hand, with the admin user: see
+ * docs/credo-database-provisioning.md and scripts/credo-database-provisioning.sql. Migrations run as Studio's own
+ * role and must not depend on that.
  *
- * Down drops the schema without CASCADE, so it refuses to run, and keeps the data, if Credo has created anything.
+ * The timestamp and class name are kept so that migration ordering, and any database that has already recorded
+ * this migration, are unaffected. It had not been released, so nothing was created anywhere that needs removing.
+ * Up and down both do nothing and are safe to run in any order.
  */
 export class StudioMigrations1791700100000 implements MigrationInterface {
 	name = 'StudioMigrations1791700100000';
 
-	public async up(queryRunner: QueryRunner): Promise<void> {
-		await queryRunner.query(`SET LOCAL lock_timeout = '3s'`);
-		await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "credo"`);
-		await queryRunner.query(`
-			DO $$
-			BEGIN
-				IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'studio_api') THEN
-					GRANT USAGE, CREATE ON SCHEMA "credo" TO "studio_api";
-				ELSE
-					RAISE NOTICE 'Role studio_api does not exist: skipping grants on schema credo';
-				END IF;
-			END
-			$$
-		`);
+	public async up(_queryRunner: QueryRunner): Promise<void> {
+		// Nothing to create: see the note above.
 	}
 
-	public async down(queryRunner: QueryRunner): Promise<void> {
-		await queryRunner.query(`SET LOCAL lock_timeout = '3s'`);
-		await queryRunner.query(`DROP SCHEMA IF EXISTS "credo"`);
+	public async down(_queryRunner: QueryRunner): Promise<void> {
+		// Nothing was created, so nothing is dropped. A `credo` schema from an earlier draft of this migration, if
+		// one exists on a development database, is left alone: it may hold data.
 	}
 }

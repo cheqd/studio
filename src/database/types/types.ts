@@ -191,7 +191,7 @@ export class Postgres implements AbstractDatabase {
 				StudioMigrations1791600000000,
 				// Add featureFlag table: engine kill switches, UI default and per-customer overrides
 				StudioMigrations1791700000000,
-				// Add credo schema for Credo storage
+				// No-op: Credo storage is a separate database, provisioned by hand
 				StudioMigrations1791700100000,
 				// Add agent and agentCard tables
 				StudioMigrations1791700200000,
