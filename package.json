@@ -61,9 +61,20 @@
 		"@cheqd/ts-proto": "^4.2.0",
 		"@cosmjs/amino": "^0.36.2",
 		"@cosmjs/encoding": "^0.36.2",
+		"@credo-ts/anoncreds": "file:vendor/credo/credo-ts-anoncreds-0.7.1-cheqd.7a0cff0.tgz",
+		"@credo-ts/askar": "file:vendor/credo/credo-ts-askar-0.7.1-cheqd.7a0cff0.tgz",
+		"@credo-ts/cheqd": "file:vendor/credo/credo-ts-cheqd-0.7.1-cheqd.7a0cff0.tgz",
+		"@credo-ts/core": "file:vendor/credo/credo-ts-core-0.7.1-cheqd.7a0cff0.tgz",
+		"@credo-ts/didcomm": "file:vendor/credo/credo-ts-didcomm-0.7.1-cheqd.7a0cff0.tgz",
+		"@credo-ts/node": "file:vendor/credo/credo-ts-node-0.7.1-cheqd.7a0cff0.tgz",
+		"@credo-ts/tenants": "file:vendor/credo/credo-ts-tenants-0.7.1-cheqd.7a0cff0.tgz",
 		"@docknetwork/universal-wallet": "^3.3.4",
+		"@hyperledger/anoncreds-nodejs": "0.4.1",
+		"@hyperledger/anoncreds-shared": "0.4.1",
 		"@logto/express": "^3.0.11",
 		"@mailchimp/mailchimp_marketing": "^3.0.80",
+		"@openwallet-foundation/askar-nodejs": "0.6.1",
+		"@openwallet-foundation/askar-shared": "0.6.1",
 		"@stablelib/ed25519": "^1.0.3",
 		"@veramo/core": "^6.0.0",
 		"@veramo/credential-ld": "^6.0.0",
@@ -113,8 +124,6 @@
 		"uri-js": "^4.4.1"
 	},
 	"devDependencies": {
-		"@credo-ts/core": "^0.7.4",
-		"@credo-ts/node": "^0.7.4",
 		"@playwright/test": "^1.64.1",
 		"@semantic-release/changelog": "^6.0.3",
 		"@semantic-release/commit-analyzer": "^13.0.1",
@@ -168,6 +177,13 @@
 	"overrides": {
 		"@transmute/jsonld": {
 			"@digitalbazaar/http-client": "^3.4.1"
-		}
+		},
+		"@credo-ts/core": "file:vendor/credo/credo-ts-core-0.7.1-cheqd.7a0cff0.tgz",
+		"@credo-ts/node": "file:vendor/credo/credo-ts-node-0.7.1-cheqd.7a0cff0.tgz",
+		"@credo-ts/askar": "file:vendor/credo/credo-ts-askar-0.7.1-cheqd.7a0cff0.tgz",
+		"@credo-ts/anoncreds": "file:vendor/credo/credo-ts-anoncreds-0.7.1-cheqd.7a0cff0.tgz",
+		"@credo-ts/cheqd": "file:vendor/credo/credo-ts-cheqd-0.7.1-cheqd.7a0cff0.tgz",
+		"@credo-ts/tenants": "file:vendor/credo/credo-ts-tenants-0.7.1-cheqd.7a0cff0.tgz",
+		"@credo-ts/didcomm": "file:vendor/credo/credo-ts-didcomm-0.7.1-cheqd.7a0cff0.tgz"
 	}
 }
