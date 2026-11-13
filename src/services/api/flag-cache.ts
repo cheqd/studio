@@ -55,8 +55,8 @@ export class FlagCache<T> {
 		const generation = this.generation;
 		// Declared first, assigned after: the `finally` below compares against it, and a synchronous failure in `load()`
 		// would otherwise read a `const` before its initialisation.
-		// eslint-disable-next-line prefer-const
 		let read: Promise<T> | undefined;
+		// eslint-disable-next-line prefer-const
 		read = (async () => {
 			try {
 				const value = await load();
