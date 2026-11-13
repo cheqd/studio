@@ -14,6 +14,7 @@ import {
 	inFlightAccreditations,
 	setCachedAccreditation,
 } from '../identity/engine/accreditation-cache.js';
+import { engineRouter } from '../identity/engine/db-lookups.js';
 import type { EngineAccreditationVerifyRequest } from '../identity/engine/types.js';
 import type { IVerifyResult, VerificationPolicies, VerifiableCredential } from '@veramo/core';
 import { CheqdW3CVerifiableCredential } from '../w3c-credential.js';
@@ -349,8 +350,13 @@ export class AccreditationService {
 	): Promise<
 		SafeAPIResponse<IVerifyResult & { accreditorDids: string[]; rootAuthorization: string; termsOfUse?: any }>
 	> {
-		// The engine for this customer (credential family, as the verification call always was). It walks the chain.
-		const engine = await new IdentityServiceStrategySetup(customer?.customerId).engine('credential');
+		// Verifying needs no customer key or payment account, so the Veramo service stays the one it always was (not the
+		// customer's, which cannot be built without a payment account). The customer id only informs the engine choice.
+		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
+		const engine = await engineRouter.engineFor(
+			{ customerId: customer?.customerId, route: 'credential' },
+			identityServiceStrategySetup.agent
+		);
 		const request: EngineAccreditationVerifyRequest = {
 			subjectDid,
 			didUrl,
