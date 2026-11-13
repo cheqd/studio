@@ -1,40 +1,71 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 import {
 	DEFAULT_LOCK_TIMEOUT_MS,
+	LedgerUnavailableError,
+	queuedWriteCount,
 	withAdvisoryLock,
 	withPayerLock,
 	type LockDataSource,
 } from '../../../../src/services/identity/ledger-lock.js';
 
-/** A fake Postgres data source: records every statement and whether the transaction committed or rolled back. */
-function fakePostgres() {
+/**
+ * A fake Postgres data source. `held` is the set of payers whose session lock is taken; `foreign` makes
+ * `pg_try_advisory_lock` fail a number of times, as if another instance held the lock.
+ */
+function fakePostgres(foreign = 0) {
 	const statements: { sql: string; parameters?: unknown[] }[] = [];
 	const log: string[] = [];
+	const held = new Set<string>();
+	let open = 0;
+	let maxOpen = 0;
+	let refusals = foreign;
 	const dataSource: LockDataSource = {
 		options: { type: 'postgres' },
 		async transaction(work) {
 			log.push('begin');
-			try {
-				const result = await work({
-					async query(sql, parameters) {
-						statements.push({ sql, parameters });
-						log.push(sql.includes('pg_advisory_xact_lock') ? 'lock' : 'set');
-						return [];
-					},
-				});
-				log.push('commit');
-				return result;
-			} catch (error) {
-				log.push('rollback');
-				throw error;
-			}
+			const result = await work({ query: async () => [] });
+			log.push('commit');
+			return result;
+		},
+		createQueryRunner() {
+			return {
+				async connect() {
+					open++;
+					maxOpen = Math.max(maxOpen, open);
+				},
+				async query(sql: string, parameters?: unknown[]) {
+					statements.push({ sql, parameters });
+					const address = String(parameters?.[0]);
+					if (sql.includes('pg_try_advisory_lock')) {
+						if (refusals > 0) {
+							refusals--;
+							log.push('refused');
+							return [{ locked: false }];
+						}
+						held.add(address);
+						log.push('lock');
+						return [{ locked: true }];
+					}
+					if (sql.includes('pg_advisory_unlock(')) {
+						held.delete(address);
+						log.push('unlock');
+					}
+					return [];
+				},
+				async release() {
+					open--;
+					log.push('release');
+				},
+			};
 		},
 	};
-	return { dataSource, statements, log };
+	return { dataSource, statements, log, held, open: () => open, maxOpen: () => maxOpen };
 }
 
+const instant = { sleep: async () => undefined };
+
 describe('withPayerLock on Postgres', () => {
-	it('takes pg_advisory_xact_lock(hashtext(address)) before the work, inside the transaction', async () => {
+	it('takes a session-level pg_try_advisory_lock before the work and unlocks after, on one connection', async () => {
 		const { dataSource, statements, log } = fakePostgres();
 		const result = await withPayerLock(dataSource, 'cheqd1payer', async () => {
 			log.push('work');
@@ -42,58 +73,174 @@ describe('withPayerLock on Postgres', () => {
 		});
 
 		expect(result).toBe(42);
-		expect(log).toEqual(['begin', 'set', 'lock', 'work', 'commit']);
-		const lock = statements.find((s) => s.sql.includes('pg_advisory_xact_lock'));
-		expect(lock?.sql).toBe('SELECT pg_advisory_xact_lock(hashtext($1))');
-		expect(lock?.parameters).toEqual(['cheqd1payer']);
+		expect(log).toEqual(['lock', 'work', 'unlock', 'release']);
+		expect(statements[0].sql).toBe('SELECT pg_try_advisory_lock(hashtext($1)) AS locked');
+		expect(statements[0].parameters).toEqual(['cheqd1payer']);
+		expect(statements[1].sql).toBe('SELECT pg_advisory_unlock(hashtext($1))');
+		expect(log).not.toContain('begin');
 	});
 
-	it('bounds the wait with a transaction-local lock_timeout', async () => {
-		const { dataSource, statements } = fakePostgres();
-		await withPayerLock(dataSource, 'cheqd1payer', async () => undefined);
-		expect(statements[0].sql).toContain(`set_config('lock_timeout', $1, true)`);
-		expect(statements[0].parameters).toEqual([`${DEFAULT_LOCK_TIMEOUT_MS}ms`]);
-
-		const custom = fakePostgres();
-		await withPayerLock(custom.dataSource, 'cheqd1payer', async () => undefined, { lockTimeoutMs: 2500 });
-		expect(custom.statements[0].parameters).toEqual(['2500ms']);
+	it('retries with backoff, giving the connection back between attempts', async () => {
+		const { dataSource, log, maxOpen } = fakePostgres(3);
+		const sleeps: number[] = [];
+		await withPayerLock(dataSource, 'cheqd1payer', async () => log.push('work'), {
+			sleep: async (ms) => {
+				sleeps.push(ms);
+			},
+		});
+		expect(log.filter((entry) => entry === 'refused')).toHaveLength(3);
+		expect(log.indexOf('work')).toBeGreaterThan(log.lastIndexOf('refused'));
+		expect(sleeps).toHaveLength(3);
+		expect(maxOpen()).toBe(1);
 	});
 
-	it('rolls back, so the lock is released, and rethrows when the work fails', async () => {
-		const { dataSource, log } = fakePostgres();
+	it('fails with LedgerUnavailable when the lock cannot be had in time, and never runs the work', async () => {
+		const { dataSource, open } = fakePostgres(Number.MAX_SAFE_INTEGER);
+		let clock = 0;
+		let ran = false;
+		const error = await withPayerLock(
+			dataSource,
+			'cheqd1payer',
+			async () => {
+				ran = true;
+			},
+			{
+				lockTimeoutMs: 1000,
+				now: () => clock,
+				sleep: async (ms) => {
+					clock += ms;
+				},
+			}
+		).catch((e) => e);
+		expect(error).toBeInstanceOf(LedgerUnavailableError);
+		expect(error.code).toBe('LedgerUnavailable');
+		expect(error.retryAfterSeconds).toBeGreaterThan(0);
+		expect(ran).toBe(false);
+		expect(open()).toBe(0);
+	});
+
+	it('unlocks and releases the connection when the work fails', async () => {
+		const { dataSource, log, held, open } = fakePostgres();
 		await expect(
 			withPayerLock(dataSource, 'cheqd1payer', async () => {
 				throw new Error('broadcast failed');
 			})
 		).rejects.toThrow('broadcast failed');
-		expect(log.at(-1)).toBe('rollback');
+		expect(log.slice(-2)).toEqual(['unlock', 'release']);
+		expect(held.size).toBe(0);
+		expect(open()).toBe(0);
 	});
 
-	it('does not run the work when the lock cannot be taken', async () => {
+	it('falls back to pg_advisory_unlock_all if the unlock itself fails, and still releases', async () => {
+		const calls: string[] = [];
 		const dataSource: LockDataSource = {
 			options: { type: 'postgres' },
-			transaction: async (work) =>
-				work({
-					async query(sql) {
-						if (sql.includes('pg_advisory_xact_lock'))
-							throw new Error('canceling statement due to lock timeout');
-						return [];
-					},
-				}),
+			transaction: async () => {
+				throw new Error('unused');
+			},
+			createQueryRunner: () => ({
+				connect: async () => undefined,
+				query: async (sql: string) => {
+					calls.push(sql);
+					if (sql.includes('try_advisory')) return [{ locked: true }];
+					if (sql.includes('pg_advisory_unlock(')) throw new Error('connection reset');
+					return [];
+				},
+				release: async () => {
+					calls.push('release');
+				},
+			}),
 		};
-		let ran = false;
-		await expect(
-			withPayerLock(dataSource, 'cheqd1payer', async () => {
-				ran = true;
-			})
-		).rejects.toThrow('lock timeout');
-		expect(ran).toBe(false);
+		await withPayerLock(dataSource, 'cheqd1payer', async () => undefined);
+		expect(calls.at(-2)).toContain('pg_advisory_unlock_all');
+		expect(calls.at(-1)).toBe('release');
+	});
+
+	it('queues same-payer writers in memory in FIFO order and holds no connection while they wait', async () => {
+		const { dataSource, open, maxOpen } = fakePostgres();
+		const order: string[] = [];
+		const gates: (() => void)[] = [];
+		const write = (name: string) =>
+			withPayerLock(dataSource, 'cheqd1fifo', async () => {
+				order.push(`${name}:start`);
+				await new Promise<void>((resolve) => gates.push(resolve));
+				order.push(`${name}:end`);
+			});
+		const all = [write('a'), write('b'), write('c')];
+		await new Promise((resolve) => setImmediate(resolve));
+		expect(order).toEqual(['a:start']);
+		expect(queuedWriteCount('cheqd1fifo')).toBe(2);
+		expect(open()).toBe(1); // only the running write has a connection
+
+		for (let i = 0; i < 3; i++) {
+			while (gates.length === 0) await new Promise((resolve) => setImmediate(resolve));
+			gates.shift()?.();
+			await new Promise((resolve) => setImmediate(resolve));
+		}
+		await Promise.all(all);
+		expect(order).toEqual(['a:start', 'a:end', 'b:start', 'b:end', 'c:start', 'c:end']);
+		expect(maxOpen()).toBe(1);
+		expect(queuedWriteCount('cheqd1fifo')).toBe(0);
+	});
+
+	it('times out a waiter in the queue with LedgerUnavailable, without disturbing the others', async () => {
+		jest.useFakeTimers();
+		try {
+			const { dataSource } = fakePostgres();
+			let release: () => void = () => undefined;
+			const running = withPayerLock(
+				dataSource,
+				'cheqd1slow',
+				() => new Promise<void>((resolve) => (release = resolve))
+			);
+			const impatient = withPayerLock(dataSource, 'cheqd1slow', async () => 'late', { lockTimeoutMs: 100 });
+			const patient = withPayerLock(dataSource, 'cheqd1slow', async () => 'patient', { lockTimeoutMs: 10_000 });
+			const impatientResult = impatient.catch((e) => e);
+			await jest.advanceTimersByTimeAsync(150);
+			expect(await impatientResult).toBeInstanceOf(LedgerUnavailableError);
+			release();
+			await running;
+			expect(await patient).toBe('patient');
+			expect(queuedWriteCount('cheqd1slow')).toBe(0);
+		} finally {
+			jest.useRealTimers();
+		}
+	});
+
+	it('does not block different payers', async () => {
+		const { dataSource } = fakePostgres();
+		let release: () => void = () => undefined;
+		const first = withPayerLock(dataSource, 'cheqd1one', () => new Promise<void>((r) => (release = r)));
+		expect(await withPayerLock(dataSource, 'cheqd1two', async () => 'free', instant)).toBe('free');
+		release();
+		await first;
 	});
 
 	it('refuses an empty address or key', async () => {
 		const { dataSource } = fakePostgres();
-		expect(() => withPayerLock(dataSource, '', async () => 1)).toThrow('needs the payer address');
+		await expect(withPayerLock(dataSource, '', async () => 1)).rejects.toThrow('needs the payer address');
 		await expect(withAdvisoryLock(dataSource, '', async () => 1)).rejects.toThrow('non-empty key');
+	});
+});
+
+describe('withAdvisoryLock (transaction-level, for rare short sections)', () => {
+	it('takes pg_advisory_xact_lock inside a transaction with a transaction-local lock_timeout', async () => {
+		const statements: { sql: string; parameters?: unknown[] }[] = [];
+		const dataSource: LockDataSource = {
+			options: { type: 'postgres' },
+			transaction: async (work) =>
+				work({
+					async query(sql, parameters) {
+						statements.push({ sql, parameters });
+						return [];
+					},
+				}),
+		};
+		await withAdvisoryLock(dataSource, 'credo-tenant:1', async () => undefined, { lockTimeoutMs: 2500 });
+		expect(statements[0].sql).toContain(`set_config('lock_timeout', $1, true)`);
+		expect(statements[0].parameters).toEqual(['2500ms']);
+		expect(statements[1].sql).toBe('SELECT pg_advisory_xact_lock(hashtext($1))');
+		expect(DEFAULT_LOCK_TIMEOUT_MS).toBe(60_000);
 	});
 });
 
