@@ -22,6 +22,7 @@ import { Middleware } from './middleware/middleware.js';
 import { jsonBodyParsers } from './middleware/body-parsers.js';
 import { customerRateLimiter, ipRateLimiter, rateLimitConfig, trustProxySetting } from './middleware/rate-limit.js';
 import { requireFreshSignIn } from './middleware/fresh-signin.js';
+import { deprecateEncryptedStatusListCreation } from './middleware/deprecation.js';
 import * as dotenv from 'dotenv';
 // Define Swagger file
 import swaggerAPIDocument from './static/swagger-api.json' with { type: 'json' };
@@ -226,6 +227,7 @@ class App {
 		);
 		app.post(
 			'/credential-status/create/encrypted',
+			deprecateEncryptedStatusListCreation,
 			CredentialStatusController.createEncryptedValidator,
 			new CredentialStatusController().createEncryptedStatusList
 		);
