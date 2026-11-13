@@ -1,5 +1,5 @@
 {
-	"generatedFrom": "eacdf3a",
+	"generatedFrom": "fde6d77",
 	"generatedBy": "npx tsx tests/contract/scripts/generate-inventory.ts",
 	"routes": [
 		{
@@ -15,6 +15,20 @@
 			"stripeOnly": false,
 			"inRouteTable": true,
 			"inOpenApi": false
+		},
+		{
+			"id": "DELETE /account",
+			"method": "DELETE",
+			"path": "/account",
+			"surface": "api",
+			"auth": "scoped",
+			"scopes": ["delete:account"],
+			"tier": 2,
+			"sideEffect": "state-database",
+			"sensitive": false,
+			"stripeOnly": false,
+			"inRouteTable": true,
+			"inOpenApi": true
 		},
 		{
 			"id": "GET /account",
@@ -80,6 +94,20 @@
 			"auth": "scoped",
 			"scopes": ["create:account"],
 			"tier": 1,
+			"sideEffect": "state-database",
+			"sensitive": false,
+			"stripeOnly": false,
+			"inRouteTable": true,
+			"inOpenApi": true
+		},
+		{
+			"id": "POST /account/export-keys",
+			"method": "POST",
+			"path": "/account/export-keys",
+			"surface": "api",
+			"auth": "scoped",
+			"scopes": ["create:account", "export:account:keys"],
+			"tier": 2,
 			"sideEffect": "state-database",
 			"sensitive": false,
 			"stripeOnly": false,
@@ -207,6 +235,20 @@
 			"scopes": ["admin:subscription:get"],
 			"tier": 1,
 			"sideEffect": "read-only",
+			"sensitive": false,
+			"stripeOnly": true,
+			"inRouteTable": true,
+			"inOpenApi": true
+		},
+		{
+			"id": "DELETE /admin/organisation/delete",
+			"method": "DELETE",
+			"path": "/admin/organisation/delete",
+			"surface": "admin",
+			"auth": "scoped",
+			"scopes": ["admin:organisation:delete"],
+			"tier": 2,
+			"sideEffect": "state-database",
 			"sensitive": false,
 			"stripeOnly": true,
 			"inRouteTable": true,
