@@ -22,6 +22,7 @@ import { IssuedCredentialEntity } from '../entities/issued-credential.entity.js'
 import { StatusRegistryEntity } from '../entities/status-registry.entity.js';
 import { FaucetRequestEntity } from '../entities/faucet-request.entity.js';
 import { DeletedAccountRecordEntity } from '../entities/deleted-account-record.entity.js';
+import { FeatureFlagEntity } from '../entities/feature-flag.entity.js';
 
 import { CreatePaymentTable1695740345977 } from '../migrations/archive/CreatePaymentTable.js';
 import { CreateOperationTable1695740345977 } from '../migrations/archive/CreateOperationTable.js';
@@ -62,6 +63,7 @@ import { StudioMigrations1791500000000 } from '../migrations/1791500000000-studi
 import { StudioMigrations1791500000001 } from '../migrations/1791500000001-studio-migrations.js';
 import { StudioMigrations1791500000002 } from '../migrations/1791500000002-studio-migrations.js';
 import { StudioMigrations1791600000000 } from '../migrations/1791600000000-studio-migrations.js';
+import { StudioMigrations1791700000000 } from '../migrations/1791700000000-studio-migrations.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -168,6 +170,8 @@ export class Postgres implements AbstractDatabase {
 				StudioMigrations1791500000002,
 				// Add deletedAccountRecord table, to block a fresh free trial after account deletion
 				StudioMigrations1791600000000,
+				// Add featureFlag table: engine kill switches, UI default and per-customer overrides
+				StudioMigrations1791700000000,
 			],
 			entities: [
 				...Entities,
@@ -189,6 +193,7 @@ export class Postgres implements AbstractDatabase {
 				StatusRegistryEntity,
 				FaucetRequestEntity,
 				DeletedAccountRecordEntity,
+				FeatureFlagEntity,
 			],
 			logging: ['error', 'info', 'warn'],
 		});
