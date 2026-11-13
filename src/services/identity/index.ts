@@ -3,6 +3,9 @@ import * as dotenv from 'dotenv';
 import { LocalIdentityService, PostgresIdentityService } from './providers/index.js';
 import { Unauthorized } from './providers/studio/unauthorized.js';
 import type { StudioAccountServices } from './studio-services.js';
+import { engineRouter } from './engine/db-lookups.js';
+import type { IdentityEngine } from './engine/identity-engine.js';
+import type { ArtifactRef, EngineRoute } from './engine/types.js';
 
 import type {
 	CredentialPayload,
@@ -255,10 +258,21 @@ export interface IIdentityService extends StudioAccountServices {
 export class IdentityServiceStrategySetup {
 	agent: IIdentityService;
 	static unauthorized = new Unauthorized();
+	private readonly customerId?: string;
 
 	constructor(agentId?: string) {
+		this.customerId = agentId;
 		this.agent = IdentityServiceStrategySetup.unauthorized;
 		this.setupIdentityStrategy(agentId);
+	}
+
+	/**
+	 * The engine for this request, chosen by the EngineRouter: the engine recorded on `artifact` if it already
+	 * exists, otherwise the one the feature flags select for this customer and route. Veramo unless a flag says
+	 * otherwise, and no flag does today.
+	 */
+	public async engine(route: EngineRoute, artifact?: ArtifactRef): Promise<IdentityEngine> {
+		return engineRouter.engineFor({ customerId: this.customerId, route, artifact }, this.agent);
 	}
 
 	private setStrategy(strategy: IIdentityService) {

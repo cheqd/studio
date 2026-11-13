@@ -175,12 +175,14 @@ export class Credentials {
 				case CredentialConnectors.Verida:
 				default: {
 					const studioService = new IdentityServiceStrategySetup(customer.customerId);
-					const verifiable_credential = await studioService.agent.createCredential(
-						credential,
+					const verifiable_credential = (await (
+						await studioService.engine('credential')
+					).createCredential(
+						credential as never,
 						format,
-						statusOptions,
+						statusOptions as never,
 						customer
-					);
+					)) as unknown as VerifiableCredential;
 
 					const isVeridaDid = new VeridaDIDValidator().validate(subjectDid);
 					let sendCredentialResponse;
