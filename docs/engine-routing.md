@@ -67,7 +67,8 @@ existing service, so wiring changes no request, response or status code.
 | `POST /credential/revoke` | `status-list` | `statusRegistry` found from the credential's issuer and status entry | Yes |
 | `POST /credential/suspend` | `status-list` | as above | Yes |
 | `POST /credential/reinstate` | `status-list` | as above | Yes |
-| `POST /trust-registry/accreditation/verify` | `credential` | none | Yes |
+| `POST /trust-registry/accreditation/verify` | `credential` | none; the engine walks the whole chain (`verifyAccreditation`). The Veramo service is the customer-less one it always used (no payment account needed); the customer id only informs the engine choice | Yes |
+| `GET /trust-registry/accreditation/list` | `resource` | `did` when the `did` filter is given, else none (`findLatestResourcesVersionsByType`, then `resolve` on the same engine) | Yes |
 | `POST /trust-registry/accreditation/revoke` | `status-list` | `statusRegistry` found from the accreditation | Yes |
 | `POST /trust-registry/accreditation/suspend` | `status-list` | as above | Yes |
 | `POST /trust-registry/accreditation/reinstate` | `status-list` | as above | Yes |
@@ -78,7 +79,7 @@ existing service, so wiring changes no request, response or status code.
 | Call site | Why |
 |---|---|
 | `resolveDid` and `resolve` (`GET /did/search/:did`, `GET /resource/search/:did`, and the resolves inside DID update, deactivate, resource create, credential issue, accreditation) | The spec's `resolve` family has no entry in `ENGINE_ROUTES`, so no feature flag can exist for it and the router has nothing to decide. Both engines read the same ledger through the same resolver. Add the family to the router first (with shadow reads), then wire these. |
-| `GET /trust-registry/accreditation/list` (`findLatestResourcesVersionsByType`) | Not part of the `IdentityEngine` interface: it is a read of Studio's own `resource` table. It needs an interface method before it can be routed. |
+| The DID and DID URL resolves inside accreditation issue, revoke, suspend and reinstate | As for the other resolves above: no `resolve` family yet. They run on the Veramo service on every engine, which reads the same ledger. |
 | `saveCredential`, `retrieveCredential`, `deleteCredential` (received-credentials, issue to a known subject DID) | They address Veramo's own data store by credential hash. No table records which engine holds a hash, so there is no artifact to route on, and routing by flag would lose credentials the day a flag flips. They need an `engine` column (wallet family) first. |
 | Payment-account key creation (`customer.ts` create, `account.ts` bootstrap) | These create the customer's Secp256k1 payer key, not a key-family API route. `customer.ts` also builds the strategy with the customer name rather than the id (the same kind of bug as the providers controller), so the router would be handed the wrong identity. Leave on Veramo until that is fixed and the payer key policy for Credo is decided. |
 | API keys, operations and payment-account export (`setAPIKey`, `getAPIKey`, `listOperations`, `exportPaymentAccountKeys`) | Studio concerns, deliberately outside `IdentityEngine` (`StudioAccountServices`). |

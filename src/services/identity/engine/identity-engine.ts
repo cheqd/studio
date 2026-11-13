@@ -8,6 +8,8 @@ import type {
 } from '../../../types/credential.js';
 import type { ListResourceOptions, ListResourceResponse } from '../../../types/resource.js';
 import type {
+	EngineAccreditationOutcome,
+	EngineAccreditationVerifyRequest,
 	EngineCredential,
 	EngineCredentialPayload,
 	EngineDidDocument,
@@ -87,6 +89,18 @@ export interface IdentityEngine {
 		publicKeyHexs?: string[]
 	): Promise<unknown>;
 	listResources(options: ListResourceOptions, customer: CustomerEntity): Promise<ListResourceResponse>;
+	/**
+	 * The latest version of each of the customer's resources of one type (a read of Studio's own `resource` table,
+	 * newest first, paged). Used to list accreditations. Scoped to the customer in the query.
+	 */
+	findLatestResourcesVersionsByType(
+		resourceType: string,
+		customer: CustomerEntity,
+		network?: string,
+		did?: string,
+		page?: number,
+		limit?: number
+	): Promise<ListResourceResponse>;
 
 	// Credentials and presentations
 	createCredential(
@@ -115,6 +129,17 @@ export interface IdentityEngine {
 	saveCredential(credential: EngineCredential, customer: CustomerEntity): Promise<string>;
 	retrieveCredential(hash: string, customer: CustomerEntity): Promise<EngineCredential | null>;
 	deleteCredential(hash: string, customer: CustomerEntity): Promise<boolean>;
+
+	// Accreditations (trust chains)
+	/**
+	 * Resolves the accreditation at `didUrl`, checks its subject and `accreditedFor`, whether its issuer DIDs are
+	 * deactivated and its signature and (optionally) status, then follows `termsOfUse.parentAccreditation` up to the
+	 * root authorisation. Never throws for a chain that does not hold: that is an outcome with `success: false`.
+	 */
+	verifyAccreditation(
+		request: EngineAccreditationVerifyRequest,
+		customer: CustomerEntity
+	): Promise<EngineAccreditationOutcome>;
 
 	// Status lists
 	createUnencryptedStatusList2021(

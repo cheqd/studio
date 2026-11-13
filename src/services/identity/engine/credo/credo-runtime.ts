@@ -6,9 +6,11 @@ import { CheqdDidRegistrar, CheqdDidResolver, CheqdModule } from '@credo-ts/cheq
 import {
 	Agent,
 	type AgentContext,
+	CacheModule,
 	DidDocument,
 	DidRepository,
 	DidsModule,
+	InMemoryLruCache,
 	JsonTransformer,
 	Kms,
 	StorageVersionRecord,
@@ -232,6 +234,10 @@ export async function createCredoRuntime(options: CredoRuntimeOptions): Promise<
 					},
 				},
 			}),
+			// Credo's default cache refuses a second agent context, and every tenant is one: resolving a DID inside a
+			// tenant (verifying a credential) fails with "SingleContextStorageLruCache can not be used with multiple
+			// agent context instances". An in-memory cache is shared by all tenants; what it holds is public ledger data.
+			cache: new CacheModule({ cache: new InMemoryLruCache({ limit: 500 }) }),
 			kms: new Kms.KeyManagementModule({ backends: [new NodeKeyManagementService(keyStorage)] }),
 			tenants: new TenantsModule({ sessionLimit: options.sessionLimit ?? 100, sessionAcquireTimeout: 10_000 }),
 			cheqd: new CheqdModule({

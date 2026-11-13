@@ -118,6 +118,42 @@ export type EngineStatusListOptions = JsonObject;
 export type EngineStatusOptions = JsonObject;
 export type EngineFeePaymentOptions = JsonObject;
 
+/** One schema an accreditation covers: what `accreditedFor` lists. */
+export interface EngineAccreditationSchema {
+	schemaId: string;
+	types: string[];
+}
+
+/** A request to verify an accreditation and walk its trust chain up to the root authorisation. */
+export interface EngineAccreditationVerifyRequest {
+	/** The DID the accreditation must be issued to. */
+	subjectDid: string;
+	/** DID URL of the accreditation (a linked resource). */
+	didUrl: string;
+	/** Schemas the accreditation must cover. Empty means no permission check. */
+	accreditedFor: EngineAccreditationSchema[];
+	verifyStatus: boolean;
+	allowDeactivatedDid: boolean;
+	rootAuthorization?: string;
+	policies?: JsonObject;
+}
+
+/**
+ * The outcome of a chain walk, in the shape the REST layer already answers with: `status` is the HTTP status the
+ * accreditation routes return for this outcome and `data` the verification result with the chain details.
+ */
+export interface EngineAccreditationOutcome {
+	success: boolean;
+	status: number;
+	data?: {
+		accreditorDids?: string[];
+		rootAuthorization?: string;
+		termsOfUse?: unknown;
+		[extra: string]: unknown;
+	};
+	error?: string;
+}
+
 export type EngineCredentialFormat = 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds' | string;
 
 /**

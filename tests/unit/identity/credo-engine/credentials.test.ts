@@ -2,10 +2,7 @@ import { randomUUID, verify } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { CredoEngine } from '../../../../src/services/identity/engine/credo/credo-engine.js';
-import {
-	CredoNotSupportedError,
-	NotImplementedByEngineError,
-} from '../../../../src/services/identity/engine/credo/errors.js';
+import { CredoNotSupportedError } from '../../../../src/services/identity/engine/credo/errors.js';
 import {
 	credentialToJwtPayload,
 	decodeJwt,
@@ -234,11 +231,39 @@ describe('createCredential (JWT)', () => {
 		expect(h.runtime.credentialState.signCalls).toEqual([]);
 	});
 
-	it('leaves credentialStatus allocation to the status list module', async () => {
+	it('does not allocate a status index itself: Studio reserves it, so one is required to issue with a status entry', async () => {
 		const { did } = await makeDid(h, alice, ['Ed25519']);
 		await expect(
-			h.engine.createCredential(payloadFor(did), 'jwt', { statusListType: 'BitstringStatusList' } as never, alice)
-		).rejects.toBeInstanceOf(NotImplementedByEngineError);
+			h.engine.createCredential(
+				payloadFor(did),
+				'jwt',
+				{ statusListType: 'BitstringStatusList', statusListName: 'list', statusPurpose: 'message' } as never,
+				alice
+			)
+		).rejects.toThrow('statusListIndex is required');
+		expect(h.runtime.credentialState.signCalls).toEqual([]);
+	});
+
+	it('issues with a StatusList2021 entry on the index Studio reserved', async () => {
+		const { did } = await makeDid(h, alice, ['Ed25519']);
+		const credential = await h.engine.createCredential(
+			payloadFor(did),
+			'jwt',
+			{
+				statusListType: 'StatusList2021',
+				statusPurpose: 'revocation',
+				statusListName: 'rev',
+				statusListIndex: 12,
+			} as never,
+			alice
+		);
+		const list = `https://resolver.cheqd.net/1.0/identifiers/${did}?resourceName=rev&resourceType=StatusList2021Revocation`;
+		expect(credential.credentialStatus).toEqual({
+			id: `${list}#12`,
+			type: 'StatusList2021Entry',
+			statusPurpose: 'revocation',
+			statusListIndex: '12',
+		});
 	});
 
 	it('keeps no copy in Credo: issuing stores nothing in the tenant', async () => {
