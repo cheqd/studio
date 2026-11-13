@@ -11,9 +11,9 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
-            - uses: actions/setup-node@v6
+            - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
               with:
                   node-version: 22.23.4
                   cache: 'npm'
@@ -69,7 +69,7 @@ jobs:
                 VERIDA_PRIVATE_KEY: ${{ secrets.VERIDA_PRIVATE_KEY }}
                 CREDS_DECRYPTION_SECRET: ${{ secrets.CREDS_DECRYPTION_SECRET }}
 
-            - uses: actions/upload-artifact@v6
+            - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
               if: always()
               with:
                 name: playwright-report
@@ -86,10 +86,10 @@ jobs:
             IMAGE_NAME: ${{ github.repository }}
 
         steps:
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+              uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
               id: buildx
               with:
                   install: true
@@ -97,7 +97,7 @@ jobs:
 
             - name: Configure Docker image metadata
               id: meta
-              uses: docker/metadata-action@v5
+              uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
               with:
                   images: |
                       ${{ env.IMAGE_NAME }}
@@ -109,7 +109,7 @@ jobs:
                       type=sha,format=long
 
             - name: Build image
-              uses: docker/build-push-action@v6
+              uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
               with:
                   context: .
                   file: docker/Dockerfile
@@ -122,7 +122,7 @@ jobs:
                   cache-to: type=gha,mode=min
 
             - name: Upload build image as artifact
-              uses: actions/upload-artifact@v6
+              uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
               with:
                   name: studio-staging
                   path: studio-staging.tar
