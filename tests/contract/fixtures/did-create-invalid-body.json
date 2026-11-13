@@ -1,0 +1,28 @@
+{
+	"schema": 1,
+	"stepId": "did-create-invalid-body",
+	"routeId": "POST /did/create",
+	"tier": 2,
+	"effect": "read-only",
+	"recorded": {
+		"at": "2026-11-13T13:34:47.134Z",
+		"engine": "veramo",
+		"gitRef": "715d81d"
+	},
+	"exchange": {
+		"request": {
+			"method": "POST",
+			"path": "/did/create",
+			"body": {
+				"network": "not-a-network"
+			}
+		},
+		"response": {
+			"status": 400,
+			"contentType": "application/json",
+			"body": {
+				"error": "Bad Request. No auth rules for handling such request: POST /did/create or please check that namespace specified correctly."
+			}
+		}
+	}
+}

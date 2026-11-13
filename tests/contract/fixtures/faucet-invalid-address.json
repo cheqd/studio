@@ -1,0 +1,28 @@
+{
+	"schema": 1,
+	"stepId": "faucet-invalid-address",
+	"routeId": "POST /account/faucet",
+	"tier": 1,
+	"effect": "read-only",
+	"recorded": {
+		"at": "2026-11-13T13:34:47.134Z",
+		"engine": "veramo",
+		"gitRef": "715d81d"
+	},
+	"exchange": {
+		"request": {
+			"method": "POST",
+			"path": "/account/faucet",
+			"body": {
+				"address": "not-an-address"
+			}
+		},
+		"response": {
+			"status": 400,
+			"contentType": "application/json",
+			"body": {
+				"error": "address should be a valid lowercase cheqd bech32 account address"
+			}
+		}
+	}
+}

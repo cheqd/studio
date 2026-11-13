@@ -1,0 +1,26 @@
+{
+	"schema": 1,
+	"stepId": "event-list",
+	"routeId": "GET /event/list",
+	"tier": 2,
+	"effect": "read-only",
+	"recorded": {
+		"at": "2026-11-13T13:34:47.133Z",
+		"engine": "veramo",
+		"gitRef": "715d81d"
+	},
+	"exchange": {
+		"request": {
+			"method": "GET",
+			"path": "/event/list"
+		},
+		"response": {
+			"status": 200,
+			"contentType": "application/json",
+			"body": {
+				"events": "<array>",
+				"total": "<number>"
+			}
+		}
+	}
+}

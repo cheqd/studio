@@ -1,0 +1,141 @@
+{
+	"schema": 1,
+	"stepId": "presentation-create",
+	"routeId": "POST /presentation/create",
+	"tier": 2,
+	"effect": "state-database",
+	"recorded": {
+		"at": "2026-11-13T13:39:08.582Z",
+		"engine": "veramo",
+		"gitRef": "715d81d"
+	},
+	"exchange": {
+		"request": {
+			"method": "POST",
+			"path": "/presentation/create",
+			"body": {
+				"credentials": [
+					{
+						"$jwt": {
+							"header": {
+								"alg": "EdDSA",
+								"typ": "JWT"
+							},
+							"payload": {
+								"iss": "did:cheqd:testnet:<uuid:1>",
+								"nbf": "<epoch>",
+								"sub": "<var:subjectDid>",
+								"vc": {
+									"@context": ["https://www.w3.org/2018/credentials/v1", "https://schema.org"],
+									"credentialSubject": {
+										"gender": "male",
+										"name": "Bob"
+									},
+									"type": ["VerifiableCredential", "Person"]
+								}
+							}
+						}
+					}
+				],
+				"holderDid": "did:cheqd:testnet:<uuid:1>"
+			}
+		},
+		"response": {
+			"status": 200,
+			"contentType": "application/json",
+			"body": {
+				"@context": ["https://www.w3.org/2018/credentials/v1"],
+				"holder": "did:cheqd:testnet:<uuid:1>",
+				"issuanceDate": "<timestamp>",
+				"proof": {
+					"jwt": {
+						"$jwt": {
+							"header": {
+								"alg": "EdDSA",
+								"typ": "JWT"
+							},
+							"payload": {
+								"iss": "did:cheqd:testnet:<uuid:1>",
+								"nbf": "<epoch>",
+								"vp": {
+									"@context": ["https://www.w3.org/2018/credentials/v1"],
+									"type": ["VerifiablePresentation"],
+									"verifiableCredential": [
+										{
+											"$jwt": {
+												"header": {
+													"alg": "EdDSA",
+													"typ": "JWT"
+												},
+												"payload": {
+													"iss": "did:cheqd:testnet:<uuid:1>",
+													"nbf": "<epoch>",
+													"sub": "<var:subjectDid>",
+													"vc": {
+														"@context": [
+															"https://www.w3.org/2018/credentials/v1",
+															"https://schema.org"
+														],
+														"credentialSubject": {
+															"gender": "male",
+															"name": "Bob"
+														},
+														"type": ["VerifiableCredential", "Person"]
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						}
+					},
+					"type": "JwtProof2020"
+				},
+				"type": ["VerifiablePresentation"],
+				"verifiableCredential": [
+					{
+						"@context": ["https://www.w3.org/2018/credentials/v1", "https://schema.org"],
+						"credentialSubject": {
+							"gender": "male",
+							"id": "<var:subjectDid>",
+							"name": "Bob"
+						},
+						"issuanceDate": "<timestamp>",
+						"issuer": {
+							"id": "did:cheqd:testnet:<uuid:1>"
+						},
+						"proof": {
+							"jwt": {
+								"$jwt": {
+									"header": {
+										"alg": "EdDSA",
+										"typ": "JWT"
+									},
+									"payload": {
+										"iss": "did:cheqd:testnet:<uuid:1>",
+										"nbf": "<epoch>",
+										"sub": "<var:subjectDid>",
+										"vc": {
+											"@context": [
+												"https://www.w3.org/2018/credentials/v1",
+												"https://schema.org"
+											],
+											"credentialSubject": {
+												"gender": "male",
+												"name": "Bob"
+											},
+											"type": ["VerifiableCredential", "Person"]
+										}
+									}
+								}
+							},
+							"type": "JwtProof2020"
+						},
+						"type": ["VerifiableCredential", "Person"]
+					}
+				]
+			}
+		}
+	}
+}

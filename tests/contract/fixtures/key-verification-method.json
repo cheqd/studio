@@ -1,0 +1,26 @@
+{
+	"schema": 1,
+	"stepId": "key-verification-method",
+	"routeId": "GET /key/:kid/verification-method",
+	"tier": 2,
+	"effect": "state-database",
+	"recorded": {
+		"at": "2026-11-13T13:34:47.135Z",
+		"engine": "veramo",
+		"gitRef": "715d81d"
+	},
+	"exchange": {
+		"request": {
+			"method": "GET",
+			"path": "/key/<hash:1>/verification-method",
+			"query": {
+				"type": "Ed25519VerificationKey2018"
+			}
+		},
+		"response": {
+			"status": 200,
+			"contentType": "application/json",
+			"body": null
+		}
+	}
+}
