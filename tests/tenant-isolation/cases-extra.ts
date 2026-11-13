@@ -100,7 +100,7 @@ export const extraCases: Case[] = [
 		prepare: (h, t) => h.stubVeramo('retrieveCredentialFromDataStore', credentialFor(t)),
 		oracle: {
 			kind: 'response',
-			reached: (_s, text) => !/in your wallet|does not belong|Offer not found|not owned/i.test(text),
+			reached: (_status, text) => !/"error":"Not found"/.test(text),
 		},
 	},
 	{
@@ -113,7 +113,7 @@ export const extraCases: Case[] = [
 		}),
 		oracle: {
 			kind: 'response',
-			reached: (_s, text) => !/in your wallet|does not belong|Offer not found|not owned/i.test(text),
+			reached: (_status, text) => !/"error":"Not found"/.test(text),
 		},
 	},
 	{
@@ -177,6 +177,7 @@ export const extraCases: Case[] = [
 			h.stubVeramo('importDid', { did: t.did, provider: 'did:cheqd:testnet', keys: [], services: [] });
 		},
 		oracle: { kind: 'read-one' },
+		twin: false,
 		extraAssert: async (h: Harness, _attacker: Tenant, victim: Tenant) => {
 			const [row] = await h.query('SELECT "customerId" FROM "identifier" WHERE "did" = $1', [victim.did]);
 			expect(row.customerId).toBe(victim.customerId);
@@ -193,10 +194,17 @@ export const extraCases: Case[] = [
 		prepare: (h, t) =>
 			h.stubVeramo('importKey', { kid: t.kid, kms: 'postgres', type: 'Ed25519', publicKeyHex: t.publicKeyHex }),
 		oracle: { kind: 'read-one' },
+		twin: false,
 		extraAssert: async (h: Harness, _attacker: Tenant, victim: Tenant) => {
 			const [row] = await h.query('SELECT "customerId" FROM "key" WHERE "kid" = $1', [victim.kid]);
 			expect(row.customerId).toBe(victim.customerId);
 		},
+	},
+	{
+		route: 'GET /admin/api-key/get',
+		title: "read another tenant's API key by value",
+		request: (t) => ({ method: 'GET', path: '/admin/api-key/get', query: { apiKey: t.spareApiKey } }),
+		oracle: { kind: 'read-one' },
 	},
 	{
 		route: 'POST /admin/api-key/update',

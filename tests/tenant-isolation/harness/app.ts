@@ -86,6 +86,8 @@ export type Harness = {
 	tenantB: Tenant;
 	/** A third tenant with no Stripe customer, for the unscoped-Stripe-list case. */
 	tenantC: Tenant;
+	/** A tenant-shaped set of fresh identifiers that exist nowhere: what "not found" looks like for each artefact. */
+	ghost: () => Tenant;
 	scopes: string[];
 	request: (method: string, path: string, options?: RequestOptions) => Promise<ApiResponse>;
 	snapshot: (tenant: Tenant) => Promise<Record<string, unknown>>;
@@ -118,7 +120,7 @@ function randomHex(bytes: number) {
 	return randomBytes(bytes).toString('hex');
 }
 
-function makeTenant(name: string, withStripeCustomer = true): Tenant {
+export function makeTenant(name: string, withStripeCustomer = true): Tenant {
 	const uuid = randomUUID();
 	const did = `did:cheqd:${TESTNET}:${uuid}`;
 	return {
@@ -302,6 +304,7 @@ export async function startHarness(): Promise<Harness> {
 		tenantA,
 		tenantB,
 		tenantC,
+		ghost: () => makeTenant('G'),
 		scopes,
 		request,
 		snapshot: (tenant) => snapshotTenant(db, tenant),

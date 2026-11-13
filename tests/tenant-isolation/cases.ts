@@ -27,6 +27,11 @@ export type Case = {
 	oracle: OracleKind;
 	/** Install Veramo stub results needed to reach the code under test. */
 	prepare?: (h: Harness, target: Tenant) => void;
+	/**
+	 * Set to false for a route where "a nonexistent artefact" is not a refusal (an import of a new DID or key simply
+	 * succeeds), so there is no not-found twin to compare with.
+	 */
+	twin?: false;
 	/** The attack is expected to fail today because of this bug. */
 	knownBug?: BugId;
 	/** A database invariant that must also hold after the attack, beyond "the victim's rows are unchanged". */
@@ -91,7 +96,7 @@ export const ledgerCases: Case[] = [
 		route: 'POST /did/export/:did',
 		title: 'export a DID and its private keys',
 		request: (t) => ({ method: 'POST', path: `/did/export/${encodeURIComponent(t.did)}`, body: {} }),
-		oracle: { kind: 'response', reached: (_status, text) => !/not found in wallet/i.test(text) },
+		oracle: { kind: 'response', reached: (status) => status !== 404 },
 	},
 	{
 		route: 'POST /resource/create/:did',

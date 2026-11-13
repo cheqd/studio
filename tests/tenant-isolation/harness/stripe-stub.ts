@@ -52,6 +52,17 @@ export class StripeLedger {
 		}
 	}
 
+	private isMissing(path: string, args: unknown[]): boolean {
+		const id = args[0] as string;
+		if (path === 'subscriptions.retrieve' || path === 'subscriptions.cancel' || path === 'subscriptions.resume') {
+			return !this.subscriptions.has(id);
+		}
+		if (path === 'checkout.sessions.retrieve') {
+			return !this.sessions.has(id);
+		}
+		return false;
+	}
+
 	build(): unknown {
 		const make = (prefix: string[]): any =>
 			new Proxy(function () {}, {
@@ -59,6 +70,15 @@ export class StripeLedger {
 				apply: (_t, _this, args) => {
 					const path = prefix.join('.');
 					this.calls.push({ path, args });
+					if (this.isMissing(path, args)) {
+						// Real Stripe rejects an unknown id; it does not answer with someone else's object.
+						return Promise.reject(
+							Object.assign(new Error(`No such object: '${String(args[0])}'`), {
+								code: 'resource_missing',
+								statusCode: 404,
+							})
+						);
+					}
 					const result = Promise.resolve(this.respond(path, args)) as Promise<unknown> & AsyncIterable<never>;
 					// Real Stripe list calls are a promise and an async iterable at once. The sync helpers iterate
 					// them; yielding nothing keeps them from writing rows, and the recorded call is what tests read.
