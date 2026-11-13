@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../../services/identity/ownership-error.js';
 import { StatusCodes } from 'http-status-codes';
 import { check, param, query } from '../validator/index.js';
 import { validate } from '../validator/decorator.js';
@@ -208,6 +209,9 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
 			});
@@ -269,6 +273,9 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(offer);
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			const errorMessage = `${error}`;
 			if (errorMessage.includes('not found') || errorMessage.includes('expired')) {
 				return response.status(StatusCodes.NOT_FOUND).json({
@@ -356,6 +363,9 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			const errorMessage = `${error}`;
 			if (errorMessage.includes('not found') || errorMessage.includes('expired')) {
 				return response.status(StatusCodes.NOT_FOUND).json({
@@ -435,6 +445,9 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			const errorMessage = `${error}`;
 			if (errorMessage.includes('not found') || errorMessage.includes('expired')) {
 				return response.status(StatusCodes.NOT_FOUND).json({
@@ -507,6 +520,9 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			const errorMessage = `${error}`;
 			if (
 				errorMessage.includes('Invalid credential') ||
@@ -609,6 +625,9 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
 			});
@@ -657,6 +676,9 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(credential);
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			const errorMessage = `${error}`;
 			if (errorMessage.includes('not found')) {
 				return response.status(StatusCodes.NOT_FOUND).json({
