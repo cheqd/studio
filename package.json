@@ -115,6 +115,7 @@
 		"loglevel": "^1.9.2",
 		"multiformats": "^13.3.2",
 		"node-cache": "^5.1.2",
+		"pako": "2.1.0",
 		"patch-package": "^8.0.1",
 		"pg": "^8.15.6",
 		"pg-connection-string": "^2.8.5",

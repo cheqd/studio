@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto';
 import {
 	createBitstring,
 	decodeBitstring,
-	encodeBitstring,
 	expandLegacyStatusIndices,
 	getBitstringStatus,
 	getTokenStatusListUri,
@@ -26,6 +25,7 @@ import type {
 	EngineTokenStatusUpdate,
 	JsonObject,
 } from '../types.js';
+import { encodeLegacyBitstring as encodeBitstring } from './status-list-codec.js';
 import { CredoOwnershipError, NotImplementedByEngineError } from './errors.js';
 import type { CredoEngineStore, CredoRuntime } from './ports.js';
 import type { LedgerResourceMetadata, TokenStatusListAlg } from './status-list-types.js';
