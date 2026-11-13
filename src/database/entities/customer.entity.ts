@@ -1,9 +1,10 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
 import * as dotenv from 'dotenv';
 dotenv.config();
 
 @Entity('customer')
+@Index('UQ_customer_credoTenantId', ['credoTenantId'], { unique: true })
 export class CustomerEntity {
 	@PrimaryGeneratedColumn('uuid')
 	customerId!: string;
@@ -44,6 +45,10 @@ export class CustomerEntity {
 		nullable: true,
 	})
 	paymentProviderId?: string;
+
+	// Set on the customer's first Credo operation
+	@Column({ type: 'varchar', length: 64, nullable: true })
+	credoTenantId?: string;
 
 	@BeforeInsert()
 	setCreatedAt() {

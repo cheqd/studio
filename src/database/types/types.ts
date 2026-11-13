@@ -23,6 +23,14 @@ import { StatusRegistryEntity } from '../entities/status-registry.entity.js';
 import { FaucetRequestEntity } from '../entities/faucet-request.entity.js';
 import { DeletedAccountRecordEntity } from '../entities/deleted-account-record.entity.js';
 import { FeatureFlagEntity } from '../entities/feature-flag.entity.js';
+import { AgentEntity } from '../entities/agent.entity.js';
+import { AgentCardEntity } from '../entities/agent-card.entity.js';
+import { AuthorityGrantEntity } from '../entities/authority-grant.entity.js';
+import { PaymentAddressBindingEntity } from '../entities/payment-address-binding.entity.js';
+import { VerificationEventEntity } from '../entities/verification-event.entity.js';
+import { AdminAuditLogEntity } from '../entities/admin-audit-log.entity.js';
+import { EngineDiffEntity } from '../entities/engine-diff.entity.js';
+import { EngineMigrationEntity } from '../entities/engine-migration.entity.js';
 
 import { CreatePaymentTable1695740345977 } from '../migrations/archive/CreatePaymentTable.js';
 import { CreateOperationTable1695740345977 } from '../migrations/archive/CreateOperationTable.js';
@@ -64,6 +72,17 @@ import { StudioMigrations1791500000001 } from '../migrations/1791500000001-studi
 import { StudioMigrations1791500000002 } from '../migrations/1791500000002-studio-migrations.js';
 import { StudioMigrations1791600000000 } from '../migrations/1791600000000-studio-migrations.js';
 import { StudioMigrations1791700000000 } from '../migrations/1791700000000-studio-migrations.js';
+import { StudioMigrations1791700100000 } from '../migrations/1791700100000-studio-migrations.js';
+import { StudioMigrations1791700200000 } from '../migrations/1791700200000-studio-migrations.js';
+import { StudioMigrations1791700300000 } from '../migrations/1791700300000-studio-migrations.js';
+import { StudioMigrations1791700400000 } from '../migrations/1791700400000-studio-migrations.js';
+import { StudioMigrations1791700500000 } from '../migrations/1791700500000-studio-migrations.js';
+import { StudioMigrations1791700600000 } from '../migrations/1791700600000-studio-migrations.js';
+import { StudioMigrations1791700700000 } from '../migrations/1791700700000-studio-migrations.js';
+import { StudioMigrations1791700800000 } from '../migrations/1791700800000-studio-migrations.js';
+import { StudioMigrations1791700900000 } from '../migrations/1791700900000-studio-migrations.js';
+import { StudioMigrations1791701000000 } from '../migrations/1791701000000-studio-migrations.js';
+import { StudioMigrations1791701100000 } from '../migrations/1791701100000-studio-migrations.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -172,6 +191,28 @@ export class Postgres implements AbstractDatabase {
 				StudioMigrations1791600000000,
 				// Add featureFlag table: engine kill switches, UI default and per-customer overrides
 				StudioMigrations1791700000000,
+				// Add credo schema for Credo storage
+				StudioMigrations1791700100000,
+				// Add agent and agentCard tables
+				StudioMigrations1791700200000,
+				// Add authorityGrant and paymentAddressBinding tables
+				StudioMigrations1791700300000,
+				// Add verificationEvent table
+				StudioMigrations1791700400000,
+				// Add customer.credoTenantId
+				StudioMigrations1791700500000,
+				// Add append-only adminAuditLog table
+				StudioMigrations1791700600000,
+				// Add engineDiff and engineMigration tables
+				StudioMigrations1791700700000,
+				// Add engine column to identifier, issuedCredential and statusRegistry
+				StudioMigrations1791700800000,
+				// Add engine, network, outcome and durationMs to operation
+				StudioMigrations1791700900000,
+				// Add statusFormat, listFormat and encoding columns
+				StudioMigrations1791701000000,
+				// Add identifier and customer credoTenantId indexes
+				StudioMigrations1791701100000,
 			],
 			entities: [
 				...Entities,
@@ -194,6 +235,14 @@ export class Postgres implements AbstractDatabase {
 				FaucetRequestEntity,
 				DeletedAccountRecordEntity,
 				FeatureFlagEntity,
+				AgentEntity,
+				AgentCardEntity,
+				AuthorityGrantEntity,
+				PaymentAddressBindingEntity,
+				VerificationEventEntity,
+				AdminAuditLogEntity,
+				EngineDiffEntity,
+				EngineMigrationEntity,
 			],
 			logging: ['error', 'info', 'warn'],
 		});
