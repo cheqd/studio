@@ -28,3 +28,18 @@ The draft renames metadata only and leaves a comment where option A's rewrite st
 - Fails if a tarball still contains `workspace:` or `catalog:` ranges, or secret-like files.
 - Generates a CycloneDX SBOM per package with `npm sbom` and uploads it with the tarballs as a workflow artefact.
 - Publishes with `--provenance`, dependencies first.
+
+## Rebuilding the vendored tarballs by hand (until the publish workflow runs)
+
+The tarballs in `vendor/credo/` are `0.7.1-cheqd.<fork commit>`. To change them: commit the fork change on a branch of the
+fork clone, build each package with its own `tsdown` (`node_modules/.bin/tsdown --config-loader unrun` in `packages/<name>`),
+then for each of core, node, askar, anoncreds, cheqd, tenants and didcomm take the previous tarball, replace its `build/`
+with the fresh one, replace the old version string in its `package.json` with the new one (the dependencies between the
+packages are exact versions), and `tar czf` it as `credo-ts-<name>-<version>.tgz` with a top-level `package/` folder.
+Delete the old tarballs, update the seven `file:vendor/credo/...` entries in `package.json` (dependencies and overrides)
+and the lock file (version strings and the `sha512` integrity of each tarball), then `npm ci --force --ignore-scripts`
+and run `scripts/credo-runtime-smoke.mjs` (`PG_PORT` selects the Postgres port).
+
+Version `0.7.1-cheqd.09ad0fb` adds `CheqdModuleConfig.resolvePayer`: the fee payer is resolved per write from the tenant
+context, there is no random-payer fallback, `disconnect()` closes connections, a raw hex payer key is decoded to its 32
+bytes, and registrars return payer, ledger and start-up failure reasons.
