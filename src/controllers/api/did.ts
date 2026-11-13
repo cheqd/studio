@@ -9,6 +9,7 @@ import {
 } from '@cheqd/sdk';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
+import { OwnershipError } from '../../services/identity/ownership-error.js';
 import { decryptPrivateKey, generateDidDoc, getQueryParams } from '../../helpers/helpers.js';
 import { bases } from 'multiformats/basics';
 import { base64ToBytes } from 'did-jwt';
@@ -597,6 +598,9 @@ export class DIDController {
 
 			return response.status(StatusCodes.OK).json(identifier);
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.FORBIDDEN).json({ error: error.message });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});

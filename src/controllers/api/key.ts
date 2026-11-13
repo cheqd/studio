@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
+import { OwnershipError } from '../../services/identity/ownership-error.js';
 import { decryptPrivateKey } from '../../helpers/helpers.js';
 import { toString } from 'uint8arrays';
 import type {
@@ -225,6 +226,11 @@ export class KeyController {
 			// Return the response
 			return response.status(StatusCodes.OK).json(key satisfies ImportKeyResponseBody);
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.FORBIDDEN).json({
+					error: error.message,
+				} satisfies UnsuccessfulImportKeyResponseBody);
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulImportKeyResponseBody);
