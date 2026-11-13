@@ -1,3 +1,4 @@
+import type { EngineResourcePayload } from '../../services/identity/engine/types.js';
 import type { Request, Response } from 'express';
 import { fromString } from 'uint8arrays';
 import { v4 } from 'uuid';
@@ -209,9 +210,12 @@ export class ResourceController {
 				version,
 				alsoKnownAs,
 			};
-			const result = await identityServiceStrategySetup.agent.createResource(
+			// A resource is written under an existing DID, so the DID's recorded engine decides
+			const result = await (
+				await identityServiceStrategySetup.engine('resource', { kind: 'did', id: did })
+			).createResource(
 				network || did.split(':')[2],
-				resourcePayload,
+				resourcePayload as EngineResourcePayload,
 				response.locals.customer,
 				publicKeyHexs
 			);
@@ -445,7 +449,9 @@ export class ResourceController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await identityServiceStrategySetup.agent.listResources(
+			const result = await (
+				await identityServiceStrategySetup.engine('resource', did ? { kind: 'did', id: did } : undefined)
+			).listResources(
 				{
 					did,
 					encrypted,

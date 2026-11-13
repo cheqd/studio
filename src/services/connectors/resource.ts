@@ -1,3 +1,4 @@
+import type { EngineResourcePayload } from '../identity/engine/types.js';
 import * as dotenv from 'dotenv';
 import type { VerifiableCredential } from '@veramo/core';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
@@ -51,11 +52,9 @@ export class ResourceConnector {
 			version: resourceVersion,
 			alsoKnownAs,
 		};
-		const isPublished = await identityServiceStrategySetup.agent.createResource(
-			did.split(':')[2],
-			resourcePayload,
-			customer
-		);
+		const isPublished = await (
+			await identityServiceStrategySetup.engine('resource', { kind: 'did', id: did })
+		).createResource(did.split(':')[2], resourcePayload as EngineResourcePayload, customer);
 		const didUrl = `${did}/resources/${resourcePayload.id}`;
 		if (isPublished) {
 			const url = new URL(
