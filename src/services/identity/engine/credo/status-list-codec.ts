@@ -1,4 +1,4 @@
-// @ts-ignore pako 2 ships no type declarations; only `gzip` is used
+// @ts-expect-error pako 2 ships no type declarations; only `gzip` is used
 import { gzip } from 'pako';
 
 /**
