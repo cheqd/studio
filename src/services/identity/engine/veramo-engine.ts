@@ -10,7 +10,11 @@ import type {
 import type { ListResourceOptions, ListResourceResponse } from '../../../types/resource.js';
 import type { IIdentityService } from '../index.js';
 import type { IdentityEngine } from './identity-engine.js';
+import { walkAccreditationChain } from './accreditation-chain.js';
+import { veramoAccreditationPorts } from './veramo-accreditation.js';
 import type {
+	EngineAccreditationOutcome,
+	EngineAccreditationVerifyRequest,
 	EngineCredential,
 	EngineCredentialPayload,
 	EngineDidDocument,
@@ -115,6 +119,25 @@ export class VeramoEngine implements IdentityEngine {
 	}
 	listResources(options: ListResourceOptions, customer: CustomerEntity): Promise<ListResourceResponse> {
 		return this.service.listResources(options, customer);
+	}
+
+	findLatestResourcesVersionsByType(
+		resourceType: string,
+		customer: CustomerEntity,
+		network?: string,
+		did?: string,
+		page?: number,
+		limit?: number
+	): Promise<ListResourceResponse> {
+		return this.service.findLatestResourcesVersionsByType!(resourceType, customer, network, did, page, limit);
+	}
+
+	// Accreditations: the chain walk Studio always ran, no limits added
+	verifyAccreditation(
+		request: EngineAccreditationVerifyRequest,
+		customer: CustomerEntity
+	): Promise<EngineAccreditationOutcome> {
+		return walkAccreditationChain(veramoAccreditationPorts(this.service, customer), request);
 	}
 
 	// Credentials and presentations
