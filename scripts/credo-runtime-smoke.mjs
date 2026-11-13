@@ -43,7 +43,7 @@ const agent = new Agent({
 				database: {
 					type: 'postgres',
 					config: {
-						host: `${env.PG_HOST ?? 'localhost'}:5432`,
+						host: `${env.PG_HOST ?? 'localhost'}:${env.PG_PORT ?? '5432'}`,
 						connectionParameters: { sslmode: 'disable' },
 					},
 					credentials: { account: 'postgres', password: env.PG_PASSWORD ?? 'postgres' },

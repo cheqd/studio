@@ -2,6 +2,10 @@
 module.exports = {
 	moduleNameMapper: {
 		'^(\\.{1,2}/.*)\\.js$': '$1',
+		// `webcrypto-core` ships its ES build as `.es.js` inside a package that is not `"type": "module"`, so Jest
+		// parses it as CommonJS and fails on `import`. The Credo fork (@credo-ts/core) pulls it in through the
+		// `import` export condition; point it at the package's own CommonJS build instead.
+		'^webcrypto-core$': '<rootDir>/node_modules/webcrypto-core/build/webcrypto-core.js',
 	},
 	extensionsToTreatAsEsm: ['.ts'],
 	transform: {

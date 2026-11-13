@@ -4,3 +4,4 @@ export { createCredoEngineStub, EngineNotImplementedError } from './credo-engine
 export { EngineRouter } from './engine-router.js';
 export { engineRouter } from './db-lookups.js';
 export * from './types.js';
+export { CredoEngine, getCredoEngine, NotImplementedByEngineError } from './credo/index.js';

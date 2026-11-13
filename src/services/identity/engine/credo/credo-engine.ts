@@ -1,0 +1,581 @@
+import { randomUUID } from 'node:crypto';
+import type { CustomerEntity } from '../../../../database/entities/customer.entity.js';
+import type { KeyEntity } from '../../../../database/entities/key.entity.js';
+import type { ExportDidResponse, ListDIDRequestOptions, ListDidsResponseBody } from '../../../../types/did.js';
+import type {
+	CredentialRequest,
+	ListCredentialRequestOptions,
+	ListCredentialResponse,
+} from '../../../../types/credential.js';
+import type { ListResourceOptions, ListResourceResponse } from '../../../../types/resource.js';
+import type { IdentityEngine } from '../identity-engine.js';
+import type {
+	EngineCredential,
+	EngineCredentialPayload,
+	EngineDidDocument,
+	EngineDidResolution,
+	EngineDidResolutionOptions,
+	EngineFeePaymentOptions,
+	EngineIdentifier,
+	EngineImportKey,
+	EngineKeyInfo,
+	EngineKeyType,
+	EnginePresentation,
+	EnginePresentationPayload,
+	EngineResourcePayload,
+	EngineSignedInput,
+	EngineStatusListOptions,
+	EngineStatusOptions,
+	EngineStatusResult,
+	EngineVerificationOptions,
+	EngineVerificationResult,
+} from '../types.js';
+import { CredoOwnershipError, NotImplementedByEngineError } from './errors.js';
+import {
+	authenticationMethods,
+	buildDefaultDidDocument,
+	generateKeyMaterial,
+	type PrivateJwk,
+} from './key-material.js';
+import type { CredoEngineStore, CredoRuntime, DidKeyLink, StoredKey } from './ports.js';
+
+const ENGINE = 'credo';
+const NETWORKS = ['mainnet', 'testnet'];
+const DEFAULT_RESOLVER_URL = 'https://resolver.cheqd.net/1.0/identifiers/';
+
+export interface CredoEngineDependencies {
+	store: CredoEngineStore;
+	runtime: CredoRuntime;
+	/** Runs `work` while holding the ledger lock for this payer address (see `ledger-lock.ts`). */
+	withPayerLock: <T>(payerAddress: string, work: () => Promise<T>) => Promise<T>;
+	resolverUrl?: string;
+	fetch?: typeof fetch;
+}
+
+function didNetwork(did: string): string {
+	const parts = did.split(':');
+	if (parts.length !== 4 || parts[0] !== 'did' || parts[1] !== 'cheqd' || !NETWORKS.includes(parts[2])) {
+		throw new Error(`'${did}' is not a did:cheqd identifier on mainnet or testnet`);
+	}
+	return parts[2];
+}
+
+function requireCustomer(customer: CustomerEntity | undefined): string {
+	if (!customer?.customerId) throw new Error('Customer not found');
+	return customer.customerId;
+}
+
+/**
+ * The Credo implementation of `IdentityEngine` (migration plan, section 3, "Rules for the Credo engine").
+ *
+ * - One Credo tenant per Studio customer, created on the customer's first operation and recorded in
+ *   `customer.credoTenantId`. The tenant id comes from the database, never from the request.
+ * - The engine checks, itself, that every key and DID it touches belongs to the calling customer. It does not rely
+ *   on the API layer having checked, and it answers from match counts and filtered single rows only.
+ * - Every ledger write holds the payer's advisory lock from before signing until the broadcast completes.
+ * - The fee payer is the customer's own payment account. The engine finds its address to lock on; the Credo cheqd
+ *   module asks `payer.ts` for the signer through the `resolvePayer` hook.
+ *
+ * Credentials, presentations, status lists and import/export are not built yet and throw `NotImplementedByEngine`.
+ */
+export class CredoEngine implements IdentityEngine {
+	readonly name = ENGINE;
+
+	private readonly store: CredoEngineStore;
+	private readonly runtime: CredoRuntime;
+	private readonly withPayerLock: CredoEngineDependencies['withPayerLock'];
+	private readonly resolverUrl: string;
+	private readonly fetchImpl: typeof fetch;
+
+	constructor(dependencies: CredoEngineDependencies) {
+		this.store = dependencies.store;
+		this.runtime = dependencies.runtime;
+		this.withPayerLock = dependencies.withPayerLock;
+		this.resolverUrl = (dependencies.resolverUrl || DEFAULT_RESOLVER_URL).replace(/\/?$/, '/');
+		this.fetchImpl = dependencies.fetch ?? fetch;
+	}
+
+	// ---------------------------------------------------------------- tenants
+
+	/** The customer's Credo tenant id, creating the tenant on first use. */
+	async ensureTenant(customerId: string): Promise<string> {
+		const existing = await this.store.readTenantId(customerId);
+		if (existing) return existing;
+
+		return this.store.withTenantCreationLock(customerId, async () => {
+			// Another instance may have created it while this one waited for the lock
+			const created = await this.store.readTenantId(customerId);
+			if (created) return created;
+
+			const tenantId = await this.runtime.createTenant(`studio-customer:${customerId}`);
+			try {
+				await this.store.writeTenantId(customerId, tenantId);
+			} catch (error) {
+				// Do not leave a tenant nobody points at
+				await this.runtime.deleteTenant(tenantId).catch(() => undefined);
+				throw error;
+			}
+			return tenantId;
+		});
+	}
+
+	// ------------------------------------------------------------------ keys
+
+	async createKey(type: EngineKeyType | string, customer?: CustomerEntity, keyAlias?: string): Promise<KeyEntity> {
+		const customerId = requireCustomer(customer);
+		const key = generateKeyMaterial(type);
+		const tenantId = await this.ensureTenant(customerId);
+
+		await this.runtime.withTenant(tenantId, (session) => session.importKey(key.privateJwk, key.kid));
+		await this.store.insertOwnedKey(customerId, {
+			kid: key.kid,
+			type: key.type,
+			publicKeyHex: key.publicKeyHex,
+			kms: 'postgres',
+		});
+		const stored = await this.store.finaliseOwnedKey(customerId, key.kid, keyAlias);
+		if (!stored) throw new CredoOwnershipError(`Key ${key.kid}`);
+		return stored as unknown as KeyEntity;
+	}
+
+	async getKey(kid: string, customer?: CustomerEntity): Promise<EngineKeyInfo | null> {
+		// Without a customer there is nobody to prove ownership for
+		if (!customer?.customerId) return null;
+		return this.store.findOwnedKey(customer.customerId, { kid });
+	}
+
+	/** Every public key hex must be a key this customer owns. Refuses on the first one that is not. */
+	private async assertPublicKeysOwned(customerId: string, publicKeyHexs: string[] | undefined): Promise<void> {
+		for (const publicKeyHex of publicKeyHexs ?? []) {
+			if (!(await this.store.findOwnedKey(customerId, { publicKeyHex }))) {
+				throw new CredoOwnershipError(`Key ${publicKeyHex}`);
+			}
+		}
+	}
+
+	/** Maps each `authentication` entry of the document to a key this customer owns, or refuses. */
+	private async linkSigningKeys(customerId: string, didDocument: EngineDidDocument): Promise<DidKeyLink[]> {
+		const methods = authenticationMethods(didDocument);
+		if (methods.length === 0)
+			throw new Error('The DID document has no authentication verification method to sign with');
+
+		const links: DidKeyLink[] = [];
+		for (const method of methods) {
+			if (!method.publicKeyHex) throw new Error(`Verification method ${method.id} has no usable public key`);
+			const key = await this.store.findOwnedKey(customerId, { publicKeyHex: method.publicKeyHex });
+			if (!key) throw new CredoOwnershipError(`Key ${method.publicKeyHex}`);
+			links.push({ didDocumentRelativeKeyId: method.relativeId, kmsKeyId: key.kid });
+		}
+		return links;
+	}
+
+	/** The keys the tenant's own record of a DID signs with must all be this customer's. */
+	private async assertRecordedKeysOwned(customerId: string, tenantId: string, did: string): Promise<void> {
+		const recorded = await this.runtime.withTenant(tenantId, (session) => session.recordedKeyIds(did));
+		if (recorded === null) throw new CredoOwnershipError(did);
+		for (const kid of recorded) {
+			if (!(await this.store.findOwnedKey(customerId, { kid }))) {
+				throw new CredoOwnershipError(`Key ${kid}`);
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------ DIDs
+
+	private async payerFor(customerId: string, network: string): Promise<string> {
+		const account = await this.store.findPayerAccount(customerId, network);
+		if (!account) throw new Error(`No ${network} payment account for this customer, so there is no fee payer`);
+		return account.address;
+	}
+
+	async createDid(
+		network: string,
+		didDocument: EngineDidDocument,
+		customer: CustomerEntity
+	): Promise<EngineIdentifier> {
+		const customerId = requireCustomer(customer);
+		if (!NETWORKS.includes(network)) throw new Error(`Unsupported network '${network}'`);
+		if (didDocument.id && !didDocument.id.startsWith(`did:cheqd:${network}:`)) {
+			throw new Error(`'${didDocument.id}' is not on ${network}`);
+		}
+
+		const payerAddress = await this.payerFor(customerId, network);
+		const tenantId = await this.ensureTenant(customerId);
+
+		let document = didDocument;
+		let links: DidKeyLink[];
+		const hasMethods = Array.isArray(didDocument.verificationMethod) && didDocument.verificationMethod.length > 0;
+		if (hasMethods) {
+			if (!didDocument.id) throw new Error('The DID document has no id');
+			links = await this.linkSigningKeys(customerId, didDocument);
+		} else {
+			// Default identifier: P-256 `JsonWebKey` plus Ed25519 `Multikey`, both new keys of this customer
+			const did = didDocument.id || `did:cheqd:${network}:${randomUUID()}`;
+			const p256 = generateKeyMaterial('Secp256r1');
+			const ed25519 = generateKeyMaterial('Ed25519');
+			for (const key of [p256, ed25519]) {
+				await this.runtime.withTenant(tenantId, (session) => session.importKey(key.privateJwk, key.kid));
+				await this.store.insertOwnedKey(customerId, {
+					kid: key.kid,
+					type: key.type,
+					publicKeyHex: key.publicKeyHex,
+					kms: 'postgres',
+				});
+			}
+			document = {
+				...buildDefaultDidDocument(
+					did,
+					p256,
+					ed25519,
+					(didDocument.service as Record<string, unknown>[]) ?? []
+				),
+			};
+			links = [
+				{ didDocumentRelativeKeyId: '#key-1', kmsKeyId: p256.kid },
+				{ didDocumentRelativeKeyId: '#key-2', kmsKeyId: ed25519.kid },
+			];
+		}
+
+		const result = await this.withPayerLock(payerAddress, () =>
+			this.runtime.withTenant(tenantId, (session) =>
+				session.createDid({ didDocument: document, network, keys: links })
+			)
+		);
+		if (result.state !== 'finished')
+			throw new Error(`Failed to create ${document.id}: ${result.reason ?? result.state}`);
+
+		return this.store.saveIdentifier(customerId, {
+			did: document.id,
+			provider: `did:cheqd:${network}`,
+			controllerKeyId: links[0].kmsKeyId,
+			keyIds: links.map((link) => link.kmsKeyId),
+			services: (document.service as Record<string, unknown>[]) ?? [],
+		});
+	}
+
+	async updateDid(
+		didDocument: EngineDidDocument,
+		customer: CustomerEntity,
+		publicKeyHexs?: string[]
+	): Promise<EngineIdentifier> {
+		const customerId = requireCustomer(customer);
+		const did = didDocument.id;
+		const network = didNetwork(did);
+		if (!(await this.store.isDidOwned(customerId, did))) throw new Error(`${did} not found in wallet`);
+		await this.assertPublicKeysOwned(customerId, publicKeyHexs);
+
+		const tenantId = await this.ensureTenant(customerId);
+		await this.assertRecordedKeysOwned(customerId, tenantId, did);
+		const payerAddress = await this.payerFor(customerId, network);
+
+		const links = await this.linkSigningKeys(customerId, didDocument);
+		// Keys that sign for authentication entries the update removes: linked when this customer holds them
+		const previous = await this.runtime.resolveDid(did);
+		if (previous.didDocument && !previous.didDocumentMetadata?.deactivated) {
+			for (const method of authenticationMethods(previous.didDocument)) {
+				if (!method.publicKeyHex || links.some((l) => l.didDocumentRelativeKeyId === method.relativeId))
+					continue;
+				const key = await this.store.findOwnedKey(customerId, { publicKeyHex: method.publicKeyHex });
+				if (key) links.push({ didDocumentRelativeKeyId: method.relativeId, kmsKeyId: key.kid });
+			}
+		}
+
+		const result = await this.withPayerLock(payerAddress, () =>
+			this.runtime.withTenant(tenantId, (session) => session.updateDid({ did, didDocument, keys: links }))
+		);
+		if (result.state !== 'finished') throw new Error(`Failed to update ${did}: ${result.reason ?? result.state}`);
+
+		const current = await this.store.getIdentifier(customerId, did);
+		return this.store.saveIdentifier(customerId, {
+			did,
+			provider: `did:cheqd:${network}`,
+			controllerKeyId: current?.controllerKeyId,
+			keyIds: Array.from(new Set([...(current?.keys ?? []).map((k) => k.kid), ...links.map((l) => l.kmsKeyId)])),
+			services: (didDocument.service as Record<string, unknown>[]) ?? [],
+		});
+	}
+
+	async deactivateDid(did: string, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<boolean> {
+		const customerId = requireCustomer(customer);
+		const network = didNetwork(did);
+		if (!(await this.store.isDidOwned(customerId, did))) throw new Error(`${did} not found in wallet`);
+		await this.assertPublicKeysOwned(customerId, publicKeyHexs);
+
+		const tenantId = await this.ensureTenant(customerId);
+		await this.assertRecordedKeysOwned(customerId, tenantId, did);
+
+		const resolved = await this.runtime.resolveDid(did);
+		if (!resolved.didDocument) throw new Error('DID document not found');
+		// Already deactivated: nothing to do, same answer as the Veramo engine
+		if (resolved.didDocumentMetadata?.deactivated) return true;
+
+		const payerAddress = await this.payerFor(customerId, network);
+		const result = await this.withPayerLock(payerAddress, () =>
+			this.runtime.withTenant(tenantId, (session) => session.deactivateDid(did))
+		);
+		if (result.state !== 'finished')
+			throw new Error(`Failed to deactivate ${did}: ${result.reason ?? result.state}`);
+		return true;
+	}
+
+	async listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<ListDidsResponseBody> {
+		return this.store.listIdentifiers(requireCustomer(customer), options);
+	}
+
+	async getDid(did: string, customer: CustomerEntity): Promise<unknown> {
+		const identifier = await this.store.getIdentifier(requireCustomer(customer), did);
+		if (!identifier) throw new Error(`Identifier ${did} not found`);
+		return identifier;
+	}
+
+	async didExists(did: string, customer: CustomerEntity): Promise<boolean> {
+		return this.store.isDidOwned(requireCustomer(customer), did);
+	}
+
+	resolveDid(did: string, options?: EngineDidResolutionOptions): Promise<EngineDidResolution> {
+		return this.runtime.resolveDid(did, options);
+	}
+
+	resolve(didUrl: string, dereferencing = false): Promise<Response> {
+		const headers: Record<string, string> = dereferencing
+			? { Accept: 'application/ld+json;profile=https://w3id.org/did-url-dereferencing' }
+			: { 'Content-Type': '*/*' };
+		return this.fetchImpl(`${this.resolverUrl}${didUrl}`, { headers, keepalive: true });
+	}
+
+	// -------------------------------------------------------------- resources
+
+	async createResource(
+		network: string,
+		payload: EngineResourcePayload,
+		customer: CustomerEntity,
+		publicKeyHexs?: string[]
+	): Promise<unknown> {
+		const customerId = requireCustomer(customer);
+		if (!NETWORKS.includes(network)) throw new Error(`Unsupported network '${network}'`);
+		if (!payload.collectionId) throw new Error('collectionId is required to create a resource');
+		const did = `did:cheqd:${network}:${payload.collectionId}`;
+		if (!(await this.store.isDidOwned(customerId, did))) throw new Error(`${did} not found in wallet`);
+		await this.assertPublicKeysOwned(customerId, publicKeyHexs);
+
+		const tenantId = await this.ensureTenant(customerId);
+		await this.assertRecordedKeysOwned(customerId, tenantId, did);
+		const payerAddress = await this.payerFor(customerId, network);
+
+		const result = await this.withPayerLock(payerAddress, () =>
+			this.runtime.withTenant(tenantId, (session) =>
+				session.createResource(did, {
+					id: payload.id ?? randomUUID(),
+					name: payload.name,
+					resourceType: payload.resourceType,
+					version: payload.version,
+					alsoKnownAs: payload.alsoKnownAs as { uri: string; description: string }[] | undefined,
+					data: payload.data as Uint8Array | string,
+				})
+			)
+		);
+		if (result.state !== 'finished') {
+			throw new Error(`Failed to create the resource on ${did}: ${result.reason ?? result.state}`);
+		}
+		return true;
+	}
+
+	listResources(options: ListResourceOptions, customer: CustomerEntity): Promise<ListResourceResponse> {
+		return this.store.listResources(requireCustomer(customer), options);
+	}
+
+	// ------------------------------------------------- not built yet (next agent)
+
+	private notImplemented(method: string): Promise<never> {
+		return Promise.reject(new NotImplementedByEngineError(ENGINE, method));
+	}
+
+	importKey(
+		_type: EngineKeyType | string,
+		_privateKeyHex: string,
+		_customer?: CustomerEntity,
+		_alias?: string
+	): Promise<KeyEntity> {
+		return this.notImplemented('importKey');
+	}
+	importDid(
+		_did: string,
+		_keys: EngineImportKey[],
+		_controllerKeyId: string | undefined,
+		_customer: CustomerEntity,
+		_provider?: string
+	): Promise<EngineIdentifier & { status?: boolean }> {
+		return this.notImplemented('importDid');
+	}
+	exportDid(_did: string, _password: string, _customer: CustomerEntity): Promise<ExportDidResponse> {
+		return this.notImplemented('exportDid');
+	}
+	createCredential(
+		_credential: EngineCredentialPayload,
+		_format: CredentialRequest['format'],
+		_statusOptions: EngineStatusOptions | null,
+		_customer: CustomerEntity
+	): Promise<EngineCredential> {
+		return this.notImplemented('createCredential');
+	}
+	verifyCredential(
+		_credential: EngineSignedInput,
+		_options: EngineVerificationOptions,
+		_customer: CustomerEntity
+	): Promise<EngineVerificationResult> {
+		return this.notImplemented('verifyCredential');
+	}
+	createPresentation(
+		_presentation: EnginePresentationPayload,
+		_options: EngineVerificationOptions,
+		_customer: CustomerEntity
+	): Promise<EnginePresentation> {
+		return this.notImplemented('createPresentation');
+	}
+	verifyPresentation(
+		_presentation: EngineSignedInput,
+		_options: EngineVerificationOptions,
+		_customer: CustomerEntity
+	): Promise<EngineVerificationResult> {
+		return this.notImplemented('verifyPresentation');
+	}
+	listCredentials(
+		_options: ListCredentialRequestOptions,
+		_customer: CustomerEntity
+	): Promise<ListCredentialResponse> {
+		return this.notImplemented('listCredentials');
+	}
+	getCredential(_credentialId: string, _customer: CustomerEntity): Promise<EngineCredential | null> {
+		return this.notImplemented('getCredential');
+	}
+	saveCredential(_credential: EngineCredential, _customer: CustomerEntity): Promise<string> {
+		return this.notImplemented('saveCredential');
+	}
+	retrieveCredential(_hash: string, _customer: CustomerEntity): Promise<EngineCredential | null> {
+		return this.notImplemented('retrieveCredential');
+	}
+	deleteCredential(_hash: string, _customer: CustomerEntity): Promise<boolean> {
+		return this.notImplemented('deleteCredential');
+	}
+	createUnencryptedStatusList2021(
+		_did: string,
+		_resource: EngineResourcePayload,
+		_options: EngineStatusListOptions,
+		_customer: CustomerEntity
+	): Promise<EngineStatusResult> {
+		return this.notImplemented('createUnencryptedStatusList2021');
+	}
+	createUnencryptedBitstringStatusList(
+		_did: string,
+		_resource: EngineResourcePayload,
+		_options: EngineStatusListOptions,
+		_customer: CustomerEntity
+	): Promise<EngineStatusResult> {
+		return this.notImplemented('createUnencryptedBitstringStatusList');
+	}
+	createEncryptedStatusList2021(
+		_did: string,
+		_resource: EngineResourcePayload,
+		_options: EngineStatusListOptions,
+		_customer: CustomerEntity
+	): Promise<EngineStatusResult> {
+		return this.notImplemented('createEncryptedStatusList2021');
+	}
+	createEncryptedBitstringStatusList(
+		_did: string,
+		_resource: EngineResourcePayload,
+		_options: EngineStatusListOptions,
+		_customer: CustomerEntity
+	): Promise<EngineStatusResult> {
+		return this.notImplemented('createEncryptedBitstringStatusList');
+	}
+	updateUnencryptedStatusList(
+		_did: string,
+		_listType: string,
+		_options: EngineStatusListOptions,
+		_customer: CustomerEntity
+	): Promise<EngineStatusResult> {
+		return this.notImplemented('updateUnencryptedStatusList');
+	}
+	updateEncryptedStatusList(
+		_did: string,
+		_listType: string,
+		_options: EngineStatusListOptions,
+		_customer: CustomerEntity
+	): Promise<EngineStatusResult> {
+		return this.notImplemented('updateEncryptedStatusList');
+	}
+	checkStatusList2021(
+		_did: string,
+		_options: EngineStatusListOptions,
+		_customer: CustomerEntity
+	): Promise<EngineStatusResult> {
+		return this.notImplemented('checkStatusList2021');
+	}
+	checkBitstringStatusList(
+		_did: string,
+		_options: EngineStatusListOptions,
+		_customer: CustomerEntity
+	): Promise<EngineStatusResult | EngineStatusResult[]> {
+		return this.notImplemented('checkBitstringStatusList');
+	}
+	searchStatusList(
+		_did: string,
+		_statusListName: string,
+		_listType: string,
+		_statusPurpose?: 'revocation' | 'suspension',
+		_customer?: CustomerEntity
+	): Promise<EngineStatusResult> {
+		return this.notImplemented('searchStatusList');
+	}
+	broadcastStatusList2021(
+		_did: string,
+		_resource: EngineResourcePayload,
+		_options: EngineStatusListOptions,
+		_customer: CustomerEntity
+	): Promise<boolean> {
+		return this.notImplemented('broadcastStatusList2021');
+	}
+	broadcastBitstringStatusList(
+		_did: string,
+		_resource: EngineResourcePayload,
+		_customer: CustomerEntity
+	): Promise<boolean> {
+		return this.notImplemented('broadcastBitstringStatusList');
+	}
+	remunerateStatusList2021(
+		_options: EngineFeePaymentOptions,
+		_customer?: CustomerEntity
+	): Promise<EngineStatusResult> {
+		return this.notImplemented('remunerateStatusList2021');
+	}
+	revokeCredentials(
+		_credential: EngineSignedInput | EngineSignedInput[],
+		_listType: string,
+		_publish: boolean,
+		_customer: CustomerEntity,
+		_symmetricKey: string
+	): Promise<EngineStatusResult> {
+		return this.notImplemented('revokeCredentials');
+	}
+	suspendCredentials(
+		_credential: EngineSignedInput | EngineSignedInput[],
+		_listType: string,
+		_publish: boolean,
+		_customer: CustomerEntity,
+		_symmetricKey: string
+	): Promise<EngineStatusResult> {
+		return this.notImplemented('suspendCredentials');
+	}
+	reinstateCredentials(
+		_credential: EngineSignedInput | EngineSignedInput[],
+		_listType: string,
+		_publish: boolean,
+		_customer: CustomerEntity,
+		_symmetricKey: string
+	): Promise<EngineStatusResult> {
+		return this.notImplemented('reinstateCredentials');
+	}
+}
+
+export type { PrivateJwk, StoredKey };

@@ -1,0 +1,116 @@
+import type { ListDIDRequestOptions, ListDidsResponseBody } from '../../../../types/did.js';
+import type { ListResourceOptions, ListResourceResponse } from '../../../../types/resource.js';
+import type { EngineDidDocument, EngineDidResolution, EngineIdentifier, EngineKeyInfo } from '../types.js';
+import type { PrivateJwk } from './key-material.js';
+
+/**
+ * The two seams of the Credo engine. The engine holds Studio's rules (ownership, payer, locking, persistence);
+ * these ports hold everything that touches Postgres or Credo, so the rules can be tested without either.
+ */
+
+/** A key row as Studio keeps it (`key` table). */
+export interface StoredKey extends EngineKeyInfo {
+	kid: string;
+	type: string;
+	publicKeyHex: string;
+}
+
+export interface PayerAccount {
+	address: string;
+	/** The `key` row holding the payer's private key */
+	kid: string;
+}
+
+export interface IdentifierRecord {
+	did: string;
+	/** `did:cheqd:<network>` */
+	provider: string;
+	controllerKeyId?: string;
+	keyIds: string[];
+	services: Record<string, unknown>[];
+}
+
+/**
+ * Persistence for the Credo engine. Every method that takes a `customerId` MUST scope its query to that
+ * customer and answer from the match count or a single filtered row. None may infer "found" from the shape of a
+ * result (an empty `[]` and a `[rows, count]` pair are both truthy; that is the bug class in plan section 7.1).
+ */
+export interface CredoEngineStore {
+	// Tenants
+	readTenantId(customerId: string): Promise<string | null>;
+	writeTenantId(customerId: string, tenantId: string): Promise<void>;
+	/** Serialises tenant creation for one customer across instances. */
+	withTenantCreationLock<T>(customerId: string, work: () => Promise<T>): Promise<T>;
+	findCustomerIdByTenantId(tenantId: string): Promise<string | null>;
+
+	// Keys
+	findOwnedKey(customerId: string, by: { kid: string } | { publicKeyHex: string }): Promise<StoredKey | null>;
+	/** Inserts the `key` row for a key Credo has just created, owned by the customer. Idempotent on `kid`. */
+	insertOwnedKey(customerId: string, key: StoredKey): Promise<void>;
+	/** Sets alias and creation time on an owned key and returns the row; null if the customer does not own it. */
+	finaliseOwnedKey(customerId: string, kid: string, alias?: string): Promise<StoredKey | null>;
+
+	// DIDs
+	isDidOwned(customerId: string, did: string): Promise<boolean>;
+	getIdentifier(customerId: string, did: string): Promise<EngineIdentifier | null>;
+	saveIdentifier(customerId: string, record: IdentifierRecord): Promise<EngineIdentifier>;
+	listIdentifiers(customerId: string, options: ListDIDRequestOptions): Promise<ListDidsResponseBody>;
+
+	// Resources
+	listResources(customerId: string, options: ListResourceOptions): Promise<ListResourceResponse>;
+
+	// Payment accounts
+	findPayerAccount(customerId: string, network: string): Promise<PayerAccount | null>;
+	/** The decrypted private key (hex) of a payment account's key, read through Studio's existing private key store. */
+	readPayerPrivateKeyHex(kid: string): Promise<string | null>;
+}
+
+export interface DidOperationResult {
+	state: string;
+	reason?: string;
+	didDocument?: EngineDidDocument;
+}
+
+export interface DidKeyLink {
+	/** `#fragment` of the verification method in the DID document */
+	didDocumentRelativeKeyId: string;
+	kmsKeyId: string;
+}
+
+export interface ResourceInput {
+	id: string;
+	name: string;
+	resourceType: string;
+	version?: string;
+	alsoKnownAs?: { uri: string; description: string }[];
+	data: Uint8Array | string;
+}
+
+/** One customer's Credo tenant, for the length of one operation. */
+export interface CredoTenantSession {
+	createDid(input: {
+		didDocument: EngineDidDocument;
+		network: string;
+		keys: DidKeyLink[];
+	}): Promise<DidOperationResult>;
+	updateDid(input: { did: string; didDocument: EngineDidDocument; keys: DidKeyLink[] }): Promise<DidOperationResult>;
+	deactivateDid(did: string): Promise<DidOperationResult>;
+	createResource(did: string, resource: ResourceInput): Promise<{ state: string; reason?: string }>;
+	/** Imports a private key into the KMS (and so into Studio's key store through the adapter) under `keyId`. */
+	importKey(privateJwk: PrivateJwk, keyId: string): Promise<void>;
+	/** The KMS key ids this tenant's record of the DID signs with, or null when the tenant never created the DID. */
+	recordedKeyIds(did: string): Promise<string[] | null>;
+	/** The service entries of the tenant's record of the DID. */
+	recordedServices(did: string): Promise<Record<string, unknown>[]>;
+}
+
+export interface CredoRuntime {
+	createTenant(label: string): Promise<string>;
+	deleteTenant(tenantId: string): Promise<void>;
+	withTenant<T>(tenantId: string, work: (session: CredoTenantSession) => Promise<T>): Promise<T>;
+	/** Public resolution: needs no tenant. */
+	resolveDid(did: string, options?: Record<string, unknown>): Promise<EngineDidResolution>;
+	shutdown(): Promise<void>;
+}
+
+export type { EngineKeyInfo };
