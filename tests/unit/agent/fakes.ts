@@ -16,6 +16,8 @@ import type {
 	AgentRecord,
 	AuthorityGrantRecord,
 	AuthorityGrantWithStatus,
+	PaymentAddressBindingRecord,
+	PaymentAddressBindingWithStatus,
 	TokenStatusListRecord,
 } from '../../../src/types/agent.js';
 import type {
@@ -24,8 +26,10 @@ import type {
 	NewAgent,
 	NewAgentCard,
 	NewGrant,
+	NewPaymentAddressBinding,
 	NewStatusList,
 } from '../../../src/services/agent/agent-store.js';
+import { conflict } from '../../../src/services/agent/agent-errors.js';
 import { ed25519MultibaseFromPublicKeyHex } from '../../../src/services/agent/agent-keys.js';
 
 export const customerA = { customerId: '11111111-1111-4111-8111-111111111111' } as CustomerEntity;
@@ -262,6 +266,7 @@ export class FakeStore implements AgentStore {
 	agents = new Map<string, AgentRecord>();
 	cards: AgentCardRecord[] = [];
 	grants = new Map<string, AuthorityGrantWithStatus>();
+	bindings = new Map<string, PaymentAddressBindingWithStatus>();
 	lists = new Map<string, TokenStatusListRecord & { customerId: string }>();
 	/** Every customerId a tenant-scoped method was called with, to prove nothing runs unscoped. */
 	calls: Array<{ method: string; customerId: string | undefined }> = [];
@@ -395,6 +400,7 @@ export class FakeStore implements AgentStore {
 			statusIndex: input.statusIndex ?? null,
 			expiresAt: input.expiresAt ?? null,
 			revokedAt: null,
+			policySummary: input.policySummary ?? null,
 			createdAt: new Date(),
 			issuerDid: input.issuerDid,
 			statusListUri: list?.uri ?? null,
@@ -408,6 +414,58 @@ export class FakeStore implements AgentStore {
 		if (!grant) return null;
 		grant.revokedAt ??= new Date();
 		return grant;
+	}
+	async countBindings(customerId: string, agentId: string, bindingId: string) {
+		this.note('countBindings', customerId);
+		const binding = this.bindings.get(bindingId);
+		return binding && binding.customerId === customerId && binding.agentId === agentId ? 1 : 0;
+	}
+	async getBinding(customerId: string, agentId: string, bindingId: string) {
+		this.note('getBinding', customerId);
+		const binding = this.bindings.get(bindingId);
+		return binding && binding.customerId === customerId && binding.agentId === agentId ? binding : null;
+	}
+	async listBindings(customerId: string, agentId: string): Promise<PaymentAddressBindingRecord[]> {
+		this.note('listBindings', customerId);
+		return [...this.bindings.values()]
+			.filter((b) => b.customerId === customerId && b.agentId === agentId)
+			.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+	}
+	async listLiveBindings(customerId: string, agentId: string) {
+		this.note('listLiveBindings', customerId);
+		return (await this.listBindings(customerId, agentId)).filter(
+			(b) => !b.revokedAt
+		) as PaymentAddressBindingWithStatus[];
+	}
+	async createBinding(input: NewPaymentAddressBinding): Promise<PaymentAddressBindingRecord> {
+		this.note('createBinding', input.customerId);
+		for (const existing of this.bindings.values()) {
+			if (existing.agentId === input.agentId && existing.account === input.account && !existing.revokedAt) {
+				throw conflict('This payment address is already bound to the agent');
+			}
+		}
+		const binding: PaymentAddressBindingWithStatus = {
+			id: uuidv4(),
+			agentId: input.agentId,
+			customerId: input.customerId,
+			account: input.account,
+			issuedCredentialId: uuidv4(),
+			statusListId: input.statusListId,
+			statusIndex: input.statusIndex,
+			revokedAt: null,
+			createdAt: new Date(Date.now() + this.bindings.size),
+			issuerDid: input.issuerDid,
+			statusListUri: input.statusUri,
+		};
+		this.bindings.set(binding.id, binding);
+		return binding;
+	}
+	async markBindingRevoked(customerId: string, agentId: string, bindingId: string) {
+		this.note('markBindingRevoked', customerId);
+		const binding = await this.getBinding(customerId, agentId, bindingId);
+		if (!binding) return null;
+		binding.revokedAt ??= new Date();
+		return binding;
 	}
 	async findOpenStatusList(customerId: string, issuerDid: string) {
 		this.note('findOpenStatusList', customerId);

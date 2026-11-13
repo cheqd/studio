@@ -105,11 +105,24 @@ describe('TypeormAgentStore', () => {
 		await store.markGrantRevoked(customerId, agentId, grantId);
 		await store.findOpenStatusList(customerId, 'did:cheqd:testnet:org');
 		await store.countOwnedDids(customerId, 'did:cheqd:testnet:org');
+		rows.PaymentAddressBindingEntity = {
+			id: grantId,
+			account: 'eip155:1:0x00',
+			createdAt: new Date(),
+			statusIndex: 1,
+			statusList: { registryId: 'r', uri: 'u', identifier: { did: 'did:cheqd:testnet:agent' } },
+			issuedCredential: { issuedCredentialId: 'ic' },
+		};
+		await store.countBindings(customerId, agentId, grantId);
+		await store.getBinding(customerId, agentId, grantId);
+		await store.listBindings(customerId, agentId);
+		await store.listLiveBindings(customerId, agentId);
+		await store.markBindingRevoked(customerId, agentId, grantId);
 
 		const queries = recorded.filter((call) =>
 			['count', 'findOne', 'find', 'findAndCount', 'update', 'softDelete'].includes(call.method)
 		);
-		expect(queries.length).toBeGreaterThanOrEqual(12);
+		expect(queries.length).toBeGreaterThanOrEqual(18);
 		for (const call of queries) expect(`${call.entity}.${call.method}: ${whereOf(call)}`).toContain(customerId);
 	});
 
@@ -136,6 +149,10 @@ describe('TypeormAgentStore', () => {
 		['listAgents', () => store.listAgents(undefined as never, { limit: 1, offset: 0 })],
 		['markGrantRevoked', () => store.markGrantRevoked(customerId, agentId, '')],
 		['reserveStatusIndex', () => store.reserveStatusIndex(customerId, undefined as never)],
+		['countBindings', () => store.countBindings(customerId, agentId, undefined as never)],
+		['listLiveBindings', () => store.listLiveBindings(undefined as never, agentId)],
+		['markBindingRevoked', () => store.markBindingRevoked(customerId, agentId, '')],
+		['createBinding', () => store.createBinding({ customerId: undefined as never, agentId } as never)],
 		['createGrant', () => store.createGrant({ customerId: undefined as never, agentId } as never)],
 	])('refuses %s with a missing identifier, so TypeORM cannot drop the filter', async (_name, run) => {
 		await expect(run()).rejects.toThrow('missing identifier');
@@ -159,5 +176,21 @@ describe('TypeormAgentStore', () => {
 		expect(saved.map((call) => call.entity)).toEqual(['IssuedCredentialEntity', 'AuthorityGrantEntity']);
 		const credential = saved[0]?.args[0] as { engine: string; statusFormat: string; providerId: string };
 		expect(credential).toMatchObject({ engine: 'credo', statusFormat: 'TokenStatusList', providerId: 'studio' });
+	});
+
+	it('writes a binding and its credential record (metadata only) in one transaction', async () => {
+		await store.createBinding({
+			agentId,
+			customerId,
+			account: 'eip155:8453:0x00',
+			issuerDid: 'did:cheqd:testnet:agent',
+			subjectDid: 'did:cheqd:testnet:agent',
+			statusListId: 'r',
+			statusIndex: 0,
+			statusUri: 'https://l.example',
+		});
+		const saved = recorded.filter((call) => call.method === 'save');
+		expect(saved.map((call) => call.entity)).toEqual(['IssuedCredentialEntity', 'PaymentAddressBindingEntity']);
+		expect(JSON.stringify(saved[0]?.args[0])).not.toContain('eyJ');
 	});
 });

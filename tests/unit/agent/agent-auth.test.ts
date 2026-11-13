@@ -34,6 +34,10 @@ describe('agent auth rules', () => {
 		['GET', `/agents/${id}/authority`, 'read:agent'],
 		['POST', `/agents/${id}/authority`, 'issue:agent-authority'],
 		['DELETE', `/agents/${id}/authority/${id}`, 'revoke:agent-authority'],
+		['GET', `/agents/${id}/payment-addresses`, 'read:agent'],
+		['POST', `/agents/${id}/payment-addresses`, 'issue:agent-payment-address'],
+		['DELETE', `/agents/${id}/payment-addresses/${id}`, 'revoke:agent-payment-address'],
+		['GET', `/agents/${id}/settlement`, 'read:agent'],
 	])('%s %s needs exactly %s and is not open to anonymous callers', (method, path, scope) => {
 		const rule = repository.match(requestFor(method, path, {}));
 		expect(rule).not.toBeNull();
@@ -48,6 +52,8 @@ describe('agent auth rules', () => {
 			['DELETE', `/agents/${id}`],
 			['POST', `/agents/${id}/authority`],
 			['DELETE', `/agents/${id}/authority/${id}`],
+			['POST', `/agents/${id}/payment-addresses`],
+			['DELETE', `/agents/${id}/payment-addresses/${id}`],
 		] as const) {
 			expect(
 				repository
@@ -74,6 +80,14 @@ describe('agent auth rules', () => {
 			['GET', `/agents/${id}/card/extra`],
 			['POST', '/verify/agent'],
 			['POST', '/v1/agents'],
+			['GET', `/agents/${id}/payment-addresses/${id}`],
+			['PUT', `/agents/${id}/payment-addresses`],
+			['POST', `/agents/${id}/payment-addresses/${id}`],
+			['GET', `/agents/${id}/payment-addresses/`],
+			['POST', `/agents/${id}/settlement`],
+			['DELETE', `/agents/${id}/settlement`],
+			['GET', `/admin/agents/${id}/settlement`],
+			['GET', `/agents/${id}/settlement/extra`],
 		] as const) {
 			expect(provider.match(requestFor(method, path, {}))).toBeNull();
 		}

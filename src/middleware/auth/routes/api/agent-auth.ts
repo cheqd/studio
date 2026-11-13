@@ -25,5 +25,14 @@ export class AgentAuthRuleProvider extends AuthRuleProvider {
 		this.registerRule('^/agents/[^/]+/authority/[^/]+$', 'DELETE', 'revoke:agent-authority', {
 			skipNamespace: true,
 		});
+		// x402, Proposed. Reading uses read:agent (no new Logto scope); binding and revoking need their own.
+		this.registerRule('^/agents/[^/]+/payment-addresses$', 'GET', 'read:agent', { skipNamespace: true });
+		this.registerRule('^/agents/[^/]+/payment-addresses$', 'POST', 'issue:agent-payment-address', {
+			skipNamespace: true,
+		});
+		this.registerRule('^/agents/[^/]+/payment-addresses/[^/]+$', 'DELETE', 'revoke:agent-payment-address', {
+			skipNamespace: true,
+		});
+		this.registerRule('^/agents/[^/]+/settlement$', 'GET', 'read:agent', { skipNamespace: true });
 	}
 }
