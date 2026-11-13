@@ -31,6 +31,7 @@ describe('agent auth rules', () => {
 		['DELETE', `/agents/${id}`, 'delete:agent'],
 		['POST', `/agents/${id}/card`, 'create:agent-card'],
 		['GET', `/agents/${id}/card`, 'read:agent-card'],
+		['GET', `/agents/${id}/authority`, 'read:agent'],
 		['POST', `/agents/${id}/authority`, 'issue:agent-authority'],
 		['DELETE', `/agents/${id}/authority/${id}`, 'revoke:agent-authority'],
 	])('%s %s needs exactly %s and is not open to anonymous callers', (method, path, scope) => {
@@ -65,7 +66,9 @@ describe('agent auth rules', () => {
 			['GET', '/admin/agents'],
 			['GET', '/did/agents'],
 			['POST', '/agentsx'],
-			['GET', `/agents/${id}/authority`],
+			['GET', `/agents/${id}/authority/${id}`],
+			['PUT', `/agents/${id}/authority`],
+			['GET', `/agents/${id}/authority/`],
 			['POST', `/agents/${id}/authority/${id}`],
 			['DELETE', `/agents/${id}/card`],
 			['GET', `/agents/${id}/card/extra`],

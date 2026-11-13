@@ -19,6 +19,8 @@ export class AgentAuthRuleProvider extends AuthRuleProvider {
 		this.registerRule('^/agents/[^/]+$', 'DELETE', 'delete:agent', { skipNamespace: true });
 		this.registerRule('^/agents/[^/]+/card$', 'POST', 'create:agent-card', { skipNamespace: true });
 		this.registerRule('^/agents/[^/]+/card$', 'GET', 'read:agent-card', { skipNamespace: true });
+		// Listing grants reads the agent, so it uses the existing read:agent scope (no new Logto scope to provision)
+		this.registerRule('^/agents/[^/]+/authority$', 'GET', 'read:agent', { skipNamespace: true });
 		this.registerRule('^/agents/[^/]+/authority$', 'POST', 'issue:agent-authority', { skipNamespace: true });
 		this.registerRule('^/agents/[^/]+/authority/[^/]+$', 'DELETE', 'revoke:agent-authority', {
 			skipNamespace: true,

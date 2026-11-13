@@ -656,6 +656,72 @@ export class AgentController {
 	 * @openapi
 	 *
 	 * /agents/{agentId}/authority:
+	 *   get:
+	 *     tags: [ Agents ]
+	 *     summary: List the authority grants of an agent.
+	 *     description: Returns every grant of the agent, live and revoked, newest first. A grant is `active`, `revoked` or `expired`. The credential itself is never returned here (it is returned once, when the grant is made). An agent that is not yours, or does not exist, is a 404.
+	 *     parameters:
+	 *       - name: agentId
+	 *         in: path
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           format: uuid
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               type: object
+	 *               properties:
+	 *                 grants:
+	 *                   type: array
+	 *                   items:
+	 *                     type: object
+	 *                     properties:
+	 *                       id:
+	 *                         type: string
+	 *                         format: uuid
+	 *                       grantType:
+	 *                         type: string
+	 *                         enum: [acts-for, tool-scope, mandate, delegation]
+	 *                       status:
+	 *                         type: string
+	 *                         enum: [active, revoked, expired]
+	 *                       createdAt:
+	 *                         type: string
+	 *                         format: date-time
+	 *                       expiresAt:
+	 *                         type: string
+	 *                         format: date-time
+	 *                         nullable: true
+	 *                       revokedAt:
+	 *                         type: string
+	 *                         format: date-time
+	 *                         nullable: true
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         $ref: '#/components/schemas/NotFoundError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public listAuthority = async (request: Request, response: Response) => {
+		return this.handle(request, response, async () => {
+			const grants = await (
+				await this.services()
+			).agents.listAuthority(response.locals.customer, request.params.agentId as string);
+			return response.status(StatusCodes.OK).json({ grants });
+		});
+	};
+
+	/**
+	 * @openapi
+	 *
+	 * /agents/{agentId}/authority:
 	 *   post:
 	 *     tags: [ Agents ]
 	 *     summary: Grant authority to an agent.

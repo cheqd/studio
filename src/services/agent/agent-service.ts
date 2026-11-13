@@ -259,6 +259,22 @@ export class AgentService {
 
 	// --- Authority ----------------------------------------------------------------------------------------
 
+	/** The agent's grants, newest first, with a status worked out from `revokedAt` and `expiresAt`. */
+	async listAuthority(customerIn: CustomerEntity | undefined, agentId: string) {
+		const customer = requireCustomer(customerIn);
+		await this.owned(customer, agentId);
+		const now = this.now();
+		const grants = await this.store.listGrants(customer.customerId, agentId);
+		return grants.map((grant) => ({
+			id: grant.id,
+			grantType: grant.grantType,
+			status: grant.revokedAt ? 'revoked' : grant.expiresAt && grant.expiresAt <= now ? 'expired' : 'active',
+			createdAt: grant.createdAt,
+			expiresAt: grant.expiresAt ?? null,
+			revokedAt: grant.revokedAt ?? null,
+		}));
+	}
+
 	async grantAuthority(
 		customerIn: CustomerEntity | undefined,
 		agentId: string,

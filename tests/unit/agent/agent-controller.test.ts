@@ -316,6 +316,96 @@ describe('cards and authority over HTTP', () => {
 		expect(revoked.body.revokedAt).toBeTruthy();
 	});
 
+	it('lists grants with a status and never returns the credential', async () => {
+		const { params } = await agentWithOrganisation();
+		const grantOf = async (body: Record<string, unknown>) =>
+			(
+				(
+					await call({
+						method: 'POST',
+						handler: 'grantAuthority',
+						validators: V.grantValidator,
+						params,
+						body,
+						customer: customerA,
+					})
+				).body.grant as { id: string }
+			).id;
+		const live = await grantOf({ grantType: 'tool-scope', tools: ['search'] });
+		const revoked = await grantOf({ grantType: 'acts-for' });
+		await call({
+			method: 'DELETE',
+			handler: 'revokeAuthority',
+			validators: V.revokeValidator,
+			params: { ...params, grantId: revoked },
+			customer: customerA,
+		});
+
+		const listed = await call({
+			method: 'GET',
+			handler: 'listAuthority',
+			validators: V.idValidator,
+			params,
+			customer: customerA,
+		});
+		expect(listed.status).toBe(200);
+		const grants = listed.body.grants as Array<Record<string, unknown>>;
+		expect(grants.map((g) => [g.id, g.status]).sort()).toEqual(
+			[
+				[live, 'active'],
+				[revoked, 'revoked'],
+			].sort()
+		);
+		for (const grant of grants) {
+			expect(Object.keys(grant).sort()).toEqual(
+				['createdAt', 'expiresAt', 'grantType', 'id', 'revokedAt', 'status'].sort()
+			);
+		}
+		expect(JSON.stringify(listed.body)).not.toMatch(/credential|eyJ|issuedCredentialId|statusList/i);
+	});
+
+	it('shows an expired grant as expired', async () => {
+		const { params } = await agentWithOrganisation();
+		await call({
+			method: 'POST',
+			handler: 'grantAuthority',
+			validators: V.grantValidator,
+			params,
+			body: { grantType: 'acts-for', expiresAt: new Date(Date.now() + 60_000).toISOString() },
+			customer: customerA,
+		});
+		for (const grant of store.grants.values()) grant.expiresAt = new Date(Date.now() - 1000);
+		const listed = await call({
+			method: 'GET',
+			handler: 'listAuthority',
+			validators: V.idValidator,
+			params,
+			customer: customerA,
+		});
+		expect((listed.body.grants as Array<{ status: string }>)[0].status).toBe('expired');
+	});
+
+	it("is 404 for another customer's agent and for an unknown agent, with the same body", async () => {
+		const { params } = await agentWithOrganisation();
+		const other = await call({
+			method: 'GET',
+			handler: 'listAuthority',
+			validators: V.idValidator,
+			params,
+			customer: customerB,
+		});
+		const unknown = await call({
+			method: 'GET',
+			handler: 'listAuthority',
+			validators: V.idValidator,
+			params: { agentId: '99999999-9999-4999-8999-999999999999' },
+			customer: customerB,
+		});
+		expect(other.status).toBe(404);
+		expect(unknown.status).toBe(404);
+		expect(other.body).toEqual(unknown.body);
+	});
+
 	it.each([
 		['an unknown grant type', { grantType: 'root' }],
 		['a bad expiry', { grantType: 'acts-for', expiresAt: 'tomorrow' }],
@@ -422,6 +512,15 @@ describe('cross-tenant refusal on every agent route: customer B gets 404 for cus
 				method: 'GET',
 				handler: 'getCard',
 				validators: V.getCardValidator,
+				params: { agentId: t.agentId },
+			}),
+		],
+		[
+			'GET /agents/{id}/authority',
+			(t) => ({
+				method: 'GET',
+				handler: 'listAuthority',
+				validators: V.idValidator,
 				params: { agentId: t.agentId },
 			}),
 		],

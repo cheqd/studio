@@ -92,6 +92,8 @@ export interface AgentStore {
 	countGrants(customerId: string, agentId: string, grantId: string): Promise<number>;
 	getGrant(customerId: string, agentId: string, grantId: string): Promise<AuthorityGrantWithStatus | null>;
 	listLiveGrants(customerId: string, agentId: string): Promise<AuthorityGrantWithStatus[]>;
+	/** Every grant of the agent (live and revoked), newest first. Rows only: no credential is loaded. */
+	listGrants(customerId: string, agentId: string): Promise<AuthorityGrantRecord[]>;
 	createGrant(grant: NewGrant): Promise<AuthorityGrantRecord>;
 	markGrantRevoked(customerId: string, agentId: string, grantId: string): Promise<AuthorityGrantWithStatus | null>;
 
@@ -288,6 +290,23 @@ export class TypeormAgentStore implements AgentStore {
 			relations: { issuedCredential: true, statusList: { identifier: true } },
 		});
 		return rows.filter((row) => !row.revokedAt).map((row) => toGrant(row, agentId, customerId));
+	}
+
+	async listGrants(customerId: string, agentId: string): Promise<AuthorityGrantRecord[]> {
+		need(customerId, agentId);
+		const rows = await this.db.getRepository(AuthorityGrantEntity).find({
+			where: { agent: { agentId }, customer: { customerId } },
+			order: { createdAt: 'DESC', id: 'ASC' },
+		});
+		return rows.map((row) => ({
+			id: row.id,
+			agentId,
+			customerId,
+			grantType: row.grantType,
+			expiresAt: row.expiresAt ?? null,
+			revokedAt: row.revokedAt ?? null,
+			createdAt: row.createdAt,
+		}));
 	}
 
 	async createGrant(grant: NewGrant): Promise<AuthorityGrantRecord> {
