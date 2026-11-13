@@ -545,4 +545,52 @@ describe('CredoEngine on Postgres', { skip }, () => {
 		await query(`DELETE FROM "customer" WHERE "customerId" = $1`, [dave]);
 		assert.equal(await count(), 0);
 	});
+
+	it('PUT /admin/flags: the flag and its adminAuditLog row commit together, and a failed audit rolls the flag back', async () => {
+		const flags = (await import('../../src/services/api/feature-flag.js')).FeatureFlagService.instance;
+		// `synchronize()` builds tables from entities and cannot express this expression index: the migration adds it
+		await query(
+			`CREATE UNIQUE INDEX IF NOT EXISTS "UQ_featureFlag_key_customer_route" ON "featureFlag" ("flagKey", COALESCE("customerId"::text, ''), COALESCE("route", ''))`
+		);
+		const write = {
+			flagKey: 'engine' as const,
+			customerId: customers.alice,
+			route: 'did' as const,
+			value: { engine: 'credo' },
+			reason: 'integration test',
+		};
+		await flags.setFlag({ ...write, value: { engine: 'veramo' } }, 'staff-a');
+		await flags.setFlag(write, 'staff-b');
+
+		const audit = await query<{
+			actorUserId: string;
+			action: string;
+			reason: string;
+			targetCustomerId: string;
+			metadata: { oldValue: unknown; newValue: unknown };
+		}>(`SELECT * FROM "adminAuditLog" WHERE "targetCustomerId" = $1 ORDER BY "createdAt"`, [customers.alice]);
+		assert.equal(audit.length, 2);
+		assert.equal(audit[1].actorUserId, 'staff-b');
+		assert.equal(audit[1].action, 'flag.set');
+		assert.equal(audit[1].reason, 'integration test');
+		assert.deepEqual(audit[1].metadata.oldValue, { engine: 'veramo' });
+		assert.deepEqual(audit[1].metadata.newValue, { engine: 'credo' });
+
+		// The cache was invalidated by the write: the next read on this instance sees the new row at once
+		const rows = await flags.rowsFor(customers.alice);
+		assert.deepEqual(rows.find((row: { route: string }) => row.route === 'did')?.value, { engine: 'credo' });
+
+		// An audit row that cannot be written (no actor) aborts the whole transaction: the flag keeps its value
+		await assert.rejects(flags.setFlag({ ...write, value: { engine: 'veramo' } }, null as never));
+		const [{ value }] = await query<{ value: { engine: string } }>(
+			`SELECT "value" FROM "featureFlag" WHERE "customerId" = $1 AND "route" = 'did'`,
+			[customers.alice]
+		);
+		assert.deepEqual(value, { engine: 'credo' });
+		const [{ n }] = await query<{ n: string }>(
+			`SELECT count(*) AS n FROM "adminAuditLog" WHERE "targetCustomerId" = $1`,
+			[customers.alice]
+		);
+		assert.equal(Number(n), 2);
+	});
 });

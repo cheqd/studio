@@ -1,3 +1,4 @@
+import { requestContext } from './middleware/request-context.js';
 import express from 'express';
 import Helmet from 'helmet';
 import cors from 'cors';
@@ -98,6 +99,8 @@ class App {
 			})
 		);
 		this.express.use(cookieParser());
+		// Request id, timing and the engine-routing log line (engine spec 4.3)
+		this.express.use(requestContext);
 		const auth = new Authentication();
 		// EventTracking
 		this.express.use(new ResponseTracker().trackJson);

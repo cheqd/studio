@@ -3,6 +3,8 @@ import type { IdentityEngine } from './identity-engine.js';
 import { getCredoEngine } from './credo/factory.js';
 import { VeramoEngine } from './veramo-engine.js';
 import { DEFAULT_ENGINE, isEngineName } from './types.js';
+import { currentRequestContext } from '../../request-context.js';
+import { logRoutingOutcome } from './routing-log.js';
 import { EngineGoneError } from './errors.js';
 import type { ArtifactRef, EngineName, EngineRoute, RoutedFamily } from './types.js';
 
@@ -30,7 +32,7 @@ export interface EngineDecisionContext {
 export type EngineDecisionReason = 'artifact' | 'flag' | 'exception' | 'default';
 
 /** Which exception fired, when `reason` is `exception` (engine spec 4.1). */
-export type EngineExceptionRule = 'agent-route' | 'p256-key';
+export type EngineExceptionRule = 'agent-route' | 'p256-key' | 'encrypted-status-list';
 
 export interface EngineDecision {
 	engine: EngineName;
@@ -93,8 +95,45 @@ export class EngineRouter {
 	}
 
 	async engineFor(context: EngineDecisionContext, service: IIdentityService): Promise<IdentityEngine> {
-		const { engine } = await this.decide(context);
-		return this.factories[engine](service);
+		let decision: EngineDecision;
+		try {
+			decision = await this.decide(context);
+		} catch (error) {
+			if (error instanceof EngineGoneError)
+				this.record(context, { engine: 'none', reason: 'exception', rule: 'encrypted-status-list' });
+			throw error;
+		}
+		this.record(context, decision);
+		return this.factories[decision.engine](service);
+	}
+
+	/**
+	 * Notes the decision on the request, so the one log line (with outcome and duration) is written when the
+	 * response is sent and the operation row gets its `engine`. Outside a request there is no outcome to wait for,
+	 * so the line is written at once. Nothing here can fail the request.
+	 */
+	private record(context: EngineDecisionContext, decision: { engine: string; reason: string; rule?: string }): void {
+		try {
+			const record = {
+				routeFamily: context.route,
+				engine: decision.engine,
+				reason: decision.reason,
+				rule: decision.rule,
+				customerId: context.customerId,
+			};
+			const request = currentRequestContext();
+			if (request) {
+				request.decisions.push(record);
+				if (context.customerId) request.customerId = context.customerId;
+			} else {
+				logRoutingOutcome(
+					{ requestId: 'none', startedAt: Date.now(), decisions: [record], customerId: context.customerId },
+					{}
+				);
+			}
+		} catch {
+			/* ignore */
+		}
 	}
 
 	private async safely(read: () => Promise<unknown>): Promise<unknown> {

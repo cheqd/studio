@@ -64,23 +64,8 @@ export class FlagsAdminController {
 
 		const actor: string = response.locals.user?.logToId || response.locals.customer?.customerId || 'unknown';
 		try {
-			const stored = await FeatureFlagService.instance.upsert(validation.write, actor);
-			// TODO: write to the `adminAuditLog` table (migration plan, section 6.3) once it exists. Until then the
-			// audit record is the structured log line below.
-			console.info(
-				JSON.stringify({
-					event: 'admin-audit',
-					action: 'flag.set',
-					actorUserId: actor,
-					targetCustomerId: validation.write.customerId,
-					reason: validation.write.reason,
-					metadata: {
-						flagKey: validation.write.flagKey,
-						route: validation.write.route,
-						value: validation.write.value,
-					},
-				})
-			);
+			// The flag and its `adminAuditLog` row are written in one transaction (engine spec 4.2)
+			const { flag: stored } = await FeatureFlagService.instance.setFlag(validation.write, actor);
 			return response.status(StatusCodes.OK).json({ flag: stored });
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

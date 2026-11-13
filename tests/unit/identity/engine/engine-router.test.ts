@@ -1,4 +1,4 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { EngineRouter } from '../../../../src/services/identity/engine/engine-router.js';
 import type {
 	ArtifactEngineLookup,
@@ -14,6 +14,11 @@ import { isP256KeyType } from '../../../../src/services/identity/engine/engine-r
 import { VeramoEngine } from '../../../../src/services/identity/engine/veramo-engine.js';
 import type { IIdentityService } from '../../../../src/services/identity/index.js';
 import type { EngineName } from '../../../../src/services/identity/engine/types.js';
+
+beforeEach(() => {
+	// Routing decisions made outside a request are logged at once; keep the test output quiet
+	jest.spyOn(console, 'info').mockImplementation(() => undefined);
+});
 
 const did = { kind: 'did', id: 'did:cheqd:testnet:abc' } as const;
 
