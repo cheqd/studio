@@ -1,5 +1,5 @@
 {
-	"generatedFrom": "fde6d77",
+	"generatedFrom": "1f8836b",
 	"generatedBy": "npx tsx tests/contract/scripts/generate-inventory.ts",
 	"routes": [
 		{
@@ -237,6 +237,20 @@
 			"sideEffect": "read-only",
 			"sensitive": false,
 			"stripeOnly": true,
+			"inRouteTable": true,
+			"inOpenApi": true
+		},
+		{
+			"id": "PUT /admin/flags",
+			"method": "PUT",
+			"path": "/admin/flags",
+			"surface": "admin",
+			"auth": "scoped",
+			"scopes": ["admin:flags:update"],
+			"tier": 2,
+			"sideEffect": "state-database",
+			"sensitive": false,
+			"stripeOnly": false,
 			"inRouteTable": true,
 			"inOpenApi": true
 		},
@@ -891,6 +905,20 @@
 			"surface": "api",
 			"auth": "scoped",
 			"scopes": ["list:event:mainnet", "list:event:testnet"],
+			"tier": 2,
+			"sideEffect": "read-only",
+			"sensitive": false,
+			"stripeOnly": false,
+			"inRouteTable": true,
+			"inOpenApi": true
+		},
+		{
+			"id": "GET /flags",
+			"method": "GET",
+			"path": "/flags",
+			"surface": "api",
+			"auth": "no-rule",
+			"scopes": [],
 			"tier": 2,
 			"sideEffect": "read-only",
 			"sensitive": false,

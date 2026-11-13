@@ -737,6 +737,84 @@
         }
       }
     },
+    "/admin/flags": {
+      "put": {
+        "summary": "Set a feature flag (staff only).",
+        "description": "Creates or replaces one flag, either global or for one customer. Every change is audited.",
+        "tags": [
+          "Flags"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "flagKey",
+                  "value",
+                  "reason"
+                ],
+                "properties": {
+                  "flagKey": {
+                    "type": "string",
+                    "enum": [
+                      "engine",
+                      "ui"
+                    ]
+                  },
+                  "customerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Omit for a global flag."
+                  },
+                  "route": {
+                    "type": "string",
+                    "enum": [
+                      "did",
+                      "resource",
+                      "credential",
+                      "status-list",
+                      "key",
+                      "presentation",
+                      "verify"
+                    ],
+                    "description": "Engine flags only. Omit to apply to every route."
+                  },
+                  "value": {
+                    "type": "object",
+                    "example": {
+                      "engine": "veramo"
+                    }
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The flag was stored."
+          },
+          "400": {
+            "description": "The request body failed validation."
+          },
+          "401": {
+            "description": "Unauthorised."
+          },
+          "403": {
+            "description": "The caller is not staff."
+          },
+          "500": {
+            "description": "An internal error has occurred."
+          }
+        }
+      }
+    },
     "/admin/organisation/update": {
       "post": {
         "summary": "Update an organisation",

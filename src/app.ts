@@ -30,6 +30,8 @@ import { PriceController } from './controllers/admin/prices.js';
 import { WebhookController } from './controllers/admin/webhook.js';
 import { APIKeyController } from './controllers/admin/api-key.js';
 import { OrganisationController } from './controllers/admin/organisation.js';
+import { FlagsController } from './controllers/api/flags.js';
+import { FlagsAdminController } from './controllers/admin/flags.js';
 import { AccreditationController } from './controllers/api/accreditation.js';
 import { OperationController } from './controllers/api/operation.js';
 import { ProvidersController } from './controllers/api/providers.controller.js';
@@ -337,6 +339,10 @@ class App {
 			ProvidersController.importDIDValidator,
 			new ProvidersController().importDid
 		);
+
+		// Feature flags
+		app.get('/flags', new FlagsController().getFlags);
+		app.put('/admin/flags', new FlagsAdminController().putFlag);
 
 		// LogTo user info
 		app.get('/auth/user-info', async (req, res) => {

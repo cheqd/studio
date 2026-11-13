@@ -5955,6 +5955,70 @@
         }
       }
     },
+    "/flags": {
+      "get": {
+        "summary": "Fetch the feature flags that apply to the caller.",
+        "description": "Returns the global defaults with the caller's own overrides applied. `ui` is `classic` unless a flag says otherwise, and every engine route is `veramo` unless a flag says otherwise.",
+        "tags": [
+          "Account"
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ui": {
+                      "type": "string",
+                      "enum": [
+                        "classic",
+                        "new"
+                      ],
+                      "example": "classic"
+                    },
+                    "engine": {
+                      "type": "object",
+                      "properties": {
+                        "default": {
+                          "type": "string",
+                          "enum": [
+                            "veramo",
+                            "credo"
+                          ],
+                          "example": "veramo"
+                        },
+                        "routes": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string",
+                            "enum": [
+                              "veramo",
+                              "credo"
+                            ]
+                          },
+                          "example": {
+                            "did": "veramo",
+                            "credential": "veramo"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
     "/key/create": {
       "post": {
         "tags": [
