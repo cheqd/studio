@@ -2102,6 +2102,11 @@
  *          type: string
  *         primaryEmail:
  *          type: string
+ *         source:
+ *          type: string
+ *          pattern: '^[a-z0-9][a-z0-9-]{0,31}$'
+ *          maxLength: 32
+ *          description: Optional label for where the account came from, stored for reporting (for example `studio`, `sdk`, `agent-quickstart`, `agent`). Lower-case letters, digits and hyphens only; anything else is rejected with 400.
  *     AccountCreateResponse:
  *       type: object
  *       properties:

@@ -7,6 +7,7 @@ import { IssuedCredentialEntity } from '../../database/entities/issued-credentia
 import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
 import { IdentifierEntity } from '../../database/entities/identifier.entity.js';
 import { CustomerEntity } from '../../database/entities/customer.entity.js';
+import { recordActivation } from '../analytics/activation.js';
 import { StatusRegistryState } from '../../types/credential-status.js';
 import { CredentialCategory } from '../../types/credential.js';
 import type {
@@ -185,6 +186,9 @@ export class TypeormAgentStore implements AgentStore {
 				status: 'active',
 			})
 		);
+		// Registering an agent creates its DID too. Idempotent and never throws (#869).
+		await recordActivation(agent.customerId, 'first_did_created');
+		await recordActivation(agent.customerId, 'first_agent_registered');
 		return toAgent({ ...saved, identifier: { did: agent.did } } as never, agent.customerId);
 	}
 
@@ -417,6 +421,7 @@ export class TypeormAgentStore implements AgentStore {
 		entity.engine = 'credo';
 		entity.listFormat = TOKEN_STATUS_LIST;
 		const saved = await repository.save(entity);
+		await recordActivation(list.customerId, 'first_status_list_created');
 		return {
 			registryId: saved.registryId,
 			uri: list.uri,

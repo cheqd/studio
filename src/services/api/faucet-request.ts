@@ -160,6 +160,7 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 			minIntervalSeconds = 0,
 			pendingTimeoutSeconds = FAUCET_PENDING_TIMEOUT_SECONDS,
 			addressCap,
+			source,
 		}: FaucetReserveOptions,
 		nowOverride?: Date
 	): Promise<FaucetReservation> {
@@ -228,7 +229,9 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 				}
 			}
 
-			const entity = await manager.save(new FaucetRequestEntity(customer, address, amountNcheq));
+			const request = new FaucetRequestEntity(customer, address, amountNcheq);
+			if (source) request.source = source;
+			const entity = await manager.save(request);
 			return { reserved: true, faucetRequestId: entity.faucetRequestId, usedNcheq, window } as const;
 		});
 		this.maybeRunRetentionCleanup();

@@ -18,6 +18,7 @@ import type { Coin } from '@cosmjs/amino';
 import { CoinService } from '../api/coin.js';
 import { PaymentAccountService } from '../api/payment-account.js';
 import { operationRouting } from './operation-routing.js';
+import { recordActivation, type ActivationMilestone } from '../analytics/activation.js';
 
 export class DBOperationSubscriber extends BaseOperationObserver implements IObserver {
 	protected logSeverity: LogLevelDesc = 'debug';
@@ -137,6 +138,12 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 				throw new Error(`Operation ${trackOperation.name} was not written to DB`);
 			}
 
+			// Activation milestones (#869). Idempotent and never throws, so it cannot fail this operation.
+			const milestone = activationMilestoneFor(trackOperation.name);
+			if (milestone && trackOperation.successful) {
+				await recordActivation(trackOperation.customer?.customerId, milestone);
+			}
+
 			// Track payments
 			if (trackOperation.feePaymentOptions) {
 				const operationWithPayment = new TrackOperationWithPayment(trackOperation);
@@ -161,4 +168,16 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 			} satisfies ITrackResult;
 		}
 	}
+}
+
+const ACTIVATION_BY_OPERATION: Partial<Record<string, ActivationMilestone>> = {
+	[OperationNameEnum.DID_CREATE]: 'first_did_created',
+	[OperationNameEnum.CREDENTIAL_ISSUE]: 'first_credential_issued',
+	[OperationNameEnum.CREDENTIAL_STATUS_CREATE_UNENCRYPTED]: 'first_status_list_created',
+	[OperationNameEnum.CREDENTIAL_STATUS_CREATE_ENCRYPTED]: 'first_status_list_created',
+};
+
+/** The activation milestone an operation counts towards, if any. */
+export function activationMilestoneFor(operationName: string): ActivationMilestone | undefined {
+	return ACTIVATION_BY_OPERATION[operationName];
 }
