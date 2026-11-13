@@ -222,11 +222,9 @@ export class ReceivedCredentials {
 			const verificationOptions: VerificationOptions = {
 				verifyStatus: true,
 			};
-			const verification: IVerifyResult = await identityService.agent.verifyCredential(
-				credential,
-				verificationOptions,
-				customer
-			);
+			const verification: IVerifyResult = await (
+				await identityService.routed('credential')
+			).verifyCredential(credential, verificationOptions, customer);
 
 			if (!verification.verified) {
 				throw new Error(`Invalid credential: ${verification.error}`);
@@ -366,7 +364,7 @@ export class ReceivedCredentials {
 	private async getHolderDids(customer: CustomerEntity): Promise<string[]> {
 		try {
 			const identityService = new IdentityServiceStrategySetup(customer.customerId);
-			const agent = identityService.agent;
+			const agent = await identityService.routed('did');
 
 			if (!agent) {
 				throw new Error('Agent not initialized');
@@ -395,7 +393,7 @@ export class ReceivedCredentials {
 		domain?: string
 	): Promise<string> {
 		try {
-			const identityService = new IdentityServiceStrategySetup(customer.customerId).agent;
+			const identityService = await new IdentityServiceStrategySetup(customer.customerId).routed('presentation');
 
 			const presentationPayload: PresentationPayload = {
 				holder: holderDid,
@@ -431,13 +429,17 @@ export class ReceivedCredentials {
 		holderDid: string
 	): Promise<{ success: boolean; credentialHash: string; credential: VerifiableCredential }> {
 		try {
-			const identityService = new IdentityServiceStrategySetup(customer.customerId).agent;
+			const identityService = new IdentityServiceStrategySetup(customer.customerId);
+			// The hash-keyed data store calls below stay on the Veramo service (no engine is recorded per hash)
+			const dataStore = identityService.agent;
 
 			// Verify the credential first
 			const verificationOptions: VerificationOptions = {
 				verifyStatus: false, // Don't verify status for external credentials
 			};
-			const verification = await identityService.verifyCredential(credential, verificationOptions, customer);
+			const verification = await (
+				await identityService.routed('credential')
+			).verifyCredential(credential, verificationOptions, customer);
 
 			if (!verification.verified) {
 				throw new Error(`Invalid credential: ${verification.error}`);
@@ -467,7 +469,7 @@ export class ReceivedCredentials {
 			}
 
 			// Save to Veramo dataStore only
-			const credentialHash = await identityService.saveCredential(parsedCredential, customer);
+			const credentialHash = await dataStore.saveCredential(parsedCredential, customer);
 
 			return {
 				success: true,

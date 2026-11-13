@@ -10,6 +10,7 @@ import {
 	type CredentialRequest,
 } from '../../types/credential.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
+import { credentialArtifact } from '../identity/engine/artifact-refs.js';
 import { v4 } from 'uuid';
 import * as dotenv from 'dotenv';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
@@ -153,9 +154,12 @@ export class Credentials {
 					const existingIssuer = await dock.getDid(issuerDid, customer).catch(() => undefined);
 					if (!existingIssuer) {
 						// export from wallet
-						const exportResult = await new IdentityServiceStrategySetup(
-							customer.customerId
-						).agent.exportDid(issuerDid, process.env.PROVIDER_EXPORT_PASSWORD || '', customer);
+						const exportResult = await (
+							await new IdentityServiceStrategySetup(customer.customerId).routed('did', {
+								kind: 'did',
+								id: issuerDid,
+							})
+						).exportDid(issuerDid, process.env.PROVIDER_EXPORT_PASSWORD || '', customer);
 						// import into provider
 						await dock.importDidV2(issuerDid, exportResult, process.env.PROVIDER_EXPORT_PASSWORD, customer);
 					}
@@ -176,7 +180,7 @@ export class Credentials {
 				default: {
 					const studioService = new IdentityServiceStrategySetup(customer.customerId);
 					const verifiable_credential = (await (
-						await studioService.engine('credential')
+						await studioService.routed('credential')
 					).createCredential(
 						credential as never,
 						format,
@@ -227,7 +231,9 @@ export class Credentials {
 					}
 
 					// Check if subject DID exists in Veramo's identifier store
-					isSubjectInDatabase = await studioService.agent.didExists(subjectDid, customer);
+					isSubjectInDatabase = await (
+						await studioService.routed('did', { kind: 'did', id: subjectDid })
+					).didExists(subjectDid, customer);
 
 					// If subject DID is in database, store credential in Veramo's dataStore
 					if (isSubjectInDatabase) {
@@ -813,9 +819,14 @@ export class Credentials {
 					if (entity.credentialStatus) {
 						const status = entity.credentialStatus;
 						const studioService = new IdentityServiceStrategySetup(customer.customerId);
+						// The credential row is known, so its recorded engine decides
+						const statusEngine = await studioService.routed(
+							'status-list',
+							credentialArtifact(entity.issuedCredentialId)
+						);
 						if (status.type === 'StatusList2021Entry') {
 							const url = new URL(status.id);
-							const currentStatus = await studioService.agent.checkStatusList2021(
+							const currentStatus = await statusEngine.checkStatusList2021(
 								entity.issuerId || '',
 								{
 									...status,
@@ -829,7 +840,7 @@ export class Credentials {
 								newStatus = currentStatus.revoked ? 'revoked' : 'issued';
 							}
 						} else {
-							const currentStatus = (await studioService.agent.checkBitstringStatusList(
+							const currentStatus = (await statusEngine.checkBitstringStatusList(
 								entity.issuerId || '',
 								status as CheqdCredentialStatus,
 								customer
@@ -887,7 +898,9 @@ export class Credentials {
 				}
 				case 'studio': {
 					const studioService = new IdentityServiceStrategySetup(customer.customerId);
-					return await studioService.agent.getCredential(credentialId, customer);
+					return await (
+						await studioService.routed('credential', credentialArtifact(entity.issuedCredentialId))
+					).getCredential(credentialId, customer);
 				}
 				default:
 					console.warn(`Credential fetch not supported for provider: ${entity.providerId}`);
@@ -910,7 +923,9 @@ export class Credentials {
 		let verificationResult: IVerifyResult;
 
 		const studioService = new IdentityServiceStrategySetup(customer.customerId);
-		verificationResult = await studioService.agent.verifyCredential(credential, verificationOptions, customer);
+		verificationResult = (await (
+			await studioService.routed('credential')
+		).verifyCredential(credential as never, verificationOptions as never, customer)) as unknown as IVerifyResult;
 
 		// Only check external providers if customer is authenticated
 		if (verificationOptions.policies?.checkExternalProvider) {
