@@ -121,6 +121,27 @@ describe('GET /flags controller', () => {
 		expect(res.statusCode).toBe(200);
 	});
 
+	it("includes the caller's own customerId and nothing else about the account", async () => {
+		const res = fakeResponse({ customer: { customerId: 'c1', email: 'x@example.com', name: 'X' } });
+		await new FlagsController().getFlags(requestFor('GET', '/flags'), res as unknown as Response);
+		expect(res.body).toEqual({ ui: 'classic', customerId: 'c1' });
+	});
+
+	it('omits customerId (not null) when the request has no customer', async () => {
+		const res = fakeResponse({});
+		await new FlagsController().getFlags(requestFor('GET', '/flags'), res as unknown as Response);
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toEqual({ ui: 'classic' });
+		expect(Object.keys(res.body as object)).not.toContain('customerId');
+	});
+
+	it('still includes customerId when the flag store is unavailable', async () => {
+		flagsFor.mockRejectedValueOnce(new Error('down') as never);
+		const res = fakeResponse({ customer: { customerId: 'c1' } });
+		await new FlagsController().getFlags(requestFor('GET', '/flags'), res as unknown as Response);
+		expect(res.body).toMatchObject({ customerId: 'c1', ui: 'classic' });
+	});
+
 	it('answers with defaults (ui classic, veramo) when the flag store is unavailable', async () => {
 		flagsFor.mockRejectedValueOnce(new Error('relation "featureFlag" does not exist') as never);
 		const res = fakeResponse({ customer: { customerId: 'c1' } });

@@ -31,6 +31,7 @@ import { IdempotencyKeyEntity } from '../entities/idempotency-key.entity.js';
 import { AdminAuditLogEntity } from '../entities/admin-audit-log.entity.js';
 import { EngineDiffEntity } from '../entities/engine-diff.entity.js';
 import { EngineMigrationEntity } from '../entities/engine-migration.entity.js';
+import { CustomerActivationEntity } from '../entities/customer-activation.entity.js';
 
 import { CreatePaymentTable1695740345977 } from '../migrations/archive/CreatePaymentTable.js';
 import { CreateOperationTable1695740345977 } from '../migrations/archive/CreateOperationTable.js';
@@ -83,6 +84,9 @@ import { StudioMigrations1791700900000 } from '../migrations/1791700900000-studi
 import { StudioMigrations1791701000000 } from '../migrations/1791701000000-studio-migrations.js';
 import { StudioMigrations1791701100000 } from '../migrations/1791701100000-studio-migrations.js';
 import { StudioMigrations1791701200000 } from '../migrations/1791701200000-studio-migrations.js';
+import { StudioMigrations1791701300000 } from '../migrations/1791701300000-studio-migrations.js';
+import { StudioMigrations1791701400000 } from '../migrations/1791701400000-studio-migrations.js';
+import { StudioMigrations1791701500000 } from '../migrations/1791701500000-studio-migrations.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -213,6 +217,12 @@ export class Postgres implements AbstractDatabase {
 				StudioMigrations1791701100000,
 				// Add idempotencyKey table
 				StudioMigrations1791701200000,
+				// Add operation and key indexes for the staff analytics queries
+				StudioMigrations1791701300000,
+				// Add source to customer and faucetRequest
+				StudioMigrations1791701400000,
+				// Add customerActivation table (activation milestones)
+				StudioMigrations1791701500000,
 			],
 			entities: [
 				...Entities,
@@ -243,6 +253,7 @@ export class Postgres implements AbstractDatabase {
 				EngineDiffEntity,
 				EngineMigrationEntity,
 				IdempotencyKeyEntity,
+				CustomerActivationEntity,
 			],
 			logging: ['error', 'info', 'warn'],
 		});

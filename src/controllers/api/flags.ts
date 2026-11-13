@@ -19,6 +19,10 @@ export class FlagsController {
 	 *             schema:
 	 *               type: object
 	 *               properties:
+	 *                 customerId:
+	 *                   type: string
+	 *                   format: uuid
+	 *                   description: The caller's own Studio customer id, used as the analytics identifier. Omitted when the request has no customer. Nothing else about the account is returned.
 	 *                 ui:
 	 *                   type: string
 	 *                   enum: [classic, new]
@@ -45,11 +49,14 @@ export class FlagsController {
 	 */
 	public async getFlags(_request: Request, response: Response) {
 		const customerId: string | undefined = response.locals.customer?.customerId;
+		// Only the caller's own id, and only when there is one (never null)
+		const identity = customerId ? { customerId } : {};
 		try {
-			return response.status(StatusCodes.OK).json(await FeatureFlagService.instance.flagsFor(customerId));
+			const flags = await FeatureFlagService.instance.flagsFor(customerId);
+			return response.status(StatusCodes.OK).json({ ...flags, ...identity });
 		} catch {
 			// The featureFlag table may not exist yet (or there is no external database): answer with the defaults.
-			return response.status(StatusCodes.OK).json(resolveFlags([], customerId));
+			return response.status(StatusCodes.OK).json({ ...resolveFlags([], customerId), ...identity });
 		}
 	}
 }

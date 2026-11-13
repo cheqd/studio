@@ -376,6 +376,12 @@ export class FakeStore implements AgentStore {
 			(g) => g.customerId === customerId && g.agentId === agentId && !g.revokedAt
 		);
 	}
+	async listGrants(customerId: string, agentId: string) {
+		this.note('listGrants', customerId);
+		return [...this.grants.values()]
+			.filter((g) => g.customerId === customerId && g.agentId === agentId)
+			.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+	}
 	async createGrant(input: NewGrant): Promise<AuthorityGrantRecord> {
 		this.note('createGrant', input.customerId);
 		const list = input.statusListId ? this.lists.get(input.statusListId) : undefined;

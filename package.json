@@ -119,6 +119,7 @@
 		"patch-package": "^8.0.1",
 		"pg": "^8.15.6",
 		"pg-connection-string": "^2.8.5",
+		"posthog-node": "^4.18.0",
 		"secp256k1": "^5.0.1",
 		"sqlite3": "^5.1.7",
 		"stripe": "^14.25.0",

@@ -7,6 +7,7 @@ import { IssuedCredentialEntity } from '../../database/entities/issued-credentia
 import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
 import { IdentifierEntity } from '../../database/entities/identifier.entity.js';
 import { CustomerEntity } from '../../database/entities/customer.entity.js';
+import { recordActivation } from '../analytics/activation.js';
 import { StatusRegistryState } from '../../types/credential-status.js';
 import { CredentialCategory } from '../../types/credential.js';
 import type {
@@ -91,6 +92,8 @@ export interface AgentStore {
 	countGrants(customerId: string, agentId: string, grantId: string): Promise<number>;
 	getGrant(customerId: string, agentId: string, grantId: string): Promise<AuthorityGrantWithStatus | null>;
 	listLiveGrants(customerId: string, agentId: string): Promise<AuthorityGrantWithStatus[]>;
+	/** Every grant of the agent (live and revoked), newest first. Rows only: no credential is loaded. */
+	listGrants(customerId: string, agentId: string): Promise<AuthorityGrantRecord[]>;
 	createGrant(grant: NewGrant): Promise<AuthorityGrantRecord>;
 	markGrantRevoked(customerId: string, agentId: string, grantId: string): Promise<AuthorityGrantWithStatus | null>;
 
@@ -185,6 +188,9 @@ export class TypeormAgentStore implements AgentStore {
 				status: 'active',
 			})
 		);
+		// Registering an agent creates its DID too. Idempotent and never throws (#869).
+		await recordActivation(agent.customerId, 'first_did_created');
+		await recordActivation(agent.customerId, 'first_agent_registered');
 		return toAgent({ ...saved, identifier: { did: agent.did } } as never, agent.customerId);
 	}
 
@@ -284,6 +290,23 @@ export class TypeormAgentStore implements AgentStore {
 			relations: { issuedCredential: true, statusList: { identifier: true } },
 		});
 		return rows.filter((row) => !row.revokedAt).map((row) => toGrant(row, agentId, customerId));
+	}
+
+	async listGrants(customerId: string, agentId: string): Promise<AuthorityGrantRecord[]> {
+		need(customerId, agentId);
+		const rows = await this.db.getRepository(AuthorityGrantEntity).find({
+			where: { agent: { agentId }, customer: { customerId } },
+			order: { createdAt: 'DESC', id: 'ASC' },
+		});
+		return rows.map((row) => ({
+			id: row.id,
+			agentId,
+			customerId,
+			grantType: row.grantType,
+			expiresAt: row.expiresAt ?? null,
+			revokedAt: row.revokedAt ?? null,
+			createdAt: row.createdAt,
+		}));
 	}
 
 	async createGrant(grant: NewGrant): Promise<AuthorityGrantRecord> {
@@ -417,6 +440,7 @@ export class TypeormAgentStore implements AgentStore {
 		entity.engine = 'credo';
 		entity.listFormat = TOKEN_STATUS_LIST;
 		const saved = await repository.save(entity);
+		await recordActivation(list.customerId, 'first_status_list_created');
 		return {
 			registryId: saved.registryId,
 			uri: list.uri,
