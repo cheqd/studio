@@ -1,0 +1,102 @@
+# Engine routing
+
+Every identity operation that signs, verifies, reads the ledger or stores a key reaches its engine through the
+`EngineRouter` (`src/services/identity/engine/engine-router.ts`). Veramo is the default engine, so with no feature flag
+and no `engine` column set every request is answered by Veramo exactly as before.
+
+## How a call site selects an engine
+
+```ts
+const setup = new IdentityServiceStrategySetup(customer.customerId);
+const engine = await setup.engine(route, artifact, hints); // IdentityEngine
+const service = await setup.routed(route, artifact, hints); // same engine, typed as Veramo-shaped RoutedService
+```
+
+- `route` is the route family (the unit a feature flag switches): `key`, `did`, `resource`, `credential`,
+  `presentation`, `status-list`. The `agent` families are Credo only and are routed in `src/services/agent/index.ts`.
+- `artifact` is an existing artifact, so its recorded engine wins and flags are ignored:
+  - `{ kind: 'did', id: <did> }` reads `identifier.engine`
+  - `{ kind: 'status-list', id: <statusRegistry.registryId> }` reads `statusRegistry.engine`
+  - `{ kind: 'credential', id: <issuedCredential.issuedCredentialId> }` reads `issuedCredential.engine`
+  - No artifact means a new artifact: the `featureFlag` for the customer and route, else `veramo`.
+- `hints` carries what the router needs for its exceptions: `keyType` (P-256 / `Secp256r1` / `JsonWebKey` always goes
+  to Credo) and `encryptedStatusList` (creation answers `Gone`, 410, on every engine).
+- `src/services/identity/engine/artifact-refs.ts` turns what a caller knows (a DID and a status-list name, or a
+  credential) into the artifact reference. Those lookups are best effort: with no external database, no row or a
+  failing query they return nothing and the router uses the default. They never fail a request.
+
+## Routes
+
+"Wired" means the engine-type call goes through the router. The Veramo engine delegates every call unchanged to the
+existing service, so wiring changes no request, response or status code.
+
+| Route | Family | Artifact reference | Wired |
+|---|---|---|---|
+| `POST /key/create` | `key` | none (new); `keyType` hint, so P-256 / `Secp256r1` / `JsonWebKey` go to Credo | Yes |
+| `POST /key/import` | `key` | none (new); `keyType` hint | Yes |
+| `GET /key/read/:kid` | `key` | none (keys have no artifact kind; the `key` table is shared by both engines) | Yes |
+| `GET /key/:kid/verification-method` | `key` | none, as above | Yes |
+| `POST /did/create` (key creation inside) | `key` | none, `keyType: Ed25519` | Yes |
+| `POST /did/create` (DID creation) | `did` | none (new) | Yes (already) |
+| `POST /did/update` | `did` | `did` | Yes (already) |
+| `POST /did/deactivate/:did` | `did` | `did` | Yes (already) |
+| `POST /did/import` | `did` | none (new to Studio) | Yes |
+| `GET /did/list` | `did` | none | Yes |
+| `POST /did/export/:did` | `did` | `did` | Yes |
+| `POST /account/export-keys` (DID export) | `did` | `did` | Yes |
+| `POST /providers/:providerId/did/import` (Dock hand-off export, in `dock/identity.ts`) | `did` | `did` | Yes |
+| `POST /resource/create/:did` | `resource` | `did` (the DID owning the resource) | Yes |
+| `GET /resource/list` | `resource` | `did` when the `did` filter is given, else none | Yes |
+| `POST /credential/issue` | `credential` | none (new) | Yes (already) |
+| `POST /credentials/issued/:id/re-issue`, accreditation issue | `credential` | none (new) | Yes (already, through `issue_credential`) |
+| `POST /credential/verify` | `credential` | none | Yes |
+| Issued-credential status sync (`syncStatusFromProvider`, run when issued credentials are read) | `status-list` | `credential` | Yes |
+| Issued-credential fetch from the provider (`fetchCredentialFromProvider`) | `credential` | `credential` | Yes |
+| `POST /credentials/offers/:credentialId/accept` (verify) | `credential` | none | Yes |
+| `POST /credentials/import` (verify) | `credential` | none | Yes |
+| Received-credential holder DIDs (`getHolderDids`) | `did` | none | Yes |
+| Received-credential presentation (`createPresentation` helper) | `presentation` | none | Yes |
+| `POST /presentation/create` | `presentation` | none | Yes |
+| `POST /presentation/verify` (verify, status-list fee setup, fee payment) | `presentation` | none | Yes |
+| `POST /credential-status/create/unencrypted` (create, broadcast) | `status-list` | none (new) | Yes |
+| `POST /credential-status/create/encrypted` | `status-list` | none; `encryptedStatusList` hint, so `410 Gone` | Yes (intentional behaviour change, see below) |
+| `POST /credential-status/update/unencrypted` | `status-list` | `statusRegistry` found by DID and list name | Yes |
+| `POST /credential-status/update/encrypted` | `status-list` | `statusRegistry` found by DID and list name | Yes |
+| `POST /credential-status/check` (search, fee payment, check) | `status-list` | `statusRegistry` found by DID and list name | Yes |
+| `GET /credential-status/search` | `status-list` | `statusRegistry` found by DID and list name | Yes |
+| `POST /credential/revoke` | `status-list` | `statusRegistry` found from the credential's issuer and status entry | Yes |
+| `POST /credential/suspend` | `status-list` | as above | Yes |
+| `POST /credential/reinstate` | `status-list` | as above | Yes |
+| `POST /trust-registry/accreditation/verify` | `credential` | none | Yes |
+| `POST /trust-registry/accreditation/revoke` | `status-list` | `statusRegistry` found from the accreditation | Yes |
+| `POST /trust-registry/accreditation/suspend` | `status-list` | as above | Yes |
+| `POST /trust-registry/accreditation/reinstate` | `status-list` | as above | Yes |
+| `POST /agents*` | `agent` | none; Credo only | Yes (already) |
+
+## Deliberately not wired
+
+| Call site | Why |
+|---|---|
+| `resolveDid` and `resolve` (`GET /did/search/:did`, `GET /resource/search/:did`, and the resolves inside DID update, deactivate, resource create, credential issue, accreditation) | The spec's `resolve` family has no entry in `ENGINE_ROUTES`, so no feature flag can exist for it and the router has nothing to decide. Both engines read the same ledger through the same resolver. Add the family to the router first (with shadow reads), then wire these. |
+| `GET /trust-registry/accreditation/list` (`findLatestResourcesVersionsByType`) | Not part of the `IdentityEngine` interface: it is a read of Studio's own `resource` table. It needs an interface method before it can be routed. |
+| `saveCredential`, `retrieveCredential`, `deleteCredential` (received-credentials, issue to a known subject DID) | They address Veramo's own data store by credential hash. No table records which engine holds a hash, so there is no artifact to route on, and routing by flag would lose credentials the day a flag flips. They need an `engine` column (wallet family) first. |
+| Payment-account key creation (`customer.ts` create, `account.ts` bootstrap) | These create the customer's Secp256k1 payer key, not a key-family API route. `customer.ts` also builds the strategy with the customer name rather than the id (the same kind of bug as the providers controller), so the router would be handed the wrong identity. Leave on Veramo until that is fixed and the payer key policy for Credo is decided. |
+| API keys, operations and payment-account export (`setAPIKey`, `getAPIKey`, `listOperations`, `exportPaymentAccountKeys`) | Studio concerns, deliberately outside `IdentityEngine` (`StudioAccountServices`). |
+| `POST /providers/:providerId/did/import` in `providers.controller.ts` | It builds `IdentityServiceStrategySetup` with the whole customer entity instead of the customer id (existing bug). Routing it would put an object in the routing log and flag lookup. Fix the argument first, then wire. |
+| Credo method bodies (`CredoEngine` throws `NotImplementedByEngine` for credentials and status lists) | Other agents are building them. Nothing here changes `credo/`. |
+
+## Differences between the routed and the direct path
+
+- **Encrypted status-list creation now answers 410.** The router has always thrown `Gone` for it; wiring it means
+  `POST /credential-status/create/encrypted` returns `410` with `{ created: false, error }` on Veramo too, before the DID
+  is looked up. This is plan gate G6 and was asked for explicitly. It is the one intended behaviour change.
+- **`POST /key/create?type=Secp256r1` (and `P-256`, `JsonWebKey`) now goes to Credo.** Veramo used to create the key.
+  If the Credo runtime is not configured the call fails with the engine's error (500 `Internal error: ...`).
+- **Key response shape.** Veramo returns the saved `key` row (`customer` on create and import, `updatedAt: null`,
+  `publicKeyAlias: null`, `meta.algorithms`). Credo's store returns a narrower record. `shapeKeyResponse` fills the
+  missing fields in for non-Veramo engines so an Ed25519 key looks identical; a Veramo key is returned untouched. The
+  better long-term fix is for the Credo store to write `meta` and return the row, after which the shaper can go.
+- **Status operations look up the status list first.** One extra read of `statusRegistry` per request (only with
+  `ENABLE_EXTERNAL_DB=true`), to find the artifact. Failure of that read is swallowed and means "Veramo".
+- **An existing artifact with no recorded row** (for example a legacy status list with no `statusRegistry` row) is
+  treated as new and follows the flag. Harmless while no flag is set; revisit before flags go on.
