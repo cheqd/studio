@@ -21,3 +21,23 @@ export class CredoOwnershipError extends Error {
 		this.name = 'CredoOwnershipError';
 	}
 }
+
+/**
+ * Credo's storage is not configured, or is configured wrongly. The message names every variable that is missing or
+ * invalid and says what to do, so an operator can fix it from the log line alone. The router treats it like any
+ * other engine failure; it never stops Studio from starting while the Credo engine is not selected.
+ */
+export class CredoConfigurationError extends Error {
+	readonly problems: string[];
+
+	constructor(problems: string[]) {
+		super(
+			`Credo storage is not configured: ${problems.join('; ')}. ` +
+				'See docs/credo-database-provisioning.md and example.env.'
+		);
+		this.name = 'CredoConfigurationError';
+		this.problems = problems;
+		// A configuration problem is reported by its message, not by where in the code it was noticed
+		this.stack = `${this.name}: ${this.message}`;
+	}
+}

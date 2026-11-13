@@ -21,6 +21,8 @@ import { VeramoKeyManagementStorage } from '../../credo/VeramoKeyManagementStora
 import type { EngineDidDocument, EngineDidResolution } from '../types.js';
 import { publicKeyHexFromJwk, veramoTypeFromJwk } from './key-material.js';
 import type { CredoRuntime, CredoTenantSession, DidOperationResult } from './ports.js';
+import type { CredoStorageConfig } from './config.js';
+import { CredoConfigurationError } from './errors.js';
 import type { PayerRequest, ResolvedPayer } from './payer.js';
 
 export interface CredoRuntimeOptions {
@@ -28,30 +30,16 @@ export interface CredoRuntimeOptions {
 	/** Called when Credo creates a key inside a tenant, so Studio can record it as that customer's key */
 	onKeyCreated: (tenantId: string, kid: string, key: { type: string; publicKeyHex: string }) => Promise<void>;
 	resolvePayer: (request: PayerRequest) => Promise<ResolvedPayer>;
-	database: {
-		host: string;
-		port: number;
-		/** Database name. It is also the Askar store id and default profile. */
-		name: string;
-		/**
-		 * The Postgres user Askar connects as. Askar keeps its tables in a schema named after this user, so a user
-		 * called `credo` puts them in schema `credo`.
-		 */
-		user: string;
-		password: string;
-		/** `disable`, `require`, or `verify-ca` (with `caCertificate`) */
-		sslMode: 'disable' | 'require' | 'verify-ca';
-		caCertificate?: string;
-	};
-	/** Opens the Askar store (record encryption). Never the signing keys: those live in Studio's key store. */
-	storeKey: string;
+	/** Credo's own database, app role, pool settings and raw store key (see `loadCredoStorageConfig`) */
+	storage: CredoStorageConfig;
 	networks: { network: 'mainnet' | 'testnet'; rpcUrl?: string }[];
 	sessionLimit?: number;
 }
 
-const PROFILE_KEY_METHOD = () => new StoreKeyMethod(KdfMethod.Argon2IInt);
+/** The store key is a raw 32-byte key (never a passphrase), so there is no derivation step */
+const STORE_KEY_METHOD = () => new StoreKeyMethod(KdfMethod.Raw);
 
-function storeUri(options: CredoRuntimeOptions['database'], caPath?: string) {
+function storeUri(options: CredoStorageConfig['database'], caPath?: string) {
 	const enc = encodeURIComponent;
 	const params = [`sslmode=${options.sslMode}`];
 	if (caPath) params.push(`sslrootcert=${enc(caPath)}`);
@@ -59,30 +47,43 @@ function storeUri(options: CredoRuntimeOptions['database'], caPath?: string) {
 }
 
 /**
- * Askar opens an existing store, or provisions it only when the database is missing. A database that exists with
- * an empty `credo` schema (which is what Studio's migration leaves) is neither, and the open fails. So on a first
- * run this provisions the store itself, and writes the framework storage version record that Credo's own
- * provisioning would have written, so that `agent.initialize()` accepts it.
+ * Opens Credo's store with the app role only (no admin credentials), and provisions it on the first run.
+ *
+ * Askar names its Postgres schema after the connecting user, and when the database exists but holds no Askar
+ * schema it does not provision one itself. So when the open reports a missing store, this provisions it and writes
+ * the framework storage version record that Credo's own provisioning would have written, so that
+ * `agent.initialize()` accepts it. The database and the role are created once, by hand, from
+ * `scripts/credo-database-provisioning.sql`: a missing database is reported as such and never created from here.
  */
 async function provisionStoreIfMissing(options: CredoRuntimeOptions, caPath?: string) {
-	const uri = storeUri(options.database, caPath);
+	const uri = storeUri(options.storage.database, caPath);
+	const databaseName = options.storage.database.name;
 	try {
-		const store = await Store.open({ uri, keyMethod: PROFILE_KEY_METHOD(), passKey: options.storeKey });
+		const store = await Store.open({ uri, keyMethod: STORE_KEY_METHOD(), passKey: options.storage.storeKey });
 		await store.close();
 		return;
 	} catch (error) {
 		const message = (error as Error).message ?? '';
-		// Wrong key, or a connection problem: provisioning would not fix it, so say what happened
+		// A wrong store key, bad credentials or a connection problem: provisioning would not fix it, so fail
+		// closed. Only a database with no Askar schema yet is provisioned.
 		if (!/does not exist|not found/i.test(message)) throw error;
 	}
 
-	const profile = options.database.name;
+	const profile = options.storage.database.name;
 	const store = await Store.provision({
 		uri,
-		keyMethod: PROFILE_KEY_METHOD(),
-		passKey: options.storeKey,
+		keyMethod: STORE_KEY_METHOD(),
+		passKey: options.storage.storeKey,
 		profile,
 		recreate: false,
+	}).catch((error: Error) => {
+		// With a missing database Askar tries to create it, which the app role may not do (and must not)
+		if (/permission denied to create database|database .* does not exist/i.test(error.message ?? '')) {
+			throw new CredoConfigurationError([
+				`the Credo database "${databaseName}" does not exist on the cluster (CREDO_DB_NAME): run scripts/credo-database-provisioning.sql as the admin user`,
+			]);
+		}
+		throw error;
 	});
 	try {
 		const session = await store.session(profile).open();
@@ -175,9 +176,9 @@ function session(tenantAgent: TenantAgentLike): CredoTenantSession {
  */
 export async function createCredoRuntime(options: CredoRuntimeOptions): Promise<CredoRuntime> {
 	let caPath: string | undefined;
-	if (options.database.caCertificate) {
+	if (options.storage.database.caCertificate) {
 		caPath = join(mkdtempSync(join(tmpdir(), 'credo-ca-')), 'ca.pem');
-		writeFileSync(caPath, options.database.caCertificate, { mode: 0o600 });
+		writeFileSync(caPath, options.storage.database.caCertificate, { mode: 0o600 });
 	}
 	await provisionStoreIfMissing(options, caPath);
 
@@ -203,19 +204,25 @@ export async function createCredoRuntime(options: CredoRuntimeOptions): Promise<
 				enableKms: false,
 				multiWalletDatabaseScheme: AskarMultiWalletDatabaseScheme.ProfilePerWallet,
 				store: {
-					id: options.database.name,
-					key: options.storeKey,
-					keyDerivationMethod: 'kdf:argon2i:int',
+					id: options.storage.database.name,
+					key: options.storage.storeKey,
+					keyDerivationMethod: 'raw',
 					database: {
 						type: 'postgres',
 						config: {
-							host: `${options.database.host}:${options.database.port}`,
+							host: `${options.storage.database.host}:${options.storage.database.port}`,
+							maxConnections: options.storage.pool.maxConnections,
+							idleTimeout: options.storage.pool.idleTimeout,
+							connectTimeout: options.storage.pool.connectTimeout,
 							connectionParameters: {
-								sslmode: options.database.sslMode,
+								sslmode: options.storage.database.sslMode,
 								...(caPath ? { sslrootcert: caPath } : {}),
 							},
 						},
-						credentials: { account: options.database.user, password: options.database.password },
+						credentials: {
+							account: options.storage.database.user,
+							password: options.storage.database.password,
+						},
 					},
 				},
 			}),
