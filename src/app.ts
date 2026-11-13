@@ -32,6 +32,7 @@ import { APIKeyController } from './controllers/admin/api-key.js';
 import { OrganisationController } from './controllers/admin/organisation.js';
 import { FlagsController } from './controllers/api/flags.js';
 import { FlagsAdminController } from './controllers/admin/flags.js';
+import { AgentController } from './controllers/api/agent.js';
 import { AccreditationController } from './controllers/api/accreditation.js';
 import { OperationController } from './controllers/api/operation.js';
 import { ProvidersController } from './controllers/api/providers.controller.js';
@@ -339,6 +340,19 @@ class App {
 			ProvidersController.importDIDValidator,
 			new ProvidersController().importDid
 		);
+
+		// Agents (migration plan 8.3). The handlers are arrow properties, so they keep their instance when passed on.
+		const agents = new AgentController();
+		app.post('/agents', AgentController.registerValidator, agents.register);
+		app.get('/agents', AgentController.listValidator, agents.list);
+		app.get('/agents/:agentId', AgentController.idValidator, agents.get);
+		app.patch('/agents/:agentId', AgentController.updateValidator, agents.update);
+		app.delete('/agents/:agentId', AgentController.idValidator, agents.remove);
+		app.post('/agents/:agentId/card', AgentController.createCardValidator, agents.createCard);
+		app.get('/agents/:agentId/card', AgentController.getCardValidator, agents.getCard);
+		app.post('/agents/:agentId/authority', AgentController.grantValidator, agents.grantAuthority);
+		app.delete('/agents/:agentId/authority/:grantId', AgentController.revokeValidator, agents.revokeAuthority);
+		app.post('/verify/agent', AgentController.verifyValidator, agents.verifyAgent);
 
 		// Feature flags
 		app.get('/flags', new FlagsController().getFlags);
