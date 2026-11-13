@@ -456,6 +456,7 @@ describe('CredoEngine on Postgres', { skip }, () => {
 		} finally {
 			process.env.CREDO_DB_NAME = saved;
 		}
+	});
 
 	// ---- Ledger write serialisation (engine spec 3.4) and idempotency --------------------------------------
 
