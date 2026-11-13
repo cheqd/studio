@@ -25,7 +25,6 @@ import type {
 	NewAgentCard,
 	NewGrant,
 	NewStatusList,
-	NewVerificationEvent,
 } from '../../../src/services/agent/agent-store.js';
 import { ed25519MultibaseFromPublicKeyHex } from '../../../src/services/agent/agent-keys.js';
 
@@ -264,8 +263,6 @@ export class FakeStore implements AgentStore {
 	cards: AgentCardRecord[] = [];
 	grants = new Map<string, AuthorityGrantWithStatus>();
 	lists = new Map<string, TokenStatusListRecord & { customerId: string }>();
-	events: Array<NewVerificationEvent & { id: string }> = [];
-	failEvents = false;
 	/** Every customerId a tenant-scoped method was called with, to prove nothing runs unscoped. */
 	calls: Array<{ method: string; customerId: string | undefined }> = [];
 
@@ -433,12 +430,6 @@ export class FakeStore implements AgentStore {
 		const list = this.lists.get(registryId);
 		if (!list || list.customerId !== customerId || list.writeCursor >= list.size) return null;
 		return list.writeCursor++;
-	}
-	async recordVerificationEvent(event: NewVerificationEvent) {
-		if (this.failEvents) throw new Error('database down');
-		const id = uuidv4();
-		this.events.push({ ...event, id });
-		return id;
 	}
 }
 

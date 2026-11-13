@@ -5,7 +5,6 @@ import { AgentCardEntity } from '../../database/entities/agent-card.entity.js';
 import { AuthorityGrantEntity } from '../../database/entities/authority-grant.entity.js';
 import { IssuedCredentialEntity } from '../../database/entities/issued-credential.entity.js';
 import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
-import { VerificationEventEntity } from '../../database/entities/verification-event.entity.js';
 import { IdentifierEntity } from '../../database/entities/identifier.entity.js';
 import { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { StatusRegistryState } from '../../types/credential-status.js';
@@ -65,14 +64,6 @@ export interface NewStatusList {
 	size: number;
 }
 
-export interface NewVerificationEvent {
-	customerId?: string;
-	subjectDid?: string;
-	checks: Record<string, unknown>;
-	verdict: string;
-	engine: string;
-}
-
 /**
  * Everything the agent service reads and writes. Every method that touches tenant data takes `customerId` and
  * filters on it; ownership is decided by COUNTS (`countAgents`), never by inspecting what a `find()` returned,
@@ -108,8 +99,6 @@ export interface AgentStore {
 	createStatusList(list: NewStatusList): Promise<TokenStatusListRecord>;
 	/** Hands out the next index of a list atomically, or null when the list is full. */
 	reserveStatusIndex(customerId: string, registryId: string): Promise<number | null>;
-
-	recordVerificationEvent(event: NewVerificationEvent): Promise<string>;
 }
 
 const TOKEN_STATUS_LIST = 'TokenStatusList';
@@ -459,19 +448,5 @@ export class TypeormAgentStore implements AgentStore {
 			if (result.affected === 1) return row.writeCursor;
 		}
 		throw new Error('Could not reserve a status list index: too much contention');
-	}
-
-	async recordVerificationEvent(event: NewVerificationEvent): Promise<string> {
-		const repository = this.db.getRepository(VerificationEventEntity);
-		const saved = await repository.save(
-			repository.create({
-				customer: event.customerId ? ({ customerId: event.customerId } as CustomerEntity) : undefined,
-				subjectDid: event.subjectDid,
-				checks: event.checks,
-				verdict: event.verdict,
-				engine: event.engine,
-			})
-		);
-		return saved.id;
 	}
 }

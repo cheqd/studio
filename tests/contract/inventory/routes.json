@@ -1,5 +1,5 @@
 {
-	"generatedFrom": "1604729",
+	"generatedFrom": "6fee42b",
 	"generatedBy": "npx tsx tests/contract/scripts/generate-inventory.ts",
 	"routes": [
 		{
@@ -1386,20 +1386,6 @@
 			"scopes": ["verify-accreditation:trust-registry:mainnet", "verify-accreditation:trust-registry:testnet"],
 			"tier": 2,
 			"sideEffect": "read-only",
-			"sensitive": false,
-			"stripeOnly": false,
-			"inRouteTable": true,
-			"inOpenApi": true
-		},
-		{
-			"id": "POST /verify/agent",
-			"method": "POST",
-			"path": "/verify/agent",
-			"surface": "api",
-			"auth": "scoped",
-			"scopes": ["verify:agent"],
-			"tier": 2,
-			"sideEffect": "state-database",
 			"sensitive": false,
 			"stripeOnly": false,
 			"inRouteTable": true,

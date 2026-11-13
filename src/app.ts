@@ -355,7 +355,6 @@ class App {
 		app.get('/agents/:agentId/card', AgentController.getCardValidator, agents.getCard);
 		app.post('/agents/:agentId/authority', AgentController.grantValidator, agents.grantAuthority);
 		app.delete('/agents/:agentId/authority/:grantId', AgentController.revokeValidator, agents.revokeAuthority);
-		app.post('/verify/agent', AgentController.verifyValidator, agents.verifyAgent);
 
 		// Feature flags
 		app.get('/flags', new FlagsController().getFlags);

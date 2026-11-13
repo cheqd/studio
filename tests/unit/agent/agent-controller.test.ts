@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Request, Response } from 'express';
 import { AgentController } from '../../../src/controllers/api/agent.js';
 import { AgentService } from '../../../src/services/agent/agent-service.js';
-import { AgentVerificationService } from '../../../src/services/agent/agent-verification-service.js';
 import { customerA, customerB, newWorld, seedOrganisationDid } from './fakes.js';
 import type { FakeStore, World } from './fakes.js';
 
@@ -10,7 +9,6 @@ let world: World;
 let store: FakeStore;
 let controller: AgentController;
 let agents: AgentService;
-let verificationService: AgentVerificationService;
 
 beforeEach(() => {
 	jest.spyOn(console, 'debug').mockImplementation(() => undefined);
@@ -19,8 +17,7 @@ beforeEach(() => {
 	world = fresh.world;
 	store = fresh.store;
 	agents = new AgentService({ store, engineFor: fresh.engineFor, kyaOsDelegationsEnabled: () => false });
-	verificationService = new AgentVerificationService({ store, engineFor: fresh.engineFor });
-	controller = new AgentController(() => ({ agents, verification: verificationService }));
+	controller = new AgentController(() => ({ agents }));
 });
 
 interface Call {
@@ -151,7 +148,6 @@ describe('POST /agents, GET /agents', () => {
 					throw new Error("Account 'cheqd1abc' does not exist on chain");
 				},
 			} as never,
-			verification: {} as never,
 		}));
 		const response = { locals: { customer: customerA } } as unknown as Response & { statusCode: number };
 		response.status = ((code: number) => ((response.statusCode = code), response)) as never;
@@ -365,55 +361,6 @@ describe('cards and authority over HTTP', () => {
 	});
 });
 
-describe('POST /verify/agent', () => {
-	it('verifies (200) and validates the body', async () => {
-		const { body } = await registerViaRoute();
-		const ok = await call({
-			method: 'POST',
-			handler: 'verifyAgent',
-			validators: V.verifyValidator,
-			body: { did: body.did, checks: ['resolveAgent'] },
-			customer: customerA,
-		});
-		expect(ok.status).toBe(200);
-		expect(ok.body).toMatchObject({ verdict: 'verified', did: body.did });
-		for (const bad of [
-			{},
-			{ did: 'nope' },
-			{ did: body.did, checks: ['everything'] },
-			{ did: body.did, mandate: { presentation: 'x' } },
-			{ did: body.did, credentials: [1] },
-		]) {
-			expect(
-				(
-					await call({
-						method: 'POST',
-						handler: 'verifyAgent',
-						validators: V.verifyValidator,
-						body: bad,
-						customer: customerA,
-					})
-				).status
-			).toBe(400);
-		}
-	});
-
-	it('needs a customer', async () => {
-		const { body } = await registerViaRoute();
-		expect(
-			(
-				await call({
-					method: 'POST',
-					handler: 'verifyAgent',
-					validators: V.verifyValidator,
-					body: { did: body.did },
-					customer: undefined,
-				})
-			).status
-		).toBe(401);
-	});
-});
-
 describe('cross-tenant refusal on every agent route: customer B gets 404 for customer A agent', () => {
 	let target: { agentId: string; grantId: string };
 
@@ -517,22 +464,6 @@ describe('cross-tenant refusal on every agent route: customer B gets 404 for cus
 		const list = await call({ method: 'GET', handler: 'list', validators: V.listValidator, customer: customerB });
 		expect(list.body).toMatchObject({ total: 0, agents: [] });
 	});
-
-	it('POST /verify/agent is not tenant-scoped by design (the verifier need not own the agent) but reveals no tenant data', async () => {
-		const agent = await store.getAgent(customerA.customerId, target.agentId);
-		const result = await call({
-			method: 'POST',
-			handler: 'verifyAgent',
-			validators: V.verifyValidator,
-			body: { did: agent?.did, checks: ['resolveAgent'] },
-			customer: customerB,
-		});
-		expect(result.status).toBe(200);
-		expect(JSON.stringify(result.body)).not.toMatch(
-			new RegExp(`${target.agentId}|${customerA.customerId}|${target.grantId}`)
-		);
-		expect(store.events.at(-1)?.customerId).toBe(customerB.customerId);
-	});
 });
 
 describe('Idempotency-Key on the ledger-writing agent routes', () => {
@@ -553,7 +484,7 @@ describe('Idempotency-Key on the ledger-writing agent routes', () => {
 			},
 		});
 		const keyed = new AgentController(
-			() => ({ agents, verification: verificationService }),
+			() => ({ agents }),
 			() => idempotency
 		);
 		const send = async (name: string, key?: string) => {

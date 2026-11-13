@@ -82,21 +82,3 @@ export interface TokenStatusListRecord {
 	/** Number of indexes handed out so far, which is also the next free index. */
 	writeCursor: number;
 }
-
-export type VerifyCheckName = 'resolveAgent' | 'verifyAgentCard' | 'checkStatus' | 'verifyMandate';
-export const VERIFY_CHECK_NAMES: readonly VerifyCheckName[] = [
-	'resolveAgent',
-	'verifyAgentCard',
-	'checkStatus',
-	'verifyMandate',
-];
-
-export type CheckOutcome = 'pass' | 'fail' | 'error' | 'skipped';
-export type VerifyVerdict = 'verified' | 'failed' | 'inconclusive';
-
-export interface CheckResult {
-	outcome: CheckOutcome;
-	/** Short machine-readable reasons, never credential contents. */
-	reasons: string[];
-	details?: Record<string, unknown>;
-}

@@ -7,15 +7,8 @@ import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
 import { LedgerUnavailableError } from '../../services/identity/ledger-lock.js';
 import { IdempotencyError, IdempotencyService, hashRequest } from '../../services/idempotency/idempotency.js';
 import type { IdempotentResult } from '../../services/idempotency/idempotency.js';
-import { AGENT_NETWORKS, AGENT_SETTABLE_STATUSES, GRANT_TYPES, VERIFY_CHECK_NAMES } from '../../types/agent.js';
-import type {
-	AgentCardRecord,
-	AgentNetwork,
-	AgentRecord,
-	AuthorityGrantRecord,
-	GrantType,
-	VerifyCheckName,
-} from '../../types/agent.js';
+import { AGENT_NETWORKS, AGENT_SETTABLE_STATUSES, GRANT_TYPES } from '../../types/agent.js';
+import type { AgentCardRecord, AgentNetwork, AgentRecord, AuthorityGrantRecord, GrantType } from '../../types/agent.js';
 
 /**
  * @openapi
@@ -154,34 +147,6 @@ import type {
  *         createdAt:
  *           type: string
  *           format: date-time
- *     AgentVerifyResult:
- *       type: object
- *       properties:
- *         verdict:
- *           type: string
- *           enum: [verified, failed, inconclusive]
- *           description: "`verified` only when no check failed or errored and at least one passed. Treat anything else as not verified."
- *         did:
- *           type: string
- *         checks:
- *           type: object
- *           description: One entry per call that ran. Reasons are short codes; no credential contents are returned or stored.
- *           additionalProperties:
- *             type: object
- *             properties:
- *               outcome:
- *                 type: string
- *                 enum: [pass, fail, error, skipped]
- *               reasons:
- *                 type: array
- *                 items:
- *                   type: string
- *               details:
- *                 type: object
- *         eventId:
- *           type: string
- *           nullable: true
- *           description: The verification event written for metering, or null if it could not be written.
  */
 
 const agentDto = (agent: AgentRecord) => ({
@@ -329,43 +294,6 @@ export class AgentController {
 	public static revokeValidator = [
 		param('agentId').isUUID().withMessage('agentId must be a UUID').bail(),
 		param('grantId').isUUID().withMessage('grantId must be a UUID').bail(),
-	];
-
-	public static verifyValidator = [
-		body('did').exists().withMessage('did is required').bail().isDID().bail(),
-		body('checks').optional().isArray({ max: 4 }).withMessage('checks must be a list').bail(),
-		body('checks.*')
-			.isIn([...VERIFY_CHECK_NAMES])
-			.withMessage(`checks must be a subset of: ${VERIFY_CHECK_NAMES.join(', ')}`)
-			.bail(),
-		body('card').optional().isObject().withMessage('card must be an object').bail(),
-		body('credentials')
-			.optional()
-			.isArray({ max: 20 })
-			.withMessage('credentials must be a list of at most 20')
-			.bail(),
-		body('credentials.*').isString().withMessage('every credential must be a compact SD-JWT string').bail(),
-		body('mandate').optional().isObject().withMessage('mandate must be an object').bail(),
-		body('mandate.presentation')
-			.if(body('mandate').exists())
-			.isString()
-			.notEmpty()
-			.withMessage('mandate.presentation is required')
-			.bail(),
-		body('mandate.audience')
-			.if(body('mandate').exists())
-			.isString()
-			.notEmpty()
-			.withMessage('mandate.audience is required')
-			.bail(),
-		body('mandate.nonce')
-			.if(body('mandate').exists())
-			.isString()
-			.notEmpty()
-			.withMessage('mandate.nonce is required')
-			.bail(),
-		body('mandate.closedMandate').optional().isObject().bail(),
-		body('mandate.checkoutJwt').optional().isString().bail(),
 	];
 
 	constructor(
@@ -883,85 +811,6 @@ export class AgentController {
 				request.params.grantId as string
 			);
 			return { status: StatusCodes.OK, body: grantDto(grant) };
-		});
-	};
-
-	/**
-	 * @openapi
-	 *
-	 * /verify/agent:
-	 *   post:
-	 *     tags: [ Agents ]
-	 *     summary: Verify an agent.
-	 *     description: |
-	 *       Runs up to four checks on an agent's did:cheqd identifier and writes one verification event (outcomes and reason codes only, no credential contents). The agent need not be yours.
-	 *
-	 *       - `resolveAgent`: the DID resolves, is not deactivated, and lists usable keys; reports the published card, if any.
-	 *       - `verifyAgentCard`: the card (presented, or the latest published) is signed by a key the DID document lists, and is anchored to this DID.
-	 *       - `checkStatus`: the DID is active and every presented authority credential is signed by its issuer, belongs to this agent, and is not revoked or suspended in its Token Status List.
-	 *       - `verifyMandate`: a presented AP2 open mandate (with its Key Binding JWT) verifies against its issuer, is bound to one of the agent's keys, is not revoked, and, if a closed mandate is given, satisfies every constraint. Budget and recurrence totals are not tracked.
-	 *
-	 *       Only did:cheqd resolves. Treat any verdict other than `verified` as not verified.
-	 *     requestBody:
-	 *       required: true
-	 *       content:
-	 *         application/json:
-	 *           schema:
-	 *             type: object
-	 *             required: [did]
-	 *             properties:
-	 *               did:
-	 *                 type: string
-	 *               checks:
-	 *                 type: array
-	 *                 items:
-	 *                   type: string
-	 *                   enum: [resolveAgent, verifyAgentCard, checkStatus, verifyMandate]
-	 *               card:
-	 *                 type: object
-	 *               credentials:
-	 *                 type: array
-	 *                 items:
-	 *                   type: string
-	 *               mandate:
-	 *                 type: object
-	 *                 required: [presentation, audience, nonce]
-	 *                 properties:
-	 *                   presentation:
-	 *                     type: string
-	 *                   audience:
-	 *                     type: string
-	 *                   nonce:
-	 *                     type: string
-	 *                   closedMandate:
-	 *                     type: object
-	 *                   checkoutJwt:
-	 *                     type: string
-	 *     responses:
-	 *       200:
-	 *         description: The checks ran. Read `verdict` and `checks`.
-	 *         content:
-	 *           application/json:
-	 *             schema:
-	 *               $ref: '#/components/schemas/AgentVerifyResult'
-	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
-	 *       401:
-	 *         $ref: '#/components/schemas/UnauthorizedError'
-	 */
-	public verifyAgent = async (request: Request, response: Response) => {
-		return this.handle(request, response, async () => {
-			const { did, checks, card, credentials, mandate } = request.body;
-			const result = await (
-				await this.services()
-			).verification.verify(response.locals.customer, {
-				did,
-				checks: checks as VerifyCheckName[] | undefined,
-				card,
-				credentials,
-				mandate,
-			});
-			return response.status(StatusCodes.OK).json(result);
 		});
 	};
 

@@ -28,7 +28,6 @@ import { AgentCardEntity } from '../entities/agent-card.entity.js';
 import { AuthorityGrantEntity } from '../entities/authority-grant.entity.js';
 import { PaymentAddressBindingEntity } from '../entities/payment-address-binding.entity.js';
 import { IdempotencyKeyEntity } from '../entities/idempotency-key.entity.js';
-import { VerificationEventEntity } from '../entities/verification-event.entity.js';
 import { AdminAuditLogEntity } from '../entities/admin-audit-log.entity.js';
 import { EngineDiffEntity } from '../entities/engine-diff.entity.js';
 import { EngineMigrationEntity } from '../entities/engine-migration.entity.js';
@@ -76,7 +75,6 @@ import { StudioMigrations1791700000000 } from '../migrations/1791700000000-studi
 import { StudioMigrations1791700100000 } from '../migrations/1791700100000-studio-migrations.js';
 import { StudioMigrations1791700200000 } from '../migrations/1791700200000-studio-migrations.js';
 import { StudioMigrations1791700300000 } from '../migrations/1791700300000-studio-migrations.js';
-import { StudioMigrations1791700400000 } from '../migrations/1791700400000-studio-migrations.js';
 import { StudioMigrations1791700500000 } from '../migrations/1791700500000-studio-migrations.js';
 import { StudioMigrations1791700600000 } from '../migrations/1791700600000-studio-migrations.js';
 import { StudioMigrations1791700700000 } from '../migrations/1791700700000-studio-migrations.js';
@@ -199,8 +197,6 @@ export class Postgres implements AbstractDatabase {
 				StudioMigrations1791700200000,
 				// Add authorityGrant and paymentAddressBinding tables
 				StudioMigrations1791700300000,
-				// Add verificationEvent table
-				StudioMigrations1791700400000,
 				// Add customer.credoTenantId
 				StudioMigrations1791700500000,
 				// Add append-only adminAuditLog table
@@ -243,7 +239,6 @@ export class Postgres implements AbstractDatabase {
 				AgentCardEntity,
 				AuthorityGrantEntity,
 				PaymentAddressBindingEntity,
-				VerificationEventEntity,
 				AdminAuditLogEntity,
 				EngineDiffEntity,
 				EngineMigrationEntity,
