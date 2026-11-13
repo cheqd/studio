@@ -33,7 +33,6 @@ describe('agent auth rules', () => {
 		['GET', `/agents/${id}/card`, 'read:agent-card'],
 		['POST', `/agents/${id}/authority`, 'issue:agent-authority'],
 		['DELETE', `/agents/${id}/authority/${id}`, 'revoke:agent-authority'],
-		['POST', '/verify/agent', 'verify:agent'],
 	])('%s %s needs exactly %s and is not open to anonymous callers', (method, path, scope) => {
 		const rule = repository.match(requestFor(method, path, {}));
 		expect(rule).not.toBeNull();
@@ -42,13 +41,12 @@ describe('agent auth rules', () => {
 		expect(rule?.isAllowedUnauthorized()).toBe(false);
 	});
 
-	it('one scope does not open another route (read:agent cannot create, revoke or verify)', () => {
+	it('one scope does not open another route (read:agent cannot create or revoke)', () => {
 		for (const [method, path] of [
 			['POST', '/agents'],
 			['DELETE', `/agents/${id}`],
 			['POST', `/agents/${id}/authority`],
 			['DELETE', `/agents/${id}/authority/${id}`],
-			['POST', '/verify/agent'],
 		] as const) {
 			expect(
 				repository
@@ -71,9 +69,7 @@ describe('agent auth rules', () => {
 			['POST', `/agents/${id}/authority/${id}`],
 			['DELETE', `/agents/${id}/card`],
 			['GET', `/agents/${id}/card/extra`],
-			['POST', '/verify/agents'],
-			['POST', '/verify/agent/extra'],
-			['GET', '/verify/agent'],
+			['POST', '/verify/agent'],
 			['POST', '/v1/agents'],
 		] as const) {
 			expect(provider.match(requestFor(method, path, {}))).toBeNull();

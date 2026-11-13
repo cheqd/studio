@@ -1,12 +1,10 @@
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { AgentEngineProvider } from './agent-engine.js';
 import { AgentService } from './agent-service.js';
-import { AgentVerificationService } from './agent-verification-service.js';
 
 export * from './agent-errors.js';
 export type { AgentEngineProvider } from './agent-engine.js';
 export { AgentService } from './agent-service.js';
-export { AgentVerificationService } from './agent-verification-service.js';
 export type { AgentStore } from './agent-store.js';
 
 /**
@@ -24,7 +22,6 @@ export const routedEngine: AgentEngineProvider = async (customer: CustomerEntity
 
 export interface AgentServices {
 	agents: AgentService;
-	verification: AgentVerificationService;
 }
 
 let services: AgentServices | undefined;
@@ -36,7 +33,6 @@ export async function agentServices(): Promise<AgentServices> {
 		const store = new TypeormAgentStore();
 		services = {
 			agents: new AgentService({ store, engineFor: routedEngine }),
-			verification: new AgentVerificationService({ store, engineFor: routedEngine }),
 		};
 	}
 	return services;

@@ -23,6 +23,5 @@ export class AgentAuthRuleProvider extends AuthRuleProvider {
 		this.registerRule('^/agents/[^/]+/authority/[^/]+$', 'DELETE', 'revoke:agent-authority', {
 			skipNamespace: true,
 		});
-		this.registerRule('^/verify/agent$', 'POST', 'verify:agent', { skipNamespace: true });
 	}
 }
