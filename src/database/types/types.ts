@@ -27,6 +27,9 @@ import { AgentCardEntity } from '../entities/agent-card.entity.js';
 import { AuthorityGrantEntity } from '../entities/authority-grant.entity.js';
 import { PaymentAddressBindingEntity } from '../entities/payment-address-binding.entity.js';
 import { VerificationEventEntity } from '../entities/verification-event.entity.js';
+import { AdminAuditLogEntity } from '../entities/admin-audit-log.entity.js';
+import { EngineDiffEntity } from '../entities/engine-diff.entity.js';
+import { EngineMigrationEntity } from '../entities/engine-migration.entity.js';
 
 import { CreatePaymentTable1695740345977 } from '../migrations/archive/CreatePaymentTable.js';
 import { CreateOperationTable1695740345977 } from '../migrations/archive/CreateOperationTable.js';
@@ -72,6 +75,8 @@ import { StudioMigrations1791700200000 } from '../migrations/1791700200000-studi
 import { StudioMigrations1791700300000 } from '../migrations/1791700300000-studio-migrations.js';
 import { StudioMigrations1791700400000 } from '../migrations/1791700400000-studio-migrations.js';
 import { StudioMigrations1791700500000 } from '../migrations/1791700500000-studio-migrations.js';
+import { StudioMigrations1791700600000 } from '../migrations/1791700600000-studio-migrations.js';
+import { StudioMigrations1791700700000 } from '../migrations/1791700700000-studio-migrations.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -188,6 +193,10 @@ export class Postgres implements AbstractDatabase {
 				StudioMigrations1791700400000,
 				// Add customer.credoTenantId
 				StudioMigrations1791700500000,
+				// Add append-only adminAuditLog table
+				StudioMigrations1791700600000,
+				// Add engineDiff and engineMigration tables
+				StudioMigrations1791700700000,
 			],
 			entities: [
 				...Entities,
@@ -214,6 +223,9 @@ export class Postgres implements AbstractDatabase {
 				AuthorityGrantEntity,
 				PaymentAddressBindingEntity,
 				VerificationEventEntity,
+				AdminAuditLogEntity,
+				EngineDiffEntity,
+				EngineMigrationEntity,
 			],
 			logging: ['error', 'info', 'warn'],
 		});
