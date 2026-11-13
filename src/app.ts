@@ -355,8 +355,8 @@ class App {
 			customerAnalytics.ledger.bind(customerAnalytics)
 		);
 		app.get('/account/balances', new AccountController().getBalances);
-		app.post('/account/export-keys', new AccountController().exportKeys);
-		app.delete('/account', new AccountController().delete);
+		app.post('/account/export-keys', requireFreshSignIn(), new AccountController().exportKeys);
+		app.delete('/account', requireFreshSignIn(), new AccountController().delete);
 
 		// LogTo webhooks
 		app.post('/account/bootstrap', LogToWebHook.verifyHookSignature, new AccountController().bootstrap);

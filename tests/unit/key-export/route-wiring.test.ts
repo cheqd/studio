@@ -8,12 +8,15 @@ const read = (p: string) => readFileSync(new URL(`../../../${p}`, import.meta.ur
 describe('export and deletion route wiring', () => {
 	const app = read('src/app.ts');
 
-	it('requires a fresh sign-in for /did/export', () => {
-		expect(app).toMatch(/app\.post\('\/did\/export\/:did',\s*requireFreshSignIn\(\)/);
+	it('requires a fresh sign-in for /did/export, /account/export-keys and DELETE /account', () => {
+		expect(app).toMatch(/app\.post\(\s*'\/did\/export\/:did',\s*requireFreshSignIn\(\)/);
+		expect(app).toMatch(/app\.post\('\/account\/export-keys',\s*requireFreshSignIn\(\)/);
+		expect(app).toMatch(/app\.delete\('\/account',\s*requireFreshSignIn\(\)/);
 	});
 
-	it('exportDid responds through respondWithEncryptedExport', () => {
+	it('exportDid and exportKeys respond through respondWithEncryptedExport', () => {
 		expect(read('src/controllers/api/did.ts')).toContain('respondWithEncryptedExport(');
+		expect(read('src/controllers/api/account.ts')).toContain('respondWithEncryptedExport(');
 	});
 
 	it('the id-token fetchers record auth_time for the freshness check', () => {

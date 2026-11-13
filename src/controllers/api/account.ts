@@ -26,6 +26,7 @@ import {
 import { CustomerService } from '../../services/api/customer.js';
 import { LogToHelper } from '../../middleware/auth/logto-helper.js';
 import { FaucetHelper, isFaucetTimeout, isValidFaucetAddress } from '../../helpers/faucet.js';
+import { respondWithEncryptedExport } from '../../helpers/key-export.js';
 import { PriceHelper } from '../../helpers/price.js';
 import { cheqToNcheq, ncheqToCheq, toSafeFaucetAmount } from '../../helpers/denom.js';
 import { StatusCodes } from 'http-status-codes';
@@ -1066,19 +1067,49 @@ export class AccountController {
 	 *     description: >-
 	 *       Returns the private keys for every DID the customer owns (via the same mechanism as
 	 *       `/did/export/{did}`) and the two cosmos payment-account private keys (mainnet and testnet fee-payer
-	 *       wallets). Returned as plaintext JSON over HTTPS; the caller is expected to encrypt it (e.g.
-	 *       client-side, with a user-supplied password) before writing it to disk. A DID that fails to export
-	 *       (e.g. one custodied by an external provider rather than Studio) is reported per-DID under `error`
-	 *       rather than failing the whole export.
+	 *       wallets). The result is never returned in plaintext: it is encrypted on the server with a key derived
+	 *       from the supplied `password` (scrypt, then AES-256-GCM) and returned as a versioned
+	 *       `cheqd-studio-key-export` envelope (see `EncryptedKeyExport`). The decrypted JSON has the shape
+	 *       `{ dids: [{ did, export?, error? }], paymentAccounts: [{ network, address, type, privateKeyHex }] }`.
+	 *       A DID that fails to export (e.g. one custodied by an external provider rather than Studio) is
+	 *       reported per-DID under `error` rather than failing the whole export. Requires a sign-in within the
+	 *       last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300); otherwise a `401` with code
+	 *       `REAUTHENTICATION_REQUIRED` is returned.
+	 *     requestBody:
+	 *       required: true
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+	 *             required: [password]
+	 *             properties:
+	 *               password:
+	 *                 type: string
+	 *                 minLength: 12
+	 *                 description: Encrypts the exported keys; needed to decrypt them. Not stored.
 	 *     responses:
 	 *       200:
-	 *         description: The request was successful.
+	 *         description: The encrypted export.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EncryptedKeyExport'
+	 *       400:
+	 *         description: The password is missing (`PASSWORD_REQUIRED`) or too weak (`WEAK_PASSWORD`).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/KeyExportPasswordError'
 	 *       401:
-	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *         description: Unauthorised, or `REAUTHENTICATION_REQUIRED` when the sign-in is older than the allowed window.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/ReauthenticationRequiredError'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
-	public async exportKeys(_request: Request, response: Response) {
+	public async exportKeys(request: Request, response: Response) {
 		if (!response.locals.customer) {
 			return response.status(StatusCodes.UNAUTHORIZED).json({
 				error: 'Unauthorized error: Studio user context was not found.',
@@ -1086,7 +1117,8 @@ export class AccountController {
 		}
 		const customer = response.locals.customer as CustomerEntity;
 
-		try {
+		// The key material is encrypted with a key derived from the supplied password before it leaves the server.
+		return respondWithEncryptedExport(request, response, async (): Promise<AccountExportKeysResponseBody> => {
 			const identityStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
 
 			const [dids] = await IdentifierService.instance.find({ customer });
@@ -1104,16 +1136,8 @@ export class AccountController {
 			);
 
 			const paymentAccounts = await identityStrategySetup.agent.exportPaymentAccountKeys(customer);
-
-			return response.status(StatusCodes.OK).json({
-				dids: exportedDids,
-				paymentAccounts,
-			} satisfies AccountExportKeysResponseBody);
-		} catch (error) {
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `Internal error: ${(error as Error)?.message || error}`,
-			} satisfies UnsuccessfulResponseBody);
-		}
+			return { dids: exportedDids, paymentAccounts };
+		});
 	}
 
 	/**
@@ -1127,7 +1151,8 @@ export class AccountController {
 	 *       Hard-deletes the account: cancels any active Stripe subscription, deletes the Logto user, then
 	 *       deletes the customer row and everything it owns (DIDs, credentials, resources, keys, API keys,
 	 *       payment accounts). This cannot be undone, and DID documents or resources already published
-	 *       on-chain are not removed from the ledger. Requires `{ "confirm": true }` in the request body.
+	 *       on-chain are not removed from the ledger. Requires `{ "confirm": true }` in the request body, and a
+	 *       sign-in within the last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300).
 	 *     requestBody:
 	 *       content:
 	 *         application/json:
@@ -1143,7 +1168,11 @@ export class AccountController {
 	 *       400:
 	 *         description: Missing confirmation, or a problem with the input fields.
 	 *       401:
-	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *         description: Unauthorised, or `REAUTHENTICATION_REQUIRED` when the sign-in is older than the allowed window.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/ReauthenticationRequiredError'
 	 *       500:
 	 *         description: The deletion pipeline failed partway through; the response body records which steps completed.
 	 */
