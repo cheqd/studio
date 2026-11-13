@@ -39,6 +39,26 @@ export class TypeormIdempotencyStore implements IdempotencyStore {
 				key: row.key,
 			})
 			.execute();
+		if (Connection.instance.dbConnection.options.type === 'postgres') {
+			// ON CONFLICT keeps the common retry path quiet: no failed statement in the logs
+			const rows: { id: string }[] = await this.repository.query(
+				`INSERT INTO "idempotencyKey" ("customerId", "key", "route", "requestHash", "state", "expiresAt")
+				 VALUES ($1, $2, $3, $4, 'submitting', $5)
+				 ON CONFLICT ("customerId", "key") DO NOTHING
+				 RETURNING "id"`,
+				[row.customerId, row.key, row.route, row.requestHash, row.expiresAt]
+			);
+			if (rows.length === 0) return null;
+			return {
+				id: rows[0].id,
+				customerId: row.customerId,
+				key: row.key,
+				route: row.route,
+				requestHash: row.requestHash,
+				state: 'submitting',
+				expiresAt: row.expiresAt,
+			};
+		}
 		try {
 			const result = await this.repository.insert({
 				customer: { customerId: row.customerId },

@@ -73,6 +73,8 @@ export async function createTestDatabase(adminUrl: string, options: { rpcUrl?: s
 	const engineModule = await import('../../../src/services/identity/engine/credo/index.js');
 	const storeModule = await import('../../../src/services/identity/engine/credo/typeorm-store.js');
 	const lockModule = await import('../../../src/services/identity/ledger-lock.js');
+	const idempotency = await import('../../../src/services/idempotency/idempotency.js');
+	const idempotencyStore = await import('../../../src/services/idempotency/typeorm-idempotency-store.js');
 	const dataStore = await import('@veramo/data-store');
 	const kmsLocal = await import('@veramo/kms-local');
 	const adapter = await import('../../../src/services/identity/credo/index.js');
@@ -84,6 +86,8 @@ export async function createTestDatabase(adminUrl: string, options: { rpcUrl?: s
 		...engineModule,
 		...storeModule,
 		...lockModule,
+		...idempotency,
+		...idempotencyStore,
 		...adapter,
 		PrivateKeyStore: dataStore.PrivateKeyStore,
 		SecretBox: kmsLocal.SecretBox,
