@@ -13,6 +13,7 @@
 import { execSync } from 'node:child_process';
 import { join, resolve } from 'node:path';
 import { assertSafeTarget, readEnv } from '../lib/config.js';
+import type { SideEffect } from '../lib/route-metadata.js';
 import { runScenario, toFixture, writeFixture, type Step } from '../lib/engine.js';
 import { buildScenario } from '../lib/scenario.js';
 
@@ -39,7 +40,8 @@ async function main() {
 		apiKey: cfg.apiKey,
 		vars: cfg.vars,
 		pin: cfg.pin,
-		allow: cfg.allow,
+		// A dry run sends real requests, so it must never perform state-changing steps, whatever the CONTRACT_ALLOW_* flags say.
+		allow: dryRun ? new Set<SideEffect>(['read-only']) : cfg.allow,
 		features: cfg.features,
 		stepFilter,
 		engineHeader: cfg.engineHeader,

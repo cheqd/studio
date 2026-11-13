@@ -77,7 +77,7 @@ npx tsx tests/contract/scripts/generate-coverage.ts
 ```sh
 export CONTRACT_BASE_URL=https://studio-api-staging.cheqd.net
 export CONTRACT_API_KEY=...            # from your shell, not a file
-npx tsx tests/contract/scripts/record.ts --dry-run   # shows what would be recorded, writes nothing
+npx tsx tests/contract/scripts/record.ts --dry-run   # sends the read-only steps only (never a state-changing one, even with CONTRACT_ALLOW_* set) and writes no fixtures
 npx tsx tests/contract/scripts/record.ts             # writes tests/contract/fixtures/*.json
 git diff --stat tests/contract/fixtures
 ```
