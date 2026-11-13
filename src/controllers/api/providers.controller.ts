@@ -470,7 +470,9 @@ export class ProvidersController {
 			let importedResult: IIdentifier;
 			switch (providerId) {
 				case 'dock':
+					// eslint-disable-next-line no-case-declarations -- existing lexical declaration in case block; not wrapped to avoid code churn
 					const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer);
+					// eslint-disable-next-line no-case-declarations -- existing lexical declaration in case block; not wrapped to avoid code churn
 					const exportedResult = await identityServiceStrategySetup.agent.exportDid(
 						did,
 						process.env.PROVIDER_EXPORT_PASSWORD || '',

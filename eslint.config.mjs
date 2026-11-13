@@ -30,6 +30,9 @@ export default [
 		rules: {
 			'@typescript-eslint/no-explicit-any': 'off',
 			'@typescript-eslint/no-unused-vars': 'off',
+			// Destructuring where one name is reassigned (e.g. accreditation.ts) is not
+			// flagged; was 8 errors with the default setting.
+			'prefer-const': ['error', { destructuring: 'all' }],
 		},
 		// Five stale `eslint-disable` comments (no-constant-condition x1,
 		// @typescript-eslint/no-non-null-assertion x4) are reported as warnings;

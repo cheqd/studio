@@ -344,6 +344,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 				(e) =>
 					(e.services = e.services.map((s) => {
 						s.serviceEndpoint =
+							// eslint-disable-next-line no-useless-escape -- harmless escape in a regex character class; left untouched in A-067
 							typeof s.serviceEndpoint === 'string' && /^[{\[]/.test(s.serviceEndpoint.trim())
 								? JSON.parse(s.serviceEndpoint)
 								: s.serviceEndpoint;

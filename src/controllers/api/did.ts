@@ -219,6 +219,7 @@ export class DIDController {
 			switch (providerId) {
 				case 'dock':
 					did = await new DockIdentityService().createDid(network, { id: '' }, response.locals.customer);
+					// eslint-disable-next-line no-case-declarations -- existing lexical declaration in case block; not wrapped to avoid code churn
 					const { didDocument: didDoc } = await identityServiceStrategySetup.agent.resolveDid(did.did);
 					if (didDoc && service) {
 						const services = Array.isArray(service) ? service : [service];
