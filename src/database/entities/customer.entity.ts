@@ -50,6 +50,10 @@ export class CustomerEntity {
 	@Column({ type: 'varchar', length: 64, nullable: true })
 	credoTenantId?: string;
 
+	// Where the account came from (cheqd/studio#868). Free-form but validated: ^[a-z0-9][a-z0-9-]{0,31}$
+	@Column({ type: 'varchar', length: 32, nullable: true })
+	source?: string;
+
 	@BeforeInsert()
 	setCreatedAt() {
 		this.createdAt = new Date();

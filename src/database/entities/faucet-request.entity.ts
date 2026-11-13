@@ -55,6 +55,10 @@ export class FaucetRequestEntity {
 	})
 	status!: FaucetRequestStatus;
 
+	// Where the request came from (cheqd/studio#868). Validated: ^[a-z0-9][a-z0-9-]{0,31}$
+	@Column({ type: 'varchar', length: 32, nullable: true })
+	source?: string;
+
 	// Set by the database (DEFAULT now()), so every instance agrees on when a request was made
 	@CreateDateColumn({
 		type: 'timestamptz',
