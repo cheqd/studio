@@ -51,6 +51,18 @@ export class OperationEntity {
 	})
 	updatedAt!: Date;
 
+	@Column({ type: 'varchar', length: 16, nullable: true })
+	engine?: string;
+
+	@Column({ type: 'varchar', length: 16, nullable: true })
+	network?: string;
+
+	@Column({ type: 'varchar', length: 16, nullable: true })
+	outcome?: string;
+
+	@Column({ type: 'integer', nullable: true })
+	durationMs?: number;
+
 	@BeforeInsert()
 	setCreatedAt() {
 		this.createdAt = new Date();

@@ -90,6 +90,13 @@ export class IssuedCredentialEntity {
 	@Column('boolean', { default: false })
 	deprecated?: boolean;
 
+	@Column({ type: 'varchar', length: 16, nullable: false, default: 'veramo' })
+	engine!: string;
+
+	// StatusList2021, BitstringStatusList or TokenStatusList. Never changes once set.
+	@Column({ type: 'varchar', length: 32, nullable: true })
+	statusFormat?: string;
+
 	// Relations
 	@ManyToOne(() => CustomerEntity, (customer) => customer.customerId, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'customerId' })

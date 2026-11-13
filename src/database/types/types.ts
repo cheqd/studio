@@ -77,6 +77,10 @@ import { StudioMigrations1791700400000 } from '../migrations/1791700400000-studi
 import { StudioMigrations1791700500000 } from '../migrations/1791700500000-studio-migrations.js';
 import { StudioMigrations1791700600000 } from '../migrations/1791700600000-studio-migrations.js';
 import { StudioMigrations1791700700000 } from '../migrations/1791700700000-studio-migrations.js';
+import { StudioMigrations1791700800000 } from '../migrations/1791700800000-studio-migrations.js';
+import { StudioMigrations1791700900000 } from '../migrations/1791700900000-studio-migrations.js';
+import { StudioMigrations1791701000000 } from '../migrations/1791701000000-studio-migrations.js';
+import { StudioMigrations1791701100000 } from '../migrations/1791701100000-studio-migrations.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -197,6 +201,14 @@ export class Postgres implements AbstractDatabase {
 				StudioMigrations1791700600000,
 				// Add engineDiff and engineMigration tables
 				StudioMigrations1791700700000,
+				// Add engine column to identifier, issuedCredential and statusRegistry
+				StudioMigrations1791700800000,
+				// Add engine, network, outcome and durationMs to operation
+				StudioMigrations1791700900000,
+				// Add statusFormat, listFormat and encoding columns
+				StudioMigrations1791701000000,
+				// Add identifier and customer credoTenantId indexes
+				StudioMigrations1791701100000,
 			],
 			entities: [
 				...Entities,
