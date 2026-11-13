@@ -25,6 +25,8 @@ export type GrantType = (typeof GRANT_TYPES)[number];
 export const VCT = {
 	actsFor: 'https://cheqd.io/vct/agent-acts-for/v1',
 	toolScope: 'https://cheqd.io/vct/agent-tool-scope/v1',
+	/** cheqd's own vocabulary (Proposed), not an x402 standard. */
+	paymentAddressBinding: 'https://cheqd.io/vct/agent-payment-address-binding/v1',
 	paymentOpenMandate: 'mandate.payment.open.1',
 	checkoutOpenMandate: 'mandate.checkout.open.1',
 } as const;
@@ -54,6 +56,24 @@ export interface AgentCardRecord {
 	createdAt: Date;
 }
 
+/**
+ * The non-secret summary of an open payment mandate that Studio keeps so the settlement view can be derived
+ * after the credential has been returned once. Caps, payees, recurrence and window only: never the signed mandate.
+ */
+export interface MandatePolicySummary {
+	mandateType: 'payment';
+	/** `payment.amount_range`: the cap per payment, in minor units of `currency`. */
+	amountRange: { currency: string; max: number; min?: number } | null;
+	/** `payment.budget`: the cap over the mandate's lifetime, in major units of `currency`. */
+	budget: { currency: string; max: number } | null;
+	/** `payment.agent_recurrence`. */
+	recurrence: { frequency: string; maxOccurrences: number | null } | null;
+	/** `payment.allowed_payees`: merchant names. */
+	payees: string[] | null;
+	/** `payment.execution_date`. */
+	executionWindow: { notBefore: string | null; notAfter: string | null } | null;
+}
+
 export interface AuthorityGrantRecord {
 	id: string;
 	agentId: string;
@@ -64,6 +84,8 @@ export interface AuthorityGrantRecord {
 	statusIndex?: number | null;
 	expiresAt?: Date | null;
 	revokedAt?: Date | null;
+	/** Only for payment mandates, and only for grants made after the settlement view was added. */
+	policySummary?: MandatePolicySummary | null;
 	createdAt: Date;
 }
 
@@ -81,4 +103,24 @@ export interface TokenStatusListRecord {
 	size: number;
 	/** Number of indexes handed out so far, which is also the next free index. */
 	writeCursor: number;
+}
+
+/** An x402 payment address bound to an agent (Proposed). The credential itself is never stored. */
+export interface PaymentAddressBindingRecord {
+	id: string;
+	agentId: string;
+	customerId: string;
+	/** CAIP-10, normalised. */
+	account: string;
+	issuedCredentialId?: string | null;
+	statusListId?: string | null;
+	statusIndex?: number | null;
+	revokedAt?: Date | null;
+	createdAt: Date;
+}
+
+/** A binding with what changing its status needs: the issuer DID (the agent) and the status list URI. */
+export interface PaymentAddressBindingWithStatus extends PaymentAddressBindingRecord {
+	issuerDid?: string | null;
+	statusListUri?: string | null;
 }

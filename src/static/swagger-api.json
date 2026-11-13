@@ -55,6 +55,10 @@
     },
     {
       "name": "Agents"
+    },
+    {
+      "name": "Agent payments (Proposed)",
+      "description": "Proposed. Payment addresses bound to an agent and a read-only settlement view of its open payment mandate. cheqd's own vocabulary, not an x402 standard."
     }
   ],
   "externalDocs": {
@@ -267,6 +271,39 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "PaymentAddressBinding": {
+        "type": "object",
+        "description": "Proposed. A payment address bound to an agent. The credential is not part of this object.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "account": {
+            "type": "string",
+            "description": "The CAIP-10 account, normalised (EVM addresses are lower case).",
+            "example": "eip155:8453:0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "revoked"
+            ],
+            "description": "`suspended` while the agent is suspended."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revokedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         }
       },
@@ -4522,7 +4559,7 @@
           "Agents"
         ],
         "summary": "Delete an agent.",
-        "description": "Revokes every live authority grant of the agent, then removes the agent (soft delete; the DID stays on the ledger). If a grant cannot be revoked the agent is not deleted.",
+        "description": "Revokes every live authority grant and every live payment address binding of the agent, then removes the agent (soft delete; the DID stays on the ledger). If a grant or binding cannot be revoked the agent is not deleted.",
         "parameters": [
           {
             "name": "agentId",
@@ -4546,6 +4583,9 @@
                       "type": "boolean"
                     },
                     "revokedGrants": {
+                      "type": "integer"
+                    },
+                    "revokedPaymentAddresses": {
                       "type": "integer"
                     }
                   }
@@ -4974,6 +5014,396 @@
           },
           "501": {
             "description": "The identity engine for this account cannot update status lists yet. It needs the Credo engine."
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/payment-addresses": {
+      "get": {
+        "tags": [
+          "Agent payments (Proposed)"
+        ],
+        "summary": "Proposed: list the payment addresses bound to an agent.",
+        "description": "**Proposed.** Lists the agent's payment address bindings, live and revoked, newest first. The credential is never returned here (it is returned once, when the address is bound). An agent that is not yours, or does not exist, is a 404.\n\n`PaymentAddressBinding` is cheqd's own vocabulary. It is not an x402 standard.\n",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "paymentAddresses": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PaymentAddressBinding"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "No such agent in your account. Also returned for an agent that belongs to another account."
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Agent payments (Proposed)"
+        ],
+        "summary": "Proposed: bind a payment address to an agent.",
+        "description": "**Proposed.** Binds a wallet address, given as a CAIP-10 account such as `eip155:8453:0x...`, to the agent. Studio issues a `PaymentAddressBinding` SD-JWT VC signed by the agent's own key (through the identity engine) with a Token Status List entry, so the binding can be revoked. The credential is returned once, in this response; Studio stores only the binding row, never the credential.\n\n`PaymentAddressBinding` is cheqd's own vocabulary. It is **not** an x402 standard. The binding is the agent's assertion about the address: it does not prove that the agent controls the wallet.\n\nThe address is validated strictly against CAIP-10 and normalised by the chain's rules: EVM (`eip155`) addresses are stored lower case, and a mixed-case address must have a valid EIP-55 checksum. An agent can have at most 10 live bindings, and one account can be bound to an agent once while the binding is not revoked.\n\nSend an optional `Idempotency-Key` header: the binding writes a status list entry, so a retry with the same key replays the first response instead of binding twice.\n",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "account"
+                ],
+                "properties": {
+                  "account": {
+                    "type": "string",
+                    "description": "A CAIP-10 account.",
+                    "example": "eip155:8453:0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The address was bound.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "paymentAddress": {
+                      "$ref": "#/components/schemas/PaymentAddressBinding"
+                    },
+                    "credential": {
+                      "type": "object",
+                      "properties": {
+                        "format": {
+                          "type": "string",
+                          "enum": [
+                            "sd-jwt-vc"
+                          ]
+                        },
+                        "value": {
+                          "type": "string",
+                          "description": "The compact SD-JWT VC. Returned once; Studio does not keep it."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "No such agent in your account. Also returned for an agent that belongs to another account."
+          },
+          "409": {
+            "description": "The agent is not active, its DID is deactivated, the account is already bound, or the agent already has 10 live bindings."
+          },
+          "501": {
+            "description": "The identity engine for this account cannot serve the agent endpoints yet. They need the Credo engine."
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/payment-addresses/{bindingId}": {
+      "delete": {
+        "tags": [
+          "Agent payments (Proposed)"
+        ],
+        "summary": "Proposed: revoke a payment address binding.",
+        "description": "**Proposed.** Sets the binding's entry in its Token Status List to revoked, then records `revokedAt`. Revoking a revoked binding returns it unchanged. Deleting or suspending the agent also takes its bindings out of use: delete revokes them, suspend marks them suspended on their status list and restores them when the agent is made active again. Accept the optional `Idempotency-Key` header for safe retries.\n",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "bindingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The binding was revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentAddressBinding"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "No such agent or binding in your account."
+          },
+          "501": {
+            "description": "The identity engine for this account cannot update status lists yet. It needs the Credo engine."
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/settlement": {
+      "get": {
+        "tags": [
+          "Agent payments (Proposed)"
+        ],
+        "summary": "Proposed: read the agent's open payment mandate as an x402 payment policy.",
+        "description": "**Proposed. Read-only.** Shows the agent's open AP2 payment mandate as an x402 payment policy: the cap per payment, the budget, how often it repeats, the allowed payees, and the addresses the agent may pay from (its live payment address bindings). Nothing here changes the mandate or moves money.\n\nStudio does not keep the signed mandate (it is returned once). The view is derived from a non-secret summary kept when the mandate was granted (caps, payees, recurrence, window) and from the live bindings. Mandates granted before the summary was kept are not shown. **Single hop only**: there are no re-delegation fields. AP2 amounts are in a fiat currency; no mapping to an x402 asset is made. The vocabulary is cheqd's own, not an x402 standard.\n\nA suspended agent shows the mandate with an empty `payFrom`.\n",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string",
+                      "enum": [
+                        "Proposed"
+                      ]
+                    },
+                    "readOnly": {
+                      "type": "boolean"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "agentId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "agentStatus": {
+                      "type": "string"
+                    },
+                    "mandate": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The id of the mandate's authority grant."
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "payment"
+                          ]
+                        },
+                        "issuedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "expiresAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    },
+                    "policy": {
+                      "type": "object",
+                      "properties": {
+                        "capPerPayment": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "currency": {
+                              "type": "string"
+                            },
+                            "max": {
+                              "type": "integer"
+                            },
+                            "min": {
+                              "type": "integer",
+                              "nullable": true
+                            },
+                            "unit": {
+                              "type": "string",
+                              "enum": [
+                                "minor"
+                              ]
+                            }
+                          }
+                        },
+                        "budget": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "currency": {
+                              "type": "string"
+                            },
+                            "max": {
+                              "type": "number"
+                            },
+                            "unit": {
+                              "type": "string",
+                              "enum": [
+                                "major"
+                              ]
+                            }
+                          }
+                        },
+                        "repeats": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "frequency": {
+                              "type": "string"
+                            },
+                            "maxOccurrences": {
+                              "type": "integer",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "payees": {
+                          "type": "array",
+                          "nullable": true,
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "window": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "notBefore": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "notAfter": {
+                              "type": "string",
+                              "nullable": true
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "payFrom": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "bindingId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "account": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "No such agent in your account, or the agent has no open payment mandate."
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
           }
         }
       }

@@ -46,6 +46,10 @@ export class AuthorityGrantEntity {
 	@Column({ type: 'timestamptz', nullable: true })
 	revokedAt?: Date;
 
+	/** Non-secret policy summary of an open payment mandate (caps, payees, recurrence). Never the signed mandate. */
+	@Column({ type: 'jsonb', nullable: true })
+	policySummary?: Record<string, unknown>;
+
 	@CreateDateColumn({ type: 'timestamptz' })
 	createdAt!: Date;
 }

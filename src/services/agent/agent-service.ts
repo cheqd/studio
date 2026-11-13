@@ -8,6 +8,8 @@ import type {
 	AuthorityGrantRecord,
 	AuthorityGrantWithStatus,
 	GrantType,
+	PaymentAddressBindingRecord,
+	PaymentAddressBindingWithStatus,
 	TokenStatusListRecord,
 } from '../../types/agent.js';
 import { AGENT_SETTABLE_STATUSES, VCT } from '../../types/agent.js';
@@ -20,6 +22,9 @@ import type { AgentEngineProvider } from './agent-engine.js';
 import { badRequest, conflict, featureDisabled, notFound, unauthorised, upstreamFailure } from './agent-errors.js';
 import type { AgentPatch, AgentStore } from './agent-store.js';
 import { validateOpenMandateRequest } from './ap2-mandate.js';
+import { parseCaip10 } from './caip10.js';
+import { buildSettlementView, summariseMandate } from './settlement.js';
+import type { SettlementView } from './settlement.js';
 import { issueSdJwtVc } from './sd-jwt.js';
 
 export interface RegisterAgentInput {
@@ -51,6 +56,12 @@ export interface IssuedAuthority {
 	label?: 'untested';
 }
 
+export interface IssuedPaymentAddressBinding {
+	binding: PaymentAddressBindingRecord;
+	/** Returned once and never stored. */
+	credential: { format: 'sd-jwt-vc'; value: string };
+}
+
 export interface AgentServiceOptions {
 	store: AgentStore;
 	engineFor: AgentEngineProvider;
@@ -65,6 +76,12 @@ export interface AgentServiceOptions {
 const DEFAULT_STATUS_LIST_SIZE = 131072;
 const MAX_NAME = 200;
 const MAX_DESCRIPTION = 2000;
+/** Live payment address bindings per agent. */
+export const MAX_PAYMENT_ADDRESSES = 10;
+/** Token Status List values (draft-ietf-oauth-status-list): 0 valid, 1 invalid (revoked), 2 suspended. */
+const STATUS_VALID = 0;
+const STATUS_REVOKED = 1;
+const STATUS_SUSPENDED = 2;
 
 const requireCustomer = (customer: CustomerEntity | undefined): CustomerEntity => {
 	if (!customer?.customerId) throw unauthorised();
@@ -152,7 +169,7 @@ export class AgentService {
 		patch: { name?: string; description?: string | null; actsForDid?: string | null; status?: string }
 	): Promise<AgentRecord> {
 		const customer = requireCustomer(customerIn);
-		await this.owned(customer, agentId);
+		const current = await this.owned(customer, agentId);
 		const change: AgentPatch = {};
 		if (patch.name !== undefined) {
 			const name = patch.name.trim();
@@ -176,22 +193,38 @@ export class AgentService {
 			change.status = patch.status;
 		}
 		if (Object.keys(change).length === 0) throw badRequest('Nothing to update');
+		// Payment address bindings follow the agent's status on their status lists (suspended while the agent is
+		// suspended, valid again on reactivation), so a relying party stops accepting them. If the write cannot
+		// be made the status does not change.
+		if (change.status !== undefined && change.status !== current.status) {
+			await this.setLiveBindingsStatus(
+				customer,
+				agentId,
+				change.status === 'suspended' ? STATUS_SUSPENDED : STATUS_VALID
+			);
+		}
 		const updated = await this.store.updateAgent(customer.customerId, agentId, change);
 		if (!updated) throw notFound();
 		return updated;
 	}
 
 	/**
-	 * Soft-deletes the agent. Live authority grants are revoked first, so a deleted agent cannot keep using a
-	 * credential: if that cannot be done (no engine capability, ledger failure) the agent is NOT deleted.
+	 * Soft-deletes the agent. Live authority grants and live payment address bindings are revoked first, so a
+	 * deleted agent cannot keep using a credential: if that cannot be done (no engine capability, ledger failure)
+	 * the agent is NOT deleted.
 	 */
-	async remove(customerIn: CustomerEntity | undefined, agentId: string): Promise<{ revokedGrants: number }> {
+	async remove(
+		customerIn: CustomerEntity | undefined,
+		agentId: string
+	): Promise<{ revokedGrants: number; revokedPaymentAddresses: number }> {
 		const customer = requireCustomer(customerIn);
 		await this.owned(customer, agentId);
 		const live = await this.store.listLiveGrants(customer.customerId, agentId);
 		for (const grant of live) await this.revokeLoaded(customer, grant);
+		const bindings = await this.store.listLiveBindings(customer.customerId, agentId);
+		for (const binding of bindings) await this.revokeBindingLoaded(customer, binding);
 		if (!(await this.store.softDeleteAgent(customer.customerId, agentId))) throw notFound();
-		return { revokedGrants: live.length };
+		return { revokedGrants: live.length, revokedPaymentAddresses: bindings.length };
 	}
 
 	// --- Cards --------------------------------------------------------------------------------------------
@@ -307,6 +340,9 @@ export class AgentService {
 		const agentDid = await resolveDidKeys(engine, agent.did);
 		const agentKey = agentDid.keys.find((key) => key.alg === 'ES256');
 		const { vct, specific } = this.claimsFor(input, agentKey?.jwk);
+		// Already validated by claimsFor. Kept so the settlement view needs no copy of the signed mandate.
+		const mandate = input.grantType === 'mandate' ? validateOpenMandateRequest(input.mandate) : undefined;
+		const policySummary = mandate?.ok ? (summariseMandate(mandate.mandate) ?? undefined) : undefined;
 		const issuer = await resolveDidKeys(engine, issuerDid);
 		if (issuer.deactivated) throw conflict('The issuer DID is deactivated');
 		const issuerKey = assertionKeys(issuer)[0];
@@ -336,6 +372,7 @@ export class AgentService {
 			statusIndex: index,
 			statusUri: list.uri,
 			expiresAt,
+			policySummary,
 		});
 		return { grant, credential: { format: 'sd-jwt-vc', value: compact } };
 	}
@@ -352,6 +389,122 @@ export class AgentService {
 		const grant = await this.store.getGrant(customer.customerId, agentId, grantId);
 		if (!grant) throw notFound('Authority grant');
 		return this.revokeLoaded(customer, grant);
+	}
+
+	// --- Payment addresses (Proposed, x402) ---------------------------------------------------------------
+
+	/** The agent's bindings, newest first. `suspended` while the agent is suspended. No credential is returned. */
+	async listPaymentAddresses(customerIn: CustomerEntity | undefined, agentId: string) {
+		const customer = requireCustomer(customerIn);
+		const agent = await this.owned(customer, agentId);
+		const bindings = await this.store.listBindings(customer.customerId, agentId);
+		return bindings.map((binding) => ({
+			id: binding.id,
+			account: binding.account,
+			status: binding.revokedAt ? 'revoked' : agent.status === 'suspended' ? 'suspended' : 'active',
+			createdAt: binding.createdAt,
+			revokedAt: binding.revokedAt ?? null,
+		}));
+	}
+
+	/**
+	 * Binds a payment address (CAIP-10) to the agent with a `PaymentAddressBinding` SD-JWT VC signed by the agent's
+	 * own key, with a Token Status List entry so it can be revoked. cheqd's own vocabulary, not an x402 standard.
+	 * The binding is the agent's assertion: it does not prove control of the wallet. Returned once, never stored.
+	 */
+	async bindPaymentAddress(
+		customerIn: CustomerEntity | undefined,
+		agentId: string,
+		input: { account: unknown }
+	): Promise<IssuedPaymentAddressBinding> {
+		const customer = requireCustomer(customerIn);
+		const agent = await this.owned(customer, agentId);
+		if (agent.status !== 'active') throw conflict(`The agent is ${agent.status}`);
+		const parsed = parseCaip10(input.account);
+		if (!parsed.ok) throw badRequest(parsed.error);
+		const { account } = parsed.value;
+
+		const engine = await this.engineFor(customer);
+		requireCapabilities(engine, 'signWithDidKey', 'createTokenStatusList', 'setTokenStatus');
+
+		// Everything that can be refused cheaply comes before a key is used or a list index is taken.
+		const live = await this.store.listLiveBindings(customer.customerId, agentId);
+		if (live.some((binding) => binding.account === account)) {
+			throw conflict('This payment address is already bound to the agent');
+		}
+		if (live.length >= MAX_PAYMENT_ADDRESSES) {
+			throw conflict(`An agent can have at most ${MAX_PAYMENT_ADDRESSES} payment addresses`);
+		}
+		const resolved = await resolveDidKeys(engine, agent.did);
+		if (resolved.deactivated) throw conflict('The agent DID is deactivated');
+		const key = resolved.keys.find((candidate) => candidate.alg === 'ES256') ?? assertionKeys(resolved)[0];
+		if (!key) throw upstreamFailure('The agent DID has no usable signing key');
+
+		const { list, index } = await this.takeStatusIndex(customer, engine, agent.did, 'agent-payment-binding');
+		const claims = {
+			iss: agent.did,
+			sub: agent.did,
+			vct: VCT.paymentAddressBinding,
+			account,
+			iat: Math.floor(this.now().getTime() / 1000),
+			status: { status_list: { idx: index, uri: list.uri } },
+		};
+		const compact = await issueSdJwtVc(didSigner(engine, customer, agent.did, key), claims);
+		const binding = await this.store.createBinding({
+			agentId,
+			customerId: customer.customerId,
+			account,
+			issuerDid: agent.did,
+			subjectDid: agent.did,
+			statusListId: list.registryId,
+			statusIndex: index,
+			statusUri: list.uri,
+		});
+		return { binding, credential: { format: 'sd-jwt-vc', value: compact } };
+	}
+
+	async revokePaymentAddress(
+		customerIn: CustomerEntity | undefined,
+		agentId: string,
+		bindingId: string
+	): Promise<PaymentAddressBindingWithStatus> {
+		const customer = requireCustomer(customerIn);
+		await this.owned(customer, agentId);
+		if ((await this.store.countBindings(customer.customerId, agentId, bindingId)) === 0)
+			throw notFound('Payment address binding');
+		const binding = await this.store.getBinding(customer.customerId, agentId, bindingId);
+		if (!binding) throw notFound('Payment address binding');
+		return this.revokeBindingLoaded(customer, binding);
+	}
+
+	// --- Settlement (Proposed, x402, read-only) -----------------------------------------------------------
+
+	/**
+	 * The agent's open AP2 payment mandate as an x402 payment policy. Derived, not stored: the policy summary kept
+	 * with the mandate grant when it was issued, and the live payment address bindings. 404 when there is no open
+	 * mandate (none granted, revoked, expired, or granted before summaries were kept).
+	 */
+	async settlement(customerIn: CustomerEntity | undefined, agentId: string): Promise<SettlementView> {
+		const customer = requireCustomer(customerIn);
+		const agent = await this.owned(customer, agentId);
+		const now = this.now();
+		const open = (await this.store.listLiveGrants(customer.customerId, agentId))
+			.filter(
+				(grant) =>
+					grant.grantType === 'mandate' && grant.policySummary && (!grant.expiresAt || grant.expiresAt > now)
+			)
+			.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+		if (!open?.policySummary) throw notFound('Open mandate');
+		// A suspended agent's addresses are not usable, so none are offered as pays-from.
+		const bindings =
+			agent.status === 'active' ? await this.store.listLiveBindings(customer.customerId, agentId) : [];
+		return buildSettlementView({
+			agentId,
+			agentStatus: agent.status,
+			grant: open,
+			summary: open.policySummary,
+			bindings,
+		});
 	}
 
 	// --- Internals ----------------------------------------------------------------------------------------
@@ -409,12 +562,13 @@ export class AgentService {
 	private async takeStatusIndex(
 		customer: CustomerEntity,
 		engine: IdentityEngine,
-		issuerDid: string
+		issuerDid: string,
+		listNamePrefix = 'agent-authority'
 	): Promise<{ list: TokenStatusListRecord; index: number }> {
 		for (let attempt = 0; attempt < 2; attempt++) {
 			let list = await this.store.findOpenStatusList(customer.customerId, issuerDid);
 			if (!list) {
-				const name = `agent-authority-${this.newId().slice(0, 8)}`;
+				const name = `${listNamePrefix}-${this.newId().slice(0, 8)}`;
 				const created = await engineMethod(engine, 'createTokenStatusList')(
 					issuerDid,
 					{ name, bits: 2, size: this.statusListSize },
@@ -452,6 +606,54 @@ export class AgentService {
 		const revoked = await this.store.markGrantRevoked(customer.customerId, grant.agentId, grant.id);
 		if (!revoked) throw notFound('Authority grant');
 		return revoked;
+	}
+
+	private async revokeBindingLoaded(
+		customer: CustomerEntity,
+		binding: PaymentAddressBindingWithStatus
+	): Promise<PaymentAddressBindingWithStatus> {
+		if (binding.revokedAt) return binding;
+		if (
+			binding.statusListUri &&
+			binding.issuerDid &&
+			binding.statusIndex !== null &&
+			binding.statusIndex !== undefined
+		) {
+			const engine = await this.engineFor(customer);
+			requireCapabilities(engine, 'setTokenStatus');
+			await engineMethod(engine, 'setTokenStatus')(
+				binding.issuerDid,
+				binding.statusListUri,
+				[{ index: binding.statusIndex, status: STATUS_REVOKED }],
+				customer
+			);
+		}
+		const revoked = await this.store.markBindingRevoked(customer.customerId, binding.agentId, binding.id);
+		if (!revoked) throw notFound('Payment address binding');
+		return revoked;
+	}
+
+	/** Suspends (2) or restores (0) the status list entries of the agent's live bindings. A no-op with none. */
+	private async setLiveBindingsStatus(customer: CustomerEntity, agentId: string, status: 0 | 2): Promise<void> {
+		const live = (await this.store.listLiveBindings(customer.customerId, agentId)).filter(
+			(binding) =>
+				binding.statusListUri &&
+				binding.issuerDid &&
+				binding.statusIndex !== null &&
+				binding.statusIndex !== undefined
+		);
+		if (live.length === 0) return;
+		const engine = await this.engineFor(customer);
+		requireCapabilities(engine, 'setTokenStatus');
+		const setStatus = engineMethod(engine, 'setTokenStatus');
+		for (const binding of live) {
+			await setStatus(
+				binding.issuerDid as string,
+				binding.statusListUri as string,
+				[{ index: binding.statusIndex as number, status }],
+				customer
+			);
+		}
 	}
 
 	/**

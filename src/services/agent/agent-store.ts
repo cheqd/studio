@@ -3,11 +3,13 @@ import { Connection } from '../../database/connection/connection.js';
 import { AgentEntity } from '../../database/entities/agent.entity.js';
 import { AgentCardEntity } from '../../database/entities/agent-card.entity.js';
 import { AuthorityGrantEntity } from '../../database/entities/authority-grant.entity.js';
+import { PaymentAddressBindingEntity } from '../../database/entities/payment-address-binding.entity.js';
 import { IssuedCredentialEntity } from '../../database/entities/issued-credential.entity.js';
 import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
 import { IdentifierEntity } from '../../database/entities/identifier.entity.js';
 import { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { recordActivation } from '../analytics/activation.js';
+import { VCT } from '../../types/agent.js';
 import { StatusRegistryState } from '../../types/credential-status.js';
 import { CredentialCategory } from '../../types/credential.js';
 import type {
@@ -15,8 +17,12 @@ import type {
 	AgentRecord,
 	AuthorityGrantRecord,
 	AuthorityGrantWithStatus,
+	MandatePolicySummary,
+	PaymentAddressBindingRecord,
+	PaymentAddressBindingWithStatus,
 	TokenStatusListRecord,
 } from '../../types/agent.js';
+import { conflict } from './agent-errors.js';
 
 export interface NewAgent {
 	customerId: string;
@@ -55,6 +61,21 @@ export interface NewGrant {
 	statusIndex?: number;
 	statusUri?: string;
 	expiresAt?: Date;
+	/** Payment mandates only: the non-secret policy summary for the settlement view. */
+	policySummary?: MandatePolicySummary;
+}
+
+export interface NewPaymentAddressBinding {
+	agentId: string;
+	customerId: string;
+	/** CAIP-10, already normalised. */
+	account: string;
+	/** The agent DID, which signs the binding and owns its status list. */
+	issuerDid: string;
+	subjectDid: string;
+	statusListId: string;
+	statusIndex: number;
+	statusUri: string;
 }
 
 export interface NewStatusList {
@@ -96,6 +117,19 @@ export interface AgentStore {
 	listGrants(customerId: string, agentId: string): Promise<AuthorityGrantRecord[]>;
 	createGrant(grant: NewGrant): Promise<AuthorityGrantRecord>;
 	markGrantRevoked(customerId: string, agentId: string, grantId: string): Promise<AuthorityGrantWithStatus | null>;
+
+	countBindings(customerId: string, agentId: string, bindingId: string): Promise<number>;
+	getBinding(customerId: string, agentId: string, bindingId: string): Promise<PaymentAddressBindingWithStatus | null>;
+	/** Every binding of the agent (live and revoked), newest first. Rows only: no credential is loaded. */
+	listBindings(customerId: string, agentId: string): Promise<PaymentAddressBindingRecord[]>;
+	listLiveBindings(customerId: string, agentId: string): Promise<PaymentAddressBindingWithStatus[]>;
+	/** Throws a 409 `conflict` when the account is already bound to the agent and not revoked. */
+	createBinding(binding: NewPaymentAddressBinding): Promise<PaymentAddressBindingRecord>;
+	markBindingRevoked(
+		customerId: string,
+		agentId: string,
+		bindingId: string
+	): Promise<PaymentAddressBindingWithStatus | null>;
 
 	/** An active Token Status List of this issuer with room left, or null. */
 	findOpenStatusList(customerId: string, issuerDid: string): Promise<TokenStatusListRecord | null>;
@@ -153,6 +187,25 @@ const toGrant = (row: AuthorityGrantEntity, agentId: string, customerId: string)
 	statusListId: row.statusList?.registryId ?? null,
 	statusIndex: row.statusIndex ?? null,
 	expiresAt: row.expiresAt ?? null,
+	revokedAt: row.revokedAt ?? null,
+	policySummary: (row.policySummary as MandatePolicySummary | undefined) ?? null,
+	createdAt: row.createdAt,
+	issuerDid: row.statusList?.identifier?.did ?? null,
+	statusListUri: row.statusList?.uri ?? null,
+});
+
+const toBinding = (
+	row: PaymentAddressBindingEntity,
+	agentId: string,
+	customerId: string
+): PaymentAddressBindingWithStatus => ({
+	id: row.id,
+	agentId,
+	customerId,
+	account: row.account,
+	issuedCredentialId: row.issuedCredential?.issuedCredentialId ?? null,
+	statusListId: row.statusList?.registryId ?? null,
+	statusIndex: row.statusIndex ?? null,
 	revokedAt: row.revokedAt ?? null,
 	createdAt: row.createdAt,
 	issuerDid: row.statusList?.identifier?.did ?? null,
@@ -352,6 +405,7 @@ export class TypeormAgentStore implements AgentStore {
 						: undefined,
 					statusIndex: grant.statusIndex,
 					expiresAt: grant.expiresAt,
+					policySummary: grant.policySummary as unknown as Record<string, unknown> | undefined,
 				})
 			);
 			return {
@@ -364,9 +418,140 @@ export class TypeormAgentStore implements AgentStore {
 				statusIndex: saved.statusIndex ?? null,
 				expiresAt: saved.expiresAt ?? null,
 				revokedAt: null,
+				policySummary: grant.policySummary ?? null,
 				createdAt: saved.createdAt,
 			};
 		});
+	}
+
+	async countBindings(customerId: string, agentId: string, bindingId: string): Promise<number> {
+		need(customerId, agentId, bindingId);
+		return this.db
+			.getRepository(PaymentAddressBindingEntity)
+			.count({ where: { id: bindingId, agent: { agentId }, customer: { customerId } } });
+	}
+
+	async getBinding(
+		customerId: string,
+		agentId: string,
+		bindingId: string
+	): Promise<PaymentAddressBindingWithStatus | null> {
+		need(customerId, agentId, bindingId);
+		const row = await this.db.getRepository(PaymentAddressBindingEntity).findOne({
+			where: { id: bindingId, agent: { agentId }, customer: { customerId } },
+			relations: { issuedCredential: true, statusList: { identifier: true } },
+		});
+		return row ? toBinding(row, agentId, customerId) : null;
+	}
+
+	async listBindings(customerId: string, agentId: string): Promise<PaymentAddressBindingRecord[]> {
+		need(customerId, agentId);
+		const rows = await this.db.getRepository(PaymentAddressBindingEntity).find({
+			where: { agent: { agentId }, customer: { customerId } },
+			order: { createdAt: 'DESC', id: 'ASC' },
+		});
+		return rows.map((row) => ({
+			id: row.id,
+			agentId,
+			customerId,
+			account: row.account,
+			revokedAt: row.revokedAt ?? null,
+			createdAt: row.createdAt,
+		}));
+	}
+
+	async listLiveBindings(customerId: string, agentId: string): Promise<PaymentAddressBindingWithStatus[]> {
+		need(customerId, agentId);
+		const rows = await this.db.getRepository(PaymentAddressBindingEntity).find({
+			where: { agent: { agentId }, customer: { customerId } },
+			relations: { issuedCredential: true, statusList: { identifier: true } },
+			order: { createdAt: 'DESC', id: 'ASC' },
+		});
+		return rows.filter((row) => !row.revokedAt).map((row) => toBinding(row, agentId, customerId));
+	}
+
+	async createBinding(binding: NewPaymentAddressBinding): Promise<PaymentAddressBindingRecord> {
+		need(binding.customerId, binding.agentId, binding.account);
+		try {
+			return await this.db.transaction(async (manager: EntityManager) => {
+				const credential = new IssuedCredentialEntity(
+					'studio',
+					'sd-jwt-vc',
+					CredentialCategory.CREDENTIAL,
+					[VCT.paymentAddressBinding],
+					new Date(),
+					{ customerId: binding.customerId } as CustomerEntity,
+					{
+						issuerId: binding.issuerDid,
+						subjectId: binding.subjectDid,
+						statusIndex: binding.statusIndex,
+						credentialStatus: { status_list: { idx: binding.statusIndex, uri: binding.statusUri } },
+						statusRegistry: { registryId: binding.statusListId } as StatusRegistryEntity,
+						// Metadata only: the signed credential is returned once and never stored.
+						metadata: { agentId: binding.agentId, kind: 'payment-address-binding' },
+					}
+				);
+				credential.engine = 'credo';
+				credential.statusFormat = TOKEN_STATUS_LIST;
+				const savedCredential = await manager.getRepository(IssuedCredentialEntity).save(credential);
+
+				const repository = manager.getRepository(PaymentAddressBindingEntity);
+				const saved = await repository.save(
+					repository.create({
+						agent: { agentId: binding.agentId } as AgentEntity,
+						customer: { customerId: binding.customerId } as CustomerEntity,
+						account: binding.account,
+						issuedCredential: {
+							issuedCredentialId: savedCredential.issuedCredentialId,
+						} as IssuedCredentialEntity,
+						statusList: { registryId: binding.statusListId } as StatusRegistryEntity,
+						statusIndex: binding.statusIndex,
+					})
+				);
+				return {
+					id: saved.id,
+					agentId: binding.agentId,
+					customerId: binding.customerId,
+					account: saved.account,
+					issuedCredentialId: savedCredential.issuedCredentialId,
+					statusListId: binding.statusListId,
+					statusIndex: saved.statusIndex ?? null,
+					revokedAt: null,
+					createdAt: saved.createdAt,
+				};
+			});
+		} catch (error) {
+			if ((error as { code?: string } | null)?.code === '23505') {
+				throw conflict('This payment address is already bound to the agent');
+			}
+			throw error;
+		}
+	}
+
+	async markBindingRevoked(
+		customerId: string,
+		agentId: string,
+		bindingId: string
+	): Promise<PaymentAddressBindingWithStatus | null> {
+		need(customerId, agentId, bindingId);
+		const binding = await this.getBinding(customerId, agentId, bindingId);
+		if (!binding) return null;
+		if (binding.revokedAt) return binding;
+		const revokedAt = new Date();
+		await this.db.transaction(async (manager: EntityManager) => {
+			await manager
+				.getRepository(PaymentAddressBindingEntity)
+				.update({ id: bindingId, agent: { agentId }, customer: { customerId } }, { revokedAt });
+			if (binding.issuedCredentialId) {
+				await manager
+					.getRepository(IssuedCredentialEntity)
+					.update(
+						{ issuedCredentialId: binding.issuedCredentialId, customer: { customerId } },
+						{ status: 'revoked', statusUpdatedAt: revokedAt }
+					);
+			}
+		});
+		return { ...binding, revokedAt };
 	}
 
 	async markGrantRevoked(
