@@ -1,5 +1,7 @@
 import { fromString } from 'uint8arrays';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
+import { EngineGoneError } from '../identity/engine/errors.js';
+import { statusListArtifact } from '../identity/engine/artifact-refs.js';
 import type {
 	CheqdCredentialStatus,
 	CreateEncryptedBitstringSuccessfulResponseBody,
@@ -106,10 +108,13 @@ export class CredentialStatusService {
 				};
 			}
 
+			// A new status list: the feature flag chooses the engine for this customer
+			const engine = await identityServiceStrategySetup.routed('status-list');
+
 			if (data) {
 				let result;
 				if (listType === StatusListType.Bitstring) {
-					result = await identityServiceStrategySetup.agent.broadcastBitstringStatusList(
+					result = await engine.broadcastBitstringStatusList(
 						did,
 						{
 							data,
@@ -120,7 +125,7 @@ export class CredentialStatusService {
 						customer
 					);
 				} else {
-					result = await identityServiceStrategySetup.agent.broadcastStatusList2021(
+					result = await engine.broadcastStatusList2021(
 						did,
 						{
 							data,
@@ -145,7 +150,7 @@ export class CredentialStatusService {
 			let statusSize: number;
 
 			if (listType === StatusListType.Bitstring) {
-				result = (await identityServiceStrategySetup.agent.createUnencryptedBitstringStatusList(
+				result = (await engine.createUnencryptedBitstringStatusList(
 					did,
 					{
 						name: statusListName,
@@ -165,7 +170,7 @@ export class CredentialStatusService {
 
 				statusSize = result.resource.metadata.length;
 			} else {
-				result = (await identityServiceStrategySetup.agent.createUnencryptedStatusList2021(
+				result = (await engine.createUnencryptedStatusList2021(
 					did,
 					{
 						name: statusListName,
@@ -280,6 +285,11 @@ export class CredentialStatusService {
 				| CreateEncryptedBitstringSuccessfulResponseBody;
 			let statusSize: number;
 
+			// Encrypted status-list creation is withdrawn: the router answers Gone (410) whatever the engine
+			const engine = await identityServiceStrategySetup.routed('status-list', undefined, {
+				encryptedStatusList: true,
+			});
+
 			// validate identifier
 			const identifier = await IdentifierService.instance.get(did, customer);
 			if (!identifier) {
@@ -291,7 +301,7 @@ export class CredentialStatusService {
 			}
 
 			if (listType === StatusListType.Bitstring) {
-				result = (await identityServiceStrategySetup.agent.createEncryptedBitstringStatusList(
+				result = (await engine.createEncryptedBitstringStatusList(
 					did,
 					{
 						name: statusListName,
@@ -314,7 +324,7 @@ export class CredentialStatusService {
 				)) as CreateEncryptedBitstringSuccessfulResponseBody;
 				statusSize = result.resource.metadata.length;
 			} else {
-				result = (await identityServiceStrategySetup.agent.createEncryptedStatusList2021(
+				result = (await engine.createEncryptedStatusList2021(
 					did,
 					{
 						name: statusListName,
@@ -390,6 +400,9 @@ export class CredentialStatusService {
 				data: result,
 			};
 		} catch (error) {
+			if (error instanceof EngineGoneError) {
+				return { success: false, statusCode: StatusCodes.GONE, error: error.message };
+			}
 			return {
 				success: false,
 				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
@@ -425,7 +438,13 @@ export class CredentialStatusService {
 				throw new Error(`[did-provider-cheqd]: Invalid statusAction provided: ${statusActionString}`);
 			}
 
-			const unencrypted = await identityServiceStrategySetup.agent.searchStatusList(
+			// The list exists, so the engine recorded on it decides
+			const engine = await identityServiceStrategySetup.routed(
+				'status-list',
+				await statusListArtifact(did, statusListName, customer.customerId)
+			);
+
+			const unencrypted = await engine.searchStatusList(
 				did,
 				statusListName,
 				listType,
@@ -455,7 +474,7 @@ export class CredentialStatusService {
 				};
 			}
 
-			const result = (await identityServiceStrategySetup.agent.updateUnencryptedStatusList(
+			const result = (await engine.updateUnencryptedStatusList(
 				did,
 				listType,
 				{
@@ -602,7 +621,13 @@ export class CredentialStatusService {
 				throw new Error(`[did-provider-cheqd]: Invalid statusAction provided: ${statusActionString}`);
 			}
 
-			const encrypted = await identityServiceStrategySetup.agent.searchStatusList(
+			// The list exists, so the engine recorded on it decides
+			const engine = await identityServiceStrategySetup.routed(
+				'status-list',
+				await statusListArtifact(did, statusListName, customer.customerId)
+			);
+
+			const encrypted = await engine.searchStatusList(
 				did,
 				statusListName,
 				listType,
@@ -632,7 +657,7 @@ export class CredentialStatusService {
 				};
 			}
 
-			const result = (await identityServiceStrategySetup.agent.updateEncryptedStatusList(
+			const result = (await engine.updateEncryptedStatusList(
 				did,
 				listType,
 				{
@@ -805,12 +830,12 @@ export class CredentialStatusService {
 
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
 
-		const statusList = await identityServiceStrategySetup.agent.searchStatusList(
-			did,
-			statusListName,
-			listType,
-			statusPurpose
+		const engine = await identityServiceStrategySetup.routed(
+			'status-list',
+			await statusListArtifact(did, statusListName, customer.customerId)
 		);
+
+		const statusList = await engine.searchStatusList(did, statusListName, listType, statusPurpose);
 
 		if (statusList.error) {
 			if (statusList.error === 'notFound') {
@@ -833,7 +858,7 @@ export class CredentialStatusService {
 				const feePaymentResult = await Promise.all(
 					statusList?.resource?.metadata?.paymentConditions?.map(
 						async (condition: { feePaymentAddress: any; feePaymentAmount: any }) => {
-							return await identityServiceStrategySetup.agent.remunerateStatusList2021(
+							return await engine.remunerateStatusList2021(
 								{
 									feePaymentAddress: condition.feePaymentAddress,
 									feePaymentAmount: condition.feePaymentAmount,
@@ -880,7 +905,7 @@ export class CredentialStatusService {
 				? `${process.env.RESOLVER_URL}${statusListCredential}`
 				: statusListCredential;
 			if (listType === StatusListType.Bitstring) {
-				result = await identityServiceStrategySetup.agent.checkBitstringStatusList(
+				result = await engine.checkBitstringStatusList(
 					did,
 					{
 						id: index ? statusListUrl + '#' + index : undefined,
@@ -897,7 +922,7 @@ export class CredentialStatusService {
 					customer
 				);
 			} else {
-				result = await identityServiceStrategySetup.agent.checkStatusList2021(
+				result = await engine.checkStatusList2021(
 					did,
 					{
 						statusListIndex: index!,
@@ -979,12 +1004,12 @@ export class CredentialStatusService {
 
 		try {
 			// find in registry and retreive uri
-			const result = await new IdentityServiceStrategySetup().agent.searchStatusList(
-				did,
-				statusListName,
-				listType,
-				statusPurpose
-			);
+			const result = await (
+				await new IdentityServiceStrategySetup().routed(
+					'status-list',
+					await statusListArtifact(did, statusListName)
+				)
+			).searchStatusList(did, statusListName, listType, statusPurpose);
 
 			if (result.error) {
 				if (result.error === 'notFound') {
