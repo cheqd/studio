@@ -43,7 +43,7 @@ export async function statusListArtifact(
 	}
 }
 
-type CredentialLike = Record<string, unknown> | string | undefined | null;
+type CredentialLike = object | string | undefined | null;
 
 function decodeJwtPayload(jwt: string): Record<string, unknown> | undefined {
 	try {
@@ -60,22 +60,19 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
 }
 
 /**
- * The status list a credential points at, found from its issuer and the `resourceName` in its status entry.
- * Accepts a credential object or a compact JWT; for a list of credentials the first one decides. Anything that
- * cannot be read gives `undefined`.
+ * The issuer DID and status-list name a credential's status entry points at. Accepts a credential object or a
+ * compact JWT; for a list of credentials the first one decides. Anything that cannot be read gives `undefined`.
  */
-export async function statusListArtifactFromCredential(
-	credential: CredentialLike | CredentialLike[],
-	customerId?: string
-): Promise<ArtifactRef | undefined> {
-	if (!usesPostgres()) return undefined;
+export function statusListReference(
+	credential: CredentialLike | CredentialLike[]
+): { issuer: string; resourceName: string } | undefined {
 	try {
 		const first = Array.isArray(credential) ? credential[0] : credential;
-		let body = typeof first === 'string' ? decodeJwtPayload(first) : asRecord(first);
-		if (!body) return undefined;
-		body = asRecord(body.vc) ?? body;
+		const decoded = typeof first === 'string' ? decodeJwtPayload(first) : asRecord(first);
+		if (!decoded) return undefined;
+		const body = asRecord(decoded.vc) ?? decoded;
 
-		const issuerRaw = body.issuer ?? (typeof first === 'string' ? decodeJwtPayload(first)?.iss : undefined);
+		const issuerRaw = body.issuer ?? decoded.iss;
 		const issuer = typeof issuerRaw === 'string' ? issuerRaw : asRecord(issuerRaw)?.id;
 		const entries = Array.isArray(body.credentialStatus) ? body.credentialStatus : [body.credentialStatus];
 		for (const entry of entries) {
@@ -83,10 +80,20 @@ export async function statusListArtifactFromCredential(
 			const location = status?.statusListCredential ?? status?.id;
 			if (typeof issuer !== 'string' || typeof location !== 'string') continue;
 			const resourceName = new URL(location).searchParams.get('resourceName');
-			if (resourceName) return await statusListArtifact(issuer, resourceName, customerId);
+			if (resourceName) return { issuer, resourceName };
 		}
 	} catch {
 		/* best effort */
 	}
 	return undefined;
+}
+
+/** The status list a credential points at, as `statusRegistry.registryId`. */
+export async function statusListArtifactFromCredential(
+	credential: CredentialLike | CredentialLike[],
+	customerId?: string
+): Promise<ArtifactRef | undefined> {
+	if (!usesPostgres()) return undefined;
+	const reference = statusListReference(credential);
+	return reference ? statusListArtifact(reference.issuer, reference.resourceName, customerId) : undefined;
 }

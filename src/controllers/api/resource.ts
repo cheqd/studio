@@ -1,4 +1,3 @@
-import type { EngineResourcePayload } from '../../services/identity/engine/types.js';
 import type { Request, Response } from 'express';
 import { fromString } from 'uint8arrays';
 import { v4 } from 'uuid';
@@ -212,13 +211,8 @@ export class ResourceController {
 			};
 			// A resource is written under an existing DID, so the DID's recorded engine decides
 			const result = await (
-				await identityServiceStrategySetup.engine('resource', { kind: 'did', id: did })
-			).createResource(
-				network || did.split(':')[2],
-				resourcePayload as EngineResourcePayload,
-				response.locals.customer,
-				publicKeyHexs
-			);
+				await identityServiceStrategySetup.routed('resource', { kind: 'did', id: did })
+			).createResource(network || did.split(':')[2], resourcePayload, response.locals.customer, publicKeyHexs);
 
 			if (result) {
 				const url = new URL(
@@ -450,7 +444,7 @@ export class ResourceController {
 
 		try {
 			const result = await (
-				await identityServiceStrategySetup.engine('resource', did ? { kind: 'did', id: did } : undefined)
+				await identityServiceStrategySetup.routed('resource', did ? { kind: 'did', id: did } : undefined)
 			).listResources(
 				{
 					did,

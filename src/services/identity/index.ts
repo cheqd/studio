@@ -256,16 +256,12 @@ export interface IIdentityService extends StudioAccountServices {
 }
 
 /**
- * What a method of `IIdentityService` resolves to. The engines return engine-neutral types; the Veramo engine
- * returns exactly what the service did, and the controllers still read the Veramo shapes. Routed call sites use
- * this to say so in one place instead of casting to `any`.
+ * The engine methods, typed the way the controllers and services still read them (Veramo-shaped results).
+ * The Veramo engine delegates unchanged, so these are the types it returns. Another engine returns the
+ * engine-neutral equivalents, which carry the same fields. Only methods that exist on `IdentityEngine` are
+ * included, so a call to a Studio-only method (API keys, operations) does not compile through this type.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LegacyServiceResult<K extends keyof IIdentityService> = IIdentityService[K] extends (
-	...args: any[]
-) => infer R
-	? Awaited<R>
-	: never;
+export type RoutedService = Pick<IIdentityService, Exclude<keyof IdentityEngine & keyof IIdentityService, 'name'>>;
 
 export class IdentityServiceStrategySetup {
 	agent: IIdentityService;
@@ -298,6 +294,18 @@ export class IdentityServiceStrategySetup {
 			},
 			this.agent
 		);
+	}
+
+	/**
+	 * `engine()`, typed as `RoutedService` for call sites that read Veramo-shaped results. Same routing, same
+	 * engine; only the static type differs.
+	 */
+	public async routed(
+		route: EngineRoute,
+		artifact?: ArtifactRef,
+		hints?: { keyType?: string; encryptedStatusList?: boolean }
+	): Promise<RoutedService> {
+		return (await this.engine(route, artifact, hints)) as unknown as RoutedService;
 	}
 
 	private setStrategy(strategy: IIdentityService) {
