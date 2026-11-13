@@ -898,9 +898,10 @@ export class PostgresIdentityService extends DefaultIdentityService {
 			const issuerId =
 				typeof decodedCredential.issuer === 'string' ? decodedCredential.issuer : decodedCredential.issuer.id;
 
-			const existsInWallet = await IdentifierService.instance.find({ did: issuerId, customer: customer });
+			// find() returns findAndCount's [rows, count] tuple, or [] on error: both are truthy, so test the count.
+			const [, ownedCount = 0] = await IdentifierService.instance.find({ did: issuerId, customer: customer });
 
-			if (!existsInWallet) {
+			if (ownedCount < 1) {
 				throw new Error(`${issuerId} not found in wallet`);
 			}
 		}
