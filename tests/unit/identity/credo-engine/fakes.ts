@@ -100,6 +100,28 @@ export class FakeStore implements CredoEngineStore {
 		return { total: 0, resources: [] };
 	}
 	resources: { customerId: string; did: string; resourceId: string; resourceType: string }[] = [];
+	async findLatestResourcesVersionsByType(customerId: string, resourceType: string, network?: string, did?: string) {
+		const own = this.resources.filter(
+			(r) =>
+				r.customerId === customerId &&
+				r.resourceType === resourceType &&
+				(!did || r.did === did) &&
+				(!network || r.did.startsWith(`did:cheqd:${network}:`))
+		);
+		return {
+			total: own.length,
+			resources: own.map((r) => ({
+				resourceId: r.resourceId,
+				resourceName: 'name',
+				resourceType: r.resourceType,
+				mediaType: 'application/json',
+				previousVersionId: '',
+				nextVersionId: '',
+				did: r.did,
+				encrypted: false,
+			})),
+		};
+	}
 	async listCredentialResources(customerId: string, options: { issuerId?: string; resourceTypes: string[] }) {
 		const own = this.resources.filter(
 			(r) =>

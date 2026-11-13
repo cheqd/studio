@@ -31,6 +31,7 @@ import type {
 	EngineVerificationOptions,
 	EngineVerificationResult,
 } from '../types.js';
+import { CredoAccreditations } from './accreditation.js';
 import { CredoCredentials } from './credentials.js';
 import { CredoOwnershipError, NotImplementedByEngineError } from './errors.js';
 import {
@@ -43,6 +44,7 @@ import type { CredoEngineStore, CredoRuntime, DidKeyLink, StoredKey } from './po
 import { CredoSigner } from './signing.js';
 import { safeFetch as defaultSafeFetch, type SafeFetch } from '../../../../helpers/safe-fetch.js';
 import { CredoStatusLists, type StatusListOwnership } from './status-lists.js';
+import type { EngineAccreditationOutcome, EngineAccreditationVerifyRequest } from '../types.js';
 import type {
 	EngineTokenStatusList,
 	EngineTokenStatusListOptions,
@@ -104,6 +106,7 @@ export class CredoEngine implements IdentityEngine {
 	private readonly signer: CredoSigner;
 	private readonly credentials: CredoCredentials;
 	private readonly statusLists: CredoStatusLists;
+	private readonly accreditations: CredoAccreditations;
 
 	constructor(dependencies: CredoEngineDependencies) {
 		this.store = dependencies.store;
@@ -118,6 +121,11 @@ export class CredoEngine implements IdentityEngine {
 			signer: this.signer,
 			ensureTenant: (customerId) => this.ensureTenant(customerId),
 			resolveUrl: (didUrl) => this.resolve(didUrl),
+			statusEntries: {
+				resolverUrl: this.resolverUrl,
+				readStatusList: (did, name, listType, purpose) =>
+					this.statusLists.searchStatusList(did, name, listType, purpose),
+			},
 		});
 		this.statusLists = new CredoStatusLists({
 			store: dependencies.store,
@@ -127,6 +135,13 @@ export class CredoEngine implements IdentityEngine {
 			ensureTenant: (customerId) => this.ensureTenant(customerId),
 			safeFetch: dependencies.safeFetch ?? defaultSafeFetch,
 			resolverUrl: this.resolverUrl,
+		});
+		this.accreditations = new CredoAccreditations({
+			store: this.store,
+			resolveUrl: (didUrl, dereferencing) => this.resolve(didUrl, dereferencing),
+			resolveDid: (did) => this.resolveDid(did),
+			verifyCredential: (credential, options, customer) =>
+				this.credentials.verifyCredential(credential, options, customer),
 		});
 	}
 
@@ -417,6 +432,26 @@ export class CredoEngine implements IdentityEngine {
 
 	listResources(options: ListResourceOptions, customer: CustomerEntity): Promise<ListResourceResponse> {
 		return this.store.listResources(requireCustomer(customer), options);
+	}
+
+	findLatestResourcesVersionsByType(
+		resourceType: string,
+		customer: CustomerEntity,
+		network?: string,
+		did?: string,
+		page?: number,
+		limit?: number
+	): Promise<ListResourceResponse> {
+		return this.accreditations.findLatestResourcesVersionsByType(resourceType, customer, network, did, page, limit);
+	}
+
+	// ---------------------------------------------------------- accreditations
+
+	verifyAccreditation(
+		request: EngineAccreditationVerifyRequest,
+		customer: CustomerEntity
+	): Promise<EngineAccreditationOutcome> {
+		return this.accreditations.verifyAccreditation(request, customer);
 	}
 
 	// ------------------------------------------------- not built yet (next agent)

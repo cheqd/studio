@@ -61,6 +61,16 @@ export interface CredoEngineStore extends CredentialStore {
 	// Resources
 	listResources(customerId: string, options: ListResourceOptions): Promise<ListResourceResponse>;
 
+	/** The latest version of each of the customer's resources of one type, newest first. Scoped to the customer. */
+	findLatestResourcesVersionsByType(
+		customerId: string,
+		resourceType: string,
+		network?: string,
+		did?: string,
+		page?: number,
+		limit?: number
+	): Promise<ListResourceResponse>;
+
 	// Payment accounts
 	findPayerAccount(customerId: string, network: string): Promise<PayerAccount | null>;
 	/** The decrypted private key (hex) of a payment account's key, read through Studio's existing private key store. */

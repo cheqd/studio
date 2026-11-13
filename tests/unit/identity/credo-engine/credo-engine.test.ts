@@ -555,6 +555,9 @@ describe('methods another agent will build', () => {
 			'retrieveCredential',
 			'deleteCredential',
 			'signWithDidKey',
+			// accreditations (credo/accreditation.ts)
+			'findLatestResourcesVersionsByType',
+			'verifyAccreditation',
 			// status lists (credo/status-lists.ts)
 			'createUnencryptedStatusList2021',
 			'createUnencryptedBitstringStatusList',

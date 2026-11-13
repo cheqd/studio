@@ -286,6 +286,41 @@ export class TypeOrmCredoEngineStore implements CredoEngineStore {
 		return resource ? { did: resource.identifier.did, resourceId: resource.resourceId } : null;
 	}
 
+	async findLatestResourcesVersionsByType(
+		customerId: string,
+		resourceType: string,
+		network?: string,
+		did?: string,
+		page?: number,
+		limit?: number
+	): Promise<ListResourceResponse> {
+		// Studio's own latest-version query, the one the Veramo engine reads: the table is not engine-specific
+		// Imported here so that loading the store does not need Studio's database connection
+		const { ResourceService } = await import('../../../api/resource.js');
+		const { resources, total } = await ResourceService.instance.findLatestVersionsByType(
+			resourceType,
+			{ customerId } as CustomerEntity,
+			network,
+			did,
+			page,
+			limit,
+			{ identifier: true }
+		);
+		return {
+			total,
+			resources: resources.map((r) => ({
+				resourceId: r.resourceId,
+				resourceName: r.resourceName,
+				resourceType: r.resourceType,
+				mediaType: r.mediaType,
+				previousVersionId: r.previousVersionId,
+				nextVersionId: r.nextVersionId,
+				did: r.identifier.did,
+				encrypted: r.encrypted,
+			})),
+		};
+	}
+
 	// --- Payment accounts
 
 	async findPayerAccount(customerId: string, network: string): Promise<PayerAccount | null> {

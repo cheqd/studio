@@ -34,6 +34,7 @@ import {
 	signingInput,
 } from './jwt-vc.js';
 import type { CredoEngineStore, CredoRuntime } from './ports.js';
+import { buildStatusEntry, type ReadStatusList } from './status-entry.js';
 import { type CredoSigner, ownedSigningKeys, type OwnedSigningKey } from './signing.js';
 
 /**
@@ -95,6 +96,8 @@ export interface CredoCredentialsDependencies {
 	ensureTenant: (customerId: string) => Promise<string>;
 	/** Dereferences a DID URL through the resolver, as the engine's `resolve` does. */
 	resolveUrl: (didUrl: string) => Promise<Response>;
+	/** Where a credential's status entry points and how the list is read: needed to issue with a status entry. */
+	statusEntries?: { resolverUrl: string; readStatusList: ReadStatusList };
 }
 
 export class CredoCredentials {
@@ -103,6 +106,7 @@ export class CredoCredentials {
 	private readonly signer: CredoSigner;
 	private readonly ensureTenant: CredoCredentialsDependencies['ensureTenant'];
 	private readonly resolveUrl: CredoCredentialsDependencies['resolveUrl'];
+	private readonly statusEntries: CredoCredentialsDependencies['statusEntries'];
 
 	constructor(dependencies: CredoCredentialsDependencies) {
 		this.store = dependencies.store;
@@ -110,6 +114,7 @@ export class CredoCredentials {
 		this.signer = dependencies.signer;
 		this.ensureTenant = dependencies.ensureTenant;
 		this.resolveUrl = dependencies.resolveUrl;
+		this.statusEntries = dependencies.statusEntries;
 	}
 
 	// ------------------------------------------------------------------ issuing
@@ -129,14 +134,25 @@ export class CredoCredentials {
 		if (format !== 'jwt' && format !== 'jsonld') {
 			throw new CredoNotSupportedError(`issuing a credential in the '${format}' format`);
 		}
-		// A status entry means allocating an index in a status list and publishing it: the status list module's job
-		if (statusOptions) throw new NotImplementedByEngineError('credo', 'createCredential with credentialStatus');
+		if (statusOptions && !this.statusEntries) {
+			throw new NotImplementedByEngineError('credo', 'createCredential with credentialStatus');
+		}
 
 		const did = issuerId(credential.issuer);
 		if (!did) throw new Error('The credential has no issuer');
 		if (!(await this.store.isDidOwned(customerId, did))) throw new CredoOwnershipError(did);
 
-		const payload = normaliseCredentialPayload(credential);
+		let payload = normaliseCredentialPayload(credential);
+		if (statusOptions && this.statusEntries) {
+			// Studio has reserved the index; the entry names it and the list it belongs to (as the Veramo plugin's does)
+			const { entry, contexts } = await buildStatusEntry(statusOptions, did, this.statusEntries);
+			const existing = payload['@context'] as JsonValue[];
+			payload = {
+				...payload,
+				'@context': [...existing, ...contexts.filter((context) => !existing.includes(context))],
+				credentialStatus: entry,
+			};
+		}
 		const document = await this.signer.resolveActiveDocument(did);
 		const keys = await ownedSigningKeys(this.store, customerId, document, 'assertionMethod');
 
