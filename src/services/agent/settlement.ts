@@ -69,7 +69,7 @@ export interface SettlementView {
 }
 
 export const SETTLEMENT_NOTE =
-	'Proposed. A read-only view of the open AP2 payment mandate as an x402 payment policy, and the payment addresses bound to the agent. The vocabulary is cheqd\'s own, not an x402 standard. AP2 amounts are fiat currency codes; mapping to an x402 asset is not done here. Single hop only.';
+	"Proposed. A read-only view of the open AP2 payment mandate as an x402 payment policy, and the payment addresses bound to the agent. The vocabulary is cheqd's own, not an x402 standard. AP2 amounts are fiat currency codes; mapping to an x402 asset is not done here. Single hop only.";
 
 export function buildSettlementView(input: {
 	agentId: string;

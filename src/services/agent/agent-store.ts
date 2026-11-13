@@ -501,7 +501,9 @@ export class TypeormAgentStore implements AgentStore {
 						agent: { agentId: binding.agentId } as AgentEntity,
 						customer: { customerId: binding.customerId } as CustomerEntity,
 						account: binding.account,
-						issuedCredential: { issuedCredentialId: savedCredential.issuedCredentialId } as IssuedCredentialEntity,
+						issuedCredential: {
+							issuedCredentialId: savedCredential.issuedCredentialId,
+						} as IssuedCredentialEntity,
 						statusList: { registryId: binding.statusListId } as StatusRegistryEntity,
 						statusIndex: binding.statusIndex,
 					})
