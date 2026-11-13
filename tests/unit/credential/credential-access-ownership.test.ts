@@ -56,3 +56,62 @@ describe('validateCredentialAccess (issuer ownership on revoke, suspend and rein
 		);
 	});
 });
+
+describe('assertCustomerOwnsDid (shared ownership guard for DID-scoped writes)', () => {
+	type Guarded = {
+		assertCustomerOwnsDid(did: string, customer: CustomerEntity): Promise<void>;
+		updateDid(doc: unknown, customer: CustomerEntity): Promise<unknown>;
+		deactivateDid(did: string, customer: CustomerEntity): Promise<unknown>;
+		createPresentation(presentation: unknown, options: unknown, customer: CustomerEntity): Promise<unknown>;
+	};
+	let guarded: Guarded;
+
+	beforeAll(async () => {
+		process.env.ENABLE_EXTERNAL_DB ??= 'false';
+		process.env.EXTERNAL_DB_ENCRYPTION_KEY ??= '0'.repeat(64);
+		({ IdentifierService } = await import('../../../src/services/api/identifier.js'));
+		const { PostgresIdentityService } = await import('../../../src/services/identity/providers/studio/postgres.js');
+		guarded = Object.create(PostgresIdentityService.prototype);
+	}, 60_000);
+
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
+	it('rejects when the count is zero, with the existing message', async () => {
+		mockFind([[], 0]);
+		await expect(guarded.assertCustomerOwnsDid(issuerDid, customer)).rejects.toThrow(
+			`${issuerDid} not found in wallet`
+		);
+	});
+
+	it('rejects when the lookup fails (find returns [])', async () => {
+		mockFind([]);
+		await expect(guarded.assertCustomerOwnsDid(issuerDid, customer)).rejects.toThrow(
+			`${issuerDid} not found in wallet`
+		);
+	});
+
+	it('rejects without querying when there is no customer', async () => {
+		const find = mockFind([[{ did: issuerDid }], 1]);
+		await expect(guarded.assertCustomerOwnsDid(issuerDid, undefined as never)).rejects.toThrow(
+			`${issuerDid} not found in wallet`
+		);
+		expect(find).not.toHaveBeenCalled();
+	});
+
+	it('allows when the customer owns the DID', async () => {
+		mockFind([[{ did: issuerDid }], 1]);
+		await expect(guarded.assertCustomerOwnsDid(issuerDid, customer)).resolves.toBeUndefined();
+	});
+
+	it('is used by updateDid, deactivateDid and createPresentation before any signing', async () => {
+		mockFind([[], 0]);
+		await expect(guarded.updateDid({ id: issuerDid }, customer)).rejects.toThrow('not found in wallet');
+		await expect(guarded.deactivateDid(issuerDid, customer)).rejects.toThrow('not found in wallet');
+		await expect(guarded.createPresentation({ holder: issuerDid }, {}, customer)).rejects.toThrow(
+			'not found in wallet'
+		);
+		await expect(guarded.createPresentation({}, {}, customer)).rejects.toThrow('not found in wallet');
+	});
+});

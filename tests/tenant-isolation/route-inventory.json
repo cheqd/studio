@@ -996,6 +996,42 @@
 			"unauthenticated": "must-refuse",
 			"coveredBy": ["implicit-tenant-routes.test.ts"],
 			"note": ""
+		},
+		{
+			"method": "DELETE",
+			"path": "/account",
+			"openapi": true,
+			"classification": "tenant",
+			"tenantScoped": false,
+			"resourceIds": [],
+			"sample": "/account",
+			"unauthenticated": "must-refuse",
+			"coveredBy": [],
+			"note": "Deletes the caller's own account. Added to the inventory after develop gained the route; no cross-tenant case yet."
+		},
+		{
+			"method": "DELETE",
+			"path": "/admin/organisation/delete",
+			"openapi": true,
+			"classification": "tenant",
+			"tenantScoped": false,
+			"resourceIds": [],
+			"sample": "/admin/organisation/delete",
+			"unauthenticated": "must-refuse",
+			"coveredBy": [],
+			"note": "Deletes the caller's own organisation. Added to the inventory after develop gained the route; no cross-tenant case yet."
+		},
+		{
+			"method": "POST",
+			"path": "/account/export-keys",
+			"openapi": true,
+			"classification": "tenant",
+			"tenantScoped": false,
+			"resourceIds": [],
+			"sample": "/account/export-keys",
+			"unauthenticated": "must-refuse",
+			"coveredBy": [],
+			"note": "Exports the caller's own keys. Added to the inventory after develop gained the route; no cross-tenant case yet (A-058 changes this route)."
 		}
 	]
 }

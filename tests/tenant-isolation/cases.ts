@@ -80,14 +80,12 @@ export const ledgerCases: Case[] = [
 			},
 		}),
 		oracle: { kind: 'ledger', reach: ['updateDid'] },
-		knownBug: 'ISO-001',
 	},
 	{
 		route: 'POST /did/deactivate/:did',
 		title: 'deactivate a DID',
 		request: (t) => ({ method: 'POST', path: `/did/deactivate/${encodeURIComponent(t.did)}`, body: {} }),
 		oracle: { kind: 'ledger', reach: ['deactivateDid'] },
-		knownBug: 'ISO-001',
 	},
 	{
 		route: 'POST /did/export/:did',
@@ -110,7 +108,6 @@ export const ledgerCases: Case[] = [
 		}),
 		prepare: (h, t) => h.stubVeramo('resolveDid', resolvedDocument(h, t.did)),
 		oracle: { kind: 'ledger', reach: ['createResource'] },
-		knownBug: 'ISO-001',
 	},
 	{
 		route: 'POST /credential/issue',
@@ -127,7 +124,6 @@ export const ledgerCases: Case[] = [
 		}),
 		prepare: (h, t) => h.stubVeramo('resolveDid', resolvedDocument(h, t.did)),
 		oracle: { kind: 'ledger', reach: ['issueCredential'] },
-		knownBug: 'ISO-001',
 	},
 	{
 		route: 'POST /credential/revoke',
@@ -139,7 +135,6 @@ export const ledgerCases: Case[] = [
 			body: { credential: credentialFor(t) },
 		}),
 		oracle: { kind: 'ledger', reach: ['revokeCredentials'] },
-		knownBug: 'A-056',
 	},
 	{
 		route: 'POST /credential/suspend',
@@ -151,7 +146,6 @@ export const ledgerCases: Case[] = [
 			body: { credential: credentialFor(t) },
 		}),
 		oracle: { kind: 'ledger', reach: ['suspendCredentials'] },
-		knownBug: 'A-056',
 	},
 	{
 		route: 'POST /credential/reinstate',
@@ -163,7 +157,6 @@ export const ledgerCases: Case[] = [
 			body: { credential: credentialFor(t) },
 		}),
 		oracle: { kind: 'ledger', reach: ['unsuspendCredentials'] },
-		knownBug: 'A-056',
 	},
 	{
 		route: 'POST /credential-status/create/unencrypted',
@@ -192,7 +185,6 @@ export const ledgerCases: Case[] = [
 				statusList: {},
 			}),
 		oracle: { kind: 'ledger', reach: ['updateUnencryptedStatusList'] },
-		knownBug: 'ISO-001',
 	},
 	{
 		route: 'POST /credential-status/create/encrypted',
@@ -243,7 +235,6 @@ export const ledgerCases: Case[] = [
 				statusList: {},
 			}),
 		oracle: { kind: 'ledger', reach: ['updateEncryptedStatusList'] },
-		knownBug: 'ISO-001',
 	},
 	{
 		route: 'POST /presentation/create',
@@ -254,7 +245,6 @@ export const ledgerCases: Case[] = [
 			body: { credentials: [CREDENTIAL_JWT], holderDid: t.did },
 		}),
 		oracle: { kind: 'ledger', reach: ['createPresentation'] },
-		knownBug: 'ISO-002',
 	},
 ];
 

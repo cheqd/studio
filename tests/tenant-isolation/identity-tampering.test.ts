@@ -120,28 +120,31 @@ describe('id-token and bearer (portal flow)', () => {
 });
 
 describe('customer-id header (machine-to-machine flow)', () => {
-	itFor(it, 'ISO-007')(
-		`[identity] an M2M bearer with customer-id acts as the named customer, as the API documents${bugLabel('ISO-007')}`,
+	it(`[identity] an M2M bearer with customer-id acts as the named customer, as the API documents`, async () => {
+		const me = await whoAmI(authHeaders(h.tenantA, 'm2m'));
+		expect(me.customerId).toBe(h.tenantA.customerId);
+	});
+
+	itFor(it, 'A-057')(
+		`[identity] a signed token that belongs to user B cannot select tenant A through customer-id${bugLabel('A-057')}`,
 		async () => {
-			const me = await whoAmI(authHeaders(h.tenantA, 'm2m'));
-			expect(me.customerId).toBe(h.tenantA.customerId);
+			const scoped = stubToken({ sub: h.tenantB.logToId, scope: h.scopes.join(' '), roles: ['studio-user'] });
+			const me = await whoAmI({ authorization: `Bearer ${scoped}`, 'customer-id': h.tenantA.customerId });
+			expect(me.customerId).not.toBe(h.tenantA.customerId);
 		}
 	);
 
-	it('[identity] a signed token that belongs to user B cannot select tenant A through customer-id', async () => {
-		const scoped = stubToken({ sub: h.tenantB.logToId, scope: h.scopes.join(' '), roles: ['studio-user'] });
-		const me = await whoAmI({ authorization: `Bearer ${scoped}`, 'customer-id': h.tenantA.customerId });
-		expect(me.customerId).not.toBe(h.tenantA.customerId);
-	});
-
-	it('[identity] a user token for B with customer-id naming A gets none of A\u2019s data from a tenant route', async () => {
-		const scoped = stubToken({ sub: h.tenantB.logToId, scope: h.scopes.join(' '), roles: ['studio-user'] });
-		const res = await h.request('GET', '/admin/api-key/list', {
-			headers: { authorization: `Bearer ${scoped}`, 'customer-id': h.tenantA.customerId },
-		});
-		expectNoLeak(res, h.tenantA, { headers: { 'customer-id': h.tenantA.customerId } });
-		expect(res.status).toBeGreaterThanOrEqual(400);
-	});
+	itFor(it, 'A-057')(
+		`[identity] a user token for B with customer-id naming A gets none of A\u2019s data from a tenant route${bugLabel('A-057')}`,
+		async () => {
+			const scoped = stubToken({ sub: h.tenantB.logToId, scope: h.scopes.join(' '), roles: ['studio-user'] });
+			const res = await h.request('GET', '/admin/api-key/list', {
+				headers: { authorization: `Bearer ${scoped}`, 'customer-id': h.tenantA.customerId },
+			});
+			expectNoLeak(res, h.tenantA, { headers: { 'customer-id': h.tenantA.customerId } });
+			expect(res.status).toBeGreaterThanOrEqual(400);
+		}
+	);
 
 	it('[identity] a customer-id that names no customer is refused, not defaulted', async () => {
 		const me = await whoAmI({
@@ -158,12 +161,15 @@ describe('customer-id header (machine-to-machine flow)', () => {
 		expect(me.customerId).toBeUndefined();
 	});
 
-	it('[identity] an id-token and bearer for B with customer-id naming A never return A\u2019s keys', async () => {
-		const res = await h.request('GET', '/admin/api-key/list', {
-			headers: { ...authHeaders(h.tenantB, 'portal'), 'customer-id': h.tenantA.customerId },
-		});
-		expectNoLeak(res, h.tenantA, { headers: { 'customer-id': h.tenantA.customerId } });
-	});
+	itFor(it, 'A-057')(
+		`[identity] an id-token and bearer for B with customer-id naming A never return A\u2019s keys${bugLabel('A-057')}`,
+		async () => {
+			const res = await h.request('GET', '/admin/api-key/list', {
+				headers: { ...authHeaders(h.tenantB, 'portal'), 'customer-id': h.tenantA.customerId },
+			});
+			expectNoLeak(res, h.tenantA, { headers: { 'customer-id': h.tenantA.customerId } });
+		}
+	);
 });
 
 describe('no credentials', () => {
