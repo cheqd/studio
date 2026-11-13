@@ -9,6 +9,7 @@ import { CredoConfigurationError } from './errors.js';
 import { createPayerResolver } from './payer.js';
 import type { CredoRuntime } from './ports.js';
 import { TypeOrmCredoEngineStore } from './typeorm-store.js';
+import { TypeOrmStatusListOwnership } from './status-list-ownership.js';
 
 let engine: CredoEngine | undefined;
 
@@ -30,6 +31,8 @@ function lazyRuntime(start: () => Promise<CredoRuntime>): CredoRuntime {
 		deleteTenant: async (id) => (await get()).deleteTenant(id),
 		withTenant: async (id, work) => (await get()).withTenant(id, work),
 		resolveDid: async (did, options) => (await get()).resolveDid(did, options),
+		readResource: async (didUrl) => (await get()).readResource?.(didUrl) ?? { error: 'notImplemented' },
+		readTokenStatusList: async (did, name) => (await get()).readTokenStatusList?.(did, name) ?? null,
 		shutdown: async () => {
 			if (started) await (await started).shutdown();
 			started = undefined;
@@ -84,5 +87,6 @@ export function createCredoEngine(): CredoEngine {
 		runtime,
 		withPayerLock: (address, work) => withPayerLock(dataSource, address, work),
 		resolverUrl: process.env.RESOLVER_URL,
+		statusListOwnership: new TypeOrmStatusListOwnership(dataSource),
 	});
 }

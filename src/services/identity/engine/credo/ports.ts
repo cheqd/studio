@@ -2,6 +2,7 @@ import type { ListDIDRequestOptions, ListDidsResponseBody } from '../../../../ty
 import type { ListResourceOptions, ListResourceResponse } from '../../../../types/resource.js';
 import type { EngineDidDocument, EngineDidResolution, EngineIdentifier, EngineKeyInfo } from '../types.js';
 import type { PrivateJwk } from './key-material.js';
+import type { LedgerResourceRead, RawTokenStatusList, StatusListSession } from './status-list-types.js';
 
 /**
  * The two seams of the Credo engine. The engine holds Studio's rules (ownership, payer, locking, persistence);
@@ -102,6 +103,8 @@ export interface CredoTenantSession {
 	recordedKeyIds(did: string): Promise<string[] | null>;
 	/** The service entries of the tenant's record of the DID. */
 	recordedServices(did: string): Promise<Record<string, unknown>[]>;
+	/** Signing for status lists (see `status-lists.ts`). Absent on runtimes that do not support them. */
+	statusLists?: StatusListSession;
 }
 
 export interface CredoRuntime {
@@ -110,6 +113,10 @@ export interface CredoRuntime {
 	withTenant<T>(tenantId: string, work: (session: CredoTenantSession) => Promise<T>): Promise<T>;
 	/** Public resolution: needs no tenant. */
 	resolveDid(did: string, options?: Record<string, unknown>): Promise<EngineDidResolution>;
+	/** Public read of a linked resource by DID URL, straight from the ledger (status lists). Needs no tenant. */
+	readResource?(didUrl: string): Promise<LedgerResourceRead>;
+	/** Public read of a Token Status List's stored bytes, or null when there is none. Needs no tenant. */
+	readTokenStatusList?(did: string, name: string): Promise<RawTokenStatusList | null>;
 	shutdown(): Promise<void>;
 }
 
