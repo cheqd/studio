@@ -102,9 +102,9 @@ export class PresentationController {
 		const { credentials, holderDid, verifierDid } = request.body as CreatePresentationRequestBody;
 
 		try {
-			const result = await new IdentityServiceStrategySetup(
-				response.locals.customer.customerId
-			).agent.createPresentation(
+			const result = await (
+				await new IdentityServiceStrategySetup(response.locals.customer.customerId).routed('presentation')
+			).createPresentation(
 				{
 					verifiableCredential: credentials,
 					holder: holderDid,
@@ -192,18 +192,16 @@ export class PresentationController {
 		const cheqdPresentation = new CheqdW3CVerifiablePresentation(presentation);
 
 		try {
+			const engine = await identityServiceStrategySetup.routed('presentation');
 			if (makeFeePayment) {
-				const setResult = await cheqdPresentation.trySetStatusList2021(identityServiceStrategySetup.agent);
+				const setResult = await cheqdPresentation.trySetStatusList2021(engine);
 				if (setResult.error) {
 					return response.status(setResult.status).send({
 						error: setResult.error,
 					} satisfies UnsuccessfulVerifyCredentialResponseBody);
 				}
 				if (cheqdPresentation.isPaymentNeeded()) {
-					const feePaymentResult = await cheqdPresentation.makeFeePayment(
-						identityServiceStrategySetup.agent,
-						response.locals.customer
-					);
+					const feePaymentResult = await cheqdPresentation.makeFeePayment(engine, response.locals.customer);
 					// Track fee payments
 					feePaymentOptions = feePaymentResult.data;
 					// handle error
@@ -234,7 +232,7 @@ export class PresentationController {
 				} satisfies UnsuccessfulVerifyCredentialResponseBody);
 			}
 			// verify presentation
-			const result = await identityServiceStrategySetup.agent.verifyPresentation(
+			const result = await engine.verifyPresentation(
 				cheqdPresentation,
 				{
 					verifyStatus,

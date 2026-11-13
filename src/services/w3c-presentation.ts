@@ -9,7 +9,7 @@ import type {
 	W3CVerifiablePresentation,
 } from '@veramo/core';
 import { jwtDecode, type JwtPayload } from 'jwt-decode';
-import type { IIdentityService } from './identity/index.js';
+import type { RoutedService } from './identity/index.js';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import { CheqdW3CVerifiableCredential } from './w3c-credential.js';
 import { CommonReturn } from '../types/shared.js';
@@ -88,7 +88,7 @@ export class CheqdW3CVerifiablePresentation extends CommonReturn implements IChe
 		return false;
 	}
 
-	public async trySetStatusList2021(agent: IIdentityService): Promise<ICommonErrorResponse> {
+	public async trySetStatusList2021(agent: RoutedService): Promise<ICommonErrorResponse> {
 		// It returns an error only if there is logical errors inside
 		if (this.verifiableCredential) {
 			const setResults = await Promise.all(
@@ -109,7 +109,7 @@ export class CheqdW3CVerifiablePresentation extends CommonReturn implements IChe
 		return this.returnOk();
 	}
 
-	public async makeFeePayment(agent: IIdentityService, customer: CustomerEntity): Promise<ICommonErrorResponse> {
+	public async makeFeePayment(agent: RoutedService, customer: CustomerEntity): Promise<ICommonErrorResponse> {
 		// If no credentials in presentation we cannot make payments
 		let feePaymentOptions: IFeePaymentOptions[] = [];
 

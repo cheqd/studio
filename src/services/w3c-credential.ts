@@ -12,7 +12,7 @@ import type {
 	W3CVerifiableCredential,
 } from '@veramo/core';
 import { JwtPayload, jwtDecode } from 'jwt-decode';
-import type { IIdentityService } from './identity/index.js';
+import type { RoutedService } from './identity/index.js';
 import type { CustomerEntity } from '../database/entities/customer.entity.js';
 import { toNetwork } from '../helpers/helpers.js';
 import { CommonReturn } from '../types/shared.js';
@@ -92,7 +92,7 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 		return credential as VerifiableCredential;
 	}
 
-	public async trySetStatusList2021(agent: IIdentityService): Promise<ICommonErrorResponse> {
+	public async trySetStatusList2021(agent: RoutedService): Promise<ICommonErrorResponse> {
 		if (!this.credentialStatus) {
 			return this.returnError(
 				StatusCodes.BAD_REQUEST,
@@ -150,7 +150,7 @@ export class CheqdW3CVerifiableCredential extends CommonReturn implements ICheqd
 		return this.statusList.metadata.encrypted;
 	}
 
-	public async makeFeePayment(agent: IIdentityService, customer: CustomerEntity): Promise<ICommonErrorResponse> {
+	public async makeFeePayment(agent: RoutedService, customer: CustomerEntity): Promise<ICommonErrorResponse> {
 		const did = typeof this.issuer === 'string' ? this.issuer : this.issuer.id;
 		const statusList = this.statusList;
 		const feePaymentOptions: IFeePaymentOptions[] = [];
