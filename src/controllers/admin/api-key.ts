@@ -191,6 +191,11 @@ export class APIKeyController {
 		const { apiKey, name, expiresAt, revoked } = request.body satisfies APIKeyUpdateRequestBody;
 		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
 		try {
+			if (!(await APIKeyService.instance.getOwned(apiKey, response.locals.customer))) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: 'Update failed: API key does not exist',
+				} satisfies APIKeyUpdateUnsuccessfulResponseBody);
+			}
 			const apiKeyEntity = await APIKeyService.instance.update(
 				{
 					apiKey,
@@ -260,6 +265,11 @@ export class APIKeyController {
 		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
 		const { apiKey } = request.body satisfies APIKeyRevokeRequestBody;
 		try {
+			if (!(await APIKeyService.instance.getOwned(apiKey, response.locals.customer))) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: 'Cannot revoke API key',
+				} satisfies APIKeyRevokeUnsuccessfulResponseBody);
+			}
 			const apiKeyEntity = await APIKeyService.instance.revoke(apiKey, options);
 			if (!apiKeyEntity) {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -377,7 +387,7 @@ export class APIKeyController {
 
 		try {
 			if (apiKey) {
-				const apiKeyEntity = await APIKeyService.instance.get(apiKey, options);
+				const apiKeyEntity = await APIKeyService.instance.getOwned(apiKey, response.locals.customer, options);
 				if (!apiKeyEntity) {
 					return response.status(StatusCodes.NOT_FOUND).json({
 						error: 'API key not found',
