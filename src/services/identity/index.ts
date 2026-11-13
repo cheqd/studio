@@ -2,6 +2,7 @@
 import * as dotenv from 'dotenv';
 import { LocalIdentityService, PostgresIdentityService } from './providers/index.js';
 import { Unauthorized } from './providers/studio/unauthorized.js';
+import type { StudioAccountServices } from './studio-services.js';
 
 import type {
 	CredentialPayload,
@@ -59,20 +60,16 @@ import type {
 } from '../../types/credential-status.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
-import type { UserEntity } from '../../database/entities/user.entity.js';
-import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import type { SupportedKeyTypes } from '@veramo/utils';
 import { ExportDidResponse, ListDIDRequestOptions, ListDidsResponseBody } from '../../types/did.js';
-import type { ExportedPaymentAccountKey } from '../../types/account.js';
 import { ListResourceOptions, ListResourceResponse } from '../../types/resource.js';
-import { ListOperationOptions } from '../../types/track.js';
 
 dotenv.config();
 
 // ToDo: get rid of this interface
 // Move it to the abstract factory
 
-export interface IIdentityService {
+export interface IIdentityService extends StudioAccountServices {
 	agent?: VeramoAgent;
 
 	initAgent(): TAgent<any>;
@@ -91,7 +88,6 @@ export interface IIdentityService {
 	listDids(options: ListDIDRequestOptions, customer: CustomerEntity): Promise<ListDidsResponseBody>;
 	resolveDid(did: string, options?: DIDResolutionOptions): Promise<DIDResolutionResult>;
 	exportDid(did: string, password: string, customer: CustomerEntity): Promise<ExportDidResponse>;
-	exportPaymentAccountKeys(customer: CustomerEntity): Promise<ExportedPaymentAccountKey[]>;
 	resolve(didUrl: string, dereferencing?: boolean): Promise<Response>;
 	getDid(did: string, customer: CustomerEntity): Promise<any>;
 	importDid(
@@ -228,11 +224,6 @@ export interface IIdentityService {
 		customer: CustomerEntity,
 		symmetricKey: string
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult | BitstringUpdateResult | BulkBitstringUpdateResult>;
-	setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity>;
-	updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity>;
-	getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | null>;
-	decryptAPIKey(apiKey: string): Promise<string>;
-	listOperations(options: ListOperationOptions, customer: CustomerEntity): Promise<any>;
 
 	/**
 	 * Check if a DID exists in the agent's identifier store
