@@ -32,6 +32,28 @@ import { MaxAllowedTrialPeriodDays } from '../../types/constants.js';
 
 dotenv.config();
 
+/** True when a Stripe `customer` reference (an id, or an expanded object) is the caller's own Stripe customer. */
+function stripeObjectBelongsTo(
+	reference: string | Stripe.Customer | Stripe.DeletedCustomer | null | undefined,
+	customer: { paymentProviderId?: string } | undefined
+): boolean {
+	const owner = typeof reference === 'string' ? reference : reference?.id;
+	return Boolean(owner) && Boolean(customer?.paymentProviderId) && owner === customer?.paymentProviderId;
+}
+
+/** True when the Stripe subscription belongs to the caller's Stripe customer. */
+async function ownsSubscription(
+	stripe: Stripe,
+	customer: { paymentProviderId?: string } | undefined,
+	subscriptionId: string
+): Promise<boolean> {
+	if (!customer?.paymentProviderId || !subscriptionId) {
+		return false;
+	}
+	const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+	return stripeObjectBelongsTo(subscription.customer, customer);
+}
+
 export function syncCustomer(target: any, key: string, descriptor: PropertyDescriptor | undefined) {
 	// save a reference to the original method this way we keep the values currently in the
 	// descriptor and don't overwrite what another decorator might have done to the descriptor.
@@ -397,11 +419,15 @@ export class SubscriptionController {
 		const paymentProviderId = response.locals.customer.paymentProviderId;
 		try {
 			// Get the subscriptions
-			const subscriptions = paymentProviderId
-				? await stripe.subscriptions.list({
-						customer: paymentProviderId as string,
-					})
-				: await stripe.subscriptions.list();
+			// A caller without a Stripe customer has no subscriptions: never list without a customer filter.
+			if (!paymentProviderId) {
+				return response.status(StatusCodes.OK).json({
+					subscriptions: { object: 'list', data: [], has_more: false, url: '/v1/subscriptions' },
+				} as unknown as SubscriptionListResponseBody);
+			}
+			const subscriptions = await stripe.subscriptions.list({
+				customer: paymentProviderId as string,
+			});
 
 			if (subscriptions.lastResponse?.statusCode !== StatusCodes.OK) {
 				return response.status(StatusCodes.NOT_FOUND).json({
@@ -506,6 +532,11 @@ export class SubscriptionController {
 		const { subscriptionId, idempotencyKey } = request.body satisfies SubscriptionCancelRequestBody;
 
 		try {
+			if (!(await ownsSubscription(stripe, response.locals.customer, subscriptionId as string))) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: `Subscription was not found`,
+				} satisfies SubscriptionCancelUnsuccessfulResponseBody);
+			}
 			// Cancel the subscription
 			const subscription = await SubscriptionService.instance.cancel(
 				stripe,
@@ -564,6 +595,11 @@ export class SubscriptionController {
 		const stripe = response.locals.stripe as Stripe;
 		const { subscriptionId, idempotencyKey } = request.body satisfies SubscriptionResumeRequestBody;
 		try {
+			if (!(await ownsSubscription(stripe, response.locals.customer, subscriptionId as string))) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: `Subscription was not found`,
+				} satisfies SubscriptionResumeUnsuccessfulResponseBody);
+			}
 			// Resume the subscription
 			const subscription = await stripe.subscriptions.resume(subscriptionId as string, {
 				idempotencyKey: idempotencyKey,
@@ -625,6 +661,13 @@ export class SubscriptionController {
 		try {
 			// retrieve the checkout session
 			const checkoutSession = await stripe.checkout.sessions.retrieve(checkoutSessionId);
+
+			// Only the Stripe customer that opened the session may read it.
+			if (!stripeObjectBelongsTo(checkoutSession.customer, response.locals.customer)) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: `Checkout session not found`,
+				} satisfies CheckoutSessionGetUnsuccessfulResponseBody);
+			}
 
 			// Check if the subscription was resumed
 			if (checkoutSession.lastResponse?.statusCode !== StatusCodes.OK) {
