@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.21.0-develop.3](https://github.com/cheqd/studio/compare/3.21.0-develop.2...3.21.0-develop.3) (2026-11-13)
+
+### Bug Fixes
+
+* enforce issuer ownership on credential revoke, suspend and reinstate ([#885](https://github.com/cheqd/studio/issues/885)) ([243b1f3](https://github.com/cheqd/studio/commit/243b1f3608a4fcd6d24e60af520dce9907ff3de0))
+
 ## [3.21.0-develop.2](https://github.com/cheqd/studio/compare/3.21.0-develop.1...3.21.0-develop.2) (2026-11-06)
 
 ### Bug Fixes
