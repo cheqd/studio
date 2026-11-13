@@ -1,6 +1,7 @@
 import type { ListDIDRequestOptions, ListDidsResponseBody } from '../../../../types/did.js';
 import type { ListResourceOptions, ListResourceResponse } from '../../../../types/resource.js';
 import type { EngineDidDocument, EngineDidResolution, EngineIdentifier, EngineKeyInfo } from '../types.js';
+import type { CredentialSession, CredentialStore } from './credential-ports.js';
 import type { PrivateJwk } from './key-material.js';
 
 /**
@@ -35,7 +36,7 @@ export interface IdentifierRecord {
  * customer and answer from the match count or a single filtered row. None may infer "found" from the shape of a
  * result (an empty `[]` and a `[rows, count]` pair are both truthy; that is the bug class in plan section 7.1).
  */
-export interface CredoEngineStore {
+export interface CredoEngineStore extends CredentialStore {
 	// Tenants
 	readTenantId(customerId: string): Promise<string | null>;
 	writeTenantId(customerId: string, tenantId: string): Promise<void>;
@@ -87,7 +88,7 @@ export interface ResourceInput {
 }
 
 /** One customer's Credo tenant, for the length of one operation. */
-export interface CredoTenantSession {
+export interface CredoTenantSession extends CredentialSession {
 	createDid(input: {
 		didDocument: EngineDidDocument;
 		network: string;

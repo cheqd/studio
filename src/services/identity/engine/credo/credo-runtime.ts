@@ -19,6 +19,7 @@ import { KdfMethod, NativeAskar, Store, StoreKeyMethod } from '@openwallet-found
 import type { PrivateKeyStore } from '@veramo/data-store';
 import { VeramoKeyManagementStorage } from '../../credo/VeramoKeyManagementStorage.js';
 import type { EngineDidDocument, EngineDidResolution } from '../types.js';
+import { credentialSession } from './credential-session.js';
 import { publicKeyHexFromJwk, veramoTypeFromJwk } from './key-material.js';
 import type { CredoRuntime, CredoTenantSession, DidOperationResult } from './ports.js';
 import type { CredoStorageConfig } from './config.js';
@@ -115,6 +116,8 @@ interface TenantAgentLike {
 	kms: any;
 	// biome-ignore lint/suspicious/noExplicitAny: ditto
 	modules: any;
+	// biome-ignore lint/suspicious/noExplicitAny: ditto
+	w3cCredentials: any;
 }
 
 function toResult(state: { state: string; reason?: string; didDocument?: DidDocument }): DidOperationResult {
@@ -131,6 +134,7 @@ function session(tenantAgent: TenantAgentLike): CredoTenantSession {
 		tenantAgent.dependencyManager.resolve<DidRepository>(DidRepository).findCreatedDid(tenantAgent.context, did);
 
 	return {
+		...credentialSession(tenantAgent),
 		async createDid({ didDocument, network, keys }) {
 			const result = await tenantAgent.dids.create({
 				method: 'cheqd',

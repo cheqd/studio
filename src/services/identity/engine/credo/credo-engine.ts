@@ -23,6 +23,7 @@ import type {
 	EnginePresentation,
 	EnginePresentationPayload,
 	EngineResourcePayload,
+	EngineSignRequest,
 	EngineSignedInput,
 	EngineStatusListOptions,
 	EngineStatusOptions,
@@ -30,6 +31,7 @@ import type {
 	EngineVerificationOptions,
 	EngineVerificationResult,
 } from '../types.js';
+import { CredoCredentials } from './credentials.js';
 import { CredoOwnershipError, NotImplementedByEngineError } from './errors.js';
 import {
 	authenticationMethods,
@@ -38,6 +40,7 @@ import {
 	type PrivateJwk,
 } from './key-material.js';
 import type { CredoEngineStore, CredoRuntime, DidKeyLink, StoredKey } from './ports.js';
+import { CredoSigner } from './signing.js';
 
 const ENGINE = 'credo';
 const NETWORKS = ['mainnet', 'testnet'];
@@ -76,7 +79,8 @@ function requireCustomer(customer: CustomerEntity | undefined): string {
  * - The fee payer is the customer's own payment account. The engine finds its address to lock on; the Credo cheqd
  *   module asks `payer.ts` for the signer through the `resolvePayer` hook.
  *
- * Credentials, presentations, status lists and import/export are not built yet and throw `NotImplementedByEngine`.
+ * Credentials, presentations and signing delegate to `credentials.ts` and `signing.ts`. Status lists and import/export
+ * are not built yet and throw `NotImplementedByEngine`.
  */
 export class CredoEngine implements IdentityEngine {
 	readonly name = ENGINE;
@@ -86,6 +90,8 @@ export class CredoEngine implements IdentityEngine {
 	private readonly withPayerLock: CredoEngineDependencies['withPayerLock'];
 	private readonly resolverUrl: string;
 	private readonly fetchImpl: typeof fetch;
+	private readonly signer: CredoSigner;
+	private readonly credentials: CredoCredentials;
 
 	constructor(dependencies: CredoEngineDependencies) {
 		this.store = dependencies.store;
@@ -93,6 +99,14 @@ export class CredoEngine implements IdentityEngine {
 		this.withPayerLock = dependencies.withPayerLock;
 		this.resolverUrl = (dependencies.resolverUrl || DEFAULT_RESOLVER_URL).replace(/\/?$/, '/');
 		this.fetchImpl = dependencies.fetch ?? fetch;
+		this.signer = new CredoSigner(this.store, this.runtime, (customerId) => this.ensureTenant(customerId));
+		this.credentials = new CredoCredentials({
+			store: this.store,
+			runtime: this.runtime,
+			signer: this.signer,
+			ensureTenant: (customerId) => this.ensureTenant(customerId),
+			resolveUrl: (didUrl) => this.resolve(didUrl),
+		});
 	}
 
 	// ---------------------------------------------------------------- tenants
@@ -411,51 +425,53 @@ export class CredoEngine implements IdentityEngine {
 		return this.notImplemented('exportDid');
 	}
 	createCredential(
-		_credential: EngineCredentialPayload,
-		_format: CredentialRequest['format'],
-		_statusOptions: EngineStatusOptions | null,
-		_customer: CustomerEntity
+		credential: EngineCredentialPayload,
+		format: CredentialRequest['format'],
+		statusOptions: EngineStatusOptions | null,
+		customer: CustomerEntity
 	): Promise<EngineCredential> {
-		return this.notImplemented('createCredential');
+		return this.credentials.createCredential(credential, format, statusOptions, customer);
 	}
 	verifyCredential(
-		_credential: EngineSignedInput,
-		_options: EngineVerificationOptions,
-		_customer: CustomerEntity
+		credential: EngineSignedInput,
+		options: EngineVerificationOptions,
+		customer: CustomerEntity
 	): Promise<EngineVerificationResult> {
-		return this.notImplemented('verifyCredential');
+		return this.credentials.verifyCredential(credential, options, customer);
 	}
 	createPresentation(
-		_presentation: EnginePresentationPayload,
-		_options: EngineVerificationOptions,
-		_customer: CustomerEntity
+		presentation: EnginePresentationPayload,
+		options: EngineVerificationOptions,
+		customer: CustomerEntity
 	): Promise<EnginePresentation> {
-		return this.notImplemented('createPresentation');
+		return this.credentials.createPresentation(presentation, options, customer);
 	}
 	verifyPresentation(
-		_presentation: EngineSignedInput,
-		_options: EngineVerificationOptions,
-		_customer: CustomerEntity
+		presentation: EngineSignedInput,
+		options: EngineVerificationOptions,
+		customer: CustomerEntity
 	): Promise<EngineVerificationResult> {
-		return this.notImplemented('verifyPresentation');
+		return this.credentials.verifyPresentation(presentation, options, customer);
 	}
-	listCredentials(
-		_options: ListCredentialRequestOptions,
-		_customer: CustomerEntity
-	): Promise<ListCredentialResponse> {
-		return this.notImplemented('listCredentials');
+	listCredentials(options: ListCredentialRequestOptions, customer: CustomerEntity): Promise<ListCredentialResponse> {
+		return this.credentials.listCredentials(options, customer);
 	}
-	getCredential(_credentialId: string, _customer: CustomerEntity): Promise<EngineCredential | null> {
-		return this.notImplemented('getCredential');
+	getCredential(credentialId: string, customer: CustomerEntity): Promise<EngineCredential | null> {
+		return this.credentials.getCredential(credentialId, customer);
 	}
-	saveCredential(_credential: EngineCredential, _customer: CustomerEntity): Promise<string> {
-		return this.notImplemented('saveCredential');
+	saveCredential(credential: EngineCredential, customer: CustomerEntity): Promise<string> {
+		return this.credentials.saveCredential(credential, customer);
 	}
-	retrieveCredential(_hash: string, _customer: CustomerEntity): Promise<EngineCredential | null> {
-		return this.notImplemented('retrieveCredential');
+	retrieveCredential(hash: string, customer: CustomerEntity): Promise<EngineCredential | null> {
+		return this.credentials.retrieveCredential(hash, customer);
 	}
-	deleteCredential(_hash: string, _customer: CustomerEntity): Promise<boolean> {
-		return this.notImplemented('deleteCredential');
+	deleteCredential(hash: string, customer: CustomerEntity): Promise<boolean> {
+		return this.credentials.deleteCredential(hash, customer);
+	}
+
+	/** The raw JWS signature with the customer's DID key (ES256 or EdDSA). See `signing.ts`. */
+	signWithDidKey(request: EngineSignRequest, customer: CustomerEntity): Promise<Uint8Array> {
+		return this.signer.signWithDidKey(request, customer);
 	}
 	createUnencryptedStatusList2021(
 		_did: string,

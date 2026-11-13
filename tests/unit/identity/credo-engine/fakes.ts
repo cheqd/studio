@@ -12,6 +12,7 @@ import type {
 	StoredKey,
 } from '../../../../src/services/identity/engine/credo/ports.js';
 import type { PrivateJwk } from '../../../../src/services/identity/engine/credo/key-material.js';
+import { CredentialFakeState, credentialFakeSession } from './credential-fakes.js';
 import type { EngineDidResolution, EngineIdentifier } from '../../../../src/services/identity/engine/types.js';
 
 export const customer = (customerId: string) => ({ customerId }) as unknown as CustomerEntity;
@@ -98,6 +99,20 @@ export class FakeStore implements CredoEngineStore {
 	async listResources() {
 		return { total: 0, resources: [] };
 	}
+	resources: { customerId: string; did: string; resourceId: string; resourceType: string }[] = [];
+	async listCredentialResources(customerId: string, options: { issuerId?: string; resourceTypes: string[] }) {
+		const own = this.resources.filter(
+			(r) =>
+				r.customerId === customerId &&
+				options.resourceTypes.includes(r.resourceType) &&
+				(!options.issuerId || r.did === options.issuerId)
+		);
+		return { total: own.length, resources: own.map(({ did, resourceId }) => ({ did, resourceId })) };
+	}
+	async findOwnedResource(customerId: string, resourceId: string) {
+		const found = this.resources.filter((r) => r.customerId === customerId && r.resourceId === resourceId);
+		return found.length === 1 ? { did: found[0].did, resourceId } : null;
+	}
 
 	async findPayerAccount(customerId: string, network: string) {
 		return this.payers.get(`${customerId}|${network}`) ?? null;
@@ -133,6 +148,7 @@ export class FakeRuntime implements CredoRuntime {
 	deactivateState: DidOperationResult = { state: 'finished' };
 	resourceState: { state: string; reason?: string } = { state: 'finished' };
 	resolution: EngineDidResolution = { didDocument: null, didDocumentMetadata: {}, didResolutionMetadata: {} };
+	credentialState = new CredentialFakeState();
 
 	async createTenant(label: string) {
 		const id = `tenant-${randomUUID().slice(0, 8)}`;
@@ -143,8 +159,8 @@ export class FakeRuntime implements CredoRuntime {
 	async deleteTenant(tenantId: string) {
 		this.deleted.push(tenantId);
 	}
-	async resolveDid() {
-		return this.resolution;
+	async resolveDid(did: string) {
+		return this.credentialState.resolutions.get(did) ?? this.resolution;
 	}
 	async shutdown() {}
 
@@ -177,6 +193,7 @@ export class FakeRuntime implements CredoRuntime {
 			},
 			recordedKeyIds: async (did) => this.recorded.get(`${tenantId}|${did}`) ?? null,
 			recordedServices: async () => [],
+			...credentialFakeSession(this.credentialState, this.imported, tenantId),
 		};
 		return work(session);
 	}

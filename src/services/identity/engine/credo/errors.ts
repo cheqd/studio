@@ -14,6 +14,20 @@ export class NotImplementedByEngineError extends Error {
 	}
 }
 
+/**
+ * The engine does not support what was asked for, and says exactly what. Unlike `NotImplementedByEngine` (not built
+ * yet), this is a decision: the answer is `NotSupported` (HTTP 501, engine spec 3.3) until the decision changes.
+ */
+export class CredoNotSupportedError extends Error {
+	readonly code = 'NotSupported';
+	readonly status = 501;
+
+	constructor(what: string) {
+		super(`NotSupported: the 'credo' engine does not support ${what}`);
+		this.name = 'NotSupported';
+	}
+}
+
 /** The caller asked for something that is not theirs, or that does not exist. Deliberately the same message for both. */
 export class CredoOwnershipError extends Error {
 	constructor(what: string) {
