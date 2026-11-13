@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.21.0-develop.4](https://github.com/cheqd/studio/compare/3.21.0-develop.3...3.21.0-develop.4) (2026-11-13)
+
+### Bug Fixes
+
+* make the contract recorder dry run send read-only steps only ([aca5184](https://github.com/cheqd/studio/commit/aca5184fe8fc98df36ece453e804f3d2687729e8))
+
 ## [3.21.0-develop.3](https://github.com/cheqd/studio/compare/3.21.0-develop.2...3.21.0-develop.3) (2026-11-13)
 
 ### Bug Fixes
