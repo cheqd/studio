@@ -31,8 +31,9 @@ WORKDIR /home/node/app
 
 # Install pre-requisites
 # Debian (glibc) rather than Alpine (musl): Askar and AnonCreds ship glibc-only native libraries
+# wget: Alpine's BusyBox provided it, and the compose health check (docker/with-external-db) calls it
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends bash ca-certificates && \
+    apt-get install -y --no-install-recommends bash ca-certificates wget && \
     update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
