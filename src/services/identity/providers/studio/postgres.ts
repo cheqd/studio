@@ -516,7 +516,7 @@ export class PostgresIdentityService extends DefaultIdentityService {
 				encrypted: options.encrypted,
 			};
 
-			let relations: FindOptionsRelations<ResourceEntity | undefined> = {
+			const relations: FindOptionsRelations<ResourceEntity | undefined> = {
 				identifier: true,
 			};
 			if (options.did || options.network) {

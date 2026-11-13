@@ -108,7 +108,7 @@ export class ProvidersController {
 	async getProviderConfiguration(req: Request, res: Response) {
 		try {
 			const customer = res.locals.customer as CustomerEntity;
-			let providerId = Array.isArray(req.params.providerId)
+			const providerId = Array.isArray(req.params.providerId)
 				? req.params.providerId[0]
 				: (req.params.providerId as string);
 
@@ -173,7 +173,7 @@ export class ProvidersController {
 	async activateProvider(req: Request, res: Response) {
 		try {
 			const customer = res.locals.customer as CustomerEntity;
-			let providerId = Array.isArray(req.params.providerId)
+			const providerId = Array.isArray(req.params.providerId)
 				? req.params.providerId[0]
 				: (req.params.providerId as string);
 
@@ -245,7 +245,7 @@ export class ProvidersController {
 	async updateProviderConfiguration(req: Request, res: Response) {
 		try {
 			const customer = res.locals.customer as CustomerEntity;
-			let providerId = Array.isArray(req.params.providerId)
+			const providerId = Array.isArray(req.params.providerId)
 				? req.params.providerId[0]
 				: (req.params.providerId as string);
 			const { apiEndpoint, webhookUrl, defaultSettings } = req.body;
@@ -346,7 +346,7 @@ export class ProvidersController {
 	async testConnection(req: Request, res: Response) {
 		try {
 			const customer = res.locals.customer as CustomerEntity;
-			let providerId = Array.isArray(req.params.providerId)
+			const providerId = Array.isArray(req.params.providerId)
 				? req.params.providerId[0]
 				: (req.params.providerId as string);
 			const newAPIUrl = req.query?.newAPIUrl as string | undefined;
@@ -386,7 +386,7 @@ export class ProvidersController {
 	async removeProvider(req: Request, res: Response) {
 		try {
 			const customer = res.locals.customer as CustomerEntity;
-			let providerId = Array.isArray(req.params.providerId)
+			const providerId = Array.isArray(req.params.providerId)
 				? req.params.providerId[0]
 				: (req.params.providerId as string);
 

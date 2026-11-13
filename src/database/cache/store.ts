@@ -11,7 +11,7 @@ export interface SubscriptionPlanSnapshot {
 	productId: string;
 }
 
-let { LOCAL_STORE_TTL = 600 } = process.env;
+const { LOCAL_STORE_TTL = 600 } = process.env;
 
 export class LocalStore {
 	private cache: NodeCache;

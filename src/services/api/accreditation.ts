@@ -377,9 +377,9 @@ export class AccreditationService {
 		let accreditationUrl = didUrl;
 		let accreditedSubject = subjectDid;
 		let initialVerifyResult: IVerifyResult | undefined = undefined;
-		let accreditorDids: string[] = [];
+		const accreditorDids: string[] = [];
 
-		let deactivatedDidsCheckPromises: Promise<boolean>[] = [];
+		const deactivatedDidsCheckPromises: Promise<boolean>[] = [];
 
 		while (true) {
 			const cacheKey = buildCacheKey(accreditationUrl, customer?.customerId);
