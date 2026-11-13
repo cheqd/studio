@@ -2,7 +2,12 @@ import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { Client } from 'pg';
-import { createTestDatabase, type TestDatabase } from './helpers/credo-database.js';
+import {
+	createTestDatabase,
+	FAKE_STORE_KEY,
+	OTHER_FAKE_STORE_KEY,
+	type TestDatabase,
+} from './helpers/credo-database.js';
 
 /**
  * Integration test for the Credo engine against a real Postgres, real migrations, a real Askar store and a real
@@ -10,16 +15,18 @@ import { createTestDatabase, type TestDatabase } from './helpers/credo-database.
  *
  * It uses Node's test runner, not jest (the controller stack and Credo's ESM packages do not mix under jest's VM
  * modules), and lives outside `tests/unit`, so `npm run test:unit` never picks it up. Run it against a disposable
- * Postgres 16 on port 54333:
+ * Postgres 16 on port 54335:
  *
- *   docker run -d --rm --name credo-it-db -e POSTGRES_PASSWORD=postgres -p 54333:5432 postgres:16
- *   CREDO_TEST_DATABASE_URL=postgres://postgres:postgres@localhost:54333/postgres \
+ *   docker run -d --rm --name credo-it-db -e POSTGRES_PASSWORD=postgres -p 54335:5432 postgres:16
+ *   CREDO_TEST_DATABASE_URL=postgres://postgres:postgres@localhost:54335/postgres \
  *     npx tsx --import ./tests/integration/hooks/register-credo.mjs --test tests/integration/credo-engine.test.ts
  *
  * The hook in `hooks/` points `webcrypto-core` at its CommonJS build, which tsx needs to load Credo.
  *
- * Without CREDO_TEST_DATABASE_URL the suite is skipped. It creates its own database and a `credo` role, and drops
- * the database when it finishes. The URL must be a superuser (it creates a database and a role).
+ * Without CREDO_TEST_DATABASE_URL the suite is skipped. It creates its own Studio database, Credo's `studio_credo`
+ * database and the `studio_credo_app` role (what docs/credo-database-provisioning.md does by hand), and drops them
+ * when it finishes. The URL must be a superuser (it creates databases and a role), and the cluster must not hold
+ * a database called `studio_credo` that matters: it is dropped.
  */
 const adminUrl = process.env.CREDO_TEST_DATABASE_URL;
 const skip = adminUrl ? false : 'set CREDO_TEST_DATABASE_URL to run (see the comment at the top of this file)';
@@ -78,29 +85,72 @@ describe('CredoEngine on Postgres', { skip }, () => {
 		assert.notEqual(rows[0].credoTenantId, rows[1].credoTenantId);
 	});
 
-	it('keeps Credo storage in schema credo and nothing of it in public', async () => {
-		const inSchema = async (schema: string) =>
+	it('keeps Credo storage in its own database, under the app role, and nothing of it in Studio’s', async () => {
+		const tablesIn = async (database: string) =>
 			(
-				await query<{ table_name: string }>(
-					`SELECT table_name FROM information_schema.tables WHERE table_schema = $1 ORDER BY table_name`,
-					[schema]
+				await db.adminQuery<{ table_schema: string; table_name: string }>(
+					`SELECT table_schema, table_name FROM information_schema.tables
+					 WHERE table_schema NOT IN ('pg_catalog', 'information_schema') ORDER BY 1, 2`,
+					database
 				)
-			).map((row) => row.table_name);
+			).map((row) => `${row.table_schema}.${row.table_name}`);
 
-		const credoTables = await inSchema('credo');
+		// Askar names its schema after the connecting role
+		const credoTables = await tablesIn(db.credoDatabase);
 		for (const table of ['config', 'items', 'items_tags', 'profiles']) {
-			assert.ok(credoTables.includes(table), `credo.${table} exists`);
+			assert.ok(
+				credoTables.includes(`studio_credo_app.${table}`),
+				`studio_credo_app.${table} exists in ${db.credoDatabase}`
+			);
 		}
-		const publicTables = await inSchema('public');
+
+		// Nothing of Askar's in Studio's own database, and no `credo` schema there either
+		const studioTables = await tablesIn(db.databaseName);
 		for (const table of ['config', 'items', 'items_tags', 'profiles']) {
-			assert.ok(!publicTables.includes(table), `public.${table} must not exist`);
+			assert.ok(
+				!studioTables.some((name) => name.endsWith(`.${table}`)),
+				`${table} must not exist in Studio's database`
+			);
 		}
+		const [{ schemas }] = await query<{ schemas: string }>(
+			`SELECT count(*) AS schemas FROM information_schema.schemata WHERE schema_name = 'credo'`
+		);
+		assert.equal(Number(schemas), 0, 'Studio’s database has no credo schema');
 
 		// One profile for the root agent and one per tenant, and the tenant records are stored
-		const [{ count }] = await query<{ count: string }>(`SELECT count(*) FROM credo.profiles`);
+		const [{ count }] = await db.adminQuery<{ count: string }>(`SELECT count(*) FROM studio_credo_app.profiles`);
 		assert.ok(Number(count) >= 3, `expected a root profile and two tenant profiles, found ${count}`);
-		const [{ items }] = await query<{ items: string }>(`SELECT count(*) AS items FROM credo.items`);
+		const [{ items }] = await db.adminQuery<{ items: string }>(
+			`SELECT count(*) AS items FROM studio_credo_app.items`
+		);
 		assert.ok(Number(items) > 0);
+
+		// The store was provisioned by the runtime with the app role only: the role has no admin rights
+		const [role] = await db.adminQuery<{ rolsuper: boolean; rolcreatedb: boolean; rolcreaterole: boolean }>(
+			`SELECT rolsuper, rolcreatedb, rolcreaterole FROM pg_roles WHERE rolname = 'studio_credo_app'`,
+			'postgres'
+		);
+		assert.deepEqual(role, { rolsuper: false, rolcreatedb: false, rolcreaterole: false });
+	});
+
+	it('keeps no key material in Askar: signing keys are only in Studio’s private-key table', async () => {
+		const key = await studio.engine.createKey('Ed25519', customer('alice'), 'not-in-askar');
+		const [{ privateKeyHex }] = await query<{ privateKeyHex: string }>(
+			`SELECT "privateKeyHex" FROM "private-key" WHERE "alias" = $1`,
+			[key.kid]
+		);
+		assert.ok(privateKeyHex, 'the key is in Studio’s private-key table');
+
+		// Askar encrypts categories and names, so look at the entry kind: 1 is a KMS key, 2 is an ordinary record
+		const kinds = await db.adminQuery<{ kind: number; n: string }>(
+			`SELECT kind, count(*) AS n FROM studio_credo_app.items GROUP BY kind`
+		);
+		assert.ok(
+			kinds.some((row) => Number(row.kind) === 2),
+			'Askar holds Credo’s records'
+		);
+		const keyItems = kinds.filter((row) => Number(row.kind) === 1);
+		assert.deepEqual(keyItems, [], 'enableKms is false: Askar holds no key entries');
 	});
 
 	it('round-trips keys through the Veramo key store adapter', async () => {
@@ -315,6 +365,96 @@ describe('CredoEngine on Postgres', { skip }, () => {
 			assert.equal(after.rows[0].n, 0);
 		} finally {
 			await observer.end();
+		}
+	});
+	it('opens the existing store again with the same raw key, and sees the tenants it already holds', async () => {
+		const [{ credoTenantId }] = await query<{ credoTenantId: string }>(
+			`SELECT "credoTenantId" FROM "customer" WHERE "customerId" = $1`,
+			[customers.alice]
+		);
+		const storage = studio.loadCredoStorageConfig();
+		const runtime = await studio.createCredoRuntime({
+			privateKeyStore: new studio.PrivateKeyStore(
+				studio.Connection.instance.dbConnection,
+				new studio.SecretBox('0'.repeat(64))
+			),
+			storage,
+			networks: [{ network: 'testnet', rpcUrl: 'http://127.0.0.1:9' }],
+			resolvePayer: async () => assert.fail('no payer is needed to reopen a store'),
+			onKeyCreated: async () => assert.fail('no key is created'),
+		});
+		try {
+			await runtime.withTenant(credoTenantId, async () => undefined);
+		} finally {
+			await runtime.shutdown();
+		}
+	});
+
+	it('fails closed with a wrong store key, and leaves the store as it was', async () => {
+		const before = await db.adminQuery<{ count: string }>(`SELECT count(*) FROM studio_credo_app.items`);
+		const storage = {
+			...studio.loadCredoStorageConfig(),
+			storeKey: studio.parseStoreKey(OTHER_FAKE_STORE_KEY).key,
+		};
+		await assert.rejects(
+			studio.createCredoRuntime({
+				privateKeyStore: new studio.PrivateKeyStore(
+					studio.Connection.instance.dbConnection,
+					new studio.SecretBox('0'.repeat(64))
+				),
+				storage,
+				networks: [{ network: 'testnet', rpcUrl: 'http://127.0.0.1:9' }],
+				resolvePayer: async () => assert.fail('unreachable'),
+				onKeyCreated: async () => assert.fail('unreachable'),
+			})
+		);
+		const after = await db.adminQuery<{ count: string }>(`SELECT count(*) FROM studio_credo_app.items`);
+		assert.equal(after[0].count, before[0].count, 'a wrong key must not provision or rewrite anything');
+		const [{ profiles }] = await db.adminQuery<{ profiles: string }>(
+			`SELECT count(*) AS profiles FROM studio_credo_app.profiles`
+		);
+		assert.ok(Number(profiles) >= 3);
+	});
+
+	it('fails the Credo engine with a configuration error, not a stack trace, when the store key is missing', async () => {
+		const saved = process.env.CREDO_STORE_KEY;
+		delete process.env.CREDO_STORE_KEY;
+		try {
+			// A fresh engine, so the runtime the other tests started is not reused
+			const fresh = studio.createCredoEngine();
+			const error: Error = await fresh.createKey('Ed25519', customer('alice')).then(
+				() => assert.fail('must not run without the store key'),
+				(e: Error) => e
+			);
+			assert.equal(error.name, 'CredoConfigurationError');
+			assert.match(error.message, /CREDO_STORE_KEY is not set/);
+			assert.doesNotMatch(error.stack ?? '', /\n\s+at /, 'no stack frames');
+		} finally {
+			process.env.CREDO_STORE_KEY = saved;
+		}
+		// Nothing was created in Credo's store by the refused call, and the engine works once the variable is back
+		assert.ok((await studio.engine.createKey('Ed25519', customer('alice'))).kid);
+	});
+
+	it('reports a missing Credo database by name', async () => {
+		const saved = process.env.CREDO_DB_NAME;
+		process.env.CREDO_DB_NAME = 'studio_credo_does_not_exist';
+		try {
+			await assert.rejects(
+				studio.createCredoRuntime({
+					privateKeyStore: new studio.PrivateKeyStore(
+						studio.Connection.instance.dbConnection,
+						new studio.SecretBox('0'.repeat(64))
+					),
+					storage: studio.loadCredoStorageConfig(),
+					networks: [{ network: 'testnet', rpcUrl: 'http://127.0.0.1:9' }],
+					resolvePayer: async () => assert.fail('unreachable'),
+					onKeyCreated: async () => assert.fail('unreachable'),
+				}),
+				/studio_credo_does_not_exist.*does not exist/
+			);
+		} finally {
+			process.env.CREDO_DB_NAME = saved;
 		}
 	});
 });
