@@ -1,4 +1,5 @@
 import type { VerifiableCredential, IVerifyResult, PresentationPayload } from '@veramo/core';
+import { OwnershipError } from '../identity/ownership-error.js';
 import { Repository, LessThan } from 'typeorm';
 import { Connection } from '../../database/connection/connection.js';
 import { IssuedCredentialEntity } from '../../database/entities/issued-credential.entity.js';
@@ -83,7 +84,7 @@ export class ReceivedCredentials {
 				// Verify the provided holderDid belongs to this customer
 				const customerDids = await this.getHolderDids(customer);
 				if (!customerDids.includes(holderDid)) {
-					throw new Error(`DID ${holderDid} not found in your wallet`);
+					throw new OwnershipError();
 				}
 				subjectDids = [holderDid];
 			}
@@ -116,6 +117,9 @@ export class ReceivedCredentials {
 				limit,
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				throw error;
+			}
 			throw new Error(`Failed to list pending offers: ${error}`);
 		}
 	}
@@ -137,7 +141,7 @@ export class ReceivedCredentials {
 
 			// Check if holderDid is owned by this customer
 			if (!customerDids.includes(holderDid)) {
-				throw new Error(`DID ${holderDid} not found in your wallet`);
+				throw new OwnershipError();
 			}
 
 			// Query offer without customer filter (issuer could be different customer)
@@ -151,7 +155,7 @@ export class ReceivedCredentials {
 			});
 
 			if (!offer) {
-				throw new Error('Credential offer not found or expired');
+				throw new OwnershipError();
 			}
 
 			// Check if offer has expired
@@ -161,6 +165,9 @@ export class ReceivedCredentials {
 
 			return offer;
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				throw error;
+			}
 			throw new Error(`Failed to get offer details: ${error}`);
 		}
 	}
@@ -186,7 +193,7 @@ export class ReceivedCredentials {
 
 			// Check if holderDid is owned by this customer
 			if (!holderDids.includes(holderDid)) {
-				throw new Error(`DID ${holderDid} not found in your wallet`);
+				throw new OwnershipError();
 			}
 
 			// Query offer without customer filter (issuer could be different customer)
@@ -200,7 +207,7 @@ export class ReceivedCredentials {
 			});
 
 			if (!offer) {
-				throw new Error('Credential offer not found or expired');
+				throw new OwnershipError();
 			}
 
 			// Check if offer has expired
@@ -264,6 +271,9 @@ export class ReceivedCredentials {
 				presentation,
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				throw error;
+			}
 			throw new Error(`Failed to accept offer: ${error}`);
 		}
 	}
@@ -300,6 +310,9 @@ export class ReceivedCredentials {
 				message: 'Credential offer rejected successfully',
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				throw error;
+			}
 			throw new Error(`Failed to reject offer: ${error}`);
 		}
 	}
@@ -460,7 +473,7 @@ export class ReceivedCredentials {
 			// Check if holder DID exists in customer's wallet
 			const holderDids = await this.getHolderDids(customer);
 			if (!holderDids.includes(holderDid)) {
-				throw new Error('Holder DID does not exist in your wallet');
+				throw new OwnershipError();
 			}
 
 			// Verify subject matches holder DID
@@ -477,6 +490,9 @@ export class ReceivedCredentials {
 				credential: parsedCredential,
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				throw error;
+			}
 			throw new Error(`Failed to import credential: ${error}`);
 		}
 	}
@@ -520,7 +536,7 @@ export class ReceivedCredentials {
 				// Verify the provided holderDid belongs to this customer
 				const customerDids = await this.getHolderDids(customer);
 				if (!customerDids.includes(holderDid)) {
-					throw new Error(`DID ${holderDid} not found in your wallet`);
+					throw new OwnershipError();
 				}
 				subjectDids = [holderDid];
 			}
@@ -610,6 +626,9 @@ export class ReceivedCredentials {
 				limit,
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				throw error;
+			}
 			throw new Error(`Failed to list received credentials: ${error}`);
 		}
 	}
@@ -628,7 +647,7 @@ export class ReceivedCredentials {
 			const credential = await identityService.retrieveCredential(credentialHash, customer);
 
 			if (!credential) {
-				throw new Error(`Credential with hash ${credentialHash} not found`);
+				throw new OwnershipError();
 			}
 
 			// Verify the credential subject belongs to customer's wallet
@@ -644,11 +663,14 @@ export class ReceivedCredentials {
 			// Check if subject DID belongs to this customer
 			const holderDids = await this.getHolderDids(customer);
 			if (!holderDids.includes(subjectId)) {
-				throw new Error('Credential subject does not belong to your wallet');
+				throw new OwnershipError();
 			}
 
 			return credential;
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				throw error;
+			}
 			throw new Error(`Failed to get received credential: ${error}`);
 		}
 	}

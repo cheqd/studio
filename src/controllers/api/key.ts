@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../../services/identity/ownership-error.js';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
-import { OwnershipError } from '../../services/identity/ownership-error.js';
 import { decryptPrivateKey } from '../../helpers/helpers.js';
 import { toString } from 'uint8arrays';
 import type {
@@ -239,9 +239,7 @@ export class KeyController {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			if (error instanceof OwnershipError) {
-				return response.status(StatusCodes.FORBIDDEN).json({
-					error: error.message,
-				} satisfies UnsuccessfulImportKeyResponseBody);
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
 			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
