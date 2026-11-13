@@ -127,6 +127,12 @@ export type EngineCredentialFormat = 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds
 export const ENGINE_ROUTES = ['did', 'resource', 'credential', 'status-list', 'key', 'presentation', 'verify'] as const;
 export type EngineRoute = (typeof ENGINE_ROUTES)[number];
 
+/**
+ * Route families the router knows. `agent` is not in `ENGINE_ROUTES` on purpose: ENGINE_ROUTES are the families a
+ * feature flag may switch, and the agent families are Credo-only (engine spec 4.1), so no flag can exist for them.
+ */
+export type RoutedFamily = EngineRoute | 'agent';
+
 export type ArtifactKind = 'did' | 'status-list' | 'credential';
 
 /** A reference to an artifact that already exists, so its recorded engine can be looked up. */
