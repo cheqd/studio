@@ -1067,7 +1067,9 @@ export class AccountController {
 			const exportedDids: ExportedDidKeys[] = await Promise.all(
 				dids.map(async (identifier): Promise<ExportedDidKeys> => {
 					try {
-						const didExport = await identityStrategySetup.agent.exportDid(identifier.did, '', customer);
+						const didExport = await (
+							await identityStrategySetup.routed('did', { kind: 'did', id: identifier.did })
+						).exportDid(identifier.did, '', customer);
 						return { did: identifier.did, export: didExport };
 					} catch (error) {
 						return { did: identifier.did, error: (error as Error)?.message || String(error) };
