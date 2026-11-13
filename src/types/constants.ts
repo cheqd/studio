@@ -188,6 +188,7 @@ export enum OperationDefaultFeeEnum {
 	DID_UPDATE = 25000000000,
 	DID_CREATE = 50000000000,
 	DID_DEACTIVATE = 10000000000,
+	// eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values -- deliberately the same default fee as DID_DEACTIVATE
 	RESOURCE_CREATE_IMAGE = 10000000000,
 	RESOURCE_CREATE_JSON = 2500000000,
 	RESOURCE_CREATE_OTHER = 5000000000,

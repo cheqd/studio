@@ -172,7 +172,7 @@ export class ResourceController {
 	@validate
 	public async createResource(request: Request, response: Response) {
 		// Extract the did from the request
-		let did = Array.isArray(request.params.did) ? request.params.did[0] : (request.params.did as string);
+		const did = Array.isArray(request.params.did) ? request.params.did[0] : (request.params.did as string);
 		// Extract the resource parameters from the request
 		const { data, encoding, name, type, alsoKnownAs, version, network, publicKeyHexs } =
 			request.body as CreateResourceRequestBody;

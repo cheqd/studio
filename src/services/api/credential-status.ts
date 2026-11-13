@@ -423,7 +423,7 @@ export class CredentialStatusService {
 		error?: string;
 	}> {
 		const { did, statusListName, statusListVersion = '1.0', indices } = body;
-		let { statusAction: statusActionString, listType } = query;
+		const { statusAction: statusActionString, listType } = query;
 
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
 		try {
@@ -901,7 +901,7 @@ export class CredentialStatusService {
 
 			// check status list
 			let result;
-			let statusListUrl = statusListCredential?.startsWith('did:cheqd:')
+			const statusListUrl = statusListCredential?.startsWith('did:cheqd:')
 				? `${process.env.RESOLVER_URL}${statusListCredential}`
 				: statusListCredential;
 			if (listType === StatusListType.Bitstring) {

@@ -255,7 +255,7 @@ export class ReceivedCredentialController {
 	@validate
 	public async getOfferDetails(request: Request, response: Response) {
 		try {
-			let credentialId = Array.isArray(request.params.credentialId)
+			const credentialId = Array.isArray(request.params.credentialId)
 				? request.params.credentialId[0]
 				: (request.params.credentialId as string);
 			const { holderDid } = request.query;
@@ -343,7 +343,7 @@ export class ReceivedCredentialController {
 	@validate
 	public async acceptOffer(request: Request, response: Response) {
 		try {
-			let credentialId = Array.isArray(request.params.credentialId)
+			const credentialId = Array.isArray(request.params.credentialId)
 				? request.params.credentialId[0]
 				: (request.params.credentialId as string);
 			const { holderDid, createPresentation, presentationDomain } = request.body;
@@ -425,7 +425,7 @@ export class ReceivedCredentialController {
 	@validate
 	public async rejectOffer(request: Request, response: Response) {
 		try {
-			let credentialId = Array.isArray(request.params.credentialId)
+			const credentialId = Array.isArray(request.params.credentialId)
 				? request.params.credentialId[0]
 				: (request.params.credentialId as string);
 			const { holderDid } = request.body;
@@ -648,7 +648,7 @@ export class ReceivedCredentialController {
 	@validate
 	public async getReceivedCredential(request: Request, response: Response) {
 		try {
-			let credentialHash = Array.isArray(request.params.credentialHash)
+			const credentialHash = Array.isArray(request.params.credentialHash)
 				? request.params.credentialHash[0]
 				: (request.params.credentialHash as string);
 			const customer = response.locals.customer;
