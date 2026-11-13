@@ -278,7 +278,7 @@ export class AccreditationController {
 	 */
 	@validate
 	public async verify(request: Request, response: Response) {
-		let { verifyStatus = false, allowDeactivatedDid = false } = request.query as VerifyCredentialRequestQuery;
+		const { verifyStatus = false, allowDeactivatedDid = false } = request.query as VerifyCredentialRequestQuery;
 		const { policies, subjectDid, schemas } = request.body as VerifyAccreditationRequestBody;
 
 		// construct didUrl
