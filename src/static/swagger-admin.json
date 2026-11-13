@@ -36,7 +36,136 @@
         "in": "header"
       }
     },
+    "parameters": {
+      "AnalyticsRange": {
+        "in": "query",
+        "name": "range",
+        "description": "Days to look back, counting today as whole UTC days.",
+        "schema": {
+          "type": "integer",
+          "enum": [
+            7,
+            30,
+            90
+          ],
+          "default": 30
+        }
+      },
+      "AnalyticsSegment": {
+        "in": "query",
+        "name": "segment",
+        "description": "`agents`: the customer has at least one non-deleted agent. `people`: no agents, but it has issued a credential. `unclassified`: neither. `all`: no filter.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "agents",
+            "people",
+            "unclassified",
+            "all"
+          ],
+          "default": "all"
+        }
+      }
+    },
     "schemas": {
+      "AdminDayCount": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-11-13"
+          },
+          "count": {
+            "type": "integer"
+          }
+        }
+      },
+      "AdminCustomer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "plan": {
+            "type": "string",
+            "example": "Build"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "mainnet",
+              "testnet"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastActiveAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ]
+          },
+          "usage": {
+            "type": "object",
+            "properties": {
+              "apiCalls30d": {
+                "type": "integer"
+              },
+              "identifiers": {
+                "type": "integer"
+              },
+              "credentials": {
+                "type": "integer"
+              },
+              "keys": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "AdminCustomerDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AdminCustomer"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "paymentPlan": {
+                "type": "string",
+                "example": "active"
+              },
+              "agentCount": {
+                "type": "integer"
+              },
+              "segment": {
+                "type": "string",
+                "enum": [
+                  "agents",
+                  "people",
+                  "unclassified"
+                ]
+              }
+            }
+          }
+        ]
+      },
       "PriceListResponseBody": {
         "description": "A list of active prcies from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/prices/list)",
         "type": "object",
@@ -544,6 +673,350 @@
     }
   ],
   "paths": {
+    "/admin/analytics/overview": {
+      "get": {
+        "summary": "Usage overview (staff only).",
+        "description": "Tiles and per-day series over the last 7, 30 or 90 whole UTC days (including today). `segment` is `agents` (has at least one non-deleted agent), `people` (no agents, has issued a credential), `unclassified` (neither) or `all`. `apiCalls` counts tracked operations; `testCheqSent` is testnet CHEQ from completed faucet requests. Needs the `admin:analytics:read` scope.",
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AnalyticsRange"
+          },
+          {
+            "$ref": "#/components/parameters/AnalyticsSegment"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tiles": {
+                      "type": "object",
+                      "properties": {
+                        "signUps": {
+                          "type": "integer"
+                        },
+                        "activeAccounts": {
+                          "type": "integer"
+                        },
+                        "registeredAnAgent": {
+                          "type": "integer"
+                        },
+                        "issuedACredential": {
+                          "type": "integer"
+                        },
+                        "apiCalls": {
+                          "type": "integer"
+                        },
+                        "testCheqSent": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "series": {
+                      "type": "object",
+                      "properties": {
+                        "signUpsPerDay": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AdminDayCount"
+                          }
+                        },
+                        "apiCallsPerDay": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AdminDayCount"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "403": {
+            "description": "The caller is not staff."
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/analytics/endpoints": {
+      "get": {
+        "summary": "Calls by endpoint (staff only).",
+        "description": "Tracked operations grouped by operation, most called first (at most 100). Studio records an `operation` row for the operations it meters, not for every HTTP request. A call failed when it was unsuccessful or its `outcome` was `error`; `errorRate` is the failed share from 0 to 1. `avgMs` is 0 when no duration was recorded. An operation with no known route is returned with its name as `route` and an empty `method`. Needs the `admin:analytics:read` scope.",
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AnalyticsRange"
+          },
+          {
+            "$ref": "#/components/parameters/AnalyticsSegment"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "route": {
+                        "type": "string",
+                        "example": "/did/create"
+                      },
+                      "method": {
+                        "type": "string",
+                        "example": "POST"
+                      },
+                      "calls": {
+                        "type": "integer"
+                      },
+                      "errorRate": {
+                        "type": "number"
+                      },
+                      "avgMs": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "403": {
+            "description": "The caller is not staff."
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/analytics/top-accounts": {
+      "get": {
+        "summary": "Top accounts by calls (staff only).",
+        "description": "Customers with the most tracked operations in the range. Needs the `admin:analytics:read` scope.",
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AnalyticsRange"
+          },
+          {
+            "$ref": "#/components/parameters/AnalyticsSegment"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "customerId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "plan": {
+                        "type": "string"
+                      },
+                      "calls": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "403": {
+            "description": "The caller is not staff."
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/analytics/plan-mix": {
+      "get": {
+        "summary": "Plan mix (staff only).",
+        "description": "Accounts per plan, and the percentage on a paid plan (plans named in `PAID_PLAN_NAMES`, default `build`). Needs the `admin:analytics:read` scope.",
+        "tags": [
+          "Analytics"
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "plans": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "plan": {
+                            "type": "string"
+                          },
+                          "accounts": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "paidPercent": {
+                      "type": "number",
+                      "description": "Share of accounts on a paid plan, 0 to 100, one decimal place."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "403": {
+            "description": "The caller is not staff."
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/analytics/funnels": {
+      "get": {
+        "summary": "Journey funnel (staff only).",
+        "description": "Steps for the customers who signed up in the range. A customer counts at a step only if it reached all the steps before it. `first-credential`: signed up, funded address (completed faucet request), first DID, first credential issued. `first-agent`: signed up, funded address, first DID, registered an agent, agent card signed. `medianSecondsFromPrevious` is null for the first step or when nobody reached the step. Percent and drop are for the client to work out from `accounts`. Needs the `admin:analytics:read` scope.",
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "journey",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "first-credential",
+                "first-agent"
+              ]
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AnalyticsRange"
+          },
+          {
+            "$ref": "#/components/parameters/AnalyticsSegment"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "journey": {
+                      "type": "string"
+                    },
+                    "steps": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "accounts": {
+                            "type": "integer"
+                          },
+                          "medianSecondsFromPrevious": {
+                            "type": "integer",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "403": {
+            "description": "The caller is not staff."
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
     "/admin/api-key/create": {
       "post": {
         "summary": "Create a new API key",
@@ -737,6 +1210,240 @@
         }
       }
     },
+    "/admin/audit-log": {
+      "get": {
+        "summary": "Staff audit log (staff only).",
+        "description": "Every staff action that changed state (customer deletion, feature flag changes), newest first. Append-only. `target` is the customer id; the log never holds a customer's name or email, so an entry outlives the customer it records. `staff` is the acting staff member's Studio email where known, otherwise the actor id. Needs the `admin:audit:read` scope.",
+        "tags": [
+          "Audit"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "when": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "staff": {
+                            "type": "string"
+                          },
+                          "action": {
+                            "type": "string",
+                            "example": "customer.delete"
+                          },
+                          "target": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "reason": {
+                            "type": "string"
+                          },
+                          "ticketRef": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "403": {
+            "description": "The caller is not staff."
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/customers": {
+      "get": {
+        "summary": "List customers (staff only).",
+        "description": "Staff search over customers, newest first. Counts only: never keys, credential contents, claim values or API keys. Needs the `admin:customers:read` scope. `status` is `active` when the customer has a tracked operation in the last 30 days and `inactive` otherwise. `plan` is the customer's plan name (`none` when it has no paid or free plan role). `usage.apiCalls30d` counts tracked operations in the last 30 days.",
+        "tags": [
+          "Customers"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "description": "Matches name, email or id (case-insensitive substring).",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "in": "query",
+            "name": "plan",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "customers": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AdminCustomer"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "Customers matching the filters, across all pages."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "403": {
+            "description": "The caller is not staff."
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/customers/{id}": {
+      "get": {
+        "summary": "Get one customer (staff only).",
+        "description": "The same shape as the list, plus `paymentPlan` (the latest subscription status, or `none`), `agentCount` (agents that are not deleted) and `segment` (`agents`: has at least one non-deleted agent; `people`: no agents but has issued a credential; `unclassified`: neither). Needs the `admin:customers:read` scope.",
+        "tags": [
+          "Customers"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCustomerDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "403": {
+            "description": "The caller is not staff."
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
     "/admin/flags": {
       "put": {
         "summary": "Set a feature flag (staff only).",
@@ -908,8 +1615,8 @@
     },
     "/admin/organisation/delete": {
       "delete": {
-        "summary": "Permanently delete the organisation identified by the `customer-id` header.",
-        "description": "For support-triggered deletions (e.g. a customer emailing in to ask for their account to be deleted) rather than self-service. Runs the same hard-delete pipeline as `DELETE /account`: cancels any active Stripe subscription, deletes the Logto user, then deletes the customer row and everything it owns. Does not export keys on the customer's behalf. Requires `{ \"confirm\": true }` in the request body.",
+        "summary": "Permanently delete an organisation (staff only).",
+        "description": "For support-triggered deletions (e.g. a customer emailing in to ask for their account to be deleted) rather than self-service. Runs the same hard-delete pipeline as `DELETE /account`: cancels any active Stripe subscription, deletes the Logto user, then deletes the customer row and everything it owns. Does not export keys on the customer's behalf and cannot remove records already written to the ledger. The target is `customerId` from the body when given, otherwise the customer named by the `customer-id` header (machine-to-machine calls). Staff cannot delete their own organisation. A customer on a paid plan also needs `confirmPaidPlan: true`. The deletion and its `adminAuditLog` row (actor, action, customer id, reason, ticket) are written in one transaction. Requires `{ \"confirm\": true }` and a `reason`.",
         "tags": [
           "Organisation"
         ],
@@ -919,11 +1626,31 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "confirm"
+                  "confirm",
+                  "reason"
                 ],
                 "properties": {
                   "confirm": {
                     "type": "boolean"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "ticketRef": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "description": "Optional support ticket reference."
+                  },
+                  "customerId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The customer to delete. Defaults to the customer named by the `customer-id` header."
+                  },
+                  "confirmPaidPlan": {
+                    "type": "boolean",
+                    "description": "Must be true when the customer is on a paid plan."
                   }
                 }
               }
@@ -935,10 +1662,13 @@
             "description": "The organisation was deleted."
           },
           "400": {
-            "description": "Missing confirmation."
+            "description": "Missing confirmation or reason, an invalid field, or a paid plan without `confirmPaidPlan`."
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "403": {
+            "description": "The caller is not staff, or is trying to delete their own organisation."
           },
           "404": {
             "$ref": "#/components/schemas/NotFoundError"

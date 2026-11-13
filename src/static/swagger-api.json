@@ -3310,6 +3310,12 @@
           },
           "primaryEmail": {
             "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+            "maxLength": 32,
+            "description": "Optional label for where the account came from, stored for reporting (for example `studio`, `sdk`, `agent-quickstart`, `agent`). Lower-case letters, digits and hyphens only; anything else is rejected with 400."
           }
         }
       },
@@ -3747,6 +3753,12 @@
                   "address": {
                     "type": "string",
                     "description": "Optional cheqd testnet address to fund; it does not have to belong to the customer. Requests count against the calling customer's quota. Defaults to the authenticated customer's testnet account."
+                  },
+                  "source": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+                    "maxLength": 32,
+                    "description": "Optional label for where the request came from, stored for reporting (for example `studio`, `sdk`, `agent-quickstart`, `agent`). Lower-case letters, digits and hyphens only; anything else is rejected with 400."
                   },
                   "amount": {
                     "type": "number",
@@ -4684,6 +4696,93 @@
       }
     },
     "/agents/{agentId}/authority": {
+      "get": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "List the authority grants of an agent.",
+        "description": "Returns every grant of the agent, live and revoked, newest first. A grant is `active`, `revoked` or `expired`. The credential itself is never returned here (it is returned once, when the grant is made). An agent that is not yours, or does not exist, is a 404.",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "grants": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "grantType": {
+                            "type": "string",
+                            "enum": [
+                              "acts-for",
+                              "tool-scope",
+                              "mandate",
+                              "delegation"
+                            ]
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "active",
+                              "revoked",
+                              "expired"
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "expiresAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "revokedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      },
       "post": {
         "tags": [
           "Agents"
@@ -6786,6 +6885,11 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "customerId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The caller's own Studio customer id, used as the analytics identifier. Omitted when the request has no customer. Nothing else about the account is returned."
+                    },
                     "ui": {
                       "type": "string",
                       "enum": [

@@ -259,7 +259,7 @@ export class AdminAnalyticsService {
 			this.rows<{ date: string; count: string }>(
 				`WITH ${WINDOW_CTE}, ${SEGMENT_CTE}
 				SELECT to_char(d.day, 'YYYY-MM-DD') AS date, COUNT(c."customerId") AS count
-				FROM win, generate_series(win.start_day, win.end_day, interval '1 day') AS d(day)
+				FROM win CROSS JOIN generate_series(win.start_day, win.end_day, interval '1 day') AS d(day)
 				LEFT JOIN "customer" c ON date_trunc('day', c."createdAt" AT TIME ZONE 'UTC') = d.day AND c."createdAt" >= win.start AND ${segmentFilter('c."customerId"')}
 				GROUP BY d.day ORDER BY d.day`,
 				parameters
@@ -272,7 +272,7 @@ export class AdminAnalyticsService {
 					GROUP BY 1
 				)
 				SELECT to_char(d.day, 'YYYY-MM-DD') AS date, COALESCE(p.count, 0) AS count
-				FROM win, generate_series(win.start_day, win.end_day, interval '1 day') AS d(day)
+				FROM win CROSS JOIN generate_series(win.start_day, win.end_day, interval '1 day') AS d(day)
 				LEFT JOIN per_day p ON p.day = d.day ORDER BY d.day`,
 				parameters
 			),

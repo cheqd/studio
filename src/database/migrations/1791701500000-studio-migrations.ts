@@ -6,7 +6,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * Expand-only safety: one new table, tenant-scoped (`customerId` is the primary key and a cascading foreign key,
  * so the row goes when the customer does). Nothing reads it until the staff analytics endpoints do. The backfill
  * fills the milestones that existing data can answer (DID from the first successful `did-create` operation,
- * credential from `issuedCredential`, agent from `agent`, status list from `statusRegistry`); later events are
+ * credential from `issuedCredential.issuedAt`, agent from `agent`, status list from `statusRegistry`); later events are
  * written by `recordActivation`. Customers with no milestone get no row. Reversible: `down` drops the table.
  */
 export class StudioMigrations1791701500000 implements MigrationInterface {
@@ -25,7 +25,7 @@ export class StudioMigrations1791701500000 implements MigrationInterface {
 			 SELECT * FROM (
 				SELECT c."customerId",
 					(SELECT MIN(o."createdAt") FROM "operation" o WHERE o."customerId" = c."customerId" AND o."operationName" = 'did-create' AND o."successful") AS did,
-					(SELECT MIN(ic."createdAt") FROM "issuedCredential" ic WHERE ic."customerId" = c."customerId" AND ic."category" = 'credential' AND ic."status" IN ('issued', 'suspended', 'revoked')) AS credential,
+					(SELECT MIN(ic."issuedAt") FROM "issuedCredential" ic WHERE ic."customerId" = c."customerId" AND ic."category" = 'credential' AND ic."status" IN ('issued', 'suspended', 'revoked')) AS credential,
 					(SELECT MIN(a."createdAt") FROM "agent" a WHERE a."customerId" = c."customerId") AS agent,
 					(SELECT MIN(sr."createdAt") FROM "statusRegistry" sr WHERE sr."customerId" = c."customerId") AS statuslist
 				FROM "customer" c
