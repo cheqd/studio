@@ -33,6 +33,9 @@ import { APIKeyController } from './controllers/admin/api-key.js';
 import { OrganisationController } from './controllers/admin/organisation.js';
 import { FlagsController } from './controllers/api/flags.js';
 import { FlagsAdminController } from './controllers/admin/flags.js';
+import { CustomersAdminController } from './controllers/admin/customers.js';
+import { AnalyticsAdminController } from './controllers/admin/analytics.js';
+import { AuditLogAdminController } from './controllers/admin/audit-log.js';
 import { AgentController } from './controllers/api/agent.js';
 import { AccreditationController } from './controllers/api/accreditation.js';
 import { OperationController } from './controllers/api/operation.js';
@@ -353,12 +356,42 @@ class App {
 		app.delete('/agents/:agentId', AgentController.idValidator, agents.remove);
 		app.post('/agents/:agentId/card', AgentController.createCardValidator, agents.createCard);
 		app.get('/agents/:agentId/card', AgentController.getCardValidator, agents.getCard);
+		app.get('/agents/:agentId/authority', AgentController.idValidator, agents.listAuthority);
 		app.post('/agents/:agentId/authority', AgentController.grantValidator, agents.grantAuthority);
 		app.delete('/agents/:agentId/authority/:grantId', AgentController.revokeValidator, agents.revokeAuthority);
 
 		// Feature flags
 		app.get('/flags', new FlagsController().getFlags);
 		app.put('/admin/flags', new FlagsAdminController().putFlag);
+
+		// Staff customer back end, analytics and audit log (read only, staff scopes)
+		const customersAdmin = new CustomersAdminController();
+		const analyticsAdmin = new AnalyticsAdminController();
+		const auditAdmin = new AuditLogAdminController();
+		app.get('/admin/customers', CustomersAdminController.listValidator, customersAdmin.list.bind(customersAdmin));
+		app.get('/admin/customers/:id', CustomersAdminController.getValidator, customersAdmin.get.bind(customersAdmin));
+		app.get(
+			'/admin/analytics/overview',
+			AnalyticsAdminController.overviewValidator,
+			analyticsAdmin.overview.bind(analyticsAdmin)
+		);
+		app.get(
+			'/admin/analytics/endpoints',
+			AnalyticsAdminController.endpointsValidator,
+			analyticsAdmin.endpoints.bind(analyticsAdmin)
+		);
+		app.get(
+			'/admin/analytics/top-accounts',
+			AnalyticsAdminController.topAccountsValidator,
+			analyticsAdmin.topAccounts.bind(analyticsAdmin)
+		);
+		app.get('/admin/analytics/plan-mix', analyticsAdmin.planMix.bind(analyticsAdmin));
+		app.get(
+			'/admin/analytics/funnels',
+			AnalyticsAdminController.funnelsValidator,
+			analyticsAdmin.funnels.bind(analyticsAdmin)
+		);
+		app.get('/admin/audit-log', AuditLogAdminController.listValidator, auditAdmin.list.bind(auditAdmin));
 
 		// LogTo user info
 		app.get('/auth/user-info', async (req, res) => {

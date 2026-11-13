@@ -1,4 +1,5 @@
 import { Connection } from '../../database/connection/connection.js';
+import { OperationNameEnum } from '../../types/constants.js';
 import { captureActivationEvent } from './posthog.js';
 
 /**
@@ -42,4 +43,16 @@ export async function recordActivation(
 		console.warn(`recordActivation(${milestone}) failed: ${(error as Error)?.message || error}`);
 		return false;
 	}
+}
+
+const ACTIVATION_BY_OPERATION: Partial<Record<string, ActivationMilestone>> = {
+	[OperationNameEnum.DID_CREATE]: 'first_did_created',
+	[OperationNameEnum.CREDENTIAL_ISSUE]: 'first_credential_issued',
+	[OperationNameEnum.CREDENTIAL_STATUS_CREATE_UNENCRYPTED]: 'first_status_list_created',
+	[OperationNameEnum.CREDENTIAL_STATUS_CREATE_ENCRYPTED]: 'first_status_list_created',
+};
+
+/** The activation milestone an operation counts towards, if any. */
+export function activationMilestoneFor(operationName: string): ActivationMilestone | undefined {
+	return ACTIVATION_BY_OPERATION[operationName];
 }

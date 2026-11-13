@@ -2,7 +2,60 @@
  * @openapi
  *
  * components:
+ *   parameters:
+ *     AnalyticsRange:
+ *       in: query
+ *       name: range
+ *       description: Days to look back, counting today as whole UTC days.
+ *       schema:
+ *         type: integer
+ *         enum: [7, 30, 90]
+ *         default: 30
+ *     AnalyticsSegment:
+ *       in: query
+ *       name: segment
+ *       description: >-
+ *         `agents`: the customer has at least one non-deleted agent. `people`: no agents, but it has issued a
+ *         credential. `unclassified`: neither. `all`: no filter.
+ *       schema:
+ *         type: string
+ *         enum: [agents, people, unclassified, all]
+ *         default: all
  *   schemas:
+ *     AdminDayCount:
+ *       type: object
+ *       properties:
+ *         date:
+ *           type: string
+ *           example: '2026-11-13'
+ *         count:
+ *           type: integer
+ *     AdminCustomer:
+ *       type: object
+ *       properties:
+ *         id: { type: string, format: uuid }
+ *         name: { type: string }
+ *         email: { type: string }
+ *         plan: { type: string, example: Build }
+ *         network: { type: string, enum: [mainnet, testnet] }
+ *         createdAt: { type: string, format: date-time }
+ *         lastActiveAt: { type: string, format: date-time, nullable: true }
+ *         status: { type: string, enum: [active, inactive] }
+ *         usage:
+ *           type: object
+ *           properties:
+ *             apiCalls30d: { type: integer }
+ *             identifiers: { type: integer }
+ *             credentials: { type: integer }
+ *             keys: { type: integer }
+ *     AdminCustomerDetail:
+ *       allOf:
+ *         - $ref: '#/components/schemas/AdminCustomer'
+ *         - type: object
+ *           properties:
+ *             paymentPlan: { type: string, example: active }
+ *             agentCount: { type: integer }
+ *             segment: { type: string, enum: [agents, people, unclassified] }
  *     PriceListResponseBody:
  *       description: A list of active prcies from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/prices/list)
  *       type: object
