@@ -20,7 +20,15 @@ import type { CredentialSession, CredoVerification, CredoVerificationCheck } fro
 // biome-ignore lint/suspicious/noExplicitAny: the Credo API objects are generic over the module set
 type TenantAgent = { kms: any; w3cCredentials: any; modules: any };
 
-const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
+/** The error's message, with the messages of the errors it wraps (vc.js reports its failures in `errors`). */
+function message(error: unknown): string {
+	if (!(error instanceof Error)) return String(error);
+	const inner = (error as { errors?: unknown }).errors;
+	const details = Array.isArray(inner)
+		? inner.map((entry) => (entry instanceof Error ? entry.message : String(entry))).filter(Boolean)
+		: [];
+	return details.length > 0 ? `${error.message} ${details.join('; ')}` : error.message;
+}
 
 /** Credo's validations, flattened to `{ name, isValid, error }` (arrays become `name[i]`, nested results `a.b`). */
 function flatten(prefix: string, value: unknown, out: CredoVerificationCheck[]): void {

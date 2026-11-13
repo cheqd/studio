@@ -339,6 +339,20 @@ describe('createPresentation', () => {
 		expect(h.runtime.credentialState.signCalls).toEqual([]);
 	});
 
+	it('gives a presentation with no challenge a random nonce, because Credo reads no JWT presentation without one', async () => {
+		const holder = await makeDid(h, alice, ['Ed25519']);
+		const make = async () =>
+			decodeJwt(
+				(
+					(await h.engine.createPresentation({ holder: holder.did, verifiableCredential: [] }, {}, alice))
+						.proof as JsonObject
+				).jwt as string
+			)?.payload.nonce;
+		const [first, second] = [await make(), await make()];
+		expect(first).toEqual(expect.any(String));
+		expect(first).not.toBe(second);
+	});
+
 	it('needs a holder', async () => {
 		await expect(h.engine.createPresentation({ verifiableCredential: [] }, {}, alice)).rejects.toThrow('no holder');
 	});
@@ -504,6 +518,16 @@ describe('verifyPresentation', () => {
 			challenge: 'abc',
 			domain: 'verifier',
 		});
+	});
+
+	it('accepts the presentation’s own nonce when the verifier supplies no challenge, and says so', async () => {
+		const result = await h.engine.verifyPresentation(presentationJwt, {}, alice);
+		expect(result.verified).toBe(true);
+		expect(h.runtime.credentialState.verifyPresentationCalls[0].challenge).toBe('abc');
+		expect(result.warnings).toEqual([expect.stringContaining('No challenge was supplied')]);
+
+		await h.engine.verifyPresentation(presentationJwt, { challenge: 'abc' } as never, alice);
+		expect(h.runtime.credentialState.verifyPresentationCalls[1].challenge).toBe('abc');
 	});
 
 	it('checks the status of the credentials inside it with verifyStatus', async () => {
