@@ -10,10 +10,8 @@ export class EngineNotImplementedError extends Error {
 }
 
 /**
- * Placeholder for the Credo engine (migration plan, phase 1 step 2). Every call throws
- * `EngineNotImplementedError`. The router only returns it when a feature flag says `credo`, and no flag does
- * today. To plug the real engine in, replace this class with one that implements `IdentityEngine` and keep the
- * `CREDO_ENGINE_FACTORY` registration in `engine-router.ts` pointing at it.
+ * The placeholder that stood in for the Credo engine before it was built. The router no longer uses it (the real
+ * `CredoEngine` is in `./credo/`); it stays as a test double that fails loudly on any call.
  */
 export function createCredoEngineStub(): IdentityEngine {
 	return new Proxy({ name: 'credo' } as unknown as IdentityEngine, {

@@ -1,6 +1,6 @@
 import type { IIdentityService } from '../index.js';
 import type { IdentityEngine } from './identity-engine.js';
-import { createCredoEngineStub } from './credo-engine.js';
+import { getCredoEngine } from './credo/factory.js';
 import { VeramoEngine } from './veramo-engine.js';
 import { DEFAULT_ENGINE, isEngineName } from './types.js';
 import type { ArtifactRef, EngineName, EngineRoute } from './types.js';
@@ -33,8 +33,8 @@ export type EngineFactory = (service: IIdentityService) => IdentityEngine;
 
 export const defaultEngineFactories: Record<EngineName, EngineFactory> = {
 	veramo: (service) => new VeramoEngine(service),
-	// STUB: replace with the real Credo engine factory. Never selected unless a flag or a recorded engine says so.
-	credo: () => createCredoEngineStub(),
+	// Never selected unless a flag or a recorded engine says so. Credo starts on first use, not here.
+	credo: () => getCredoEngine(),
 };
 
 /**
