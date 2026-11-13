@@ -22,10 +22,15 @@ import type {
 	EnginePresentation,
 	EnginePresentationPayload,
 	EngineResourcePayload,
+	EngineSignRequest,
 	EngineSignedInput,
 	EngineStatusListOptions,
 	EngineStatusOptions,
 	EngineStatusResult,
+	EngineTokenStatusList,
+	EngineTokenStatusListOptions,
+	EngineTokenStatusReading,
+	EngineTokenStatusUpdate,
 	EngineVerificationOptions,
 	EngineVerificationResult,
 } from './types.js';
@@ -201,4 +206,33 @@ export interface IdentityEngine {
 		customer: CustomerEntity,
 		symmetricKey: string
 	): Promise<EngineStatusResult>;
+
+	// Agent capabilities. Optional until the Credo engine implements them; the agent endpoints check for each one
+	// and answer 501 when it is missing. See `AgentService` (src/services/agent).
+
+	/**
+	 * Sign raw bytes with the private key behind a verification method of one of the customer's DIDs, and return
+	 * the raw JWS signature (ES256: 64 bytes r||s; EdDSA: 64 bytes). Used for the A2A agent card JWS and for
+	 * SD-JWT VC issuance (AP2 open mandates, authority credentials). The private key never leaves the engine.
+	 */
+	signWithDidKey?(request: EngineSignRequest, customer: CustomerEntity): Promise<Uint8Array>;
+	/** Create a Token Status List under one of the customer's DIDs and host it (a DID-Linked Resource). */
+	createTokenStatusList?(
+		did: string,
+		options: EngineTokenStatusListOptions,
+		customer: CustomerEntity
+	): Promise<EngineTokenStatusList>;
+	/** Set one or more entries of a Token Status List the customer owns, then republish it. */
+	setTokenStatus?(
+		did: string,
+		listUri: string,
+		updates: EngineTokenStatusUpdate[],
+		customer: CustomerEntity
+	): Promise<void>;
+	/**
+	 * Read one entry of any Token Status List, fetched through the shared internal-destination block. Takes no
+	 * customer: a verifier checks lists issued by other tenants. Must report `verified: false` rather than throw
+	 * when the list is unreachable or its signature does not check out.
+	 */
+	getTokenStatus?(listUri: string, index: number): Promise<EngineTokenStatusReading>;
 }

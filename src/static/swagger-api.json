@@ -52,6 +52,9 @@
     },
     {
       "name": "Verifiable Presentations"
+    },
+    {
+      "name": "Agents"
     }
   ],
   "externalDocs": {
@@ -67,6 +70,255 @@
       }
     },
     "schemas": {
+      "Agent": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "did": {
+            "type": "string",
+            "description": "The agent's did:cheqd identifier. It has two keys, P-256 (default signing key) and Ed25519.",
+            "example": "did:cheqd:testnet:a1b2c3d4-0000-4000-8000-000000000001"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "actsForDid": {
+            "type": "string",
+            "nullable": true,
+            "description": "The organisation DID this agent acts for."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "deleted"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AgentCardInput": {
+        "type": "object",
+        "required": [
+          "endpoint"
+        ],
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "format": "uri",
+            "description": "Where the agent serves A2A. Must be https."
+          },
+          "protocolBinding": {
+            "type": "string",
+            "enum": [
+              "JSONRPC",
+              "GRPC",
+              "HTTP+JSON"
+            ],
+            "default": "JSONRPC"
+          },
+          "description": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string",
+            "default": "1.0.0"
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "name"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "examples": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "streaming": {
+            "type": "boolean"
+          },
+          "pushNotifications": {
+            "type": "boolean"
+          },
+          "documentationUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "AgentCard": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "agentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "card": {
+            "type": "object",
+            "description": "The signed A2A agent card (v1.0), with its JWS in `signatures`."
+          },
+          "jws": {
+            "type": "string",
+            "description": "The same signature as a detached compact JWS (`protected..signature`)."
+          },
+          "resourceId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The DID-Linked Resource id, when the card has been published."
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AuthorityGrant": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "agentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "grantType": {
+            "type": "string",
+            "enum": [
+              "acts-for",
+              "tool-scope",
+              "mandate",
+              "delegation"
+            ]
+          },
+          "issuedCredentialId": {
+            "type": "string",
+            "nullable": true
+          },
+          "statusListId": {
+            "type": "string",
+            "nullable": true
+          },
+          "statusIndex": {
+            "type": "integer",
+            "nullable": true
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "revokedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AgentVerifyResult": {
+        "type": "object",
+        "properties": {
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "failed",
+              "inconclusive"
+            ],
+            "description": "`verified` only when no check failed or errored and at least one passed. Treat anything else as not verified."
+          },
+          "did": {
+            "type": "string"
+          },
+          "checks": {
+            "type": "object",
+            "description": "One entry per call that ran. Reasons are short codes; no credential contents are returned or stored.",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "outcome": {
+                  "type": "string",
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "error",
+                    "skipped"
+                  ]
+                },
+                "reasons": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "details": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "eventId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The verification event written for metering, or null if it could not be written."
+          }
+        }
+      },
       "AlsoKnownAs": {
         "type": "object",
         "properties": {
@@ -4059,6 +4311,710 @@
           },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/agents": {
+      "post": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Register an agent.",
+        "description": "Creates the agent's did:cheqd identifier with two keys (P-256 as the default signing key, and Ed25519) and the agent record. Needs the Credo engine for the account. Costs CHEQ on the ledger like any DID creation.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "network": {
+                    "type": "string",
+                    "enum": [
+                      "testnet",
+                      "mainnet"
+                    ],
+                    "default": "testnet"
+                  },
+                  "actsForDid": {
+                    "type": "string",
+                    "description": "A DID in your account that this agent acts for."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The agent was registered.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A problem with the input fields has occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "402": {
+            "description": "The payer account has no CHEQ, or too little to pay the fee."
+          },
+          "404": {
+            "description": "actsForDid is not a DID in your account."
+          },
+          "501": {
+            "description": "The identity engine for this account cannot serve the agent endpoints yet. They need the Credo engine."
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "List your agents.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": {
+                      "type": "integer"
+                    },
+                    "agents": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Agent"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/agents/{agentId}": {
+      "get": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Get an agent.",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "No such agent in your account. Also returned for an agent that belongs to another account."
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Update an agent.",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "actsForDid": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "active",
+                      "suspended"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The agent was updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "No such agent in your account, or actsForDid is not a DID in your account."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Delete an agent.",
+        "description": "Revokes every live authority grant of the agent, then removes the agent (soft delete; the DID stays on the ledger). If a grant cannot be revoked the agent is not deleted.",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The agent was deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deleted": {
+                      "type": "boolean"
+                    },
+                    "revokedGrants": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "No such agent in your account."
+          },
+          "501": {
+            "description": "The agent has live grants and the engine cannot revoke them."
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/card": {
+      "post": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Create a signed agent card.",
+        "description": "Builds an A2A v1.0 agent card, signs it with the agent's key (the key stays in the identity engine), checks the signature, stores it as the next version and, if asked, publishes it as a DID-Linked Resource of type A2AAgentCard. Needs the Credo engine.",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "card"
+                ],
+                "properties": {
+                  "card": {
+                    "$ref": "#/components/schemas/AgentCardInput"
+                  },
+                  "publish": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "alg": {
+                    "type": "string",
+                    "enum": [
+                      "ES256",
+                      "EdDSA"
+                    ],
+                    "default": "ES256"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The card was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentCard"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "402": {
+            "description": "The payer account has no CHEQ, or too little to pay the fee (publishing writes to the ledger)."
+          },
+          "404": {
+            "description": "No such agent in your account."
+          },
+          "409": {
+            "description": "The agent is not active, or its DID is deactivated."
+          },
+          "501": {
+            "description": "The identity engine for this account cannot serve the agent endpoints yet. They need the Credo engine."
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Get an agent card.",
+        "description": "Returns the latest version, or the version given.",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentCard"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "No such agent in your account, or it has no card yet."
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/authority": {
+      "post": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Grant authority to an agent.",
+        "description": "Issues an authority credential to the agent, signed by one of your DIDs, with an entry in a Token Status List so it can be revoked. The credential is returned once, in this response.\n\n- `acts-for`: an SD-JWT VC saying the agent acts for the issuer.\n- `tool-scope`: an SD-JWT VC listing the tools the agent may call (`tools`).\n- `mandate`: an AP2 open mandate as an SD-JWT VC, bound to the agent's P-256 key (`mandate`). **Single hop only**: re-delegation to sub-agents is not supported and any such field is refused.\n- `delegation`: a KYA-OS delegation (`scopes`). **Untested** (gate T9) and switched off unless the server sets `ENABLE_KYA_OS_DELEGATIONS`; it has no status list entry, so revoking it does not reach verifiers.\n",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "grantType"
+                ],
+                "properties": {
+                  "grantType": {
+                    "type": "string",
+                    "enum": [
+                      "acts-for",
+                      "tool-scope",
+                      "mandate",
+                      "delegation"
+                    ]
+                  },
+                  "issuerDid": {
+                    "type": "string",
+                    "description": "Defaults to the agent's actsForDid. Must be a DID in your account."
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "tools": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "scopes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "mandate": {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "constraints"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "payment",
+                          "checkout"
+                        ]
+                      },
+                      "constraints": {
+                        "type": "array",
+                        "description": "AP2 constraints, for example payment.amount_range, payment.allowed_payees, payment.budget, payment.agent_recurrence, payment.execution_date, checkout.allowed_merchants, checkout.line_items.",
+                        "items": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The authority was granted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "grant": {
+                      "$ref": "#/components/schemas/AuthorityGrant"
+                    },
+                    "credential": {
+                      "type": "object",
+                      "properties": {
+                        "format": {
+                          "type": "string",
+                          "enum": [
+                            "sd-jwt-vc",
+                            "jwt"
+                          ]
+                        },
+                        "value": {
+                          "description": "The compact SD-JWT VC (a string), or the credential for a delegation."
+                        }
+                      }
+                    },
+                    "label": {
+                      "type": "string",
+                      "enum": [
+                        "untested"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "403": {
+            "description": "KYA-OS delegations are switched off."
+          },
+          "404": {
+            "description": "No such agent in your account, or issuerDid is not a DID in your account."
+          },
+          "409": {
+            "description": "The agent is not active, or the issuer DID is deactivated."
+          },
+          "501": {
+            "description": "The identity engine for this account cannot serve the agent endpoints yet. They need the Credo engine."
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/authority/{grantId}": {
+      "delete": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Revoke an authority grant.",
+        "description": "Sets the grant's entry in its Token Status List to revoked, then records the revocation. Revoking a revoked grant returns it unchanged.",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "grantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The grant was revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorityGrant"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "No such agent or grant in your account."
+          },
+          "501": {
+            "description": "The identity engine for this account cannot update status lists yet. It needs the Credo engine."
+          }
+        }
+      }
+    },
+    "/verify/agent": {
+      "post": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Verify an agent.",
+        "description": "Runs up to four checks on an agent's did:cheqd identifier and writes one verification event (outcomes and reason codes only, no credential contents). The agent need not be yours.\n\n- `resolveAgent`: the DID resolves, is not deactivated, and lists usable keys; reports the published card, if any.\n- `verifyAgentCard`: the card (presented, or the latest published) is signed by a key the DID document lists, and is anchored to this DID.\n- `checkStatus`: the DID is active and every presented authority credential is signed by its issuer, belongs to this agent, and is not revoked or suspended in its Token Status List.\n- `verifyMandate`: a presented AP2 open mandate (with its Key Binding JWT) verifies against its issuer, is bound to one of the agent's keys, is not revoked, and, if a closed mandate is given, satisfies every constraint. Budget and recurrence totals are not tracked.\n\nOnly did:cheqd resolves. Treat any verdict other than `verified` as not verified.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "did"
+                ],
+                "properties": {
+                  "did": {
+                    "type": "string"
+                  },
+                  "checks": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "resolveAgent",
+                        "verifyAgentCard",
+                        "checkStatus",
+                        "verifyMandate"
+                      ]
+                    }
+                  },
+                  "card": {
+                    "type": "object"
+                  },
+                  "credentials": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "mandate": {
+                    "type": "object",
+                    "required": [
+                      "presentation",
+                      "audience",
+                      "nonce"
+                    ],
+                    "properties": {
+                      "presentation": {
+                        "type": "string"
+                      },
+                      "audience": {
+                        "type": "string"
+                      },
+                      "nonce": {
+                        "type": "string"
+                      },
+                      "closedMandate": {
+                        "type": "object"
+                      },
+                      "checkoutJwt": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The checks ran. Read `verdict` and `checks`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentVerifyResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
           }
         }
       }

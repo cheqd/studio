@@ -135,3 +135,56 @@ export interface ArtifactRef {
 	/** DID for `did`, `statusListId` (or provider list id) for `status-list`, `issuedCredentialId` for `credential`. */
 	id: string;
 }
+
+// --- Agent capabilities -------------------------------------------------------------------------------------
+// Used by the agent endpoints (`AgentService`). The matching `IdentityEngine` methods are optional: the Veramo
+// engine does not have them, so the agent endpoints answer 501 for a customer who is not on the Credo engine.
+
+/** JWS algorithms the agent endpoints sign with: P-256 is the default, Ed25519 is the second key. */
+export type EngineSigningAlg = 'ES256' | 'EdDSA';
+
+export interface EngineSignRequest {
+	/** The DID whose key signs. The engine checks it belongs to the calling customer. */
+	did: string;
+	/** The verification method DID URL of the signing key, for example `did:cheqd:testnet:<id>#key-1`. */
+	kid: string;
+	alg: EngineSigningAlg;
+	/** The exact bytes to sign (for a JWS: the ASCII of `base64url(header).base64url(payload)`). */
+	data: Uint8Array;
+}
+
+/** Token Status List values (draft-ietf-oauth-status-list): 0 valid, 1 invalid (revoked), 2 suspended. */
+export type EngineTokenStatus = 0 | 1 | 2;
+
+export interface EngineTokenStatusListOptions {
+	/** Resource name of the list under the issuer DID. */
+	name: string;
+	/** Bits per status entry: 1, 2, 4 or 8. Default 2 (valid, revoked, suspended). */
+	bits?: 1 | 2 | 4 | 8;
+	/** Number of entries. Default 131072, the size of the existing Studio lists. */
+	size?: number;
+	/** Seconds a verifier may cache the list (the `ttl` claim). */
+	ttlSeconds?: number;
+}
+
+export interface EngineTokenStatusList {
+	/** The URI that goes in the credential's `status.status_list.uri`. */
+	uri: string;
+	name: string;
+	bits: 1 | 2 | 4 | 8;
+	size: number;
+	/** The DID-Linked Resource id when the list is hosted as one. */
+	resourceId?: string;
+}
+
+export interface EngineTokenStatusUpdate {
+	index: number;
+	status: EngineTokenStatus;
+}
+
+export interface EngineTokenStatusReading {
+	status: EngineTokenStatus | number;
+	/** False when the list could not be fetched or its signature did not verify; the verifier must fail closed. */
+	verified: boolean;
+	error?: string;
+}

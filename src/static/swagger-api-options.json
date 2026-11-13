@@ -52,6 +52,9 @@
 		},
 		{
 			"name": "Verifiable Presentations"
+		},
+		{
+			"name": "Agents"
 		}
 	],
 	"externalDocs": {
