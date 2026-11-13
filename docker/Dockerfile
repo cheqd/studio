@@ -2,7 +2,7 @@
 ###         STAGE 1: Build cheqd studio app                 ###
 ###############################################################
 
-FROM node:22.23.4-alpine3.23 AS builder
+FROM node:22.23.4-bookworm-slim AS builder
 
 # Set working directory
 WORKDIR /home/node/app
@@ -21,7 +21,7 @@ RUN npm run build
 ###         STAGE 2: Build cheqd studio runner              ###
 ###############################################################
 
-FROM node:22.23.4-alpine3.23 AS runner
+FROM node:22.23.4-bookworm-slim AS runner
 
 # Set Node.js environment
 ENV NODE_ENV=production
@@ -30,14 +30,19 @@ ENV NODE_ENV=production
 WORKDIR /home/node/app
 
 # Install pre-requisites
-RUN apk add --no-cache --upgrade bash ca-certificates && \
-    update-ca-certificates
+# Debian (glibc) rather than Alpine (musl): Askar and AnonCreds ship glibc-only native libraries
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends bash ca-certificates && \
+    update-ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy files from builder
 COPY --from=builder --chown=node:node /home/node/app/*.json /home/node/app/*.md ./
 COPY --from=builder --chown=node:node /home/node/app/dist ./dist
 # Dependency patches, applied by the postinstall script during npm ci
 COPY --from=builder --chown=node:node /home/node/app/patches ./patches
+# Vendored Credo fork tarballs, referenced by file: dependencies in package.json
+COPY --from=builder --chown=node:node /home/node/app/vendor ./vendor
 
 # Install production dependencies
 RUN npm ci --force
