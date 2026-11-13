@@ -23,6 +23,12 @@ export class UserInfoHelper {
 		return;
 	}
 
+	// Logto `auth_time` claim (seconds since epoch): when the user last actively signed in. Used by requireFreshSignIn.
+	setAuthTime(authTime: unknown, response: Response) {
+		response.locals.authTime = typeof authTime === 'number' ? authTime : undefined;
+		return;
+	}
+
 	appendScopes(scopes: string[], response: Response) {
 		response.locals.scopes = Array.from(new Set([...response.locals.scopes, ...scopes]));
 		return;

@@ -93,6 +93,7 @@ export class PortalUserInfoFetcher extends UserInfoHelper implements IUserInfoFe
 			// Set global context
 			this.setScopes(_resp.data, response);
 			await this.setStaffIdentity(payload, response);
+			this.setAuthTime(payload.auth_time, response);
 			return await this.setUserEntity(payload.sub, response);
 		} catch (error) {
 			console.error(error);

@@ -2957,6 +2957,111 @@
           }
         }
       },
+      "EncryptedKeyExport": {
+        "type": "object",
+        "description": "Password-protected key export, format `cheqd-studio-key-export` version 1. The key is scrypt(utf8(password), salt, keyLength, N, r, p); the plaintext is UTF-8 JSON encrypted with AES-256-GCM using additional authenticated data `cheqd-studio-key-export:v1`. All binary fields are base64.",
+        "required": [
+          "format",
+          "version",
+          "kdf",
+          "cipher",
+          "ciphertext"
+        ],
+        "properties": {
+          "format": {
+            "type": "string",
+            "example": "cheqd-studio-key-export"
+          },
+          "version": {
+            "type": "integer",
+            "example": 1
+          },
+          "kdf": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "scrypt"
+              },
+              "salt": {
+                "type": "string",
+                "description": "16 random bytes, base64."
+              },
+              "N": {
+                "type": "integer",
+                "example": 131072
+              },
+              "r": {
+                "type": "integer",
+                "example": 8
+              },
+              "p": {
+                "type": "integer",
+                "example": 1
+              },
+              "keyLength": {
+                "type": "integer",
+                "example": 32
+              }
+            }
+          },
+          "cipher": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "aes-256-gcm"
+              },
+              "iv": {
+                "type": "string",
+                "description": "12 random bytes, base64."
+              },
+              "tag": {
+                "type": "string",
+                "description": "16-byte GCM authentication tag, base64."
+              }
+            }
+          },
+          "ciphertext": {
+            "type": "string",
+            "description": "Base64 ciphertext of the JSON key material."
+          }
+        }
+      },
+      "KeyExportPasswordError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "PASSWORD_REQUIRED",
+              "WEAK_PASSWORD"
+            ]
+          }
+        }
+      },
+      "ReauthenticationRequiredError": {
+        "type": "object",
+        "description": "The caller did not sign in recently enough. Also sent as `WWW-Authenticate: Bearer error=\"insufficient_user_authentication\", max_age=N` (RFC 9470). Sign the user in again (Logto `max_age` / `prompt=login`) and retry.",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "REAUTHENTICATION_REQUIRED"
+            ]
+          },
+          "maxAgeSeconds": {
+            "type": "integer",
+            "example": 300
+          }
+        }
+      },
       "ExportDidResult": {
         "type": "object",
         "properties": {
@@ -8271,8 +8376,8 @@
         "tags": [
           "Decentralized Identifiers (DIDs)"
         ],
-        "summary": "Export a DID Document.",
-        "description": "This endpoint exports a decentralized identifier associated with the user's account with the custodied keys.",
+        "summary": "Export a DID Document with its private keys, encrypted with a password.",
+        "description": "Exports a decentralized identifier associated with the user's account together with its custodied private keys. The result is never returned in plaintext: it is encrypted on the server with a key derived from the supplied `password` (scrypt, then AES-256-GCM) and returned as a versioned `cheqd-studio-key-export` envelope (see `EncryptedKeyExport`). Requires a sign-in within the last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300); otherwise a `401` with code `REAUTHENTICATION_REQUIRED` is returned.",
         "parameters": [
           {
             "in": "path",
@@ -8292,13 +8397,17 @@
                 "properties": {
                   "password": {
                     "type": "string",
-                    "required": false
+                    "minLength": 12,
+                    "description": "Required. Encrypts the exported keys; needed to decrypt them. Not stored."
                   },
                   "providerId": {
                     "type": "string",
                     "required": false
                   }
-                }
+                },
+                "required": [
+                  "password"
+                ]
               }
             },
             "application/json": {
@@ -8307,43 +8416,51 @@
                 "properties": {
                   "password": {
                     "type": "string",
-                    "required": false
+                    "minLength": 12,
+                    "description": "Required. Encrypts the exported keys; needed to decrypt them. Not stored."
                   },
                   "providerId": {
                     "type": "string",
                     "required": false
                   }
-                }
+                },
+                "required": [
+                  "password"
+                ]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "The request was successful.",
+            "description": "The encrypted export.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ExportDidResult"
+                  "$ref": "#/components/schemas/EncryptedKeyExport"
                 }
               }
             }
           },
           "400": {
-            "description": "A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.",
+            "description": "The password is missing (`PASSWORD_REQUIRED`) or too weak (`WEAK_PASSWORD`).",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
-                },
-                "example": {
-                  "error": "InvalidRequest"
+                  "$ref": "#/components/schemas/KeyExportPasswordError"
                 }
               }
             }
           },
           "401": {
-            "$ref": "#/components/schemas/UnauthorizedError"
+            "description": "Unauthorised, or `REAUTHENTICATION_REQUIRED` when the sign-in is older than the allowed window.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReauthenticationRequiredError"
+                }
+              }
+            }
           },
           "500": {
             "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
