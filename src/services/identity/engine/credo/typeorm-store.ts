@@ -11,6 +11,7 @@ import type { ListResourceOptions, ListResourceResponse } from '../../../../type
 import { withAdvisoryLock } from '../../ledger-lock.js';
 import type { EngineIdentifier, EngineKeyInfo } from '../types.js';
 import { CredoOwnershipError } from './errors.js';
+import type { CredentialResourcePage, CredentialResourceQuery, CredentialResourceRow } from './credential-ports.js';
 import type { CredoEngineStore, IdentifierRecord, PayerAccount, StoredKey } from './ports.js';
 
 const toStoredKey = (key: KeyEntity): StoredKey => ({
@@ -251,6 +252,38 @@ export class TypeOrmCredoEngineStore implements CredoEngineStore {
 				encrypted: r.encrypted,
 			})),
 		};
+	}
+
+	// --- Credential resources
+
+	async listCredentialResources(
+		customerId: string,
+		options: CredentialResourceQuery
+	): Promise<CredentialResourcePage> {
+		const where = options.resourceTypes.map(
+			(resourceType): FindOptionsWhere<ResourceEntity> => ({
+				customer: { customerId },
+				resourceType,
+				...(options.issuerId ? { identifier: { did: options.issuerId } } : {}),
+			})
+		);
+		const [resources, total] = await this.dataSource.getRepository(ResourceEntity).findAndCount({
+			where,
+			relations: { identifier: true },
+			skip: options.page && options.limit ? (options.page - 1) * options.limit : 0,
+			take: options.limit,
+		});
+		return { total, resources: resources.map((r) => ({ did: r.identifier.did, resourceId: r.resourceId })) };
+	}
+
+	async findOwnedResource(customerId: string, resourceId: string): Promise<CredentialResourceRow | null> {
+		// A resource id that is not a UUID cannot exist (the column is a uuid) and would make Postgres raise
+		if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(resourceId)) return null;
+		const resource = await this.dataSource.getRepository(ResourceEntity).findOne({
+			where: { resourceId, customer: { customerId } },
+			relations: { identifier: true },
+		});
+		return resource ? { did: resource.identifier.did, resourceId: resource.resourceId } : null;
 	}
 
 	// --- Payment accounts
