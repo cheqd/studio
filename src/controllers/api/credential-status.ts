@@ -809,8 +809,12 @@ export class CredentialStatusController {
 	 * /credential-status/create/encrypted:
 	 *   post:
 	 *     tags: [ Status Lists ]
+	 *     deprecated: true
 	 *     summary: Create an encrypted StatusList2021 or BitstringStatusList credential status list.
-	 *     description: This endpoint creates an encrypted StatusList2021 or BitstringStatusList credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted.
+	 *     description: |
+	 *       **Deprecated.** Creating encrypted (paid-access) status lists is deprecated and will be removed. Responses carry `Deprecation` (RFC 9745) and, once a sunset date is configured, `Sunset` (RFC 8594) headers. After the sunset date this endpoint returns `410 Gone`; use `POST /credential-status/create/unencrypted` instead. Existing encrypted status lists can still be read, checked and updated.
+	 *
+	 *       This endpoint creates an encrypted StatusList2021 or BitstringStatusList credential status list. The StatusList is published as a DID-Linked Resource on ledger. As input, it can can take input parameters needed to create the status list via a form, or a pre-assembled status list in JSON format. Status lists can be created as either encrypted or unencrypted.
 	 *     parameters:
 	 *       - in: query
 	 *         name: listType
@@ -869,6 +873,15 @@ export class CredentialStatusController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       410:
+	 *         description: Gone. Encrypted status list creation has passed its sunset date. Create an unencrypted status list instead.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               type: object
+	 *               properties:
+	 *                 error:
+	 *                   type: string
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
