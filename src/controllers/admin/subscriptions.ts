@@ -32,6 +32,12 @@ import { MaxAllowedTrialPeriodDays } from '../../types/constants.js';
 
 dotenv.config();
 
+/** True when Stripe reports that the requested object does not exist. */
+function isStripeMissing(error: unknown): boolean {
+	const { code, statusCode } = (error ?? {}) as { code?: string; statusCode?: number };
+	return code === 'resource_missing' || statusCode === StatusCodes.NOT_FOUND;
+}
+
 /** True when a Stripe `customer` reference (an id, or an expanded object) is the caller's own Stripe customer. */
 function stripeObjectBelongsTo(
 	reference: string | Stripe.Customer | Stripe.DeletedCustomer | null | undefined,
@@ -50,8 +56,16 @@ async function ownsSubscription(
 	if (!customer?.paymentProviderId || !subscriptionId) {
 		return false;
 	}
-	const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-	return stripeObjectBelongsTo(subscription.customer, customer);
+	try {
+		const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+		return stripeObjectBelongsTo(subscription.customer, customer);
+	} catch (error) {
+		// Stripe answers an unknown id with an error: treat it exactly like a subscription that is not the caller's.
+		if (isStripeMissing(error)) {
+			return false;
+		}
+		throw error;
+	}
 }
 
 export function syncCustomer(target: any, key: string, descriptor: PropertyDescriptor | undefined) {
@@ -659,11 +673,18 @@ export class SubscriptionController {
 			? request.params.id[0]
 			: (request.params.id as string);
 		try {
-			// retrieve the checkout session
-			const checkoutSession = await stripe.checkout.sessions.retrieve(checkoutSessionId);
+			// retrieve the checkout session. An unknown id answers exactly like another customer's session.
+			const checkoutSession = await stripe.checkout.sessions
+				.retrieve(checkoutSessionId)
+				.catch((error: unknown) => {
+					if (isStripeMissing(error)) {
+						return null;
+					}
+					throw error;
+				});
 
 			// Only the Stripe customer that opened the session may read it.
-			if (!stripeObjectBelongsTo(checkoutSession.customer, response.locals.customer)) {
+			if (!checkoutSession || !stripeObjectBelongsTo(checkoutSession.customer, response.locals.customer)) {
 				return response.status(StatusCodes.NOT_FOUND).json({
 					error: `Checkout session not found`,
 				} satisfies CheckoutSessionGetUnsuccessfulResponseBody);
