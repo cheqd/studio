@@ -4,6 +4,9 @@ import { body, param, query, validationResult } from '../validator/index.js';
 import { AgentServiceError, agentServices } from '../../services/agent/index.js';
 import type { AgentServices } from '../../services/agent/index.js';
 import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
+import { LedgerUnavailableError } from '../../services/identity/ledger-lock.js';
+import { IdempotencyError, IdempotencyService, hashRequest } from '../../services/idempotency/idempotency.js';
+import type { IdempotentResult } from '../../services/idempotency/idempotency.js';
 import { AGENT_NETWORKS, AGENT_SETTABLE_STATUSES, GRANT_TYPES, VERIFY_CHECK_NAMES } from '../../types/agent.js';
 import type {
 	AgentCardRecord,
@@ -365,7 +368,10 @@ export class AgentController {
 		body('mandate.checkoutJwt').optional().isString().bail(),
 	];
 
-	constructor(private readonly services: () => Promise<AgentServices> | AgentServices = agentServices) {}
+	constructor(
+		private readonly services: () => Promise<AgentServices> | AgentServices = agentServices,
+		private readonly idempotency: () => Promise<IdempotencyService> | IdempotencyService = defaultIdempotency
+	) {}
 
 	/**
 	 * @openapi
@@ -452,7 +458,7 @@ export class AgentController {
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 */
 	public register = async (request: Request, response: Response) => {
-		return this.handle(request, response, async () => {
+		return this.handleIdempotent(request, response, async () => {
 			const { name, description, network, actsForDid } = request.body;
 			const agent = await (
 				await this.services()
@@ -462,7 +468,7 @@ export class AgentController {
 				network: (network ?? 'testnet') as AgentNetwork,
 				actsForDid,
 			});
-			return response.status(StatusCodes.CREATED).json(agentDto(agent));
+			return { status: StatusCodes.CREATED, body: agentDto(agent) };
 		});
 	};
 
@@ -605,11 +611,11 @@ export class AgentController {
 	};
 
 	public remove = async (request: Request, response: Response) => {
-		return this.handle(request, response, async () => {
+		return this.handleIdempotent(request, response, async () => {
 			const { revokedGrants } = await (
 				await this.services()
 			).agents.remove(response.locals.customer, request.params.agentId as string);
-			return response.status(StatusCodes.OK).json({ deleted: true, revokedGrants });
+			return { status: StatusCodes.OK, body: { deleted: true, revokedGrants } };
 		});
 	};
 
@@ -695,7 +701,7 @@ export class AgentController {
 	 *         description: No such agent in your account, or it has no card yet.
 	 */
 	public createCard = async (request: Request, response: Response) => {
-		return this.handle(request, response, async () => {
+		return this.handleIdempotent(request, response, async () => {
 			const { card, publish, alg } = request.body;
 			const created = await (
 				await this.services()
@@ -704,7 +710,7 @@ export class AgentController {
 				publish: publish === true || publish === 'true',
 				alg,
 			});
-			return response.status(StatusCodes.CREATED).json(cardDto(created));
+			return { status: StatusCodes.CREATED, body: cardDto(created) };
 		});
 	};
 
@@ -844,7 +850,7 @@ export class AgentController {
 	 *         description: The identity engine for this account cannot update status lists yet. It needs the Credo engine.
 	 */
 	public grantAuthority = async (request: Request, response: Response) => {
-		return this.handle(request, response, async () => {
+		return this.handleIdempotent(request, response, async () => {
 			const { grantType, issuerDid, expiresAt, tools, scopes, mandate } = request.body;
 			const issued = await (
 				await this.services()
@@ -856,16 +862,19 @@ export class AgentController {
 				scopes,
 				mandate,
 			});
-			return response.status(StatusCodes.CREATED).json({
-				grant: grantDto(issued.grant),
-				credential: issued.credential,
-				...(issued.label ? { label: issued.label } : {}),
-			});
+			return {
+				status: StatusCodes.CREATED,
+				body: {
+					grant: grantDto(issued.grant),
+					credential: issued.credential,
+					...(issued.label ? { label: issued.label } : {}),
+				},
+			};
 		});
 	};
 
 	public revokeAuthority = async (request: Request, response: Response) => {
-		return this.handle(request, response, async () => {
+		return this.handleIdempotent(request, response, async () => {
 			const grant = await (
 				await this.services()
 			).agents.revokeAuthority(
@@ -873,7 +882,7 @@ export class AgentController {
 				request.params.agentId as string,
 				request.params.grantId as string
 			);
-			return response.status(StatusCodes.OK).json(grantDto(grant));
+			return { status: StatusCodes.OK, body: grantDto(grant) };
 		});
 	};
 
@@ -956,6 +965,72 @@ export class AgentController {
 		});
 	};
 
+	/**
+	 * Like `handle`, for the ledger-writing operations. `run` returns the status and body instead of sending them.
+	 * With an `Idempotency-Key` header the write happens at most once for that key (engine spec 3.4); without one
+	 * it is the same as `handle`.
+	 */
+	private async handleIdempotent(
+		request: Request,
+		response: Response,
+		run: () => Promise<IdempotentResult>
+	): Promise<Response> {
+		const invalid = validationResult(request);
+		if (!invalid.isEmpty()) {
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: invalid.array().pop()?.msg });
+		}
+		try {
+			const header = request.headers?.['idempotency-key'];
+			const key = Array.isArray(header) ? header[0] : header;
+			const customerId = response.locals.customer?.customerId as string | undefined;
+			if (!key || !customerId) {
+				const result = await run();
+				return response.status(result.status).json(result.body);
+			}
+			const route = `${request.method} ${request.route?.path ?? request.path ?? ''}`;
+			const outcome = await (
+				await this.idempotency()
+			).execute(
+				{
+					customerId,
+					key,
+					route,
+					requestHash: hashRequest({ route, params: request.params, body: request.body }),
+				},
+				run
+			);
+			if (outcome.replayed) response.setHeader?.('Idempotent-Replayed', 'true');
+			return response.status(outcome.result.status).json(outcome.result.body);
+		} catch (error) {
+			return this.fail(response, error);
+		}
+	}
+
+	private fail(response: Response, error: unknown): Response {
+		if (error instanceof IdempotencyError) {
+			return response.status(error.status).json({
+				error: error.message,
+				code: error.code,
+				...(error.idempotencyKey ? { idempotencyKey: error.idempotencyKey } : {}),
+			});
+		}
+		if (error instanceof LedgerUnavailableError) {
+			response.setHeader?.('Retry-After', String(error.retryAfterSeconds));
+			return response.status(StatusCodes.SERVICE_UNAVAILABLE).json({
+				error: error.message,
+				code: error.code,
+				...(error.idempotencyKey ? { idempotencyKey: error.idempotencyKey } : {}),
+			});
+		}
+		if (error instanceof AgentServiceError) {
+			return response.status(error.status).json({ error: error.message, code: error.code });
+		}
+		const unfunded = unfundedPayerFailure(error);
+		if (unfunded) return response.status(unfunded.status).json({ error: unfunded.error });
+		console.error('Agent endpoint failed:', error);
+		return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Internal error' });
+	}
+
 	/** Validation, then the handler; every service error becomes its status, anything else a 500 that leaks nothing. */
 	private async handle(request: Request, response: Response, run: () => Promise<Response>): Promise<Response> {
 		const invalid = validationResult(request);
@@ -965,13 +1040,17 @@ export class AgentController {
 		try {
 			return await run();
 		} catch (error) {
-			if (error instanceof AgentServiceError) {
-				return response.status(error.status).json({ error: error.message, code: error.code });
-			}
-			const unfunded = unfundedPayerFailure(error);
-			if (unfunded) return response.status(unfunded.status).json({ error: unfunded.error });
-			console.error('Agent endpoint failed:', error);
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Internal error' });
+			return this.fail(response, error);
 		}
 	}
+}
+
+/** The production idempotency service, on the TypeORM store. Imported on first use so tests need no database. */
+let idempotencyService: IdempotencyService | undefined;
+async function defaultIdempotency(): Promise<IdempotencyService> {
+	if (!idempotencyService) {
+		const { TypeormIdempotencyStore } = await import('../../services/idempotency/typeorm-idempotency-store.js');
+		idempotencyService = new IdempotencyService({ store: new TypeormIdempotencyStore() });
+	}
+	return idempotencyService;
 }

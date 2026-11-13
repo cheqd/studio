@@ -10,6 +10,7 @@ let world: World;
 let store: FakeStore;
 let controller: AgentController;
 let agents: AgentService;
+let verificationService: AgentVerificationService;
 
 beforeEach(() => {
 	jest.spyOn(console, 'debug').mockImplementation(() => undefined);
@@ -18,8 +19,8 @@ beforeEach(() => {
 	world = fresh.world;
 	store = fresh.store;
 	agents = new AgentService({ store, engineFor: fresh.engineFor, kyaOsDelegationsEnabled: () => false });
-	const verification = new AgentVerificationService({ store, engineFor: fresh.engineFor });
-	controller = new AgentController(() => ({ agents, verification }));
+	verificationService = new AgentVerificationService({ store, engineFor: fresh.engineFor });
+	controller = new AgentController(() => ({ agents, verification: verificationService }));
 });
 
 interface Call {
@@ -531,5 +532,68 @@ describe('cross-tenant refusal on every agent route: customer B gets 404 for cus
 			new RegExp(`${target.agentId}|${customerA.customerId}|${target.grantId}`)
 		);
 		expect(store.events.at(-1)?.customerId).toBe(customerB.customerId);
+	});
+});
+
+describe('Idempotency-Key on the ledger-writing agent routes', () => {
+	it('registers once for a repeated key, and answers 422 for the same key with a different body', async () => {
+		const { IdempotencyService } = await import('../../../src/services/idempotency/idempotency.js');
+		const rows = new Map<string, Record<string, unknown>>();
+		const idempotency = new IdempotencyService({
+			store: {
+				insertSubmitting: async (row) => {
+					const id = `${row.customerId}:${row.key}`;
+					if (rows.has(id)) return null;
+					rows.set(id, { id, ...row, state: 'submitting' });
+					return rows.get(id) as never;
+				},
+				find: async (customerId, key) => (rows.get(`${customerId}:${key}`) as never) ?? null,
+				settle: async (id, change) => void Object.assign(rows.get(id) as object, change),
+				remove: async (id) => void rows.delete(id),
+			},
+		});
+		const keyed = new AgentController(
+			() => ({ agents, verification: verificationService }),
+			() => idempotency
+		);
+		const send = async (name: string, key?: string) => {
+			const request = {
+				method: 'POST',
+				body: { name },
+				params: {},
+				query: {},
+				headers: key ? { 'idempotency-key': key } : {},
+				route: { path: '/agents' },
+			} as unknown as Request;
+			for (const validator of V.registerValidator) await validator.run(request);
+			const out = { statusCode: 0, body: undefined as unknown, headers: {} as Record<string, string> } as {
+				statusCode: number;
+				body: Record<string, unknown>;
+				headers: Record<string, string>;
+			};
+			const response = { locals: { customer: customerA } } as unknown as Response;
+			response.status = ((code: number) => ((out.statusCode = code), response)) as never;
+			response.json = ((body: Record<string, unknown>) => ((out.body = body), response)) as never;
+			response.setHeader = ((name: string, value: string) => ((out.headers[name] = value), response)) as never;
+			await keyed.register(request, response);
+			return out;
+		};
+
+		const first = await send('bot', 'key-1');
+		const second = await send('bot', 'key-1');
+		expect(first.statusCode).toBe(201);
+		expect(second.statusCode).toBe(201);
+		expect(second.body).toEqual(first.body);
+		expect(second.headers['Idempotent-Replayed']).toBe('true');
+		expect((await store.listAgents(customerA.customerId, { limit: 50, offset: 0 })).total).toBe(1);
+
+		const different = await send('other', 'key-1');
+		expect(different.statusCode).toBe(422);
+		expect(different.body.code).toBe('idempotency_key_reused');
+
+		// Without the header the route behaves as before: two calls make two agents
+		await send('plain');
+		await send('plain');
+		expect((await store.listAgents(customerA.customerId, { limit: 50, offset: 0 })).total).toBe(3);
 	});
 });
