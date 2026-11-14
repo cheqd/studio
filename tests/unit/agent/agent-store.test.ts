@@ -81,6 +81,44 @@ describe('TypeormAgentStore', () => {
 		);
 	});
 
+	it('finds an agent DID among deleted agents too, and by the kind on the identifier', async () => {
+		const did = 'did:cheqd:testnet:agent-did';
+		counts.AgentEntity = 1;
+		expect(await store.isAgentDid(customerId, did)).toBe(true);
+		const agentCount = recorded.find((call) => call.entity === 'AgentEntity' && call.method === 'count');
+		expect((agentCount?.args[0] as { withDeleted?: boolean }).withDeleted).toBe(true);
+		expect(whereOf(agentCount as RecordedCall)).toContain(customerId);
+
+		counts.AgentEntity = 0;
+		counts.IdentifierEntity = 0;
+		expect(await store.isAgentDid(customerId, did)).toBe(false);
+		counts.IdentifierEntity = 1;
+		expect(await store.isAgentDid(customerId, did)).toBe(true);
+	});
+
+	it('marks the DID kind agent on creation and records the deletion time, never touching the ledger', async () => {
+		await store.createAgent({
+			customerId,
+			did: 'did:cheqd:testnet:agent-did',
+			name: 'a',
+		} as never);
+		const marked = recorded.find((call) => call.entity === 'IdentifierEntity' && call.method === 'update');
+		expect(marked?.args[1]).toEqual({ kind: 'agent' });
+		expect(whereOf(marked as RecordedCall)).toContain(customerId);
+
+		recorded.length = 0;
+		rows.AgentEntity = { agentId, identifier: { did: 'did:cheqd:testnet:agent-did' } };
+		await store.softDeleteAgent(customerId, agentId);
+		const deleted = recorded.find(
+			(call) =>
+				call.entity === 'IdentifierEntity' &&
+				call.method === 'update' &&
+				(call.args[1] as { agentDeletedAt?: Date }).agentDeletedAt instanceof Date
+		);
+		expect(deleted).toBeDefined();
+		expect((deleted?.args[1] as { kind: string }).kind).toBe('agent');
+	});
+
 	it('scopes every read and write by customer', async () => {
 		rows.AgentEntity = {
 			agentId,
@@ -110,6 +148,7 @@ describe('TypeormAgentStore', () => {
 		await store.markGrantRevoked(customerId, agentId, grantId);
 		await store.findOpenStatusList(customerId, 'did:cheqd:testnet:org');
 		await store.countOwnedDids(customerId, 'did:cheqd:testnet:org');
+		await store.isAgentDid(customerId, 'did:cheqd:testnet:org');
 		rows.PaymentAddressBindingEntity = {
 			id: grantId,
 			account: 'eip155:1:0x00',

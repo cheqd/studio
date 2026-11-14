@@ -23,6 +23,12 @@ export const actsForExists = () =>
 		'acts_for_exists',
 		'The agent already has an active or suspended acts-for grant. Revoke it before granting another'
 	);
+export const actsForIsAgent = (did: string) =>
+	new AgentServiceError(
+		StatusCodes.BAD_REQUEST,
+		'acts_for_is_agent',
+		`${did} is the DID of an agent (or of a deleted agent), so no agent can act for it. Choose one of your own DIDs that is not an agent's`
+	);
 export const unauthorised = () =>
 	new AgentServiceError(StatusCodes.UNAUTHORIZED, 'unauthorised', 'A customer account is required');
 export const featureDisabled = (message: string) =>

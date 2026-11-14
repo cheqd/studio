@@ -176,3 +176,19 @@ All are expand-only with a `down` that reverses them (the second drops the table
 - Nothing here was exercised against a real ledger. The tests use the in-memory fakes in `tests/unit/agent/fakes.ts`
   (real crypto, no ledger, no database): the SQL for `q`, the event queries and the grant swap is checked as
   query shape only, and the migrations are checked as text, not run against Postgres.
+
+## Agent DIDs are not principals
+
+Registering an agent creates its DID. Deleting the agent soft-deletes the agent row and revokes its grants and payment
+addresses; the DID stays active on the ledger (Studio never deactivates it). That DID used to remain in `GET /did/list`
+and in the register form's "acts for" choices, so a new agent could be registered to act for a deleted agent.
+
+- `identifier.kind` is `agent` for a DID made for an agent, set on registration and never cleared;
+  `identifier.agentDeletedAt` is when that agent was deleted. A migration (1791702100000, with `down`) adds both and fills
+  them from the `agent` table, deleted rows included, which is provable from data.
+- `POST /agents` and `PATCH /agents/:id` with an `actsForDid` that is an agent's DID, current or deleted, answer
+  `400 acts_for_is_agent`. A DID that is not the caller's still answers 404.
+- `GET /did/list` adds `agentDids` (the listed DIDs that belong to an agent) and, with `metadata=true`, `kind` and
+  `agentDeletedAt` on each item. Item shape otherwise unchanged; the default list is still a list of strings.
+- Portal: remove every DID in `agentDids` (or with `kind === 'agent'`) from the "acts for" selector, and do not default
+  to one. The server now refuses them anyway.

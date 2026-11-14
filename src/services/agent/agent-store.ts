@@ -136,6 +136,8 @@ export interface NewStatusList {
 export interface AgentStore {
 	/** How many of the customer's identifiers have this DID (0 or 1). */
 	countOwnedDids(customerId: string, did: string): Promise<number>;
+	/** True when the DID was made for an agent, current or deleted. */
+	isAgentDid(customerId: string, did: string): Promise<boolean>;
 
 	countAgents(customerId: string, agentId: string): Promise<number>;
 	createAgent(agent: NewAgent): Promise<AgentRecord>;
@@ -308,6 +310,21 @@ export class TypeormAgentStore implements AgentStore {
 		return this.db.getRepository(IdentifierEntity).count({ where: { did, customer: { customerId } } });
 	}
 
+	async isAgentDid(customerId: string, did: string): Promise<boolean> {
+		need(customerId, did);
+		// The agent table is the record of truth and soft-deleted rows stay in it, so a deleted agent's DID is found
+		// too. `identifier.kind` is the same fact kept on the DID.
+		const agents = await this.db
+			.getRepository(AgentEntity)
+			.count({ where: { identifier: { did }, customer: { customerId } }, withDeleted: true });
+		if (agents > 0) return true;
+		return (
+			(await this.db
+				.getRepository(IdentifierEntity)
+				.count({ where: { did, kind: 'agent', customer: { customerId } } })) > 0
+		);
+	}
+
 	async countAgents(customerId: string, agentId: string): Promise<number> {
 		need(customerId, agentId);
 		return this.db.getRepository(AgentEntity).count({ where: { agentId, customer: { customerId } } });
@@ -328,6 +345,10 @@ export class TypeormAgentStore implements AgentStore {
 				status: 'active',
 			})
 		);
+		// Mark the DID as an agent's, so it is never offered as a principal to act for
+		await this.db
+			.getRepository(IdentifierEntity)
+			.update({ did: agent.did, customer: { customerId: agent.customerId } }, { kind: 'agent' });
 		// Registering an agent creates its DID too. Idempotent and never throws (#869).
 		await recordActivation(agent.customerId, 'first_did_created');
 		await recordActivation(agent.customerId, 'first_agent_registered');
@@ -381,7 +402,20 @@ export class TypeormAgentStore implements AgentStore {
 		const repository = this.db.getRepository(AgentEntity);
 		const updated = await repository.update({ agentId, customer: { customerId } }, { status: 'deleted' });
 		if (!updated.affected) return false;
+		const row = await repository.findOne({
+			where: { agentId, customer: { customerId } },
+			relations: { identifier: true },
+		});
 		const deleted = await repository.softDelete({ agentId, customer: { customerId } });
+		if (row?.identifier?.did) {
+			// Only a record on the DID: nothing is deactivated on the ledger
+			await this.db
+				.getRepository(IdentifierEntity)
+				.update(
+					{ did: row.identifier.did, customer: { customerId } },
+					{ kind: 'agent', agentDeletedAt: new Date() }
+				);
+		}
 		return (deleted.affected ?? 0) > 0;
 	}
 

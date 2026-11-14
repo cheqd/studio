@@ -6,7 +6,8 @@ const updates: { where: Row; set: Row }[] = [];
 
 const matches = (row: Row, where: Row): boolean =>
 	Object.entries(where).every(([key, want]) => {
-		if (want && typeof want === 'object' && (want as any).type === 'in') return (want as any).value.includes(row[key]);
+		if (want && typeof want === 'object' && (want as any).type === 'in')
+			return (want as any).value.includes(row[key]);
 		if (want && typeof want === 'object') return matches(row[key] ?? {}, want);
 		return row[key] === want;
 	});

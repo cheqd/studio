@@ -69,6 +69,35 @@ describe('register', () => {
 		);
 	});
 
+	it('refuses an actsForDid that belongs to an agent, current or deleted, with a 400 that says so', async () => {
+		const first = await service.register(customerA, { name: 'first', network: 'testnet' });
+		const refusal = async (did: string) => {
+			try {
+				await service.register(customerA, { name: 'x', network: 'testnet', actsForDid: did });
+				return undefined;
+			} catch (error) {
+				return error as AgentServiceError;
+			}
+		};
+		const current = await refusal(first.did);
+		expect(current?.status).toBe(400);
+		expect(current?.code).toBe('acts_for_is_agent');
+		expect(current?.message).toContain('DID of an agent');
+
+		await service.remove(customerA, first.agentId);
+		expect((await refusal(first.did))?.code).toBe('acts_for_is_agent');
+		// nothing was deactivated: the DID is still there
+		expect(world.dids.get(first.did)).toBeDefined();
+	});
+
+	it('refuses to repoint an agent at an agent DID', async () => {
+		const first = await service.register(customerA, { name: 'first', network: 'testnet' });
+		const second = await service.register(customerA, { name: 'second', network: 'testnet' });
+		expect(await statusOf(service.update(customerA, second.agentId, { actsForDid: first.did }))).toBe(400);
+		const own = await seedOrganisationDid(world, customerA);
+		expect(await statusOf(service.update(customerA, second.agentId, { actsForDid: own }))).toBe(200);
+	});
+
 	it('needs a customer and a name', async () => {
 		expect(await statusOf(service.register(undefined, { name: 'x', network: 'testnet' }))).toBe(401);
 		expect(await statusOf(service.register(customerA, { name: '  ', network: 'testnet' }))).toBe(400);

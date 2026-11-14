@@ -6677,7 +6677,15 @@
         },
         "responses": {
           "200": {
-            "description": "The request was successful.",
+            "description": "The request was successful. The body is the credential. The id of Studio's record of it (the id GET /credentials/issued/{id} and the issued list use) is in the X-Issued-Credential-Id response header.",
+            "headers": {
+              "X-Issued-Credential-Id": {
+                "description": "The issuedCredentialId of the tracking record.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -7632,7 +7640,7 @@
           "Decentralized Identifiers (DIDs)"
         ],
         "summary": "Fetch DIDs associated with an account.",
-        "description": "This endpoint returns the list of DIDs controlled by the account.",
+        "description": "This endpoint returns the list of DIDs controlled by the account. The response also carries `agentDids`, the listed DIDs that were made for an agent (current or deleted), which must not be offered as a principal to act for; with `metadata=true` each item also has `kind` (`agent` or null) and `agentDeletedAt`.",
         "parameters": [
           {
             "in": "query",

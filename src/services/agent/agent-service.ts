@@ -32,6 +32,7 @@ import { assertionKeys, didSigner, engineMethod, requireCapabilities, resolveDid
 import type { AgentEngineProvider } from './agent-engine.js';
 import {
 	actsForExists,
+	actsForIsAgent,
 	badRequest,
 	conflict,
 	featureDisabled,
@@ -201,7 +202,7 @@ export class AgentService {
 			throw badRequest(`useCase is at most ${MAX_USE_CASE} characters`);
 		}
 		const capabilities = mergeCapabilities(defaultCapabilities(), input.capabilities);
-		if (input.actsForDid) await this.requireOwnedDid(customer, input.actsForDid);
+		if (input.actsForDid) await this.requireActsForDid(customer, input.actsForDid);
 
 		const engine = await this.engineFor(customer);
 		// Both keys are created by the engine; the private halves never come back.
@@ -324,7 +325,7 @@ export class AgentService {
 			change.description = patch.description;
 		}
 		if (patch.actsForDid !== undefined) {
-			if (patch.actsForDid !== null) await this.requireOwnedDid(customer, patch.actsForDid);
+			if (patch.actsForDid !== null) await this.requireActsForDid(customer, patch.actsForDid);
 			change.actsForDid = patch.actsForDid;
 		}
 		if (patch.capabilities !== undefined) {
@@ -1157,6 +1158,12 @@ export class AgentService {
 		const agent = await this.store.getAgent(customer.customerId, agentId);
 		if (!agent) throw notFound();
 		return agent;
+	}
+
+	/** The customer's own DID, and not one made for an agent (current or deleted): an agent acts for a principal. */
+	private async requireActsForDid(customer: CustomerEntity, did: string): Promise<void> {
+		await this.requireOwnedDid(customer, did);
+		if (await this.store.isAgentDid(customer.customerId, did)) throw actsForIsAgent(did);
 	}
 
 	private async requireOwnedDid(customer: CustomerEntity, did: string): Promise<void> {

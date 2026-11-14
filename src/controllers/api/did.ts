@@ -1,3 +1,4 @@
+import { IdentifierService } from '../../services/api/identifier.js';
 import type { Request, Response } from 'express';
 import { fromString, toString } from 'uint8arrays';
 import {
@@ -717,7 +718,7 @@ export class DIDController {
 	 *   get:
 	 *     tags: [ Decentralized Identifiers (DIDs) ]
 	 *     summary: Fetch DIDs associated with an account.
-	 *     description: This endpoint returns the list of DIDs controlled by the account.
+	 *     description: This endpoint returns the list of DIDs controlled by the account. The response also carries `agentDids`, the listed DIDs that were made for an agent (current or deleted), which must not be offered as a principal to act for; with `metadata=true` each item also has `kind` (`agent` or null) and `agentDeletedAt`.
 	 *     parameters:
 	 *       - in: query
 	 *         name: network
@@ -797,6 +798,18 @@ export class DIDController {
 						: await (
 								await identityServiceStrategySetup.engine('did')
 							).listDids({ network, page, limit, metadata }, response.locals.customer);
+			}
+			// Tell the client which listed DIDs were made for an agent (current or deleted), so it does not offer them
+			// as a principal to act for. Additive: each item of a `metadata=true` list also carries `kind`.
+			if (!did && providerId !== 'dock' && response.locals.customer && 'dids' in didDocument) {
+				const listed = (didDocument.dids as (string | { did: string })[]).map((item) =>
+					typeof item === 'string' ? item : item.did
+				);
+				const agentDids = await IdentifierService.instance.agentDidsAmong(
+					response.locals.customer.customerId,
+					listed
+				);
+				return response.status(StatusCodes.OK).json({ ...didDocument, agentDids });
 			}
 			return response
 				.status(StatusCodes.OK)

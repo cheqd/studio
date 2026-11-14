@@ -341,6 +341,10 @@ export class FakeStore implements AgentStore {
 		this.note('countOwnedDids', customerId);
 		return this.world.dids.get(did)?.owner === customerId ? 1 : 0;
 	}
+	async isAgentDid(customerId: string, did: string) {
+		this.note('isAgentDid', customerId);
+		return [...this.agents.values()].some((agent) => agent.customerId === customerId && agent.did === did);
+	}
 	async countAgents(customerId: string, agentId: string) {
 		this.note('countAgents', customerId);
 		const agent = this.agents.get(agentId);
