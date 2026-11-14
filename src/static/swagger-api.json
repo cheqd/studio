@@ -106,6 +106,9 @@
               "deleted"
             ]
           },
+          "capabilities": {
+            "$ref": "#/components/schemas/AgentCapabilities"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -113,6 +116,179 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "AgentCapabilities": {
+        "type": "object",
+        "description": "Labels the owner chose for the agent. They describe it; nothing enforces them.",
+        "properties": {
+          "a2a": {
+            "type": "boolean"
+          },
+          "ap2": {
+            "type": "boolean"
+          },
+          "kyaOs": {
+            "type": "boolean"
+          },
+          "mcp": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AuthoritySummary": {
+        "type": "object",
+        "description": "The agent's active grants (not revoked, not expired) in brief.",
+        "properties": {
+          "actsFor": {
+            "type": "string",
+            "nullable": true,
+            "description": "The DID the active acts-for grant says the agent acts for, else null."
+          },
+          "grantCounts": {
+            "type": "object",
+            "properties": {
+              "actsFor": {
+                "type": "integer"
+              },
+              "mandate": {
+                "type": "integer"
+              },
+              "delegation": {
+                "type": "integer"
+              },
+              "toolScope": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "AgentListItem": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Agent"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "authoritySummary": {
+                "$ref": "#/components/schemas/AuthoritySummary"
+              }
+            }
+          }
+        ]
+      },
+      "AgentDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AgentListItem"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "cardUrl": {
+                "type": "string",
+                "format": "uri",
+                "nullable": true,
+                "description": "Where the newest published card can be fetched (a DID-Linked Resource). Null when no card is published."
+              }
+            }
+          }
+        ]
+      },
+      "AgentKey": {
+        "type": "object",
+        "description": "One key of the agent. Public material only.",
+        "properties": {
+          "keyId": {
+            "type": "string",
+            "description": "The full DID URL of the verification method."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "Ed25519",
+              "P-256"
+            ]
+          },
+          "algorithm": {
+            "type": "string",
+            "enum": [
+              "EdDSA",
+              "ES256"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "rotated",
+              "revoked"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rotatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "publicKeyMultibase": {
+            "type": "string"
+          },
+          "usedBy": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "did",
+                "a2a",
+                "ap2",
+                "kya-os"
+              ]
+            }
+          }
+        }
+      },
+      "AgentEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "registered",
+              "authority-granted",
+              "authority-revoked",
+              "authority-expiry-changed",
+              "key-added",
+              "key-rotated",
+              "card-published",
+              "card-updated"
+            ]
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actor": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "api-key",
+              "system"
+            ]
+          },
+          "detail": {
+            "type": "object",
+            "description": "Non-secret details of the event (ids, types, dates)."
           }
         }
       },
@@ -245,6 +421,10 @@
               "mandate",
               "delegation"
             ]
+          },
+          "summary": {
+            "type": "string",
+            "description": "A short human-readable line built on the server from the grant's policy. Present on grant lists and on expiry changes."
           },
           "issuedCredentialId": {
             "type": "string",
@@ -4349,6 +4529,14 @@
                   "actsForDid": {
                     "type": "string",
                     "description": "A DID in your account that this agent acts for."
+                  },
+                  "capabilities": {
+                    "$ref": "#/components/schemas/AgentCapabilities"
+                  },
+                  "useCase": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "description": "Free text, for analytics only. Stored, never trusted, not returned."
                   }
                 }
               }
@@ -4395,7 +4583,17 @@
           "Agents"
         ],
         "summary": "List your agents.",
+        "description": "Each agent carries its `capabilities` and an `authoritySummary` of its active grants. `total` is the count after `q` filtering.",
         "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Case-insensitive match on name, description or DID, applied in the database query (not after paging).",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
           {
             "name": "limit",
             "in": "query",
@@ -4453,6 +4651,7 @@
           "Agents"
         ],
         "summary": "Get an agent.",
+        "description": "Includes `capabilities`, an `authoritySummary` and `cardUrl` (null when no card is published).",
         "parameters": [
           {
             "name": "agentId",
@@ -4470,7 +4669,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Agent"
+                  "$ref": "#/components/schemas/AgentDetail"
                 }
               }
             }
@@ -4519,6 +4718,9 @@
                   "actsForDid": {
                     "type": "string",
                     "nullable": true
+                  },
+                  "capabilities": {
+                    "$ref": "#/components/schemas/AgentCapabilities"
                   },
                   "status": {
                     "type": "string",
@@ -4784,8 +4986,15 @@
                             "enum": [
                               "active",
                               "revoked",
-                              "expired"
-                            ]
+                              "expired",
+                              "suspended"
+                            ],
+                            "description": "`suspended` while the agent is suspended (a Studio view; the credential is unchanged)."
+                          },
+                          "summary": {
+                            "type": "string",
+                            "description": "A short human-readable line built on the server from the grant's policy, for example `Up to 50 USD per week, supplies`. No secrets, no raw credential.",
+                            "example": "Tools: search, fetch"
                           },
                           "createdAt": {
                             "type": "string",
@@ -5014,6 +5223,382 @@
           },
           "501": {
             "description": "The identity engine for this account cannot update status lists yet. It needs the Credo engine."
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Change the expiry of an authority grant.",
+        "description": "Changes a grant's expiry without revoking it. Grants are signed credentials, so Studio issues a replacement credential with the new expiry and, in the same operation, revokes the old one on its Token Status List. The grant keeps its `id`. The replacement credential is returned once, in this response. Honours `Idempotency-Key`.\n\nRefused with 409 for a grant that is revoked or expired, for a KYA-OS delegation (no status list entry, so the old credential cannot be superseded), and for a tool-scope or mandate grant made before Studio kept its claims. 400 when the new expiry is in the past or later than the platform maximum (365 days from now unless the server sets `AGENT_GRANT_MAX_LIFETIME_DAYS`). Ownership: a grant or agent that is not yours is a 404.\n",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "grantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "expiresAt"
+                ],
+                "properties": {
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The expiry was changed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "grant": {
+                      "$ref": "#/components/schemas/AuthorityGrant"
+                    },
+                    "credential": {
+                      "type": "object",
+                      "description": "The replacement credential. Returned once.",
+                      "properties": {
+                        "format": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "409": {
+            "description": "The grant is revoked or expired, cannot be superseded, or a change to it is already in progress."
+          },
+          "501": {
+            "description": "The identity engine for this account cannot serve the agent endpoints yet. They need the Credo engine."
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/keys": {
+      "get": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "List the keys of an agent.",
+        "description": "Read from the agent's DID document. `active` keys are in force, `rotated` keys stay in the document so earlier credentials still verify, `revoked` is every key of a deactivated DID. `usedBy` says which protocols an active key signs for. Never returns private material.",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "keys": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AgentKey"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "502": {
+            "description": "The agent's DID could not be resolved."
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Add an Ed25519 key to an agent.",
+        "description": "Adds an Ed25519 key to an agent that has only a P-256 key, and updates the DID document on the ledger (costs CHEQ, paid by your payer account; ledger writes are queued per payer). Honours `Idempotency-Key`. 409 when an active Ed25519 key already exists.",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "Ed25519"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The key was added.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentKey"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "402": {
+            "description": "The payer account has no CHEQ, or too little to pay the fee."
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "409": {
+            "description": "The agent already has an active Ed25519 key, its DID is deactivated, or a key change is already in progress."
+          },
+          "503": {
+            "description": "The payer's write queue is busy. Retry after the time in Retry-After."
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/keys/rotate": {
+      "post": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Rotate a key of an agent.",
+        "description": "Makes a new key of the same type, updates the DID document on the ledger with the old key signing the update, and marks the old key `rotated`. The old key stays in the document so earlier credentials still verify. Uses your payer account and the per-payer ledger write queue and lock. Honours `Idempotency-Key`. Recorded in the audit log and the agent's activity.\n\nRotation does not reissue authority: a mandate stays bound to the key it was issued for, so grant it again to bind the new key.\n",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "keyId",
+                  "confirm"
+                ],
+                "properties": {
+                  "keyId": {
+                    "type": "string",
+                    "description": "The `keyId` from the key list (a full DID URL; the `#key-1` fragment is also accepted)."
+                  },
+                  "confirm": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The key was rotated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "oldKeyId": {
+                      "type": "string"
+                    },
+                    "newKeyId": {
+                      "type": "string"
+                    },
+                    "didUpdate": {
+                      "type": "object",
+                      "properties": {
+                        "txHash": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "The ledger transaction hash. Null when the identity engine does not report it (the Credo engine does not yet)."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "402": {
+            "description": "The payer account has no CHEQ, or too little to pay the fee."
+          },
+          "404": {
+            "description": "No such agent in your account, or the agent has no such key."
+          },
+          "409": {
+            "description": "The key is not active, the DID is deactivated, or a rotation is already in progress."
+          },
+          "503": {
+            "description": "The payer's write queue is busy. Retry after the time in Retry-After."
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/activity": {
+      "get": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "The activity of an agent.",
+        "description": "What happened to the agent, newest first. Written by Studio when the change is made, and backfilled for agents that existed before the feed (registration, grants, revocations and cards only). `actor` is `owner`, `api-key` or `system`, never an email. Staff audit data is not part of it.",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": {
+                      "type": "integer"
+                    },
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AgentEvent"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
           }
         }
       }

@@ -1,5 +1,5 @@
 {
-	"generatedFrom": "7d10cf1",
+	"generatedFrom": "166bfac",
 	"generatedBy": "npx tsx tests/contract/scripts/generate-inventory.ts",
 	"routes": [
 		{
@@ -633,6 +633,20 @@
 			"inOpenApi": true
 		},
 		{
+			"id": "GET /agents/:agentId/activity",
+			"method": "GET",
+			"path": "/agents/:agentId/activity",
+			"surface": "api",
+			"auth": "scoped",
+			"scopes": ["read:agent"],
+			"tier": 2,
+			"sideEffect": "read-only",
+			"sensitive": false,
+			"stripeOnly": false,
+			"inRouteTable": true,
+			"inOpenApi": true
+		},
+		{
 			"id": "GET /agents/:agentId/authority",
 			"method": "GET",
 			"path": "/agents/:agentId/authority",
@@ -675,6 +689,20 @@
 			"inOpenApi": true
 		},
 		{
+			"id": "PATCH /agents/:agentId/authority/:grantId",
+			"method": "PATCH",
+			"path": "/agents/:agentId/authority/:grantId",
+			"surface": "api",
+			"auth": "scoped",
+			"scopes": ["issue:agent-authority"],
+			"tier": 2,
+			"sideEffect": "ledger-fee",
+			"sensitive": false,
+			"stripeOnly": false,
+			"inRouteTable": true,
+			"inOpenApi": true
+		},
+		{
 			"id": "GET /agents/:agentId/card",
 			"method": "GET",
 			"path": "/agents/:agentId/card",
@@ -695,6 +723,48 @@
 			"surface": "api",
 			"auth": "scoped",
 			"scopes": ["create:agent-card"],
+			"tier": 2,
+			"sideEffect": "ledger-fee",
+			"sensitive": false,
+			"stripeOnly": false,
+			"inRouteTable": true,
+			"inOpenApi": true
+		},
+		{
+			"id": "GET /agents/:agentId/keys",
+			"method": "GET",
+			"path": "/agents/:agentId/keys",
+			"surface": "api",
+			"auth": "scoped",
+			"scopes": ["read:agent"],
+			"tier": 2,
+			"sideEffect": "read-only",
+			"sensitive": false,
+			"stripeOnly": false,
+			"inRouteTable": true,
+			"inOpenApi": true
+		},
+		{
+			"id": "POST /agents/:agentId/keys",
+			"method": "POST",
+			"path": "/agents/:agentId/keys",
+			"surface": "api",
+			"auth": "scoped",
+			"scopes": ["update:agent"],
+			"tier": 2,
+			"sideEffect": "ledger-fee",
+			"sensitive": false,
+			"stripeOnly": false,
+			"inRouteTable": true,
+			"inOpenApi": true
+		},
+		{
+			"id": "POST /agents/:agentId/keys/rotate",
+			"method": "POST",
+			"path": "/agents/:agentId/keys/rotate",
+			"surface": "api",
+			"auth": "scoped",
+			"scopes": ["update:agent"],
 			"tier": 2,
 			"sideEffect": "ledger-fee",
 			"sensitive": false,
