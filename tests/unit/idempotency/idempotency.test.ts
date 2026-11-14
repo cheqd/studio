@@ -156,6 +156,57 @@ describe('IdempotencyService', () => {
 		expect((await service.execute(input(), async () => ok)).replayed).toBe(false);
 	});
 
+	it('forgets the key after an unfunded-payer failure (nothing was written), so a retry after top-up runs fresh', async () => {
+		const unfundedMessages = [
+			"Account 'cheqd1abcdefghijklmnopqrstuvwxyz0123456' does not exist on chain. Send some tokens there before trying to query sequence.",
+			'insufficient funds: insufficient fees; got: 0ncheq required: 50000000000ncheq',
+		];
+		for (const [index, message] of unfundedMessages.entries()) {
+			const key = `unfunded-${index}`;
+			await expect(
+				service.execute(input({ key }), async () => {
+					throw new Error(message);
+				})
+			).rejects.toThrow(message);
+			expect(store.rows.has(`c1:${key}`)).toBe(false);
+			let writes = 0;
+			const retry = await service.execute(input({ key }), async () => (writes++, ok));
+			expect(writes).toBe(1);
+			expect(retry.replayed).toBe(false);
+		}
+	});
+
+	it('forgets the key for an error that declares nothing was written', async () => {
+		const failure = Object.assign(new Error('Tenant missing'), { status: 500, code: 'x', nothingWritten: true });
+		await expect(
+			service.execute(input(), async () => {
+				throw failure;
+			})
+		).rejects.toBe(failure);
+		expect(store.rows.size).toBe(0);
+	});
+
+	it.each([
+		[409, 'conflict'],
+		[422, 'idempotency_key_reused'],
+		[501, 'engine_capability_missing'],
+		[502, 'upstream_failure'],
+		[404, 'not_found'],
+	])('replays a typed %i failure with its own status and code, never as 500', async (status, code) => {
+		const failure = Object.assign(new Error(`typed ${status}`), { status, code });
+		await expect(
+			service.execute(input(), async () => {
+				throw failure;
+			})
+		).rejects.toBe(failure);
+		const retry = await service.execute(input(), async () => ok);
+		expect(retry).toMatchObject({
+			replayed: true,
+			state: 'failed',
+			result: { status, body: { error: `typed ${status}`, code } },
+		});
+	});
+
 	it('answers 409 while the first attempt is still submitting, and never writes', async () => {
 		let release: () => void = () => undefined;
 		const first = service.execute(input(), () => new Promise((resolve) => (release = () => resolve(ok))));

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
 import { LedgerUnavailableError } from '../identity/ledger-lock.js';
 import type { IdempotencyState } from '../../database/entities/idempotency-key.entity.js';
 
@@ -169,6 +170,13 @@ export class IdempotencyService {
 				await this.store.remove(row.id);
 				throw error;
 			}
+			if (wroteNothing(error)) {
+				// A payer with no funds (the transaction is rejected before it is broadcast) or an error that declares
+				// itself raised before any write: nothing landed. Forget the key so a retry after the fix runs fresh,
+				// instead of replaying the failure for a day.
+				await this.store.remove(row.id);
+				throw error;
+			}
 			if (error instanceof DeadlineExceeded || isTimeoutError(error)) {
 				await this.store.settle(row.id, { state: 'unknown' });
 				const unavailable = new LedgerUnavailableError(
@@ -229,9 +237,15 @@ export class IdempotencyService {
 	}
 }
 
+/** True for failures known to have happened before any ledger write, so the idempotency key is not kept. */
+function wroteNothing(error: unknown): boolean {
+	if (unfundedPayerFailure(error)) return true;
+	return (error as { nothingWritten?: unknown } | null)?.nothingWritten === true;
+}
+
 const statusOf = (error: unknown): number => {
 	const status = (error as { status?: unknown })?.status;
-	return typeof status === 'number' ? status : 500;
+	return typeof status === 'number' && Number.isInteger(status) && status >= 400 && status <= 599 ? status : 500;
 };
 const failureBody = (error: unknown): Record<string, unknown> => {
 	// Only errors that carry an HTTP status are meant for the caller; anything else is stored as a generic failure
