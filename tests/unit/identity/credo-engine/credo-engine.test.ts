@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { bases } from 'multiformats/basics';
 import { CredoEngine } from '../../../../src/services/identity/engine/credo/credo-engine.js';
+import { CredoTenantMissingError } from '../../../../src/services/identity/engine/credo/errors.js';
 import type { EngineDidDocument } from '../../../../src/services/identity/engine/types.js';
 import { customer, FakeRuntime, FakeStore } from './fakes.js';
 
@@ -117,6 +118,35 @@ describe('tenant lifecycle', () => {
 		h.store.failTenantWrite = true;
 		await expect(h.engine.ensureTenant('alice')).rejects.toThrow('write failed');
 		expect(h.runtime.deleted).toEqual(h.runtime.tenants);
+	});
+
+	describe('a recorded tenant that is missing from the Askar store', () => {
+		const missing = (tenantId: string) => new Error(`TenantRecord: record with id ${tenantId} not found.`);
+
+		it('fails with credo_tenant_missing, creates nothing, and leaves the record alone', async () => {
+			h.store.tenants.set('alice', 'tenant-gone');
+			h.runtime.withTenant = async (tenantId) => {
+				throw missing(tenantId);
+			};
+			const error = await h.engine.createKey('Ed25519', alice).catch((e) => e);
+			expect(error).toBeInstanceOf(CredoTenantMissingError);
+			expect(error).toMatchObject({ status: 500, code: 'credo_tenant_missing', tenantId: 'tenant-gone' });
+			expect(error.message).not.toContain('tenant-gone');
+			expect(h.runtime.tenants).toHaveLength(0);
+			expect(h.store.tenants.get('alice')).toBe('tenant-gone');
+		});
+
+		it('does not rewrite any other error, or a missing record of another tenant', async () => {
+			h.store.tenants.set('alice', 'tenant-a');
+			h.runtime.withTenant = async () => {
+				throw missing('tenant-other');
+			};
+			await expect(h.engine.createKey('Ed25519', alice)).rejects.toThrow('tenant-other');
+			h.runtime.withTenant = async () => {
+				throw new Error('boom');
+			};
+			await expect(h.engine.createKey('Ed25519', alice)).rejects.toThrow('boom');
+		});
 	});
 });
 

@@ -4,6 +4,7 @@ import { body, param, query, validationResult } from '../validator/index.js';
 import { AgentServiceError, agentServices } from '../../services/agent/index.js';
 import type { AgentServices } from '../../services/agent/index.js';
 import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
+import { CredoTenantMissingError } from '../../services/identity/engine/credo/errors.js';
 import { LedgerUnavailableError } from '../../services/identity/ledger-lock.js';
 import { IdempotencyError, IdempotencyService, hashRequest } from '../../services/idempotency/idempotency.js';
 import type { IdempotentResult } from '../../services/idempotency/idempotency.js';
@@ -1924,6 +1925,13 @@ export class AgentController {
 			});
 		}
 		if (error instanceof AgentServiceError) {
+			return response.status(error.status).json({ error: error.message, code: error.code });
+		}
+		if (error instanceof CredoTenantMissingError) {
+			// Operator problem, not the caller's: say so specifically and log what is needed to fix it.
+			console.error(
+				`Agent endpoint failed: customer.credoTenantId points at Credo tenant ${error.tenantId}, which is missing from the Askar store. It was not recreated.`
+			);
 			return response.status(error.status).json({ error: error.message, code: error.code });
 		}
 		const unfunded = unfundedPayerFailure(error);

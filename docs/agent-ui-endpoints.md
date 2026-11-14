@@ -118,6 +118,14 @@ replacement credential is returned once, like a new grant.
 Studio now keeps each new grant's non-secret claims (tool names, scopes, mandate constraints; never `cnf` or the
 signed credential) in `authorityGrant.claims` so the replacement can be built.
 
+## A missing Credo tenant
+
+If `customer.credoTenantId` is set but the tenant record is not in the Askar store, every agent route that needs the
+tenant answers `500 { error, code: 'credo_tenant_missing' }` with a fixed message that names no id, and logs the
+tenant id server-side. Studio does not create a replacement: an empty tenant would orphan the customer's DIDs and keys
+in the old one. An operator must restore the tenant record (or deliberately clear `credoTenantId`). The error is
+raised before anything is written, so an `Idempotency-Key` used for the failed request is not kept.
+
 ## Migrations
 
 | Timestamp | Change |

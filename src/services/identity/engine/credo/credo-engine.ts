@@ -33,7 +33,7 @@ import type {
 } from '../types.js';
 import { CredoAccreditations } from './accreditation.js';
 import { CredoCredentials } from './credentials.js';
-import { CredoOwnershipError, NotImplementedByEngineError } from './errors.js';
+import { CredoOwnershipError, NotImplementedByEngineError, asTenantMissing } from './errors.js';
 import {
 	authenticationMethods,
 	buildDefaultDidDocument,
@@ -76,6 +76,16 @@ function didNetwork(did: string): string {
 	return parts[2];
 }
 
+/** The same runtime, except that a tenant missing from Askar surfaces as `CredoTenantMissingError`. */
+function translateTenantErrors(runtime: CredoRuntime): CredoRuntime {
+	const wrapped: CredoRuntime = Object.create(runtime);
+	wrapped.withTenant = (tenantId, work) =>
+		runtime.withTenant(tenantId, work).catch((error: unknown) => {
+			throw asTenantMissing(tenantId, error);
+		});
+	return wrapped;
+}
+
 function requireCustomer(customer: CustomerEntity | undefined): string {
 	if (!customer?.customerId) throw new Error('Customer not found');
 	return customer.customerId;
@@ -110,7 +120,7 @@ export class CredoEngine implements IdentityEngine {
 
 	constructor(dependencies: CredoEngineDependencies) {
 		this.store = dependencies.store;
-		this.runtime = dependencies.runtime;
+		this.runtime = translateTenantErrors(dependencies.runtime);
 		this.withPayerLock = dependencies.withPayerLock;
 		this.resolverUrl = (dependencies.resolverUrl || DEFAULT_RESOLVER_URL).replace(/\/?$/, '/');
 		this.fetchImpl = dependencies.fetch ?? fetch;
@@ -129,7 +139,7 @@ export class CredoEngine implements IdentityEngine {
 		});
 		this.statusLists = new CredoStatusLists({
 			store: dependencies.store,
-			runtime: dependencies.runtime,
+			runtime: this.runtime,
 			ownership: dependencies.statusListOwnership,
 			withPayerLock: dependencies.withPayerLock,
 			ensureTenant: (customerId) => this.ensureTenant(customerId),

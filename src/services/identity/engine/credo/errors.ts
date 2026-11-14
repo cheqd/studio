@@ -55,3 +55,28 @@ export class CredoConfigurationError extends Error {
 		this.stack = `${this.name}: ${this.message}`;
 	}
 }
+
+/**
+ * The customer row points at a Credo tenant (`customer.credoTenantId`) that is not in Credo's Askar store. The
+ * engine does not create a replacement: a new tenant would be empty, so every DID and key the customer made in the
+ * old one would silently stop working. An operator has to restore the tenant or decide to reset it. Raised before
+ * anything is written, so an idempotent request is not kept (`nothingWritten`).
+ */
+export class CredoTenantMissingError extends Error {
+	readonly status = 500;
+	readonly code = 'credo_tenant_missing';
+	readonly nothingWritten = true;
+
+	constructor(readonly tenantId: string) {
+		super('The identity engine record for this account is missing. Contact support; nothing was changed.');
+		this.name = 'CredoTenantMissingError';
+	}
+}
+
+/** Turns Credo's "TenantRecord: record with id <id> not found" for this tenant into `CredoTenantMissingError`. */
+export function asTenantMissing(tenantId: string, error: unknown): unknown {
+	const message = error instanceof Error ? error.message : '';
+	return message.startsWith(`TenantRecord: record with id ${tenantId} not found`)
+		? new CredoTenantMissingError(tenantId)
+		: error;
+}

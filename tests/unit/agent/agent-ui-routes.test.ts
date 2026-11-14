@@ -4,6 +4,7 @@ import { AgentController } from '../../../src/controllers/api/agent.js';
 import { AgentService } from '../../../src/services/agent/agent-service.js';
 import { LedgerUnavailableError } from '../../../src/services/identity/ledger-lock.js';
 import { AGENT_EVENT_TYPES } from '../../../src/types/agent.js';
+import { CredoTenantMissingError } from '../../../src/services/identity/engine/credo/errors.js';
 import { IdempotencyService } from '../../../src/services/idempotency/idempotency.js';
 import { customerA, customerB, newWorld, seedOrganisationDid } from './fakes.js';
 import type { FakeStore, World } from './fakes.js';
@@ -1131,5 +1132,65 @@ describe('GET /agents/{id}/activity detail never carries secrets or emails', () 
 		}
 		const rotated = body.events.find((e: any) => e.type === 'key-rotated' && e.detail.newKeyId);
 		expect(rotated.detail).toEqual({ newKeyId: `${agent.did}#key-9`, keyType: 'Ed25519' });
+	});
+});
+
+describe('a customer whose Credo tenant record is missing', () => {
+	it('answers a specific 500 credo_tenant_missing, logs it, does not keep the idempotency key, and creates nothing', async () => {
+		const organisation = await seedOrganisationDid(world, customerA);
+		let broken = true;
+		const failing = new AgentService({
+			store,
+			engineFor: async (customer) => {
+				const engine = (await (await import('./fakes.js')).engineFor(world)(customer)) as any;
+				if (broken) {
+					engine.createKey = async () => {
+						throw new CredoTenantMissingError('tenant-gone');
+					};
+				}
+				return engine;
+			},
+			now: () => now,
+			resolverUrl: () => RESOLVER,
+		});
+		const rows = new Map<string, Record<string, unknown>>();
+		const idempotency = new IdempotencyService({
+			store: {
+				insertSubmitting: async (row) => {
+					const id = `${row.customerId}:${row.key}`;
+					if (rows.has(id)) return null;
+					rows.set(id, { id, ...row, state: 'submitting' });
+					return rows.get(id) as never;
+				},
+				find: async (customerId, key) => (rows.get(`${customerId}:${key}`) as never) ?? null,
+				settle: async (id, change) => void Object.assign(rows.get(id) as object, change),
+				remove: async (id) => void rows.delete(id),
+			},
+		});
+		const keyed = new AgentController(
+			() => ({ agents: failing }),
+			() => idempotency
+		);
+		const register = () =>
+			call({
+				handler: 'register',
+				validators: V.registerValidator,
+				body: { name: 'bot', network: 'testnet', actsForDid: organisation },
+				customer: customerA,
+				headers: { 'idempotency-key': 'reg-1' },
+				controllerOverride: keyed,
+			});
+
+		const result = await register();
+		expect(result.status).toBe(500);
+		expect(result.body.code).toBe('credo_tenant_missing');
+		expect(result.body.error).not.toBe('Internal error');
+		expect(JSON.stringify(result.body)).not.toContain('tenant-gone');
+		expect(console.error).toHaveBeenCalledWith(expect.stringContaining('tenant-gone'));
+		expect(store.agents.size).toBe(0);
+		// Nothing was written, so the key is gone and a retry after the operator's fix runs fresh
+		expect(rows.size).toBe(0);
+		broken = false;
+		expect((await register()).status).toBe(201);
 	});
 });
