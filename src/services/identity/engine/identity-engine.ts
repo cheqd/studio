@@ -236,6 +236,12 @@ export interface IdentityEngine {
 	// and answer 501 when it is missing. See `AgentService` (src/services/agent).
 
 	/**
+	 * Removes a key this customer owns that no DID uses, public row and private material. For cleaning up after a
+	 * failed write that is known not to have reached the ledger. Returns false when there is nothing to remove, the
+	 * customer does not own it, or a DID already uses it (it is then left untouched).
+	 */
+	deleteUnusedKey?(kid: string, customer: CustomerEntity): Promise<boolean>;
+	/**
 	 * Sign raw bytes with the private key behind a verification method of one of the customer's DIDs, and return
 	 * the raw JWS signature (ES256: 64 bytes r||s; EdDSA: 64 bytes). Used for the A2A agent card JWS and for
 	 * SD-JWT VC issuance (AP2 open mandates, authority credentials). The private key never leaves the engine.

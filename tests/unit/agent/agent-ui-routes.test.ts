@@ -1194,3 +1194,107 @@ describe('a customer whose Credo tenant record is missing', () => {
 		expect((await register()).status).toBe(201);
 	});
 });
+
+describe('POST /agents and key writes remove the keys of a write that failed', () => {
+	const register = (extra: Partial<Call> = {}) =>
+		call({
+			handler: 'register',
+			validators: V.registerValidator,
+			body: { name: 'bot', network: 'testnet' },
+			customer: customerA,
+			...extra,
+		});
+
+	it('removes both new keys when the DID write fails, and answers with the original error', async () => {
+		world.failNextCreateDid = new Error('the ledger said no');
+		const result = await register();
+		expect(result.status).toBe(500);
+		expect(result.body).toEqual({ error: 'Internal error' });
+		expect(world.keys.size).toBe(0);
+		expect(world.deletedKeys).toHaveLength(2);
+		expect(store.agents.size).toBe(0);
+	});
+
+	it('removes them after an unfunded-payer failure too, and still answers 402', async () => {
+		world.failNextCreateDid = new Error(
+			"Account 'cheqd1abcdefghijklmnopqrstuvwxyz0123456' does not exist on chain."
+		);
+		const result = await register();
+		expect(result.status).toBe(402);
+		expect(world.keys.size).toBe(0);
+	});
+
+	it('never masks the original error when the cleanup itself fails', async () => {
+		world.failNextCreateDid = Object.assign(new Error('original failure'), {
+			status: 502,
+			code: 'upstream_failure',
+		});
+		world.failDeleteKey = new Error('key store down');
+		await expect(agents.register(customerA, { name: 'bot', network: 'testnet' })).rejects.toThrow(
+			'original failure'
+		);
+		expect(console.error).toHaveBeenCalledWith(expect.stringContaining('key store down'));
+	});
+
+	it('keeps the keys when the outcome is unknown (a timeout)', async () => {
+		world.failNextCreateDid = Object.assign(new Error('not included in a block'), { name: 'TimeoutError' });
+		await register();
+		expect(world.keys.size).toBe(2);
+		expect(world.deletedKeys).toHaveLength(0);
+	});
+
+	it('keeps the keys when the DID turns out to be on the ledger', async () => {
+		world.failNextCreateDid = new Error('failed after broadcast');
+		world.createDidLandsFirst = true;
+		await register();
+		expect(world.keys.size).toBe(2);
+		expect(world.deletedKeys).toHaveLength(0);
+	});
+
+	it('removes only the new key when a rotation fails, and keeps the old ones', async () => {
+		const { agent } = await newAgent();
+		const before = world.keys.size;
+		world.failNextDidUpdate = new Error('boom');
+		await expect(agents.rotateKey(customerA, agent.agentId, { keyId: 'key-1', confirm: true })).rejects.toThrow(
+			'boom'
+		);
+		expect(world.keys.size).toBe(before);
+		expect(world.deletedKeys).toHaveLength(1);
+	});
+
+	it('keeps the new key when a rotation times out', async () => {
+		const { agent } = await newAgent();
+		const before = world.keys.size;
+		world.failNextDidUpdate = Object.assign(new Error('timeout'), { name: 'TimeoutError' });
+		await expect(agents.rotateKey(customerA, agent.agentId, { keyId: 'key-1', confirm: true })).rejects.toThrow(
+			'timeout'
+		);
+		expect(world.keys.size).toBe(before + 1);
+	});
+
+	it('removes the new key when adding a key fails', async () => {
+		const { agent } = await newAgent();
+		const entry = world.dids.get(agent.did)!;
+		const keep = `${agent.did}#key-1`;
+		entry.doc = {
+			...entry.doc,
+			verificationMethod: (entry.doc.verificationMethod as Array<{ id: string }>).filter((m) => m.id === keep),
+			authentication: [keep],
+			assertionMethod: [keep],
+		};
+		const before = world.keys.size;
+		world.failNextDidUpdate = new Error('boom');
+		await expect(agents.addKey(customerA, agent.agentId, { type: 'Ed25519' })).rejects.toThrow('boom');
+		expect(world.keys.size).toBe(before);
+	});
+});
+
+describe('key rotation on a suspended agent', () => {
+	it('is allowed: rotation needs no active status and leaves the agent suspended', async () => {
+		const { agent } = await newAgent();
+		await agents.update(customerA, agent.agentId, { status: 'suspended' });
+		const result = await agents.rotateKey(customerA, agent.agentId, { keyId: 'key-1', confirm: true });
+		expect(result.newKeyId).toBe(`${agent.did}#key-3`);
+		expect((await agents.get(customerA, agent.agentId)).status).toBe('suspended');
+	});
+});

@@ -52,6 +52,9 @@ export interface CredoEngineStore extends CredentialStore {
 	/** Sets alias and creation time on an owned key and returns the row; null if the customer does not own it. */
 	finaliseOwnedKey(customerId: string, kid: string, alias?: string): Promise<StoredKey | null>;
 
+	/** Deletes an owned key row that no identifier uses. True when a row was deleted. Scoped to the customer. */
+	deleteUnlinkedOwnedKey(customerId: string, kid: string): Promise<boolean>;
+
 	// DIDs
 	isDidOwned(customerId: string, did: string): Promise<boolean>;
 	getIdentifier(customerId: string, did: string): Promise<EngineIdentifier | null>;
@@ -110,6 +113,8 @@ export interface CredoTenantSession extends CredentialSession {
 	createResource(did: string, resource: ResourceInput): Promise<{ state: string; reason?: string }>;
 	/** Imports a private key into the KMS (and so into Studio's key store through the adapter) under `keyId`. */
 	importKey(privateJwk: PrivateJwk, keyId: string): Promise<void>;
+	/** Deletes a key from the KMS (and so its private material from Studio's key store). */
+	deleteKey(keyId: string): Promise<void>;
 	/** The KMS key ids this tenant's record of the DID signs with, or null when the tenant never created the DID. */
 	recordedKeyIds(did: string): Promise<string[] | null>;
 	/** The service entries of the tenant's record of the DID. */

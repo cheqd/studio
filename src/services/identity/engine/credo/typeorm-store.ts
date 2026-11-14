@@ -102,6 +102,16 @@ export class TypeOrmCredoEngineStore implements CredoEngineStore {
 		return toStoredKey(await repository.save(key));
 	}
 
+	async deleteUnlinkedOwnedKey(customerId: string, kid: string): Promise<boolean> {
+		const result = await this.dataSource
+			.getRepository(KeyEntity)
+			.createQueryBuilder()
+			.delete()
+			.where(`"kid" = :kid AND "customerId" = :customerId AND "identifierDid" IS NULL`, { kid, customerId })
+			.execute();
+		return result.affected === 1;
+	}
+
 	// --- DIDs
 
 	async isDidOwned(customerId: string, did: string): Promise<boolean> {

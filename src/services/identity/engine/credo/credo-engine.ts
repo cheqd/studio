@@ -198,6 +198,15 @@ export class CredoEngine implements IdentityEngine {
 		return stored as unknown as KeyEntity;
 	}
 
+	async deleteUnusedKey(kid: string, customer: CustomerEntity): Promise<boolean> {
+		const customerId = requireCustomer(customer);
+		// Studio's row first: it is the check that the customer owns the key and no DID uses it
+		if (!(await this.store.deleteUnlinkedOwnedKey(customerId, kid))) return false;
+		const tenantId = await this.ensureTenant(customerId);
+		await this.runtime.withTenant(tenantId, (session) => session.deleteKey(kid));
+		return true;
+	}
+
 	async getKey(kid: string, customer?: CustomerEntity): Promise<EngineKeyInfo | null> {
 		// Without a customer there is nobody to prove ownership for
 		if (!customer?.customerId) return null;

@@ -184,6 +184,39 @@ describe('keys', () => {
 	});
 });
 
+describe('deleteUnusedKey', () => {
+	it('removes an unused key of the customer, in Studio and in the KMS', async () => {
+		const h = harness();
+		const key = await h.engine.createKey('Ed25519', alice);
+		expect(await h.engine.deleteUnusedKey(key.kid, alice)).toBe(true);
+		expect(h.store.keys).toHaveLength(0);
+		expect(h.runtime.deletedKeys).toEqual([{ tenantId: h.store.tenants.get('alice'), keyId: key.kid }]);
+	});
+
+	it('leaves another customer’s key, and an unknown key, alone', async () => {
+		const h = harness();
+		const key = await h.engine.createKey('Ed25519', alice);
+		expect(await h.engine.deleteUnusedKey(key.kid, bob)).toBe(false);
+		expect(await h.engine.deleteUnusedKey('nope', alice)).toBe(false);
+		expect(h.store.keys).toHaveLength(1);
+		expect(h.runtime.deletedKeys).toHaveLength(0);
+	});
+
+	it('leaves a key that a DID uses', async () => {
+		const h = harness();
+		const key = await h.engine.createKey('Ed25519', alice);
+		h.store.identifiers.push({
+			customerId: 'alice',
+			did: 'did:cheqd:testnet:x',
+			provider: 'did:cheqd:testnet',
+			keyIds: [key.kid],
+			services: [],
+		});
+		expect(await h.engine.deleteUnusedKey(key.kid, alice)).toBe(false);
+		expect(h.store.keys).toHaveLength(1);
+	});
+});
+
 describe('createDid', () => {
 	let h: Harness;
 	beforeEach(() => {
@@ -563,6 +596,7 @@ describe('methods another agent will build', () => {
 		const { engine } = harness();
 		const built = [
 			'createKey',
+			'deleteUnusedKey',
 			'getKey',
 			'createDid',
 			'updateDid',

@@ -167,6 +167,9 @@ function session(tenantAgent: TenantAgentLike): CredoTenantSession {
 		async importKey(privateJwk, keyId) {
 			await tenantAgent.kms.importKey({ privateJwk: { ...privateJwk, kid: keyId } });
 		},
+		async deleteKey(keyId) {
+			await tenantAgent.kms.deleteKey({ keyId });
+		},
 		async recordedKeyIds(did) {
 			const found = await record(did);
 			return found ? (found.keys ?? []).map((key) => key.kmsKeyId) : null;

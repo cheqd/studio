@@ -70,6 +70,14 @@ export class FakeStore implements CredoEngineStore {
 		return key;
 	}
 
+	async deleteUnlinkedOwnedKey(customerId: string, kid: string) {
+		const linked = this.identifiers.some((i) => i.customerId === customerId && i.keyIds.includes(kid));
+		const index = this.keys.findIndex((k) => k.kid === kid && k.customerId === customerId);
+		if (linked || index < 0) return false;
+		this.keys.splice(index, 1);
+		return true;
+	}
+
 	async isDidOwned(customerId: string, did: string) {
 		return this.identifiers.filter((i) => i.did === did && i.customerId === customerId).length > 0;
 	}
@@ -162,6 +170,7 @@ export class FakeRuntime implements CredoRuntime {
 	deleted: string[] = [];
 	calls: RecordedCall[] = [];
 	events: string[] = [];
+	deletedKeys: { tenantId: string; keyId: string }[] = [];
 	imported: { tenantId: string; keyId: string; privateJwk: PrivateJwk }[] = [];
 	/** KMS key ids each tenant's record of a DID signs with. `undefined` entry: the tenant never created the DID. */
 	recorded = new Map<string, string[]>(); // `${tenantId}|${did}`
@@ -212,6 +221,10 @@ export class FakeRuntime implements CredoRuntime {
 			importKey: async (privateJwk, keyId) => {
 				record('importKey', [keyId]);
 				this.imported.push({ tenantId, keyId, privateJwk });
+			},
+			deleteKey: async (keyId) => {
+				record('deleteKey', [keyId]);
+				this.deletedKeys.push({ tenantId, keyId });
 			},
 			recordedKeyIds: async (did) => this.recorded.get(`${tenantId}|${did}`) ?? null,
 			recordedServices: async () => [],

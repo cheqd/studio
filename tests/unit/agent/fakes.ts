@@ -67,6 +67,12 @@ export class World {
 	signCalls: EngineSignRequest[] = [];
 	/** Every DID document the fake ledger was asked to update, with who asked. */
 	didUpdates: Array<{ did: string; doc: EngineDidDocument; owner: string }> = [];
+	/** Set to make the next `createDid` fail. With `createDidLandsFirst` the DID is written before it fails. */
+	failNextCreateDid: Error | undefined;
+	createDidLandsFirst = false;
+	/** Set to make `deleteUnusedKey` fail, as a broken key store would. */
+	failDeleteKey: Error | undefined;
+	deletedKeys: string[] = [];
 	/** Set to make the next `updateDid` fail, as an unfunded payer or a busy ledger would. */
 	failNextDidUpdate: Error | undefined;
 	/** Set to have `updateDid` report a transaction hash (the real Credo engine does not yet). */
@@ -127,7 +133,21 @@ export class FakeEngine {
 		return { kid: publicKeyHex, type, publicKeyHex } as never;
 	}
 
+	async deleteUnusedKey(kid: string, _customer: CustomerEntity) {
+		if (this.world.failDeleteKey) throw this.world.failDeleteKey;
+		this.world.deletedKeys.push(kid);
+		return this.world.keys.delete(kid);
+	}
+
 	async createDid(_network: string, doc: EngineDidDocument, customer: CustomerEntity) {
+		if (this.world.failNextCreateDid) {
+			const failure = this.world.failNextCreateDid;
+			this.world.failNextCreateDid = undefined;
+			if (this.world.createDidLandsFirst) {
+				this.world.dids.set(doc.id, { doc, owner: customer.customerId, deactivated: false });
+			}
+			throw failure;
+		}
 		this.world.dids.set(doc.id, { doc, owner: customer.customerId, deactivated: false });
 		return { did: doc.id, provider: 'did:cheqd:testnet' };
 	}

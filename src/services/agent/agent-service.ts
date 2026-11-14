@@ -1,3 +1,6 @@
+import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
+import { LedgerUnavailableError } from '../identity/ledger-lock.js';
+import { isTimeoutError } from '../idempotency/idempotency.js';
 import { sanitiseEventDetail } from './agent-event-detail.js';
 import { v4 as uuidv4 } from 'uuid';
 import { fromString } from 'uint8arrays';
@@ -195,14 +198,35 @@ export class AgentService {
 		const engine = await this.engineFor(customer);
 		// Both keys are created by the engine; the private halves never come back.
 		const p256 = await engine.createKey('Secp256r1', customer, `agent-${name}-p256`);
-		const ed25519 = await engine.createKey('Ed25519', customer, `agent-${name}-ed25519`);
+		let ed25519;
+		try {
+			ed25519 = await engine.createKey('Ed25519', customer, `agent-${name}-ed25519`);
+		} catch (error) {
+			// Nothing was sent to the ledger: the first key is certainly unused.
+			await this.discardKeys(engine, customer, [p256.kid]);
+			throw error;
+		}
 		const document = buildAgentDidDocument({
 			network: input.network,
 			id: this.newId(),
 			p256PublicKeyHex: p256.publicKeyHex,
 			ed25519PublicKeyHex: ed25519.publicKeyHex,
 		});
-		const identifier = await engine.createDid(input.network, document, customer);
+		let identifier;
+		try {
+			identifier = await engine.createDid(input.network, document, customer);
+		} catch (error) {
+			// The DID write failed: the two new keys belong to nothing. Remove them if the write cannot have landed.
+			if (
+				await this.writeCannotHaveLanded(error, async () => {
+					const resolution = await engine.resolveDid(document.id);
+					return !resolution.didDocument;
+				})
+			) {
+				await this.discardKeys(engine, customer, [p256.kid, ed25519.kid]);
+			}
+			throw error;
+		}
 
 		let created: AgentRecord;
 		try {
@@ -706,7 +730,13 @@ export class AgentService {
 				{ fragment, type: key.type, publicKeyHex: created.publicKeyHex },
 				keyId
 			);
-			const identifier = await engine.updateDid(document, customer);
+			let identifier;
+			try {
+				identifier = await engine.updateDid(document, customer);
+			} catch (error) {
+				await this.discardNewKeyAfterFailedUpdate(engine, customer, agent.did, fragment, created.kid, error);
+				throw error;
+			}
 			const newKeyId = `${agent.did}#${fragment}`;
 			const txHash = typeof identifier?.txHash === 'string' ? identifier.txHash : null;
 			await this.record(customer, agentId, 'key-rotated', ctx, { oldKeyId: keyId, newKeyId, keyType: key.type });
@@ -744,7 +774,12 @@ export class AgentService {
 				type: 'Ed25519',
 				publicKeyHex: created.publicKeyHex,
 			});
-			await engine.updateDid(document, customer);
+			try {
+				await engine.updateDid(document, customer);
+			} catch (error) {
+				await this.discardNewKeyAfterFailedUpdate(engine, customer, agent.did, fragment, created.kid, error);
+				throw error;
+			}
 			const keyId = `${agent.did}#${fragment}`;
 			const addedAt = this.now();
 			await this.record(customer, agentId, 'key-added', ctx, { keyId, keyType: 'Ed25519' });
@@ -935,6 +970,61 @@ export class AgentService {
 				`Could not write the audit entry ${action}: ${error instanceof Error ? error.message : 'unknown error'}`
 			);
 		}
+	}
+
+	/**
+	 * True when a failed ledger write is known not to have been included: a payer with no funds, a busy payer lock,
+	 * or (for any other error) when `provedAbsent` shows the change is not on the ledger. A timeout is never safe:
+	 * the transaction may land later. Anything that cannot be checked counts as "may have landed".
+	 */
+	private async writeCannotHaveLanded(error: unknown, provedAbsent: () => Promise<boolean>): Promise<boolean> {
+		if (unfundedPayerFailure(error)) return true;
+		if (error instanceof LedgerUnavailableError) return !error.idempotencyKey;
+		if (isTimeoutError(error)) return false;
+		try {
+			return await provedAbsent();
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * Best effort: removes keys made for a write that failed, so they are not left behind. Never throws, so it can
+	 * not hide the error that caused it. An engine without `deleteUnusedKey` leaves them (logged).
+	 */
+	private async discardKeys(engine: IdentityEngine, customer: CustomerEntity, kids: string[]): Promise<void> {
+		for (const kid of kids) {
+			try {
+				if (!engine.deleteUnusedKey) {
+					console.error(
+						`Could not remove the unused key ${kid}: the ${engine.name} engine cannot delete keys`
+					);
+					continue;
+				}
+				await engine.deleteUnusedKey(kid, customer);
+			} catch (error) {
+				console.error(
+					`Could not remove the unused key ${kid}: ${error instanceof Error ? error.message : 'unknown error'}`
+				);
+			}
+		}
+	}
+
+	/** After a failed DID update: the new key is unused unless the update landed (checked on the ledger). */
+	private async discardNewKeyAfterFailedUpdate(
+		engine: IdentityEngine,
+		customer: CustomerEntity,
+		did: string,
+		fragment: string,
+		kid: string,
+		error: unknown
+	): Promise<void> {
+		const cannotHaveLanded = await this.writeCannotHaveLanded(error, async () => {
+			const resolution = await engine.resolveDid(did);
+			const methods = (resolution.didDocument?.verificationMethod ?? []) as Array<{ id?: string }>;
+			return Boolean(resolution.didDocument) && !methods.some((method) => method.id === `${did}#${fragment}`);
+		});
+		if (cannotHaveLanded) await this.discardKeys(engine, customer, [kid]);
 	}
 
 	/** One key change at a time per agent in this process: the second gets a 409 instead of racing the first. */

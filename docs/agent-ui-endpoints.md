@@ -2,7 +2,8 @@
 
 What the agents area of the portal needs from Studio, on top of the existing `/agents` routes. Every route is
 customer-scoped: an agent (or grant) that is not yours answers 404 with exactly the body of an unknown one. Every
-write honours `Idempotency-Key`. Errors use the existing agent envelope (`{ error, code }`), including request validation failures: a 400 from the
+write honours `Idempotency-Key`. A write that failed because the payer account has no CHEQ answers 402 and does not
+keep the key (nothing was written), so retrying with the same key after topping up runs fresh. Errors use the existing agent envelope (`{ error, code }`), including request validation failures: a 400 from the
 validators is `{ error, code: 'invalid_request' }` (the OpenAPI schema is `AgentInvalidRequest`). The OpenAPI source is
 `src/controllers/api/agent.ts` (built into `src/static/swagger-api.json`); the route inventory is
 `tests/contract/inventory/routes.json`.
@@ -75,6 +76,16 @@ its expiry (which rebinds it), to bind the new key.
 `POST /agents/{id}/keys` takes `{ type: 'Ed25519' }` and adds that key, listed under `authentication` and
 `assertionMethod`, with the same ledger rules. 409 when an active Ed25519 key exists. It answers 201 with the key
 object. Only Ed25519 is offered (the reverse is not needed).
+
+Key changes are allowed while the agent is suspended: neither route checks the agent's status (a suspended agent
+cannot be granted authority or have its card changed, but its keys can be rotated, for example after a suspected
+compromise). The agent stays suspended afterwards.
+
+When the DID update fails, the key made for it is removed again (best effort, never replacing the original error), and
+so are both keys of a failed `POST /agents`. A key is only removed when the write cannot have landed: the payer was
+unfunded, the payer lock was busy, or the DID on the ledger shows the change is absent. After a timeout, or when the
+ledger cannot be checked, the keys are kept, because the transaction may still land. A key that a DID uses is never
+removed.
 
 Both write routes record `key-rotated` or `key-added` in the agent's activity and an entry in the append-only
 `adminAuditLog` (`agent.key.rotated`, `agent.key.added`; actor `owner` or `api-key` with the internal user id, never
