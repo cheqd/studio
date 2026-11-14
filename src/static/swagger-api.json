@@ -119,6 +119,20 @@
           }
         }
       },
+      "AgentInvalidRequest": {
+        "description": "The request failed validation. Agent routes use the same `{ error, code }` envelope as their other errors.",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "name is required"
+          },
+          "code": {
+            "type": "string",
+            "example": "invalid_request"
+          }
+        }
+      },
       "AgentCapabilities": {
         "type": "object",
         "description": "Labels the owner chose for the agent. They describe it; nothing enforces them.",
@@ -139,7 +153,7 @@
       },
       "AuthoritySummary": {
         "type": "object",
-        "description": "The agent's active grants (not revoked, not expired) in brief.",
+        "description": "The agent's active grants (not revoked, not expired, agent not suspended) in brief.",
         "properties": {
           "actsFor": {
             "type": "string",
@@ -422,9 +436,19 @@
               "delegation"
             ]
           },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "revoked",
+              "expired",
+              "suspended"
+            ],
+            "description": "The grant's state. `suspended` appears only on the grant list, while the agent is suspended. Present on every route that returns a grant (list, grant, expiry change, revoke)."
+          },
           "summary": {
             "type": "string",
-            "description": "A short human-readable line built on the server from the grant's policy. Present on grant lists and on expiry changes."
+            "description": "A short human-readable line built on the server from the grant's policy. Present on every route that returns a grant."
           },
           "issuedCredentialId": {
             "type": "string",
@@ -4559,7 +4583,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InvalidRequest"
+                  "$ref": "#/components/schemas/AgentInvalidRequest"
                 }
               }
             }
@@ -4637,7 +4661,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -4675,7 +4699,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -4746,7 +4770,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -4796,7 +4820,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -4870,7 +4894,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -4926,7 +4950,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -5019,7 +5043,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -5154,7 +5178,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -5180,7 +5204,7 @@
           "Agents"
         ],
         "summary": "Revoke an authority grant.",
-        "description": "Sets the grant's entry in its Token Status List to revoked, then records the revocation. Revoking a revoked grant returns it unchanged.",
+        "description": "Sets the grant's entry in its Token Status List to revoked, then records the revocation. Revoking a revoked grant returns it unchanged. The response is the grant itself, in the same shape as `grant` on the grant and expiry-change responses (with `status` and `summary`).",
         "parameters": [
           {
             "name": "agentId",
@@ -5213,7 +5237,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -5300,7 +5324,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -5355,7 +5379,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -5418,7 +5442,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -5512,7 +5536,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -5592,7 +5616,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -5641,7 +5665,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -5731,7 +5755,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -5795,7 +5819,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
@@ -5979,7 +6003,7 @@
             }
           },
           "400": {
-            "$ref": "#/components/schemas/InvalidRequest"
+            "$ref": "#/components/schemas/AgentInvalidRequest"
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
