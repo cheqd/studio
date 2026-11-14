@@ -99,6 +99,8 @@ class App {
 					}
 					return callback(new Error(CORS_ERROR_MSG), false);
 				},
+				// POST /credential/issue returns the credential itself; the Studio record id travels in this header
+				exposedHeaders: ['X-Issued-Credential-Id'],
 			})
 		);
 		this.express.use(cookieParser());

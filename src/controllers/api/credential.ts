@@ -1,6 +1,5 @@
 import { statusUpdateFailure } from '../../services/api/status-update-outcome.js';
 import type { Request, Response } from 'express';
-import type { VerifiableCredential } from '@veramo/core';
 import { StatusCodes } from 'http-status-codes';
 
 import { check, query } from '../validator/index.js';
@@ -128,7 +127,12 @@ export class CredentialController {
 	 *             $ref: '#/components/schemas/CredentialRequest'
 	 *     responses:
 	 *       200:
-	 *         description: The request was successful.
+	 *         description: The request was successful. The body is the credential. The id of Studio's record of it (the id GET /credentials/issued/{id} and the issued list use) is in the X-Issued-Credential-Id response header.
+	 *         headers:
+	 *           X-Issued-Credential-Id:
+	 *             description: The issuedCredentialId of the tracking record.
+	 *             schema:
+	 *               type: string
 	 *         content:
 	 *           application/json:
 	 *             schema:
@@ -174,10 +178,12 @@ export class CredentialController {
 				} satisfies UnsuccesfulIssueCredentialResponseBody);
 			}
 			// issue credential
-			const credential: VerifiableCredential = await Credentials.instance.issue_credential(
+			const { credential, issuedCredentialId } = await Credentials.instance.issueWithRecord(
 				requestBody,
 				response.locals.customer
 			);
+			// The body is the credential itself, which has no Studio id. The record id goes in a header.
+			response.setHeader('X-Issued-Credential-Id', issuedCredentialId);
 
 			// Track operation
 			const trackInfo: ITrackOperation<ICredentialTrack> = {
@@ -391,6 +397,7 @@ export class CredentialController {
 
 			const failure = statusUpdateFailure('revoke', result as Record<string, unknown>);
 			if (failure) return response.status(failure.statusCode).json({ error: failure.error });
+			await Credentials.instance.recordStatusChange(credential, 'revoke', response.locals.customer);
 
 			// Track operation if revocation was successful and publish is true
 			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
@@ -505,6 +512,7 @@ export class CredentialController {
 
 			const failure = statusUpdateFailure('suspend', result as Record<string, unknown>);
 			if (failure) return response.status(failure.statusCode).json({ error: failure.error });
+			await Credentials.instance.recordStatusChange(credential, 'suspend', response.locals.customer);
 
 			// Track operation if suspension was successful and publish is true
 			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
@@ -618,6 +626,7 @@ export class CredentialController {
 
 			const failure = statusUpdateFailure('reinstate', result as Record<string, unknown>);
 			if (failure) return response.status(failure.statusCode).json({ error: failure.error });
+			await Credentials.instance.recordStatusChange(credential, 'reinstate', response.locals.customer);
 
 			// Track operation if the process of reinstantiating was successful and publish is true
 			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource

@@ -239,6 +239,7 @@ export class AccreditationService {
 
 			const failure = statusUpdateFailure('revoke', result as Record<string, unknown>);
 			if (failure) return { success: false, status: failure.statusCode, error: failure.error };
+			await Credentials.instance.recordStatusChange(accreditation, 'revoke', customer);
 
 			return {
 				success: true,
@@ -286,6 +287,7 @@ export class AccreditationService {
 
 			const failure = statusUpdateFailure('suspend', result as Record<string, unknown>);
 			if (failure) return { success: false, status: failure.statusCode, error: failure.error };
+			await Credentials.instance.recordStatusChange(accreditation, 'suspend', customer);
 
 			return {
 				success: true,
@@ -333,6 +335,7 @@ export class AccreditationService {
 
 			const failure = statusUpdateFailure('reinstate', result as Record<string, unknown>);
 			if (failure) return { success: false, status: failure.statusCode, error: failure.error };
+			await Credentials.instance.recordStatusChange(accreditation, 'reinstate', customer);
 
 			return {
 				success: true,

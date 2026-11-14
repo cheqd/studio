@@ -20,7 +20,8 @@ import { ResourceConnector } from '../connectors/resource.js';
 import { DockIdentityService } from '../identity/providers/index.js';
 import { ProviderService } from './provider.service.js';
 import { IssuedCredentialEntity } from '../../database/entities/issued-credential.entity.js';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import { Cheqd } from '@cheqd/did-provider-cheqd';
 import { Connection } from '../../database/connection/connection.js';
 import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
 
@@ -56,6 +57,17 @@ export class Credentials {
 	}
 
 	async issue_credential(request: CredentialRequest, customer: CustomerEntity): Promise<VerifiableCredential> {
+		return (await this.issueWithRecord(request, customer)).credential;
+	}
+
+	/**
+	 * Issues the credential and also returns the id of the Studio record that tracks it (`issuedCredentialId`), which
+	 * is the id `GET /credentials/issued/:id` expects. The credential itself carries no such id.
+	 */
+	async issueWithRecord(
+		request: CredentialRequest,
+		customer: CustomerEntity
+	): Promise<{ credential: VerifiableCredential; issuedCredentialId: string }> {
 		const {
 			attributes,
 			credentialName,
@@ -317,7 +329,7 @@ export class Credentials {
 			// Also update fields not covered by the update() method
 			await this.repository.update({ issuedCredentialId: trackingRecord.issuedCredentialId }, updatePayload);
 
-			return verifiableCredential;
+			return { credential: verifiableCredential, issuedCredentialId: trackingRecord.issuedCredentialId };
 		} catch (error) {
 			// Phase 5: Update tracking record with failure details
 			// This ensures the reserved index is tracked even when credential creation fails
@@ -588,14 +600,16 @@ export class Credentials {
 			});
 		}
 
-		// Strategy 3: Search across all provider fields
+		// Strategy 3: Search across all provider fields. A credential id is often written as a URN
+		// (`urn:uuid:<uuid>`) in the credential and as the bare uuid by callers, so both spellings are tried.
 		if (!entity) {
+			const bare = id.replace(/^urn:uuid:/i, '');
 			entity = await this.repository.findOne({
 				where: {
-					providerCredentialId: id,
+					providerCredentialId: In([id, bare, `urn:uuid:${bare}`]),
 					customer: { customerId: customer.customerId },
 				},
-				relations: ['customer'],
+				relations: ['customer', 'statusRegistry'],
 			});
 		}
 		if (!entity) {
@@ -663,6 +677,59 @@ export class Credentials {
 		if (options.engine) entity.engine = options.engine;
 
 		return await this.repository.save(entity);
+	}
+
+	/**
+	 * After a revoke, suspend or reinstate has really changed the status list, mirror it on the tracking rows of the
+	 * credential, so the issued-credentials API reports `revoked` or `suspended` instead of the status the row was
+	 * issued with. Best effort: the status list is the source of truth and a failure here is logged, never raised.
+	 * Rows are found by customer, issuer, status index and the status entry's id.
+	 */
+	async recordStatusChange(
+		credential: unknown,
+		action: 'revoke' | 'suspend' | 'reinstate',
+		customer: CustomerEntity
+	): Promise<number> {
+		try {
+			const decoded =
+				typeof credential === 'string'
+					? ((await Cheqd.decodeCredentialJWT(credential)) as unknown as Record<string, any>)
+					: (credential as Record<string, any>);
+			const issuer = typeof decoded?.issuer === 'string' ? decoded.issuer : decoded?.issuer?.id;
+			const raw = decoded?.credentialStatus;
+			const entries: Record<string, any>[] = Array.isArray(raw) ? raw : raw ? [raw] : [];
+			if (!issuer || entries.length === 0) return 0;
+
+			let changed = 0;
+			for (const entry of entries) {
+				const index = Number.parseInt(String(entry.statusListIndex ?? entry.statusIndex), 10);
+				if (!Number.isFinite(index)) continue;
+				const rows = await this.repository.find({
+					where: { customer: { customerId: customer.customerId }, issuerId: issuer, statusIndex: index },
+				});
+				for (const row of rows) {
+					const stored = ([] as Record<string, any>[]).concat(row.credentialStatus ?? []);
+					if (!stored.some((s) => s?.id === entry.id)) continue;
+					const status =
+						action === 'revoke'
+							? 'revoked'
+							: action === 'suspend'
+								? 'suspended'
+								: row.offerExpiresAt && !row.subjectAcceptedAt
+									? 'offered'
+									: 'issued';
+					await this.repository.update(
+						{ issuedCredentialId: row.issuedCredentialId },
+						{ status: status as IssuedCredentialEntity['status'], statusUpdatedAt: new Date() }
+					);
+					changed += 1;
+				}
+			}
+			return changed;
+		} catch (error) {
+			console.warn(`Could not mirror the ${action} on the issued credential row: ${(error as Error)?.message}`);
+			return 0;
+		}
 	}
 
 	/**

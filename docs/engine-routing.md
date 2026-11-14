@@ -138,3 +138,16 @@ say `veramo`, whose issuer DID is `credo`, and for which no `engineMigration` ro
 moved engines could legitimately hold older Veramo rows). Issued credentials must also have `providerId = 'studio'`
 and a status registry that is `credo` (or none). Each change is copied to `engineCorrection`; `down` restores exactly
 those rows and drops the table. Rows that do not meet every condition are left untouched, and nothing is guessed.
+
+## Issued credential ids and status
+
+- `POST /credential/issue` returns the credential itself, which has no Studio id. Studio's record id is the
+  `issuedCredentialId` in the `X-Issued-Credential-Id` response header (exposed to browsers through CORS). The portal
+  should show and link that value. `GET /credentials/issued/:id` accepts it, and also the credential's own `id` (the
+  stored `providerCredentialId`), bare or as `urn:uuid:...`, for the calling customer only. A credential without an `id`
+  (Studio sets none) can only be found by the record id.
+- After a successful revoke, suspend or reinstate (credential and accreditation routes) the matching issued-credential
+  row is updated to `revoked`, `suspended`, or back to `issued` (`offered` if the offer was never accepted). Before, only
+  `GET /credentials/issued/:id?syncStatus=true` refreshed a status, so the list kept the status the row was issued with.
+  Rows are matched on customer, issuer, status index and the status entry id; a status change made outside Studio's API
+  is still picked up only by `syncStatus=true`.
