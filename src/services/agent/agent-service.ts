@@ -981,9 +981,10 @@ export class AgentService {
 		return agent.status === 'suspended' ? 'suspended' : 'active';
 	}
 
-	/** Counts of the agent's active (not revoked, not expired) grants, and the DID it acts for. */
+	/** Counts of the agent's active (not revoked, not expired, agent not suspended) grants, and the DID it acts for. */
 	private authoritySummary(agent: AgentRecord, grants: AuthorityGrantWithStatus[], now: Date): AuthoritySummary {
-		const active = grants.filter((grant) => !grant.revokedAt && !(grant.expiresAt && grant.expiresAt <= now));
+		// Same rule as the grant list: only `active` grants count, so a suspended agent's grants do not.
+		const active = grants.filter((grant) => this.grantStatus(grant, agent, now) === 'active');
 		const count = (type: string) => active.filter((grant) => grant.grantType === type).length;
 		// Newest first: the first acts-for grant is the latest. Its issuer is the DID the agent acts for.
 		const actsFor = active.find((grant) => grant.grantType === 'acts-for');

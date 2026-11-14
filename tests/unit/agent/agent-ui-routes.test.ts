@@ -154,6 +154,25 @@ describe('GET /agents with q, authoritySummary and capabilities', () => {
 	});
 });
 
+describe('authoritySummary and a suspended agent', () => {
+	it('counts no grants of a suspended agent, in the list and in the detail, and again after reactivation', async () => {
+		const { agent, params } = await newAgent();
+		await grant(agent.agentId, { grantType: 'acts-for' });
+		await grant(agent.agentId, { grantType: 'tool-scope', tools: ['a'] });
+		await agents.update(customerA, agent.agentId, { status: 'suspended' });
+
+		const none = { actsFor: null, grantCounts: { actsFor: 0, mandate: 0, delegation: 0, toolScope: 0 } };
+		const list = await call({ handler: 'list', validators: V.listValidator, customer: customerA });
+		expect(list.body.agents.find((x: any) => x.agentId === agent.agentId).authoritySummary).toEqual(none);
+		const detail = await call({ handler: 'get', validators: V.idValidator, params, customer: customerA });
+		expect(detail.body.authoritySummary).toEqual(none);
+
+		await agents.update(customerA, agent.agentId, { status: 'active' });
+		const back = await call({ handler: 'get', validators: V.idValidator, params, customer: customerA });
+		expect(back.body.authoritySummary.grantCounts).toMatchObject({ actsFor: 1, toolScope: 1 });
+	});
+});
+
 describe('GET /agents/{id}', () => {
 	it('returns capabilities, authoritySummary and a null cardUrl while no card is published', async () => {
 		const { params } = await newAgent();

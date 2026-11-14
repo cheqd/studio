@@ -71,7 +71,7 @@ import type { CallContext } from '../../services/agent/agent-service.js';
  *           type: boolean
  *     AuthoritySummary:
  *       type: object
- *       description: The agent's active grants (not revoked, not expired) in brief.
+ *       description: The agent's active grants (not revoked, not expired, agent not suspended) in brief.
  *       properties:
  *         actsFor:
  *           type: string

@@ -23,8 +23,9 @@ No new Logto scope is needed.
   gains `capabilities` and `authoritySummary`.
 - `GET /agents/{id}`: gains `capabilities`, `authoritySummary` and `cardUrl` (the newest published card as a
   DID-Linked Resource URL on the configured resolver, or `null`).
-- `authoritySummary` is `{ actsFor, grantCounts: { actsFor, mandate, delegation, toolScope } }`, over active grants
-  only (not revoked, not expired). `actsFor` is the DID the newest active acts-for grant was issued by, else `null`.
+- `authoritySummary` is `{ actsFor, grantCounts: { actsFor, mandate, delegation, toolScope } }`, over grants whose
+  `status` is `active` only: not revoked, not expired, and the agent not suspended (a suspended agent's counts are all
+  zero, as in the portal). `actsFor` is the DID the newest active acts-for grant was issued by, else `null`.
 - `GET /agents/{id}/authority`: each grant gains `summary` (below) and `status` may now be `suspended`, which is
   shown while the agent is suspended (a Studio view; the credential and its status list entry are unchanged).
 - `POST /agents` and `PATCH /agents/{id}` accept `capabilities`, an object with any of `a2a`, `ap2`, `kyaOs`, `mcp`
