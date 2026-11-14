@@ -134,6 +134,8 @@ export class StatusRegistryEntity {
 		identifier: Identifier;
 		customer: CustomerEntity;
 		createdAt?: Date;
+		/** The engine that created the list. Omitted means the column default (veramo). */
+		engine?: string;
 	}) {
 		if (!options) {
 			return;
@@ -161,5 +163,6 @@ export class StatusRegistryEntity {
 		this.identifier = options.identifier;
 		this.customer = options.customer;
 		this.createdAt = options.createdAt || new Date();
+		if (options.engine) this.engine = options.engine;
 	}
 }

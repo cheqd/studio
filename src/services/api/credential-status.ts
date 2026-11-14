@@ -1,6 +1,7 @@
 import { fromString } from 'uint8arrays';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
 import { EngineGoneError } from '../identity/engine/errors.js';
+import type { RoutedService } from '../identity/index.js';
 import { statusListArtifact } from '../identity/engine/artifact-refs.js';
 import type {
 	CheqdCredentialStatus,
@@ -109,7 +110,8 @@ export class CredentialStatusService {
 			}
 
 			// A new status list: the feature flag chooses the engine for this customer
-			const engine = await identityServiceStrategySetup.routed('status-list');
+			const identityEngine = await identityServiceStrategySetup.engine('status-list');
+			const engine = identityEngine as unknown as RoutedService;
 
 			if (data) {
 				let result;
@@ -198,6 +200,7 @@ export class CredentialStatusService {
 			// persist status list in the db
 			const statusRegistry = new StatusRegistryEntity({
 				registryId: v4(),
+				engine: identityEngine.name,
 				uri: `${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
 				registryType: result.resourceMetadata.resourceType,
 				registryName: statusListName,
@@ -286,9 +289,10 @@ export class CredentialStatusService {
 			let statusSize: number;
 
 			// Encrypted status-list creation is withdrawn: the router answers Gone (410) whatever the engine
-			const engine = await identityServiceStrategySetup.routed('status-list', undefined, {
+			const identityEngine = await identityServiceStrategySetup.engine('status-list', undefined, {
 				encryptedStatusList: true,
 			});
+			const engine = identityEngine as unknown as RoutedService;
 
 			// validate identifier
 			const identifier = await IdentifierService.instance.get(did, customer);
@@ -356,6 +360,7 @@ export class CredentialStatusService {
 			// persist status list in the db
 			const statusRegistry = new StatusRegistryEntity({
 				registryId: v4(),
+				engine: identityEngine.name,
 				uri: `${did}?resourceName=${result.resourceMetadata.resourceName}&resourceType=${result.resourceMetadata.resourceType}`,
 				registryType: result.resourceMetadata.resourceType,
 				registryName: statusListName,

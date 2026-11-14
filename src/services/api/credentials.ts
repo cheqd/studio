@@ -10,6 +10,7 @@ import {
 	type CredentialRequest,
 } from '../../types/credential.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
+import type { RoutedService } from '../identity/index.js';
 import { credentialArtifact } from '../identity/engine/artifact-refs.js';
 import { v4 } from 'uuid';
 import * as dotenv from 'dotenv';
@@ -113,6 +114,13 @@ export class Credentials {
 
 		// Phase 2: Create tracking record immediately to reserve the index
 		// This ensures the index is tracked even if credential creation fails
+		// The engine that will sign the credential is decided once, here, and recorded on the row. Dock-issued
+		// credentials never reach an identity engine, so they keep the default.
+		const isDockConnector = (providerId || connector) === CredentialConnectors.Dock;
+		const credentialEngine = isDockConnector
+			? undefined
+			: await new IdentityServiceStrategySetup(customer.customerId).engine('credential');
+
 		let trackingRecord: IssuedCredentialEntity;
 		if (issuedCredentialId) {
 			const existingRecord = await this.fetch(issuedCredentialId, customer);
@@ -136,6 +144,7 @@ export class Credentials {
 				statusRegistryId: statusRegistryId,
 				statusIndex: reservedIndex,
 				retryCount: 0,
+				engine: credentialEngine?.name,
 			});
 		}
 
@@ -180,7 +189,7 @@ export class Credentials {
 				default: {
 					const studioService = new IdentityServiceStrategySetup(customer.customerId);
 					const verifiable_credential = (await (
-						await studioService.routed('credential')
+						(credentialEngine ?? (await studioService.engine('credential'))) as unknown as RoutedService
 					).createCredential(
 						credential as never,
 						format,
@@ -649,6 +658,9 @@ export class Credentials {
 				expiresAt: options.expiresAt,
 			}
 		);
+
+		// Record the engine that actually created the credential, so later operations route back to it
+		if (options.engine) entity.engine = options.engine;
 
 		return await this.repository.save(entity);
 	}
