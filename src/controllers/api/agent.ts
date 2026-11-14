@@ -4,7 +4,7 @@ import { body, param, query, validationResult } from '../validator/index.js';
 import { AgentServiceError, agentServices } from '../../services/agent/index.js';
 import type { AgentServices } from '../../services/agent/index.js';
 import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
-import { CredoTenantMissingError } from '../../services/identity/engine/credo/errors.js';
+import { credoTenantMissingResponse } from '../../helpers/credo-tenant-errors.js';
 import { LedgerUnavailableError } from '../../services/identity/ledger-lock.js';
 import { IdempotencyError, IdempotencyService, hashRequest } from '../../services/idempotency/idempotency.js';
 import type { IdempotentResult } from '../../services/idempotency/idempotency.js';
@@ -1061,7 +1061,7 @@ export class AgentController {
 	 *     description: |
 	 *       Issues an authority credential to the agent, signed by one of your DIDs, with an entry in a Token Status List so it can be revoked. The credential is returned once, in this response.
 	 *
-	 *       - `acts-for`: an SD-JWT VC saying the agent acts for the issuer.
+	 *       - `acts-for`: an SD-JWT VC saying the agent acts for the issuer. An agent has at most one active or suspended `acts-for` grant: a second is refused with 409 `acts_for_exists` until the first is revoked or has expired.
 	 *       - `tool-scope`: an SD-JWT VC listing the tools the agent may call (`tools`).
 	 *       - `mandate`: an AP2 open mandate as an SD-JWT VC, bound to the agent's P-256 key (`mandate`). **Single hop only**: re-delegation to sub-agents is not supported and any such field is refused.
 	 *       - `delegation`: a KYA-OS delegation (`scopes`). **Untested** (gate T9) and switched off unless the server sets `ENABLE_KYA_OS_DELEGATIONS`; it has no status list entry, so revoking it does not reach verifiers.
@@ -1089,6 +1089,7 @@ export class AgentController {
 	 *               expiresAt:
 	 *                 type: string
 	 *                 format: date-time
+	 *                 description: Must be in the future and no later than the platform maximum (365 days from now unless the server sets `AGENT_GRANT_MAX_LIFETIME_DAYS`); otherwise 400.
 	 *               tools:
 	 *                 type: array
 	 *                 items:
@@ -1173,6 +1174,8 @@ export class AgentController {
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
 	 *         description: No such agent or grant in your account.
+	 *       409:
+	 *         description: The agent is not active, or (for `acts-for`) already has an active or suspended acts-for grant (`code` is `acts_for_exists`).
 	 *       501:
 	 *         description: The identity engine for this account cannot update status lists yet. It needs the Credo engine.
 	 */
@@ -1927,13 +1930,8 @@ export class AgentController {
 		if (error instanceof AgentServiceError) {
 			return response.status(error.status).json({ error: error.message, code: error.code });
 		}
-		if (error instanceof CredoTenantMissingError) {
-			// Operator problem, not the caller's: say so specifically and log what is needed to fix it.
-			console.error(
-				`Agent endpoint failed: customer.credoTenantId points at Credo tenant ${error.tenantId}, which is missing from the Askar store. It was not recreated.`
-			);
-			return response.status(error.status).json({ error: error.message, code: error.code });
-		}
+		const tenantMissing = credoTenantMissingResponse(response, error);
+		if (tenantMissing) return tenantMissing;
 		const unfunded = unfundedPayerFailure(error);
 		if (unfunded) return response.status(unfunded.status).json({ error: unfunded.error });
 		console.error('Agent endpoint failed:', error);

@@ -24,6 +24,7 @@ import { validate } from '../validator/decorator.js';
 import { UnsuccessfulGetDidResponseBody } from '../../types/did.js';
 import { CheqdNetwork } from '@cheqd/sdk';
 import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
+import { credoTenantMissingResponse } from '../../helpers/credo-tenant-errors.js';
 
 export class ResourceController {
 	public static createResourceValidator = [
@@ -245,6 +246,8 @@ export class ResourceController {
 				} satisfies UnsuccessfulCreateResourceResponseBody);
 			}
 		} catch (error) {
+			const tenantMissing = credoTenantMissingResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			const unfunded = unfundedPayerFailure(error);
 			if (unfunded) {
 				return response.status(unfunded.status).json({
@@ -354,6 +357,8 @@ export class ResourceController {
 				} satisfies UnsuccessfulQueryResourceResponseBody);
 			}
 		} catch (error) {
+			const tenantMissing = credoTenantMissingResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
 			} satisfies UnsuccessfulQueryResourceResponseBody);
@@ -461,6 +466,8 @@ export class ResourceController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			const tenantMissing = credoTenantMissingResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulGetDidResponseBody);
