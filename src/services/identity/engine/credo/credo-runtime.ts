@@ -120,6 +120,8 @@ interface TenantAgentLike {
 	// biome-ignore lint/suspicious/noExplicitAny: ditto
 	modules: any;
 	// biome-ignore lint/suspicious/noExplicitAny: ditto
+	tokenStatusList: any;
+	// biome-ignore lint/suspicious/noExplicitAny: ditto
 	w3cCredentials: any;
 }
 

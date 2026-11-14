@@ -13,6 +13,9 @@ interface TenantAgentLike {
 	dependencyManager: { resolve<T>(token: unknown): T };
 	// biome-ignore lint/suspicious/noExplicitAny: the Credo API objects are generic over the module set
 	modules: any;
+	/** A default Credo module: its API is a property of the agent, not an entry of `modules`. */
+	// biome-ignore lint/suspicious/noExplicitAny: ditto
+	tokenStatusList: any;
 }
 
 /** Signing for status lists inside one customer's tenant. Ledger writes stay with the engine, under the payer lock. */
@@ -51,7 +54,7 @@ export function createStatusListSession(tenantAgent: TenantAgentLike): StatusLis
 		},
 
 		async createTokenStatusList({ didUrl, alg, uri, bits, size, ttlSeconds }) {
-			const result = await tenantAgent.modules.tokenStatusList.createTokenStatusList({
+			const result = await tenantAgent.tokenStatusList.createTokenStatusList({
 				format: 'jwt',
 				statusList: { statusListLength: size, bitsPerStatus: bits },
 				statusListUri: uri,
@@ -63,7 +66,7 @@ export function createStatusListSession(tenantAgent: TenantAgentLike): StatusLis
 		},
 
 		async updateTokenStatusList({ didUrl, alg, token, updates }) {
-			const result = await tenantAgent.modules.tokenStatusList.updateTokenStatusList({
+			const result = await tenantAgent.tokenStatusList.updateTokenStatusList({
 				format: 'jwt',
 				token,
 				status: updates,
