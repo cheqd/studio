@@ -358,7 +358,7 @@ describe('cards and authority over HTTP', () => {
 		);
 		for (const grant of grants) {
 			expect(Object.keys(grant).sort()).toEqual(
-				['createdAt', 'expiresAt', 'grantType', 'id', 'revokedAt', 'status'].sort()
+				['createdAt', 'expiresAt', 'grantType', 'id', 'revokedAt', 'status', 'summary'].sort()
 			);
 		}
 		expect(JSON.stringify(listed.body)).not.toMatch(/credential|eyJ|issuedCredentialId|statusList/i);

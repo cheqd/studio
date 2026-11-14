@@ -36,7 +36,12 @@ const EVERY: Record<string, string> = {
 
 /** Plain text for display: control characters out, length bounded. Caller-supplied names go through this. */
 function clean(value: string, max = MAX_ITEM): string {
-	const text = value.replace(/[\u0000-\u001f\u007f]+/g, ' ').trim();
+	const text = Array.from(value, (character) => {
+		const code = character.charCodeAt(0);
+		return code < 0x20 || code === 0x7f ? ' ' : character;
+	})
+		.join('')
+		.trim();
 	return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
 

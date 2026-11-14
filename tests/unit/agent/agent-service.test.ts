@@ -99,7 +99,9 @@ describe('get, list, update, remove', () => {
 		await service.register(customerA, { name: 'a2', network: 'testnet' });
 		await service.register(customerB, { name: 'b1', network: 'testnet' });
 		expect((await service.list(customerA, { limit: 10, offset: 0 })).total).toBe(2);
-		expect((await service.list(customerB, { limit: 10, offset: 0 })).items.map((a) => a.name)).toEqual(['b1']);
+		expect((await service.list(customerB, { limit: 10, offset: 0 })).items.map((a) => a.agent.name)).toEqual([
+			'b1',
+		]);
 	});
 
 	it('updates name, description and status; rejects other statuses', async () => {

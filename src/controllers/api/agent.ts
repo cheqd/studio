@@ -7,8 +7,20 @@ import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
 import { LedgerUnavailableError } from '../../services/identity/ledger-lock.js';
 import { IdempotencyError, IdempotencyService, hashRequest } from '../../services/idempotency/idempotency.js';
 import type { IdempotentResult } from '../../services/idempotency/idempotency.js';
-import { AGENT_NETWORKS, AGENT_SETTABLE_STATUSES, GRANT_TYPES } from '../../types/agent.js';
-import type { AgentCardRecord, AgentNetwork, AgentRecord, AuthorityGrantRecord, GrantType } from '../../types/agent.js';
+import { AGENT_NETWORKS, AGENT_SETTABLE_STATUSES, CAPABILITY_NAMES, GRANT_TYPES } from '../../types/agent.js';
+import type {
+	AgentCardRecord,
+	AgentEventRecord,
+	AgentNetwork,
+	AgentRecord,
+	AuthorityGrantRecord,
+	AuthorityGrantWithStatus,
+	AuthoritySummary,
+	GrantType,
+} from '../../types/agent.js';
+import { summariseGrant } from '../../services/agent/grant-summary.js';
+import type { AgentKeyView } from '../../services/agent/agent-key-view.js';
+import type { CallContext } from '../../services/agent/agent-service.js';
 
 /**
  * @openapi
@@ -37,12 +49,110 @@ import type { AgentCardRecord, AgentNetwork, AgentRecord, AuthorityGrantRecord, 
  *         status:
  *           type: string
  *           enum: [active, suspended, deleted]
+ *         capabilities:
+ *           $ref: '#/components/schemas/AgentCapabilities'
  *         createdAt:
  *           type: string
  *           format: date-time
  *         updatedAt:
  *           type: string
  *           format: date-time
+ *     AgentCapabilities:
+ *       type: object
+ *       description: Labels the owner chose for the agent. They describe it; nothing enforces them.
+ *       properties:
+ *         a2a:
+ *           type: boolean
+ *         ap2:
+ *           type: boolean
+ *         kyaOs:
+ *           type: boolean
+ *         mcp:
+ *           type: boolean
+ *     AuthoritySummary:
+ *       type: object
+ *       description: The agent's active grants (not revoked, not expired) in brief.
+ *       properties:
+ *         actsFor:
+ *           type: string
+ *           nullable: true
+ *           description: The DID the active acts-for grant says the agent acts for, else null.
+ *         grantCounts:
+ *           type: object
+ *           properties:
+ *             actsFor:
+ *               type: integer
+ *             mandate:
+ *               type: integer
+ *             delegation:
+ *               type: integer
+ *             toolScope:
+ *               type: integer
+ *     AgentListItem:
+ *       allOf:
+ *         - $ref: '#/components/schemas/Agent'
+ *         - type: object
+ *           properties:
+ *             authoritySummary:
+ *               $ref: '#/components/schemas/AuthoritySummary'
+ *     AgentDetail:
+ *       allOf:
+ *         - $ref: '#/components/schemas/AgentListItem'
+ *         - type: object
+ *           properties:
+ *             cardUrl:
+ *               type: string
+ *               format: uri
+ *               nullable: true
+ *               description: Where the newest published card can be fetched (a DID-Linked Resource). Null when no card is published.
+ *     AgentKey:
+ *       type: object
+ *       description: One key of the agent. Public material only.
+ *       properties:
+ *         keyId:
+ *           type: string
+ *           description: The full DID URL of the verification method.
+ *         type:
+ *           type: string
+ *           enum: [Ed25519, P-256]
+ *         algorithm:
+ *           type: string
+ *           enum: [EdDSA, ES256]
+ *         status:
+ *           type: string
+ *           enum: [active, rotated, revoked]
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         rotatedAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *         publicKeyMultibase:
+ *           type: string
+ *         usedBy:
+ *           type: array
+ *           items:
+ *             type: string
+ *             enum: [did, a2a, ap2, kya-os]
+ *     AgentEvent:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         type:
+ *           type: string
+ *           enum: [registered, authority-granted, authority-revoked, authority-expiry-changed, key-added, key-rotated, card-published, card-updated]
+ *         at:
+ *           type: string
+ *           format: date-time
+ *         actor:
+ *           type: string
+ *           enum: [owner, api-key, system]
+ *         detail:
+ *           type: object
+ *           description: Non-secret details of the event (ids, types, dates).
  *     AgentCardInput:
  *       type: object
  *       required: [endpoint]
@@ -127,6 +237,9 @@ import type { AgentCardRecord, AgentNetwork, AgentRecord, AuthorityGrantRecord, 
  *         grantType:
  *           type: string
  *           enum: [acts-for, tool-scope, mandate, delegation]
+ *         summary:
+ *           type: string
+ *           description: A short human-readable line built on the server from the grant's policy. Present on grant lists and on expiry changes.
  *         issuedCredentialId:
  *           type: string
  *           nullable: true
@@ -178,8 +291,39 @@ const agentDto = (agent: AgentRecord) => ({
 	description: agent.description ?? null,
 	actsForDid: agent.actsForDid ?? null,
 	status: agent.status,
+	capabilities: agent.capabilities,
 	createdAt: agent.createdAt,
 	updatedAt: agent.updatedAt,
+});
+
+const listItemDto = (agent: AgentRecord, authoritySummary: AuthoritySummary) => ({
+	...agentDto(agent),
+	authoritySummary,
+});
+
+const keyDto = (key: AgentKeyView) => ({
+	keyId: key.keyId,
+	type: key.type,
+	algorithm: key.algorithm,
+	status: key.status,
+	createdAt: key.createdAt,
+	rotatedAt: key.rotatedAt,
+	publicKeyMultibase: key.publicKeyMultibase,
+	usedBy: key.usedBy,
+});
+
+const eventDto = (event: AgentEventRecord) => ({
+	id: event.id,
+	type: event.type,
+	at: event.createdAt,
+	actor: event.actor,
+	detail: event.detail,
+});
+
+/** Who is calling, for the activity feed and audit log. `authMethod` is set by the API key middleware. */
+const callContext = (response: Response): CallContext => ({
+	actor: response.locals?.authMethod === 'api-key' ? 'api-key' : 'owner',
+	userId: response.locals?.user?.logToId,
 });
 
 const cardDto = (card: AgentCardRecord) => ({
@@ -213,6 +357,25 @@ const bindingDto = (binding: { id: string; account: string; createdAt: Date; rev
 	revokedAt: binding.revokedAt ?? null,
 });
 
+/** `capabilities` is an object with any of the four flags as booleans, and nothing else. */
+function capabilitiesValidators() {
+	return [
+		body('capabilities')
+			.optional()
+			.custom((value) => typeof value === 'object' && value !== null && !Array.isArray(value))
+			.withMessage('capabilities must be an object')
+			.bail()
+			.custom((value) =>
+				Object.keys(value).every((name) => (CAPABILITY_NAMES as readonly string[]).includes(name))
+			)
+			.withMessage(`capabilities may only have: ${CAPABILITY_NAMES.join(', ')}`)
+			.bail()
+			.custom((value) => Object.values(value).every((flag) => typeof flag === 'boolean'))
+			.withMessage('every capability must be true or false')
+			.bail(),
+	];
+}
+
 const isHttps = (value: unknown) => {
 	if (typeof value !== 'string') return false;
 	try {
@@ -244,9 +407,17 @@ export class AgentController {
 			.withMessage(`network must be one of: ${AGENT_NETWORKS.join(', ')}`)
 			.bail(),
 		body('actsForDid').optional().isDID().bail(),
+		...capabilitiesValidators(),
+		body('useCase')
+			.optional()
+			.isString()
+			.isLength({ max: 64 })
+			.withMessage('useCase is at most 64 characters')
+			.bail(),
 	];
 
 	public static listValidator = [
+		query('q').optional().isString().isLength({ max: 200 }).withMessage('q is at most 200 characters').bail(),
 		query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('limit must be 1 to 100').bail(),
 		query('page').optional().isInt({ min: 1 }).withMessage('page must be 1 or more').bail(),
 	];
@@ -268,6 +439,7 @@ export class AgentController {
 			.withMessage('description is at most 2000 characters')
 			.bail(),
 		body('actsForDid').optional({ values: 'null' }).isDID().bail(),
+		...capabilitiesValidators(),
 		body('status')
 			.optional()
 			.isIn([...AGENT_SETTABLE_STATUSES])
@@ -319,6 +491,52 @@ export class AgentController {
 		body('tools').optional().isArray({ max: 50 }).withMessage('tools must be a list of at most 50 names').bail(),
 		body('scopes').optional().isArray({ max: 50 }).withMessage('scopes must be a list of at most 50 names').bail(),
 		body('mandate').optional().isObject().withMessage('mandate must be an object').bail(),
+	];
+
+	public static expiryValidator = [
+		param('agentId').isUUID().withMessage('agentId must be a UUID').bail(),
+		param('grantId').isUUID().withMessage('grantId must be a UUID').bail(),
+		body('expiresAt')
+			.exists()
+			.withMessage('expiresAt is required')
+			.bail()
+			.isString()
+			.isISO8601()
+			.withMessage('expiresAt must be an ISO 8601 date')
+			.bail(),
+	];
+
+	public static rotateKeyValidator = [
+		param('agentId').isUUID().withMessage('agentId must be a UUID').bail(),
+		body('keyId')
+			.exists()
+			.withMessage('keyId is required')
+			.bail()
+			.isString()
+			.isLength({ min: 1, max: 512 })
+			.withMessage('keyId must be 1 to 512 characters')
+			.bail(),
+		body('confirm')
+			.custom((value) => value === true)
+			.withMessage('confirm must be true to rotate a key')
+			.bail(),
+	];
+
+	public static addKeyValidator = [
+		param('agentId').isUUID().withMessage('agentId must be a UUID').bail(),
+		body('type')
+			.exists()
+			.withMessage('type is required')
+			.bail()
+			.isIn(['Ed25519'])
+			.withMessage('type must be Ed25519')
+			.bail(),
+	];
+
+	public static activityValidator = [
+		param('agentId').isUUID().withMessage('agentId must be a UUID').bail(),
+		query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('limit must be 1 to 100').bail(),
+		query('page').optional().isInt({ min: 1 }).withMessage('page must be 1 or more').bail(),
 	];
 
 	public static revokeValidator = [
@@ -377,6 +595,12 @@ export class AgentController {
 	 *               actsForDid:
 	 *                 type: string
 	 *                 description: A DID in your account that this agent acts for.
+	 *               capabilities:
+	 *                 $ref: '#/components/schemas/AgentCapabilities'
+	 *               useCase:
+	 *                 type: string
+	 *                 maxLength: 64
+	 *                 description: Free text, for analytics only. Stored, never trusted, not returned.
 	 *     responses:
 	 *       201:
 	 *         description: The agent was registered.
@@ -401,7 +625,14 @@ export class AgentController {
 	 *   get:
 	 *     tags: [ Agents ]
 	 *     summary: List your agents.
+	 *     description: Each agent carries its `capabilities` and an `authoritySummary` of its active grants. `total` is the count after `q` filtering.
 	 *     parameters:
+	 *       - name: q
+	 *         in: query
+	 *         description: Case-insensitive match on name, description or DID, applied in the database query (not after paging).
+	 *         schema:
+	 *           type: string
+	 *           maxLength: 200
 	 *       - name: limit
 	 *         in: query
 	 *         schema:
@@ -436,15 +667,21 @@ export class AgentController {
 	 */
 	public register = async (request: Request, response: Response) => {
 		return this.handleIdempotent(request, response, async () => {
-			const { name, description, network, actsForDid } = request.body;
+			const { name, description, network, actsForDid, capabilities, useCase } = request.body;
 			const agent = await (
 				await this.services()
-			).agents.register(response.locals.customer, {
-				name,
-				description,
-				network: (network ?? 'testnet') as AgentNetwork,
-				actsForDid,
-			});
+			).agents.register(
+				response.locals.customer,
+				{
+					name,
+					description,
+					network: (network ?? 'testnet') as AgentNetwork,
+					actsForDid,
+					capabilities,
+					useCase,
+				},
+				callContext(response)
+			);
 			return { status: StatusCodes.CREATED, body: agentDto(agent) };
 		});
 	};
@@ -453,13 +690,17 @@ export class AgentController {
 		return this.handle(request, response, async () => {
 			const limit = Number(request.query.limit ?? 50);
 			const page = Number(request.query.page ?? 1);
+			const q = typeof request.query.q === 'string' ? request.query.q : undefined;
 			const { items, total } = await (
 				await this.services()
 			).agents.list(response.locals.customer, {
 				limit,
 				offset: (page - 1) * limit,
+				q,
 			});
-			return response.status(StatusCodes.OK).json({ total, agents: items.map(agentDto) });
+			return response
+				.status(StatusCodes.OK)
+				.json({ total, agents: items.map((item) => listItemDto(item.agent, item.authoritySummary)) });
 		});
 	};
 
@@ -470,6 +711,7 @@ export class AgentController {
 	 *   get:
 	 *     tags: [ Agents ]
 	 *     summary: Get an agent.
+	 *     description: Includes `capabilities`, an `authoritySummary` and `cardUrl` (null when no card is published).
 	 *     parameters:
 	 *       - name: agentId
 	 *         in: path
@@ -483,7 +725,7 @@ export class AgentController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/Agent'
+	 *               $ref: '#/components/schemas/AgentDetail'
 	 *       400:
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
@@ -515,6 +757,8 @@ export class AgentController {
 	 *               actsForDid:
 	 *                 type: string
 	 *                 nullable: true
+	 *               capabilities:
+	 *                 $ref: '#/components/schemas/AgentCapabilities'
 	 *               status:
 	 *                 type: string
 	 *                 enum: [active, suspended]
@@ -567,16 +811,16 @@ export class AgentController {
 	 */
 	public get = async (request: Request, response: Response) => {
 		return this.handle(request, response, async () => {
-			const agent = await (
+			const { agent, authoritySummary, cardUrl } = await (
 				await this.services()
-			).agents.get(response.locals.customer, request.params.agentId as string);
-			return response.status(StatusCodes.OK).json(agentDto(agent));
+			).agents.detail(response.locals.customer, request.params.agentId as string);
+			return response.status(StatusCodes.OK).json({ ...listItemDto(agent, authoritySummary), cardUrl });
 		});
 	};
 
 	public update = async (request: Request, response: Response) => {
 		return this.handle(request, response, async () => {
-			const { name, description, actsForDid, status } = request.body;
+			const { name, description, actsForDid, status, capabilities } = request.body;
 			const agent = await (
 				await this.services()
 			).agents.update(response.locals.customer, request.params.agentId as string, {
@@ -584,6 +828,7 @@ export class AgentController {
 				description,
 				actsForDid,
 				status,
+				capabilities,
 			});
 			return response.status(StatusCodes.OK).json(agentDto(agent));
 		});
@@ -684,11 +929,16 @@ export class AgentController {
 			const { card, publish, alg } = request.body;
 			const created = await (
 				await this.services()
-			).agents.createCard(response.locals.customer, request.params.agentId as string, {
-				card,
-				publish: publish === true || publish === 'true',
-				alg,
-			});
+			).agents.createCard(
+				response.locals.customer,
+				request.params.agentId as string,
+				{
+					card,
+					publish: publish === true || publish === 'true',
+					alg,
+				},
+				callContext(response)
+			);
 			return { status: StatusCodes.CREATED, body: cardDto(created) };
 		});
 	};
@@ -739,7 +989,12 @@ export class AgentController {
 	 *                         enum: [acts-for, tool-scope, mandate, delegation]
 	 *                       status:
 	 *                         type: string
-	 *                         enum: [active, revoked, expired]
+	 *                         enum: [active, revoked, expired, suspended]
+	 *                         description: '`suspended` while the agent is suspended (a Studio view; the credential is unchanged).'
+	 *                       summary:
+	 *                         type: string
+	 *                         description: A short human-readable line built on the server from the grant's policy, for example `Up to 50 USD per week, supplies`. No secrets, no raw credential.
+	 *                         example: 'Tools: search, fetch'
 	 *                       createdAt:
 	 *                         type: string
 	 *                         format: date-time
@@ -899,14 +1154,19 @@ export class AgentController {
 			const { grantType, issuerDid, expiresAt, tools, scopes, mandate } = request.body;
 			const issued = await (
 				await this.services()
-			).agents.grantAuthority(response.locals.customer, request.params.agentId as string, {
-				grantType: grantType as GrantType,
-				issuerDid,
-				expiresAt,
-				tools,
-				scopes,
-				mandate,
-			});
+			).agents.grantAuthority(
+				response.locals.customer,
+				request.params.agentId as string,
+				{
+					grantType: grantType as GrantType,
+					issuerDid,
+					expiresAt,
+					tools,
+					scopes,
+					mandate,
+				},
+				callContext(response)
+			);
 			return {
 				status: StatusCodes.CREATED,
 				body: {
@@ -925,9 +1185,340 @@ export class AgentController {
 			).agents.revokeAuthority(
 				response.locals.customer,
 				request.params.agentId as string,
-				request.params.grantId as string
+				request.params.grantId as string,
+				callContext(response)
 			);
 			return { status: StatusCodes.OK, body: grantDto(grant) };
+		});
+	};
+
+	/**
+	 * @openapi
+	 *
+	 * /agents/{agentId}/authority/{grantId}:
+	 *   patch:
+	 *     tags: [ Agents ]
+	 *     summary: Change the expiry of an authority grant.
+	 *     description: |
+	 *       Changes a grant's expiry without revoking it. Grants are signed credentials, so Studio issues a replacement credential with the new expiry and, in the same operation, revokes the old one on its Token Status List. The grant keeps its `id`. The replacement credential is returned once, in this response. Honours `Idempotency-Key`.
+	 *
+	 *       Refused with 409 for a grant that is revoked or expired, for a KYA-OS delegation (no status list entry, so the old credential cannot be superseded), and for a tool-scope or mandate grant made before Studio kept its claims. 400 when the new expiry is in the past or later than the platform maximum (365 days from now unless the server sets `AGENT_GRANT_MAX_LIFETIME_DAYS`). Ownership: a grant or agent that is not yours is a 404.
+	 *     parameters:
+	 *       - name: agentId
+	 *         in: path
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           format: uuid
+	 *       - name: grantId
+	 *         in: path
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           format: uuid
+	 *     requestBody:
+	 *       required: true
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+	 *             required: [expiresAt]
+	 *             properties:
+	 *               expiresAt:
+	 *                 type: string
+	 *                 format: date-time
+	 *     responses:
+	 *       200:
+	 *         description: The expiry was changed.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               type: object
+	 *               properties:
+	 *                 grant:
+	 *                   $ref: '#/components/schemas/AuthorityGrant'
+	 *                 credential:
+	 *                   type: object
+	 *                   description: The replacement credential. Returned once.
+	 *                   properties:
+	 *                     format:
+	 *                       type: string
+	 *                     value:
+	 *                       type: string
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         $ref: '#/components/schemas/NotFoundError'
+	 *       409:
+	 *         description: The grant is revoked or expired, cannot be superseded, or a change to it is already in progress.
+	 *       501:
+	 *         description: The identity engine for this account cannot serve the agent endpoints yet. They need the Credo engine.
+	 */
+	public changeGrantExpiry = async (request: Request, response: Response) => {
+		return this.handleIdempotent(request, response, async () => {
+			const result = await (
+				await this.services()
+			).agents.changeGrantExpiry(
+				response.locals.customer,
+				request.params.agentId as string,
+				request.params.grantId as string,
+				{ expiresAt: request.body.expiresAt },
+				callContext(response)
+			);
+			return {
+				status: StatusCodes.OK,
+				body: {
+					grant: {
+						...grantDto(result.grant),
+						status: 'active',
+						summary: summariseGrant(result.grant as AuthorityGrantWithStatus),
+					},
+					credential: result.credential,
+				},
+			};
+		});
+	};
+
+	/**
+	 * @openapi
+	 *
+	 * /agents/{agentId}/keys:
+	 *   get:
+	 *     tags: [ Agents ]
+	 *     summary: List the keys of an agent.
+	 *     description: Read from the agent's DID document. `active` keys are in force, `rotated` keys stay in the document so earlier credentials still verify, `revoked` is every key of a deactivated DID. `usedBy` says which protocols an active key signs for. Never returns private material.
+	 *     parameters:
+	 *       - name: agentId
+	 *         in: path
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           format: uuid
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               type: object
+	 *               properties:
+	 *                 keys:
+	 *                   type: array
+	 *                   items:
+	 *                     $ref: '#/components/schemas/AgentKey'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         $ref: '#/components/schemas/NotFoundError'
+	 *       502:
+	 *         description: The agent's DID could not be resolved.
+	 *   post:
+	 *     tags: [ Agents ]
+	 *     summary: Add an Ed25519 key to an agent.
+	 *     description: Adds an Ed25519 key to an agent that has only a P-256 key, and updates the DID document on the ledger (costs CHEQ, paid by your payer account; ledger writes are queued per payer). Honours `Idempotency-Key`. 409 when an active Ed25519 key already exists.
+	 *     parameters:
+	 *       - name: agentId
+	 *         in: path
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           format: uuid
+	 *     requestBody:
+	 *       required: true
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+	 *             required: [type]
+	 *             properties:
+	 *               type:
+	 *                 type: string
+	 *                 enum: [Ed25519]
+	 *     responses:
+	 *       201:
+	 *         description: The key was added.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/AgentKey'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       402:
+	 *         description: The payer account has no CHEQ, or too little to pay the fee.
+	 *       404:
+	 *         $ref: '#/components/schemas/NotFoundError'
+	 *       409:
+	 *         description: The agent already has an active Ed25519 key, its DID is deactivated, or a key change is already in progress.
+	 *       503:
+	 *         description: The payer's write queue is busy. Retry after the time in Retry-After.
+	 */
+	public listKeys = async (request: Request, response: Response) => {
+		return this.handle(request, response, async () => {
+			const keys = await (
+				await this.services()
+			).agents.listKeys(response.locals.customer, request.params.agentId as string);
+			return response.status(StatusCodes.OK).json({ keys: keys.map(keyDto) });
+		});
+	};
+
+	public addKey = async (request: Request, response: Response) => {
+		return this.handleIdempotent(request, response, async () => {
+			const key = await (
+				await this.services()
+			).agents.addKey(
+				response.locals.customer,
+				request.params.agentId as string,
+				{ type: request.body.type },
+				callContext(response)
+			);
+			return { status: StatusCodes.CREATED, body: keyDto(key) };
+		});
+	};
+
+	/**
+	 * @openapi
+	 *
+	 * /agents/{agentId}/keys/rotate:
+	 *   post:
+	 *     tags: [ Agents ]
+	 *     summary: Rotate a key of an agent.
+	 *     description: |
+	 *       Makes a new key of the same type, updates the DID document on the ledger with the old key signing the update, and marks the old key `rotated`. The old key stays in the document so earlier credentials still verify. Uses your payer account and the per-payer ledger write queue and lock. Honours `Idempotency-Key`. Recorded in the audit log and the agent's activity.
+	 *
+	 *       Rotation does not reissue authority: a mandate stays bound to the key it was issued for, so grant it again to bind the new key.
+	 *     parameters:
+	 *       - name: agentId
+	 *         in: path
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           format: uuid
+	 *     requestBody:
+	 *       required: true
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+	 *             required: [keyId, confirm]
+	 *             properties:
+	 *               keyId:
+	 *                 type: string
+	 *                 description: The `keyId` from the key list (a full DID URL; the `#key-1` fragment is also accepted).
+	 *               confirm:
+	 *                 type: boolean
+	 *                 enum: [true]
+	 *     responses:
+	 *       200:
+	 *         description: The key was rotated.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               type: object
+	 *               properties:
+	 *                 oldKeyId:
+	 *                   type: string
+	 *                 newKeyId:
+	 *                   type: string
+	 *                 didUpdate:
+	 *                   type: object
+	 *                   properties:
+	 *                     txHash:
+	 *                       type: string
+	 *                       nullable: true
+	 *                       description: The ledger transaction hash. Null when the identity engine does not report it (the Credo engine does not yet).
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       402:
+	 *         description: The payer account has no CHEQ, or too little to pay the fee.
+	 *       404:
+	 *         description: No such agent in your account, or the agent has no such key.
+	 *       409:
+	 *         description: The key is not active, the DID is deactivated, or a rotation is already in progress.
+	 *       503:
+	 *         description: The payer's write queue is busy. Retry after the time in Retry-After.
+	 */
+	public rotateKey = async (request: Request, response: Response) => {
+		return this.handleIdempotent(request, response, async () => {
+			const result = await (
+				await this.services()
+			).agents.rotateKey(
+				response.locals.customer,
+				request.params.agentId as string,
+				{ keyId: request.body.keyId, confirm: request.body.confirm },
+				callContext(response)
+			);
+			return { status: StatusCodes.OK, body: result };
+		});
+	};
+
+	/**
+	 * @openapi
+	 *
+	 * /agents/{agentId}/activity:
+	 *   get:
+	 *     tags: [ Agents ]
+	 *     summary: The activity of an agent.
+	 *     description: What happened to the agent, newest first. Written by Studio when the change is made, and backfilled for agents that existed before the feed (registration, grants, revocations and cards only). `actor` is `owner`, `api-key` or `system`, never an email. Staff audit data is not part of it.
+	 *     parameters:
+	 *       - name: agentId
+	 *         in: path
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           format: uuid
+	 *       - name: limit
+	 *         in: query
+	 *         schema:
+	 *           type: integer
+	 *           minimum: 1
+	 *           maximum: 100
+	 *           default: 50
+	 *       - name: page
+	 *         in: query
+	 *         schema:
+	 *           type: integer
+	 *           minimum: 1
+	 *           default: 1
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               type: object
+	 *               properties:
+	 *                 total:
+	 *                   type: integer
+	 *                 events:
+	 *                   type: array
+	 *                   items:
+	 *                     $ref: '#/components/schemas/AgentEvent'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         $ref: '#/components/schemas/NotFoundError'
+	 */
+	public activity = async (request: Request, response: Response) => {
+		return this.handle(request, response, async () => {
+			const limit = Number(request.query.limit ?? 50);
+			const page = Number(request.query.page ?? 1);
+			const { total, events } = await (
+				await this.services()
+			).agents.listActivity(response.locals.customer, request.params.agentId as string, {
+				limit,
+				offset: (page - 1) * limit,
+			});
+			return response.status(StatusCodes.OK).json({ total, events: events.map(eventDto) });
 		});
 	};
 

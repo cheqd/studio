@@ -13,6 +13,7 @@ import type {
 } from '../../../src/services/identity/engine/types.js';
 import type {
 	AgentCardRecord,
+	AgentEventRecord,
 	AgentRecord,
 	AuthorityGrantRecord,
 	AuthorityGrantWithStatus,
@@ -23,12 +24,16 @@ import type {
 import type {
 	AgentPatch,
 	AgentStore,
+	GrantReplacement,
 	NewAgent,
 	NewAgentCard,
+	NewAgentEvent,
+	NewAuditEntry,
 	NewGrant,
 	NewPaymentAddressBinding,
 	NewStatusList,
 } from '../../../src/services/agent/agent-store.js';
+import { defaultCapabilities } from '../../../src/types/agent.js';
 import { conflict } from '../../../src/services/agent/agent-errors.js';
 import { ed25519MultibaseFromPublicKeyHex } from '../../../src/services/agent/agent-keys.js';
 
@@ -60,6 +65,14 @@ export class World {
 	>();
 	lists = new Map<string, { entries: number[]; did: string; owner: string }>();
 	signCalls: EngineSignRequest[] = [];
+	/** Every DID document the fake ledger was asked to update, with who asked. */
+	didUpdates: Array<{ did: string; doc: EngineDidDocument; owner: string }> = [];
+	/** Set to make the next `updateDid` fail, as an unfunded payer or a busy ledger would. */
+	failNextDidUpdate: Error | undefined;
+	/** Set to have `updateDid` report a transaction hash (the real Credo engine does not yet). */
+	reportTxHash: string | undefined;
+	/** Set to make the next `setTokenStatus` fail. */
+	failNextTokenStatus: Error | undefined;
 	/** Switch a reading off to see the verifier fail closed. */
 	unverifiableLists = new Set<string>();
 
@@ -117,6 +130,23 @@ export class FakeEngine {
 	async createDid(_network: string, doc: EngineDidDocument, customer: CustomerEntity) {
 		this.world.dids.set(doc.id, { doc, owner: customer.customerId, deactivated: false });
 		return { did: doc.id, provider: 'did:cheqd:testnet' };
+	}
+
+	async updateDid(doc: EngineDidDocument, customer: CustomerEntity) {
+		const entry = this.world.dids.get(doc.id);
+		if (!entry || entry.owner !== customer.customerId) throw new Error(`${doc.id} not found in wallet`);
+		if (this.world.failNextDidUpdate) {
+			const failure = this.world.failNextDidUpdate;
+			this.world.failNextDidUpdate = undefined;
+			throw failure;
+		}
+		entry.doc = doc;
+		this.world.didUpdates.push({ did: doc.id, doc, owner: customer.customerId });
+		return {
+			did: doc.id,
+			provider: 'did:cheqd:testnet',
+			...(this.world.reportTxHash ? { txHash: this.world.reportTxHash } : {}),
+		};
 	}
 
 	async resolveDid(did: string, options?: { resourceMetadata?: boolean }) {
@@ -224,6 +254,11 @@ export class FakeEngine {
 		updates: EngineTokenStatusUpdate[],
 		customer: CustomerEntity
 	): Promise<void> {
+		if (this.world.failNextTokenStatus) {
+			const failure = this.world.failNextTokenStatus;
+			this.world.failNextTokenStatus = undefined;
+			throw failure;
+		}
 		const list = this.world.lists.get(listUri);
 		if (!list || list.owner !== customer.customerId || list.did !== did)
 			throw new Error('status list not found in wallet');
@@ -267,6 +302,10 @@ export class FakeStore implements AgentStore {
 	cards: AgentCardRecord[] = [];
 	grants = new Map<string, AuthorityGrantWithStatus>();
 	bindings = new Map<string, PaymentAddressBindingWithStatus>();
+	events: AgentEventRecord[] = [];
+	audit: NewAuditEntry[] = [];
+	/** Set to make event writes fail, to prove the main operation does not depend on them. */
+	failEvents = false;
 	lists = new Map<string, TokenStatusListRecord & { customerId: string }>();
 	/** Every customerId a tenant-scoped method was called with, to prove nothing runs unscoped. */
 	calls: Array<{ method: string; customerId: string | undefined }> = [];
@@ -297,6 +336,8 @@ export class FakeStore implements AgentStore {
 			name: input.name,
 			description: input.description ?? null,
 			actsForDid: input.actsForDid ?? null,
+			capabilities: input.capabilities ?? defaultCapabilities(),
+			useCase: input.useCase ?? null,
 			status: 'active',
 			createdAt: now,
 			updatedAt: now,
@@ -310,9 +351,18 @@ export class FakeStore implements AgentStore {
 		const agent = this.agents.get(agentId);
 		return agent && agent.customerId === customerId && !agent.deletedAt ? agent : null;
 	}
-	async listAgents(customerId: string, page: { limit: number; offset: number }) {
+	async listAgents(customerId: string, page: { limit: number; offset: number; q?: string }) {
 		this.note('listAgents', customerId);
-		const all = [...this.agents.values()].filter((agent) => agent.customerId === customerId && !agent.deletedAt);
+		const needle = page.q?.trim().toLowerCase();
+		const all = [...this.agents.values()].filter(
+			(agent) =>
+				agent.customerId === customerId &&
+				!agent.deletedAt &&
+				(!needle ||
+					agent.name.toLowerCase().includes(needle) ||
+					(agent.description ?? '').toLowerCase().includes(needle) ||
+					agent.did.toLowerCase().includes(needle))
+		);
 		return { items: all.slice(page.offset, page.offset + page.limit), total: all.length };
 	}
 	async updateAgent(customerId: string, agentId: string, patch: AgentPatch) {
@@ -365,6 +415,14 @@ export class FakeStore implements AgentStore {
 			.sort((a, b) => b.version - a.version);
 		return matching[0] ?? null;
 	}
+	async latestPublishedCard(customerId: string, agentId: string) {
+		this.note('latestPublishedCard', customerId);
+		return (
+			this.cards
+				.filter((c) => c.customerId === customerId && c.agentId === agentId && c.resourceId)
+				.sort((a, b) => b.version - a.version)[0] ?? null
+		);
+	}
 	async countGrants(customerId: string, agentId: string, grantId: string) {
 		this.note('countGrants', customerId);
 		const grant = this.grants.get(grantId);
@@ -387,6 +445,12 @@ export class FakeStore implements AgentStore {
 			.filter((g) => g.customerId === customerId && g.agentId === agentId)
 			.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 	}
+	async listGrantsForAgents(customerId: string, agentIds: string[]) {
+		this.note('listGrantsForAgents', customerId);
+		return [...this.grants.values()]
+			.filter((g) => g.customerId === customerId && agentIds.includes(g.agentId))
+			.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+	}
 	async createGrant(input: NewGrant): Promise<AuthorityGrantRecord> {
 		this.note('createGrant', input.customerId);
 		const list = input.statusListId ? this.lists.get(input.statusListId) : undefined;
@@ -401,7 +465,8 @@ export class FakeStore implements AgentStore {
 			expiresAt: input.expiresAt ?? null,
 			revokedAt: null,
 			policySummary: input.policySummary ?? null,
-			createdAt: new Date(),
+			claims: input.claims ?? null,
+			createdAt: new Date(Date.now() + this.grants.size),
 			issuerDid: input.issuerDid,
 			statusListUri: list?.uri ?? null,
 		};
@@ -414,6 +479,46 @@ export class FakeStore implements AgentStore {
 		if (!grant) return null;
 		grant.revokedAt ??= new Date();
 		return grant;
+	}
+	async replaceGrantCredential(customerId: string, agentId: string, grantId: string, replacement: GrantReplacement) {
+		this.note('replaceGrantCredential', customerId);
+		const grant = await this.getGrant(customerId, agentId, grantId);
+		if (!grant) return null;
+		grant.issuedCredentialId = uuidv4();
+		grant.statusListId = replacement.statusListId;
+		grant.statusIndex = replacement.statusIndex;
+		grant.statusListUri = replacement.statusUri;
+		grant.expiresAt = replacement.expiresAt;
+		return grant;
+	}
+	async addEvent(input: NewAgentEvent) {
+		this.note('addEvent', input.customerId);
+		if (this.failEvents) throw new Error('event store down');
+		const event: AgentEventRecord = {
+			id: uuidv4(),
+			agentId: input.agentId,
+			customerId: input.customerId,
+			type: input.type,
+			actor: input.actor,
+			detail: input.detail ?? {},
+			createdAt: new Date(Date.now() + this.events.length),
+		};
+		this.events.push(event);
+		return event;
+	}
+	async listEvents(customerId: string, agentId: string, page: { limit: number; offset: number; types?: string[] }) {
+		this.note('listEvents', customerId);
+		const all = this.events
+			.filter(
+				(e) =>
+					e.customerId === customerId && e.agentId === agentId && (!page.types || page.types.includes(e.type))
+			)
+			.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+		return { items: all.slice(page.offset, page.offset + page.limit), total: all.length };
+	}
+	async recordAudit(entry: NewAuditEntry) {
+		this.note('recordAudit', entry.customerId);
+		this.audit.push(entry);
 	}
 	async countBindings(customerId: string, agentId: string, bindingId: string) {
 		this.note('countBindings', customerId);

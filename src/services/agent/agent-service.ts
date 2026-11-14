@@ -2,9 +2,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { fromString } from 'uint8arrays';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type {
+	AgentActor,
+	AgentCapabilities,
 	AgentCardRecord,
+	AgentEventRecord,
+	AgentEventType,
 	AgentNetwork,
 	AgentRecord,
+	AuthoritySummary,
 	AuthorityGrantRecord,
 	AuthorityGrantWithStatus,
 	GrantType,
@@ -12,9 +17,12 @@ import type {
 	PaymentAddressBindingWithStatus,
 	TokenStatusListRecord,
 } from '../../types/agent.js';
-import { AGENT_SETTABLE_STATUSES, VCT } from '../../types/agent.js';
+import { AGENT_SETTABLE_STATUSES, CAPABILITY_NAMES, VCT, defaultCapabilities } from '../../types/agent.js';
 import type { IdentityEngine } from '../identity/engine/identity-engine.js';
-import { buildAgentDidDocument } from './agent-keys.js';
+import { buildAgentDidDocument, documentWithNewKey, nextKeyFragment } from './agent-keys.js';
+import { viewKeys } from './agent-key-view.js';
+import type { AgentKeyView, KeyHistory } from './agent-key-view.js';
+import { summariseGrant } from './grant-summary.js';
 import { AGENT_CARD_RESOURCE_TYPE, buildAgentCard, signAgentCard } from './agent-card.js';
 import type { AgentCardInput } from './agent-card.js';
 import { assertionKeys, didSigner, engineMethod, requireCapabilities, resolveDidKeys } from './agent-engine.js';
@@ -27,9 +35,22 @@ import { buildSettlementView, summariseMandate } from './settlement.js';
 import type { SettlementView } from './settlement.js';
 import { issueSdJwtVc } from './sd-jwt.js';
 
+/** Who is calling, for the activity feed and the audit log. */
+export interface CallContext {
+	actor?: AgentActor;
+	/** The internal user id, for the audit log only. Never returned. */
+	userId?: string;
+}
+
+/** The label set an owner may send: any of the four flags, nothing else. */
+export type CapabilitiesInput = Partial<AgentCapabilities>;
+
 export interface RegisterAgentInput {
 	name: string;
 	description?: string;
+	capabilities?: CapabilitiesInput;
+	/** Free text for analytics. Stored, never trusted. */
+	useCase?: string;
 	network: AgentNetwork;
 	/** The organisation DID the agent acts for. Must be one of the customer's DIDs. */
 	actsForDid?: string;
@@ -71,17 +92,42 @@ export interface AgentServiceOptions {
 	newId?: () => string;
 	/** Number of entries in a status list this service creates. */
 	statusListSize?: number;
+	/** The resolver base URL (ends with `/`), for the card URL. Defaults to `RESOLVER_URL`. */
+	resolverUrl?: () => string;
+	/** Longest a grant's expiry may be set to, from now. Defaults to `AGENT_GRANT_MAX_LIFETIME_DAYS` or 365 days. */
+	maxGrantLifetimeDays?: () => number;
 }
 
 const DEFAULT_STATUS_LIST_SIZE = 131072;
 const MAX_NAME = 200;
 const MAX_DESCRIPTION = 2000;
+const MAX_USE_CASE = 64;
+const DEFAULT_MAX_GRANT_LIFETIME_DAYS = 365;
+const DEFAULT_RESOLVER_URL = 'https://resolver.cheqd.net/1.0/identifiers/';
+const DAY_MS = 24 * 60 * 60 * 1000;
 /** Live payment address bindings per agent. */
 export const MAX_PAYMENT_ADDRESSES = 10;
 /** Token Status List values (draft-ietf-oauth-status-list): 0 valid, 1 invalid (revoked), 2 suspended. */
 const STATUS_VALID = 0;
 const STATUS_REVOKED = 1;
 const STATUS_SUSPENDED = 2;
+
+/** Merges the labels an owner sent over a base. Unknown names and non-booleans are a 400, never ignored. */
+function mergeCapabilities(base: AgentCapabilities, input: unknown): AgentCapabilities {
+	if (input === undefined) return base;
+	if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+		throw badRequest('capabilities must be an object');
+	}
+	const merged = { ...base };
+	for (const [name, value] of Object.entries(input)) {
+		if (!(CAPABILITY_NAMES as readonly string[]).includes(name)) {
+			throw badRequest(`capabilities has no "${name}" (use ${CAPABILITY_NAMES.join(', ')})`);
+		}
+		if (typeof value !== 'boolean') throw badRequest(`capabilities.${name} must be true or false`);
+		merged[name as keyof AgentCapabilities] = value;
+	}
+	return merged;
+}
 
 const requireCustomer = (customer: CustomerEntity | undefined): CustomerEntity => {
 	if (!customer?.customerId) throw unauthorised();
@@ -105,6 +151,10 @@ export class AgentService {
 	private readonly now: () => Date;
 	private readonly newId: () => string;
 	private readonly statusListSize: number;
+	private readonly resolverUrl: () => string;
+	private readonly maxGrantLifetimeDays: () => number;
+	/** Key changes and expiry changes in progress in this process (`agent:<id>` or `grant:<id>`). */
+	private readonly inFlight = new Set<string>();
 
 	constructor(options: AgentServiceOptions) {
 		this.store = options.store;
@@ -113,17 +163,33 @@ export class AgentService {
 		this.now = options.now ?? (() => new Date());
 		this.newId = options.newId ?? uuidv4;
 		this.statusListSize = options.statusListSize ?? DEFAULT_STATUS_LIST_SIZE;
+		this.resolverUrl =
+			options.resolverUrl ?? (() => (process.env.RESOLVER_URL || DEFAULT_RESOLVER_URL).replace(/\/?$/, '/'));
+		this.maxGrantLifetimeDays =
+			options.maxGrantLifetimeDays ??
+			(() => {
+				const configured = Number(process.env.AGENT_GRANT_MAX_LIFETIME_DAYS);
+				return Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_MAX_GRANT_LIFETIME_DAYS;
+			});
 	}
 
 	// --- Agents -------------------------------------------------------------------------------------------
 
-	async register(customerIn: CustomerEntity | undefined, input: RegisterAgentInput): Promise<AgentRecord> {
+	async register(
+		customerIn: CustomerEntity | undefined,
+		input: RegisterAgentInput,
+		ctx: CallContext = {}
+	): Promise<AgentRecord> {
 		const customer = requireCustomer(customerIn);
 		const name = input.name?.trim();
 		if (!name || name.length > MAX_NAME) throw badRequest(`name is required (1 to ${MAX_NAME} characters)`);
 		if (input.description !== undefined && input.description.length > MAX_DESCRIPTION) {
 			throw badRequest(`description is at most ${MAX_DESCRIPTION} characters`);
 		}
+		if (input.useCase !== undefined && (typeof input.useCase !== 'string' || input.useCase.length > MAX_USE_CASE)) {
+			throw badRequest(`useCase is at most ${MAX_USE_CASE} characters`);
+		}
+		const capabilities = mergeCapabilities(defaultCapabilities(), input.capabilities);
 		if (input.actsForDid) await this.requireOwnedDid(customer, input.actsForDid);
 
 		const engine = await this.engineFor(customer);
@@ -138,24 +204,46 @@ export class AgentService {
 		});
 		const identifier = await engine.createDid(input.network, document, customer);
 
+		let created: AgentRecord;
 		try {
-			return await this.store.createAgent({
+			created = await this.store.createAgent({
 				customerId: customer.customerId,
 				did: identifier.did,
 				name,
 				description: input.description,
 				actsForDid: input.actsForDid,
+				capabilities,
+				useCase: input.useCase?.trim() || undefined,
 			});
 		} catch (error) {
 			throw upstreamFailure(
 				`The DID ${identifier.did} was created but the agent could not be saved: ${error instanceof Error ? error.message : 'unknown error'}`
 			);
 		}
+		await this.record(customer, created.agentId, 'registered', ctx, {});
+		return created;
 	}
 
-	async list(customerIn: CustomerEntity | undefined, page: { limit: number; offset: number }) {
+	/** One page of the customer's agents, filtered by `q` in the query, each with its authority summary. */
+	async list(customerIn: CustomerEntity | undefined, page: { limit: number; offset: number; q?: string }) {
 		const customer = requireCustomer(customerIn);
-		return this.store.listAgents(customer.customerId, page);
+		const { items, total } = await this.store.listAgents(customer.customerId, page);
+		const grants = await this.store.listGrantsForAgents(
+			customer.customerId,
+			items.map((agent) => agent.agentId)
+		);
+		const now = this.now();
+		return {
+			total,
+			items: items.map((agent) => ({
+				agent,
+				authoritySummary: this.authoritySummary(
+					agent,
+					grants.filter((grant) => grant.agentId === agent.agentId),
+					now
+				),
+			})),
+		};
 	}
 
 	async get(customerIn: CustomerEntity | undefined, agentId: string): Promise<AgentRecord> {
@@ -163,10 +251,31 @@ export class AgentService {
 		return this.owned(customer, agentId);
 	}
 
+	/** The agent with its authority summary and the URL of its published card (null when none is published). */
+	async detail(customerIn: CustomerEntity | undefined, agentId: string) {
+		const customer = requireCustomer(customerIn);
+		const agent = await this.owned(customer, agentId);
+		const grants = await this.store.listGrants(customer.customerId, agentId);
+		const published = await this.store.latestPublishedCard(customer.customerId, agentId);
+		return {
+			agent,
+			authoritySummary: this.authoritySummary(agent, grants, this.now()),
+			cardUrl: published?.resourceId
+				? `${this.resolverUrl()}${agent.did}/resources/${published.resourceId}`
+				: null,
+		};
+	}
+
 	async update(
 		customerIn: CustomerEntity | undefined,
 		agentId: string,
-		patch: { name?: string; description?: string | null; actsForDid?: string | null; status?: string }
+		patch: {
+			name?: string;
+			description?: string | null;
+			actsForDid?: string | null;
+			status?: string;
+			capabilities?: CapabilitiesInput;
+		}
 	): Promise<AgentRecord> {
 		const customer = requireCustomer(customerIn);
 		const current = await this.owned(customer, agentId);
@@ -185,6 +294,9 @@ export class AgentService {
 		if (patch.actsForDid !== undefined) {
 			if (patch.actsForDid !== null) await this.requireOwnedDid(customer, patch.actsForDid);
 			change.actsForDid = patch.actsForDid;
+		}
+		if (patch.capabilities !== undefined) {
+			change.capabilities = mergeCapabilities(current.capabilities, patch.capabilities);
 		}
 		if (patch.status !== undefined) {
 			if (!(AGENT_SETTABLE_STATUSES as readonly string[]).includes(patch.status)) {
@@ -232,7 +344,8 @@ export class AgentService {
 	async createCard(
 		customerIn: CustomerEntity | undefined,
 		agentId: string,
-		input: { card: AgentCardInput; publish?: boolean; alg?: 'ES256' | 'EdDSA' }
+		input: { card: AgentCardInput; publish?: boolean; alg?: 'ES256' | 'EdDSA' },
+		ctx: CallContext = {}
 	): Promise<AgentCardRecord> {
 		const customer = requireCustomer(customerIn);
 		const agent = await this.owned(customer, agentId);
@@ -271,7 +384,10 @@ export class AgentService {
 			);
 			publishedAt = this.now();
 		}
-		return this.store.createCard({
+		// Decided before the new card is saved: the first publication is `card-published`, every later version
+		// (published or not) is `card-updated`.
+		const firstPublication = input.publish && !(await this.store.latestPublishedCard(customer.customerId, agentId));
+		const created = await this.store.createCard({
 			agentId,
 			customerId: customer.customerId,
 			version,
@@ -280,6 +396,11 @@ export class AgentService {
 			resourceId,
 			publishedAt,
 		});
+		await this.record(customer, agentId, firstPublication ? 'card-published' : 'card-updated', ctx, {
+			version,
+			published: Boolean(input.publish),
+		});
+		return created;
 	}
 
 	async getCard(customerIn: CustomerEntity | undefined, agentId: string, version?: number): Promise<AgentCardRecord> {
@@ -292,16 +413,17 @@ export class AgentService {
 
 	// --- Authority ----------------------------------------------------------------------------------------
 
-	/** The agent's grants, newest first, with a status worked out from `revokedAt` and `expiresAt`. */
+	/** The agent's grants, newest first, with a status worked out from `revokedAt`, `expiresAt` and the agent's status. */
 	async listAuthority(customerIn: CustomerEntity | undefined, agentId: string) {
 		const customer = requireCustomer(customerIn);
-		await this.owned(customer, agentId);
+		const agent = await this.owned(customer, agentId);
 		const now = this.now();
 		const grants = await this.store.listGrants(customer.customerId, agentId);
 		return grants.map((grant) => ({
 			id: grant.id,
 			grantType: grant.grantType,
-			status: grant.revokedAt ? 'revoked' : grant.expiresAt && grant.expiresAt <= now ? 'expired' : 'active',
+			status: this.grantStatus(grant, agent, now),
+			summary: summariseGrant(grant),
 			createdAt: grant.createdAt,
 			expiresAt: grant.expiresAt ?? null,
 			revokedAt: grant.revokedAt ?? null,
@@ -311,7 +433,8 @@ export class AgentService {
 	async grantAuthority(
 		customerIn: CustomerEntity | undefined,
 		agentId: string,
-		input: GrantInput
+		input: GrantInput,
+		ctx: CallContext = {}
 	): Promise<IssuedAuthority> {
 		const customer = requireCustomer(customerIn);
 		const agent = await this.owned(customer, agentId);
@@ -331,8 +454,14 @@ export class AgentService {
 			throw badRequest('expiresAt must be a future ISO 8601 date');
 		}
 		const engine = await this.engineFor(customer);
-		if (input.grantType === 'delegation')
-			return this.issueDelegation(customer, engine, agent, issuerDid, input, expiresAt);
+		if (input.grantType === 'delegation') {
+			const issued = await this.issueDelegation(customer, engine, agent, issuerDid, input, expiresAt);
+			await this.record(customer, agentId, 'authority-granted', ctx, {
+				grantId: issued.grant.id,
+				grantType: 'delegation',
+			});
+			return issued;
+		}
 
 		requireCapabilities(engine, 'signWithDidKey', 'createTokenStatusList', 'setTokenStatus');
 
@@ -343,6 +472,11 @@ export class AgentService {
 		// Already validated by claimsFor. Kept so the settlement view needs no copy of the signed mandate.
 		const mandate = input.grantType === 'mandate' ? validateOpenMandateRequest(input.mandate) : undefined;
 		const policySummary = mandate?.ok ? (summariseMandate(mandate.mandate) ?? undefined) : undefined;
+		const claimsToKeep = this.claimsToKeep(
+			input.grantType,
+			specific,
+			mandate?.ok ? mandate.mandate.type : undefined
+		);
 		const issuer = await resolveDidKeys(engine, issuerDid);
 		if (issuer.deactivated) throw conflict('The issuer DID is deactivated');
 		const issuerKey = assertionKeys(issuer)[0];
@@ -373,6 +507,11 @@ export class AgentService {
 			statusUri: list.uri,
 			expiresAt,
 			policySummary,
+			claims: claimsToKeep,
+		});
+		await this.record(customer, agentId, 'authority-granted', ctx, {
+			grantId: grant.id,
+			grantType: input.grantType,
 		});
 		return { grant, credential: { format: 'sd-jwt-vc', value: compact } };
 	}
@@ -380,7 +519,8 @@ export class AgentService {
 	async revokeAuthority(
 		customerIn: CustomerEntity | undefined,
 		agentId: string,
-		grantId: string
+		grantId: string,
+		ctx: CallContext = {}
 	): Promise<AuthorityGrantWithStatus> {
 		const customer = requireCustomer(customerIn);
 		await this.owned(customer, agentId);
@@ -388,7 +528,250 @@ export class AgentService {
 			throw notFound('Authority grant');
 		const grant = await this.store.getGrant(customer.customerId, agentId, grantId);
 		if (!grant) throw notFound('Authority grant');
-		return this.revokeLoaded(customer, grant);
+		const wasLive = !grant.revokedAt;
+		const revoked = await this.revokeLoaded(customer, grant);
+		if (wasLive) {
+			await this.record(customer, agentId, 'authority-revoked', ctx, { grantId, grantType: grant.grantType });
+		}
+		return revoked;
+	}
+
+	/**
+	 * Changes a grant's expiry without revoking it. Grants are signed credentials, so this issues a replacement
+	 * with the new expiry and, in the same operation, revokes the old one on its Token Status List; the grant keeps
+	 * its id. Order: the replacement is signed first, then the old entry is revoked on the ledger, then Studio's
+	 * record is switched over, so a failure at any step leaves the old credential as the only valid one (or, if the
+	 * last step fails, neither valid: it fails closed, and re-granting fixes it).
+	 *
+	 * Not possible for grants whose claims Studio did not keep (made before this was built; `acts-for` has none to
+	 * keep) or for KYA-OS delegations (no status list entry, so the old credential cannot be superseded): 409.
+	 */
+	async changeGrantExpiry(
+		customerIn: CustomerEntity | undefined,
+		agentId: string,
+		grantId: string,
+		input: { expiresAt: unknown },
+		ctx: CallContext = {}
+	): Promise<IssuedAuthority & { replaced: { from: Date | null; to: Date } }> {
+		const customer = requireCustomer(customerIn);
+		const agent = await this.owned(customer, agentId);
+		if ((await this.store.countGrants(customer.customerId, agentId, grantId)) === 0)
+			throw notFound('Authority grant');
+		const grant = await this.store.getGrant(customer.customerId, agentId, grantId);
+		if (!grant) throw notFound('Authority grant');
+		const now = this.now();
+		if (grant.revokedAt) throw conflict('The grant is revoked');
+		if (grant.expiresAt && grant.expiresAt <= now) throw conflict('The grant has expired');
+		if (agent.status !== 'active') throw conflict(`The agent is ${agent.status}`);
+
+		const expiresAt = typeof input.expiresAt === 'string' ? new Date(input.expiresAt) : undefined;
+		if (!expiresAt || Number.isNaN(expiresAt.getTime())) throw badRequest('expiresAt must be an ISO 8601 date');
+		if (expiresAt <= now) throw badRequest('expiresAt must be in the future');
+		const maxDays = this.maxGrantLifetimeDays();
+		if (expiresAt.getTime() > now.getTime() + maxDays * DAY_MS) {
+			throw badRequest(`expiresAt is later than the platform maximum (${maxDays} days from now)`);
+		}
+
+		if (grant.grantType === 'delegation') {
+			throw conflict(
+				'KYA-OS delegations carry no status list entry, so a replacement cannot supersede the old credential. Revoke it and grant again.'
+			);
+		}
+		if (!grant.issuerDid || !grant.statusListUri || grant.statusIndex === null || grant.statusIndex === undefined) {
+			throw conflict('This grant has no status list entry, so its credential cannot be superseded');
+		}
+		const stored = (grant.claims ?? {}) as Record<string, unknown>;
+		const needsClaims = grant.grantType === 'tool-scope' || grant.grantType === 'mandate';
+		if (needsClaims && Object.keys(stored).length === 0) {
+			throw conflict(
+				'This grant was made before expiry changes were supported and its claims were not kept. Revoke it and grant again.'
+			);
+		}
+
+		const previousExpiry = grant.expiresAt ?? null;
+		const lock = `grant:${grantId}`;
+		if (this.inFlight.has(lock)) throw conflict('A change to this grant is already in progress');
+		this.inFlight.add(lock);
+		try {
+			const engine = await this.engineFor(customer);
+			requireCapabilities(engine, 'signWithDidKey', 'createTokenStatusList', 'setTokenStatus');
+			const { vct, specific } = await this.claimsForReissue(engine, agent, grant.grantType, stored);
+			const issuer = await resolveDidKeys(engine, grant.issuerDid);
+			if (issuer.deactivated) throw conflict('The issuer DID is deactivated');
+			const issuerKey = assertionKeys(issuer)[0];
+			if (!issuerKey) throw upstreamFailure(`The issuer DID ${grant.issuerDid} has no usable key`);
+
+			const { list, index } = await this.takeStatusIndex(customer, engine, grant.issuerDid);
+			const claims: Record<string, unknown> = {
+				iss: grant.issuerDid,
+				sub: agent.did,
+				vct,
+				...specific,
+				iat: Math.floor(now.getTime() / 1000),
+				exp: Math.floor(expiresAt.getTime() / 1000),
+				status: { status_list: { idx: index, uri: list.uri } },
+			};
+			const compact = await issueSdJwtVc(didSigner(engine, customer, grant.issuerDid, issuerKey), claims);
+
+			await engineMethod(engine, 'setTokenStatus')(
+				grant.issuerDid,
+				grant.statusListUri,
+				[{ index: grant.statusIndex, status: STATUS_REVOKED }],
+				customer
+			);
+			const replaced = await this.store.replaceGrantCredential(customer.customerId, agentId, grantId, {
+				issuerDid: grant.issuerDid,
+				subjectDid: agent.did,
+				format: 'sd-jwt-vc',
+				vct,
+				statusListId: list.registryId,
+				statusIndex: index,
+				statusUri: list.uri,
+				expiresAt,
+			});
+			if (!replaced) throw notFound('Authority grant');
+			await this.record(customer, agentId, 'authority-expiry-changed', ctx, {
+				grantId,
+				grantType: grant.grantType,
+				from: previousExpiry?.toISOString() ?? null,
+				to: expiresAt.toISOString(),
+			});
+			return {
+				grant: replaced,
+				credential: { format: 'sd-jwt-vc', value: compact },
+				replaced: { from: previousExpiry, to: expiresAt },
+			};
+		} finally {
+			this.inFlight.delete(lock);
+		}
+	}
+
+	// --- Keys ---------------------------------------------------------------------------------------------
+
+	/** The agent's keys, from its DID document and its key events. Public material only. */
+	async listKeys(customerIn: CustomerEntity | undefined, agentId: string): Promise<AgentKeyView[]> {
+		const customer = requireCustomer(customerIn);
+		const agent = await this.owned(customer, agentId);
+		const engine = await this.engineFor(customer);
+		const resolved = await resolveDidKeys(engine, agent.did);
+		return viewKeys(
+			resolved.document,
+			resolved.deactivated,
+			await this.keyHistory(customer, agentId),
+			agent.createdAt
+		);
+	}
+
+	/**
+	 * Rotates one key: a new key of the same type is made by the engine, the DID document on the ledger is updated
+	 * (the old key signs the update, through the engine's payer lock and write queue), and the old key is left in the
+	 * document but out of `authentication` and `assertionMethod`, so it is `rotated` and still verifies earlier
+	 * credentials. Existing mandates stay bound to the key they were issued for: grant them again to bind a new key.
+	 */
+	async rotateKey(
+		customerIn: CustomerEntity | undefined,
+		agentId: string,
+		input: { keyId: unknown; confirm: unknown },
+		ctx: CallContext = {}
+	) {
+		const customer = requireCustomer(customerIn);
+		if (input.confirm !== true) throw badRequest('confirm must be true to rotate a key');
+		if (typeof input.keyId !== 'string' || input.keyId.length === 0 || input.keyId.length > 512) {
+			throw badRequest('keyId is required');
+		}
+		const agent = await this.owned(customer, agentId);
+		return this.withAgentLock(agentId, async () => {
+			const engine = await this.engineFor(customer);
+			const resolved = await resolveDidKeys(engine, agent.did);
+			if (resolved.deactivated) throw conflict('The agent DID is deactivated');
+			const wanted = input.keyId as string;
+			const keyId = wanted.startsWith('#')
+				? `${agent.did}${wanted}`
+				: wanted.includes('#')
+					? wanted
+					: `${agent.did}#${wanted}`;
+			const keys = viewKeys(resolved.document, false, await this.keyHistory(customer, agentId), agent.createdAt);
+			const key = keys.find((candidate) => candidate.keyId === keyId);
+			if (!key) throw notFound('Key');
+			if (key.status !== 'active') throw conflict(`The key is ${key.status}, only an active key can be rotated`);
+
+			const created = await engine.createKey(
+				key.type === 'P-256' ? 'Secp256r1' : 'Ed25519',
+				customer,
+				`agent-${agent.name}-${key.type === 'P-256' ? 'p256' : 'ed25519'}-rotated`
+			);
+			const fragment = nextKeyFragment(resolved.document);
+			const document = documentWithNewKey(
+				resolved.document,
+				{ fragment, type: key.type, publicKeyHex: created.publicKeyHex },
+				keyId
+			);
+			const identifier = await engine.updateDid(document, customer);
+			const newKeyId = `${agent.did}#${fragment}`;
+			const txHash = typeof identifier?.txHash === 'string' ? identifier.txHash : null;
+			await this.record(customer, agentId, 'key-rotated', ctx, { oldKeyId: keyId, newKeyId, keyType: key.type });
+			await this.audit(customer, ctx, 'agent.key.rotated', { agentId, oldKeyId: keyId, newKeyId });
+			return { oldKeyId: keyId, newKeyId, didUpdate: { txHash } };
+		});
+	}
+
+	/**
+	 * Adds an Ed25519 key to an agent that has only a P-256 key, with the same ledger rules as a rotation. 409 when
+	 * an active Ed25519 key already exists. (The reverse, adding P-256, is not offered.)
+	 */
+	async addKey(
+		customerIn: CustomerEntity | undefined,
+		agentId: string,
+		input: { type: unknown },
+		ctx: CallContext = {}
+	): Promise<AgentKeyView> {
+		const customer = requireCustomer(customerIn);
+		if (input.type !== 'Ed25519') throw badRequest('type must be Ed25519');
+		const agent = await this.owned(customer, agentId);
+		return this.withAgentLock(agentId, async () => {
+			const engine = await this.engineFor(customer);
+			const resolved = await resolveDidKeys(engine, agent.did);
+			if (resolved.deactivated) throw conflict('The agent DID is deactivated');
+			const history = await this.keyHistory(customer, agentId);
+			const existing = viewKeys(resolved.document, false, history, agent.createdAt);
+			if (existing.some((key) => key.type === 'Ed25519' && key.status === 'active')) {
+				throw conflict('The agent already has an Ed25519 key');
+			}
+			const created = await engine.createKey('Ed25519', customer, `agent-${agent.name}-ed25519-added`);
+			const fragment = nextKeyFragment(resolved.document);
+			const document = documentWithNewKey(resolved.document, {
+				fragment,
+				type: 'Ed25519',
+				publicKeyHex: created.publicKeyHex,
+			});
+			await engine.updateDid(document, customer);
+			const keyId = `${agent.did}#${fragment}`;
+			const addedAt = this.now();
+			await this.record(customer, agentId, 'key-added', ctx, { keyId, keyType: 'Ed25519' });
+			await this.audit(customer, ctx, 'agent.key.added', { agentId, keyId, keyType: 'Ed25519' });
+			const added = viewKeys(
+				document,
+				false,
+				{ ...history, createdAt: new Map([[keyId, addedAt]]) },
+				agent.createdAt
+			).find((key) => key.keyId === keyId);
+			if (!added) throw upstreamFailure('The new key is not in the updated DID document');
+			return added;
+		});
+	}
+
+	// --- Activity -----------------------------------------------------------------------------------------
+
+	/** The agent's events, newest first. Customer-scoped; never staff audit data. */
+	async listActivity(
+		customerIn: CustomerEntity | undefined,
+		agentId: string,
+		page: { limit: number; offset: number }
+	): Promise<{ total: number; events: AgentEventRecord[] }> {
+		const customer = requireCustomer(customerIn);
+		await this.owned(customer, agentId);
+		const { items, total } = await this.store.listEvents(customer.customerId, agentId, page);
+		return { total, events: items };
 	}
 
 	// --- Payment addresses (Proposed, x402) ---------------------------------------------------------------
@@ -508,6 +891,149 @@ export class AgentService {
 	}
 
 	// --- Internals ----------------------------------------------------------------------------------------
+
+	/** Best effort: the change it describes has already happened, so a failed event write must not undo or hide it. */
+	private async record(
+		customer: CustomerEntity,
+		agentId: string,
+		type: AgentEventType,
+		ctx: CallContext,
+		detail: Record<string, unknown>
+	): Promise<void> {
+		try {
+			await this.store.addEvent({
+				agentId,
+				customerId: customer.customerId,
+				type,
+				actor: ctx.actor ?? 'owner',
+				detail,
+			});
+		} catch (error) {
+			console.error(
+				`Could not record the ${type} event: ${error instanceof Error ? error.message : 'unknown error'}`
+			);
+		}
+	}
+
+	/** The append-only audit log, for key changes. Best effort for the same reason as `record`. */
+	private async audit(
+		customer: CustomerEntity,
+		ctx: CallContext,
+		action: string,
+		metadata: Record<string, unknown>
+	): Promise<void> {
+		try {
+			await this.store.recordAudit({
+				customerId: customer.customerId,
+				actor: ctx.userId ? `${ctx.actor ?? 'owner'}:${ctx.userId}` : (ctx.actor ?? 'owner'),
+				action,
+				reason: 'Customer request through the agent API',
+				metadata,
+			});
+		} catch (error) {
+			console.error(
+				`Could not write the audit entry ${action}: ${error instanceof Error ? error.message : 'unknown error'}`
+			);
+		}
+	}
+
+	/** One key change at a time per agent in this process: the second gets a 409 instead of racing the first. */
+	private async withAgentLock<T>(agentId: string, work: () => Promise<T>): Promise<T> {
+		const lock = `agent:${agentId}`;
+		if (this.inFlight.has(lock)) throw conflict('A key change is already in progress for this agent');
+		this.inFlight.add(lock);
+		try {
+			return await work();
+		} finally {
+			this.inFlight.delete(lock);
+		}
+	}
+
+	private async keyHistory(customer: CustomerEntity, agentId: string): Promise<KeyHistory> {
+		const { items } = await this.store.listEvents(customer.customerId, agentId, {
+			limit: 500,
+			offset: 0,
+			types: ['key-added', 'key-rotated'],
+		});
+		const history: KeyHistory = { createdAt: new Map(), rotatedAt: new Map() };
+		// Newest first: keep the earliest creation and the latest rotation of each key.
+		for (const event of items) {
+			const detail = event.detail as { keyId?: string; oldKeyId?: string; newKeyId?: string };
+			if (event.type === 'key-added' && detail.keyId) history.createdAt.set(detail.keyId, event.createdAt);
+			if (event.type === 'key-rotated') {
+				if (detail.newKeyId) history.createdAt.set(detail.newKeyId, event.createdAt);
+				if (detail.oldKeyId && !history.rotatedAt.has(detail.oldKeyId)) {
+					history.rotatedAt.set(detail.oldKeyId, event.createdAt);
+				}
+			}
+		}
+		return history;
+	}
+
+	private grantStatus(
+		grant: { revokedAt?: Date | null; expiresAt?: Date | null },
+		agent: AgentRecord,
+		now: Date
+	): 'active' | 'revoked' | 'expired' | 'suspended' {
+		if (grant.revokedAt) return 'revoked';
+		if (grant.expiresAt && grant.expiresAt <= now) return 'expired';
+		// Studio only: a suspended agent's grants are shown as suspended (the credentials themselves are unchanged).
+		return agent.status === 'suspended' ? 'suspended' : 'active';
+	}
+
+	/** Counts of the agent's active (not revoked, not expired) grants, and the DID it acts for. */
+	private authoritySummary(agent: AgentRecord, grants: AuthorityGrantWithStatus[], now: Date): AuthoritySummary {
+		const active = grants.filter((grant) => !grant.revokedAt && !(grant.expiresAt && grant.expiresAt <= now));
+		const count = (type: string) => active.filter((grant) => grant.grantType === type).length;
+		// Newest first: the first acts-for grant is the latest. Its issuer is the DID the agent acts for.
+		const actsFor = active.find((grant) => grant.grantType === 'acts-for');
+		return {
+			actsFor: actsFor ? (actsFor.issuerDid ?? agent.actsForDid ?? null) : null,
+			grantCounts: {
+				actsFor: count('acts-for'),
+				mandate: count('mandate'),
+				delegation: count('delegation'),
+				toolScope: count('tool-scope'),
+			},
+		};
+	}
+
+	/** The grant-specific claims worth keeping for a reissue: policy only, never `cnf`. */
+	private claimsToKeep(
+		grantType: GrantType,
+		specific: Record<string, unknown>,
+		mandateType: string | undefined
+	): Record<string, unknown> | undefined {
+		if (grantType === 'tool-scope') return { tools: specific.tools };
+		if (grantType === 'mandate') return { constraints: specific.constraints, mandateType };
+		return undefined;
+	}
+
+	/** The vct and claims for a replacement credential, from what was kept; a mandate is rebound to the agent's current P-256 key. */
+	private async claimsForReissue(
+		engine: IdentityEngine,
+		agent: AgentRecord,
+		grantType: string,
+		stored: Record<string, unknown>
+	): Promise<{ vct: string; specific: Record<string, unknown> }> {
+		switch (grantType) {
+			case 'acts-for':
+				return { vct: VCT.actsFor, specific: {} };
+			case 'tool-scope':
+				return { vct: VCT.toolScope, specific: { tools: stored.tools } };
+			case 'mandate': {
+				const resolved = await resolveDidKeys(engine, agent.did);
+				const key = resolved.keys.find((candidate) => candidate.alg === 'ES256');
+				if (!key) throw upstreamFailure('The agent DID has no P-256 key to bind the mandate to');
+				return {
+					vct: stored.mandateType === 'checkout' ? VCT.checkoutOpenMandate : VCT.paymentOpenMandate,
+					specific: { constraints: stored.constraints, cnf: { jwk: key.jwk } },
+				};
+			}
+			default:
+				throw conflict(`A ${grantType} grant cannot have its expiry changed`);
+		}
+	}
 
 	/** Ownership by count, then a customer-scoped read. 404 for anything that is not this customer's agent. */
 	private async owned(customer: CustomerEntity, agentId: string): Promise<AgentRecord> {

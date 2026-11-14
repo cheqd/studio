@@ -60,6 +60,8 @@ export class APITokenUserInfoFetcher extends UserInfoHelper implements IUserInfo
 			this.setScopes(_resp.data, response);
 			response.locals.user = userEntity;
 			response.locals.customer = customerEntity;
+			// Lets handlers say who acted (the agent activity feed shows `api-key`, never an email).
+			response.locals.authMethod = 'api-key';
 			return;
 		} catch (error) {
 			const failure = apiKeyVerificationFailure(error);

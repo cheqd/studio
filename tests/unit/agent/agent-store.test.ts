@@ -193,4 +193,105 @@ describe('TypeormAgentStore', () => {
 		expect(saved.map((call) => call.entity)).toEqual(['IssuedCredentialEntity', 'PaymentAddressBindingEntity']);
 		expect(JSON.stringify(saved[0]?.args[0])).not.toContain('eyJ');
 	});
+
+	it('puts `q` in the query as three alternatives that each carry the customer, with wildcards escaped', async () => {
+		await store.listAgents(customerId, { limit: 10, offset: 0, q: '  50%_off\\  ' });
+		const call = recorded.find((c) => c.entity === 'AgentEntity' && c.method === 'findAndCount');
+		const where = (call?.args[0] as { where: Array<Record<string, any>> }).where;
+		expect(where).toHaveLength(3);
+		for (const alternative of where) expect(alternative.customer).toEqual({ customerId });
+		const patterns = [where[0]?.name, where[1]?.description, where[2]?.identifier?.did].map(
+			(operator) => operator.value as string
+		);
+		expect(new Set(patterns).size).toBe(1);
+		expect(patterns[0]).toBe('%50\\%\\_off\\\\%');
+		expect(where[0]?.name.type).toBe('ilike');
+	});
+
+	it('does not filter when q is blank, and takes the page and offset', async () => {
+		await store.listAgents(customerId, { limit: 5, offset: 10, q: '   ' });
+		const call = recorded.find((c) => c.entity === 'AgentEntity' && c.method === 'findAndCount');
+		const options = call?.args[0] as { where: unknown; take: number; skip: number };
+		expect(options.where).toEqual({ customer: { customerId } });
+		expect([options.take, options.skip]).toEqual([5, 10]);
+	});
+
+	it('scopes the new reads by customer and refuses a missing identifier', async () => {
+		rows.AuthorityGrantEntity = {
+			id: grantId,
+			grantType: 'acts-for',
+			createdAt: new Date(),
+			agent: { agentId },
+			statusList: { registryId: 'r', uri: 'u', identifier: { did: 'did:cheqd:testnet:org' } },
+		};
+		await store.listGrantsForAgents(customerId, [agentId]);
+		await store.latestPublishedCard(customerId, agentId);
+		await store.listEvents(customerId, agentId, { limit: 10, offset: 0, types: ['key-added'] });
+		await store.addEvent({ agentId, customerId, type: 'registered', actor: 'owner' });
+		// (The recording proxy hands `save` a promise, so the event's customer is checked on `create`.)
+		const scoped = recorded.filter(
+			(c) =>
+				['AuthorityGrantEntity', 'AgentCardEntity', 'AgentEventEntity'].includes(c.entity) &&
+				c.method !== 'save'
+		);
+		expect(scoped.length).toBeGreaterThanOrEqual(4);
+		for (const call of scoped) {
+			const text = JSON.stringify(
+				call.method === 'save' || call.method === 'create'
+					? call.args[0]
+					: (call.args[0] as { where: unknown }).where
+			);
+			expect([call.entity, call.method, text].join(' ')).toContain(customerId);
+		}
+		expect(await store.listGrantsForAgents(customerId, [])).toEqual([]);
+		await expect(store.listEvents('', agentId, { limit: 1, offset: 0 })).rejects.toThrow(/missing identifier/);
+		await expect(store.listGrantsForAgents(customerId, [''])).rejects.toThrow(/missing identifier/);
+	});
+
+	it('swaps a grant credential in one transaction: new credential, grant repointed, old credential revoked', async () => {
+		rows.AuthorityGrantEntity = {
+			id: grantId,
+			grantType: 'tool-scope',
+			createdAt: new Date(),
+			statusIndex: 1,
+			statusList: { registryId: 'r', uri: 'u', identifier: { did: 'did:cheqd:testnet:org' } },
+			issuedCredential: { issuedCredentialId: 'old-credential' },
+		};
+		await store.replaceGrantCredential(customerId, agentId, grantId, {
+			issuerDid: 'did:cheqd:testnet:org',
+			subjectDid: 'did:cheqd:testnet:agent',
+			format: 'sd-jwt-vc',
+			vct: 'v',
+			statusListId: 'r2',
+			statusIndex: 4,
+			statusUri: 'https://l.example',
+			expiresAt: new Date('2027-01-01T00:00:00Z'),
+		});
+		const writes = recorded.filter((c) => ['save', 'update'].includes(c.method));
+		expect(writes.map((c) => `${c.entity}.${c.method}`)).toEqual([
+			'IssuedCredentialEntity.save',
+			'AuthorityGrantEntity.update',
+			'IssuedCredentialEntity.update',
+		]);
+		expect(JSON.stringify(writes[1]?.args[0])).toContain(customerId);
+		expect(JSON.stringify(writes[2]?.args)).toContain('old-credential');
+		expect(JSON.stringify(writes[2]?.args)).toContain('revoked');
+		expect(JSON.stringify(writes[0]?.args[0])).not.toContain('eyJ');
+	});
+
+	it('writes an audit entry to the append-only log with the customer as target, and no email', async () => {
+		await store.recordAudit({
+			customerId,
+			actor: 'owner',
+			action: 'agent.key.rotated',
+			reason: 'Customer request through the agent API',
+			metadata: { agentId },
+		});
+		const insert = recorded.find((c) => c.entity === 'AdminAuditLogEntity' && c.method === 'insert');
+		expect(insert?.args[0]).toMatchObject({
+			actorUserId: 'owner',
+			targetCustomerId: customerId,
+			action: 'agent.key.rotated',
+		});
+	});
 });

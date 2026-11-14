@@ -359,6 +359,11 @@ class App {
 		app.get('/agents/:agentId/authority', AgentController.idValidator, agents.listAuthority);
 		app.post('/agents/:agentId/authority', AgentController.grantValidator, agents.grantAuthority);
 		app.delete('/agents/:agentId/authority/:grantId', AgentController.revokeValidator, agents.revokeAuthority);
+		app.patch('/agents/:agentId/authority/:grantId', AgentController.expiryValidator, agents.changeGrantExpiry);
+		app.get('/agents/:agentId/keys', AgentController.idValidator, agents.listKeys);
+		app.post('/agents/:agentId/keys', AgentController.addKeyValidator, agents.addKey);
+		app.post('/agents/:agentId/keys/rotate', AgentController.rotateKeyValidator, agents.rotateKey);
+		app.get('/agents/:agentId/activity', AgentController.activityValidator, agents.activity);
 		// x402, Proposed: payment addresses and the read-only settlement view
 		app.get('/agents/:agentId/payment-addresses', AgentController.idValidator, agents.listPaymentAddresses);
 		app.post(

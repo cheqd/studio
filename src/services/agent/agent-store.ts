@@ -1,7 +1,10 @@
+import { ILike, In, IsNull, Not } from 'typeorm';
 import type { EntityManager } from 'typeorm';
 import { Connection } from '../../database/connection/connection.js';
 import { AgentEntity } from '../../database/entities/agent.entity.js';
 import { AgentCardEntity } from '../../database/entities/agent-card.entity.js';
+import { AdminAuditLogEntity } from '../../database/entities/admin-audit-log.entity.js';
+import { AgentEventEntity } from '../../database/entities/agent-event.entity.js';
 import { AuthorityGrantEntity } from '../../database/entities/authority-grant.entity.js';
 import { PaymentAddressBindingEntity } from '../../database/entities/payment-address-binding.entity.js';
 import { IssuedCredentialEntity } from '../../database/entities/issued-credential.entity.js';
@@ -9,11 +12,15 @@ import { StatusRegistryEntity } from '../../database/entities/status-registry.en
 import { IdentifierEntity } from '../../database/entities/identifier.entity.js';
 import { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { recordActivation } from '../analytics/activation.js';
-import { VCT } from '../../types/agent.js';
+import { VCT, defaultCapabilities } from '../../types/agent.js';
 import { StatusRegistryState } from '../../types/credential-status.js';
 import { CredentialCategory } from '../../types/credential.js';
 import type {
+	AgentActor,
+	AgentCapabilities,
 	AgentCardRecord,
+	AgentEventRecord,
+	AgentEventType,
 	AgentRecord,
 	AuthorityGrantRecord,
 	AuthorityGrantWithStatus,
@@ -30,13 +37,45 @@ export interface NewAgent {
 	name: string;
 	description?: string;
 	actsForDid?: string;
+	capabilities?: AgentCapabilities;
+	useCase?: string;
 }
 
 export interface AgentPatch {
 	name?: string;
 	description?: string | null;
 	actsForDid?: string | null;
+	capabilities?: AgentCapabilities;
 	status?: string;
+}
+
+export interface NewAgentEvent {
+	agentId: string;
+	customerId: string;
+	type: AgentEventType;
+	actor: AgentActor;
+	detail?: Record<string, unknown>;
+}
+
+export interface NewAuditEntry {
+	customerId: string;
+	/** `owner` or `api-key`, with the internal user id when known. Never an email. */
+	actor: string;
+	action: string;
+	reason: string;
+	metadata: Record<string, unknown>;
+}
+
+/** What replaces a grant's credential when its expiry changes. The grant keeps its id. */
+export interface GrantReplacement {
+	issuerDid: string;
+	subjectDid: string;
+	format: 'sd-jwt-vc' | 'jwt';
+	vct: string;
+	statusListId: string;
+	statusIndex: number;
+	statusUri: string;
+	expiresAt: Date;
 }
 
 export interface NewAgentCard {
@@ -63,6 +102,8 @@ export interface NewGrant {
 	expiresAt?: Date;
 	/** Payment mandates only: the non-secret policy summary for the settlement view. */
 	policySummary?: MandatePolicySummary;
+	/** Tool names, scopes or mandate constraints (never `cnf`), so an expiry change can reissue the credential. */
+	claims?: Record<string, unknown>;
 }
 
 export interface NewPaymentAddressBinding {
@@ -99,9 +140,10 @@ export interface AgentStore {
 	countAgents(customerId: string, agentId: string): Promise<number>;
 	createAgent(agent: NewAgent): Promise<AgentRecord>;
 	getAgent(customerId: string, agentId: string): Promise<AgentRecord | null>;
+	/** `q` matches name, description or DID, case-insensitively, in the query itself (so `total` is the filtered count). */
 	listAgents(
 		customerId: string,
-		page: { limit: number; offset: number }
+		page: { limit: number; offset: number; q?: string }
 	): Promise<{ items: AgentRecord[]; total: number }>;
 	updateAgent(customerId: string, agentId: string, patch: AgentPatch): Promise<AgentRecord | null>;
 	softDeleteAgent(customerId: string, agentId: string): Promise<boolean>;
@@ -109,14 +151,41 @@ export interface AgentStore {
 	latestCardVersion(customerId: string, agentId: string): Promise<number>;
 	createCard(card: NewAgentCard): Promise<AgentCardRecord>;
 	getCard(customerId: string, agentId: string, version?: number): Promise<AgentCardRecord | null>;
+	/** The newest card of the agent that has been published (a DID-Linked Resource written), or null. */
+	latestPublishedCard(customerId: string, agentId: string): Promise<AgentCardRecord | null>;
 
 	countGrants(customerId: string, agentId: string, grantId: string): Promise<number>;
 	getGrant(customerId: string, agentId: string, grantId: string): Promise<AuthorityGrantWithStatus | null>;
 	listLiveGrants(customerId: string, agentId: string): Promise<AuthorityGrantWithStatus[]>;
-	/** Every grant of the agent (live and revoked), newest first. Rows only: no credential is loaded. */
-	listGrants(customerId: string, agentId: string): Promise<AuthorityGrantRecord[]>;
+	/** Every grant of the agent (live and revoked), newest first, with its issuer DID. No credential is loaded. */
+	listGrants(customerId: string, agentId: string): Promise<AuthorityGrantWithStatus[]>;
+	/** Every grant of several agents of one customer (one query), with issuer DIDs. No credential is loaded. */
+	listGrantsForAgents(customerId: string, agentIds: string[]): Promise<AuthorityGrantWithStatus[]>;
 	createGrant(grant: NewGrant): Promise<AuthorityGrantRecord>;
 	markGrantRevoked(customerId: string, agentId: string, grantId: string): Promise<AuthorityGrantWithStatus | null>;
+	/**
+	 * In one transaction: records a new credential for the grant, points the grant at it (new status list entry and
+	 * expiry), and marks the old credential revoked. The grant id does not change. Null when the grant is not found.
+	 */
+	replaceGrantCredential(
+		customerId: string,
+		agentId: string,
+		grantId: string,
+		replacement: GrantReplacement
+	): Promise<AuthorityGrantWithStatus | null>;
+
+	addEvent(event: NewAgentEvent): Promise<AgentEventRecord>;
+	/** Newest first. */
+	listEvents(
+		customerId: string,
+		agentId: string,
+		page: { limit: number; offset: number; types?: AgentEventType[] }
+	): Promise<{ items: AgentEventRecord[]; total: number }>;
+	/**
+	 * Records a customer-initiated change that touches keys or the ledger in the append-only audit log. Failure is
+	 * the caller's to log: the ledger write it describes has already happened.
+	 */
+	recordAudit(entry: NewAuditEntry): Promise<void>;
 
 	countBindings(customerId: string, agentId: string, bindingId: string): Promise<number>;
 	getBinding(customerId: string, agentId: string, bindingId: string): Promise<PaymentAddressBindingWithStatus | null>;
@@ -160,6 +229,8 @@ const toAgent = (
 	name: row.name,
 	description: row.description ?? null,
 	actsForDid: row.actsForDid ?? null,
+	capabilities: { ...defaultCapabilities(), ...(row.capabilities as Partial<AgentCapabilities> | undefined) },
+	useCase: row.useCase ?? null,
 	status: row.status,
 	createdAt: row.createdAt,
 	updatedAt: row.updatedAt,
@@ -189,10 +260,24 @@ const toGrant = (row: AuthorityGrantEntity, agentId: string, customerId: string)
 	expiresAt: row.expiresAt ?? null,
 	revokedAt: row.revokedAt ?? null,
 	policySummary: (row.policySummary as MandatePolicySummary | undefined) ?? null,
+	claims: row.claims ?? null,
 	createdAt: row.createdAt,
 	issuerDid: row.statusList?.identifier?.did ?? null,
 	statusListUri: row.statusList?.uri ?? null,
 });
+
+const toEvent = (row: AgentEventEntity, agentId: string, customerId: string): AgentEventRecord => ({
+	id: row.id,
+	agentId,
+	customerId,
+	type: row.type as AgentEventType,
+	actor: row.actor as AgentActor,
+	detail: row.detail ?? {},
+	createdAt: row.createdAt,
+});
+
+/** A `LIKE` pattern that matches the text anywhere, with `%`, `_` and `\` in the text taken literally. */
+const containsPattern = (text: string) => `%${text.replace(/[\\%_]/g, (character) => `\\${character}`)}%`;
 
 const toBinding = (
 	row: PaymentAddressBindingEntity,
@@ -238,6 +323,8 @@ export class TypeormAgentStore implements AgentStore {
 				name: agent.name,
 				description: agent.description,
 				actsForDid: agent.actsForDid,
+				capabilities: agent.capabilities ?? defaultCapabilities(),
+				useCase: agent.useCase,
 				status: 'active',
 			})
 		);
@@ -256,10 +343,23 @@ export class TypeormAgentStore implements AgentStore {
 		return row ? toAgent(row, customerId) : null;
 	}
 
-	async listAgents(customerId: string, page: { limit: number; offset: number }) {
+	async listAgents(customerId: string, page: { limit: number; offset: number; q?: string }) {
 		need(customerId);
+		const text = page.q?.trim();
+		// The filter is part of the query, so `total` and the page both reflect it. Three alternatives, each
+		// still carrying the customer: an OR must never widen the tenant scope.
+		const where = text
+			? (() => {
+					const pattern = containsPattern(text);
+					return [
+						{ customer: { customerId }, name: ILike(pattern) },
+						{ customer: { customerId }, description: ILike(pattern) },
+						{ customer: { customerId }, identifier: { did: ILike(pattern) } },
+					];
+				})()
+			: { customer: { customerId } };
 		const [rows, total] = await this.db.getRepository(AgentEntity).findAndCount({
-			where: { customer: { customerId } },
+			where,
 			relations: { identifier: true },
 			order: { createdAt: 'DESC' },
 			take: page.limit,
@@ -320,6 +420,15 @@ export class TypeormAgentStore implements AgentStore {
 		return row ? toCard(row, agentId, customerId) : null;
 	}
 
+	async latestPublishedCard(customerId: string, agentId: string): Promise<AgentCardRecord | null> {
+		need(customerId, agentId);
+		const row = await this.db.getRepository(AgentCardEntity).findOne({
+			where: { agent: { agentId }, customer: { customerId }, resourceId: Not(IsNull()) },
+			order: { version: 'DESC' },
+		});
+		return row ? toCard(row, agentId, customerId) : null;
+	}
+
 	async countGrants(customerId: string, agentId: string, grantId: string): Promise<number> {
 		need(customerId, agentId, grantId);
 		return this.db
@@ -345,21 +454,25 @@ export class TypeormAgentStore implements AgentStore {
 		return rows.filter((row) => !row.revokedAt).map((row) => toGrant(row, agentId, customerId));
 	}
 
-	async listGrants(customerId: string, agentId: string): Promise<AuthorityGrantRecord[]> {
+	async listGrants(customerId: string, agentId: string): Promise<AuthorityGrantWithStatus[]> {
 		need(customerId, agentId);
 		const rows = await this.db.getRepository(AuthorityGrantEntity).find({
 			where: { agent: { agentId }, customer: { customerId } },
+			relations: { statusList: { identifier: true } },
 			order: { createdAt: 'DESC', id: 'ASC' },
 		});
-		return rows.map((row) => ({
-			id: row.id,
-			agentId,
-			customerId,
-			grantType: row.grantType,
-			expiresAt: row.expiresAt ?? null,
-			revokedAt: row.revokedAt ?? null,
-			createdAt: row.createdAt,
-		}));
+		return rows.map((row) => toGrant(row, agentId, customerId));
+	}
+
+	async listGrantsForAgents(customerId: string, agentIds: string[]): Promise<AuthorityGrantWithStatus[]> {
+		need(customerId, ...agentIds);
+		if (agentIds.length === 0) return [];
+		const rows = await this.db.getRepository(AuthorityGrantEntity).find({
+			where: { agent: { agentId: In(agentIds) }, customer: { customerId } },
+			relations: { agent: true, statusList: { identifier: true } },
+			order: { createdAt: 'DESC', id: 'ASC' },
+		});
+		return rows.map((row) => toGrant(row, row.agent.agentId, customerId));
 	}
 
 	async createGrant(grant: NewGrant): Promise<AuthorityGrantRecord> {
@@ -406,6 +519,7 @@ export class TypeormAgentStore implements AgentStore {
 					statusIndex: grant.statusIndex,
 					expiresAt: grant.expiresAt,
 					policySummary: grant.policySummary as unknown as Record<string, unknown> | undefined,
+					claims: grant.claims,
 				})
 			);
 			return {
@@ -419,6 +533,7 @@ export class TypeormAgentStore implements AgentStore {
 				expiresAt: saved.expiresAt ?? null,
 				revokedAt: null,
 				policySummary: grant.policySummary ?? null,
+				claims: grant.claims ?? null,
 				createdAt: saved.createdAt,
 			};
 		});
@@ -578,6 +693,103 @@ export class TypeormAgentStore implements AgentStore {
 			}
 		});
 		return { ...grant, revokedAt };
+	}
+
+	async replaceGrantCredential(
+		customerId: string,
+		agentId: string,
+		grantId: string,
+		replacement: GrantReplacement
+	): Promise<AuthorityGrantWithStatus | null> {
+		need(customerId, agentId, grantId);
+		const grant = await this.getGrant(customerId, agentId, grantId);
+		if (!grant) return null;
+		await this.db.transaction(async (manager: EntityManager) => {
+			const now = new Date();
+			const credential = new IssuedCredentialEntity(
+				'studio',
+				replacement.format,
+				CredentialCategory.CREDENTIAL,
+				[replacement.vct],
+				now,
+				{ customerId } as CustomerEntity,
+				{
+					issuerId: replacement.issuerDid,
+					subjectId: replacement.subjectDid,
+					statusIndex: replacement.statusIndex,
+					expiresAt: replacement.expiresAt,
+					credentialStatus: { status_list: { idx: replacement.statusIndex, uri: replacement.statusUri } },
+					statusRegistry: { registryId: replacement.statusListId } as StatusRegistryEntity,
+					metadata: { agentId, grantType: grant.grantType, replaces: grant.issuedCredentialId ?? undefined },
+				}
+			);
+			credential.engine = 'credo';
+			credential.statusFormat = TOKEN_STATUS_LIST;
+			const saved = await manager.getRepository(IssuedCredentialEntity).save(credential);
+			await manager.getRepository(AuthorityGrantEntity).update(
+				{ id: grantId, agent: { agentId }, customer: { customerId } },
+				{
+					issuedCredential: { issuedCredentialId: saved.issuedCredentialId } as IssuedCredentialEntity,
+					statusList: { registryId: replacement.statusListId } as StatusRegistryEntity,
+					statusIndex: replacement.statusIndex,
+					expiresAt: replacement.expiresAt,
+				}
+			);
+			if (grant.issuedCredentialId) {
+				await manager
+					.getRepository(IssuedCredentialEntity)
+					.update(
+						{ issuedCredentialId: grant.issuedCredentialId, customer: { customerId } },
+						{ status: 'revoked', statusUpdatedAt: now }
+					);
+			}
+		});
+		return this.getGrant(customerId, agentId, grantId);
+	}
+
+	async addEvent(event: NewAgentEvent): Promise<AgentEventRecord> {
+		need(event.customerId, event.agentId);
+		const repository = this.db.getRepository(AgentEventEntity);
+		const saved = await repository.save(
+			repository.create({
+				agent: { agentId: event.agentId } as AgentEntity,
+				customer: { customerId: event.customerId } as CustomerEntity,
+				type: event.type,
+				actor: event.actor,
+				detail: event.detail ?? {},
+			})
+		);
+		return toEvent(saved, event.agentId, event.customerId);
+	}
+
+	async recordAudit(entry: NewAuditEntry): Promise<void> {
+		need(entry.customerId, entry.actor, entry.action);
+		await this.db.getRepository(AdminAuditLogEntity).insert({
+			actorUserId: entry.actor,
+			action: entry.action,
+			targetCustomerId: entry.customerId,
+			reason: entry.reason,
+			metadata: entry.metadata as never,
+		});
+	}
+
+	async listEvents(
+		customerId: string,
+		agentId: string,
+		page: { limit: number; offset: number; types?: AgentEventType[] }
+	) {
+		need(customerId, agentId);
+		const [rows, total] = await this.db.getRepository(AgentEventEntity).findAndCount({
+			where: {
+				agent: { agentId },
+				customer: { customerId },
+				...(page.types ? { type: In(page.types) } : {}),
+			},
+			order: { createdAt: 'DESC', id: 'ASC' },
+			take: page.limit,
+			skip: page.offset,
+		});
+		return { items: rows.map((row) => toEvent(row, agentId, customerId)), total };
 	}
 
 	async findOpenStatusList(customerId: string, issuerDid: string): Promise<TokenStatusListRecord | null> {

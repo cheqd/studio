@@ -25,6 +25,16 @@ export class AgentAuthRuleProvider extends AuthRuleProvider {
 		this.registerRule('^/agents/[^/]+/authority/[^/]+$', 'DELETE', 'revoke:agent-authority', {
 			skipNamespace: true,
 		});
+		// Changing a grant's expiry issues a replacement credential, so it needs the same scope as granting.
+		this.registerRule('^/agents/[^/]+/authority/[^/]+$', 'PATCH', 'issue:agent-authority', {
+			skipNamespace: true,
+		});
+		// Keys: reading uses read:agent; adding and rotating change the agent's DID, so they use update:agent.
+		// No new Logto scope to provision.
+		this.registerRule('^/agents/[^/]+/keys$', 'GET', 'read:agent', { skipNamespace: true });
+		this.registerRule('^/agents/[^/]+/keys$', 'POST', 'update:agent', { skipNamespace: true });
+		this.registerRule('^/agents/[^/]+/keys/rotate$', 'POST', 'update:agent', { skipNamespace: true });
+		this.registerRule('^/agents/[^/]+/activity$', 'GET', 'read:agent', { skipNamespace: true });
 		// x402, Proposed. Reading uses read:agent (no new Logto scope); binding and revoking need their own.
 		this.registerRule('^/agents/[^/]+/payment-addresses$', 'GET', 'read:agent', { skipNamespace: true });
 		this.registerRule('^/agents/[^/]+/payment-addresses$', 'POST', 'issue:agent-payment-address', {
