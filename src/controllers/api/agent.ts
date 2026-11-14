@@ -57,6 +57,16 @@ import type { CallContext } from '../../services/agent/agent-service.js';
  *         updatedAt:
  *           type: string
  *           format: date-time
+ *     AgentInvalidRequest:
+ *       description: The request failed validation. Agent routes use the same `{ error, code }` envelope as their other errors.
+ *       type: object
+ *       properties:
+ *         error:
+ *           type: string
+ *           example: name is required
+ *         code:
+ *           type: string
+ *           example: invalid_request
  *     AgentCapabilities:
  *       type: object
  *       description: Labels the owner chose for the agent. They describe it; nothing enforces them.
@@ -613,7 +623,7 @@ export class AgentController {
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/InvalidRequest'
+	 *               $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       402:
@@ -661,7 +671,7 @@ export class AgentController {
 	 *                   items:
 	 *                     $ref: '#/components/schemas/Agent'
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 */
@@ -727,7 +737,7 @@ export class AgentController {
 	 *             schema:
 	 *               $ref: '#/components/schemas/AgentDetail'
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
@@ -770,7 +780,7 @@ export class AgentController {
 	 *             schema:
 	 *               $ref: '#/components/schemas/Agent'
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
@@ -801,7 +811,7 @@ export class AgentController {
 	 *                 revokedPaymentAddresses:
 	 *                   type: integer
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
@@ -883,7 +893,7 @@ export class AgentController {
 	 *             schema:
 	 *               $ref: '#/components/schemas/AgentCard'
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       402:
@@ -918,7 +928,7 @@ export class AgentController {
 	 *             schema:
 	 *               $ref: '#/components/schemas/AgentCard'
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
@@ -1007,7 +1017,7 @@ export class AgentController {
 	 *                         format: date-time
 	 *                         nullable: true
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
@@ -1104,7 +1114,7 @@ export class AgentController {
 	 *                   type: string
 	 *                   enum: [untested]
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       403:
@@ -1141,7 +1151,7 @@ export class AgentController {
 	 *             schema:
 	 *               $ref: '#/components/schemas/AuthorityGrant'
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
@@ -1246,7 +1256,7 @@ export class AgentController {
 	 *                     value:
 	 *                       type: string
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
@@ -1309,7 +1319,7 @@ export class AgentController {
 	 *                   items:
 	 *                     $ref: '#/components/schemas/AgentKey'
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
@@ -1346,7 +1356,7 @@ export class AgentController {
 	 *             schema:
 	 *               $ref: '#/components/schemas/AgentKey'
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       402:
@@ -1433,7 +1443,7 @@ export class AgentController {
 	 *                       nullable: true
 	 *                       description: The ledger transaction hash. Null when the identity engine does not report it (the Credo engine does not yet).
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       402:
@@ -1502,7 +1512,7 @@ export class AgentController {
 	 *                   items:
 	 *                     $ref: '#/components/schemas/AgentEvent'
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
@@ -1553,7 +1563,7 @@ export class AgentController {
 	 *                   items:
 	 *                     $ref: '#/components/schemas/PaymentAddressBinding'
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
@@ -1615,7 +1625,7 @@ export class AgentController {
 	 *                       type: string
 	 *                       description: The compact SD-JWT VC. Returned once; Studio does not keep it.
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
@@ -1656,7 +1666,7 @@ export class AgentController {
 	 *             schema:
 	 *               $ref: '#/components/schemas/PaymentAddressBinding'
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
@@ -1820,7 +1830,7 @@ export class AgentController {
 	 *                       account:
 	 *                         type: string
 	 *       400:
-	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
@@ -1849,7 +1859,7 @@ export class AgentController {
 	): Promise<Response> {
 		const invalid = validationResult(request);
 		if (!invalid.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: invalid.array().pop()?.msg });
+			return this.invalid(response, invalid.array().pop()?.msg);
 		}
 		try {
 			const header = request.headers?.['idempotency-key'];
@@ -1876,6 +1886,13 @@ export class AgentController {
 		} catch (error) {
 			return this.fail(response, error);
 		}
+	}
+
+	/** express-validator failures: the same `{ error, code }` envelope as every other agent error. */
+	private invalid(response: Response, message: unknown): Response {
+		return response
+			.status(StatusCodes.BAD_REQUEST)
+			.json({ error: typeof message === 'string' ? message : 'Invalid request', code: 'invalid_request' });
 	}
 
 	private fail(response: Response, error: unknown): Response {
@@ -1907,7 +1924,7 @@ export class AgentController {
 	private async handle(request: Request, response: Response, run: () => Promise<Response>): Promise<Response> {
 		const invalid = validationResult(request);
 		if (!invalid.isEmpty()) {
-			return response.status(StatusCodes.BAD_REQUEST).json({ error: invalid.array().pop()?.msg });
+			return this.invalid(response, invalid.array().pop()?.msg);
 		}
 		try {
 			return await run();

@@ -2,7 +2,8 @@
 
 What the agents area of the portal needs from Studio, on top of the existing `/agents` routes. Every route is
 customer-scoped: an agent (or grant) that is not yours answers 404 with exactly the body of an unknown one. Every
-write honours `Idempotency-Key`. Errors use the existing agent envelope (`{ error, code }`). The OpenAPI source is
+write honours `Idempotency-Key`. Errors use the existing agent envelope (`{ error, code }`), including request validation failures: a 400 from the
+validators is `{ error, code: 'invalid_request' }` (the OpenAPI schema is `AgentInvalidRequest`). The OpenAPI source is
 `src/controllers/api/agent.ts` (built into `src/static/swagger-api.json`); the route inventory is
 `tests/contract/inventory/routes.json`.
 

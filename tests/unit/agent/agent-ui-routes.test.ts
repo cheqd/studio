@@ -154,6 +154,45 @@ describe('GET /agents with q, authoritySummary and capabilities', () => {
 	});
 });
 
+describe('validation errors carry a code', () => {
+	const cases: Array<[string, Call]> = [
+		['register', { handler: 'register', validators: V.registerValidator as never, body: {} }],
+		['list', { handler: 'list', validators: V.listValidator as never, query: { q: 'x'.repeat(201) } }],
+		[
+			'activity',
+			{
+				handler: 'activity',
+				validators: V.activityValidator as never,
+				params: { agentId: ZERO },
+				query: { limit: '500' },
+			},
+		],
+		[
+			'rotateKey',
+			{ handler: 'rotateKey', validators: V.rotateKeyValidator as never, params: { agentId: ZERO }, body: {} },
+		],
+		['get', { handler: 'get', validators: V.idValidator as never, params: { agentId: 'nope' } }],
+	];
+	it.each(cases)('%s answers { error, code: invalid_request }', async (_name, spec) => {
+		const result = await call({ ...spec, customer: customerA });
+		expect(result.status).toBe(400);
+		expect(result.body).toEqual({ error: expect.any(String), code: 'invalid_request' });
+		expect(result.body.error.length).toBeGreaterThan(0);
+	});
+
+	it('also does so for an idempotent write route', async () => {
+		const result = await call({
+			handler: 'changeGrantExpiry',
+			validators: V.expiryValidator,
+			params: { agentId: ZERO, grantId: ZERO },
+			body: { expiresAt: 'tomorrow-ish' },
+			customer: customerA,
+		});
+		expect(result.status).toBe(400);
+		expect(result.body.code).toBe('invalid_request');
+	});
+});
+
 describe('authoritySummary and a suspended agent', () => {
 	it('counts no grants of a suspended agent, in the list and in the detail, and again after reactivation', async () => {
 		const { agent, params } = await newAgent();
