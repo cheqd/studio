@@ -18,6 +18,7 @@ import type {
 	AuthoritySummary,
 	GrantType,
 } from '../../types/agent.js';
+import { sanitiseEventDetail } from '../../services/agent/agent-event-detail.js';
 import { summariseGrant } from '../../services/agent/grant-summary.js';
 import type { AgentKeyView } from '../../services/agent/agent-key-view.js';
 import type { CallContext } from '../../services/agent/agent-service.js';
@@ -331,7 +332,7 @@ const eventDto = (event: AgentEventRecord) => ({
 	type: event.type,
 	at: event.createdAt,
 	actor: event.actor,
-	detail: event.detail,
+	detail: sanitiseEventDetail(event.type, event.detail),
 });
 
 /** Who is calling, for the activity feed and audit log. `authMethod` is set by the API key middleware. */

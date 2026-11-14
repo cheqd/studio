@@ -1,3 +1,4 @@
+import { sanitiseEventDetail } from './agent-event-detail.js';
 import { v4 as uuidv4 } from 'uuid';
 import { fromString } from 'uint8arrays';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
@@ -905,7 +906,7 @@ export class AgentService {
 				customerId: customer.customerId,
 				type,
 				actor: ctx.actor ?? 'owner',
-				detail,
+				detail: sanitiseEventDetail(type, detail),
 			});
 		} catch (error) {
 			console.error(

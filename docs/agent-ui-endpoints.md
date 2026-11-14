@@ -88,7 +88,11 @@ first (limit 1 to 100, default 50). Types: `registered`, `authority-granted`, `a
 `authority-expiry-changed`, `key-added`, `key-rotated`, `card-published`, `card-updated`. The first publication of a
 card is `card-published`; every later card version, published or not, is `card-updated`. `actor` is `owner` (a
 signed-in user), `api-key` or `system`, never an email. Events live in the new `agentEvent` table, written by the
-agent service. Nothing from `adminAuditLog` is read into it. An event that cannot be written is logged and does not
+agent service. `detail` is always an object and is an allowlist per type, applied on write and again on read
+(`src/services/agent/agent-event-detail.ts`): `registered` none; `authority-granted` and `authority-revoked` `grantId`,
+`grantType`; `authority-expiry-changed` also `from`, `to`; `key-added` `keyId`, `keyType`; `key-rotated` `oldKeyId`,
+`newKeyId`, `keyType`; `card-published` and `card-updated` `version`, `published`. Values are short scalars; anything
+that looks like an email address or a token is dropped. Nothing from `adminAuditLog` is read into it. An event that cannot be written is logged and does not
 undo the change it describes.
 
 The backfill (migration `1791701800000`) creates, for agents that already exist and with actor `system`:

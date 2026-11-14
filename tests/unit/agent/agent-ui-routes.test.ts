@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { AgentController } from '../../../src/controllers/api/agent.js';
 import { AgentService } from '../../../src/services/agent/agent-service.js';
 import { LedgerUnavailableError } from '../../../src/services/identity/ledger-lock.js';
+import { AGENT_EVENT_TYPES } from '../../../src/types/agent.js';
 import { IdempotencyService } from '../../../src/services/idempotency/idempotency.js';
 import { customerA, customerB, newWorld, seedOrganisationDid } from './fakes.js';
 import type { FakeStore, World } from './fakes.js';
@@ -1040,5 +1041,95 @@ describe('summary function wiring', () => {
 		expect(listed.body.grants[0].summary).toBe(
 			summariseGrant({ grantType: 'tool-scope', claims: store.grants.get(made.grant.id)!.claims })
 		);
+	});
+});
+
+describe('GET /agents/{id}/activity detail never carries secrets or emails', () => {
+	const LEAK = /@|eyJ|[A-Fa-f0-9]{64}|private|secret|password|bearer|mailto/i;
+	const activity = (agentId: string) =>
+		call({ handler: 'activity', validators: V.activityValidator, params: { agentId }, customer: customerA });
+
+	it('holds for every event type, produced by the real operations', async () => {
+		const ctx = { actor: 'owner' as const, userId: 'someone@example.com' };
+		const { agent } = await newAgent(customerA, { name: 'ops@example.com bot', description: 'mail me: a@b.co' });
+		const made = await agents.grantAuthority(
+			customerA,
+			agent.agentId,
+			{ grantType: 'tool-scope', tools: ['mail@example.com'], expiresAt: '2026-12-01T00:00:00Z' } as never,
+			ctx
+		);
+		await agents.changeGrantExpiry(
+			customerA,
+			agent.agentId,
+			made.grant.id,
+			{ expiresAt: '2027-01-01T00:00:00Z' },
+			ctx
+		);
+		await agents.createCard(
+			customerA,
+			agent.agentId,
+			{ card: { endpoint: 'https://agent.example/a2a' }, publish: true },
+			ctx
+		);
+		await agents.createCard(customerA, agent.agentId, { card: { endpoint: 'https://agent.example/a2a' } }, ctx);
+		await agents.revokeAuthority(customerA, agent.agentId, made.grant.id, ctx);
+		await agents.rotateKey(customerA, agent.agentId, { keyId: 'key-1', confirm: true }, ctx);
+
+		const other = await newAgent();
+		const entry = world.dids.get(other.agent.did)!;
+		const keep = `${other.agent.did}#key-1`;
+		entry.doc = {
+			...entry.doc,
+			verificationMethod: (entry.doc.verificationMethod as Array<{ id: string }>).filter((m) => m.id === keep),
+			authentication: [keep],
+			assertionMethod: [keep],
+		};
+		await agents.addKey(customerA, other.agent.agentId, { type: 'Ed25519' }, ctx);
+
+		const events = [
+			...(await activity(agent.agentId)).body.events,
+			...(await activity(other.agent.agentId)).body.events,
+		];
+		expect(new Set(events.map((e: any) => e.type))).toEqual(new Set(AGENT_EVENT_TYPES));
+		for (const event of events) {
+			expect(typeof event.detail).toBe('object');
+			expect(JSON.stringify(event)).not.toMatch(LEAK);
+		}
+	});
+
+	it('strips anything unexpected from a stored row on the way out, for every event type', async () => {
+		const { agent } = await newAgent();
+		const poison = {
+			email: 'owner@example.com',
+			grantId: 'ok-id',
+			keyId: 'owner@example.com',
+			oldKeyId: 'eyJhbGciOiJFUzI1NiJ9.eyJzdWIiOiIxIn0.c2ln',
+			newKeyId: `${agent.did}#key-9`,
+			keyType: 'Ed25519',
+			privateKeyHex: 'a'.repeat(64),
+			credential: 'eyJhbGciOiJFUzI1NiJ9.eyJzdWIiOiIxIn0.c2ln',
+			version: 3,
+			published: true,
+			from: null,
+			to: 'ops@example.com',
+			nested: { password: 'hunter2' },
+		};
+		for (const type of AGENT_EVENT_TYPES) {
+			await store.addEvent({
+				agentId: agent.agentId,
+				customerId: customerA.customerId,
+				type,
+				actor: 'system',
+				detail: poison,
+			});
+		}
+		const { body } = await activity(agent.agentId);
+		expect(body.events.length).toBeGreaterThanOrEqual(AGENT_EVENT_TYPES.length);
+		for (const event of body.events) {
+			expect(JSON.stringify(event)).not.toMatch(LEAK);
+			expect(Object.keys(event.detail)).not.toEqual(expect.arrayContaining(['email', 'credential', 'nested']));
+		}
+		const rotated = body.events.find((e: any) => e.type === 'key-rotated' && e.detail.newKeyId);
+		expect(rotated.detail).toEqual({ newKeyId: `${agent.did}#key-9`, keyType: 'Ed25519' });
 	});
 });
