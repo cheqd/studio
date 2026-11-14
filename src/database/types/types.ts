@@ -25,6 +25,7 @@ import { DeletedAccountRecordEntity } from '../entities/deleted-account-record.e
 import { FeatureFlagEntity } from '../entities/feature-flag.entity.js';
 import { AgentEntity } from '../entities/agent.entity.js';
 import { AgentCardEntity } from '../entities/agent-card.entity.js';
+import { AgentEventEntity } from '../entities/agent-event.entity.js';
 import { AuthorityGrantEntity } from '../entities/authority-grant.entity.js';
 import { PaymentAddressBindingEntity } from '../entities/payment-address-binding.entity.js';
 import { IdempotencyKeyEntity } from '../entities/idempotency-key.entity.js';
@@ -88,6 +89,9 @@ import { StudioMigrations1791701300000 } from '../migrations/1791701300000-studi
 import { StudioMigrations1791701400000 } from '../migrations/1791701400000-studio-migrations.js';
 import { StudioMigrations1791701500000 } from '../migrations/1791701500000-studio-migrations.js';
 import { StudioMigrations1791701600000 } from '../migrations/1791701600000-studio-migrations.js';
+import { StudioMigrations1791701700000 } from '../migrations/1791701700000-studio-migrations.js';
+import { StudioMigrations1791701800000 } from '../migrations/1791701800000-studio-migrations.js';
+import { StudioMigrations1791701900000 } from '../migrations/1791701900000-studio-migrations.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -226,6 +230,9 @@ export class Postgres implements AbstractDatabase {
 				StudioMigrations1791701500000,
 				// Add authorityGrant.policySummary (settlement view)
 				StudioMigrations1791701600000,
+				StudioMigrations1791701700000,
+				StudioMigrations1791701800000,
+				StudioMigrations1791701900000,
 			],
 			entities: [
 				...Entities,
@@ -250,6 +257,7 @@ export class Postgres implements AbstractDatabase {
 				FeatureFlagEntity,
 				AgentEntity,
 				AgentCardEntity,
+				AgentEventEntity,
 				AuthorityGrantEntity,
 				PaymentAddressBindingEntity,
 				AdminAuditLogEntity,

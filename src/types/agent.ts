@@ -31,6 +31,49 @@ export const VCT = {
 	checkoutOpenMandate: 'mandate.checkout.open.1',
 } as const;
 
+/** Labels the owner chose for an agent. They describe it for people and tooling; nothing enforces them. */
+export interface AgentCapabilities {
+	a2a: boolean;
+	ap2: boolean;
+	kyaOs: boolean;
+	mcp: boolean;
+}
+export const CAPABILITY_NAMES = ['a2a', 'ap2', 'kyaOs', 'mcp'] as const;
+export const defaultCapabilities = (): AgentCapabilities => ({ a2a: false, ap2: false, kyaOs: false, mcp: false });
+
+/** Who did something to an agent, as the customer sees it. Never an email or a user id. */
+export const AGENT_ACTORS = ['owner', 'api-key', 'system'] as const;
+export type AgentActor = (typeof AGENT_ACTORS)[number];
+
+export const AGENT_EVENT_TYPES = [
+	'registered',
+	'authority-granted',
+	'authority-revoked',
+	'authority-expiry-changed',
+	'key-added',
+	'key-rotated',
+	'card-published',
+	'card-updated',
+] as const;
+export type AgentEventType = (typeof AGENT_EVENT_TYPES)[number];
+
+export interface AgentEventRecord {
+	id: string;
+	agentId: string;
+	customerId: string;
+	type: AgentEventType;
+	actor: AgentActor;
+	detail: Record<string, unknown>;
+	createdAt: Date;
+}
+
+/** The authority an agent holds, in two lines for a list row. Active grants only. */
+export interface AuthoritySummary {
+	/** The DID the active acts-for grant says the agent acts for, else null. */
+	actsFor: string | null;
+	grantCounts: { actsFor: number; mandate: number; delegation: number; toolScope: number };
+}
+
 export interface AgentRecord {
 	agentId: string;
 	customerId: string;
@@ -38,6 +81,8 @@ export interface AgentRecord {
 	name: string;
 	description?: string | null;
 	actsForDid?: string | null;
+	capabilities: AgentCapabilities;
+	useCase?: string | null;
 	status: string;
 	createdAt: Date;
 	updatedAt: Date;
@@ -86,6 +131,8 @@ export interface AuthorityGrantRecord {
 	revokedAt?: Date | null;
 	/** Only for payment mandates, and only for grants made after the settlement view was added. */
 	policySummary?: MandatePolicySummary | null;
+	/** Tool names, scopes or mandate constraints. Kept so an expiry change can reissue the credential. */
+	claims?: Record<string, unknown> | null;
 	createdAt: Date;
 }
 

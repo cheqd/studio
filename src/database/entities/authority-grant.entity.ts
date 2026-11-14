@@ -50,6 +50,10 @@ export class AuthorityGrantEntity {
 	@Column({ type: 'jsonb', nullable: true })
 	policySummary?: Record<string, unknown>;
 
+	/** The grant-specific claims (tools, scopes, mandate constraints), kept so an expiry change can reissue the credential. Never `cnf`, never the signed credential. */
+	@Column({ type: 'jsonb', nullable: true })
+	claims?: Record<string, unknown>;
+
 	@CreateDateColumn({ type: 'timestamptz' })
 	createdAt!: Date;
 }
