@@ -468,7 +468,7 @@ describe('staff analytics on Postgres', { skip }, () => {
 		assert.equal(a1.plan, 'Build');
 		assert.equal(a1.status, 'active');
 		assert.equal(a1.network, 'testnet');
-		assert.deepEqual(a1.usage, { apiCalls30d: 4, identifiers: 1, credentials: 0, keys: 0 });
+		assert.deepEqual(a1.usage, { apiCalls30d: 4, identifiers: 1, credentials: 0, keys: 0, didKeys: 0, apiKeys: 0 });
 		assert.ok(a1.lastActiveAt);
 		const p1 = all.customers.find((x: { id: string }) => x.id === c.P1);
 		assert.equal(p1.usage.credentials, 1);
@@ -502,8 +502,9 @@ describe('staff analytics on Postgres', { skip }, () => {
 			await service.auditLog(1, 100),
 		]);
 		assert.ok(!text.includes('kid-secret'));
-		assert.ok(!/"cd"|publicKeyHex|privateKey|apiKey|VerifiableCredential|did:cheqd/.test(text));
+		assert.ok(!/"cd"|publicKeyHex|privateKey|"apiKey"|VerifiableCredential|did:cheqd/.test(text));
 		assert.equal((await service.getCustomer(c.A1)).usage.keys, 1); // counted, never shown
+		assert.equal((await service.getCustomer(c.A1)).usage.didKeys, 1);
 	});
 
 	it('recordActivation is idempotent and keeps the first timestamp', async () => {

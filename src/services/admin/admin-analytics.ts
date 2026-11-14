@@ -38,7 +38,12 @@ export interface CustomerUsage {
 	apiCalls30d: number;
 	identifiers: number;
 	credentials: number;
+	/** @deprecated The count of DID keys, kept for compatibility. Use `didKeys`; it was never API keys. */
 	keys: number;
+	/** DID keys (rows in `key`). */
+	didKeys: number;
+	/** API keys that are not revoked. */
+	apiKeys: number;
 }
 export interface CustomerSummary {
 	id: string;
@@ -147,6 +152,7 @@ export class AdminAnalyticsService {
 			(SELECT COUNT(*) FROM "identifier" i WHERE i."customerId" = ${alias}.id) AS identifiers,
 			(SELECT COUNT(*) FROM "issuedCredential" ic WHERE ic."customerId" = ${alias}.id AND ic."category" = 'credential') AS credentials,
 			(SELECT COUNT(*) FROM "key" k WHERE k."customerId" = ${alias}.id) AS keys,
+			(SELECT COUNT(*) FROM "apiKey" ak WHERE ak."customerId" = ${alias}.id AND ak."revoked" = false) AS "apiKeys",
 			CASE WHEN EXISTS (SELECT 1 FROM "identifier" i WHERE i."customerId" = ${alias}.id AND i."provider" LIKE 'did:cheqd:mainnet%') THEN 'mainnet' ELSE 'testnet' END AS network`;
 	}
 
@@ -168,6 +174,8 @@ export class AdminAnalyticsService {
 				identifiers: num(row.identifiers),
 				credentials: num(row.credentials),
 				keys: num(row.keys),
+				didKeys: num(row.keys),
+				apiKeys: num(row.apiKeys),
 			},
 		};
 	}

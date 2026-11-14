@@ -401,6 +401,7 @@ describe('AdminAnalyticsService shaping and privacy', () => {
 							identifiers: '2',
 							credentials: '1',
 							keys: '3',
+							apiKeys: '2',
 							network: 'mainnet',
 						},
 						{
@@ -414,6 +415,7 @@ describe('AdminAnalyticsService shaping and privacy', () => {
 							identifiers: '0',
 							credentials: '0',
 							keys: '1',
+							apiKeys: '0',
 							network: 'testnet',
 						},
 					]
@@ -424,7 +426,28 @@ describe('AdminAnalyticsService shaping and privacy', () => {
 			['a', 'active', 'mainnet', false],
 			['b', 'inactive', 'testnet', true],
 		]);
-		expect(result.customers[0].usage).toEqual({ apiCalls30d: 5, identifiers: 2, credentials: 1, keys: 3 });
+		expect(result.customers[0].usage).toEqual({
+			apiCalls30d: 5,
+			identifiers: 2,
+			credentials: 1,
+			keys: 3,
+			didKeys: 3,
+			apiKeys: 2,
+		});
+	});
+
+	it('counts API keys from the apiKey table, leaving revoked ones out, and keeps DID keys separate', async () => {
+		const seen: string[] = [];
+		const { service } = serviceWith((sql) => {
+			seen.push(sql);
+			return sql.includes('COUNT(*) AS total') ? [{ total: '0' }] : [];
+		});
+		await service.listCustomers({ page: 1, limit: 25 });
+		const text = seen.join('\n');
+		expect(text).toMatch(
+			/FROM "apiKey" ak WHERE ak\."customerId" = \w+\.id AND ak\."revoked" = false\) AS "apiKeys"/
+		);
+		expect(text).toMatch(/FROM "key" k WHERE k\."customerId" = \w+\.id\) AS keys/);
 	});
 
 	it('escapes LIKE wildcards in q and passes it as a parameter, never in the SQL text', async () => {
@@ -462,7 +485,8 @@ describe('AdminAnalyticsService shaping and privacy', () => {
 			/private-?key/i,
 			/"privateKeyHex"/,
 			/"publicKeyHex"/,
-			/"apiKey"/,
+			// the apiKey table may be counted (`FROM "apiKey"`), never read as a column
+			/(?<!FROM )"apiKey"/,
 			/"apiKeyHash"/,
 			/"claim"/,
 			/"claims"/,

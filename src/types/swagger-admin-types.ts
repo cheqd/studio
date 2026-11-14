@@ -47,7 +47,9 @@
  *             apiCalls30d: { type: integer }
  *             identifiers: { type: integer }
  *             credentials: { type: integer }
- *             keys: { type: integer }
+ *             keys: { type: integer, deprecated: true, description: 'Deprecated: the count of DID keys. Use didKeys.' }
+ *             didKeys: { type: integer, description: 'DID keys held by the customer.' }
+ *             apiKeys: { type: integer, description: 'API keys that are not revoked.' }
  *     AdminCustomerDetail:
  *       allOf:
  *         - $ref: '#/components/schemas/AdminCustomer'
