@@ -1,3 +1,4 @@
+import { statusUpdateFailure } from './status-update-outcome.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { SafeAPIResponse } from '../../types/common.js';
 import {
@@ -236,6 +237,9 @@ export class AccreditationService {
 				)
 			).revokeCredentials(accreditation, StatusListType.Bitstring, publish, customer, symmetricKey);
 
+			const failure = statusUpdateFailure('revoke', result as Record<string, unknown>);
+			if (failure) return { success: false, status: failure.statusCode, error: failure.error };
+
 			return {
 				success: true,
 				status: StatusCodes.OK,
@@ -280,6 +284,9 @@ export class AccreditationService {
 				)
 			).suspendCredentials(accreditation, StatusListType.Bitstring, publish, customer, symmetricKey);
 
+			const failure = statusUpdateFailure('suspend', result as Record<string, unknown>);
+			if (failure) return { success: false, status: failure.statusCode, error: failure.error };
+
 			return {
 				success: true,
 				status: StatusCodes.OK,
@@ -323,6 +330,9 @@ export class AccreditationService {
 					await statusListArtifactFromCredential(accreditation, customer.customerId)
 				)
 			).reinstateCredentials(accreditation, StatusListType.Bitstring, publish, customer, symmetricKey);
+
+			const failure = statusUpdateFailure('reinstate', result as Record<string, unknown>);
+			if (failure) return { success: false, status: failure.statusCode, error: failure.error };
 
 			return {
 				success: true,

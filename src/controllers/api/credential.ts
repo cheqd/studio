@@ -1,3 +1,4 @@
+import { statusUpdateFailure } from '../../services/api/status-update-outcome.js';
 import type { Request, Response } from 'express';
 import type { VerifiableCredential } from '@veramo/core';
 import { StatusCodes } from 'http-status-codes';
@@ -388,6 +389,9 @@ export class CredentialController {
 				symmetricKey as string
 			);
 
+			const failure = statusUpdateFailure('revoke', result as Record<string, unknown>);
+			if (failure) return response.status(failure.statusCode).json({ error: failure.error });
+
 			// Track operation if revocation was successful and publish is true
 			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
 			// and it will be tracked there
@@ -499,6 +503,9 @@ export class CredentialController {
 				symmetricKey as string
 			);
 
+			const failure = statusUpdateFailure('suspend', result as Record<string, unknown>);
+			if (failure) return response.status(failure.statusCode).json({ error: failure.error });
+
 			// Track operation if suspension was successful and publish is true
 			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
 			// and it will be tracked there
@@ -608,6 +615,9 @@ export class CredentialController {
 				response.locals.customer,
 				symmetricKey as string
 			);
+
+			const failure = statusUpdateFailure('reinstate', result as Record<string, unknown>);
+			if (failure) return response.status(failure.statusCode).json({ error: failure.error });
 
 			// Track operation if the process of reinstantiating was successful and publish is true
 			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
