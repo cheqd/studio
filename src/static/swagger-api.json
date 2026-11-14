@@ -5061,7 +5061,7 @@
           "Agents"
         ],
         "summary": "Grant authority to an agent.",
-        "description": "Issues an authority credential to the agent, signed by one of your DIDs, with an entry in a Token Status List so it can be revoked. The credential is returned once, in this response.\n\n- `acts-for`: an SD-JWT VC saying the agent acts for the issuer.\n- `tool-scope`: an SD-JWT VC listing the tools the agent may call (`tools`).\n- `mandate`: an AP2 open mandate as an SD-JWT VC, bound to the agent's P-256 key (`mandate`). **Single hop only**: re-delegation to sub-agents is not supported and any such field is refused.\n- `delegation`: a KYA-OS delegation (`scopes`). **Untested** (gate T9) and switched off unless the server sets `ENABLE_KYA_OS_DELEGATIONS`; it has no status list entry, so revoking it does not reach verifiers.\n",
+        "description": "Issues an authority credential to the agent, signed by one of your DIDs, with an entry in a Token Status List so it can be revoked. The credential is returned once, in this response.\n\n- `acts-for`: an SD-JWT VC saying the agent acts for the issuer. An agent has at most one active or suspended `acts-for` grant: a second is refused with 409 `acts_for_exists` until the first is revoked or has expired.\n- `tool-scope`: an SD-JWT VC listing the tools the agent may call (`tools`).\n- `mandate`: an AP2 open mandate as an SD-JWT VC, bound to the agent's P-256 key (`mandate`). **Single hop only**: re-delegation to sub-agents is not supported and any such field is refused.\n- `delegation`: a KYA-OS delegation (`scopes`). **Untested** (gate T9) and switched off unless the server sets `ENABLE_KYA_OS_DELEGATIONS`; it has no status list entry, so revoking it does not reach verifiers.\n",
         "parameters": [
           {
             "name": "agentId",
@@ -5098,7 +5098,8 @@
                   },
                   "expiresAt": {
                     "type": "string",
-                    "format": "date-time"
+                    "format": "date-time",
+                    "description": "Must be in the future and no later than the platform maximum (365 days from now unless the server sets `AGENT_GRANT_MAX_LIFETIME_DAYS`); otherwise 400."
                   },
                   "tools": {
                     "type": "array",
@@ -5244,6 +5245,9 @@
           },
           "404": {
             "description": "No such agent or grant in your account."
+          },
+          "409": {
+            "description": "The agent is not active, or (for `acts-for`) already has an active or suspended acts-for grant (`code` is `acts_for_exists`)."
           },
           "501": {
             "description": "The identity engine for this account cannot update status lists yet. It needs the Credo engine."

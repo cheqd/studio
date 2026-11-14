@@ -4,7 +4,7 @@ What the agents area of the portal needs from Studio, on top of the existing `/a
 customer-scoped: an agent (or grant) that is not yours answers 404 with exactly the body of an unknown one. Every
 write honours `Idempotency-Key`. A write that failed because the payer account has no CHEQ answers 402 and does not
 keep the key (nothing was written), so retrying with the same key after topping up runs fresh. Errors use the existing agent envelope (`{ error, code }`), including request validation failures: a 400 from the
-validators is `{ error, code: 'invalid_request' }` (the OpenAPI schema is `AgentInvalidRequest`). The OpenAPI source is
+validators is `{ error, code: 'invalid_request' }` (the OpenAPI schema is `AgentInvalidRequest`). Every 400 on the agent routes carries that same code, whether it came from a validator, the service (a bad expiry, a missing issuer DID, bad tool names) or the `Idempotency-Key` check; other codes (`not_found`, `conflict`, `acts_for_exists`, `credo_tenant_missing` and so on) are unchanged. The OpenAPI source is
 `src/controllers/api/agent.ts` (built into `src/static/swagger-api.json`); the route inventory is
 `tests/contract/inventory/routes.json`.
 
@@ -46,6 +46,20 @@ answers `201 { grant, credential }`, `PATCH /agents/{id}/authority/{grantId}` an
 agent cannot be granted to or changed, and a revoked grant is `revoked` whatever the agent's state. `suspended`
 appears only on `GET /agents/{id}/authority`. `GET .../authority` rows carry `status` and `summary` and omit the
 credential-handle fields, as before.
+
+## Granting authority: limits
+
+- One `acts-for` grant per agent. `POST /agents/{id}/authority` with `grantType: 'acts-for'` answers
+  `409 { error, code: 'acts_for_exists' }` while the agent has an active or suspended one (not revoked, not expired;
+  a suspended agent's grant still counts). Revoke it first. The check is repeated inside the grant's database
+  transaction after taking a row lock on the agent (`SELECT ... FOR UPDATE`), so two concurrent requests take turns
+  and only one succeeds. A unique partial index was not used because "not expired" depends on the current time and
+  cannot be part of an index; so there is no migration, and agents that already have more than one live acts-for
+  grant are untouched (nothing is deleted or revoked; they only cannot be given another until none is live).
+  The losing request of a race may have signed a credential and taken a status list index before it was refused;
+  neither is recorded as a grant.
+- `expiresAt` on `POST` has the same platform maximum as `PATCH`: 365 days from now, or
+  `AGENT_GRANT_MAX_LIFETIME_DAYS`. Later than that is a 400. Before this change `POST` had no upper bound.
 
 ## Grant summary
 
@@ -103,7 +117,10 @@ agent service. `detail` is always an object and is an allowlist per type, applie
 (`src/services/agent/agent-event-detail.ts`): `registered` none; `authority-granted` and `authority-revoked` `grantId`,
 `grantType`; `authority-expiry-changed` also `from`, `to`; `key-added` `keyId`, `keyType`; `key-rotated` `oldKeyId`,
 `newKeyId`, `keyType`; `card-published` and `card-updated` `version`, `published`. Values are short scalars; anything
-that looks like an email address or a token is dropped. Nothing from `adminAuditLog` is read into it. An event that cannot be written is logged and does not
+that looks like an email address or a token is dropped, including short ones: vendor-prefixed tokens (`sk_`, `pk_`,
+`rk_`, `ghp_`/`github_pat_`, `xox*-`), anything with `Bearer`, a value that starts with a word and then whitespace
+(`Basic ...`, `Token ...`), a URL carrying credentials, hex of 32 or more characters and base64 of 40 or more
+characters (a `did:` URL is held to the older 80-character limit, so `did:key:` ids survive). Nothing from `adminAuditLog` is read into it. An event that cannot be written is logged and does not
 undo the change it describes.
 
 The backfill (migration `1791701800000`) creates, for agents that already exist and with actor `system`:
@@ -131,8 +148,9 @@ signed credential) in `authorityGrant.claims` so the replacement can be built.
 
 ## A missing Credo tenant
 
-If `customer.credoTenantId` is set but the tenant record is not in the Askar store, every agent route that needs the
-tenant answers `500 { error, code: 'credo_tenant_missing' }` with a fixed message that names no id, and logs the
+If `customer.credoTenantId` is set but the tenant record is not in the Askar store, every route that needs the
+tenant (the agent routes, and `/did/*`, `/key/*`, `/resource/*`, `/credential/*`, `/presentation/*`, and the accreditation
+and received-credential routes that reach the Credo engine) answers `500 { error, code: 'credo_tenant_missing' }` with a fixed message that names no id, and logs the
 tenant id server-side. Studio does not create a replacement: an empty tenant would orphan the customer's DIDs and keys
 in the old one. An operator must restore the tenant record (or deliberately clear `credoTenantId`). The error is
 raised before anything is written, so an `Idempotency-Key` used for the failed request is not kept.
