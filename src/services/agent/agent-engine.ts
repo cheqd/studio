@@ -2,7 +2,7 @@ import type { CustomerEntity } from '../../database/entities/customer.entity.js'
 import type { IdentityEngine } from '../identity/engine/identity-engine.js';
 import type { EngineDidDocument } from '../identity/engine/types.js';
 import { EngineCapabilityError, upstreamFailure } from './agent-errors.js';
-import { keysFromDidDocument } from './agent-keys.js';
+import { keysFromDidDocument, relationshipIds } from './agent-keys.js';
 import type { ResolvedAgentKey } from './agent-keys.js';
 import type { DidSigner } from './sd-jwt.js';
 
@@ -44,8 +44,23 @@ export async function resolveDidKeys(engine: IdentityEngine, did: string): Promi
 	return {
 		document: resolution.didDocument,
 		deactivated: resolution.didDocumentMetadata?.deactivated === true,
-		keys: keysFromDidDocument(resolution.didDocument),
+		keys: signingKeys(resolution.didDocument),
 	};
+}
+
+/**
+ * The keys that may sign: those listed under `authentication` or `assertionMethod`. A rotated key stays in
+ * `verificationMethod` (so earlier credentials still verify) but must never be picked to sign again. A document
+ * with no such lists, or none of whose keys are listed, falls back to all of its keys.
+ */
+function signingKeys(document: EngineDidDocument): ResolvedAgentKey[] {
+	const all = keysFromDidDocument(document);
+	const inForce = new Set([
+		...relationshipIds(document, 'authentication'),
+		...relationshipIds(document, 'assertionMethod'),
+	]);
+	const current = all.filter((key) => inForce.has(key.kid));
+	return current.length > 0 ? current : all;
 }
 
 /** The keys a DID document lists under `assertionMethod`, or all of its keys when it has no such list. */

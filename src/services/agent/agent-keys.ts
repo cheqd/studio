@@ -99,7 +99,7 @@ export interface ResolvedAgentKey {
 	jwk: PublicJwk;
 }
 
-interface VerificationMethodLike {
+export interface VerificationMethodLike {
 	id?: unknown;
 	publicKeyJwk?: Record<string, unknown>;
 	publicKeyMultibase?: unknown;
@@ -139,4 +139,111 @@ export function isImportableJwk(jwk: Record<string, unknown>): boolean {
 	} catch {
 		return false;
 	}
+}
+
+// --- Key listing, rotation and addition ------------------------------------------------------------------
+
+export type AgentKeyType = 'Ed25519' | 'P-256';
+
+/** The DID document relationships a verification method can be listed under. */
+const RELATIONSHIPS = ['authentication', 'assertionMethod', 'capabilityInvocation', 'capabilityDelegation'] as const;
+
+const entryId = (entry: unknown): string | undefined =>
+	typeof entry === 'string' ? entry : ((entry as { id?: string } | null)?.id ?? undefined);
+
+/** The full DID URL of a reference that may be relative (`#key-1`). */
+const absolute = (did: string, id: string) => (id.startsWith('#') ? `${did}${id}` : id);
+
+/** The ids listed under a relationship, as full DID URLs. */
+export function relationshipIds(document: EngineDidDocument, relationship: (typeof RELATIONSHIPS)[number]): string[] {
+	const listed = document[relationship];
+	if (!Array.isArray(listed)) return [];
+	return listed
+		.map(entryId)
+		.filter((id): id is string => typeof id === 'string')
+		.map((id) => absolute(document.id, id));
+}
+
+/** P-256 public key as multibase (`zDn...`, compressed point with the 0x8024 multicodec prefix). */
+export function p256MultibaseFromJwk(jwk: Record<string, unknown>): string {
+	const x = fromString(String(jwk.x), 'base64url');
+	const y = fromString(String(jwk.y), 'base64url');
+	const prefix = (y[y.length - 1] as number) % 2 === 0 ? 0x02 : 0x03;
+	return base58btc.encode(concat([Uint8Array.of(0x80, 0x24, prefix), x]));
+}
+
+export function publicKeyMultibaseFor(key: ResolvedAgentKey): string {
+	if (key.alg === 'EdDSA')
+		return base58btc.encode(concat([Uint8Array.of(0xed, 0x01), fromString(String(key.jwk.x), 'base64url')]));
+	return p256MultibaseFromJwk(key.jwk);
+}
+
+/** The next free `#key-N` fragment of a DID document (`key-3` when `key-1` and `key-2` exist). */
+export function nextKeyFragment(document: EngineDidDocument): string {
+	const methods = (document.verificationMethod as VerificationMethodLike[] | undefined) ?? [];
+	let highest = 0;
+	for (const method of methods) {
+		const match = typeof method.id === 'string' ? /#key-(\d+)$/.exec(method.id) : null;
+		if (match) highest = Math.max(highest, Number(match[1]));
+	}
+	return `key-${highest + 1}`;
+}
+
+/** The ledger takes the on-chain method type names; a resolved document may carry the resolver's names. */
+function onChainMethod(method: Record<string, unknown>): Record<string, unknown> {
+	if (method.type === 'JsonWebKey') return { ...method, type: 'JsonWebKey2020' };
+	if (method.type === 'Multikey') return { ...method, type: 'Ed25519VerificationKey2020' };
+	return method;
+}
+
+export interface NewDidKey {
+	fragment: string;
+	type: AgentKeyType;
+	publicKeyHex: string;
+}
+
+/**
+ * A copy of the DID document with one more verification method.
+ *  - `replaces`: the new key takes the old key's place in every relationship that listed it, and the old method
+ *    stays in `verificationMethod` so credentials issued before the rotation can still be verified.
+ *  - no `replaces`: the key is added to `authentication` and `assertionMethod`.
+ * Everything else (services, controllers, other methods) is kept as resolved.
+ */
+export function documentWithNewKey(document: EngineDidDocument, key: NewDidKey, replaces?: string): EngineDidDocument {
+	const did = document.id;
+	const kid = `${did}#${key.fragment}`;
+	const method: Record<string, unknown> =
+		key.type === 'P-256'
+			? {
+					id: kid,
+					type: 'JsonWebKey2020',
+					controller: did,
+					publicKeyJwk: p256JwkFromPublicKeyHex(key.publicKeyHex),
+				}
+			: {
+					id: kid,
+					type: 'Ed25519VerificationKey2020',
+					controller: did,
+					publicKeyMultibase: ed25519MultibaseFromPublicKeyHex(key.publicKeyHex),
+				};
+	const next: EngineDidDocument = {
+		...document,
+		verificationMethod: [
+			...((document.verificationMethod as Record<string, unknown>[] | undefined) ?? []).map(onChainMethod),
+			method,
+		],
+	};
+	for (const relationship of RELATIONSHIPS) {
+		const listed = document[relationship];
+		if (replaces) {
+			if (!Array.isArray(listed)) continue;
+			next[relationship] = listed.map((entry) => {
+				const id = entryId(entry);
+				return id !== undefined && absolute(did, id) === replaces ? kid : entry;
+			});
+		} else if (relationship === 'authentication' || relationship === 'assertionMethod') {
+			next[relationship] = [...(Array.isArray(listed) ? listed : []), kid];
+		}
+	}
+	return next;
 }
