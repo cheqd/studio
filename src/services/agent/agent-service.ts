@@ -30,7 +30,15 @@ import { AGENT_CARD_RESOURCE_TYPE, buildAgentCard, signAgentCard } from './agent
 import type { AgentCardInput } from './agent-card.js';
 import { assertionKeys, didSigner, engineMethod, requireCapabilities, resolveDidKeys } from './agent-engine.js';
 import type { AgentEngineProvider } from './agent-engine.js';
-import { badRequest, conflict, featureDisabled, notFound, unauthorised, upstreamFailure } from './agent-errors.js';
+import {
+	actsForExists,
+	badRequest,
+	conflict,
+	featureDisabled,
+	notFound,
+	unauthorised,
+	upstreamFailure,
+} from './agent-errors.js';
 import type { AgentPatch, AgentStore } from './agent-store.js';
 import { validateOpenMandateRequest } from './ap2-mandate.js';
 import { parseCaip10 } from './caip10.js';
@@ -477,6 +485,12 @@ export class AgentService {
 		if (expiresAt && (Number.isNaN(expiresAt.getTime()) || expiresAt <= this.now())) {
 			throw badRequest('expiresAt must be a future ISO 8601 date');
 		}
+		if (expiresAt) this.assertWithinMaxLifetime(expiresAt, this.now());
+		// A cheap early refusal, before any key is used. The store repeats the check under a row lock, which is
+		// what makes it race-safe.
+		if (input.grantType === 'acts-for' && (await this.hasLiveActsFor(customer.customerId, agentId))) {
+			throw actsForExists();
+		}
 		const engine = await this.engineFor(customer);
 		if (input.grantType === 'delegation') {
 			const issued = await this.issueDelegation(customer, engine, agent, issuerDid, input, expiresAt);
@@ -591,10 +605,7 @@ export class AgentService {
 		const expiresAt = typeof input.expiresAt === 'string' ? new Date(input.expiresAt) : undefined;
 		if (!expiresAt || Number.isNaN(expiresAt.getTime())) throw badRequest('expiresAt must be an ISO 8601 date');
 		if (expiresAt <= now) throw badRequest('expiresAt must be in the future');
-		const maxDays = this.maxGrantLifetimeDays();
-		if (expiresAt.getTime() > now.getTime() + maxDays * DAY_MS) {
-			throw badRequest(`expiresAt is later than the platform maximum (${maxDays} days from now)`);
-		}
+		this.assertWithinMaxLifetime(expiresAt, now);
 
 		if (grant.grantType === 'delegation') {
 			throw conflict(
@@ -1058,6 +1069,20 @@ export class AgentService {
 			}
 		}
 		return history;
+	}
+
+	private assertWithinMaxLifetime(expiresAt: Date, now: Date): void {
+		const maxDays = this.maxGrantLifetimeDays();
+		if (expiresAt.getTime() > now.getTime() + maxDays * DAY_MS) {
+			throw badRequest(`expiresAt is later than the platform maximum (${maxDays} days from now)`);
+		}
+	}
+
+	/** An acts-for grant that is active or suspended: not revoked and not expired. */
+	private async hasLiveActsFor(customerId: string, agentId: string): Promise<boolean> {
+		const now = this.now();
+		const live = await this.store.listLiveGrants(customerId, agentId);
+		return live.some((grant) => grant.grantType === 'acts-for' && (!grant.expiresAt || grant.expiresAt > now));
 	}
 
 	private grantStatus(

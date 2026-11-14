@@ -14,8 +14,15 @@ export class AgentServiceError extends Error {
 
 export const notFound = (what = 'Agent') =>
 	new AgentServiceError(StatusCodes.NOT_FOUND, 'not_found', `${what} not found`);
-export const badRequest = (message: string) => new AgentServiceError(StatusCodes.BAD_REQUEST, 'bad_request', message);
+export const badRequest = (message: string) =>
+	new AgentServiceError(StatusCodes.BAD_REQUEST, 'invalid_request', message);
 export const conflict = (message: string) => new AgentServiceError(StatusCodes.CONFLICT, 'conflict', message);
+export const actsForExists = () =>
+	new AgentServiceError(
+		StatusCodes.CONFLICT,
+		'acts_for_exists',
+		'The agent already has an active or suspended acts-for grant. Revoke it before granting another'
+	);
 export const unauthorised = () =>
 	new AgentServiceError(StatusCodes.UNAUTHORIZED, 'unauthorised', 'A customer account is required');
 export const featureDisabled = (message: string) =>

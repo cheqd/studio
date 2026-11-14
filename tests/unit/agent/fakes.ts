@@ -34,7 +34,7 @@ import type {
 	NewStatusList,
 } from '../../../src/services/agent/agent-store.js';
 import { defaultCapabilities } from '../../../src/types/agent.js';
-import { conflict } from '../../../src/services/agent/agent-errors.js';
+import { actsForExists, conflict } from '../../../src/services/agent/agent-errors.js';
 import { ed25519MultibaseFromPublicKeyHex } from '../../../src/services/agent/agent-keys.js';
 
 export const customerA = { customerId: '11111111-1111-4111-8111-111111111111' } as CustomerEntity;
@@ -473,6 +473,19 @@ export class FakeStore implements AgentStore {
 	}
 	async createGrant(input: NewGrant): Promise<AuthorityGrantRecord> {
 		this.note('createGrant', input.customerId);
+		// Same rule as the TypeORM store, which enforces it under a row lock: one live acts-for grant per agent.
+		if (
+			input.grantType === 'acts-for' &&
+			[...this.grants.values()].some(
+				(g) =>
+					g.agentId === input.agentId &&
+					g.grantType === 'acts-for' &&
+					!g.revokedAt &&
+					(!g.expiresAt || g.expiresAt > new Date())
+			)
+		) {
+			throw actsForExists();
+		}
 		const list = input.statusListId ? this.lists.get(input.statusListId) : undefined;
 		const grant: AuthorityGrantWithStatus = {
 			id: uuidv4(),

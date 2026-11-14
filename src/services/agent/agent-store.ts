@@ -29,7 +29,7 @@ import type {
 	PaymentAddressBindingWithStatus,
 	TokenStatusListRecord,
 } from '../../types/agent.js';
-import { conflict } from './agent-errors.js';
+import { actsForExists, conflict } from './agent-errors.js';
 
 export interface NewAgent {
 	customerId: string;
@@ -475,10 +475,33 @@ export class TypeormAgentStore implements AgentStore {
 		return rows.map((row) => toGrant(row, row.agent.agentId, customerId));
 	}
 
+	/**
+	 * One active-or-suspended acts-for grant per agent, safe against concurrent requests: the agent row is locked
+	 * (`FOR UPDATE`) for the rest of the transaction, so two requests for the same agent take turns and the second
+	 * sees the first's grant. "Live" is not revoked and not expired, which cannot be a unique index (expiry depends
+	 * on the current time), hence the lock. Rows that already break the rule are left alone and only block a new one.
+	 */
+	private async assertNoLiveActsFor(manager: EntityManager, grant: NewGrant, now: Date): Promise<void> {
+		await manager.query(`SELECT "agentId" FROM "agent" WHERE "agentId" = $1 AND "customerId" = $2 FOR UPDATE`, [
+			grant.agentId,
+			grant.customerId,
+		]);
+		const existing = await manager.getRepository(AuthorityGrantEntity).find({
+			where: {
+				agent: { agentId: grant.agentId },
+				customer: { customerId: grant.customerId },
+				grantType: 'acts-for',
+				revokedAt: IsNull(),
+			},
+		});
+		if (existing.some((row) => !row.expiresAt || row.expiresAt > now)) throw actsForExists();
+	}
+
 	async createGrant(grant: NewGrant): Promise<AuthorityGrantRecord> {
 		need(grant.customerId, grant.agentId);
 		return this.db.transaction(async (manager: EntityManager) => {
 			const now = new Date();
+			if (grant.grantType === 'acts-for') await this.assertNoLiveActsFor(manager, grant, now);
 			const credential = new IssuedCredentialEntity(
 				'studio',
 				grant.format,

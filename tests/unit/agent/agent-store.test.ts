@@ -10,6 +10,7 @@ interface RecordedCall {
 const recorded: RecordedCall[] = [];
 let counts: Record<string, number> = {};
 let rows: Record<string, unknown> = {};
+const queries: Array<{ sql: string; params: unknown[] }> = [];
 
 const repositoryFor = (entity: { name: string }) =>
 	new Proxy(
@@ -41,7 +42,10 @@ jest.unstable_mockModule('../../../src/database/connection/connection.js', () =>
 			dbConnection: {
 				getRepository: (entity: { name: string }) => repositoryFor(entity),
 				transaction: async (run: (manager: unknown) => Promise<unknown>) =>
-					run({ getRepository: (entity: { name: string }) => repositoryFor(entity) }),
+					run({
+						getRepository: (entity: { name: string }) => repositoryFor(entity),
+						query: async (sql: string, params: unknown[]) => void queries.push({ sql, params }),
+					}),
 			},
 		},
 	},
@@ -61,6 +65,7 @@ const whereOf = (call: RecordedCall) => {
 
 beforeEach(() => {
 	recorded.length = 0;
+	queries.length = 0;
 	counts = {};
 	rows = {};
 });
@@ -176,6 +181,40 @@ describe('TypeormAgentStore', () => {
 		expect(saved.map((call) => call.entity)).toEqual(['IssuedCredentialEntity', 'AuthorityGrantEntity']);
 		const credential = saved[0]?.args[0] as { engine: string; statusFormat: string; providerId: string };
 		expect(credential).toMatchObject({ engine: 'credo', statusFormat: 'TokenStatusList', providerId: 'studio' });
+	});
+
+	describe('one live acts-for grant per agent', () => {
+		const actsFor = {
+			agentId,
+			customerId,
+			grantType: 'acts-for',
+			issuerDid: 'did:cheqd:testnet:org',
+			subjectDid: 'did:cheqd:testnet:agent',
+			format: 'sd-jwt-vc' as const,
+			vct: 'v',
+		};
+		const past = new Date(Date.now() - 60_000);
+		const future = new Date(Date.now() + 60_000);
+
+		it('locks the agent row, then refuses when a live acts-for grant exists, saving nothing', async () => {
+			rows.AuthorityGrantEntity = { id: grantId, grantType: 'acts-for', revokedAt: null, expiresAt: future };
+			await expect(store.createGrant(actsFor)).rejects.toMatchObject({ status: 409, code: 'acts_for_exists' });
+			expect(queries).toHaveLength(1);
+			expect(queries[0]?.sql).toContain('FOR UPDATE');
+			expect(queries[0]?.params).toEqual([agentId, customerId]);
+			expect(recorded.filter((call) => call.method === 'save')).toHaveLength(0);
+			const find = recorded.find((call) => call.entity === 'AuthorityGrantEntity' && call.method === 'find');
+			expect(JSON.stringify((find?.args[0] as { where: unknown }).where)).toContain(customerId);
+		});
+
+		it('writes the grant when the only acts-for grants are expired, and for other grant types takes no lock', async () => {
+			rows.AuthorityGrantEntity = { id: grantId, grantType: 'acts-for', revokedAt: null, expiresAt: past };
+			await store.createGrant(actsFor);
+			expect(recorded.filter((call) => call.method === 'save')).toHaveLength(2);
+			queries.length = 0;
+			await store.createGrant({ ...actsFor, grantType: 'tool-scope' });
+			expect(queries).toHaveLength(0);
+		});
 	});
 
 	it('writes a binding and its credential record (metadata only) in one transaction', async () => {

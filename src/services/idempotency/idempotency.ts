@@ -138,7 +138,7 @@ export class IdempotencyService {
 		if (!input.key || input.key.length > IDEMPOTENCY_KEY_MAX_LENGTH) {
 			throw new IdempotencyError(
 				400,
-				'bad_request',
+				'invalid_request',
 				`Idempotency-Key must be 1 to ${IDEMPOTENCY_KEY_MAX_LENGTH} characters`
 			);
 		}

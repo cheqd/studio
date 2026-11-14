@@ -262,7 +262,10 @@ describe('authority grants', () => {
 		const indexes: number[] = [];
 		const uris = new Set<string>();
 		for (let i = 0; i < 5; i++) {
-			const { grant } = await service.grantAuthority(customerA, agent.agentId, { grantType: 'acts-for' });
+			const { grant } = await service.grantAuthority(customerA, agent.agentId, {
+				grantType: 'tool-scope',
+				tools: ['search'],
+			});
 			indexes.push(grant.statusIndex as number);
 			uris.add(store.grants.get(grant.id)?.statusListUri as string);
 		}
@@ -304,6 +307,105 @@ describe('authority grants', () => {
 	it('needs an issuer DID when the agent has no actsForDid', async () => {
 		const bare = await service.register(customerA, { name: 'bare', network: 'testnet' });
 		expect(await statusOf(service.grantAuthority(customerA, bare.agentId, { grantType: 'acts-for' }))).toBe(400);
+	});
+
+	describe('one live acts-for grant per agent', () => {
+		const codeOf = async (promise: Promise<unknown>) => {
+			try {
+				await promise;
+				return 'ok';
+			} catch (error) {
+				return error instanceof AgentServiceError ? `${error.status} ${error.code}` : 'other';
+			}
+		};
+
+		it('refuses a second acts-for grant with 409 acts_for_exists, and uses no key or index for it', async () => {
+			const { agent } = await setup();
+			await service.grantAuthority(customerA, agent.agentId, { grantType: 'acts-for' });
+			const signed = world.signCalls.length;
+			expect(await codeOf(service.grantAuthority(customerA, agent.agentId, { grantType: 'acts-for' }))).toBe(
+				'409 acts_for_exists'
+			);
+			expect(world.signCalls).toHaveLength(signed);
+			expect([...store.grants.values()].filter((g) => g.grantType === 'acts-for')).toHaveLength(1);
+		});
+
+		it('lets only one of two concurrent requests through', async () => {
+			const { agent } = await setup();
+			const results = await Promise.all([
+				codeOf(service.grantAuthority(customerA, agent.agentId, { grantType: 'acts-for' })),
+				codeOf(service.grantAuthority(customerA, agent.agentId, { grantType: 'acts-for' })),
+			]);
+			expect([...results].sort()).toEqual(['409 acts_for_exists', 'ok']);
+			expect([...store.grants.values()].filter((g) => g.grantType === 'acts-for')).toHaveLength(1);
+		});
+
+		it('allows another acts-for grant once the first is revoked, and other grant types alongside', async () => {
+			const { agent } = await setup();
+			const first = await service.grantAuthority(customerA, agent.agentId, { grantType: 'acts-for' });
+			await service.grantAuthority(customerA, agent.agentId, { grantType: 'tool-scope', tools: ['search'] });
+			await service.revokeAuthority(customerA, agent.agentId, first.grant.id);
+			expect(await codeOf(service.grantAuthority(customerA, agent.agentId, { grantType: 'acts-for' }))).toBe(
+				'ok'
+			);
+		});
+
+		it('counts a suspended agent grant as live, but not an expired one', async () => {
+			const { agent } = await setup();
+			const first = await service.grantAuthority(customerA, agent.agentId, { grantType: 'acts-for' });
+			await service.update(customerA, agent.agentId, { status: 'suspended' });
+			await service.update(customerA, agent.agentId, { status: 'active' });
+			expect(await codeOf(service.grantAuthority(customerA, agent.agentId, { grantType: 'acts-for' }))).toBe(
+				'409 acts_for_exists'
+			);
+			const stored = store.grants.get(first.grant.id);
+			if (stored) stored.expiresAt = new Date(Date.now() - 1000);
+			expect(await codeOf(service.grantAuthority(customerA, agent.agentId, { grantType: 'acts-for' }))).toBe(
+				'ok'
+			);
+		});
+	});
+
+	describe('platform maximum lifetime on a new grant', () => {
+		const days = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString();
+
+		it('refuses an expiry beyond 365 days with 400 and takes nothing', async () => {
+			const { agent } = await setup();
+			expect(
+				await statusOf(
+					service.grantAuthority(customerA, agent.agentId, { grantType: 'acts-for', expiresAt: days(366) })
+				)
+			).toBe(400);
+			expect(world.signCalls).toHaveLength(0);
+			expect(
+				await statusOf(
+					service.grantAuthority(customerA, agent.agentId, { grantType: 'acts-for', expiresAt: days(364) })
+				)
+			).toBe(200);
+		});
+
+		it('honours the configured maximum', async () => {
+			const { agent } = await setup();
+			const short = new AgentService({ store, engineFor, statusListSize: 4, maxGrantLifetimeDays: () => 30 });
+			expect(
+				await statusOf(
+					short.grantAuthority(customerA, agent.agentId, {
+						grantType: 'tool-scope',
+						tools: ['a'],
+						expiresAt: days(31),
+					})
+				)
+			).toBe(400);
+			expect(
+				await statusOf(
+					short.grantAuthority(customerA, agent.agentId, {
+						grantType: 'tool-scope',
+						tools: ['a'],
+						expiresAt: days(29),
+					})
+				)
+			).toBe(200);
+		});
 	});
 
 	describe('AP2 open mandate (single hop)', () => {

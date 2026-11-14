@@ -1298,3 +1298,77 @@ describe('key rotation on a suspended agent', () => {
 		expect((await agents.get(customerA, agent.agentId)).status).toBe('suspended');
 	});
 });
+
+describe('POST /agents/{id}/authority: acts-for uniqueness, maximum lifetime and the 400 code', () => {
+	const post = (params: Record<string, string>, body: Record<string, unknown>, headers?: Record<string, string>) =>
+		call({ handler: 'grantAuthority', validators: V.grantValidator, params, body, customer: customerA, headers });
+
+	it('answers 409 acts_for_exists for a second acts-for grant, and allows it once the first is revoked', async () => {
+		const { params } = await newAgent();
+		const first = await post(params, { grantType: 'acts-for' });
+		expect(first.status).toBe(201);
+		const second = await post(params, { grantType: 'acts-for' });
+		expect(second.status).toBe(409);
+		expect(second.body.code).toBe('acts_for_exists');
+		await agents.revokeAuthority(customerA, params.agentId, first.body.grant.id);
+		expect((await post(params, { grantType: 'acts-for' })).status).toBe(201);
+	});
+
+	it('answers 400 invalid_request for an expiry past the platform maximum, as PATCH does', async () => {
+		const { params } = await newAgent();
+		const tooFar = new Date(now.getTime() + 366 * 86_400_000).toISOString();
+		const result = await post(params, { grantType: 'acts-for', expiresAt: tooFar });
+		expect(result.status).toBe(400);
+		expect(result.body.code).toBe('invalid_request');
+		expect(result.body.error).toContain('platform maximum');
+		const withinLimit = new Date(now.getTime() + 364 * 86_400_000).toISOString();
+		expect((await post(params, { grantType: 'acts-for', expiresAt: withinLimit })).status).toBe(201);
+	});
+
+	it.each([
+		[
+			'a service check (no issuer DID)',
+			async () => ({
+				...(await newAgent(customerA, { actsForDid: undefined })),
+				body: { grantType: 'acts-for' },
+			}),
+		],
+		[
+			'a service check (empty tools)',
+			async () => ({ ...(await newAgent()), body: { grantType: 'tool-scope', tools: [] } }),
+		],
+	])('gives every 400 the code invalid_request: %s', async (_name, make) => {
+		const { params, body } = await make();
+		const result = await post(params, body);
+		expect(result.status).toBe(400);
+		expect(result.body.code).toBe('invalid_request');
+	});
+
+	it('gives a bad Idempotency-Key the same code', async () => {
+		const { params } = await newAgent();
+		const keyed = new AgentController(
+			() => ({ agents }),
+			() =>
+				new IdempotencyService({
+					store: {
+						insertSubmitting: async () => null,
+						find: async () => null,
+						settle: async () => undefined,
+						remove: async () => undefined,
+					},
+				})
+		);
+		const result = await call({
+			handler: 'grantAuthority',
+			validators: V.grantValidator,
+			params,
+			body: { grantType: 'acts-for' },
+			customer: customerA,
+			locals: { customer: customerA },
+			headers: { 'idempotency-key': 'k'.repeat(300) },
+			controllerOverride: keyed,
+		});
+		expect(result.status).toBe(400);
+		expect(result.body.code).toBe('invalid_request');
+	});
+});
