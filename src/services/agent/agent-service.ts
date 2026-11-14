@@ -10,7 +10,6 @@ import type {
 	AgentNetwork,
 	AgentRecord,
 	AuthoritySummary,
-	AuthorityGrantRecord,
 	AuthorityGrantWithStatus,
 	GrantType,
 	PaymentAddressBindingRecord,
@@ -71,7 +70,7 @@ export interface GrantInput {
 }
 
 export interface IssuedAuthority {
-	grant: AuthorityGrantRecord;
+	grant: AuthorityGrantWithStatus;
 	credential: { format: 'sd-jwt-vc' | 'jwt'; value: unknown };
 	/** `untested` for KYA-OS delegations (gate T9), absent otherwise. */
 	label?: 'untested';
@@ -513,7 +512,7 @@ export class AgentService {
 			grantId: grant.id,
 			grantType: input.grantType,
 		});
-		return { grant, credential: { format: 'sd-jwt-vc', value: compact } };
+		return { grant: { ...grant, issuerDid }, credential: { format: 'sd-jwt-vc', value: compact } };
 	}
 
 	async revokeAuthority(

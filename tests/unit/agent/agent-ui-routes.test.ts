@@ -768,6 +768,58 @@ describe('GET /agents/{id}/activity', () => {
 	});
 });
 
+describe('one grant shape across POST, PATCH and DELETE authority', () => {
+	it('returns status and summary on all three, and the same fields as the list', async () => {
+		const { params, organisation } = await newAgent();
+		const posted = await call({
+			handler: 'grantAuthority',
+			validators: V.grantValidator,
+			params,
+			body: { grantType: 'tool-scope', tools: ['search'] },
+			customer: customerA,
+		});
+		const acts = await call({
+			handler: 'grantAuthority',
+			validators: V.grantValidator,
+			params,
+			body: { grantType: 'acts-for' },
+			customer: customerA,
+		});
+		expect(posted.status).toBe(201);
+		expect(posted.body.grant).toMatchObject({ status: 'active', summary: 'Tools: search' });
+		expect(acts.body.grant.summary).toBe(`Acts for ${organisation}`);
+
+		const grantId = posted.body.grant.id;
+		const patched = await call({
+			handler: 'changeGrantExpiry',
+			validators: V.expiryValidator,
+			params: { ...params, grantId },
+			body: { expiresAt: '2027-03-01T00:00:00Z' },
+			customer: customerA,
+		});
+		expect(patched.status).toBe(200);
+		const deleted = await call({
+			handler: 'revokeAuthority',
+			validators: V.revokeValidator,
+			params: { ...params, grantId },
+			customer: customerA,
+		});
+		expect(deleted.status).toBe(200);
+		expect(deleted.body).toMatchObject({ id: grantId, status: 'revoked', summary: 'Tools: search' });
+		expect(deleted.body.revokedAt).toBeTruthy();
+
+		const keys = (o: object) => Object.keys(o).sort();
+		expect(keys(deleted.body)).toEqual(keys(patched.body.grant));
+		expect(keys(posted.body.grant)).toEqual(keys(patched.body.grant));
+		expect(patched.body.grant.status).toBe('active');
+
+		const listed = await call({ handler: 'listAuthority', validators: V.idValidator, params, customer: customerA });
+		const row = listed.body.grants.find((g: any) => g.id === grantId);
+		expect(row.status).toBe(deleted.body.status);
+		expect(row.summary).toBe(deleted.body.summary);
+	});
+});
+
 describe('PATCH /agents/{id}/authority/{grantId}', () => {
 	const patch = (params: Record<string, string>, body: unknown, extra: Partial<Call> = {}) =>
 		call({

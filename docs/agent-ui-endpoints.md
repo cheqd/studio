@@ -35,6 +35,17 @@ No new Logto scope is needed.
 - `POST /agents` accepts `useCase` (at most 64 characters). It is stored for analytics, never trusted and never
   returned.
 
+## One grant shape
+
+Every authority route returns the same grant object: `id`, `agentId`, `grantType`, `status`, `summary`,
+`issuedCredentialId`, `statusListId`, `statusIndex`, `expiresAt`, `revokedAt`, `createdAt`. `POST /agents/{id}/authority`
+answers `201 { grant, credential }`, `PATCH /agents/{id}/authority/{grantId}` answers `200 { grant, credential }`, and
+`DELETE /agents/{id}/authority/{grantId}` answers `200` with the grant object itself (unwrapped, as before) now carrying
+`status` (`revoked`) and `summary`. On these write routes `status` is `active`, `expired` or `revoked`: a suspended
+agent cannot be granted to or changed, and a revoked grant is `revoked` whatever the agent's state. `suspended`
+appears only on `GET /agents/{id}/authority`. `GET .../authority` rows carry `status` and `summary` and omit the
+credential-handle fields, as before.
+
 ## Grant summary
 
 `summariseGrant` (`src/services/agent/grant-summary.ts`) is one pure function, so the portal never builds the text.

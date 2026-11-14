@@ -247,9 +247,13 @@ import type { CallContext } from '../../services/agent/agent-service.js';
  *         grantType:
  *           type: string
  *           enum: [acts-for, tool-scope, mandate, delegation]
+ *         status:
+ *           type: string
+ *           enum: [active, revoked, expired, suspended]
+ *           description: The grant's state. `suspended` appears only on the grant list, while the agent is suspended. Present on every route that returns a grant (list, grant, expiry change, revoke).
  *         summary:
  *           type: string
- *           description: A short human-readable line built on the server from the grant's policy. Present on grant lists and on expiry changes.
+ *           description: A short human-readable line built on the server from the grant's policy. Present on every route that returns a grant.
  *         issuedCredentialId:
  *           type: string
  *           nullable: true
@@ -357,6 +361,17 @@ const grantDto = (grant: AuthorityGrantRecord) => ({
 	expiresAt: grant.expiresAt ?? null,
 	revokedAt: grant.revokedAt ?? null,
 	createdAt: grant.createdAt,
+});
+
+/**
+ * The one grant shape every authority route returns: the stored fields plus `status` (worked out here from the
+ * revocation and expiry, as the list does; a suspended agent cannot be written to, so it is never `suspended`
+ * here) and the server-built `summary`.
+ */
+const grantResponse = (grant: AuthorityGrantWithStatus, now: Date = new Date()) => ({
+	...grantDto(grant),
+	status: grant.revokedAt ? 'revoked' : grant.expiresAt && grant.expiresAt <= now ? 'expired' : 'active',
+	summary: summariseGrant(grant),
 });
 
 const bindingDto = (binding: { id: string; account: string; createdAt: Date; revokedAt?: Date | null }) => ({
@@ -1129,7 +1144,7 @@ export class AgentController {
 	 *   delete:
 	 *     tags: [ Agents ]
 	 *     summary: Revoke an authority grant.
-	 *     description: Sets the grant's entry in its Token Status List to revoked, then records the revocation. Revoking a revoked grant returns it unchanged.
+	 *     description: Sets the grant's entry in its Token Status List to revoked, then records the revocation. Revoking a revoked grant returns it unchanged. The response is the grant itself, in the same shape as `grant` on the grant and expiry-change responses (with `status` and `summary`).
 	 *     parameters:
 	 *       - name: agentId
 	 *         in: path
@@ -1180,7 +1195,7 @@ export class AgentController {
 			return {
 				status: StatusCodes.CREATED,
 				body: {
-					grant: grantDto(issued.grant),
+					grant: grantResponse(issued.grant),
 					credential: issued.credential,
 					...(issued.label ? { label: issued.label } : {}),
 				},
@@ -1198,7 +1213,7 @@ export class AgentController {
 				request.params.grantId as string,
 				callContext(response)
 			);
-			return { status: StatusCodes.OK, body: grantDto(grant) };
+			return { status: StatusCodes.OK, body: grantResponse(grant) };
 		});
 	};
 
@@ -1280,11 +1295,7 @@ export class AgentController {
 			return {
 				status: StatusCodes.OK,
 				body: {
-					grant: {
-						...grantDto(result.grant),
-						status: 'active',
-						summary: summariseGrant(result.grant as AuthorityGrantWithStatus),
-					},
+					grant: grantResponse(result.grant as AuthorityGrantWithStatus),
 					credential: result.credential,
 				},
 			};
