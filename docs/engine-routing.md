@@ -101,3 +101,40 @@ existing service, so wiring changes no request, response or status code.
   `ENABLE_EXTERNAL_DB=true`), to find the artifact. Failure of that read is swallowed and means "Veramo".
 - **An existing artifact with no recorded row** (for example a legacy status list with no `statusRegistry` row) is
   treated as new and follows the flag. Harmless while no flag is set; revisit before flags go on.
+
+## Recording the engine on new artefacts
+
+An existing artefact always uses the engine recorded on it, so the recorded value must be the engine that really
+created the artefact. Every creation site records it:
+
+| Artefact | Where the engine is set |
+|---|---|
+| `statusRegistry` (Studio API, both create routes) | `CredentialStatusService`, from the engine the router chose for the create |
+| `statusRegistry` (token status lists) and agent grants | `agent-store.ts`, `credo` |
+| `issuedCredential` (issue API) | `Credentials.issue_credential`: the engine decided once before the row is made (Dock rows keep the default) |
+| `issuedCredential` (agent grants and credentials) | `agent-store.ts`, `credo` |
+| `identifier` | the Credo store sets `credo`; Veramo-created DIDs take the column default |
+| `key`, `resource`, presentations, accreditations, agent rows | no `engine` column. Accreditations are `issuedCredential` rows with `category = accreditation` and follow that row |
+
+A list or credential created through Credo used to be stored as `veramo` (the column default), so revoke, suspend and
+reinstate went to Veramo, which did nothing.
+
+## Status updates that change nothing
+
+`/credential/revoke`, `/credential/suspend`, `/credential/reinstate` and the accreditation equivalents no longer answer
+200 when nothing was updated (`src/services/api/status-update-outcome.ts`):
+
+- 409 when the credential is already in the requested state;
+- 400 when the engine reported an error (its message is returned);
+- 500 otherwise (`updated: false` with no error, for example a list recorded against the wrong engine).
+
+A bulk call that updated at least one entry stays 200 and carries the per-entry results.
+
+## Correcting rows recorded wrongly (migration 1791702000000)
+
+A Credo list or credential is signed inside the customer's Credo tenant, so it can only sit under a DID whose
+`identifier.engine` is `credo`; Veramo cannot sign for that DID. The migration sets `engine = 'credo'` only on rows that
+say `veramo`, whose issuer DID is `credo`, and for which no `engineMigration` row mentions the DID or list (a DID that
+moved engines could legitimately hold older Veramo rows). Issued credentials must also have `providerId = 'studio'`
+and a status registry that is `credo` (or none). Each change is copied to `engineCorrection`; `down` restores exactly
+those rows and drops the table. Rows that do not meet every condition are left untouched, and nothing is guessed.
