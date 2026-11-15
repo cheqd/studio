@@ -9,7 +9,7 @@ import {
 	EngineNotImplementedError,
 	createCredoEngineStub,
 } from '../../../../src/services/identity/engine/credo-engine.js';
-import { EngineGoneError } from '../../../../src/services/identity/engine/errors.js';
+import { EngineGoneError, EngineRoutingUnavailableError } from '../../../../src/services/identity/engine/errors.js';
 import { isP256KeyType } from '../../../../src/services/identity/engine/engine-router.js';
 import { VeramoEngine } from '../../../../src/services/identity/engine/veramo-engine.js';
 import type { IIdentityService } from '../../../../src/services/identity/index.js';
@@ -58,20 +58,89 @@ describe('EngineRouter decision table', () => {
 		});
 	});
 
-	describe('missing or unreadable engine column reads as veramo', () => {
+	describe('an existing record with no usable engine value reads as veramo', () => {
 		it.each<[string, unknown]>([
 			['null', null],
 			['undefined (row without the column)', undefined],
 			['empty string', ''],
-			['unknown engine name', 'something-else'],
-			['non-string', 42],
-			['query error (column does not exist)', new Error('column "engine" does not exist')],
 		])('%s', async (_name, recorded) => {
 			const { subject } = router(recorded, 'credo');
 			expect(await subject.decide({ route: 'did', customerId: 'c1', artifact: did })).toEqual({
 				engine: 'veramo',
 				reason: 'default',
 			});
+		});
+	});
+
+	describe('flagWhenUnrecorded: an artefact Studio has no record of is routed like a new one', () => {
+		const ctx = { route: 'credential', customerId: 'c1', artifact: did, flagWhenUnrecorded: true } as const;
+
+		it('the recorded engine still wins over the flag', async () => {
+			const { subject, flags } = router('credo', 'veramo');
+			expect(await subject.decide(ctx)).toEqual({ engine: 'credo', reason: 'artifact' });
+			expect(flags.flaggedEngine).not.toHaveBeenCalled();
+		});
+
+		it('uses the flag when there is no row (undefined)', async () => {
+			expect(await router(undefined, 'credo').subject.decide(ctx)).toEqual({ engine: 'credo', reason: 'flag' });
+		});
+
+		it('keeps a legacy row (null) on veramo, whatever the flag says', async () => {
+			expect(await router(null, 'credo').subject.decide(ctx)).toEqual({ engine: 'veramo', reason: 'default' });
+		});
+
+		it('without the option, no row is the default and flags are ignored', async () => {
+			expect(await router(undefined, 'credo').subject.decide({ ...ctx, flagWhenUnrecorded: false })).toEqual({
+				engine: 'veramo',
+				reason: 'default',
+			});
+		});
+
+		it('still fails closed when the recorded-engine lookup fails', async () => {
+			jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+			await expect(router(new Error('down'), 'veramo').subject.decide(ctx)).rejects.toBeInstanceOf(
+				EngineRoutingUnavailableError
+			);
+		});
+	});
+
+	describe('fails closed instead of guessing veramo', () => {
+		beforeEach(() => {
+			jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		});
+
+		it.each<[string, unknown]>([
+			['a failing artefact lookup', new Error('connection terminated')],
+			['an unknown recorded engine name', 'something-else'],
+			['a non-string recorded engine', 42],
+		])('%s on an existing artefact', async (_name, recorded) => {
+			const { subject, flags } = router(recorded, 'veramo');
+			const error = await subject.decide({ route: 'did', customerId: 'c1', artifact: did }).catch((e) => e);
+			expect(error).toBeInstanceOf(EngineRoutingUnavailableError);
+			expect(error.status).toBe(503);
+			expect(error.message).not.toContain('connection terminated');
+			expect(flags.flaggedEngine).not.toHaveBeenCalled();
+		});
+
+		it('on a failing flag lookup for a new artefact', async () => {
+			const { subject } = router(null, new Error('connection terminated'));
+			await expect(subject.decide({ route: 'did', customerId: 'c1' })).rejects.toBeInstanceOf(
+				EngineRoutingUnavailableError
+			);
+		});
+
+		it('engineFor builds no engine when routing fails', async () => {
+			const factories = { veramo: jest.fn(), credo: jest.fn() } as unknown as Record<EngineName, EngineFactory>;
+			const failing = new EngineRouter(
+				{ recordedEngine: async () => Promise.reject(new Error('down')) },
+				{ flaggedEngine: async () => null },
+				factories
+			);
+			await expect(
+				failing.engineFor({ route: 'did', artifact: did }, {} as IIdentityService)
+			).rejects.toBeInstanceOf(EngineRoutingUnavailableError);
+			expect(factories.veramo).not.toHaveBeenCalled();
+			expect(factories.credo).not.toHaveBeenCalled();
 		});
 	});
 
@@ -93,13 +162,13 @@ describe('EngineRouter decision table', () => {
 			});
 		});
 
-		it.each<[string, unknown]>([
-			['an invalid flag value', 'nonsense'],
-			['a failing flag lookup (table missing)', new Error('relation "featureFlag" does not exist')],
-		])('falls back to veramo on %s', async (_name, flagged) => {
-			const { subject } = router(null, flagged);
-			expect((await subject.decide({ route: 'did' })).engine).toBe('veramo');
-		});
+		it.each<[string, unknown]>([['an invalid flag value', 'nonsense']])(
+			'falls back to veramo on %s',
+			async (_name, flagged) => {
+				const { subject } = router(null, flagged);
+				expect((await subject.decide({ route: 'did' })).engine).toBe('veramo');
+			}
+		);
 	});
 
 	describe('engineFor', () => {

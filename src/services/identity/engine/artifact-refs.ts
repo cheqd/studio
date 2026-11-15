@@ -1,12 +1,14 @@
 import { Connection } from '../../../database/connection/connection.js';
+import { EngineRoutingUnavailableError, isMissingSchemaError, logRoutingFailure } from './errors.js';
 import type { ArtifactRef } from './types.js';
 
 /**
  * Finds the artifact an operation acts on, so the router can use the engine recorded on it (engine spec 4.1.1).
  * Callers know a DID and a status-list name, or a credential, but not the `statusRegistry.registryId`. These
- * helpers do that lookup. Every one of them is best effort: with no external database, no row, or a failing query
- * they return `undefined`, which the router reads as "no existing artifact" and answers with the default engine.
- * They never throw and never make a request fail.
+ * helpers do that lookup. With no external database, no row, or a schema that predates the table, they return
+ * `undefined`, which the router reads as "no existing artifact". A query that FAILS is different: the artefact may
+ * be recorded as Credo, so the lookup throws `EngineRoutingUnavailableError` (503) rather than let the router
+ * answer with the default engine.
  */
 
 const usesPostgres = () => process.env.ENABLE_EXTERNAL_DB === 'true';
@@ -38,8 +40,10 @@ export async function statusListArtifact(
 				);
 		const registryId = rows[0]?.registryId;
 		return registryId ? { kind: 'status-list', id: registryId } : undefined;
-	} catch {
-		return undefined;
+	} catch (error) {
+		if (isMissingSchemaError(error)) return undefined;
+		logRoutingFailure('artifact', error);
+		throw new EngineRoutingUnavailableError(undefined, error);
 	}
 }
 

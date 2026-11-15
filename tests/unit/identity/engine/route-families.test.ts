@@ -43,8 +43,14 @@ describe('every routed family follows the same decision table', () => {
 			expect(await router(null, null).decide({ route, artifact })).toMatchObject({ engine: 'veramo' });
 		});
 
-		it('uses veramo when the lookups fail or return rubbish', async () => {
-			expect((await router('nonsense', 'nonsense').decide({ route, artifact })).engine).toBe('veramo');
+		it('uses veramo when a flag returns rubbish, and refuses an unreadable recorded engine', async () => {
+			if (artifact) {
+				await expect(router('nonsense', 'nonsense').decide({ route, artifact })).rejects.toMatchObject({
+					status: 503,
+				});
+			} else {
+				expect((await router('nonsense', 'nonsense').decide({ route, artifact })).engine).toBe('veramo');
+			}
 		});
 
 		if (artifact) {

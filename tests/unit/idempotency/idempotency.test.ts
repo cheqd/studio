@@ -4,6 +4,7 @@ import {
 	IdempotencyService,
 	canonicalJson,
 	hashRequest,
+	idempotencySettingsFromEnv,
 	isTimeoutError,
 } from '../../../src/services/idempotency/idempotency.js';
 import type { IdempotencyRecord, IdempotencyStore } from '../../../src/services/idempotency/idempotency.js';
@@ -240,5 +241,58 @@ describe('request hashing', () => {
 	it('recognises timeouts', () => {
 		expect(isTimeoutError(Object.assign(new Error('x'), { name: 'TimeoutError' }))).toBe(true);
 		expect(isTimeoutError(new Error('insufficient funds'))).toBe(false);
+	});
+});
+
+describe('expired-row purge and retention', () => {
+	class PurgingStore extends MemoryStore {
+		purges: number[] = [];
+		fail = false;
+		async purgeExpired(limit: number) {
+			this.purges.push(limit);
+			if (this.fail) throw new Error('db down');
+			return limit;
+		}
+	}
+
+	it('sweeps one bounded batch when a key is recorded, at most once per interval', async () => {
+		const purging = new PurgingStore();
+		let clock = 1_000_000;
+		const svc = new IdempotencyService({
+			store: purging,
+			now: () => clock,
+			purgeBatch: 25,
+			purgeIntervalMs: 60_000,
+		});
+		await svc.execute(input({ key: 'a' }), async () => ok);
+		await svc.execute(input({ key: 'b' }), async () => ok);
+		expect(purging.purges).toEqual([25]);
+		clock += 60_001;
+		await svc.execute(input({ key: 'c' }), async () => ok);
+		expect(purging.purges).toEqual([25, 25]);
+	});
+
+	it('never fails or delays the request when the sweep fails', async () => {
+		const purging = new PurgingStore();
+		purging.fail = true;
+		const svc = new IdempotencyService({ store: purging });
+		const outcome = await svc.execute(input(), async () => ok);
+		expect(outcome.replayed).toBe(false);
+	});
+
+	it('works with a store that has no purge', async () => {
+		expect((await service.execute(input(), async () => ok)).replayed).toBe(false);
+	});
+
+	it('reads retention and purge settings from the environment, with defaults', () => {
+		expect(idempotencySettingsFromEnv({})).toEqual({ ttlMs: 86_400_000, purgeBatch: 100, purgeIntervalMs: 60_000 });
+		expect(
+			idempotencySettingsFromEnv({
+				IDEMPOTENCY_RETENTION_HOURS: '6',
+				IDEMPOTENCY_PURGE_BATCH: '10',
+				IDEMPOTENCY_PURGE_INTERVAL_MS: '5000',
+			})
+		).toEqual({ ttlMs: 21_600_000, purgeBatch: 10, purgeIntervalMs: 5000 });
+		expect(idempotencySettingsFromEnv({ IDEMPOTENCY_RETENTION_HOURS: 'nope' }).ttlMs).toBe(86_400_000);
 	});
 });

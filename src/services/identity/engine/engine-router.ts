@@ -2,10 +2,11 @@ import type { IIdentityService } from '../index.js';
 import type { IdentityEngine } from './identity-engine.js';
 import { getCredoEngine } from './credo/factory.js';
 import { VeramoEngine } from './veramo-engine.js';
+import { veramoPayerLock } from './veramo-payer-lock.js';
 import { DEFAULT_ENGINE, isEngineName } from './types.js';
 import { currentRequestContext } from '../../request-context.js';
 import { logRoutingOutcome } from './routing-log.js';
-import { EngineGoneError } from './errors.js';
+import { EngineGoneError, EngineRoutingUnavailableError, logRoutingFailure } from './errors.js';
 import type { ArtifactRef, EngineName, EngineRoute, RoutedFamily } from './types.js';
 
 /** Reads the engine recorded on an existing artifact. Returns anything: the column may be missing or null. */
@@ -27,6 +28,12 @@ export interface EngineDecisionContext {
 	encryptedStatusList?: boolean;
 	/** Set when the operation acts on an artifact that already exists (update, deactivate, revoke, status check). */
 	artifact?: ArtifactRef;
+	/**
+	 * With `artifact`: when the lookup worked and found NO record of the artefact (no row at all), choose by flag
+	 * like a new artefact instead of the compiled default. A record whose engine column is empty is a legacy row and
+	 * still reads as `veramo`. Used where the artefact (an issuer DID) is not necessarily one Studio created.
+	 */
+	flagWhenUnrecorded?: boolean;
 }
 
 export type EngineDecisionReason = 'artifact' | 'flag' | 'exception' | 'default';
@@ -51,7 +58,7 @@ export function isP256KeyType(keyType: unknown): boolean {
 export type EngineFactory = (service: IIdentityService) => IdentityEngine;
 
 export const defaultEngineFactories: Record<EngineName, EngineFactory> = {
-	veramo: (service) => new VeramoEngine(service),
+	veramo: (service) => new VeramoEngine(service, veramoPayerLock()),
 	// Never selected unless a flag or a recorded engine says so. Credo starts on first use, not here.
 	credo: () => getCredoEngine(),
 };
@@ -63,8 +70,11 @@ export const defaultEngineFactories: Record<EngineName, EngineFactory> = {
  *   1. an operation on an existing artifact uses the engine recorded on it;
  *   2. a new artifact uses the engine from the `featureFlag` table for that customer and route;
  *   3. otherwise the global default, `veramo`.
- * A missing column, a null, an unrecognised value or a failing lookup all read as `veramo`: the router must
- * never make a request fail because the engine bookkeeping is absent. Shadow reads are not part of this step.
+ * A missing column, a null or an empty value on an existing record reads as `veramo`: those rows predate the
+ * engine bookkeeping. A lookup that FAILS, or a recorded value that is not an engine name, is not the same as "no
+ * record": the artefact may belong to Credo, so the request is refused with `EngineRoutingUnavailableError` (503)
+ * rather than answered by Veramo. The compiled default applies only when the lookup worked and found no record.
+ * Shadow reads are not part of this step.
  */
 export class EngineRouter {
 	constructor(
@@ -80,13 +90,23 @@ export class EngineRouter {
 		if (context.route === 'agent') return { engine: 'credo', reason: 'exception', rule: 'agent-route' };
 		if (isP256KeyType(context.keyType)) return { engine: 'credo', reason: 'exception', rule: 'p256-key' };
 		if (context.artifact) {
-			const recorded = await this.safely(() => this.artifacts.recordedEngine(context.artifact as ArtifactRef));
+			const recorded = await this.lookup('artifact', () =>
+				this.artifacts.recordedEngine(context.artifact as ArtifactRef)
+			);
 			// An existing artifact never consults the flags: moving it between engines is a migration, not a flag.
-			return isEngineName(recorded)
-				? { engine: recorded, reason: 'artifact' }
-				: { engine: DEFAULT_ENGINE, reason: 'default' };
+			if (isEngineName(recorded)) return { engine: recorded, reason: 'artifact' };
+			if (recorded === undefined && context.flagWhenUnrecorded) return this.decideByFlag(context);
+			if (recorded === null || recorded === undefined || recorded === '') {
+				return { engine: DEFAULT_ENGINE, reason: 'default' };
+			}
+			logRoutingFailure('artifact', new Error('recorded engine is not a known engine'));
+			throw new EngineRoutingUnavailableError();
 		}
-		const flagged = await this.safely(() =>
+		return this.decideByFlag(context);
+	}
+
+	private async decideByFlag(context: EngineDecisionContext): Promise<EngineDecision> {
+		const flagged = await this.lookup('flag', () =>
 			this.flags.flaggedEngine(context.customerId, context.route as EngineRoute)
 		);
 		return isEngineName(flagged)
@@ -136,11 +156,14 @@ export class EngineRouter {
 		}
 	}
 
-	private async safely(read: () => Promise<unknown>): Promise<unknown> {
+	/** Runs a lookup. A failure is logged and refused as `EngineRoutingUnavailableError`, never turned into "veramo". */
+	private async lookup(what: 'artifact' | 'flag', read: () => Promise<unknown>): Promise<unknown> {
 		try {
 			return await read();
-		} catch {
-			return null;
+		} catch (error) {
+			if (error instanceof EngineRoutingUnavailableError) throw error;
+			logRoutingFailure(what, error);
+			throw new EngineRoutingUnavailableError(undefined, error);
 		}
 	}
 }

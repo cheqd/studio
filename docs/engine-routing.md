@@ -22,8 +22,13 @@ const service = await setup.routed(route, artifact, hints); // same engine, type
 - `hints` carries what the router needs for its exceptions: `keyType` (P-256 / `Secp256r1` / `JsonWebKey` always goes
   to Credo) and `encryptedStatusList` (creation answers `Gone`, 410, on every engine).
 - `src/services/identity/engine/artifact-refs.ts` turns what a caller knows (a DID and a status-list name, or a
-  credential) into the artifact reference. Those lookups are best effort: with no external database, no row or a
-  failing query they return nothing and the router uses the default. They never fail a request.
+  credential) into the artifact reference. With no external database, no row, or a schema that predates the table they
+  return nothing and the router uses the default. A query that fails is not "no record": the artifact may be Credo's,
+  so the request is refused with `EngineRoutingUnavailable` (503, retryable) instead of being answered by Veramo.
+- The same holds in the router: a failed artifact-engine lookup, an unrecognised recorded engine, or a failed flag
+  read with no last-known value is refused with 503 (and logged as `engine-routing-failed`). A flag read that fails
+  while a last-known value exists keeps using that value (logged as `flag-read-failed`). The compiled default
+  (`veramo`) applies only when the lookup worked and found no record or flag.
 
 ## Routes
 
@@ -47,7 +52,7 @@ existing service, so wiring changes no request, response or status code.
 | `POST /providers/:providerId/did/import` (Dock hand-off export, in `dock/identity.ts`) | `did` | `did` | Yes |
 | `POST /resource/create/:did` | `resource` | `did` (the DID owning the resource) | Yes |
 | `GET /resource/list` | `resource` | `did` when the `did` filter is given, else none | Yes |
-| `POST /credential/issue` | `credential` | none (new) | Yes (already) |
+| `POST /credential/issue` | `credential` | `did` (the issuer DID): its recorded engine signs; the `credential` flag applies only when Studio has no record of the issuer | Yes |
 | `POST /credentials/issued/:id/re-issue`, accreditation issue | `credential` | none (new) | Yes (already, through `issue_credential`) |
 | `POST /credential/verify` | `credential` | none | Yes |
 | Issued-credential status sync (`syncStatusFromProvider`, run when issued credentials are read) | `status-list` | `credential` | Yes |
@@ -151,3 +156,13 @@ those rows and drops the table. Rows that do not meet every condition are left u
   `GET /credentials/issued/:id?syncStatus=true` refreshed a status, so the list kept the status the row was issued with.
   Rows are matched on customer, issuer, status index and the status entry id; a status change made outside Studio's API
   is still picked up only by `syncStatus=true`.
+
+## Ledger writes and the payer lock
+Every ledger write, from either engine, runs inside `withPayerLock` keyed by the customer's payer address, so a
+Veramo write and a Credo write from one account cannot pick the same account sequence. The Veramo engine
+(`veramo-engine.ts`, `veramo-payer-lock.ts`) locks DID create, update and deactivate, resource create, status-list
+create, update and broadcast, fee payment, and published revoke, suspend and reinstate. Reads, key, credential and
+presentation signing and unpublished status changes do not write and do not lock. Where the payer cannot be resolved
+(no payment account, or a revoke whose credential carries no readable status entry) the write runs unlocked: it either
+fails for lack of an account or cannot be tied to a payer. Locks live on their own small pool
+(`EXTERNAL_DB_LOCK_POOL_*`), so they cannot exhaust the main pool.

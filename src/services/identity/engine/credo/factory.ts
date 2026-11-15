@@ -2,6 +2,7 @@ import { PrivateKeyStore } from '@veramo/data-store';
 import { SecretBox } from '@veramo/kms-local';
 import { Connection } from '../../../../database/connection/connection.js';
 import { withPayerLock } from '../../ledger-lock.js';
+import { sharedPayerLockSource } from '../../payer-lock-pool.js';
 import { CredoEngine } from './credo-engine.js';
 import { loadCredoStorageConfig } from './config.js';
 import { createCredoRuntime } from './credo-runtime.js';
@@ -85,7 +86,7 @@ export function createCredoEngine(): CredoEngine {
 	return new CredoEngine({
 		store,
 		runtime,
-		withPayerLock: (address, work) => withPayerLock(dataSource, address, work),
+		withPayerLock: (address, work) => withPayerLock(sharedPayerLockSource(), address, work),
 		resolverUrl: process.env.RESOLVER_URL,
 		statusListOwnership: new TypeOrmStatusListOwnership(dataSource),
 	});

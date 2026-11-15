@@ -167,4 +167,46 @@ describe('FlagCache', () => {
 			expect(await cache.get('c1', async () => ['new'], fallback)).toEqual(['new']);
 		});
 	});
+
+	describe('failClosed reads (routing)', () => {
+		it('throws when the read fails and nothing is known', async () => {
+			const cache = new FlagCache<string[]>();
+			await expect(
+				cache.get(
+					'c1',
+					async () => {
+						throw new Error('down');
+					},
+					fallback,
+					{ failClosed: true }
+				)
+			).rejects.toThrow('down');
+		});
+
+		it('still serves the last known value when the read fails', async () => {
+			const cache = new FlagCache<string[]>();
+			await cache.get('c1', async () => ['credo'], fallback, { failClosed: true });
+			jest.advanceTimersByTime(FLAG_CACHE_TTL_MS + 1);
+			const value = await cache.get(
+				'c1',
+				async () => {
+					throw new Error('down');
+				},
+				fallback,
+				{ failClosed: true }
+			);
+			expect(value).toEqual(['credo']);
+		});
+
+		it('does not let a lenient read hand its fallback to a strict caller sharing the key', async () => {
+			const cache = new FlagCache<string[]>();
+			const failing = async (): Promise<string[]> => {
+				throw new Error('down');
+			};
+			const lenient = cache.get('c1', failing, fallback);
+			const strict = cache.get('c1', failing, fallback, { failClosed: true });
+			expect(await lenient).toEqual(fallback);
+			await expect(strict).rejects.toThrow('down');
+		});
+	});
 });

@@ -155,6 +155,14 @@ export class FeatureFlagService {
 		return this.cache.get(customerId ?? '', () => this.readRows(customerId), []);
 	}
 
+	/**
+	 * Like `rowsFor`, for routing decisions: a failed read with no last-known value throws instead of returning no
+	 * rows, so a database fault is never read as "no flag, use the default engine".
+	 */
+	async rowsForRouting(customerId: string | undefined): Promise<FeatureFlagEntity[]> {
+		return this.cache.get(customerId ?? '', () => this.readRows(customerId), [], { failClosed: true });
+	}
+
 	/** One database read of the rows that apply to a caller. Throws if the table is unavailable. */
 	async readRows(customerId: string | undefined): Promise<FeatureFlagEntity[]> {
 		const query = Connection.instance.dbConnection

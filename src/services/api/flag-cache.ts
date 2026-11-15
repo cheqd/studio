@@ -4,6 +4,8 @@
  *   - TTL 5 seconds, so a switch flipped on `PUT /admin/flags` reaches every instance within the TTL.
  *   - Fail safe: if a read fails, the last known value is returned, however old. If there is none, the loader's
  *     `fallback` (the compiled default, i.e. no rows) is returned. A failed read never fails the request.
+ *   - Fail closed, for callers that route on the value (`failClosed`): with no last-known value the read error is
+ *     thrown, because "no rows" would be a guess that the compiled default applies.
  *   - After a failed read the cache does not retry for a short pause, so a database outage does not add a failing
  *     query to every request.
  *   - Concurrent reads of the same key share one query.
@@ -43,13 +45,15 @@ export class FlagCache<T> {
 		this.onFailure = options.onFailure;
 	}
 
-	async get(key: string, load: () => Promise<T>, fallback: T): Promise<T> {
+	async get(key: string, load: () => Promise<T>, fallback: T, options: { failClosed?: boolean } = {}): Promise<T> {
+		const failClosed = options.failClosed === true;
+		const flightKey = failClosed ? `strict:${key}` : key;
 		const entry = this.entries.get(key);
 		const now = this.now();
 		if (entry && now - entry.fetchedAt < this.ttlMs) return entry.value;
 		if (entry && now < (this.pausedUntil.get(key) ?? 0)) return entry.value;
 
-		const pending = this.inFlight.get(key);
+		const pending = this.inFlight.get(flightKey);
 		if (pending) return pending;
 
 		const generation = this.generation;
@@ -73,12 +77,14 @@ export class FlagCache<T> {
 				} catch {
 					/* logging must not fail the request */
 				}
-				return lastKnown ? lastKnown.value : fallback;
+				if (lastKnown) return lastKnown.value;
+				if (failClosed) throw error;
+				return fallback;
 			} finally {
-				if (this.inFlight.get(key) === read) this.inFlight.delete(key);
+				if (this.inFlight.get(flightKey) === read) this.inFlight.delete(flightKey);
 			}
 		})();
-		this.inFlight.set(key, read);
+		this.inFlight.set(flightKey, read);
 		return read;
 	}
 

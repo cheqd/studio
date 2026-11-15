@@ -1,8 +1,13 @@
 import { Connection } from '../../database/connection/connection.js';
 import { IdempotencyKeyEntity } from '../../database/entities/idempotency-key.entity.js';
 import type { IdempotencyRecord, IdempotencyStore } from './idempotency.js';
+import { createSecretBoxCipher } from './response-cipher.js';
+import type { ResponseCipher } from './response-cipher.js';
 
-const toRecord = (row: IdempotencyKeyEntity & { customerId?: string }): IdempotencyRecord => ({
+const toRecord = (
+	row: IdempotencyKeyEntity & { customerId?: string },
+	response: IdempotencyRecord['response']
+): IdempotencyRecord => ({
 	id: row.id,
 	customerId: row.customerId ?? row.customer?.customerId,
 	key: row.key,
@@ -10,7 +15,7 @@ const toRecord = (row: IdempotencyKeyEntity & { customerId?: string }): Idempote
 	requestHash: row.requestHash,
 	state: row.state,
 	txHash: row.txHash,
-	response: row.response,
+	response,
 	expiresAt: row.expiresAt,
 });
 
@@ -19,6 +24,15 @@ const toRecord = (row: IdempotencyKeyEntity & { customerId?: string }): Idempote
  * connection: committed on return, and independent of any transaction the caller might hold.
  */
 export class TypeormIdempotencyStore implements IdempotencyStore {
+	private cipherInstance?: ResponseCipher;
+
+	/** `cipher` is injected by tests; production builds it from `EXTERNAL_DB_ENCRYPTION_KEY` on first use. */
+	constructor(private readonly cipher?: ResponseCipher) {}
+
+	private get responseCipher(): ResponseCipher {
+		return this.cipher ?? (this.cipherInstance ??= createSecretBoxCipher());
+	}
+
 	private get repository() {
 		return Connection.instance.dbConnection.getRepository(IdempotencyKeyEntity);
 	}
@@ -89,17 +103,37 @@ export class TypeormIdempotencyStore implements IdempotencyStore {
 			where: { customer: { customerId }, key },
 			relations: { customer: true },
 		});
-		return row ? toRecord(row) : null;
+		if (!row) return null;
+		// An unreadable stored response (key rotated, row damaged) reads as an empty one: the replay then answers
+		// with the generic status for the state and never an invented body.
+		const response = row.response ? await this.responseCipher.open(row.response) : row.response;
+		return toRecord(row, response);
 	}
 
 	async settle(
 		id: string,
 		change: { state: IdempotencyRecord['state']; txHash?: string | null; response?: Record<string, unknown> | null }
 	): Promise<void> {
-		await this.repository.update({ id }, change as never);
+		const stored = change.response ? await this.responseCipher.seal(change.response) : change.response;
+		await this.repository.update({ id }, { ...change, response: stored } as never);
 	}
 
 	async remove(id: string): Promise<void> {
 		await this.repository.delete({ id });
+	}
+
+	/**
+	 * Deletes up to `limit` rows whose retention has ended, oldest first, and returns how many went. Bounded so one
+	 * call never holds a long lock or a large transaction. Postgres only (the in-memory database is per process).
+	 */
+	async purgeExpired(limit: number): Promise<number> {
+		if (Connection.instance.dbConnection.options.type !== 'postgres') return 0;
+		const rows: unknown[] = await this.repository.query(
+			`DELETE FROM "idempotencyKey" WHERE "id" IN (
+				SELECT "id" FROM "idempotencyKey" WHERE "expiresAt" < now() ORDER BY "expiresAt" LIMIT $1 FOR UPDATE SKIP LOCKED
+			) RETURNING "id"`,
+			[limit]
+		);
+		return Array.isArray(rows) ? (Array.isArray(rows[0]) ? (rows[0] as unknown[]).length : rows.length) : 0;
 	}
 }

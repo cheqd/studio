@@ -282,7 +282,7 @@ export class IdentityServiceStrategySetup {
 	public async engine(
 		route: EngineRoute,
 		artifact?: ArtifactRef,
-		hints?: { keyType?: string; encryptedStatusList?: boolean }
+		hints?: { keyType?: string; encryptedStatusList?: boolean; flagWhenUnrecorded?: boolean }
 	): Promise<IdentityEngine> {
 		return engineRouter.engineFor(
 			{
@@ -291,6 +291,7 @@ export class IdentityServiceStrategySetup {
 				artifact,
 				keyType: hints?.keyType,
 				encryptedStatusList: hints?.encryptedStatusList,
+				flagWhenUnrecorded: hints?.flagWhenUnrecorded,
 			},
 			this.agent
 		);
@@ -303,7 +304,7 @@ export class IdentityServiceStrategySetup {
 	public async routed(
 		route: EngineRoute,
 		artifact?: ArtifactRef,
-		hints?: { keyType?: string; encryptedStatusList?: boolean }
+		hints?: { keyType?: string; encryptedStatusList?: boolean; flagWhenUnrecorded?: boolean }
 	): Promise<RoutedService> {
 		return (await this.engine(route, artifact, hints)) as unknown as RoutedService;
 	}

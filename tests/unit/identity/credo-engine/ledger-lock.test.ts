@@ -2,6 +2,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import {
 	DEFAULT_LOCK_TIMEOUT_MS,
 	LedgerUnavailableError,
+	LockPoolBusyError,
 	queuedWriteCount,
 	withAdvisoryLock,
 	withPayerLock,
@@ -284,5 +285,54 @@ describe('without Postgres (in-memory development database)', () => {
 			})
 		).rejects.toThrow('boom');
 		expect(await withPayerLock(memory, 'cheqd1same', async () => 'ok')).toBe('ok');
+	});
+});
+
+describe('withPayerLock when every lock connection is busy', () => {
+	function busyPool(busyAttempts: number) {
+		let attempts = 0;
+		const released: string[] = [];
+		const dataSource: LockDataSource = {
+			options: { type: 'postgres' },
+			async transaction(work) {
+				return work({ query: async () => [] });
+			},
+			createQueryRunner() {
+				return {
+					async connect() {
+						attempts++;
+						if (attempts <= busyAttempts) throw new LockPoolBusyError();
+					},
+					async query(sql: string) {
+						return sql.includes('pg_try_advisory_lock') ? [{ locked: true }] : [];
+					},
+					async release() {
+						released.push('release');
+					},
+				};
+			},
+		};
+		return { dataSource, attempts: () => attempts, released };
+	}
+
+	it('retries within the wait and then runs the write', async () => {
+		const { dataSource, attempts } = busyPool(3);
+		const result = await withPayerLock(dataSource, 'cheqd1payer', async () => 'done', instant);
+		expect(result).toBe('done');
+		expect(attempts()).toBe(4);
+	});
+
+	it('fails with LedgerUnavailableError, not a stall, once the wait is over', async () => {
+		const { dataSource } = busyPool(Number.MAX_SAFE_INTEGER);
+		let clock = 0;
+		await expect(
+			withPayerLock(dataSource, 'cheqd1payer', async () => 'never', {
+				lockTimeoutMs: 100,
+				now: () => clock,
+				sleep: async (ms) => {
+					clock += ms + 50;
+				},
+			})
+		).rejects.toBeInstanceOf(LedgerUnavailableError);
 	});
 });
