@@ -12,6 +12,8 @@ import type { IIdentityService } from '../index.js';
 import type { IdentityEngine } from './identity-engine.js';
 import { walkAccreditationChain } from './accreditation-chain.js';
 import { veramoAccreditationPorts } from './veramo-accreditation.js';
+import { networkOfCredential, networkOfDid } from './veramo-payer-lock.js';
+import type { VeramoPayerLock } from './veramo-payer-lock.js';
 import type {
 	EngineAccreditationOutcome,
 	EngineAccreditationVerifyRequest,
@@ -44,11 +46,22 @@ import type {
  *
  * Everything Veramo-specific that is not part of the interface (`agent`, `initAgent`, `createAgent`) stays on
  * the wrapped service.
+ *
+ * The one thing added here: every method that writes to the ledger (and so spends from the customer's payer
+ * account) runs inside the per-payer lock, the same queue the Credo engine uses. Reads, key and credential
+ * storage and signing do not. With no `payerLock` (tests) calls pass straight through.
  */
 export class VeramoEngine implements IdentityEngine {
 	readonly name = 'veramo' as const;
 
-	constructor(private readonly service: IIdentityService) {}
+	constructor(
+		private readonly service: IIdentityService,
+		private readonly payerLock?: VeramoPayerLock
+	) {}
+
+	private locked<T>(customer: CustomerEntity | undefined, network: string | undefined, work: () => Promise<T>) {
+		return this.payerLock ? this.payerLock.run(customer, network, work) : work();
+	}
 
 	// Keys
 	createKey(type: EngineKeyType | string, customer?: CustomerEntity, keyAlias?: string): Promise<KeyEntity> {
@@ -68,17 +81,21 @@ export class VeramoEngine implements IdentityEngine {
 
 	// DIDs
 	createDid(network: string, didDocument: EngineDidDocument, customer: CustomerEntity): Promise<EngineIdentifier> {
-		return this.service.createDid(network, didDocument as any, customer) as Promise<any>;
+		return this.locked(customer, network, () =>
+			this.service.createDid(network, didDocument as any, customer)
+		) as Promise<any>;
 	}
 	updateDid(
 		didDocument: EngineDidDocument,
 		customer: CustomerEntity,
 		publicKeyHexs?: string[]
 	): Promise<EngineIdentifier> {
-		return this.service.updateDid(didDocument as any, customer, publicKeyHexs) as Promise<any>;
+		return this.locked(customer, networkOfDid(didDocument?.id), () =>
+			this.service.updateDid(didDocument as any, customer, publicKeyHexs)
+		) as Promise<any>;
 	}
 	deactivateDid(did: string, customer: CustomerEntity, publicKeyHexs?: string[]): Promise<boolean> {
-		return this.service.deactivateDid(did, customer, publicKeyHexs);
+		return this.locked(customer, networkOfDid(did), () => this.service.deactivateDid(did, customer, publicKeyHexs));
 	}
 	importDid(
 		did: string,
@@ -115,7 +132,9 @@ export class VeramoEngine implements IdentityEngine {
 		customer: CustomerEntity,
 		publicKeyHexs?: string[]
 	): Promise<unknown> {
-		return this.service.createResource(network, payload as any, customer, publicKeyHexs);
+		return this.locked(customer, network, () =>
+			this.service.createResource(network, payload as any, customer, publicKeyHexs)
+		);
 	}
 	listResources(options: ListResourceOptions, customer: CustomerEntity): Promise<ListResourceResponse> {
 		return this.service.listResources(options, customer);
@@ -201,11 +220,8 @@ export class VeramoEngine implements IdentityEngine {
 		statusOptions: EngineStatusListOptions,
 		customer: CustomerEntity
 	): Promise<EngineStatusResult> {
-		return this.service.createUnencryptedStatusList2021(
-			did,
-			resourceOptions as any,
-			statusOptions as any,
-			customer
+		return this.locked(customer, networkOfDid(did), () =>
+			this.service.createUnencryptedStatusList2021(did, resourceOptions as any, statusOptions as any, customer)
 		) as Promise<any>;
 	}
 	createUnencryptedBitstringStatusList(
@@ -214,11 +230,13 @@ export class VeramoEngine implements IdentityEngine {
 		statusOptions: EngineStatusListOptions,
 		customer: CustomerEntity
 	): Promise<EngineStatusResult> {
-		return this.service.createUnencryptedBitstringStatusList(
-			did,
-			resourceOptions as any,
-			statusOptions as any,
-			customer
+		return this.locked(customer, networkOfDid(did), () =>
+			this.service.createUnencryptedBitstringStatusList(
+				did,
+				resourceOptions as any,
+				statusOptions as any,
+				customer
+			)
 		) as Promise<any>;
 	}
 	createEncryptedStatusList2021(
@@ -227,11 +245,8 @@ export class VeramoEngine implements IdentityEngine {
 		statusOptions: EngineStatusListOptions,
 		customer: CustomerEntity
 	): Promise<EngineStatusResult> {
-		return this.service.createEncryptedStatusList2021(
-			did,
-			resourceOptions as any,
-			statusOptions as any,
-			customer
+		return this.locked(customer, networkOfDid(did), () =>
+			this.service.createEncryptedStatusList2021(did, resourceOptions as any, statusOptions as any, customer)
 		) as Promise<any>;
 	}
 	createEncryptedBitstringStatusList(
@@ -240,11 +255,8 @@ export class VeramoEngine implements IdentityEngine {
 		statusOptions: EngineStatusListOptions,
 		customer: CustomerEntity
 	): Promise<EngineStatusResult> {
-		return this.service.createEncryptedBitstringStatusList(
-			did,
-			resourceOptions as any,
-			statusOptions as any,
-			customer
+		return this.locked(customer, networkOfDid(did), () =>
+			this.service.createEncryptedBitstringStatusList(did, resourceOptions as any, statusOptions as any, customer)
 		) as Promise<any>;
 	}
 	updateUnencryptedStatusList(
@@ -253,7 +265,9 @@ export class VeramoEngine implements IdentityEngine {
 		statusOptions: EngineStatusListOptions,
 		customer: CustomerEntity
 	): Promise<EngineStatusResult> {
-		return this.service.updateUnencryptedStatusList(did, listType, statusOptions as any, customer) as Promise<any>;
+		return this.locked(customer, networkOfDid(did), () =>
+			this.service.updateUnencryptedStatusList(did, listType, statusOptions as any, customer)
+		) as Promise<any>;
 	}
 	updateEncryptedStatusList(
 		did: string,
@@ -261,7 +275,9 @@ export class VeramoEngine implements IdentityEngine {
 		statusOptions: EngineStatusListOptions,
 		customer: CustomerEntity
 	): Promise<EngineStatusResult> {
-		return this.service.updateEncryptedStatusList(did, listType, statusOptions as any, customer) as Promise<any>;
+		return this.locked(customer, networkOfDid(did), () =>
+			this.service.updateEncryptedStatusList(did, listType, statusOptions as any, customer)
+		) as Promise<any>;
 	}
 	checkStatusList2021(
 		did: string,
@@ -292,20 +308,26 @@ export class VeramoEngine implements IdentityEngine {
 		statusOptions: EngineStatusListOptions,
 		customer: CustomerEntity
 	): Promise<boolean> {
-		return this.service.broadcastStatusList2021(did, resourceOptions as any, statusOptions as any, customer);
+		return this.locked(customer, networkOfDid(did), () =>
+			this.service.broadcastStatusList2021(did, resourceOptions as any, statusOptions as any, customer)
+		);
 	}
 	broadcastBitstringStatusList(
 		did: string,
 		resourceOptions: EngineResourcePayload,
 		customer: CustomerEntity
 	): Promise<boolean> {
-		return this.service.broadcastBitstringStatusList(did, resourceOptions as any, customer);
+		return this.locked(customer, networkOfDid(did), () =>
+			this.service.broadcastBitstringStatusList(did, resourceOptions as any, customer)
+		);
 	}
 	remunerateStatusList2021(
 		feePaymentOptions: EngineFeePaymentOptions,
 		customer?: CustomerEntity
 	): Promise<EngineStatusResult> {
-		return this.service.remunerateStatusList2021(feePaymentOptions as any, customer) as Promise<any>;
+		return this.locked(customer, (feePaymentOptions as any)?.feePaymentNetwork, () =>
+			this.service.remunerateStatusList2021(feePaymentOptions as any, customer)
+		) as Promise<any>;
 	}
 	revokeCredentials(
 		credential: EngineSignedInput | EngineSignedInput[],
@@ -314,13 +336,16 @@ export class VeramoEngine implements IdentityEngine {
 		customer: CustomerEntity,
 		symmetricKey: string
 	): Promise<EngineStatusResult> {
-		return this.service.revokeCredentials(
-			credential as any,
-			listType,
-			publish,
-			customer,
-			symmetricKey
-		) as Promise<any>;
+		const run = () =>
+			this.service.revokeCredentials(
+				credential as any,
+				listType,
+				publish,
+				customer,
+				symmetricKey
+			) as Promise<any>;
+		// Only a published change writes to the ledger
+		return publish ? this.locked(customer, networkOfCredential(credential), run) : run();
 	}
 	suspendCredentials(
 		credential: EngineSignedInput | EngineSignedInput[],
@@ -329,13 +354,16 @@ export class VeramoEngine implements IdentityEngine {
 		customer: CustomerEntity,
 		symmetricKey: string
 	): Promise<EngineStatusResult> {
-		return this.service.suspendCredentials(
-			credential as any,
-			listType,
-			publish,
-			customer,
-			symmetricKey
-		) as Promise<any>;
+		const run = () =>
+			this.service.suspendCredentials(
+				credential as any,
+				listType,
+				publish,
+				customer,
+				symmetricKey
+			) as Promise<any>;
+		// Only a published change writes to the ledger
+		return publish ? this.locked(customer, networkOfCredential(credential), run) : run();
 	}
 	reinstateCredentials(
 		credential: EngineSignedInput | EngineSignedInput[],
@@ -344,12 +372,15 @@ export class VeramoEngine implements IdentityEngine {
 		customer: CustomerEntity,
 		symmetricKey: string
 	): Promise<EngineStatusResult> {
-		return this.service.reinstateCredentials(
-			credential as any,
-			listType,
-			publish,
-			customer,
-			symmetricKey
-		) as Promise<any>;
+		const run = () =>
+			this.service.reinstateCredentials(
+				credential as any,
+				listType,
+				publish,
+				customer,
+				symmetricKey
+			) as Promise<any>;
+		// Only a published change writes to the ledger
+		return publish ? this.locked(customer, networkOfCredential(credential), run) : run();
 	}
 }

@@ -156,3 +156,13 @@ those rows and drops the table. Rows that do not meet every condition are left u
   `GET /credentials/issued/:id?syncStatus=true` refreshed a status, so the list kept the status the row was issued with.
   Rows are matched on customer, issuer, status index and the status entry id; a status change made outside Studio's API
   is still picked up only by `syncStatus=true`.
+
+## Ledger writes and the payer lock
+Every ledger write, from either engine, runs inside `withPayerLock` keyed by the customer's payer address, so a
+Veramo write and a Credo write from one account cannot pick the same account sequence. The Veramo engine
+(`veramo-engine.ts`, `veramo-payer-lock.ts`) locks DID create, update and deactivate, resource create, status-list
+create, update and broadcast, fee payment, and published revoke, suspend and reinstate. Reads, key, credential and
+presentation signing and unpublished status changes do not write and do not lock. Where the payer cannot be resolved
+(no payment account, or a revoke whose credential carries no readable status entry) the write runs unlocked: it either
+fails for lack of an account or cannot be tied to a payer. Locks live on their own small pool
+(`EXTERNAL_DB_LOCK_POOL_*`), so they cannot exhaust the main pool.

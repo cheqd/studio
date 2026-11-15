@@ -2,6 +2,7 @@ import type { IIdentityService } from '../index.js';
 import type { IdentityEngine } from './identity-engine.js';
 import { getCredoEngine } from './credo/factory.js';
 import { VeramoEngine } from './veramo-engine.js';
+import { veramoPayerLock } from './veramo-payer-lock.js';
 import { DEFAULT_ENGINE, isEngineName } from './types.js';
 import { currentRequestContext } from '../../request-context.js';
 import { logRoutingOutcome } from './routing-log.js';
@@ -57,7 +58,7 @@ export function isP256KeyType(keyType: unknown): boolean {
 export type EngineFactory = (service: IIdentityService) => IdentityEngine;
 
 export const defaultEngineFactories: Record<EngineName, EngineFactory> = {
-	veramo: (service) => new VeramoEngine(service),
+	veramo: (service) => new VeramoEngine(service, veramoPayerLock()),
 	// Never selected unless a flag or a recorded engine says so. Credo starts on first use, not here.
 	credo: () => getCredoEngine(),
 };
