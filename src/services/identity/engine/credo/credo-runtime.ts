@@ -1,7 +1,6 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { AskarModule, AskarMultiWalletDatabaseScheme } from '@credo-ts/askar';
 import { CheqdDidRegistrar, CheqdDidResolver, CheqdModule } from '@credo-ts/cheqd';
 import {
 	Agent,
@@ -18,7 +17,6 @@ import {
 } from '@credo-ts/core';
 import { agentDependencies, NodeKeyManagementService } from '@credo-ts/node';
 import { TenantsModule } from '@credo-ts/tenants';
-import { KdfMethod, NativeAskar, Store, StoreKeyMethod } from '@openwallet-foundation/askar-nodejs';
 import type { PrivateKeyStore } from '@veramo/data-store';
 import { VeramoKeyManagementStorage } from '../../credo/VeramoKeyManagementStorage.js';
 import type { EngineDidDocument, EngineDidResolution } from '../types.js';
@@ -26,6 +24,7 @@ import { credentialSession } from './credential-session.js';
 import { createSafeDocumentLoader } from './safe-document-loader.js';
 import { publicKeyHexFromJwk, veramoTypeFromJwk } from './key-material.js';
 import { createStatusListSession } from './status-lists-session.js';
+import { type AskarBindings, loadAskar } from './askar-native.js';
 import type { CredoRuntime, CredoTenantSession, DidOperationResult } from './ports.js';
 import type { CredoStorageConfig } from './config.js';
 import { CredoConfigurationError } from './errors.js';
@@ -43,7 +42,7 @@ export interface CredoRuntimeOptions {
 }
 
 /** The store key is a raw 32-byte key (never a passphrase), so there is no derivation step */
-const STORE_KEY_METHOD = () => new StoreKeyMethod(KdfMethod.Raw);
+const storeKeyMethod = ({ StoreKeyMethod, KdfMethod }: AskarBindings) => new StoreKeyMethod(KdfMethod.Raw);
 
 function storeUri(options: CredoStorageConfig['database'], caPath?: string) {
 	const enc = encodeURIComponent;
@@ -61,11 +60,12 @@ function storeUri(options: CredoStorageConfig['database'], caPath?: string) {
  * `agent.initialize()` accepts it. The database and the role are created once, by hand, from
  * `scripts/credo-database-provisioning.sql`: a missing database is reported as such and never created from here.
  */
-async function provisionStoreIfMissing(options: CredoRuntimeOptions, caPath?: string) {
+async function provisionStoreIfMissing(askar: AskarBindings, options: CredoRuntimeOptions, caPath?: string) {
+	const { Store } = askar;
 	const uri = storeUri(options.storage.database, caPath);
 	const databaseName = options.storage.database.name;
 	try {
-		const store = await Store.open({ uri, keyMethod: STORE_KEY_METHOD(), passKey: options.storage.storeKey });
+		const store = await Store.open({ uri, keyMethod: storeKeyMethod(askar), passKey: options.storage.storeKey });
 		await store.close();
 		return;
 	} catch (error) {
@@ -78,7 +78,7 @@ async function provisionStoreIfMissing(options: CredoRuntimeOptions, caPath?: st
 	const profile = options.storage.database.name;
 	const store = await Store.provision({
 		uri,
-		keyMethod: STORE_KEY_METHOD(),
+		keyMethod: storeKeyMethod(askar),
 		passKey: options.storage.storeKey,
 		profile,
 		recreate: false,
@@ -190,12 +190,13 @@ function session(tenantAgent: TenantAgentLike): CredoTenantSession {
  * per-customer fee payer from `resolvePayer`.
  */
 export async function createCredoRuntime(options: CredoRuntimeOptions): Promise<CredoRuntime> {
+	const askar = await loadAskar();
 	let caPath: string | undefined;
 	if (options.storage.database.caCertificate) {
 		caPath = join(mkdtempSync(join(tmpdir(), 'credo-ca-')), 'ca.pem');
 		writeFileSync(caPath, options.storage.database.caCertificate, { mode: 0o600 });
 	}
-	await provisionStoreIfMissing(options, caPath);
+	await provisionStoreIfMissing(askar, options, caPath);
 
 	const keyStorage = new VeramoKeyManagementStorage({
 		privateKeyStore: options.privateKeyStore,
@@ -214,10 +215,10 @@ export async function createCredoRuntime(options: CredoRuntimeOptions): Promise<
 		config: {},
 		dependencies: agentDependencies,
 		modules: {
-			askar: new AskarModule({
-				askar: NativeAskar,
+			askar: new askar.AskarModule({
+				askar: askar.NativeAskar,
 				enableKms: false,
-				multiWalletDatabaseScheme: AskarMultiWalletDatabaseScheme.ProfilePerWallet,
+				multiWalletDatabaseScheme: askar.AskarMultiWalletDatabaseScheme.ProfilePerWallet,
 				store: {
 					id: options.storage.database.name,
 					key: options.storage.storeKey,

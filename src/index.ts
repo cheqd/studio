@@ -2,9 +2,12 @@ import * as http from 'http';
 import App, { dbReady } from './app.js';
 import * as dotenv from 'dotenv';
 import { assertSecureStartup } from './helpers/startup-guard.js';
+import { loadAskar } from './services/identity/engine/credo/askar-native.js';
 
 dotenv.config();
 assertSecureStartup();
+// Fail on boot, not on the first Credo request, if Askar's native module cannot load (it is loaded lazily elsewhere)
+await loadAskar();
 
 const port = process.env.PORT || 3000;
 App.set('port', port);
