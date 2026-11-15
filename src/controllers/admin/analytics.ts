@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { query } from 'express-validator';
 import { StatusCodes } from 'http-status-codes';
 import { validate } from '../validator/decorator.js';
+import { singleChoice } from '../validator/single-choice.js';
 import { LedgerIndexer } from '../../services/ledger/ledger-indexer.js';
 import {
 	AdminAnalyticsService,
@@ -14,6 +15,7 @@ import {
 	type Range,
 	type Segment,
 } from '../../services/admin/admin-analytics.js';
+import { AdminLedgerWritesService } from '../../services/admin/admin-ledger-writes.js';
 import { requireStaffScope, STAFF_SCOPES } from './staff-guard.js';
 
 const rangeValidator = query('range')
@@ -36,7 +38,10 @@ const segmentOf = (request: Request): Segment => (request.query.segment ?? 'all'
  * `all` applies no segment filter. Needs the `admin:analytics:read` scope on every route.
  */
 export class AnalyticsAdminController {
-	constructor(private readonly service: () => AdminAnalyticsService = () => AdminAnalyticsService.instance) {}
+	constructor(
+		private readonly service: () => AdminAnalyticsService = () => AdminAnalyticsService.instance,
+		private readonly ledgerWrites: () => AdminLedgerWritesService = () => AdminLedgerWritesService.instance
+	) {}
 
 	public static overviewValidator = [rangeValidator, segmentValidator];
 	public static endpointsValidator = [rangeValidator, segmentValidator];
@@ -50,6 +55,7 @@ export class AnalyticsAdminController {
 			.bail(),
 	];
 	public static faucetToLedgerValidator = [rangeValidator, segmentValidator];
+	public static ledgerWritesValidator = [singleChoice('range', RANGES, '30')];
 	public static funnelsValidator = [
 		query('journey')
 			.exists()
@@ -374,5 +380,65 @@ export class AnalyticsAdminController {
 	public async faucetToLedger(request: Request, response: Response) {
 		LedgerIndexer.instance.maybeRun();
 		return this.run(response, () => this.service().faucetToLedger(rangeOf(request), segmentOf(request)));
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /admin/analytics/ledger-writes:
+	 *   get:
+	 *     summary: On-ledger writes of the faucet-funded addresses (staff only).
+	 *     description: >-
+	 *       Writes by type and day (zero-filled), retention (the share of addresses that wrote and were still writing 1,
+	 *       2 and 4 weeks after their first write: week buckets after the first write day, UTC), the fees paid by
+	 *       operation type split into Studio payer accounts and other (SDK) addresses, and the share of writes made
+	 *       through Studio. Testnet. Fees are exact (the fee recorded on each transaction); failed transactions are
+	 *       not included. Needs the ledger indexer (`LEDGER_INDEXER_ENABLED`) to have stored per-day writes for at
+	 *       least `LEDGER_INDEXER_MIN_COVERAGE_PERCENT` of the funded addresses; otherwise every section is
+	 *       `{ supported: false, reason }`. Counts and fees only. Needs the `admin:analytics:read` scope.
+	 *     tags: [Analytics]
+	 *     parameters:
+	 *       - in: query
+	 *         name: range
+	 *         schema: { type: integer, enum: [7, 30, 90], default: 30 }
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               type: object
+	 *               properties:
+	 *                 range: { type: integer, enum: [7, 30, 90] }
+	 *                 from: { type: string }
+	 *                 to: { type: string }
+	 *                 network: { type: string, enum: [testnet] }
+	 *                 coverage:
+	 *                   type: object
+	 *                   properties:
+	 *                     fundedAddresses: { type: integer }
+	 *                     coveredAddresses: { type: integer }
+	 *                     percent: { type: number }
+	 *                     minimumPercent: { type: number }
+	 *                 writes: { type: object, description: '`{ supported: true, days, totals }` or unsupported.' }
+	 *                 retention: { type: object, description: '`{ supported: true, definition, cohort, weeks }` or unsupported.' }
+	 *                 fees: { type: object, description: '`{ supported: true, basis, denom, byOperation, totals }` or unsupported.' }
+	 *                 channels: { type: object, description: '`{ supported: true, studioWrites, otherWrites, studioShare, writingAddresses }` or unsupported.' }
+	 *                 notes:
+	 *                   type: array
+	 *                   items: { type: string }
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       403:
+	 *         description: The caller is not staff.
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	@validate
+	public async ledgerWritesReport(request: Request, response: Response) {
+		LedgerIndexer.instance.maybeRun();
+		return this.run(response, () => this.ledgerWrites().ledgerWrites(rangeOf(request)));
 	}
 }

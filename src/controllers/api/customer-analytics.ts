@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { query } from 'express-validator';
 import { StatusCodes } from 'http-status-codes';
 import { validate } from '../validator/decorator.js';
+import { singleChoice } from '../validator/single-choice.js';
 import {
 	CUSTOMER_RANGES,
 	CustomerAnalyticsService,
@@ -21,17 +22,6 @@ const rangeValidator = query('range')
 	.isIn(CUSTOMER_RANGES.map(String))
 	.withMessage(`range must be one of: ${CUSTOMER_RANGES.join(', ')} (days)`)
 	.bail();
-
-/** A query parameter that must appear once, as a string from a fixed list: a repeated parameter is a 400, not a 500. */
-const singleChoice = (name: string, allowed: readonly (string | number)[], fallback: string) =>
-	query(name)
-		.optional()
-		.custom((value) => typeof value === 'string' && allowed.map(String).includes(value))
-		.withMessage(
-			`${name} must be given once and be one of: ${allowed.join(', ')}${name === 'range' ? ' (days)' : ''}`
-		)
-		.bail()
-		.default(fallback);
 
 /**
  * Analytics for the signed-in customer, for the portal's Analytics page. The customer is always the authenticated

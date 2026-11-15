@@ -79,6 +79,7 @@ const handlers: Array<{ method: string; path: string; run: Handler }> = [
 	{ method: 'GET', path: '/admin/analytics/plan-mix', run: (q, r) => analytics.planMix(q, r) },
 	{ method: 'GET', path: '/admin/analytics/funnels', run: (q, r) => analytics.funnels(q, r) },
 	{ method: 'GET', path: '/admin/analytics/faucet-to-ledger', run: (q, r) => analytics.faucetToLedger(q, r) },
+	{ method: 'GET', path: '/admin/analytics/ledger-writes', run: (q, r) => analytics.ledgerWritesReport(q, r) },
 	{ method: 'GET', path: '/admin/audit-log', run: (q, r) => audit.list(q, r) },
 	{ method: 'DELETE', path: '/admin/organisation/delete', run: (q, r) => organisation.delete(q, r) },
 	{ method: 'PUT', path: '/admin/flags', run: (q, r) => flags.putFlag(q, r) },

@@ -1,5 +1,5 @@
 {
-	"generatedFrom": "4ed53e9",
+	"generatedFrom": "b54a793",
 	"generatedBy": "npx tsx tests/contract/scripts/generate-inventory.ts",
 	"routes": [
 		{
@@ -216,6 +216,20 @@
 			"id": "GET /admin/analytics/funnels",
 			"method": "GET",
 			"path": "/admin/analytics/funnels",
+			"surface": "admin",
+			"auth": "scoped",
+			"scopes": ["admin:analytics:read"],
+			"tier": 2,
+			"sideEffect": "read-only",
+			"sensitive": false,
+			"stripeOnly": false,
+			"inRouteTable": true,
+			"inOpenApi": true
+		},
+		{
+			"id": "GET /admin/analytics/ledger-writes",
+			"method": "GET",
+			"path": "/admin/analytics/ledger-writes",
 			"surface": "admin",
 			"auth": "scoped",
 			"scopes": ["admin:analytics:read"],

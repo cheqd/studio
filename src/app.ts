@@ -432,6 +432,11 @@ class App {
 			analyticsAdmin.faucetToLedger.bind(analyticsAdmin)
 		);
 		app.get(
+			'/admin/analytics/ledger-writes',
+			AnalyticsAdminController.ledgerWritesValidator,
+			analyticsAdmin.ledgerWritesReport.bind(analyticsAdmin)
+		);
+		app.get(
 			'/admin/analytics/funnels',
 			AnalyticsAdminController.funnelsValidator,
 			analyticsAdmin.funnels.bind(analyticsAdmin)
