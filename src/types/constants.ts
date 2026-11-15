@@ -95,6 +95,7 @@ export const DEFAULT_DENOM_EXPONENT = 9;
  * entry is 1 MiB before compression and encodes in about 10 ms, so allocation and compression stay small for every
  * customer sharing the process. Override with STATUS_LIST_MAX_LENGTH.
  */
+export const STATUS_LIST_MIN_LENGTH = 131072;
 export const STATUS_LIST_MAX_LENGTH = Math.floor(
 	parseNumberEnv(process.env.STATUS_LIST_MAX_LENGTH, 1048576, 'STATUS_LIST_MAX_LENGTH')
 );
