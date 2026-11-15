@@ -1,6 +1,6 @@
 import { fromString } from 'uint8arrays';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
-import { EngineGoneError } from '../identity/engine/errors.js';
+import { mapEngineError } from '../../helpers/engine-errors.js';
 import type { RoutedService } from '../identity/index.js';
 import { statusListArtifact } from '../identity/engine/artifact-refs.js';
 import type {
@@ -242,6 +242,8 @@ export class CredentialStatusService {
 				data: result,
 			};
 		} catch (error) {
+			const mapped = mapEngineError(error);
+			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error };
 			return {
 				success: false,
 				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
@@ -405,9 +407,8 @@ export class CredentialStatusService {
 				data: result,
 			};
 		} catch (error) {
-			if (error instanceof EngineGoneError) {
-				return { success: false, statusCode: StatusCodes.GONE, error: error.message };
-			}
+			const mapped = mapEngineError(error);
+			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error };
 			return {
 				success: false,
 				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
@@ -580,6 +581,8 @@ export class CredentialStatusService {
 				data: formatted,
 			};
 		} catch (error) {
+			const mapped = mapEngineError(error);
+			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error };
 			return {
 				success: false,
 				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
@@ -770,6 +773,8 @@ export class CredentialStatusService {
 				data: formatted,
 			};
 		} catch (error) {
+			const mapped = mapEngineError(error);
+			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error };
 			return {
 				success: false,
 				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
@@ -1037,6 +1042,8 @@ export class CredentialStatusService {
 				data: result,
 			};
 		} catch (error) {
+			const mapped = mapEngineError(error);
+			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error };
 			return {
 				success: false,
 				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
@@ -1320,6 +1327,8 @@ export class CredentialStatusService {
 				},
 			};
 		} catch (error) {
+			const mapped = mapEngineError(error);
+			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error };
 			return {
 				success: false,
 				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,

@@ -18,7 +18,7 @@ import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/consta
 import { eventTracker } from '../../services/track/tracker.js';
 import type { IFeePaymentOptions, IPresentationTrack, ITrackOperation } from '../../types/track.js';
 import { validate } from '../validator/decorator.js';
-import { credoTenantMissingResponse } from '../../helpers/credo-tenant-errors.js';
+import { engineErrorResponse } from '../../helpers/engine-errors.js';
 
 export class PresentationController {
 	public static presentationCreateValidator = [
@@ -122,7 +122,7 @@ export class PresentationController {
 			}
 			return response.status(StatusCodes.OK).json(result satisfies CreatePresentationResponseBody);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -265,7 +265,7 @@ export class PresentationController {
 
 			return response.status(StatusCodes.OK).json(result satisfies VerifyPresentationResponseBody);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			// define error
 			const errorRef = error as Record<string, unknown>;

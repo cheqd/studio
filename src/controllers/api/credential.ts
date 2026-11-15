@@ -37,7 +37,7 @@ import { eventTracker } from '../../services/track/tracker.js';
 import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '../../types/track.js';
 import { validate } from '../validator/decorator.js';
 import { StatusListType } from '../../types/credential-status.js';
-import { credoTenantMissingResponse } from '../../helpers/credo-tenant-errors.js';
+import { engineErrorResponse } from '../../helpers/engine-errors.js';
 
 export const CREDENTIAL_STATUS_NOT_CHECKED_WARNING =
 	'Credential status was not checked: the credential has a credentialStatus but verifyStatus was not set to true, so a revoked or suspended credential can still return verified: true. Set verifyStatus=true to check it.';
@@ -200,7 +200,7 @@ export class CredentialController {
 
 			return response.status(StatusCodes.OK).json(credential satisfies IssueCredentialResponseBody);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -316,7 +316,7 @@ export class CredentialController {
 
 			return response.status(StatusCodes.OK).json(verifyResult satisfies VerifyCredentialResponseBody);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -432,7 +432,7 @@ export class CredentialController {
 			// Return Ok response
 			return response.status(StatusCodes.OK).json(result satisfies RevokeCredentialResponseBody);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -547,7 +547,7 @@ export class CredentialController {
 
 			return response.status(StatusCodes.OK).json(result satisfies SuspendCredentialResponseBody);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -661,7 +661,7 @@ export class CredentialController {
 			// Return Ok response
 			return response.status(StatusCodes.OK).json(result satisfies UnsuspendCredentialResponseBody);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -796,7 +796,7 @@ export class CredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -881,7 +881,7 @@ export class CredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -969,7 +969,7 @@ export class CredentialController {
 				data: result,
 			} satisfies UpdateIssuedCredentialResponseBody);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				success: false,
@@ -1080,7 +1080,7 @@ export class CredentialController {
 				data: result,
 			} satisfies UpdateIssuedCredentialResponseBody);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				success: false,

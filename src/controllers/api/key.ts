@@ -27,7 +27,7 @@ import {
 	VerificationMethods,
 } from '@cheqd/sdk';
 import { query } from 'express-validator';
-import { credoTenantMissingResponse } from '../../helpers/credo-tenant-errors.js';
+import { engineErrorResponse } from '../../helpers/engine-errors.js';
 
 // ToDo: Make the format of /key/create and /key/read the same
 // ToDo: Add valdiation for /key/import
@@ -144,7 +144,7 @@ export class KeyController {
 			// Return the response
 			return response.status(StatusCodes.OK).json(key satisfies CreateKeyResponseBody);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -232,7 +232,7 @@ export class KeyController {
 			// Return the response
 			return response.status(StatusCodes.OK).json(key satisfies ImportKeyResponseBody);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -297,7 +297,7 @@ export class KeyController {
 				error: `Key with kid: ${kid} not found`,
 			} satisfies UnsuccessfulQueryKeyResponseBody);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
@@ -409,7 +409,7 @@ export class KeyController {
 
 			return response.status(StatusCodes.OK).json(verificationMethods[0]);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,

@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import { check, param, query } from '../validator/index.js';
 import { validate } from '../validator/decorator.js';
 import { ReceivedCredentials } from '../../services/api/received-credentials.js';
-import { credoTenantMissingResponse } from '../../helpers/credo-tenant-errors.js';
+import { engineErrorResponse } from '../../helpers/engine-errors.js';
 
 export class ReceivedCredentialController {
 	public static listOffersValidator = [
@@ -209,7 +209,7 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
@@ -272,7 +272,7 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(offer);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			const errorMessage = `${error}`;
 			if (errorMessage.includes('not found') || errorMessage.includes('expired')) {
@@ -361,7 +361,7 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			const errorMessage = `${error}`;
 			if (errorMessage.includes('not found') || errorMessage.includes('expired')) {
@@ -442,7 +442,7 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			const errorMessage = `${error}`;
 			if (errorMessage.includes('not found') || errorMessage.includes('expired')) {
@@ -516,7 +516,7 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			const errorMessage = `${error}`;
 			if (
@@ -620,7 +620,7 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
@@ -670,7 +670,7 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(credential);
 		} catch (error) {
-			const tenantMissing = credoTenantMissingResponse(response, error);
+			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			const errorMessage = `${error}`;
 			if (errorMessage.includes('not found')) {
