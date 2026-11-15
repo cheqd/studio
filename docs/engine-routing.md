@@ -22,8 +22,13 @@ const service = await setup.routed(route, artifact, hints); // same engine, type
 - `hints` carries what the router needs for its exceptions: `keyType` (P-256 / `Secp256r1` / `JsonWebKey` always goes
   to Credo) and `encryptedStatusList` (creation answers `Gone`, 410, on every engine).
 - `src/services/identity/engine/artifact-refs.ts` turns what a caller knows (a DID and a status-list name, or a
-  credential) into the artifact reference. Those lookups are best effort: with no external database, no row or a
-  failing query they return nothing and the router uses the default. They never fail a request.
+  credential) into the artifact reference. With no external database, no row, or a schema that predates the table they
+  return nothing and the router uses the default. A query that fails is not "no record": the artifact may be Credo's,
+  so the request is refused with `EngineRoutingUnavailable` (503, retryable) instead of being answered by Veramo.
+- The same holds in the router: a failed artifact-engine lookup, an unrecognised recorded engine, or a failed flag
+  read with no last-known value is refused with 503 (and logged as `engine-routing-failed`). A flag read that fails
+  while a last-known value exists keeps using that value (logged as `flag-read-failed`). The compiled default
+  (`veramo`) applies only when the lookup worked and found no record or flag.
 
 ## Routes
 
