@@ -22,6 +22,7 @@ import { ProviderConfigurationEntity } from '../entities/provider-configuration.
 import { IssuedCredentialEntity } from '../entities/issued-credential.entity.js';
 import { StatusRegistryEntity } from '../entities/status-registry.entity.js';
 import { FaucetRequestEntity } from '../entities/faucet-request.entity.js';
+import { LedgerAddressActivityEntity } from '../entities/ledger-address-activity.entity.js';
 import { DeletedAccountRecordEntity } from '../entities/deleted-account-record.entity.js';
 import { FeatureFlagEntity } from '../entities/feature-flag.entity.js';
 import { AgentEntity } from '../entities/agent.entity.js';
@@ -260,6 +261,7 @@ export class Postgres implements AbstractDatabase {
 				IssuedCredentialEntity,
 				StatusRegistryEntity,
 				FaucetRequestEntity,
+				LedgerAddressActivityEntity,
 				DeletedAccountRecordEntity,
 				FeatureFlagEntity,
 				AgentEntity,
