@@ -11,12 +11,16 @@ import { productHasCapability, StudioPlanCapability } from '../../services/admin
 
 dotenv.config();
 
+/** How long a user's role names are reused before Logto is asked again. */
+const ROLE_CACHE_TTL_MS = 30_000;
+
 export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 	private m2mToken: string;
 	private allScopes: string[];
 	private allResourceWithNames: string[];
 	public defaultScopes: string[];
 	private m2mGetTokenAttempts = 5;
+	private userRoleCache = new Map<string, { names: string[]; expires: number }>();
 
 	constructor() {
 		super();
@@ -116,6 +120,28 @@ export class LogToHelper extends OAuthProvider implements IOAuthProvider {
 			}
 		}
 		return this.returnOk(scopes);
+	}
+
+	/**
+	 * The names of the Logto roles assigned to the user, from the Management API (the source of truth, so removing a
+	 * staff role takes effect at the next lookup). Cached per user for a short time to spare Logto, so a removal can
+	 * take up to `ROLE_CACHE_TTL_MS` to apply. Failures are not cached. Role names only: nothing secret is logged.
+	 */
+	public async getUserRoles(userId: string): Promise<ICommonErrorResponse> {
+		const cached = this.userRoleCache.get(userId);
+		if (cached && cached.expires > Date.now()) {
+			return this.returnOk([...cached.names]);
+		}
+		const roles = await this.getRolesForUser(userId);
+		if (roles.status !== StatusCodes.OK || !Array.isArray(roles.data)) {
+			return this.returnError(StatusCodes.BAD_GATEWAY, 'getUserRoles: could not read the roles for the user');
+		}
+		const names = (roles.data as { name?: unknown }[])
+			.map((role) => role?.name)
+			.filter((name): name is string => typeof name === 'string');
+		if (this.userRoleCache.size >= 1000) this.userRoleCache.clear();
+		this.userRoleCache.set(userId, { names, expires: Date.now() + ROLE_CACHE_TTL_MS });
+		return this.returnOk([...names]);
 	}
 
 	public async getAppScopes(appId: string): Promise<ICommonErrorResponse> {

@@ -94,3 +94,33 @@ export function evaluateStaffAccess(input: StaffAccessInput, env: NodeJS.Process
 	}
 	return { allowed: true };
 }
+
+/**
+ * `admin:*` scopes that belong to ordinary customers (billing, API keys, their own organisation, the swagger page).
+ * Every other `admin:*` scope is a staff scope. Listing the customer scopes rather than the staff ones means a new
+ * `admin:*` scope is staff-only until someone decides otherwise.
+ */
+export const CUSTOMER_ADMIN_SCOPES: ReadonlySet<string> = new Set([
+	'admin:swagger',
+	'admin:subscription:create',
+	'admin:subscription:list',
+	'admin:subscription:update',
+	'admin:subscription:cancel',
+	'admin:subscription:resume',
+	'admin:subscription:get',
+	'admin:price:list',
+	'admin:product:list',
+	'admin:product:get',
+	'admin:api-key:create',
+	'admin:api-key:update',
+	'admin:api-key:revoke',
+	'admin:api-key:get',
+	'admin:api-key:list',
+	'admin:organisation:update',
+	'admin:organisation:get',
+]);
+
+/** True for a scope that only staff may hold. */
+export function isStaffScope(scope: string): boolean {
+	return scope.startsWith('admin:') && !CUSTOMER_ADMIN_SCOPES.has(scope);
+}

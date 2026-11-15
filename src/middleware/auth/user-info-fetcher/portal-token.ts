@@ -2,7 +2,8 @@ import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { UserInfoHelper, type IUserInfoFetcher } from './base.js';
 import type { IOAuthProvider } from '../oauth/abstract.js';
-import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
+import { isStaffScope, USER_SESSION_AUTH_METHOD } from '../../../controllers/admin/staff-policy.js';
 
 import * as dotenv from 'dotenv';
 import type { UnsuccessfulResponseBody } from '../../../types/shared.js';
@@ -27,7 +28,16 @@ export class PortalUserInfoFetcher extends UserInfoHelper implements IUserInfoFe
 			return errorResponse;
 		}
 
-		return this.verifyM2MToken(request, response);
+		const m2mError = await this.verifyM2MToken(request, response);
+		if (m2mError) {
+			return m2mError;
+		}
+		// Both tokens verified: this is a named person's portal session. Only this fetcher sets the marker, and the
+		// staff policy refuses any request without it.
+		if (response.locals.staffIdentity) {
+			response.locals.staffIdentity.authMethod = USER_SESSION_AUTH_METHOD;
+		}
+		return;
 	}
 
 	/**
@@ -62,6 +72,7 @@ export class PortalUserInfoFetcher extends UserInfoHelper implements IUserInfoFe
 			}
 			// Set global context
 			this.setScopes(_resp.data, response);
+			await this.setStaffIdentity(payload, response);
 			return await this.setUserEntity(payload.sub, response);
 		} catch (error) {
 			console.error(error);
@@ -87,7 +98,11 @@ export class PortalUserInfoFetcher extends UserInfoHelper implements IUserInfoFe
 					error: `Unauthorized error: No sub found in the token.`,
 				} satisfies UnsuccessfulResponseBody);
 			}
-			const scopes = payload.scope ? (payload.scope as string).split(' ') : [];
+			// The M2M client acts for the portal, not for the person: it must never add a staff scope to the user's
+			// own scopes (F-29). Customer-facing scopes are kept as before.
+			const scopes = (payload.scope ? (payload.scope as string).split(' ') : []).filter(
+				(scope) => !isStaffScope(scope)
+			);
 			this.appendScopes(scopes, response);
 			return;
 		} catch (error) {
@@ -95,5 +110,33 @@ export class PortalUserInfoFetcher extends UserInfoHelper implements IUserInfoFe
 				error: `Unexpected error: While verifying M2M token for Portal: ${error}`,
 			} satisfies UnsuccessfulResponseBody);
 		}
+	}
+
+	/**
+	 * Records who the verified ID token says the user is, for the staff policy. Email and its verification come from
+	 * the verified token claims only (the portal asks for the Logto `email` scope). Role names come from Logto's
+	 * Management API, so removing a role applies without waiting for the token to expire; the token's `roles` claim
+	 * is used only when that lookup fails. Nothing is read from a header, and nothing is logged here.
+	 */
+	private async setStaffIdentity(payload: JWTPayload, response: Response) {
+		let roles: string[] | undefined;
+		try {
+			const lookup = await this.oauthProvider.getUserRoles(payload.sub as string);
+			if (lookup.status === StatusCodes.OK && Array.isArray(lookup.data)) {
+				roles = lookup.data as string[];
+			}
+		} catch {
+			roles = undefined;
+		}
+		if (!roles && Array.isArray(payload.roles) && payload.roles.every((role) => typeof role === 'string')) {
+			roles = payload.roles as string[];
+		}
+		response.locals.staffIdentity = {
+			logtoUserId: payload.sub,
+			email: typeof payload.email === 'string' ? payload.email : undefined,
+			emailVerified: typeof payload.email_verified === 'boolean' ? payload.email_verified : undefined,
+			roles,
+			authMethod: undefined,
+		};
 	}
 }
