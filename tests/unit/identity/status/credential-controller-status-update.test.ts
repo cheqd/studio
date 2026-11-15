@@ -28,6 +28,7 @@ jest.unstable_mockModule('../../../../src/services/identity/index.js', () => ({
 jest.unstable_mockModule('../../../../src/services/identity/engine/artifact-refs.js', () => ({
 	statusListArtifactFromCredential: async () => ({ kind: 'status-list', id: 'r-1' }),
 	credentialArtifact: async () => undefined,
+	didArtifact: () => undefined,
 }));
 jest.unstable_mockModule('../../../../src/services/identity/providers/index.js', () => ({
 	DockIdentityService: class {},

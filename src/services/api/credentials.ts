@@ -11,7 +11,7 @@ import {
 } from '../../types/credential.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
 import type { RoutedService } from '../identity/index.js';
-import { credentialArtifact } from '../identity/engine/artifact-refs.js';
+import { credentialArtifact, didArtifact } from '../identity/engine/artifact-refs.js';
 import { v4 } from 'uuid';
 import * as dotenv from 'dotenv';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
@@ -127,11 +127,15 @@ export class Credentials {
 		// Phase 2: Create tracking record immediately to reserve the index
 		// This ensures the index is tracked even if credential creation fails
 		// The engine that will sign the credential is decided once, here, and recorded on the row. Dock-issued
-		// credentials never reach an identity engine, so they keep the default.
+		// credentials never reach an identity engine, so they keep the default. The issuer DID's recorded engine decides,
+		// so a credential is signed by the engine that holds the issuer's keys; only an issuer Studio has no record of
+		// falls back to the `credential` flag.
 		const isDockConnector = (providerId || connector) === CredentialConnectors.Dock;
 		const credentialEngine = isDockConnector
 			? undefined
-			: await new IdentityServiceStrategySetup(customer.customerId).engine('credential');
+			: await new IdentityServiceStrategySetup(customer.customerId).engine('credential', didArtifact(issuerDid), {
+					flagWhenUnrecorded: true,
+				});
 
 		let trackingRecord: IssuedCredentialEntity;
 		if (issuedCredentialId) {
@@ -201,7 +205,10 @@ export class Credentials {
 				default: {
 					const studioService = new IdentityServiceStrategySetup(customer.customerId);
 					const verifiable_credential = (await (
-						(credentialEngine ?? (await studioService.engine('credential'))) as unknown as RoutedService
+						(credentialEngine ??
+							(await studioService.engine('credential', didArtifact(issuerDid), {
+								flagWhenUnrecorded: true,
+							}))) as unknown as RoutedService
 					).createCredential(
 						credential as never,
 						format,

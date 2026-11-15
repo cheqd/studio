@@ -44,15 +44,15 @@ describe('artefact engine lookup', () => {
 		expect(await new DbArtifactEngineLookup().recordedEngine(did)).toBe('credo');
 	});
 
-	it('returns null for a row with no engine, or no row', async () => {
+	it('tells a legacy row (null engine) from no row at all (undefined)', async () => {
 		query.mockResolvedValueOnce([{ engine: null }]).mockResolvedValueOnce([]);
 		expect(await new DbArtifactEngineLookup().recordedEngine(did)).toBeNull();
-		expect(await new DbArtifactEngineLookup().recordedEngine(did)).toBeNull();
+		expect(await new DbArtifactEngineLookup().recordedEngine(did)).toBeUndefined();
 	});
 
 	it('reads a schema that predates the engine column as no record', async () => {
 		query.mockRejectedValue(missingColumn);
-		expect(await new DbArtifactEngineLookup().recordedEngine(did)).toBeNull();
+		expect(await new DbArtifactEngineLookup().recordedEngine(did)).toBeUndefined();
 	});
 
 	it('throws any other failure, so the router can refuse the request', async () => {

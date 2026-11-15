@@ -72,6 +72,38 @@ describe('EngineRouter decision table', () => {
 		});
 	});
 
+	describe('flagWhenUnrecorded: an artefact Studio has no record of is routed like a new one', () => {
+		const ctx = { route: 'credential', customerId: 'c1', artifact: did, flagWhenUnrecorded: true } as const;
+
+		it('the recorded engine still wins over the flag', async () => {
+			const { subject, flags } = router('credo', 'veramo');
+			expect(await subject.decide(ctx)).toEqual({ engine: 'credo', reason: 'artifact' });
+			expect(flags.flaggedEngine).not.toHaveBeenCalled();
+		});
+
+		it('uses the flag when there is no row (undefined)', async () => {
+			expect(await router(undefined, 'credo').subject.decide(ctx)).toEqual({ engine: 'credo', reason: 'flag' });
+		});
+
+		it('keeps a legacy row (null) on veramo, whatever the flag says', async () => {
+			expect(await router(null, 'credo').subject.decide(ctx)).toEqual({ engine: 'veramo', reason: 'default' });
+		});
+
+		it('without the option, no row is the default and flags are ignored', async () => {
+			expect(await router(undefined, 'credo').subject.decide({ ...ctx, flagWhenUnrecorded: false })).toEqual({
+				engine: 'veramo',
+				reason: 'default',
+			});
+		});
+
+		it('still fails closed when the recorded-engine lookup fails', async () => {
+			jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+			await expect(router(new Error('down'), 'veramo').subject.decide(ctx)).rejects.toBeInstanceOf(
+				EngineRoutingUnavailableError
+			);
+		});
+	});
+
 	describe('fails closed instead of guessing veramo', () => {
 		beforeEach(() => {
 			jest.spyOn(console, 'warn').mockImplementation(() => undefined);

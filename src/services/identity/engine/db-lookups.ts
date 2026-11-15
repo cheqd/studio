@@ -27,9 +27,10 @@ export class DbArtifactEngineLookup implements ArtifactEngineLookup {
 				`SELECT "engine" FROM "${table}" WHERE "${idColumn}" = $1 LIMIT 1`,
 				[artifact.id]
 			);
-			return rows[0]?.engine ?? null;
+			// No row is `undefined` (not recorded); a row with an empty column is `null` (a legacy row)
+			return rows[0] ? (rows[0].engine ?? null) : undefined;
 		} catch (error) {
-			if (isMissingSchemaError(error)) return null;
+			if (isMissingSchemaError(error)) return undefined;
 			throw error;
 		}
 	}

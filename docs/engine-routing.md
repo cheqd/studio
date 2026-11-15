@@ -52,7 +52,7 @@ existing service, so wiring changes no request, response or status code.
 | `POST /providers/:providerId/did/import` (Dock hand-off export, in `dock/identity.ts`) | `did` | `did` | Yes |
 | `POST /resource/create/:did` | `resource` | `did` (the DID owning the resource) | Yes |
 | `GET /resource/list` | `resource` | `did` when the `did` filter is given, else none | Yes |
-| `POST /credential/issue` | `credential` | none (new) | Yes (already) |
+| `POST /credential/issue` | `credential` | `did` (the issuer DID): its recorded engine signs; the `credential` flag applies only when Studio has no record of the issuer | Yes |
 | `POST /credentials/issued/:id/re-issue`, accreditation issue | `credential` | none (new) | Yes (already, through `issue_credential`) |
 | `POST /credential/verify` | `credential` | none | Yes |
 | Issued-credential status sync (`syncStatusFromProvider`, run when issued credentials are read) | `status-list` | `credential` | Yes |

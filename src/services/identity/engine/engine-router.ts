@@ -27,6 +27,12 @@ export interface EngineDecisionContext {
 	encryptedStatusList?: boolean;
 	/** Set when the operation acts on an artifact that already exists (update, deactivate, revoke, status check). */
 	artifact?: ArtifactRef;
+	/**
+	 * With `artifact`: when the lookup worked and found NO record of the artefact (no row at all), choose by flag
+	 * like a new artefact instead of the compiled default. A record whose engine column is empty is a legacy row and
+	 * still reads as `veramo`. Used where the artefact (an issuer DID) is not necessarily one Studio created.
+	 */
+	flagWhenUnrecorded?: boolean;
 }
 
 export type EngineDecisionReason = 'artifact' | 'flag' | 'exception' | 'default';
@@ -88,12 +94,17 @@ export class EngineRouter {
 			);
 			// An existing artifact never consults the flags: moving it between engines is a migration, not a flag.
 			if (isEngineName(recorded)) return { engine: recorded, reason: 'artifact' };
+			if (recorded === undefined && context.flagWhenUnrecorded) return this.decideByFlag(context);
 			if (recorded === null || recorded === undefined || recorded === '') {
 				return { engine: DEFAULT_ENGINE, reason: 'default' };
 			}
 			logRoutingFailure('artifact', new Error('recorded engine is not a known engine'));
 			throw new EngineRoutingUnavailableError();
 		}
+		return this.decideByFlag(context);
+	}
+
+	private async decideByFlag(context: EngineDecisionContext): Promise<EngineDecision> {
 		const flagged = await this.lookup('flag', () =>
 			this.flags.flaggedEngine(context.customerId, context.route as EngineRoute)
 		);
