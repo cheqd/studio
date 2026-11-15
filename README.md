@@ -37,6 +37,13 @@ The application allows configuring the following parameters using environment va
 
 ### Core configuration
 
+#### Production startup guard
+
+When `NODE_ENV=production` (the Docker image default) the application refuses to start unless `ENABLE_AUTHENTICATION`
+and `ENABLE_EXTERNAL_DB` are both exactly `true`. Anything else, including `True` or `1`, counts as off. Outside
+production the check does nothing. For a deliberate exception set `ALLOW_INSECURE_PRODUCTION_WITHOUT_AUTHENTICATION=true`;
+startup then logs a warning naming the reason. See [`docs/deployment-checklist.md`](docs/deployment-checklist.md).
+
 #### Events tracking
 
 1. `LOG_LEVEL`: specifies log level, like 'trace', 'debug', 'info', 'warn' or 'error';

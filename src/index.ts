@@ -1,8 +1,10 @@
 import * as http from 'http';
 import App, { dbReady } from './app.js';
 import * as dotenv from 'dotenv';
+import { assertSecureStartup } from './helpers/startup-guard.js';
 
 dotenv.config();
+assertSecureStartup();
 
 const port = process.env.PORT || 3000;
 App.set('port', port);
