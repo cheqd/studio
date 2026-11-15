@@ -69,6 +69,16 @@ stored but ignored, so keys whose expiry has already passed were still working. 
 - [ ] `API_KEY_MAX_EXPIRATION_DAYS` (default 730) is the longest expiry the create and update routes accept. Keys created
       without an expiry now expire 30 days after creation (previously a date roughly 30 months out).
 
+## Machine-to-machine customer path
+
+Disabled by default; enable only for a named internal service, add its client to `M2M_CLIENT_CUSTOMER_MAP`, and plan to bind audience and client first.
+
+- [ ] `ENABLE_M2M_CUSTOMER_PATH` is unset or not exactly `true` in every environment, unless a named internal service needs it.
+- [ ] Only the exact string `true` enables it; `TRUE`, `1` or anything else leaves it off.
+- [ ] While it is off, a request with a `customer-id` header and a Bearer token (and no `x-api-key`) answers `401` before any token is checked, and the log shows `m2m-customer-path-disabled`. The portal never sends `customer-id`, so it is unaffected, as are API keys and ID-token sessions.
+- [ ] If it is enabled, the startup log carries a warning. Treat that as a finding to close, not a steady state.
+- [ ] Callers that sent `customer-id` with a Bearer token (for example faucet scripts) have moved to an API key or a user session before the release is deployed.
+
 ## Staff access
 
 See `docs/staff-access.md`.

@@ -56,4 +56,4 @@ Roles are read from Logto's Management API, so removing a role applies within ab
 - No `email` or `email_verified` claim (the portal did not request the `email` scope, or the address is unverified): every staff route answers `403` for everyone (`identity-missing` or `email-unverified`).
 - No `roles` claim: nothing breaks while the Management API answers, because roles come from there. If both the claim and the lookup are missing, staff routes answer `403` (`identity-missing`).
 - No role assigned in Logto, or the role name differs from `STAFF_ROLE_NAMES`: `403` (`role-missing`).
-- Calling a staff route with an M2M client, an API key or an ID token alone: `403` (`not-user-session`).
+- Calling a staff route with an M2M client, an API key or an ID token alone: `403` (`not-user-session`). The direct machine-to-machine customer path (`customer-id` header with a Bearer token) is also switched off by default (`ENABLE_M2M_CUSTOMER_PATH`), so such a call is refused with `401` before it reaches the staff policy; with the path enabled it is still `403` here.
