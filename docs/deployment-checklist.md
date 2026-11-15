@@ -40,3 +40,21 @@ set it on a shared or internet-facing deployment. Development, test and the loca
 
 Health, readiness (`/health`, `/healthz`, `/ready`, `/readyz`, `/readiness`, `/live`, `/livez`) and the Swagger paths
 are never rate limited.
+
+## API key expiry
+
+API key expiry is now enforced on every request (see `docs/api-key-expiry.md`). Before this release the expiry was
+stored but ignored, so keys whose expiry has already passed were still working. They stop working at rollout, with `401`.
+
+- [ ] List the keys that will stop working, and tell their owners (or extend them with `POST /admin/api-key/update`):
+
+      ```sql
+      SELECT "customerId", "name", "expiresAt", "revoked"
+      FROM "apiKey"
+      WHERE "revoked" = false AND "expiresAt" <= now()
+      ORDER BY "expiresAt";
+      ```
+
+      To see the keys that will lapse soon, change the condition to `"expiresAt" <= now() + interval '30 days'`.
+- [ ] `API_KEY_MAX_EXPIRATION_DAYS` (default 730) is the longest expiry the create and update routes accept. Keys created
+      without an expiry now expire 30 days after creation (previously a date roughly 30 months out).
