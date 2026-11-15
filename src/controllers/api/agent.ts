@@ -6,7 +6,12 @@ import type { AgentServices } from '../../services/agent/index.js';
 import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
 import { credoTenantMissingResponse } from '../../helpers/credo-tenant-errors.js';
 import { LedgerUnavailableError } from '../../services/identity/ledger-lock.js';
-import { IdempotencyError, IdempotencyService, hashRequest } from '../../services/idempotency/idempotency.js';
+import {
+	IdempotencyError,
+	IdempotencyService,
+	hashRequest,
+	idempotencySettingsFromEnv,
+} from '../../services/idempotency/idempotency.js';
 import type { IdempotentResult } from '../../services/idempotency/idempotency.js';
 import { AGENT_NETWORKS, AGENT_SETTABLE_STATUSES, CAPABILITY_NAMES, GRANT_TYPES } from '../../types/agent.js';
 import type {
@@ -1957,7 +1962,10 @@ let idempotencyService: IdempotencyService | undefined;
 async function defaultIdempotency(): Promise<IdempotencyService> {
 	if (!idempotencyService) {
 		const { TypeormIdempotencyStore } = await import('../../services/idempotency/typeorm-idempotency-store.js');
-		idempotencyService = new IdempotencyService({ store: new TypeormIdempotencyStore() });
+		idempotencyService = new IdempotencyService({
+			store: new TypeormIdempotencyStore(),
+			...idempotencySettingsFromEnv(),
+		});
 	}
 	return idempotencyService;
 }

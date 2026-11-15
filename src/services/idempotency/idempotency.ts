@@ -19,6 +19,27 @@ import type { IdempotencyState } from '../../database/entities/idempotency-key.e
  */
 
 export const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000;
+/** Rows deleted per sweep, and the least time between sweeps in one process. */
+export const DEFAULT_PURGE_BATCH = 100;
+export const DEFAULT_PURGE_INTERVAL_MS = 60_000;
+
+const positiveNumber = (raw: string | undefined, fallback: number): number => {
+	const value = Number(raw);
+	return raw !== undefined && raw.trim() !== '' && Number.isFinite(value) && value > 0 ? value : fallback;
+};
+
+/**
+ * How long a settled key (and the response stored for replay) is kept: `IDEMPOTENCY_RETENTION_HOURS`, default 24.
+ * Expired rows are deleted opportunistically, `IDEMPOTENCY_PURGE_BATCH` at a time (default 100), at most once per
+ * `IDEMPOTENCY_PURGE_INTERVAL_MS` (default 60 000) per process, when a new key is recorded.
+ */
+export function idempotencySettingsFromEnv(env: Record<string, string | undefined> = process.env) {
+	return {
+		ttlMs: positiveNumber(env.IDEMPOTENCY_RETENTION_HOURS, 24) * 60 * 60 * 1000,
+		purgeBatch: Math.floor(positiveNumber(env.IDEMPOTENCY_PURGE_BATCH, DEFAULT_PURGE_BATCH)),
+		purgeIntervalMs: positiveNumber(env.IDEMPOTENCY_PURGE_INTERVAL_MS, DEFAULT_PURGE_INTERVAL_MS),
+	};
+}
 export const DEFAULT_WRITE_DEADLINE_MS = 120_000;
 export const IDEMPOTENCY_KEY_MAX_LENGTH = 255;
 
@@ -50,6 +71,8 @@ export interface IdempotencyStore {
 		change: { state: IdempotencyState; txHash?: string | null; response?: Record<string, unknown> | null }
 	): Promise<void>;
 	remove(id: string): Promise<void>;
+	/** Deletes up to `limit` rows past their retention; returns how many. Optional: a store without it is never purged. */
+	purgeExpired?(limit: number): Promise<number>;
 }
 
 /** What a settled write returns to the caller and what is stored for replay. */
@@ -114,17 +137,32 @@ export interface IdempotencyServiceOptions {
 	store: IdempotencyStore;
 	now?: () => number;
 	ttlMs?: number;
+	purgeBatch?: number;
+	purgeIntervalMs?: number;
 }
 
 export class IdempotencyService {
 	private readonly store: IdempotencyStore;
 	private readonly now: () => number;
 	private readonly ttlMs: number;
+	private readonly purgeBatch: number;
+	private readonly purgeIntervalMs: number;
+	private lastPurgeAt = Number.NEGATIVE_INFINITY;
 
 	constructor(options: IdempotencyServiceOptions) {
 		this.store = options.store;
 		this.now = options.now ?? Date.now;
 		this.ttlMs = options.ttlMs ?? IDEMPOTENCY_TTL_MS;
+		this.purgeBatch = options.purgeBatch ?? DEFAULT_PURGE_BATCH;
+		this.purgeIntervalMs = options.purgeIntervalMs ?? DEFAULT_PURGE_INTERVAL_MS;
+	}
+
+	/** Deletes one bounded batch of expired rows, at most once per interval. Never delays or fails a request. */
+	private sweepExpired(): void {
+		const now = this.now();
+		if (!this.store.purgeExpired || now - this.lastPurgeAt < this.purgeIntervalMs) return;
+		this.lastPurgeAt = now;
+		void this.store.purgeExpired(this.purgeBatch).catch(() => undefined);
 	}
 
 	/**
@@ -143,6 +181,7 @@ export class IdempotencyService {
 			);
 		}
 
+		this.sweepExpired();
 		const row = await this.store.insertSubmitting({
 			customerId: input.customerId,
 			key: input.key,
