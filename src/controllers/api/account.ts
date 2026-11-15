@@ -1106,6 +1106,12 @@ export class AccountController {
 	 *           application/json:
 	 *             schema:
 	 *               $ref: '#/components/schemas/ReauthenticationRequiredError'
+	 *       429:
+	 *         description: Too many concurrent exports (`EXPORT_BUSY`). Retry after the `Retry-After` interval.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/InvalidRequest'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */

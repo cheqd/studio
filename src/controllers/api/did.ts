@@ -997,6 +997,12 @@ export class DIDController {
 	 *           application/json:
 	 *             schema:
 	 *               $ref: '#/components/schemas/ReauthenticationRequiredError'
+	 *       429:
+	 *         description: Too many concurrent exports (`EXPORT_BUSY`). Retry after the `Retry-After` interval.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/InvalidRequest'
 	 *       500:
 	 *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
 	 *         content:

@@ -2,6 +2,7 @@ import { createCipheriv, createDecipheriv, randomBytes, scrypt, type ScryptOptio
 import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { engineErrorResponse } from './engine-errors.js';
+import { tryAcquireExportSlot } from './export-concurrency.js';
 
 /**
  * Password-protected export of private key material.
@@ -179,6 +180,14 @@ export async function respondWithEncryptedExport(
 	if (!validation.ok) {
 		return response.status(StatusCodes.BAD_REQUEST).json({ error: validation.error, code: validation.code });
 	}
+	const customerId: unknown = response.locals?.customer?.customerId;
+	const release = tryAcquireExportSlot(typeof customerId === 'string' ? customerId : undefined);
+	if (!release) {
+		response.setHeader('Retry-After', '5');
+		return response
+			.status(StatusCodes.TOO_MANY_REQUESTS)
+			.json({ error: 'Too many export requests, try again shortly', code: 'EXPORT_BUSY' });
+	}
 	try {
 		const envelope = await encryptKeyExport(await produce(), validation.password);
 		return response.status(StatusCodes.OK).json(envelope);
@@ -189,5 +198,7 @@ export async function respondWithEncryptedExport(
 		return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 			error: `Internal error: ${(error as Error)?.message || error}`,
 		});
+	} finally {
+		release();
 	}
 }
