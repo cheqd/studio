@@ -38,11 +38,14 @@ describe('status list length limit', () => {
 		}
 	);
 
-	it.each([[16384], [131071]])('rejects length %d below the minimum with a message naming both limits', async (length) => {
-		expect(await lengthErrors(length)).toEqual([
-			`length: should be at least 131072 (the minimum entries for herd privacy) and at most ${STATUS_LIST_MAX_LENGTH}`,
-		]);
-	});
+	it.each([[16384], [131071]])(
+		'rejects length %d below the minimum with a message naming both limits',
+		async (length) => {
+			expect(await lengthErrors(length)).toEqual([
+				`length: should be at least 131072 (the minimum entries for herd privacy) and at most ${STATUS_LIST_MAX_LENGTH}`,
+			]);
+		}
+	);
 
 	it.each([[0], [-8], [1.5], ['abc']])('rejects length %p', async (length) => {
 		expect((await lengthErrors(length)).length).toBeGreaterThan(0);

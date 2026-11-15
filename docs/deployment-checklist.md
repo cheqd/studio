@@ -30,6 +30,13 @@ Start-up opens the Askar native library (`LIB_ASKAR_PATH`, or the package's own 
 library directories) with its version call. If it is missing or incompatible the process exits at once with a one-line
 reason that names `LIB_ASKAR_PATH`; check that first. Without this check the first DID creation would answer `500`.
 
+## CORS origin rejected
+
+Symptom: every call from the portal (or any browser client) fails with `401` that looks like an authentication error,
+while the same call without an `Origin` header works. Cause: the browser's origin is not in `CORS_ALLOWED_ORIGINS`.
+The log carries one line per rejected origin per minute, `CORS: origin <origin> is not in CORS_ALLOWED_ORIGINS`. Fix:
+add that exact origin (scheme and host, no trailing slash) to `CORS_ALLOWED_ORIGINS` and restart.
+
 ## Graceful shutdown
 
 On `SIGTERM` or `SIGINT` the process stops accepting connections, makes `/ready` (also `/readyz`, `/readiness`) answer

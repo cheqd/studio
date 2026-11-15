@@ -15,7 +15,8 @@ import { warnIfM2MCustomerPathEnabled } from './middleware/auth/m2m-customer-pat
 import { Authentication } from './middleware/authentication.js';
 import { Connection } from './database/connection/connection.js';
 import { CredentialStatusController } from './controllers/api/credential-status.js';
-import { CORS_ALLOWED_ORIGINS, CORS_ERROR_MSG } from './types/constants.js';
+import { CORS_ALLOWED_ORIGINS } from './types/constants.js';
+import { createOriginCheck } from './helpers/cors-origin.js';
 import { LogToWebHook } from './middleware/hook.js';
 import { Middleware } from './middleware/middleware.js';
 import { jsonBodyParsers } from './middleware/body-parsers.js';
@@ -99,17 +100,7 @@ class App {
 		this.express.use(Helmet());
 		this.express.use(
 			cors({
-				origin: function (origin, callback) {
-					if (!origin) return callback(null, true);
-					const allowedList = CORS_ALLOWED_ORIGINS.split(',');
-
-					for (const allowed of allowedList) {
-						if (allowed.indexOf(origin) !== -1) {
-							return callback(null, true);
-						}
-					}
-					return callback(new Error(CORS_ERROR_MSG), false);
-				},
+				origin: createOriginCheck({ allowedOrigins: CORS_ALLOWED_ORIGINS }),
 				// POST /credential/issue returns the credential itself; the Studio record id travels in this header
 				exposedHeaders: ['X-Issued-Credential-Id'],
 			})
