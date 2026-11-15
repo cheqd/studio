@@ -16,6 +16,8 @@ import { CredentialStatusController } from './controllers/api/credential-status.
 import { CORS_ALLOWED_ORIGINS, CORS_ERROR_MSG } from './types/constants.js';
 import { LogToWebHook } from './middleware/hook.js';
 import { Middleware } from './middleware/middleware.js';
+import { jsonBodyParsers } from './middleware/body-parsers.js';
+import { customerRateLimiter, ipRateLimiter, rateLimitConfig, trustProxySetting } from './middleware/rate-limit.js';
 import * as dotenv from 'dotenv';
 // Define Swagger file
 import swaggerAPIDocument from './static/swagger-api.json' with { type: 'json' };
@@ -74,14 +76,17 @@ class App {
 	}
 
 	private middleware() {
-		this.express.use(
-			express.json({
-				limit: '50mb',
-				verify: (req: express.Request & { rawBody: Buffer }, _res, buf) => {
-					req.rawBody = buf;
-				},
-			})
-		);
+		// Limits run first, so a flood or an oversize body is turned away before any parsing or authentication work.
+		const proxySetting = trustProxySetting(process.env.TRUST_PROXY);
+		if (proxySetting !== undefined) this.express.set('trust proxy', proxySetting);
+		const limits = rateLimitConfig();
+		if (limits.enabled) this.express.use(ipRateLimiter(limits));
+		for (const { path, handler } of jsonBodyParsers((req, _res, buf) => {
+			req.rawBody = buf;
+		})) {
+			if (path) this.express.use(path, handler);
+			else this.express.use(handler);
+		}
 		this.express.use(express.raw({ type: 'application/octet-stream' }));
 		this.express.use(express.urlencoded({ extended: true }));
 		this.express.use(Middleware.parseUrlEncodedJson);
@@ -131,6 +136,8 @@ class App {
 				this.express.use(async (req, res, next) => await auth.guard(req, res, next));
 			}
 		}
+		// Per-customer limit, once the guard has identified the customer
+		if (limits.enabled) this.express.use(customerRateLimiter(limits));
 		this.express.use(express.text());
 		this.express.use(auth.handleError);
 		this.express.use(async (req, res, next) => await auth.accessControl(req, res, next));

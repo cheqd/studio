@@ -16,3 +16,20 @@ the external database are both on. Values are compared strictly: only the exact 
 the no-database sample in `docker/no-external-db`. When it is used, start-up logs a warning with the same reason. Do not
 set it on a shared or internet-facing deployment. Development, test and the local end-to-end harness run with
 `NODE_ENV` unset and are not affected.
+
+## Request limits
+
+- [ ] `TRUST_PROXY` is set when the service runs behind a reverse proxy or load balancer (number of hops, or an Express
+      trust-proxy value). Without it every client shares one per-IP counter, the proxy's.
+- [ ] Rate limits fit the traffic: `RATE_LIMIT_IP_MAX` (default 1000 per window), `RATE_LIMIT_CUSTOMER_MAX` (default 600),
+      `RATE_LIMIT_WINDOW_SECONDS` (default 60). Over the limit the API answers `429` with `Retry-After`.
+      Counters are in memory and per instance: with N instances the effective limit is up to N times higher. Use an
+      ingress or shared-store limit if an exact global figure matters. `RATE_LIMIT_ENABLED=false` turns the in-app
+      limits off for a deployment that limits at the ingress.
+- [ ] JSON bodies are limited to `JSON_BODY_LIMIT` (default `1mb`). Only `POST /resource/create/:did`,
+      `POST /credentials/import` and `POST /admin/webhook` use `JSON_BODY_LIMIT_LARGE` (default `10mb`); larger bodies
+      answer `413`.
+- [ ] `STATUS_LIST_MAX_LENGTH` (default 1048576 entries) suits the status lists customers create.
+
+Health, readiness (`/health`, `/healthz`, `/ready`, `/readyz`, `/readiness`, `/live`, `/livez`) and the Swagger paths
+are never rate limited.
