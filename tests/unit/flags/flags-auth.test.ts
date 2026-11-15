@@ -142,11 +142,11 @@ describe('GET /flags controller', () => {
 		expect(res.body).toMatchObject({ customerId: 'c1', ui: 'classic' });
 	});
 
-	it('answers with defaults (ui classic, veramo) when the flag store is unavailable', async () => {
+	it('answers with defaults (ui classic, credo) when the flag store is unavailable', async () => {
 		flagsFor.mockRejectedValueOnce(new Error('relation "featureFlag" does not exist') as never);
 		const res = fakeResponse({ customer: { customerId: 'c1' } });
 		await new FlagsController().getFlags(requestFor('GET', '/flags'), res as unknown as Response);
 		expect(res.statusCode).toBe(200);
-		expect(res.body).toMatchObject({ ui: 'classic', engine: { default: 'veramo' } });
+		expect(res.body).toMatchObject({ ui: 'classic', engine: { default: 'credo' } });
 	});
 });

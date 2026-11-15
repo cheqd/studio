@@ -10,10 +10,17 @@ export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue | undefined };
 export type JsonObject = { [key: string]: JsonValue | undefined };
 
-/** The engines Studio can route to. `veramo` is the only one that is live today. */
+/** The engines Studio can route to. `veramo` is being retired: it serves existing artefacts only. */
 export const ENGINE_NAMES = ['veramo', 'credo'] as const;
 export type EngineName = (typeof ENGINE_NAMES)[number];
+/**
+ * The engine for an EXISTING artefact with no recorded engine (a legacy row), and for operations that name no
+ * artefact and create nothing. It is Veramo because those rows predate the engine column. It is NOT the engine for
+ * new artefacts: see `new-artefact-policy.ts`.
+ */
 export const DEFAULT_ENGINE: EngineName = 'veramo';
+/** The engine for every new artefact (unless the documented, off-by-default Veramo override is on). */
+export const NEW_ARTEFACT_DEFAULT_ENGINE: EngineName = 'credo';
 
 export function isEngineName(value: unknown): value is EngineName {
 	return typeof value === 'string' && (ENGINE_NAMES as readonly string[]).includes(value);

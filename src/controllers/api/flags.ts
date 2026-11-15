@@ -9,7 +9,7 @@ export class FlagsController {
 	 * /flags:
 	 *   get:
 	 *     summary: Fetch the feature flags that apply to the caller.
-	 *     description: Returns the global defaults with the caller's own overrides applied. `ui` is `classic` unless a flag says otherwise, and every engine route is `veramo` unless a flag says otherwise.
+	 *     description: Returns the global defaults with the caller's own overrides applied. `ui` is `classic` unless a flag says otherwise, and every engine route is `credo`, the engine for NEW artefacts (Veramo is retired for new artefacts, so a `veramo` flag is shown only while the temporary override is on). Existing artefacts use the engine recorded on them, whatever is shown here.
 	 *     tags: [ Account ]
 	 *     responses:
 	 *       200:
@@ -33,15 +33,15 @@ export class FlagsController {
 	 *                     default:
 	 *                       type: string
 	 *                       enum: [veramo, credo]
-	 *                       example: veramo
+	 *                       example: credo
 	 *                     routes:
 	 *                       type: object
 	 *                       additionalProperties:
 	 *                         type: string
 	 *                         enum: [veramo, credo]
 	 *                       example:
-	 *                         did: veramo
-	 *                         credential: veramo
+	 *                         did: credo
+	 *                         credential: credo
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       500:

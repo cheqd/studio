@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+import { afterEach, describe, expect, it } from '@jest/globals';
 import { pickEngine, resolveFlags, validateFlagWrite } from '../../../src/services/api/feature-flag.js';
 import type { FlagRow } from '../../../src/services/api/feature-flag.js';
 
@@ -17,11 +17,24 @@ const row = (
 });
 
 describe('flag resolution', () => {
-	it('defaults to veramo and the classic UI with no rows', () => {
+	afterEach(() => {
+		delete process.env.VERAMO_NEW_ARTEFACT_OVERRIDE;
+	});
+
+	it('defaults to credo (new artefacts) and the classic UI with no rows', () => {
 		const flags = resolveFlags([], A);
 		expect(flags.ui).toBe('classic');
-		expect(flags.engine.default).toBe('veramo');
-		expect(Object.values(flags.engine.routes).every((e) => e === 'veramo')).toBe(true);
+		expect(flags.engine.default).toBe('credo');
+		expect(Object.values(flags.engine.routes).every((e) => e === 'credo')).toBe(true);
+	});
+
+	it('ignores a veramo row unless the temporary override is on', () => {
+		const rows = [row('engine', { engine: 'veramo' }), row('engine', { engine: 'credo' }, null, 'did')];
+		expect(resolveFlags(rows, A).engine.routes.credential).toBe('credo');
+		process.env.VERAMO_NEW_ARTEFACT_OVERRIDE = 'true';
+		const flags = resolveFlags(rows, A);
+		expect(flags.engine.routes.credential).toBe('veramo');
+		expect(flags.engine.routes.did).toBe('credo');
 	});
 
 	it('prefers the most specific row: customer+route, customer, global+route, global', () => {
@@ -40,13 +53,13 @@ describe('flag resolution', () => {
 	it("never applies another customer's override", () => {
 		const rows = [row('engine', { engine: 'credo' }, B)];
 		expect(pickEngine(rows, A, 'did')).toBeUndefined();
-		expect(resolveFlags(rows, A).engine.routes.did).toBe('veramo');
+		expect(resolveFlags(rows, A).engine.routes.did).toBe('credo');
 	});
 
 	it('ignores invalid stored values', () => {
 		const rows = [row('engine', { engine: 'bogus' }), row('ui', { ui: 'bogus' })];
 		const flags = resolveFlags(rows, A);
-		expect(flags.engine.default).toBe('veramo');
+		expect(flags.engine.default).toBe('credo');
 		expect(flags.ui).toBe('classic');
 	});
 

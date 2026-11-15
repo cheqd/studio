@@ -21,7 +21,13 @@ beforeEach(() => {
 	jest.spyOn(IdentityServiceStrategySetup.prototype, 'setupIdentityStrategy').mockImplementation(() => undefined);
 	jest.spyOn(IdentityServiceStrategySetup.prototype, 'engine').mockImplementation(async (route, artifact, hints) =>
 		router.engineFor(
-			{ route, artifact, keyType: hints?.keyType, encryptedStatusList: hints?.encryptedStatusList },
+			{
+				route,
+				artifact,
+				keyType: hints?.keyType,
+				encryptedStatusList: hints?.encryptedStatusList,
+				creates: hints?.creates,
+			},
 			{} as IIdentityService
 		)
 	);
