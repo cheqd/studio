@@ -23,6 +23,7 @@ import { IssuedCredentialEntity } from '../entities/issued-credential.entity.js'
 import { StatusRegistryEntity } from '../entities/status-registry.entity.js';
 import { FaucetRequestEntity } from '../entities/faucet-request.entity.js';
 import { LedgerAddressActivityEntity } from '../entities/ledger-address-activity.entity.js';
+import { LedgerAddressDailyEntity } from '../entities/ledger-address-daily.entity.js';
 import { DeletedAccountRecordEntity } from '../entities/deleted-account-record.entity.js';
 import { FeatureFlagEntity } from '../entities/feature-flag.entity.js';
 import { AgentEntity } from '../entities/agent.entity.js';
@@ -97,6 +98,7 @@ import { StudioMigrations1791701900000 } from '../migrations/1791701900000-studi
 import { StudioMigrations1791702000000 } from '../migrations/1791702000000-studio-migrations.js';
 import { StudioMigrations1791702100000 } from '../migrations/1791702100000-studio-migrations.js';
 import { StudioMigrations1791702200000 } from '../migrations/1791702200000-studio-migrations.js';
+import { StudioMigrations1791702300000 } from '../migrations/1791702300000-studio-migrations.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -243,6 +245,8 @@ export class Postgres implements AbstractDatabase {
 				StudioMigrations1791702000000,
 				StudioMigrations1791702100000,
 				StudioMigrations1791702200000,
+				// Add ledgerAddressDaily and the per-day sync markers on ledgerAddressActivity
+				StudioMigrations1791702300000,
 			],
 			entities: [
 				...Entities,
@@ -264,6 +268,7 @@ export class Postgres implements AbstractDatabase {
 				StatusRegistryEntity,
 				FaucetRequestEntity,
 				LedgerAddressActivityEntity,
+				LedgerAddressDailyEntity,
 				DeletedAccountRecordEntity,
 				FeatureFlagEntity,
 				AgentEntity,

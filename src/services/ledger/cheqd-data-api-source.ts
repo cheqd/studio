@@ -1,5 +1,6 @@
 import {
 	EMPTY_SUMMARY,
+	type DailyBucket,
 	type LedgerActivitySource,
 	type LedgerExtent,
 	type LedgerNetwork,
@@ -82,6 +83,46 @@ export function toWrite(endpoint: 'did' | 'resource', item: Item): LedgerWrite |
 	};
 }
 
+const dayOf = (date: Date) => date.toISOString().slice(0, 10);
+const nextDay = (day: string) => dayOf(new Date(Date.parse(`${day}T00:00:00Z`) + 86_400_000));
+
+/**
+ * Per-day buckets (UTC) of the writes read from the newest pages. When an endpoint was capped its oldest day is only
+ * partly read, so that day and everything older is left out and `completeFrom` names the first complete day.
+ */
+export function dailyBuckets(reads: Array<{ endpoint: 'did' | 'resource'; head: Item[]; capped: boolean }>): {
+	daily: DailyBucket[];
+	completeFrom: string | null;
+} {
+	let completeFrom: string | null = null;
+	const all: LedgerWrite[] = [];
+	for (const read of reads) {
+		const writes = read.head
+			.map((item) => toWrite(read.endpoint, item))
+			.filter((w): w is LedgerWrite => w !== null);
+		let kept = writes;
+		if (read.capped && writes.length > 0) {
+			const oldest = dayOf(new Date(Math.min(...writes.map((w) => w.at.getTime()))));
+			const from = nextDay(oldest);
+			kept = writes.filter((w) => dayOf(w.at) >= from);
+			if (completeFrom === null || from > completeFrom) completeFrom = from;
+		}
+		all.push(...kept);
+	}
+	const buckets = new Map<string, DailyBucket>();
+	for (const write of all) {
+		const day = dayOf(write.at);
+		if (completeFrom !== null && day < completeFrom) continue;
+		const resourceType = write.resourceType ?? '';
+		const key = `${day}|${write.operation}|${resourceType}`;
+		const bucket = buckets.get(key) ?? { day, operation: write.operation, resourceType, count: 0, feeNcheq: 0 };
+		bucket.count++;
+		bucket.feeNcheq += write.feeNcheq ?? 0;
+		buckets.set(key, bucket);
+	}
+	return { daily: [...buckets.values()].sort((a, b) => a.day.localeCompare(b.day)), completeFrom };
+}
+
 export class CheqdDataApiSource implements LedgerActivitySource, LedgerWriteReader {
 	private readonly fetcher: typeof fetch;
 
@@ -120,7 +161,7 @@ export class CheqdDataApiSource implements LedgerActivitySource, LedgerWriteRead
 		address: string,
 		since: Date,
 		network: LedgerNetwork = this.options.network
-	): Promise<{ total: number; items: Item[]; capped: boolean }> {
+	): Promise<{ total: number; items: Item[]; head: Item[]; capped: boolean }> {
 		const first = await this.page(endpoint, address, since, 1, network);
 		const items = [...first.items];
 		const pages = Math.ceil(first.totalCount / this.options.pageSize);
@@ -128,9 +169,10 @@ export class CheqdDataApiSource implements LedgerActivitySource, LedgerWriteRead
 		for (let n = 2; n <= readable; n++)
 			items.push(...(await this.page(endpoint, address, since, n, network)).items);
 		const capped = pages > readable;
+		const head = [...items];
 		// The newest pages were read; fetch the very last page too so the first write time stays exact
 		if (capped) items.push(...(await this.page(endpoint, address, since, pages, network)).items);
-		return { total: first.totalCount, items, capped };
+		return { total: first.totalCount, items, head, capped };
 	}
 
 	async summarise(address: string, since: Date): Promise<LedgerWriteSummary> {
@@ -145,6 +187,10 @@ export class CheqdDataApiSource implements LedgerActivitySource, LedgerWriteRead
 			.filter((t) => Number.isFinite(t));
 		const statusLists = resources.items.filter((i) => STATUS_LIST_TYPE.test(String(i.resourceType ?? ''))).length;
 		const capped = dids.capped || resources.capped;
+		const { daily, completeFrom } = dailyBuckets([
+			{ endpoint: 'did', head: dids.head, capped: dids.capped },
+			{ endpoint: 'resource', head: resources.head, capped: resources.capped },
+		]);
 		return {
 			writeCount,
 			didWriteCount: dids.items.length,
@@ -153,6 +199,8 @@ export class CheqdDataApiSource implements LedgerActivitySource, LedgerWriteRead
 			firstWriteAt: times.length ? new Date(Math.min(...times)) : null,
 			lastWriteAt: times.length ? new Date(Math.max(...times)) : null,
 			capped,
+			daily,
+			dailyCompleteFrom: completeFrom,
 		};
 	}
 

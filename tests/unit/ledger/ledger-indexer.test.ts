@@ -58,6 +58,16 @@ describe('LedgerIndexer.runOnce', () => {
 							statusListWriteCount: 1,
 							firstWriteAt: new Date('2026-03-05T00:00:00Z'),
 							lastWriteAt: new Date('2026-03-09T00:00:00Z'),
+							daily: [
+								{
+									day: '2026-03-05',
+									operation: 'createDid',
+									resourceType: '',
+									count: 2,
+									feeNcheq: 5_000_000_000,
+								},
+							],
+							dailyCompleteFrom: '2026-03-02',
 						}
 					: { ...EMPTY_SUMMARY },
 		};
@@ -79,8 +89,12 @@ describe('LedgerIndexer.runOnce', () => {
 			1,
 			0,
 			false,
+			JSON.stringify([
+				{ day: '2026-03-05', operationType: 'createDid', resourceType: '', count: 2, feeNcheq: 5_000_000_000 },
+			]),
+			'2026-03-02',
 		]);
-		expect(writes[1]).toEqual(['cheqd1b', null, null, 0, 0, 0, 0, false]);
+		expect(writes[1]).toEqual(['cheqd1b', null, null, 0, 0, 0, 0, false, '[]', null]);
 	});
 
 	it('retries with exponential backoff and then succeeds', async () => {
@@ -130,6 +144,43 @@ describe('LedgerIndexer.runOnce', () => {
 		await indexer.runOnce();
 		await indexer.runOnce();
 		expect(writes[0]).toEqual(writes[1]);
+	});
+});
+
+describe('LedgerIndexer per-day storage', () => {
+	it('replaces the per-day rows and the summary in one statement, and re-checks addresses without per-day rows', async () => {
+		const statements: string[] = [];
+		const db: Queryable = {
+			query: async (sql: string) => {
+				statements.push(sql);
+				return sql.includes('FROM "faucetRequest"') ? [funded('cheqd1a')] : [];
+			},
+		};
+		const source: LedgerActivitySource = { summarise: async () => ({ ...EMPTY_SUMMARY }) };
+		await new LedgerIndexer(
+			() => db,
+			() => config(),
+			() => source,
+			noSleep
+		).runOnce();
+		const select = statements.find((sql) => sql.includes('FROM "faucetRequest"')) as string;
+		expect(select).toMatch(/"dailySyncedAt" IS NULL/);
+		const writes = statements.filter((sql) => sql.includes('INSERT INTO "ledgerAddressActivity"'));
+		expect(writes).toHaveLength(1);
+		expect(writes[0]).toMatch(/DELETE FROM "ledgerAddressDaily"/);
+		expect(writes[0]).toMatch(/INSERT INTO "ledgerAddressDaily"/);
+	});
+
+	it('does not mark per-day rows as stored when the source gives none', async () => {
+		const { db, writes } = fakeDb([funded('cheqd1a')]);
+		const { daily: _daily, dailyCompleteFrom: _from, ...bare } = EMPTY_SUMMARY;
+		await new LedgerIndexer(
+			() => db,
+			() => config(),
+			() => ({ summarise: async () => bare }),
+			noSleep
+		).runOnce();
+		expect(writes[0]!.slice(8)).toEqual([null, null]);
 	});
 });
 

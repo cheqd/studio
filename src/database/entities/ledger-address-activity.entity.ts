@@ -35,4 +35,12 @@ export class LedgerAddressActivityEntity {
 
 	@Column({ type: 'timestamptz' })
 	checkedAt!: Date;
+
+	// When the per-day rows (`ledgerAddressDaily`) were stored for this address; null until the sync has done so
+	@Column({ type: 'timestamptz', nullable: true })
+	dailySyncedAt?: Date | null;
+
+	// First UTC day from which the per-day rows are complete; null means complete from the first funding
+	@Column({ type: 'date', nullable: true })
+	dailyCompleteFrom?: string | null;
 }

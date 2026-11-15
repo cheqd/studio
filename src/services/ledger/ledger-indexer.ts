@@ -2,7 +2,7 @@ import { Connection } from '../../database/connection/connection.js';
 import { isShuttingDown } from '../../helpers/shutdown-state.js';
 import { parseNonNegativeIntEnv, parseNumberEnv } from '../../types/constants.js';
 import { CheqdDataApiSource } from './cheqd-data-api-source.js';
-import type { LedgerActivitySource } from './ledger-activity-source.js';
+import type { DailyBucket, LedgerActivitySource } from './ledger-activity-source.js';
 
 export interface Queryable {
 	query(sql: string, parameters?: unknown[]): Promise<unknown>;
@@ -40,6 +40,14 @@ export const ledgerIndexerConfig = (env: Record<string, string | undefined> = pr
 		100,
 		parseNumberEnv(env.LEDGER_INDEXER_MIN_COVERAGE_PERCENT, 90, 'LEDGER_INDEXER_MIN_COVERAGE_PERCENT')
 	),
+});
+
+const dailyRow = (bucket: DailyBucket) => ({
+	day: bucket.day,
+	operationType: bucket.operation,
+	resourceType: bucket.resourceType,
+	count: bucket.count,
+	feeNcheq: bucket.feeNcheq,
 });
 
 export interface SyncResult {
@@ -93,7 +101,7 @@ export class LedgerIndexer {
 			`SELECT f.address, f.first_funded AS "firstFunded"
 			FROM (SELECT "address", MIN("createdAt") AS first_funded FROM "faucetRequest" WHERE "status" = 'completed' GROUP BY "address") f
 			LEFT JOIN "ledgerAddressActivity" a ON a."address" = f.address
-			WHERE a."address" IS NULL OR a."checkedAt" < now() - ($2::numeric * interval '1 hour')
+			WHERE a."address" IS NULL OR a."dailySyncedAt" IS NULL OR a."checkedAt" < now() - ($2::numeric * interval '1 hour')
 			ORDER BY a."checkedAt" ASC NULLS FIRST, f.first_funded ASC
 			LIMIT $1`,
 			[config.batchSize, config.recheckHours]
@@ -121,16 +129,35 @@ export class LedgerIndexer {
 				continue;
 			}
 			consecutive = 0;
+			// One statement, so the per-day rows and the summary never disagree: the rows are upserted, the ones no
+			// longer in the answer are removed, and the summary is replaced. Repeating it writes the same answer.
 			await db.query(
-				`INSERT INTO "ledgerAddressActivity"
-					("address", "firstWriteAt", "lastWriteAt", "writeCount", "didWriteCount", "statusListWriteCount", "otherResourceWriteCount", "capped", "checkedAt")
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
+				`WITH incoming AS (
+					SELECT x."day", x."operationType", x."resourceType", x."count", x."feeNcheq"
+					FROM jsonb_to_recordset($9::jsonb) AS x("day" date, "operationType" text, "resourceType" text, "count" integer, "feeNcheq" bigint)
+				),
+				removed AS (
+					DELETE FROM "ledgerAddressDaily" d
+					WHERE $9::jsonb IS NOT NULL AND d."address" = $1
+						AND NOT EXISTS (SELECT 1 FROM incoming i WHERE i."day" = d."day" AND i."operationType" = d."operationType" AND i."resourceType" = d."resourceType")
+				),
+				stored AS (
+					INSERT INTO "ledgerAddressDaily" ("address", "day", "operationType", "resourceType", "count", "feeNcheq")
+					SELECT $1, i."day", i."operationType", i."resourceType", i."count", i."feeNcheq" FROM incoming i
+					ON CONFLICT ("address", "day", "operationType", "resourceType") DO UPDATE SET
+						"count" = EXCLUDED."count", "feeNcheq" = EXCLUDED."feeNcheq"
+				)
+				INSERT INTO "ledgerAddressActivity"
+					("address", "firstWriteAt", "lastWriteAt", "writeCount", "didWriteCount", "statusListWriteCount", "otherResourceWriteCount", "capped", "checkedAt", "dailySyncedAt", "dailyCompleteFrom")
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now(), CASE WHEN $9::jsonb IS NULL THEN NULL ELSE now() END, $10::date)
 				ON CONFLICT ("address") DO UPDATE SET
 					"firstWriteAt" = EXCLUDED."firstWriteAt", "lastWriteAt" = EXCLUDED."lastWriteAt",
 					"writeCount" = EXCLUDED."writeCount", "didWriteCount" = EXCLUDED."didWriteCount",
 					"statusListWriteCount" = EXCLUDED."statusListWriteCount",
 					"otherResourceWriteCount" = EXCLUDED."otherResourceWriteCount",
-					"capped" = EXCLUDED."capped", "checkedAt" = now()`,
+					"capped" = EXCLUDED."capped", "checkedAt" = now(),
+					"dailySyncedAt" = CASE WHEN $9::jsonb IS NULL THEN "ledgerAddressActivity"."dailySyncedAt" ELSE now() END,
+					"dailyCompleteFrom" = CASE WHEN $9::jsonb IS NULL THEN "ledgerAddressActivity"."dailyCompleteFrom" ELSE EXCLUDED."dailyCompleteFrom" END`,
 				[
 					row.address,
 					summary.firstWriteAt,
@@ -140,6 +167,8 @@ export class LedgerIndexer {
 					summary.statusListWriteCount,
 					summary.otherResourceWriteCount,
 					summary.capped,
+					summary.daily ? JSON.stringify(summary.daily.map(dailyRow)) : null,
+					summary.dailyCompleteFrom ?? null,
 				]
 			);
 			result.checked++;

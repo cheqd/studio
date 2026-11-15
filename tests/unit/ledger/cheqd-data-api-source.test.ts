@@ -1,5 +1,9 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { CheqdDataApiSource, DataApiHttpError } from '../../../src/services/ledger/cheqd-data-api-source.js';
+import {
+	CheqdDataApiSource,
+	DataApiHttpError,
+	dailyBuckets,
+} from '../../../src/services/ledger/cheqd-data-api-source.js';
 
 type Reply = { status?: number; body: unknown };
 
@@ -69,7 +73,7 @@ describe('CheqdDataApiSource', () => {
 					}
 		);
 		const summary = await new CheqdDataApiSource(options(fetcher)).summarise('cheqd1test', since);
-		expect(summary).toEqual({
+		expect(summary).toMatchObject({
 			writeCount: 3,
 			didWriteCount: 1,
 			statusListWriteCount: 1,
@@ -211,5 +215,74 @@ describe('CheqdDataApiSource writes and extent', () => {
 		await expect(new CheqdDataApiSource(options(failing.fetcher)).extent('cheqd1test', 'testnet')).rejects.toThrow(
 			DataApiHttpError
 		);
+	});
+});
+
+describe('per-day buckets', () => {
+	const did = (operationType: string, createdAt: string, amount: number) => ({ operationType, createdAt, amount });
+
+	it('sums writes and fees per UTC day, operation and resource type', async () => {
+		const { fetcher } = fakeApi((endpoint) =>
+			endpoint === 'did'
+				? {
+						body: {
+							totalCount: 3,
+							items: [
+								did('createDid', '2026-03-05T23:59:00.000Z', 2),
+								did('createDid', '2026-03-05T00:00:00.000Z', 1.5),
+								did('updateDid', '2026-03-06T00:00:00.000Z', 0.25),
+							],
+						},
+					}
+				: {
+						body: {
+							totalCount: 1,
+							items: [
+								{
+									resourceType: 'anonCredsStatusList',
+									createdAt: '2026-03-06T10:00:00.000Z',
+									amount: 0.5,
+								},
+							],
+						},
+					}
+		);
+		const summary = await new CheqdDataApiSource(options(fetcher, { pageSize: 10 })).summarise('cheqd1test', since);
+		expect(summary.dailyCompleteFrom).toBeNull();
+		expect(summary.daily).toEqual([
+			{ day: '2026-03-05', operation: 'createDid', resourceType: '', count: 2, feeNcheq: 3_500_000_000 },
+			{ day: '2026-03-06', operation: 'updateDid', resourceType: '', count: 1, feeNcheq: 250_000_000 },
+			{
+				day: '2026-03-06',
+				operation: 'createResource',
+				resourceType: 'anonCredsStatusList',
+				count: 1,
+				feeNcheq: 500_000_000,
+			},
+		]);
+	});
+
+	it('leaves out the partly read oldest day of a capped endpoint and names the first complete day', () => {
+		const result = dailyBuckets([
+			{
+				endpoint: 'did',
+				capped: true,
+				head: [
+					{ operationType: 'createDid', createdAt: '2026-03-09T10:00:00.000Z', amount: 1 },
+					{ operationType: 'createDid', createdAt: '2026-03-08T10:00:00.000Z', amount: 1 },
+					{ operationType: 'createDid', createdAt: '2026-03-07T22:00:00.000Z', amount: 1 },
+				],
+			},
+			{
+				endpoint: 'resource',
+				capped: false,
+				head: [{ resourceType: 't', createdAt: '2026-03-01T10:00:00.000Z', amount: 1 }],
+			},
+		]);
+		expect(result.completeFrom).toBe('2026-03-08');
+		expect(result.daily.map((b) => [b.day, b.operation])).toEqual([
+			['2026-03-08', 'createDid'],
+			['2026-03-09', 'createDid'],
+		]);
 	});
 });
