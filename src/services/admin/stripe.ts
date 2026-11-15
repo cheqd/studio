@@ -50,6 +50,11 @@ export class StripeService {
 
 	// Sync all the subscriptions for current customer
 	async syncCustomer(customer: CustomerEntity): Promise<void> {
+		// Without a Stripe customer id the list below would not be filtered and would return every customer's
+		// subscriptions, so there is nothing to sync.
+		if (!customer.paymentProviderId) {
+			return;
+		}
 		for await (const subscription of this.stripe.subscriptions.list({
 			customer: customer.paymentProviderId,
 			status: 'all',
@@ -75,6 +80,10 @@ export class StripeService {
 				),
 				severity: 'debug',
 			});
+			// No Stripe customer id means no subscriptions to find: an unfiltered list is every customer's.
+			if (!customer.paymentProviderId) {
+				return;
+			}
 			const activeSubs = await this.stripe.subscriptions.list({
 				customer: customer.paymentProviderId,
 				status: 'active',

@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../../services/identity/ownership-error.js';
 import { StatusCodes } from 'http-status-codes';
 
 import { check, query } from '../validator/index.js';
@@ -121,6 +122,9 @@ export class PresentationController {
 			}
 			return response.status(StatusCodes.OK).json(result satisfies CreatePresentationResponseBody);
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulCreatePresentationResponseBody);

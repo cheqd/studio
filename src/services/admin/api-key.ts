@@ -142,6 +142,24 @@ export class APIKeyService {
 		return await this.secretBox.encrypt(apiKey);
 	}
 
+	/**
+	 * Like get(), but only for a key that belongs to `customer`. A key that is unknown or owned by someone else
+	 * returns null, so the two cannot be told apart. Possession of a key is not authority over it.
+	 */
+	public async getOwned(apiKey: string, customer: CustomerEntity, options?: APIServiceOptions) {
+		if (!customer?.customerId) {
+			return null;
+		}
+		const candidate = await this.apiKeyRepository.findOne({
+			where: { fingerprint: sha256(apiKey) },
+			relations: { customer: true },
+		});
+		if (!candidate || candidate.customer?.customerId !== customer.customerId) {
+			return null;
+		}
+		return await this.get(apiKey, options);
+	}
+
 	public async get(apiKey: string, options?: APIServiceOptions) {
 		// fingerprint
 		const fingerprint = sha256(apiKey);
