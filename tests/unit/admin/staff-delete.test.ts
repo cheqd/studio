@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Request, Response } from 'express';
+import { staffIdentity } from './staff-identity-fixture.js';
 
 const CUSTOMER = '11111111-1111-4111-8111-111111111111';
 const STAFF_CUSTOMER = '33333333-3333-4333-8333-333333333333';
@@ -81,7 +82,7 @@ function run(options: {
 }) {
 	const request = { body: options.body ?? {}, headers: options.headers ?? {} } as unknown as Request;
 	const response = {
-		locals: { scopes: ['admin:organisation:delete'], ...options.locals },
+		locals: { scopes: ['admin:organisation:delete'], staffIdentity: staffIdentity(), ...options.locals },
 		statusCode: 0,
 		body: undefined as unknown,
 		status(code: number) {

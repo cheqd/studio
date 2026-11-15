@@ -7,6 +7,7 @@ import {
 } from '../../../src/services/admin/admin-ledger-writes.js';
 import { AnalyticsAdminController } from '../../../src/controllers/admin/analytics.js';
 import { STAFF_SCOPES } from '../../../src/controllers/admin/staff-guard.js';
+import { staffIdentity } from './staff-identity-fixture.js';
 
 // 2026-11-15 12:00 UTC
 const NOW = Date.parse('2026-11-15T12:00:00Z');
@@ -179,7 +180,7 @@ describe('AnalyticsAdminController.ledgerWritesReport', () => {
 		const request = { method: 'GET', query, params: {}, body: {} } as unknown as Request;
 		for (const validator of AnalyticsAdminController.ledgerWritesValidator) await validator.run(request);
 		const response = {
-			locals: { scopes: [STAFF_SCOPES.analyticsRead] },
+			locals: { scopes: [STAFF_SCOPES.analyticsRead], staffIdentity: staffIdentity() },
 			statusCode: 0,
 			body: undefined as unknown,
 			status(code: number) {
