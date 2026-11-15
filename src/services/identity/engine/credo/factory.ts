@@ -13,6 +13,14 @@ import { TypeOrmCredoEngineStore } from './typeorm-store.js';
 import { TypeOrmStatusListOwnership } from './status-list-ownership.js';
 
 let engine: CredoEngine | undefined;
+let activeRuntime: CredoRuntime | undefined;
+
+/** Shuts down the process-wide Credo runtime if one was built (it starts lazily, so an unused one costs nothing). */
+export async function shutdownCredoRuntime(): Promise<void> {
+	const runtime = activeRuntime;
+	activeRuntime = undefined;
+	await runtime?.shutdown();
+}
 
 /**
  * A runtime that starts Credo on first use, so merely registering the engine with the router costs nothing and a
@@ -83,6 +91,7 @@ export function createCredoEngine(): CredoEngine {
 		})
 	);
 
+	activeRuntime = runtime;
 	return new CredoEngine({
 		store,
 		runtime,

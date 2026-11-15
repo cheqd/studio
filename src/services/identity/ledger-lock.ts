@@ -135,6 +135,13 @@ interface PayerQueue {
 }
 const payerQueues = new Map<string, PayerQueue>();
 
+let payerWritesInFlight = 0;
+
+/** Ledger writes that have entered `withPayerLock` (queued or running) and not yet finished. Shutdown waits on it. */
+export function payerWritesInFlightCount(): number {
+	return payerWritesInFlight;
+}
+
 /** Number of writes waiting in memory for this payer (tests and metrics). */
 export function queuedWriteCount(payerAddress: string): number {
 	return payerQueues.get(payerAddress)?.waiters.length ?? 0;
@@ -273,27 +280,36 @@ export async function withPayerLock<T>(
 	const startedAt = now();
 	const deadline = startedAt + Math.max(1, Math.floor(options.lockTimeoutMs ?? DEFAULT_LOCK_TIMEOUT_MS));
 
-	const releaseSlot = await acquireQueueSlot(payerAddress, deadline, { now }, startedAt);
+	payerWritesInFlight++;
 	try {
-		if (dataSource.options.type !== 'postgres') return await work();
-		const runner = await acquireSessionLock(
-			dataSource,
-			payerAddress,
-			deadline,
-			{
-				now,
-				sleep,
-				retryInitialMs: options.retryInitialMs ?? DEFAULT_RETRY_INITIAL_MS,
-				retryMaxMs: options.retryMaxMs ?? DEFAULT_RETRY_MAX_MS,
-			},
-			startedAt
-		);
-		try {
-			return await work();
-		} finally {
-			await unlockPayer(runner, payerAddress);
-		}
+		return await withPayerSlot();
 	} finally {
-		releaseSlot();
+		payerWritesInFlight--;
+	}
+
+	async function withPayerSlot(): Promise<T> {
+		const releaseSlot = await acquireQueueSlot(payerAddress, deadline, { now }, startedAt);
+		try {
+			if (dataSource.options.type !== 'postgres') return await work();
+			const runner = await acquireSessionLock(
+				dataSource,
+				payerAddress,
+				deadline,
+				{
+					now,
+					sleep,
+					retryInitialMs: options.retryInitialMs ?? DEFAULT_RETRY_INITIAL_MS,
+					retryMaxMs: options.retryMaxMs ?? DEFAULT_RETRY_MAX_MS,
+				},
+				startedAt
+			);
+			try {
+				return await work();
+			} finally {
+				await unlockPayer(runner, payerAddress);
+			}
+		} finally {
+			releaseSlot();
+		}
 	}
 }

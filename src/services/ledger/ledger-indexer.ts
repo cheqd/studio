@@ -1,4 +1,5 @@
 import { Connection } from '../../database/connection/connection.js';
+import { isShuttingDown } from '../../helpers/shutdown-state.js';
 import { parseNonNegativeIntEnv, parseNumberEnv } from '../../types/constants.js';
 import { CheqdDataApiSource } from './cheqd-data-api-source.js';
 import type { LedgerActivitySource } from './ledger-activity-source.js';
@@ -152,6 +153,7 @@ export class LedgerIndexer {
 	 * happen (a faucet request, a staff look at the analytics). It never delays or fails the caller and never throws.
 	 */
 	public maybeRun(): void {
+		if (isShuttingDown()) return;
 		const config = this.config();
 		if (!config.enabled || this.running) return;
 		const now = this.now();

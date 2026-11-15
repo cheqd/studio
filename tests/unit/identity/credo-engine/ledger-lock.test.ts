@@ -3,6 +3,7 @@ import {
 	DEFAULT_LOCK_TIMEOUT_MS,
 	LedgerUnavailableError,
 	LockPoolBusyError,
+	payerWritesInFlightCount,
 	queuedWriteCount,
 	withAdvisoryLock,
 	withPayerLock,
@@ -334,5 +335,24 @@ describe('withPayerLock when every lock connection is busy', () => {
 				},
 			})
 		).rejects.toBeInstanceOf(LedgerUnavailableError);
+	});
+});
+
+describe('payerWritesInFlightCount', () => {
+	it('counts running and queued writes until each one finishes, including after a failure', async () => {
+		const dataSource = { options: { type: 'sqlite' } } as unknown as LockDataSource;
+		let release: () => void = () => undefined;
+		const gate = new Promise<void>((resolve) => (release = resolve));
+		const first = withPayerLock(dataSource, 'cheqd1inflight', () => gate);
+		const second = withPayerLock(dataSource, 'cheqd1inflight', async () => {
+			throw new Error('write failed');
+		});
+		const settled = second.catch(() => undefined);
+		await new Promise((resolve) => setImmediate(resolve));
+		expect(payerWritesInFlightCount()).toBe(2);
+		release();
+		await first;
+		await settled;
+		expect(payerWritesInFlightCount()).toBe(0);
 	});
 });

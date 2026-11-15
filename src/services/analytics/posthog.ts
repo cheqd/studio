@@ -73,3 +73,14 @@ export function captureActivationEvent(customerId: string, event: string, proper
 export function resetPostHogForTests(): void {
 	client = undefined;
 }
+
+/** Flushes events still waiting to be sent and stops the client (shutdown). Never throws; does nothing without a key. */
+export async function flushAnalytics(timeoutMs = 2000): Promise<void> {
+	const current = client;
+	client = undefined;
+	try {
+		await current?.shutdown(timeoutMs);
+	} catch {
+		// Analytics never blocks shutdown
+	}
+}

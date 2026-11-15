@@ -163,6 +163,25 @@ describe('LedgerIndexer.maybeRun', () => {
 		expect(selects).toHaveLength(2);
 	});
 
+	it('starts no new run once shutdown has begun', async () => {
+		const { beginShutdown, resetShutdownStateForTests } = await import('../../../src/helpers/shutdown-state.js');
+		const makeSource = jest.fn();
+		const indexer = new LedgerIndexer(
+			() => ({ query: jest.fn() }) as never,
+			() => config(),
+			makeSource as never,
+			noSleep
+		);
+		beginShutdown();
+		try {
+			indexer.maybeRun();
+			await new Promise((resolve) => setImmediate(resolve));
+			expect(makeSource).not.toHaveBeenCalled();
+		} finally {
+			resetShutdownStateForTests();
+		}
+	});
+
 	it('swallows a database failure', async () => {
 		const spy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
 		const db: Queryable = { query: async () => Promise.reject(new Error('boom')) };

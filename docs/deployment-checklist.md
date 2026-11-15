@@ -24,6 +24,20 @@ the no-database sample in `docker/no-external-db`. When it is used, start-up log
 set it on a shared or internet-facing deployment. Development, test and the local end-to-end harness run with
 `NODE_ENV` unset and are not affected.
 
+## Graceful shutdown
+
+On `SIGTERM` or `SIGINT` the process stops accepting connections, makes `/ready` (also `/readyz`, `/readiness`) answer
+`503` at once so the platform stops routing, waits for in-flight requests and queued per-payer ledger writes, then shuts
+down the Credo runtime, closes the lock pool (which releases the advisory locks) and the database pool, and exits `0`.
+If the work has not finished within `SHUTDOWN_GRACE_SECONDS` (default `25`) it logs the reason, cleans up and exits `1`.
+A second signal exits `1` immediately. Background work (the opportunistic ledger indexer and faucet retention cleanup)
+does not start once shutdown has begun. `/health` (also `/healthz`, `/live`, `/livez`) stays `200`.
+
+- [ ] The platform's termination grace period is at least `SHUTDOWN_GRACE_SECONDS` plus a few seconds (platforms usually
+      kill at 30 seconds, hence the default of 25). If you raise `SHUTDOWN_GRACE_SECONDS`, raise the platform's period too.
+- [ ] The platform's readiness probe uses `/ready` and the liveness probe uses `/health`.
+- [ ] The container receives the signal itself (the process is PID 1 or the init forwards `SIGTERM`).
+
 ## Request limits
 
 - [ ] `TRUST_PROXY` is set when the service runs behind a reverse proxy or load balancer (number of hops, or an Express

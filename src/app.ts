@@ -1,4 +1,5 @@
 import { requestContext } from './middleware/request-context.js';
+import { healthRouter } from './middleware/health.js';
 import express from 'express';
 import Helmet from 'helmet';
 import cors from 'cors';
@@ -79,6 +80,8 @@ class App {
 	}
 
 	private middleware() {
+		// Liveness and readiness come first: no limits, no authentication, no data
+		this.express.use(healthRouter());
 		// Limits run first, so a flood or an oversize body is turned away before any parsing or authentication work.
 		const proxySetting = trustProxySetting(process.env.TRUST_PROXY);
 		if (proxySetting !== undefined) this.express.set('trust proxy', proxySetting);

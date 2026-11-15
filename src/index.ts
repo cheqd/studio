@@ -2,6 +2,12 @@ import * as http from 'http';
 import App, { dbReady } from './app.js';
 import * as dotenv from 'dotenv';
 import { assertSecureStartup } from './helpers/startup-guard.js';
+import { createGracefulShutdown, shutdownGraceSeconds } from './helpers/graceful-shutdown.js';
+import { Connection } from './database/connection/connection.js';
+import { shutdownCredoRuntime } from './services/identity/engine/credo/index.js';
+import { closeSharedPayerLockSource } from './services/identity/payer-lock-pool.js';
+import { payerWritesInFlightCount } from './services/identity/ledger-lock.js';
+import { flushAnalytics } from './services/analytics/posthog.js';
 import { loadAskar } from './services/identity/engine/credo/askar-native.js';
 
 dotenv.config();
@@ -21,6 +27,30 @@ server.on('listening', () => {
 });
 
 server.on('error', onError);
+
+// Orderly shutdown on SIGTERM/SIGINT: drain in-flight requests and queued ledger writes (bounded by
+// SHUTDOWN_GRACE_SECONDS), then close the Credo runtime, the lock pool (which releases advisory locks) and the main
+// pool. A second signal exits at once.
+const gracefulShutdown = createGracefulShutdown({
+	server,
+	graceSeconds: shutdownGraceSeconds(),
+	pendingWork: payerWritesInFlightCount,
+	steps: [
+		{ name: 'credo runtime', run: shutdownCredoRuntime },
+		{ name: 'lock pool', run: closeSharedPayerLockSource },
+		{ name: 'analytics flush', run: flushAnalytics },
+		{
+			name: 'database pool',
+			run: async () => {
+				const source = Connection.instance.dbConnection;
+				if (source.isInitialized) await source.destroy();
+			},
+		},
+	],
+	exit: (code) => process.exit(code),
+});
+process.on('SIGTERM', () => void gracefulShutdown.handleSignal('SIGTERM'));
+process.on('SIGINT', () => void gracefulShutdown.handleSignal('SIGINT'));
 
 function onError(error: NodeJS.ErrnoException): void {
 	if (error.syscall !== 'listen') {

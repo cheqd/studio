@@ -98,7 +98,7 @@ export function createPayerLockSource(
 	};
 }
 
-let shared: LockDataSource | undefined;
+let shared: (LockDataSource & { destroy(): Promise<void> }) | undefined;
 
 /**
  * The process-wide lock source over Studio's database, shared by the Credo and Veramo write paths so both serialise
@@ -107,4 +107,11 @@ let shared: LockDataSource | undefined;
 export function sharedPayerLockSource(): LockDataSource {
 	shared ??= createPayerLockSource(Connection.instance.dbConnection);
 	return shared;
+}
+
+/** Closes the shared lock pool, which releases every session advisory lock still held. Safe to call more than once. */
+export async function closeSharedPayerLockSource(): Promise<void> {
+	const current = shared;
+	shared = undefined;
+	await current?.destroy();
 }
