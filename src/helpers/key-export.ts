@@ -28,6 +28,7 @@ export const KEY_EXPORT_VERSION = 1 as const;
 const AAD = Buffer.from(`${KEY_EXPORT_FORMAT}:v${KEY_EXPORT_VERSION}`, 'utf8');
 const SALT_BYTES = 16;
 const IV_BYTES = 12;
+const TAG_BYTES = 16;
 const KEY_BYTES = 32;
 const SCRYPT_N = 2 ** 17;
 const SCRYPT_R = 8;
@@ -154,9 +155,13 @@ export async function decryptKeyExport(envelope: EncryptedKeyExport, password: s
 			keyLength,
 			scryptOptions(N, r, p)
 		);
-		const decipher = createDecipheriv('aes-256-gcm', u8(key), u8(Buffer.from(envelope.cipher.iv, 'base64')));
+		const tag = Buffer.from(envelope.cipher.tag, 'base64');
+		if (tag.length !== TAG_BYTES) throw new Error('Unexpected authentication tag length.');
+		const decipher = createDecipheriv('aes-256-gcm', u8(key), u8(Buffer.from(envelope.cipher.iv, 'base64')), {
+			authTagLength: TAG_BYTES,
+		});
 		decipher.setAAD(u8(AAD));
-		decipher.setAuthTag(u8(Buffer.from(envelope.cipher.tag, 'base64')));
+		decipher.setAuthTag(u8(tag));
 		const plaintext = Buffer.concat([
 			u8(decipher.update(u8(Buffer.from(envelope.ciphertext, 'base64')))),
 			u8(decipher.final()),

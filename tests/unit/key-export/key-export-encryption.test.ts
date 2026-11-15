@@ -112,4 +112,17 @@ describe('validateExportPassword', () => {
 			delete process.env.KEY_EXPORT_MIN_PASSWORD_LENGTH;
 		}
 	});
+
+	it('rejects an envelope whose authentication tag is truncated', async () => {
+		const envelope = await encryptKeyExport(payload, PASSWORD);
+		const tag = Buffer.from(envelope.cipher.tag, 'base64');
+		expect(tag.length).toBe(16);
+		for (const length of [4, 8, 15]) {
+			const truncated = {
+				...envelope,
+				cipher: { ...envelope.cipher, tag: tag.subarray(0, length).toString('base64') },
+			};
+			await expect(decryptKeyExport(truncated, PASSWORD)).rejects.toThrow(/wrong password or corrupted/);
+		}
+	});
 });
