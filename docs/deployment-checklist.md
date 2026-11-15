@@ -30,6 +30,13 @@ set it on a shared or internet-facing deployment. Development, test and the loca
       `POST /credentials/import` and `POST /admin/webhook` use `JSON_BODY_LIMIT_LARGE` (default `10mb`); larger bodies
       answer `413`.
 - [ ] `STATUS_LIST_MAX_LENGTH` (default 1048576 entries) suits the status lists customers create.
+- [ ] Database connection budget. Each instance can open up to 20 Postgres connections by default: the main pool
+      (`EXTERNAL_DB_POOL_MAX`, default 10) and the ledger-lock pool (`EXTERNAL_DB_LOCK_POOL_MAX`, default 10). With N
+      instances that is up to 20 x N connections, so check it against the database's `max_connections` and any
+      pooler (for example PgBouncer in transaction mode must not sit in front of the lock pool, because the locks are
+      session-level advisory locks). Lower either value if the budget is tight. Related timeouts:
+      `EXTERNAL_DB_POOL_IDLE_TIMEOUT_MS`, `EXTERNAL_DB_POOL_CONNECTION_TIMEOUT_MS`,
+      `EXTERNAL_DB_LOCK_POOL_IDLE_TIMEOUT_MS`, `EXTERNAL_DB_LOCK_POOL_CONNECTION_TIMEOUT_MS`.
 
 Health, readiness (`/health`, `/healthz`, `/ready`, `/readyz`, `/readiness`, `/live`, `/livez`) and the Swagger paths
 are never rate limited.
