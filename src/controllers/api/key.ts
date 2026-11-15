@@ -124,7 +124,7 @@ export class KeyController {
 		try {
 			const keyType = (request.query.type as SupportedKeyTypes | undefined) || SupportedKeyTypes.Ed25519;
 			// P-256 / JsonWebKey keys always go to Credo: the router applies that rule from the key type
-			const engine = await identityServiceStrategySetup.engine('key', undefined, { keyType });
+			const engine = await identityServiceStrategySetup.engine('key', undefined, { keyType, creates: true });
 			const key = shapeKeyResponse(
 				await engine.createKey(keyType, response.locals.customer),
 				engine,
@@ -212,7 +212,10 @@ export class KeyController {
 					} satisfies UnsuccessfulImportKeyResponseBody);
 				}
 			}
-			const engine = await identityServiceStrategySetup.engine('key', undefined, { keyType: type || 'Ed25519' });
+			const engine = await identityServiceStrategySetup.engine('key', undefined, {
+				keyType: type || 'Ed25519',
+				creates: true,
+			});
 			const key = shapeKeyResponse(
 				await engine.importKey(type || 'Ed25519', decryptedPrivateKeyHex, response.locals.customer, alias),
 				engine,

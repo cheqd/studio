@@ -257,6 +257,7 @@ export class DIDController {
 									await (
 										await identityServiceStrategySetup.engine('key', undefined, {
 											keyType: SupportedKeyTypes.Ed25519,
+											creates: true,
 										})
 									).createKey(SupportedKeyTypes.Ed25519, response.locals.customer)
 								).publicKeyHex;
@@ -285,6 +286,7 @@ export class DIDController {
 								await (
 									await identityServiceStrategySetup.engine('key', undefined, {
 										keyType: SupportedKeyTypes.Ed25519,
+										creates: true,
 									})
 								).createKey(SupportedKeyTypes.Ed25519, response.locals.customer)
 							).publicKeyHex;
@@ -324,7 +326,7 @@ export class DIDController {
 						} satisfies UnsuccessfulCreateDidResponseBody);
 					}
 					did = (await (
-						await identityServiceStrategySetup.engine('did')
+						await identityServiceStrategySetup.engine('did', undefined, { creates: true })
 					).createDid(
 						network || didDocument.id.split(':')[2],
 						didDocument,
@@ -591,9 +593,11 @@ export class DIDController {
 				});
 			}
 
-			const identifier = await // A new artifact for Studio: no recorded engine yet, so the feature flag decides
+			const identifier = await // A new artifact for Studio: no recorded engine yet, so it goes to Credo
 			(
-				await new IdentityServiceStrategySetup(response.locals.customer.customerId).engine('did')
+				await new IdentityServiceStrategySetup(response.locals.customer.customerId).engine('did', undefined, {
+					creates: true,
+				})
 			).importDid(did, keys as never, controllerKeyId, response.locals.customer);
 
 			// Track the operation

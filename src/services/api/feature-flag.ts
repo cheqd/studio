@@ -2,8 +2,9 @@ import validator from 'validator';
 import { Connection } from '../../database/connection/connection.js';
 import { FeatureFlagEntity } from '../../database/entities/feature-flag.entity.js';
 import { AdminAuditLogEntity } from '../../database/entities/admin-audit-log.entity.js';
-import { DEFAULT_ENGINE, ENGINE_NAMES, ENGINE_ROUTES, isEngineName } from '../identity/engine/types.js';
+import { ENGINE_NAMES, ENGINE_ROUTES, isEngineName } from '../identity/engine/types.js';
 import type { EngineName, EngineRoute } from '../identity/engine/types.js';
+import { engineForNewArtefact } from '../identity/engine/new-artefact-policy.js';
 import { FlagCache } from './flag-cache.js';
 
 export const FLAG_KEYS = ['engine', 'ui'] as const;
@@ -56,16 +57,20 @@ export interface ResolvedFlags {
 	engine: { default: EngineName; routes: Record<EngineRoute, EngineName> };
 }
 
-/** The flags that apply to one caller: global defaults with that caller's overrides on top. */
+/**
+ * The flags that apply to one caller: global defaults with that caller's overrides on top. The engine values are the
+ * ones a NEW artefact gets: Credo, unless the temporary Veramo override is on and a row says `veramo`. Existing
+ * artefacts ignore all of this and use the engine recorded on them.
+ */
 export function resolveFlags(rows: readonly FlagRow[], customerId: string | undefined): ResolvedFlags {
 	const ui = pickFlagRow(rows, 'ui', customerId, null)?.value?.ui;
 	const routes = {} as Record<EngineRoute, EngineName>;
 	for (const route of ENGINE_ROUTES) {
-		routes[route] = pickEngine(rows, customerId, route) ?? DEFAULT_ENGINE;
+		routes[route] = engineForNewArtefact(pickEngine(rows, customerId, route));
 	}
 	return {
 		ui: UI_VARIANTS.includes(ui as UiVariant) ? (ui as UiVariant) : DEFAULT_UI,
-		engine: { default: pickEngine(rows, customerId, null) ?? DEFAULT_ENGINE, routes },
+		engine: { default: engineForNewArtefact(pickEngine(rows, customerId, null)), routes },
 	};
 }
 

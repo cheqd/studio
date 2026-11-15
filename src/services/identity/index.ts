@@ -276,13 +276,14 @@ export class IdentityServiceStrategySetup {
 
 	/**
 	 * The engine for this request, chosen by the EngineRouter: the engine recorded on `artifact` if it already
-	 * exists, otherwise the one the feature flags select for this customer and route. Veramo unless a flag says
-	 * otherwise, and no flag does today.
+	 * exists. A new artefact (`hints.creates`) goes to Credo: Veramo is retired for new artefacts, bar the
+	 * temporary override in `new-artefact-policy.ts`. A call that names no artefact and creates nothing keeps the
+	 * legacy choice (flag, else Veramo).
 	 */
 	public async engine(
 		route: EngineRoute,
 		artifact?: ArtifactRef,
-		hints?: { keyType?: string; encryptedStatusList?: boolean; flagWhenUnrecorded?: boolean }
+		hints?: { keyType?: string; encryptedStatusList?: boolean; flagWhenUnrecorded?: boolean; creates?: boolean }
 	): Promise<IdentityEngine> {
 		return engineRouter.engineFor(
 			{
@@ -292,6 +293,7 @@ export class IdentityServiceStrategySetup {
 				keyType: hints?.keyType,
 				encryptedStatusList: hints?.encryptedStatusList,
 				flagWhenUnrecorded: hints?.flagWhenUnrecorded,
+				creates: hints?.creates,
 			},
 			this.agent
 		);
@@ -304,7 +306,7 @@ export class IdentityServiceStrategySetup {
 	public async routed(
 		route: EngineRoute,
 		artifact?: ArtifactRef,
-		hints?: { keyType?: string; encryptedStatusList?: boolean; flagWhenUnrecorded?: boolean }
+		hints?: { keyType?: string; encryptedStatusList?: boolean; flagWhenUnrecorded?: boolean; creates?: boolean }
 	): Promise<RoutedService> {
 		return (await this.engine(route, artifact, hints)) as unknown as RoutedService;
 	}

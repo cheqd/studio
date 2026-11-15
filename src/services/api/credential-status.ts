@@ -109,8 +109,10 @@ export class CredentialStatusService {
 				};
 			}
 
-			// A new status list: the feature flag chooses the engine for this customer
-			const identityEngine = await identityServiceStrategySetup.engine('status-list');
+			// A new status list goes to Credo (Veramo is retired for new artefacts)
+			const identityEngine = await identityServiceStrategySetup.engine('status-list', undefined, {
+				creates: true,
+			});
 			const engine = identityEngine as unknown as RoutedService;
 
 			if (data) {

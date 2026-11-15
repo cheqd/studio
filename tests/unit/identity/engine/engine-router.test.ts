@@ -81,8 +81,12 @@ describe('EngineRouter decision table', () => {
 			expect(flags.flaggedEngine).not.toHaveBeenCalled();
 		});
 
-		it('uses the flag when there is no row (undefined)', async () => {
-			expect(await router(undefined, 'credo').subject.decide(ctx)).toEqual({ engine: 'credo', reason: 'flag' });
+		it('treats no row (undefined) as a new artefact: credo, whatever the flag says', async () => {
+			expect(await router(undefined, 'veramo').subject.decide(ctx)).toEqual({
+				engine: 'credo',
+				reason: 'default',
+			});
+			expect(await router(undefined, null).subject.decide(ctx)).toEqual({ engine: 'credo', reason: 'default' });
 		});
 
 		it('keeps a legacy row (null) on veramo, whatever the flag says', async () => {

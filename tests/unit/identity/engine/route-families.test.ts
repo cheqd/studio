@@ -122,7 +122,9 @@ describe('encrypted status-list creation is gone on every engine', () => {
 	});
 
 	it('does not apply to unencrypted creation or to other families', async () => {
-		expect((await router(null).decide({ route: 'status-list', encryptedStatusList: false })).engine).toBe('veramo');
+		expect(
+			(await router(null).decide({ route: 'status-list', encryptedStatusList: false, creates: true })).engine
+		).toBe('credo');
 		expect((await router(null).decide({ route: 'credential', encryptedStatusList: true })).engine).toBe('veramo');
 	});
 });

@@ -3,7 +3,8 @@ import type { IdentityEngine } from './identity-engine.js';
 import { getCredoEngine } from './credo/factory.js';
 import { VeramoEngine } from './veramo-engine.js';
 import { veramoPayerLock } from './veramo-payer-lock.js';
-import { DEFAULT_ENGINE, isEngineName } from './types.js';
+import { DEFAULT_ENGINE, NEW_ARTEFACT_DEFAULT_ENGINE, isEngineName } from './types.js';
+import { veramoOverrideEnabled } from './new-artefact-policy.js';
 import { currentRequestContext } from '../../request-context.js';
 import { logRoutingOutcome } from './routing-log.js';
 import { EngineGoneError, EngineRoutingUnavailableError, logRoutingFailure } from './errors.js';
@@ -29,11 +30,17 @@ export interface EngineDecisionContext {
 	/** Set when the operation acts on an artifact that already exists (update, deactivate, revoke, status check). */
 	artifact?: ArtifactRef;
 	/**
-	 * With `artifact`: when the lookup worked and found NO record of the artefact (no row at all), choose by flag
-	 * like a new artefact instead of the compiled default. A record whose engine column is empty is a legacy row and
-	 * still reads as `veramo`. Used where the artefact (an issuer DID) is not necessarily one Studio created.
+	 * With `artifact`: when the lookup worked and found NO record of the artefact (no row at all), treat it as a new
+	 * artefact (Credo) instead of the legacy default. A record whose engine column is empty is a legacy row and still
+	 * reads as `veramo`. Used where the artefact (an issuer DID) is not necessarily one Studio created.
 	 */
 	flagWhenUnrecorded?: boolean;
+	/**
+	 * Set by every call site that CREATES a new artefact (a DID, key, status list; a credential's engine is decided
+	 * from its issuer DID). New artefacts go to Credo. Without `artifact` and without this the call names no artefact
+	 * and creates nothing (verify, list, read, presentation): it keeps the legacy choice, the flag else `veramo`.
+	 */
+	creates?: boolean;
 }
 
 export type EngineDecisionReason = 'artifact' | 'flag' | 'exception' | 'default';
@@ -68,8 +75,10 @@ export const defaultEngineFactories: Record<EngineName, EngineFactory> = {
  * written here, not in flags: encrypted status-list creation is `Gone` on every engine; agent route families and
  * P-256 key creation always use Credo. Then:
  *   1. an operation on an existing artifact uses the engine recorded on it;
- *   2. a new artifact uses the engine from the `featureFlag` table for that customer and route;
- *   3. otherwise the global default, `veramo`.
+ *   2. a new artifact (`creates`, or an unrecorded one with `flagWhenUnrecorded`) uses Credo. Veramo is retired for
+ *      new artefacts: a `featureFlag` row of `veramo` is ignored unless the temporary override is on
+ *      (`new-artefact-policy.ts`), and each use of the override is logged;
+ *   3. an operation that names no artifact and creates nothing keeps the legacy choice: the flag, else `veramo`.
  * A missing column, a null or an empty value on an existing record reads as `veramo`: those rows predate the
  * engine bookkeeping. A lookup that FAILS, or a recorded value that is not an engine name, is not the same as "no
  * record": the artefact may belong to Credo, so the request is refused with `EngineRoutingUnavailableError` (503)
@@ -95,16 +104,42 @@ export class EngineRouter {
 			);
 			// An existing artifact never consults the flags: moving it between engines is a migration, not a flag.
 			if (isEngineName(recorded)) return { engine: recorded, reason: 'artifact' };
-			if (recorded === undefined && context.flagWhenUnrecorded) return this.decideByFlag(context);
+			if (recorded === undefined && context.flagWhenUnrecorded) return this.decideForNew(context);
 			if (recorded === null || recorded === undefined || recorded === '') {
 				return { engine: DEFAULT_ENGINE, reason: 'default' };
 			}
 			logRoutingFailure('artifact', new Error('recorded engine is not a known engine'));
 			throw new EngineRoutingUnavailableError();
 		}
-		return this.decideByFlag(context);
+		return context.creates ? this.decideForNew(context) : this.decideByFlag(context);
 	}
 
+	/**
+	 * A new artefact: Credo. The `featureFlag` table is read only while the temporary Veramo override is on, so with
+	 * the override off a flag outage cannot fail a create and a stale `veramo` row has no effect.
+	 */
+	private async decideForNew(context: EngineDecisionContext): Promise<EngineDecision> {
+		if (!veramoOverrideEnabled()) return { engine: NEW_ARTEFACT_DEFAULT_ENGINE, reason: 'default' };
+		const flagged = await this.lookup('flag', () =>
+			this.flags.flaggedEngine(context.customerId, context.route as EngineRoute)
+		);
+		if (flagged !== 'veramo') {
+			return isEngineName(flagged)
+				? { engine: flagged, reason: 'flag' }
+				: { engine: NEW_ARTEFACT_DEFAULT_ENGINE, reason: 'default' };
+		}
+		console.warn(
+			JSON.stringify({
+				event: 'veramo-new-artefact-override',
+				message: 'A new artefact is being created on Veramo because the temporary override is on',
+				routeFamily: context.route,
+				customerId: context.customerId,
+			})
+		);
+		return { engine: 'veramo', reason: 'flag' };
+	}
+
+	/** The legacy choice for an operation that creates nothing and names no artefact: the flag, else `veramo`. */
 	private async decideByFlag(context: EngineDecisionContext): Promise<EngineDecision> {
 		const flagged = await this.lookup('flag', () =>
 			this.flags.flaggedEngine(context.customerId, context.route as EngineRoute)

@@ -66,7 +66,13 @@ beforeEach(() => {
 	jest.spyOn(IdentityServiceStrategySetup.prototype, 'setupIdentityStrategy').mockImplementation(() => undefined);
 	jest.spyOn(IdentityServiceStrategySetup.prototype, 'engine').mockImplementation(async (route, artifact, hints) =>
 		router.engineFor(
-			{ route, artifact, keyType: hints?.keyType, encryptedStatusList: hints?.encryptedStatusList },
+			{
+				route,
+				artifact,
+				keyType: hints?.keyType,
+				encryptedStatusList: hints?.encryptedStatusList,
+				creates: hints?.creates,
+			},
 			{} as IIdentityService
 		)
 	);
@@ -93,13 +99,13 @@ async function post(query: Record<string, string | undefined>) {
 }
 
 describe('POST /key/create engine selection', () => {
-	it('sends Ed25519 and the default type to Veramo and returns its row untouched', async () => {
+	it('sends a new Ed25519 key (and the default type) to Credo: no new key is created on Veramo', async () => {
 		for (const query of [{ type: 'Ed25519' }, {}]) {
 			const response = await post(query);
 			expect(response.statusCode).toBe(200);
-			expect(response.body).toEqual(veramoKey('Ed25519', 'veramo-Ed25519'));
 		}
-		expect(credo.createKey).not.toHaveBeenCalled();
+		expect(credo.createKey).toHaveBeenCalledTimes(2);
+		expect(veramo.createKey).not.toHaveBeenCalled();
 	});
 
 	it.each(['Secp256r1', 'P-256', 'JsonWebKey'])('sends %s to Credo, whatever the flag says', async (type) => {
@@ -118,7 +124,7 @@ describe('POST /key/create engine selection', () => {
 	});
 
 	it('answers 500 with the existing body shape when the engine fails', async () => {
-		veramo.createKey.mockImplementationOnce(async () => {
+		credo.createKey.mockImplementationOnce(async () => {
 			throw new Error('boom');
 		});
 		const response = await post({ type: 'Ed25519' });
