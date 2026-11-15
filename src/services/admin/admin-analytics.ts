@@ -1,5 +1,6 @@
 import { Connection } from '../../database/connection/connection.js';
 import type { Table, Tile, Unsupported } from '../analytics/customer-analytics.js';
+import { ledgerIndexerConfig } from '../ledger/ledger-indexer.js';
 
 /**
  * Read-only staff queries over Studio's own tables: customers, usage, funnels and the audit log. Counts only: nothing
@@ -145,7 +146,11 @@ export function routeForOperation(operationName: string): { route: string; metho
 export class AdminAnalyticsService {
 	public static instance = new AdminAnalyticsService();
 
-	constructor(private readonly db: () => Queryable = () => Connection.instance.dbConnection) {}
+	constructor(
+		private readonly db: () => Queryable = () => Connection.instance.dbConnection,
+		private readonly ledgerConfig: () => { enabled: boolean; minCoveragePercent: number } = () =>
+			ledgerIndexerConfig()
+	) {}
 
 	private async rows<T = Record<string, unknown>>(sql: string, parameters: unknown[] = []): Promise<T[]> {
 		return (await this.db().query(sql, parameters)) as T[];
@@ -453,6 +458,58 @@ export class AdminAnalyticsService {
 	}
 
 	/**
+	 * What the ledger indexer knows about the same cohort `faucetToLedger` counts. Returns `null` when the indexer is
+	 * disabled, nobody is funded in the range, or too few of the funded addresses have been checked yet (a partial
+	 * picture would read as a real one), so the caller keeps every ledger element unsupported, exactly as before.
+	 */
+	private async ledgerFigures(range: Range, segment: Segment) {
+		const config = this.ledgerConfig();
+		if (!config.enabled) return null;
+		const rows = await this.rows(
+			`WITH ${WINDOW_CTE}, ${SEGMENT_CTE},
+			first AS (
+				SELECT DISTINCT ON (fr."address") fr."address" AS address, fr."customerId" AS "customerId", fr."createdAt" AS funded_at
+				FROM "faucetRequest" fr WHERE fr."status" = 'completed'
+				ORDER BY fr."address", fr."createdAt"
+			),
+			cohort AS (
+				SELECT f.address, f."customerId", f.funded_at,
+					a."writeCount" AS writes, a."firstWriteAt" AS first_write, a."didWriteCount" AS did,
+					a."statusListWriteCount" AS lists, a."otherResourceWriteCount" AS other, (a."address" IS NOT NULL) AS checked,
+					EXISTS (SELECT 1 FROM "agent" ag WHERE ag."customerId" = f."customerId") AS journey
+				FROM first f
+				JOIN win ON f.funded_at >= win.start
+				LEFT JOIN "ledgerAddressActivity" a ON a."address" = f.address
+				WHERE ${segmentFilter('f."customerId"')}
+			)
+			SELECT COUNT(*) AS funded, COUNT(*) FILTER (WHERE checked) AS checked,
+				COUNT(*) FILTER (WHERE checked AND writes > 0 AND first_write <= funded_at + interval '7 days') AS "firstWrite7d",
+				COUNT(*) FILTER (WHERE checked AND writes >= 2) AS "wroteAgain",
+				COUNT(*) FILTER (WHERE checked AND writes = 0) AS "stillOff",
+				COUNT(*) FILTER (WHERE checked AND did > 0) AS did,
+				COUNT(*) FILTER (WHERE checked AND lists > 0) AS lists,
+				COUNT(*) FILTER (WHERE checked AND other > 0) AS other,
+				COUNT(*) FILTER (WHERE checked AND writes > 0 AND GREATEST(first_write - funded_at, interval '0') < interval '1 hour') AS "withinHour",
+				COUNT(*) FILTER (WHERE checked AND writes > 0 AND GREATEST(first_write - funded_at, interval '0') >= interval '1 hour' AND first_write - funded_at < interval '1 day') AS "withinDay",
+				COUNT(*) FILTER (WHERE checked AND writes > 0 AND first_write - funded_at >= interval '1 day' AND first_write - funded_at < interval '7 days') AS "withinWeek",
+				COUNT(*) FILTER (WHERE checked AND writes > 0 AND first_write - funded_at >= interval '7 days' AND first_write - funded_at < interval '30 days') AS "withinMonth",
+				COUNT(*) FILTER (WHERE checked AND writes > 0 AND journey) AS "wroteJourney",
+				COUNT(*) FILTER (WHERE checked AND writes > 0 AND NOT journey) AS "wroteNoJourney",
+				COUNT(*) FILTER (WHERE checked AND writes = 0 AND journey) AS "noWriteJourney",
+				COUNT(*) FILTER (WHERE checked AND writes = 0 AND NOT journey) AS "noWriteNoJourney"
+			FROM cohort`,
+			[range, segment]
+		);
+		const r = rows[0] ?? {};
+		const funded = num(r.funded);
+		const checked = num(r.checked);
+		if (funded === 0 || checked === 0 || (checked / funded) * 100 < config.minCoveragePercent) {
+			return { figures: null, funded, checked };
+		}
+		return { figures: r, funded, checked };
+	}
+
+	/**
 	 * Faucet to ledger, from what Studio records. The unit is a funded address: the first completed faucet request for
 	 * an address, if it falls in the range (and the requesting customer is in the segment). Studio only sees faucet
 	 * requests made by signed-in customers, so every funded address belongs to a customer, and it sees no ledger
@@ -502,9 +559,13 @@ export class AdminAnalyticsService {
 			[range, segment, FAUCET_WRITE_OPERATIONS, DID_WRITES, STATUS_LIST_WRITES, RESOURCE_WRITES]
 		);
 		const r = rows[0] ?? {};
+		const indexed = await this.ledgerFigures(range, segment);
+		const L = indexed?.figures ?? null;
 		const ledger = (what: string): Unsupported => ({
 			supported: false,
-			reason: `${what} needs the ledger itself: Studio sees only the writes it makes for a customer, not writes made with an SDK or another tool. A ledger indexer is not built (decision A3).`,
+			reason: indexed
+				? `${what} needs the ledger itself, and the ledger indexer has checked ${indexed.checked} of ${indexed.funded} funded addresses so far, too few to report. It fills in on its own.`
+				: `${what} needs the ledger itself: Studio sees only the writes it makes for a customer, not writes made with an SDK or another tool. The ledger indexer is not switched on or has no data yet (decision A3).`,
 		});
 		const tile = (value: unknown): Tile => ({ supported: true, value: num(value) });
 		const table = <Row>(rowList: Row[]): Table<Row> => ({ supported: true, rows: rowList });
@@ -516,10 +577,10 @@ export class AdminAnalyticsService {
 				supported: false,
 				reason: 'Studio only records faucet requests made by signed-in customers, so every funded address is already linked to an account and the share would always read 100%. Funding without an account is not recorded (decision A3).',
 			},
-			wroteToLedgerWithin7Days: ledger('Writes to the ledger within 7 days'),
-			stillOffLedger: ledger('Addresses still off the ledger'),
+			wroteToLedgerWithin7Days: L ? tile(L.firstWrite7d) : ledger('Writes to the ledger within 7 days'),
+			stillOffLedger: L ? tile(L.stillOff) : ledger('Addresses still off the ledger'),
 		};
-		const funnel = table([
+		const studioFunnel = table([
 			{ key: 'funded', label: 'Funded from the faucet', addresses: num(r.funded), basis: 'all-funded' },
 			{
 				key: 'first-studio-write-7d',
@@ -540,19 +601,64 @@ export class AdminAnalyticsService {
 				basis: 'all-funded',
 			},
 		]);
+		const funnel = L
+			? table([
+					{
+						key: 'funded',
+						label: 'Funded from the faucet',
+						addresses: num(r.funded),
+						basis: 'all-funded' as const,
+					},
+					{
+						key: 'first-ledger-write-7d',
+						label: 'First ledger write (within 7 days)',
+						addresses: num(L.firstWrite7d),
+						basis: 'all-funded' as const,
+					},
+					{
+						key: 'wrote-again-ledger',
+						label: 'Wrote again (2 or more writes)',
+						addresses: num(L.wroteAgain),
+						basis: 'all-funded' as const,
+					},
+					{
+						key: 'topped-up',
+						label: 'Came back for another top-up',
+						addresses: num(r.toppedUp),
+						basis: 'all-funded' as const,
+					},
+				])
+			: studioFunnel;
+		const kinds = L ?? r;
 		const writeKinds = table([
-			{ key: 'did', label: 'DID created or updated', addresses: num(r.did) },
-			{ key: 'status-list', label: 'Status list or revocation update', addresses: num(r.lists) },
-			{ key: 'other-resource', label: 'Other linked resources', addresses: num(r.other) },
+			{ key: 'did', label: 'DID created or updated', addresses: num(kinds.did) },
+			{ key: 'status-list', label: 'Status list or revocation update', addresses: num(kinds.lists) },
+			{ key: 'other-resource', label: 'Other linked resources', addresses: num(kinds.other) },
 		]);
+		const timing = L ?? r;
 		const timeToFirstWrite = table([
-			{ key: 'within-hour', label: 'Within the hour', addresses: num(r.withinHour) },
-			{ key: 'within-day', label: 'Within a day', addresses: num(r.withinDay) },
-			{ key: 'within-week', label: 'Within a week', addresses: num(r.withinWeek) },
-			{ key: 'within-month', label: 'Within a month', addresses: num(r.withinMonth) },
+			{ key: 'within-hour', label: 'Within the hour', addresses: num(timing.withinHour) },
+			{ key: 'within-day', label: 'Within a day', addresses: num(timing.withinDay) },
+			{ key: 'within-week', label: 'Within a week', addresses: num(timing.withinWeek) },
+			{ key: 'within-month', label: 'Within a month', addresses: num(timing.withinMonth) },
 		]);
-		const ledgerFunnel = ledger('The faucet to ledger funnel');
-		const ledgerVsStudioJourneys = ledger('The ledger writes and Studio journeys table');
+		const ledgerFunnel = L ? table((funnel as { rows: unknown[] }).rows) : ledger('The faucet to ledger funnel');
+		const ledgerVsStudioJourneys = L
+			? table([
+					{
+						key: 'wrote',
+						label: 'Wrote to the ledger',
+						usedStudioJourney: num(L.wroteJourney),
+						noStudioJourney: num(L.wroteNoJourney),
+					},
+					{
+						key: 'no-writes',
+						label: 'No ledger writes',
+						usedStudioJourney: num(L.noWriteJourney),
+						noStudioJourney: num(L.noWriteNoJourney),
+					},
+				])
+			: ledger('The ledger writes and Studio journeys table');
 		const days = 86_400_000;
 		const end = Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate());
 		const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
@@ -560,8 +666,7 @@ export class AdminAnalyticsService {
 			...Object.entries(tiles)
 				.filter(([, item]) => !item.supported)
 				.map(([key]) => `tiles.${key}`),
-			'ledgerFunnel',
-			'ledgerVsStudioJourneys',
+			...(L ? [] : ['ledgerFunnel', 'ledgerVsStudioJourneys']),
 		];
 		return {
 			range,
@@ -576,11 +681,24 @@ export class AdminAnalyticsService {
 			timeToFirstWrite,
 			ledgerVsStudioJourneys,
 			unavailable,
-			notes: [
-				"Writes are the ones Studio made for the customer on testnet, counted only for addresses that are the customer's own Studio account. The steps marked own-account use fundedToOwnAccount as their denominator.",
-				'Writes made with an SDK outside Studio are not seen, so first-write figures undercount. Operations recorded before the network was stored are not attributed.',
-				'Cohorts are cut short by today, so the 7-day and later buckets are incomplete for recent funding. The faucet table keeps a limited history.',
-			],
+			ledgerIndexer: {
+				enabled: indexed !== null,
+				fundedAddresses: indexed?.funded ?? 0,
+				checkedAddresses: indexed?.checked ?? 0,
+				supported: L !== null,
+			},
+			notes: L
+				? [
+						'Ledger figures come from the ledger indexer, which reads DID and resource writes (not other transaction types) whose fee payer is the funded address, on testnet. Failed writes are not counted.',
+						`The indexer has checked ${indexed?.checked ?? 0} of ${indexed?.funded ?? 0} funded addresses in this range; the ledger figures cover the checked ones. Addresses with more writes than one check reads show exact totals and times but a lower-bound split by kind.`,
+						'A Studio journey means the account has registered an agent. Granting authority needs an agent, so it is included; verifying an agent and partner hand-offs are not recorded.',
+						'Cohorts are cut short by today, so the 7-day and later buckets are incomplete for recent funding. The faucet table keeps a limited history.',
+					]
+				: [
+						"Writes are the ones Studio made for the customer on testnet, counted only for addresses that are the customer's own Studio account. The steps marked own-account use fundedToOwnAccount as their denominator.",
+						'Writes made with an SDK outside Studio are not seen, so first-write figures undercount. Operations recorded before the network was stored are not attributed.',
+						'Cohorts are cut short by today, so the 7-day and later buckets are incomplete for recent funding. The faucet table keeps a limited history.',
+					],
 		};
 	}
 

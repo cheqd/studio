@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { query } from 'express-validator';
 import { StatusCodes } from 'http-status-codes';
 import { validate } from '../validator/decorator.js';
+import { LedgerIndexer } from '../../services/ledger/ledger-indexer.js';
 import {
 	AdminAnalyticsService,
 	DEFAULT_TOP_LIMIT,
@@ -371,6 +372,7 @@ export class AnalyticsAdminController {
 	 */
 	@validate
 	public async faucetToLedger(request: Request, response: Response) {
+		LedgerIndexer.instance.maybeRun();
 		return this.run(response, () => this.service().faucetToLedger(rangeOf(request), segmentOf(request)));
 	}
 }

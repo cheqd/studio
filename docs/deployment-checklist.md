@@ -37,6 +37,16 @@ set it on a shared or internet-facing deployment. Development, test and the loca
       session-level advisory locks). Lower either value if the budget is tight. Related timeouts:
       `EXTERNAL_DB_POOL_IDLE_TIMEOUT_MS`, `EXTERNAL_DB_POOL_CONNECTION_TIMEOUT_MS`,
       `EXTERNAL_DB_LOCK_POOL_IDLE_TIMEOUT_MS`, `EXTERNAL_DB_LOCK_POOL_CONNECTION_TIMEOUT_MS`.
+- [ ] Ledger indexer (optional, off by default). `LEDGER_INDEXER_ENABLED=true` fills the staff faucet-to-ledger
+      ledger figures. Steps: run the migration `1791702200000` (new table `ledgerAddressActivity`, reversible); check the
+      pod can reach `LEDGER_INDEXER_SOURCE_URL` (default `https://data-api.cheqd.io`, outbound HTTPS, no key); set
+      `LEDGER_INDEXER_ENABLED=true`; the first batches start on the next faucet request or staff view of the analytics.
+      With `LEDGER_INDEXER_BATCH_SIZE=25` and the default 10-minute interval, expect about 150 addresses an hour per
+      busy instance, so a large backlog takes a while; the route stays on "not available" until
+      `LEDGER_INDEXER_MIN_COVERAGE_PERCENT` of the funded addresses are checked. The source is a public cheqd service
+      with no published rate limit or SLA: if it is down the sync backs off and the route keeps its previous answer.
+      Rollback: set `LEDGER_INDEXER_ENABLED=false` (the route reverts to Studio-recorded figures at once); the table
+      can stay.
 
 Health, readiness (`/health`, `/healthz`, `/ready`, `/readyz`, `/readiness`, `/live`, `/livez`) and the Swagger paths
 are never rate limited.
