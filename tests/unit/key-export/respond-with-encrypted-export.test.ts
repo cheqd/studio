@@ -1,5 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { Request, Response } from 'express';
+import { CredoTenantMissingError } from '../../../src/services/identity/engine/credo/errors.js';
 import { decryptKeyExport, respondWithEncryptedExport } from '../../../src/helpers/key-export.js';
 
 const SECRET_HEX = 'deadbeefcafebabe0123456789abcdef0123456789abcdef0123456789abcdef';
@@ -75,5 +76,34 @@ describe('respondWithEncryptedExport', () => {
 			}
 		);
 		expect(res.statusCode).toBe(500);
+	});
+
+	it('keeps the Credo tenant-missing answer (500 with code credo_tenant_missing) instead of a generic 500', async () => {
+		const res = mockResponse();
+		const error = new CredoTenantMissingError('tenant-1');
+		const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+		await respondWithEncryptedExport(
+			{ body: { password: PASSWORD } } as Request,
+			res as unknown as Response,
+			async () => {
+				throw error;
+			}
+		);
+		errorSpy.mockRestore();
+		expect(res.statusCode).toBe(500);
+		expect(res.body).toEqual({ error: error.message, code: 'credo_tenant_missing' });
+	});
+
+	it('maps other typed engine errors through the wrapper (ownership error gives 404)', async () => {
+		const res = mockResponse();
+		const { CredoOwnershipError } = await import('../../../src/services/identity/engine/credo/errors.js');
+		await respondWithEncryptedExport(
+			{ body: { password: PASSWORD } } as Request,
+			res as unknown as Response,
+			async () => {
+				throw new CredoOwnershipError('did:cheqd:testnet:abc');
+			}
+		);
+		expect(res.statusCode).toBe(404);
 	});
 });
