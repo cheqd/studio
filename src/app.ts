@@ -37,6 +37,7 @@ import { FlagsController } from './controllers/api/flags.js';
 import { FlagsAdminController } from './controllers/admin/flags.js';
 import { CustomersAdminController } from './controllers/admin/customers.js';
 import { AnalyticsAdminController } from './controllers/admin/analytics.js';
+import { CustomerAnalyticsController } from './controllers/api/customer-analytics.js';
 import { AuditLogAdminController } from './controllers/admin/audit-log.js';
 import { AgentController } from './controllers/api/agent.js';
 import { AccreditationController } from './controllers/api/accreditation.js';
@@ -335,6 +336,17 @@ class App {
 		app.get('/account', new AccountController().get);
 		app.get('/account/idtoken', new AccountController().getIdToken);
 		app.get('/account/analytics', new AccountController().getAnalytics);
+		const customerAnalytics = new CustomerAnalyticsController();
+		app.get(
+			'/account/analytics/agents',
+			CustomerAnalyticsController.analyticsValidator,
+			customerAnalytics.agents.bind(customerAnalytics)
+		);
+		app.get(
+			'/account/analytics/individuals',
+			CustomerAnalyticsController.analyticsValidator,
+			customerAnalytics.individuals.bind(customerAnalytics)
+		);
 		app.get('/account/balances', new AccountController().getBalances);
 		app.post('/account/export-keys', new AccountController().exportKeys);
 		app.delete('/account', new AccountController().delete);
@@ -413,6 +425,11 @@ class App {
 			analyticsAdmin.topAccounts.bind(analyticsAdmin)
 		);
 		app.get('/admin/analytics/plan-mix', analyticsAdmin.planMix.bind(analyticsAdmin));
+		app.get(
+			'/admin/analytics/faucet-to-ledger',
+			AnalyticsAdminController.faucetToLedgerValidator,
+			analyticsAdmin.faucetToLedger.bind(analyticsAdmin)
+		);
 		app.get(
 			'/admin/analytics/funnels',
 			AnalyticsAdminController.funnelsValidator,

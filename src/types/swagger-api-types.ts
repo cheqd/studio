@@ -2145,6 +2145,39 @@
  *          type: integer
  *        resources:
  *          type: integer
+ *     AnalyticsUnsupported:
+ *       type: object
+ *       description: An element Studio cannot measure yet. Show "not available yet", not zero.
+ *       properties:
+ *         supported: { type: boolean, enum: [false] }
+ *         reason: { type: string }
+ *     CustomerAnalyticsResponse:
+ *       type: object
+ *       description: >-
+ *         Every entry of `tiles`, `series` and `tables` is either supported (`tiles`: `{ supported: true, value }`,
+ *         `series`: `{ supported: true, points: [{ date, count }] }`, `tables`: `{ supported: true, rows }`) or an
+ *         `AnalyticsUnsupported`.
+ *       properties:
+ *         audience: { type: string, enum: [agents, individuals] }
+ *         range: { type: integer, enum: [7, 30] }
+ *         from: { type: string, example: '2026-10-17', description: First UTC day of the range. }
+ *         to: { type: string, example: '2026-11-15', description: Last UTC day of the range (today). }
+ *         tiles:
+ *           type: object
+ *           additionalProperties: { type: object }
+ *         series:
+ *           type: object
+ *           additionalProperties: { type: object }
+ *         tables:
+ *           type: object
+ *           additionalProperties: { type: object }
+ *         unavailable:
+ *           type: array
+ *           description: Dotted keys of the unsupported elements, for example `tiles.verificationsReceived`.
+ *           items: { type: string }
+ *         notes:
+ *           type: array
+ *           items: { type: string }
  *     AccountNetworkBalance:
  *       type: object
  *       nullable: true

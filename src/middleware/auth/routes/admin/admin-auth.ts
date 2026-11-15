@@ -45,7 +45,7 @@ export class AdminAuthRuleProvider extends AuthRuleProvider {
 		this.registerRule('^/admin/customers$', 'GET', 'admin:customers:read', { skipNamespace: true });
 		this.registerRule('^/admin/customers/[^/]+$', 'GET', 'admin:customers:read', { skipNamespace: true });
 		this.registerRule(
-			'^/admin/analytics/(overview|endpoints|top-accounts|plan-mix|funnels)$',
+			'^/admin/analytics/(overview|endpoints|top-accounts|plan-mix|funnels|faucet-to-ledger)$',
 			'GET',
 			'admin:analytics:read',
 			{ skipNamespace: true }

@@ -1,5 +1,5 @@
 {
-	"generatedFrom": "166bfac",
+	"generatedFrom": "5895200",
 	"generatedBy": "npx tsx tests/contract/scripts/generate-inventory.ts",
 	"routes": [
 		{
@@ -48,6 +48,34 @@
 			"id": "GET /account/analytics",
 			"method": "GET",
 			"path": "/account/analytics",
+			"surface": "api",
+			"auth": "scoped",
+			"scopes": ["read:account"],
+			"tier": 2,
+			"sideEffect": "read-only",
+			"sensitive": false,
+			"stripeOnly": false,
+			"inRouteTable": true,
+			"inOpenApi": true
+		},
+		{
+			"id": "GET /account/analytics/agents",
+			"method": "GET",
+			"path": "/account/analytics/agents",
+			"surface": "api",
+			"auth": "scoped",
+			"scopes": ["read:account"],
+			"tier": 2,
+			"sideEffect": "read-only",
+			"sensitive": false,
+			"stripeOnly": false,
+			"inRouteTable": true,
+			"inOpenApi": true
+		},
+		{
+			"id": "GET /account/analytics/individuals",
+			"method": "GET",
+			"path": "/account/analytics/individuals",
 			"surface": "api",
 			"auth": "scoped",
 			"scopes": ["read:account"],
@@ -146,6 +174,20 @@
 			"id": "GET /admin/analytics/endpoints",
 			"method": "GET",
 			"path": "/admin/analytics/endpoints",
+			"surface": "admin",
+			"auth": "scoped",
+			"scopes": ["admin:analytics:read"],
+			"tier": 2,
+			"sideEffect": "read-only",
+			"sensitive": false,
+			"stripeOnly": false,
+			"inRouteTable": true,
+			"inOpenApi": true
+		},
+		{
+			"id": "GET /admin/analytics/faucet-to-ledger",
+			"method": "GET",
+			"path": "/admin/analytics/faucet-to-ledger",
 			"surface": "admin",
 			"auth": "scoped",
 			"scopes": ["admin:analytics:read"],

@@ -3615,6 +3615,82 @@
           }
         }
       },
+      "AnalyticsUnsupported": {
+        "type": "object",
+        "description": "An element Studio cannot measure yet. Show \"not available yet\", not zero.",
+        "properties": {
+          "supported": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "CustomerAnalyticsResponse": {
+        "type": "object",
+        "description": "Every entry of `tiles`, `series` and `tables` is either supported (`tiles`: `{ supported: true, value }`, `series`: `{ supported: true, points: [{ date, count }] }`, `tables`: `{ supported: true, rows }`) or an `AnalyticsUnsupported`.",
+        "properties": {
+          "audience": {
+            "type": "string",
+            "enum": [
+              "agents",
+              "individuals"
+            ]
+          },
+          "range": {
+            "type": "integer",
+            "enum": [
+              7,
+              30
+            ]
+          },
+          "from": {
+            "type": "string",
+            "example": "2026-10-17",
+            "description": "First UTC day of the range."
+          },
+          "to": {
+            "type": "string",
+            "example": "2026-11-15",
+            "description": "Last UTC day of the range (today)."
+          },
+          "tiles": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "series": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "tables": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "unavailable": {
+            "type": "array",
+            "description": "Dotted keys of the unsupported elements, for example `tiles.verificationsReceived`.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "AccountNetworkBalance": {
         "type": "object",
         "nullable": true,
@@ -7404,6 +7480,96 @@
                 }
               }
             }
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/account/analytics/agents": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Analytics for your agents.",
+        "description": "Tiles, a per-day series and tables for the Agents tab, over the last 7 or 30 whole UTC days (including today), for the signed-in customer only. Counts only. Studio does not record verifications of agents, so the verification tiles, series and tables are returned as `{ supported: false, reason }` and listed in `unavailable`; they are not zero. What is supported is agent activity: agents registered, authority granted and revoked, and the activity feed per day and per agent.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "range",
+            "description": "Days to look back, counting today as a whole UTC day.",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                7,
+                30
+              ],
+              "default": 30
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerAnalyticsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/account/analytics/individuals": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Analytics for credentials you issue to individuals.",
+        "description": "Tiles (credentials issued, presentations verified, revoked, status checks), credentials issued per day and a by-format table for the Individuals tab, over the last 7 or 30 whole UTC days (including today), for the signed-in customer only. Counts only, never credential contents. Partner hand-offs are not recorded and are returned as `{ supported: false, reason }`.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "range",
+            "description": "Days to look back, counting today as a whole UTC day.",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                7,
+                30
+              ],
+              "default": 30
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerAnalyticsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
           },
           "500": {
             "$ref": "#/components/schemas/InternalError"

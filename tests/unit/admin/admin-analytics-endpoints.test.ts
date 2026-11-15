@@ -54,6 +54,7 @@ describe('staff auth rules', () => {
 		['/admin/analytics/top-accounts', 'admin:analytics:read'],
 		['/admin/analytics/plan-mix', 'admin:analytics:read'],
 		['/admin/analytics/funnels', 'admin:analytics:read'],
+		['/admin/analytics/faucet-to-ledger', 'admin:analytics:read'],
 		['/admin/audit-log', 'admin:audit:read'],
 	])('GET %s needs exactly %s and is not open to anonymous callers', (path, scope) => {
 		const rule = repository.match(requestFor('GET', path));

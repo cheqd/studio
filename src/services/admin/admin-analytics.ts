@@ -1,4 +1,5 @@
 import { Connection } from '../../database/connection/connection.js';
+import type { Table, Tile, Unsupported } from '../analytics/customer-analytics.js';
 
 /**
  * Read-only staff queries over Studio's own tables: customers, usage, funnels and the audit log. Counts only: nothing
@@ -121,6 +122,20 @@ const OPERATION_ROUTES: Record<string, [string, string]> = {
 	'account-create': ['POST', '/account'],
 	'account-get': ['GET', '/account'],
 };
+
+/** Tracked operations that write to the ledger through Studio, grouped as the Faucet to ledger tab shows them. */
+const DID_WRITES = ['did-create', 'did-update', 'did-deactivate'];
+const STATUS_LIST_WRITES = [
+	'credential-status-create-unencrypted',
+	'credential-status-create-encrypted',
+	'credential-status-update-unencrypted',
+	'credential-status-update-encrypted',
+	'credential-revoke',
+	'credential-suspend',
+	'credential-unsuspend',
+];
+const RESOURCE_WRITES = ['resource-create'];
+const FAUCET_WRITE_OPERATIONS = [...DID_WRITES, ...STATUS_LIST_WRITES, ...RESOURCE_WRITES];
 
 export function routeForOperation(operationName: string): { route: string; method: string } {
 	const known = OPERATION_ROUTES[operationName];
@@ -434,6 +449,138 @@ export class AdminAnalyticsService {
 						? null
 						: Math.round(num(row[`gap${i}`])),
 			})),
+		};
+	}
+
+	/**
+	 * Faucet to ledger, from what Studio records. The unit is a funded address: the first completed faucet request for
+	 * an address, if it falls in the range (and the requesting customer is in the segment). Studio only sees faucet
+	 * requests made by signed-in customers, so every funded address belongs to a customer, and it sees no ledger
+	 * writes made outside Studio. So "wrote" here means a tracked, successful write operation (DID, status list or
+	 * resource) by the customer on testnet after the funding, and only for addresses that are the customer's own
+	 * payer account (`paymentAccount`), where an address and a customer are the same thing. Anything that needs the
+	 * ledger itself comes back as `{ supported: false, reason }`.
+	 */
+	async faucetToLedger(range: Range, segment: Segment) {
+		const rows = await this.rows(
+			`WITH ${WINDOW_CTE}, ${SEGMENT_CTE},
+			first AS (
+				SELECT DISTINCT ON (fr."address") fr."address" AS address, fr."customerId" AS "customerId", fr."createdAt" AS funded_at
+				FROM "faucetRequest" fr WHERE fr."status" = 'completed'
+				ORDER BY fr."address", fr."createdAt"
+			),
+			cohort AS (
+				SELECT f.address, f."customerId", f.funded_at,
+					EXISTS (SELECT 1 FROM "paymentAccount" pa WHERE pa."address" = f.address AND pa."customerId" = f."customerId") AS own,
+					(SELECT COUNT(*) FROM "faucetRequest" r WHERE r."address" = f.address AND r."status" = 'completed') AS requests
+				FROM first f, win
+				WHERE f.funded_at >= win.start AND ${segmentFilter('f."customerId"')}
+			),
+			per_address AS (
+				SELECT c.address, c.own, c.requests, c.funded_at,
+					MIN(o."createdAt") AS first_write, COUNT(o."operationId") AS writes,
+					COALESCE(bool_or(o."operationName" = ANY($4::text[])), false) AS did,
+					COALESCE(bool_or(o."operationName" = ANY($5::text[])), false) AS lists,
+					COALESCE(bool_or(o."operationName" = ANY($6::text[])), false) AS other
+				FROM cohort c
+				LEFT JOIN "operation" o ON c.own AND o."customerId" = c."customerId" AND o."createdAt" >= c.funded_at
+					AND o."network" = 'testnet' AND o."successful" AND o."outcome" IS DISTINCT FROM 'error'
+					AND o."operationName" = ANY($3::text[])
+				GROUP BY c.address, c.own, c.requests, c.funded_at
+			)
+			SELECT COUNT(*) AS funded,
+				COUNT(*) FILTER (WHERE own) AS own,
+				COUNT(*) FILTER (WHERE own AND first_write <= funded_at + interval '7 days') AS "firstWrite7d",
+				COUNT(*) FILTER (WHERE own AND writes >= 2) AS "wroteAgain",
+				COUNT(*) FILTER (WHERE requests >= 2) AS "toppedUp",
+				COUNT(*) FILTER (WHERE did) AS did, COUNT(*) FILTER (WHERE lists) AS lists, COUNT(*) FILTER (WHERE other) AS other,
+				COUNT(*) FILTER (WHERE first_write IS NOT NULL AND first_write - funded_at < interval '1 hour') AS "withinHour",
+				COUNT(*) FILTER (WHERE first_write - funded_at >= interval '1 hour' AND first_write - funded_at < interval '1 day') AS "withinDay",
+				COUNT(*) FILTER (WHERE first_write - funded_at >= interval '1 day' AND first_write - funded_at < interval '7 days') AS "withinWeek",
+				COUNT(*) FILTER (WHERE first_write - funded_at >= interval '7 days' AND first_write - funded_at < interval '30 days') AS "withinMonth"
+			FROM per_address`,
+			[range, segment, FAUCET_WRITE_OPERATIONS, DID_WRITES, STATUS_LIST_WRITES, RESOURCE_WRITES]
+		);
+		const r = rows[0] ?? {};
+		const ledger = (what: string): Unsupported => ({
+			supported: false,
+			reason: `${what} needs the ledger itself: Studio sees only the writes it makes for a customer, not writes made with an SDK or another tool. A ledger indexer is not built (decision A3).`,
+		});
+		const tile = (value: unknown): Tile => ({ supported: true, value: num(value) });
+		const table = <Row>(rowList: Row[]): Table<Row> => ({ supported: true, rows: rowList });
+		const tiles: Record<string, Tile> = {
+			fundedAddresses: tile(r.funded),
+			fundedToOwnAccount: tile(r.own),
+			wroteViaStudioWithin7Days: tile(r.firstWrite7d),
+			savedToProfile: {
+				supported: false,
+				reason: 'Studio only records faucet requests made by signed-in customers, so every funded address is already linked to an account and the share would always read 100%. Funding without an account is not recorded (decision A3).',
+			},
+			wroteToLedgerWithin7Days: ledger('Writes to the ledger within 7 days'),
+			stillOffLedger: ledger('Addresses still off the ledger'),
+		};
+		const funnel = table([
+			{ key: 'funded', label: 'Funded from the faucet', addresses: num(r.funded), basis: 'all-funded' },
+			{
+				key: 'first-studio-write-7d',
+				label: 'First write through Studio within 7 days',
+				addresses: num(r.firstWrite7d),
+				basis: 'own-account',
+			},
+			{
+				key: 'wrote-again',
+				label: 'Wrote again through Studio (2 or more)',
+				addresses: num(r.wroteAgain),
+				basis: 'own-account',
+			},
+			{
+				key: 'topped-up',
+				label: 'Came back for another top-up',
+				addresses: num(r.toppedUp),
+				basis: 'all-funded',
+			},
+		]);
+		const writeKinds = table([
+			{ key: 'did', label: 'DID created or updated', addresses: num(r.did) },
+			{ key: 'status-list', label: 'Status list or revocation update', addresses: num(r.lists) },
+			{ key: 'other-resource', label: 'Other linked resources', addresses: num(r.other) },
+		]);
+		const timeToFirstWrite = table([
+			{ key: 'within-hour', label: 'Within the hour', addresses: num(r.withinHour) },
+			{ key: 'within-day', label: 'Within a day', addresses: num(r.withinDay) },
+			{ key: 'within-week', label: 'Within a week', addresses: num(r.withinWeek) },
+			{ key: 'within-month', label: 'Within a month', addresses: num(r.withinMonth) },
+		]);
+		const ledgerFunnel = ledger('The faucet to ledger funnel');
+		const ledgerVsStudioJourneys = ledger('The ledger writes and Studio journeys table');
+		const days = 86_400_000;
+		const end = Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate());
+		const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+		const unavailable = [
+			...Object.entries(tiles)
+				.filter(([, item]) => !item.supported)
+				.map(([key]) => `tiles.${key}`),
+			'ledgerFunnel',
+			'ledgerVsStudioJourneys',
+		];
+		return {
+			range,
+			segment,
+			from: day(end - (range - 1) * days),
+			to: day(end),
+			network: 'testnet' as const,
+			tiles,
+			funnel,
+			ledgerFunnel,
+			writeKinds,
+			timeToFirstWrite,
+			ledgerVsStudioJourneys,
+			unavailable,
+			notes: [
+				"Writes are the ones Studio made for the customer on testnet, counted only for addresses that are the customer's own Studio account. The steps marked own-account use fundedToOwnAccount as their denominator.",
+				'Writes made with an SDK outside Studio are not seen, so first-write figures undercount. Operations recorded before the network was stored are not attributed.',
+				'Cohorts are cut short by today, so the 7-day and later buckets are incomplete for recent funding. The faucet table keeps a limited history.',
+			],
 		};
 	}
 

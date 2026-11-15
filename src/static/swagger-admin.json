@@ -1027,6 +1027,113 @@
         }
       }
     },
+    "/admin/analytics/faucet-to-ledger": {
+      "get": {
+        "summary": "Faucet to ledger, from what Studio records (staff only).",
+        "description": "Funded addresses (first completed faucet request in the range) and what Studio can tell about them. Studio only records faucet requests made by signed-in customers and only the ledger writes it makes itself, so \"wrote\" means a tracked, successful testnet write operation by the customer after funding, counted for addresses that are the customer's own Studio account. Elements that need the ledger itself (writes made with an SDK, the 2 by 2 with Studio journeys) are `{ supported: false, reason }` and listed in `unavailable`; they are not zero. Counts only. Needs the `admin:analytics:read` scope.",
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AnalyticsRange"
+          },
+          {
+            "$ref": "#/components/parameters/AnalyticsSegment"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "range": {
+                      "type": "integer",
+                      "enum": [
+                        7,
+                        30,
+                        90
+                      ]
+                    },
+                    "segment": {
+                      "type": "string"
+                    },
+                    "from": {
+                      "type": "string",
+                      "example": "2026-10-17"
+                    },
+                    "to": {
+                      "type": "string",
+                      "example": "2026-11-15"
+                    },
+                    "network": {
+                      "type": "string",
+                      "enum": [
+                        "testnet"
+                      ]
+                    },
+                    "tiles": {
+                      "type": "object",
+                      "description": "Each tile is { supported: true, value } or { supported: false, reason }.",
+                      "additionalProperties": {
+                        "type": "object"
+                      }
+                    },
+                    "funnel": {
+                      "type": "object",
+                      "description": "`{ supported: true, rows: [{ key, label, addresses, basis }] }`. `basis` is `all-funded` or `own-account`."
+                    },
+                    "ledgerFunnel": {
+                      "type": "object",
+                      "description": "Unsupported: needs a ledger indexer."
+                    },
+                    "writeKinds": {
+                      "type": "object",
+                      "description": "`{ supported: true, rows: [{ key, label, addresses }] }`."
+                    },
+                    "timeToFirstWrite": {
+                      "type": "object",
+                      "description": "`{ supported: true, rows: [{ key, label, addresses }] }`."
+                    },
+                    "ledgerVsStudioJourneys": {
+                      "type": "object",
+                      "description": "Unsupported: needs a ledger indexer."
+                    },
+                    "unavailable": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "notes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "403": {
+            "description": "The caller is not staff."
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
     "/admin/api-key/create": {
       "post": {
         "summary": "Create a new API key",
