@@ -165,6 +165,7 @@ export class Credentials {
 		}
 
 		// Phase 3: Attempt credential creation with error handling
+		let publishedToConnector = false;
 		try {
 			let verifiableCredential: VerifiableCredential;
 			let providerCredentialId: string | undefined;
@@ -250,6 +251,8 @@ export class Credentials {
 							credentialId
 						);
 					}
+
+					if (sendCredentialResponse) publishedToConnector = true;
 
 					// Get resourceId from ResourceConnector response if available
 					if (sendCredentialResponse && sendCredentialResponse.resourceId) {
@@ -338,8 +341,18 @@ export class Credentials {
 
 			return { credential: verifiableCredential, issuedCredentialId: trackingRecord.issuedCredentialId };
 		} catch (error) {
-			// Phase 5: Update tracking record with failure details
-			// This ensures the reserved index is tracked even when credential creation fails
+			// Phase 5: a row this call created, for a credential that was never published, is removed: the index it
+			// reserved stays consumed (the write cursor has already moved past it), so nothing is reused, and no
+			// `unknown` row is left for a request that failed. A row that existed before this call, or one whose
+			// credential reached a resource connector, is kept and marked `unknown` with the failure.
+			if (!issuedCredentialId && !publishedToConnector) {
+				const removed = await this.repository
+					.delete({ issuedCredentialId: trackingRecord.issuedCredentialId })
+					.then(() => true)
+					.catch(() => false);
+				// The row could not be removed: fall through and record the failure on it instead
+				if (removed) throw error;
+			}
 			await this.repository.update(
 				{ issuedCredentialId: trackingRecord.issuedCredentialId },
 				{

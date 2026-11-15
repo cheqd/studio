@@ -1,5 +1,6 @@
 import { statusUpdateFailure } from '../../services/api/status-update-outcome.js';
 import type { Request, Response } from 'express';
+import { unsupportedIssuanceStatus } from '../../helpers/issuance-status.js';
 import { StatusCodes } from 'http-status-codes';
 
 import { check, query } from '../validator/index.js';
@@ -155,6 +156,12 @@ export class CredentialController {
 		}
 		if (typeof requestBody['@context'] === 'string') {
 			requestBody['@context'] = [requestBody['@context']];
+		}
+
+		// An unsupported status list type and purpose pair is a caller error, found before anything is stored
+		const unsupportedStatus = unsupportedIssuanceStatus(requestBody.credentialStatus);
+		if (unsupportedStatus) {
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: unsupportedStatus, code: 'invalid_request' });
 		}
 
 		// Get strategy e.g. postgres or local
