@@ -3,11 +3,19 @@ import { StatusCodes } from 'http-status-codes';
 import { UserInfoHelper, type IUserInfoFetcher } from './base.js';
 import type { IOAuthProvider } from '../oauth/abstract.js';
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
+import { audienceMatches, portalAppIds } from '../id-token-audiences.js';
 import { isStaffScope, USER_SESSION_AUTH_METHOD } from '../../../controllers/admin/staff-policy.js';
 
 import * as dotenv from 'dotenv';
 import type { UnsuccessfulResponseBody } from '../../../types/shared.js';
 dotenv.config();
+
+let warnedAudienceNotEnforced = false;
+
+/** For tests: log the 'not enforced' warning again. */
+export function resetPortalAudienceWarningForTests(): void {
+	warnedAudienceNotEnforced = false;
+}
 
 export class PortalUserInfoFetcher extends UserInfoHelper implements IUserInfoFetcher {
 	private m2mToken: string;
@@ -57,6 +65,18 @@ export class PortalUserInfoFetcher extends UserInfoHelper implements IUserInfoFe
 					issuer: this.oauthProvider.endpoint_issuer,
 				}
 			);
+			// The ID token must have been issued to the portal's application, not to any application in the tenant
+			const allowedAudiences = portalAppIds();
+			if (allowedAudiences.length > 0) {
+				if (!audienceMatches(payload.aud, allowedAudiences)) {
+					return response.status(StatusCodes.UNAUTHORIZED).json({
+						error: `Unauthorized error: The token was not issued for the portal application.`,
+					} satisfies UnsuccessfulResponseBody);
+				}
+			} else if (!warnedAudienceNotEnforced) {
+				warnedAudienceNotEnforced = true;
+				console.warn('PORTAL_APP_IDS is not set: the portal ID token audience is not enforced');
+			}
 			// Setup the scopes from the token
 			if (!payload.sub) {
 				return response.status(StatusCodes.UNAUTHORIZED).json({

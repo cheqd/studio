@@ -3,7 +3,8 @@
  *
  * Authentication is only mounted when both `ENABLE_AUTHENTICATION` and `ENABLE_EXTERNAL_DB` are exactly "true", so a
  * missing or mistyped value leaves every route open. In production the process refuses to start in that state unless
- * the deliberate override below is set. Outside production (development, test, the local end-to-end harness, where
+ * the deliberate override below is set. `PORTAL_APP_IDS` (the portal's Logto application id) must also be set, so a
+ * missing value fails at deploy, not at the first sign-in. Outside production (development, test, the local end-to-end harness, where
  * NODE_ENV is unset) the guard does nothing.
  */
 
@@ -27,6 +28,9 @@ export function evaluateStartupGuard(env: StartupEnvironment = process.env): Sta
 	const problems: string[] = [];
 	if (env.ENABLE_AUTHENTICATION !== 'true') problems.push('ENABLE_AUTHENTICATION is not "true"');
 	if (env.ENABLE_EXTERNAL_DB !== 'true') problems.push('ENABLE_EXTERNAL_DB is not "true"');
+	if (!(env.PORTAL_APP_IDS ?? '').split(',').some((id) => id.trim() !== '')) {
+		problems.push('PORTAL_APP_IDS is not set (the portal ID token audience would not be checked)');
+	}
 	if (problems.length === 0) return { ok: true, overridden: false };
 
 	const reason = `Authentication is not fully enabled in production: ${problems.join(' and ')}`;
@@ -45,7 +49,7 @@ export function assertSecureStartup(
 		log.warn(`${result.reason}; continuing because ${INSECURE_OVERRIDE_VARIABLE}=true is set`);
 		return;
 	}
-	const message = `${result.reason}. Refusing to start; set both to "true", or set ${INSECURE_OVERRIDE_VARIABLE}=true for a deliberate exception.`;
+	const message = `${result.reason}. Refusing to start; set ENABLE_AUTHENTICATION and ENABLE_EXTERNAL_DB to "true" and PORTAL_APP_IDS, or set ${INSECURE_OVERRIDE_VARIABLE}=true for a deliberate exception.`;
 	log.error(message);
 	throw new Error(message);
 }

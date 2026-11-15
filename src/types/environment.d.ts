@@ -27,6 +27,8 @@ declare global {
 			LOGTO_APP_ID: string;
 			LOGTO_APP_SECRET: string;
 			LOGTO_CLI_APP_IDS?: string;
+			PORTAL_APP_IDS?: string;
+			SHUTDOWN_GRACE_SECONDS?: string;
 			LOGTO_DEFAULT_RESOURCE_URL: string;
 			LOGTO_M2M_APP_ID: string;
 			LOGTO_M2M_APP_SECRET: string;

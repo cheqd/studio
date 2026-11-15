@@ -5,7 +5,12 @@ import {
 	INSECURE_OVERRIDE_VARIABLE,
 } from '../../../src/helpers/startup-guard.js';
 
-const secure = { NODE_ENV: 'production', ENABLE_AUTHENTICATION: 'true', ENABLE_EXTERNAL_DB: 'true' };
+const secure = {
+	NODE_ENV: 'production',
+	ENABLE_AUTHENTICATION: 'true',
+	ENABLE_EXTERNAL_DB: 'true',
+	PORTAL_APP_IDS: 'portal-app',
+};
 
 describe('startup guard', () => {
 	it('allows production with authentication and the external database on', () => {
@@ -30,6 +35,23 @@ describe('startup guard', () => {
 		['unset (local end-to-end harness)', { ENABLE_AUTHENTICATION: 'false', ENABLE_EXTERNAL_DB: 'false' }],
 	])('does not trip in %s', (_name, env) => {
 		expect(evaluateStartupGuard(env)).toEqual({ ok: true, overridden: false });
+	});
+
+	it('refuses production when the portal application id is unset or blank', () => {
+		for (const value of [undefined, '', ' , ']) {
+			const result = evaluateStartupGuard({ ...secure, PORTAL_APP_IDS: value });
+			expect(result.ok).toBe(false);
+			expect(result.reason).toContain('PORTAL_APP_IDS');
+		}
+	});
+
+	it('lets the explicit override cover a missing portal application id', () => {
+		const env = { ...secure, PORTAL_APP_IDS: undefined, [INSECURE_OVERRIDE_VARIABLE]: 'true' };
+		expect(evaluateStartupGuard(env)).toMatchObject({ ok: true, overridden: true });
+	});
+
+	it('does not require the portal application id outside production', () => {
+		expect(evaluateStartupGuard({ NODE_ENV: 'development' })).toEqual({ ok: true, overridden: false });
 	});
 
 	it('continues with a warning when the explicit override is set', () => {

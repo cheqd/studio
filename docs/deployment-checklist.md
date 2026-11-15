@@ -6,11 +6,18 @@
       The image is built with `NODE_ENV=production`, and the build arguments default to `false`, so pass both as `true`
       when building or set them in the runtime environment.
 - [ ] `ALLOW_INSECURE_PRODUCTION_WITHOUT_AUTHENTICATION` is **not** set.
+- [ ] `PORTAL_APP_IDS` is set to the portal's Logto application id (the value the portal calls `LOGTO_APP_ID`; a comma
+      list if there is more than one portal application). **Set it before the deploy**: in production the process
+      refuses to start without it. The portal path then accepts an ID token only when its `aud` includes one of these
+      ids; a token issued to any other application in the tenant answers `401`. Smoke test: sign in through the portal
+      (works), and a token from another Logto application is refused.
 
 ## Startup guard
 
 With `NODE_ENV=production` the process exits at start-up, with a one-line reason on stderr, unless authentication and
-the external database are both on. Values are compared strictly: only the exact string `true` counts as on.
+the external database are both on and `PORTAL_APP_IDS` is set. Values are compared strictly: only the exact string
+`true` counts as on. Outside production an unset `PORTAL_APP_IDS` means the portal ID token audience is not enforced,
+with a warning in the log.
 
 `ALLOW_INSECURE_PRODUCTION_WITHOUT_AUTHENTICATION=true` is the single override for a deliberate exception, for example
 the no-database sample in `docker/no-external-db`. When it is used, start-up logs a warning with the same reason. Do not

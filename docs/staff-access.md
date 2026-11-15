@@ -37,6 +37,8 @@ Staff cannot delete their own organisation through the staff route; use `DELETE 
 
 Blank values fall back to the defaults.
 
+The portal path also checks who the ID token was issued to. `PORTAL_APP_IDS` (comma separated) must hold the portal's Logto application id, the value the portal calls `LOGTO_APP_ID`. A portal ID token is accepted only when its `aud` (a string or an array) includes one of them, so an ID token issued to any other application in the tenant cannot be used to reach a staff route. Production refuses to start without it (unless `ALLOW_INSECURE_PRODUCTION_WITHOUT_AUTHENTICATION=true`); in development and test an unset value means the audience is not enforced, with a logged warning.
+
 ## What must exist in Logto
 
 - A role named as in `STAFF_ROLE_NAMES` (default `cheqd admin`), carrying the staff scopes on the Studio admin resource (the `LOGTO_DEFAULT_RESOURCE_URL` API resource): `admin:customers:read`, `admin:analytics:read`, `admin:audit:read`, `admin:organisation:delete`, `admin:flags:update`.
@@ -53,6 +55,7 @@ Roles are read from Logto's Management API, so removing a role applies within ab
 
 ## What breaks if a claim is missing
 
+- An ID token whose `aud` is not one of `PORTAL_APP_IDS`, or that has no `aud`: `401` before any staff check.
 - No `email` or `email_verified` claim (the portal did not request the `email` scope, or the address is unverified): every staff route answers `403` for everyone (`identity-missing` or `email-unverified`).
 - No `roles` claim: nothing breaks while the Management API answers, because roles come from there. If both the claim and the lookup are missing, staff routes answer `403` (`identity-missing`).
 - No role assigned in Logto, or the role name differs from `STAFF_ROLE_NAMES`: `403` (`role-missing`).
