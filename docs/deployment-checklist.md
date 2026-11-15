@@ -68,3 +68,14 @@ stored but ignored, so keys whose expiry has already passed were still working. 
       To see the keys that will lapse soon, change the condition to `"expiresAt" <= now() + interval '30 days'`.
 - [ ] `API_KEY_MAX_EXPIRATION_DAYS` (default 730) is the longest expiry the create and update routes accept. Keys created
       without an expiry now expire 30 days after creation (previously a date roughly 30 months out).
+
+## Staff access
+
+See `docs/staff-access.md`.
+
+- [ ] A Logto role named as in `STAFF_ROLE_NAMES` (default `cheqd admin`) exists, with the staff scopes (`admin:customers:read`, `admin:analytics:read`, `admin:audit:read`, `admin:organisation:delete`, `admin:flags:update`) on the Studio admin resource, assigned only to named staff.
+- [ ] No staff scope is on a customer role, the portal M2M application or any other M2M client.
+- [ ] The portal's Logto application requests the ID-token scopes `email` and `roles`.
+- [ ] `STAFF_EMAIL_DOMAINS` and `STAFF_ROLE_NAMES` are set deliberately (or left at the defaults `cheqd.io` and `cheqd admin`).
+- [ ] Smoke test: a staff member with the role and a verified cheqd address gets `200` from `GET /admin/customers`; a non-staff user, a user without the role, a user with an unverified or other-domain email, an M2M client and an API key each get `403`.
+
