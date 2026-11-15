@@ -198,6 +198,7 @@ those rows and drops the table. Rows that do not meet every condition are left u
   is still picked up only by `syncStatus=true`.
 
 ## Ledger writes and the payer lock
+
 Every ledger write, from either engine, runs inside `withPayerLock` keyed by the customer's payer address, so a
 Veramo write and a Credo write from one account cannot pick the same account sequence. The Veramo engine
 (`veramo-engine.ts`, `veramo-payer-lock.ts`) locks DID create, update and deactivate, resource create, status-list

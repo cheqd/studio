@@ -69,7 +69,7 @@ that migration 1791702000000 relies on: a status list or credential on `credo` s
 Credo signs inside the tenant for DIDs it holds a record for, and Veramo cannot sign for a Credo DID (and a Credo DID
 should never be left with a Veramo list). The unit is:
 
-```
+```text
 DID  +  its keys (no change)  +  its resources (no change: ledger)  +  its status lists  +  credentials issued by it
 ```
 

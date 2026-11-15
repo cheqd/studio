@@ -98,7 +98,7 @@ SELECT kind, count(*) FROM studio_credo_app.items GROUP BY kind;
 -- expect only kind 2 (records). A row with kind 1 would mean Askar is holding keys: stop and investigate.
 ```
 
-4. Restart Studio and repeat the call: the store reopens with the same key.
+Finally, restart Studio and repeat the call: the store reopens with the same key.
 
 ## If Credo storage is not configured
 
