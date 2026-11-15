@@ -72,10 +72,15 @@ describe('respondWithEncryptedExport', () => {
 			{ body: { password: PASSWORD } } as Request,
 			res as unknown as Response,
 			async () => {
+				const material = { privateKeyHex: SECRET_HEX };
+				void material;
 				throw new Error('boom');
 			}
 		);
 		expect(res.statusCode).toBe(500);
+		const serialised = JSON.stringify(res.body);
+		expect(serialised).not.toContain(SECRET_HEX);
+		expect(serialised).not.toContain(PASSWORD);
 	});
 
 	it('keeps the Credo tenant-missing answer (500 with code credo_tenant_missing) instead of a generic 500', async () => {
