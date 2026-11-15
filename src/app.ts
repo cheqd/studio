@@ -10,6 +10,7 @@ import { StatusCodes } from 'http-status-codes';
 import { CredentialController } from './controllers/api/credential.js';
 import { ReceivedCredentialController } from './controllers/api/received-credential.js';
 import { AccountController } from './controllers/api/account.js';
+import { warnIfM2MCustomerPathEnabled } from './middleware/auth/m2m-customer-path.js';
 import { Authentication } from './middleware/authentication.js';
 import { Connection } from './database/connection/connection.js';
 import { CredentialStatusController } from './controllers/api/credential-status.js';
@@ -55,6 +56,7 @@ class App {
 
 	constructor() {
 		this.express = express();
+		warnIfM2MCustomerPathEnabled();
 		this.middleware();
 		this.routes();
 		this.dbReady = Connection.instance

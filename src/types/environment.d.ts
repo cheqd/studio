@@ -39,6 +39,7 @@ declare global {
 			// Authentication
 			ENABLE_AUTHENTICATION: string | 'false';
 			COOKIE_SECRET: string;
+			ENABLE_M2M_CUSTOMER_PATH?: string;
 
 			// Verida
 			ENABLE_VERIDA_CONNECTOR: string | 'false';
