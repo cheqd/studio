@@ -96,6 +96,7 @@ import { StudioMigrations1791701800000 } from '../migrations/1791701800000-studi
 import { StudioMigrations1791701900000 } from '../migrations/1791701900000-studio-migrations.js';
 import { StudioMigrations1791702000000 } from '../migrations/1791702000000-studio-migrations.js';
 import { StudioMigrations1791702100000 } from '../migrations/1791702100000-studio-migrations.js';
+import { StudioMigrations1791702200000 } from '../migrations/1791702200000-studio-migrations.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -241,6 +242,7 @@ export class Postgres implements AbstractDatabase {
 				StudioMigrations1791701900000,
 				StudioMigrations1791702000000,
 				StudioMigrations1791702100000,
+				StudioMigrations1791702200000,
 			],
 			entities: [
 				...Entities,
