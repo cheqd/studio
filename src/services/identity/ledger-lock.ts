@@ -11,10 +11,13 @@
  *      serialised too, and a lost connection frees the lock.
  *
  * The wait for both layers together is bounded: past it the write is not attempted and `LedgerUnavailableError`
- * is thrown. Used by the Credo engine; the Veramo path wraps its sign-and-broadcast with `withPayerLock` too.
+ * is thrown. Used by the Credo engine and by every Veramo path that spends from a customer's payer account.
  *
- * Cost to keep in mind: while a write runs it holds one pooled connection per payer that is writing at once, so
- * the pool must be larger than the number of payers that can write simultaneously.
+ * Cost to keep in mind: while a write runs it holds one connection per payer that is writing at once. Pass a
+ * `LockDataSource` whose connections come from a dedicated pool (`createPayerLockSource`), never the main pool:
+ * the write itself needs the main pool, so locks taken from it can exhaust it and stall the service. With the
+ * dedicated pool, a write that finds every lock connection busy keeps retrying within its bounded wait, then
+ * fails with `LedgerUnavailableError`.
  */
 
 /** The part of a TypeORM `EntityManager` this helper needs. */
@@ -65,6 +68,14 @@ export class LedgerUnavailableError extends Error {
 		super(message);
 		this.name = 'LedgerUnavailable';
 		this.retryAfterSeconds = retryAfterSeconds;
+	}
+}
+
+/** Every connection of the lock pool is in use. `withPayerLock` retries within its wait; it never reaches a caller. */
+export class LockPoolBusyError extends Error {
+	constructor() {
+		super('Every payer-lock connection is in use');
+		this.name = 'LockPoolBusyError';
 	}
 }
 
@@ -195,8 +206,19 @@ async function acquireSessionLock(
 	let pause = options.retryInitialMs;
 	for (;;) {
 		const runner = dataSource.createQueryRunner();
-		await runner.connect();
 		let locked = false;
+		try {
+			await runner.connect();
+		} catch (error) {
+			await runner.release().catch(() => undefined);
+			if (!(error instanceof LockPoolBusyError)) throw error;
+			// No lock connection is free: wait and retry like a lock held elsewhere, within the same deadline
+			const remaining = deadline - options.now();
+			if (remaining <= 0) throw unavailable(payerAddress, options.now() - startedAt);
+			await options.sleep(Math.min(remaining, Math.round(pause * (0.5 + Math.random()))));
+			pause = Math.min(options.retryMaxMs, pause * 2);
+			continue;
+		}
 		try {
 			const rows = (await runner.query(`SELECT pg_try_advisory_lock(hashtext($1)) AS locked`, [
 				payerAddress,

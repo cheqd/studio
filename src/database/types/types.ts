@@ -1,4 +1,5 @@
 import pkg from 'pg-connection-string';
+import { loadMainPoolSettings, toPgPoolExtra } from '../config/pool-config.js';
 import { DataSource } from 'typeorm';
 import { migrations, Entities } from '@veramo/data-store';
 
@@ -131,6 +132,8 @@ export class Postgres implements AbstractDatabase {
 			username: config.user,
 			password: config.password,
 			database: config.database,
+			// Explicit pool: max, idle and connection timeouts come from EXTERNAL_DB_POOL_* (database/config/pool-config.ts)
+			extra: toPgPoolExtra(loadMainPoolSettings()),
 			ssl: config.ssl
 				? {
 						ca: EXTERNAL_DB_CERT,
