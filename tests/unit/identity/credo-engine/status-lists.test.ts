@@ -15,6 +15,7 @@ import type { LedgerResourceRead } from '../../../../src/services/identity/engin
 import { SafeFetchError, type SafeFetch } from '../../../../src/helpers/safe-fetch.js';
 import { EngineGoneError } from '../../../../src/services/identity/engine/errors.js';
 import { customer, FakeRuntime, FakeStore } from './fakes.js';
+import { STATUS_LIST_MAX_LENGTH } from '../../../../src/types/constants.js';
 
 const alice = customer('alice');
 const bob = customer('bob');
@@ -249,6 +250,35 @@ describe('status list creation', () => {
 		});
 		expect(h.events.indexOf('lock:cheqd1alice')).toBeLessThan(h.events.indexOf('createResource'));
 		expect(h.events.indexOf('createResource')).toBeLessThan(h.events.indexOf('unlock:cheqd1alice'));
+	});
+
+	it('refuses oversize lists before allocating anything, and accepts the largest allowed one', async () => {
+		const tooBig = STATUS_LIST_MAX_LENGTH + 1;
+		const sl2021 = (options: Record<string, unknown>) =>
+			h.engine.createUnencryptedStatusList2021(DID, { name: 'big', resourceType: 'x' }, options as never, alice);
+		const bitstring = (options: Record<string, unknown>) =>
+			h.engine.createUnencryptedBitstringStatusList(
+				DID,
+				{ name: 'big', resourceType: 'x' },
+				options as never,
+				alice
+			);
+		await expect(sl2021({ length: tooBig })).rejects.toThrow(/between 1 and/);
+		await expect(sl2021({ length: 4_000_000_000 })).rejects.toThrow(/between 1 and/);
+		await expect(bitstring({ length: tooBig })).rejects.toThrow(/between 1 and/);
+		await expect(bitstring({ length: 4_000_000_000, size: 8 })).rejects.toThrow(/between 1 and/);
+		await expect(bitstring({ length: 131072.5 })).rejects.toThrow();
+		await expect(bitstring({ length: 131072, size: 9 })).rejects.toThrow(/between 1 and 8/);
+		await expect(h.engine.createTokenStatusList(DID, { name: 'tsl', size: tooBig }, alice)).rejects.toThrow(
+			/between 1 and/
+		);
+		expect(h.runtime.written).toHaveLength(0);
+
+		const started = performance.now();
+		await sl2021({ length: STATUS_LIST_MAX_LENGTH });
+		await bitstring({ length: STATUS_LIST_MAX_LENGTH, size: 8 });
+		expect(performance.now() - started).toBeLessThan(2000);
+		expect(h.runtime.written).toHaveLength(2);
 	});
 
 	it('refuses short lists, unknown purposes and encodings, and a missing name', async () => {

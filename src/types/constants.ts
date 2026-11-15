@@ -82,6 +82,17 @@ export const MINIMAL_DENOM = 'ncheq';
 export const FAUCET_URI = process.env.FAUCET_URI || 'https://faucet-api.cheqd.network/credit';
 export const FAUCET_API_KEY = process.env.FAUCET_API_KEY || 'default-api-key';
 export const DEFAULT_DENOM_EXPONENT = 9;
+// Status list constants
+/**
+ * Most entries a status list may have (Bitstring Status List, StatusList2021 and Token Status List). The spec
+ * default and minimum is 131072 entries (16 KiB); the cap is eight times that. A list of this size at 8 bits per
+ * entry is 1 MiB before compression and encodes in about 10 ms, so allocation and compression stay small for every
+ * customer sharing the process. Override with STATUS_LIST_MAX_LENGTH.
+ */
+export const STATUS_LIST_MAX_LENGTH = Math.floor(
+	parseNumberEnv(process.env.STATUS_LIST_MAX_LENGTH, 1048576, 'STATUS_LIST_MAX_LENGTH')
+);
+
 // Most CHEQ a customer can request through POST /account/faucet per calendar month (UTC)
 export const FAUCET_MONTHLY_LIMIT_CHEQ = parseNumberEnv(
 	process.env.FAUCET_MONTHLY_LIMIT_CHEQ,

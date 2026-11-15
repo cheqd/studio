@@ -30,6 +30,7 @@ import {
 } from '@cheqd/did-provider-cheqd';
 import type { AlternativeUri } from '@cheqd/ts-proto/cheqd/resource/v2/resource.js';
 import { validate } from '../validator/decorator.js';
+import { STATUS_LIST_MAX_LENGTH } from '../../types/constants.js';
 import { CredentialStatusService } from '../../services/api/credential-status.js';
 import { param } from 'express-validator';
 
@@ -151,6 +152,9 @@ export class CredentialStatusController {
 			.bail()
 			.custom((value) => value > 0)
 			.withMessage('length: should be a positive integer')
+			.bail()
+			.custom((value) => value <= STATUS_LIST_MAX_LENGTH)
+			.withMessage(`length: should be at most ${STATUS_LIST_MAX_LENGTH}`)
 			.bail(),
 		check('encoding')
 			.optional()

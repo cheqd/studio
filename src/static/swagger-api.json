@@ -1896,7 +1896,7 @@
                 "type": "string"
               },
               "length": {
-                "description": "The length of the status list to be created. The default and minimum length is 131072 which is 16kb.",
+                "description": "The length of the status list to be created. The default and minimum length is 131072 which is 16kb. The maximum is 1048576 by default (configurable on the server with STATUS_LIST_MAX_LENGTH); larger values are rejected with 400.",
                 "type": "integer",
                 "minimum": 0,
                 "exclusiveMinimum": true,

@@ -13,6 +13,7 @@ import {
 } from '@credo-ts/cheqd';
 import type { CustomerEntity } from '../../../../database/entities/customer.entity.js';
 import type { SafeFetch } from '../../../../helpers/safe-fetch.js';
+import { STATUS_LIST_MAX_LENGTH } from '../../../../types/constants.js';
 import { EngineGoneError } from '../errors.js';
 import type {
 	EngineResourcePayload,
@@ -142,6 +143,13 @@ function toBase64Url(hexOrB64u: string, from: string): string {
 	return hexOrB64u;
 }
 
+/** Refuses an oversize list before anything is allocated. */
+function assertListLengthWithinLimit(length: number, label = 'statusListLength'): void {
+	if (!Number.isInteger(length) || length <= 0 || length > STATUS_LIST_MAX_LENGTH) {
+		throw new Error(`[credo]: ${label} must be an integer between 1 and ${STATUS_LIST_MAX_LENGTH}`);
+	}
+}
+
 function encodeList(bits: Uint8Array, encoding: string): string {
 	const b64u = encodeBitstring(bits);
 	return encoding === 'hex' ? Buffer.from(b64u, 'base64url').toString('hex') : b64u;
@@ -237,6 +245,7 @@ export class CredoStatusLists {
 		const length = options.length as number | undefined;
 		if (length !== undefined) {
 			if (typeof length !== 'number') throw new Error('[credo]: statusListLength must be number');
+			assertListLengthWithinLimit(length);
 			if (length < STATUS_LIST_2021_MIN_LENGTH) {
 				throw new Error(
 					`[credo]: statusListLength must be greater than or equal to ${STATUS_LIST_2021_MIN_LENGTH} number of entries`
@@ -286,7 +295,11 @@ export class CredoStatusLists {
 			throw new Error('[credo]: statusListEncoding must be base64url');
 		}
 		const statusSize = (options.size as number | undefined) || 1;
+		if (!Number.isInteger(statusSize) || statusSize < 1 || statusSize > 8) {
+			throw new Error('[credo]: statusListSize must be an integer between 1 and 8');
+		}
 		const entries = length ?? BITSTRING_MIN_LENGTH;
+		assertListLengthWithinLimit(entries);
 		await this.assertOwnsList(customerId, did, resource.name);
 
 		const signerDidUrl = await this.signerFor(did);
@@ -888,6 +901,7 @@ export class CredoStatusLists {
 		const size = options.size ?? DEFAULT_TSL_SIZE;
 		if (![1, 2, 4, 8].includes(bits)) throw new Error('bits must be 1, 2, 4 or 8');
 		if (!Number.isInteger(size) || size <= 0) throw new Error('size must be a positive integer');
+		assertListLengthWithinLimit(size, 'size');
 		await this.assertOwnsList(customerId, did, options.name);
 		if (!this.deps.runtime.readTokenStatusList)
 			throw new NotImplementedByEngineError(ENGINE, 'readTokenStatusList');
