@@ -1,3 +1,4 @@
+import { statusUpdateFailure } from './status-update-outcome.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { SafeAPIResponse } from '../../types/common.js';
 import {
@@ -5,46 +6,28 @@ import {
 	AccreditationRequestType,
 	DIDAccreditationTypes,
 	DIDAccreditationPolicyTypes,
-	VerfifiableAccreditation,
 } from '../../types/accreditation.js';
-import { isCredentialIssuerDidDeactivated } from '../helpers.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
+import { statusListArtifactFromCredential } from '../identity/engine/artifact-refs.js';
+import {
+	buildCacheKey,
+	getCachedAccreditation,
+	inFlightAccreditations,
+	setCachedAccreditation,
+} from '../identity/engine/accreditation-cache.js';
+import { engineRouter } from '../identity/engine/db-lookups.js';
+import type { EngineAccreditationVerifyRequest } from '../identity/engine/types.js';
 import type { IVerifyResult, VerificationPolicies, VerifiableCredential } from '@veramo/core';
 import { CheqdW3CVerifiableCredential } from '../w3c-credential.js';
 import { StatusCodes } from 'http-status-codes';
-import { parseDidFromDidUrl } from '../../helpers/helpers.js';
 import { v4 } from 'uuid';
 import { CredentialCategory, CredentialConnectors } from '../../types/credential.js';
 import type { CredentialRequest } from '../../types/credential.js';
 import { Credentials } from './credentials.js';
-import NodeCache from 'node-cache';
 import { BitstringUpdateResult, RevocationResult } from '@cheqd/did-provider-cheqd';
 import { StatusListType } from '../../types/credential-status.js';
 
-const ACCREDITATION_RESOLVE_CACHE_TTL_MS = 30_000;
-const ACCREDITATION_RESOLVE_CACHE_MAX_ENTRIES = 200;
 const ACCREDITATION_RESOLVE_CONCURRENCY = 8;
-
-function buildCacheKey(url: string, customerId?: string) {
-	return `${customerId ?? 'anonymous'}::${url}`;
-}
-
-const accreditationResolveCache = new NodeCache({
-	stdTTL: ACCREDITATION_RESOLVE_CACHE_TTL_MS / 1000,
-	checkperiod: 0,
-	useClones: false,
-	deleteOnExpire: true,
-	maxKeys: ACCREDITATION_RESOLVE_CACHE_MAX_ENTRIES,
-});
-const inFlightAccreditations = new Map<string, Promise<unknown>>();
-
-function getCachedAccreditation(key: string) {
-	return accreditationResolveCache.get(key) ?? null;
-}
-
-function setCachedAccreditation(key: string, value: unknown) {
-	accreditationResolveCache.set(key, value);
-}
 
 export class AccreditationService {
 	public static instance = new AccreditationService();
@@ -247,13 +230,16 @@ export class AccreditationService {
 
 			const accreditation: CheqdW3CVerifiableCredential = resource;
 
-			const result = await identityServiceStrategySetup.agent.revokeCredentials(
-				accreditation,
-				StatusListType.Bitstring,
-				publish,
-				customer,
-				symmetricKey
-			);
+			const result = await (
+				await identityServiceStrategySetup.routed(
+					'status-list',
+					await statusListArtifactFromCredential(accreditation, customer.customerId)
+				)
+			).revokeCredentials(accreditation, StatusListType.Bitstring, publish, customer, symmetricKey);
+
+			const failure = statusUpdateFailure('revoke', result as Record<string, unknown>);
+			if (failure) return { success: false, status: failure.statusCode, error: failure.error };
+			await Credentials.instance.recordStatusChange(accreditation, 'revoke', customer);
 
 			return {
 				success: true,
@@ -292,13 +278,16 @@ export class AccreditationService {
 
 			const accreditation: CheqdW3CVerifiableCredential = resource;
 
-			const result = await identityServiceStrategySetup.agent.suspendCredentials(
-				accreditation,
-				StatusListType.Bitstring,
-				publish,
-				customer,
-				symmetricKey
-			);
+			const result = await (
+				await identityServiceStrategySetup.routed(
+					'status-list',
+					await statusListArtifactFromCredential(accreditation, customer.customerId)
+				)
+			).suspendCredentials(accreditation, StatusListType.Bitstring, publish, customer, symmetricKey);
+
+			const failure = statusUpdateFailure('suspend', result as Record<string, unknown>);
+			if (failure) return { success: false, status: failure.statusCode, error: failure.error };
+			await Credentials.instance.recordStatusChange(accreditation, 'suspend', customer);
 
 			return {
 				success: true,
@@ -337,13 +326,16 @@ export class AccreditationService {
 
 			const accreditation: CheqdW3CVerifiableCredential = resource;
 
-			const result = await identityServiceStrategySetup.agent.reinstateCredentials(
-				accreditation,
-				StatusListType.Bitstring,
-				publish,
-				customer,
-				symmetricKey
-			);
+			const result = await (
+				await identityServiceStrategySetup.routed(
+					'status-list',
+					await statusListArtifactFromCredential(accreditation, customer.customerId)
+				)
+			).reinstateCredentials(accreditation, StatusListType.Bitstring, publish, customer, symmetricKey);
+
+			const failure = statusUpdateFailure('reinstate', result as Record<string, unknown>);
+			if (failure) return { success: false, status: failure.statusCode, error: failure.error };
+			await Credentials.instance.recordStatusChange(accreditation, 'reinstate', customer);
 
 			return {
 				success: true,
@@ -371,202 +363,25 @@ export class AccreditationService {
 	): Promise<
 		SafeAPIResponse<IVerifyResult & { accreditorDids: string[]; rootAuthorization: string; termsOfUse?: any }>
 	> {
-		// Get strategy e.g. postgres or local
+		// Verifying needs no customer key or payment account, so the Veramo service stays the one it always was (not the
+		// customer's, which cannot be built without a payment account). The customer id only informs the engine choice.
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup();
-
-		let accreditationUrl = didUrl;
-		let accreditedSubject = subjectDid;
-		let initialVerifyResult: IVerifyResult | undefined = undefined;
-		const accreditorDids: string[] = [];
-
-		const deactivatedDidsCheckPromises: Promise<boolean>[] = [];
-
-		while (true) {
-			const cacheKey = buildCacheKey(accreditationUrl, customer?.customerId);
-			const cached = getCachedAccreditation(cacheKey);
-			let result;
-			if (cached) {
-				result = cached;
-			} else {
-				const res = await identityServiceStrategySetup.agent.resolve(accreditationUrl);
-				result = await res.json();
-				// Cache successful dereferenced results (skip caching not-found / dereferencing metadata)
-				if (!result?.dereferencingMetadata) {
-					setCachedAccreditation(cacheKey, result);
-				}
-			}
-
-			if (result.dereferencingMetadata) {
-				return {
-					success: false,
-					status: StatusCodes.NOT_FOUND,
-					data: initialVerifyResult,
-					error: `Error on verifying accreditation ${accreditationUrl}: DID URL ${accreditationUrl} is not found`,
-				};
-			}
-
-			// Create credential object
-			const accreditation: VerfifiableAccreditation = result;
-			const accreditorDid =
-				typeof accreditation.issuer === 'string' ? accreditation.issuer : accreditation.issuer.id;
-
-			// Check if issuer DID is deactivated
-			if (!allowDeactivatedDid) {
-				deactivatedDidsCheckPromises.push(
-					isCredentialIssuerDidDeactivated(accreditation as unknown as CheqdW3CVerifiableCredential)
-				);
-			}
-
-			// Check if the accreditation is provided for the subjectDid
-			if (accreditation.credentialSubject.id !== accreditedSubject) {
-				return {
-					success: false,
-					status: StatusCodes.BAD_REQUEST,
-					data: initialVerifyResult,
-					error: `Error on verifying accreditation ${accreditationUrl}: Expected accreditation to be linked to subject DID ${accreditedSubject}, but found it linked to DID ${accreditation.credentialSubject.id} instead.`,
-				};
-			}
-
-			// Check if the accreditor has permission for the schema provided
-			if (
-				!accreditedFor.every((schema) =>
-					accreditation.credentialSubject.accreditedFor.some(
-						(accredited) =>
-							schema.types.every((value) => (accredited.types || []).includes(value)) &&
-							accredited.schemaId === schema.schemaId
-					)
-				)
-			) {
-				return {
-					success: false,
-					status: StatusCodes.UNAUTHORIZED,
-					data: initialVerifyResult,
-					error: `Error on verifying accreditation ${accreditationUrl}: Accreditation does not have the permissions for the given schema`,
-				};
-			}
-
-			const verifyResult = await identityServiceStrategySetup.agent.verifyCredential(
-				accreditation,
-				{
-					verifyStatus,
-					policies,
-				},
-				customer
-			);
-
-			if (!initialVerifyResult) {
-				initialVerifyResult = { ...verifyResult, rootAuthorization };
-			}
-
-			if (verifyResult.error) {
-				return {
-					success: false,
-					status: StatusCodes.OK,
-					data: initialVerifyResult,
-					error: `Error on verifying accreditation ${accreditationUrl}: ${verifyResult.error.message}`,
-				};
-			}
-
-			if (verifyStatus && verifyResult.valid === false) {
-				return {
-					success: false,
-					status: StatusCodes.OK,
-					data: initialVerifyResult,
-					error: `Error on verifying accreditation ${accreditationUrl}: ${accreditorDid} is ${verifyResult.message} in the trust chain`,
-				};
-			}
-
-			if (!Array.isArray(accreditation.type)) {
-				return {
-					success: false,
-					status: StatusCodes.BAD_REQUEST,
-					data: initialVerifyResult,
-					error: `Error on verifying accreditation ${accreditationUrl}: Invalid accreditation type`,
-				};
-			}
-
-			const accreditationTypes = Object.keys(DIDAccreditationTypes);
-			const isTypeAccreditation = accreditation.type.find((x: any) => accreditationTypes.includes(x));
-
-			if (!isTypeAccreditation) {
-				return {
-					success: false,
-					status: StatusCodes.BAD_REQUEST,
-					data: initialVerifyResult,
-					error: `Error on verifying accreditation ${accreditationUrl}: Invalid accreditation type`,
-				};
-			}
-
-			if (
-				isTypeAccreditation === DIDAccreditationTypes.VerifiableAccreditationToAccredit ||
-				isTypeAccreditation === DIDAccreditationTypes.VerifiableAccreditationToAttest
-			) {
-				const termsOfUse = accreditation.termsOfUse;
-				if (!termsOfUse || !termsOfUse.parentAccreditation || !termsOfUse.rootAuthorization) {
-					return {
-						success: false,
-						status: StatusCodes.BAD_REQUEST,
-						data: initialVerifyResult,
-						error: `Error on verifying accreditation ${accreditationUrl}: Missing parentAccreditaiton and rootAuthorization in termsOfUse for accreditation: ${accreditationUrl}`,
-					};
-				}
-
-				if (isTypeAccreditation === DIDAccreditationTypes.VerifiableAccreditationToAccredit) {
-					accreditorDids.push(accreditorDid);
-				}
-
-				accreditationUrl = termsOfUse.parentAccreditation;
-				accreditedSubject = accreditorDid;
-				accreditedFor = accreditation.credentialSubject.accreditedFor;
-
-				if (rootAuthorization && rootAuthorization !== termsOfUse.rootAuthorization) {
-					return {
-						status: StatusCodes.OK,
-						success: false,
-						data: initialVerifyResult,
-						error: `Error on verifying accreditation ${accreditationUrl}: Expected accreditation to be linked to root accreditation ${rootAuthorization}, but found it linked to DID ${termsOfUse.rootAuthorization} instead`,
-					};
-				}
-
-				rootAuthorization = termsOfUse.rootAuthorization;
-			} else {
-				const results = await Promise.all(deactivatedDidsCheckPromises);
-				const deactivatedDids = results.filter((r) => r);
-
-				if (rootAuthorization && parseDidFromDidUrl(rootAuthorization) !== accreditation.credentialSubject.id) {
-					return {
-						status: StatusCodes.OK,
-						success: false,
-						data: {
-							...initialVerifyResult,
-							accreditorDids,
-							rootAuthorization: accreditation.credentialSubject.id,
-							termsOfUse: accreditation.termsOfUse,
-						},
-						error: `Error on verifying accreditation ${accreditationUrl}: Expected accreditation to be linked to root accreditation ${rootAuthorization}, but found it linked to DID ${accreditation.credentialSubject.id} instead`,
-					};
-				}
-				if (deactivatedDids.length > 0) {
-					return {
-						status: StatusCodes.OK,
-						success: false,
-						data: initialVerifyResult,
-						error: `Error on verifying accreditation ${accreditationUrl}: DIDs ${deactivatedDids.join(', ')} are deactivated in the trust chain`,
-					};
-				}
-
-				return {
-					status: StatusCodes.OK,
-					success: true,
-					data: {
-						...initialVerifyResult,
-						accreditorDids,
-						rootAuthorization: accreditation.credentialSubject.id,
-						termsOfUse: accreditation.termsOfUse,
-					},
-				};
-			}
-		}
+		const engine = await engineRouter.engineFor(
+			{ customerId: customer?.customerId, route: 'credential' },
+			identityServiceStrategySetup.agent
+		);
+		const request: EngineAccreditationVerifyRequest = {
+			subjectDid,
+			didUrl,
+			accreditedFor,
+			verifyStatus,
+			allowDeactivatedDid,
+			rootAuthorization,
+			policies: policies as EngineAccreditationVerifyRequest['policies'],
+		};
+		return (await engine.verifyAccreditation(request, customer)) as SafeAPIResponse<
+			IVerifyResult & { accreditorDids: string[]; rootAuthorization: string; termsOfUse?: any }
+		>;
 	}
 
 	async list_accreditations(
@@ -600,7 +415,12 @@ export class AccreditationService {
 
 		try {
 			// Fetch resources of accreditation resourceType associated with the account
-			const { resources } = await identityServiceStrategySetup.agent.findLatestResourcesVersionsByType!(
+			// Same family as listing resources: the table is Studio's, and the DID filter names an existing artifact
+			const engine = await identityServiceStrategySetup.engine(
+				'resource',
+				did ? { kind: 'did', id: did } : undefined
+			);
+			const { resources } = await engine.findLatestResourcesVersionsByType(
 				resourceType,
 				customer,
 				network,
@@ -648,7 +468,7 @@ export class AccreditationService {
 				}
 				const resolverPromise = (async () => {
 					try {
-						const res = await identityServiceStrategySetup.agent.resolve(url, true);
+						const res = await engine.resolve(url, true);
 						const credential = await res.json();
 
 						// Skip if the credential doesn't have contentStream

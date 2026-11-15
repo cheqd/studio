@@ -1,11 +1,14 @@
+import { statusUpdateFailure } from '../../services/api/status-update-outcome.js';
 import type { Request, Response } from 'express';
-import type { VerifiableCredential } from '@veramo/core';
+import { unsupportedIssuanceStatus } from '../../helpers/issuance-status.js';
 import { StatusCodes } from 'http-status-codes';
 
 import { check, query } from '../validator/index.js';
 
 import { Credentials } from '../../services/api/credentials.js';
+import { validateIssuedCredentialUpdate } from '../../helpers/issued-credential-update.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
+import { statusListArtifactFromCredential } from '../../services/identity/engine/artifact-refs.js';
 import { CheqdW3CVerifiableCredential } from '../../services/w3c-credential.js';
 import { isCredentialIssuerDidDeactivated } from '../../services/helpers.js';
 import type {
@@ -13,7 +16,6 @@ import type {
 	IssueCredentialResponseBody,
 	UpdateCredentialRequestBody,
 	UpdateCredentialRequestQuery,
-	UpdateIssuedCredentialRequestBody,
 	UpdateIssuedCredentialResponseBody,
 	RevokeCredentialResponseBody,
 	SuspendCredentialResponseBody,
@@ -36,6 +38,7 @@ import { eventTracker } from '../../services/track/tracker.js';
 import type { ICredentialStatusTrack, ICredentialTrack, ITrackOperation } from '../../types/track.js';
 import { validate } from '../validator/decorator.js';
 import { StatusListType } from '../../types/credential-status.js';
+import { engineErrorResponse } from '../../helpers/engine-errors.js';
 
 export const CREDENTIAL_STATUS_NOT_CHECKED_WARNING =
 	'Credential status was not checked: the credential has a credentialStatus but verifyStatus was not set to true, so a revoked or suspended credential can still return verified: true. Set verifyStatus=true to check it.';
@@ -125,7 +128,12 @@ export class CredentialController {
 	 *             $ref: '#/components/schemas/CredentialRequest'
 	 *     responses:
 	 *       200:
-	 *         description: The request was successful.
+	 *         description: The request was successful. The body is the credential. The id of Studio's record of it (the id GET /credentials/issued/{id} and the issued list use) is in the X-Issued-Credential-Id response header.
+	 *         headers:
+	 *           X-Issued-Credential-Id:
+	 *             description: The issuedCredentialId of the tracking record.
+	 *             schema:
+	 *               type: string
 	 *         content:
 	 *           application/json:
 	 *             schema:
@@ -150,6 +158,12 @@ export class CredentialController {
 			requestBody['@context'] = [requestBody['@context']];
 		}
 
+		// An unsupported status list type and purpose pair is a caller error, found before anything is stored
+		const unsupportedStatus = unsupportedIssuanceStatus(requestBody.credentialStatus);
+		if (unsupportedStatus) {
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: unsupportedStatus, code: 'invalid_request' });
+		}
+
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
@@ -171,10 +185,12 @@ export class CredentialController {
 				} satisfies UnsuccesfulIssueCredentialResponseBody);
 			}
 			// issue credential
-			const credential: VerifiableCredential = await Credentials.instance.issue_credential(
+			const { credential, issuedCredentialId } = await Credentials.instance.issueWithRecord(
 				requestBody,
 				response.locals.customer
 			);
+			// The body is the credential itself, which has no Studio id. The record id goes in a header.
+			response.setHeader('X-Issued-Credential-Id', issuedCredentialId);
 
 			// Track operation
 			const trackInfo: ITrackOperation<ICredentialTrack> = {
@@ -191,6 +207,8 @@ export class CredentialController {
 
 			return response.status(StatusCodes.OK).json(credential satisfies IssueCredentialResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccesfulIssueCredentialResponseBody);
@@ -305,6 +323,8 @@ export class CredentialController {
 
 			return response.status(StatusCodes.OK).json(verifyResult satisfies VerifyCredentialResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccesfulVerifyCredentialResponseBody);
@@ -369,13 +389,22 @@ export class CredentialController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await identityServiceStrategySetup.agent.revokeCredentials(
+			const result = await (
+				await identityServiceStrategySetup.routed(
+					'status-list',
+					await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
+				)
+			).revokeCredentials(
 				credential,
 				listType || StatusListType.Bitstring,
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
 			);
+
+			const failure = statusUpdateFailure('revoke', result as Record<string, unknown>);
+			if (failure) return response.status(failure.statusCode).json({ error: failure.error });
+			await Credentials.instance.recordStatusChange(credential, 'revoke', response.locals.customer);
 
 			// Track operation if revocation was successful and publish is true
 			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
@@ -410,6 +439,8 @@ export class CredentialController {
 			// Return Ok response
 			return response.status(StatusCodes.OK).json(result satisfies RevokeCredentialResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccesfulRevokeCredentialResponseBody);
@@ -473,13 +504,22 @@ export class CredentialController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await identityServiceStrategySetup.agent.suspendCredentials(
+			const result = await (
+				await identityServiceStrategySetup.routed(
+					'status-list',
+					await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
+				)
+			).suspendCredentials(
 				credential,
 				listType || StatusListType.Bitstring,
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
 			);
+
+			const failure = statusUpdateFailure('suspend', result as Record<string, unknown>);
+			if (failure) return response.status(failure.statusCode).json({ error: failure.error });
+			await Credentials.instance.recordStatusChange(credential, 'suspend', response.locals.customer);
 
 			// Track operation if suspension was successful and publish is true
 			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
@@ -514,6 +554,8 @@ export class CredentialController {
 
 			return response.status(StatusCodes.OK).json(result satisfies SuspendCredentialResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccesfulSuspendCredentialResponseBody);
@@ -576,13 +618,22 @@ export class CredentialController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await identityServiceStrategySetup.agent.reinstateCredentials(
+			const result = await (
+				await identityServiceStrategySetup.routed(
+					'status-list',
+					await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
+				)
+			).reinstateCredentials(
 				credential,
 				listType || StatusListType.Bitstring,
 				publish as boolean,
 				response.locals.customer,
 				symmetricKey as string
 			);
+
+			const failure = statusUpdateFailure('reinstate', result as Record<string, unknown>);
+			if (failure) return response.status(failure.statusCode).json({ error: failure.error });
+			await Credentials.instance.recordStatusChange(credential, 'reinstate', response.locals.customer);
 
 			// Track operation if the process of reinstantiating was successful and publish is true
 			// Otherwise the StatusList2021 or BitstringStatusList publisher should manually publish the resource
@@ -617,6 +668,8 @@ export class CredentialController {
 			// Return Ok response
 			return response.status(StatusCodes.OK).json(result satisfies UnsuspendCredentialResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccesfulUnsuspendCredentialResponseBody);
@@ -750,6 +803,8 @@ export class CredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
@@ -833,6 +888,8 @@ export class CredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
@@ -846,7 +903,7 @@ export class CredentialController {
 	 *   put:
 	 *     tags: [ Verifiable Credentials ]
 	 *     summary: Update an issued credential metadata.
-	 *     description: This endpoint updates metadata for an issued credential. It allows updating providerCredentialId, status, and providerMetadata fields.
+	 *     description: This endpoint updates metadata for an issued credential. It allows updating only providerCredentialId, status, and providerMetadata. Any other field is rejected with 400 invalid_request.
 	 *     parameters:
 	 *       - in: path
 	 *         name: id
@@ -870,6 +927,7 @@ export class CredentialController {
 	 *               providerMetadata:
 	 *                 type: object
 	 *                 description: Additional provider-specific metadata.
+	 *             additionalProperties: false
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -902,10 +960,17 @@ export class CredentialController {
 	 */
 	public async updateIssuedCredential(request: Request, response: Response) {
 		const id = Array.isArray(request.params.id) ? request.params.id[0] : (request.params.id as string);
-		const updateData = request.body as UpdateIssuedCredentialRequestBody;
+		const validated = validateIssuedCredentialUpdate(request.body);
+		if (!validated.ok) {
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				success: false,
+				error: validated.error,
+				code: 'invalid_request',
+			});
+		}
 
 		try {
-			const result = await Credentials.instance.update(id, updateData, response.locals.customer);
+			const result = await Credentials.instance.update(id, validated.value, response.locals.customer);
 
 			if (!result) {
 				return response.status(StatusCodes.NOT_FOUND).json({
@@ -919,6 +984,8 @@ export class CredentialController {
 				data: result,
 			} satisfies UpdateIssuedCredentialResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				success: false,
 				error: `Internal error: ${(error as Error)?.message || error}`,
@@ -1028,6 +1095,8 @@ export class CredentialController {
 				data: result,
 			} satisfies UpdateIssuedCredentialResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				success: false,
 				error: `Internal error: ${(error as Error)?.message || error}`,

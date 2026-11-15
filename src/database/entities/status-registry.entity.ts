@@ -87,6 +87,17 @@ export class StatusRegistryEntity {
 	@Column('boolean', { default: false })
 	deprecated!: boolean;
 
+	@Column({ type: 'varchar', length: 16, nullable: false, default: 'veramo' })
+	engine!: string;
+
+	// Never changes once set
+	@Column({ type: 'varchar', length: 32, nullable: true })
+	listFormat?: string;
+
+	// Exact legacy encoding (no-prefix base64url, or hex), so Credo can reproduce it
+	@Column({ type: 'varchar', length: 16, nullable: true })
+	encoding?: string;
+
 	@ManyToOne(() => Identifier, (identifier) => identifier.did, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'issuerId' })
 	identifier!: Identifier;
@@ -123,6 +134,8 @@ export class StatusRegistryEntity {
 		identifier: Identifier;
 		customer: CustomerEntity;
 		createdAt?: Date;
+		/** The engine that created the list. Omitted means the column default (veramo). */
+		engine?: string;
 	}) {
 		if (!options) {
 			return;
@@ -150,5 +163,6 @@ export class StatusRegistryEntity {
 		this.identifier = options.identifier;
 		this.customer = options.customer;
 		this.createdAt = options.createdAt || new Date();
+		if (options.engine) this.engine = options.engine;
 	}
 }

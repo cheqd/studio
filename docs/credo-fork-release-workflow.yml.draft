@@ -1,0 +1,169 @@
+# DRAFT. Not active. Intended path in cheqd/credo-ts: .github/workflows/release-packages.yml
+# See docs/credo-fork-release-workflow.md in cheqd/studio for what must be done before enabling it.
+#
+# Publishes the Credo packages Studio needs from the `cheqd` branch under the
+# @cheqd npm scope, with an exact version, npm provenance and a CycloneDX SBOM.
+#
+# Trigger: manual only, from the `cheqd` branch. The version is an input and is
+# never derived, so a release is always a deliberate act.
+name: Release @cheqd/credo packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Exact version to publish, for example 0.7.1-cheqd.1 (no ranges, no leading v)'
+        required: true
+        type: string
+      npm_tag:
+        description: 'npm dist-tag'
+        required: true
+        default: 'next'
+        type: choice
+        options: [next, latest]
+      dry_run:
+        description: 'Pack, scan and generate the SBOM but do not publish'
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-packages
+  cancel-in-progress: false
+
+env:
+  # Studio needs these, plus their in-repo dependencies. didcomm is required by node, anoncreds and tenants.
+  PACKAGES: 'core node askar anoncreds cheqd tenants didcomm'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Create this environment with required reviewers; the NPM_TOKEN secret lives in it, not in the repo.
+    environment: npm-publish
+    permissions:
+      contents: read
+      id-token: write # npm provenance (OIDC)
+    steps:
+      - name: Refuse anything but the cheqd branch
+        if: github.ref != 'refs/heads/cheqd'
+        run: |
+          echo "Release only from refs/heads/cheqd (got $GITHUB_REF)" >&2
+          exit 1
+
+      - name: Validate version input
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          # Exact semver only. Passed through env, never interpolated into the script.
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "Version must be exact semver, got: $VERSION" >&2
+            exit 1
+          fi
+
+      # TODO before enabling: pin each action to a full commit SHA.
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22.22.1'
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Update npm (provenance needs npm >= 9.5)
+        run: npm install -g npm@^11
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Rename to @cheqd/credo-* and set the exact version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          node --input-type=module <<'JS'
+          import { readFileSync, writeFileSync } from 'node:fs'
+          const version = process.env.VERSION
+          const pkgs = process.env.PACKAGES.split(' ')
+          const rename = (n) => n.replace(/^@credo-ts\//, '@cheqd/credo-')
+          for (const p of pkgs) {
+            const file = `packages/${p}/package.json`
+            const j = JSON.parse(readFileSync(file, 'utf8'))
+            j.name = rename(j.name)
+            j.version = version
+            j.publishConfig = { ...j.publishConfig, access: 'public', provenance: true }
+            // Internal references become exact pins on the renamed packages.
+            // pnpm pack later resolves workspace: and catalog: ranges.
+            for (const field of ['dependencies', 'peerDependencies', 'devDependencies']) {
+              for (const [dep, range] of Object.entries(j[field] ?? {})) {
+                if (dep.startsWith('@credo-ts/') && pkgs.includes(dep.split('/')[1])) {
+                  delete j[field][dep]
+                  j[field][rename(dep)] = field === 'peerDependencies' ? version : `workspace:${version}`
+                }
+              }
+            }
+            writeFileSync(file, JSON.stringify(j, null, 2) + '\n')
+          }
+          JS
+          # Source files import '@credo-ts/<pkg>'. Published builds must import the renamed packages,
+          # so alias them at build time: see "Open design point" in docs/credo-fork-release-workflow.md.
+
+      - name: Pack tarballs
+        run: |
+          mkdir -p out
+          for p in $PACKAGES; do
+            (cd "packages/$p" && pnpm pack --pack-destination "$GITHUB_WORKSPACE/out")
+          done
+          ls -l out
+
+      - name: Check tarball contents
+        run: |
+          for t in out/*.tgz; do
+            tar -tzf "$t" | grep -E '(^package/\.env|\.pem$|\.key$)' && { echo "secret-like file in $t" >&2; exit 1; } || true
+            tar -xzOf "$t" package/package.json | node -e '
+              const j = JSON.parse(require("fs").readFileSync(0, "utf8"));
+              const bad = JSON.stringify(j).match(/workspace:|catalog:/);
+              if (bad) { console.error(j.name + " still has " + bad[0]); process.exit(1); }
+              console.log(j.name + "@" + j.version);'
+          done
+
+      - name: Generate SBOMs (CycloneDX)
+        run: |
+          mkdir -p sbom
+          for p in $PACKAGES; do
+            (cd "packages/$p" && npm sbom --sbom-format cyclonedx --omit dev > "$GITHUB_WORKSPACE/sbom/$p.cdx.json")
+          done
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: credo-packages-${{ inputs.version }}
+          path: |
+            out/*.tgz
+            sbom/*.json
+
+      - name: Publish with provenance
+        if: ${{ !inputs.dry_run }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TAG: ${{ inputs.npm_tag }}
+        run: |
+          # Dependency order: leaf packages first.
+          for p in core didcomm node askar anoncreds cheqd tenants; do
+            tgz=$(ls out/cheqd-credo-"$p"-*.tgz)
+            npm publish "$tgz" --access public --provenance --tag "$NPM_TAG"
+          done
+
+      - name: Attach SBOMs and tarballs to a GitHub release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          # needs contents: write, grant on this step's job only if you want it
+          echo "Optional: gh release create v$VERSION out/*.tgz sbom/*.json --prerelease"

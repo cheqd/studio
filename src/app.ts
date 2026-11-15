@@ -1,3 +1,5 @@
+import { requestContext } from './middleware/request-context.js';
+import { healthRouter } from './middleware/health.js';
 import express from 'express';
 import Helmet from 'helmet';
 import cors from 'cors';
@@ -9,12 +11,16 @@ import { StatusCodes } from 'http-status-codes';
 import { CredentialController } from './controllers/api/credential.js';
 import { ReceivedCredentialController } from './controllers/api/received-credential.js';
 import { AccountController } from './controllers/api/account.js';
+import { warnIfM2MCustomerPathEnabled } from './middleware/auth/m2m-customer-path.js';
 import { Authentication } from './middleware/authentication.js';
 import { Connection } from './database/connection/connection.js';
 import { CredentialStatusController } from './controllers/api/credential-status.js';
-import { CORS_ALLOWED_ORIGINS, CORS_ERROR_MSG } from './types/constants.js';
+import { CORS_ALLOWED_ORIGINS } from './types/constants.js';
+import { createOriginCheck } from './helpers/cors-origin.js';
 import { LogToWebHook } from './middleware/hook.js';
 import { Middleware } from './middleware/middleware.js';
+import { jsonBodyParsers } from './middleware/body-parsers.js';
+import { customerRateLimiter, ipRateLimiter, rateLimitConfig, trustProxySetting } from './middleware/rate-limit.js';
 import * as dotenv from 'dotenv';
 // Define Swagger file
 import swaggerAPIDocument from './static/swagger-api.json' with { type: 'json' };
@@ -30,6 +36,13 @@ import { PriceController } from './controllers/admin/prices.js';
 import { WebhookController } from './controllers/admin/webhook.js';
 import { APIKeyController } from './controllers/admin/api-key.js';
 import { OrganisationController } from './controllers/admin/organisation.js';
+import { FlagsController } from './controllers/api/flags.js';
+import { FlagsAdminController } from './controllers/admin/flags.js';
+import { CustomersAdminController } from './controllers/admin/customers.js';
+import { AnalyticsAdminController } from './controllers/admin/analytics.js';
+import { CustomerAnalyticsController } from './controllers/api/customer-analytics.js';
+import { AuditLogAdminController } from './controllers/admin/audit-log.js';
+import { AgentController } from './controllers/api/agent.js';
 import { AccreditationController } from './controllers/api/accreditation.js';
 import { OperationController } from './controllers/api/operation.js';
 import { ProvidersController } from './controllers/api/providers.controller.js';
@@ -45,6 +58,7 @@ class App {
 
 	constructor() {
 		this.express = express();
+		warnIfM2MCustomerPathEnabled();
 		this.middleware();
 		this.routes();
 		this.dbReady = Connection.instance
@@ -67,34 +81,33 @@ class App {
 	}
 
 	private middleware() {
-		this.express.use(
-			express.json({
-				limit: '50mb',
-				verify: (req: express.Request & { rawBody: Buffer }, _res, buf) => {
-					req.rawBody = buf;
-				},
-			})
-		);
+		// Liveness and readiness come first: no limits, no authentication, no data
+		this.express.use(healthRouter());
+		// Limits run first, so a flood or an oversize body is turned away before any parsing or authentication work.
+		const proxySetting = trustProxySetting(process.env.TRUST_PROXY);
+		if (proxySetting !== undefined) this.express.set('trust proxy', proxySetting);
+		const limits = rateLimitConfig();
+		if (limits.enabled) this.express.use(ipRateLimiter(limits));
+		for (const { path, handler } of jsonBodyParsers((req, _res, buf) => {
+			req.rawBody = buf;
+		})) {
+			if (path) this.express.use(path, handler);
+			else this.express.use(handler);
+		}
 		this.express.use(express.raw({ type: 'application/octet-stream' }));
 		this.express.use(express.urlencoded({ extended: true }));
 		this.express.use(Middleware.parseUrlEncodedJson);
 		this.express.use(Helmet());
 		this.express.use(
 			cors({
-				origin: function (origin, callback) {
-					if (!origin) return callback(null, true);
-					const allowedList = CORS_ALLOWED_ORIGINS.split(',');
-
-					for (const allowed of allowedList) {
-						if (allowed.indexOf(origin) !== -1) {
-							return callback(null, true);
-						}
-					}
-					return callback(new Error(CORS_ERROR_MSG), false);
-				},
+				origin: createOriginCheck({ allowedOrigins: CORS_ALLOWED_ORIGINS }),
+				// POST /credential/issue returns the credential itself; the Studio record id travels in this header
+				exposedHeaders: ['X-Issued-Credential-Id'],
 			})
 		);
 		this.express.use(cookieParser());
+		// Request id, timing and the engine-routing log line (engine spec 4.3)
+		this.express.use(requestContext);
 		const auth = new Authentication();
 		// EventTracking
 		this.express.use(new ResponseTracker().trackJson);
@@ -120,6 +133,8 @@ class App {
 				this.express.use(async (req, res, next) => await auth.guard(req, res, next));
 			}
 		}
+		// Per-customer limit, once the guard has identified the customer
+		if (limits.enabled) this.express.use(customerRateLimiter(limits));
 		this.express.use(express.text());
 		this.express.use(auth.handleError);
 		this.express.use(async (req, res, next) => await auth.accessControl(req, res, next));
@@ -317,6 +332,22 @@ class App {
 		app.get('/account', new AccountController().get);
 		app.get('/account/idtoken', new AccountController().getIdToken);
 		app.get('/account/analytics', new AccountController().getAnalytics);
+		const customerAnalytics = new CustomerAnalyticsController();
+		app.get(
+			'/account/analytics/agents',
+			CustomerAnalyticsController.analyticsValidator,
+			customerAnalytics.agents.bind(customerAnalytics)
+		);
+		app.get(
+			'/account/analytics/individuals',
+			CustomerAnalyticsController.analyticsValidator,
+			customerAnalytics.individuals.bind(customerAnalytics)
+		);
+		app.get(
+			'/account/analytics/ledger',
+			CustomerAnalyticsController.ledgerValidator,
+			customerAnalytics.ledger.bind(customerAnalytics)
+		);
 		app.get('/account/balances', new AccountController().getBalances);
 		app.post('/account/export-keys', new AccountController().exportKeys);
 		app.delete('/account', new AccountController().delete);
@@ -337,6 +368,80 @@ class App {
 			ProvidersController.importDIDValidator,
 			new ProvidersController().importDid
 		);
+
+		// Agents (migration plan 8.3). The handlers are arrow properties, so they keep their instance when passed on.
+		const agents = new AgentController();
+		app.post('/agents', AgentController.registerValidator, agents.register);
+		app.get('/agents', AgentController.listValidator, agents.list);
+		app.get('/agents/:agentId', AgentController.idValidator, agents.get);
+		app.patch('/agents/:agentId', AgentController.updateValidator, agents.update);
+		app.delete('/agents/:agentId', AgentController.idValidator, agents.remove);
+		app.post('/agents/:agentId/card', AgentController.createCardValidator, agents.createCard);
+		app.get('/agents/:agentId/card', AgentController.getCardValidator, agents.getCard);
+		app.get('/agents/:agentId/authority', AgentController.idValidator, agents.listAuthority);
+		app.post('/agents/:agentId/authority', AgentController.grantValidator, agents.grantAuthority);
+		app.delete('/agents/:agentId/authority/:grantId', AgentController.revokeValidator, agents.revokeAuthority);
+		app.patch('/agents/:agentId/authority/:grantId', AgentController.expiryValidator, agents.changeGrantExpiry);
+		app.get('/agents/:agentId/keys', AgentController.idValidator, agents.listKeys);
+		app.post('/agents/:agentId/keys', AgentController.addKeyValidator, agents.addKey);
+		app.post('/agents/:agentId/keys/rotate', AgentController.rotateKeyValidator, agents.rotateKey);
+		app.get('/agents/:agentId/activity', AgentController.activityValidator, agents.activity);
+		// x402, Proposed: payment addresses and the read-only settlement view
+		app.get('/agents/:agentId/payment-addresses', AgentController.idValidator, agents.listPaymentAddresses);
+		app.post(
+			'/agents/:agentId/payment-addresses',
+			AgentController.bindPaymentAddressValidator,
+			agents.bindPaymentAddress
+		);
+		app.delete(
+			'/agents/:agentId/payment-addresses/:bindingId',
+			AgentController.revokePaymentAddressValidator,
+			agents.revokePaymentAddress
+		);
+		app.get('/agents/:agentId/settlement', AgentController.idValidator, agents.settlement);
+
+		// Feature flags
+		app.get('/flags', new FlagsController().getFlags);
+		app.put('/admin/flags', new FlagsAdminController().putFlag);
+
+		// Staff customer back end, analytics and audit log (read only, staff scopes)
+		const customersAdmin = new CustomersAdminController();
+		const analyticsAdmin = new AnalyticsAdminController();
+		const auditAdmin = new AuditLogAdminController();
+		app.get('/admin/customers', CustomersAdminController.listValidator, customersAdmin.list.bind(customersAdmin));
+		app.get('/admin/customers/:id', CustomersAdminController.getValidator, customersAdmin.get.bind(customersAdmin));
+		app.get(
+			'/admin/analytics/overview',
+			AnalyticsAdminController.overviewValidator,
+			analyticsAdmin.overview.bind(analyticsAdmin)
+		);
+		app.get(
+			'/admin/analytics/endpoints',
+			AnalyticsAdminController.endpointsValidator,
+			analyticsAdmin.endpoints.bind(analyticsAdmin)
+		);
+		app.get(
+			'/admin/analytics/top-accounts',
+			AnalyticsAdminController.topAccountsValidator,
+			analyticsAdmin.topAccounts.bind(analyticsAdmin)
+		);
+		app.get('/admin/analytics/plan-mix', analyticsAdmin.planMix.bind(analyticsAdmin));
+		app.get(
+			'/admin/analytics/faucet-to-ledger',
+			AnalyticsAdminController.faucetToLedgerValidator,
+			analyticsAdmin.faucetToLedger.bind(analyticsAdmin)
+		);
+		app.get(
+			'/admin/analytics/ledger-writes',
+			AnalyticsAdminController.ledgerWritesValidator,
+			analyticsAdmin.ledgerWritesReport.bind(analyticsAdmin)
+		);
+		app.get(
+			'/admin/analytics/funnels',
+			AnalyticsAdminController.funnelsValidator,
+			analyticsAdmin.funnels.bind(analyticsAdmin)
+		);
+		app.get('/admin/audit-log', AuditLogAdminController.listValidator, auditAdmin.list.bind(auditAdmin));
 
 		// LogTo user info
 		app.get('/auth/user-info', async (req, res) => {

@@ -10,6 +10,8 @@ import {
 	type CredentialRequest,
 } from '../../types/credential.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
+import type { RoutedService } from '../identity/index.js';
+import { credentialArtifact, didArtifact } from '../identity/engine/artifact-refs.js';
 import { v4 } from 'uuid';
 import * as dotenv from 'dotenv';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
@@ -18,7 +20,8 @@ import { ResourceConnector } from '../connectors/resource.js';
 import { DockIdentityService } from '../identity/providers/index.js';
 import { ProviderService } from './provider.service.js';
 import { IssuedCredentialEntity } from '../../database/entities/issued-credential.entity.js';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import { Cheqd } from '@cheqd/did-provider-cheqd';
 import { Connection } from '../../database/connection/connection.js';
 import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
 
@@ -54,6 +57,17 @@ export class Credentials {
 	}
 
 	async issue_credential(request: CredentialRequest, customer: CustomerEntity): Promise<VerifiableCredential> {
+		return (await this.issueWithRecord(request, customer)).credential;
+	}
+
+	/**
+	 * Issues the credential and also returns the id of the Studio record that tracks it (`issuedCredentialId`), which
+	 * is the id `GET /credentials/issued/:id` expects. The credential itself carries no such id.
+	 */
+	async issueWithRecord(
+		request: CredentialRequest,
+		customer: CustomerEntity
+	): Promise<{ credential: VerifiableCredential; issuedCredentialId: string }> {
 		const {
 			attributes,
 			credentialName,
@@ -112,6 +126,17 @@ export class Credentials {
 
 		// Phase 2: Create tracking record immediately to reserve the index
 		// This ensures the index is tracked even if credential creation fails
+		// The engine that will sign the credential is decided once, here, and recorded on the row. Dock-issued
+		// credentials never reach an identity engine, so they keep the default. The issuer DID's recorded engine decides,
+		// so a credential is signed by the engine that holds the issuer's keys; only an issuer Studio has no record of
+		// falls back to the `credential` flag.
+		const isDockConnector = (providerId || connector) === CredentialConnectors.Dock;
+		const credentialEngine = isDockConnector
+			? undefined
+			: await new IdentityServiceStrategySetup(customer.customerId).engine('credential', didArtifact(issuerDid), {
+					flagWhenUnrecorded: true,
+				});
+
 		let trackingRecord: IssuedCredentialEntity;
 		if (issuedCredentialId) {
 			const existingRecord = await this.fetch(issuedCredentialId, customer);
@@ -135,10 +160,12 @@ export class Credentials {
 				statusRegistryId: statusRegistryId,
 				statusIndex: reservedIndex,
 				retryCount: 0,
+				engine: credentialEngine?.name,
 			});
 		}
 
 		// Phase 3: Attempt credential creation with error handling
+		let publishedToConnector = false;
 		try {
 			let verifiableCredential: VerifiableCredential;
 			let providerCredentialId: string | undefined;
@@ -153,9 +180,12 @@ export class Credentials {
 					const existingIssuer = await dock.getDid(issuerDid, customer).catch(() => undefined);
 					if (!existingIssuer) {
 						// export from wallet
-						const exportResult = await new IdentityServiceStrategySetup(
-							customer.customerId
-						).agent.exportDid(issuerDid, process.env.PROVIDER_EXPORT_PASSWORD || '', customer);
+						const exportResult = await (
+							await new IdentityServiceStrategySetup(customer.customerId).routed('did', {
+								kind: 'did',
+								id: issuerDid,
+							})
+						).exportDid(issuerDid, process.env.PROVIDER_EXPORT_PASSWORD || '', customer);
 						// import into provider
 						await dock.importDidV2(issuerDid, exportResult, process.env.PROVIDER_EXPORT_PASSWORD, customer);
 					}
@@ -175,12 +205,17 @@ export class Credentials {
 				case CredentialConnectors.Verida:
 				default: {
 					const studioService = new IdentityServiceStrategySetup(customer.customerId);
-					const verifiable_credential = await studioService.agent.createCredential(
-						credential,
+					const verifiable_credential = (await (
+						(credentialEngine ??
+							(await studioService.engine('credential', didArtifact(issuerDid), {
+								flagWhenUnrecorded: true,
+							}))) as unknown as RoutedService
+					).createCredential(
+						credential as never,
 						format,
-						statusOptions,
+						statusOptions as never,
 						customer
-					);
+					)) as unknown as VerifiableCredential;
 
 					const isVeridaDid = new VeridaDIDValidator().validate(subjectDid);
 					let sendCredentialResponse;
@@ -217,6 +252,8 @@ export class Credentials {
 						);
 					}
 
+					if (sendCredentialResponse) publishedToConnector = true;
+
 					// Get resourceId from ResourceConnector response if available
 					if (sendCredentialResponse && sendCredentialResponse.resourceId) {
 						providerCredentialId = sendCredentialResponse.resourceId;
@@ -225,7 +262,9 @@ export class Credentials {
 					}
 
 					// Check if subject DID exists in Veramo's identifier store
-					isSubjectInDatabase = await studioService.agent.didExists(subjectDid, customer);
+					isSubjectInDatabase = await (
+						await studioService.routed('did', { kind: 'did', id: subjectDid })
+					).didExists(subjectDid, customer);
 
 					// If subject DID is in database, store credential in Veramo's dataStore
 					if (isSubjectInDatabase) {
@@ -300,10 +339,20 @@ export class Credentials {
 			// Also update fields not covered by the update() method
 			await this.repository.update({ issuedCredentialId: trackingRecord.issuedCredentialId }, updatePayload);
 
-			return verifiableCredential;
+			return { credential: verifiableCredential, issuedCredentialId: trackingRecord.issuedCredentialId };
 		} catch (error) {
-			// Phase 5: Update tracking record with failure details
-			// This ensures the reserved index is tracked even when credential creation fails
+			// Phase 5: a row this call created, for a credential that was never published, is removed: the index it
+			// reserved stays consumed (the write cursor has already moved past it), so nothing is reused, and no
+			// `unknown` row is left for a request that failed. A row that existed before this call, or one whose
+			// credential reached a resource connector, is kept and marked `unknown` with the failure.
+			if (!issuedCredentialId && !publishedToConnector) {
+				const removed = await this.repository
+					.delete({ issuedCredentialId: trackingRecord.issuedCredentialId })
+					.then(() => true)
+					.catch(() => false);
+				// The row could not be removed: fall through and record the failure on it instead
+				if (removed) throw error;
+			}
 			await this.repository.update(
 				{ issuedCredentialId: trackingRecord.issuedCredentialId },
 				{
@@ -571,14 +620,16 @@ export class Credentials {
 			});
 		}
 
-		// Strategy 3: Search across all provider fields
+		// Strategy 3: Search across all provider fields. A credential id is often written as a URN
+		// (`urn:uuid:<uuid>`) in the credential and as the bare uuid by callers, so both spellings are tried.
 		if (!entity) {
+			const bare = id.replace(/^urn:uuid:/i, '');
 			entity = await this.repository.findOne({
 				where: {
-					providerCredentialId: id,
+					providerCredentialId: In([id, bare, `urn:uuid:${bare}`]),
 					customer: { customerId: customer.customerId },
 				},
-				relations: ['customer'],
+				relations: ['customer', 'statusRegistry'],
 			});
 		}
 		if (!entity) {
@@ -642,7 +693,63 @@ export class Credentials {
 			}
 		);
 
+		// Record the engine that actually created the credential, so later operations route back to it
+		if (options.engine) entity.engine = options.engine;
+
 		return await this.repository.save(entity);
+	}
+
+	/**
+	 * After a revoke, suspend or reinstate has really changed the status list, mirror it on the tracking rows of the
+	 * credential, so the issued-credentials API reports `revoked` or `suspended` instead of the status the row was
+	 * issued with. Best effort: the status list is the source of truth and a failure here is logged, never raised.
+	 * Rows are found by customer, issuer, status index and the status entry's id.
+	 */
+	async recordStatusChange(
+		credential: unknown,
+		action: 'revoke' | 'suspend' | 'reinstate',
+		customer: CustomerEntity
+	): Promise<number> {
+		try {
+			const decoded =
+				typeof credential === 'string'
+					? ((await Cheqd.decodeCredentialJWT(credential)) as unknown as Record<string, any>)
+					: (credential as Record<string, any>);
+			const issuer = typeof decoded?.issuer === 'string' ? decoded.issuer : decoded?.issuer?.id;
+			const raw = decoded?.credentialStatus;
+			const entries: Record<string, any>[] = Array.isArray(raw) ? raw : raw ? [raw] : [];
+			if (!issuer || entries.length === 0) return 0;
+
+			let changed = 0;
+			for (const entry of entries) {
+				const index = Number.parseInt(String(entry.statusListIndex ?? entry.statusIndex), 10);
+				if (!Number.isFinite(index)) continue;
+				const rows = await this.repository.find({
+					where: { customer: { customerId: customer.customerId }, issuerId: issuer, statusIndex: index },
+				});
+				for (const row of rows) {
+					const stored = ([] as Record<string, any>[]).concat(row.credentialStatus ?? []);
+					if (!stored.some((s) => s?.id === entry.id)) continue;
+					const status =
+						action === 'revoke'
+							? 'revoked'
+							: action === 'suspend'
+								? 'suspended'
+								: row.offerExpiresAt && !row.subjectAcceptedAt
+									? 'offered'
+									: 'issued';
+					await this.repository.update(
+						{ issuedCredentialId: row.issuedCredentialId },
+						{ status: status as IssuedCredentialEntity['status'], statusUpdatedAt: new Date() }
+					);
+					changed += 1;
+				}
+			}
+			return changed;
+		} catch (error) {
+			console.warn(`Could not mirror the ${action} on the issued credential row: ${(error as Error)?.message}`);
+			return 0;
+		}
 	}
 
 	/**
@@ -683,11 +790,19 @@ export class Credentials {
 			return null;
 		}
 
-		// Update the entity
-		const updatePayload: any = {
-			...updateData,
-			updatedAt: new Date(),
-		};
+		// Update the entity. Only the allow-listed fields are copied: the caller's object is never spread into the update.
+		const updatePayload: Partial<IssuedCredentialEntity> = { updatedAt: new Date() };
+		if (updateData.providerCredentialId !== undefined)
+			updatePayload.providerCredentialId = updateData.providerCredentialId;
+		if (updateData.status !== undefined) updatePayload.status = updateData.status;
+		if (updateData.metadata !== undefined) {
+			// Server-written migration bookkeeping is not caller-controlled
+			const migratedFrom = entity.metadata?.migratedFrom;
+			updatePayload.metadata = {
+				...updateData.metadata,
+				...(migratedFrom !== undefined ? { migratedFrom } : {}),
+			};
+		}
 
 		// If status is being updated, also update statusUpdatedAt
 		if (updateData.status) {
@@ -811,9 +926,14 @@ export class Credentials {
 					if (entity.credentialStatus) {
 						const status = entity.credentialStatus;
 						const studioService = new IdentityServiceStrategySetup(customer.customerId);
+						// The credential row is known, so its recorded engine decides
+						const statusEngine = await studioService.routed(
+							'status-list',
+							credentialArtifact(entity.issuedCredentialId)
+						);
 						if (status.type === 'StatusList2021Entry') {
 							const url = new URL(status.id);
-							const currentStatus = await studioService.agent.checkStatusList2021(
+							const currentStatus = await statusEngine.checkStatusList2021(
 								entity.issuerId || '',
 								{
 									...status,
@@ -827,7 +947,7 @@ export class Credentials {
 								newStatus = currentStatus.revoked ? 'revoked' : 'issued';
 							}
 						} else {
-							const currentStatus = (await studioService.agent.checkBitstringStatusList(
+							const currentStatus = (await statusEngine.checkBitstringStatusList(
 								entity.issuerId || '',
 								status as CheqdCredentialStatus,
 								customer
@@ -885,7 +1005,9 @@ export class Credentials {
 				}
 				case 'studio': {
 					const studioService = new IdentityServiceStrategySetup(customer.customerId);
-					return await studioService.agent.getCredential(credentialId, customer);
+					return await (
+						await studioService.routed('credential', credentialArtifact(entity.issuedCredentialId))
+					).getCredential(credentialId, customer);
 				}
 				default:
 					console.warn(`Credential fetch not supported for provider: ${entity.providerId}`);
@@ -908,7 +1030,9 @@ export class Credentials {
 		let verificationResult: IVerifyResult;
 
 		const studioService = new IdentityServiceStrategySetup(customer.customerId);
-		verificationResult = await studioService.agent.verifyCredential(credential, verificationOptions, customer);
+		verificationResult = (await (
+			await studioService.routed('credential')
+		).verifyCredential(credential as never, verificationOptions as never, customer)) as unknown as IVerifyResult;
 
 		// Only check external providers if customer is authenticated
 		if (verificationOptions.policies?.checkExternalProvider) {

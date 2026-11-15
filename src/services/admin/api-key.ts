@@ -8,9 +8,10 @@ import { randomBytes, createHmac } from 'crypto';
 import { SecretBox } from '@veramo/kms-local';
 import { Connection } from '../../database/connection/connection.js';
 import { APIKeyEntity } from '../../database/entities/api.key.entity.js';
-import { API_SECRET_KEY_LENGTH, API_KEY_PREFIX, API_KEY_EXPIRATION } from '../../types/constants.js';
+import { API_SECRET_KEY_LENGTH, API_KEY_PREFIX } from '../../types/constants.js';
 import { sha256 } from '../../utils/index.js';
 import { InvalidAPIKeyError } from './api-key-errors.js';
+import { defaultAPIKeyExpiry, isAPIKeyExpired } from './api-key-expiry.js';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -55,8 +56,7 @@ export class APIKeyService {
 			throw new Error('API key user is not specified');
 		}
 		if (!expiresAt) {
-			expiresAt = new Date();
-			expiresAt.setMonth(expiresAt.getDay() + API_KEY_EXPIRATION);
+			expiresAt = defaultAPIKeyExpiry();
 		}
 
 		// encrypt the key
@@ -142,6 +142,39 @@ export class APIKeyService {
 		return await this.secretBox.encrypt(apiKey);
 	}
 
+	/**
+	 * Authenticates a request that presents an API key. Unknown, mismatched, revoked and expired keys are all rejected
+	 * with an InvalidAPIKeyError. An expired key gets the same message as an unknown one, so a caller cannot tell
+	 * that the key exists. Every request reads the row afresh: nothing is cached, so a revocation or an expiry takes
+	 * effect on the next request.
+	 */
+	public async authenticate(apiKey: string, now: Date = new Date()) {
+		let apiKeyEntity: APIKeyEntity;
+		try {
+			apiKeyEntity = await this.get(apiKey);
+		} catch (error) {
+			if (error instanceof InvalidAPIKeyError && error.message === 'API key is revoked') {
+				console.warn(`API key rejected: revoked (key ${APIKeyService.keyReference(apiKey)})`);
+			}
+			throw error;
+		}
+		if (apiKeyEntity.revoked) {
+			console.warn(`API key rejected: revoked (key ${APIKeyService.keyReference(apiKey)})`);
+			throw new InvalidAPIKeyError('API key is revoked');
+		}
+		if (isAPIKeyExpired(apiKeyEntity.expiresAt, now)) {
+			console.warn(`API key rejected: expired (key ${APIKeyService.keyReference(apiKey)})`);
+			throw new InvalidAPIKeyError();
+		}
+		return apiKeyEntity;
+	}
+
+	/** A short, non-secret reference for logs: the first characters of the key's SHA-256 fingerprint. */
+	public static keyReference(apiKey: string): string {
+		return sha256(apiKey).slice(0, 8);
+	}
+
+	/** Looks a key up and checks it is not revoked. It does not check expiry: use `authenticate` for requests. */
 	public async get(apiKey: string, options?: APIServiceOptions) {
 		// fingerprint
 		const fingerprint = sha256(apiKey);
@@ -158,7 +191,6 @@ export class APIKeyService {
 			throw new InvalidAPIKeyError();
 		}
 
-		// validate expiry
 		if (apiKeyEntity.revoked) {
 			throw new InvalidAPIKeyError('API key is revoked');
 		}

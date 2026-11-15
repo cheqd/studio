@@ -51,11 +51,9 @@ export class ResourceConnector {
 			version: resourceVersion,
 			alsoKnownAs,
 		};
-		const isPublished = await identityServiceStrategySetup.agent.createResource(
-			did.split(':')[2],
-			resourcePayload,
-			customer
-		);
+		const isPublished = await (
+			await identityServiceStrategySetup.routed('resource', { kind: 'did', id: did })
+		).createResource(did.split(':')[2], resourcePayload, customer);
 		const didUrl = `${did}/resources/${resourcePayload.id}`;
 		if (isPublished) {
 			const url = new URL(

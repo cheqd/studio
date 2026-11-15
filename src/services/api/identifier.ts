@@ -1,3 +1,4 @@
+import { In } from 'typeorm';
 import type { FindOptionsRelations, Repository } from 'typeorm';
 
 import { Connection } from '../../database/connection/connection.js';
@@ -14,6 +15,23 @@ export class IdentifierService {
 
 	constructor() {
 		this.identifierRepository = Connection.instance.dbConnection.getRepository(IdentifierEntity);
+	}
+
+	/**
+	 * Which of these DIDs belong to an agent, current or deleted (`identifier.kind = 'agent'`). Used to tell a client
+	 * which DIDs must not be offered as a principal to act for. Never throws: with no database the answer is none.
+	 */
+	public async agentDidsAmong(customerId: string, dids: string[]): Promise<string[]> {
+		if (dids.length === 0) return [];
+		try {
+			const rows = await this.identifierRepository.find({
+				select: { did: true },
+				where: { did: In(dids), kind: 'agent', customer: { customerId } },
+			});
+			return rows.map((row) => row.did);
+		} catch {
+			return [];
+		}
 	}
 
 	public async update(did: string, customer: CustomerEntity) {

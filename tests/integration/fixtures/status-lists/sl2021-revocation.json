@@ -1,0 +1,8 @@
+{
+	"StatusList2021": {
+		"statusPurpose": "revocation",
+		"encodedList": "H4sIAAAAAAAAA-3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAADwaDhDr_xcRAAA",
+		"validFrom": "2024-07-01T04:54:16.491Z"
+	},
+	"metadata": { "type": "StatusList2021Revocation", "encrypted": false, "encoding": "base64url" }
+}

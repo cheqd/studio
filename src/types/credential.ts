@@ -221,6 +221,8 @@ export interface IssuedCredentialCreateOptions {
 	statusIndex?: number;
 	retryCount?: number;
 	lastError?: string;
+	/** The engine that created the credential. Omitted means the column default (veramo). */
+	engine?: 'veramo' | 'credo';
 }
 
 export interface IssuedCredentialResponse {

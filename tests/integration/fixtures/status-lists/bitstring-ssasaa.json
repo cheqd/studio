@@ -1,0 +1,25 @@
+{
+	"bitstringStatusListCredential": {
+		"credentialSubject": {
+			"type": "BitstringStatusList",
+			"statusPurpose": ["revocation", "suspension", "message"],
+			"encodedList": "H4sIAAAAAAAAA-3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAIC3AYbSVKsAQAAA",
+			"ttl": 1000
+		},
+		"issuer": { "id": "did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA" },
+		"type": ["VerifiableCredential", "BitstringStatusListCredential"],
+		"@context": ["https://www.w3.org/2018/credentials/v1"],
+		"issuanceDate": "2025-11-14T12:57:35.000Z",
+		"proof": {
+			"type": "JwtProof2020",
+			"jwt": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSJdLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQml0c3RyaW5nU3RhdHVzTGlzdENyZWRlbnRpYWwiXSwiY3JlZGVudGlhbFN1YmplY3QiOnsidHlwZSI6IkJpdHN0cmluZ1N0YXR1c0xpc3QiLCJzdGF0dXNQdXJwb3NlIjpbInJldm9jYXRpb24iLCJzdXNwZW5zaW9uIiwibWVzc2FnZSJdLCJ0dGwiOjEwMDB9fSwibmJmIjoxNzYzMTI1MDU1LCJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDo1UnBFZzY2amhoYm1BU1dQWEpSV3JBIn0.kNj7IWQnv6ehoCF6oQzCLM1WMX8MrDyy1ly2At8294MihWaogH_ycqDC2pM_Qcz2pEQbSk2zpW6FZjSehQRiAg"
+		}
+	},
+	"metadata": {
+		"encrypted": false,
+		"encoding": "base64url",
+		"length": 131072,
+		"statusSize": 1,
+		"statusMessages": [{ "status": "0x0", "message": "valid" }]
+	}
+}

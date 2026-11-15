@@ -1,3 +1,4 @@
+import { IdentifierService } from '../../services/api/identifier.js';
 import type { Request, Response } from 'express';
 import { fromString, toString } from 'uint8arrays';
 import {
@@ -47,6 +48,7 @@ import { validate } from '../validator/decorator.js';
 import { query } from 'express-validator';
 import { DockIdentityService } from '../../services/identity/providers/index.js';
 import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
+import { engineErrorResponse } from '../../helpers/engine-errors.js';
 
 export class DIDController {
 	public static createDIDValidator = [
@@ -239,7 +241,9 @@ export class DIDController {
 								accept: service.accept,
 							});
 						}
-						did = await identityServiceStrategySetup.agent.updateDid(didDoc, response.locals.customer);
+						did = (await (
+							await identityServiceStrategySetup.engine('did', { kind: 'did', id: didDoc.id })
+						).updateDid(didDoc, response.locals.customer)) as unknown as IIdentifier;
 					}
 					break;
 				case 'studio':
@@ -250,10 +254,12 @@ export class DIDController {
 							const publicKeyHex =
 								key ||
 								(
-									await identityServiceStrategySetup.agent.createKey(
-										SupportedKeyTypes.Ed25519,
-										response.locals.customer
-									)
+									await (
+										await identityServiceStrategySetup.engine('key', undefined, {
+											keyType: SupportedKeyTypes.Ed25519,
+											creates: true,
+										})
+									).createKey(SupportedKeyTypes.Ed25519, response.locals.customer)
 								).publicKeyHex;
 
 							const pkBase64 = toString(fromString(publicKeyHex, 'hex'), 'base64');
@@ -277,10 +283,12 @@ export class DIDController {
 						const publicKeyHex =
 							key ||
 							(
-								await identityServiceStrategySetup.agent.createKey(
-									SupportedKeyTypes.Ed25519,
-									response.locals.customer
-								)
+								await (
+									await identityServiceStrategySetup.engine('key', undefined, {
+										keyType: SupportedKeyTypes.Ed25519,
+										creates: true,
+									})
+								).createKey(SupportedKeyTypes.Ed25519, response.locals.customer)
 							).publicKeyHex;
 
 						didDocument = generateDidDoc({
@@ -317,11 +325,13 @@ export class DIDController {
 							error: 'Provide a DID Document or the VerificationMethodType to create a DID',
 						} satisfies UnsuccessfulCreateDidResponseBody);
 					}
-					did = await identityServiceStrategySetup.agent.createDid(
+					did = (await (
+						await identityServiceStrategySetup.engine('did', undefined, { creates: true })
+					).createDid(
 						network || didDocument.id.split(':')[2],
 						didDocument,
 						response.locals.customer
-					);
+					)) as unknown as IIdentifier;
 					break;
 				default:
 					return response.status(StatusCodes.BAD_REQUEST).json({
@@ -341,6 +351,8 @@ export class DIDController {
 
 			return response.status(StatusCodes.OK).json(did satisfies CreateDidResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			const unfunded = unfundedPayerFailure(error);
 			if (unfunded) {
 				return response.status(unfunded.status).json({
@@ -440,11 +452,9 @@ export class DIDController {
 				} satisfies UnsuccessfulUpdateDidResponseBody);
 			}
 
-			const result = await identityServiceStrategySetup.agent.updateDid(
-				updatedDocument,
-				response.locals.customer,
-				publicKeyHexs
-			);
+			const result = (await (
+				await identityServiceStrategySetup.engine('did', { kind: 'did', id: updatedDocument.id })
+			).updateDid(updatedDocument, response.locals.customer, publicKeyHexs)) as unknown as IIdentifier;
 
 			// Track the operation
 			eventTracker.emit('track', {
@@ -459,6 +469,8 @@ export class DIDController {
 
 			return response.status(StatusCodes.OK).json(result satisfies UpdateDidResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			const errorCode = (error as CheqdProviderError).errorCode;
 			// Handle specific cases when DID is deactivated or verificationMethod is empty
 			if (
@@ -581,9 +593,12 @@ export class DIDController {
 				});
 			}
 
-			const identifier = await new IdentityServiceStrategySetup(
-				response.locals.customer.customerId
-			).agent.importDid(did, keys, controllerKeyId, response.locals.customer);
+			const identifier = await // A new artifact for Studio: no recorded engine yet, so it goes to Credo
+			(
+				await new IdentityServiceStrategySetup(response.locals.customer.customerId).engine('did', undefined, {
+					creates: true,
+				})
+			).importDid(did, keys as never, controllerKeyId, response.locals.customer);
 
 			// Track the operation
 			eventTracker.emit('track', {
@@ -598,6 +613,8 @@ export class DIDController {
 
 			return response.status(StatusCodes.OK).json(identifier);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
@@ -664,7 +681,9 @@ export class DIDController {
 
 		try {
 			// Deactivate DID
-			await identityServiceStrategySetup.agent.deactivateDid(did, response.locals.customer, publicKeyHexs);
+			await (
+				await identityServiceStrategySetup.engine('did', { kind: 'did', id: did })
+			).deactivateDid(did, response.locals.customer, publicKeyHexs);
 			// Send the deactivated DID as result
 			const result = await identityServiceStrategySetup.agent.resolveDid(did);
 
@@ -681,6 +700,8 @@ export class DIDController {
 
 			return response.status(StatusCodes.OK).json(result satisfies DeactivateDidResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			const unfunded = unfundedPayerFailure(error);
 			if (unfunded) {
 				return response.status(unfunded.status).json({
@@ -701,7 +722,7 @@ export class DIDController {
 	 *   get:
 	 *     tags: [ Decentralized Identifiers (DIDs) ]
 	 *     summary: Fetch DIDs associated with an account.
-	 *     description: This endpoint returns the list of DIDs controlled by the account.
+	 *     description: This endpoint returns the list of DIDs controlled by the account. The response also carries `agentDids`, the listed DIDs that were made for an agent (current or deleted), which must not be offered as a principal to act for; with `metadata=true` each item also has `kind` (`agent` or null) and `agentDeletedAt`.
 	 *     parameters:
 	 *       - in: query
 	 *         name: network
@@ -778,15 +799,28 @@ export class DIDController {
 				default:
 					didDocument = did
 						? await identityServiceStrategySetup.agent.resolveDid(did)
-						: await identityServiceStrategySetup.agent.listDids(
-								{ network, page, limit, metadata },
-								response.locals.customer
-							);
+						: await (
+								await identityServiceStrategySetup.engine('did')
+							).listDids({ network, page, limit, metadata }, response.locals.customer);
+			}
+			// Tell the client which listed DIDs were made for an agent (current or deleted), so it does not offer them
+			// as a principal to act for. Additive: each item of a `metadata=true` list also carries `kind`.
+			if (!did && providerId !== 'dock' && response.locals.customer && 'dids' in didDocument) {
+				const listed = (didDocument.dids as (string | { did: string })[]).map((item) =>
+					typeof item === 'string' ? item : item.did
+				);
+				const agentDids = await IdentifierService.instance.agentDidsAmong(
+					response.locals.customer.customerId,
+					listed
+				);
+				return response.status(StatusCodes.OK).json({ ...didDocument, agentDids });
 			}
 			return response
 				.status(StatusCodes.OK)
 				.json(didDocument satisfies ListDidsResponseBody | QueryDidResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulGetDidResponseBody);
@@ -888,6 +922,8 @@ export class DIDController {
 				} satisfies UnsuccessfulResolveDidResponseBody);
 			}
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulResolveDidResponseBody);
@@ -971,9 +1007,12 @@ export class DIDController {
 					break;
 				case 'studio':
 				default:
-					result = await new IdentityServiceStrategySetup(
-						response.locals.customer.customerId
-					).agent.exportDid(did, '', response.locals.customer);
+					result = await (
+						await new IdentityServiceStrategySetup(response.locals.customer.customerId).engine('did', {
+							kind: 'did',
+							id: did,
+						})
+					).exportDid(did, '', response.locals.customer);
 			}
 			// Track the operation
 			eventTracker.emit('track', {
@@ -988,6 +1027,8 @@ export class DIDController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});

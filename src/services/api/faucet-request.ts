@@ -1,6 +1,8 @@
 import type { EntityManager, Repository } from 'typeorm';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { FaucetRequestEntity } from '../../database/entities/faucet-request.entity.js';
+import { isShuttingDown } from '../../helpers/shutdown-state.js';
+import { LedgerIndexer } from '../ledger/ledger-indexer.js';
 import { Connection } from '../../database/connection/connection.js';
 import { FAUCET_PENDING_TIMEOUT_SECONDS, FAUCET_REQUEST_RETENTION_MONTHS } from '../../types/constants.js';
 import {
@@ -160,6 +162,7 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 			minIntervalSeconds = 0,
 			pendingTimeoutSeconds = FAUCET_PENDING_TIMEOUT_SECONDS,
 			addressCap,
+			source,
 		}: FaucetReserveOptions,
 		nowOverride?: Date
 	): Promise<FaucetReservation> {
@@ -228,10 +231,13 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 				}
 			}
 
-			const entity = await manager.save(new FaucetRequestEntity(customer, address, amountNcheq));
+			const request = new FaucetRequestEntity(customer, address, amountNcheq);
+			if (source) request.source = source;
+			const entity = await manager.save(request);
 			return { reserved: true, faucetRequestId: entity.faucetRequestId, usedNcheq, window } as const;
 		});
 		this.maybeRunRetentionCleanup();
+		LedgerIndexer.instance.maybeRun();
 		return reservation;
 	}
 
@@ -256,7 +262,7 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 	 * because Studio has no scheduler; it never delays or fails the request that triggered it.
 	 */
 	private maybeRunRetentionCleanup(): void {
-		if (FAUCET_REQUEST_RETENTION_MONTHS <= 0) return;
+		if (isShuttingDown() || FAUCET_REQUEST_RETENTION_MONTHS <= 0) return;
 		// This only throttles how often this process runs the cleanup, so the process clock is the right one here
 		const processNow = Date.now();
 		if (processNow - this.lastRetentionCleanupAt < RETENTION_CLEANUP_INTERVAL_MS) return;

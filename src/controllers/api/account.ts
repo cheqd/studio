@@ -69,10 +69,14 @@ import {
 	remainingQuota,
 	secondsUntilReset,
 } from '../../helpers/faucet-quota.js';
+import { isValidSource, sourceOrUndefined } from '../../helpers/source.js';
 import { deleteCustomerAccount, describeAccountDeletionFailure } from '../../services/api/account-deletion.js';
 import { liveAccountDeletionDeps } from '../../services/api/account-deletion-live-deps.js';
 
 dotenv.config();
+
+const SOURCE_MESSAGE =
+	'source should be 1 to 32 characters: lower-case letters, digits and hyphens, starting with a letter or digit';
 
 export class AccountController {
 	public static createValidator = [
@@ -84,9 +88,17 @@ export class AccountController {
 			.withMessage('Invalid email id')
 			.bail(),
 		check('name').optional().isString().withMessage('name should be a valid string'),
+		check('source')
+			.optional()
+			.custom((value: unknown) => isValidSource(value))
+			.withMessage(SOURCE_MESSAGE),
 	];
 
 	public static faucetValidator = [
+		check('source')
+			.optional()
+			.custom((value: unknown) => isValidSource(value))
+			.withMessage(SOURCE_MESSAGE),
 		check('address').optional().isString().notEmpty().withMessage('address should be a valid string').bail(),
 		check('address')
 			.optional()
@@ -270,9 +282,14 @@ export class AccountController {
 				// I’m setting the "name" field to an empty string on the current CustomerEntity because it is non-nullable.
 				//  we will populate the customer's "name" field using the response from the Stripe account creation in account-submitter.ts.
 				if (!customerEntity) {
+					// An optional `source` in the body is stored when valid and ignored otherwise: bootstrap is called
+					// by the sign-up flow, and a bad marketing label must never stop an account being created
 					customerEntity = (await CustomerService.instance.create(
 						logToName,
-						logToUserEmail
+						logToUserEmail,
+						undefined,
+						undefined,
+						sourceOrUndefined(request.body.source)
 					)) as CustomerEntity;
 					if (!customerEntity) {
 						return response.status(StatusCodes.BAD_REQUEST).json({
@@ -537,7 +554,10 @@ export class AccountController {
 				: // 2.1 Create customer
 					((await CustomerService.instance.create(
 						firstName || lastName || primaryEmail,
-						primaryEmail
+						primaryEmail,
+						undefined,
+						undefined,
+						sourceOrUndefined(request.body.source)
 					)) as CustomerEntity);
 
 			if (!customerEntity) {
@@ -606,6 +626,11 @@ export class AccountController {
 	 *               address:
 	 *                 type: string
 	 *                 description: Optional cheqd testnet address to fund; it does not have to belong to the customer. Requests count against the calling customer's quota. Defaults to the authenticated customer's testnet account.
+	 *               source:
+	 *                 type: string
+	 *                 pattern: '^[a-z0-9][a-z0-9-]{0,31}$'
+	 *                 maxLength: 32
+	 *                 description: Optional label for where the request came from, stored for reporting (for example `studio`, `sdk`, `agent-quickstart`, `agent`). Lower-case letters, digits and hyphens only; anything else is rejected with 400.
 	 *               amount:
 	 *                 type: number
 	 *                 description: Optional amount in CHEQ. If omitted, FAUCET_DEFAULT_REQUEST_CHEQ (default 10,000) is sent, or less if the room under the address cap or the monthly quota left is lower. Set it to ask for more; the response shows the amount sent.
@@ -783,6 +808,7 @@ export class AccountController {
 					amountNcheq: amountToRequestNcheq,
 					limitNcheq: quotaLimitNcheq,
 					minIntervalSeconds: FAUCET_MIN_INTERVAL_SECONDS,
+					source: sourceOrUndefined(request.body.source),
 					addressCap: {
 						capNcheq: addressCapNcheq,
 						currentBalanceNcheq,
@@ -1067,7 +1093,9 @@ export class AccountController {
 			const exportedDids: ExportedDidKeys[] = await Promise.all(
 				dids.map(async (identifier): Promise<ExportedDidKeys> => {
 					try {
-						const didExport = await identityStrategySetup.agent.exportDid(identifier.did, '', customer);
+						const didExport = await (
+							await identityStrategySetup.routed('did', { kind: 'did', id: identifier.did })
+						).exportDid(identifier.did, '', customer);
 						return { did: identifier.did, export: didExport };
 					} catch (error) {
 						return { did: identifier.did, error: (error as Error)?.message || String(error) };
