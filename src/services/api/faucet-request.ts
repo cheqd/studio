@@ -1,6 +1,7 @@
 import type { EntityManager, Repository } from 'typeorm';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { FaucetRequestEntity } from '../../database/entities/faucet-request.entity.js';
+import { LedgerIndexer } from '../ledger/ledger-indexer.js';
 import { Connection } from '../../database/connection/connection.js';
 import { FAUCET_PENDING_TIMEOUT_SECONDS, FAUCET_REQUEST_RETENTION_MONTHS } from '../../types/constants.js';
 import {
@@ -235,6 +236,7 @@ export class FaucetRequestService implements FaucetQuotaLedger {
 			return { reserved: true, faucetRequestId: entity.faucetRequestId, usedNcheq, window } as const;
 		});
 		this.maybeRunRetentionCleanup();
+		LedgerIndexer.instance.maybeRun();
 		return reservation;
 	}
 
