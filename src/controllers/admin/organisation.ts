@@ -29,7 +29,7 @@ import {
 	MAX_TICKET_LENGTH,
 	withAuditedCustomerDelete,
 } from '../../services/admin/staff-deletion.js';
-import { isM2MRequest, requireStaffScope, staffActor, STAFF_SCOPES } from './staff-guard.js';
+import { checkStaffAccess, isM2MRequest, logStaffDenial, staffActor, STAFF_SCOPES } from './staff-guard.js';
 
 dotenv.config();
 
@@ -239,7 +239,14 @@ export class OrganisationController {
 	 *         description: The deletion pipeline failed partway through; the response body records which steps completed.
 	 */
 	async delete(request: Request, response: Response) {
-		if (!requireStaffScope(response, STAFF_SCOPES.organisationDelete)) return response;
+		const access = checkStaffAccess(response, STAFF_SCOPES.organisationDelete);
+		if (!access.allowed) {
+			logStaffDenial(response, STAFF_SCOPES.organisationDelete, access.reason);
+			await recordDeniedStaffAttempt(request, response, access.reason);
+			return response.status(StatusCodes.FORBIDDEN).json({
+				error: 'Only staff can use this endpoint.',
+			} satisfies UnsuccessfulResponseBody);
+		}
 		if (request.body?.confirm !== true) {
 			return response.status(StatusCodes.BAD_REQUEST).json({
 				error: 'confirm must be set to true to delete the organisation.',
@@ -342,5 +349,24 @@ export class OrganisationController {
 				.json({ error: describeAccountDeletionFailure(result), ...result });
 		}
 		return response.status(StatusCodes.OK).json(result);
+	}
+}
+
+/**
+ * Writes a refused staff deletion to the admin audit log, best effort: the actor's Logto user id, the route and a
+ * reason code. No email is recorded. The log write never changes the 403 the caller gets.
+ */
+async function recordDeniedStaffAttempt(request: Request, response: Response, reasonCode: string) {
+	const target = request.body?.customerId;
+	try {
+		await Connection.instance.dbConnection.getRepository(AdminAuditLogEntity).insert({
+			actorUserId: staffActor(request, response),
+			action: 'staff.access.denied',
+			targetCustomerId: typeof target === 'string' && validator.isUUID(target) ? target : undefined,
+			reason: reasonCode,
+			metadata: { route: 'DELETE /admin/organisation/delete', reasonCode } as never,
+		});
+	} catch (error) {
+		console.error(`Could not record the denied staff attempt in the audit log: ${(error as Error)?.message}`);
 	}
 }

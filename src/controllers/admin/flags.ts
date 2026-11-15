@@ -1,9 +1,10 @@
 import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { veramoOverrideEnabled } from '../../services/identity/engine/new-artefact-policy.js';
+import { requireStaffScope, STAFF_SCOPES } from './staff-guard.js';
 import { FeatureFlagService, validateFlagWrite } from '../../services/api/feature-flag.js';
 
-export const FLAGS_ADMIN_SCOPE = 'admin:flags:update';
+export const FLAGS_ADMIN_SCOPE = STAFF_SCOPES.flagsUpdate;
 
 export class FlagsAdminController {
 	/**
@@ -52,11 +53,8 @@ export class FlagsAdminController {
 	 *         description: An internal error has occurred.
 	 */
 	public async putFlag(request: Request, response: Response) {
-		// The auth rule already requires the scope; this keeps the route staff-only if the rule is ever loosened.
-		const scopes: string[] = response.locals.scopes || [];
-		if (process.env.ENABLE_AUTHENTICATION === 'true' && !scopes.includes(FLAGS_ADMIN_SCOPE)) {
-			return response.status(StatusCodes.FORBIDDEN).json({ error: 'Only staff can change feature flags.' });
-		}
+		// The auth rule already requires the scope; this applies the full staff policy as well.
+		if (!requireStaffScope(response, FLAGS_ADMIN_SCOPE, 'Only staff can change feature flags.')) return response;
 
 		const validation = validateFlagWrite(request.body);
 		if (!validation.ok) {

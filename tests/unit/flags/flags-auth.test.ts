@@ -1,4 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
+import { staffIdentity } from '../admin/staff-identity-fixture.js';
 import type { Request, Response } from 'express';
 
 const upsert = jest.fn(async (write: unknown) => ({ flag: { id: 'row', ...(write as object) }, previous: null }));
@@ -84,7 +85,7 @@ describe('PUT /admin/flags controller', () => {
 
 	it('rejects an invalid body with 400 and writes nothing', async () => {
 		process.env.ENABLE_AUTHENTICATION = 'true';
-		const res = fakeResponse({ scopes: ['admin:flags:update'] });
+		const res = fakeResponse({ scopes: ['admin:flags:update'], staffIdentity: staffIdentity() });
 		await new FlagsAdminController().putFlag(
 			requestFor('PUT', '/admin/flags', { ...body, value: { engine: 'nope' } }),
 			res as unknown as Response
@@ -95,7 +96,11 @@ describe('PUT /admin/flags controller', () => {
 
 	it('stores a valid change for staff through setFlag, which audits in the same transaction', async () => {
 		process.env.ENABLE_AUTHENTICATION = 'true';
-		const res = fakeResponse({ scopes: ['admin:flags:update'], user: { logToId: 'staff-1' } });
+		const res = fakeResponse({
+			scopes: ['admin:flags:update'],
+			staffIdentity: staffIdentity(),
+			user: { logToId: 'staff-1' },
+		});
 		await new FlagsAdminController().putFlag(requestFor('PUT', '/admin/flags', body), res as unknown as Response);
 		expect(res.statusCode).toBe(200);
 		expect(upsert).toHaveBeenCalledWith(
@@ -107,7 +112,11 @@ describe('PUT /admin/flags controller', () => {
 	it('answers 500 and stores nothing when the transactional write fails', async () => {
 		process.env.ENABLE_AUTHENTICATION = 'true';
 		upsert.mockRejectedValueOnce(new Error('audit insert failed'));
-		const res = fakeResponse({ scopes: ['admin:flags:update'], user: { logToId: 'staff-1' } });
+		const res = fakeResponse({
+			scopes: ['admin:flags:update'],
+			staffIdentity: staffIdentity(),
+			user: { logToId: 'staff-1' },
+		});
 		await new FlagsAdminController().putFlag(requestFor('PUT', '/admin/flags', body), res as unknown as Response);
 		expect(res.statusCode).toBe(500);
 	});

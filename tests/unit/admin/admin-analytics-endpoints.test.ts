@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Request, Response } from 'express';
 import { AuthRuleRepository } from '../../../src/middleware/auth/routes/auth-rule-repository.js';
+import { staffIdentity } from './staff-identity-fixture.js';
 import { AdminAuthRuleProvider } from '../../../src/middleware/auth/routes/admin/admin-auth.js';
 import { AccountAuthProvider } from '../../../src/middleware/auth/routes/api/account-auth.js';
 import { KeyAuthProvider } from '../../../src/middleware/auth/routes/api/key-auth.js';
@@ -134,7 +135,7 @@ async function call(
 	} as unknown as Request;
 	for (const validator of validators) await validator.run(request);
 	const response: FakeResponse = {
-		locals: { scopes: options.scopes ?? [] },
+		locals: { scopes: options.scopes ?? [], staffIdentity: staffIdentity() },
 		statusCode: 0,
 		body: undefined,
 		status(code) {

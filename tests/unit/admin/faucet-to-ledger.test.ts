@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { staffIdentity } from './staff-identity-fixture.js';
 import type { Request, Response } from 'express';
 import { AnalyticsAdminController } from '../../../src/controllers/admin/analytics.js';
 import { AdminAnalyticsService, type Queryable } from '../../../src/services/admin/admin-analytics.js';
@@ -115,7 +116,7 @@ describe('GET /admin/analytics/faucet-to-ledger controller', () => {
 		const request = { method: 'GET', query, params: {}, body: {} } as unknown as Request;
 		for (const validator of AnalyticsAdminController.faucetToLedgerValidator) await validator.run(request);
 		const response = {
-			locals: { scopes },
+			locals: { scopes, staffIdentity: staffIdentity() },
 			statusCode: 0,
 			status(code: number) {
 				this.statusCode = code;
