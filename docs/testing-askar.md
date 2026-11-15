@@ -11,8 +11,10 @@ passes when run alone.
 - Production code must not import `@openwallet-foundation/askar-nodejs` or `@credo-ts/askar` statically. Use
   `loadAskar()` from `src/services/identity/engine/credo/askar-native.ts`, which imports both on first call.
   `createCredoRuntime` calls it, so importing the engine, router, factory or a controller never loads the native module.
-- `src/index.ts` awaits `loadAskar()` before the server listens, so a broken native module still stops the boot instead
-  of failing the first Credo request.
+- `src/index.ts` awaits `enforceAskarNative()` before the server listens. It calls Askar's version query, which opens
+  the native library (importing the package does not), so a missing or incompatible binary stops the boot with a
+  one-line reason naming `LIB_ASKAR_PATH` instead of failing the first Credo request. The probe is injectable; unit
+  tests pass a fake (`askar-startup-check.test.ts`) and never load the real library.
 - Unit tests must not load the real package. `tests/unit/identity/credo-engine/askar-lazy-load.test.ts` fails if an
   engine import evaluates it again.
 - A test that genuinely needs the real native module (integration, contract) must run in its own Jest process

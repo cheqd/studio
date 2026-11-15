@@ -8,12 +8,13 @@ import { shutdownCredoRuntime } from './services/identity/engine/credo/index.js'
 import { closeSharedPayerLockSource } from './services/identity/payer-lock-pool.js';
 import { payerWritesInFlightCount } from './services/identity/ledger-lock.js';
 import { flushAnalytics } from './services/analytics/posthog.js';
-import { loadAskar } from './services/identity/engine/credo/askar-native.js';
+import { enforceAskarNative } from './services/identity/engine/credo/askar-native.js';
 
 dotenv.config();
 assertSecureStartup();
-// Fail on boot, not on the first Credo request, if Askar's native module cannot load (it is loaded lazily elsewhere)
-await loadAskar();
+// Fail on boot, not on the first Credo request, if Askar's native library is missing or incompatible: importing the
+// package is lazy and does not open the library, so this calls into it
+await enforceAskarNative();
 
 const port = process.env.PORT || 3000;
 App.set('port', port);

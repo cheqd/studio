@@ -24,6 +24,12 @@ the no-database sample in `docker/no-external-db`. When it is used, start-up log
 set it on a shared or internet-facing deployment. Development, test and the local end-to-end harness run with
 `NODE_ENV` unset and are not affected.
 
+## Askar native library
+
+Start-up opens the Askar native library (`LIB_ASKAR_PATH`, or the package's own `native/` directory, or the system
+library directories) with its version call. If it is missing or incompatible the process exits at once with a one-line
+reason that names `LIB_ASKAR_PATH`; check that first. Without this check the first DID creation would answer `500`.
+
 ## Graceful shutdown
 
 On `SIGTERM` or `SIGINT` the process stops accepting connections, makes `/ready` (also `/readyz`, `/readiness`) answer
