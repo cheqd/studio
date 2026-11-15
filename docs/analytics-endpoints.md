@@ -105,3 +105,61 @@ repeated or overlapping runs are safe. Logs carry counts only.
 
 The other Admin Analytics tabs use existing routes: Overview (`/admin/analytics/overview`, `/funnels`) and Usage
 (`/endpoints`, `/top-accounts`, `/plan-mix`). The funnels lack the portal-event steps; plan mix has no segment filter.
+
+## On-ledger analytics
+
+Only on-ledger behaviour is measured here: creating, updating (including key rotations) and deactivating DIDs, and
+creating DID-Linked Resources. Verifications, presentations and wallet activity are not on the ledger and are not
+covered. Source: the cheqd data API (`LEDGER_INDEXER_SOURCE_URL`, default `https://data-api.cheqd.io`, `/analytics/testnet`
+and `/analytics/mainnet`), filtered by fee payer (always the signer). Both routes need `LEDGER_INDEXER_ENABLED=true`;
+without it every element is `{ "supported": false, "reason": "..." }`. The portal contract is
+`onledger-analytics-contract.md`; this section is the reference.
+
+### Customer: `GET /account/analytics/ledger?range=7|30&kind=all|organisation|agent`
+
+Scope `read:account`. Customer from the session, never a parameter. Default `range=30`, `kind=all`; any other value
+or a repeated parameter is 400. The data is the writes paid from the customer's own payment account(s)
+(`paymentAccount`, testnet and mainnet), so writes made from other addresses are not seen. `kind=agent` is identifiers
+Studio created for agents (`identifier.kind`), `organisation` the rest; identifiers Studio no longer holds count only
+under `all`.
+
+Response (`supported: true`): `{ state: 'ok' | 'empty', range, kind, from, to, networks, tiles: { writes,
+activeIdentifiers, statusListsPublished, resourcesPublished }, series: { days: [{ date, createDid, updateDid,
+deactivateDid, createResource }] }, byIdentifier: { rows (max 50, latest write first: did, kind, lastWriteAt, writes),
+total, unmatchedWrites }, resourcesByType: { rows: [{ resourceType, category, count, latestAt }] }, firstWriteAt,
+lastWriteAt, truncated, generatedAt, notes }`. Days are UTC and zero-filled. A customer with no payer account, or no
+writes ever, gets `state: 'empty'` with real zeros. When the source fails, times out or is switched off the answer is
+`{ supported: false, reason, range, kind, from, to }`, never zeros. No fee or CHEQ figure, address or transaction hash
+is returned to customers; only DIDs Studio holds for the customer.
+
+Bounds: at most `LEDGER_INDEXER_MAX_PAGES` pages of `LEDGER_INDEXER_PAGE_SIZE` per endpoint per payer account
+(`truncated: true` when more exist, so counts are then a lower bound), at most two payer accounts, a 25 second overall
+budget, and an in-memory cache per customer, range and kind for 5 minutes (a failure is remembered for 30 seconds), at
+most 200 entries, concurrent identical calls share one lookup. The source is not called at import or in tests.
+
+### Staff: `GET /admin/analytics/ledger-writes?range=7|30|90`
+
+Scope `admin:analytics:read`, staff policy as for every staff route. Default 30. Funded addresses are the testnet
+faucet cohort (every completed `faucetRequest` address). Sections, each `supported: true` or
+`{ supported: false, reason }`:
+
+- `writes`: `days` (zero-filled, per UTC day, by `createDid`, `updateDid`, `deactivateDid`, `createResource`, `total`)
+  and `totals`.
+- `retention`: of funded addresses whose first write falls in the range, the share still writing 1, 2 and 4 weeks
+  after it. Week k is the 7-day bucket from D0+7k to D0+7k+6 (UTC, D0 the UTC day of the first write); only addresses
+  whose bucket ended before today and lies in their stored history are `eligible`; `share = retained / eligible`
+  (`null` when nobody is eligible). The definition is returned in `definition`.
+- `fees`: total CHEQ fees by operation type, split into `studioPayerAccounts` (an address held in a Studio
+  `paymentAccount`) and `otherAddresses` (SDK). **Exact, not estimated**: the data API item carries `amount`, the fee in
+  CHEQ, which equals the transaction fee (checked against the node REST for one transaction). Failed transactions are
+  not in the source, so fees burnt on them are not counted. Each `Fee` is `{ writes, ncheq, cheq }` (`ncheq` an exact
+  integer string).
+- `channels`: `studioWrites`, `otherWrites`, `studioShare` and the number of writing addresses of each kind.
+
+Stored per-day data: `ledgerAddressDaily` (address, UTC day, operation type, resource type, count, fees in ncheq),
+filled by the existing sync (same batch and page bounds, one statement per address so it is idempotent), plus
+`dailySyncedAt` and `dailyCompleteFrom` on `ledgerAddressActivity`. An address with more writes than the page bound
+keeps its newest days complete and records the first complete day; an address counts as covered for a range only if its
+per-day history is stored and complete from the start of the range. `coverage` reports funded versus covered addresses;
+below `LEDGER_INDEXER_MIN_COVERAGE_PERCENT` every section is unsupported. Existing rows are backfilled by the next
+sync, so coverage climbs as it runs.

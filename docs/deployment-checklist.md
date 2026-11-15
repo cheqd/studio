@@ -81,6 +81,18 @@ does not start once shutdown has begun. `/health` (also `/healthz`, `/live`, `/l
       with no published rate limit or SLA: if it is down the sync backs off and the route keeps its previous answer.
       Rollback: set `LEDGER_INDEXER_ENABLED=false` (the route reverts to Studio-recorded figures at once); the table
       can stay.
+- [ ] On-ledger analytics (same switch). Run the migration `1791702300000` after `1791702200000`: it adds the table
+      `ledgerAddressDaily` and two nullable columns on `ledgerAddressActivity` (expand-only, additive, reversible with
+      its `down`). The sync now stores per-day writes and fees for each funded address, so each address check does one
+      more statement of the same size and the first full pass after the deploy re-checks every address (existing rows
+      have no per-day data yet): expect the staff route `/admin/analytics/ledger-writes` to answer `supported: false`
+      until `LEDGER_INDEXER_MIN_COVERAGE_PERCENT` of the funded addresses are covered. The customer route
+      `/account/analytics/ledger` calls the data API on demand (cached 5 minutes per customer, bounded by
+      `LEDGER_INDEXER_MAX_PAGES`, `LEDGER_INDEXER_PAGE_SIZE`, `LEDGER_INDEXER_TIMEOUT_SECONDS`) for the customer's own
+      payer addresses on testnet and mainnet, so with `LEDGER_INDEXER_ENABLED=true` the pod needs outbound HTTPS to
+      `LEDGER_INDEXER_SOURCE_URL`; with it off the route answers `supported: false`. No new variable, no new scope
+      (`read:account` and `admin:analytics:read`). Rollback: `LEDGER_INDEXER_ENABLED=false`; the table and columns can
+      stay, or run the migration `down`.
 
 Health, readiness (`/health`, `/healthz`, `/ready`, `/readyz`, `/readiness`, `/live`, `/livez`) and the Swagger paths
 are never rate limited.

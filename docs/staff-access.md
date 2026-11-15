@@ -19,7 +19,7 @@ A refusal answers `403` with the same generic message for every reason. The reas
 | Route | Scope |
 | --- | --- |
 | `GET /admin/customers`, `GET /admin/customers/{id}` | `admin:customers:read` |
-| `GET /admin/analytics/overview`, `endpoints`, `top-accounts`, `plan-mix`, `funnels`, `faucet-to-ledger` | `admin:analytics:read` |
+| `GET /admin/analytics/overview`, `endpoints`, `top-accounts`, `plan-mix`, `funnels`, `faucet-to-ledger`, `ledger-writes` | `admin:analytics:read` |
 | `GET /admin/audit-log` | `admin:audit:read` |
 | `DELETE /admin/organisation/delete` | `admin:organisation:delete` |
 | `PUT /admin/flags` | `admin:flags:update` |
