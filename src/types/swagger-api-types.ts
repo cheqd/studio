@@ -2367,6 +2367,13 @@
  *         error:
  *           type: string
  *           example: Unauthorized Error
+ *     NotFoundError:
+ *       description: The resource was not found, or it is not owned by the caller. Both cases answer identically.
+ *       type: object
+ *       properties:
+ *         error:
+ *           type: string
+ *           example: Not found
  *     ListAccreditationResult:
  *       type: object
  *       properties:
