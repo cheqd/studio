@@ -11,6 +11,7 @@ import {
 	DidRepository,
 	DidsModule,
 	InMemoryLruCache,
+	JsonLdModule,
 	JsonTransformer,
 	Kms,
 	StorageVersionRecord,
@@ -22,6 +23,7 @@ import type { PrivateKeyStore } from '@veramo/data-store';
 import { VeramoKeyManagementStorage } from '../../credo/VeramoKeyManagementStorage.js';
 import type { EngineDidDocument, EngineDidResolution } from '../types.js';
 import { credentialSession } from './credential-session.js';
+import { createSafeDocumentLoader } from './safe-document-loader.js';
 import { publicKeyHexFromJwk, veramoTypeFromJwk } from './key-material.js';
 import { createStatusListSession } from './status-lists-session.js';
 import type { CredoRuntime, CredoTenantSession, DidOperationResult } from './ports.js';
@@ -243,6 +245,8 @@ export async function createCredoRuntime(options: CredoRuntimeOptions): Promise<
 			// tenant (verifying a credential) fails with "SingleContextStorageLruCache can not be used with multiple
 			// agent context instances". An in-memory cache is shared by all tenants; what it holds is public ledger data.
 			cache: new CacheModule({ cache: new InMemoryLruCache({ limit: 500 }) }),
+			// Remote JSON-LD contexts are fetched through safeFetch, never through the agent's own fetch
+			jsonLd: new JsonLdModule({ documentLoader: createSafeDocumentLoader() }),
 			kms: new Kms.KeyManagementModule({ backends: [new NodeKeyManagementService(keyStorage)] }),
 			tenants: new TenantsModule({ sessionLimit: options.sessionLimit ?? 100, sessionAcquireTimeout: 10_000 }),
 			cheqd: new CheqdModule({
