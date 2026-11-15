@@ -13,7 +13,13 @@ export const APPLICATION_BASE_URL = process.env.APPLICATION_BASE_URL || 'http://
 export const CORS_ALLOWED_ORIGINS = process.env.CORS_ALLOWED_ORIGINS || APPLICATION_BASE_URL;
 export const API_KEY_PREFIX = 'caas';
 export const API_SECRET_KEY_LENGTH = 64;
+// Default lifetime, in days, of an API key created without an explicit expiry.
 export const API_KEY_EXPIRATION = 30;
+// Longest lifetime, in days, the create and update routes accept for a requested expiry.
+export const API_KEY_MAX_EXPIRATION_DAYS = (() => {
+	const parsed = Number.parseInt(process.env.API_KEY_MAX_EXPIRATION_DAYS ?? '', 10);
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : 730;
+})();
 // Possible cases 'trace' 'debug' 'info' 'warn' 'error';
 export const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 
