@@ -7228,7 +7228,7 @@
           "Verifiable Credentials"
         ],
         "summary": "Update an issued credential metadata.",
-        "description": "This endpoint updates metadata for an issued credential. It allows updating providerCredentialId, status, and providerMetadata fields.",
+        "description": "This endpoint updates metadata for an issued credential. It allows updating only providerCredentialId, status, and providerMetadata. Any other field is rejected with 400 invalid_request.",
         "parameters": [
           {
             "in": "path",
@@ -7263,7 +7263,8 @@
                     "type": "object",
                     "description": "Additional provider-specific metadata."
                   }
-                }
+                },
+                "additionalProperties": false
               }
             }
           }

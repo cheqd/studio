@@ -5,6 +5,7 @@ import { StatusCodes } from 'http-status-codes';
 import { check, query } from '../validator/index.js';
 
 import { Credentials } from '../../services/api/credentials.js';
+import { validateIssuedCredentialUpdate } from '../../helpers/issued-credential-update.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { statusListArtifactFromCredential } from '../../services/identity/engine/artifact-refs.js';
 import { CheqdW3CVerifiableCredential } from '../../services/w3c-credential.js';
@@ -14,7 +15,6 @@ import type {
 	IssueCredentialResponseBody,
 	UpdateCredentialRequestBody,
 	UpdateCredentialRequestQuery,
-	UpdateIssuedCredentialRequestBody,
 	UpdateIssuedCredentialResponseBody,
 	RevokeCredentialResponseBody,
 	SuspendCredentialResponseBody,
@@ -896,7 +896,7 @@ export class CredentialController {
 	 *   put:
 	 *     tags: [ Verifiable Credentials ]
 	 *     summary: Update an issued credential metadata.
-	 *     description: This endpoint updates metadata for an issued credential. It allows updating providerCredentialId, status, and providerMetadata fields.
+	 *     description: This endpoint updates metadata for an issued credential. It allows updating only providerCredentialId, status, and providerMetadata. Any other field is rejected with 400 invalid_request.
 	 *     parameters:
 	 *       - in: path
 	 *         name: id
@@ -920,6 +920,7 @@ export class CredentialController {
 	 *               providerMetadata:
 	 *                 type: object
 	 *                 description: Additional provider-specific metadata.
+	 *             additionalProperties: false
 	 *     responses:
 	 *       200:
 	 *         description: The request was successful.
@@ -952,10 +953,17 @@ export class CredentialController {
 	 */
 	public async updateIssuedCredential(request: Request, response: Response) {
 		const id = Array.isArray(request.params.id) ? request.params.id[0] : (request.params.id as string);
-		const updateData = request.body as UpdateIssuedCredentialRequestBody;
+		const validated = validateIssuedCredentialUpdate(request.body);
+		if (!validated.ok) {
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				success: false,
+				error: validated.error,
+				code: 'invalid_request',
+			});
+		}
 
 		try {
-			const result = await Credentials.instance.update(id, updateData, response.locals.customer);
+			const result = await Credentials.instance.update(id, validated.value, response.locals.customer);
 
 			if (!result) {
 				return response.status(StatusCodes.NOT_FOUND).json({

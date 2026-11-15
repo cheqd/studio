@@ -770,11 +770,19 @@ export class Credentials {
 			return null;
 		}
 
-		// Update the entity
-		const updatePayload: any = {
-			...updateData,
-			updatedAt: new Date(),
-		};
+		// Update the entity. Only the allow-listed fields are copied: the caller's object is never spread into the update.
+		const updatePayload: Partial<IssuedCredentialEntity> = { updatedAt: new Date() };
+		if (updateData.providerCredentialId !== undefined)
+			updatePayload.providerCredentialId = updateData.providerCredentialId;
+		if (updateData.status !== undefined) updatePayload.status = updateData.status;
+		if (updateData.metadata !== undefined) {
+			// Server-written migration bookkeeping is not caller-controlled
+			const migratedFrom = entity.metadata?.migratedFrom;
+			updatePayload.metadata = {
+				...updateData.metadata,
+				...(migratedFrom !== undefined ? { migratedFrom } : {}),
+			};
+		}
 
 		// If status is being updated, also update statusUpdatedAt
 		if (updateData.status) {
