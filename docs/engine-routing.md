@@ -1,8 +1,12 @@
 # Engine routing
 
 Every identity operation that signs, verifies, reads the ledger or stores a key reaches its engine through the
-`EngineRouter` (`src/services/identity/engine/engine-router.ts`). Veramo is the default engine, so with no feature flag
-and no `engine` column set every request is answered by Veramo exactly as before.
+`EngineRouter` (`src/services/identity/engine/engine-router.ts`).
+
+**Veramo is retired for new artefacts (decision of 15 November 2026).** Existing artefacts keep working on Veramo, and
+the engine recorded on an artefact always decides. A NEW DID, key, status list or credential goes to Credo, whatever
+the `featureFlag` table says (see "Veramo retired for new artefacts" below). The migration design is in
+`docs/veramo-retirement.md`.
 
 ## How a call site selects an engine
 
@@ -18,8 +22,14 @@ const service = await setup.routed(route, artifact, hints); // same engine, type
   - `{ kind: 'did', id: <did> }` reads `identifier.engine`
   - `{ kind: 'status-list', id: <statusRegistry.registryId> }` reads `statusRegistry.engine`
   - `{ kind: 'credential', id: <issuedCredential.issuedCredentialId> }` reads `issuedCredential.engine`
-  - No artifact means a new artifact: the `featureFlag` for the customer and route, else `veramo`.
-- `hints` carries what the router needs for its exceptions: `keyType` (P-256 / `Secp256r1` / `JsonWebKey` always goes
+  - No artifact and `hints.creates` means a new artifact: Credo (unless the temporary override below is on).
+  - No artifact and no `creates` means a call that creates nothing and names nothing (verify, list, key read,
+    presentation, received credentials): the legacy choice, the `featureFlag`, else `veramo`. Those calls cannot be
+    moved to Credo before the artefacts they act on have moved.
+- `hints.creates` is set by every call site that creates a new artefact: `POST /key/create`, `POST /key/import`, the key
+  made inside `POST /did/create`, `POST /did/create`, `POST /did/import`, and status-list creation. A credential is
+  signed by its issuer DID's engine, and an issuer DID Studio has no record of (`flagWhenUnrecorded`) counts as new.
+- `hints` also carries what the router needs for its exceptions: `keyType` (P-256 / `Secp256r1` / `JsonWebKey` always goes
   to Credo) and `encryptedStatusList` (creation answers `Gone`, 410, on every engine).
 - `src/services/identity/engine/artifact-refs.ts` turns what a caller knows (a DID and a status-list name, or a
   credential) into the artifact reference. With no external database, no row, or a schema that predates the table they
@@ -27,8 +37,37 @@ const service = await setup.routed(route, artifact, hints); // same engine, type
   so the request is refused with `EngineRoutingUnavailable` (503, retryable) instead of being answered by Veramo.
 - The same holds in the router: a failed artifact-engine lookup, an unrecognised recorded engine, or a failed flag
   read with no last-known value is refused with 503 (and logged as `engine-routing-failed`). A flag read that fails
-  while a last-known value exists keeps using that value (logged as `flag-read-failed`). The compiled default
-  (`veramo`) applies only when the lookup worked and found no record or flag.
+  while a last-known value exists keeps using that value (logged as `flag-read-failed`). For an existing record the
+  legacy default (`veramo`) applies only when the lookup worked and found a row with an empty `engine` column.
+- A new artefact does not read the flag table at all while the override is off, so a flag outage cannot fail a create.
+
+## Veramo retired for new artefacts
+
+| Situation | Engine |
+|---|---|
+| New DID, key, status list; credential or resource under an issuer or DID Studio has no record of | `credo` |
+| Existing artefact with `engine = 'credo'` | `credo` |
+| Existing artefact with `engine = 'veramo'` (update, deactivate, revoke, suspend, reinstate, verify, export) | `veramo` |
+| Existing artefact with an empty `engine` column (legacy row) | `veramo` |
+| `featureFlag` row of `credo` for a new artefact | `credo` (same as the default) |
+| `featureFlag` row of `veramo` for a new artefact | `credo`, unless the temporary override is on |
+
+**Temporary escape hatch (one release).** Removing the Veramo option entirely could strand a customer whose Credo
+tenant, payer key or database is not provisioned yet, so it is kept as an explicit, logged, off-by-default override. It
+needs both:
+
+1. the environment variable `VERAMO_NEW_ARTEFACT_OVERRIDE=true` on the instances, and
+2. a `featureFlag` engine row of `veramo` for the customer and route (`PUT /admin/flags`).
+
+Each new artefact the override sends to Veramo writes a `veramo-new-artefact-override` warning (route family and
+customer id) to the log. Without the variable a `veramo` row is stored but ignored; `PUT /admin/flags` answers with a
+`warning` saying so, and `GET /flags` shows `credo`. The override never moves an existing artefact. Remove the variable,
+`src/services/identity/engine/new-artefact-policy.ts` and the `veramo` option from `validateFlagWrite` after the release.
+
+**Still created on Veramo, not through the router** (listed so none is missed; each needs a Credo-side decision first,
+see `docs/veramo-retirement.md`): the customer's payment-account key (Secp256k1) made in `customer.ts` and the account
+bootstrap; the Dock hand-off DID import (`dock/identity.ts`); and the holder wallet copy of an issued credential
+(`saveCredential`, `received-credentials`), which writes to Veramo's data store.
 
 ## Routes
 
@@ -37,7 +76,7 @@ existing service, so wiring changes no request, response or status code.
 
 | Route | Family | Artifact reference | Wired |
 |---|---|---|---|
-| `POST /key/create` | `key` | none (new); `keyType` hint, so P-256 / `Secp256r1` / `JsonWebKey` go to Credo | Yes |
+| `POST /key/create` | `key` | none (new, `creates`): Credo; `keyType` hint, so P-256 / `Secp256r1` / `JsonWebKey` always go to Credo | Yes |
 | `POST /key/import` | `key` | none (new); `keyType` hint | Yes |
 | `GET /key/read/:kid` | `key` | none (keys have no artifact kind; the `key` table is shared by both engines) | Yes |
 | `GET /key/:kid/verification-method` | `key` | none, as above | Yes |
@@ -52,7 +91,7 @@ existing service, so wiring changes no request, response or status code.
 | `POST /providers/:providerId/did/import` (Dock hand-off export, in `dock/identity.ts`) | `did` | `did` | Yes |
 | `POST /resource/create/:did` | `resource` | `did` (the DID owning the resource) | Yes |
 | `GET /resource/list` | `resource` | `did` when the `did` filter is given, else none | Yes |
-| `POST /credential/issue` | `credential` | `did` (the issuer DID): its recorded engine signs; the `credential` flag applies only when Studio has no record of the issuer | Yes |
+| `POST /credential/issue` | `credential` | `did` (the issuer DID): its recorded engine signs; an issuer Studio has no record of is a new artefact (Credo) | Yes |
 | `POST /credentials/issued/:id/re-issue`, accreditation issue | `credential` | none (new) | Yes (already, through `issue_credential`) |
 | `POST /credential/verify` | `credential` | none | Yes |
 | Issued-credential status sync (`syncStatusFromProvider`, run when issued credentials are read) | `status-list` | `credential` | Yes |
@@ -104,8 +143,9 @@ existing service, so wiring changes no request, response or status code.
   better long-term fix is for the Credo store to write `meta` and return the row, after which the shaper can go.
 - **Status operations look up the status list first.** One extra read of `statusRegistry` per request (only with
   `ENABLE_EXTERNAL_DB=true`), to find the artifact. Failure of that read is swallowed and means "Veramo".
-- **An existing artifact with no recorded row** (for example a legacy status list with no `statusRegistry` row) is
-  treated as new and follows the flag. Harmless while no flag is set; revisit before flags go on.
+- **An existing artifact with no recorded row** is treated as new only where the call site says so
+  (`flagWhenUnrecorded`: the issuer DID of a credential), and then goes to Credo. A status list with no `statusRegistry`
+  row is looked up as existing and falls back to `veramo`, as before.
 
 ## Recording the engine on new artefacts
 
