@@ -69,4 +69,11 @@ describe('requireFreshSignIn', () => {
 		process.env.FRESH_SIGNIN_MAX_AGE_SECONDS = 'garbage';
 		expect(getFreshSignInMaxAgeSeconds()).toBe(300);
 	});
+
+	it('falls back to 300 for 0, -5 and abc', () => {
+		for (const value of ['0', '-5', 'abc']) {
+			process.env.FRESH_SIGNIN_MAX_AGE_SECONDS = value;
+			expect(getFreshSignInMaxAgeSeconds()).toBe(300);
+		}
+	});
 });
