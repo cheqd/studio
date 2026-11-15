@@ -343,6 +343,11 @@ class App {
 			CustomerAnalyticsController.analyticsValidator,
 			customerAnalytics.individuals.bind(customerAnalytics)
 		);
+		app.get(
+			'/account/analytics/ledger',
+			CustomerAnalyticsController.ledgerValidator,
+			customerAnalytics.ledger.bind(customerAnalytics)
+		);
 		app.get('/account/balances', new AccountController().getBalances);
 		app.post('/account/export-keys', new AccountController().exportKeys);
 		app.delete('/account', new AccountController().delete);

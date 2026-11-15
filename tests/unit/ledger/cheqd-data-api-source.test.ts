@@ -126,3 +126,90 @@ describe('CheqdDataApiSource', () => {
 		expect(fetcher).not.toHaveBeenCalled();
 	});
 });
+
+describe('CheqdDataApiSource writes and extent', () => {
+	const didItem = (operationType: string, createdAt: string, amount = 2.5) => ({
+		operationType,
+		createdAt,
+		didId: 'did:cheqd:testnet:x',
+		amount,
+		denom: 'CHEQ',
+		transactionHash: 'ABC',
+	});
+
+	it('lists writes with the fee in ncheq, queries the network it is asked for, and drops unknown operations', async () => {
+		const { fetcher, urls } = fakeApi((endpoint) =>
+			endpoint === 'did'
+				? {
+						body: {
+							totalCount: 2,
+							items: [
+								didItem('updateDid', '2026-03-05T09:00:00.000Z', 2342.314809118),
+								didItem('mystery', '2026-03-05T08:00:00.000Z'),
+							],
+						},
+					}
+				: {
+						body: {
+							totalCount: 1,
+							items: [
+								{
+									resourceType: 'anonCredsStatusList',
+									createdAt: '2026-03-05T10:00:00.000Z',
+									didId: 'did:cheqd:testnet:x',
+									amount: 1,
+								},
+							],
+						},
+					}
+		);
+		const list = await new CheqdDataApiSource(options(fetcher)).writes('cheqd1test', since, 'mainnet');
+		expect(urls.every((u) => u.pathname.startsWith('/analytics/mainnet/'))).toBe(true);
+		expect(list.total).toBe(3);
+		expect(list.capped).toBe(false);
+		expect(list.writes.map((w) => [w.operation, w.resourceType, w.feeNcheq])).toEqual([
+			['updateDid', null, 2342314809118],
+			['createResource', 'anonCredsStatusList', 1_000_000_000],
+		]);
+		expect(JSON.stringify(list)).not.toContain('ABC');
+	});
+
+	it('reads at most maxPages pages per endpoint and says so', async () => {
+		const { fetcher, urls } = fakeApi((endpoint, page) => ({
+			body: {
+				totalCount: endpoint === 'did' ? 10 : 0,
+				items: [didItem('createDid', `2026-03-0${page}T09:00:00.000Z`)],
+			},
+		}));
+		const list = await new CheqdDataApiSource(options(fetcher)).writes('cheqd1test', since, 'testnet');
+		expect(list.capped).toBe(true);
+		expect(list.total).toBe(10);
+		expect(urls.filter((u) => u.pathname.endsWith('/did'))).toHaveLength(2);
+	});
+
+	it('finds the first and last write with two requests per endpoint, and throws when the source fails', async () => {
+		const { fetcher, urls } = fakeApi((endpoint, page) =>
+			endpoint === 'did'
+				? {
+						body: {
+							totalCount: 5,
+							items: [
+								didItem(
+									'createDid',
+									page === 1 ? '2026-11-01T00:00:00.000Z' : '2026-02-01T00:00:00.000Z'
+								),
+							],
+						},
+					}
+				: { body: { totalCount: 0, items: [] } }
+		);
+		const extent = await new CheqdDataApiSource(options(fetcher)).extent('cheqd1test', 'testnet');
+		expect(extent.firstWriteAt?.toISOString()).toBe('2026-02-01T00:00:00.000Z');
+		expect(extent.lastWriteAt?.toISOString()).toBe('2026-11-01T00:00:00.000Z');
+		expect(urls.filter((u) => u.searchParams.get('limit') === '1')).toHaveLength(3);
+		const failing = fakeApi(() => ({ status: 503, body: {} }));
+		await expect(new CheqdDataApiSource(options(failing.fetcher)).extent('cheqd1test', 'testnet')).rejects.toThrow(
+			DataApiHttpError
+		);
+	});
+});

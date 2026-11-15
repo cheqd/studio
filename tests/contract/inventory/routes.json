@@ -1,5 +1,5 @@
 {
-	"generatedFrom": "5895200",
+	"generatedFrom": "4ed53e9",
 	"generatedBy": "npx tsx tests/contract/scripts/generate-inventory.ts",
 	"routes": [
 		{
@@ -76,6 +76,20 @@
 			"id": "GET /account/analytics/individuals",
 			"method": "GET",
 			"path": "/account/analytics/individuals",
+			"surface": "api",
+			"auth": "scoped",
+			"scopes": ["read:account"],
+			"tier": 2,
+			"sideEffect": "read-only",
+			"sensitive": false,
+			"stripeOnly": false,
+			"inRouteTable": true,
+			"inOpenApi": true
+		},
+		{
+			"id": "GET /account/analytics/ledger",
+			"method": "GET",
+			"path": "/account/analytics/ledger",
 			"surface": "api",
 			"auth": "scoped",
 			"scopes": ["read:account"],

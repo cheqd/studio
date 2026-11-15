@@ -210,7 +210,7 @@ describe('customer analytics auth rules', () => {
 	repository.push(new AdminAuthRuleProvider());
 	const requestFor = (method: string, path: string) => ({ method, path }) as unknown as Request;
 
-	it.each(['/account/analytics/agents', '/account/analytics/individuals'])(
+	it.each(['/account/analytics/agents', '/account/analytics/individuals', '/account/analytics/ledger'])(
 		'GET %s needs read:account and is not anonymous',
 		(path) => {
 			const rule = repository.match(requestFor('GET', path));

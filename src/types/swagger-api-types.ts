@@ -2178,6 +2178,78 @@
  *         notes:
  *           type: array
  *           items: { type: string }
+ *     CustomerLedgerAnalyticsResponse:
+ *       type: object
+ *       description: >-
+ *         Either `{ supported: false, reason, range, kind, from, to }` (the ledger data source is off or cannot be
+ *         read: not zero) or the full shape below. `state` is `empty` when the customer has no payer account or has
+ *         never written. No fee or CHEQ figure is ever returned to customers.
+ *       properties:
+ *         supported: { type: boolean }
+ *         reason: { type: string }
+ *         state: { type: string, enum: [ok, empty] }
+ *         range: { type: integer, enum: [7, 30] }
+ *         kind: { type: string, enum: [all, organisation, agent] }
+ *         from: { type: string, example: '2026-10-17' }
+ *         to: { type: string, example: '2026-11-15' }
+ *         networks:
+ *           type: array
+ *           items: { type: string, enum: [testnet, mainnet] }
+ *         tiles:
+ *           type: object
+ *           properties:
+ *             writes: { type: integer }
+ *             activeIdentifiers: { type: integer }
+ *             statusListsPublished: { type: integer }
+ *             resourcesPublished: { type: integer }
+ *         series:
+ *           type: object
+ *           properties:
+ *             days:
+ *               type: array
+ *               description: One entry per UTC day of the range, zero-filled. Key rotations are updateDid.
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   date: { type: string }
+ *                   createDid: { type: integer }
+ *                   updateDid: { type: integer }
+ *                   deactivateDid: { type: integer }
+ *                   createResource: { type: integer }
+ *         byIdentifier:
+ *           type: object
+ *           properties:
+ *             rows:
+ *               type: array
+ *               description: At most 50, most recent write first.
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   did: { type: string }
+ *                   kind: { type: string, enum: [organisation, agent] }
+ *                   lastWriteAt: { type: string, format: date-time }
+ *                   writes: { type: integer }
+ *             total: { type: integer }
+ *             unmatchedWrites: { type: integer }
+ *         resourcesByType:
+ *           type: object
+ *           properties:
+ *             rows:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   resourceType: { type: string, description: As the ledger reports it. }
+ *                   category: { type: string, enum: [status-list, schema, credential-definition, card, other] }
+ *                   count: { type: integer }
+ *                   latestAt: { type: string, format: date-time }
+ *         firstWriteAt: { type: string, format: date-time, nullable: true }
+ *         lastWriteAt: { type: string, format: date-time, nullable: true }
+ *         truncated: { type: boolean, description: More writes exist than are read at once; counts are a lower bound. }
+ *         generatedAt: { type: string, format: date-time }
+ *         notes:
+ *           type: array
+ *           items: { type: string }
  *     AccountNetworkBalance:
  *       type: object
  *       nullable: true

@@ -8,6 +8,13 @@ import {
 	type CustomerAnalytics,
 	type CustomerRange,
 } from '../../services/analytics/customer-analytics.js';
+import {
+	CustomerLedgerAnalyticsService,
+	LEDGER_KINDS,
+	LEDGER_RANGES,
+	type LedgerKind,
+	type LedgerRange,
+} from '../../services/analytics/customer-ledger-analytics.js';
 
 const rangeValidator = query('range')
 	.optional()
@@ -15,15 +22,34 @@ const rangeValidator = query('range')
 	.withMessage(`range must be one of: ${CUSTOMER_RANGES.join(', ')} (days)`)
 	.bail();
 
+/** A query parameter that must appear once, as a string from a fixed list: a repeated parameter is a 400, not a 500. */
+const singleChoice = (name: string, allowed: readonly (string | number)[], fallback: string) =>
+	query(name)
+		.optional()
+		.custom((value) => typeof value === 'string' && allowed.map(String).includes(value))
+		.withMessage(
+			`${name} must be given once and be one of: ${allowed.join(', ')}${name === 'range' ? ' (days)' : ''}`
+		)
+		.bail()
+		.default(fallback);
+
 /**
  * Analytics for the signed-in customer, for the portal's Analytics page. The customer is always the authenticated
  * one (`response.locals.customer`); no parameter can name another. Counts only. Elements Studio cannot measure are
  * returned as `{ supported: false, reason }`, never as zero. Needs the `read:account` scope.
  */
 export class CustomerAnalyticsController {
-	constructor(private readonly service: () => CustomerAnalyticsService = () => CustomerAnalyticsService.instance) {}
+	constructor(
+		private readonly service: () => CustomerAnalyticsService = () => CustomerAnalyticsService.instance,
+		private readonly ledgerService: () => CustomerLedgerAnalyticsService = () =>
+			CustomerLedgerAnalyticsService.instance
+	) {}
 
 	public static analyticsValidator = [rangeValidator];
+	public static ledgerValidator = [
+		singleChoice('range', LEDGER_RANGES, '30'),
+		singleChoice('kind', LEDGER_KINDS, 'all'),
+	];
 
 	private async run(
 		request: Request,
@@ -121,5 +147,58 @@ export class CustomerAnalyticsController {
 	@validate
 	public async individuals(request: Request, response: Response) {
 		return this.run(request, response, (customerId, range) => this.service().individuals(customerId, range));
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /account/analytics/ledger:
+	 *   get:
+	 *     tags: [Account]
+	 *     summary: Your on-ledger activity.
+	 *     description: >-
+	 *       Writes to the cheqd ledger paid from your own Studio payer account(s) over the last 7 or 30 whole UTC
+	 *       days (including today): tiles, a per-day series by write type (key rotations are DID updates), a table by
+	 *       identifier, a table by resource type, and your first and last write. Counts only: no fee or CHEQ figure,
+	 *       no credential content. A customer with no payer account or no writes gets `state: empty`. When the ledger
+	 *       data source cannot be read the answer is `{ supported: false, reason }`, never zeros. Cached for about
+	 *       five minutes.
+	 *     parameters:
+	 *       - in: query
+	 *         name: range
+	 *         schema: { type: integer, enum: [7, 30], default: 30 }
+	 *       - in: query
+	 *         name: kind
+	 *         description: Which identifiers to count. `agent` is DIDs created for agents, `organisation` the rest.
+	 *         schema: { type: string, enum: [all, organisation, agent], default: all }
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/CustomerLedgerAnalyticsResponse'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	@validate
+	public async ledger(request: Request, response: Response) {
+		const customerId = response.locals.customer?.customerId as string | undefined;
+		if (!customerId) {
+			return response.status(StatusCodes.UNAUTHORIZED).json({ error: 'Unauthorized Error' });
+		}
+		try {
+			const range = Number(request.query.range ?? 30) as LedgerRange;
+			const kind = (request.query.kind ?? 'all') as LedgerKind;
+			return response.status(StatusCodes.OK).json(await this.ledgerService().ledger(customerId, range, kind));
+		} catch (error) {
+			return response
+				.status(StatusCodes.INTERNAL_SERVER_ERROR)
+				.json({ error: `Internal error: ${(error as Error)?.message || error}` });
+		}
 	}
 }
