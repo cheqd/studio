@@ -545,14 +545,33 @@ describe('verifyPresentation', () => {
 		});
 	});
 
-	it('accepts the presentation’s own nonce when the verifier supplies no challenge, and says so', async () => {
-		const result = await h.engine.verifyPresentation(presentationJwt, {}, alice);
-		expect(result.verified).toBe(true);
-		expect(h.runtime.credentialState.verifyPresentationCalls[0].challenge).toBe('abc');
-		expect(result.warnings).toEqual([expect.stringContaining('No challenge was supplied')]);
+	it('refuses a presentation when the verifier supplies no challenge, instead of using its own nonce', async () => {
+		await expect(h.engine.verifyPresentation(presentationJwt, { domain: 'verifier' }, alice)).rejects.toMatchObject(
+			{
+				name: 'PresentationBindingRequiredError',
+				code: 'invalid_request',
+				status: 400,
+			}
+		);
+		await expect(
+			h.engine.verifyPresentation(presentationJwt, { domain: 'verifier', challenge: '' } as never, alice)
+		).rejects.toMatchObject({ code: 'invalid_request' });
+		expect(h.runtime.credentialState.verifyPresentationCalls).toHaveLength(0);
+	});
 
-		await h.engine.verifyPresentation(presentationJwt, { challenge: 'abc' } as never, alice);
-		expect(h.runtime.credentialState.verifyPresentationCalls[1].challenge).toBe('abc');
+	it('refuses a presentation with no domain, unless the audience policy is explicitly switched off', async () => {
+		await expect(
+			h.engine.verifyPresentation(presentationJwt, { challenge: 'abc' } as never, alice)
+		).rejects.toMatchObject({ code: 'invalid_request', missing: 'domain' });
+		expect(h.runtime.credentialState.verifyPresentationCalls).toHaveLength(0);
+
+		const result = await h.engine.verifyPresentation(
+			presentationJwt,
+			{ challenge: 'abc', policies: { audience: false } } as never,
+			alice
+		);
+		expect(result.verified).toBe(true);
+		expect(h.runtime.credentialState.verifyPresentationCalls[0]).toMatchObject({ challenge: 'abc' });
 	});
 
 	it('checks the status of the credentials inside it with verifyStatus', async () => {
@@ -577,7 +596,11 @@ describe('verifyPresentation', () => {
 		})}.${vp.signature}`;
 
 		h.runtime.credentialState.status = [{ ...validStatus('u'), revoked: true, valid: false }];
-		const result = await h.engine.verifyPresentation(withRevocable, { verifyStatus: true }, alice);
+		const result = await h.engine.verifyPresentation(
+			withRevocable,
+			{ verifyStatus: true, challenge: 'abc', domain: 'verifier' } as never,
+			alice
+		);
 		expect(result).toMatchObject({ verified: false, error: { errorCode: 'revoked' } });
 		expect(h.runtime.credentialState.statusCalls).toHaveLength(1);
 	});

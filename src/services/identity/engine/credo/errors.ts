@@ -80,3 +80,22 @@ export function asTenantMissing(tenantId: string, error: unknown): unknown {
 		? new CredoTenantMissingError(tenantId)
 		: error;
 }
+
+/**
+ * A presentation was submitted for verification without the verifier's own challenge (or, unless the audience check
+ * is switched off by policy, without the domain it is meant for). The presentation's own nonce is never used in its
+ * place: that would make the check succeed for any presentation and give no replay or audience protection.
+ */
+export class PresentationBindingRequiredError extends Error {
+	readonly status = 400;
+	readonly code = 'invalid_request';
+
+	constructor(readonly missing: 'challenge' | 'domain') {
+		super(
+			missing === 'challenge'
+				? 'challenge is required: pass the challenge you issued to the holder'
+				: 'verifierDid is required as the domain the presentation was made for, unless policies.audience is false'
+		);
+		this.name = 'PresentationBindingRequiredError';
+	}
+}

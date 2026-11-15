@@ -89,6 +89,8 @@ export class CommonReturn implements IReturn {
 export interface VerificationOptions {
 	fetchRemoteContexts?: boolean;
 	domain?: string;
+	/** The verifier's own challenge for a presentation */
+	challenge?: string;
 	verifyStatus?: boolean;
 	policies?: VerificationPolicies;
 	allowDeactivatedDid?: boolean;

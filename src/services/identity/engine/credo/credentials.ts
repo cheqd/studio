@@ -18,7 +18,12 @@ import type {
 	JsonValue,
 } from '../types.js';
 import type { CredoVerification, LegacyStatusOutcome } from './credential-ports.js';
-import { CredoNotSupportedError, CredoOwnershipError, NotImplementedByEngineError } from './errors.js';
+import {
+	CredoNotSupportedError,
+	CredoOwnershipError,
+	NotImplementedByEngineError,
+	PresentationBindingRequiredError,
+} from './errors.js';
 import {
 	assembleJwt,
 	compactJwtOf,
@@ -215,9 +220,9 @@ export class CredoCredentials {
 					: []
 		).map((credential) => compactJwtOf(credential) ?? (credential as JsonValue));
 		// Credo reads a JWT presentation only if it carries a `nonce`, so one with no challenge gets a random one. It
-		// binds nothing, since no verifier knows it; `verifyPresentation` accepts a presentation's own nonce when
-		// the verifier supplies no challenge (and says so).
-		const challenge = (options as { challenge?: string }).challenge ?? randomUUID();
+		// binds nothing, since no verifier knows it; `verifyPresentation` refuses a presentation unless the verifier
+		// supplies the challenge it issued.
+		const challenge = options.challenge ?? randomUUID();
 
 		const parts = {
 			header: jwtHeader(key.alg, key.verificationMethod),
@@ -283,32 +288,25 @@ export class CredoCredentials {
 			throw new Error('The presentation is neither a JWT nor a JSON-LD document');
 		}
 		const input = jwt ?? (presentation as JsonObject);
-		const suppliedChallenge = (options as { challenge?: string }).challenge;
-		// Without a verifier challenge, accept the presentation's own (Veramo does not check one unless asked), and
-		// say that nothing was bound. Replay protection needs the verifier to pass the challenge it issued.
-		const ownChallenge = jwt
-			? decodeJwt(jwt)?.payload.nonce
-			: isObject((input as JsonObject).proof)
-				? ((input as JsonObject).proof as JsonObject).challenge
-				: undefined;
-		const challenge = suppliedChallenge ?? ownChallenge;
+		// The verifier must supply the challenge it issued (and the domain the presentation is for). The presentation's
+		// own nonce is never accepted in its place: that always matches, so it would bind nothing.
+		const challenge = options.challenge;
+		if (typeof challenge !== 'string' || challenge.length === 0)
+			throw new PresentationBindingRequiredError('challenge');
+		const audienceCheckSkipped = (options.policies as { audience?: unknown } | undefined)?.audience === false;
+		if (!options.domain && !audienceCheckSkipped) throw new PresentationBindingRequiredError('domain');
 
 		const tenantId = await this.ensureTenant(customerId);
 		const outcome = await this.runtime.withTenant(tenantId, (session) =>
 			session.verifyPresentation({
 				presentation: input,
-				challenge: typeof challenge === 'string' ? challenge : undefined,
+				challenge,
 				domain: options.domain,
 				allowUndefinedTerms: !jwt,
 			})
 		);
 
 		const warnings: string[] = [];
-		if (suppliedChallenge === undefined && ownChallenge !== undefined) {
-			warnings.push(
-				'No challenge was supplied, so the presentation was not checked against one: pass the challenge you issued to prevent replay'
-			);
-		}
 		const holder = jwt ? issuerFromJwt(jwt) : issuerId((input as JsonObject).holder);
 		const result = this.baseResult(outcome, { holder }, warnings);
 

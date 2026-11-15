@@ -823,6 +823,11 @@
  *         verifierDid:
  *           description: DID of verifier
  *           type: string
+ *         challenge:
+ *           description: Optional challenge issued by the verifier, bound into the presentation as its nonce. Pass the same value when verifying.
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 1024
  *     PresentationVerifyRequest:
  *       type: object
  *       required:
@@ -832,8 +837,13 @@
  *           description: Verifiable Presentation to be verified as a VP-JWT string or a JSON object.
  *           type: object
  *         verifierDid:
- *           description: Provide an optional verifier DID (also known as 'domain' parameter), if the verifier DID in the presentation is not managed in the wallet.
+ *           description: The verifier DID (also known as the 'domain' parameter) the presentation was made for. Required for customers served by the Credo engine unless `policies.audience` is `false`; otherwise optional (needed if the verifier DID in the presentation is not managed in the wallet).
  *           type: string
+ *         challenge:
+ *           description: The challenge the verifier issued to the holder. Required for customers served by the Credo engine; a request without it is rejected with 400 `invalid_request`. The presentation's own nonce is never accepted in its place.
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 1024
  *         makeFeePayment:
  *           description: Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 or BitstringStatusList DID-Linked Resource.
  *           type: boolean

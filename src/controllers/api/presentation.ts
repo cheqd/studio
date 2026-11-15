@@ -19,6 +19,7 @@ import { eventTracker } from '../../services/track/tracker.js';
 import type { IFeePaymentOptions, IPresentationTrack, ITrackOperation } from '../../types/track.js';
 import { validate } from '../validator/decorator.js';
 import { credoTenantMissingResponse } from '../../helpers/credo-tenant-errors.js';
+import { PresentationBindingRequiredError } from '../../services/identity/engine/credo/errors.js';
 
 export class PresentationController {
 	public static presentationCreateValidator = [
@@ -30,6 +31,14 @@ export class PresentationController {
 			.bail(),
 		check('holderDid').optional().isDID().bail(),
 		check('verifierDid').optional().isDID().bail(),
+		check('challenge')
+			.optional()
+			.isString()
+			.withMessage('challenge: should be a string')
+			.bail()
+			.isLength({ min: 1, max: 1024 })
+			.withMessage('challenge: should be between 1 and 1024 characters')
+			.bail(),
 		check('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
 	];
 
@@ -41,6 +50,14 @@ export class PresentationController {
 			.withMessage('Provide a valid w3c verifiable presentation')
 			.bail(),
 		check('verifierDid').optional().isDID().bail(),
+		check('challenge')
+			.optional()
+			.isString()
+			.withMessage('challenge: should be a string')
+			.bail()
+			.isLength({ min: 1, max: 1024 })
+			.withMessage('challenge: should be between 1 and 1024 characters')
+			.bail(),
 		check('policies').optional().isObject().withMessage('Verification policies should be an object').bail(),
 		check('makeFeePayment')
 			.optional()
@@ -100,7 +117,7 @@ export class PresentationController {
 	 */
 	@validate
 	public async createPresentation(request: Request, response: Response) {
-		const { credentials, holderDid, verifierDid } = request.body as CreatePresentationRequestBody;
+		const { credentials, holderDid, verifierDid, challenge } = request.body as CreatePresentationRequestBody;
 
 		try {
 			const result = await (
@@ -112,6 +129,7 @@ export class PresentationController {
 				},
 				{
 					domain: verifierDid,
+					challenge,
 				},
 				response.locals.customer
 			);
@@ -137,7 +155,7 @@ export class PresentationController {
 	 *   post:
 	 *     tags: [ Verifiable Presentations ]
 	 *     summary: Verify a Verifiable Presentation generated from credential(s).
-	 *     description: This endpoint verifies the Verifiable Presentation generated from credential(s). As input, it can take the Verifiable Presentation JWT as a string or the entire Verifiable Presentation itself.
+	 *     description: This endpoint verifies the Verifiable Presentation generated from credential(s). As input, it can take the Verifiable Presentation JWT as a string or the entire Verifiable Presentation itself. For customers served by the Credo engine, `challenge` (the value the verifier issued to the holder) and `verifierDid` (the domain the presentation was made for) are required, and a request without them is rejected with 400 `invalid_request`; `verifierDid` may be omitted only when `policies.audience` is `false`. The presentation's own nonce is never accepted in place of the challenge.
 	 *     parameters:
 	 *       - in: query
 	 *         name: verifyStatus
@@ -185,7 +203,8 @@ export class PresentationController {
 		let feePaymentOptions: IFeePaymentOptions[] = [];
 
 		// Extract request parameters from body
-		const { presentation, verifierDid, policies, makeFeePayment } = request.body as VerifyPresentationRequestBody;
+		const { presentation, verifierDid, policies, makeFeePayment, challenge } =
+			request.body as VerifyPresentationRequestBody;
 		// Extract request parameters from query
 		const { verifyStatus, allowDeactivatedDid } = request.query as VerifyPresentationResponseQuery;
 
@@ -241,6 +260,7 @@ export class PresentationController {
 					verifyStatus,
 					policies,
 					domain: verifierDid,
+					challenge,
 				},
 				response.locals.customer
 			);
@@ -265,6 +285,13 @@ export class PresentationController {
 
 			return response.status(StatusCodes.OK).json(result satisfies VerifyPresentationResponseBody);
 		} catch (error) {
+			if (error instanceof PresentationBindingRequiredError) {
+				return response.status(StatusCodes.BAD_REQUEST).json({
+					verified: false,
+					error: error.message,
+					code: error.code,
+				});
+			}
 			const tenantMissing = credoTenantMissingResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			// define error

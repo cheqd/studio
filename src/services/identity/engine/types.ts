@@ -75,6 +75,8 @@ export type EngineSignedInput = EngineCredential | string;
 export interface EngineVerificationOptions {
 	fetchRemoteContexts?: boolean;
 	domain?: string;
+	/** The verifier's own challenge. Required by the Credo engine when verifying a presentation. */
+	challenge?: string;
 	verifyStatus?: boolean;
 	policies?: JsonObject;
 	allowDeactivatedDid?: boolean;

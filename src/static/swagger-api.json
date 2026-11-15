@@ -1663,6 +1663,12 @@
           "verifierDid": {
             "description": "DID of verifier",
             "type": "string"
+          },
+          "challenge": {
+            "description": "Optional challenge issued by the verifier, bound into the presentation as its nonce. Pass the same value when verifying.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024
           }
         }
       },
@@ -1677,8 +1683,14 @@
             "type": "object"
           },
           "verifierDid": {
-            "description": "Provide an optional verifier DID (also known as 'domain' parameter), if the verifier DID in the presentation is not managed in the wallet.",
+            "description": "The verifier DID (also known as the 'domain' parameter) the presentation was made for. Required for customers served by the Credo engine unless `policies.audience` is `false`; otherwise optional (needed if the verifier DID in the presentation is not managed in the wallet).",
             "type": "string"
+          },
+          "challenge": {
+            "description": "The challenge the verifier issued to the holder. Required for customers served by the Credo engine; a request without it is rejected with 400 `invalid_request`. The presentation's own nonce is never accepted in its place.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024
           },
           "makeFeePayment": {
             "description": "Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 or BitstringStatusList DID-Linked Resource.",
@@ -8449,7 +8461,7 @@
           "Verifiable Presentations"
         ],
         "summary": "Verify a Verifiable Presentation generated from credential(s).",
-        "description": "This endpoint verifies the Verifiable Presentation generated from credential(s). As input, it can take the Verifiable Presentation JWT as a string or the entire Verifiable Presentation itself.",
+        "description": "This endpoint verifies the Verifiable Presentation generated from credential(s). As input, it can take the Verifiable Presentation JWT as a string or the entire Verifiable Presentation itself. For customers served by the Credo engine, `challenge` (the value the verifier issued to the holder) and `verifierDid` (the domain the presentation was made for) are required, and a request without them is rejected with 400 `invalid_request`; `verifierDid` may be omitted only when `policies.audience` is `false`. The presentation's own nonce is never accepted in place of the challenge.",
         "parameters": [
           {
             "in": "query",

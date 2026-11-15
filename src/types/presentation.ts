@@ -12,6 +12,7 @@ export type CreatePresentationRequestBody = {
 	credentials: W3CVerifiableCredential[];
 	holderDid: string;
 	verifierDid: string;
+	challenge?: string;
 };
 
 export type VerifyPresentationRequestBody = {
@@ -19,6 +20,7 @@ export type VerifyPresentationRequestBody = {
 	verifierDid: string;
 	policies: VerificationPolicies;
 	makeFeePayment: boolean;
+	challenge?: string;
 };
 
 // Positive
