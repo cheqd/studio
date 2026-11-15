@@ -4,6 +4,7 @@ import {
 	KEY_EXPORT_VERSION,
 	decryptKeyExport,
 	encryptKeyExport,
+	getMinPasswordLength,
 	validateExportPassword,
 } from '../../../src/helpers/key-export.js';
 
@@ -86,6 +87,27 @@ describe('validateExportPassword', () => {
 		try {
 			expect(validateExportPassword(PASSWORD).ok).toBe(true); // 27 chars
 			expect(validateExportPassword('only fifteen chars').ok).toBe(false); // 18 chars
+		} finally {
+			delete process.env.KEY_EXPORT_MIN_PASSWORD_LENGTH;
+		}
+	});
+
+	it('never lets KEY_EXPORT_MIN_PASSWORD_LENGTH drop below 12', () => {
+		try {
+			const cases: Array<[string, number]> = [
+				['0', 12],
+				['3', 12],
+				['8', 12],
+				['12', 12],
+				['20', 20],
+				['abc', 12],
+			];
+			for (const [value, expected] of cases) {
+				process.env.KEY_EXPORT_MIN_PASSWORD_LENGTH = value;
+				expect(getMinPasswordLength()).toBe(expected);
+			}
+			delete process.env.KEY_EXPORT_MIN_PASSWORD_LENGTH;
+			expect(getMinPasswordLength()).toBe(12);
 		} finally {
 			delete process.env.KEY_EXPORT_MIN_PASSWORD_LENGTH;
 		}

@@ -53,7 +53,8 @@ export type ExportPasswordValidation =
 
 export function getMinPasswordLength(): number {
 	const parsed = Number.parseInt(process.env.KEY_EXPORT_MIN_PASSWORD_LENGTH || '', 10);
-	return Number.isInteger(parsed) && parsed >= 8 ? parsed : DEFAULT_MIN_PASSWORD_LENGTH;
+	// Never below the default: the setting can raise the bar but not lower it.
+	return Number.isInteger(parsed) ? Math.max(DEFAULT_MIN_PASSWORD_LENGTH, parsed) : DEFAULT_MIN_PASSWORD_LENGTH;
 }
 
 export function validateExportPassword(value: unknown): ExportPasswordValidation {
