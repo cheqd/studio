@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.21.0-develop.5](https://github.com/cheqd/studio/compare/3.21.0-develop.4...3.21.0-develop.5) (2026-11-16)
+
+### Features
+
+* add advisory lock helper for ledger writes per fee payer ([75d164a](https://github.com/cheqd/studio/commit/75d164a4a543b6b0e22cbf763f20dd479cdbc8d1))
+* **agent:** add agent routes, validation, auth rules and OpenAPI ([73f1fa8](https://github.com/cheqd/studio/commit/73f1fa8e1aa4b78271a2f9cc57af4d0968e5b8ed))
+* **agent:** add agent service, card signing, authority and verification ([564a919](https://github.com/cheqd/studio/commit/564a919120a402d73b2af44758abdf66835a2cd3))
+* **engine:** add optional agent capabilities to IdentityEngine ([4e12702](https://github.com/cheqd/studio/commit/4e12702b53d28d642b8c64a237a8092b6d4baa6e))
+* implement CredoEngine core behind the engine router ([b8b3424](https://github.com/cheqd/studio/commit/b8b342404be2316bd4cb859d52b6041db3a7e596))
+* route new artefacts to Credo, add agents, A2A, staff access policy and analytics (Phase 1) ([#894](https://github.com/cheqd/studio/issues/894)) ([e66baa7](https://github.com/cheqd/studio/commit/e66baa7416f51ba9ebbbc6afe0f24f99e1aa80ec))
+
+### Bug Fixes
+
+* close the merged integration test block and format it ([6fee42b](https://github.com/cheqd/studio/commit/6fee42b5292124b05e971097c9844c4bcbde69a3))
+* **docker:** install wget in the Debian runtime image ([32a9e0b](https://github.com/cheqd/studio/commit/32a9e0bae1a5b9e7b19e10604533dd62af57eca0))
+
 ## [3.21.0-develop.4](https://github.com/cheqd/studio/compare/3.21.0-develop.3...3.21.0-develop.4) (2026-11-13)
 
 ### Bug Fixes
