@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.21.0-develop.6](https://github.com/cheqd/studio/compare/3.21.0-develop.5...3.21.0-develop.6) (2026-11-16)
+
+### Bug Fixes
+
+* encrypt key exports with a password and require fresh sign-in (A-058) ([#895](https://github.com/cheqd/studio/issues/895)) ([62f621c](https://github.com/cheqd/studio/commit/62f621c485f56b94be1b45ef806acc5a743a0bc2))
+
 ## [3.21.0-develop.5](https://github.com/cheqd/studio/compare/3.21.0-develop.4...3.21.0-develop.5) (2026-11-16)
 
 ### Features
