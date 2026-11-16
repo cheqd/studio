@@ -21,6 +21,7 @@ import { LogToWebHook } from './middleware/hook.js';
 import { Middleware } from './middleware/middleware.js';
 import { jsonBodyParsers } from './middleware/body-parsers.js';
 import { customerRateLimiter, ipRateLimiter, rateLimitConfig, trustProxySetting } from './middleware/rate-limit.js';
+import { requireFreshSignIn } from './middleware/fresh-signin.js';
 import * as dotenv from 'dotenv';
 // Define Swagger file
 import swaggerAPIDocument from './static/swagger-api.json' with { type: 'json' };
@@ -276,7 +277,12 @@ class App {
 		app.post('/did/deactivate/:did', DIDController.didPathValidator, new DIDController().deactivateDid);
 		app.get('/did/list', DIDController.listDIDValidator, new DIDController().getDids);
 		app.get('/did/search/:did', new DIDController().resolveDidUrl);
-		app.post('/did/export/:did', DIDController.didPathValidator, new DIDController().exportDid);
+		app.post(
+			'/did/export/:did',
+			requireFreshSignIn(),
+			DIDController.didPathValidator,
+			new DIDController().exportDid
+		);
 
 		// Trust Registry API
 		app.post(
@@ -349,8 +355,8 @@ class App {
 			customerAnalytics.ledger.bind(customerAnalytics)
 		);
 		app.get('/account/balances', new AccountController().getBalances);
-		app.post('/account/export-keys', new AccountController().exportKeys);
-		app.delete('/account', new AccountController().delete);
+		app.post('/account/export-keys', requireFreshSignIn(), new AccountController().exportKeys);
+		app.delete('/account', requireFreshSignIn(), new AccountController().delete);
 
 		// LogTo webhooks
 		app.post('/account/bootstrap', LogToWebHook.verifyHookSignature, new AccountController().bootstrap);

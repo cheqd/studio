@@ -1689,6 +1689,79 @@
  *              type: array
  *              items:
  *                  type: string
+ *     EncryptedKeyExport:
+ *       type: object
+ *       description: >-
+ *         Password-protected key export, format `cheqd-studio-key-export` version 1. The key is
+ *         scrypt(utf8(password), salt, keyLength, N, r, p); the plaintext is UTF-8 JSON encrypted with AES-256-GCM
+ *         using additional authenticated data `cheqd-studio-key-export:v1`. All binary fields are base64.
+ *       required: [format, version, kdf, cipher, ciphertext]
+ *       properties:
+ *         format:
+ *           type: string
+ *           example: cheqd-studio-key-export
+ *         version:
+ *           type: integer
+ *           example: 1
+ *         kdf:
+ *           type: object
+ *           properties:
+ *             name:
+ *               type: string
+ *               example: scrypt
+ *             salt:
+ *               type: string
+ *               description: 16 random bytes, base64.
+ *             N:
+ *               type: integer
+ *               example: 131072
+ *             r:
+ *               type: integer
+ *               example: 8
+ *             p:
+ *               type: integer
+ *               example: 1
+ *             keyLength:
+ *               type: integer
+ *               example: 32
+ *         cipher:
+ *           type: object
+ *           properties:
+ *             name:
+ *               type: string
+ *               example: aes-256-gcm
+ *             iv:
+ *               type: string
+ *               description: 12 random bytes, base64.
+ *             tag:
+ *               type: string
+ *               description: 16-byte GCM authentication tag, base64.
+ *         ciphertext:
+ *           type: string
+ *           description: Base64 ciphertext of the JSON key material.
+ *     KeyExportPasswordError:
+ *       type: object
+ *       properties:
+ *         error:
+ *           type: string
+ *         code:
+ *           type: string
+ *           enum: [PASSWORD_REQUIRED, WEAK_PASSWORD]
+ *     ReauthenticationRequiredError:
+ *       type: object
+ *       description: >-
+ *         The caller did not sign in recently enough. Also sent as `WWW-Authenticate: Bearer
+ *         error="insufficient_user_authentication", max_age=N` (RFC 9470). Sign the user in again (Logto
+ *         `max_age` / `prompt=login`) and retry.
+ *       properties:
+ *         error:
+ *           type: string
+ *         code:
+ *           type: string
+ *           enum: [REAUTHENTICATION_REQUIRED]
+ *         maxAgeSeconds:
+ *           type: integer
+ *           example: 300
  *     ExportDidResult:
  *       type: object
  *       properties:
