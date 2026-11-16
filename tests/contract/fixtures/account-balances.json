@@ -1,0 +1,69 @@
+{
+	"schema": 1,
+	"stepId": "account-balances",
+	"routeId": "GET /account/balances",
+	"tier": 1,
+	"effect": "read-only",
+	"recorded": {
+		"at": "2026-11-13T13:34:47.132Z",
+		"engine": "veramo",
+		"gitRef": "715d81d"
+	},
+	"exchange": {
+		"request": {
+			"method": "GET",
+			"path": "/account/balances"
+		},
+		"response": {
+			"status": 200,
+			"contentType": "application/json",
+			"body": {
+				"faucet": {
+					"cap": {
+						"cheq": 100000,
+						"ncheq": "100000000000000"
+					},
+					"quota": {
+						"limit": {
+							"cheq": 100000,
+							"ncheq": "100000000000000"
+						},
+						"period": "month",
+						"remaining": {
+							"cheq": 100000,
+							"ncheq": "100000000000000"
+						},
+						"resetsAt": "<timestamp>",
+						"used": {
+							"cheq": 0,
+							"ncheq": "0"
+						}
+					}
+				},
+				"mainnet": {
+					"address": "<address:1>",
+					"balance": {
+						"cheq": 0,
+						"ncheq": "0"
+					},
+					"denom": "ncheq",
+					"usd": 0
+				},
+				"rate": {
+					"asOf": "<timestamp>",
+					"cheqUsd": 0.00091617,
+					"source": "coingecko"
+				},
+				"testnet": {
+					"address": "<address:2>",
+					"balance": {
+						"cheq": 0,
+						"ncheq": "0"
+					},
+					"denom": "ncheq",
+					"usd": 0
+				}
+			}
+		}
+	}
+}

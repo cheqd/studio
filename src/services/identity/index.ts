@@ -2,6 +2,10 @@
 import * as dotenv from 'dotenv';
 import { LocalIdentityService, PostgresIdentityService } from './providers/index.js';
 import { Unauthorized } from './providers/studio/unauthorized.js';
+import type { StudioAccountServices } from './studio-services.js';
+import { engineRouter } from './engine/db-lookups.js';
+import type { IdentityEngine } from './engine/identity-engine.js';
+import type { ArtifactRef, EngineRoute } from './engine/types.js';
 
 import type {
 	CredentialPayload,
@@ -59,19 +63,16 @@ import type {
 } from '../../types/credential-status.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { KeyEntity } from '../../database/entities/key.entity.js';
-import type { UserEntity } from '../../database/entities/user.entity.js';
-import type { APIKeyEntity } from '../../database/entities/api.key.entity.js';
 import type { SupportedKeyTypes } from '@veramo/utils';
 import { ExportDidResponse, ListDIDRequestOptions, ListDidsResponseBody } from '../../types/did.js';
 import { ListResourceOptions, ListResourceResponse } from '../../types/resource.js';
-import { ListOperationOptions } from '../../types/track.js';
 
 dotenv.config();
 
 // ToDo: get rid of this interface
 // Move it to the abstract factory
 
-export interface IIdentityService {
+export interface IIdentityService extends StudioAccountServices {
 	agent?: VeramoAgent;
 
 	initAgent(): TAgent<any>;
@@ -226,11 +227,6 @@ export interface IIdentityService {
 		customer: CustomerEntity,
 		symmetricKey: string
 	): Promise<UnsuspensionResult | BulkUnsuspensionResult | BitstringUpdateResult | BulkBitstringUpdateResult>;
-	setAPIKey(apiKey: string, customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity>;
-	updateAPIKey(apiKey: APIKeyEntity, newApiKey: string): Promise<APIKeyEntity>;
-	getAPIKey(customer: CustomerEntity, user: UserEntity): Promise<APIKeyEntity | null>;
-	decryptAPIKey(apiKey: string): Promise<string>;
-	listOperations(options: ListOperationOptions, customer: CustomerEntity): Promise<any>;
 
 	/**
 	 * Check if a DID exists in the agent's identifier store
@@ -259,13 +255,60 @@ export interface IIdentityService {
 	retrieveCredential(hash: string, customer: CustomerEntity): Promise<VerifiableCredential | null>;
 }
 
+/**
+ * The engine methods, typed the way the controllers and services still read them (Veramo-shaped results).
+ * The Veramo engine delegates unchanged, so these are the types it returns. Another engine returns the
+ * engine-neutral equivalents, which carry the same fields. Only methods that exist on `IdentityEngine` are
+ * included, so a call to a Studio-only method (API keys, operations) does not compile through this type.
+ */
+export type RoutedService = Pick<IIdentityService, Exclude<keyof IdentityEngine & keyof IIdentityService, 'name'>>;
+
 export class IdentityServiceStrategySetup {
 	agent: IIdentityService;
 	static unauthorized = new Unauthorized();
+	private readonly customerId?: string;
 
 	constructor(agentId?: string) {
+		this.customerId = agentId;
 		this.agent = IdentityServiceStrategySetup.unauthorized;
 		this.setupIdentityStrategy(agentId);
+	}
+
+	/**
+	 * The engine for this request, chosen by the EngineRouter: the engine recorded on `artifact` if it already
+	 * exists. A new artefact (`hints.creates`) goes to Credo: Veramo is retired for new artefacts, bar the
+	 * temporary override in `new-artefact-policy.ts`. A call that names no artefact and creates nothing keeps the
+	 * legacy choice (flag, else Veramo).
+	 */
+	public async engine(
+		route: EngineRoute,
+		artifact?: ArtifactRef,
+		hints?: { keyType?: string; encryptedStatusList?: boolean; flagWhenUnrecorded?: boolean; creates?: boolean }
+	): Promise<IdentityEngine> {
+		return engineRouter.engineFor(
+			{
+				customerId: this.customerId,
+				route,
+				artifact,
+				keyType: hints?.keyType,
+				encryptedStatusList: hints?.encryptedStatusList,
+				flagWhenUnrecorded: hints?.flagWhenUnrecorded,
+				creates: hints?.creates,
+			},
+			this.agent
+		);
+	}
+
+	/**
+	 * `engine()`, typed as `RoutedService` for call sites that read Veramo-shaped results. Same routing, same
+	 * engine; only the static type differs.
+	 */
+	public async routed(
+		route: EngineRoute,
+		artifact?: ArtifactRef,
+		hints?: { keyType?: string; encryptedStatusList?: boolean; flagWhenUnrecorded?: boolean; creates?: boolean }
+	): Promise<RoutedService> {
+		return (await this.engine(route, artifact, hints)) as unknown as RoutedService;
 	}
 
 	private setStrategy(strategy: IIdentityService) {

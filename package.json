@@ -1,6 +1,6 @@
 {
 	"name": "@cheqd/studio",
-	"version": "3.20.0",
+	"version": "3.21.0-develop.6",
 	"description": "cheqd Studio Backend",
 	"source": "src/index.ts",
 	"main": "dist/index.js",
@@ -37,7 +37,7 @@
 		"typeorm": "typeorm-ts-node-esm  -d ./dist/database/ormconfig.js",
 		"add:to:types": "tsx src/database/scripts/add-migration-to-types.ts",
 		"generate": "npm run typeorm migration:generate ./src/database/migrations/studio-migrations && npm run add:to:types",
-		"migrate": "npm run typeorm migration:run",
+		"migrate": "npm run typeorm migration:run -- -t each",
 		"migrate:stripe-plans": "tsx scripts/migrate-studio-plans.ts",
 		"postinstall": "patch-package"
 	},
@@ -56,14 +56,29 @@
 		"README.md"
 	],
 	"dependencies": {
+		"@a2a-js/sdk": "1.3.0",
+		"@cheqd/agent-identity": "file:vendor/agent-toolkit/cheqd-agent-identity-0.0.0-a831d48.tgz",
+		"@cheqd/agent-identity-ap2": "file:vendor/agent-toolkit/cheqd-agent-identity-ap2-0.0.0-a831d48.tgz",
 		"@cheqd/did-provider-cheqd": "^4.8.0",
 		"@cheqd/sdk": "^5.5.0",
 		"@cheqd/ts-proto": "^4.2.0",
 		"@cosmjs/amino": "^0.36.2",
 		"@cosmjs/encoding": "^0.36.2",
+		"@credo-ts/anoncreds": "file:vendor/credo/credo-ts-anoncreds-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/askar": "file:vendor/credo/credo-ts-askar-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/cheqd": "file:vendor/credo/credo-ts-cheqd-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/core": "file:vendor/credo/credo-ts-core-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/didcomm": "file:vendor/credo/credo-ts-didcomm-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/node": "file:vendor/credo/credo-ts-node-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/tenants": "file:vendor/credo/credo-ts-tenants-0.7.1-cheqd.09ad0fb.tgz",
 		"@docknetwork/universal-wallet": "^3.3.4",
+		"@hyperledger/anoncreds-nodejs": "0.4.1",
+		"@hyperledger/anoncreds-shared": "0.4.1",
 		"@logto/express": "^3.0.11",
 		"@mailchimp/mailchimp_marketing": "^3.0.80",
+		"@openwallet-foundation/askar-nodejs": "0.6.1",
+		"@openwallet-foundation/askar-shared": "0.6.1",
+		"@sd-jwt/core": "^0.24.3",
 		"@stablelib/ed25519": "^1.0.3",
 		"@veramo/core": "^6.0.0",
 		"@veramo/credential-ld": "^6.0.0",
@@ -100,9 +115,11 @@
 		"loglevel": "^1.9.2",
 		"multiformats": "^13.3.2",
 		"node-cache": "^5.1.2",
+		"pako": "2.1.0",
 		"patch-package": "^8.0.1",
 		"pg": "^8.15.6",
 		"pg-connection-string": "^2.8.5",
+		"posthog-node": "^4.18.0",
 		"secp256k1": "^5.0.1",
 		"sqlite3": "^5.1.7",
 		"stripe": "^14.25.0",
@@ -113,6 +130,7 @@
 		"uri-js": "^4.4.1"
 	},
 	"devDependencies": {
+		"@eslint/js": "^9.39.2",
 		"@playwright/test": "^1.64.1",
 		"@semantic-release/changelog": "^6.0.3",
 		"@semantic-release/commit-analyzer": "^13.0.1",
@@ -144,9 +162,11 @@
 		"eslint": "^9.38.0",
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-config-typescript": "^3.0.0",
+		"globals": "^14.0.0",
 		"jest": "^29.7.0",
 		"prettier": "^3.5.3",
 		"semantic-release": "^24.2.3",
+		"sql.js": "^1.15.2",
 		"swagger-jsdoc": "^6.2.8",
 		"ts-jest": "^29.3.2",
 		"ts-loader": "^9.5.2",
@@ -165,6 +185,13 @@
 	"overrides": {
 		"@transmute/jsonld": {
 			"@digitalbazaar/http-client": "^3.4.1"
-		}
+		},
+		"@credo-ts/core": "file:vendor/credo/credo-ts-core-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/node": "file:vendor/credo/credo-ts-node-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/askar": "file:vendor/credo/credo-ts-askar-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/anoncreds": "file:vendor/credo/credo-ts-anoncreds-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/cheqd": "file:vendor/credo/credo-ts-cheqd-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/tenants": "file:vendor/credo/credo-ts-tenants-0.7.1-cheqd.09ad0fb.tgz",
+		"@credo-ts/didcomm": "file:vendor/credo/credo-ts-didcomm-0.7.1-cheqd.09ad0fb.tgz"
 	}
 }

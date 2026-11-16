@@ -1,5 +1,66 @@
 # Changelog
 
+## [3.21.0-develop.6](https://github.com/cheqd/studio/compare/3.21.0-develop.5...3.21.0-develop.6) (2026-11-16)
+
+### Bug Fixes
+
+* encrypt key exports with a password and require fresh sign-in (A-058) ([#895](https://github.com/cheqd/studio/issues/895)) ([62f621c](https://github.com/cheqd/studio/commit/62f621c485f56b94be1b45ef806acc5a743a0bc2))
+
+## [3.21.0-develop.5](https://github.com/cheqd/studio/compare/3.21.0-develop.4...3.21.0-develop.5) (2026-11-16)
+
+### Features
+
+* add advisory lock helper for ledger writes per fee payer ([75d164a](https://github.com/cheqd/studio/commit/75d164a4a543b6b0e22cbf763f20dd479cdbc8d1))
+* **agent:** add agent routes, validation, auth rules and OpenAPI ([73f1fa8](https://github.com/cheqd/studio/commit/73f1fa8e1aa4b78271a2f9cc57af4d0968e5b8ed))
+* **agent:** add agent service, card signing, authority and verification ([564a919](https://github.com/cheqd/studio/commit/564a919120a402d73b2af44758abdf66835a2cd3))
+* **engine:** add optional agent capabilities to IdentityEngine ([4e12702](https://github.com/cheqd/studio/commit/4e12702b53d28d642b8c64a237a8092b6d4baa6e))
+* implement CredoEngine core behind the engine router ([b8b3424](https://github.com/cheqd/studio/commit/b8b342404be2316bd4cb859d52b6041db3a7e596))
+* route new artefacts to Credo, add agents, A2A, staff access policy and analytics (Phase 1) ([#894](https://github.com/cheqd/studio/issues/894)) ([e66baa7](https://github.com/cheqd/studio/commit/e66baa7416f51ba9ebbbc6afe0f24f99e1aa80ec))
+
+### Bug Fixes
+
+* close the merged integration test block and format it ([6fee42b](https://github.com/cheqd/studio/commit/6fee42b5292124b05e971097c9844c4bcbde69a3))
+* **docker:** install wget in the Debian runtime image ([32a9e0b](https://github.com/cheqd/studio/commit/32a9e0bae1a5b9e7b19e10604533dd62af57eca0))
+
+## [3.21.0-develop.4](https://github.com/cheqd/studio/compare/3.21.0-develop.3...3.21.0-develop.4) (2026-11-13)
+
+### Bug Fixes
+
+* make the contract recorder dry run send read-only steps only ([aca5184](https://github.com/cheqd/studio/commit/aca5184fe8fc98df36ece453e804f3d2687729e8))
+
+## [3.21.0-develop.3](https://github.com/cheqd/studio/compare/3.21.0-develop.2...3.21.0-develop.3) (2026-11-13)
+
+### Bug Fixes
+
+* enforce issuer ownership on credential revoke, suspend and reinstate ([#885](https://github.com/cheqd/studio/issues/885)) ([243b1f3](https://github.com/cheqd/studio/commit/243b1f3608a4fcd6d24e60af520dce9907ff3de0))
+
+## [3.21.0-develop.2](https://github.com/cheqd/studio/compare/3.21.0-develop.1...3.21.0-develop.2) (2026-11-06)
+
+### Bug Fixes
+
+* **auth:** pass the bearer token, not customer-id, to the M2M JWT verifier ([#875](https://github.com/cheqd/studio/issues/875)) ([11cd7aa](https://github.com/cheqd/studio/commit/11cd7aa14fd2e81ffa848e48cd85f603f6ee5bbc)), closes [#873](https://github.com/cheqd/studio/issues/873) [#874](https://github.com/cheqd/studio/issues/874)
+* **auth:** pass the bearer token, not the customer-id header, to the M2M JWT verifier ([942070b](https://github.com/cheqd/studio/commit/942070bd72ae9b8a2ced1b2b2ff2ca4df3cf6a1a)), closes [#873](https://github.com/cheqd/studio/issues/873) [cheqd/studio#874](https://github.com/cheqd/studio/issues/874)
+
+## [3.21.0-develop.1](https://github.com/cheqd/studio/compare/3.20.1-develop.1...3.21.0-develop.1) (2026-11-06)
+
+### Features
+
+* **account:** add an audit log entry for admin-triggered account deletion ([892e3b7](https://github.com/cheqd/studio/commit/892e3b72b6341698710ddab5424bc43a24ced602)), closes [#874](https://github.com/cheqd/studio/issues/874) [cheqd/studio#872](https://github.com/cheqd/studio/issues/872)
+* **account:** add POST /account/export-keys for DID and payment-account private keys ([3fae1ab](https://github.com/cheqd/studio/commit/3fae1ab0a4cb3a783aca4ee51b4954fad36a75a3)), closes [cheqd/studio#872](https://github.com/cheqd/studio/issues/872)
+* **account:** block a fresh free trial for an email with a prior deleted account ([d2c3a6c](https://github.com/cheqd/studio/commit/d2c3a6c1eefb93039ba92bb4506c470f1caa3207)), closes [cheqd/studio#872](https://github.com/cheqd/studio/issues/872)
+* **account:** hard-delete pipeline for self-service and admin account deletion ([0b65196](https://github.com/cheqd/studio/commit/0b65196de40c5e8409bdf5f0da0b2f12e4db62c7)), closes [cheqd/studio#872](https://github.com/cheqd/studio/issues/872)
+* **account:** include a summary error string on failed deletion responses ([cc54f44](https://github.com/cheqd/studio/commit/cc54f44d718b9ea6812642fe4c67134915dd1ed8)), closes [cheqd/studio#872](https://github.com/cheqd/studio/issues/872)
+* **account:** self-service + admin account deletion, key export, trial-abuse prevention ([#873](https://github.com/cheqd/studio/issues/873)) ([ee327fd](https://github.com/cheqd/studio/commit/ee327fd06d2b5adfc4806849dbf9b4e3013f2967)), closes [#872](https://github.com/cheqd/studio/issues/872)
+
+### Bug Fixes
+
+* **account:** don't call a method on the entity constructor's own argument ([f0ce30e](https://github.com/cheqd/studio/commit/f0ce30e80950b0ebd9acb6a63a0e25df1ba5db85))
+* **account:** roll back the deletion record if the DB delete doesn't succeed ([145a907](https://github.com/cheqd/studio/commit/145a9070963719bc3a566c0d4e6c1f4b09cb8e57)), closes [cheqd/studio#872](https://github.com/cheqd/studio/issues/872)
+* **server:** log the DB connect failure to stderr, not stdout ([0c906d1](https://github.com/cheqd/studio/commit/0c906d1745fb2da33ee9b50f774b2f6c550be0eb))
+* **server:** wait for the DB connection before accepting requests ([118e714](https://github.com/cheqd/studio/commit/118e7149e6b205856754e0638d62e4a8be8e15d8))
+
+## [3.20.1-develop.1](https://github.com/cheqd/studio/compare/3.20.0...3.20.1-develop.1) (2026-11-06)
+
 ## [3.20.0](https://github.com/cheqd/studio/compare/3.19.0...3.20.0) (2026-11-04)
 
 ### Features

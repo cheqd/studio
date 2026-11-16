@@ -26,6 +26,7 @@ import {
 import { CustomerService } from '../../services/api/customer.js';
 import { LogToHelper } from '../../middleware/auth/logto-helper.js';
 import { FaucetHelper, isFaucetTimeout, isValidFaucetAddress } from '../../helpers/faucet.js';
+import { respondWithEncryptedExport } from '../../helpers/key-export.js';
 import { PriceHelper } from '../../helpers/price.js';
 import { cheqToNcheq, ncheqToCheq, toSafeFaucetAmount } from '../../helpers/denom.js';
 import { StatusCodes } from 'http-status-codes';
@@ -45,8 +46,10 @@ import { KeyService } from '../../services/api/key.js';
 import { LocalStore } from '../../database/cache/store.js';
 import { BootStrapAccountResponse } from '../../types/account.js';
 import type {
+	AccountExportKeysResponseBody,
 	AccountFaucetInfo,
 	AccountNetworkBalance,
+	ExportedDidKeys,
 	QueryAccountBalancesResponseBody,
 } from '../../types/account.js';
 import { RoleEntity } from '../../database/entities/role.entity.js';
@@ -67,8 +70,14 @@ import {
 	remainingQuota,
 	secondsUntilReset,
 } from '../../helpers/faucet-quota.js';
+import { isValidSource, sourceOrUndefined } from '../../helpers/source.js';
+import { deleteCustomerAccount, describeAccountDeletionFailure } from '../../services/api/account-deletion.js';
+import { liveAccountDeletionDeps } from '../../services/api/account-deletion-live-deps.js';
 
 dotenv.config();
+
+const SOURCE_MESSAGE =
+	'source should be 1 to 32 characters: lower-case letters, digits and hyphens, starting with a letter or digit';
 
 export class AccountController {
 	public static createValidator = [
@@ -80,9 +89,17 @@ export class AccountController {
 			.withMessage('Invalid email id')
 			.bail(),
 		check('name').optional().isString().withMessage('name should be a valid string'),
+		check('source')
+			.optional()
+			.custom((value: unknown) => isValidSource(value))
+			.withMessage(SOURCE_MESSAGE),
 	];
 
 	public static faucetValidator = [
+		check('source')
+			.optional()
+			.custom((value: unknown) => isValidSource(value))
+			.withMessage(SOURCE_MESSAGE),
 		check('address').optional().isString().notEmpty().withMessage('address should be a valid string').bail(),
 		check('address')
 			.optional()
@@ -266,9 +283,14 @@ export class AccountController {
 				// I’m setting the "name" field to an empty string on the current CustomerEntity because it is non-nullable.
 				//  we will populate the customer's "name" field using the response from the Stripe account creation in account-submitter.ts.
 				if (!customerEntity) {
+					// An optional `source` in the body is stored when valid and ignored otherwise: bootstrap is called
+					// by the sign-up flow, and a bad marketing label must never stop an account being created
 					customerEntity = (await CustomerService.instance.create(
 						logToName,
-						logToUserEmail
+						logToUserEmail,
+						undefined,
+						undefined,
+						sourceOrUndefined(request.body.source)
 					)) as CustomerEntity;
 					if (!customerEntity) {
 						return response.status(StatusCodes.BAD_REQUEST).json({
@@ -533,7 +555,10 @@ export class AccountController {
 				: // 2.1 Create customer
 					((await CustomerService.instance.create(
 						firstName || lastName || primaryEmail,
-						primaryEmail
+						primaryEmail,
+						undefined,
+						undefined,
+						sourceOrUndefined(request.body.source)
 					)) as CustomerEntity);
 
 			if (!customerEntity) {
@@ -602,6 +627,11 @@ export class AccountController {
 	 *               address:
 	 *                 type: string
 	 *                 description: Optional cheqd testnet address to fund; it does not have to belong to the customer. Requests count against the calling customer's quota. Defaults to the authenticated customer's testnet account.
+	 *               source:
+	 *                 type: string
+	 *                 pattern: '^[a-z0-9][a-z0-9-]{0,31}$'
+	 *                 maxLength: 32
+	 *                 description: Optional label for where the request came from, stored for reporting (for example `studio`, `sdk`, `agent-quickstart`, `agent`). Lower-case letters, digits and hyphens only; anything else is rejected with 400.
 	 *               amount:
 	 *                 type: number
 	 *                 description: Optional amount in CHEQ. If omitted, FAUCET_DEFAULT_REQUEST_CHEQ (default 10,000) is sent, or less if the room under the address cap or the monthly quota left is lower. Set it to ask for more; the response shows the amount sent.
@@ -779,6 +809,7 @@ export class AccountController {
 					amountNcheq: amountToRequestNcheq,
 					limitNcheq: quotaLimitNcheq,
 					minIntervalSeconds: FAUCET_MIN_INTERVAL_SECONDS,
+					source: sourceOrUndefined(request.body.source),
 					addressCap: {
 						capNcheq: addressCapNcheq,
 						currentBalanceNcheq,
@@ -1024,6 +1055,156 @@ export class AccountController {
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulResponseBody);
 		}
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /account/export-keys:
+	 *   post:
+	 *     tags: [Account]
+	 *     summary: Export the authenticated user's private key material.
+	 *     description: >-
+	 *       Returns the private keys for every DID the customer owns (via the same mechanism as
+	 *       `/did/export/{did}`) and the two cosmos payment-account private keys (mainnet and testnet fee-payer
+	 *       wallets). The result is never returned in plaintext: it is encrypted on the server with a key derived
+	 *       from the supplied `password` (scrypt, then AES-256-GCM) and returned as a versioned
+	 *       `cheqd-studio-key-export` envelope (see `EncryptedKeyExport`). The decrypted JSON has the shape
+	 *       `{ dids: [{ did, export?, error? }], paymentAccounts: [{ network, address, type, privateKeyHex }] }`.
+	 *       A DID that fails to export (e.g. one custodied by an external provider rather than Studio) is
+	 *       reported per-DID under `error` rather than failing the whole export. Requires a sign-in within the
+	 *       last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300); otherwise a `401` with code
+	 *       `REAUTHENTICATION_REQUIRED` is returned.
+	 *     requestBody:
+	 *       required: true
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+	 *             required: [password]
+	 *             properties:
+	 *               password:
+	 *                 type: string
+	 *                 minLength: 12
+	 *                 description: Encrypts the exported keys; needed to decrypt them. Not stored.
+	 *     responses:
+	 *       200:
+	 *         description: The encrypted export.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EncryptedKeyExport'
+	 *       400:
+	 *         description: The password is missing (`PASSWORD_REQUIRED`) or too weak (`WEAK_PASSWORD`).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/KeyExportPasswordError'
+	 *       401:
+	 *         description: Unauthorised, or `REAUTHENTICATION_REQUIRED` when the sign-in is older than the allowed window.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/ReauthenticationRequiredError'
+	 *       429:
+	 *         description: Too many concurrent exports (`EXPORT_BUSY`). Retry after the `Retry-After` interval.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/InvalidRequest'
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public async exportKeys(request: Request, response: Response) {
+		if (!response.locals.customer) {
+			return response.status(StatusCodes.UNAUTHORIZED).json({
+				error: 'Unauthorized error: Studio user context was not found.',
+			} satisfies UnsuccessfulResponseBody);
+		}
+		const customer = response.locals.customer as CustomerEntity;
+
+		// The key material is encrypted with a key derived from the supplied password before it leaves the server.
+		return respondWithEncryptedExport(request, response, async (): Promise<AccountExportKeysResponseBody> => {
+			const identityStrategySetup = new IdentityServiceStrategySetup(customer.customerId);
+
+			const [dids] = await IdentifierService.instance.find({ customer });
+			const exportedDids: ExportedDidKeys[] = await Promise.all(
+				dids.map(async (identifier): Promise<ExportedDidKeys> => {
+					try {
+						const didExport = await (
+							await identityStrategySetup.routed('did', { kind: 'did', id: identifier.did })
+						).exportDid(identifier.did, '', customer);
+						return { did: identifier.did, export: didExport };
+					} catch (error) {
+						return { did: identifier.did, error: (error as Error)?.message || String(error) };
+					}
+				})
+			);
+
+			const paymentAccounts = await identityStrategySetup.agent.exportPaymentAccountKeys(customer);
+			return { dids: exportedDids, paymentAccounts };
+		});
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /account:
+	 *   delete:
+	 *     tags: [Account]
+	 *     summary: Permanently delete the authenticated user's Studio account.
+	 *     description: >-
+	 *       Hard-deletes the account: cancels any active Stripe subscription, deletes the Logto user, then
+	 *       deletes the customer row and everything it owns (DIDs, credentials, resources, keys, API keys,
+	 *       payment accounts). This cannot be undone, and DID documents or resources already published
+	 *       on-chain are not removed from the ledger. Requires `{ "confirm": true }` in the request body, and a
+	 *       sign-in within the last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300).
+	 *     requestBody:
+	 *       content:
+	 *         application/json:
+	 *           schema:
+	 *             type: object
+	 *             required: [confirm]
+	 *             properties:
+	 *               confirm:
+	 *                 type: boolean
+	 *     responses:
+	 *       200:
+	 *         description: The account was deleted.
+	 *       400:
+	 *         description: Missing confirmation, or a problem with the input fields.
+	 *       401:
+	 *         description: Unauthorised, or `REAUTHENTICATION_REQUIRED` when the sign-in is older than the allowed window.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/ReauthenticationRequiredError'
+	 *       500:
+	 *         description: The deletion pipeline failed partway through; the response body records which steps completed.
+	 */
+	public async delete(request: Request, response: Response) {
+		if (request.body?.confirm !== true) {
+			return response.status(StatusCodes.BAD_REQUEST).json({
+				error: 'confirm must be set to true to delete the account.',
+			} satisfies UnsuccessfulResponseBody);
+		}
+
+		if (!response.locals.customer) {
+			return response.status(StatusCodes.UNAUTHORIZED).json({
+				error: 'Unauthorized error: Studio user context was not found.',
+			} satisfies UnsuccessfulResponseBody);
+		}
+
+		const customer = response.locals.customer as CustomerEntity;
+		const stripe = response.locals.stripe as Stripe | undefined;
+
+		const result = await deleteCustomerAccount(customer, stripe, liveAccountDeletionDeps);
+		if (!result.success) {
+			return response
+				.status(StatusCodes.INTERNAL_SERVER_ERROR)
+				.json({ error: describeAccountDeletionFailure(result), ...result });
+		}
+		return response.status(StatusCodes.OK).json(result);
 	}
 }
 

@@ -19,6 +19,7 @@ import type { IKeyTrack, ITrackOperation } from '../../types/track.js';
 import { OperationCategoryNameEnum, OperationNameEnum } from '../../types/constants.js';
 import { validate } from '../validator/decorator.js';
 import { SupportedKeyTypes } from '@veramo/utils';
+import { shapeKeyResponse } from '../../services/identity/engine/key-response.js';
 import {
 	createDidVerificationMethod,
 	createVerificationKeys,
@@ -26,6 +27,7 @@ import {
 	VerificationMethods,
 } from '@cheqd/sdk';
 import { query } from 'express-validator';
+import { engineErrorResponse } from '../../helpers/engine-errors.js';
 
 // ToDo: Make the format of /key/create and /key/read the same
 // ToDo: Add valdiation for /key/import
@@ -120,9 +122,12 @@ export class KeyController {
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
-			const keyType = request.query.type as SupportedKeyTypes | undefined;
-			const key = await identityServiceStrategySetup.agent.createKey(
-				keyType || SupportedKeyTypes.Ed25519,
+			const keyType = (request.query.type as SupportedKeyTypes | undefined) || SupportedKeyTypes.Ed25519;
+			// P-256 / JsonWebKey keys always go to Credo: the router applies that rule from the key type
+			const engine = await identityServiceStrategySetup.engine('key', undefined, { keyType, creates: true });
+			const key = shapeKeyResponse(
+				await engine.createKey(keyType, response.locals.customer),
+				engine,
 				response.locals.customer
 			);
 
@@ -139,6 +144,8 @@ export class KeyController {
 			// Return the response
 			return response.status(StatusCodes.OK).json(key satisfies CreateKeyResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulCreateKeyResponseBody);
@@ -205,11 +212,14 @@ export class KeyController {
 					} satisfies UnsuccessfulImportKeyResponseBody);
 				}
 			}
-			const key = await identityServiceStrategySetup.agent.importKey(
-				type || 'Ed25519',
-				decryptedPrivateKeyHex,
-				response.locals.customer,
-				alias
+			const engine = await identityServiceStrategySetup.engine('key', undefined, {
+				keyType: type || 'Ed25519',
+				creates: true,
+			});
+			const key = shapeKeyResponse(
+				await engine.importKey(type || 'Ed25519', decryptedPrivateKeyHex, response.locals.customer, alias),
+				engine,
+				response.locals.customer
 			);
 			// Track the operation
 			eventTracker.emit('track', {
@@ -225,6 +235,8 @@ export class KeyController {
 			// Return the response
 			return response.status(StatusCodes.OK).json(key satisfies ImportKeyResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulImportKeyResponseBody);
@@ -278,14 +290,18 @@ export class KeyController {
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 		try {
-			const key = await identityServiceStrategySetup.agent.getKey(kid, response.locals.customer);
+			const engine = await identityServiceStrategySetup.engine('key');
+			const found = await engine.getKey(kid, response.locals.customer);
+			const key = found && shapeKeyResponse(found, engine);
 			if (key) {
-				return response.status(StatusCodes.OK).json(key satisfies QueryKeyResponseBody);
+				return response.status(StatusCodes.OK).json(key as unknown as QueryKeyResponseBody);
 			}
 			return response.status(StatusCodes.NOT_FOUND).json({
 				error: `Key with kid: ${kid} not found`,
 			} satisfies UnsuccessfulQueryKeyResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
 			} satisfies UnsuccessfulQueryKeyResponseBody);
@@ -374,7 +390,7 @@ export class KeyController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const key = await identityServiceStrategySetup.agent.getKey(kid, response.locals.customer);
+			const key = await (await identityServiceStrategySetup.engine('key')).getKey(kid, response.locals.customer);
 			if (!key) {
 				return response.status(StatusCodes.NOT_FOUND).json({
 					error: `Key with kid: ${kid} not found`,
@@ -396,6 +412,8 @@ export class KeyController {
 
 			return response.status(StatusCodes.OK).json(verificationMethods[0]);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
 			});

@@ -24,6 +24,7 @@ import { validate } from '../validator/decorator.js';
 import { UnsuccessfulGetDidResponseBody } from '../../types/did.js';
 import { CheqdNetwork } from '@cheqd/sdk';
 import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
+import { engineErrorResponse } from '../../helpers/engine-errors.js';
 
 export class ResourceController {
 	public static createResourceValidator = [
@@ -172,7 +173,7 @@ export class ResourceController {
 	@validate
 	public async createResource(request: Request, response: Response) {
 		// Extract the did from the request
-		let did = Array.isArray(request.params.did) ? request.params.did[0] : (request.params.did as string);
+		const did = Array.isArray(request.params.did) ? request.params.did[0] : (request.params.did as string);
 		// Extract the resource parameters from the request
 		const { data, encoding, name, type, alsoKnownAs, version, network, publicKeyHexs } =
 			request.body as CreateResourceRequestBody;
@@ -209,12 +210,10 @@ export class ResourceController {
 				version,
 				alsoKnownAs,
 			};
-			const result = await identityServiceStrategySetup.agent.createResource(
-				network || did.split(':')[2],
-				resourcePayload,
-				response.locals.customer,
-				publicKeyHexs
-			);
+			// A resource is written under an existing DID, so the DID's recorded engine decides
+			const result = await (
+				await identityServiceStrategySetup.routed('resource', { kind: 'did', id: did })
+			).createResource(network || did.split(':')[2], resourcePayload, response.locals.customer, publicKeyHexs);
 
 			if (result) {
 				const url = new URL(
@@ -247,6 +246,8 @@ export class ResourceController {
 				} satisfies UnsuccessfulCreateResourceResponseBody);
 			}
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			const unfunded = unfundedPayerFailure(error);
 			if (unfunded) {
 				return response.status(unfunded.status).json({
@@ -356,6 +357,8 @@ export class ResourceController {
 				} satisfies UnsuccessfulQueryResourceResponseBody);
 			}
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
 			} satisfies UnsuccessfulQueryResourceResponseBody);
@@ -445,7 +448,9 @@ export class ResourceController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await identityServiceStrategySetup.agent.listResources(
+			const result = await (
+				await identityServiceStrategySetup.routed('resource', did ? { kind: 'did', id: did } : undefined)
+			).listResources(
 				{
 					did,
 					encrypted,
@@ -461,6 +466,8 @@ export class ResourceController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulGetDidResponseBody);

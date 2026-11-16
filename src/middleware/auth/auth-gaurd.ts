@@ -10,6 +10,7 @@ import { PortalUserInfoFetcher } from './user-info-fetcher/portal-token.js';
 import { IdTokenUserInfoFetcher } from './user-info-fetcher/idtoken.js';
 import { M2MCredsTokenUserInfoFetcher } from './user-info-fetcher/m2m-creds-token.js';
 import { APITokenUserInfoFetcher } from './user-info-fetcher/api-token.js';
+import { m2mCustomerPathEnabled } from './m2m-customer-path.js';
 
 export class APIGuard {
 	private authRuleRepository: AuthRuleRepository;
@@ -40,6 +41,14 @@ export class APIGuard {
 			} satisfies ValidationErrorResponseBody);
 		}
 
+		// The direct customer-id path is disabled unless explicitly enabled. Refuse before any token work.
+		if (!m2mCustomerPathEnabled() && APIGuard.isCustomerPathAttempt(request)) {
+			console.warn('Authentication refused: m2m-customer-path-disabled');
+			return response.status(StatusCodes.UNAUTHORIZED).json({
+				error: 'Unauthorized error: Authentication failed.',
+			} satisfies ValidationErrorResponseBody);
+		}
+
 		// Set user info fetcher
 		this.chooseUserFetcherStrategy(request);
 
@@ -65,6 +74,18 @@ export class APIGuard {
 	}
 
 	/**
+	 * True when the request carries a `customer-id` header with a Bearer token and no API key, which is what selects
+	 * the direct machine-to-machine customer path.
+	 */
+	private static isCustomerPathAttempt(request: Request): boolean {
+		return Boolean(
+			request.headers['customer-id'] &&
+			!request.headers['x-api-key'] &&
+			APIGuard.extractBearerTokenFromHeaders(request.headers)
+		);
+	}
+
+	/**
 	 * Chooses the appropriate user fetcher strategy based on the request headers.
 	 *
 	 * @param {Request} request - The request object containing the headers.
@@ -81,8 +102,11 @@ export class APIGuard {
 			return;
 		}
 
-		if (m2mCreds) {
-			this.setUserInfoStrategy(new M2MCredsTokenUserInfoFetcher(m2mCreds, this.oauthProvider));
+		// Defence in depth: while the path is disabled this strategy is never chosen, whatever the caller above did
+		if (m2mCreds && m2mCustomerPathEnabled()) {
+			// bearerToken, not m2mCreds: the fetcher verifies this as a JWT, and reads the customer-id header
+			// separately itself. Passing the customer-id string here made every M2M request fail (see #874).
+			this.setUserInfoStrategy(new M2MCredsTokenUserInfoFetcher(bearerToken, this.oauthProvider));
 			return;
 		}
 

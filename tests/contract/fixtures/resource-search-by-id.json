@@ -1,0 +1,28 @@
+{
+	"schema": 1,
+	"stepId": "resource-search-by-id",
+	"routeId": "GET /resource/search/:did",
+	"tier": 2,
+	"effect": "read-only",
+	"recorded": {
+		"at": "2026-11-13T13:34:47.132Z",
+		"engine": "veramo",
+		"gitRef": "715d81d"
+	},
+	"exchange": {
+		"request": {
+			"method": "GET",
+			"path": "/resource/search/<var:resourceDid>",
+			"query": {
+				"resourceId": "<uuid:1>"
+			}
+		},
+		"response": {
+			"status": 200,
+			"contentType": "application/json",
+			"body": {
+				"data": "Hello World"
+			}
+		}
+	}
+}

@@ -37,6 +37,13 @@ The application allows configuring the following parameters using environment va
 
 ### Core configuration
 
+#### Production startup guard
+
+When `NODE_ENV=production` (the Docker image default) the application refuses to start unless `ENABLE_AUTHENTICATION`
+and `ENABLE_EXTERNAL_DB` are both exactly `true`. Anything else, including `True` or `1`, counts as off. Outside
+production the check does nothing. For a deliberate exception set `ALLOW_INSECURE_PRODUCTION_WITHOUT_AUTHENTICATION=true`;
+startup then logs a warning naming the reason. See [`docs/deployment-checklist.md`](docs/deployment-checklist.md).
+
 #### Events tracking
 
 1. `LOG_LEVEL`: specifies log level, like 'trace', 'debug', 'info', 'warn' or 'error';
@@ -123,7 +130,7 @@ portal tells a new user, on the dashboard, to request testnet CHEQ from Balances
 12. `FAUCET_ACCESS_CLIENT_ID`: Cloudflare Access client ID for accessing the Testnet Faucet API
 13. `FAUCET_ACCESS_CLIENT_SECRET`: Cloudflare Access client secret for accessing the Testnet Faucet API
 
-`POST /account/faucet` accepts three kinds of credential: a Studio user session (bearer token), an API key (`x-api-key` header) and a machine-to-machine token (bearer token plus a `customer-id` header selecting the customer). All three are checked against the same rule: the scopes they carry must include `request:faucet:testnet`. A user session and an API key get their scopes from the user's LogTo roles, so the scope comes with the Basic and Build plan roles; a machine-to-machine token carries its scopes in the token, so `request:faucet:testnet` must be granted to the M2M application's role in LogTo. The plan check, address ownership, quota and limits apply identically to all three.
+`POST /account/faucet` accepts three kinds of credential: a Studio user session (bearer token), an API key (`x-api-key` header) and a machine-to-machine token (bearer token plus a `customer-id` header selecting the customer; this path is disabled unless `ENABLE_M2M_CUSTOMER_PATH` is exactly `true`). All three are checked against the same rule: the scopes they carry must include `request:faucet:testnet`. A user session and an API key get their scopes from the user's LogTo roles, so the scope comes with the Basic and Build plan roles; a machine-to-machine token carries its scopes in the token, so `request:faucet:testnet` must be granted to the M2M application's role in LogTo. The plan check, address ownership, quota and limits apply identically to all three.
 
 The faucet quota, limits and handlers have two Postgres-backed test suites that are skipped unless `FAUCET_TEST_DATABASE_URL` points at a disposable database, so a plain `npm run test:unit` and CI are unaffected. Start a database with `docker run -d --rm --name faucet-test-db -e POSTGRES_PASSWORD=pw -e POSTGRES_DB=studio -p 55432:5432 postgres:16`, then:
 

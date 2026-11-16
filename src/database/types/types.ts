@@ -1,4 +1,5 @@
 import pkg from 'pg-connection-string';
+import { loadMainPoolSettings, toPgPoolExtra } from '../config/pool-config.js';
 import { DataSource } from 'typeorm';
 import { migrations, Entities } from '@veramo/data-store';
 
@@ -21,6 +22,20 @@ import { ProviderConfigurationEntity } from '../entities/provider-configuration.
 import { IssuedCredentialEntity } from '../entities/issued-credential.entity.js';
 import { StatusRegistryEntity } from '../entities/status-registry.entity.js';
 import { FaucetRequestEntity } from '../entities/faucet-request.entity.js';
+import { LedgerAddressActivityEntity } from '../entities/ledger-address-activity.entity.js';
+import { LedgerAddressDailyEntity } from '../entities/ledger-address-daily.entity.js';
+import { DeletedAccountRecordEntity } from '../entities/deleted-account-record.entity.js';
+import { FeatureFlagEntity } from '../entities/feature-flag.entity.js';
+import { AgentEntity } from '../entities/agent.entity.js';
+import { AgentCardEntity } from '../entities/agent-card.entity.js';
+import { AgentEventEntity } from '../entities/agent-event.entity.js';
+import { AuthorityGrantEntity } from '../entities/authority-grant.entity.js';
+import { PaymentAddressBindingEntity } from '../entities/payment-address-binding.entity.js';
+import { IdempotencyKeyEntity } from '../entities/idempotency-key.entity.js';
+import { AdminAuditLogEntity } from '../entities/admin-audit-log.entity.js';
+import { EngineDiffEntity } from '../entities/engine-diff.entity.js';
+import { EngineMigrationEntity } from '../entities/engine-migration.entity.js';
+import { CustomerActivationEntity } from '../entities/customer-activation.entity.js';
 
 import { CreatePaymentTable1695740345977 } from '../migrations/archive/CreatePaymentTable.js';
 import { CreateOperationTable1695740345977 } from '../migrations/archive/CreateOperationTable.js';
@@ -60,6 +75,30 @@ import { StudioMigrations1766408271347 } from '../migrations/1766408271347-studi
 import { StudioMigrations1791500000000 } from '../migrations/1791500000000-studio-migrations.js';
 import { StudioMigrations1791500000001 } from '../migrations/1791500000001-studio-migrations.js';
 import { StudioMigrations1791500000002 } from '../migrations/1791500000002-studio-migrations.js';
+import { StudioMigrations1791600000000 } from '../migrations/1791600000000-studio-migrations.js';
+import { StudioMigrations1791700000000 } from '../migrations/1791700000000-studio-migrations.js';
+import { StudioMigrations1791700100000 } from '../migrations/1791700100000-studio-migrations.js';
+import { StudioMigrations1791700200000 } from '../migrations/1791700200000-studio-migrations.js';
+import { StudioMigrations1791700300000 } from '../migrations/1791700300000-studio-migrations.js';
+import { StudioMigrations1791700500000 } from '../migrations/1791700500000-studio-migrations.js';
+import { StudioMigrations1791700600000 } from '../migrations/1791700600000-studio-migrations.js';
+import { StudioMigrations1791700700000 } from '../migrations/1791700700000-studio-migrations.js';
+import { StudioMigrations1791700800000 } from '../migrations/1791700800000-studio-migrations.js';
+import { StudioMigrations1791700900000 } from '../migrations/1791700900000-studio-migrations.js';
+import { StudioMigrations1791701000000 } from '../migrations/1791701000000-studio-migrations.js';
+import { StudioMigrations1791701100000 } from '../migrations/1791701100000-studio-migrations.js';
+import { StudioMigrations1791701200000 } from '../migrations/1791701200000-studio-migrations.js';
+import { StudioMigrations1791701300000 } from '../migrations/1791701300000-studio-migrations.js';
+import { StudioMigrations1791701400000 } from '../migrations/1791701400000-studio-migrations.js';
+import { StudioMigrations1791701500000 } from '../migrations/1791701500000-studio-migrations.js';
+import { StudioMigrations1791701600000 } from '../migrations/1791701600000-studio-migrations.js';
+import { StudioMigrations1791701700000 } from '../migrations/1791701700000-studio-migrations.js';
+import { StudioMigrations1791701800000 } from '../migrations/1791701800000-studio-migrations.js';
+import { StudioMigrations1791701900000 } from '../migrations/1791701900000-studio-migrations.js';
+import { StudioMigrations1791702000000 } from '../migrations/1791702000000-studio-migrations.js';
+import { StudioMigrations1791702100000 } from '../migrations/1791702100000-studio-migrations.js';
+import { StudioMigrations1791702200000 } from '../migrations/1791702200000-studio-migrations.js';
+import { StudioMigrations1791702300000 } from '../migrations/1791702300000-studio-migrations.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -97,6 +136,8 @@ export class Postgres implements AbstractDatabase {
 			username: config.user,
 			password: config.password,
 			database: config.database,
+			// Explicit pool: max, idle and connection timeouts come from EXTERNAL_DB_POOL_* (database/config/pool-config.ts)
+			extra: toPgPoolExtra(loadMainPoolSettings()),
 			ssl: config.ssl
 				? {
 						ca: EXTERNAL_DB_CERT,
@@ -164,6 +205,48 @@ export class Postgres implements AbstractDatabase {
 				StudioMigrations1791500000001,
 				// Let the database set faucetRequest.createdAt
 				StudioMigrations1791500000002,
+				// Add deletedAccountRecord table, to block a fresh free trial after account deletion
+				StudioMigrations1791600000000,
+				// Add featureFlag table: engine kill switches, UI default and per-customer overrides
+				StudioMigrations1791700000000,
+				// No-op: Credo storage is a separate database, provisioned by hand
+				StudioMigrations1791700100000,
+				// Add agent and agentCard tables
+				StudioMigrations1791700200000,
+				// Add authorityGrant and paymentAddressBinding tables
+				StudioMigrations1791700300000,
+				// Add customer.credoTenantId
+				StudioMigrations1791700500000,
+				// Add append-only adminAuditLog table
+				StudioMigrations1791700600000,
+				// Add engineDiff and engineMigration tables
+				StudioMigrations1791700700000,
+				// Add engine column to identifier, issuedCredential and statusRegistry
+				StudioMigrations1791700800000,
+				// Add engine, network, outcome and durationMs to operation
+				StudioMigrations1791700900000,
+				// Add statusFormat, listFormat and encoding columns
+				StudioMigrations1791701000000,
+				// Add identifier and customer credoTenantId indexes
+				StudioMigrations1791701100000,
+				// Add idempotencyKey table
+				StudioMigrations1791701200000,
+				// Add operation and key indexes for the staff analytics queries
+				StudioMigrations1791701300000,
+				// Add source to customer and faucetRequest
+				StudioMigrations1791701400000,
+				// Add customerActivation table (activation milestones)
+				StudioMigrations1791701500000,
+				// Add authorityGrant.policySummary (settlement view)
+				StudioMigrations1791701600000,
+				StudioMigrations1791701700000,
+				StudioMigrations1791701800000,
+				StudioMigrations1791701900000,
+				StudioMigrations1791702000000,
+				StudioMigrations1791702100000,
+				StudioMigrations1791702200000,
+				// Add ledgerAddressDaily and the per-day sync markers on ledgerAddressActivity
+				StudioMigrations1791702300000,
 			],
 			entities: [
 				...Entities,
@@ -184,6 +267,20 @@ export class Postgres implements AbstractDatabase {
 				IssuedCredentialEntity,
 				StatusRegistryEntity,
 				FaucetRequestEntity,
+				LedgerAddressActivityEntity,
+				LedgerAddressDailyEntity,
+				DeletedAccountRecordEntity,
+				FeatureFlagEntity,
+				AgentEntity,
+				AgentCardEntity,
+				AgentEventEntity,
+				AuthorityGrantEntity,
+				PaymentAddressBindingEntity,
+				AdminAuditLogEntity,
+				EngineDiffEntity,
+				EngineMigrationEntity,
+				IdempotencyKeyEntity,
+				CustomerActivationEntity,
 			],
 			logging: ['error', 'info', 'warn'],
 		});

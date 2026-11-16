@@ -2,7 +2,62 @@
  * @openapi
  *
  * components:
+ *   parameters:
+ *     AnalyticsRange:
+ *       in: query
+ *       name: range
+ *       description: Days to look back, counting today as whole UTC days.
+ *       schema:
+ *         type: integer
+ *         enum: [7, 30, 90]
+ *         default: 30
+ *     AnalyticsSegment:
+ *       in: query
+ *       name: segment
+ *       description: >-
+ *         `agents`: the customer has at least one non-deleted agent. `people`: no agents, but it has issued a
+ *         credential. `unclassified`: neither. `all`: no filter.
+ *       schema:
+ *         type: string
+ *         enum: [agents, people, unclassified, all]
+ *         default: all
  *   schemas:
+ *     AdminDayCount:
+ *       type: object
+ *       properties:
+ *         date:
+ *           type: string
+ *           example: '2026-11-13'
+ *         count:
+ *           type: integer
+ *     AdminCustomer:
+ *       type: object
+ *       properties:
+ *         id: { type: string, format: uuid }
+ *         name: { type: string }
+ *         email: { type: string }
+ *         plan: { type: string, example: Build }
+ *         network: { type: string, enum: [mainnet, testnet] }
+ *         createdAt: { type: string, format: date-time }
+ *         lastActiveAt: { type: string, format: date-time, nullable: true }
+ *         status: { type: string, enum: [active, inactive] }
+ *         usage:
+ *           type: object
+ *           properties:
+ *             apiCalls30d: { type: integer }
+ *             identifiers: { type: integer }
+ *             credentials: { type: integer }
+ *             keys: { type: integer, deprecated: true, description: 'Deprecated: the count of DID keys. Use didKeys.' }
+ *             didKeys: { type: integer, description: 'DID keys held by the customer.' }
+ *             apiKeys: { type: integer, description: 'API keys that are not revoked.' }
+ *     AdminCustomerDetail:
+ *       allOf:
+ *         - $ref: '#/components/schemas/AdminCustomer'
+ *         - type: object
+ *           properties:
+ *             paymentPlan: { type: string, example: active }
+ *             agentCount: { type: integer }
+ *             segment: { type: string, enum: [agents, people, unclassified] }
  *     PriceListResponseBody:
  *       description: A list of active prcies from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/prices/list)
  *       type: object
@@ -204,13 +259,17 @@
  *           type: boolean
  *           description: The status of the API key
  *           example: false
+ *         expired:
+ *           type: boolean
+ *           description: Whether the expiry has passed, by the server clock (UTC). An expired key is rejected with 401 on every request.
+ *           example: false
  *     APIKeyCreateRequestBody:
  *       description: The request body for creating an API key
  *       type: object
  *       properties:
  *         expiresAt:
  *           type: string
- *           description: The expiration date of the API key
+ *           description: The expiration date of the API key. Optional on creation; when omitted the key expires 30 days after creation. It must be in the future and no more than 730 days ahead (the server's `API_KEY_MAX_EXPIRATION_DAYS` setting, default 730); otherwise the request is rejected with 400. A key stops authenticating, with 401, at this instant.
  *           example: "2000-10-31T01:23:45Z"
  *           format: date-time
  *         name:
@@ -244,7 +303,7 @@
  *           example: My API Key
  *         expiresAt:
  *           type: string
- *           description: The expiration date of the API key
+ *           description: The new expiration date of the API key. It must be in the future and no more than 730 days ahead (`API_KEY_MAX_EXPIRATION_DAYS`, default 730).
  *           example: 2000-10-31T01:23:45Z
  *           format: date-time
  *         revoked:

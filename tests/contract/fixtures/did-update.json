@@ -1,0 +1,69 @@
+{
+	"schema": 1,
+	"stepId": "did-update",
+	"routeId": "POST /did/update",
+	"tier": 2,
+	"effect": "ledger-fee",
+	"recorded": {
+		"at": "2026-11-13T13:39:08.581Z",
+		"engine": "veramo",
+		"gitRef": "715d81d"
+	},
+	"exchange": {
+		"request": {
+			"method": "POST",
+			"path": "/did/update",
+			"body": {
+				"did": "did:cheqd:testnet:<uuid:1>",
+				"service": [
+					{
+						"id": "did:cheqd:testnet:<uuid:1>#service-1",
+						"serviceEndpoint": ["https://example.com"],
+						"type": "LinkedDomains"
+					}
+				]
+			}
+		},
+		"response": {
+			"status": 200,
+			"contentType": "application/json",
+			"body": {
+				"controllerKeyId": "<hash:1>",
+				"controllerKeyRefs": ["<hash:1>"],
+				"controllerKeys": [
+					{
+						"controller": "did:cheqd:testnet:<uuid:1>",
+						"kid": "<hash:1>",
+						"kms": "postgres",
+						"meta": {
+							"algorithms": ["EdDSA", "Ed25519"]
+						},
+						"publicKeyHex": "<hash:1>",
+						"type": "Ed25519"
+					}
+				],
+				"did": "did:cheqd:testnet:<uuid:1>",
+				"keys": [
+					{
+						"controller": "did:cheqd:testnet:<uuid:1>",
+						"kid": "<hash:1>",
+						"kms": "postgres",
+						"meta": {
+							"algorithms": ["EdDSA", "Ed25519"]
+						},
+						"publicKeyHex": "<hash:1>",
+						"type": "Ed25519"
+					}
+				],
+				"provider": "cheqd",
+				"services": [
+					{
+						"id": "did:cheqd:testnet:<uuid:1>#service-1",
+						"serviceEndpoint": ["https://example.com"],
+						"type": "LinkedDomains"
+					}
+				]
+			}
+		}
+	}
+}

@@ -9,6 +9,7 @@ export interface IOAuthProvider {
 	getDefaultScopes(): string[] | void;
 	getAllResourcesWithNames(): string[] | void;
 	getUserScopes(userId: string): Promise<ICommonErrorResponse>;
+	getUserRoles(userId: string): Promise<ICommonErrorResponse>;
 	getAppScopes(appId: string): Promise<ICommonErrorResponse>;
 	getScopesForRoles(rolesList: string[]): Promise<string[] | void>;
 }
@@ -27,6 +28,9 @@ export abstract class OAuthProvider implements IOAuthProvider {
 		throw new Error('Method not implemented.');
 	}
 	getUserScopes(userId: string): Promise<ICommonErrorResponse> {
+		throw new Error('Method not implemented.');
+	}
+	getUserRoles(userId: string): Promise<ICommonErrorResponse> {
 		throw new Error('Method not implemented.');
 	}
 	getAppScopes(appId: string): Promise<ICommonErrorResponse> {

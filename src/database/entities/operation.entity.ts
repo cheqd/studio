@@ -1,4 +1,13 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+	BeforeInsert,
+	BeforeUpdate,
+	Column,
+	Entity,
+	Index,
+	JoinColumn,
+	ManyToOne,
+	PrimaryGeneratedColumn,
+} from 'typeorm';
 
 import { categoryEnum } from './../types/enum.js';
 import { CoinEntity } from './coin.entity.js';
@@ -8,6 +17,8 @@ import { CustomerEntity } from './customer.entity.js';
 dotenv.config();
 
 @Entity('operation')
+@Index('IDX_operation_customerId_createdAt', ['customer', 'createdAt'])
+@Index('IDX_operation_createdAt', ['createdAt'])
 export class OperationEntity {
 	@PrimaryGeneratedColumn('uuid')
 	operationId!: string;
@@ -50,6 +61,18 @@ export class OperationEntity {
 		nullable: true,
 	})
 	updatedAt!: Date;
+
+	@Column({ type: 'varchar', length: 16, nullable: true })
+	engine?: string;
+
+	@Column({ type: 'varchar', length: 16, nullable: true })
+	network?: string;
+
+	@Column({ type: 'varchar', length: 16, nullable: true })
+	outcome?: string;
+
+	@Column({ type: 'integer', nullable: true })
+	durationMs?: number;
 
 	@BeforeInsert()
 	setCreatedAt() {

@@ -1,0 +1,43 @@
+{
+	"schema": 1,
+	"stepId": "resource-create",
+	"routeId": "POST /resource/create/:did",
+	"tier": 2,
+	"effect": "ledger-fee",
+	"recorded": {
+		"at": "2026-11-13T13:39:08.581Z",
+		"engine": "veramo",
+		"gitRef": "715d81d"
+	},
+	"exchange": {
+		"request": {
+			"method": "POST",
+			"path": "/resource/create/did:cheqd:testnet:<uuid:1>",
+			"body": {
+				"data": "SGVsbG8gV29ybGQ=",
+				"encoding": "base64url",
+				"name": "contract-<var:run>",
+				"type": "TextDocument"
+			}
+		},
+		"response": {
+			"status": 201,
+			"contentType": "application/json",
+			"body": {
+				"resource": {
+					"checksum": "<hash:1>",
+					"created": "<timestamp>",
+					"mediaType": "text/plain; charset=utf-8",
+					"nextVersionId": null,
+					"previousVersionId": null,
+					"resourceCollectionId": "<uuid:1>",
+					"resourceId": "<uuid:2>",
+					"resourceName": "contract-<var:run>",
+					"resourceType": "TextDocument",
+					"resourceURI": "did:cheqd:testnet:<uuid:1>/resources/<uuid:2>",
+					"resourceVersion": ""
+				}
+			}
+		}
+	}
+}

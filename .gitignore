@@ -189,6 +189,8 @@ web_modules/
 
 # Output of 'npm pack'
 *.tgz
+!vendor/credo/*.tgz
+!vendor/agent-toolkit/*.tgz
 
 # Yarn Integrity file
 .yarn-integrity

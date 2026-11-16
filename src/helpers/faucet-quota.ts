@@ -112,6 +112,8 @@ export interface FaucetReserveOptions {
 	minIntervalSeconds?: number;
 	// Enforce the address cap under the lock, counting requests still in flight for the same address
 	addressCap?: FaucetAddressCap;
+	// Where the request came from (#868). Already validated by the caller; stored as given.
+	source?: string;
 }
 
 export type FaucetReservation =
@@ -192,6 +194,7 @@ export async function creditWithinQuota(
 		limitNcheq: bigint;
 		minIntervalSeconds?: number;
 		addressCap?: FaucetAddressCap;
+		source?: string;
 	},
 	log: FaucetLogger = logFaucetEvent
 ): Promise<FaucetCreditResult> {
@@ -204,6 +207,7 @@ export async function creditWithinQuota(
 		limitNcheq: params.limitNcheq,
 		minIntervalSeconds: params.minIntervalSeconds,
 		addressCap: params.addressCap,
+		source: params.source,
 	});
 	if (!reservation.reserved) {
 		switch (reservation.reason) {

@@ -3,6 +3,7 @@ import { BeforeInsert, BeforeUpdate, Column, Entity, Index, JoinColumn, ManyToOn
 import * as dotenv from 'dotenv';
 import { CustomerEntity } from './customer.entity.js';
 import { UserEntity } from './user.entity.js';
+import { isAPIKeyExpired } from '../../services/admin/api-key-expiry.js';
 dotenv.config();
 
 @Entity('apiKey')
@@ -73,8 +74,8 @@ export class APIKeyEntity {
 		this.updatedAt = new Date();
 	}
 
-	public isExpired(): boolean {
-		return this.expiresAt < new Date();
+	public isExpired(now: Date = new Date()): boolean {
+		return isAPIKeyExpired(this.expiresAt, now);
 	}
 
 	constructor(

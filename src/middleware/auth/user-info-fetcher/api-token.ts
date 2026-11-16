@@ -32,7 +32,7 @@ export class APITokenUserInfoFetcher extends UserInfoHelper implements IUserInfo
 	public async verifyToken(response: Response): Promise<Response | undefined> {
 		try {
 			// fetches api, customer and user entity
-			const apiEntity = await APIKeyService.instance.get(this.token);
+			const apiEntity = await APIKeyService.instance.authenticate(this.token);
 			const userEntity = apiEntity.user;
 			const customerEntity = apiEntity.customer;
 			if (!apiEntity) {
@@ -60,6 +60,8 @@ export class APITokenUserInfoFetcher extends UserInfoHelper implements IUserInfo
 			this.setScopes(_resp.data, response);
 			response.locals.user = userEntity;
 			response.locals.customer = customerEntity;
+			// Lets handlers say who acted (the agent activity feed shows `api-key`, never an email).
+			response.locals.authMethod = 'api-key';
 			return;
 		} catch (error) {
 			const failure = apiKeyVerificationFailure(error);
