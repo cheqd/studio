@@ -2,11 +2,67 @@ import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { veramoOverrideEnabled } from '../../services/identity/engine/new-artefact-policy.js';
 import { requireStaffScope, STAFF_SCOPES } from './staff-guard.js';
-import { FeatureFlagService, validateFlagWrite } from '../../services/api/feature-flag.js';
+import validator from 'validator';
+import { FeatureFlagService, resolveFlags, validateFlagWrite } from '../../services/api/feature-flag.js';
 
 export const FLAGS_ADMIN_SCOPE = STAFF_SCOPES.flagsUpdate;
+export const FLAGS_READ_SCOPE = STAFF_SCOPES.customersRead;
 
 export class FlagsAdminController {
+	/**
+	 * @openapi
+	 *
+	 * /admin/customers/{id}/flags:
+	 *   get:
+	 *     summary: Read the feature flags that apply to one customer (staff only).
+	 *     description: The flags this customer gets now (the engine for NEW artefacts on each route, and the UI), the stored rows behind them (global and this customer's own), and whether the temporary Veramo override is on for the instance that answered. A stored `veramo` engine row has no effect while the override is off, so `effective` can say `credo` while a row says `veramo`. Existing artefacts always use the engine recorded on them.
+	 *     tags: [Admin]
+	 *     parameters:
+	 *       - in: path
+	 *         name: id
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           format: uuid
+	 *     responses:
+	 *       200:
+	 *         description: The customer's flags.
+	 *       400:
+	 *         description: The id is not a UUID.
+	 *       401:
+	 *         description: Unauthorised.
+	 *       403:
+	 *         description: The caller is not staff.
+	 */
+	public async getCustomerFlags(request: Request, response: Response) {
+		if (!requireStaffScope(response, FLAGS_READ_SCOPE, 'Only staff can read customer flags.')) return response;
+		const customerId = request.params.id;
+		if (typeof customerId !== 'string' || !validator.isUUID(customerId)) {
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: 'id must be a UUID' });
+		}
+		const overrideEnabled = veramoOverrideEnabled();
+		try {
+			const rows = await FeatureFlagService.instance.readRows(customerId);
+			return response.status(StatusCodes.OK).json({
+				customerId,
+				effective: resolveFlags(rows, customerId),
+				rows: rows.map((row) => ({
+					scope: row.customerId ? 'customer' : 'global',
+					flagKey: row.flagKey,
+					route: row.route,
+					value: row.value,
+					updatedAt: row.updatedAt,
+				})),
+				overrideEnabled,
+			});
+		} catch {
+			// No featureFlag table (or no external database): the compiled defaults apply
+			return response
+				.status(StatusCodes.OK)
+				.json({ customerId, effective: resolveFlags([], customerId), rows: [], overrideEnabled });
+		}
+	}
+
 	/**
 	 * @openapi
 	 *

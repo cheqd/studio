@@ -34,7 +34,15 @@ jest.unstable_mockModule('../../../src/services/track/tracker.js', () => ({
 }));
 const upsert = jest.fn();
 jest.unstable_mockModule('../../../src/services/api/feature-flag.js', () => ({
-	FeatureFlagService: { instance: { setFlag: upsert } },
+	FeatureFlagService: {
+		instance: {
+			setFlag: upsert,
+			readRows: async () => {
+				throw new Error('a refused call must not read flags');
+			},
+		},
+	},
+	resolveFlags: () => ({}),
 	validateFlagWrite: () => ({
 		ok: true,
 		write: { flagKey: 'engine', value: { engine: 'credo' }, reason: 'x' },
@@ -83,6 +91,7 @@ const handlers: Array<{ method: string; path: string; run: Handler }> = [
 	{ method: 'GET', path: '/admin/audit-log', run: (q, r) => audit.list(q, r) },
 	{ method: 'DELETE', path: '/admin/organisation/delete', run: (q, r) => organisation.delete(q, r) },
 	{ method: 'PUT', path: '/admin/flags', run: (q, r) => flags.putFlag(q, r) },
+	{ method: 'GET', path: `/admin/customers/${uuid}/flags`, run: (q, r) => flags.getCustomerFlags(q, r) },
 ];
 
 const rules = (
