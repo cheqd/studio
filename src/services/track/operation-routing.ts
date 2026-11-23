@@ -29,5 +29,6 @@ export function operationRouting(operation: ITrackOperation<TrackData>, now: num
 		network: networkOf(operation),
 		outcome: failed ? 'error' : 'ok',
 		durationMs: request ? Math.max(0, now - request.startedAt) : undefined,
+		authMethod: request?.authMethod,
 	};
 }

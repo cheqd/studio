@@ -15,6 +15,8 @@ export interface OperationRouting {
 	network?: string;
 	outcome?: string;
 	durationMs?: number;
+	/** How the caller authenticated (`api-key`, `portal`, `id-token`, `m2m`, `swagger-ui`); empty outside a request */
+	authMethod?: string;
 }
 
 export class OperationService {
@@ -56,6 +58,7 @@ export class OperationService {
 		operationEntity.network = routing.network;
 		operationEntity.outcome = routing.outcome;
 		operationEntity.durationMs = routing.durationMs;
+		operationEntity.authMethod = routing.authMethod;
 		const operation = (await this.operationRepository.insert(operationEntity)).identifiers[0];
 		if (!operation) throw new Error(`Cannot create a new operation`);
 
