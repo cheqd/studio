@@ -90,6 +90,7 @@ import {
 	VC_REMOVE_ORIGINAL_FIELDS,
 } from '../../../../types/constants.js';
 import { toCoin, toDefaultDkg, toMinimalDenom } from '../../../../helpers/helpers.js';
+import { withNormalisedBitstringStatusPurpose } from './bitstring-status-purpose.js';
 import { jwtDecode } from 'jwt-decode';
 import type {
 	BitstringStatusListEntry as BitstringStatusListEntryType,
@@ -386,10 +387,14 @@ export class Veramo {
 									statusOptions: statusOptions as SuspensionStatusOptions,
 								});
 				} else {
-					verifiable_credential = await agent.cheqdIssueCredentialWithStatusList({
-						issuanceOptions,
-						statusOptions: statusOptions,
-					});
+					// Single-purpose lists store `statusPurpose` as a string, which the plugin's purpose check
+					// cannot read; see bitstring-status-purpose.ts.
+					verifiable_credential = await withNormalisedBitstringStatusPurpose(() =>
+						agent.cheqdIssueCredentialWithStatusList({
+							issuanceOptions,
+							statusOptions: statusOptions,
+						})
+					);
 				}
 			} else {
 				verifiable_credential = await agent.createVerifiableCredential(issuanceOptions);
