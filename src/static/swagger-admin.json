@@ -88,10 +88,13 @@
             "format": "uuid"
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Masked like email when the name is an email address."
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "example": "a•••@example.com",
+            "description": "Masked. The full address is only returned by POST /admin/customers/{id}/email-reveal, which is audited."
           },
           "plan": {
             "type": "string",
@@ -837,7 +840,7 @@
     "/admin/analytics/top-accounts": {
       "get": {
         "summary": "Top accounts by calls (staff only).",
-        "description": "Customers with the most tracked operations in the range. Needs the `admin:analytics:read` scope.",
+        "description": "Customers with the most tracked operations in the range. `name` is masked (first character, `•••@`, then the domain) when it is an email address. Needs the `admin:analytics:read` scope.",
         "tags": [
           "Analytics"
         ],
@@ -874,7 +877,8 @@
                         "format": "uuid"
                       },
                       "name": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Masked when it is an email address."
                       },
                       "plan": {
                         "type": "string"
@@ -1444,7 +1448,7 @@
     "/admin/audit-log": {
       "get": {
         "summary": "Staff audit log (staff only).",
-        "description": "Every staff action that changed state (customer deletion, feature flag changes), newest first. Append-only. `target` is the customer id; the log never holds a customer's name or email, so an entry outlives the customer it records. `staff` is the acting staff member's Studio email where known, otherwise the actor id. Needs the `admin:audit:read` scope.",
+        "description": "Every staff action that changed state (customer deletion, feature flag changes), plus each read of a customer's detail (`customer.viewed`) and each email reveal (`customer.email_revealed`), newest first. Append-only. `target` is the customer id; the log never holds a customer's name or email, so an entry outlives the customer it records. `staff` is the acting staff member's Studio email where known, otherwise the actor id. Needs the `admin:audit:read` scope.",
         "tags": [
           "Audit"
         ],
@@ -1538,7 +1542,7 @@
     "/admin/customers": {
       "get": {
         "summary": "List customers (staff only).",
-        "description": "Staff search over customers, newest first. Counts only: never keys, credential contents, claim values or API keys. Needs the `admin:customers:read` scope. `status` is `active` when the customer has a tracked operation in the last 30 days and `inactive` otherwise. `plan` is the customer's plan name (`none` when it has no paid or free plan role). `usage.apiCalls30d` counts tracked operations in the last 30 days.",
+        "description": "Staff search over customers, newest first. Counts only: never keys, credential contents, claim values or API keys. `email` is masked (first character, `•••@`, then the domain), and so is `name` when the name is itself an email address; staff get the full address only through the audited `POST /admin/customers/{id}/email-reveal`. `q` still matches the full email. Needs the `admin:customers:read` scope. `status` is `active` when the customer has a tracked operation in the last 30 days and `inactive` otherwise. `plan` is the customer's plan name (`none` when it has no paid or free plan role). `usage.apiCalls30d` counts tracked operations in the last 30 days.",
         "tags": [
           "Customers"
         ],
@@ -1631,7 +1635,7 @@
     "/admin/customers/{id}": {
       "get": {
         "summary": "Get one customer (staff only).",
-        "description": "The same shape as the list, plus `paymentPlan` (the latest subscription status, or `none`), `agentCount` (agents that are not deleted) and `segment` (`agents`: has at least one non-deleted agent; `people`: no agents but has issued a credential; `unclassified`: neither). Needs the `admin:customers:read` scope.",
+        "description": "The same shape as the list, plus `paymentPlan` (the latest subscription status, or `none`), `agentCount` (agents that are not deleted) and `segment` (`agents`: has at least one non-deleted agent; `people`: no agents but has issued a credential; `unclassified`: neither). `email` (and an email-like `name`) is masked as in the list. Each successful read writes a `customer.viewed` entry to the staff audit log (actor, action, customer id and time; never the email). Needs the `admin:customers:read` scope.",
         "tags": [
           "Customers"
         ],
@@ -1653,6 +1657,80 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AdminCustomerDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "403": {
+            "description": "The caller is not staff."
+          },
+          "404": {
+            "$ref": "#/components/schemas/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/customers/{id}/email-reveal": {
+      "post": {
+        "summary": "Reveal one customer's full email (staff only, audited).",
+        "description": "Returns the customer's full email address, which the list and detail show masked. Every reveal first writes a `customer.email_revealed` entry to the staff audit log (actor, action, customer id and time; the email itself is never stored there). If that entry cannot be written, the email is not returned. Needs the `admin:customers:read` scope.",
+        "tags": [
+          "Customers"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "description": "Why the email is needed. Recorded in the audit entry."
+                  },
+                  "ticketRef": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "description": "Support ticket reference, recorded in the audit entry."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }

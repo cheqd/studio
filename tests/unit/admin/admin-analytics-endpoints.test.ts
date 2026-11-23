@@ -17,6 +17,7 @@ import { FlagsAuthRuleProvider } from '../../../src/middleware/auth/routes/api/f
 import { CustomersAdminController } from '../../../src/controllers/admin/customers.js';
 import { AnalyticsAdminController } from '../../../src/controllers/admin/analytics.js';
 import { AuditLogAdminController } from '../../../src/controllers/admin/audit-log.js';
+import { maskEmail, maskIfEmail } from '../../../src/services/admin/mask-email.js';
 import {
 	AdminAnalyticsService,
 	routeForOperation,
@@ -50,6 +51,7 @@ describe('staff auth rules', () => {
 	it.each([
 		['/admin/customers', 'admin:customers:read'],
 		[`/admin/customers/${uuid}`, 'admin:customers:read'],
+		[`/admin/customers/${uuid}/email-reveal`, 'admin:customers:read', 'POST'],
 		['/admin/analytics/overview', 'admin:analytics:read'],
 		['/admin/analytics/endpoints', 'admin:analytics:read'],
 		['/admin/analytics/top-accounts', 'admin:analytics:read'],
@@ -57,8 +59,8 @@ describe('staff auth rules', () => {
 		['/admin/analytics/funnels', 'admin:analytics:read'],
 		['/admin/analytics/faucet-to-ledger', 'admin:analytics:read'],
 		['/admin/audit-log', 'admin:audit:read'],
-	])('GET %s needs exactly %s and is not open to anonymous callers', (path, scope) => {
-		const rule = repository.match(requestFor('GET', path));
+	])('%s needs exactly %s and is not open to anonymous callers', (path, scope, method = 'GET') => {
+		const rule = repository.match(requestFor(method, path));
 		expect(rule).not.toBeNull();
 		expect(rule?.isValidScope(scope)).toBe(true);
 		expect(rule?.isAllowedUnauthorized()).toBe(false);
@@ -87,6 +89,11 @@ describe('staff auth rules', () => {
 			['PUT', '/admin/customers'],
 			['GET', '/admin/customers/'],
 			['GET', `/admin/customers/${uuid}/keys`],
+			['GET', `/admin/customers/${uuid}/email-reveal`],
+			['PUT', `/admin/customers/${uuid}/email-reveal`],
+			['POST', `/admin/customers/${uuid}/email-reveal/x`],
+			['POST', `/admin/customers/${uuid}/email-reveals`],
+			['POST', `/x/admin/customers/${uuid}/email-reveal`],
 			['GET', '/v1/admin/customers'],
 			['GET', '/did/admin/customers'],
 			['GET', '/admin/customersx'],
@@ -125,13 +132,18 @@ async function call(
 	controller: object,
 	handler: string,
 	validators: Array<{ run: (req: Request) => Promise<unknown> }>,
-	options: { query?: Record<string, string>; params?: Record<string, string>; scopes?: string[] } = {}
+	options: {
+		query?: Record<string, string>;
+		params?: Record<string, string>;
+		scopes?: string[];
+		body?: Record<string, unknown>;
+	} = {}
 ) {
 	const request = {
-		method: 'GET',
+		method: options.body ? 'POST' : 'GET',
 		query: options.query ?? {},
 		params: options.params ?? {},
-		body: {},
+		body: options.body ?? {},
 	} as unknown as Request;
 	for (const validator of validators) await validator.run(request);
 	const response: FakeResponse = {
@@ -158,6 +170,10 @@ function fakeService() {
 	const service = {
 		listCustomers: jest.fn(async () => ({ customers: [], total: 0 })),
 		getCustomer: jest.fn(async (id: string): Promise<unknown> => (id === uuid ? { id } : null)),
+		getCustomerEmail: jest.fn(
+			async (id: string): Promise<string | null> => (id === uuid ? 'alice@example.com' : null)
+		),
+		recordStaffAction: jest.fn(async (_entry: Record<string, unknown>) => undefined),
 		overview: jest.fn(async () => ({ tiles: {}, series: {} })),
 		endpoints: jest.fn(async () => []),
 		topAccounts: jest.fn(async () => []),
@@ -235,6 +251,86 @@ describe('staff endpoints: validation, defaults and staff-only enforcement', () 
 		expect(found.body).toEqual({ id: uuid });
 	});
 
+	it('GET /admin/customers/{id} writes a customer.viewed audit entry, and none for an unknown id', async () => {
+		await call(customers, 'get', CustomersAdminController.getValidator, {
+			params: { id: '22222222-2222-4222-8222-222222222222' },
+		});
+		expect(service.recordStaffAction).not.toHaveBeenCalled();
+		const found = await call(customers, 'get', CustomersAdminController.getValidator, { params: { id: uuid } });
+		expect(found.status).toBe(200);
+		expect(service.recordStaffAction).toHaveBeenCalledTimes(1);
+		expect(service.recordStaffAction).toHaveBeenCalledWith({
+			actorUserId: 'logto-staff-1',
+			action: 'customer.viewed',
+			targetCustomerId: uuid,
+			reason: 'Customer detail viewed',
+		});
+	});
+
+	it('GET /admin/customers/{id} still answers when the view audit write fails', async () => {
+		jest.spyOn(console, 'error').mockImplementation(() => undefined);
+		service.recordStaffAction.mockRejectedValueOnce(new Error('down'));
+		const found = await call(customers, 'get', CustomersAdminController.getValidator, { params: { id: uuid } });
+		expect(found.status).toBe(200);
+		jest.restoreAllMocks();
+	});
+
+	it('POST /admin/customers/{id}/email-reveal returns the full email and audits the reveal without it', async () => {
+		const result = await call(customers, 'revealEmail', CustomersAdminController.revealEmailValidator, {
+			params: { id: uuid },
+			body: { reason: 'Support request', ticketRef: 'SUP-1' },
+		});
+		expect(result.status).toBe(200);
+		expect(result.body).toEqual({ email: 'alice@example.com' });
+		expect(service.recordStaffAction).toHaveBeenCalledWith({
+			actorUserId: 'logto-staff-1',
+			action: 'customer.email_revealed',
+			targetCustomerId: uuid,
+			reason: 'Support request',
+			ticketRef: 'SUP-1',
+		});
+		expect(JSON.stringify(service.recordStaffAction.mock.calls)).not.toContain('@');
+		// the reason is optional
+		await call(customers, 'revealEmail', CustomersAdminController.revealEmailValidator, {
+			params: { id: uuid },
+			body: {},
+		});
+		expect(service.recordStaffAction).toHaveBeenLastCalledWith(
+			expect.objectContaining({ action: 'customer.email_revealed', reason: 'Email revealed' })
+		);
+	});
+
+	it('POST /admin/customers/{id}/email-reveal: 404 and no audit for an unknown id, 400 for a bad id or reason', async () => {
+		const unknown = await call(customers, 'revealEmail', CustomersAdminController.revealEmailValidator, {
+			params: { id: '22222222-2222-4222-8222-222222222222' },
+			body: {},
+		});
+		expect(unknown.status).toBe(404);
+		for (const [params, body] of [
+			[{ id: 'org_a1f3' }, {}],
+			[{ id: uuid }, { reason: 'x'.repeat(501) }],
+			[{ id: uuid }, { reason: 7 }],
+			[{ id: uuid }, { ticketRef: '' }],
+		] as Array<[Record<string, string>, Record<string, unknown>]>) {
+			const result = await call(customers, 'revealEmail', CustomersAdminController.revealEmailValidator, {
+				params,
+				body,
+			});
+			expect([params, body, result.status]).toEqual([params, body, 400]);
+		}
+		expect(service.recordStaffAction).not.toHaveBeenCalled();
+	});
+
+	it('POST /admin/customers/{id}/email-reveal fails closed: no audit entry, no email', async () => {
+		service.recordStaffAction.mockRejectedValueOnce(new Error('down'));
+		const result = await call(customers, 'revealEmail', CustomersAdminController.revealEmailValidator, {
+			params: { id: uuid },
+			body: {},
+		});
+		expect(result.status).toBe(500);
+		expect(JSON.stringify(result.body)).not.toContain('alice@example.com');
+	});
+
 	it('analytics routes default to 30 days and all segments, and accept 7, 30 and 90', async () => {
 		await call(analytics, 'overview', AnalyticsAdminController.overviewValidator);
 		expect(service.overview).toHaveBeenCalledWith(30, 'all');
@@ -301,6 +397,7 @@ describe('staff endpoints: validation, defaults and staff-only enforcement', () 
 		> = [
 			[customers, 'list', CustomersAdminController.listValidator, {}, customerScopes],
 			[customers, 'get', CustomersAdminController.getValidator, { id: uuid }, customerScopes],
+			[customers, 'revealEmail', CustomersAdminController.revealEmailValidator, { id: uuid }, customerScopes],
 			[
 				analytics,
 				'overview',
@@ -436,6 +533,71 @@ describe('AdminAnalyticsService shaping and privacy', () => {
 			didKeys: 3,
 			apiKeys: 2,
 		});
+	});
+
+	it('masks emails in the customer list and detail, and email-like names in the list and top accounts', async () => {
+		const row = {
+			id: uuid,
+			name: 'bob@example.org',
+			email: 'alice@example.com',
+			createdAt: new Date().toISOString(),
+			plan: 'Build',
+			lastActiveAt: null,
+			network: 'testnet',
+		};
+		const { service } = serviceWith((sql) =>
+			sql.includes('COUNT(*) AS total')
+				? [{ total: '2' }]
+				: sql.includes('AS calls')
+					? [{ customerId: uuid, name: 'bob@example.org', plan: 'Build', calls: '4' }]
+					: [row, { ...row, id: 'b', name: 'Acme Ltd', email: 'carol@acme.test' }]
+		);
+		const list = await service.listCustomers({ page: 1, limit: 25 });
+		expect(list.customers.map((c) => [c.name, c.email])).toEqual([
+			['b•••@example.org', 'a•••@example.com'],
+			['Acme Ltd', 'c•••@acme.test'],
+		]);
+		const detail = await service.getCustomer(uuid);
+		expect([detail?.name, detail?.email]).toEqual(['b•••@example.org', 'a•••@example.com']);
+		expect(await service.topAccounts(30, 'all', 10)).toEqual([
+			{ customerId: uuid, name: 'b•••@example.org', plan: 'Build', calls: 4 },
+		]);
+		expect(JSON.stringify([list, detail])).not.toMatch(/alice@|bob@|carol@/);
+	});
+
+	it('maskEmail and maskIfEmail', () => {
+		expect(maskEmail('alice@example.com')).toBe('a•••@example.com');
+		expect(maskEmail('a@b.c')).toBe('a•••@b.c');
+		expect(maskEmail('no-at-sign')).toBe('n•••');
+		expect(maskEmail('@example.com')).toBe('@•••');
+		expect(maskEmail('')).toBe('');
+		expect(maskEmail(null)).toBe('');
+		expect(maskIfEmail('Acme Ltd')).toBe('Acme Ltd');
+		expect(maskIfEmail('name with @ sign')).toBe('name with @ sign');
+		expect(maskIfEmail(' dan@example.net ')).toBe('d•••@example.net');
+	});
+
+	it('reads the full email only for the reveal, and writes audit rows without it', async () => {
+		const seen: Array<{ sql: string; parameters: unknown[] }> = [];
+		const db: Queryable = {
+			query: async (sql: string, parameters: unknown[] = []) => {
+				seen.push({ sql, parameters });
+				return sql.includes('SELECT c."email"') ? [{ email: 'alice@example.com' }] : [];
+			},
+		};
+		const service = new AdminAnalyticsService(() => db);
+		expect(await service.getCustomerEmail(uuid)).toBe('alice@example.com');
+		expect(seen[0].parameters).toEqual([uuid]);
+		await service.recordStaffAction({
+			actorUserId: 'logto-staff-1',
+			action: 'customer.email_revealed',
+			targetCustomerId: uuid,
+			reason: 'Email revealed',
+		});
+		expect(seen[1].sql).toMatch(/^INSERT INTO "adminAuditLog"/);
+		expect(seen[1].parameters).toEqual(['logto-staff-1', 'customer.email_revealed', uuid, 'Email revealed', null]);
+		const none = new AdminAnalyticsService(() => ({ query: async () => [] }));
+		expect(await none.getCustomerEmail(uuid)).toBeNull();
 	});
 
 	it('counts API keys from the apiKey table, leaving revoked ones out, and keeps DID keys separate', async () => {

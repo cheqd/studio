@@ -34,8 +34,11 @@
  *       type: object
  *       properties:
  *         id: { type: string, format: uuid }
- *         name: { type: string }
- *         email: { type: string }
+ *         name: { type: string, description: 'Masked like email when the name is an email address.' }
+ *         email:
+ *           type: string
+ *           example: 'a•••@example.com'
+ *           description: 'Masked. The full address is only returned by POST /admin/customers/{id}/email-reveal, which is audited.'
  *         plan: { type: string, example: Build }
  *         network: { type: string, enum: [mainnet, testnet] }
  *         createdAt: { type: string, format: date-time }

@@ -410,12 +410,17 @@ class App {
 		app.get('/flags', new FlagsController().getFlags);
 		app.put('/admin/flags', new FlagsAdminController().putFlag);
 
-		// Staff customer back end, analytics and audit log (read only, staff scopes)
+		// Staff customer back end, analytics and audit log (staff scopes; reads, plus the audited email reveal)
 		const customersAdmin = new CustomersAdminController();
 		const analyticsAdmin = new AnalyticsAdminController();
 		const auditAdmin = new AuditLogAdminController();
 		app.get('/admin/customers', CustomersAdminController.listValidator, customersAdmin.list.bind(customersAdmin));
 		app.get('/admin/customers/:id', CustomersAdminController.getValidator, customersAdmin.get.bind(customersAdmin));
+		app.post(
+			'/admin/customers/:id/email-reveal',
+			CustomersAdminController.revealEmailValidator,
+			customersAdmin.revealEmail.bind(customersAdmin)
+		);
 		app.get(
 			'/admin/analytics/overview',
 			AnalyticsAdminController.overviewValidator,

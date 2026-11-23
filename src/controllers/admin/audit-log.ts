@@ -17,7 +17,9 @@ export class AuditLogAdminController {
 	 *   get:
 	 *     summary: Staff audit log (staff only).
 	 *     description: >-
-	 *       Every staff action that changed state (customer deletion, feature flag changes), newest first. Append-only.
+	 *       Every staff action that changed state (customer deletion, feature flag changes), plus each read of a
+	 *       customer's detail (`customer.viewed`) and each email reveal (`customer.email_revealed`), newest first.
+	 *       Append-only.
 	 *       `target` is the customer id; the log never holds a customer's name or email, so an entry outlives the
 	 *       customer it records. `staff` is the acting staff member's Studio email where known, otherwise the actor id.
 	 *       Needs the `admin:audit:read` scope.
