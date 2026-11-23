@@ -37,6 +37,18 @@ export class CredoOwnershipError extends Error {
 }
 
 /**
+ * The key store already holds private material under this key id. The runtime raises it in place of Credo's own
+ * "key exists" error so the engine can tell it apart from a storage failure. Never sent as is: the engine decides
+ * what the caller is told.
+ */
+export class CredoKeyExistsError extends Error {
+	constructor(readonly keyId: string) {
+		super(`The key store already holds key ${keyId}`);
+		this.name = 'CredoKeyExistsError';
+	}
+}
+
+/**
  * Credo's storage is not configured, or is configured wrongly. The message names every variable that is missing or
  * invalid and says what to do, so an operator can fix it from the log line alone. The router treats it like any
  * other engine failure; it never stops Studio from starting while the Credo engine is not selected.

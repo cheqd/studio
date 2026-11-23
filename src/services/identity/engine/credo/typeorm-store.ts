@@ -102,6 +102,21 @@ export class TypeOrmCredoEngineStore implements CredoEngineStore {
 		return toStoredKey(await repository.save(key));
 	}
 
+	async readOwnedPrivateKey(
+		customerId: string,
+		kid: string
+	): Promise<{ alias: string; privateKeyHex: string } | null> {
+		// Ownership first, from the customer-scoped `key` row: the private key table has no customer column
+		if (!(await this.findOwnedKey(customerId, { kid }))) return null;
+		try {
+			const stored = await this.privateKeyStore.getKey({ alias: kid });
+			return stored?.privateKeyHex ? { alias: stored.alias, privateKeyHex: stored.privateKeyHex } : null;
+		} catch {
+			// Veramo throws when the alias is unknown
+			return null;
+		}
+	}
+
 	async deleteUnlinkedOwnedKey(customerId: string, kid: string): Promise<boolean> {
 		const result = await this.dataSource
 			.getRepository(KeyEntity)

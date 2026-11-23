@@ -52,6 +52,12 @@ export interface CredoEngineStore extends CredentialStore {
 	/** Sets alias and creation time on an owned key and returns the row; null if the customer does not own it. */
 	finaliseOwnedKey(customerId: string, kid: string, alias?: string): Promise<StoredKey | null>;
 
+	/**
+	 * The decrypted private key of a key this customer owns, read from Studio's key store, or null when the customer
+	 * does not own the key or the store holds no private material for it. For DID export only; never log the result.
+	 */
+	readOwnedPrivateKey(customerId: string, kid: string): Promise<{ alias: string; privateKeyHex: string } | null>;
+
 	/** Deletes an owned key row that no identifier uses. True when a row was deleted. Scoped to the customer. */
 	deleteUnlinkedOwnedKey(customerId: string, kid: string): Promise<boolean>;
 
@@ -111,7 +117,16 @@ export interface CredoTenantSession extends CredentialSession {
 	updateDid(input: { did: string; didDocument: EngineDidDocument; keys: DidKeyLink[] }): Promise<DidOperationResult>;
 	deactivateDid(did: string): Promise<DidOperationResult>;
 	createResource(did: string, resource: ResourceInput): Promise<{ state: string; reason?: string }>;
-	/** Imports a private key into the KMS (and so into Studio's key store through the adapter) under `keyId`. */
+	/**
+	 * Records a DID that already exists on the ledger as one this tenant controls (Credo's `dids.import`), with the
+	 * KMS key ids of the methods it signs with. A local write only: nothing goes to the ledger. Replaces the tenant's
+	 * earlier record of the same DID.
+	 */
+	importDid(input: { did: string; didDocument: EngineDidDocument; keys: DidKeyLink[] }): Promise<void>;
+	/**
+	 * Imports a private key into the KMS (and so into Studio's key store through the adapter) under `keyId`.
+	 * Rejects with `CredoKeyExistsError` when the key store already holds that key id.
+	 */
 	importKey(privateJwk: PrivateJwk, keyId: string): Promise<void>;
 	/** Deletes a key from the KMS (and so its private material from Studio's key store). */
 	deleteKey(keyId: string): Promise<void>;

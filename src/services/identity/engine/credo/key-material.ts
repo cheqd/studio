@@ -1,9 +1,11 @@
-import { generateKeyPairSync } from 'node:crypto';
+import { createPrivateKey, createPublicKey, generateKeyPairSync } from 'node:crypto';
 import { bases } from 'multiformats/basics';
+import { veramoKeyToJwk } from '../../credo/keyConversion.js';
 import type { EngineDidDocument, EngineKeyType } from '../types.js';
 
 /**
- * Key material helpers for the Credo engine. No Credo imports: the same code feeds the runtime and the unit tests.
+ * Key material helpers for the Credo engine. No Credo runtime imports (`keyConversion.ts` imports Credo types only):
+ * the same code feeds the runtime and the unit tests.
  *
  * Studio's key ids follow Veramo: `kid` is the public key as hex (Ed25519: the 32 raw bytes; P-256 and secp256k1:
  * the 33-byte compressed point). The Credo engine keeps that convention, so a key it creates is addressable the
@@ -80,6 +82,69 @@ export function generateKeyMaterial(type: EngineKeyType | string): GeneratedKey 
 		kid: publicKeyHex,
 		publicKeyHex,
 		privateJwk: { ...(jwk as unknown as PrivateJwk), kid: publicKeyHex },
+	};
+}
+
+/** The key types a customer can import. The same set the key store can hold in Veramo's layout. */
+export const IMPORTABLE_KEY_TYPES: readonly EngineKeyType[] = ['Ed25519', 'Secp256k1', 'Secp256r1', 'X25519'];
+
+const ED25519_PKCS8_PREFIX = '302e020100300506032b657004220420';
+
+/**
+ * Key material for a private key the customer supplies as hex, in the layout `POST /key/import` and `/did/import`
+ * accept: Ed25519 as the 32-byte seed or Veramo's 64-byte seed-plus-public-key form, the others as the 32-byte
+ * secret. The `kid` follows the same convention as a generated key (the public key hex).
+ *
+ * Errors never quote the key: the message says only what is wrong with it.
+ */
+export function keyMaterialFromPrivateKeyHex(type: EngineKeyType, privateKeyHex: string): GeneratedKey {
+	const hex = privateKeyHex.replace(/^0x/i, '').toLowerCase();
+	if (hex.length === 0 || hex.length % 2 !== 0 || !/^[0-9a-f]+$/.test(hex)) {
+		throw new Error(`The ${type} private key is not a hexadecimal string of whole bytes`);
+	}
+
+	let veramoHex = hex;
+	if (type === 'Ed25519' && hex.length === 64) {
+		// A bare seed: append the public key, which is the form Veramo stores and `veramoKeyToJwk` reads
+		const privateKey = createPrivateKey({
+			key: Buffer.from(ED25519_PKCS8_PREFIX + hex, 'hex'),
+			format: 'der',
+			type: 'pkcs8',
+		});
+		const { x } = createPublicKey(privateKey).export({ format: 'jwk' }) as { x: string };
+		veramoHex = hex + Buffer.from(x, 'base64url').toString('hex');
+	}
+
+	let jwk: PrivateJwk;
+	try {
+		jwk = veramoKeyToJwk(type, veramoHex, 'import') as unknown as PrivateJwk;
+	} catch (error) {
+		// The conversion's own messages name lengths and consistency only; Node's curve errors are replaced
+		const reason =
+			error instanceof Error && /expected|inconsistent/.test(error.message) ? `: ${error.message}` : '';
+		throw new Error(`The private key is not a valid ${type} key${reason}`);
+	}
+	const publicKeyHex = publicKeyHexFromJwk(jwk);
+	return { type, kid: publicKeyHex, publicKeyHex, privateJwk: { ...jwk, kid: publicKeyHex } };
+}
+
+const MULTIBASE_KEY_HEADER = [0xed, 0x01];
+
+/**
+ * The encodings of a key pair in a DID export, byte for byte what the Veramo export writes: `@cheqd/sdk`
+ * `toMultibaseRaw` (which prefixes the Ed25519 multicodec header whatever the key type) and unprefixed base58btc.
+ */
+export function exportKeyEncodings(publicKeyHex: string, privateKeyHex: string) {
+	const publicKey = new Uint8Array(Buffer.from(publicKeyHex, 'hex'));
+	const privateKey = new Uint8Array(Buffer.from(privateKeyHex, 'hex'));
+	const multibase = (bytes: Uint8Array) =>
+		bases.base58btc.encode(new Uint8Array([...MULTIBASE_KEY_HEADER, ...bytes]));
+	const base58 = (bytes: Uint8Array) => bases.base58btc.encode(bytes).slice(1);
+	return {
+		publicKeyMultibase: multibase(publicKey),
+		privateKeyMultibase: multibase(privateKey),
+		publicKeyBase58: base58(publicKey),
+		privateKeyBase58: base58(privateKey),
 	};
 }
 
