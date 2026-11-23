@@ -43,6 +43,9 @@ declare global {
 			COOKIE_SECRET: string;
 			ENABLE_M2M_CUSTOMER_PATH?: string;
 
+			// Portal credential screens: history counts only before this ISO date (the release date)
+			CREDENTIAL_SCREENS_HISTORY_CUTOFF?: string;
+
 			// Verida
 			ENABLE_VERIDA_CONNECTOR: string | 'false';
 			POLYGON_RPC_URL_MAINNET: string;

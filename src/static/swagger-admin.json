@@ -1712,7 +1712,7 @@
     "/admin/flags": {
       "put": {
         "summary": "Set a feature flag (staff only).",
-        "description": "Creates or replaces one flag, either global or for one customer. Every change is audited. Engine flags only choose the engine for NEW artefacts, and Credo is the default for every family. Veramo is retired for new artefacts, so an engine flag of `veramo` has no effect unless the instances run the temporary override `VERAMO_NEW_ARTEFACT_OVERRIDE=true`; each artefact it then creates on Veramo is logged as `veramo-new-artefact-override`. Existing artefacts always use the engine recorded on them, whatever a flag says.",
+        "description": "Creates or replaces one flag, either global or for one customer. Every change is audited. Engine flags only choose the engine for NEW artefacts, and Credo is the default for every family. Veramo is retired for new artefacts, so an engine flag of `veramo` has no effect unless the instances run the temporary override `VERAMO_NEW_ARTEFACT_OVERRIDE=true`; each artefact it then creates on Veramo is logged as `veramo-new-artefact-override`. Existing artefacts always use the engine recorded on them, whatever a flag says. The `credentialScreens` flag (per customer only, no route) shows or hides the portal's credential screens, with a value whose `mode` is `auto`, `on` or `off`; `auto` follows the customer's history.",
         "tags": [
           "Flags"
         ],
@@ -1732,7 +1732,8 @@
                     "type": "string",
                     "enum": [
                       "engine",
-                      "ui"
+                      "ui",
+                      "credentialScreens"
                     ]
                   },
                   "customerId": {
