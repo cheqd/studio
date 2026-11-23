@@ -167,9 +167,26 @@ reinstate went to Veramo, which did nothing.
 ## Status updates that change nothing
 
 `/credential/revoke`, `/credential/suspend`, `/credential/reinstate` and the accreditation equivalents no longer answer
-200 when nothing was updated (`src/services/api/status-update-outcome.ts`):
+200 when nothing was updated (`src/services/api/status-update-outcome.ts`).
 
-- 409 when the credential is already in the requested state;
+A change that would do nothing answers **409** on both engines, with `error` and a stable `code`:
+
+| `code` | When |
+|---|---|
+| `already_revoked` | revoke of a revoked credential |
+| `already_suspended` | suspend of a suspended credential |
+| `not_suspended` | reinstate of a credential that is not suspended |
+| `credential_revoked` | suspend or reinstate of a revoked credential (Bitstring lists; revocation cannot be undone) |
+
+Before the change is sent to the engine, `statusUpdateConflict` reads the credential's current status through the same
+engine (`checkBitstringStatusList`, or `checkStatusList2021` on the list for the action's purpose). Neither engine
+reports every no-op itself: the Veramo plugin answers `{ revoked: true }` for a StatusList2021 credential that was
+already revoked, and on a Bitstring list both engines would move a revoked credential back to valid or suspended. When
+the status cannot be read (undecodable credential, no status entry, an encrypted list, a failing read) the update runs
+and its own result decides. A no-op the engine reports itself (a race after the read) is also 409 with the same code.
+
+A genuine failure is not 409:
+
 - 400 when the engine reported an error (its message is returned);
 - 500 otherwise (`updated: false` with no error, for example a list recorded against the wrong engine).
 

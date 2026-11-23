@@ -372,6 +372,12 @@ export class AccreditationController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       409:
+	 *         description: The change would do nothing; see `code`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/StatusUpdateConflict'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
@@ -422,6 +428,7 @@ export class AccreditationController {
 			} else {
 				return response.status(result.status).json({
 					error: result.error,
+					...(result.data?.code ? { code: result.data.code } : {}),
 				});
 			}
 		} catch (error) {
@@ -469,6 +476,12 @@ export class AccreditationController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       409:
+	 *         description: The change would do nothing; see `code`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/StatusUpdateConflict'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
@@ -520,6 +533,7 @@ export class AccreditationController {
 			} else {
 				return response.status(result.status).json({
 					error: result.error,
+					...(result.data?.code ? { code: result.data.code } : {}),
 				});
 			}
 		} catch (error) {
@@ -567,6 +581,12 @@ export class AccreditationController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       409:
+	 *         description: The change would do nothing; see `code`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/StatusUpdateConflict'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
@@ -618,6 +638,7 @@ export class AccreditationController {
 			} else {
 				return response.status(result.status).json({
 					error: result.error,
+					...(result.data?.code ? { code: result.data.code } : {}),
 				});
 			}
 		} catch (error) {

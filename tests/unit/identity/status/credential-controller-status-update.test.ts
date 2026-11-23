@@ -91,3 +91,67 @@ describe('credential status updates', () => {
 		}
 	);
 });
+
+describe('status changes that would change nothing (U-58)', () => {
+	const objectCredential = {
+		issuer: 'did:cheqd:testnet:11111111-1111-4111-8111-111111111111',
+		credentialStatus: {
+			type: 'BitstringStatusListEntry',
+			statusPurpose: 'message',
+			statusListIndex: '5',
+			statusListCredential:
+				'https://resolver.cheqd.net/1.0/identifiers/did:cheqd:testnet:11111111-1111-4111-8111-111111111111?resourceName=bits&resourceType=BitstringStatusListCredential',
+		},
+	};
+	const runWith = async (action: 'revoke' | 'suspend' | 'reinstate') => {
+		const response = respond();
+		const req = {
+			query: { listType: 'BitstringStatusList' },
+			body: { credential: objectCredential },
+		} as unknown as Request;
+		await (new CredentialController() as never as Record<string, (q: Request, r: Response) => Promise<unknown>>)[
+			action
+		](req, response);
+		return response;
+	};
+
+	it.each<['revoke' | 'suspend' | 'reinstate', number, string]>([
+		['revoke', 1, 'already_revoked'],
+		['suspend', 2, 'already_suspended'],
+		['suspend', 1, 'credential_revoked'],
+		['reinstate', 0, 'not_suspended'],
+		['reinstate', 1, 'credential_revoked'],
+	])('%s when the status is %i answers 409 %s on both engines without writing', async (action, status, code) => {
+		for (const engine of ['veramo', 'credo'] as const) {
+			recorded = engine;
+			const fake = make(engine, { updated: true, statusValue: 1 }) as Fake & Record<string, jest.Mock>;
+			fake.checkBitstringStatusList = jest.fn(async () => ({ status, purpose: 'message', valid: status === 0 }));
+			fake.checkStatusList2021 = jest.fn(async () => ({}));
+			engines[engine] = fake;
+			const response = await runWith(action);
+			expect(response.statusCode).toBe(409);
+			expect(response.body).toEqual({ error: expect.stringMatching(/^Nothing was changed/), code });
+			const method = {
+				revoke: 'revokeCredentials',
+				suspend: 'suspendCredentials',
+				reinstate: 'reinstateCredentials',
+			}[action];
+			expect(fake[method]).not.toHaveBeenCalled();
+		}
+	});
+
+	it('answers 409 with a code when the engine itself reports the no-op', async () => {
+		for (const engine of ['veramo', 'credo'] as const) {
+			recorded = engine;
+			// No status read available: the engine's own answer decides
+			engines[engine] = make(engine, {
+				updated: false,
+				statusValue: 1,
+				error: { message: 'Credential already has status value 1 (revoked)' },
+			});
+			const response = await runWith('revoke');
+			expect(response.statusCode).toBe(409);
+			expect(response.body).toMatchObject({ code: 'already_revoked' });
+		}
+	});
+});

@@ -1,4 +1,8 @@
-import { statusUpdateFailure } from '../../services/api/status-update-outcome.js';
+import {
+	statusFailureBody,
+	statusUpdateConflict,
+	statusUpdateFailure,
+} from '../../services/api/status-update-outcome.js';
 import type { Request, Response } from 'express';
 import { unsupportedIssuanceStatus } from '../../helpers/issuance-status.js';
 import { StatusCodes } from 'http-status-codes';
@@ -376,6 +380,12 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       409:
+	 *         description: The change would do nothing; see `code`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/StatusUpdateConflict'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
@@ -389,12 +399,21 @@ export class CredentialController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await (
-				await identityServiceStrategySetup.routed(
-					'status-list',
-					await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
-				)
-			).revokeCredentials(
+			const engine = await identityServiceStrategySetup.routed(
+				'status-list',
+				await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
+			);
+			// A change that would do nothing is refused with 409 before anything is written
+			const noOp = await statusUpdateConflict(
+				'revoke',
+				credential,
+				listType || StatusListType.Bitstring,
+				engine,
+				response.locals.customer,
+				symmetricKey as string
+			);
+			if (noOp) return response.status(noOp.statusCode).json(statusFailureBody(noOp));
+			const result = await engine.revokeCredentials(
 				credential,
 				listType || StatusListType.Bitstring,
 				publish as boolean,
@@ -403,7 +422,7 @@ export class CredentialController {
 			);
 
 			const failure = statusUpdateFailure('revoke', result as Record<string, unknown>);
-			if (failure) return response.status(failure.statusCode).json({ error: failure.error });
+			if (failure) return response.status(failure.statusCode).json(statusFailureBody(failure));
 			await Credentials.instance.recordStatusChange(credential, 'revoke', response.locals.customer);
 
 			// Track operation if revocation was successful and publish is true
@@ -490,6 +509,12 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       409:
+	 *         description: The change would do nothing; see `code`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/StatusUpdateConflict'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
@@ -504,12 +529,21 @@ export class CredentialController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await (
-				await identityServiceStrategySetup.routed(
-					'status-list',
-					await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
-				)
-			).suspendCredentials(
+			const engine = await identityServiceStrategySetup.routed(
+				'status-list',
+				await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
+			);
+			// A change that would do nothing is refused with 409 before anything is written
+			const noOp = await statusUpdateConflict(
+				'suspend',
+				credential,
+				listType || StatusListType.Bitstring,
+				engine,
+				response.locals.customer,
+				symmetricKey as string
+			);
+			if (noOp) return response.status(noOp.statusCode).json(statusFailureBody(noOp));
+			const result = await engine.suspendCredentials(
 				credential,
 				listType || StatusListType.Bitstring,
 				publish as boolean,
@@ -518,7 +552,7 @@ export class CredentialController {
 			);
 
 			const failure = statusUpdateFailure('suspend', result as Record<string, unknown>);
-			if (failure) return response.status(failure.statusCode).json({ error: failure.error });
+			if (failure) return response.status(failure.statusCode).json(statusFailureBody(failure));
 			await Credentials.instance.recordStatusChange(credential, 'suspend', response.locals.customer);
 
 			// Track operation if suspension was successful and publish is true
@@ -605,6 +639,12 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       409:
+	 *         description: The change would do nothing; see `code`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/StatusUpdateConflict'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
@@ -618,12 +658,21 @@ export class CredentialController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await (
-				await identityServiceStrategySetup.routed(
-					'status-list',
-					await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
-				)
-			).reinstateCredentials(
+			const engine = await identityServiceStrategySetup.routed(
+				'status-list',
+				await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
+			);
+			// A change that would do nothing is refused with 409 before anything is written
+			const noOp = await statusUpdateConflict(
+				'reinstate',
+				credential,
+				listType || StatusListType.Bitstring,
+				engine,
+				response.locals.customer,
+				symmetricKey as string
+			);
+			if (noOp) return response.status(noOp.statusCode).json(statusFailureBody(noOp));
+			const result = await engine.reinstateCredentials(
 				credential,
 				listType || StatusListType.Bitstring,
 				publish as boolean,
@@ -632,7 +681,7 @@ export class CredentialController {
 			);
 
 			const failure = statusUpdateFailure('reinstate', result as Record<string, unknown>);
-			if (failure) return response.status(failure.statusCode).json({ error: failure.error });
+			if (failure) return response.status(failure.statusCode).json(statusFailureBody(failure));
 			await Credentials.instance.recordStatusChange(credential, 'reinstate', response.locals.customer);
 
 			// Track operation if the process of reinstantiating was successful and publish is true

@@ -2440,6 +2440,17 @@
  *         error:
  *           type: string
  *           example: Unauthorized Error
+ *     StatusUpdateConflict:
+ *       description: "The status change would change nothing, so nothing was written: the credential is already revoked (`already_revoked`), already suspended (`already_suspended`), not suspended when asked to reinstate (`not_suspended`), or revoked when asked to suspend or reinstate (`credential_revoked`; revocation cannot be undone). The same on both engines."
+ *       type: object
+ *       properties:
+ *         error:
+ *           type: string
+ *           example: 'Nothing was changed: the credential is already revoked'
+ *         code:
+ *           type: string
+ *           enum: [ already_revoked, already_suspended, not_suspended, credential_revoked ]
+ *           example: already_revoked
  *     NotFoundError:
  *       description: The resource was not found, or it is not owned by the caller. Both cases answer identically.
  *       type: object
