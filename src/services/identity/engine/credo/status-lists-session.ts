@@ -18,11 +18,42 @@ interface TenantAgentLike {
 	tokenStatusList: any;
 }
 
+/** The JWT payload of a Bitstring list's JwtProof2020. Like the plugin's, it leaves out `encodedList` (#657). */
+export function bitstringProofPayload({
+	did,
+	statusPurpose,
+	ttl,
+	issuanceDate,
+	expirationDate,
+}: {
+	did: string;
+	statusPurpose: string | string[];
+	ttl?: number;
+	issuanceDate: string;
+	expirationDate?: string;
+}) {
+	const nbf = Math.floor(new Date(issuanceDate).getTime() / 1000);
+	return {
+		vc: {
+			'@context': ['https://www.w3.org/2018/credentials/v1'],
+			type: ['VerifiableCredential', 'BitstringStatusListCredential'],
+			credentialSubject: {
+				type: 'BitstringStatusList',
+				statusPurpose,
+				...(ttl !== undefined ? { ttl } : {}),
+			},
+		},
+		nbf,
+		...(expirationDate ? { exp: Math.floor(new Date(expirationDate).getTime() / 1000) } : {}),
+		iss: did,
+	};
+}
+
 /** Signing for status lists inside one customer's tenant. Ledger writes stay with the engine, under the payer lock. */
 export function createStatusListSession(tenantAgent: TenantAgentLike): StatusListSession {
 	const context = tenantAgent.context as never;
 	return {
-		async signBitstringProof({ did, signerDidUrl, purposes, ttl, issuanceDate, expirationDate }) {
+		async signBitstringProof({ did, signerDidUrl, statusPurpose, ttl, issuanceDate, expirationDate }) {
 			const record = await tenantAgent.dependencyManager
 				.resolve<DidRepository>(DidRepository)
 				.findCreatedDid(context, did);
@@ -30,24 +61,10 @@ export function createStatusListSession(tenantAgent: TenantAgentLike): StatusLis
 			const method = record.didDocument.dereferenceKey(signerDidUrl, ['assertionMethod', 'authentication']);
 			const publicJwk = getPublicJwkFromVerificationMethod(method);
 			const keyId = getKmsKeyIdForVerifiacationMethod(method, record.keys) ?? publicJwk.legacyKeyId;
-			const nbf = Math.floor(new Date(issuanceDate).getTime() / 1000);
 			return tenantAgent.dependencyManager.resolve<JwsService>(JwsService).createJwsCompact(context, {
 				keyId,
 				payload: TypedArrayEncoder.fromUtf8String(
-					JSON.stringify({
-						vc: {
-							'@context': ['https://www.w3.org/2018/credentials/v1'],
-							type: ['VerifiableCredential', 'BitstringStatusListCredential'],
-							credentialSubject: {
-								type: 'BitstringStatusList',
-								statusPurpose: purposes,
-								...(ttl !== undefined ? { ttl } : {}),
-							},
-						},
-						nbf,
-						...(expirationDate ? { exp: Math.floor(new Date(expirationDate).getTime() / 1000) } : {}),
-						iss: did,
-					})
+					JSON.stringify(bitstringProofPayload({ did, statusPurpose, ttl, issuanceDate, expirationDate }))
 				),
 				protectedHeaderOptions: { alg: publicJwk.signatureAlgorithm, typ: 'JWT', kid: signerDidUrl },
 			});

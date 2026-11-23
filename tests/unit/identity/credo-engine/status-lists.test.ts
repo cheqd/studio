@@ -320,7 +320,11 @@ describe('status list creation', () => {
 			alice
 		);
 		expect(result.created).toBe(true);
-		expect(h.runtime.signed[0]).toMatchObject({ did: DID, signerDidUrl: `${DID}#key-2`, purposes: ['revocation'] });
+		expect(h.runtime.signed[0]).toMatchObject({
+			did: DID,
+			signerDidUrl: `${DID}#key-2`,
+			statusPurpose: 'revocation',
+		});
 		const content = decodedWrite(h);
 		expect(content.bitstringStatusListCredential.proof).toEqual({ type: 'JwtProof2020', jwt: 'proof.jwt.value' });
 		expect(content.bitstringStatusListCredential.credentialSubject.statusPurpose).toBe('revocation');
