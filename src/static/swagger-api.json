@@ -1428,22 +1428,33 @@
             "example": "jwt"
           },
           "credentialStatus": {
-            "description": "Optional `credentialStatus` properties for VC revocation or suspension. Takes `statusListName` and `statusListPurpose` as inputs.",
+            "description": "Optional `credentialStatus` properties so the accreditation can later be revoked, suspended or reinstated. Takes `statusListName`, `statusListType` and `statusPurpose`. The status list must already exist for the issuer DID with that name and type; without `statusListType` the list is not found and issuance fails with `Status Registry Not Found`. Accreditation status changes use a Bitstring Status List, so create the list with `statusListType` `BitstringStatusList` and issue with the `message` purpose (StatusList2021 lists take `revocation` or `suspension`).",
             "type": "object",
             "required": [
               "statusPurpose",
-              "statusListName"
+              "statusListName",
+              "statusListType"
             ],
             "properties": {
               "statusPurpose": {
                 "type": "string",
+                "description": "Use `message` for a BitstringStatusList; `revocation` or `suspension` for a StatusList2021 list.",
                 "enum": [
+                  "message",
                   "revocation",
                   "suspension"
                 ]
               },
               "statusListName": {
                 "type": "string"
+              },
+              "statusListType": {
+                "type": "string",
+                "description": "Type of the existing status list named by `statusListName`.",
+                "enum": [
+                  "BitstringStatusList",
+                  "StatusList2021"
+                ]
               },
               "statusListIndex": {
                 "type": "number"
@@ -1463,8 +1474,9 @@
               }
             },
             "example": {
-              "statusPurpose": "revocation",
-              "statusListName": "employee-credentials"
+              "statusPurpose": "message",
+              "statusListName": "accreditation-status",
+              "statusListType": "BitstringStatusList"
             }
           },
           "termsOfUse": {
@@ -4598,7 +4610,7 @@
           "Trust Registries"
         ],
         "summary": "Publish a verifiable accreditation for a DID.",
-        "description": "Generate and publish a Verifiable Accreditation for a subject DID as a DID Linked resource.",
+        "description": "Generate and publish a Verifiable Accreditation for a subject DID as a DID Linked resource. For `accredit` and `attest`, the parent accreditation (and root authorisation) must verify for the issuer DID; when it does not, the request is rejected with a 4xx status.",
         "operationId": "accredit-issue",
         "parameters": [
           {
@@ -4647,8 +4659,17 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "404": {
+            "description": "The parent accreditation or root authorisation was not found."
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "The identity engine of this account does not support this operation yet."
+          },
+          "503": {
+            "description": "The ledger or identity engine is temporarily unavailable; nothing was written. Retry after the `Retry-After` header."
           }
         }
       }
@@ -4769,8 +4790,17 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "404": {
+            "description": "The accreditation or its status list was not found for this account."
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "The identity engine of this account does not support this operation yet."
+          },
+          "503": {
+            "description": "The ledger or identity engine is temporarily unavailable; nothing was written. Retry after the `Retry-After` header."
           }
         }
       }
@@ -4826,8 +4856,17 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "404": {
+            "description": "The accreditation or its status list was not found for this account."
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "The identity engine of this account does not support this operation yet."
+          },
+          "503": {
+            "description": "The ledger or identity engine is temporarily unavailable; nothing was written. Retry after the `Retry-After` header."
           }
         }
       }
@@ -4883,8 +4922,17 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "404": {
+            "description": "The accreditation or its status list was not found for this account."
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "The identity engine of this account does not support this operation yet."
+          },
+          "503": {
+            "description": "The ledger or identity engine is temporarily unavailable; nothing was written. Retry after the `Retry-After` header."
           }
         }
       }
@@ -4913,7 +4961,7 @@
           {
             "in": "query",
             "name": "accreditationType",
-            "description": "Select the type of accreditation to be issued.",
+            "description": "The type of accreditation to list. Required; each request lists one type, and a request without it is rejected with 400.",
             "schema": {
               "type": "string",
               "enum": [

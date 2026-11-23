@@ -648,19 +648,28 @@
  *             - jsonld
  *           example: jwt
  *         credentialStatus:
- *           description: Optional `credentialStatus` properties for VC revocation or suspension. Takes `statusListName` and `statusListPurpose` as inputs.
+ *           description: Optional `credentialStatus` properties so the accreditation can later be revoked, suspended or reinstated. Takes `statusListName`, `statusListType` and `statusPurpose`. The status list must already exist for the issuer DID with that name and type; without `statusListType` the list is not found and issuance fails with `Status Registry Not Found`. Accreditation status changes use a Bitstring Status List, so create the list with `statusListType` `BitstringStatusList` and issue with the `message` purpose (StatusList2021 lists take `revocation` or `suspension`).
  *           type: object
  *           required:
  *             - statusPurpose
  *             - statusListName
+ *             - statusListType
  *           properties:
  *             statusPurpose:
  *               type: string
+ *               description: Use `message` for a BitstringStatusList; `revocation` or `suspension` for a StatusList2021 list.
  *               enum:
+ *                 - message
  *                 - revocation
  *                 - suspension
  *             statusListName:
  *               type: string
+ *             statusListType:
+ *               type: string
+ *               description: Type of the existing status list named by `statusListName`.
+ *               enum:
+ *                 - BitstringStatusList
+ *                 - StatusList2021
  *             statusListIndex:
  *               type: number
  *             statusListVersion:
@@ -673,8 +682,9 @@
  *             indexNotIn:
  *               type: number
  *           example:
- *             statusPurpose: revocation
- *             statusListName: employee-credentials
+ *             statusPurpose: message
+ *             statusListName: accreditation-status
+ *             statusListType: BitstringStatusList
  *         termsOfUse:
  *           description: Terms of use can be utilized by an issuer or a holder to communicate the terms under which a verifiable credential was issued.
  *           type: array
