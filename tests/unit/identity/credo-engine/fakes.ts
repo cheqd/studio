@@ -193,6 +193,13 @@ export class FakeRuntime implements CredoRuntime {
 	async resolveDid(did: string) {
 		return this.credentialState.resolutions.get(did) ?? this.resolution;
 	}
+	/** Versions the ledger holds for each DID; a DID with no entry makes `didVersionCount` fail. */
+	versionCounts = new Map<string, number>();
+	async didVersionCount(did: string) {
+		const count = this.versionCounts.get(did);
+		if (count === undefined) throw new Error(`no version metadata for ${did}`);
+		return count;
+	}
 	async shutdown() {}
 
 	async withTenant<T>(tenantId: string, work: (session: CredoTenantSession) => Promise<T>) {
@@ -210,8 +217,8 @@ export class FakeRuntime implements CredoRuntime {
 				record('updateDid', [input]);
 				return this.updateState;
 			},
-			deactivateDid: async (did) => {
-				record('deactivateDid', [did]);
+			deactivateDid: async (did, options) => {
+				record('deactivateDid', [did, options]);
 				return this.deactivateState;
 			},
 			createResource: async (did, resource: ResourceInput) => {

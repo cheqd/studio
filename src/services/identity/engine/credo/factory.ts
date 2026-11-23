@@ -42,6 +42,11 @@ function lazyRuntime(start: () => Promise<CredoRuntime>): CredoRuntime {
 		resolveDid: async (did, options) => (await get()).resolveDid(did, options),
 		readResource: async (didUrl) => (await get()).readResource?.(didUrl) ?? { error: 'notImplemented' },
 		readTokenStatusList: async (did, name) => (await get()).readTokenStatusList?.(did, name) ?? null,
+		didVersionCount: async (did) => {
+			const runtime = await get();
+			if (!runtime.didVersionCount) throw new Error('This Credo runtime cannot count DID versions');
+			return runtime.didVersionCount(did);
+		},
 		shutdown: async () => {
 			if (started) await (await started).shutdown();
 			started = undefined;

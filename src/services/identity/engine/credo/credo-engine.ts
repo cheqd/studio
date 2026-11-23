@@ -44,6 +44,7 @@ import type { CredoEngineStore, CredoRuntime, DidKeyLink, StoredKey } from './po
 import { CredoSigner } from './signing.js';
 import { safeFetch as defaultSafeFetch, type SafeFetch } from '../../../../helpers/safe-fetch.js';
 import { CredoStatusLists, type StatusListOwnership } from './status-lists.js';
+import { deactivationGasLimit } from '../deactivation-gas.js';
 import type { EngineAccreditationOutcome, EngineAccreditationVerifyRequest } from '../types.js';
 import type {
 	EngineTokenStatusList,
@@ -378,9 +379,14 @@ export class CredoEngine implements IdentityEngine {
 		// Already deactivated: nothing to do, same answer as the Veramo engine
 		if (resolved.didDocumentMetadata?.deactivated) return true;
 
+		// The ledger rewrites every version on deactivation, so the SDK's fixed gas limit is too low for a DID with
+		// history (U-62). An unknown count falls back to a generous assumption inside `deactivationGasLimit`.
+		const versionCount = await this.runtime.didVersionCount?.(did).catch(() => undefined);
+		const gasLimit = deactivationGasLimit({ didDocument: resolved.didDocument, versionCount });
+
 		const payerAddress = await this.payerFor(customerId, network);
 		const result = await this.withPayerLock(payerAddress, () =>
-			this.runtime.withTenant(tenantId, (session) => session.deactivateDid(did))
+			this.runtime.withTenant(tenantId, (session) => session.deactivateDid(did, { gasLimit }))
 		);
 		if (result.state !== 'finished')
 			throw new Error(`Failed to deactivate ${did}: ${result.reason ?? result.state}`);

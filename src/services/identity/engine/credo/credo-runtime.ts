@@ -1,7 +1,7 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { CheqdDidRegistrar, CheqdDidResolver, CheqdModule } from '@credo-ts/cheqd';
+import { CheqdDidRegistrar, CheqdDidResolver, CheqdLedgerService, CheqdModule } from '@credo-ts/cheqd';
 import {
 	Agent,
 	type AgentContext,
@@ -158,8 +158,13 @@ function session(tenantAgent: TenantAgentLike): CredoTenantSession {
 			});
 			return toResult(result.didState);
 		},
-		async deactivateDid(did) {
-			const result = await tenantAgent.dids.deactivate({ did });
+		async deactivateDid(did, deactivateOptions) {
+			// The registrar passes `feeOptions` to the ledger service, which builds the fee from it (patches/@credo-ts+cheqd)
+			const gasLimit = deactivateOptions?.gasLimit;
+			const result = await tenantAgent.dids.deactivate({
+				did,
+				...(gasLimit ? { options: { feeOptions: { gasLimit } } } : {}),
+			});
 			return toResult(result.didState);
 		},
 		async createResource(did, resource) {
@@ -295,6 +300,12 @@ export async function createCredoRuntime(options: CredoRuntimeOptions): Promise<
 		async readTokenStatusList(did, name) {
 			// biome-ignore lint/suspicious/noExplicitAny: ditto
 			return (agent as any).modules.cheqd.fetchTokenStatusList(did, name).catch(() => null);
+		},
+		async didVersionCount(did) {
+			// Straight from the ledger: Credo's resolver drops the `/versions` path before it reaches the cheqd resolver
+			const ledger = agent.dependencyManager.resolve(CheqdLedgerService);
+			const { didDocumentVersionsMetadata } = await ledger.resolveMetadata(did);
+			return didDocumentVersionsMetadata.length;
 		},
 		async shutdown() {
 			await agent.shutdown();
