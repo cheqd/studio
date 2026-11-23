@@ -2,7 +2,6 @@ import { statusUpdateFailure } from '../../services/api/status-update-outcome.js
 import type { Request, Response } from 'express';
 import { unsupportedIssuanceStatus } from '../../helpers/issuance-status.js';
 import { NOT_FOUND_MESSAGE, OwnershipError } from '../../services/identity/ownership-error.js';
-import type { VerifiableCredential } from '@veramo/core';
 import { StatusCodes } from 'http-status-codes';
 
 import { check, query } from '../validator/index.js';
