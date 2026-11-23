@@ -2,7 +2,7 @@ import { fromString } from 'uint8arrays';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
 import { mapEngineError } from '../../helpers/engine-errors.js';
 import type { RoutedService } from '../identity/index.js';
-import { statusListArtifact } from '../identity/engine/artifact-refs.js';
+import { didArtifact, statusListArtifact } from '../identity/engine/artifact-refs.js';
 import type {
 	CheqdCredentialStatus,
 	CreateEncryptedBitstringSuccessfulResponseBody,
@@ -109,9 +109,13 @@ export class CredentialStatusService {
 				};
 			}
 
-			// A new status list goes to Credo (Veramo is retired for new artefacts)
-			const identityEngine = await identityServiceStrategySetup.engine('status-list', undefined, {
+			// A new status list is signed and published under its DID, so it goes to the engine that holds the DID: an
+			// existing Veramo DID keeps its lists on Veramo (Credo has no record of that DID and would refuse), a Credo
+			// DID uses Credo, and a DID Studio has no record of is new and goes to Credo (Veramo is retired for new
+			// artefacts).
+			const identityEngine = await identityServiceStrategySetup.engine('status-list', didArtifact(did), {
 				creates: true,
+				flagWhenUnrecorded: true,
 			});
 			const engine = identityEngine as unknown as RoutedService;
 
