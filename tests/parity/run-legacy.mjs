@@ -489,8 +489,12 @@ async function exercise(s) {
 			}),
 		{ known: 'U-63' }
 	);
-	await step('Deactivate an existing DID with history', () =>
-		api('POST', `/did/deactivate/${encodeURIComponent(E)}`, {})
+	await step(
+		'Deactivate an existing DID with history',
+		() => api('POST', `/did/deactivate/${encodeURIComponent(E)}`, {}),
+		{
+			known: 'U-62',
+		}
 	);
 	await step('Deactivate an existing DID', () => api('POST', `/did/deactivate/${encodeURIComponent(D)}`, {}));
 }
