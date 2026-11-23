@@ -46,6 +46,11 @@ dotenv.config();
 
 const { ENABLE_VERIDA_CONNECTOR } = process.env;
 
+/** The base credentials context first, then the caller's contexts, without duplicates. */
+export function credentialContexts(context: string[] | undefined): string[] {
+	return [...new Set([...VC_CONTEXT, ...(context || [])])];
+}
+
 export class Credentials {
 	public static instance = new Credentials();
 	public repository: Repository<IssuedCredentialEntity>;
@@ -89,7 +94,8 @@ export class Credentials {
 		} = request;
 
 		const credential: CredentialPayload = {
-			'@context': [...(context || []), ...VC_CONTEXT],
+			// The VC Data Model requires the base credentials context first; Credo rejects any other order.
+			'@context': credentialContexts(context),
 			type: [...new Set([...(type || []), VC_TYPE])],
 			issuer: { id: issuerDid },
 			credentialSchema,
@@ -106,6 +112,9 @@ export class Credentials {
 		}
 
 		const statusOptions = credentialStatus || null;
+		// The documented default is VC-JWT. Veramo signed anything other than `jsonld` as a JWT; Credo needs the format
+		// named, so the default is made explicit here (and recorded on the row as what was actually signed).
+		const signingFormat = format || 'jwt';
 
 		// Phase 1: Atomic Index Reservation with CAS
 		let reservedIndex: number | undefined;
@@ -152,7 +161,11 @@ export class Credentials {
 				providerId: providerId || 'studio',
 				issuerId: issuerDid,
 				subjectId: subjectDid,
-				format: (format || 'jsonld') as 'jwt' | 'jsonld' | 'sd-jwt-vc' | 'anoncreds',
+				format: (isDockConnector ? format || 'jsonld' : signingFormat) as
+					| 'jwt'
+					| 'jsonld'
+					| 'sd-jwt-vc'
+					| 'anoncreds',
 				category: category || CredentialCategory.CREDENTIAL,
 				type: type || ['VerifiableCredential'],
 				status: 'issued',
@@ -196,7 +209,7 @@ export class Credentials {
 						schema: dockCredential.credentialSchema,
 						proof: dockCredential.proof,
 						termsOfUse: additionalData.termsOfUse,
-						contexts: [...(context || []), ...VC_CONTEXT],
+						contexts: credentialContexts(context),
 					};
 					break;
 				}
@@ -212,7 +225,7 @@ export class Credentials {
 							}))) as unknown as RoutedService
 					).createCredential(
 						credential as never,
-						format,
+						signingFormat,
 						statusOptions as never,
 						customer
 					)) as unknown as VerifiableCredential;
@@ -281,7 +294,7 @@ export class Credentials {
 						resourceType: sendCredentialResponse?.resourceType,
 						didUrl: sendCredentialResponse?.didUrl,
 						termsOfUse: additionalData.termsOfUse,
-						contexts: [...(context || []), ...VC_CONTEXT],
+						contexts: credentialContexts(context),
 					};
 					verifiableCredential = verifiable_credential;
 					break;
