@@ -1406,7 +1406,7 @@
  *           type: string
  *         type:
  *           type: string
- *           enum: [ Ed25519, Secp256k1 ]
+ *           enum: [ Ed25519, Secp256k1, Secp256r1 ]
  *         privateKeyHex:
  *           type: string
  *     KeyResult:

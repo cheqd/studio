@@ -143,11 +143,11 @@ export class DIDController {
 						typeof item.encrypted === 'boolean' &&
 						(item.encrypted === true ? item.ivHex && item.salt : true) &&
 						typeof item.type === 'string' &&
-						(item.type === 'Ed25519' || item.type === 'Secp256k1')
+						(item.type === 'Ed25519' || item.type === 'Secp256k1' || item.type === 'Secp256r1')
 				);
 			})
 			.withMessage(
-				'KeyImportRequest object is invalid, privateKeyHex is required, Property ivHex, salt is required when encrypted is set to true, property type should be Ed25519 or Secp256k1'
+				'KeyImportRequest object is invalid, privateKeyHex is required, Property ivHex, salt is required when encrypted is set to true, property type should be Ed25519, Secp256k1 or Secp256r1'
 			)
 			.bail(),
 	];
@@ -599,7 +599,7 @@ export class DIDController {
 				await new IdentityServiceStrategySetup(response.locals.customer.customerId).engine('did', undefined, {
 					creates: true,
 				})
-			).importDid(did, keys as never, controllerKeyId, response.locals.customer);
+			).importDid(did, keysToImport, controllerKeyId, response.locals.customer);
 
 			// Track the operation
 			eventTracker.emit('track', {
