@@ -58,6 +58,33 @@
  *             paymentPlan: { type: string, example: active }
  *             agentCount: { type: integer }
  *             segment: { type: string, enum: [agents, people, unclassified] }
+ *             milestones:
+ *               $ref: '#/components/schemas/AdminCustomerMilestones'
+ *     AdminCustomerMilestones:
+ *       type: object
+ *       description: >-
+ *         When the customer first reached each milestone, or null if it has not yet. Recorded once, when the event
+ *         happens; dates from before recording started come from a backfill over existing data.
+ *       properties:
+ *         firstIdentifierAt: { type: string, format: date-time, nullable: true, description: 'First DID created.' }
+ *         firstAgentAt: { type: string, format: date-time, nullable: true, description: 'First agent registered.' }
+ *         firstApiKeyAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *           description: First API key the customer created itself; portal session keys do not count.
+ *         firstCredentialIssuedAt: { type: string, format: date-time, nullable: true }
+ *         firstStatusListAt: { type: string, format: date-time, nullable: true }
+ *         firstFaucetRequestAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *           description: First faucet request that credited the account.
+ *         firstApiCallAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *           description: First tracked operation of any kind.
  *     PriceListResponseBody:
  *       description: A list of active prcies from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/prices/list)
  *       type: object

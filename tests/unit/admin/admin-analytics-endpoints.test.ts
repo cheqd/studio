@@ -438,6 +438,49 @@ describe('AdminAnalyticsService shaping and privacy', () => {
 		});
 	});
 
+	it('getCustomer adds a milestones object from customerActivation, null where not reached (U-35)', async () => {
+		const { service, statements } = serviceWith(() => [
+			{
+				id: uuid,
+				name: 'A',
+				email: 'a@x',
+				createdAt: '2026-11-01T09:00:00.000Z',
+				plan: 'none',
+				lastActiveAt: null,
+				paymentPlan: 'none',
+				agentCount: '0',
+				segment: 'unclassified',
+				mIdentifier: '2026-11-02T10:00:00.000Z',
+				mAgent: null,
+				mApiKey: new Date('2026-11-01T09:30:00.000Z'),
+				mCredential: null,
+				mStatusList: null,
+				mFaucet: '2026-11-01T09:45:00.000Z',
+				mApiCall: '2026-11-01T09:31:00.000Z',
+			},
+		]);
+		const customer = await service.getCustomer(uuid);
+		expect(customer?.segment).toBe('unclassified');
+		expect(customer?.agentCount).toBe(0);
+		expect(customer?.milestones).toEqual({
+			firstIdentifierAt: '2026-11-02T10:00:00.000Z',
+			firstAgentAt: null,
+			firstApiKeyAt: '2026-11-01T09:30:00.000Z',
+			firstCredentialIssuedAt: null,
+			firstStatusListAt: null,
+			firstFaucetRequestAt: '2026-11-01T09:45:00.000Z',
+			firstApiCallAt: '2026-11-01T09:31:00.000Z',
+		});
+		expect(statements[0]).toContain('LEFT JOIN "customerActivation" ca ON ca."customerId" = one.id');
+	});
+
+	it('getCustomer: a customer with no activation row gets every milestone as null', async () => {
+		const { service } = serviceWith(() => [{ id: uuid, createdAt: '2026-11-01T09:00:00.000Z', segment: 'people' }]);
+		const customer = await service.getCustomer(uuid);
+		expect(Object.values(customer?.milestones ?? { x: 'missing' }).every((v) => v === null)).toBe(true);
+		expect(Object.keys(customer?.milestones ?? {})).toHaveLength(7);
+	});
+
 	it('counts API keys from the apiKey table, leaving revoked ones out, and keeps DID keys separate', async () => {
 		const seen: string[] = [];
 		const { service } = serviceWith((sql) => {

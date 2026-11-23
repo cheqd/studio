@@ -36,6 +36,7 @@ import { PaymentAccountService } from '../../services/api/payment-account.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { check } from 'express-validator';
 import { EventTracker, eventTracker } from '../../services/track/tracker.js';
+import { recordActivation } from '../../services/analytics/activation.js';
 import * as dotenv from 'dotenv';
 import { validate } from '../validator/decorator.js';
 import { SupportedKeyTypes } from '@veramo/utils';
@@ -849,6 +850,9 @@ export class AccountController {
 					error: 'The testnet faucet is temporarily unavailable. Please try again later.',
 				} satisfies UnsuccessfulResponseBody);
 			}
+
+			// Activation milestone (U-35). Idempotent and never throws.
+			await recordActivation(customer.customerId, 'first_faucet_request');
 
 			return response.status(StatusCodes.OK).json({
 				funded: true,

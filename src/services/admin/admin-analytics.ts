@@ -58,10 +58,28 @@ export interface CustomerSummary {
 	status: 'active' | 'inactive';
 	usage: CustomerUsage;
 }
+/**
+ * When the customer first reached each milestone (ISO 8601), or null if it has not yet (U-35). Dates from before a
+ * milestone was recorded come from a backfill over existing data (see the `customerActivation` migrations).
+ */
+export interface CustomerMilestones {
+	/** First DID created (through the API, or for an agent). */
+	firstIdentifierAt: string | null;
+	firstAgentAt: string | null;
+	/** First API key the customer created itself; portal session keys do not count. */
+	firstApiKeyAt: string | null;
+	firstCredentialIssuedAt: string | null;
+	firstStatusListAt: string | null;
+	/** First faucet request that credited the account. */
+	firstFaucetRequestAt: string | null;
+	/** First tracked operation of any kind. */
+	firstApiCallAt: string | null;
+}
 export interface CustomerDetail extends CustomerSummary {
 	paymentPlan: string;
 	agentCount: number;
 	segment: Exclude<Segment, 'all'>;
+	milestones: CustomerMilestones;
 }
 
 const num = (value: unknown): number => Number(value ?? 0);
@@ -244,8 +262,12 @@ export class AdminAnalyticsService {
 				(SELECT COUNT(*) FROM "agent" a WHERE a."customerId" = c."customerId" AND a."deletedAt" IS NULL) AS "agentCount"`
 			)})
 			SELECT one.*, ${AdminAnalyticsService.usageColumns('one')},
-				(SELECT segment FROM seg WHERE seg."customerId" = one.id) AS segment
-			FROM one`,
+				(SELECT segment FROM seg WHERE seg."customerId" = one.id) AS segment,
+				ca."firstDidCreatedAt" AS "mIdentifier", ca."firstAgentRegisteredAt" AS "mAgent",
+				ca."firstApiKeyCreatedAt" AS "mApiKey", ca."firstCredentialIssuedAt" AS "mCredential",
+				ca."firstStatusListCreatedAt" AS "mStatusList", ca."firstFaucetRequestAt" AS "mFaucet",
+				ca."firstApiCallAt" AS "mApiCall"
+			FROM one LEFT JOIN "customerActivation" ca ON ca."customerId" = one.id`,
 			[customerId]
 		);
 		if (rows.length === 0) return null;
@@ -255,6 +277,15 @@ export class AdminAnalyticsService {
 			paymentPlan: row.paymentPlan as string,
 			agentCount: num(row.agentCount),
 			segment: row.segment as CustomerDetail['segment'],
+			milestones: {
+				firstIdentifierAt: iso(row.mIdentifier),
+				firstAgentAt: iso(row.mAgent),
+				firstApiKeyAt: iso(row.mApiKey),
+				firstCredentialIssuedAt: iso(row.mCredential),
+				firstStatusListAt: iso(row.mStatusList),
+				firstFaucetRequestAt: iso(row.mFaucet),
+				firstApiCallAt: iso(row.mApiCall),
+			},
 		};
 	}
 

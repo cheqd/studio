@@ -119,7 +119,10 @@ export class CustomersAdminController {
 	 *     description: >-
 	 *       The same shape as the list, plus `paymentPlan` (the latest subscription status, or `none`), `agentCount`
 	 *       (agents that are not deleted) and `segment` (`agents`: has at least one non-deleted agent; `people`: no
-	 *       agents but has issued a credential; `unclassified`: neither). Needs the `admin:customers:read` scope.
+	 *       agents but has issued a credential; `unclassified`: neither) and `milestones` (when the customer first
+	 *       created an identifier, registered an agent, created an API key, issued a credential, created a status
+	 *       list, was credited by the faucet and made a tracked API call; null where not reached). Needs the
+	 *       `admin:customers:read` scope.
 	 *     tags: [Customers]
 	 *     parameters:
 	 *       - in: path

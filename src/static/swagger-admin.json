@@ -171,10 +171,59 @@
                   "people",
                   "unclassified"
                 ]
+              },
+              "milestones": {
+                "$ref": "#/components/schemas/AdminCustomerMilestones"
               }
             }
           }
         ]
+      },
+      "AdminCustomerMilestones": {
+        "type": "object",
+        "description": "When the customer first reached each milestone, or null if it has not yet. Recorded once, when the event happens; dates from before recording started come from a backfill over existing data.",
+        "properties": {
+          "firstIdentifierAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "First DID created."
+          },
+          "firstAgentAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "First agent registered."
+          },
+          "firstApiKeyAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "First API key the customer created itself; portal session keys do not count."
+          },
+          "firstCredentialIssuedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "firstStatusListAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "firstFaucetRequestAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "First faucet request that credited the account."
+          },
+          "firstApiCallAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "First tracked operation of any kind."
+          }
+        }
       },
       "PriceListResponseBody": {
         "description": "A list of active prcies from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/prices/list)",
@@ -1631,7 +1680,7 @@
     "/admin/customers/{id}": {
       "get": {
         "summary": "Get one customer (staff only).",
-        "description": "The same shape as the list, plus `paymentPlan` (the latest subscription status, or `none`), `agentCount` (agents that are not deleted) and `segment` (`agents`: has at least one non-deleted agent; `people`: no agents but has issued a credential; `unclassified`: neither). Needs the `admin:customers:read` scope.",
+        "description": "The same shape as the list, plus `paymentPlan` (the latest subscription status, or `none`), `agentCount` (agents that are not deleted) and `segment` (`agents`: has at least one non-deleted agent; `people`: no agents but has issued a credential; `unclassified`: neither) and `milestones` (when the customer first created an identifier, registered an agent, created an API key, issued a credential, created a status list, was credited by the faucet and made a tracked API call; null where not reached). Needs the `admin:customers:read` scope.",
         "tags": [
           "Customers"
         ],

@@ -99,6 +99,7 @@ import { StudioMigrations1791702000000 } from '../migrations/1791702000000-studi
 import { StudioMigrations1791702100000 } from '../migrations/1791702100000-studio-migrations.js';
 import { StudioMigrations1791702200000 } from '../migrations/1791702200000-studio-migrations.js';
 import { StudioMigrations1791702300000 } from '../migrations/1791702300000-studio-migrations.js';
+import { StudioMigrations1791702500100 } from '../migrations/1791702500100-studio-migrations.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -247,6 +248,8 @@ export class Postgres implements AbstractDatabase {
 				StudioMigrations1791702200000,
 				// Add ledgerAddressDaily and the per-day sync markers on ledgerAddressActivity
 				StudioMigrations1791702300000,
+				// Add first API key, faucet and API call dates to customerActivation, with a backfill (U-35)
+				StudioMigrations1791702500100,
 			],
 			entities: [
 				...Entities,

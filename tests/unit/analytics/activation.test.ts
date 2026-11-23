@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
+import type { ActivationMilestone } from '../../../src/services/analytics/activation.js';
+
 const query = jest.fn<(sql: string, parameters: unknown[]) => Promise<unknown>>();
 jest.unstable_mockModule('../../../src/database/connection/connection.js', () => ({
 	Connection: { instance: { dbConnection: { query } } },
@@ -10,7 +12,7 @@ const on = jest.fn();
 const PostHogConstructor = jest.fn(() => ({ capture, on }));
 jest.unstable_mockModule('posthog-node', () => ({ PostHog: PostHogConstructor }));
 
-const { recordActivation, ACTIVATION_MILESTONES, activationMilestoneFor } =
+const { recordActivation, ACTIVATION_MILESTONES, activationMilestoneFor, resetActivationCacheForTests } =
 	await import('../../../src/services/analytics/activation.js');
 const posthog = await import('../../../src/services/analytics/posthog.js');
 const { isValidSource, sourceOrUndefined } = await import('../../../src/helpers/source.js');
@@ -92,6 +94,63 @@ describe('recordActivation', () => {
 			first_credential_issued: 'firstCredentialIssuedAt',
 			first_agent_registered: 'firstAgentRegisteredAt',
 			first_status_list_created: 'firstStatusListCreatedAt',
+			first_api_key_created: 'firstApiKeyCreatedAt',
+			first_faucet_request: 'firstFaucetRequestAt',
+			first_api_call: 'firstApiCallAt',
+		});
+	});
+
+	describe('U-35 milestones', () => {
+		beforeEach(() => resetActivationCacheForTests());
+
+		it.each([
+			['first_api_key_created', 'firstApiKeyCreatedAt'],
+			['first_faucet_request', 'firstFaucetRequestAt'],
+			['first_api_call', 'firstApiCallAt'],
+		] as Array<[ActivationMilestone, string]>)('%s only fills an empty %s column', async (milestone, column) => {
+			query.mockResolvedValueOnce([{ customerId, source: null }]);
+			expect(await recordActivation(customerId, milestone)).toBe(true);
+			const [sql] = query.mock.calls[0];
+			expect(sql).toContain(`INSERT INTO "customerActivation" ("customerId", "${column}")`);
+			expect(sql).toContain(`WHERE "customerActivation"."${column}" IS NULL`);
+		});
+
+		it('first_api_call runs one statement per customer per process, then none', async () => {
+			query.mockResolvedValueOnce([{ customerId, source: null }]);
+			expect(await recordActivation(customerId, 'first_api_call')).toBe(true);
+			expect(await recordActivation(customerId, 'first_api_call')).toBe(false);
+			expect(await recordActivation(customerId, 'first_api_call')).toBe(false);
+			expect(query).toHaveBeenCalledTimes(1);
+			// an already-stamped customer is remembered too
+			const other = '22222222-2222-4222-8222-222222222222';
+			query.mockResolvedValueOnce([]);
+			expect(await recordActivation(other, 'first_api_call')).toBe(false);
+			expect(await recordActivation(other, 'first_api_call')).toBe(false);
+			expect(query).toHaveBeenCalledTimes(2);
+		});
+
+		it('first_api_call is not remembered after a database failure, so the next call retries', async () => {
+			query.mockRejectedValueOnce(new Error('connection reset'));
+			expect(await recordActivation(customerId, 'first_api_call')).toBe(false);
+			query.mockResolvedValueOnce([{ customerId, source: null }]);
+			expect(await recordActivation(customerId, 'first_api_call')).toBe(true);
+			expect(query).toHaveBeenCalledTimes(2);
+		});
+
+		it('other milestones are not cached: each call asks the database', async () => {
+			query.mockResolvedValue([]);
+			await recordActivation(customerId, 'first_api_key_created');
+			await recordActivation(customerId, 'first_api_key_created');
+			expect(query).toHaveBeenCalledTimes(2);
+		});
+
+		it('the new milestones never reach PostHog (not on the allow-list)', async () => {
+			process.env.POSTHOG_API_KEY = 'phc_test';
+			query.mockResolvedValue([{ customerId, source: 'sdk' }]);
+			await recordActivation(customerId, 'first_api_key_created');
+			await recordActivation(customerId, 'first_faucet_request');
+			await recordActivation(customerId, 'first_api_call');
+			expect(capture).not.toHaveBeenCalled();
 		});
 	});
 
