@@ -340,6 +340,8 @@ test('[Negative] It fails to issue credential when statusListIndex does not matc
 	});
 	expect(issueResponse).not.toBeOK();
 	expect(issueResponse.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+	// A 500 carries only a generic message and an error id; the cause stays in the server log.
 	const errorBody = await issueResponse.json();
-	expect(errorBody.error).toContain('Expected statusListIndex');
+	expect(errorBody.error).toBe('Internal error. Quote the errorId when contacting support.');
+	expect(errorBody.errorId).toEqual(expect.any(String));
 });
