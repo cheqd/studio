@@ -1,4 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
+import { currentRequestContext, type AuthMethod } from '../../services/request-context.js';
 import type { AuthRuleRepository } from './routes/auth-rule-repository.js';
 import type { NextFunction, Request, Response } from 'express';
 import type { ValidationErrorResponseBody } from '../../types/shared.js';
@@ -50,7 +51,7 @@ export class APIGuard {
 		}
 
 		// Set user info fetcher
-		this.chooseUserFetcherStrategy(request);
+		const authMethod = this.chooseUserFetcherStrategy(request);
 
 		// There some requests where API guarding is not needed
 		if (!request.user.isAuthenticated && authRule.isAllowedUnauthorized()) {
@@ -62,6 +63,9 @@ export class APIGuard {
 		if (resp) {
 			return resp;
 		}
+		// Authentication succeeded: record how, so operations written for this request say which channel made them
+		const context = currentRequestContext();
+		if (context) context.authMethod = authMethod;
 
 		// Checks if the list of scopes from user enough to make an action
 		if (!authRule.isAllowedUnauthorized() && !authRule.areValidScopes(response.locals.scopes)) {
@@ -91,7 +95,7 @@ export class APIGuard {
 	 * @param {Request} request - The request object containing the headers.
 	 * @return {void} This function does not return a value.
 	 */
-	private chooseUserFetcherStrategy(request: Request): void {
+	private chooseUserFetcherStrategy(request: Request): AuthMethod {
 		const bearerToken = APIGuard.extractBearerTokenFromHeaders(request.headers) as string;
 		const portalToken = request.headers['id-token'] as string;
 		const m2mCreds = request.headers['customer-id'] as string;
@@ -99,7 +103,7 @@ export class APIGuard {
 
 		if (apiToken) {
 			this.setUserInfoStrategy(new APITokenUserInfoFetcher(apiToken, this.oauthProvider));
-			return;
+			return 'api-key';
 		}
 
 		// Defence in depth: while the path is disabled this strategy is never chosen, whatever the caller above did
@@ -107,20 +111,21 @@ export class APIGuard {
 			// bearerToken, not m2mCreds: the fetcher verifies this as a JWT, and reads the customer-id header
 			// separately itself. Passing the customer-id string here made every M2M request fail (see #874).
 			this.setUserInfoStrategy(new M2MCredsTokenUserInfoFetcher(bearerToken, this.oauthProvider));
-			return;
+			return 'm2m';
 		}
 
 		if (portalToken && bearerToken) {
 			this.setUserInfoStrategy(new PortalUserInfoFetcher(bearerToken, portalToken, this.oauthProvider));
-			return;
+			return 'portal';
 		}
 
 		if (bearerToken) {
 			this.setUserInfoStrategy(new IdTokenUserInfoFetcher(bearerToken, this.oauthProvider));
-			return;
+			return 'id-token';
 		}
 
 		this.setUserInfoStrategy(new SwaggerUserInfoFetcher(this.oauthProvider));
+		return 'swagger-ui';
 	}
 
 	/**

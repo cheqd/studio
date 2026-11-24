@@ -74,6 +74,10 @@ export class OperationEntity {
 	@Column({ type: 'integer', nullable: true })
 	durationMs?: number;
 
+	/** How the caller authenticated: `api-key`, `portal`, `id-token`, `m2m` or `swagger-ui`. Null on older rows. */
+	@Column({ type: 'varchar', length: 16, nullable: true })
+	authMethod?: string;
+
 	@BeforeInsert()
 	setCreatedAt() {
 		this.createdAt = new Date();
