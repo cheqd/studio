@@ -187,7 +187,9 @@ export class AnalyticsAdminController {
 	 * /admin/analytics/top-accounts:
 	 *   get:
 	 *     summary: Top accounts by calls (staff only).
-	 *     description: Customers with the most tracked operations in the range. Needs the `admin:analytics:read` scope.
+	 *     description: >-
+	 *       Customers with the most tracked operations in the range. `name` is masked (first character, `•••@`, then
+	 *       the domain) when it is an email address. Needs the `admin:analytics:read` scope.
 	 *     tags: [Analytics]
 	 *     parameters:
 	 *       - $ref: '#/components/parameters/AnalyticsRange'
@@ -210,7 +212,7 @@ export class AnalyticsAdminController {
 	 *                 type: object
 	 *                 properties:
 	 *                   customerId: { type: string, format: uuid }
-	 *                   name: { type: string }
+	 *                   name: { type: string, description: 'Masked when it is an email address.' }
 	 *                   plan: { type: string }
 	 *                   calls: { type: integer }
 	 *       400:

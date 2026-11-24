@@ -45,6 +45,10 @@ export class AdminAuthRuleProvider extends AuthRuleProvider {
 		// Staff customer back end, analytics and audit log. Read only, anchored so no other rule can match these paths.
 		this.registerRule('^/admin/customers$', 'GET', 'admin:customers:read', { skipNamespace: true });
 		this.registerRule('^/admin/customers/[^/]+$', 'GET', 'admin:customers:read', { skipNamespace: true });
+		// Reveals one customer's full email; audited by the handler
+		this.registerRule('^/admin/customers/[^/]+/email-reveal$', 'POST', 'admin:customers:read', {
+			skipNamespace: true,
+		});
 		this.registerRule(
 			'^/admin/analytics/(overview|endpoints|top-accounts|plan-mix|funnels|faucet-to-ledger|ledger-writes)$',
 			'GET',

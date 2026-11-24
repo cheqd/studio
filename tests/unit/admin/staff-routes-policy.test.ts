@@ -82,6 +82,7 @@ const flags = new FlagsAdminController();
 const handlers: Array<{ method: string; path: string; run: Handler }> = [
 	{ method: 'GET', path: '/admin/customers', run: (q, r) => customers.list(q, r) },
 	{ method: 'GET', path: `/admin/customers/${uuid}`, run: (q, r) => customers.get(q, r) },
+	{ method: 'POST', path: `/admin/customers/${uuid}/email-reveal`, run: (q, r) => customers.revealEmail(q, r) },
 	{ method: 'GET', path: '/admin/analytics/overview', run: (q, r) => analytics.overview(q, r) },
 	{ method: 'GET', path: '/admin/analytics/endpoints', run: (q, r) => analytics.endpoints(q, r) },
 	{ method: 'GET', path: '/admin/analytics/top-accounts', run: (q, r) => analytics.topAccounts(q, r) },

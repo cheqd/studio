@@ -1,6 +1,7 @@
 import { Connection } from '../../database/connection/connection.js';
 import type { Table, Tile, Unsupported } from '../analytics/customer-analytics.js';
 import { ledgerIndexerConfig } from '../ledger/ledger-indexer.js';
+import { maskEmail, maskIfEmail } from './mask-email.js';
 
 /**
  * Read-only staff queries over Studio's own tables: customers, usage, funnels and the audit log. Counts only: nothing
@@ -49,7 +50,9 @@ export interface CustomerUsage {
 }
 export interface CustomerSummary {
 	id: string;
+	/** Masked when the name is itself an email address. */
 	name: string;
+	/** Always masked (`a•••@example.com`); the full address only comes from the audited email reveal. */
 	email: string;
 	plan: string;
 	network: 'mainnet' | 'testnet';
@@ -182,8 +185,8 @@ export class AdminAnalyticsService {
 			lastActive !== null && Date.now() - new Date(lastActive).getTime() <= ACTIVE_WINDOW_DAYS * 86_400_000;
 		return {
 			id: row.id as string,
-			name: row.name as string,
-			email: row.email as string,
+			name: maskIfEmail(row.name as string),
+			email: maskEmail(row.email as string),
 			plan: row.plan as string,
 			network: row.network === 'mainnet' ? 'mainnet' : 'testnet',
 			createdAt: iso(row.createdAt) as string,
@@ -256,6 +259,32 @@ export class AdminAnalyticsService {
 			agentCount: num(row.agentCount),
 			segment: row.segment as CustomerDetail['segment'],
 		};
+	}
+
+	/** The full email of one customer, or null when there is no such customer. Only the audited reveal uses it. */
+	async getCustomerEmail(customerId: string): Promise<string | null> {
+		const rows = await this.rows<{ email: string | null }>(
+			`SELECT c."email" FROM "customer" c WHERE c."customerId" = $1::uuid`,
+			[customerId]
+		);
+		return rows.length === 0 ? null : (rows[0].email ?? '');
+	}
+
+	/**
+	 * Appends one row to `adminAuditLog` (the one write in this service). Callers pass the actor, the action and the
+	 * target customer id only: never a customer's name or email.
+	 */
+	async recordStaffAction(entry: {
+		actorUserId: string;
+		action: string;
+		targetCustomerId: string;
+		reason: string;
+		ticketRef?: string;
+	}): Promise<void> {
+		await this.db().query(
+			`INSERT INTO "adminAuditLog" ("actorUserId", "action", "targetCustomerId", "reason", "ticketRef") VALUES ($1, $2, $3::uuid, $4, $5)`,
+			[entry.actorUserId, entry.action, entry.targetCustomerId, entry.reason, entry.ticketRef ?? null]
+		);
 	}
 
 	/** The plan name of one customer, and whether it counts as paid. Used to guard deletion. */
@@ -360,7 +389,7 @@ export class AdminAnalyticsService {
 		);
 		return rows.map((r) => ({
 			customerId: r.customerId as string,
-			name: r.name as string,
+			name: maskIfEmail(r.name as string),
 			plan: r.plan as string,
 			calls: num(r.calls),
 		}));
