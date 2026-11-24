@@ -21,4 +21,8 @@ module.exports = {
 	moduleDirectories: ['node_modules', 'src'],
 	testEnvironment: 'node',
 	testTimeout: 10 * 1000, // 10s
+	// Memory builds up in a worker across test files (module registries of the ESM suites); one worker reached the
+	// 4 GB heap limit in CI and was killed. Restart any worker above 1 GB after a test file, and use at most two in CI.
+	workerIdleMemoryLimit: '1GB',
+	maxWorkers: process.env.CI ? 2 : '50%',
 };
