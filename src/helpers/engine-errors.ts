@@ -35,7 +35,8 @@ export interface MappedEngineError {
  *   CredoConfigurationError                       -> 503, without the variable names (they are logged)
  *   CredoTenantMissing                            -> 500, as before
  */
-export function mapEngineError(error: unknown): MappedEngineError | undefined {
+export function mapEngineError(error: unknown, options: { log?: boolean } = {}): MappedEngineError | undefined {
+	const log = options.log ?? true;
 	if (error instanceof LedgerUnavailableError) {
 		return {
 			status: StatusCodes.SERVICE_UNAVAILABLE,
@@ -70,7 +71,7 @@ export function mapEngineError(error: unknown): MappedEngineError | undefined {
 		return { status: StatusCodes.NOT_FOUND, code: 'not_found', error: error.message };
 	}
 	if (error instanceof CredoConfigurationError) {
-		console.error(`Identity engine is not configured: ${error.problems.join('; ')}`);
+		if (log) console.error(`Identity engine is not configured: ${error.problems.join('; ')}`);
 		return {
 			status: StatusCodes.SERVICE_UNAVAILABLE,
 			code: 'engine_unavailable',
@@ -78,12 +79,21 @@ export function mapEngineError(error: unknown): MappedEngineError | undefined {
 		};
 	}
 	if (error instanceof CredoTenantMissingError) {
-		console.error(
-			`Request failed: customer.credoTenantId points at Credo tenant ${error.tenantId}, which is missing from the Askar store. It was not recreated.`
-		);
+		if (log)
+			console.error(
+				`Request failed: customer.credoTenantId points at Credo tenant ${error.tenantId}, which is missing from the Askar store. It was not recreated.`
+			);
 		return { status: error.status, code: error.code, error: error.message };
 	}
 	return undefined;
+}
+
+/**
+ * Whether `mapEngineError` has an answer for this error, without logging. A service that turns its failures into a
+ * result rethrows these, so the controller's `engineErrorResponse` sends the mapped status, code and `Retry-After`.
+ */
+export function isEngineError(error: unknown): boolean {
+	return mapEngineError(error, { log: false }) !== undefined;
 }
 
 /**
