@@ -340,10 +340,10 @@ export class AnalyticsAdminController {
 	 *     summary: Journey funnel (staff only).
 	 *     description: >-
 	 *       Steps for the customers who signed up in the window (`range`, or `from` and `to`). A customer counts at a step only if it reached all the
-	 *       steps before it. `first-credential`: signed up, first API key (any API key, revoked or not, including the
-	 *       portal session key), first API call (first tracked operation), funded address (completed faucet request),
-	 *       first DID, first credential issued. `first-agent`: signed up, first API key, first API call, funded
-	 *       address, first DID, registered an agent, agent card
+	 *       steps before it. `first-credential`: signed up, funded address (completed faucet request), first DID,
+	 *       first credential issued. `first-api-call`: signed up, first API key (a key the customer created; portal
+	 *       session keys and Studio's own keys do not count), first API call (first tracked operation).
+	 *       `first-agent`: signed up, funded address, first DID, registered an agent, agent card
 	 *       signed. `medianSecondsFromPrevious` is null for the first step or when nobody reached the step. Percent and
 	 *       drop are for the client to work out from `accounts`. Needs the `admin:analytics:read` scope.
 	 *     tags: [Analytics]
@@ -353,7 +353,7 @@ export class AnalyticsAdminController {
 	 *         required: true
 	 *         schema:
 	 *           type: string
-	 *           enum: [first-credential, first-agent]
+	 *           enum: [first-credential, first-agent, first-api-call]
 	 *       - $ref: '#/components/parameters/AnalyticsRange'
 	 *       - $ref: '#/components/parameters/AnalyticsFrom'
 	 *       - $ref: '#/components/parameters/AnalyticsTo'
@@ -434,14 +434,14 @@ export class AnalyticsAdminController {
 	 *         required: true
 	 *         schema:
 	 *           type: string
-	 *           enum: [first-credential, first-agent]
+	 *           enum: [first-credential, first-agent, first-api-call]
 	 *       - in: query
 	 *         name: step
 	 *         required: true
 	 *         description: >-
-	 *           A step key of the journey other than the first. `first-credential`: first-api-key, first-api-call,
-	 *           funded, first-did, first-credential. `first-agent`: first-api-key, first-api-call, funded, first-did,
-	 *           registered-agent, card-signed.
+	 *           A step key of the journey other than the first. `first-credential`: funded, first-did,
+	 *           first-credential. `first-agent`: funded, first-did, registered-agent, card-signed. `first-api-call`:
+	 *           first-api-key, first-api-call.
 	 *         schema:
 	 *           type: string
 	 *           enum: [first-api-key, first-api-call, funded, first-did, first-credential, registered-agent, card-signed]

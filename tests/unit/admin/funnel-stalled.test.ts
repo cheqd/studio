@@ -71,8 +71,7 @@ describe('AdminAnalyticsService.stalledAccounts (U-40)', () => {
 		const { service, calls } = serviceWith((sql) => (sql.includes('COUNT(*) AS total') ? [{ total: '0' }] : []));
 		await service.stalledAccounts('first-agent', 'registered-agent', 90, 'people', 3, 10);
 		const [page, total] = calls;
-		const stalled =
-			'j.signed IS NOT NULL AND j.apikey IS NOT NULL AND j.apicall IS NOT NULL AND j.funded IS NOT NULL AND j.did IS NOT NULL AND j.agent IS NULL';
+		const stalled = 'j.signed IS NOT NULL AND j.funded IS NOT NULL AND j.did IS NOT NULL AND j.agent IS NULL';
 		expect(page.sql).toContain(`WHERE ${stalled} ORDER BY j.signed DESC, j."customerId" LIMIT $3 OFFSET $4`);
 		expect(page.parameters).toEqual([expect.any(Array), 'people', 10, 20]);
 		expect(total.sql).toContain(`SELECT COUNT(*) AS total FROM j WHERE ${stalled}`);
@@ -81,10 +80,21 @@ describe('AdminAnalyticsService.stalledAccounts (U-40)', () => {
 		for (const { sql } of calls) expect(sql).not.toMatch(/c\."(name|email)"/);
 	});
 
-	it('the first step after sign-up stalls on the API key only', async () => {
+	it('the first step after sign-up stalls on funding only', async () => {
 		const { service, calls } = serviceWith(() => []);
-		await service.stalledAccounts('first-credential', 'first-api-key', 30, 'all', 1, 25);
-		expect(calls[0].sql).toContain('WHERE j.signed IS NOT NULL AND j.apikey IS NULL ORDER BY');
+		await service.stalledAccounts('first-credential', 'funded', 30, 'all', 1, 25);
+		expect(calls[0].sql).toContain('WHERE j.signed IS NOT NULL AND j.funded IS NULL ORDER BY');
+	});
+
+	it('the first-api-call journey: stalled at the call means a key but no call', async () => {
+		const { service, calls } = serviceWith(() => []);
+		const result = await service.stalledAccounts('first-api-call', 'first-api-call', 30, 'all', 1, 25);
+		expect(calls[0].sql).toContain(
+			'WHERE j.signed IS NOT NULL AND j.apikey IS NOT NULL AND j.apicall IS NULL ORDER BY'
+		);
+		expect([result?.previousStep, result?.previousStepLabel]).toEqual(['first-api-key', 'First API key']);
+		// funding steps are not part of this journey
+		expect(await service.stalledAccounts('first-api-call', 'funded', 30, 'all', 1, 25)).toBeNull();
 	});
 
 	it('uses the same cohort as the funnel, so total = previous accounts minus this step accounts', async () => {

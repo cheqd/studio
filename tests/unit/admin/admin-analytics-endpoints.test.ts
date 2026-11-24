@@ -289,6 +289,26 @@ describe('staff endpoints: validation, defaults and staff-only enforcement', () 
 		expect(service.funnel).toHaveBeenCalledWith('first-agent', 90, 'people');
 	});
 
+	it('the first-api-call journey is accepted by funnels (with cohort and window) and funnels/stalled', async () => {
+		const funnels = await call(analytics, 'funnels', AnalyticsAdminController.funnelsValidator, {
+			query: { journey: 'first-api-call', range: 'all', cohort: 'week' },
+		});
+		expect(funnels.status).toBe(200);
+		expect(service.funnel).toHaveBeenLastCalledWith('first-api-call', 'all', 'all', 'week');
+		const stalled = await call(analytics, 'stalled', AnalyticsAdminController.stalledValidator, {
+			query: { journey: 'first-api-call', step: 'first-api-call', from: '2026-10-01', to: '2026-10-31' },
+		});
+		expect(stalled.status).toBe(200);
+		expect(service.stalledAccounts).toHaveBeenLastCalledWith(
+			'first-api-call',
+			'first-api-call',
+			{ from: '2026-10-01', to: '2026-10-31' },
+			'all',
+			1,
+			25
+		);
+	});
+
 	it('funnels/stalled passes journey, step, range, segment and page through with defaults', async () => {
 		const ok = await call(analytics, 'stalled', AnalyticsAdminController.stalledValidator, {
 			query: { journey: 'first-credential', step: 'first-did' },
@@ -315,6 +335,8 @@ describe('staff endpoints: validation, defaults and staff-only enforcement', () 
 		['the first step (nothing before it)', { journey: 'first-agent', step: 'signed-up' }],
 		['a step of the other journey', { journey: 'first-credential', step: 'card-signed' }],
 		['a step of the other journey (agent)', { journey: 'first-agent', step: 'first-credential' }],
+		['an API step on a ledger journey', { journey: 'first-credential', step: 'first-api-key' }],
+		['a ledger step on the API journey', { journey: 'first-api-call', step: 'funded' }],
 		['a bad range', { journey: 'first-agent', step: 'funded', range: '14' }],
 		['a bad segment', { journey: 'first-agent', step: 'funded', segment: 'everyone' }],
 		['limit above 100', { journey: 'first-agent', step: 'funded', limit: '101' }],
@@ -605,24 +627,18 @@ describe('AdminAnalyticsService shaping and privacy', () => {
 			{
 				accounts0: '10',
 				gap0: null,
-				accounts1: '9',
-				gap1: '30',
-				accounts2: '8',
-				gap2: '60.6',
-				accounts3: '6',
-				gap3: '120.4',
-				accounts4: '3',
-				gap4: '3600',
-				accounts5: '0',
-				gap5: null,
+				accounts1: '6',
+				gap1: '120.4',
+				accounts2: '3',
+				gap2: '3600',
+				accounts3: '0',
+				gap3: null,
 			},
 		]);
 		const funnel = await service.funnel('first-credential', 30, 'agents');
 		expect(funnel.journey).toBe('first-credential');
 		expect(funnel.steps).toEqual([
 			{ key: 'signed-up', label: 'Signed up', accounts: 10, medianSecondsFromPrevious: null },
-			{ key: 'first-api-key', label: 'First API key', accounts: 9, medianSecondsFromPrevious: 30 },
-			{ key: 'first-api-call', label: 'First API call', accounts: 8, medianSecondsFromPrevious: 61 },
 			{ key: 'funded', label: 'Funded address', accounts: 6, medianSecondsFromPrevious: 120 },
 			{ key: 'first-did', label: 'First DID created', accounts: 3, medianSecondsFromPrevious: 3600 },
 			{ key: 'first-credential', label: 'First credential issued', accounts: 0, medianSecondsFromPrevious: null },
@@ -630,8 +646,6 @@ describe('AdminAnalyticsService shaping and privacy', () => {
 		const agent = await serviceWith(() => [{}]).service.funnel('first-agent', 7, 'all');
 		expect(agent.steps.map((s) => s.key)).toEqual([
 			'signed-up',
-			'first-api-key',
-			'first-api-call',
 			'funded',
 			'first-did',
 			'registered-agent',
@@ -639,15 +653,19 @@ describe('AdminAnalyticsService shaping and privacy', () => {
 		]);
 	});
 
-	it('first API key counts any apiKey row (revoked too); first API call comes from customerActivation (U-34)', async () => {
-		const { service, statements } = serviceWith(() => [{}]);
-		await service.funnel('first-agent', 30, 'all');
-		expect(statements[0]).toContain(
-			'SELECT ak."customerId", MIN(ak."createdAt") AS at FROM "apiKey" ak\n\t\tWHERE ak."customerId" IN (SELECT "customerId" FROM cohort) GROUP BY ak."customerId"'
-		);
-		expect(statements[0]).not.toMatch(/ak\."revoked"/);
-		expect(statements[0]).toContain('ca."firstApiCallAt" AS apicall');
-		// step 1 is reached with sign-up and key, step 2 adds the call
+	it('the first-api-call journey: signed up, first API key, first API call, from customerActivation (U-34)', async () => {
+		const { service, statements } = serviceWith(() => [
+			{ accounts0: '10', gap0: null, accounts1: '4', gap1: '600', accounts2: '3', gap2: '45.2' },
+		]);
+		const funnel = await service.funnel('first-api-call', 30, 'all');
+		expect(funnel.steps).toEqual([
+			{ key: 'signed-up', label: 'Signed up', accounts: 10, medianSecondsFromPrevious: null },
+			{ key: 'first-api-key', label: 'First API key', accounts: 4, medianSecondsFromPrevious: 600 },
+			{ key: 'first-api-call', label: 'First API call', accounts: 3, medianSecondsFromPrevious: 45 },
+		]);
+		// the U-35 definitions: customer-created keys only, first tracked operation
+		expect(statements[0]).toContain('ca."firstApiKeyCreatedAt" AS apikey, ca."firstApiCallAt" AS apicall');
+		expect(statements[0]).not.toContain('FROM "apiKey"');
 		expect(statements[0]).toContain(
 			'COUNT(*) FILTER (WHERE j.signed IS NOT NULL AND j.apikey IS NOT NULL AND j.apicall IS NOT NULL) AS "accounts2"'
 		);

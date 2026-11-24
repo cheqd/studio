@@ -115,7 +115,7 @@
  *     AdminStalledAccounts:
  *       type: object
  *       properties:
- *         journey: { type: string, enum: [first-credential, first-agent] }
+ *         journey: { type: string, enum: [first-credential, first-agent, first-api-call] }
  *         step: { type: string, example: first-did }
  *         stepLabel: { type: string, example: First DID created }
  *         previousStep: { type: string, example: funded }

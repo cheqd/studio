@@ -16,7 +16,7 @@ export const RANGES = [7, 30, 90] as const;
 export type Range = (typeof RANGES)[number];
 export const SEGMENTS = ['agents', 'people', 'unclassified', 'all'] as const;
 export type Segment = (typeof SEGMENTS)[number];
-export const JOURNEYS = ['first-credential', 'first-agent'] as const;
+export const JOURNEYS = ['first-credential', 'first-agent', 'first-api-call'] as const;
 export type Journey = (typeof JOURNEYS)[number];
 
 export const DEFAULT_PAGE_LIMIT = 25;
@@ -222,20 +222,22 @@ interface JourneyStep {
 export const JOURNEY_STEPS: Record<Journey, readonly JourneyStep[]> = {
 	'first-credential': [
 		{ key: 'signed-up', label: 'Signed up', column: 'j.signed' },
-		{ key: 'first-api-key', label: 'First API key', column: 'j.apikey' },
-		{ key: 'first-api-call', label: 'First API call', column: 'j.apicall' },
 		{ key: 'funded', label: 'Funded address', column: 'j.funded' },
 		{ key: 'first-did', label: 'First DID created', column: 'j.did' },
 		{ key: 'first-credential', label: 'First credential issued', column: 'j.credential' },
 	],
 	'first-agent': [
 		{ key: 'signed-up', label: 'Signed up', column: 'j.signed' },
-		{ key: 'first-api-key', label: 'First API key', column: 'j.apikey' },
-		{ key: 'first-api-call', label: 'First API call', column: 'j.apicall' },
 		{ key: 'funded', label: 'Funded address', column: 'j.funded' },
 		{ key: 'first-did', label: 'First DID created', column: 'j.did' },
 		{ key: 'registered-agent', label: 'Registered an agent', column: 'j.agent' },
 		{ key: 'card-signed', label: 'Agent card signed', column: 'j.card' },
+	],
+	// Studio API adoption, apart from the ledger journeys: SDK users may never call the Studio API (U-34)
+	'first-api-call': [
+		{ key: 'signed-up', label: 'Signed up', column: 'j.signed' },
+		{ key: 'first-api-key', label: 'First API key', column: 'j.apikey' },
+		{ key: 'first-api-call', label: 'First API call', column: 'j.apicall' },
 	],
 };
 
@@ -270,16 +272,11 @@ const JOURNEY_CTES = `${WINDOW_CTE}, ${SEGMENT_CTE},
 		SELECT ac."customerId", MIN(ac."createdAt") AS at FROM "agentCard" ac
 		WHERE ac."jws" IS NOT NULL AND ac."customerId" IN (SELECT "customerId" FROM cohort) GROUP BY ac."customerId"
 	),
-	apikeys AS (
-		SELECT ak."customerId", MIN(ak."createdAt") AS at FROM "apiKey" ak
-		WHERE ak."customerId" IN (SELECT "customerId" FROM cohort) GROUP BY ak."customerId"
-	),
 	j AS (
-		SELECT cohort."customerId", cohort.signed, apikeys.at AS apikey, ca."firstApiCallAt" AS apicall,
+		SELECT cohort."customerId", cohort.signed, ca."firstApiKeyCreatedAt" AS apikey, ca."firstApiCallAt" AS apicall,
 			funded.at AS funded, ca."firstDidCreatedAt" AS did,
 			ca."firstCredentialIssuedAt" AS credential, ca."firstAgentRegisteredAt" AS agent, cards.at AS card
 		FROM cohort
-		LEFT JOIN apikeys ON apikeys."customerId" = cohort."customerId"
 		LEFT JOIN funded ON funded."customerId" = cohort."customerId"
 		LEFT JOIN "customerActivation" ca ON ca."customerId" = cohort."customerId"
 		LEFT JOIN cards ON cards."customerId" = cohort."customerId"
@@ -599,12 +596,11 @@ export class AdminAnalyticsService {
 	 * median gap between a step and the one before it among customers who reached it (never negative: a milestone
 	 * recorded before the step above counts as 0), and null for the first step or when nobody reached it.
 	 *
-	 * Journey A: signed up, first API key, first API call, funded address (a completed faucet request), first DID,
-	 * first credential issued.
-	 * Journey B: signed up, first API key, first API call, funded address, first DID, registered an agent, agent card
-	 * signed.
-	 * First API key is the earliest `apiKey` row of any kind, revoked or not; that includes the session key the portal
-	 * creates at first sign-in. First API call is `customerActivation.firstApiCallAt` (the first tracked operation).
+	 * Journey A: signed up, funded address (a completed faucet request), first DID, first credential issued.
+	 * Journey B: signed up, funded address, first DID, registered an agent, agent card signed.
+	 * Journey C (`first-api-call`): signed up, first API key, first API call. First API key is
+	 * `customerActivation.firstApiKeyCreatedAt` (a key the customer created; portal session keys and Studio's own keys
+	 * do not count); first API call is `customerActivation.firstApiCallAt` (the first tracked operation).
 	 * The faucet table keeps a limited history (see FAUCET_REQUEST_RETENTION_MONTHS), so "funded" can undercount for
 	 * old customers, which `range=all` and custom dates can now include.
 	 * With `cohort = 'week'` the result also has `cohorts`: the same steps per calendar week of sign-up (UTC, weeks
