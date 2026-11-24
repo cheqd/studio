@@ -19,7 +19,7 @@ export class AdminAuthRuleProvider extends AuthRuleProvider {
 		this.registerRule('^/admin/subscription/update$', 'POST', 'admin:subscription:update', {
 			skipNamespace: true,
 		});
-		this.registerRule('^/admin/subscription/cancel$', 'POST', 'admin:subscription:cancel', {
+		this.registerRule('^/admin/subscription/cancel$', 'DELETE', 'admin:subscription:cancel', {
 			skipNamespace: true,
 		});
 		this.registerRule('^/admin/subscription/resume$', 'POST', 'admin:subscription:resume', {

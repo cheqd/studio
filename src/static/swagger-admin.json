@@ -1327,7 +1327,7 @@
       }
     },
     "/admin/api-key/revoke": {
-      "post": {
+      "delete": {
         "summary": "Revoke an existing API key",
         "description": "Revoke an existing API key",
         "tags": [
@@ -2221,7 +2221,7 @@
       }
     },
     "/admin/subscription/cancel": {
-      "post": {
+      "delete": {
         "summary": "Cancel a subscription",
         "description": "Cancels an existing subscription",
         "tags": [

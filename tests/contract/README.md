@@ -182,6 +182,6 @@ status code are compared from the HTTP envelope; other headers are not.
   listing responses, are written from the OpenAPI spec and the e2e payloads and have not been run against a live Studio.
   Expect to correct a few on the first recording.
 - The recorder cannot tell which network the server is on; it only controls the network the scenario asks for.
-- The inventory's `auth` field reflects the auth rules in code. It flags documentation and rule drift that exists on `main`:
-  `DELETE /admin/subscription/cancel` has no matching auth rule (the rule is registered for POST) and OpenAPI documents
-  it as POST; `DELETE /admin/api-key/revoke` is documented as POST. `POST /admin/webhook` has no auth rule.
+- The inventory's `auth` field reflects the auth rules in code. `POST /admin/webhook` has no auth rule: it is skipped by
+  the guard and authenticated by its signature. The unit test `tests/unit/auth/route-auth-coverage.test.ts` fails when a
+  route in `src/app.ts` has no matching rule and is not on its public list.

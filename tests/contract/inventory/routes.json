@@ -1,5 +1,5 @@
 {
-	"generatedFrom": "07182ce",
+	"generatedFrom": "96af3f3",
 	"generatedBy": "npx tsx tests/contract/scripts/generate-inventory.ts",
 	"routes": [
 		{
@@ -336,20 +336,6 @@
 			"sensitive": false,
 			"stripeOnly": true,
 			"inRouteTable": true,
-			"inOpenApi": false
-		},
-		{
-			"id": "POST /admin/api-key/revoke",
-			"method": "POST",
-			"path": "/admin/api-key/revoke",
-			"surface": "admin",
-			"auth": "no-rule",
-			"scopes": [],
-			"tier": 2,
-			"sideEffect": "state-database",
-			"sensitive": false,
-			"stripeOnly": false,
-			"inRouteTable": false,
 			"inOpenApi": true
 		},
 		{
@@ -525,27 +511,13 @@
 			"method": "DELETE",
 			"path": "/admin/subscription/cancel",
 			"surface": "admin",
-			"auth": "no-rule",
-			"scopes": [],
+			"auth": "scoped",
+			"scopes": ["admin:subscription:cancel"],
 			"tier": 1,
 			"sideEffect": "billing",
 			"sensitive": false,
 			"stripeOnly": true,
 			"inRouteTable": true,
-			"inOpenApi": false
-		},
-		{
-			"id": "POST /admin/subscription/cancel",
-			"method": "POST",
-			"path": "/admin/subscription/cancel",
-			"surface": "admin",
-			"auth": "scoped",
-			"scopes": ["admin:subscription:cancel"],
-			"tier": 1,
-			"sideEffect": "state-database",
-			"sensitive": false,
-			"stripeOnly": false,
-			"inRouteTable": false,
 			"inOpenApi": true
 		},
 		{

@@ -88,6 +88,17 @@ export function syncOne(target: any, key: string, descriptor: PropertyDescriptor
 	return descriptor;
 }
 
+/**
+ * True when the subscription belongs to the calling customer. A subscription of another customer and one that does not
+ * exist get the same answer, so the caller cannot tell them apart.
+ */
+async function isOwnSubscription(response: Response, subscriptionId: string): Promise<boolean> {
+	const customerId = response.locals.customer?.customerId;
+	if (!customerId || !subscriptionId) return false;
+	const subscription = await SubscriptionService.instance.get(subscriptionId);
+	return subscription?.customer?.customerId === customerId;
+}
+
 export class SubscriptionController {
 	static subscriptionCreateValidator = [
 		check('price')
@@ -474,7 +485,7 @@ export class SubscriptionController {
 	 * @openapi
 	 *
 	 * /admin/subscription/cancel:
-	 *  post:
+	 *  delete:
 	 *    summary: Cancel a subscription
 	 *    description: Cancels an existing subscription
 	 *    tags: [Subscription]
@@ -506,6 +517,11 @@ export class SubscriptionController {
 		const { subscriptionId, idempotencyKey } = request.body satisfies SubscriptionCancelRequestBody;
 
 		try {
+			if (!(await isOwnSubscription(response, subscriptionId as string))) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: `Subscription was not found`,
+				} satisfies SubscriptionCancelUnsuccessfulResponseBody);
+			}
 			// Cancel the subscription
 			const subscription = await SubscriptionService.instance.cancel(
 				stripe,
@@ -564,6 +580,11 @@ export class SubscriptionController {
 		const stripe = response.locals.stripe as Stripe;
 		const { subscriptionId, idempotencyKey } = request.body satisfies SubscriptionResumeRequestBody;
 		try {
+			if (!(await isOwnSubscription(response, subscriptionId as string))) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: `Subscription was not found`,
+				} satisfies SubscriptionResumeUnsuccessfulResponseBody);
+			}
 			// Resume the subscription
 			const subscription = await stripe.subscriptions.resume(subscriptionId as string, {
 				idempotencyKey: idempotencyKey,

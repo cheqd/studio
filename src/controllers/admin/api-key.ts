@@ -234,7 +234,7 @@ export class APIKeyController {
 	 * @openapi
 	 *
 	 * /admin/api-key/revoke:
-	 *  post:
+	 *  delete:
 	 *   summary: Revoke an existing API key
 	 *   description: Revoke an existing API key
 	 *   tags: [API Key]
