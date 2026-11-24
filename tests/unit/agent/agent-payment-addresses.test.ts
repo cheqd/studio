@@ -311,7 +311,10 @@ describe('settlement', () => {
 	});
 
 	it('offers no pays-from while the agent is suspended, and uses the newest of several mandates', async () => {
-		const { agent, organisation } = await agentWithMandate();
+		const { agent, organisation, grant: older } = await agentWithMandate();
+		// The fake store stamps grants with the wall clock; put both mandates on the test clock, or the older one
+		// becomes the newest once the wall clock passes the fixed test time.
+		store.grants.get(older.id)!.createdAt = new Date(now);
 		await agents.bindPaymentAddress(customerA, agent.agentId, { account: account(1) });
 		now = new Date(now.getTime() + 1000);
 		const newer = await agents.grantAuthority(customerA, agent.agentId, {
