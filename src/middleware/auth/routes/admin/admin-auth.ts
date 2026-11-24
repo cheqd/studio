@@ -41,6 +41,7 @@ export class AdminAuthRuleProvider extends AuthRuleProvider {
 		this.registerRule('/admin/api-key/list', 'GET', 'admin:api-key:list', { skipNamespace: true });
 		// Feature flags (staff only). Anchored so that no other rule can match this path.
 		this.registerRule('^/admin/flags$', 'PUT', 'admin:flags:update', { skipNamespace: true });
+		this.registerRule('^/admin/customers/[^/]+/flags$', 'GET', 'admin:customers:read', { skipNamespace: true });
 		// Staff customer back end, analytics and audit log. Read only, anchored so no other rule can match these paths.
 		this.registerRule('^/admin/customers$', 'GET', 'admin:customers:read', { skipNamespace: true });
 		this.registerRule('^/admin/customers/[^/]+$', 'GET', 'admin:customers:read', { skipNamespace: true });

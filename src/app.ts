@@ -409,6 +409,7 @@ class App {
 		// Feature flags
 		app.get('/flags', new FlagsController().getFlags);
 		app.put('/admin/flags', new FlagsAdminController().putFlag);
+		app.get('/admin/customers/:id/flags', new FlagsAdminController().getCustomerFlags);
 
 		// Staff customer back end, analytics and audit log (read only, staff scopes)
 		const customersAdmin = new CustomersAdminController();

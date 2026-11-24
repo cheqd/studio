@@ -1675,6 +1675,40 @@
         }
       }
     },
+    "/admin/customers/{id}/flags": {
+      "get": {
+        "summary": "Read the feature flags that apply to one customer (staff only).",
+        "description": "The flags this customer gets now (the engine for NEW artefacts on each route, and the UI), the stored rows behind them (global and this customer's own), and whether the temporary Veramo override is on for the instance that answered. A stored `veramo` engine row has no effect while the override is off, so `effective` can say `credo` while a row says `veramo`. Existing artefacts always use the engine recorded on them.",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The customer's flags."
+          },
+          "400": {
+            "description": "The id is not a UUID."
+          },
+          "401": {
+            "description": "Unauthorised."
+          },
+          "403": {
+            "description": "The caller is not staff."
+          }
+        }
+      }
+    },
     "/admin/flags": {
       "put": {
         "summary": "Set a feature flag (staff only).",
