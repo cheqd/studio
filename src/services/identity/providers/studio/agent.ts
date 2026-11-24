@@ -492,6 +492,9 @@ export class Veramo {
 			proofFormat: VC_PROOF_FORMAT,
 			removeOriginalFields: VC_REMOVE_ORIGINAL_FIELDS,
 			domain: verificationOptions.domain,
+			// The verifier's challenge becomes the presentation's nonce (JWT `nonce`); without it, verifying with the
+			// same challenge fails because the presentation carries none.
+			...(verificationOptions.challenge ? { challenge: verificationOptions.challenge } : {}),
 		};
 		const result = await agent.createVerifiablePresentation(presentationOptions);
 
