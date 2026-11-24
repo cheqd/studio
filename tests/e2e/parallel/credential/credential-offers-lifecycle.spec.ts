@@ -10,6 +10,7 @@ import {
 	NOT_EXISTENT_TESTNET_DID,
 	PAYLOADS_PATH,
 } from '../../constants';
+import { NOT_FOUND_MESSAGE } from '../../../../src/services/identity/ownership-error';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
@@ -188,7 +189,7 @@ test.describe.serial('Credential Offers & Received Credentials - Complete Lifecy
 
 		expect(offerDetailsResponse.status()).toBe(StatusCodes.NOT_FOUND);
 		const errorData = await offerDetailsResponse.json();
-		expect(errorData.error).toContain('not found in your wallet');
+		expect(errorData.error).toBe(NOT_FOUND_MESSAGE);
 	});
 
 	// ================================================================================
@@ -266,7 +267,7 @@ test.describe.serial('Credential Offers & Received Credentials - Complete Lifecy
 
 		expect(acceptResponse.status()).toBe(StatusCodes.NOT_FOUND);
 		const errorData = await acceptResponse.json();
-		expect(errorData.error).toContain('not found');
+		expect(errorData.error).toBe(NOT_FOUND_MESSAGE);
 	});
 
 	// ================================================================================
@@ -347,7 +348,7 @@ test.describe.serial('Credential Offers & Received Credentials - Complete Lifecy
 
 		expect(secondRejectResponse.status()).toBe(StatusCodes.NOT_FOUND);
 		const errorData = await secondRejectResponse.json();
-		expect(errorData.error).toContain('not found');
+		expect(errorData.error).toBe(NOT_FOUND_MESSAGE);
 	});
 
 	// ================================================================================
@@ -439,9 +440,10 @@ test.describe.serial('Credential Offers & Received Credentials - Complete Lifecy
 			},
 		});
 
-		expect(importResponse.status()).toBe(StatusCodes.BAD_REQUEST);
+		// A holder DID the customer does not own is answered like a missing one
+		expect(importResponse.status()).toBe(StatusCodes.NOT_FOUND);
 		const errorData = await importResponse.json();
-		expect(errorData.error).toContain('does not exist in your wallet');
+		expect(errorData.error).toBe(NOT_FOUND_MESSAGE);
 	});
 
 	// ================================================================================
@@ -507,9 +509,9 @@ test.describe.serial('Credential Offers & Received Credentials - Complete Lifecy
 			},
 		});
 
-		expect(listResponse.status()).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+		expect(listResponse.status()).toBe(StatusCodes.NOT_FOUND);
 		const errorData = await listResponse.json();
-		expect(errorData.error).toContain('not found in your wallet');
+		expect(errorData.error).toBe(NOT_FOUND_MESSAGE);
 	});
 
 	test(' Get specific received credential by hash', async ({ request }) => {

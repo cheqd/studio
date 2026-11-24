@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { engineErrorResponse } from './engine-errors.js';
 import { tryAcquireExportSlot } from './export-concurrency.js';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../services/identity/ownership-error.js';
 
 /**
  * Password-protected export of private key material.
@@ -201,6 +202,10 @@ export async function respondWithEncryptedExport(
 		// Typed engine errors (for example a missing Credo tenant) keep their mapped status and body.
 		const engineError = engineErrorResponse(response, error);
 		if (engineError) return engineError;
+		// A missing identifier and one owned by another customer get the same 404 and body.
+		if (error instanceof OwnershipError) {
+			return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+		}
 		return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 			error: `Internal error: ${(error as Error)?.message || error}`,
 		});

@@ -1,5 +1,6 @@
 import { statusUpdateFailure } from './status-update-outcome.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../identity/ownership-error.js';
 import type { SafeAPIResponse } from '../../types/common.js';
 import {
 	AccreditationSchemaType,
@@ -216,6 +217,9 @@ export class AccreditationService {
 				},
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return { success: false, status: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			return internalErrorUnlessEngineError(error);
 		}
 	}
@@ -260,6 +264,9 @@ export class AccreditationService {
 				data: result as RevocationResult | BitstringUpdateResult,
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return { success: false, status: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			return internalErrorUnlessEngineError(error);
 		}
 	}
@@ -304,6 +311,9 @@ export class AccreditationService {
 				data: result as BitstringUpdateResult,
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return { success: false, status: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			return internalErrorUnlessEngineError(error);
 		}
 	}
@@ -348,6 +358,9 @@ export class AccreditationService {
 				data: result as BitstringUpdateResult,
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return { success: false, status: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			return internalErrorUnlessEngineError(error);
 		}
 	}

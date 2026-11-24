@@ -1,4 +1,5 @@
 import { fromString } from 'uint8arrays';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../identity/ownership-error.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
 import { mapEngineError } from '../../helpers/engine-errors.js';
 import type { RoutedService } from '../identity/index.js';
@@ -250,6 +251,9 @@ export class CredentialStatusService {
 		} catch (error) {
 			const mapped = mapEngineError(error);
 			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error };
+			if (error instanceof OwnershipError) {
+				return { success: false, statusCode: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			return {
 				success: false,
 				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
@@ -415,6 +419,9 @@ export class CredentialStatusService {
 		} catch (error) {
 			const mapped = mapEngineError(error);
 			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error };
+			if (error instanceof OwnershipError) {
+				return { success: false, statusCode: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			return {
 				success: false,
 				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
@@ -589,6 +596,9 @@ export class CredentialStatusService {
 		} catch (error) {
 			const mapped = mapEngineError(error);
 			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error };
+			if (error instanceof OwnershipError) {
+				return { success: false, statusCode: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			return {
 				success: false,
 				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
@@ -781,6 +791,9 @@ export class CredentialStatusService {
 		} catch (error) {
 			const mapped = mapEngineError(error);
 			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error };
+			if (error instanceof OwnershipError) {
+				return { success: false, statusCode: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			return {
 				success: false,
 				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
@@ -976,6 +989,9 @@ export class CredentialStatusService {
 				data: result,
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return { success: false, statusCode: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			const errorRef = error as Record<string, unknown>;
 
 			if (errorRef?.errorCode === 'NodeAccessControlConditionsReturnedNotAuthorized') {

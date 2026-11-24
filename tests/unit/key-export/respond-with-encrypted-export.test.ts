@@ -2,6 +2,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import type { Request, Response } from 'express';
 import { CredoTenantMissingError } from '../../../src/services/identity/engine/credo/errors.js';
 import { decryptKeyExport, respondWithEncryptedExport } from '../../../src/helpers/key-export.js';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../../../src/services/identity/ownership-error.js';
 
 const SECRET_HEX = 'deadbeefcafebabe0123456789abcdef0123456789abcdef0123456789abcdef';
 const PASSWORD = 'correct horse battery staple';
@@ -110,5 +111,18 @@ describe('respondWithEncryptedExport', () => {
 			}
 		);
 		expect(res.statusCode).toBe(404);
+	});
+
+	it('answers a studio ownership failure with the fixed 404 body', async () => {
+		const res = mockResponse();
+		await respondWithEncryptedExport(
+			{ body: { password: PASSWORD } } as Request,
+			res as unknown as Response,
+			async () => {
+				throw new OwnershipError();
+			}
+		);
+		expect(res.statusCode).toBe(404);
+		expect(res.body).toEqual({ error: NOT_FOUND_MESSAGE });
 	});
 });

@@ -1,5 +1,6 @@
 import { IdentifierService } from '../../services/api/identifier.js';
 import type { Request, Response } from 'express';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../../services/identity/ownership-error.js';
 import { fromString, toString } from 'uint8arrays';
 import {
 	CheqdNetwork,
@@ -472,6 +473,9 @@ export class DIDController {
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			const errorCode = (error as CheqdProviderError).errorCode;
 			// Handle specific cases when DID is deactivated or verificationMethod is empty
 			if (
@@ -616,6 +620,9 @@ export class DIDController {
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
@@ -703,6 +710,9 @@ export class DIDController {
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			const unfunded = unfundedPayerFailure(error);
 			if (unfunded) {
 				return response.status(unfunded.status).json({

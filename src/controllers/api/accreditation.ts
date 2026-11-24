@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../../services/identity/ownership-error.js';
 import type {
 	DIDAccreditationRequestBody,
 	DIDAccreditationRequestParams,
@@ -235,6 +236,9 @@ export class AccreditationController {
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
@@ -439,6 +443,9 @@ export class AccreditationController {
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
@@ -543,6 +550,9 @@ export class AccreditationController {
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
@@ -647,6 +657,9 @@ export class AccreditationController {
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccesfulRevokeCredentialResponseBody);
