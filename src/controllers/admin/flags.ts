@@ -4,6 +4,7 @@ import { veramoOverrideEnabled } from '../../services/identity/engine/new-artefa
 import { requireStaffScope, STAFF_SCOPES } from './staff-guard.js';
 import validator from 'validator';
 import { FeatureFlagService, resolveFlags, validateFlagWrite } from '../../services/api/feature-flag.js';
+import { CredentialScreensService } from '../../services/api/credential-screens.js';
 
 export const FLAGS_ADMIN_SCOPE = STAFF_SCOPES.flagsUpdate;
 export const FLAGS_READ_SCOPE = STAFF_SCOPES.customersRead;
@@ -43,9 +44,11 @@ export class FlagsAdminController {
 		const overrideEnabled = veramoOverrideEnabled();
 		try {
 			const rows = await FeatureFlagService.instance.readRows(customerId);
+			const credentialScreens = await CredentialScreensService.instance.decide(customerId, rows);
 			return response.status(StatusCodes.OK).json({
 				customerId,
 				effective: resolveFlags(rows, customerId),
+				credentialScreens,
 				rows: rows.map((row) => ({
 					scope: row.customerId ? 'customer' : 'global',
 					flagKey: row.flagKey,
@@ -57,9 +60,13 @@ export class FlagsAdminController {
 			});
 		} catch {
 			// No featureFlag table (or no external database): the compiled defaults apply
-			return response
-				.status(StatusCodes.OK)
-				.json({ customerId, effective: resolveFlags([], customerId), rows: [], overrideEnabled });
+			return response.status(StatusCodes.OK).json({
+				customerId,
+				effective: resolveFlags([], customerId),
+				credentialScreens: { enabled: false, mode: 'auto', source: 'default' },
+				rows: [],
+				overrideEnabled,
+			});
 		}
 	}
 
@@ -69,7 +76,7 @@ export class FlagsAdminController {
 	 * /admin/flags:
 	 *   put:
 	 *     summary: Set a feature flag (staff only).
-	 *     description: Creates or replaces one flag, either global or for one customer. Every change is audited. Engine flags only choose the engine for NEW artefacts, and Credo is the default for every family. Veramo is retired for new artefacts, so an engine flag of `veramo` has no effect unless the instances run the temporary override `VERAMO_NEW_ARTEFACT_OVERRIDE=true`; each artefact it then creates on Veramo is logged as `veramo-new-artefact-override`. Existing artefacts always use the engine recorded on them, whatever a flag says.
+	 *     description: Creates or replaces one flag, either global or for one customer. Every change is audited. Engine flags only choose the engine for NEW artefacts, and Credo is the default for every family. Veramo is retired for new artefacts, so an engine flag of `veramo` has no effect unless the instances run the temporary override `VERAMO_NEW_ARTEFACT_OVERRIDE=true`; each artefact it then creates on Veramo is logged as `veramo-new-artefact-override`. Existing artefacts always use the engine recorded on them, whatever a flag says. The `credentialScreens` flag (per customer only, no route) shows or hides the portal's credential screens, with a value whose `mode` is `auto`, `on` or `off`; `auto` follows the customer's history.
 	 *     tags: [Flags]
 	 *     requestBody:
 	 *       required: true
@@ -81,7 +88,7 @@ export class FlagsAdminController {
 	 *             properties:
 	 *               flagKey:
 	 *                 type: string
-	 *                 enum: [engine, ui]
+	 *                 enum: [engine, ui, credentialScreens]
 	 *               customerId:
 	 *                 type: string
 	 *                 format: uuid

@@ -21,6 +21,8 @@ const { FlagsAuthRuleProvider } = await import('../../../src/middleware/auth/rou
 const { AccountAuthProvider } = await import('../../../src/middleware/auth/routes/api/account-auth.js');
 const { FlagsAdminController } = await import('../../../src/controllers/admin/flags.js');
 const { FlagsController } = await import('../../../src/controllers/api/flags.js');
+const { CredentialScreensService } = await import('../../../src/services/api/credential-screens.js');
+CredentialScreensService.instance.decide = (async () => ({ enabled: false, mode: 'auto', source: 'default' })) as never;
 
 const requestFor = (method: string, path: string, body?: unknown) => ({ method, path, body }) as unknown as Request;
 
@@ -133,14 +135,14 @@ describe('GET /flags controller', () => {
 	it("includes the caller's own customerId and nothing else about the account", async () => {
 		const res = fakeResponse({ customer: { customerId: 'c1', email: 'x@example.com', name: 'X' } });
 		await new FlagsController().getFlags(requestFor('GET', '/flags'), res as unknown as Response);
-		expect(res.body).toEqual({ ui: 'classic', customerId: 'c1' });
+		expect(res.body).toEqual({ ui: 'classic', credentialScreens: false, customerId: 'c1' });
 	});
 
 	it('omits customerId (not null) when the request has no customer', async () => {
 		const res = fakeResponse({});
 		await new FlagsController().getFlags(requestFor('GET', '/flags'), res as unknown as Response);
 		expect(res.statusCode).toBe(200);
-		expect(res.body).toEqual({ ui: 'classic' });
+		expect(res.body).toEqual({ ui: 'classic', credentialScreens: false });
 		expect(Object.keys(res.body as object)).not.toContain('customerId');
 	});
 

@@ -43,6 +43,7 @@ jest.unstable_mockModule('../../../src/services/api/feature-flag.js', () => ({
 		},
 	},
 	resolveFlags: () => ({}),
+	credentialScreensMode: () => 'auto',
 	validateFlagWrite: () => ({
 		ok: true,
 		write: { flagKey: 'engine', value: { engine: 'credo' }, reason: 'x' },

@@ -8625,6 +8625,11 @@
                       ],
                       "example": "classic"
                     },
+                    "credentialScreens": {
+                      "type": "boolean",
+                      "description": "Whether the portal shows its credential screens (issue, verify, issued, status lists) to this customer. On for customers who issued, verified or created a status list before the release, or when staff switched them on.",
+                      "example": false
+                    },
                     "engine": {
                       "type": "object",
                       "properties": {

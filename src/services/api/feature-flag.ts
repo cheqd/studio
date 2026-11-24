@@ -7,12 +7,27 @@ import type { EngineName, EngineRoute } from '../identity/engine/types.js';
 import { engineForNewArtefact } from '../identity/engine/new-artefact-policy.js';
 import { FlagCache } from './flag-cache.js';
 
-export const FLAG_KEYS = ['engine', 'ui'] as const;
+export const FLAG_KEYS = ['engine', 'ui', 'credentialScreens'] as const;
 export type FlagKey = (typeof FLAG_KEYS)[number];
 
 export const UI_VARIANTS = ['classic', 'new'] as const;
 export type UiVariant = (typeof UI_VARIANTS)[number];
 export const DEFAULT_UI: UiVariant = 'classic';
+
+/**
+ * Whether a customer sees the portal's credential screens (issue, verify, issued, status lists). `auto` follows the
+ * customer's history (see `credential-screens.ts`); `on` and `off` are staff overrides.
+ */
+export const CREDENTIAL_SCREEN_MODES = ['auto', 'on', 'off'] as const;
+export type CredentialScreenMode = (typeof CREDENTIAL_SCREEN_MODES)[number];
+
+/** The customer's credential-screens setting: their own row if there is one, else `auto`. Global rows are ignored. */
+export function credentialScreensMode(rows: readonly FlagRow[], customerId: string | undefined): CredentialScreenMode {
+	if (!customerId) return 'auto';
+	const row = rows.find((r) => r.flagKey === 'credentialScreens' && r.customerId === customerId && r.route === null);
+	const mode = row?.value?.mode;
+	return CREDENTIAL_SCREEN_MODES.includes(mode as CredentialScreenMode) ? (mode as CredentialScreenMode) : 'auto';
+}
 
 /** The part of a `featureFlag` row the resolvers need. */
 export interface FlagRow {
@@ -109,7 +124,26 @@ export function validateFlagWrite(body: unknown): FlagWriteValidation {
 		return { ok: false, error: 'value must be a JSON object' };
 	}
 	const keys = Object.keys(value);
-	if (flagKey === 'engine') {
+	if (flagKey === 'credentialScreens') {
+		if (typeof customerId !== 'string') {
+			return {
+				ok: false,
+				error: 'customerId is required for the credentialScreens flag (it is set per customer)',
+			};
+		}
+		if (route !== undefined && route !== null) {
+			return { ok: false, error: 'route must be omitted for the credentialScreens flag' };
+		}
+		if (
+			keys.length !== 1 ||
+			!CREDENTIAL_SCREEN_MODES.includes((value as Record<string, unknown>).mode as CredentialScreenMode)
+		) {
+			return {
+				ok: false,
+				error: `value for credentialScreens must be {"mode": ${CREDENTIAL_SCREEN_MODES.map((n) => `"${n}"`).join(' | ')}}`,
+			};
+		}
+	} else if (flagKey === 'engine') {
 		if (keys.length !== 1 || !isEngineName((value as Record<string, unknown>).engine)) {
 			return {
 				ok: false,
