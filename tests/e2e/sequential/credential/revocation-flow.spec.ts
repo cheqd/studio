@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
+import { alreadyAppliedOnRetry } from '../../helpers';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
@@ -55,7 +56,7 @@ test(" Verify a credential's revocation status", async ({ request }) => {
 	expect(result.revoked).toBe(false);
 });
 
-test(' Verify a credential status after revocation', async ({ request }) => {
+test(' Verify a credential status after revocation', async ({ request }, testInfo) => {
 	const response = await request.post(`/credential/revoke?publish=true&listType=StatusList2021`, {
 		data: JSON.stringify({
 			credential: jwtCredential,
@@ -65,10 +66,12 @@ test(' Verify a credential status after revocation', async ({ request }) => {
 		},
 	});
 	const result = await response.json();
-	expect(response).toBeOK();
-	expect(response.status()).toBe(StatusCodes.OK);
-	expect(result.revoked).toBe(true);
-	expect(result.published).toBe(true);
+	if (!alreadyAppliedOnRetry(response.status(), testInfo)) {
+		expect(response).toBeOK();
+		expect(response.status()).toBe(StatusCodes.OK);
+		expect(result.revoked).toBe(true);
+		expect(result.published).toBe(true);
+	}
 
 	const verificationResponse = await request.post(`/credential/verify?verifyStatus=true`, {
 		data: JSON.stringify({

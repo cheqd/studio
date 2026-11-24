@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../../services/identity/ownership-error.js';
 import type {
 	DIDAccreditationRequestBody,
 	DIDAccreditationRequestParams,
@@ -181,13 +182,37 @@ export class AccreditationController {
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
-	 *         description: The parent accreditation or root authorisation was not found.
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 *       501:
-	 *         description: The identity engine of this account does not support this operation yet.
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
 	 *       503:
-	 *         description: The ledger or identity engine is temporarily unavailable; nothing was written. Retry after the `Retry-After` header.
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async issue(request: Request, response: Response) {
@@ -235,6 +260,9 @@ export class AccreditationController {
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
@@ -282,8 +310,32 @@ export class AccreditationController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async verify(request: Request, response: Response) {
@@ -379,13 +431,43 @@ export class AccreditationController {
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
-	 *         description: The accreditation or its status list was not found for this account.
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
+	 *       409:
+	 *         description: The change would do nothing; see `code`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/StatusUpdateConflict'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 *       501:
-	 *         description: The identity engine of this account does not support this operation yet.
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
 	 *       503:
-	 *         description: The ledger or identity engine is temporarily unavailable; nothing was written. Retry after the `Retry-After` header.
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async revoke(request: Request, response: Response) {
@@ -434,11 +516,15 @@ export class AccreditationController {
 			} else {
 				return response.status(result.status).json({
 					error: result.error,
+					...(result.data?.code ? { code: result.data.code } : {}),
 				});
 			}
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
@@ -482,13 +568,43 @@ export class AccreditationController {
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
-	 *         description: The accreditation or its status list was not found for this account.
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
+	 *       409:
+	 *         description: The change would do nothing; see `code`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/StatusUpdateConflict'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 *       501:
-	 *         description: The identity engine of this account does not support this operation yet.
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
 	 *       503:
-	 *         description: The ledger or identity engine is temporarily unavailable; nothing was written. Retry after the `Retry-After` header.
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async suspend(request: Request, response: Response) {
@@ -538,11 +654,15 @@ export class AccreditationController {
 			} else {
 				return response.status(result.status).json({
 					error: result.error,
+					...(result.data?.code ? { code: result.data.code } : {}),
 				});
 			}
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
@@ -586,13 +706,43 @@ export class AccreditationController {
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       404:
-	 *         description: The accreditation or its status list was not found for this account.
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
+	 *       409:
+	 *         description: The change would do nothing; see `code`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/StatusUpdateConflict'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 *       501:
-	 *         description: The identity engine of this account does not support this operation yet.
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
 	 *       503:
-	 *         description: The ledger or identity engine is temporarily unavailable; nothing was written. Retry after the `Retry-After` header.
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async reinstate(request: Request, response: Response) {
@@ -642,11 +792,15 @@ export class AccreditationController {
 			} else {
 				return response.status(result.status).json({
 					error: result.error,
+					...(result.data?.code ? { code: result.data.code } : {}),
 				});
 			}
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccesfulRevokeCredentialResponseBody);
@@ -711,8 +865,26 @@ export class AccreditationController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	public async listAccreditations(request: Request, response: Response) {
 		const { network, accreditationType, did, page, limit } = request.query as any;

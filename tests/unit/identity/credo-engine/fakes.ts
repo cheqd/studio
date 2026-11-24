@@ -12,6 +12,8 @@ import type {
 	StoredKey,
 } from '../../../../src/services/identity/engine/credo/ports.js';
 import type { PrivateJwk } from '../../../../src/services/identity/engine/credo/key-material.js';
+import { CredoKeyExistsError } from '../../../../src/services/identity/engine/credo/errors.js';
+import { jwkToVeramoKey } from '../../../../src/services/identity/credo/keyConversion.js';
 import { CredentialFakeState, credentialFakeSession } from './credential-fakes.js';
 import type { EngineDidResolution, EngineIdentifier } from '../../../../src/services/identity/engine/types.js';
 
@@ -24,6 +26,8 @@ export class FakeStore implements CredoEngineStore {
 	identifiers: (IdentifierRecord & { customerId: string })[] = [];
 	payers = new Map<string, PayerAccount>(); // `${customerId}|${network}`
 	privateKeys = new Map<string, string>();
+	/** Studio's `private-key` table: kid to Veramo type and private key hex. Written by `FakeRuntime` imports. */
+	keyMaterial = new Map<string, { type: string; privateKeyHex: string }>();
 	failTenantWrite = false;
 	private locks = new Map<string, Promise<unknown>>();
 
@@ -68,6 +72,12 @@ export class FakeStore implements CredoEngineStore {
 		if (!key) return null;
 		if (alias) key.publicKeyAlias = alias;
 		return key;
+	}
+
+	async readOwnedPrivateKey(customerId: string, kid: string) {
+		if (!(await this.findOwnedKey(customerId, { kid }))) return null;
+		const stored = this.keyMaterial.get(kid);
+		return stored ? { alias: kid, privateKeyHex: stored.privateKeyHex } : null;
 	}
 
 	async deleteUnlinkedOwnedKey(customerId: string, kid: string) {
@@ -181,6 +191,9 @@ export class FakeRuntime implements CredoRuntime {
 	resolution: EngineDidResolution = { didDocument: null, didDocumentMetadata: {}, didResolutionMetadata: {} };
 	credentialState = new CredentialFakeState();
 
+	/** With a key store, imports write to it and refuse a key id it already holds, like the real KMS. */
+	constructor(private readonly keyStore?: Map<string, { type: string; privateKeyHex: string }>) {}
+
 	async createTenant(label: string) {
 		const id = `tenant-${randomUUID().slice(0, 8)}`;
 		this.tenants.push(id);
@@ -192,6 +205,13 @@ export class FakeRuntime implements CredoRuntime {
 	}
 	async resolveDid(did: string) {
 		return this.credentialState.resolutions.get(did) ?? this.resolution;
+	}
+	/** Versions the ledger holds for each DID; a DID with no entry makes `didVersionCount` fail. */
+	versionCounts = new Map<string, number>();
+	async didVersionCount(did: string) {
+		const count = this.versionCounts.get(did);
+		if (count === undefined) throw new Error(`no version metadata for ${did}`);
+		return count;
 	}
 	async shutdown() {}
 
@@ -210,16 +230,27 @@ export class FakeRuntime implements CredoRuntime {
 				record('updateDid', [input]);
 				return this.updateState;
 			},
-			deactivateDid: async (did) => {
-				record('deactivateDid', [did]);
+			deactivateDid: async (did, options) => {
+				record('deactivateDid', [did, options]);
 				return this.deactivateState;
 			},
 			createResource: async (did, resource: ResourceInput) => {
 				record('createResource', [did, resource]);
 				return this.resourceState;
 			},
+			importDid: async (input) => {
+				record('importDid', [input]);
+				this.recorded.set(
+					`${tenantId}|${input.did}`,
+					input.keys.map((link) => link.kmsKeyId)
+				);
+			},
 			importKey: async (privateJwk, keyId) => {
 				record('importKey', [keyId]);
+				if (this.keyStore) {
+					if (this.keyStore.has(keyId)) throw new CredoKeyExistsError(keyId);
+					this.keyStore.set(keyId, jwkToVeramoKey(privateJwk as never));
+				}
 				this.imported.push({ tenantId, keyId, privateJwk });
 			},
 			deleteKey: async (keyId) => {

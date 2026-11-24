@@ -28,11 +28,40 @@ export class CredoNotSupportedError extends Error {
 	}
 }
 
+/**
+ * Extra signers (`publicKeyHexs` on DID update, DID deactivate and resource create) are not passed through the Credo
+ * registrar yet, so a Credo DID refuses them instead of ignoring them: ignored, a multi-controller update would be
+ * sent with too few signatures and fail at the ledger, or succeed without the signer the caller asked for.
+ */
+export class CredoExtraSignersNotSupportedError extends Error {
+	readonly code = 'extra_signers_not_supported';
+	readonly status = 400;
+
+	constructor() {
+		super(
+			'Extra signers (publicKeyHexs) are not supported for this identifier yet: every key in publicKeyHexs must be an authentication key of the DID itself. Send the request without the other keys.'
+		);
+		this.name = 'CredoExtraSignersNotSupported';
+	}
+}
+
 /** The caller asked for something that is not theirs, or that does not exist. Deliberately the same message for both. */
 export class CredoOwnershipError extends Error {
 	constructor(what: string) {
 		super(`${what} not found in wallet`);
 		this.name = 'CredoOwnershipError';
+	}
+}
+
+/**
+ * The key store already holds private material under this key id. The runtime raises it in place of Credo's own
+ * "key exists" error so the engine can tell it apart from a storage failure. Never sent as is: the engine decides
+ * what the caller is told.
+ */
+export class CredoKeyExistsError extends Error {
+	constructor(readonly keyId: string) {
+		super(`The key store already holds key ${keyId}`);
+		this.name = 'CredoKeyExistsError';
 	}
 }
 

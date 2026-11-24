@@ -5,6 +5,7 @@ import { EngineNotImplementedError } from '../services/identity/engine/credo-eng
 import { EngineGoneError, EngineRoutingUnavailableError } from '../services/identity/engine/errors.js';
 import {
 	CredoConfigurationError,
+	CredoExtraSignersNotSupportedError,
 	CredoNotSupportedError,
 	CredoOwnershipError,
 	CredoTenantMissingError,
@@ -32,6 +33,7 @@ export interface MappedEngineError {
  *   NotSupported                                  -> 501
  *   NotImplementedByEngine                        -> 501, without naming the method
  *   CredoOwnershipError                           -> 404 (the same answer for "not yours" and "does not exist")
+ *   CredoExtraSignersNotSupported                 -> 400 (publicKeyHexs on a Credo DID)
  *   CredoConfigurationError                       -> 503, without the variable names (they are logged)
  *   CredoTenantMissing                            -> 500, as before
  */
@@ -66,6 +68,9 @@ export function mapEngineError(error: unknown, options: { log?: boolean } = {}):
 			code: 'NotImplemented',
 			error: 'This operation is not available yet for the identity engine of this account.',
 		};
+	}
+	if (error instanceof CredoExtraSignersNotSupportedError) {
+		return { status: StatusCodes.BAD_REQUEST, code: error.code, error: error.message };
 	}
 	if (error instanceof CredoOwnershipError) {
 		return { status: StatusCodes.NOT_FOUND, code: 'not_found', error: error.message };

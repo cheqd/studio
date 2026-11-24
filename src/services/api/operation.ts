@@ -15,6 +15,10 @@ export interface OperationRouting {
 	network?: string;
 	outcome?: string;
 	durationMs?: number;
+	/** How the caller authenticated (`api-key`, `portal`, `id-token`, `m2m`, `swagger-ui`); empty outside a request */
+	authMethod?: string;
+	/** Only for a failed ledger write (U-30); see `OperationEntity.errorCategory`. */
+	errorCategory?: string;
 }
 
 export class OperationService {
@@ -29,7 +33,7 @@ export class OperationService {
 	public async create(
 		category: string,
 		operationName: string,
-		defaultFee: CoinEntity,
+		defaultFee: CoinEntity | undefined,
 		deprecated = false,
 		successful = true,
 		customer: CustomerEntity,
@@ -56,6 +60,8 @@ export class OperationService {
 		operationEntity.network = routing.network;
 		operationEntity.outcome = routing.outcome;
 		operationEntity.durationMs = routing.durationMs;
+		operationEntity.authMethod = routing.authMethod;
+		operationEntity.errorCategory = routing.errorCategory;
 		const operation = (await this.operationRepository.insert(operationEntity)).identifiers[0];
 		if (!operation) throw new Error(`Cannot create a new operation`);
 
@@ -108,6 +114,8 @@ export class OperationService {
 	) {
 		return await this.operationRepository.findAndCount({
 			where: where,
+			// Newest first; the id breaks ties between rows with the same timestamp, so pages never overlap
+			order: { createdAt: 'DESC', operationId: 'DESC' },
 			skip: page && limit ? (page - 1) * limit : 0,
 			take: limit,
 			relations,

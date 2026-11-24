@@ -31,6 +31,7 @@ import { AgentCardEntity } from '../entities/agent-card.entity.js';
 import { AgentEventEntity } from '../entities/agent-event.entity.js';
 import { AuthorityGrantEntity } from '../entities/authority-grant.entity.js';
 import { PaymentAddressBindingEntity } from '../entities/payment-address-binding.entity.js';
+import { AuthorityCredentialEntity } from '../entities/authority-credential.entity.js';
 import { IdempotencyKeyEntity } from '../entities/idempotency-key.entity.js';
 import { AdminAuditLogEntity } from '../entities/admin-audit-log.entity.js';
 import { EngineDiffEntity } from '../entities/engine-diff.entity.js';
@@ -99,6 +100,11 @@ import { StudioMigrations1791702000000 } from '../migrations/1791702000000-studi
 import { StudioMigrations1791702100000 } from '../migrations/1791702100000-studio-migrations.js';
 import { StudioMigrations1791702200000 } from '../migrations/1791702200000-studio-migrations.js';
 import { StudioMigrations1791702300000 } from '../migrations/1791702300000-studio-migrations.js';
+import { StudioMigrations1791702400000 } from '../migrations/1791702400000-studio-migrations.js';
+import { StudioMigrations1791702500100 } from '../migrations/1791702500100-studio-migrations.js';
+import { StudioMigrations1791702500200 } from '../migrations/1791702500200-studio-migrations.js';
+import { StudioMigrations1791702500300 } from '../migrations/1791702500300-studio-migrations.js';
+import { StudioMigrations1791702700000 } from '../migrations/1791702700000-studio-migrations.js';
 dotenv.config();
 
 const { EXTERNAL_DB_CONNECTION_URL, EXTERNAL_DB_CERT } = process.env;
@@ -247,6 +253,16 @@ export class Postgres implements AbstractDatabase {
 				StudioMigrations1791702200000,
 				// Add ledgerAddressDaily and the per-day sync markers on ledgerAddressActivity
 				StudioMigrations1791702300000,
+				// Add operation.authMethod (portal versus API use)
+				StudioMigrations1791702400000,
+				// Add first API key, faucet and API call dates to customerActivation, with a backfill (U-35)
+				StudioMigrations1791702500100,
+				// Add operation.errorCategory for failed ledger writes (U-30)
+				StudioMigrations1791702500200,
+				// Add the audit-log filter indexes (U-43)
+				StudioMigrations1791702500300,
+				// Add authorityCredential (stored authority credentials, owner download)
+				StudioMigrations1791702700000,
 			],
 			entities: [
 				...Entities,
@@ -276,6 +292,7 @@ export class Postgres implements AbstractDatabase {
 				AgentEventEntity,
 				AuthorityGrantEntity,
 				PaymentAddressBindingEntity,
+				AuthorityCredentialEntity,
 				AdminAuditLogEntity,
 				EngineDiffEntity,
 				EngineMigrationEntity,

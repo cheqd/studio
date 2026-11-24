@@ -33,17 +33,30 @@ import type {
 } from '../types.js';
 import { CredoAccreditations } from './accreditation.js';
 import { CredoCredentials } from './credentials.js';
-import { CredoOwnershipError, NotImplementedByEngineError, asTenantMissing } from './errors.js';
+import {
+	CredoExtraSignersNotSupportedError,
+	CredoKeyExistsError,
+	CredoNotSupportedError,
+	CredoOwnershipError,
+	NotImplementedByEngineError,
+	asTenantMissing,
+} from './errors.js';
 import {
 	authenticationMethods,
 	buildDefaultDidDocument,
+	exportKeyEncodings,
 	generateKeyMaterial,
+	IMPORTABLE_KEY_TYPES,
+	keyMaterialFromPrivateKeyHex,
+	publicKeyHexFromVerificationMethod,
+	type GeneratedKey,
 	type PrivateJwk,
 } from './key-material.js';
 import type { CredoEngineStore, CredoRuntime, DidKeyLink, StoredKey } from './ports.js';
 import { CredoSigner } from './signing.js';
 import { safeFetch as defaultSafeFetch, type SafeFetch } from '../../../../helpers/safe-fetch.js';
 import { CredoStatusLists, type StatusListOwnership } from './status-lists.js';
+import { deactivationGasLimit } from '../deactivation-gas.js';
 import type { EngineAccreditationOutcome, EngineAccreditationVerifyRequest } from '../types.js';
 import type {
 	EngineTokenStatusList,
@@ -91,6 +104,20 @@ function requireCustomer(customer: CustomerEntity | undefined): string {
 	return customer.customerId;
 }
 
+/** A supplied private key as key material, or `NotSupported` for a type the key store cannot hold. */
+function importableKey(type: EngineKeyType | string, privateKeyHex: string): GeneratedKey {
+	if (!(IMPORTABLE_KEY_TYPES as readonly string[]).includes(type)) {
+		throw new CredoNotSupportedError(`importing keys of type '${type}'`);
+	}
+	if (typeof privateKeyHex !== 'string') throw new Error(`The ${type} private key is missing`);
+	return keyMaterialFromPrivateKeyHex(type as EngineKeyType, privateKeyHex);
+}
+
+/** `#fragment` for a verification method id given absolute (`did#fragment`) or relative. */
+function relativeMethodId(did: string, id: string): string {
+	return id.startsWith(did) ? id.slice(did.length) : id;
+}
+
 /**
  * The Credo implementation of `IdentityEngine` (migration plan, section 3, "Rules for the Credo engine").
  *
@@ -102,8 +129,8 @@ function requireCustomer(customer: CustomerEntity | undefined): string {
  * - The fee payer is the customer's own payment account. The engine finds its address to lock on; the Credo cheqd
  *   module asks `payer.ts` for the signer through the `resolvePayer` hook.
  *
- * Credentials, presentations and signing delegate to `credentials.ts` and `signing.ts`. Status lists and import/export
- * are not built yet and throw `NotImplementedByEngine`.
+ * Credentials, presentations and signing delegate to `credentials.ts` and `signing.ts`, status lists to
+ * `status-lists.ts`. The few methods not built yet throw `NotImplementedByEngine`.
  */
 export class CredoEngine implements IdentityEngine {
 	readonly name = ENGINE;
@@ -220,6 +247,28 @@ export class CredoEngine implements IdentityEngine {
 				throw new CredoOwnershipError(`Key ${publicKeyHex}`);
 			}
 		}
+	}
+
+	/**
+	 * Extra signers are not passed to the Credo registrar yet: the write is signed with the DID's own authentication
+	 * keys only. A key in `publicKeyHexs` that is one of those already signs, so it is accepted; any other key (for
+	 * example a key of another controller DID) is refused rather than silently left out (U-59).
+	 */
+	private assertNoExtraSigners(
+		publicKeyHexs: string[] | undefined,
+		...documents: (EngineDidDocument | null | undefined)[]
+	): void {
+		if (!publicKeyHexs?.length) return;
+		const own = new Set(
+			documents.flatMap((document) =>
+				document
+					? authenticationMethods(document)
+							.map((method) => method.publicKeyHex?.toLowerCase())
+							.filter((hex): hex is string => !!hex)
+					: []
+			)
+		);
+		if (publicKeyHexs.some((hex) => !own.has(hex.toLowerCase()))) throw new CredoExtraSignersNotSupportedError();
 	}
 
 	/** Maps each `authentication` entry of the document to a key this customer owns, or refuses. */
@@ -349,6 +398,8 @@ export class CredoEngine implements IdentityEngine {
 			}
 		}
 
+		this.assertNoExtraSigners(publicKeyHexs, didDocument, previous.didDocument);
+
 		const result = await this.withPayerLock(payerAddress, () =>
 			this.runtime.withTenant(tenantId, (session) => session.updateDid({ did, didDocument, keys: links }))
 		);
@@ -377,10 +428,16 @@ export class CredoEngine implements IdentityEngine {
 		if (!resolved.didDocument) throw new Error('DID document not found');
 		// Already deactivated: nothing to do, same answer as the Veramo engine
 		if (resolved.didDocumentMetadata?.deactivated) return true;
+		this.assertNoExtraSigners(publicKeyHexs, resolved.didDocument);
+
+		// The ledger rewrites every version on deactivation, so the SDK's fixed gas limit is too low for a DID with
+		// history (U-62). An unknown count falls back to a generous assumption inside `deactivationGasLimit`.
+		const versionCount = await this.runtime.didVersionCount?.(did).catch(() => undefined);
+		const gasLimit = deactivationGasLimit({ didDocument: resolved.didDocument, versionCount });
 
 		const payerAddress = await this.payerFor(customerId, network);
 		const result = await this.withPayerLock(payerAddress, () =>
-			this.runtime.withTenant(tenantId, (session) => session.deactivateDid(did))
+			this.runtime.withTenant(tenantId, (session) => session.deactivateDid(did, { gasLimit }))
 		);
 		if (result.state !== 'finished')
 			throw new Error(`Failed to deactivate ${did}: ${result.reason ?? result.state}`);
@@ -431,6 +488,9 @@ export class CredoEngine implements IdentityEngine {
 		await this.assertRecordedKeysOwned(customerId, tenantId, did);
 		const payerAddress = await this.payerFor(customerId, network);
 
+		if (publicKeyHexs?.length)
+			this.assertNoExtraSigners(publicKeyHexs, (await this.runtime.resolveDid(did)).didDocument);
+
 		const result = await this.withPayerLock(payerAddress, () =>
 			this.runtime.withTenant(tenantId, (session) =>
 				session.createResource(did, {
@@ -464,6 +524,175 @@ export class CredoEngine implements IdentityEngine {
 		return this.accreditations.findLatestResourcesVersionsByType(resourceType, customer, network, did, page, limit);
 	}
 
+	// ------------------------------------------------------- import and export
+
+	/**
+	 * Puts a supplied key in Studio's key store, through the tenant's KMS (Veramo's `private-key` layout, so both
+	 * engines can sign with it), and records it as this customer's `key` row. A key the customer already owns is left
+	 * as it is. A key the store already holds for anyone else is refused: one customer never gets another's key row.
+	 */
+	private async storeImportedKey(customerId: string, tenantId: string, key: GeneratedKey): Promise<void> {
+		if (await this.store.findOwnedKey(customerId, { kid: key.kid })) return;
+		try {
+			await this.runtime.withTenant(tenantId, (session) => session.importKey(key.privateJwk, key.kid));
+		} catch (error) {
+			if (error instanceof CredoKeyExistsError) throw new CredoOwnershipError(`Key ${key.kid}`);
+			throw error;
+		}
+		await this.store.insertOwnedKey(customerId, {
+			kid: key.kid,
+			type: key.type,
+			publicKeyHex: key.publicKeyHex,
+			kms: 'postgres',
+		});
+	}
+
+	async importKey(
+		type: EngineKeyType | string,
+		privateKeyHex: string,
+		customer?: CustomerEntity,
+		alias?: string
+	): Promise<KeyEntity> {
+		const customerId = requireCustomer(customer);
+		const key = importableKey(type, privateKeyHex);
+		const tenantId = await this.ensureTenant(customerId);
+		await this.storeImportedKey(customerId, tenantId, key);
+		// Alias and creation time, as the Veramo path sets them after its import
+		const stored = await this.store.finaliseOwnedKey(customerId, key.kid, alias);
+		if (!stored) throw new CredoOwnershipError(`Key ${key.kid}`);
+		return stored as unknown as KeyEntity;
+	}
+
+	/**
+	 * Takes over a did:cheqd DID that is already on the ledger: checks every supplied key belongs to the resolved
+	 * document and that, with the keys the customer already holds, every authentication method can sign; stores the
+	 * keys; records the DID in the customer's tenant with each method linked to its key by `kid`; and records the
+	 * `identifier` row (engine `credo` for a new row). No ledger write. All the checks run before anything is written.
+	 */
+	async importDid(
+		did: string,
+		keys: EngineImportKey[],
+		controllerKeyId: string | undefined,
+		customer: CustomerEntity,
+		provider?: string
+	): Promise<EngineIdentifier & { status?: boolean }> {
+		const customerId = requireCustomer(customer);
+		if (!did.startsWith('did:cheqd:'))
+			throw new CredoNotSupportedError('importing DIDs of methods other than cheqd');
+		const network = didNetwork(did);
+		if (provider && provider !== `did:cheqd:${network}`) {
+			throw new Error(`Provider '${provider}' does not match ${did}`);
+		}
+
+		const resolved = await this.runtime.resolveDid(did);
+		const didDocument = resolved.didDocument;
+		if (!didDocument || didDocument.id !== did) throw new Error(`Error resolving ${did}`);
+		if (resolved.didDocumentMetadata?.deactivated) throw new Error(`${did} is deactivated and cannot be imported`);
+
+		// Every supplied key must be the key of one of the document's verification methods
+		const methods = ((didDocument.verificationMethod as Record<string, unknown>[] | undefined) ?? []).map((vm) => ({
+			relativeId: relativeMethodId(did, String(vm.id)),
+			publicKeyHex: publicKeyHexFromVerificationMethod(vm),
+		}));
+		const documentKeys = new Set(methods.map((m) => m.publicKeyHex).filter((hex): hex is string => !!hex));
+		const supplied = new Map<string, GeneratedKey>();
+		(keys ?? []).forEach((input, index) => {
+			const key = importableKey(input.type || 'Ed25519', input.privateKeyHex);
+			if (!documentKeys.has(key.publicKeyHex)) {
+				throw new Error(`Key ${index + 1} (${key.type}) is not the key of any verification method of ${did}`);
+			}
+			supplied.set(key.kid, key);
+		});
+
+		// Every authentication method must be signable once the supplied keys are stored, or Credo cannot update it
+		const holds = async (publicKeyHex: string) =>
+			[...supplied.values()].some((k) => k.publicKeyHex === publicKeyHex) ||
+			(await this.store.findOwnedKey(customerId, { publicKeyHex })) !== null;
+		const signing = authenticationMethods(didDocument);
+		if (signing.length === 0) throw new Error(`${did} has no authentication verification method to sign with`);
+		for (const method of signing) {
+			if (!method.publicKeyHex) throw new Error(`Verification method ${method.id} has no usable public key`);
+			if (!(await holds(method.publicKeyHex))) {
+				throw new Error(
+					`The keys must include the key of authentication method ${method.relativeId} of ${did}`
+				);
+			}
+		}
+
+		const tenantId = await this.ensureTenant(customerId);
+		for (const key of supplied.values()) await this.storeImportedKey(customerId, tenantId, key);
+
+		// The authentication methods, then every other method whose key this customer holds (issuing signs with those)
+		const links = await this.linkSigningKeys(customerId, didDocument);
+		for (const method of methods) {
+			if (!method.publicKeyHex || links.some((l) => l.didDocumentRelativeKeyId === method.relativeId)) continue;
+			const key = await this.store.findOwnedKey(customerId, { publicKeyHex: method.publicKeyHex });
+			if (key) links.push({ didDocumentRelativeKeyId: method.relativeId, kmsKeyId: key.kid });
+		}
+
+		await this.runtime.withTenant(tenantId, (session) => session.importDid({ did, didDocument, keys: links }));
+
+		const linkedKids = links.map((link) => link.kmsKeyId);
+		return this.store.saveIdentifier(customerId, {
+			did,
+			provider: `did:cheqd:${network}`,
+			controllerKeyId: controllerKeyId && linkedKids.includes(controllerKeyId) ? controllerKeyId : linkedKids[0],
+			keyIds: Array.from(new Set(linkedKids)),
+			services: (didDocument.service as Record<string, unknown>[]) ?? [],
+		});
+	}
+
+	/**
+	 * The DID document and the private key of each verification method, in the Veramo export's shape. The keys are
+	 * read from Studio's key store, only for key rows this customer owns. `password` is unused here, as on the
+	 * Veramo path: the controller encrypts the whole result (`respondWithEncryptedExport`). Nothing here is logged.
+	 */
+	async exportDid(did: string, _password: string, customer: CustomerEntity): Promise<ExportDidResponse> {
+		const customerId = requireCustomer(customer);
+		const identifier = await this.store.getIdentifier(customerId, did);
+		// The Veramo path's answer, word for word, for a DID that does not exist and for one that is not this customer's
+		if (!identifier) throw new Error(`${did} not found in wallet`);
+
+		const { didDocument, didDocumentMetadata, didResolutionMetadata } = await this.runtime.resolveDid(did);
+		if (!didDocument) throw new Error(`Error resolving ${did}`);
+
+		const keys = await Promise.all(
+			((didDocument.verificationMethod as Record<string, unknown>[] | undefined) ?? []).map(async (vm) => {
+				const publicKeyHex = publicKeyHexFromVerificationMethod(vm);
+				if (!publicKeyHex) throw new Error('Not supported');
+
+				const existingKey = (identifier.keys ?? []).find(
+					(k) => k.kid === publicKeyHex || k.publicKeyHex === publicKeyHex
+				);
+				if (!existingKey) throw new Error(`Key not found in wallet: ${publicKeyHex}`);
+
+				const privateKey = await this.store.readOwnedPrivateKey(customerId, existingKey.kid);
+				if (!privateKey) throw new Error(`Private key not found for kid: ${existingKey.kid}`);
+
+				return {
+					'@context': ['https://w3id.org/wallet/v1'],
+					id: String(vm.id),
+					type: [String(vm.type)],
+					controller: String(vm.id),
+					name: privateKey.alias,
+					correlation: [String(vm.id)],
+					created: new Date().toISOString(),
+					...exportKeyEncodings(existingKey.publicKeyHex, privateKey.privateKeyHex),
+				};
+			})
+		);
+
+		return {
+			'@context': ['https://w3id.org/wallet/v1', 'https://w3id.org/did-resolution/v1'],
+			id: did,
+			type: ['DIDResolutionResponse'],
+			didDocument,
+			didDocumentMetadata,
+			didResolutionMetadata,
+			keys,
+		} as unknown as ExportDidResponse;
+	}
+
 	// ---------------------------------------------------------- accreditations
 
 	verifyAccreditation(
@@ -479,26 +708,6 @@ export class CredoEngine implements IdentityEngine {
 		return Promise.reject(new NotImplementedByEngineError(ENGINE, method));
 	}
 
-	importKey(
-		_type: EngineKeyType | string,
-		_privateKeyHex: string,
-		_customer?: CustomerEntity,
-		_alias?: string
-	): Promise<KeyEntity> {
-		return this.notImplemented('importKey');
-	}
-	importDid(
-		_did: string,
-		_keys: EngineImportKey[],
-		_controllerKeyId: string | undefined,
-		_customer: CustomerEntity,
-		_provider?: string
-	): Promise<EngineIdentifier & { status?: boolean }> {
-		return this.notImplemented('importDid');
-	}
-	exportDid(_did: string, _password: string, _customer: CustomerEntity): Promise<ExportDidResponse> {
-		return this.notImplemented('exportDid');
-	}
 	createCredential(
 		credential: EngineCredentialPayload,
 		format: CredentialRequest['format'],

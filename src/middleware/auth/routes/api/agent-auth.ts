@@ -29,6 +29,8 @@ export class AgentAuthRuleProvider extends AuthRuleProvider {
 		this.registerRule('^/agents/[^/]+/authority/[^/]+$', 'PATCH', 'issue:agent-authority', {
 			skipNamespace: true,
 		});
+		// Downloading a stored authority credential: owner only (every agent route is tenant-scoped), read:agent
+		this.registerRule('^/agents/[^/]+/authority/[^/]+/credential$', 'GET', 'read:agent', { skipNamespace: true });
 		// Keys: reading uses read:agent; adding and rotating change the agent's DID, so they use update:agent.
 		// No new Logto scope to provision.
 		this.registerRule('^/agents/[^/]+/keys$', 'GET', 'read:agent', { skipNamespace: true });
@@ -41,6 +43,9 @@ export class AgentAuthRuleProvider extends AuthRuleProvider {
 			skipNamespace: true,
 		});
 		this.registerRule('^/agents/[^/]+/payment-addresses/[^/]+$', 'DELETE', 'revoke:agent-payment-address', {
+			skipNamespace: true,
+		});
+		this.registerRule('^/agents/[^/]+/payment-addresses/[^/]+/credential$', 'GET', 'read:agent', {
 			skipNamespace: true,
 		});
 		this.registerRule('^/agents/[^/]+/settlement$', 'GET', 'read:agent', { skipNamespace: true });

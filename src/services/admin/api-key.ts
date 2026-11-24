@@ -1,4 +1,5 @@
 import type { FindOptionsOrder, FindOptionsRelations, FindOptionsWhere, Repository } from 'typeorm';
+import { MoreThan } from 'typeorm';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
 import type { UserEntity } from '../../database/entities/user.entity.js';
 import type { APIServiceOptions } from '../../types/admin.js';
@@ -80,6 +81,13 @@ export class APIKeyService {
 			apiKeyEntity.apiKey = apiKey;
 		}
 		return apiKeyEntity;
+	}
+
+	/** How many keys of this customer are usable now: not revoked and not yet expired. */
+	public async countActive(customer: CustomerEntity, now: Date = new Date()): Promise<number> {
+		return await this.apiKeyRepository.count({
+			where: { customer: { customerId: customer.customerId }, revoked: false, expiresAt: MoreThan(now) },
+		});
 	}
 
 	public async update(
@@ -172,6 +180,24 @@ export class APIKeyService {
 	/** A short, non-secret reference for logs: the first characters of the key's SHA-256 fingerprint. */
 	public static keyReference(apiKey: string): string {
 		return sha256(apiKey).slice(0, 8);
+	}
+
+	/**
+	 * Like get(), but only for a key that belongs to `customer`. A key that is unknown or owned by someone else
+	 * returns null, so the two cannot be told apart. Possession of a key is not authority over it.
+	 */
+	public async getOwned(apiKey: string, customer: CustomerEntity, options?: APIServiceOptions) {
+		if (!customer?.customerId) {
+			return null;
+		}
+		const candidate = await this.apiKeyRepository.findOne({
+			where: { fingerprint: sha256(apiKey) },
+			relations: { customer: true },
+		});
+		if (!candidate || candidate.customer?.customerId !== customer.customerId) {
+			return null;
+		}
+		return await this.get(apiKey, options);
 	}
 
 	/** Looks a key up and checks it is not revoked. It does not check expiry: use `authenticate` for requests. */

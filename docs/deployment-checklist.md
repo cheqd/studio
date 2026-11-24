@@ -30,6 +30,14 @@ Start-up opens the Askar native library (`LIB_ASKAR_PATH`, or the package's own 
 library directories) with its version call. If it is missing or incompatible the process exits at once with a one-line
 reason that names `LIB_ASKAR_PATH`; check that first. Without this check the first DID creation would answer `500`.
 
+## Credo store
+
+When any of `CREDO_DB_USER`, `CREDO_DB_PASSWORD` or `CREDO_STORE_KEY` is set (with `ENABLE_EXTERNAL_DB=true`), start-up
+opens Credo's Askar store before the server listens, and logs `Credo runtime: store open`. If the store cannot be
+opened the process exits with `Credo runtime could not start, stopping: <reason>`. With `EXTERNAL_DB_CERT` set the
+connection uses `sslmode=verify-ca`: Askar gets `sslmode` in its URI and the CA file through `PGSSLROOTCERT`, because
+Askar joins two pass-through URI parameters without a separator (U-68).
+
 ## CORS origin rejected
 
 Symptom: every call from the portal (or any browser client) fails with `401` that looks like an authentication error,
@@ -93,6 +101,38 @@ does not start once shutdown has begun. `/health` (also `/healthz`, `/live`, `/l
       `LEDGER_INDEXER_SOURCE_URL`; with it off the route answers `supported: false`. No new variable, no new scope
       (`read:account` and `admin:analytics:read`). Rollback: `LEDGER_INDEXER_ENABLED=false`; the table and columns can
       stay, or run the migration `down`.
+
+- [ ] Account milestone dates (U-35). The migration `1791702500100` adds three nullable columns to `customerActivation`
+      (`firstApiKeyCreatedAt`, `firstFaucetRequestAt`, `firstApiCallAt`; no default, so no table rewrite) and backfills
+      them in the same step. The backfill reads each customer's earliest `apiKey`, completed `faucetRequest` and
+      `operation` row through the existing per-customer indexes, so it costs one index probe per customer whatever the
+      size of `operation`; it only fills empty columns and is safe to re-run. If it was skipped or interrupted, re-run
+      the statement exported as `BACKFILL_FIRST_MILESTONES_SQL` from
+      `src/database/migrations/1791702500100-studio-migrations.ts` in `psql`. Check afterwards:
+
+      ```sql
+      SELECT COUNT(*) FILTER (WHERE "firstApiCallAt" IS NOT NULL) AS api_call,
+             COUNT(*) FILTER (WHERE "firstFaucetRequestAt" IS NOT NULL) AS faucet,
+             COUNT(*) FILTER (WHERE "firstApiKeyCreatedAt" IS NOT NULL) AS api_key
+      FROM "customerActivation";
+      ```
+
+      Rollback: the migration `down` drops the three columns; `GET /admin/customers/{id}` then needs the previous
+      release.
+
+- [ ] Failed ledger writes (U-30). The migration `1791702500200` adds one nullable column `operation.errorCategory`
+      (`varchar(32)`, no default): a catalogue-only change in Postgres, so the lock on `operation` is momentary and
+      bounded by `lock_timeout = 3s`; if it times out under load, re-run the migration. No backfill. From this release a
+      failed DID create, update or deactivate, resource create or status list create or update writes one unsuccessful
+      `operation` row with `errorCategory` (`insufficient_funds`, `out_of_gas`, `ledger_unavailable`, `rejected` or
+      `other`), never the payload; these rows appear in `GET /event/list` (`successful: false`) and count in the staff
+      endpoint error rates. Error bodies of those routes gain a `code` (`insufficient_funds`, `out_of_gas`,
+      `ledger_unavailable`, `ledger_rejected`); status list create and update now answer `402` for an unfunded payer,
+      as the DID and resource routes already did. Rollback: the migration `down` drops the column.
+
+- [ ] Audit-log filters (U-43). The migration `1791702500300` adds two indexes on the small `adminAuditLog` table
+      (`action, createdAt` and `actorUserId, createdAt`; `IF NOT EXISTS`, `lock_timeout = 3s`). No data change.
+      Rollback: the migration `down` drops them.
 
 Health, readiness (`/health`, `/healthz`, `/ready`, `/readyz`, `/readiness`, `/live`, `/livez`) and the Swagger paths
 are never rate limited.

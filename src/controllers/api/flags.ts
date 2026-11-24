@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { FeatureFlagService, resolveFlags } from '../../services/api/feature-flag.js';
+import { CredentialScreensService } from '../../services/api/credential-screens.js';
 
 export class FlagsController {
 	/**
@@ -27,6 +28,10 @@ export class FlagsController {
 	 *                   type: string
 	 *                   enum: [classic, new]
 	 *                   example: classic
+	 *                 credentialScreens:
+	 *                   type: boolean
+	 *                   description: Whether the portal shows its credential screens (issue, verify, issued, status lists) to this customer. On for customers who issued, verified or created a status list before the release, or when staff switched them on.
+	 *                   example: false
 	 *                 engine:
 	 *                   type: object
 	 *                   properties:
@@ -53,10 +58,14 @@ export class FlagsController {
 		const identity = customerId ? { customerId } : {};
 		try {
 			const flags = await FeatureFlagService.instance.flagsFor(customerId);
-			return response.status(StatusCodes.OK).json({ ...flags, ...identity });
+			const rows = (await FeatureFlagService.instance.rowsFor(customerId)) ?? [];
+			const screens = await CredentialScreensService.instance.decide(customerId, rows);
+			return response.status(StatusCodes.OK).json({ ...flags, credentialScreens: screens.enabled, ...identity });
 		} catch {
 			// The featureFlag table may not exist yet (or there is no external database): answer with the defaults.
-			return response.status(StatusCodes.OK).json({ ...resolveFlags([], customerId), ...identity });
+			return response
+				.status(StatusCodes.OK)
+				.json({ ...resolveFlags([], customerId), credentialScreens: false, ...identity });
 		}
 	}
 }

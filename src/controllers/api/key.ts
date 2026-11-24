@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../../services/identity/ownership-error.js';
 import { StatusCodes } from 'http-status-codes';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { decryptPrivateKey } from '../../helpers/helpers.js';
@@ -109,6 +110,18 @@ export class KeyController {
 	 *               error: InvalidRequest
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
 	 *         content:
@@ -117,6 +130,18 @@ export class KeyController {
 	 *               $ref: '#/components/schemas/InvalidRequest'
 	 *             example:
 	 *               error: Internal Error
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	public async createKey(request: Request, response: Response) {
 		// Get strategy e.g. postgres or local
@@ -185,6 +210,18 @@ export class KeyController {
 	 *               error: InvalidRequest
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
 	 *         content:
@@ -193,6 +230,18 @@ export class KeyController {
 	 *               $ref: '#/components/schemas/InvalidRequest'
 	 *             example:
 	 *               error: Internal Error
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async importKey(request: Request, response: Response) {
@@ -237,6 +286,9 @@ export class KeyController {
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulImportKeyResponseBody);
@@ -275,6 +327,12 @@ export class KeyController {
 	 *               error: InvalidRequest
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
 	 *         content:
@@ -283,6 +341,18 @@ export class KeyController {
 	 *               $ref: '#/components/schemas/InvalidRequest'
 	 *             example:
 	 *               error: Internal Error
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async getKey(request: Request, response: Response) {
@@ -368,6 +438,12 @@ export class KeyController {
 	 *               $ref: '#/components/schemas/InvalidRequest'
 	 *             example:
 	 *               error: Key not found
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
 	 *         content:
@@ -376,6 +452,18 @@ export class KeyController {
 	 *               $ref: '#/components/schemas/InvalidRequest'
 	 *             example:
 	 *               error: Internal Error
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async convertToVerificationMethod(request: Request, response: Response) {

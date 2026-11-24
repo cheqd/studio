@@ -20,6 +20,13 @@ export const API_KEY_MAX_EXPIRATION_DAYS = (() => {
 	const parsed = Number.parseInt(process.env.API_KEY_MAX_EXPIRATION_DAYS ?? '', 10);
 	return Number.isFinite(parsed) && parsed > 0 ? parsed : 730;
 })();
+// Most active (not revoked, not expired) API keys one customer may hold. Creating another is refused until one is
+// revoked or expires.
+export function parseMaxActiveAPIKeys(value: string | undefined): number {
+	const parsed = Number.parseInt(value ?? '', 10);
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : 10;
+}
+export const API_KEY_MAX_ACTIVE_PER_CUSTOMER = parseMaxActiveAPIKeys(process.env.API_KEY_MAX_ACTIVE_PER_CUSTOMER);
 // Possible cases 'trace' 'debug' 'info' 'warn' 'error';
 export const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 

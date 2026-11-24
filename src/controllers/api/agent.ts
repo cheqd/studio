@@ -21,6 +21,7 @@ import type {
 	AgentRecord,
 	AuthorityGrantRecord,
 	AuthorityGrantWithStatus,
+	StoredAuthorityCredential,
 	AuthoritySummary,
 	GrantType,
 } from '../../types/agent.js';
@@ -303,6 +304,41 @@ import type { CallContext } from '../../services/agent/agent-service.js';
  *           type: string
  *           format: date-time
  *           nullable: true
+ *         hasCredential:
+ *           type: boolean
+ *           description: On the list only. True when Studio holds a copy of the binding credential, which the owner can download from `GET /agents/{agentId}/payment-addresses/{bindingId}/credential`. False for bindings made before Studio kept credentials.
+ *     StoredAuthorityCredential:
+ *       type: object
+ *       description: A credential Studio issued to an agent, as it was issued, for its owner to keep. Sent with a no-store cache header.
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *           description: The id of this stored copy.
+ *         grantId:
+ *           type: string
+ *           format: uuid
+ *           description: Present for an authority grant.
+ *         bindingId:
+ *           type: string
+ *           format: uuid
+ *           description: Present for a payment address binding.
+ *         credential:
+ *           type: object
+ *           properties:
+ *             format:
+ *               type: string
+ *               enum: [sd-jwt-vc, jwt]
+ *             value:
+ *               description: The compact SD-JWT VC or JWT (a string), or the credential object for a delegation, exactly as returned when it was issued.
+ *         issuedAt:
+ *           type: string
+ *           format: date-time
+ *         supersedes:
+ *           type: string
+ *           format: uuid
+ *           nullable: true
+ *           description: The stored copy this credential replaced when the grant's expiry was changed, or null. The replaced credential is revoked on its status list.
  */
 
 const agentDto = (agent: AgentRecord) => ({
@@ -387,6 +423,17 @@ const bindingDto = (binding: { id: string; account: string; createdAt: Date; rev
 	status: binding.revokedAt ? 'revoked' : 'active',
 	createdAt: binding.createdAt,
 	revokedAt: binding.revokedAt ?? null,
+});
+
+const storedCredentialDto = (
+	stored: StoredAuthorityCredential,
+	owner: { grantId: string } | { bindingId: string }
+) => ({
+	id: stored.id,
+	...owner,
+	credential: stored.credential,
+	issuedAt: stored.issuedAt,
+	supersedes: stored.supersedes,
 });
 
 /** `capabilities` is an object with any of the four flags as booleans, and nothing else. */
@@ -594,6 +641,10 @@ export class AgentController {
 		param('agentId').isUUID().withMessage('agentId must be a UUID').bail(),
 		param('bindingId').isUUID().withMessage('bindingId must be a UUID').bail(),
 	];
+
+	/** Downloading a stored credential: the same ids as revoking it. */
+	public static grantCredentialValidator = AgentController.revokeValidator;
+	public static bindingCredentialValidator = AgentController.revokePaymentAddressValidator;
 
 	constructor(
 		private readonly services: () => Promise<AgentServices> | AgentServices = agentServices,
@@ -992,7 +1043,7 @@ export class AgentController {
 	 *   get:
 	 *     tags: [ Agents ]
 	 *     summary: List the authority grants of an agent.
-	 *     description: Returns every grant of the agent, live and revoked, newest first. A grant is `active`, `revoked` or `expired`. The credential itself is never returned here (it is returned once, when the grant is made). An agent that is not yours, or does not exist, is a 404.
+	 *     description: Returns every grant of the agent, live and revoked, newest first. A grant is `active`, `revoked` or `expired`. The credential itself is not returned here. `hasCredential` says whether Studio holds a copy that the owner can download from `GET /agents/{agentId}/authority/{grantId}/credential`; grants made before Studio kept credentials have none. An agent that is not yours, or does not exist, is a 404.
 	 *     parameters:
 	 *       - name: agentId
 	 *         in: path
@@ -1038,6 +1089,9 @@ export class AgentController {
 	 *                         type: string
 	 *                         format: date-time
 	 *                         nullable: true
+	 *                       hasCredential:
+	 *                         type: boolean
+	 *                         description: True when Studio holds a copy of the grant's current credential (after an expiry change, the replacement).
 	 *       400:
 	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
@@ -1053,6 +1107,57 @@ export class AgentController {
 				await this.services()
 			).agents.listAuthority(response.locals.customer, request.params.agentId as string);
 			return response.status(StatusCodes.OK).json({ grants });
+		});
+	};
+
+	/**
+	 * @openapi
+	 *
+	 * /agents/{agentId}/authority/{grantId}/credential:
+	 *   get:
+	 *     tags: [ Agents ]
+	 *     summary: Download the credential of an authority grant.
+	 *     description: |
+	 *       Returns the grant's current credential exactly as Studio issued it, for the owner to keep or hand to a verifier. After an expiry change this is the replacement; `supersedes` names the stored copy it replaced (revoked on its status list). Studio keeps authority credentials encrypted and serves them to the owning account only; nothing is published.
+	 *
+	 *       A grant or agent that is not yours, or does not exist, is a 404 `not_found`. A grant made before Studio kept credentials is a 404 `credential_not_stored`. The response is sent with `Cache-Control: no-store`.
+	 *     parameters:
+	 *       - name: agentId
+	 *         in: path
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           format: uuid
+	 *       - name: grantId
+	 *         in: path
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           format: uuid
+	 *     responses:
+	 *       200:
+	 *         description: The stored credential.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/StoredAuthorityCredential'
+	 *       400:
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: No such agent or grant in your account (`not_found`), or no stored copy of its credential (`credential_not_stored`).
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public getAuthorityCredential = async (request: Request, response: Response) => {
+		response.setHeader?.('Cache-Control', 'no-store');
+		return this.handle(request, response, async () => {
+			const grantId = request.params.grantId as string;
+			const stored = await (
+				await this.services()
+			).agents.getAuthorityCredential(response.locals.customer, request.params.agentId as string, grantId);
+			return response.status(StatusCodes.OK).json(storedCredentialDto(stored, { grantId }));
 		});
 	};
 
@@ -1561,7 +1666,7 @@ export class AgentController {
 	 *     tags: [ "Agent payments (Proposed)" ]
 	 *     summary: "Proposed: list the payment addresses bound to an agent."
 	 *     description: |
-	 *       **Proposed.** Lists the agent's payment address bindings, live and revoked, newest first. The credential is never returned here (it is returned once, when the address is bound). An agent that is not yours, or does not exist, is a 404.
+	 *       **Proposed.** Lists the agent's payment address bindings, live and revoked, newest first. The credential is not returned here; `hasCredential` says whether the owner can download it from `GET /agents/{agentId}/payment-addresses/{bindingId}/credential`. An agent that is not yours, or does not exist, is a 404.
 	 *
 	 *       `PaymentAddressBinding` is cheqd's own vocabulary. It is not an x402 standard.
 	 *     parameters:
@@ -1595,7 +1700,7 @@ export class AgentController {
 	 *     tags: [ "Agent payments (Proposed)" ]
 	 *     summary: "Proposed: bind a payment address to an agent."
 	 *     description: |
-	 *       **Proposed.** Binds a wallet address, given as a CAIP-10 account such as `eip155:8453:0x...`, to the agent. Studio issues a `PaymentAddressBinding` SD-JWT VC signed by the agent's own key (through the identity engine) with a Token Status List entry, so the binding can be revoked. The credential is returned once, in this response; Studio stores only the binding row, never the credential.
+	 *       **Proposed.** Binds a wallet address, given as a CAIP-10 account such as `eip155:8453:0x...`, to the agent. Studio issues a `PaymentAddressBinding` SD-JWT VC signed by the agent's own key (through the identity engine) with a Token Status List entry, so the binding can be revoked. The credential is returned in this response, and Studio keeps an encrypted copy that only your account can download again.
 	 *
 	 *       `PaymentAddressBinding` is cheqd's own vocabulary. It is **not** an x402 standard. The binding is the agent's assertion about the address: it does not prove that the agent controls the wallet.
 	 *
@@ -1644,7 +1749,7 @@ export class AgentController {
 	 *                       enum: [sd-jwt-vc]
 	 *                     value:
 	 *                       type: string
-	 *                       description: The compact SD-JWT VC. Returned once; Studio does not keep it.
+	 *                       description: The compact SD-JWT VC. Studio keeps an encrypted copy for the owner (`GET /agents/{agentId}/payment-addresses/{bindingId}/credential`).
 	 *       400:
 	 *         $ref: '#/components/schemas/AgentInvalidRequest'
 	 *       401:
@@ -1701,6 +1806,55 @@ export class AgentController {
 				await this.services()
 			).agents.listPaymentAddresses(response.locals.customer, request.params.agentId as string);
 			return response.status(StatusCodes.OK).json({ paymentAddresses });
+		});
+	};
+
+	/**
+	 * @openapi
+	 *
+	 * /agents/{agentId}/payment-addresses/{bindingId}/credential:
+	 *   get:
+	 *     tags: [ "Agent payments (Proposed)" ]
+	 *     summary: "Proposed: download the credential of a payment address binding."
+	 *     description: |
+	 *       **Proposed.** Returns the `PaymentAddressBinding` credential exactly as Studio issued it, for the owner only. A binding or agent that is not yours is a 404 `not_found`; a binding made before Studio kept credentials is a 404 `credential_not_stored`. Sent with `Cache-Control: no-store`.
+	 *     parameters:
+	 *       - name: agentId
+	 *         in: path
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           format: uuid
+	 *       - name: bindingId
+	 *         in: path
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           format: uuid
+	 *     responses:
+	 *       200:
+	 *         description: The stored credential.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/StoredAuthorityCredential'
+	 *       400:
+	 *         $ref: '#/components/schemas/AgentInvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: No such agent or binding in your account (`not_found`), or no stored copy of its credential (`credential_not_stored`).
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	public getPaymentAddressCredential = async (request: Request, response: Response) => {
+		response.setHeader?.('Cache-Control', 'no-store');
+		return this.handle(request, response, async () => {
+			const bindingId = request.params.bindingId as string;
+			const stored = await (
+				await this.services()
+			).agents.getPaymentAddressCredential(response.locals.customer, request.params.agentId as string, bindingId);
+			return response.status(StatusCodes.OK).json(storedCredentialDto(stored, { bindingId }));
 		});
 	};
 
@@ -1938,7 +2092,7 @@ export class AgentController {
 		const tenantMissing = credoTenantMissingResponse(response, error);
 		if (tenantMissing) return tenantMissing;
 		const unfunded = unfundedPayerFailure(error);
-		if (unfunded) return response.status(unfunded.status).json({ error: unfunded.error });
+		if (unfunded) return response.status(unfunded.status).json({ error: unfunded.error, code: unfunded.code });
 		console.error('Agent endpoint failed:', error);
 		return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Internal error' });
 	}

@@ -10,22 +10,26 @@ const FUNDING_HINT =
 
 /**
  * Recognises a ledger write that failed because the payer account has no CHEQ, or too little to pay the fee, and
- * turns it into a 402 that tells the caller what to do. Returns undefined for any other error, so the caller keeps
+ * turns it into a 402 that tells the caller what to do, with the stable code `insufficient_funds`. Returns undefined for any other error, so the caller keeps
  * its own handling.
  */
-export function unfundedPayerFailure(error: unknown): { status: number; error: string } | undefined {
+export function unfundedPayerFailure(
+	error: unknown
+): { status: number; error: string; code: 'insufficient_funds' } | undefined {
 	const message = (error as Error)?.message || String(error);
 	const notOnChain = message.match(ACCOUNT_NOT_ON_CHAIN);
 	if (notOnChain) {
 		return {
 			status: StatusCodes.PAYMENT_REQUIRED,
 			error: `Payment required: the payer account ${notOnChain[1]} has no CHEQ yet. ${FUNDING_HINT}`,
+			code: 'insufficient_funds',
 		};
 	}
 	if (INSUFFICIENT_FUNDS.test(message)) {
 		return {
 			status: StatusCodes.PAYMENT_REQUIRED,
 			error: `Payment required: the payer account does not have enough CHEQ to pay the fee. ${FUNDING_HINT}`,
+			code: 'insufficient_funds',
 		};
 	}
 	return undefined;

@@ -8,6 +8,7 @@ import {
 	ConnectionTestResult,
 	ProviderActivationResult,
 } from '../../../types/provider.types.js';
+import { assertProviderEndpoint } from '../../../helpers/provider-endpoint.js';
 
 export abstract class BaseProviderService implements IProviderService {
 	protected masterApiKey: string;
@@ -79,6 +80,9 @@ export abstract class BaseProviderService implements IProviderService {
 	// Helper method to get base URL with configuration-specific endpoint support
 	protected getBaseUrlFromConfig(config?: ProviderConfigurationEntity): string {
 		if (config?.apiEndpoint) {
+			// The customer chose this endpoint and the provider key is about to be sent to it: refuse a host that is
+			// not allowed, even if it was stored before the allow-list existed.
+			assertProviderEndpoint(config.apiEndpoint);
 			return config.apiEndpoint;
 		}
 		// Fallback to provider default - note: this is async, so providers should override if they need this

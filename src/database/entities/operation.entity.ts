@@ -74,6 +74,17 @@ export class OperationEntity {
 	@Column({ type: 'integer', nullable: true })
 	durationMs?: number;
 
+	/** How the caller authenticated: `api-key`, `portal`, `id-token`, `m2m` or `swagger-ui`. Null on older rows. */
+	@Column({ type: 'varchar', length: 16, nullable: true })
+	authMethod?: string;
+
+	/**
+	 * Why a failed ledger write failed, in plain words (U-30): `insufficient_funds`, `out_of_gas`,
+	 * `ledger_unavailable`, `rejected` or `other`. Null for every other row. Never the raw error or payload.
+	 */
+	@Column({ type: 'varchar', length: 32, nullable: true })
+	errorCategory?: string;
+
 	@BeforeInsert()
 	setCreatedAt() {
 		this.createdAt = new Date();
@@ -96,7 +107,7 @@ export class OperationEntity {
 		operationId: string,
 		category: string,
 		operationName: string,
-		defaultFee: CoinEntity,
+		defaultFee: CoinEntity | undefined,
 		deprecated: boolean,
 		successful: boolean,
 		customer: CustomerEntity

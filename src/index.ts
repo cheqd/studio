@@ -9,6 +9,7 @@ import { closeSharedPayerLockSource } from './services/identity/payer-lock-pool.
 import { payerWritesInFlightCount } from './services/identity/ledger-lock.js';
 import { flushAnalytics } from './services/analytics/posthog.js';
 import { enforceAskarNative } from './services/identity/engine/credo/askar-native.js';
+import { enforceCredoRuntime } from './services/identity/engine/credo/boot.js';
 
 dotenv.config();
 assertSecureStartup();
@@ -21,6 +22,9 @@ App.set('port', port);
 
 const server = http.createServer(App);
 await dbReady;
+// Open Credo's store once, before listening: concurrent first requests after a deploy no longer start it, and a store
+// that cannot be opened stops the boot with its reason
+await enforceCredoRuntime();
 server.listen(port);
 
 server.on('listening', () => {

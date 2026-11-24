@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { bases } from 'multiformats/basics';
 import { CredoEngine } from '../../../../src/services/identity/engine/credo/credo-engine.js';
-import { CredoTenantMissingError } from '../../../../src/services/identity/engine/credo/errors.js';
+import {
+	CredoExtraSignersNotSupportedError,
+	CredoTenantMissingError,
+} from '../../../../src/services/identity/engine/credo/errors.js';
+import { mapEngineError } from '../../../../src/helpers/engine-errors.js';
+import { deactivationGasLimit } from '../../../../src/services/identity/engine/deactivation-gas.js';
 import type { EngineDidDocument } from '../../../../src/services/identity/engine/types.js';
 import { customer, FakeRuntime, FakeStore } from './fakes.js';
 
@@ -382,6 +387,57 @@ describe('ownership: a second customer cannot use the first customer’s key or 
 		expect(ledgerCalls(h)).toHaveLength(0);
 	});
 
+	it('refuses extra signers (publicKeyHexs) on update, deactivate and resource create with a 400 error (U-59)', async () => {
+		const bobKey = await h.engine.createKey('Ed25519', bob);
+		const extraKey = await h.engine.createKey('Ed25519', bob);
+		const bobDid = `${DID_NS}bob-signers`;
+		const bobDocument = documentFor(bobDid, bobKey.publicKeyHex, 'Ed25519VerificationKey2018');
+		await h.engine.createDid('testnet', bobDocument, bob);
+		h.runtime.resolution = {
+			didDocument: bobDocument,
+			didDocumentMetadata: {},
+			didResolutionMetadata: {},
+		} as never;
+		h.runtime.calls.length = 0;
+		const refused = async (work: Promise<unknown>) => {
+			const error = await work.then(
+				() => undefined,
+				(e: unknown) => e
+			);
+			expect(error).toBeInstanceOf(CredoExtraSignersNotSupportedError);
+			expect(mapEngineError(error)).toEqual({
+				status: 400,
+				code: 'extra_signers_not_supported',
+				error: expect.stringContaining(
+					'Extra signers (publicKeyHexs) are not supported for this identifier yet'
+				),
+			});
+		};
+		// A key of this account that is not an authentication key of the DID would have to sign as an extra signer
+		await refused(h.engine.updateDid(bobDocument, bob, [extraKey.publicKeyHex]));
+		await refused(h.engine.deactivateDid(bobDid, bob, [bobKey.publicKeyHex, extraKey.publicKeyHex]));
+		await refused(
+			h.engine.createResource(
+				'testnet',
+				{ collectionId: 'bob-signers', name: 'n', resourceType: 't', data: 'x' },
+				bob,
+				[extraKey.publicKeyHex]
+			)
+		);
+		expect(ledgerCalls(h).filter((c) => c.method !== 'resolveDid')).toHaveLength(0);
+		// The DID's own key, or an empty list, is not an extra signer: the write goes ahead
+		await h.engine.createResource(
+			'testnet',
+			{ collectionId: 'bob-signers', name: 'n', resourceType: 't', data: 'x' },
+			bob,
+			[bobKey.publicKeyHex]
+		);
+		await h.engine.deactivateDid(bobDid, bob, []);
+		expect(ledgerCalls(h).map((c) => c.method)).toEqual(
+			expect.arrayContaining(['createResource', 'deactivateDid'])
+		);
+	});
+
 	it('bob cannot deactivate alice’s DID or write a resource to it', async () => {
 		await expect(h.engine.deactivateDid(aliceDid, bob)).rejects.toThrow('not found in wallet');
 		await expect(
@@ -522,6 +578,31 @@ describe('updateDid, deactivateDid, createResource (own DID)', () => {
 		]);
 	});
 
+	it('deactivateDid sends a gas limit that grows with the DID’s versions (U-62)', async () => {
+		const didDocument = {
+			id: did,
+			service: [1, 2, 3, 4].map((i) => ({
+				id: `${did}#s${i}`,
+				type: 'T',
+				serviceEndpoint: 'https://example.com',
+			})),
+		};
+		h.runtime.resolution = { didDocument, didDocumentMetadata: {}, didResolutionMetadata: {} };
+		h.runtime.versionCounts.set(did, 4);
+		await h.engine.deactivateDid(did, alice);
+		const call = h.runtime.calls.find((c) => c.method === 'deactivateDid');
+		expect(call?.args).toEqual([did, { gasLimit: deactivationGasLimit({ didDocument, versionCount: 4 }) }]);
+		expect(Number((call?.args[1] as { gasLimit: string }).gasLimit)).toBeGreaterThan(360_226);
+	});
+
+	it('deactivateDid still sends a raised gas limit when the version count cannot be read', async () => {
+		h.runtime.resolution = { didDocument: { id: did }, didDocumentMetadata: {}, didResolutionMetadata: {} };
+		await h.engine.deactivateDid(did, alice);
+		const call = h.runtime.calls.find((c) => c.method === 'deactivateDid');
+		expect(call?.args[1]).toEqual({ gasLimit: deactivationGasLimit({ didDocument: { id: did } }) });
+		expect(Number((call?.args[1] as { gasLimit: string }).gasLimit)).toBeGreaterThan(360_000);
+	});
+
 	it('deactivateDid on an already deactivated DID answers true without touching the ledger', async () => {
 		h.runtime.resolution = {
 			didDocument: { id: did },
@@ -574,14 +655,7 @@ describe('updateDid, deactivateDid, createResource (own DID)', () => {
 });
 
 describe('methods another agent will build', () => {
-	const methods = [
-		'importKey',
-		'importDid',
-		'exportDid',
-		'broadcastStatusList2021',
-		'broadcastBitstringStatusList',
-		'remunerateStatusList2021',
-	];
+	const methods = ['broadcastStatusList2021', 'broadcastBitstringStatusList', 'remunerateStatusList2021'];
 
 	it.each(methods)('%s rejects with NotImplementedByEngine naming the method', async (method) => {
 		const { engine } = harness();
@@ -597,6 +671,10 @@ describe('methods another agent will build', () => {
 		const built = [
 			'createKey',
 			'deleteUnusedKey',
+			// import and export (tests in import-export.test.ts)
+			'importKey',
+			'importDid',
+			'exportDid',
 			'getKey',
 			'createDid',
 			'updateDid',
@@ -646,8 +724,10 @@ describe('methods another agent will build', () => {
 					'notImplemented',
 					'payerFor',
 					'assertPublicKeysOwned',
+					'assertNoExtraSigners',
 					'linkSigningKeys',
 					'assertRecordedKeysOwned',
+					'storeImportedKey',
 				].includes(name)
 		);
 		expect(proto.sort()).toEqual([...built, ...methods].sort());

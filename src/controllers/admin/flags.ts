@@ -2,18 +2,81 @@ import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { veramoOverrideEnabled } from '../../services/identity/engine/new-artefact-policy.js';
 import { requireStaffScope, STAFF_SCOPES } from './staff-guard.js';
-import { FeatureFlagService, validateFlagWrite } from '../../services/api/feature-flag.js';
+import validator from 'validator';
+import { FeatureFlagService, resolveFlags, validateFlagWrite } from '../../services/api/feature-flag.js';
+import { CredentialScreensService } from '../../services/api/credential-screens.js';
 
 export const FLAGS_ADMIN_SCOPE = STAFF_SCOPES.flagsUpdate;
+export const FLAGS_READ_SCOPE = STAFF_SCOPES.customersRead;
 
 export class FlagsAdminController {
+	/**
+	 * @openapi
+	 *
+	 * /admin/customers/{id}/flags:
+	 *   get:
+	 *     summary: Read the feature flags that apply to one customer (staff only).
+	 *     description: The flags this customer gets now (the engine for NEW artefacts on each route, and the UI), the stored rows behind them (global and this customer's own), and whether the temporary Veramo override is on for the instance that answered. A stored `veramo` engine row has no effect while the override is off, so `effective` can say `credo` while a row says `veramo`. Existing artefacts always use the engine recorded on them.
+	 *     tags: [Admin]
+	 *     parameters:
+	 *       - in: path
+	 *         name: id
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           format: uuid
+	 *     responses:
+	 *       200:
+	 *         description: The customer's flags.
+	 *       400:
+	 *         description: The id is not a UUID.
+	 *       401:
+	 *         description: Unauthorised.
+	 *       403:
+	 *         description: The caller is not staff.
+	 */
+	public async getCustomerFlags(request: Request, response: Response) {
+		if (!requireStaffScope(response, FLAGS_READ_SCOPE, 'Only staff can read customer flags.')) return response;
+		const customerId = request.params.id;
+		if (typeof customerId !== 'string' || !validator.isUUID(customerId)) {
+			return response.status(StatusCodes.BAD_REQUEST).json({ error: 'id must be a UUID' });
+		}
+		const overrideEnabled = veramoOverrideEnabled();
+		try {
+			const rows = await FeatureFlagService.instance.readRows(customerId);
+			const credentialScreens = await CredentialScreensService.instance.decide(customerId, rows);
+			return response.status(StatusCodes.OK).json({
+				customerId,
+				effective: resolveFlags(rows, customerId),
+				credentialScreens,
+				rows: rows.map((row) => ({
+					scope: row.customerId ? 'customer' : 'global',
+					flagKey: row.flagKey,
+					route: row.route,
+					value: row.value,
+					updatedAt: row.updatedAt,
+				})),
+				overrideEnabled,
+			});
+		} catch {
+			// No featureFlag table (or no external database): the compiled defaults apply
+			return response.status(StatusCodes.OK).json({
+				customerId,
+				effective: resolveFlags([], customerId),
+				credentialScreens: { enabled: false, mode: 'auto', source: 'default' },
+				rows: [],
+				overrideEnabled,
+			});
+		}
+	}
+
 	/**
 	 * @openapi
 	 *
 	 * /admin/flags:
 	 *   put:
 	 *     summary: Set a feature flag (staff only).
-	 *     description: Creates or replaces one flag, either global or for one customer. Every change is audited. Engine flags only choose the engine for NEW artefacts, and Credo is the default for every family. Veramo is retired for new artefacts, so an engine flag of `veramo` has no effect unless the instances run the temporary override `VERAMO_NEW_ARTEFACT_OVERRIDE=true`; each artefact it then creates on Veramo is logged as `veramo-new-artefact-override`. Existing artefacts always use the engine recorded on them, whatever a flag says.
+	 *     description: Creates or replaces one flag, either global or for one customer. Every change is audited. Engine flags only choose the engine for NEW artefacts, and Credo is the default for every family. Veramo is retired for new artefacts, so an engine flag of `veramo` has no effect unless the instances run the temporary override `VERAMO_NEW_ARTEFACT_OVERRIDE=true`; each artefact it then creates on Veramo is logged as `veramo-new-artefact-override`. Existing artefacts always use the engine recorded on them, whatever a flag says. The `credentialScreens` flag (per customer only, no route) shows or hides the portal's credential screens, with a value whose `mode` is `auto`, `on` or `off`; `auto` follows the customer's history.
 	 *     tags: [Flags]
 	 *     requestBody:
 	 *       required: true
@@ -25,7 +88,7 @@ export class FlagsAdminController {
 	 *             properties:
 	 *               flagKey:
 	 *                 type: string
-	 *                 enum: [engine, ui]
+	 *                 enum: [engine, ui, credentialScreens]
 	 *               customerId:
 	 *                 type: string
 	 *                 format: uuid

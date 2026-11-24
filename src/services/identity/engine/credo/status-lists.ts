@@ -304,14 +304,17 @@ export class CredoStatusLists {
 
 		const signerDidUrl = await this.signerFor(did);
 		const tenantId = await this.deps.ensureTenant(customerId);
-		const issuanceDate = this.now().toISOString();
+		// Whole seconds: the JWT carries the date as `nbf`, and a verifier rebuilds the credential from the JWT and
+		// requires it to equal the published one, so a fractional second here fails that check (U-53).
+		const issuanceDate = new Date(Math.floor(this.now().getTime() / 1000) * 1000).toISOString();
 		const ttl = options.ttl as number | undefined;
 		const jwt = await this.deps.runtime.withTenant(tenantId, (session) => {
 			if (!session.statusLists) throw new NotImplementedByEngineError(ENGINE, 'signBitstringProof');
 			return session.statusLists.signBitstringProof({
 				did,
 				signerDidUrl,
-				purposes,
+				// as published below: a verifier compares the list with the JWT field by field (U-53)
+				statusPurpose: rawPurpose,
 				ttl,
 				issuanceDate,
 			});

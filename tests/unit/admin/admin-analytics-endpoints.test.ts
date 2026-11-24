@@ -17,6 +17,7 @@ import { FlagsAuthRuleProvider } from '../../../src/middleware/auth/routes/api/f
 import { CustomersAdminController } from '../../../src/controllers/admin/customers.js';
 import { AnalyticsAdminController } from '../../../src/controllers/admin/analytics.js';
 import { AuditLogAdminController } from '../../../src/controllers/admin/audit-log.js';
+import { maskEmail, maskIfEmail } from '../../../src/services/admin/mask-email.js';
 import {
 	AdminAnalyticsService,
 	routeForOperation,
@@ -50,15 +51,17 @@ describe('staff auth rules', () => {
 	it.each([
 		['/admin/customers', 'admin:customers:read'],
 		[`/admin/customers/${uuid}`, 'admin:customers:read'],
+		[`/admin/customers/${uuid}/email-reveal`, 'admin:customers:read', 'POST'],
 		['/admin/analytics/overview', 'admin:analytics:read'],
 		['/admin/analytics/endpoints', 'admin:analytics:read'],
 		['/admin/analytics/top-accounts', 'admin:analytics:read'],
 		['/admin/analytics/plan-mix', 'admin:analytics:read'],
 		['/admin/analytics/funnels', 'admin:analytics:read'],
+		['/admin/analytics/funnels/stalled', 'admin:analytics:read'],
 		['/admin/analytics/faucet-to-ledger', 'admin:analytics:read'],
 		['/admin/audit-log', 'admin:audit:read'],
-	])('GET %s needs exactly %s and is not open to anonymous callers', (path, scope) => {
-		const rule = repository.match(requestFor('GET', path));
+	])('%s needs exactly %s and is not open to anonymous callers', (path, scope, method = 'GET') => {
+		const rule = repository.match(requestFor(method, path));
 		expect(rule).not.toBeNull();
 		expect(rule?.isValidScope(scope)).toBe(true);
 		expect(rule?.isAllowedUnauthorized()).toBe(false);
@@ -87,6 +90,11 @@ describe('staff auth rules', () => {
 			['PUT', '/admin/customers'],
 			['GET', '/admin/customers/'],
 			['GET', `/admin/customers/${uuid}/keys`],
+			['GET', `/admin/customers/${uuid}/email-reveal`],
+			['PUT', `/admin/customers/${uuid}/email-reveal`],
+			['POST', `/admin/customers/${uuid}/email-reveal/x`],
+			['POST', `/admin/customers/${uuid}/email-reveals`],
+			['POST', `/x/admin/customers/${uuid}/email-reveal`],
 			['GET', '/v1/admin/customers'],
 			['GET', '/did/admin/customers'],
 			['GET', '/admin/customersx'],
@@ -94,6 +102,10 @@ describe('staff auth rules', () => {
 			['GET', '/admin/analytics/'],
 			['GET', '/admin/analytics/overview/extra'],
 			['GET', '/admin/analytics/overviews'],
+			['GET', '/admin/analytics/funnels/stalled/'],
+			['GET', '/admin/analytics/funnels/stalledx'],
+			['GET', '/admin/analytics/funnels/other'],
+			['POST', '/admin/analytics/funnels/stalled'],
 			['GET', '/x/admin/analytics/overview'],
 			['POST', '/admin/analytics/overview'],
 			['GET', '/admin/audit-log/'],
@@ -125,13 +137,18 @@ async function call(
 	controller: object,
 	handler: string,
 	validators: Array<{ run: (req: Request) => Promise<unknown> }>,
-	options: { query?: Record<string, string>; params?: Record<string, string>; scopes?: string[] } = {}
+	options: {
+		query?: Record<string, string>;
+		params?: Record<string, string>;
+		scopes?: string[];
+		body?: Record<string, unknown>;
+	} = {}
 ) {
 	const request = {
-		method: 'GET',
+		method: options.body ? 'POST' : 'GET',
 		query: options.query ?? {},
 		params: options.params ?? {},
-		body: {},
+		body: options.body ?? {},
 	} as unknown as Request;
 	for (const validator of validators) await validator.run(request);
 	const response: FakeResponse = {
@@ -158,11 +175,16 @@ function fakeService() {
 	const service = {
 		listCustomers: jest.fn(async () => ({ customers: [], total: 0 })),
 		getCustomer: jest.fn(async (id: string): Promise<unknown> => (id === uuid ? { id } : null)),
+		getCustomerEmail: jest.fn(
+			async (id: string): Promise<string | null> => (id === uuid ? 'alice@example.com' : null)
+		),
+		recordStaffAction: jest.fn(async (_entry: Record<string, unknown>) => undefined),
 		overview: jest.fn(async () => ({ tiles: {}, series: {} })),
 		endpoints: jest.fn(async () => []),
 		topAccounts: jest.fn(async () => []),
 		planMix: jest.fn(async () => ({ plans: [], paidPercent: 0 })),
 		funnel: jest.fn(async () => ({ journey: 'first-agent', steps: [] })),
+		stalledAccounts: jest.fn(async () => ({ accounts: [], total: 0 })),
 		auditLog: jest.fn(async () => ({ entries: [], total: 0 })),
 	};
 	return service;
@@ -235,6 +257,86 @@ describe('staff endpoints: validation, defaults and staff-only enforcement', () 
 		expect(found.body).toEqual({ id: uuid });
 	});
 
+	it('GET /admin/customers/{id} writes a customer.viewed audit entry, and none for an unknown id', async () => {
+		await call(customers, 'get', CustomersAdminController.getValidator, {
+			params: { id: '22222222-2222-4222-8222-222222222222' },
+		});
+		expect(service.recordStaffAction).not.toHaveBeenCalled();
+		const found = await call(customers, 'get', CustomersAdminController.getValidator, { params: { id: uuid } });
+		expect(found.status).toBe(200);
+		expect(service.recordStaffAction).toHaveBeenCalledTimes(1);
+		expect(service.recordStaffAction).toHaveBeenCalledWith({
+			actorUserId: 'logto-staff-1',
+			action: 'customer.viewed',
+			targetCustomerId: uuid,
+			reason: 'Customer detail viewed',
+		});
+	});
+
+	it('GET /admin/customers/{id} still answers when the view audit write fails', async () => {
+		jest.spyOn(console, 'error').mockImplementation(() => undefined);
+		service.recordStaffAction.mockRejectedValueOnce(new Error('down'));
+		const found = await call(customers, 'get', CustomersAdminController.getValidator, { params: { id: uuid } });
+		expect(found.status).toBe(200);
+		jest.restoreAllMocks();
+	});
+
+	it('POST /admin/customers/{id}/email-reveal returns the full email and audits the reveal without it', async () => {
+		const result = await call(customers, 'revealEmail', CustomersAdminController.revealEmailValidator, {
+			params: { id: uuid },
+			body: { reason: 'Support request', ticketRef: 'SUP-1' },
+		});
+		expect(result.status).toBe(200);
+		expect(result.body).toEqual({ email: 'alice@example.com' });
+		expect(service.recordStaffAction).toHaveBeenCalledWith({
+			actorUserId: 'logto-staff-1',
+			action: 'customer.email_revealed',
+			targetCustomerId: uuid,
+			reason: 'Support request',
+			ticketRef: 'SUP-1',
+		});
+		expect(JSON.stringify(service.recordStaffAction.mock.calls)).not.toContain('@');
+		// the reason is optional
+		await call(customers, 'revealEmail', CustomersAdminController.revealEmailValidator, {
+			params: { id: uuid },
+			body: {},
+		});
+		expect(service.recordStaffAction).toHaveBeenLastCalledWith(
+			expect.objectContaining({ action: 'customer.email_revealed', reason: 'Email revealed' })
+		);
+	});
+
+	it('POST /admin/customers/{id}/email-reveal: 404 and no audit for an unknown id, 400 for a bad id or reason', async () => {
+		const unknown = await call(customers, 'revealEmail', CustomersAdminController.revealEmailValidator, {
+			params: { id: '22222222-2222-4222-8222-222222222222' },
+			body: {},
+		});
+		expect(unknown.status).toBe(404);
+		for (const [params, body] of [
+			[{ id: 'org_a1f3' }, {}],
+			[{ id: uuid }, { reason: 'x'.repeat(501) }],
+			[{ id: uuid }, { reason: 7 }],
+			[{ id: uuid }, { ticketRef: '' }],
+		] as Array<[Record<string, string>, Record<string, unknown>]>) {
+			const result = await call(customers, 'revealEmail', CustomersAdminController.revealEmailValidator, {
+				params,
+				body,
+			});
+			expect([params, body, result.status]).toEqual([params, body, 400]);
+		}
+		expect(service.recordStaffAction).not.toHaveBeenCalled();
+	});
+
+	it('POST /admin/customers/{id}/email-reveal fails closed: no audit entry, no email', async () => {
+		service.recordStaffAction.mockRejectedValueOnce(new Error('down'));
+		const result = await call(customers, 'revealEmail', CustomersAdminController.revealEmailValidator, {
+			params: { id: uuid },
+			body: {},
+		});
+		expect(result.status).toBe(500);
+		expect(JSON.stringify(result.body)).not.toContain('alice@example.com');
+	});
+
 	it('analytics routes default to 30 days and all segments, and accept 7, 30 and 90', async () => {
 		await call(analytics, 'overview', AnalyticsAdminController.overviewValidator);
 		expect(service.overview).toHaveBeenCalledWith(30, 'all');
@@ -283,11 +385,69 @@ describe('staff endpoints: validation, defaults and staff-only enforcement', () 
 		expect(service.funnel).toHaveBeenCalledWith('first-agent', 90, 'people');
 	});
 
+	it('the first-api-call journey is accepted by funnels (with cohort and window) and funnels/stalled', async () => {
+		const funnels = await call(analytics, 'funnels', AnalyticsAdminController.funnelsValidator, {
+			query: { journey: 'first-api-call', range: 'all', cohort: 'week' },
+		});
+		expect(funnels.status).toBe(200);
+		expect(service.funnel).toHaveBeenLastCalledWith('first-api-call', 'all', 'all', 'week');
+		const stalled = await call(analytics, 'stalled', AnalyticsAdminController.stalledValidator, {
+			query: { journey: 'first-api-call', step: 'first-api-call', from: '2026-10-01', to: '2026-10-31' },
+		});
+		expect(stalled.status).toBe(200);
+		expect(service.stalledAccounts).toHaveBeenLastCalledWith(
+			'first-api-call',
+			'first-api-call',
+			{ from: '2026-10-01', to: '2026-10-31' },
+			'all',
+			1,
+			25
+		);
+	});
+
+	it('funnels/stalled passes journey, step, range, segment and page through with defaults', async () => {
+		const ok = await call(analytics, 'stalled', AnalyticsAdminController.stalledValidator, {
+			query: { journey: 'first-credential', step: 'first-did' },
+		});
+		expect(ok.status).toBe(200);
+		expect(service.stalledAccounts).toHaveBeenCalledWith('first-credential', 'first-did', 30, 'all', 1, 25);
+		await call(analytics, 'stalled', AnalyticsAdminController.stalledValidator, {
+			query: {
+				journey: 'first-agent',
+				step: 'card-signed',
+				range: '7',
+				segment: 'agents',
+				page: '3',
+				limit: '100',
+			},
+		});
+		expect(service.stalledAccounts).toHaveBeenLastCalledWith('first-agent', 'card-signed', 7, 'agents', 3, 100);
+	});
+
+	it.each([
+		['no step', { journey: 'first-agent' }],
+		['no journey', { step: 'funded' }],
+		['an unknown step', { journey: 'first-agent', step: 'paid' }],
+		['the first step (nothing before it)', { journey: 'first-agent', step: 'signed-up' }],
+		['a step of the other journey', { journey: 'first-credential', step: 'card-signed' }],
+		['a step of the other journey (agent)', { journey: 'first-agent', step: 'first-credential' }],
+		['an API step on a ledger journey', { journey: 'first-credential', step: 'first-api-key' }],
+		['a ledger step on the API journey', { journey: 'first-api-call', step: 'funded' }],
+		['a bad range', { journey: 'first-agent', step: 'funded', range: '14' }],
+		['a bad segment', { journey: 'first-agent', step: 'funded', segment: 'everyone' }],
+		['limit above 100', { journey: 'first-agent', step: 'funded', limit: '101' }],
+		['page 0', { journey: 'first-agent', step: 'funded', page: '0' }],
+	])('funnels/stalled rejects %s with 400 and does not query', async (_name, query) => {
+		const result = await call(analytics, 'stalled', AnalyticsAdminController.stalledValidator, { query });
+		expect(result.status).toBe(400);
+		expect(service.stalledAccounts).not.toHaveBeenCalled();
+	});
+
 	it('GET /admin/audit-log paginates with defaults 25 and a maximum of 100', async () => {
 		await call(audit, 'list', AuditLogAdminController.listValidator);
-		expect(service.auditLog).toHaveBeenCalledWith(1, 25);
+		expect(service.auditLog).toHaveBeenCalledWith(1, 25, {});
 		await call(audit, 'list', AuditLogAdminController.listValidator, { query: { page: '3', limit: '100' } });
-		expect(service.auditLog).toHaveBeenLastCalledWith(3, 100);
+		expect(service.auditLog).toHaveBeenLastCalledWith(3, 100, {});
 		expect(
 			(await call(audit, 'list', AuditLogAdminController.listValidator, { query: { limit: '101' } })).status
 		).toBe(400);
@@ -301,6 +461,7 @@ describe('staff endpoints: validation, defaults and staff-only enforcement', () 
 		> = [
 			[customers, 'list', CustomersAdminController.listValidator, {}, customerScopes],
 			[customers, 'get', CustomersAdminController.getValidator, { id: uuid }, customerScopes],
+			[customers, 'revealEmail', CustomersAdminController.revealEmailValidator, { id: uuid }, customerScopes],
 			[
 				analytics,
 				'overview',
@@ -317,6 +478,13 @@ describe('staff endpoints: validation, defaults and staff-only enforcement', () 
 				AnalyticsAdminController.funnelsValidator,
 				{ journey: 'first-agent' },
 				['admin:customers:read'],
+			],
+			[
+				analytics,
+				'stalled',
+				AnalyticsAdminController.stalledValidator,
+				{ journey: 'first-agent', step: 'funded' },
+				['admin:customers:read', 'admin:audit:read'],
 			],
 			[
 				audit,
@@ -438,6 +606,114 @@ describe('AdminAnalyticsService shaping and privacy', () => {
 		});
 	});
 
+	it('masks emails in the customer list and detail, and email-like names in the list and top accounts', async () => {
+		const row = {
+			id: uuid,
+			name: 'bob@example.org',
+			email: 'alice@example.com',
+			createdAt: new Date().toISOString(),
+			plan: 'Build',
+			lastActiveAt: null,
+			network: 'testnet',
+		};
+		const { service } = serviceWith((sql) =>
+			sql.includes('COUNT(*) AS total')
+				? [{ total: '2' }]
+				: sql.includes('AS calls')
+					? [{ customerId: uuid, name: 'bob@example.org', plan: 'Build', calls: '4' }]
+					: [row, { ...row, id: 'b', name: 'Acme Ltd', email: 'carol@acme.test' }]
+		);
+		const list = await service.listCustomers({ page: 1, limit: 25 });
+		expect(list.customers.map((c) => [c.name, c.email])).toEqual([
+			['b•••@example.org', 'a•••@example.com'],
+			['Acme Ltd', 'c•••@acme.test'],
+		]);
+		const detail = await service.getCustomer(uuid);
+		expect([detail?.name, detail?.email]).toEqual(['b•••@example.org', 'a•••@example.com']);
+		expect(await service.topAccounts(30, 'all', 10)).toEqual([
+			{ customerId: uuid, name: 'b•••@example.org', plan: 'Build', calls: 4 },
+		]);
+		expect(JSON.stringify([list, detail])).not.toMatch(/alice@|bob@|carol@/);
+	});
+
+	it('maskEmail and maskIfEmail', () => {
+		expect(maskEmail('alice@example.com')).toBe('a•••@example.com');
+		expect(maskEmail('a@b.c')).toBe('a•••@b.c');
+		expect(maskEmail('no-at-sign')).toBe('n•••');
+		expect(maskEmail('@example.com')).toBe('@•••');
+		expect(maskEmail('')).toBe('');
+		expect(maskEmail(null)).toBe('');
+		expect(maskIfEmail('Acme Ltd')).toBe('Acme Ltd');
+		expect(maskIfEmail('name with @ sign')).toBe('name with @ sign');
+		expect(maskIfEmail(' dan@example.net ')).toBe('d•••@example.net');
+	});
+
+	it('reads the full email only for the reveal, and writes audit rows without it', async () => {
+		const seen: Array<{ sql: string; parameters: unknown[] }> = [];
+		const db: Queryable = {
+			query: async (sql: string, parameters: unknown[] = []) => {
+				seen.push({ sql, parameters });
+				return sql.includes('SELECT c."email"') ? [{ email: 'alice@example.com' }] : [];
+			},
+		};
+		const service = new AdminAnalyticsService(() => db);
+		expect(await service.getCustomerEmail(uuid)).toBe('alice@example.com');
+		expect(seen[0].parameters).toEqual([uuid]);
+		await service.recordStaffAction({
+			actorUserId: 'logto-staff-1',
+			action: 'customer.email_revealed',
+			targetCustomerId: uuid,
+			reason: 'Email revealed',
+		});
+		expect(seen[1].sql).toMatch(/^INSERT INTO "adminAuditLog"/);
+		expect(seen[1].parameters).toEqual(['logto-staff-1', 'customer.email_revealed', uuid, 'Email revealed', null]);
+		const none = new AdminAnalyticsService(() => ({ query: async () => [] }));
+		expect(await none.getCustomerEmail(uuid)).toBeNull();
+	});
+
+	it('getCustomer adds a milestones object from customerActivation, null where not reached (U-35)', async () => {
+		const { service, statements } = serviceWith(() => [
+			{
+				id: uuid,
+				name: 'A',
+				email: 'a@x',
+				createdAt: '2026-11-01T09:00:00.000Z',
+				plan: 'none',
+				lastActiveAt: null,
+				paymentPlan: 'none',
+				agentCount: '0',
+				segment: 'unclassified',
+				mIdentifier: '2026-11-02T10:00:00.000Z',
+				mAgent: null,
+				mApiKey: new Date('2026-11-01T09:30:00.000Z'),
+				mCredential: null,
+				mStatusList: null,
+				mFaucet: '2026-11-01T09:45:00.000Z',
+				mApiCall: '2026-11-01T09:31:00.000Z',
+			},
+		]);
+		const customer = await service.getCustomer(uuid);
+		expect(customer?.segment).toBe('unclassified');
+		expect(customer?.agentCount).toBe(0);
+		expect(customer?.milestones).toEqual({
+			firstIdentifierAt: '2026-11-02T10:00:00.000Z',
+			firstAgentAt: null,
+			firstApiKeyAt: '2026-11-01T09:30:00.000Z',
+			firstCredentialIssuedAt: null,
+			firstStatusListAt: null,
+			firstFaucetRequestAt: '2026-11-01T09:45:00.000Z',
+			firstApiCallAt: '2026-11-01T09:31:00.000Z',
+		});
+		expect(statements[0]).toContain('LEFT JOIN "customerActivation" ca ON ca."customerId" = one.id');
+	});
+
+	it('getCustomer: a customer with no activation row gets every milestone as null', async () => {
+		const { service } = serviceWith(() => [{ id: uuid, createdAt: '2026-11-01T09:00:00.000Z', segment: 'people' }]);
+		const customer = await service.getCustomer(uuid);
+		expect(Object.values(customer?.milestones ?? { x: 'missing' }).every((v) => v === null)).toBe(true);
+		expect(Object.keys(customer?.milestones ?? {})).toHaveLength(7);
+	});
+
 	it('counts API keys from the apiKey table, leaving revoked ones out, and keeps DID keys separate', async () => {
 		const seen: string[] = [];
 		const { service } = serviceWith((sql) => {
@@ -481,6 +757,7 @@ describe('AdminAnalyticsService shaping and privacy', () => {
 		await service.planMix();
 		await service.funnel('first-credential', 30, 'all');
 		await service.funnel('first-agent', 30, 'all');
+		await service.stalledAccounts('first-agent', 'first-did', 30, 'all', 1, 25);
 		await service.auditLog(1, 25);
 		expect(statements.length).toBeGreaterThan(10);
 		const forbidden = [
@@ -536,6 +813,24 @@ describe('AdminAnalyticsService shaping and privacy', () => {
 			'registered-agent',
 			'card-signed',
 		]);
+	});
+
+	it('the first-api-call journey: signed up, first API key, first API call, from customerActivation (U-34)', async () => {
+		const { service, statements } = serviceWith(() => [
+			{ accounts0: '10', gap0: null, accounts1: '4', gap1: '600', accounts2: '3', gap2: '45.2' },
+		]);
+		const funnel = await service.funnel('first-api-call', 30, 'all');
+		expect(funnel.steps).toEqual([
+			{ key: 'signed-up', label: 'Signed up', accounts: 10, medianSecondsFromPrevious: null },
+			{ key: 'first-api-key', label: 'First API key', accounts: 4, medianSecondsFromPrevious: 600 },
+			{ key: 'first-api-call', label: 'First API call', accounts: 3, medianSecondsFromPrevious: 45 },
+		]);
+		// the U-35 definitions: customer-created keys only, first tracked operation
+		expect(statements[0]).toContain('ca."firstApiKeyCreatedAt" AS apikey, ca."firstApiCallAt" AS apicall');
+		expect(statements[0]).not.toContain('FROM "apiKey"');
+		expect(statements[0]).toContain(
+			'COUNT(*) FILTER (WHERE j.signed IS NOT NULL AND j.apikey IS NOT NULL AND j.apicall IS NOT NULL) AS "accounts2"'
+		);
 	});
 
 	it('audit entries expose the customer id as target and never a customer name or email', async () => {

@@ -36,6 +36,7 @@ import { PaymentAccountService } from '../../services/api/payment-account.js';
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { check } from 'express-validator';
 import { EventTracker, eventTracker } from '../../services/track/tracker.js';
+import { recordActivation } from '../../services/analytics/activation.js';
 import * as dotenv from 'dotenv';
 import { validate } from '../validator/decorator.js';
 import { SupportedKeyTypes } from '@veramo/utils';
@@ -850,6 +851,9 @@ export class AccountController {
 				} satisfies UnsuccessfulResponseBody);
 			}
 
+			// Activation milestone (U-35). Idempotent and never throws.
+			await recordActivation(customer.customerId, 'first_faucet_request');
+
 			return response.status(StatusCodes.OK).json({
 				funded: true,
 				address: testnetAccount.address,
@@ -1072,9 +1076,10 @@ export class AccountController {
 	 *       `cheqd-studio-key-export` envelope (see `EncryptedKeyExport`). The decrypted JSON has the shape
 	 *       `{ dids: [{ did, export?, error? }], paymentAccounts: [{ network, address, type, privateKeyHex }] }`.
 	 *       A DID that fails to export (e.g. one custodied by an external provider rather than Studio) is
-	 *       reported per-DID under `error` rather than failing the whole export. Requires a sign-in within the
-	 *       last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300); otherwise a `401` with code
-	 *       `REAUTHENTICATION_REQUIRED` is returned.
+	 *       reported per-DID under `error` rather than failing the whole export. Requires a recent portal
+	 *       sign-in, within the last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300); otherwise a `401` with
+	 *       code `REAUTHENTICATION_REQUIRED` is returned. API keys and machine credentials cannot call this route:
+	 *       they carry no sign-in time, so they always get that `401`.
 	 *     requestBody:
 	 *       required: true
 	 *       content:
@@ -1158,7 +1163,8 @@ export class AccountController {
 	 *       deletes the customer row and everything it owns (DIDs, credentials, resources, keys, API keys,
 	 *       payment accounts). This cannot be undone, and DID documents or resources already published
 	 *       on-chain are not removed from the ledger. Requires `{ "confirm": true }` in the request body, and a
-	 *       sign-in within the last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300).
+	 *       recent portal sign-in, within the last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300). API keys
+	 *       and machine credentials cannot call this route: they always get `401` `REAUTHENTICATION_REQUIRED`.
 	 *     requestBody:
 	 *       content:
 	 *         application/json:

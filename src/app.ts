@@ -1,4 +1,5 @@
 import { requestContext } from './middleware/request-context.js';
+import { hideInternalErrors, internalErrorHandler } from './middleware/internal-errors.js';
 import { healthRouter } from './middleware/health.js';
 import express from 'express';
 import Helmet from 'helmet';
@@ -22,6 +23,8 @@ import { Middleware } from './middleware/middleware.js';
 import { jsonBodyParsers } from './middleware/body-parsers.js';
 import { customerRateLimiter, ipRateLimiter, rateLimitConfig, trustProxySetting } from './middleware/rate-limit.js';
 import { requireFreshSignIn } from './middleware/fresh-signin.js';
+import { deprecateEncryptedStatusListCreation } from './middleware/deprecation.js';
+import { userInfo } from './middleware/auth/user-info-route.js';
 import * as dotenv from 'dotenv';
 // Define Swagger file
 import swaggerAPIDocument from './static/swagger-api.json' with { type: 'json' };
@@ -109,6 +112,8 @@ class App {
 		this.express.use(cookieParser());
 		// Request id, timing and the engine-routing log line (engine spec 4.3)
 		this.express.use(requestContext);
+		// 500 responses carry a generic message and an error id; the detail goes to the log (S16, #834)
+		this.express.use(hideInternalErrors);
 		const auth = new Authentication();
 		// EventTracking
 		this.express.use(new ResponseTracker().trackJson);
@@ -226,6 +231,7 @@ class App {
 		);
 		app.post(
 			'/credential-status/create/encrypted',
+			deprecateEncryptedStatusListCreation,
 			CredentialStatusController.createEncryptedValidator,
 			new CredentialStatusController().createEncryptedStatusList
 		);
@@ -388,6 +394,11 @@ class App {
 		app.post('/agents/:agentId/authority', AgentController.grantValidator, agents.grantAuthority);
 		app.delete('/agents/:agentId/authority/:grantId', AgentController.revokeValidator, agents.revokeAuthority);
 		app.patch('/agents/:agentId/authority/:grantId', AgentController.expiryValidator, agents.changeGrantExpiry);
+		app.get(
+			'/agents/:agentId/authority/:grantId/credential',
+			AgentController.grantCredentialValidator,
+			agents.getAuthorityCredential
+		);
 		app.get('/agents/:agentId/keys', AgentController.idValidator, agents.listKeys);
 		app.post('/agents/:agentId/keys', AgentController.addKeyValidator, agents.addKey);
 		app.post('/agents/:agentId/keys/rotate', AgentController.rotateKeyValidator, agents.rotateKey);
@@ -404,18 +415,29 @@ class App {
 			AgentController.revokePaymentAddressValidator,
 			agents.revokePaymentAddress
 		);
+		app.get(
+			'/agents/:agentId/payment-addresses/:bindingId/credential',
+			AgentController.bindingCredentialValidator,
+			agents.getPaymentAddressCredential
+		);
 		app.get('/agents/:agentId/settlement', AgentController.idValidator, agents.settlement);
 
 		// Feature flags
 		app.get('/flags', new FlagsController().getFlags);
 		app.put('/admin/flags', new FlagsAdminController().putFlag);
+		app.get('/admin/customers/:id/flags', new FlagsAdminController().getCustomerFlags);
 
-		// Staff customer back end, analytics and audit log (read only, staff scopes)
+		// Staff customer back end, analytics and audit log (staff scopes; reads, plus the audited email reveal)
 		const customersAdmin = new CustomersAdminController();
 		const analyticsAdmin = new AnalyticsAdminController();
 		const auditAdmin = new AuditLogAdminController();
 		app.get('/admin/customers', CustomersAdminController.listValidator, customersAdmin.list.bind(customersAdmin));
 		app.get('/admin/customers/:id', CustomersAdminController.getValidator, customersAdmin.get.bind(customersAdmin));
+		app.post(
+			'/admin/customers/:id/email-reveal',
+			CustomersAdminController.revealEmailValidator,
+			customersAdmin.revealEmail.bind(customersAdmin)
+		);
 		app.get(
 			'/admin/analytics/overview',
 			AnalyticsAdminController.overviewValidator,
@@ -447,12 +469,15 @@ class App {
 			AnalyticsAdminController.funnelsValidator,
 			analyticsAdmin.funnels.bind(analyticsAdmin)
 		);
+		app.get(
+			'/admin/analytics/funnels/stalled',
+			AnalyticsAdminController.stalledValidator,
+			analyticsAdmin.stalled.bind(analyticsAdmin)
+		);
 		app.get('/admin/audit-log', AuditLogAdminController.listValidator, auditAdmin.list.bind(auditAdmin));
 
 		// LogTo user info
-		app.get('/auth/user-info', async (req, res) => {
-			return res.json(req.user);
-		});
+		app.get('/auth/user-info', userInfo);
 
 		// static files
 		app.get(
@@ -529,6 +554,8 @@ class App {
 
 		// 404 for all other requests
 		app.all('{*path}', (_req, res) => res.status(StatusCodes.BAD_REQUEST).send('Bad request'));
+		// Errors a route throws or passes on: generic 500 body, detail logged
+		app.use(internalErrorHandler);
 	}
 }
 

@@ -18,10 +18,18 @@ export interface RoutingRecord {
 	customerId?: string;
 }
 
+/**
+ * How the caller authenticated, set by the API guard once authentication has succeeded: an API key, the portal (a
+ * user session: Logto ID token plus the portal's machine token), a bare Logto access token, the machine-to-machine
+ * customer path, or the Swagger UI session.
+ */
+export type AuthMethod = 'api-key' | 'portal' | 'id-token' | 'm2m' | 'swagger-ui';
+
 export interface RequestContext {
 	requestId: string;
 	startedAt: number;
 	customerId?: string;
+	authMethod?: AuthMethod;
 	decisions: RoutingRecord[];
 }
 

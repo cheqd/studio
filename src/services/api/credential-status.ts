@@ -1,6 +1,9 @@
 import { fromString } from 'uint8arrays';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../identity/ownership-error.js';
 import { IdentityServiceStrategySetup } from '../identity/index.js';
 import { mapEngineError } from '../../helpers/engine-errors.js';
+import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
+import { ledgerErrorCode, recordFailedLedgerWrite } from '../../helpers/ledger-write-failure.js';
 import type { RoutedService } from '../identity/index.js';
 import { didArtifact, statusListArtifact } from '../identity/engine/artifact-refs.js';
 import type {
@@ -77,6 +80,7 @@ export class CredentialStatusService {
 		statusCode: number;
 		data?: CreateUnencryptedStatusListSuccessfulResponseBody | CreateUnencryptedBitstringSuccessfulResponseBody;
 		error?: string;
+		code?: string;
 	}> {
 		const {
 			did,
@@ -248,12 +252,28 @@ export class CredentialStatusService {
 				data: result,
 			};
 		} catch (error) {
+			const ledgerFailure = await recordFailedLedgerWrite(
+				{
+					category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
+					name: OperationNameEnum.CREDENTIAL_STATUS_CREATE_UNENCRYPTED,
+					customer,
+					did,
+				},
+				error
+			);
+			const unfunded = unfundedPayerFailure(error);
+			if (unfunded)
+				return { success: false, statusCode: unfunded.status, error: unfunded.error, code: unfunded.code };
 			const mapped = mapEngineError(error);
-			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error };
+			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error, code: mapped.code };
+			if (error instanceof OwnershipError) {
+				return { success: false, statusCode: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			return {
 				success: false,
 				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
 				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
+				...ledgerErrorCode(ledgerFailure),
 			};
 		}
 	}
@@ -268,6 +288,7 @@ export class CredentialStatusService {
 		statusCode: number;
 		data?: CreateEncryptedStatusListSuccessfulResponseBody | CreateEncryptedBitstringSuccessfulResponseBody;
 		error?: string;
+		code?: string;
 	}> {
 		const {
 			did,
@@ -413,12 +434,28 @@ export class CredentialStatusService {
 				data: result,
 			};
 		} catch (error) {
+			const ledgerFailure = await recordFailedLedgerWrite(
+				{
+					category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
+					name: OperationNameEnum.CREDENTIAL_STATUS_CREATE_ENCRYPTED,
+					customer,
+					did,
+				},
+				error
+			);
+			const unfunded = unfundedPayerFailure(error);
+			if (unfunded)
+				return { success: false, statusCode: unfunded.status, error: unfunded.error, code: unfunded.code };
 			const mapped = mapEngineError(error);
-			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error };
+			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error, code: mapped.code };
+			if (error instanceof OwnershipError) {
+				return { success: false, statusCode: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			return {
 				success: false,
 				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
 				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
+				...ledgerErrorCode(ledgerFailure),
 			};
 		}
 	}
@@ -433,6 +470,7 @@ export class CredentialStatusService {
 		statusCode: number;
 		data?: any;
 		error?: string;
+		code?: string;
 	}> {
 		const { did, statusListName, statusListVersion = '1.0', indices } = body;
 		const { statusAction: statusActionString, listType } = query;
@@ -587,12 +625,28 @@ export class CredentialStatusService {
 				data: formatted,
 			};
 		} catch (error) {
+			const ledgerFailure = await recordFailedLedgerWrite(
+				{
+					category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
+					name: OperationNameEnum.CREDENTIAL_STATUS_UPDATE_UNENCRYPTED,
+					customer,
+					did,
+				},
+				error
+			);
+			const unfunded = unfundedPayerFailure(error);
+			if (unfunded)
+				return { success: false, statusCode: unfunded.status, error: unfunded.error, code: unfunded.code };
 			const mapped = mapEngineError(error);
-			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error };
+			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error, code: mapped.code };
+			if (error instanceof OwnershipError) {
+				return { success: false, statusCode: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			return {
 				success: false,
 				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
 				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
+				...ledgerErrorCode(ledgerFailure),
 			};
 		}
 	}
@@ -607,6 +661,7 @@ export class CredentialStatusService {
 		statusCode: number;
 		data?: any;
 		error?: string;
+		code?: string;
 	}> {
 		const {
 			did,
@@ -779,12 +834,28 @@ export class CredentialStatusService {
 				data: formatted,
 			};
 		} catch (error) {
+			const ledgerFailure = await recordFailedLedgerWrite(
+				{
+					category: OperationCategoryNameEnum.CREDENTIAL_STATUS,
+					name: OperationNameEnum.CREDENTIAL_STATUS_UPDATE_ENCRYPTED,
+					customer,
+					did,
+				},
+				error
+			);
+			const unfunded = unfundedPayerFailure(error);
+			if (unfunded)
+				return { success: false, statusCode: unfunded.status, error: unfunded.error, code: unfunded.code };
 			const mapped = mapEngineError(error);
-			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error };
+			if (mapped) return { success: false, statusCode: mapped.status, error: mapped.error, code: mapped.code };
+			if (error instanceof OwnershipError) {
+				return { success: false, statusCode: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			return {
 				success: false,
 				statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
 				error: `Internal error: ${(error as Record<string, unknown>)?.message || error}`,
+				...ledgerErrorCode(ledgerFailure),
 			};
 		}
 	}
@@ -976,6 +1047,9 @@ export class CredentialStatusService {
 				data: result,
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return { success: false, statusCode: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			const errorRef = error as Record<string, unknown>;
 
 			if (errorRef?.errorCode === 'NodeAccessControlConditionsReturnedNotAuthorized') {

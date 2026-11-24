@@ -15,6 +15,11 @@ export class AuthRuleRepository {
 		this.providers.push(provider);
 	}
 
+	/** Every registered rule, in matching order. */
+	public getRules(): AuthRule[] {
+		return this.providers.flatMap((provider) => [...provider.getRules()]);
+	}
+
 	/**
 	 * Matches the request against the rules and returns the matching rule, if found.
 	 *

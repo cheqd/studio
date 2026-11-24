@@ -140,9 +140,11 @@ export class DBOperationSubscriber extends BaseOperationObserver implements IObs
 
 			// Activation milestones (#869). Idempotent and never throws, so it cannot fail this operation.
 			const milestone = activationMilestoneFor(trackOperation.name);
-			if (milestone && trackOperation.successful) {
+			if (milestone && trackOperation.successful !== false) {
 				await recordActivation(trackOperation.customer?.customerId, milestone);
 			}
+			// Any tracked call counts as the first API call (U-35); cached per process, so usually no statement
+			await recordActivation(trackOperation.customer?.customerId, 'first_api_call');
 
 			// Track payments
 			if (trackOperation.feePaymentOptions) {

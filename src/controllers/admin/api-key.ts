@@ -23,7 +23,8 @@ import type {
 	APIServiceOptions,
 } from '../../types/admin.js';
 import { EventTracker, eventTracker } from '../../services/track/tracker.js';
-import { OperationNameEnum } from '../../types/constants.js';
+import { API_KEY_MAX_ACTIVE_PER_CUSTOMER, OperationNameEnum } from '../../types/constants.js';
+import { recordActivation } from '../../services/analytics/activation.js';
 
 dotenv.config();
 
@@ -114,6 +115,8 @@ export class APIKeyController {
 	 *         $ref: '#/components/schemas/APIKeyCreateUnsuccessfulResponseBody'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       409:
+	 *         description: The account already holds the maximum number of active API keys (API_KEY_MAX_ACTIVE_PER_CUSTOMER, default 10). Revoke one first.
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
@@ -123,6 +126,13 @@ export class APIKeyController {
 		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
 
 		try {
+			// Cap how many live keys one customer can hold, so a retry loop or a misused token cannot pile them up
+			const activeKeys = await APIKeyService.instance.countActive(response.locals.customer);
+			if (activeKeys >= API_KEY_MAX_ACTIVE_PER_CUSTOMER) {
+				return response.status(StatusCodes.CONFLICT).json({
+					error: `API key limit reached: an account can hold at most ${API_KEY_MAX_ACTIVE_PER_CUSTOMER} active API keys. Revoke a key you no longer use, then try again.`,
+				} satisfies APIKeyCreateUnsuccessfulResponseBody);
+			}
 			const apiKey = await APIKeyService.generateAPIKey(response.locals.user.logToId as string);
 			const apiKeyEntity = await APIKeyService.instance.create(
 				apiKey,
@@ -138,6 +148,8 @@ export class APIKeyController {
 					message: 'Cannot create a new API key',
 				});
 			}
+			// Activation milestone (U-35). Idempotent and never throws.
+			await recordActivation(response.locals.customer?.customerId, 'first_api_key_created');
 			await eventTracker.notify({
 				message: EventTracker.compileBasicNotification(
 					`API key for customer: ${response.locals.customer.customerId} has been created`,
@@ -193,6 +205,11 @@ export class APIKeyController {
 		const { apiKey, name, expiresAt, revoked } = request.body satisfies APIKeyUpdateRequestBody;
 		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
 		try {
+			if (!(await APIKeyService.instance.getOwned(apiKey, response.locals.customer))) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: 'Update failed: API key does not exist',
+				} satisfies APIKeyUpdateUnsuccessfulResponseBody);
+			}
 			const apiKeyEntity = await APIKeyService.instance.update(
 				{
 					apiKey,
@@ -234,7 +251,7 @@ export class APIKeyController {
 	 * @openapi
 	 *
 	 * /admin/api-key/revoke:
-	 *  post:
+	 *  delete:
 	 *   summary: Revoke an existing API key
 	 *   description: Revoke an existing API key
 	 *   tags: [API Key]
@@ -263,6 +280,11 @@ export class APIKeyController {
 		const options = { decryptionNeeded: true } satisfies APIServiceOptions;
 		const { apiKey } = request.body satisfies APIKeyRevokeRequestBody;
 		try {
+			if (!(await APIKeyService.instance.getOwned(apiKey, response.locals.customer))) {
+				return response.status(StatusCodes.NOT_FOUND).json({
+					error: 'Cannot revoke API key',
+				} satisfies APIKeyRevokeUnsuccessfulResponseBody);
+			}
 			const apiKeyEntity = await APIKeyService.instance.revoke(apiKey, options);
 			if (!apiKeyEntity) {
 				return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -381,7 +403,7 @@ export class APIKeyController {
 
 		try {
 			if (apiKey) {
-				const apiKeyEntity = await APIKeyService.instance.get(apiKey, options);
+				const apiKeyEntity = await APIKeyService.instance.getOwned(apiKey, response.locals.customer, options);
 				if (!apiKeyEntity) {
 					return response.status(StatusCodes.NOT_FOUND).json({
 						error: 'API key not found',

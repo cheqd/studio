@@ -227,8 +227,7 @@ describe('customer analytics auth rules', () => {
 		expect(
 			repository.match(requestFor('GET', '/admin/analytics/faucet-to-ledger'))?.isValidScope('read:account')
 		).toBe(false);
-		expect(repository.match(requestFor('POST', '/account/analytics/agents'))?.isValidScope('create:account')).toBe(
-			true
-		);
+		// No POST route exists here; with anchored rules it no longer falls to the account-creation rule
+		expect(repository.match(requestFor('POST', '/account/analytics/agents'))).toBeNull();
 	});
 });

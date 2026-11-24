@@ -1,8 +1,10 @@
+import { randomBytes } from 'node:crypto';
 import { describe, expect, it } from '@jest/globals';
 import { bases } from 'multiformats/basics';
 import {
 	authenticationMethods,
 	buildDefaultDidDocument,
+	exportKeyEncodings,
 	generateKeyMaterial,
 	publicKeyHexFromJwk,
 	publicKeyHexFromVerificationMethod,
@@ -96,4 +98,24 @@ describe('authenticationMethods', () => {
 		});
 		expect(embedded[0]).toMatchObject({ id: `${did}#k`, relativeId: '#k', publicKeyHex: ed.publicKeyHex });
 	});
+});
+
+describe('DID export encodings', () => {
+	it.each(['Ed25519', 'Secp256r1'] as const)(
+		'are byte for byte what the Veramo export writes for a %s key',
+		async (type) => {
+			const { toMultibaseRaw } = await import('@cheqd/sdk');
+			const { bytesToBase58 } = await import('@veramo/utils');
+			const key = generateKeyMaterial(type);
+			const privateKeyHex = randomBytes(type === 'Ed25519' ? 64 : 32).toString('hex');
+			const publicBytes = new Uint8Array(Buffer.from(key.publicKeyHex, 'hex'));
+			const privateBytes = new Uint8Array(Buffer.from(privateKeyHex, 'hex'));
+			expect(exportKeyEncodings(key.publicKeyHex, privateKeyHex)).toEqual({
+				publicKeyMultibase: toMultibaseRaw(publicBytes),
+				privateKeyMultibase: toMultibaseRaw(privateBytes),
+				publicKeyBase58: bytesToBase58(publicBytes),
+				privateKeyBase58: bytesToBase58(privateBytes),
+			});
+		}
+	);
 });

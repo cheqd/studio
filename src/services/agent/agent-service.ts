@@ -18,6 +18,7 @@ import type {
 	GrantType,
 	PaymentAddressBindingRecord,
 	PaymentAddressBindingWithStatus,
+	StoredAuthorityCredential,
 	TokenStatusListRecord,
 } from '../../types/agent.js';
 import { AGENT_SETTABLE_STATUSES, CAPABILITY_NAMES, VCT, defaultCapabilities } from '../../types/agent.js';
@@ -35,6 +36,7 @@ import {
 	actsForIsAgent,
 	badRequest,
 	conflict,
+	credentialNotStored,
 	featureDisabled,
 	notFound,
 	unauthorised,
@@ -91,7 +93,7 @@ export interface IssuedAuthority {
 
 export interface IssuedPaymentAddressBinding {
 	binding: PaymentAddressBindingRecord;
-	/** Returned once and never stored. */
+	/** Also kept, sealed, so the owner can download it again. */
 	credential: { format: 'sd-jwt-vc'; value: string };
 }
 
@@ -452,6 +454,7 @@ export class AgentService {
 		const agent = await this.owned(customer, agentId);
 		const now = this.now();
 		const grants = await this.store.listGrants(customer.customerId, agentId);
+		const stored = new Set((await this.store.listStoredCredentialOwners(customer.customerId, agentId)).grantIds);
 		return grants.map((grant) => ({
 			id: grant.id,
 			grantType: grant.grantType,
@@ -460,7 +463,42 @@ export class AgentService {
 			createdAt: grant.createdAt,
 			expiresAt: grant.expiresAt ?? null,
 			revokedAt: grant.revokedAt ?? null,
+			hasCredential: stored.has(grant.id),
 		}));
+	}
+
+	/**
+	 * The grant's current credential, for its owner to download again. After an expiry change this is the
+	 * replacement (`supersedes` names the stored credential it replaced). A grant or agent that is not the caller's
+	 * is a 404 like any other; a grant made before Studio kept credentials is a 404 `credential_not_stored`.
+	 */
+	async getAuthorityCredential(
+		customerIn: CustomerEntity | undefined,
+		agentId: string,
+		grantId: string
+	): Promise<StoredAuthorityCredential> {
+		const customer = requireCustomer(customerIn);
+		await this.owned(customer, agentId);
+		if ((await this.store.countGrants(customer.customerId, agentId, grantId)) === 0)
+			throw notFound('Authority grant');
+		const stored = await this.store.getStoredCredential(customer.customerId, agentId, { grantId });
+		if (!stored) throw credentialNotStored();
+		return stored;
+	}
+
+	/** The binding's credential, for its owner to download again. Same rules as `getAuthorityCredential`. */
+	async getPaymentAddressCredential(
+		customerIn: CustomerEntity | undefined,
+		agentId: string,
+		bindingId: string
+	): Promise<StoredAuthorityCredential> {
+		const customer = requireCustomer(customerIn);
+		await this.owned(customer, agentId);
+		if ((await this.store.countBindings(customer.customerId, agentId, bindingId)) === 0)
+			throw notFound('Payment address');
+		const stored = await this.store.getStoredCredential(customer.customerId, agentId, { bindingId });
+		if (!stored) throw credentialNotStored();
+		return stored;
 	}
 
 	async grantAuthority(
@@ -547,6 +585,7 @@ export class AgentService {
 			expiresAt,
 			policySummary,
 			claims: claimsToKeep,
+			credential: { format: 'sd-jwt-vc', value: compact },
 		});
 		await this.record(customer, agentId, 'authority-granted', ctx, {
 			grantId: grant.id,
@@ -664,6 +703,7 @@ export class AgentService {
 				statusIndex: index,
 				statusUri: list.uri,
 				expiresAt,
+				credential: { format: 'sd-jwt-vc', value: compact },
 			});
 			if (!replaced) throw notFound('Authority grant');
 			await this.record(customer, agentId, 'authority-expiry-changed', ctx, {
@@ -828,19 +868,22 @@ export class AgentService {
 		const customer = requireCustomer(customerIn);
 		const agent = await this.owned(customer, agentId);
 		const bindings = await this.store.listBindings(customer.customerId, agentId);
+		const stored = new Set((await this.store.listStoredCredentialOwners(customer.customerId, agentId)).bindingIds);
 		return bindings.map((binding) => ({
 			id: binding.id,
 			account: binding.account,
 			status: binding.revokedAt ? 'revoked' : agent.status === 'suspended' ? 'suspended' : 'active',
 			createdAt: binding.createdAt,
 			revokedAt: binding.revokedAt ?? null,
+			hasCredential: stored.has(binding.id),
 		}));
 	}
 
 	/**
 	 * Binds a payment address (CAIP-10) to the agent with a `PaymentAddressBinding` SD-JWT VC signed by the agent's
 	 * own key, with a Token Status List entry so it can be revoked. cheqd's own vocabulary, not an x402 standard.
-	 * The binding is the agent's assertion: it does not prove control of the wallet. Returned once, never stored.
+	 * The binding is the agent's assertion: it does not prove control of the wallet. Returned here, and kept sealed
+	 * so the owner can download it again.
 	 */
 	async bindPaymentAddress(
 		customerIn: CustomerEntity | undefined,
@@ -889,6 +932,7 @@ export class AgentService {
 			statusListId: list.registryId,
 			statusIndex: index,
 			statusUri: list.uri,
+			credential: { format: 'sd-jwt-vc', value: compact },
 		});
 		return { binding, credential: { format: 'sd-jwt-vc', value: compact } };
 	}
@@ -1349,6 +1393,7 @@ export class AgentService {
 			format: 'jwt',
 			vct: 'DelegationCredential',
 			expiresAt,
+			credential: { format: 'jwt', value: credential },
 		});
 		return { grant, credential: { format: 'jwt', value: credential }, label: 'untested' };
 	}

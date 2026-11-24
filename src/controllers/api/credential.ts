@@ -1,6 +1,11 @@
-import { statusUpdateFailure } from '../../services/api/status-update-outcome.js';
+import {
+	statusFailureBody,
+	statusUpdateConflict,
+	statusUpdateFailure,
+} from '../../services/api/status-update-outcome.js';
 import type { Request, Response } from 'express';
 import { unsupportedIssuanceStatus } from '../../helpers/issuance-status.js';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../../services/identity/ownership-error.js';
 import { StatusCodes } from 'http-status-codes';
 
 import { check, query } from '../validator/index.js';
@@ -142,8 +147,38 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async issue(request: Request, response: Response) {
@@ -209,6 +244,9 @@ export class CredentialController {
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccesfulIssueCredentialResponseBody);
@@ -262,8 +300,32 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async verify(request: Request, response: Response) {
@@ -376,8 +438,44 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
+	 *       409:
+	 *         description: The change would do nothing; see `code`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/StatusUpdateConflict'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async revoke(request: Request, response: Response) {
@@ -389,12 +487,21 @@ export class CredentialController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await (
-				await identityServiceStrategySetup.routed(
-					'status-list',
-					await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
-				)
-			).revokeCredentials(
+			const engine = await identityServiceStrategySetup.routed(
+				'status-list',
+				await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
+			);
+			// A change that would do nothing is refused with 409 before anything is written
+			const noOp = await statusUpdateConflict(
+				'revoke',
+				credential,
+				listType || StatusListType.Bitstring,
+				engine,
+				response.locals.customer,
+				symmetricKey as string
+			);
+			if (noOp) return response.status(noOp.statusCode).json(statusFailureBody(noOp));
+			const result = await engine.revokeCredentials(
 				credential,
 				listType || StatusListType.Bitstring,
 				publish as boolean,
@@ -403,7 +510,7 @@ export class CredentialController {
 			);
 
 			const failure = statusUpdateFailure('revoke', result as Record<string, unknown>);
-			if (failure) return response.status(failure.statusCode).json({ error: failure.error });
+			if (failure) return response.status(failure.statusCode).json(statusFailureBody(failure));
 			await Credentials.instance.recordStatusChange(credential, 'revoke', response.locals.customer);
 
 			// Track operation if revocation was successful and publish is true
@@ -441,6 +548,9 @@ export class CredentialController {
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccesfulRevokeCredentialResponseBody);
@@ -490,8 +600,44 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
+	 *       409:
+	 *         description: The change would do nothing; see `code`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/StatusUpdateConflict'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async suspend(request: Request, response: Response) {
@@ -504,12 +650,21 @@ export class CredentialController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await (
-				await identityServiceStrategySetup.routed(
-					'status-list',
-					await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
-				)
-			).suspendCredentials(
+			const engine = await identityServiceStrategySetup.routed(
+				'status-list',
+				await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
+			);
+			// A change that would do nothing is refused with 409 before anything is written
+			const noOp = await statusUpdateConflict(
+				'suspend',
+				credential,
+				listType || StatusListType.Bitstring,
+				engine,
+				response.locals.customer,
+				symmetricKey as string
+			);
+			if (noOp) return response.status(noOp.statusCode).json(statusFailureBody(noOp));
+			const result = await engine.suspendCredentials(
 				credential,
 				listType || StatusListType.Bitstring,
 				publish as boolean,
@@ -518,7 +673,7 @@ export class CredentialController {
 			);
 
 			const failure = statusUpdateFailure('suspend', result as Record<string, unknown>);
-			if (failure) return response.status(failure.statusCode).json({ error: failure.error });
+			if (failure) return response.status(failure.statusCode).json(statusFailureBody(failure));
 			await Credentials.instance.recordStatusChange(credential, 'suspend', response.locals.customer);
 
 			// Track operation if suspension was successful and publish is true
@@ -556,6 +711,9 @@ export class CredentialController {
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccesfulSuspendCredentialResponseBody);
@@ -605,8 +763,44 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
+	 *       409:
+	 *         description: The change would do nothing; see `code`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/StatusUpdateConflict'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async reinstate(request: Request, response: Response) {
@@ -618,12 +812,21 @@ export class CredentialController {
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
 
 		try {
-			const result = await (
-				await identityServiceStrategySetup.routed(
-					'status-list',
-					await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
-				)
-			).reinstateCredentials(
+			const engine = await identityServiceStrategySetup.routed(
+				'status-list',
+				await statusListArtifactFromCredential(credential, response.locals.customer.customerId)
+			);
+			// A change that would do nothing is refused with 409 before anything is written
+			const noOp = await statusUpdateConflict(
+				'reinstate',
+				credential,
+				listType || StatusListType.Bitstring,
+				engine,
+				response.locals.customer,
+				symmetricKey as string
+			);
+			if (noOp) return response.status(noOp.statusCode).json(statusFailureBody(noOp));
+			const result = await engine.reinstateCredentials(
 				credential,
 				listType || StatusListType.Bitstring,
 				publish as boolean,
@@ -632,7 +835,7 @@ export class CredentialController {
 			);
 
 			const failure = statusUpdateFailure('reinstate', result as Record<string, unknown>);
-			if (failure) return response.status(failure.statusCode).json({ error: failure.error });
+			if (failure) return response.status(failure.statusCode).json(statusFailureBody(failure));
 			await Credentials.instance.recordStatusChange(credential, 'reinstate', response.locals.customer);
 
 			// Track operation if the process of reinstantiating was successful and publish is true
@@ -670,6 +873,9 @@ export class CredentialController {
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccesfulUnsuspendCredentialResponseBody);
@@ -768,8 +974,26 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	public async listIssuedCredentials(request: Request, response: Response) {
 		const {
@@ -866,8 +1090,26 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	public async getIssuedCredential(request: Request, response: Response) {
 		const id = Array.isArray(request.params.id) ? request.params.id[0] : (request.params.id as string);
@@ -955,8 +1197,32 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	public async updateIssuedCredential(request: Request, response: Response) {
 		const id = Array.isArray(request.params.id) ? request.params.id[0] : (request.params.id as string);
@@ -1043,8 +1309,32 @@ export class CredentialController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	public async retryIssuedCredential(request: Request, response: Response) {
 		const id = Array.isArray(request.params.id) ? request.params.id[0] : (request.params.id as string);
@@ -1097,6 +1387,9 @@ export class CredentialController {
 		} catch (error) {
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
+			if (error instanceof OwnershipError) {
+				return response.status(StatusCodes.NOT_FOUND).json({ error: NOT_FOUND_MESSAGE });
+			}
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				success: false,
 				error: `Internal error: ${(error as Error)?.message || error}`,

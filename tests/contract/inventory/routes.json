@@ -1,5 +1,5 @@
 {
-	"generatedFrom": "b54a793",
+	"generatedFrom": "96af3f3",
 	"generatedBy": "npx tsx tests/contract/scripts/generate-inventory.ts",
 	"routes": [
 		{
@@ -120,7 +120,7 @@
 			"path": "/account/bootstrap",
 			"surface": "internal",
 			"auth": "webhook-signature",
-			"scopes": ["create:account"],
+			"scopes": [],
 			"tier": 2,
 			"sideEffect": "state-database",
 			"sensitive": false,
@@ -148,7 +148,7 @@
 			"path": "/account/export-keys",
 			"surface": "api",
 			"auth": "scoped",
-			"scopes": ["create:account", "export:account:keys"],
+			"scopes": ["export:account:keys"],
 			"tier": 2,
 			"sideEffect": "state-database",
 			"sensitive": false,
@@ -162,7 +162,7 @@
 			"path": "/account/faucet",
 			"surface": "api",
 			"auth": "scoped",
-			"scopes": ["create:account", "request:faucet:testnet"],
+			"scopes": ["request:faucet:testnet"],
 			"tier": 1,
 			"sideEffect": "faucet",
 			"sensitive": false,
@@ -336,20 +336,6 @@
 			"sensitive": false,
 			"stripeOnly": true,
 			"inRouteTable": true,
-			"inOpenApi": false
-		},
-		{
-			"id": "POST /admin/api-key/revoke",
-			"method": "POST",
-			"path": "/admin/api-key/revoke",
-			"surface": "admin",
-			"auth": "no-rule",
-			"scopes": [],
-			"tier": 2,
-			"sideEffect": "state-database",
-			"sensitive": false,
-			"stripeOnly": false,
-			"inRouteTable": false,
 			"inOpenApi": true
 		},
 		{
@@ -525,27 +511,13 @@
 			"method": "DELETE",
 			"path": "/admin/subscription/cancel",
 			"surface": "admin",
-			"auth": "no-rule",
-			"scopes": [],
+			"auth": "scoped",
+			"scopes": ["admin:subscription:cancel"],
 			"tier": 1,
 			"sideEffect": "billing",
 			"sensitive": false,
 			"stripeOnly": true,
 			"inRouteTable": true,
-			"inOpenApi": false
-		},
-		{
-			"id": "POST /admin/subscription/cancel",
-			"method": "POST",
-			"path": "/admin/subscription/cancel",
-			"surface": "admin",
-			"auth": "scoped",
-			"scopes": ["admin:subscription:cancel"],
-			"tier": 1,
-			"sideEffect": "state-database",
-			"sensitive": false,
-			"stripeOnly": false,
-			"inRouteTable": false,
 			"inOpenApi": true
 		},
 		{
@@ -1534,7 +1506,7 @@
 			"path": "/providers/:providerId/did/import",
 			"surface": "api",
 			"auth": "scoped",
-			"scopes": ["configure:providers:mainnet", "import:did:mainnet", "import:did:testnet"],
+			"scopes": ["import:did:mainnet", "import:did:testnet"],
 			"tier": 2,
 			"sideEffect": "state-database",
 			"sensitive": false,

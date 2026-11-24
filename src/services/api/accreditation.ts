@@ -1,5 +1,6 @@
-import { statusUpdateFailure } from './status-update-outcome.js';
+import { statusUpdateConflict, statusUpdateFailure } from './status-update-outcome.js';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
+import { NOT_FOUND_MESSAGE, OwnershipError } from '../identity/ownership-error.js';
 import type { SafeAPIResponse } from '../../types/common.js';
 import {
 	AccreditationSchemaType,
@@ -216,6 +217,9 @@ export class AccreditationService {
 				},
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return { success: false, status: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			return internalErrorUnlessEngineError(error);
 		}
 	}
@@ -243,15 +247,36 @@ export class AccreditationService {
 
 			const accreditation: CheqdW3CVerifiableCredential = resource;
 
-			const result = await (
-				await identityServiceStrategySetup.routed(
-					'status-list',
-					await statusListArtifactFromCredential(accreditation, customer.customerId)
-				)
-			).revokeCredentials(accreditation, StatusListType.Bitstring, publish, customer, symmetricKey);
+			const engine = await identityServiceStrategySetup.routed(
+				'status-list',
+				await statusListArtifactFromCredential(accreditation, customer.customerId)
+			);
+			// A change that would do nothing is refused with 409 before anything is written
+			const noOp = await statusUpdateConflict(
+				'revoke',
+				accreditation,
+				StatusListType.Bitstring,
+				engine,
+				customer,
+				symmetricKey
+			);
+			if (noOp) return { success: false, status: noOp.statusCode, error: noOp.error, data: { code: noOp.code } };
+			const result = await engine.revokeCredentials(
+				accreditation,
+				StatusListType.Bitstring,
+				publish,
+				customer,
+				symmetricKey
+			);
 
 			const failure = statusUpdateFailure('revoke', result as Record<string, unknown>);
-			if (failure) return { success: false, status: failure.statusCode, error: failure.error };
+			if (failure)
+				return {
+					success: false,
+					status: failure.statusCode,
+					error: failure.error,
+					data: { code: failure.code },
+				};
 			await Credentials.instance.recordStatusChange(accreditation, 'revoke', customer);
 
 			return {
@@ -260,6 +285,9 @@ export class AccreditationService {
 				data: result as RevocationResult | BitstringUpdateResult,
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return { success: false, status: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			return internalErrorUnlessEngineError(error);
 		}
 	}
@@ -287,15 +315,36 @@ export class AccreditationService {
 
 			const accreditation: CheqdW3CVerifiableCredential = resource;
 
-			const result = await (
-				await identityServiceStrategySetup.routed(
-					'status-list',
-					await statusListArtifactFromCredential(accreditation, customer.customerId)
-				)
-			).suspendCredentials(accreditation, StatusListType.Bitstring, publish, customer, symmetricKey);
+			const engine = await identityServiceStrategySetup.routed(
+				'status-list',
+				await statusListArtifactFromCredential(accreditation, customer.customerId)
+			);
+			// A change that would do nothing is refused with 409 before anything is written
+			const noOp = await statusUpdateConflict(
+				'suspend',
+				accreditation,
+				StatusListType.Bitstring,
+				engine,
+				customer,
+				symmetricKey
+			);
+			if (noOp) return { success: false, status: noOp.statusCode, error: noOp.error, data: { code: noOp.code } };
+			const result = await engine.suspendCredentials(
+				accreditation,
+				StatusListType.Bitstring,
+				publish,
+				customer,
+				symmetricKey
+			);
 
 			const failure = statusUpdateFailure('suspend', result as Record<string, unknown>);
-			if (failure) return { success: false, status: failure.statusCode, error: failure.error };
+			if (failure)
+				return {
+					success: false,
+					status: failure.statusCode,
+					error: failure.error,
+					data: { code: failure.code },
+				};
 			await Credentials.instance.recordStatusChange(accreditation, 'suspend', customer);
 
 			return {
@@ -304,6 +353,9 @@ export class AccreditationService {
 				data: result as BitstringUpdateResult,
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return { success: false, status: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			return internalErrorUnlessEngineError(error);
 		}
 	}
@@ -331,15 +383,36 @@ export class AccreditationService {
 
 			const accreditation: CheqdW3CVerifiableCredential = resource;
 
-			const result = await (
-				await identityServiceStrategySetup.routed(
-					'status-list',
-					await statusListArtifactFromCredential(accreditation, customer.customerId)
-				)
-			).reinstateCredentials(accreditation, StatusListType.Bitstring, publish, customer, symmetricKey);
+			const engine = await identityServiceStrategySetup.routed(
+				'status-list',
+				await statusListArtifactFromCredential(accreditation, customer.customerId)
+			);
+			// A change that would do nothing is refused with 409 before anything is written
+			const noOp = await statusUpdateConflict(
+				'reinstate',
+				accreditation,
+				StatusListType.Bitstring,
+				engine,
+				customer,
+				symmetricKey
+			);
+			if (noOp) return { success: false, status: noOp.statusCode, error: noOp.error, data: { code: noOp.code } };
+			const result = await engine.reinstateCredentials(
+				accreditation,
+				StatusListType.Bitstring,
+				publish,
+				customer,
+				symmetricKey
+			);
 
 			const failure = statusUpdateFailure('reinstate', result as Record<string, unknown>);
-			if (failure) return { success: false, status: failure.statusCode, error: failure.error };
+			if (failure)
+				return {
+					success: false,
+					status: failure.statusCode,
+					error: failure.error,
+					data: { code: failure.code },
+				};
 			await Credentials.instance.recordStatusChange(accreditation, 'reinstate', customer);
 
 			return {
@@ -348,6 +421,9 @@ export class AccreditationService {
 				data: result as BitstringUpdateResult,
 			};
 		} catch (error) {
+			if (error instanceof OwnershipError) {
+				return { success: false, status: StatusCodes.NOT_FOUND, error: NOT_FOUND_MESSAGE };
+			}
 			return internalErrorUnlessEngineError(error);
 		}
 	}

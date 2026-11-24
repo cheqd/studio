@@ -11,6 +11,7 @@ export type AuthRuleOptions = {
 
 export class AuthRule {
 	private route: string;
+	private pattern: RegExp;
 	private method: string;
 	private scope: string;
 	private options: AuthRuleOptions;
@@ -22,6 +23,7 @@ export class AuthRule {
 		options: AuthRuleOptions = { allowUnauthorized: false, skipNamespace: false }
 	) {
 		this.route = route;
+		this.pattern = new RegExp(route);
 		this.method = method;
 		this.scope = scope;
 		this.options = options;
@@ -32,17 +34,26 @@ export class AuthRule {
 	}
 
 	public match(request: Request): boolean {
-		const { path, method } = request;
-		// Route may be /account/create which matches as is
-		// Also it may be /did/deactivate/:did which matches only with regexp
-		const directMatch = this.route === path && this.method === method;
-		const matches = path.match(this.route);
-		const regexpMatch = matches && matches.length > 0 && this.method === method;
-
-		if (directMatch || regexpMatch) {
+		if (this.matchesRoute(request.method, request.path)) {
 			return this.matchScope(request);
 		}
 		return false;
+	}
+
+	/**
+	 * True when the rule covers this method and path, before any scope or namespace check. Every route is an anchored
+	 * regular expression (`^...$`), so a rule only matches its own path, exactly.
+	 */
+	public matchesRoute(method: string, path: string): boolean {
+		return this.method === method && this.pattern.test(path);
+	}
+
+	public getRoute(): string {
+		return this.route;
+	}
+
+	public getMethod(): string {
+		return this.method;
 	}
 
 	private matchScope(request: Request): boolean {

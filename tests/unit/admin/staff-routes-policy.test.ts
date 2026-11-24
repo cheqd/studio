@@ -34,7 +34,16 @@ jest.unstable_mockModule('../../../src/services/track/tracker.js', () => ({
 }));
 const upsert = jest.fn();
 jest.unstable_mockModule('../../../src/services/api/feature-flag.js', () => ({
-	FeatureFlagService: { instance: { setFlag: upsert } },
+	FeatureFlagService: {
+		instance: {
+			setFlag: upsert,
+			readRows: async () => {
+				throw new Error('a refused call must not read flags');
+			},
+		},
+	},
+	resolveFlags: () => ({}),
+	credentialScreensMode: () => 'auto',
 	validateFlagWrite: () => ({
 		ok: true,
 		write: { flagKey: 'engine', value: { engine: 'credo' }, reason: 'x' },
@@ -73,16 +82,19 @@ const flags = new FlagsAdminController();
 const handlers: Array<{ method: string; path: string; run: Handler }> = [
 	{ method: 'GET', path: '/admin/customers', run: (q, r) => customers.list(q, r) },
 	{ method: 'GET', path: `/admin/customers/${uuid}`, run: (q, r) => customers.get(q, r) },
+	{ method: 'POST', path: `/admin/customers/${uuid}/email-reveal`, run: (q, r) => customers.revealEmail(q, r) },
 	{ method: 'GET', path: '/admin/analytics/overview', run: (q, r) => analytics.overview(q, r) },
 	{ method: 'GET', path: '/admin/analytics/endpoints', run: (q, r) => analytics.endpoints(q, r) },
 	{ method: 'GET', path: '/admin/analytics/top-accounts', run: (q, r) => analytics.topAccounts(q, r) },
 	{ method: 'GET', path: '/admin/analytics/plan-mix', run: (q, r) => analytics.planMix(q, r) },
 	{ method: 'GET', path: '/admin/analytics/funnels', run: (q, r) => analytics.funnels(q, r) },
+	{ method: 'GET', path: '/admin/analytics/funnels/stalled', run: (q, r) => analytics.stalled(q, r) },
 	{ method: 'GET', path: '/admin/analytics/faucet-to-ledger', run: (q, r) => analytics.faucetToLedger(q, r) },
 	{ method: 'GET', path: '/admin/analytics/ledger-writes', run: (q, r) => analytics.ledgerWritesReport(q, r) },
 	{ method: 'GET', path: '/admin/audit-log', run: (q, r) => audit.list(q, r) },
 	{ method: 'DELETE', path: '/admin/organisation/delete', run: (q, r) => organisation.delete(q, r) },
 	{ method: 'PUT', path: '/admin/flags', run: (q, r) => flags.putFlag(q, r) },
+	{ method: 'GET', path: `/admin/customers/${uuid}/flags`, run: (q, r) => flags.getCustomerFlags(q, r) },
 ];
 
 const rules = (
