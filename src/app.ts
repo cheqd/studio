@@ -1,4 +1,5 @@
 import { requestContext } from './middleware/request-context.js';
+import { hideInternalErrors, internalErrorHandler } from './middleware/internal-errors.js';
 import { healthRouter } from './middleware/health.js';
 import express from 'express';
 import Helmet from 'helmet';
@@ -109,6 +110,8 @@ class App {
 		this.express.use(cookieParser());
 		// Request id, timing and the engine-routing log line (engine spec 4.3)
 		this.express.use(requestContext);
+		// 500 responses carry a generic message and an error id; the detail goes to the log (S16, #834)
+		this.express.use(hideInternalErrors);
 		const auth = new Authentication();
 		// EventTracking
 		this.express.use(new ResponseTracker().trackJson);
@@ -529,6 +532,8 @@ class App {
 
 		// 404 for all other requests
 		app.all('{*path}', (_req, res) => res.status(StatusCodes.BAD_REQUEST).send('Bad request'));
+		// Errors a route throws or passes on: generic 500 body, detail logged
+		app.use(internalErrorHandler);
 	}
 }
 
