@@ -149,7 +149,7 @@ export class AccreditationController {
 	 *   post:
 	 *     tags: [ Trust Registries ]
 	 *     summary: Publish a verifiable accreditation for a DID.
-	 *     description: Generate and publish a Verifiable Accreditation for a subject DID as a DID Linked resource.
+	 *     description: Generate and publish a Verifiable Accreditation for a subject DID as a DID Linked resource. For `accredit` and `attest`, the parent accreditation (and root authorisation) must verify for the issuer DID; when it does not, the request is rejected with a 4xx status.
 	 *     operationId: accredit-issue
 	 *     parameters:
 	 *       - in: query
@@ -181,8 +181,14 @@ export class AccreditationController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: The parent accreditation or root authorisation was not found.
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: The identity engine of this account does not support this operation yet.
+	 *       503:
+	 *         description: The ledger or identity engine is temporarily unavailable; nothing was written. Retry after the `Retry-After` header.
 	 */
 	@validate
 	public async issue(request: Request, response: Response) {
@@ -376,8 +382,14 @@ export class AccreditationController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: The accreditation or its status list was not found for this account.
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: The identity engine of this account does not support this operation yet.
+	 *       503:
+	 *         description: The ledger or identity engine is temporarily unavailable; nothing was written. Retry after the `Retry-After` header.
 	 */
 	@validate
 	public async revoke(request: Request, response: Response) {
@@ -476,8 +488,14 @@ export class AccreditationController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: The accreditation or its status list was not found for this account.
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: The identity engine of this account does not support this operation yet.
+	 *       503:
+	 *         description: The ledger or identity engine is temporarily unavailable; nothing was written. Retry after the `Retry-After` header.
 	 */
 	@validate
 	public async suspend(request: Request, response: Response) {
@@ -577,8 +595,14 @@ export class AccreditationController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       404:
+	 *         description: The accreditation or its status list was not found for this account.
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: The identity engine of this account does not support this operation yet.
+	 *       503:
+	 *         description: The ledger or identity engine is temporarily unavailable; nothing was written. Retry after the `Retry-After` header.
 	 */
 	@validate
 	public async reinstate(request: Request, response: Response) {
@@ -662,7 +686,7 @@ export class AccreditationController {
 	 *         required: false
 	 *       - in: query
 	 *         name: accreditationType
-	 *         description: Select the type of accreditation to be issued.
+	 *         description: The type of accreditation to list. Required; each request lists one type, and a request without it is rejected with 400.
 	 *         schema:
 	 *           type: string
 	 *           enum:
