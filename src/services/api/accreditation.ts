@@ -26,8 +26,23 @@ import type { CredentialRequest } from '../../types/credential.js';
 import { Credentials } from './credentials.js';
 import { BitstringUpdateResult, RevocationResult } from '@cheqd/did-provider-cheqd';
 import { StatusListType } from '../../types/credential-status.js';
+import { isEngineError } from '../../helpers/engine-errors.js';
 
 const ACCREDITATION_RESOLVE_CONCURRENCY = 8;
+
+/**
+ * The failure answer for an unexpected error. A typed engine error (not implemented, not found, ledger busy, ...) is
+ * rethrown instead, so the controller's `engineErrorResponse` answers with its own status, code and `Retry-After`
+ * rather than a generic 500.
+ */
+function internalErrorUnlessEngineError(error: unknown): { success: false; status: number; error: string } {
+	if (isEngineError(error)) throw error;
+	return {
+		success: false,
+		status: StatusCodes.INTERNAL_SERVER_ERROR,
+		error: `Internal error: ${(error as Error)?.message || error}`,
+	};
+}
 
 export class AccreditationService {
 	public static instance = new AccreditationService();
@@ -175,7 +190,9 @@ export class AccreditationService {
 				if (result.success === false) {
 					return {
 						success: false,
-						status: result.status,
+						// A chain that verifies as invalid comes back as a 200 verification result; issuing on it is
+						// the caller's error, so it must not reach the client as a success status
+						status: result.status >= StatusCodes.BAD_REQUEST ? result.status : StatusCodes.BAD_REQUEST,
 						error: `Invalid Request: Root Authorization or parent Accreditation is not valid: ${result.error}`,
 					};
 				}
@@ -199,11 +216,7 @@ export class AccreditationService {
 				},
 			};
 		} catch (error) {
-			return {
-				success: false,
-				status: StatusCodes.INTERNAL_SERVER_ERROR,
-				error: `Internal error: ${(error as Error)?.message || error}`,
-			};
+			return internalErrorUnlessEngineError(error);
 		}
 	}
 
@@ -268,11 +281,7 @@ export class AccreditationService {
 				data: result as RevocationResult | BitstringUpdateResult,
 			};
 		} catch (error) {
-			return {
-				success: false,
-				status: StatusCodes.INTERNAL_SERVER_ERROR,
-				error: `Internal error: ${(error as Error)?.message || error}`,
-			};
+			return internalErrorUnlessEngineError(error);
 		}
 	}
 
@@ -337,11 +346,7 @@ export class AccreditationService {
 				data: result as BitstringUpdateResult,
 			};
 		} catch (error) {
-			return {
-				success: false,
-				status: StatusCodes.INTERNAL_SERVER_ERROR,
-				error: `Internal error: ${(error as Error)?.message || error}`,
-			};
+			return internalErrorUnlessEngineError(error);
 		}
 	}
 
@@ -406,11 +411,7 @@ export class AccreditationService {
 				data: result as BitstringUpdateResult,
 			};
 		} catch (error) {
-			return {
-				success: false,
-				status: StatusCodes.INTERNAL_SERVER_ERROR,
-				error: `Internal error: ${(error as Error)?.message || error}`,
-			};
+			return internalErrorUnlessEngineError(error);
 		}
 	}
 
@@ -614,11 +615,7 @@ export class AccreditationService {
 				},
 			};
 		} catch (error) {
-			return {
-				success: false,
-				status: StatusCodes.INTERNAL_SERVER_ERROR,
-				error: `Internal error: ${(error as Error)?.message || error}`,
-			};
+			return internalErrorUnlessEngineError(error);
 		}
 	}
 }

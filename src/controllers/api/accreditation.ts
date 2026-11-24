@@ -148,7 +148,7 @@ export class AccreditationController {
 	 *   post:
 	 *     tags: [ Trust Registries ]
 	 *     summary: Publish a verifiable accreditation for a DID.
-	 *     description: Generate and publish a Verifiable Accreditation for a subject DID as a DID Linked resource.
+	 *     description: Generate and publish a Verifiable Accreditation for a subject DID as a DID Linked resource. For `accredit` and `attest`, the parent accreditation (and root authorisation) must verify for the issuer DID; when it does not, the request is rejected with a 4xx status.
 	 *     operationId: accredit-issue
 	 *     parameters:
 	 *       - in: query
@@ -814,7 +814,7 @@ export class AccreditationController {
 	 *         required: false
 	 *       - in: query
 	 *         name: accreditationType
-	 *         description: Select the type of accreditation to be issued.
+	 *         description: The type of accreditation to list. Required; each request lists one type, and a request without it is rejected with 400.
 	 *         schema:
 	 *           type: string
 	 *           enum:
