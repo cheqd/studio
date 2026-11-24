@@ -1,5 +1,5 @@
 {
-	"generatedFrom": "b54a793",
+	"generatedFrom": "07182ce",
 	"generatedBy": "npx tsx tests/contract/scripts/generate-inventory.ts",
 	"routes": [
 		{
@@ -120,7 +120,7 @@
 			"path": "/account/bootstrap",
 			"surface": "internal",
 			"auth": "webhook-signature",
-			"scopes": ["create:account"],
+			"scopes": [],
 			"tier": 2,
 			"sideEffect": "state-database",
 			"sensitive": false,
@@ -148,7 +148,7 @@
 			"path": "/account/export-keys",
 			"surface": "api",
 			"auth": "scoped",
-			"scopes": ["create:account", "export:account:keys"],
+			"scopes": ["export:account:keys"],
 			"tier": 2,
 			"sideEffect": "state-database",
 			"sensitive": false,
@@ -162,7 +162,7 @@
 			"path": "/account/faucet",
 			"surface": "api",
 			"auth": "scoped",
-			"scopes": ["create:account", "request:faucet:testnet"],
+			"scopes": ["request:faucet:testnet"],
 			"tier": 1,
 			"sideEffect": "faucet",
 			"sensitive": false,
@@ -1534,7 +1534,7 @@
 			"path": "/providers/:providerId/did/import",
 			"surface": "api",
 			"auth": "scoped",
-			"scopes": ["configure:providers:mainnet", "import:did:mainnet", "import:did:testnet"],
+			"scopes": ["import:did:mainnet", "import:did:testnet"],
 			"tier": 2,
 			"sideEffect": "state-database",
 			"sensitive": false,
