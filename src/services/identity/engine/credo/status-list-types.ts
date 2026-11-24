@@ -38,7 +38,8 @@ export interface StatusListSession {
 	signBitstringProof(input: {
 		did: string;
 		signerDidUrl: string;
-		purposes: string[];
+		/** Exactly as the published list states it (a string or an array): the JWT must match the list. */
+		statusPurpose: string | string[];
 		ttl?: number;
 		issuanceDate: string;
 		expirationDate?: string;
