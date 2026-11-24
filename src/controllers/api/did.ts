@@ -198,6 +198,18 @@ export class DIDController {
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       402:
 	 *         description: The payer account has no CHEQ, or too little to pay the fee. The message says how to fund it.
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
 	 *         content:
@@ -206,6 +218,18 @@ export class DIDController {
 	 *               $ref: '#/components/schemas/InvalidRequest'
 	 *             example:
 	 *               error: Internal Error
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async createDid(request: Request, response: Response) {
@@ -397,8 +421,38 @@ export class DIDController {
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       402:
 	 *         description: The payer account has no CHEQ, or too little to pay the fee. The message says how to fund it.
+	 *       404:
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async updateDid(request: Request, response: Response) {
@@ -534,6 +588,18 @@ export class DIDController {
 	 *               error: InvalidRequest
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
 	 *         content:
@@ -542,6 +608,18 @@ export class DIDController {
 	 *               $ref: '#/components/schemas/InvalidRequest'
 	 *             example:
 	 *               error: Internal Error
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async importDid(request: Request, response: Response) {
@@ -665,8 +743,38 @@ export class DIDController {
 	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       402:
 	 *         description: The payer account has no CHEQ, or too little to pay the fee. The message says how to fund it.
+	 *       404:
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async deactivateDid(request: Request, response: Response) {
@@ -786,8 +894,26 @@ export class DIDController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	public async getDids(request: Request, response: Response) {
 		// Extract did from params
@@ -905,8 +1031,26 @@ export class DIDController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	public async resolveDidUrl(request: Request, response: Response) {
 		// Get strategy e.g. postgres or local
@@ -952,9 +1096,10 @@ export class DIDController {
 	 *       Exports a decentralized identifier associated with the user's account together with its custodied
 	 *       private keys. The result is never returned in plaintext: it is encrypted on the server with a key derived
 	 *       from the supplied `password` (scrypt, then AES-256-GCM) and returned as a versioned
-	 *       `cheqd-studio-key-export` envelope (see `EncryptedKeyExport`). Requires a sign-in within the last
-	 *       `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300); otherwise a `401` with code
-	 *       `REAUTHENTICATION_REQUIRED` is returned.
+	 *       `cheqd-studio-key-export` envelope (see `EncryptedKeyExport`). Requires a recent portal sign-in,
+	 *       within the last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300); otherwise a `401` with code
+	 *       `REAUTHENTICATION_REQUIRED` is returned. API keys and machine credentials cannot call this route: they
+	 *       carry no sign-in time, so they always get that `401`.
 	 *     parameters:
 	 *       - in: path
 	 *         name: did
@@ -1007,6 +1152,18 @@ export class DIDController {
 	 *           application/json:
 	 *             schema:
 	 *               $ref: '#/components/schemas/ReauthenticationRequiredError'
+	 *       404:
+	 *         description: The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/NotFoundError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
 	 *       429:
 	 *         description: Too many concurrent exports (`EXPORT_BUSY`). Retry after the `Retry-After` interval.
 	 *         content:
@@ -1021,6 +1178,18 @@ export class DIDController {
 	 *               $ref: '#/components/schemas/InvalidRequest'
 	 *             example:
 	 *               error: Internal Error
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async exportDid(request: Request, response: Response) {

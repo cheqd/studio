@@ -88,11 +88,11 @@ existing service, so wiring changes no request, response or status code.
 | `GET /did/list` | `did` | none | Yes |
 | `POST /did/export/:did` | `did` | `did` | Yes |
 | `POST /account/export-keys` (DID export) | `did` | `did` | Yes |
-| `POST /providers/:providerId/did/import` (Dock hand-off export, in `dock/identity.ts`) | `did` | `did` | Yes |
+| `POST /providers/:providerId/did/import` (Dock hand-off export) | `did` | `did` | **No.** The route handler (`providers.controller.ts`) exports with `agent.exportDid` (the Veramo service, unrouted) and then calls `DockIdentityService.importDidV2`. Only `DockIdentityService.importDid` exports through the router, and the route does not call it. See "Deliberately not wired" |
 | `POST /resource/create/:did` | `resource` | `did` (the DID owning the resource) | Yes |
 | `GET /resource/list` | `resource` | `did` when the `did` filter is given, else none | Yes |
 | `POST /credential/issue` | `credential` | `did` (the issuer DID): its recorded engine signs; an issuer Studio has no record of is a new artefact (Credo) | Yes |
-| `POST /credentials/issued/:id/re-issue`, accreditation issue | `credential` | none (new) | Yes (already, through `issue_credential`) |
+| `POST /credentials/issued/:id/re-issue`, accreditation issue | `credential` | `did` (the issuer DID), as for `POST /credential/issue`: both go through `issue_credential`, whose engine is the issuer DID's recorded engine (an issuer with no record counts as new, Credo) | Yes |
 | `POST /credential/verify` | `credential` | none | Yes |
 | Issued-credential status sync (`syncStatusFromProvider`, run when issued credentials are read) | `status-list` | `credential` | Yes |
 | Issued-credential fetch from the provider (`fetchCredentialFromProvider`) | `credential` | `credential` | Yes |
@@ -128,7 +128,7 @@ existing service, so wiring changes no request, response or status code.
 | Payment-account key creation (`customer.ts` create, `account.ts` bootstrap) | These create the customer's Secp256k1 payer key, not a key-family API route. `customer.ts` also builds the strategy with the customer name rather than the id (the same kind of bug as the providers controller), so the router would be handed the wrong identity. Leave on Veramo until that is fixed and the payer key policy for Credo is decided. |
 | API keys, operations and payment-account export (`setAPIKey`, `getAPIKey`, `listOperations`, `exportPaymentAccountKeys`) | Studio concerns, deliberately outside `IdentityEngine` (`StudioAccountServices`). |
 | `POST /providers/:providerId/did/import` in `providers.controller.ts` | It builds `IdentityServiceStrategySetup` with the whole customer entity instead of the customer id (existing bug). Routing it would put an object in the routing log and flag lookup. Fix the argument first, then wire. |
-| Credo method bodies (`CredoEngine` throws `NotImplementedByEngine` for credentials and status lists) | Other agents are building them. Nothing here changes `credo/`. |
+| Credo methods still missing | Credential and status-list bodies are built (`credo/credentials.ts`, `credo/status-lists.ts`). `CredoEngine` still throws `NotImplementedByEngine` (501) for `importKey`, `importDid`, `exportDid`, `broadcastStatusList2021`, `broadcastBitstringStatusList` and `remunerateStatusList2021`. |
 
 ## Differences between the routed and the direct path
 
@@ -167,13 +167,52 @@ reinstate went to Veramo, which did nothing.
 ## Status updates that change nothing
 
 `/credential/revoke`, `/credential/suspend`, `/credential/reinstate` and the accreditation equivalents no longer answer
-200 when nothing was updated (`src/services/api/status-update-outcome.ts`):
+200 when nothing was updated (`src/services/api/status-update-outcome.ts`).
 
-- 409 when the credential is already in the requested state;
+A change that would do nothing answers **409** on both engines, with `error` and a stable `code`:
+
+| `code` | When |
+|---|---|
+| `already_revoked` | revoke of a revoked credential |
+| `already_suspended` | suspend of a suspended credential |
+| `not_suspended` | reinstate of a credential that is not suspended |
+| `credential_revoked` | suspend or reinstate of a revoked credential (Bitstring lists; revocation cannot be undone) |
+
+Before the change is sent to the engine, `statusUpdateConflict` reads the credential's current status through the same
+engine (`checkBitstringStatusList`, or `checkStatusList2021` on the list for the action's purpose). Neither engine
+reports every no-op itself: the Veramo plugin answers `{ revoked: true }` for a StatusList2021 credential that was
+already revoked, and on a Bitstring list both engines would move a revoked credential back to valid or suspended. When
+the status cannot be read (undecodable credential, no status entry, an encrypted list, a failing read) the update runs
+and its own result decides. A no-op the engine reports itself (a race after the read) is also 409 with the same code.
+
+A genuine failure is not 409:
+
 - 400 when the engine reported an error (its message is returned);
 - 500 otherwise (`updated: false` with no error, for example a list recorded against the wrong engine).
 
 A bulk call that updated at least one entry stays 200 and carries the per-entry results.
+
+## Extra signers and cross-account offers on Credo DIDs
+
+- **Extra signers.** `publicKeyHexs` on `POST /did/update`, `POST /did/deactivate/:did` and
+  `POST /resource/create/:did` names extra keys to sign with (for a DID controlled by several DIDs). The Credo engine
+  signs with the DID's own authentication keys only, so a key in `publicKeyHexs` that is not one of them is refused
+  with **400** `extra_signers_not_supported` ("Extra signers (publicKeyHexs) are not supported for this identifier
+  yet") before anything is written. Keys that are the DID's own authentication keys, and an empty list, are accepted.
+  Veramo DIDs are unchanged.
+- **Offers to another account's Credo DID.** Issuing to a DID that Studio holds makes an offer. The subject check
+  (`didExists`) on Credo only sees the issuer's own DIDs, so an offer to a Credo DID of another account used to be
+  dropped and the credential recorded as `issued`. `POST /credential/issue` now refuses that case with **501**
+  `NotSupported` before a status index is reserved or anything is signed (`assertSubjectCanBeOffered` in
+  `src/services/api/credentials.ts`). The issuer's own Credo DIDs, Veramo DIDs, DIDs Studio has no record of and
+  non-cheqd DIDs behave as before.
+
+**Follow-up (not built yet):** pass extra signers through to the Credo registrar. For each key in `publicKeyHexs`
+that is not the DID's own, find the key in the customer's Credo tenant (the same lookup `assertPublicKeysOwned`
+does), add it to the `keys` links handed to `session.updateDid`, `session.deactivateDid` and
+`session.createResource` with the verification method id of the controller DID it signs for, and drop the 400. Then
+decide how a cross-account offer to a Credo DID is stored (the holder's Credo wallet, not Veramo's data store) and
+drop the 501.
 
 ## Correcting rows recorded wrongly (migration 1791702000000)
 

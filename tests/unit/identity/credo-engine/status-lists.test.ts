@@ -16,6 +16,7 @@ import { SafeFetchError, type SafeFetch } from '../../../../src/helpers/safe-fet
 import { EngineGoneError } from '../../../../src/services/identity/engine/errors.js';
 import { customer, FakeRuntime, FakeStore } from './fakes.js';
 import { STATUS_LIST_MAX_LENGTH } from '../../../../src/types/constants.js';
+import { statusUpdateConflict } from '../../../../src/services/api/status-update-outcome.js';
 
 const alice = customer('alice');
 const bob = customer('bob');
@@ -978,5 +979,76 @@ describe('Token Status List', () => {
 		expect(h.fetchCalls).toEqual([hosted]);
 		original.fail = true;
 		expect(await engine.getTokenStatus!('https://169.254.169.254/x', 3)).toMatchObject({ verified: false });
+	});
+});
+
+describe('status changes that would change nothing, read through the Credo engine (U-58)', () => {
+	let h: Harness;
+	const url = `${URL_BASE}${DID}?resourceName=bits&resourceType=BitstringStatusListCredential`;
+	const credential = (index: number) => ({
+		issuer: DID,
+		credentialStatus: {
+			type: 'BitstringStatusListEntry',
+			statusPurpose: 'message',
+			statusListIndex: String(index),
+			statusListCredential: url,
+		},
+	});
+	beforeEach(() => {
+		h = harness();
+		// 4 valid, 5 revoked, 6 suspended
+		h.runtime.put(
+			DID,
+			'bits',
+			'BitstringStatusListCredential',
+			bitstringContent([
+				[5, 1],
+				[6, 2],
+			])
+		);
+		h.runtime.put(DID, 'list-a', 'StatusList2021Revocation', sl2021Content([10]));
+		h.runtime.put(DID, 'list-s', 'StatusList2021Suspension', sl2021Content([], 'suspension'));
+	});
+
+	it.each<['revoke' | 'suspend' | 'reinstate', number, string | null]>([
+		['revoke', 5, 'already_revoked'],
+		['revoke', 6, null],
+		['suspend', 6, 'already_suspended'],
+		['suspend', 5, 'credential_revoked'],
+		['reinstate', 4, 'not_suspended'],
+		['reinstate', 5, 'credential_revoked'],
+		['reinstate', 6, null],
+	])('Bitstring: %s of index %i answers %s', async (action, index, code) => {
+		const outcome = await statusUpdateConflict(action, credential(index), 'BitstringStatusList', h.engine, alice);
+		if (code === null) expect(outcome).toBeNull();
+		else expect(outcome).toMatchObject({ statusCode: 409, code });
+		expect(h.runtime.written).toHaveLength(0);
+	});
+
+	it('StatusList2021: already revoked, and reinstate of a credential that is not suspended', async () => {
+		const sl2021 = (name: string, purpose: string, index: number) => ({
+			issuer: DID,
+			credentialStatus: {
+				id: `${URL_BASE}${DID}?resourceName=${name}&resourceType=StatusList2021${purpose === 'revocation' ? 'Revocation' : 'Suspension'}#${index}`,
+				type: 'StatusList2021Entry',
+				statusPurpose: purpose,
+				statusListIndex: String(index),
+			},
+		});
+		expect(
+			await statusUpdateConflict('revoke', sl2021('list-a', 'revocation', 10), 'StatusList2021', h.engine, alice)
+		).toMatchObject({ statusCode: 409, code: 'already_revoked' });
+		expect(
+			await statusUpdateConflict('revoke', sl2021('list-a', 'revocation', 11), 'StatusList2021', h.engine, alice)
+		).toBeNull();
+		expect(
+			await statusUpdateConflict(
+				'reinstate',
+				sl2021('list-s', 'suspension', 3),
+				'StatusList2021',
+				h.engine,
+				alice
+			)
+		).toMatchObject({ statusCode: 409, code: 'not_suspended' });
 	});
 });

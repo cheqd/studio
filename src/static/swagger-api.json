@@ -3058,7 +3058,7 @@
       },
       "ReauthenticationRequiredError": {
         "type": "object",
-        "description": "The caller did not sign in recently enough. Also sent as `WWW-Authenticate: Bearer error=\"insufficient_user_authentication\", max_age=N` (RFC 9470). Sign the user in again (Logto `max_age` / `prompt=login`) and retry.",
+        "description": "The caller did not sign in to the portal recently enough. API keys and machine credentials carry no sign-in time, so they always get this answer on the routes that need it. Also sent as `WWW-Authenticate: Bearer error=\"insufficient_user_authentication\", max_age=N` (RFC 9470). Sign the user in again (Logto `max_age` / `prompt=login`) and retry.",
         "properties": {
           "error": {
             "type": "string"
@@ -3313,7 +3313,7 @@
             }
           },
           "publicKeyHexs": {
-            "description": "List of key references (publicKeys) which will be used for signing the message. The should be in hexadecimal format and placed in the wallet of current user.",
+            "description": "List of key references (publicKeys) which will be used for signing the message. They should be in hexadecimal format and placed in the wallet of current user. On a DID created by the Credo engine, extra signers are not supported yet: a key that is not one of the DID's own authentication keys is refused with 400 (`code: extra_signers_not_supported`).",
             "type": "array",
             "items": {
               "type": "string"
@@ -3328,7 +3328,7 @@
         "type": "object",
         "properties": {
           "publicKeyHexs": {
-            "description": "List of key references (publicKeys) which will be used for signing the message. The should be in hexadecimal format and placed in the wallet of current user.",
+            "description": "List of key references (publicKeys) which will be used for signing the message. They should be in hexadecimal format and placed in the wallet of current user. On a DID created by the Credo engine, extra signers are not supported yet: a key that is not one of the DID's own authentication keys is refused with 400 (`code: extra_signers_not_supported`).",
             "type": "array",
             "items": {
               "type": "string"
@@ -3388,7 +3388,7 @@
             "type": "string"
           },
           "publicKeyHexs": {
-            "description": "List of key references (publicKeys) which will be used for signing the message. The should be in hexadecimal format and placed in the wallet of current user.",
+            "description": "List of key references (publicKeys) which will be used for signing the message. They should be in hexadecimal format and placed in the wallet of current user. On a DID created by the Credo engine, extra signers are not supported yet: a key that is not one of the DID's own authentication keys is refused with 400 (`code: extra_signers_not_supported`).",
             "type": "array",
             "items": {
               "type": "string"
@@ -4168,6 +4168,86 @@
           }
         }
       },
+      "RateLimited": {
+        "description": "Too many requests from this IP address or account in the current window (defaults 1000 a minute per IP, 600 a minute per account). Sent with a `Retry-After` header in seconds, and `RateLimit-Limit`, `RateLimit-Remaining` and `RateLimit-Reset` on every response.",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "Too many requests. Try again later."
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "rate_limited"
+            ]
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "description": "The JSON body is larger than the limit: 1 MB on most routes (`JSON_BODY_LIMIT`), 10 MB on `POST /resource/create/{did}` and `POST /credentials/import` (`JSON_BODY_LIMIT_LARGE`). The body of this answer is the web framework's default error page, not JSON.",
+        "type": "string"
+      },
+      "EngineUnavailable": {
+        "description": "Nothing was done and the request can be retried: the ledger is busy for this account (`code: LedgerUnavailable`), the identity engine for the artefact could not be determined (`code: EngineRoutingUnavailable`), or the engine is not configured (`code: engine_unavailable`). A retryable answer carries a `Retry-After` header in seconds.",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "EngineNotImplemented": {
+        "description": "The identity engine of this account or artefact does not offer this operation (`code: NotImplemented`), or does not support what was asked (`code: NotSupported`, for example an encrypted status list on Credo, or an offer to a Credo DID held by another account).",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "NotImplemented",
+              "NotSupported"
+            ]
+          }
+        }
+      },
+      "Gone": {
+        "description": "The operation has been withdrawn (`code: Gone`). Encrypted status lists can no longer be created.",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "StatusUpdateConflict": {
+        "description": "The status change would change nothing, so nothing was written: the credential is already revoked (`already_revoked`), already suspended (`already_suspended`), not suspended when asked to reinstate (`not_suspended`), or revoked when asked to suspend or reinstate (`credential_revoked`; revocation cannot be undone). The same on both engines.",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "Nothing was changed: the credential is already revoked"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "already_revoked",
+              "already_suspended",
+              "not_suspended",
+              "credential_revoked"
+            ],
+            "example": "already_revoked"
+          }
+        }
+      },
       "NotFoundError": {
         "description": "The resource was not found, or it is not owned by the caller. Both cases answer identically.",
         "type": "object",
@@ -4278,7 +4358,7 @@
           "Account"
         ],
         "summary": "Permanently delete the authenticated user's Studio account.",
-        "description": "Hard-deletes the account: cancels any active Stripe subscription, deletes the Logto user, then deletes the customer row and everything it owns (DIDs, credentials, resources, keys, API keys, payment accounts). This cannot be undone, and DID documents or resources already published on-chain are not removed from the ledger. Requires `{ \"confirm\": true }` in the request body, and a sign-in within the last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300).",
+        "description": "Hard-deletes the account: cancels any active Stripe subscription, deletes the Logto user, then deletes the customer row and everything it owns (DIDs, credentials, resources, keys, API keys, payment accounts). This cannot be undone, and DID documents or resources already published on-chain are not removed from the ledger. Requires `{ \"confirm\": true }` in the request body, and a recent portal sign-in, within the last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300). API keys and machine credentials cannot call this route: they always get `401` `REAUTHENTICATION_REQUIRED`.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -4537,7 +4617,7 @@
           "Account"
         ],
         "summary": "Export the authenticated user's private key material.",
-        "description": "Returns the private keys for every DID the customer owns (via the same mechanism as `/did/export/{did}`) and the two cosmos payment-account private keys (mainnet and testnet fee-payer wallets). The result is never returned in plaintext: it is encrypted on the server with a key derived from the supplied `password` (scrypt, then AES-256-GCM) and returned as a versioned `cheqd-studio-key-export` envelope (see `EncryptedKeyExport`). The decrypted JSON has the shape `{ dids: [{ did, export?, error? }], paymentAccounts: [{ network, address, type, privateKeyHex }] }`. A DID that fails to export (e.g. one custodied by an external provider rather than Studio) is reported per-DID under `error` rather than failing the whole export. Requires a sign-in within the last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300); otherwise a `401` with code `REAUTHENTICATION_REQUIRED` is returned.",
+        "description": "Returns the private keys for every DID the customer owns (via the same mechanism as `/did/export/{did}`) and the two cosmos payment-account private keys (mainnet and testnet fee-payer wallets). The result is never returned in plaintext: it is encrypted on the server with a key derived from the supplied `password` (scrypt, then AES-256-GCM) and returned as a versioned `cheqd-studio-key-export` envelope (see `EncryptedKeyExport`). The decrypted JSON has the shape `{ dids: [{ did, export?, error? }], paymentAccounts: [{ network, address, type, privateKeyHex }] }`. A DID that fails to export (e.g. one custodied by an external provider rather than Studio) is reported per-DID under `error` rather than failing the whole export. Requires a recent portal sign-in, within the last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300); otherwise a `401` with code `REAUTHENTICATION_REQUIRED` is returned. API keys and machine credentials cannot call this route: they carry no sign-in time, so they always get that `401`.",
         "requestBody": {
           "required": true,
           "content": {
@@ -4661,16 +4741,57 @@
             "$ref": "#/components/schemas/UnauthorizedError"
           },
           "404": {
-            "description": "The parent accreditation or root authorisation was not found."
+            "description": "The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
           },
           "500": {
             "$ref": "#/components/schemas/InternalError"
           },
           "501": {
-            "description": "The identity engine of this account does not support this operation yet."
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
           },
           "503": {
-            "description": "The ledger or identity engine is temporarily unavailable; nothing was written. Retry after the `Retry-After` header."
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -4734,8 +4855,48 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -4792,16 +4953,67 @@
             "$ref": "#/components/schemas/UnauthorizedError"
           },
           "404": {
-            "description": "The accreditation or its status list was not found for this account."
+            "description": "The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The change would do nothing; see `code`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusUpdateConflict"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
           },
           "500": {
             "$ref": "#/components/schemas/InternalError"
           },
           "501": {
-            "description": "The identity engine of this account does not support this operation yet."
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
           },
           "503": {
-            "description": "The ledger or identity engine is temporarily unavailable; nothing was written. Retry after the `Retry-After` header."
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -4858,16 +5070,67 @@
             "$ref": "#/components/schemas/UnauthorizedError"
           },
           "404": {
-            "description": "The accreditation or its status list was not found for this account."
+            "description": "The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The change would do nothing; see `code`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusUpdateConflict"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
           },
           "500": {
             "$ref": "#/components/schemas/InternalError"
           },
           "501": {
-            "description": "The identity engine of this account does not support this operation yet."
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
           },
           "503": {
-            "description": "The ledger or identity engine is temporarily unavailable; nothing was written. Retry after the `Retry-After` header."
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -4924,16 +5187,67 @@
             "$ref": "#/components/schemas/UnauthorizedError"
           },
           "404": {
-            "description": "The accreditation or its status list was not found for this account."
+            "description": "The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The change would do nothing; see `code`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusUpdateConflict"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
           },
           "500": {
             "$ref": "#/components/schemas/InternalError"
           },
           "501": {
-            "description": "The identity engine of this account does not support this operation yet."
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
           },
           "503": {
-            "description": "The ledger or identity engine is temporarily unavailable; nothing was written. Retry after the `Retry-After` header."
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -5019,8 +5333,38 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -6630,8 +6974,48 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -6745,18 +7129,53 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/Gone"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
                 }
               }
             }
           },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -6822,8 +7241,58 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "404": {
+            "description": "The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -6889,8 +7358,58 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "404": {
+            "description": "The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -6963,8 +7482,58 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "404": {
+            "description": "The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -7038,8 +7607,38 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -7130,6 +7729,16 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
           }
@@ -7169,6 +7778,16 @@
           },
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
           },
           "500": {
             "$ref": "#/components/schemas/InternalError"
@@ -7222,8 +7841,58 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "404": {
+            "description": "The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -7296,8 +7965,48 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -7366,8 +8075,68 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "404": {
+            "description": "The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The change would do nothing; see `code`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusUpdateConflict"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -7434,8 +8203,68 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "404": {
+            "description": "The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The change would do nothing; see `code`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusUpdateConflict"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -7502,8 +8331,68 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "404": {
+            "description": "The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The change would do nothing; see `code`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusUpdateConflict"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -7655,8 +8544,38 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -7740,8 +8659,38 @@
               }
             }
           },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       },
@@ -7834,8 +8783,48 @@
               }
             }
           },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -7915,8 +8904,48 @@
               }
             }
           },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -8120,6 +9149,26 @@
           "402": {
             "description": "The payer account has no CHEQ, or too little to pay the fee. The message says how to fund it."
           },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
             "content": {
@@ -8129,6 +9178,26 @@
                 },
                 "example": {
                   "error": "Internal Error"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
                 }
               }
             }
@@ -8177,8 +9246,58 @@
           "402": {
             "description": "The payer account has no CHEQ, or too little to pay the fee. The message says how to fund it."
           },
+          "404": {
+            "description": "The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -8231,6 +9350,26 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
             "content": {
@@ -8240,6 +9379,26 @@
                 },
                 "example": {
                   "error": "Internal Error"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
                 }
               }
             }
@@ -8299,8 +9458,58 @@
           "402": {
             "description": "The payer account has no CHEQ, or too little to pay the fee. The message says how to fund it."
           },
+          "404": {
+            "description": "The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -8390,8 +9599,38 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -8491,8 +9730,38 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -8503,7 +9772,7 @@
           "Decentralized Identifiers (DIDs)"
         ],
         "summary": "Export a DID Document with its private keys, encrypted with a password.",
-        "description": "Exports a decentralized identifier associated with the user's account together with its custodied private keys. The result is never returned in plaintext: it is encrypted on the server with a key derived from the supplied `password` (scrypt, then AES-256-GCM) and returned as a versioned `cheqd-studio-key-export` envelope (see `EncryptedKeyExport`). Requires a sign-in within the last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300); otherwise a `401` with code `REAUTHENTICATION_REQUIRED` is returned.",
+        "description": "Exports a decentralized identifier associated with the user's account together with its custodied private keys. The result is never returned in plaintext: it is encrypted on the server with a key derived from the supplied `password` (scrypt, then AES-256-GCM) and returned as a versioned `cheqd-studio-key-export` envelope (see `EncryptedKeyExport`). Requires a recent portal sign-in, within the last `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300); otherwise a `401` with code `REAUTHENTICATION_REQUIRED` is returned. API keys and machine credentials cannot call this route: they carry no sign-in time, so they always get that `401`.",
         "parameters": [
           {
             "in": "path",
@@ -8588,6 +9857,26 @@
               }
             }
           },
+          "404": {
+            "description": "The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
           "429": {
             "description": "Too many concurrent exports (`EXPORT_BUSY`). Retry after the `Retry-After` interval.",
             "content": {
@@ -8607,6 +9896,26 @@
                 },
                 "example": {
                   "error": "Internal Error"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
                 }
               }
             }
@@ -8735,6 +10044,26 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
             "content": {
@@ -8744,6 +10073,26 @@
                 },
                 "example": {
                   "error": "Internal Error"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
                 }
               }
             }
@@ -8799,6 +10148,26 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
             "content": {
@@ -8808,6 +10177,26 @@
                 },
                 "example": {
                   "error": "Internal Error"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
                 }
               }
             }
@@ -8860,6 +10249,16 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
             "content": {
@@ -8869,6 +10268,26 @@
                 },
                 "example": {
                   "error": "Internal Error"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
                 }
               }
             }
@@ -8964,6 +10383,16 @@
               }
             }
           },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "description": "An internal error has occurred. Additional state information plus metadata may be available in the response body.",
             "content": {
@@ -8973,6 +10402,26 @@
                 },
                 "example": {
                   "error": "Internal Error"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
                 }
               }
             }
@@ -9134,8 +10583,48 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -9207,8 +10696,48 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -9600,8 +11129,38 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -9654,8 +11213,38 @@
           "404": {
             "description": "Credential offer not found"
           },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -9739,8 +11328,48 @@
           "404": {
             "description": "Credential offer not found"
           },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -9811,8 +11440,48 @@
           "404": {
             "description": "Credential offer not found"
           },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -9886,8 +11555,48 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -9987,8 +11696,38 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -10029,8 +11768,38 @@
           "404": {
             "description": "Credential not found"
           },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -10087,8 +11856,58 @@
           "402": {
             "description": "The payer account has no CHEQ, or too little to pay the fee. The message says how to fund it."
           },
+          "404": {
+            "description": "The DID, key, status list or credential named is not this account's, or does not exist (the same answer for both).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is over the size limit.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadTooLarge"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -10193,8 +12012,38 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }
@@ -10302,8 +12151,38 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "429": {
+            "description": "Rate limited; see `Retry-After`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                }
+              }
+            }
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
+          },
+          "501": {
+            "description": "Not available on the identity engine of this account or artefact.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineNotImplemented"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nothing was done; retry after `Retry-After` when it is sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineUnavailable"
+                }
+              }
+            }
           }
         }
       }

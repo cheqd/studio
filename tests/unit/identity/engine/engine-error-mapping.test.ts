@@ -32,6 +32,7 @@ jest.unstable_mockModule('../../../../src/services/identity/index.js', () => ({
 	},
 }));
 jest.unstable_mockModule('../../../../src/services/identity/engine/artifact-refs.js', () => ({
+	statusListReference: () => undefined,
 	statusListArtifactFromCredential: async () => undefined,
 	statusListArtifact: async () => undefined,
 	credentialArtifact: () => undefined,

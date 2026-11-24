@@ -113,8 +113,32 @@ export class PresentationController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async createPresentation(request: Request, response: Response) {
@@ -198,8 +222,32 @@ export class PresentationController {
 	 *         $ref: '#/components/schemas/InvalidRequest'
 	 *       401:
 	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       413:
+	 *         description: The JSON body is over the size limit.
+	 *         content:
+	 *           text/html:
+	 *             schema:
+	 *               $ref: '#/components/schemas/PayloadTooLarge'
+	 *       429:
+	 *         description: Rate limited; see `Retry-After`.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/RateLimited'
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
+	 *       501:
+	 *         description: Not available on the identity engine of this account or artefact.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineNotImplemented'
+	 *       503:
+	 *         description: Nothing was done; retry after `Retry-After` when it is sent.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/EngineUnavailable'
 	 */
 	@validate
 	public async verifyPresentation(request: Request, response: Response) {

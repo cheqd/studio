@@ -53,6 +53,9 @@ describe('requireFreshSignIn', () => {
 			const { res, next } = run(value);
 			expect(next).not.toHaveBeenCalled();
 			expect(res.body.code).toBe(FRESH_SIGNIN_ERROR_CODE);
+			// An API key or machine credential never has auth_time: the message says so in plain words
+			expect(res.body.error).toContain('requires a recent portal sign-in');
+			expect(res.body.error).toContain('API keys and machine credentials cannot call it');
 		}
 	});
 

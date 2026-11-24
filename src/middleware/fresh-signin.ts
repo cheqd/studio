@@ -13,7 +13,8 @@ export function getFreshSignInMaxAgeSeconds(): number {
 /**
  * Requires the caller to have authenticated recently. `response.locals.authTime` is the Logto `auth_time` claim
  * (seconds since epoch), set by the id-token fetchers. Fails closed: if there is no auth_time (API keys, M2M
- * credentials, tokens without the claim) the request is rejected with the same distinct error code.
+ * credentials, tokens without the claim) the request is rejected with the same distinct error code. This is deliberate
+ * (U-63): key export and account deletion can only be called from a portal session, never with an API key.
  *
  * The 401 carries an RFC 9470 `WWW-Authenticate: Bearer error="insufficient_user_authentication"` challenge and a
  * JSON body `{ error, code: "REAUTHENTICATION_REQUIRED", maxAgeSeconds }`.
@@ -36,7 +37,7 @@ export function requireFreshSignIn(options: { maxAgeSeconds?: number; now?: () =
 			`Bearer error="insufficient_user_authentication", error_description="A recent sign-in is required", max_age=${maxAge}`
 		);
 		return response.status(StatusCodes.UNAUTHORIZED).json({
-			error: `A sign-in within the last ${maxAge} seconds is required for this action. Please sign in again.`,
+			error: `This action requires a recent portal sign-in (within the last ${maxAge} seconds); API keys and machine credentials cannot call it. Sign in to the portal again and retry.`,
 			code: FRESH_SIGNIN_ERROR_CODE,
 			maxAgeSeconds: maxAge,
 		});
