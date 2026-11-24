@@ -111,6 +111,8 @@ export class OperationService {
 	) {
 		return await this.operationRepository.findAndCount({
 			where: where,
+			// Newest first; the id breaks ties between rows with the same timestamp, so pages never overlap
+			order: { createdAt: 'DESC', operationId: 'DESC' },
 			skip: page && limit ? (page - 1) * limit : 0,
 			take: limit,
 			relations,

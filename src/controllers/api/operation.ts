@@ -5,6 +5,11 @@ import { CheqdNetwork } from '@cheqd/sdk';
 
 import { IdentityServiceStrategySetup } from '../../services/identity/index.js';
 import { ListOperationOptions } from '../../types/track.js';
+import { validate } from '../validator/decorator.js';
+
+/** `true`/`1` or `false`/`0` (what isBoolean allows) to a boolean; absent stays undefined. */
+const booleanQuery = (value: unknown): boolean | undefined =>
+	value === undefined ? undefined : ['true', '1'].includes(String(value).toLowerCase());
 
 export class OperationController {
 	public static listOperationValidator = [
@@ -26,7 +31,11 @@ export class OperationController {
 	 *   get:
 	 *     tags: [ Event ]
 	 *     summary: Fetch Credential event's triggered by the user.
-	 *     description: This endpoint returns the list of Credential Events controlled by the account.
+	 *     description: >-
+	 *       This endpoint returns the list of Credential Events controlled by the account, newest first (by
+	 *       `createdAt`, then by id). Use `successful=false` to list failed operations only, including failed ledger
+	 *       writes, which carry an `errorCategory` (`insufficient_funds`, `out_of_gas`, `ledger_unavailable`,
+	 *       `rejected` or `other`).
 	 *     parameters:
 	 *       - in: query
 	 *         name: network
@@ -100,10 +109,13 @@ export class OperationController {
 	 *       500:
 	 *         $ref: '#/components/schemas/InternalError'
 	 */
+	@validate
 	public async listOperations(request: Request, response: Response) {
 		// Extract params, filters and pagination
-		const { category, operationName, deprecated, successful, createdAt, page, limit } =
-			request.query as ListOperationOptions;
+		const { category, operationName, createdAt, page, limit } = request.query as ListOperationOptions;
+		// Query strings arrive as text: compare booleans as booleans, so `successful=false` lists failed operations
+		const deprecated = booleanQuery(request.query.deprecated);
+		const successful = booleanQuery(request.query.successful);
 
 		// Get strategy e.g. postgres or local
 		const identityServiceStrategySetup = new IdentityServiceStrategySetup(response.locals.customer.customerId);
@@ -113,8 +125,8 @@ export class OperationController {
 				{
 					category,
 					operationName,
-					deprecated,
-					successful,
+					...(deprecated === undefined ? {} : { deprecated }),
+					...(successful === undefined ? {} : { successful }),
 					createdAt,
 					page: page,
 					limit: limit,
