@@ -1553,9 +1553,9 @@
           "parentAccreditation": "did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578?resourceName=accreditAccreditation&resourceType=VerifiableAccreditationToAccredit",
           "rootAuthorization": "did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorizationForTrustChain",
           "credentialStatus": {
-            "statusPurpose": "revocation",
-            "statusListName": "employee-credentials",
-            "statusListIndex": 10
+            "statusPurpose": "message",
+            "statusListName": "accreditation-status",
+            "statusListType": "BitstringStatusList"
           }
         }
       },
