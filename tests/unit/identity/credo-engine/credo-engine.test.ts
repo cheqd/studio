@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from '@jest/globals';
 import { bases } from 'multiformats/basics';
 import { CredoEngine } from '../../../../src/services/identity/engine/credo/credo-engine.js';
 import { CredoTenantMissingError } from '../../../../src/services/identity/engine/credo/errors.js';
+import { deactivationGasLimit } from '../../../../src/services/identity/engine/deactivation-gas.js';
 import type { EngineDidDocument } from '../../../../src/services/identity/engine/types.js';
 import { customer, FakeRuntime, FakeStore } from './fakes.js';
 
@@ -520,6 +521,31 @@ describe('updateDid, deactivateDid, createResource (own DID)', () => {
 			'deactivateDid',
 			'unlock:cheqd1alicetestnet',
 		]);
+	});
+
+	it('deactivateDid sends a gas limit that grows with the DID’s versions (U-62)', async () => {
+		const didDocument = {
+			id: did,
+			service: [1, 2, 3, 4].map((i) => ({
+				id: `${did}#s${i}`,
+				type: 'T',
+				serviceEndpoint: 'https://example.com',
+			})),
+		};
+		h.runtime.resolution = { didDocument, didDocumentMetadata: {}, didResolutionMetadata: {} };
+		h.runtime.versionCounts.set(did, 4);
+		await h.engine.deactivateDid(did, alice);
+		const call = h.runtime.calls.find((c) => c.method === 'deactivateDid');
+		expect(call?.args).toEqual([did, { gasLimit: deactivationGasLimit({ didDocument, versionCount: 4 }) }]);
+		expect(Number((call?.args[1] as { gasLimit: string }).gasLimit)).toBeGreaterThan(360_226);
+	});
+
+	it('deactivateDid still sends a raised gas limit when the version count cannot be read', async () => {
+		h.runtime.resolution = { didDocument: { id: did }, didDocumentMetadata: {}, didResolutionMetadata: {} };
+		await h.engine.deactivateDid(did, alice);
+		const call = h.runtime.calls.find((c) => c.method === 'deactivateDid');
+		expect(call?.args[1]).toEqual({ gasLimit: deactivationGasLimit({ didDocument: { id: did } }) });
+		expect(Number((call?.args[1] as { gasLimit: string }).gasLimit)).toBeGreaterThan(360_000);
 	});
 
 	it('deactivateDid on an already deactivated DID answers true without touching the ledger', async () => {

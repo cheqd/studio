@@ -30,6 +30,14 @@ Start-up opens the Askar native library (`LIB_ASKAR_PATH`, or the package's own 
 library directories) with its version call. If it is missing or incompatible the process exits at once with a one-line
 reason that names `LIB_ASKAR_PATH`; check that first. Without this check the first DID creation would answer `500`.
 
+## Credo store
+
+When any of `CREDO_DB_USER`, `CREDO_DB_PASSWORD` or `CREDO_STORE_KEY` is set (with `ENABLE_EXTERNAL_DB=true`), start-up
+opens Credo's Askar store before the server listens, and logs `Credo runtime: store open`. If the store cannot be
+opened the process exits with `Credo runtime could not start, stopping: <reason>`. With `EXTERNAL_DB_CERT` set the
+connection uses `sslmode=verify-ca`: Askar gets `sslmode` in its URI and the CA file through `PGSSLROOTCERT`, because
+Askar joins two pass-through URI parameters without a separator (U-68).
+
 ## CORS origin rejected
 
 Symptom: every call from the portal (or any browser client) fails with `401` that looks like an authentication error,

@@ -115,7 +115,8 @@ export interface CredoTenantSession extends CredentialSession {
 		keys: DidKeyLink[];
 	}): Promise<DidOperationResult>;
 	updateDid(input: { did: string; didDocument: EngineDidDocument; keys: DidKeyLink[] }): Promise<DidOperationResult>;
-	deactivateDid(did: string): Promise<DidOperationResult>;
+	/** `gasLimit` overrides the SDK's fixed deactivation gas limit; the fee amount stays the SDK's (U-62). */
+	deactivateDid(did: string, options?: { gasLimit?: string }): Promise<DidOperationResult>;
 	createResource(did: string, resource: ResourceInput): Promise<{ state: string; reason?: string }>;
 	/**
 	 * Records a DID that already exists on the ledger as one this tenant controls (Credo's `dids.import`), with the
@@ -148,6 +149,8 @@ export interface CredoRuntime {
 	readResource?(didUrl: string): Promise<LedgerResourceRead>;
 	/** Public read of a Token Status List's stored bytes, or null when there is none. Needs no tenant. */
 	readTokenStatusList?(did: string, name: string): Promise<RawTokenStatusList | null>;
+	/** How many versions of the DID document the ledger holds. Needs no tenant. */
+	didVersionCount?(did: string): Promise<number>;
 	shutdown(): Promise<void>;
 }
 

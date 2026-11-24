@@ -13,7 +13,7 @@ import { TypeOrmCredoEngineStore } from './typeorm-store.js';
 import { TypeOrmStatusListOwnership } from './status-list-ownership.js';
 
 let engine: CredoEngine | undefined;
-let activeRuntime: CredoRuntime | undefined;
+let activeRuntime: LazyCredoRuntime | undefined;
 
 /** Shuts down the process-wide Credo runtime if one was built (it starts lazily, so an unused one costs nothing). */
 export async function shutdownCredoRuntime(): Promise<void> {
@@ -23,10 +23,25 @@ export async function shutdownCredoRuntime(): Promise<void> {
 }
 
 /**
- * A runtime that starts Credo on first use, so merely registering the engine with the router costs nothing and a
- * failed start is retried on the next call instead of being cached.
+ * Starts the process-wide Credo runtime now, rather than on the first Credo call, and resolves once its store is open.
+ * The boot awaits this before the server listens (`enforceCredoRuntime`), so no request ever starts Credo.
  */
-function lazyRuntime(start: () => Promise<CredoRuntime>): CredoRuntime {
+export async function startCredoRuntime(): Promise<void> {
+	getCredoEngine();
+	if (!activeRuntime) throw new Error('The Credo runtime was not created');
+	await activeRuntime.ready();
+}
+
+export interface LazyCredoRuntime extends CredoRuntime {
+	/** Starts the runtime if it has not started, and resolves once it has. Concurrent callers share one start. */
+	ready(): Promise<void>;
+}
+
+/**
+ * A runtime that starts Credo once, on `ready()` (the boot) or on first use, whichever comes first. Every caller
+ * shares the one start in flight; a failed start is not cached, so the next call starts again.
+ */
+export function lazyRuntime(start: () => Promise<CredoRuntime>): LazyCredoRuntime {
 	let started: Promise<CredoRuntime> | undefined;
 	const get = () => {
 		started ??= start().catch((error) => {
@@ -36,12 +51,20 @@ function lazyRuntime(start: () => Promise<CredoRuntime>): CredoRuntime {
 		return started;
 	};
 	return {
+		ready: async () => {
+			await get();
+		},
 		createTenant: async (label) => (await get()).createTenant(label),
 		deleteTenant: async (id) => (await get()).deleteTenant(id),
 		withTenant: async (id, work) => (await get()).withTenant(id, work),
 		resolveDid: async (did, options) => (await get()).resolveDid(did, options),
 		readResource: async (didUrl) => (await get()).readResource?.(didUrl) ?? { error: 'notImplemented' },
 		readTokenStatusList: async (did, name) => (await get()).readTokenStatusList?.(did, name) ?? null,
+		didVersionCount: async (did) => {
+			const runtime = await get();
+			if (!runtime.didVersionCount) throw new Error('This Credo runtime cannot count DID versions');
+			return runtime.didVersionCount(did);
+		},
 		shutdown: async () => {
 			if (started) await (await started).shutdown();
 			started = undefined;

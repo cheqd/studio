@@ -1,0 +1,36 @@
+diff --git a/node_modules/@cheqd/did-provider-cheqd/build/esm/agent/ICheqd.js b/node_modules/@cheqd/did-provider-cheqd/build/esm/agent/ICheqd.js
+index 3817889..34cc6e7 100644
+--- a/node_modules/@cheqd/did-provider-cheqd/build/esm/agent/ICheqd.js
++++ b/node_modules/@cheqd/did-provider-cheqd/build/esm/agent/ICheqd.js
+@@ -703,6 +703,7 @@ export class Cheqd {
+             options: {
+                 keys: args.keys,
+                 fee: args?.fee,
++                feeOptions: args?.feeOptions,
+             },
+         }, context);
+     }
+diff --git a/node_modules/@cheqd/did-provider-cheqd/build/esm/did-manager/cheqd-did-provider.js b/node_modules/@cheqd/did-provider-cheqd/build/esm/did-manager/cheqd-did-provider.js
+index 1b75a29..fd53095 100644
+--- a/node_modules/@cheqd/did-provider-cheqd/build/esm/did-manager/cheqd-did-provider.js
++++ b/node_modules/@cheqd/did-provider-cheqd/build/esm/did-manager/cheqd-did-provider.js
+@@ -565,7 +565,18 @@ export class CheqdDIDProvider extends AbstractIdentifierProvider {
+                 return signInfoProvider.getSignInfos();
+             })();
+         debug(`[deactivateIdentifier]: DID: ${did}, VerificationMethodIds for signing: ${signInputs.map((signInput) => signInput.verificationMethodId)}`);
+-        const tx = await sdk.deactivateDidDocTx(signInputs, document, '', undefined, undefined, versionId, undefined, { sdk: sdk });
++        // Studio patch (U-62): honour the caller's fee and gas limit. The SDK's fixed-fee path (mainnet) ignores
++        // feeOptions.gasLimit, so the fee is built here, with the amount the SDK charges and the caller's gas limit.
++        const feeOptions = options?.feeOptions;
++        let fee = options?.fee;
++        if (!fee && feeOptions?.gasLimit) {
++            const [{ address }] = await (await this.cosmosPayerWallet).getAccounts();
++            fee = {
++                ...(await sdk.generateDeactivateDidDocFees(address, undefined, feeOptions)),
++                gas: String(feeOptions.gasLimit),
++            };
++        }
++        const tx = await sdk.deactivateDidDocTx(signInputs, document, '', fee, undefined, versionId, feeOptions, { sdk: sdk });
+         assert(tx.code === 0, `cosmos_transaction: Failed to update DID. Reason: ${tx.rawLog}`);
+         debug('Deactivated DID', did);
+         return true;

@@ -1,7 +1,7 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { CheqdDidRegistrar, CheqdDidResolver, CheqdModule } from '@credo-ts/cheqd';
+import { CheqdDidRegistrar, CheqdDidResolver, CheqdLedgerService, CheqdModule } from '@credo-ts/cheqd';
 import {
 	Agent,
 	type AgentContext,
@@ -44,11 +44,57 @@ export interface CredoRuntimeOptions {
 /** The store key is a raw 32-byte key (never a passphrase), so there is no derivation step */
 const storeKeyMethod = ({ StoreKeyMethod, KdfMethod }: AskarBindings) => new StoreKeyMethod(KdfMethod.Raw);
 
-function storeUri(options: CredoStorageConfig['database'], caPath?: string) {
+/**
+ * Query parameters the native Askar library reads itself and removes from a Postgres URI. Every other parameter is
+ * passed on to the driver (sqlx) in a query string that Askar rebuilds from a hash map, in a random order and without
+ * `&` between the pairs (askar 0.5.0, as loaded by askar-nodejs 0.6.1). One such parameter is passed on intact; two
+ * are glued together. With `sslmode=verify-ca&sslrootcert=<ca>` the driver sees either
+ * `sslmode=verify-casslrootcert=<ca>` (refused: "unknown value ... for `ssl_mode`") or
+ * `sslrootcert=<ca>sslmode=verify-ca` (accepted, but neither setting is applied as given).
+ * The order differs on each open, which is why only some Credo calls failed after a deploy (U-68).
+ */
+export const ASKAR_CONSUMED_POSTGRES_PARAMETERS: readonly string[] = [
+	'connect_timeout',
+	'idle_timeout',
+	'max_connections',
+	'min_connections',
+	'admin_account',
+	'admin_password',
+];
+
+/**
+ * How Credo's store connects, in a form Askar passes on intact: `sslmode` is the only query parameter Askar does not
+ * consume, and the CA file is given to the driver through `PGSSLROOTCERT`, which sqlx reads when it parses the
+ * options (node-postgres, used for Studio's own database, does not read it).
+ */
+export function credoPostgresConnection(database: CredoStorageConfig['database'], caPath?: string) {
 	const enc = encodeURIComponent;
-	const params = [`sslmode=${options.sslMode}`];
-	if (caPath) params.push(`sslrootcert=${enc(caPath)}`);
-	return `postgres://${enc(options.user)}:${enc(options.password)}@${options.host}:${options.port}/${enc(options.name)}?${params.join('&')}`;
+	const connectionParameters: Record<string, string> = { sslmode: database.sslMode };
+	const environment: Record<string, string> = caPath ? { PGSSLROOTCERT: caPath } : {};
+	return {
+		/** For opening the store directly (the provisioning check) */
+		uri: `postgres://${enc(database.user)}:${enc(database.password)}@${database.host}:${database.port}/${enc(database.name)}?sslmode=${enc(database.sslMode)}`,
+		/** For Credo's Askar module, which builds its own URI from these */
+		connectionParameters,
+		/** Set in `process.env` before the store is opened */
+		environment,
+	};
+}
+
+/**
+ * Refuses a Postgres URI that would reach the driver with more than one parameter Askar does not consume (see
+ * `ASKAR_CONSUMED_POSTGRES_PARAMETERS`): such a URI connects or fails at random.
+ */
+export function assertAskarSafePostgresUri(uri: string): void {
+	const query = uri.includes('?') ? uri.slice(uri.indexOf('?') + 1) : '';
+	const passedOn = Array.from(new URLSearchParams(query).keys()).filter(
+		(key) => !ASKAR_CONSUMED_POSTGRES_PARAMETERS.includes(key)
+	);
+	if (passedOn.length > 1) {
+		throw new CredoConfigurationError([
+			`the Credo store URI passes ${passedOn.join(', ')} to the Postgres driver: Askar joins more than one such parameter without a separator`,
+		]);
+	}
 }
 
 /**
@@ -62,7 +108,8 @@ function storeUri(options: CredoStorageConfig['database'], caPath?: string) {
  */
 async function provisionStoreIfMissing(askar: AskarBindings, options: CredoRuntimeOptions, caPath?: string) {
 	const { Store } = askar;
-	const uri = storeUri(options.storage.database, caPath);
+	const { uri } = credoPostgresConnection(options.storage.database, caPath);
+	assertAskarSafePostgresUri(uri);
 	const databaseName = options.storage.database.name;
 	try {
 		const store = await Store.open({ uri, keyMethod: storeKeyMethod(askar), passKey: options.storage.storeKey });
@@ -158,8 +205,13 @@ function session(tenantAgent: TenantAgentLike): CredoTenantSession {
 			});
 			return toResult(result.didState);
 		},
-		async deactivateDid(did) {
-			const result = await tenantAgent.dids.deactivate({ did });
+		async deactivateDid(did, deactivateOptions) {
+			// The registrar passes `feeOptions` to the ledger service, which builds the fee from it (patches/@credo-ts+cheqd)
+			const gasLimit = deactivateOptions?.gasLimit;
+			const result = await tenantAgent.dids.deactivate({
+				did,
+				...(gasLimit ? { options: { feeOptions: { gasLimit } } } : {}),
+			});
 			return toResult(result.didState);
 		},
 		async createResource(did, resource) {
@@ -204,6 +256,9 @@ export async function createCredoRuntime(options: CredoRuntimeOptions): Promise<
 		caPath = join(mkdtempSync(join(tmpdir(), 'credo-ca-')), 'ca.pem');
 		writeFileSync(caPath, options.storage.database.caCertificate, { mode: 0o600 });
 	}
+	const connection = credoPostgresConnection(options.storage.database, caPath);
+	// Before any open: the driver reads the CA path from the environment (see `credoPostgresConnection`)
+	Object.assign(process.env, connection.environment);
 	await provisionStoreIfMissing(askar, options, caPath);
 
 	const keyStorage = new VeramoKeyManagementStorage({
@@ -238,10 +293,7 @@ export async function createCredoRuntime(options: CredoRuntimeOptions): Promise<
 							maxConnections: options.storage.pool.maxConnections,
 							idleTimeout: options.storage.pool.idleTimeout,
 							connectTimeout: options.storage.pool.connectTimeout,
-							connectionParameters: {
-								sslmode: options.storage.database.sslMode,
-								...(caPath ? { sslrootcert: caPath } : {}),
-							},
+							connectionParameters: connection.connectionParameters,
 						},
 						credentials: {
 							account: options.storage.database.user,
@@ -303,6 +355,12 @@ export async function createCredoRuntime(options: CredoRuntimeOptions): Promise<
 		async readTokenStatusList(did, name) {
 			// biome-ignore lint/suspicious/noExplicitAny: ditto
 			return (agent as any).modules.cheqd.fetchTokenStatusList(did, name).catch(() => null);
+		},
+		async didVersionCount(did) {
+			// Straight from the ledger: Credo's resolver drops the `/versions` path before it reaches the cheqd resolver
+			const ledger = agent.dependencyManager.resolve(CheqdLedgerService);
+			const { didDocumentVersionsMetadata } = await ledger.resolveMetadata(did);
+			return didDocumentVersionsMetadata.length;
 		},
 		async shutdown() {
 			await agent.shutdown();

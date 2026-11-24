@@ -105,7 +105,8 @@ import type {
 import type { TPublicKeyEd25519 } from '@cheqd/did-provider-cheqd';
 import { SupportedKeyTypes } from '@veramo/utils';
 import { CheqdW3CVerifiableCredential } from '../../../w3c-credential.js';
-import { CheqdNetwork } from '@cheqd/sdk';
+import { CheqdNetwork, type DidFeeOptions } from '@cheqd/sdk';
+import { countDidVersions, deactivationGasLimit } from '../../engine/deactivation-gas.js';
 
 // dynamic import to avoid circular dependency
 const VeridaResolver =
@@ -265,14 +266,32 @@ export class Veramo {
 				return true;
 			}
 
-			const result = await agent.cheqdDeactivateIdentifier({
+			// The ledger rewrites every version on deactivation, so the SDK's fixed gas limit is too low for a DID
+			// with history (U-62). The provider builds the fee from `feeOptions` (patches/@cheqd+did-provider-cheqd).
+			const gasLimit = deactivationGasLimit({
+				didDocument,
+				versionCount: await this.didVersionCount(did),
+			});
+			const args = {
 				kms,
 				document: didDocument,
 				keys: publicKeyHexs,
-			} satisfies ICheqdDeactivateIdentifierArgs);
-			return result;
+				feeOptions: { gasLimit },
+			} satisfies ICheqdDeactivateIdentifierArgs & { feeOptions: DidFeeOptions };
+			return await agent.cheqdDeactivateIdentifier(args);
 		} catch (error) {
 			throw new Error(`${error}`);
+		}
+	}
+
+	/** How many versions of the DID document the ledger holds, from the resolver; undefined when it cannot say. */
+	async didVersionCount(did: string): Promise<number | undefined> {
+		try {
+			const response = await this.resolve(`${did}/versions`, true);
+			if (!response.ok) return undefined;
+			return countDidVersions(await response.json());
+		} catch {
+			return undefined;
 		}
 	}
 
