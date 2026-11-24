@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 import { check } from '../validator/index.js';
 import { validate } from '../validator/decorator.js';
 import { APIKeyService } from '../../services/admin/api-key.js';
+import { apiKeyExpiryProblem, isAPIKeyExpired } from '../../services/admin/api-key-expiry.js';
 import type {
 	APIKeyCreateRequestBody,
 	APIKeyCreateResponseBody,
@@ -34,9 +35,9 @@ export class APIKeyController {
 			.toDate()
 			.withMessage('Invalid date format')
 			.custom((value) => {
-				const current = new Date();
-				if (value < new Date(current.toISOString())) {
-					throw new Error('expiresAt must be in the future');
+				const problem = apiKeyExpiryProblem(value);
+				if (problem) {
+					throw new Error(problem);
 				}
 				return true;
 			})
@@ -64,9 +65,9 @@ export class APIKeyController {
 			.toDate()
 			.withMessage('Invalid date format')
 			.custom((value) => {
-				const current = new Date();
-				if (value < new Date(current.toISOString())) {
-					throw new Error('expiresAt must be in the future');
+				const problem = apiKeyExpiryProblem(value);
+				if (problem) {
+					throw new Error(problem);
 				}
 				return true;
 			})
@@ -150,6 +151,7 @@ export class APIKeyController {
 				createdAt: apiKeyEntity.createdAt.toISOString(),
 				expiresAt: apiKeyEntity.expiresAt.toISOString(),
 				revoked: apiKeyEntity.revoked,
+				expired: isAPIKeyExpired(apiKeyEntity.expiresAt),
 			} satisfies APIKeyCreateResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -219,6 +221,7 @@ export class APIKeyController {
 				createdAt: apiKeyEntity.createdAt.toISOString(),
 				expiresAt: apiKeyEntity.expiresAt.toISOString(),
 				revoked: apiKeyEntity.revoked,
+				expired: isAPIKeyExpired(apiKeyEntity.expiresAt),
 			} satisfies APIKeyUpdateResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -327,6 +330,7 @@ export class APIKeyController {
 					createdAt: apiKey.createdAt.toISOString(),
 					expiresAt: apiKey.expiresAt.toISOString(),
 					revoked: apiKey.revoked,
+					expired: isAPIKeyExpired(apiKey.expiresAt),
 				} satisfies APIKeyResponseBody;
 			});
 			return response.status(StatusCodes.OK).json({
@@ -389,6 +393,7 @@ export class APIKeyController {
 					createdAt: apiKeyEntity.createdAt.toISOString(),
 					expiresAt: apiKeyEntity.expiresAt.toISOString(),
 					revoked: apiKeyEntity.revoked,
+					expired: isAPIKeyExpired(apiKeyEntity.expiresAt),
 				} satisfies APIKeyGetResponseBody);
 			}
 			// Otherwise try to get the latest not revoked API key
@@ -414,6 +419,7 @@ export class APIKeyController {
 				createdAt: key.createdAt.toISOString(),
 				expiresAt: key.expiresAt.toISOString(),
 				revoked: key.revoked,
+				expired: isAPIKeyExpired(key.expiresAt),
 			} satisfies APIKeyGetResponseBody);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

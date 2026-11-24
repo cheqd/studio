@@ -1,3 +1,4 @@
+import { IdentifierService } from '../../services/api/identifier.js';
 import type { Request, Response } from 'express';
 import { fromString, toString } from 'uint8arrays';
 import {
@@ -47,6 +48,8 @@ import { validate } from '../validator/decorator.js';
 import { query } from 'express-validator';
 import { DockIdentityService } from '../../services/identity/providers/index.js';
 import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
+import { engineErrorResponse } from '../../helpers/engine-errors.js';
+import { respondWithEncryptedExport } from '../../helpers/key-export.js';
 
 export class DIDController {
 	public static createDIDValidator = [
@@ -219,6 +222,7 @@ export class DIDController {
 			switch (providerId) {
 				case 'dock':
 					did = await new DockIdentityService().createDid(network, { id: '' }, response.locals.customer);
+					// eslint-disable-next-line no-case-declarations -- existing lexical declaration in case block; not wrapped to avoid code churn
 					const { didDocument: didDoc } = await identityServiceStrategySetup.agent.resolveDid(did.did);
 					if (didDoc && service) {
 						const services = Array.isArray(service) ? service : [service];
@@ -238,7 +242,9 @@ export class DIDController {
 								accept: service.accept,
 							});
 						}
-						did = await identityServiceStrategySetup.agent.updateDid(didDoc, response.locals.customer);
+						did = (await (
+							await identityServiceStrategySetup.engine('did', { kind: 'did', id: didDoc.id })
+						).updateDid(didDoc, response.locals.customer)) as unknown as IIdentifier;
 					}
 					break;
 				case 'studio':
@@ -249,10 +255,12 @@ export class DIDController {
 							const publicKeyHex =
 								key ||
 								(
-									await identityServiceStrategySetup.agent.createKey(
-										SupportedKeyTypes.Ed25519,
-										response.locals.customer
-									)
+									await (
+										await identityServiceStrategySetup.engine('key', undefined, {
+											keyType: SupportedKeyTypes.Ed25519,
+											creates: true,
+										})
+									).createKey(SupportedKeyTypes.Ed25519, response.locals.customer)
 								).publicKeyHex;
 
 							const pkBase64 = toString(fromString(publicKeyHex, 'hex'), 'base64');
@@ -276,10 +284,12 @@ export class DIDController {
 						const publicKeyHex =
 							key ||
 							(
-								await identityServiceStrategySetup.agent.createKey(
-									SupportedKeyTypes.Ed25519,
-									response.locals.customer
-								)
+								await (
+									await identityServiceStrategySetup.engine('key', undefined, {
+										keyType: SupportedKeyTypes.Ed25519,
+										creates: true,
+									})
+								).createKey(SupportedKeyTypes.Ed25519, response.locals.customer)
 							).publicKeyHex;
 
 						didDocument = generateDidDoc({
@@ -316,11 +326,13 @@ export class DIDController {
 							error: 'Provide a DID Document or the VerificationMethodType to create a DID',
 						} satisfies UnsuccessfulCreateDidResponseBody);
 					}
-					did = await identityServiceStrategySetup.agent.createDid(
+					did = (await (
+						await identityServiceStrategySetup.engine('did', undefined, { creates: true })
+					).createDid(
 						network || didDocument.id.split(':')[2],
 						didDocument,
 						response.locals.customer
-					);
+					)) as unknown as IIdentifier;
 					break;
 				default:
 					return response.status(StatusCodes.BAD_REQUEST).json({
@@ -340,6 +352,8 @@ export class DIDController {
 
 			return response.status(StatusCodes.OK).json(did satisfies CreateDidResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			const unfunded = unfundedPayerFailure(error);
 			if (unfunded) {
 				return response.status(unfunded.status).json({
@@ -439,11 +453,9 @@ export class DIDController {
 				} satisfies UnsuccessfulUpdateDidResponseBody);
 			}
 
-			const result = await identityServiceStrategySetup.agent.updateDid(
-				updatedDocument,
-				response.locals.customer,
-				publicKeyHexs
-			);
+			const result = (await (
+				await identityServiceStrategySetup.engine('did', { kind: 'did', id: updatedDocument.id })
+			).updateDid(updatedDocument, response.locals.customer, publicKeyHexs)) as unknown as IIdentifier;
 
 			// Track the operation
 			eventTracker.emit('track', {
@@ -458,6 +470,8 @@ export class DIDController {
 
 			return response.status(StatusCodes.OK).json(result satisfies UpdateDidResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			const errorCode = (error as CheqdProviderError).errorCode;
 			// Handle specific cases when DID is deactivated or verificationMethod is empty
 			if (
@@ -580,9 +594,12 @@ export class DIDController {
 				});
 			}
 
-			const identifier = await new IdentityServiceStrategySetup(
-				response.locals.customer.customerId
-			).agent.importDid(did, keys, controllerKeyId, response.locals.customer);
+			const identifier = await // A new artifact for Studio: no recorded engine yet, so it goes to Credo
+			(
+				await new IdentityServiceStrategySetup(response.locals.customer.customerId).engine('did', undefined, {
+					creates: true,
+				})
+			).importDid(did, keys as never, controllerKeyId, response.locals.customer);
 
 			// Track the operation
 			eventTracker.emit('track', {
@@ -597,6 +614,8 @@ export class DIDController {
 
 			return response.status(StatusCodes.OK).json(identifier);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			});
@@ -663,7 +682,9 @@ export class DIDController {
 
 		try {
 			// Deactivate DID
-			await identityServiceStrategySetup.agent.deactivateDid(did, response.locals.customer, publicKeyHexs);
+			await (
+				await identityServiceStrategySetup.engine('did', { kind: 'did', id: did })
+			).deactivateDid(did, response.locals.customer, publicKeyHexs);
 			// Send the deactivated DID as result
 			const result = await identityServiceStrategySetup.agent.resolveDid(did);
 
@@ -680,6 +701,8 @@ export class DIDController {
 
 			return response.status(StatusCodes.OK).json(result satisfies DeactivateDidResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			const unfunded = unfundedPayerFailure(error);
 			if (unfunded) {
 				return response.status(unfunded.status).json({
@@ -700,7 +723,7 @@ export class DIDController {
 	 *   get:
 	 *     tags: [ Decentralized Identifiers (DIDs) ]
 	 *     summary: Fetch DIDs associated with an account.
-	 *     description: This endpoint returns the list of DIDs controlled by the account.
+	 *     description: This endpoint returns the list of DIDs controlled by the account. The response also carries `agentDids`, the listed DIDs that were made for an agent (current or deleted), which must not be offered as a principal to act for; with `metadata=true` each item also has `kind` (`agent` or null) and `agentDeletedAt`.
 	 *     parameters:
 	 *       - in: query
 	 *         name: network
@@ -777,15 +800,28 @@ export class DIDController {
 				default:
 					didDocument = did
 						? await identityServiceStrategySetup.agent.resolveDid(did)
-						: await identityServiceStrategySetup.agent.listDids(
-								{ network, page, limit, metadata },
-								response.locals.customer
-							);
+						: await (
+								await identityServiceStrategySetup.engine('did')
+							).listDids({ network, page, limit, metadata }, response.locals.customer);
+			}
+			// Tell the client which listed DIDs were made for an agent (current or deleted), so it does not offer them
+			// as a principal to act for. Additive: each item of a `metadata=true` list also carries `kind`.
+			if (!did && providerId !== 'dock' && response.locals.customer && 'dids' in didDocument) {
+				const listed = (didDocument.dids as (string | { did: string })[]).map((item) =>
+					typeof item === 'string' ? item : item.did
+				);
+				const agentDids = await IdentifierService.instance.agentDidsAmong(
+					response.locals.customer.customerId,
+					listed
+				);
+				return response.status(StatusCodes.OK).json({ ...didDocument, agentDids });
 			}
 			return response
 				.status(StatusCodes.OK)
 				.json(didDocument satisfies ListDidsResponseBody | QueryDidResponseBody);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulGetDidResponseBody);
@@ -887,6 +923,8 @@ export class DIDController {
 				} satisfies UnsuccessfulResolveDidResponseBody);
 			}
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `Internal error: ${(error as Error)?.message || error}`,
 			} satisfies UnsuccessfulResolveDidResponseBody);
@@ -899,8 +937,14 @@ export class DIDController {
 	 * /did/export/{did}:
 	 *   post:
 	 *     tags: [ Decentralized Identifiers (DIDs) ]
-	 *     summary: Export a DID Document.
-	 *     description: This endpoint exports a decentralized identifier associated with the user's account with the custodied keys.
+	 *     summary: Export a DID Document with its private keys, encrypted with a password.
+	 *     description: >-
+	 *       Exports a decentralized identifier associated with the user's account together with its custodied
+	 *       private keys. The result is never returned in plaintext: it is encrypted on the server with a key derived
+	 *       from the supplied `password` (scrypt, then AES-256-GCM) and returned as a versioned
+	 *       `cheqd-studio-key-export` envelope (see `EncryptedKeyExport`). Requires a sign-in within the last
+	 *       `FRESH_SIGNIN_MAX_AGE_SECONDS` seconds (default 300); otherwise a `401` with code
+	 *       `REAUTHENTICATION_REQUIRED` is returned.
 	 *     parameters:
 	 *       - in: path
 	 *         name: did
@@ -916,37 +960,49 @@ export class DIDController {
 	 *             properties:
 	 *               password:
 	 *                 type: string
-	 *                 required: false
+	 *                 minLength: 12
+	 *                 description: Required. Encrypts the exported keys; needed to decrypt them. Not stored.
 	 *               providerId:
 	 *                 type: string
 	 *                 required: false
+	 *             required: [password]
 	 *         application/json:
 	 *           schema:
 	 *             type: object
 	 *             properties:
 	 *               password:
 	 *                 type: string
-	 *                 required: false
+	 *                 minLength: 12
+	 *                 description: Required. Encrypts the exported keys; needed to decrypt them. Not stored.
 	 *               providerId:
 	 *                 type: string
 	 *                 required: false
+	 *             required: [password]
 	 *     responses:
 	 *       200:
-	 *         description: The request was successful.
+	 *         description: The encrypted export.
 	 *         content:
 	 *           application/json:
 	 *             schema:
-	 *               $ref: '#/components/schemas/ExportDidResult'
+	 *               $ref: '#/components/schemas/EncryptedKeyExport'
 	 *       400:
-	 *         description: A problem with the input fields has occurred. Additional state information plus metadata may be available in the response body.
+	 *         description: The password is missing (`PASSWORD_REQUIRED`) or too weak (`WEAK_PASSWORD`).
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/KeyExportPasswordError'
+	 *       401:
+	 *         description: Unauthorised, or `REAUTHENTICATION_REQUIRED` when the sign-in is older than the allowed window.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/ReauthenticationRequiredError'
+	 *       429:
+	 *         description: Too many concurrent exports (`EXPORT_BUSY`). Retry after the `Retry-After` interval.
 	 *         content:
 	 *           application/json:
 	 *             schema:
 	 *               $ref: '#/components/schemas/InvalidRequest'
-	 *             example:
-	 *               error: InvalidRequest
-	 *       401:
-	 *         $ref: '#/components/schemas/UnauthorizedError'
 	 *       500:
 	 *         description: An internal error has occurred. Additional state information plus metadata may be available in the response body.
 	 *         content:
@@ -958,21 +1014,25 @@ export class DIDController {
 	 */
 	@validate
 	public async exportDid(request: Request, response: Response) {
-		try {
-			// Get the params from body
-			const { did } = request.params as ResolveDIDRequestParams;
+		// Get the params from body
+		const { did } = request.params as ResolveDIDRequestParams;
+		const { providerId, password } = request.body;
 
-			const { providerId, password } = request.body;
+		// The key material is encrypted with a key derived from `password` before it leaves the server.
+		return respondWithEncryptedExport(request, response, async () => {
 			let result: ExportDidResponse;
 			switch (providerId) {
 				case 'dock':
-					result = await new DockIdentityService().exportDid(did, password || '', response.locals.customer);
+					result = await new DockIdentityService().exportDid(did, password, response.locals.customer);
 					break;
 				case 'studio':
 				default:
-					result = await new IdentityServiceStrategySetup(
-						response.locals.customer.customerId
-					).agent.exportDid(did, '', response.locals.customer);
+					result = await (
+						await new IdentityServiceStrategySetup(response.locals.customer.customerId).engine('did', {
+							kind: 'did',
+							id: did,
+						})
+					).exportDid(did, '', response.locals.customer);
 			}
 			// Track the operation
 			eventTracker.emit('track', {
@@ -984,12 +1044,7 @@ export class DIDController {
 				customer: response.locals.customer,
 				user: response.locals.user,
 			} satisfies ITrackOperation<IDIDTrack>);
-
-			return response.status(StatusCodes.OK).json(result);
-		} catch (error) {
-			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-				error: `Internal error: ${(error as Error)?.message || error}`,
-			});
-		}
+			return result;
+		});
 	}
 }

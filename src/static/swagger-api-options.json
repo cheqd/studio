@@ -52,6 +52,13 @@
 		},
 		{
 			"name": "Verifiable Presentations"
+		},
+		{
+			"name": "Agents"
+		},
+		{
+			"name": "Agent payments (Proposed)",
+			"description": "Proposed. Payment addresses bound to an agent and a read-only settlement view of its open payment mandate. cheqd's own vocabulary, not an x402 standard."
 		}
 	],
 	"externalDocs": {

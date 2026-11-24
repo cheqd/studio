@@ -648,19 +648,28 @@
  *             - jsonld
  *           example: jwt
  *         credentialStatus:
- *           description: Optional `credentialStatus` properties for VC revocation or suspension. Takes `statusListName` and `statusListPurpose` as inputs.
+ *           description: Optional `credentialStatus` properties so the accreditation can later be revoked, suspended or reinstated. Takes `statusListName`, `statusListType` and `statusPurpose`. The status list must already exist for the issuer DID with that name and type; without `statusListType` the list is not found and issuance fails with `Status Registry Not Found`. Accreditation status changes use a Bitstring Status List, so create the list with `statusListType` `BitstringStatusList` and issue with the `message` purpose (StatusList2021 lists take `revocation` or `suspension`).
  *           type: object
  *           required:
  *             - statusPurpose
  *             - statusListName
+ *             - statusListType
  *           properties:
  *             statusPurpose:
  *               type: string
+ *               description: Use `message` for a BitstringStatusList; `revocation` or `suspension` for a StatusList2021 list.
  *               enum:
+ *                 - message
  *                 - revocation
  *                 - suspension
  *             statusListName:
  *               type: string
+ *             statusListType:
+ *               type: string
+ *               description: Type of the existing status list named by `statusListName`.
+ *               enum:
+ *                 - BitstringStatusList
+ *                 - StatusList2021
  *             statusListIndex:
  *               type: number
  *             statusListVersion:
@@ -673,8 +682,9 @@
  *             indexNotIn:
  *               type: number
  *           example:
- *             statusPurpose: revocation
- *             statusListName: employee-credentials
+ *             statusPurpose: message
+ *             statusListName: accreditation-status
+ *             statusListType: BitstringStatusList
  *         termsOfUse:
  *           description: Terms of use can be utilized by an issuer or a holder to communicate the terms under which a verifiable credential was issued.
  *           type: array
@@ -732,9 +742,9 @@
  *         parentAccreditation: did:cheqd:testnet:15b74787-6e48-4fd5-8020-eab24e990578?resourceName=accreditAccreditation&resourceType=VerifiableAccreditationToAccredit
  *         rootAuthorization: did:cheqd:testnet:5RpEg66jhhbmASWPXJRWrA?resourceName=authorizeAccreditation&resourceType=VerifiableAuthorizationForTrustChain
  *         credentialStatus:
- *           statusPurpose: revocation
- *           statusListName: employee-credentials
- *           statusListIndex: 10
+ *           statusPurpose: message
+ *           statusListName: accreditation-status
+ *           statusListType: BitstringStatusList
  *     AccreditationVerifyRequest:
  *       type: object
  *       properties:
@@ -823,6 +833,11 @@
  *         verifierDid:
  *           description: DID of verifier
  *           type: string
+ *         challenge:
+ *           description: Optional challenge issued by the verifier, bound into the presentation as its nonce. Pass the same value when verifying.
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 1024
  *     PresentationVerifyRequest:
  *       type: object
  *       required:
@@ -832,8 +847,13 @@
  *           description: Verifiable Presentation to be verified as a VP-JWT string or a JSON object.
  *           type: object
  *         verifierDid:
- *           description: Provide an optional verifier DID (also known as 'domain' parameter), if the verifier DID in the presentation is not managed in the wallet.
+ *           description: The verifier DID (also known as the 'domain' parameter) the presentation was made for. Required for customers served by the Credo engine unless `policies.audience` is `false`; otherwise optional (needed if the verifier DID in the presentation is not managed in the wallet).
  *           type: string
+ *         challenge:
+ *           description: The challenge the verifier issued to the holder. Required for customers served by the Credo engine; a request without it is rejected with 400 `invalid_request`. The presentation's own nonce is never accepted in its place.
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 1024
  *         makeFeePayment:
  *           description: Automatically make fee payment (if required) based on payment conditions to unlock encrypted StatusList2021 or BitstringStatusList DID-Linked Resource.
  *           type: boolean
@@ -997,7 +1017,7 @@
  *               description: The name of the StatusList2021 or BitstringStatusList DID-Linked Resource to be created.
  *               type: string
  *             length:
- *               description: The length of the status list to be created. The default and minimum length is 131072 which is 16kb.
+ *               description: The length of the status list to be created. The default and minimum length is 131072 which is 16kb. The maximum is 1048576 by default (configurable on the server with STATUS_LIST_MAX_LENGTH); larger values are rejected with 400.
  *               type: integer
  *               minimum: 0
  *               exclusiveMinimum: true
@@ -1679,6 +1699,79 @@
  *              type: array
  *              items:
  *                  type: string
+ *     EncryptedKeyExport:
+ *       type: object
+ *       description: >-
+ *         Password-protected key export, format `cheqd-studio-key-export` version 1. The key is
+ *         scrypt(utf8(password), salt, keyLength, N, r, p); the plaintext is UTF-8 JSON encrypted with AES-256-GCM
+ *         using additional authenticated data `cheqd-studio-key-export:v1`. All binary fields are base64.
+ *       required: [format, version, kdf, cipher, ciphertext]
+ *       properties:
+ *         format:
+ *           type: string
+ *           example: cheqd-studio-key-export
+ *         version:
+ *           type: integer
+ *           example: 1
+ *         kdf:
+ *           type: object
+ *           properties:
+ *             name:
+ *               type: string
+ *               example: scrypt
+ *             salt:
+ *               type: string
+ *               description: 16 random bytes, base64.
+ *             N:
+ *               type: integer
+ *               example: 131072
+ *             r:
+ *               type: integer
+ *               example: 8
+ *             p:
+ *               type: integer
+ *               example: 1
+ *             keyLength:
+ *               type: integer
+ *               example: 32
+ *         cipher:
+ *           type: object
+ *           properties:
+ *             name:
+ *               type: string
+ *               example: aes-256-gcm
+ *             iv:
+ *               type: string
+ *               description: 12 random bytes, base64.
+ *             tag:
+ *               type: string
+ *               description: 16-byte GCM authentication tag, base64.
+ *         ciphertext:
+ *           type: string
+ *           description: Base64 ciphertext of the JSON key material.
+ *     KeyExportPasswordError:
+ *       type: object
+ *       properties:
+ *         error:
+ *           type: string
+ *         code:
+ *           type: string
+ *           enum: [PASSWORD_REQUIRED, WEAK_PASSWORD]
+ *     ReauthenticationRequiredError:
+ *       type: object
+ *       description: >-
+ *         The caller did not sign in recently enough. Also sent as `WWW-Authenticate: Bearer
+ *         error="insufficient_user_authentication", max_age=N` (RFC 9470). Sign the user in again (Logto
+ *         `max_age` / `prompt=login`) and retry.
+ *       properties:
+ *         error:
+ *           type: string
+ *         code:
+ *           type: string
+ *           enum: [REAUTHENTICATION_REQUIRED]
+ *         maxAgeSeconds:
+ *           type: integer
+ *           example: 300
  *     ExportDidResult:
  *       type: object
  *       properties:
@@ -2102,6 +2195,11 @@
  *          type: string
  *         primaryEmail:
  *          type: string
+ *         source:
+ *          type: string
+ *          pattern: '^[a-z0-9][a-z0-9-]{0,31}$'
+ *          maxLength: 32
+ *          description: Optional label for where the account came from, stored for reporting (for example `studio`, `sdk`, `agent-quickstart`, `agent`). Lower-case letters, digits and hyphens only; anything else is rejected with 400.
  *     AccountCreateResponse:
  *       type: object
  *       properties:
@@ -2130,6 +2228,111 @@
  *          type: integer
  *        resources:
  *          type: integer
+ *     AnalyticsUnsupported:
+ *       type: object
+ *       description: An element Studio cannot measure yet. Show "not available yet", not zero.
+ *       properties:
+ *         supported: { type: boolean, enum: [false] }
+ *         reason: { type: string }
+ *     CustomerAnalyticsResponse:
+ *       type: object
+ *       description: >-
+ *         Every entry of `tiles`, `series` and `tables` is either supported (`tiles`: `{ supported: true, value }`,
+ *         `series`: `{ supported: true, points: [{ date, count }] }`, `tables`: `{ supported: true, rows }`) or an
+ *         `AnalyticsUnsupported`.
+ *       properties:
+ *         audience: { type: string, enum: [agents, individuals] }
+ *         range: { type: integer, enum: [7, 30] }
+ *         from: { type: string, example: '2026-10-17', description: First UTC day of the range. }
+ *         to: { type: string, example: '2026-11-15', description: Last UTC day of the range (today). }
+ *         tiles:
+ *           type: object
+ *           additionalProperties: { type: object }
+ *         series:
+ *           type: object
+ *           additionalProperties: { type: object }
+ *         tables:
+ *           type: object
+ *           additionalProperties: { type: object }
+ *         unavailable:
+ *           type: array
+ *           description: Dotted keys of the unsupported elements, for example `tiles.verificationsReceived`.
+ *           items: { type: string }
+ *         notes:
+ *           type: array
+ *           items: { type: string }
+ *     CustomerLedgerAnalyticsResponse:
+ *       type: object
+ *       description: >-
+ *         Either `{ supported: false, reason, range, kind, from, to }` (the ledger data source is off or cannot be
+ *         read: not zero) or the full shape below. `state` is `empty` when the customer has no payer account or has
+ *         never written. No fee or CHEQ figure is ever returned to customers.
+ *       properties:
+ *         supported: { type: boolean }
+ *         reason: { type: string }
+ *         state: { type: string, enum: [ok, empty] }
+ *         range: { type: integer, enum: [7, 30] }
+ *         kind: { type: string, enum: [all, organisation, agent] }
+ *         from: { type: string, example: '2026-10-17' }
+ *         to: { type: string, example: '2026-11-15' }
+ *         networks:
+ *           type: array
+ *           items: { type: string, enum: [testnet, mainnet] }
+ *         tiles:
+ *           type: object
+ *           properties:
+ *             writes: { type: integer }
+ *             activeIdentifiers: { type: integer }
+ *             statusListsPublished: { type: integer }
+ *             resourcesPublished: { type: integer }
+ *         series:
+ *           type: object
+ *           properties:
+ *             days:
+ *               type: array
+ *               description: One entry per UTC day of the range, zero-filled. Key rotations are updateDid.
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   date: { type: string }
+ *                   createDid: { type: integer }
+ *                   updateDid: { type: integer }
+ *                   deactivateDid: { type: integer }
+ *                   createResource: { type: integer }
+ *         byIdentifier:
+ *           type: object
+ *           properties:
+ *             rows:
+ *               type: array
+ *               description: At most 50, most recent write first.
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   did: { type: string }
+ *                   kind: { type: string, enum: [organisation, agent] }
+ *                   lastWriteAt: { type: string, format: date-time }
+ *                   writes: { type: integer }
+ *             total: { type: integer }
+ *             unmatchedWrites: { type: integer }
+ *         resourcesByType:
+ *           type: object
+ *           properties:
+ *             rows:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   resourceType: { type: string, description: As the ledger reports it. }
+ *                   category: { type: string, enum: [status-list, schema, credential-definition, card, other] }
+ *                   count: { type: integer }
+ *                   latestAt: { type: string, format: date-time }
+ *         firstWriteAt: { type: string, format: date-time, nullable: true }
+ *         lastWriteAt: { type: string, format: date-time, nullable: true }
+ *         truncated: { type: boolean, description: More writes exist than are read at once; counts are a lower bound. }
+ *         generatedAt: { type: string, format: date-time }
+ *         notes:
+ *           type: array
+ *           items: { type: string }
  *     AccountNetworkBalance:
  *       type: object
  *       nullable: true
@@ -2247,6 +2450,13 @@
  *         error:
  *           type: string
  *           example: Unauthorized Error
+ *     NotFoundError:
+ *       description: The resource was not found, or it is not owned by the caller. Both cases answer identically.
+ *       type: object
+ *       properties:
+ *         error:
+ *           type: string
+ *           example: Not found
  *     ListAccreditationResult:
  *       type: object
  *       properties:

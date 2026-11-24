@@ -1,4 +1,4 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import type { Request, Response } from 'express';
 
 const jwtVerifyMock = jest.fn(async () => {
@@ -15,6 +15,15 @@ const { AuthRuleRepository } = await import('../../../src/middleware/auth/routes
 const { AdminAuthRuleProvider } = await import('../../../src/middleware/auth/routes/admin/admin-auth.js');
 
 describe('APIGuard M2M auth strategy', () => {
+	const previous = process.env.ENABLE_M2M_CUSTOMER_PATH;
+	beforeAll(() => {
+		process.env.ENABLE_M2M_CUSTOMER_PATH = 'true';
+	});
+	afterAll(() => {
+		if (previous === undefined) delete process.env.ENABLE_M2M_CUSTOMER_PATH;
+		else process.env.ENABLE_M2M_CUSTOMER_PATH = previous;
+	});
+
 	it('verifies the bearer token, not the customer-id header, as the JWT (regression test for #874)', async () => {
 		const repository = new AuthRuleRepository();
 		repository.push(new AdminAuthRuleProvider());

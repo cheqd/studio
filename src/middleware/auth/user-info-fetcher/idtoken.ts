@@ -56,6 +56,7 @@ export class IdTokenUserInfoFetcher extends UserInfoHelper implements IUserInfoF
 			}
 			// Set global context
 			this.setScopes(scopes, response);
+			this.setAuthTime(payload.auth_time, response);
 			return await this.setUserEntity(payload.sub as string, response);
 		} catch (error) {
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

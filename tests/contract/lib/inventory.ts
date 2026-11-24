@@ -101,6 +101,7 @@ export function buildInventory(repoRoot: string): InventoryRoute[] {
 
 	const ruleSources = [
 		'account-auth',
+		'agent-auth',
 		'accreditation-auth',
 		'auth-user-info',
 		'credential-auth',

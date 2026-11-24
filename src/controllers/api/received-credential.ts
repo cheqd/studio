@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import { check, param, query } from '../validator/index.js';
 import { validate } from '../validator/decorator.js';
 import { ReceivedCredentials } from '../../services/api/received-credentials.js';
+import { engineErrorResponse } from '../../helpers/engine-errors.js';
 
 export class ReceivedCredentialController {
 	public static listOffersValidator = [
@@ -208,6 +209,8 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
 			});
@@ -255,7 +258,7 @@ export class ReceivedCredentialController {
 	@validate
 	public async getOfferDetails(request: Request, response: Response) {
 		try {
-			let credentialId = Array.isArray(request.params.credentialId)
+			const credentialId = Array.isArray(request.params.credentialId)
 				? request.params.credentialId[0]
 				: (request.params.credentialId as string);
 			const { holderDid } = request.query;
@@ -269,6 +272,8 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(offer);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			const errorMessage = `${error}`;
 			if (errorMessage.includes('not found') || errorMessage.includes('expired')) {
 				return response.status(StatusCodes.NOT_FOUND).json({
@@ -343,7 +348,7 @@ export class ReceivedCredentialController {
 	@validate
 	public async acceptOffer(request: Request, response: Response) {
 		try {
-			let credentialId = Array.isArray(request.params.credentialId)
+			const credentialId = Array.isArray(request.params.credentialId)
 				? request.params.credentialId[0]
 				: (request.params.credentialId as string);
 			const { holderDid, createPresentation, presentationDomain } = request.body;
@@ -356,6 +361,8 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			const errorMessage = `${error}`;
 			if (errorMessage.includes('not found') || errorMessage.includes('expired')) {
 				return response.status(StatusCodes.NOT_FOUND).json({
@@ -425,7 +432,7 @@ export class ReceivedCredentialController {
 	@validate
 	public async rejectOffer(request: Request, response: Response) {
 		try {
-			let credentialId = Array.isArray(request.params.credentialId)
+			const credentialId = Array.isArray(request.params.credentialId)
 				? request.params.credentialId[0]
 				: (request.params.credentialId as string);
 			const { holderDid } = request.body;
@@ -435,6 +442,8 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			const errorMessage = `${error}`;
 			if (errorMessage.includes('not found') || errorMessage.includes('expired')) {
 				return response.status(StatusCodes.NOT_FOUND).json({
@@ -507,6 +516,8 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			const errorMessage = `${error}`;
 			if (
 				errorMessage.includes('Invalid credential') ||
@@ -609,6 +620,8 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(result);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
 			});
@@ -648,7 +661,7 @@ export class ReceivedCredentialController {
 	@validate
 	public async getReceivedCredential(request: Request, response: Response) {
 		try {
-			let credentialHash = Array.isArray(request.params.credentialHash)
+			const credentialHash = Array.isArray(request.params.credentialHash)
 				? request.params.credentialHash[0]
 				: (request.params.credentialHash as string);
 			const customer = response.locals.customer;
@@ -657,6 +670,8 @@ export class ReceivedCredentialController {
 
 			return response.status(StatusCodes.OK).json(credential);
 		} catch (error) {
+			const tenantMissing = engineErrorResponse(response, error);
+			if (tenantMissing) return tenantMissing;
 			const errorMessage = `${error}`;
 			if (errorMessage.includes('not found')) {
 				return response.status(StatusCodes.NOT_FOUND).json({

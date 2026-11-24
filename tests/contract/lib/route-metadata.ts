@@ -48,6 +48,14 @@ export const SIDE_EFFECT_OVERRIDES: Readonly<Record<string, SideEffect>> = {
 	'POST /trust-registry/accreditation/verify': 'read-only',
 
 	// Ledger writes (network fee from the customer's account).
+	'POST /agents': 'ledger-fee',
+	'DELETE /agents/:agentId': 'ledger-fee',
+	'POST /agents/:agentId/card': 'ledger-fee',
+	'POST /agents/:agentId/authority': 'ledger-fee',
+	'DELETE /agents/:agentId/authority/:grantId': 'ledger-fee',
+	'PATCH /agents/:agentId/authority/:grantId': 'ledger-fee',
+	'POST /agents/:agentId/keys': 'ledger-fee',
+	'POST /agents/:agentId/keys/rotate': 'ledger-fee',
 	'POST /did/create': 'ledger-fee',
 	'POST /did/update': 'ledger-fee',
 	'POST /did/deactivate/:did': 'ledger-fee',
