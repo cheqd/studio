@@ -1281,6 +1281,9 @@
           "401": {
             "$ref": "#/components/schemas/UnauthorizedError"
           },
+          "409": {
+            "description": "The account already holds the maximum number of active API keys (API_KEY_MAX_ACTIVE_PER_CUSTOMER, default 10). Revoke one first."
+          },
           "500": {
             "$ref": "#/components/schemas/InternalError"
           }
