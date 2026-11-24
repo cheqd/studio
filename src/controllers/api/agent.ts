@@ -1938,7 +1938,7 @@ export class AgentController {
 		const tenantMissing = credoTenantMissingResponse(response, error);
 		if (tenantMissing) return tenantMissing;
 		const unfunded = unfundedPayerFailure(error);
-		if (unfunded) return response.status(unfunded.status).json({ error: unfunded.error });
+		if (unfunded) return response.status(unfunded.status).json({ error: unfunded.error, code: unfunded.code });
 		console.error('Agent endpoint failed:', error);
 		return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Internal error' });
 	}

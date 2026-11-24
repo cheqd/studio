@@ -112,6 +112,16 @@ does not start once shutdown has begun. `/health` (also `/healthz`, `/live`, `/l
       Rollback: the migration `down` drops the three columns; `GET /admin/customers/{id}` then needs the previous
       release.
 
+- [ ] Failed ledger writes (U-30). The migration `1791702500200` adds one nullable column `operation.errorCategory`
+      (`varchar(32)`, no default): a catalogue-only change in Postgres, so the lock on `operation` is momentary and
+      bounded by `lock_timeout = 3s`; if it times out under load, re-run the migration. No backfill. From this release a
+      failed DID create, update or deactivate, resource create or status list create or update writes one unsuccessful
+      `operation` row with `errorCategory` (`insufficient_funds`, `out_of_gas`, `ledger_unavailable`, `rejected` or
+      `other`), never the payload; these rows appear in `GET /event/list` (`successful: false`) and count in the staff
+      endpoint error rates. Error bodies of those routes gain a `code` (`insufficient_funds`, `out_of_gas`,
+      `ledger_unavailable`, `ledger_rejected`); status list create and update now answer `402` for an unfunded payer,
+      as the DID and resource routes already did. Rollback: the migration `down` drops the column.
+
 Health, readiness (`/health`, `/healthz`, `/ready`, `/readyz`, `/readiness`, `/live`, `/livez`) and the Swagger paths
 are never rate limited.
 

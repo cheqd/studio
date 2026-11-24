@@ -24,6 +24,7 @@ import { validate } from '../validator/decorator.js';
 import { UnsuccessfulGetDidResponseBody } from '../../types/did.js';
 import { CheqdNetwork } from '@cheqd/sdk';
 import { unfundedPayerFailure } from '../../helpers/ledger-errors.js';
+import { ledgerErrorCode, recordFailedLedgerWrite } from '../../helpers/ledger-write-failure.js';
 import { engineErrorResponse } from '../../helpers/engine-errors.js';
 
 export class ResourceController {
@@ -246,17 +247,28 @@ export class ResourceController {
 				} satisfies UnsuccessfulCreateResourceResponseBody);
 			}
 		} catch (error) {
+			const ledgerFailure = await recordFailedLedgerWrite(
+				{
+					category: OperationCategoryNameEnum.RESOURCE,
+					name: OperationNameEnum.RESOURCE_CREATE,
+					customer: response.locals.customer,
+					did,
+				},
+				error
+			);
 			const tenantMissing = engineErrorResponse(response, error);
 			if (tenantMissing) return tenantMissing;
 			const unfunded = unfundedPayerFailure(error);
 			if (unfunded) {
 				return response.status(unfunded.status).json({
 					error: unfunded.error,
+					code: unfunded.code,
 				} satisfies UnsuccessfulCreateResourceResponseBody);
 			}
 
 			return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
 				error: `${error}`,
+				...ledgerErrorCode(ledgerFailure),
 			} satisfies UnsuccessfulCreateResourceResponseBody);
 		}
 	}

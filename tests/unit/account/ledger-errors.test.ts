@@ -16,6 +16,7 @@ describe('unfundedPayerFailure', () => {
 	it('returns 402 when the chain rejects the fee for insufficient funds', () => {
 		const error = new Error('spendable balance 10ncheq is smaller than 50000000000ncheq: insufficient funds');
 		expect(unfundedPayerFailure(error)?.status).toBe(StatusCodes.PAYMENT_REQUIRED);
+		expect(unfundedPayerFailure(error)?.code).toBe('insufficient_funds');
 	});
 
 	it('leaves other errors to the caller', () => {

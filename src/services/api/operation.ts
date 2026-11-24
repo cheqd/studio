@@ -15,6 +15,8 @@ export interface OperationRouting {
 	network?: string;
 	outcome?: string;
 	durationMs?: number;
+	/** Only for a failed ledger write (U-30); see `OperationEntity.errorCategory`. */
+	errorCategory?: string;
 }
 
 export class OperationService {
@@ -29,7 +31,7 @@ export class OperationService {
 	public async create(
 		category: string,
 		operationName: string,
-		defaultFee: CoinEntity,
+		defaultFee: CoinEntity | undefined,
 		deprecated = false,
 		successful = true,
 		customer: CustomerEntity,
@@ -56,6 +58,7 @@ export class OperationService {
 		operationEntity.network = routing.network;
 		operationEntity.outcome = routing.outcome;
 		operationEntity.durationMs = routing.durationMs;
+		operationEntity.errorCategory = routing.errorCategory;
 		const operation = (await this.operationRepository.insert(operationEntity)).identifiers[0];
 		if (!operation) throw new Error(`Cannot create a new operation`);
 
