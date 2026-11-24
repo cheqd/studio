@@ -35,6 +35,7 @@ describe('agent auth rules', () => {
 		['POST', `/agents/${id}/authority`, 'issue:agent-authority'],
 		['DELETE', `/agents/${id}/authority/${id}`, 'revoke:agent-authority'],
 		['PATCH', `/agents/${id}/authority/${id}`, 'issue:agent-authority'],
+		['GET', `/agents/${id}/authority/${id}/credential`, 'read:agent'],
 		['GET', `/agents/${id}/keys`, 'read:agent'],
 		['POST', `/agents/${id}/keys`, 'update:agent'],
 		['POST', `/agents/${id}/keys/rotate`, 'update:agent'],
@@ -42,6 +43,7 @@ describe('agent auth rules', () => {
 		['GET', `/agents/${id}/payment-addresses`, 'read:agent'],
 		['POST', `/agents/${id}/payment-addresses`, 'issue:agent-payment-address'],
 		['DELETE', `/agents/${id}/payment-addresses/${id}`, 'revoke:agent-payment-address'],
+		['GET', `/agents/${id}/payment-addresses/${id}/credential`, 'read:agent'],
 		['GET', `/agents/${id}/settlement`, 'read:agent'],
 	])('%s %s needs exactly %s and is not open to anonymous callers', (method, path, scope) => {
 		const rule = repository.match(requestFor(method, path, {}));
@@ -96,6 +98,11 @@ describe('agent auth rules', () => {
 			['DELETE', `/agents/${id}/settlement`],
 			['GET', `/admin/agents/${id}/settlement`],
 			['GET', `/agents/${id}/settlement/extra`],
+			['POST', `/agents/${id}/authority/${id}/credential`],
+			['DELETE', `/agents/${id}/authority/${id}/credential`],
+			['GET', `/agents/${id}/authority/${id}/credential/extra`],
+			['GET', `/agents/${id}/authority/credential`],
+			['PUT', `/agents/${id}/payment-addresses/${id}/credential`],
 		] as const) {
 			expect(provider.match(requestFor(method, path, {}))).toBeNull();
 		}

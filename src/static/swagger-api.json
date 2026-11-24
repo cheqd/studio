@@ -508,6 +508,56 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "hasCredential": {
+            "type": "boolean",
+            "description": "On the list only. True when Studio holds a copy of the binding credential, which the owner can download from `GET /agents/{agentId}/payment-addresses/{bindingId}/credential`. False for bindings made before Studio kept credentials."
+          }
+        }
+      },
+      "StoredAuthorityCredential": {
+        "type": "object",
+        "description": "A credential Studio issued to an agent, as it was issued, for its owner to keep. Sent with a no-store cache header.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The id of this stored copy."
+          },
+          "grantId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Present for an authority grant."
+          },
+          "bindingId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Present for a payment address binding."
+          },
+          "credential": {
+            "type": "object",
+            "properties": {
+              "format": {
+                "type": "string",
+                "enum": [
+                  "sd-jwt-vc",
+                  "jwt"
+                ]
+              },
+              "value": {
+                "description": "The compact SD-JWT VC or JWT (a string), or the credential object for a delegation, exactly as returned when it was issued."
+              }
+            }
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "supersedes": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "The stored copy this credential replaced when the grant's expiry was changed, or null. The replaced credential is revoked on its status list."
           }
         }
       },
@@ -5817,7 +5867,7 @@
           "Agents"
         ],
         "summary": "List the authority grants of an agent.",
-        "description": "Returns every grant of the agent, live and revoked, newest first. A grant is `active`, `revoked` or `expired`. The credential itself is never returned here (it is returned once, when the grant is made). An agent that is not yours, or does not exist, is a 404.",
+        "description": "Returns every grant of the agent, live and revoked, newest first. A grant is `active`, `revoked` or `expired`. The credential itself is not returned here. `hasCredential` says whether Studio holds a copy that the owner can download from `GET /agents/{agentId}/authority/{grantId}/credential`; grants made before Studio kept credentials have none. An agent that is not yours, or does not exist, is a 404.",
         "parameters": [
           {
             "name": "agentId",
@@ -5883,6 +5933,10 @@
                             "type": "string",
                             "format": "date-time",
                             "nullable": true
+                          },
+                          "hasCredential": {
+                            "type": "boolean",
+                            "description": "True when Studio holds a copy of the grant's current credential (after an expiry change, the replacement)."
                           }
                         }
                       }
@@ -6045,6 +6099,59 @@
           },
           "501": {
             "description": "The identity engine for this account cannot serve the agent endpoints yet. They need the Credo engine."
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/authority/{grantId}/credential": {
+      "get": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Download the credential of an authority grant.",
+        "description": "Returns the grant's current credential exactly as Studio issued it, for the owner to keep or hand to a verifier. After an expiry change this is the replacement; `supersedes` names the stored copy it replaced (revoked on its status list). Studio keeps authority credentials encrypted and serves them to the owning account only; nothing is published.\n\nA grant or agent that is not yours, or does not exist, is a 404 `not_found`. A grant made before Studio kept credentials is a 404 `credential_not_stored`. The response is sent with `Cache-Control: no-store`.\n",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "grantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The stored credential.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredAuthorityCredential"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/AgentInvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "No such agent or grant in your account (`not_found`), or no stored copy of its credential (`credential_not_stored`)."
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
           }
         }
       }
@@ -6487,7 +6594,7 @@
           "Agent payments (Proposed)"
         ],
         "summary": "Proposed: list the payment addresses bound to an agent.",
-        "description": "**Proposed.** Lists the agent's payment address bindings, live and revoked, newest first. The credential is never returned here (it is returned once, when the address is bound). An agent that is not yours, or does not exist, is a 404.\n\n`PaymentAddressBinding` is cheqd's own vocabulary. It is not an x402 standard.\n",
+        "description": "**Proposed.** Lists the agent's payment address bindings, live and revoked, newest first. The credential is not returned here; `hasCredential` says whether the owner can download it from `GET /agents/{agentId}/payment-addresses/{bindingId}/credential`. An agent that is not yours, or does not exist, is a 404.\n\n`PaymentAddressBinding` is cheqd's own vocabulary. It is not an x402 standard.\n",
         "parameters": [
           {
             "name": "agentId",
@@ -6537,7 +6644,7 @@
           "Agent payments (Proposed)"
         ],
         "summary": "Proposed: bind a payment address to an agent.",
-        "description": "**Proposed.** Binds a wallet address, given as a CAIP-10 account such as `eip155:8453:0x...`, to the agent. Studio issues a `PaymentAddressBinding` SD-JWT VC signed by the agent's own key (through the identity engine) with a Token Status List entry, so the binding can be revoked. The credential is returned once, in this response; Studio stores only the binding row, never the credential.\n\n`PaymentAddressBinding` is cheqd's own vocabulary. It is **not** an x402 standard. The binding is the agent's assertion about the address: it does not prove that the agent controls the wallet.\n\nThe address is validated strictly against CAIP-10 and normalised by the chain's rules: EVM (`eip155`) addresses are stored lower case, and a mixed-case address must have a valid EIP-55 checksum. An agent can have at most 10 live bindings, and one account can be bound to an agent once while the binding is not revoked.\n\nSend an optional `Idempotency-Key` header: the binding writes a status list entry, so a retry with the same key replays the first response instead of binding twice.\n",
+        "description": "**Proposed.** Binds a wallet address, given as a CAIP-10 account such as `eip155:8453:0x...`, to the agent. Studio issues a `PaymentAddressBinding` SD-JWT VC signed by the agent's own key (through the identity engine) with a Token Status List entry, so the binding can be revoked. The credential is returned in this response, and Studio keeps an encrypted copy that only your account can download again.\n\n`PaymentAddressBinding` is cheqd's own vocabulary. It is **not** an x402 standard. The binding is the agent's assertion about the address: it does not prove that the agent controls the wallet.\n\nThe address is validated strictly against CAIP-10 and normalised by the chain's rules: EVM (`eip155`) addresses are stored lower case, and a mixed-case address must have a valid EIP-55 checksum. An agent can have at most 10 live bindings, and one account can be bound to an agent once while the binding is not revoked.\n\nSend an optional `Idempotency-Key` header: the binding writes a status list entry, so a retry with the same key replays the first response instead of binding twice.\n",
         "parameters": [
           {
             "name": "agentId",
@@ -6599,7 +6706,7 @@
                         },
                         "value": {
                           "type": "string",
-                          "description": "The compact SD-JWT VC. Returned once; Studio does not keep it."
+                          "description": "The compact SD-JWT VC. Studio keeps an encrypted copy for the owner (`GET /agents/{agentId}/payment-addresses/{bindingId}/credential`)."
                         }
                       }
                     }
@@ -6683,6 +6790,59 @@
           },
           "501": {
             "description": "The identity engine for this account cannot update status lists yet. It needs the Credo engine."
+          }
+        }
+      }
+    },
+    "/agents/{agentId}/payment-addresses/{bindingId}/credential": {
+      "get": {
+        "tags": [
+          "Agent payments (Proposed)"
+        ],
+        "summary": "Proposed: download the credential of a payment address binding.",
+        "description": "**Proposed.** Returns the `PaymentAddressBinding` credential exactly as Studio issued it, for the owner only. A binding or agent that is not yours is a 404 `not_found`; a binding made before Studio kept credentials is a 404 `credential_not_stored`. Sent with `Cache-Control: no-store`.\n",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "bindingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The stored credential.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredAuthorityCredential"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/AgentInvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "404": {
+            "description": "No such agent or binding in your account (`not_found`), or no stored copy of its credential (`credential_not_stored`)."
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
           }
         }
       }

@@ -6,12 +6,15 @@ import { AgentCardEntity } from '../../database/entities/agent-card.entity.js';
 import { AdminAuditLogEntity } from '../../database/entities/admin-audit-log.entity.js';
 import { AgentEventEntity } from '../../database/entities/agent-event.entity.js';
 import { AuthorityGrantEntity } from '../../database/entities/authority-grant.entity.js';
+import { AuthorityCredentialEntity } from '../../database/entities/authority-credential.entity.js';
 import { PaymentAddressBindingEntity } from '../../database/entities/payment-address-binding.entity.js';
 import { IssuedCredentialEntity } from '../../database/entities/issued-credential.entity.js';
 import { StatusRegistryEntity } from '../../database/entities/status-registry.entity.js';
 import { IdentifierEntity } from '../../database/entities/identifier.entity.js';
 import { CustomerEntity } from '../../database/entities/customer.entity.js';
 import { recordActivation } from '../analytics/activation.js';
+import { createSecretBoxCipher } from '../idempotency/response-cipher.js';
+import type { ResponseCipher } from '../idempotency/response-cipher.js';
 import { VCT, defaultCapabilities } from '../../types/agent.js';
 import { StatusRegistryState } from '../../types/credential-status.js';
 import { CredentialCategory } from '../../types/credential.js';
@@ -24,9 +27,12 @@ import type {
 	AgentRecord,
 	AuthorityGrantRecord,
 	AuthorityGrantWithStatus,
+	IssuedCredentialValue,
 	MandatePolicySummary,
 	PaymentAddressBindingRecord,
 	PaymentAddressBindingWithStatus,
+	StoredAuthorityCredential,
+	StoredCredentialOwners,
 	TokenStatusListRecord,
 } from '../../types/agent.js';
 import { actsForExists, conflict } from './agent-errors.js';
@@ -76,6 +82,8 @@ export interface GrantReplacement {
 	statusIndex: number;
 	statusUri: string;
 	expiresAt: Date;
+	/** The replacement credential, stored sealed; the grant's previous stored credential is marked superseded. */
+	credential?: IssuedCredentialValue;
 }
 
 export interface NewAgentCard {
@@ -104,6 +112,8 @@ export interface NewGrant {
 	policySummary?: MandatePolicySummary;
 	/** Tool names, scopes or mandate constraints (never `cnf`), so an expiry change can reissue the credential. */
 	claims?: Record<string, unknown>;
+	/** The signed credential, stored sealed so the owner can download it again. */
+	credential?: IssuedCredentialValue;
 }
 
 export interface NewPaymentAddressBinding {
@@ -117,7 +127,12 @@ export interface NewPaymentAddressBinding {
 	statusListId: string;
 	statusIndex: number;
 	statusUri: string;
+	/** The signed binding credential, stored sealed so the owner can download it again. */
+	credential?: IssuedCredentialValue;
 }
+
+/** Whose stored credential: a grant or a payment address binding. */
+export type StoredCredentialOwner = { grantId: string } | { bindingId: string };
 
 export interface NewStatusList {
 	customerId: string;
@@ -201,6 +216,18 @@ export interface AgentStore {
 		agentId: string,
 		bindingId: string
 	): Promise<PaymentAddressBindingWithStatus | null>;
+
+	/**
+	 * The current (not superseded) stored credential of one of the agent's grants or bindings, decrypted. Null when
+	 * none is stored (made before credentials were kept) or it cannot be decrypted (the database key changed).
+	 */
+	getStoredCredential(
+		customerId: string,
+		agentId: string,
+		owner: StoredCredentialOwner
+	): Promise<StoredAuthorityCredential | null>;
+	/** The grants and bindings of the agent that have a current stored credential. Ids only: nothing is decrypted. */
+	listStoredCredentialOwners(customerId: string, agentId: string): Promise<StoredCredentialOwners>;
 
 	/** An active Token Status List of this issuer with room left, or null. */
 	findOpenStatusList(customerId: string, issuerDid: string): Promise<TokenStatusListRecord | null>;
@@ -301,8 +328,23 @@ const toBinding = (
 
 /** The TypeORM implementation. Repositories are looked up per call so importing this file needs no database. */
 export class TypeormAgentStore implements AgentStore {
+	private cipherInstance?: ResponseCipher;
+
+	/** `cipher` is injected by tests; production builds it from `EXTERNAL_DB_ENCRYPTION_KEY` on first use. */
+	constructor(private readonly cipher?: ResponseCipher) {}
+
 	private get db() {
 		return Connection.instance.dbConnection;
+	}
+
+	/** The `SecretBox` cipher that already seals stored idempotent responses, on `EXTERNAL_DB_ENCRYPTION_KEY`. */
+	private get credentialCipher(): ResponseCipher {
+		return this.cipher ?? (this.cipherInstance ??= createSecretBoxCipher());
+	}
+
+	private async seal(credential: IssuedCredentialValue | undefined): Promise<Record<string, unknown> | undefined> {
+		if (!credential) return undefined;
+		return this.credentialCipher.seal({ format: credential.format, value: credential.value });
 	}
 
 	async countOwnedDids(customerId: string, did: string): Promise<number> {
@@ -533,6 +575,7 @@ export class TypeormAgentStore implements AgentStore {
 
 	async createGrant(grant: NewGrant): Promise<AuthorityGrantRecord> {
 		need(grant.customerId, grant.agentId);
+		const sealed = await this.seal(grant.credential);
 		return this.db.transaction(async (manager: EntityManager) => {
 			const now = new Date();
 			if (grant.grantType === 'acts-for') await this.assertNoLiveActsFor(manager, grant, now);
@@ -579,6 +622,16 @@ export class TypeormAgentStore implements AgentStore {
 					claims: grant.claims,
 				})
 			);
+			if (sealed && grant.credential) {
+				await this.saveStoredCredential(manager, {
+					customerId: grant.customerId,
+					agentId: grant.agentId,
+					owner: { grantId: saved.id },
+					issuedCredentialId: savedCredential.issuedCredentialId,
+					format: grant.credential.format,
+					sealed,
+				});
+			}
 			return {
 				id: saved.id,
 				agentId: grant.agentId,
@@ -644,6 +697,7 @@ export class TypeormAgentStore implements AgentStore {
 
 	async createBinding(binding: NewPaymentAddressBinding): Promise<PaymentAddressBindingRecord> {
 		need(binding.customerId, binding.agentId, binding.account);
+		const sealed = await this.seal(binding.credential);
 		try {
 			return await this.db.transaction(async (manager: EntityManager) => {
 				const credential = new IssuedCredentialEntity(
@@ -659,7 +713,7 @@ export class TypeormAgentStore implements AgentStore {
 						statusIndex: binding.statusIndex,
 						credentialStatus: { status_list: { idx: binding.statusIndex, uri: binding.statusUri } },
 						statusRegistry: { registryId: binding.statusListId } as StatusRegistryEntity,
-						// Metadata only: the signed credential is returned once and never stored.
+						// Metadata only: the signed credential is kept sealed in `authorityCredential`, for the owner.
 						metadata: { agentId: binding.agentId, kind: 'payment-address-binding' },
 					}
 				);
@@ -680,6 +734,16 @@ export class TypeormAgentStore implements AgentStore {
 						statusIndex: binding.statusIndex,
 					})
 				);
+				if (sealed && binding.credential) {
+					await this.saveStoredCredential(manager, {
+						customerId: binding.customerId,
+						agentId: binding.agentId,
+						owner: { bindingId: saved.id },
+						issuedCredentialId: savedCredential.issuedCredentialId,
+						format: binding.credential.format,
+						sealed,
+					});
+				}
 				return {
 					id: saved.id,
 					agentId: binding.agentId,
@@ -761,6 +825,7 @@ export class TypeormAgentStore implements AgentStore {
 		need(customerId, agentId, grantId);
 		const grant = await this.getGrant(customerId, agentId, grantId);
 		if (!grant) return null;
+		const sealed = await this.seal(replacement.credential);
 		await this.db.transaction(async (manager: EntityManager) => {
 			const now = new Date();
 			const credential = new IssuedCredentialEntity(
@@ -800,8 +865,127 @@ export class TypeormAgentStore implements AgentStore {
 						{ status: 'revoked', statusUpdatedAt: now }
 					);
 			}
+			await this.supersedeStoredCredential(manager, {
+				customerId,
+				agentId,
+				grantId,
+				now,
+				replacement:
+					sealed && replacement.credential
+						? {
+								issuedCredentialId: saved.issuedCredentialId,
+								format: replacement.credential.format,
+								sealed,
+							}
+						: undefined,
+			});
 		});
 		return this.getGrant(customerId, agentId, grantId);
+	}
+
+	async getStoredCredential(
+		customerId: string,
+		agentId: string,
+		owner: StoredCredentialOwner
+	): Promise<StoredAuthorityCredential | null> {
+		const ownerWhere = 'grantId' in owner ? { grant: { id: owner.grantId } } : { binding: { id: owner.bindingId } };
+		need(customerId, agentId, 'grantId' in owner ? owner.grantId : owner.bindingId);
+		const row = await this.db.getRepository(AuthorityCredentialEntity).findOne({
+			where: { ...ownerWhere, agent: { agentId }, customer: { customerId }, supersededAt: IsNull() },
+		});
+		if (!row) return null;
+		// Only a sealed envelope is accepted: the column is never written in plaintext, so anything else is damage
+		const sealed = row.sealed as { v?: unknown; enc?: unknown } | null;
+		if (!sealed || typeof sealed.enc !== 'string') return null;
+		const opened = await this.credentialCipher.open(row.sealed);
+		if (!opened || (opened.format !== 'sd-jwt-vc' && opened.format !== 'jwt')) {
+			console.error('A stored authority credential could not be decrypted', { id: row.id });
+			return null;
+		}
+		const previous = await this.db.getRepository(AuthorityCredentialEntity).findOne({
+			where: { supersededBy: { id: row.id }, customer: { customerId } },
+			select: { id: true },
+		});
+		return {
+			id: row.id,
+			credential: { format: opened.format, value: opened.value },
+			issuedAt: row.createdAt,
+			supersedes: previous?.id ?? null,
+		};
+	}
+
+	async listStoredCredentialOwners(customerId: string, agentId: string): Promise<StoredCredentialOwners> {
+		need(customerId, agentId);
+		const rows = await this.db.getRepository(AuthorityCredentialEntity).find({
+			where: { agent: { agentId }, customer: { customerId }, supersededAt: IsNull() },
+			relations: { grant: true, binding: true },
+			select: { id: true, grant: { id: true }, binding: { id: true } },
+		});
+		return {
+			grantIds: rows.flatMap((row) => (row.grant?.id ? [row.grant.id] : [])),
+			bindingIds: rows.flatMap((row) => (row.binding?.id ? [row.binding.id] : [])),
+		};
+	}
+
+	private async saveStoredCredential(
+		manager: EntityManager,
+		row: {
+			customerId: string;
+			agentId: string;
+			owner: StoredCredentialOwner;
+			issuedCredentialId: string;
+			format: string;
+			sealed: Record<string, unknown>;
+		}
+	): Promise<AuthorityCredentialEntity> {
+		const repository = manager.getRepository(AuthorityCredentialEntity);
+		return repository.save(
+			repository.create({
+				customer: { customerId: row.customerId } as CustomerEntity,
+				agent: { agentId: row.agentId } as AgentEntity,
+				...('grantId' in row.owner
+					? { grant: { id: row.owner.grantId } as AuthorityGrantEntity }
+					: { binding: { id: row.owner.bindingId } as PaymentAddressBindingEntity }),
+				issuedCredential: { issuedCredentialId: row.issuedCredentialId } as IssuedCredentialEntity,
+				format: row.format,
+				sealed: row.sealed,
+			})
+		);
+	}
+
+	/**
+	 * Marks the grant's current stored credential superseded, then stores the replacement and links the old row to
+	 * it. Superseded first, because at most one row per grant may be current (a partial unique index).
+	 */
+	private async supersedeStoredCredential(
+		manager: EntityManager,
+		input: {
+			customerId: string;
+			agentId: string;
+			grantId: string;
+			now: Date;
+			replacement?: { issuedCredentialId: string; format: string; sealed: Record<string, unknown> };
+		}
+	): Promise<void> {
+		const { customerId, agentId, grantId, now } = input;
+		const repository = manager.getRepository(AuthorityCredentialEntity);
+		const current = await repository.findOne({
+			where: { grant: { id: grantId }, agent: { agentId }, customer: { customerId }, supersededAt: IsNull() },
+			select: { id: true },
+		});
+		if (current) {
+			await repository.update({ id: current.id, customer: { customerId } }, { supersededAt: now });
+		}
+		if (!input.replacement) return;
+		const saved = await this.saveStoredCredential(manager, {
+			customerId,
+			agentId,
+			owner: { grantId },
+			...input.replacement,
+		});
+		if (current && saved?.id) {
+			await repository.update({ id: current.id, customer: { customerId } }, { supersededBy: { id: saved.id } });
+		}
 	}
 
 	async addEvent(event: NewAgentEvent): Promise<AgentEventRecord> {

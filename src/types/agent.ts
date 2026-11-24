@@ -152,7 +152,7 @@ export interface TokenStatusListRecord {
 	writeCursor: number;
 }
 
-/** An x402 payment address bound to an agent (Proposed). The credential itself is never stored. */
+/** An x402 payment address bound to an agent (Proposed). The signed binding is kept, sealed, in `authorityCredential`. */
 export interface PaymentAddressBindingRecord {
 	id: string;
 	agentId: string;
@@ -164,6 +164,28 @@ export interface PaymentAddressBindingRecord {
 	statusIndex?: number | null;
 	revokedAt?: Date | null;
 	createdAt: Date;
+}
+
+/** A credential exactly as Studio issued it: a compact SD-JWT VC or JWT string, or the credential object. */
+export interface IssuedCredentialValue {
+	format: 'sd-jwt-vc' | 'jwt';
+	value: unknown;
+}
+
+/** The current stored credential of a grant or binding, decrypted for its owner. */
+export interface StoredAuthorityCredential {
+	id: string;
+	credential: IssuedCredentialValue;
+	/** When Studio stored it, which is when it was issued. */
+	issuedAt: Date;
+	/** The stored credential this one replaced (an expiry change), or null. */
+	supersedes: string | null;
+}
+
+/** Which grants and bindings of an agent have a current stored credential. */
+export interface StoredCredentialOwners {
+	grantIds: string[];
+	bindingIds: string[];
 }
 
 /** A binding with what changing its status needs: the issuer DID (the agent) and the status list URI. */

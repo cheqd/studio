@@ -394,6 +394,11 @@ class App {
 		app.post('/agents/:agentId/authority', AgentController.grantValidator, agents.grantAuthority);
 		app.delete('/agents/:agentId/authority/:grantId', AgentController.revokeValidator, agents.revokeAuthority);
 		app.patch('/agents/:agentId/authority/:grantId', AgentController.expiryValidator, agents.changeGrantExpiry);
+		app.get(
+			'/agents/:agentId/authority/:grantId/credential',
+			AgentController.grantCredentialValidator,
+			agents.getAuthorityCredential
+		);
 		app.get('/agents/:agentId/keys', AgentController.idValidator, agents.listKeys);
 		app.post('/agents/:agentId/keys', AgentController.addKeyValidator, agents.addKey);
 		app.post('/agents/:agentId/keys/rotate', AgentController.rotateKeyValidator, agents.rotateKey);
@@ -409,6 +414,11 @@ class App {
 			'/agents/:agentId/payment-addresses/:bindingId',
 			AgentController.revokePaymentAddressValidator,
 			agents.revokePaymentAddress
+		);
+		app.get(
+			'/agents/:agentId/payment-addresses/:bindingId/credential',
+			AgentController.bindingCredentialValidator,
+			agents.getPaymentAddressCredential
 		);
 		app.get('/agents/:agentId/settlement', AgentController.idValidator, agents.settlement);
 

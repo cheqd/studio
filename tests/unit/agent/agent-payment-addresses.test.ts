@@ -85,6 +85,7 @@ describe('bindPaymentAddress', () => {
 			status: 'active',
 			createdAt: expect.any(Date),
 			revokedAt: null,
+			hasCredential: true,
 		});
 		expect(JSON.stringify(list)).not.toContain('~');
 	});
