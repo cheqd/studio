@@ -17,6 +17,7 @@ import type {
 	AgentRecord,
 	AuthorityGrantRecord,
 	AuthorityGrantWithStatus,
+	IssuedCredentialValue,
 	PaymentAddressBindingRecord,
 	PaymentAddressBindingWithStatus,
 	TokenStatusListRecord,
@@ -32,6 +33,7 @@ import type {
 	NewGrant,
 	NewPaymentAddressBinding,
 	NewStatusList,
+	StoredCredentialOwner,
 } from '../../../src/services/agent/agent-store.js';
 import { defaultCapabilities } from '../../../src/types/agent.js';
 import { actsForExists, conflict } from '../../../src/services/agent/agent-errors.js';
@@ -322,6 +324,18 @@ export class FakeStore implements AgentStore {
 	cards: AgentCardRecord[] = [];
 	grants = new Map<string, AuthorityGrantWithStatus>();
 	bindings = new Map<string, PaymentAddressBindingWithStatus>();
+	/** Stored authority credentials. The TypeORM store seals them; the fake keeps them as issued. */
+	storedCredentials: Array<{
+		id: string;
+		customerId: string;
+		agentId: string;
+		grantId?: string;
+		bindingId?: string;
+		credential: IssuedCredentialValue;
+		createdAt: Date;
+		supersededAt?: Date;
+		supersededBy?: string;
+	}> = [];
 	events: AgentEventRecord[] = [];
 	audit: NewAuditEntry[] = [];
 	/** Set to make event writes fail, to prove the main operation does not depend on them. */
@@ -508,6 +522,8 @@ export class FakeStore implements AgentStore {
 			statusListUri: list?.uri ?? null,
 		};
 		this.grants.set(grant.id, grant);
+		if (input.credential)
+			this.storeCredential(input.customerId, input.agentId, { grantId: grant.id }, input.credential);
 		return grant;
 	}
 	async markGrantRevoked(customerId: string, agentId: string, grantId: string) {
@@ -526,6 +542,12 @@ export class FakeStore implements AgentStore {
 		grant.statusIndex = replacement.statusIndex;
 		grant.statusListUri = replacement.statusUri;
 		grant.expiresAt = replacement.expiresAt;
+		const current = this.storedCredentials.find((c) => c.grantId === grantId && !c.supersededAt);
+		if (current) current.supersededAt = new Date();
+		if (replacement.credential) {
+			const stored = this.storeCredential(customerId, agentId, { grantId }, replacement.credential);
+			if (current) current.supersededBy = stored.id;
+		}
 		return grant;
 	}
 	async addEvent(input: NewAgentEvent) {
@@ -600,6 +622,9 @@ export class FakeStore implements AgentStore {
 			statusListUri: input.statusUri,
 		};
 		this.bindings.set(binding.id, binding);
+		if (input.credential) {
+			this.storeCredential(input.customerId, input.agentId, { bindingId: binding.id }, input.credential);
+		}
 		return binding;
 	}
 	async markBindingRevoked(customerId: string, agentId: string, bindingId: string) {
@@ -608,6 +633,50 @@ export class FakeStore implements AgentStore {
 		if (!binding) return null;
 		binding.revokedAt ??= new Date();
 		return binding;
+	}
+	private storeCredential(
+		customerId: string,
+		agentId: string,
+		owner: StoredCredentialOwner,
+		credential: IssuedCredentialValue
+	) {
+		const row = {
+			id: uuidv4(),
+			customerId,
+			agentId,
+			...owner,
+			credential,
+			createdAt: new Date(Date.now() + this.storedCredentials.length),
+		};
+		this.storedCredentials.push(row);
+		return row;
+	}
+	async getStoredCredential(customerId: string, agentId: string, owner: StoredCredentialOwner) {
+		this.note('getStoredCredential', customerId);
+		const row = this.storedCredentials.find(
+			(c) =>
+				c.customerId === customerId &&
+				c.agentId === agentId &&
+				!c.supersededAt &&
+				('grantId' in owner ? c.grantId === owner.grantId : c.bindingId === owner.bindingId)
+		);
+		if (!row) return null;
+		return {
+			id: row.id,
+			credential: row.credential,
+			issuedAt: row.createdAt,
+			supersedes: this.storedCredentials.find((c) => c.supersededBy === row.id)?.id ?? null,
+		};
+	}
+	async listStoredCredentialOwners(customerId: string, agentId: string) {
+		this.note('listStoredCredentialOwners', customerId);
+		const current = this.storedCredentials.filter(
+			(c) => c.customerId === customerId && c.agentId === agentId && !c.supersededAt
+		);
+		return {
+			grantIds: current.flatMap((c) => (c.grantId ? [c.grantId] : [])),
+			bindingIds: current.flatMap((c) => (c.bindingId ? [c.bindingId] : [])),
+		};
 	}
 	async findOpenStatusList(customerId: string, issuerDid: string) {
 		this.note('findOpenStatusList', customerId);

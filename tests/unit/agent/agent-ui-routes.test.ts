@@ -357,7 +357,7 @@ describe('GET /agents/{id}/authority: summary, expiry and status', () => {
 			customer: customerA,
 		});
 		expect(suspended.body.grants.every((g: any) => g.status === 'suspended')).toBe(true);
-		expect(JSON.stringify(suspended.body)).not.toMatch(/eyJ|credential|statusList/i);
+		expect(JSON.stringify(suspended.body)).not.toMatch(/eyJ|"credential"|statusList/i);
 	});
 });
 

@@ -14,6 +14,13 @@ export class AgentServiceError extends Error {
 
 export const notFound = (what = 'Agent') =>
 	new AgentServiceError(StatusCodes.NOT_FOUND, 'not_found', `${what} not found`);
+/** The grant or binding exists, but Studio holds no copy of its credential (issued before credentials were kept). */
+export const credentialNotStored = () =>
+	new AgentServiceError(
+		StatusCodes.NOT_FOUND,
+		'credential_not_stored',
+		'Studio has no stored copy of this credential. It was issued before Studio kept authority credentials, so only the copy returned when it was issued exists'
+	);
 export const badRequest = (message: string) =>
 	new AgentServiceError(StatusCodes.BAD_REQUEST, 'invalid_request', message);
 export const conflict = (message: string) => new AgentServiceError(StatusCodes.CONFLICT, 'conflict', message);

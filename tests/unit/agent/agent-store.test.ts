@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { randomBytes } from 'node:crypto';
 
 // The TypeORM store is checked against a recording repository: no database is needed to prove that every
 // tenant-scoped query carries the customer, and that a missing identifier is refused instead of dropped.
@@ -52,6 +53,7 @@ jest.unstable_mockModule('../../../src/database/connection/connection.js', () =>
 }));
 
 const { TypeormAgentStore } = await import('../../../src/services/agent/agent-store.js');
+const { createSecretBoxCipher } = await import('../../../src/services/idempotency/response-cipher.js');
 
 const customerId = 'c0000000-0000-4000-8000-000000000001';
 const agentId = 'a0000000-0000-4000-8000-000000000001';
@@ -371,5 +373,132 @@ describe('TypeormAgentStore', () => {
 			targetCustomerId: customerId,
 			action: 'agent.key.rotated',
 		});
+	});
+});
+
+describe('stored authority credentials (sealed at rest)', () => {
+	const secret = randomBytes(32).toString('hex');
+	const sealing = new TypeormAgentStore(createSecretBoxCipher(secret));
+	const COMPACT = 'eyJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJkaWQ6Y2hlcWQ6dGVzdG5ldDpvcmcifQ.c2lnbmF0dXJl~';
+	// The recording repository's `create` is async, so the row written is what `create` was given
+	const savesOf = (entity: string, method = entity === 'AuthorityCredentialEntity' ? 'create' : 'save') =>
+		recorded.filter((call) => call.entity === entity && call.method === method).map((call) => call.args[0]);
+
+	it('stores the grant credential in the same transaction, sealed: no plaintext anywhere in the row', async () => {
+		await sealing.createGrant({
+			agentId,
+			customerId,
+			grantType: 'tool-scope',
+			issuerDid: 'did:cheqd:testnet:org',
+			subjectDid: 'did:cheqd:testnet:agent',
+			format: 'sd-jwt-vc',
+			vct: 'v',
+			credential: { format: 'sd-jwt-vc', value: COMPACT },
+		});
+		const [row] = savesOf('AuthorityCredentialEntity') as Array<Record<string, any>>;
+		expect(row).toBeDefined();
+		const text = JSON.stringify(row);
+		expect(text).not.toContain(COMPACT);
+		expect(text).not.toContain('eyJ');
+		expect(row.sealed).toEqual({ v: 1, enc: expect.any(String) });
+		expect(row.format).toBe('sd-jwt-vc');
+		expect(JSON.stringify(row.customer)).toContain(customerId);
+		expect(JSON.stringify(row.agent)).toContain(agentId);
+		// The ordinary issuedCredential index row still carries no credential
+		expect(JSON.stringify(savesOf('IssuedCredentialEntity'))).not.toContain('eyJ');
+	});
+
+	it('opens it for the owner, scoped by customer, agent and "current", and fails closed under another key', async () => {
+		await sealing.createGrant({
+			agentId,
+			customerId,
+			grantType: 'acts-for',
+			issuerDid: 'did:cheqd:testnet:org',
+			subjectDid: 'did:cheqd:testnet:agent',
+			format: 'sd-jwt-vc',
+			vct: 'v',
+			credential: { format: 'sd-jwt-vc', value: COMPACT },
+		});
+		const [row] = savesOf('AuthorityCredentialEntity') as Array<Record<string, any>>;
+		rows.AuthorityCredentialEntity = { id: 'stored-1', sealed: row.sealed, createdAt: new Date() };
+		recorded.length = 0;
+		const opened = await sealing.getStoredCredential(customerId, agentId, { grantId });
+		expect(opened?.credential).toEqual({ format: 'sd-jwt-vc', value: COMPACT });
+		const where = JSON.stringify((recorded[0]?.args[0] as { where: unknown }).where);
+		expect(where).toContain(customerId);
+		expect(where).toContain(agentId);
+		expect(where).toContain(grantId);
+		expect(where).toContain('supersededAt');
+
+		jest.spyOn(console, 'error').mockImplementation(() => undefined);
+		const otherKey = new TypeormAgentStore(createSecretBoxCipher(randomBytes(32).toString('hex')));
+		expect(await otherKey.getStoredCredential(customerId, agentId, { grantId })).toBeNull();
+		// A row that is not a sealed envelope is never served as plaintext
+		rows.AuthorityCredentialEntity = { id: 'stored-2', sealed: { format: 'sd-jwt-vc', value: COMPACT } };
+		expect(await sealing.getStoredCredential(customerId, agentId, { grantId })).toBeNull();
+	});
+
+	it('on reissue marks the current copy superseded before storing the sealed replacement, then links them', async () => {
+		rows.AuthorityGrantEntity = {
+			id: grantId,
+			grantType: 'tool-scope',
+			createdAt: new Date(),
+			statusIndex: 1,
+			statusList: { registryId: 'r', uri: 'u', identifier: { did: 'did:cheqd:testnet:org' } },
+			issuedCredential: { issuedCredentialId: 'old-credential' },
+		};
+		rows.AuthorityCredentialEntity = { id: 'stored-old' };
+		const original = recorded.length;
+		await sealing.replaceGrantCredential(customerId, agentId, grantId, {
+			issuerDid: 'did:cheqd:testnet:org',
+			subjectDid: 'did:cheqd:testnet:agent',
+			format: 'sd-jwt-vc',
+			vct: 'v',
+			statusListId: 'r2',
+			statusIndex: 4,
+			statusUri: 'https://l.example',
+			expiresAt: new Date('2027-01-01T00:00:00Z'),
+			credential: { format: 'sd-jwt-vc', value: COMPACT },
+		});
+		const writes = recorded
+			.slice(original)
+			.filter((c) => c.entity === 'AuthorityCredentialEntity' && ['save', 'update'].includes(c.method));
+		expect(writes.map((c) => c.method)).toEqual(['update', 'save']);
+		expect(JSON.stringify(writes[0]?.args)).toContain('stored-old');
+		expect(JSON.stringify(writes[0]?.args)).toContain('supersededAt');
+		expect(JSON.stringify(writes[0]?.args[0])).toContain(customerId);
+		expect(JSON.stringify(writes[1]?.args[0])).not.toContain(COMPACT);
+	});
+
+	it('stores a payment address binding credential sealed, in the binding transaction', async () => {
+		await sealing.createBinding({
+			agentId,
+			customerId,
+			account: 'eip155:8453:0x00',
+			issuerDid: 'did:cheqd:testnet:agent',
+			subjectDid: 'did:cheqd:testnet:agent',
+			statusListId: 'r',
+			statusIndex: 0,
+			statusUri: 'https://l.example',
+			credential: { format: 'sd-jwt-vc', value: COMPACT },
+		});
+		const [row] = savesOf('AuthorityCredentialEntity') as Array<Record<string, any>>;
+		expect(row?.sealed).toEqual({ v: 1, enc: expect.any(String) });
+		expect(JSON.stringify(row)).not.toContain(COMPACT);
+	});
+
+	it('lists which grants and bindings have a current copy without loading the sealed column', async () => {
+		rows.AuthorityCredentialEntity = [
+			{ id: '1', grant: { id: grantId } },
+			{ id: '2', binding: { id: 'b1' } },
+		];
+		expect(await sealing.listStoredCredentialOwners(customerId, agentId)).toEqual({
+			grantIds: [grantId],
+			bindingIds: ['b1'],
+		});
+		const find = recorded.find((c) => c.entity === 'AuthorityCredentialEntity' && c.method === 'find');
+		const options = find?.args[0] as { where: unknown; select: Record<string, unknown> };
+		expect(JSON.stringify(options.where)).toContain(customerId);
+		expect(options.select).not.toHaveProperty('sealed');
 	});
 });

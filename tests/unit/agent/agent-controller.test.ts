@@ -358,10 +358,11 @@ describe('cards and authority over HTTP', () => {
 		);
 		for (const grant of grants) {
 			expect(Object.keys(grant).sort()).toEqual(
-				['createdAt', 'expiresAt', 'grantType', 'id', 'revokedAt', 'status', 'summary'].sort()
+				['createdAt', 'expiresAt', 'grantType', 'hasCredential', 'id', 'revokedAt', 'status', 'summary'].sort()
 			);
 		}
-		expect(JSON.stringify(listed.body)).not.toMatch(/credential|eyJ|issuedCredentialId|statusList/i);
+		// Only the flag: the credential itself is served by its own owner-only route
+		expect(JSON.stringify(listed.body)).not.toMatch(/"credential"|eyJ|issuedCredentialId|statusList/i);
 	});
 
 	it('shows an expired grant as expired', async () => {
