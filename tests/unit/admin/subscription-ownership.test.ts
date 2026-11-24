@@ -71,3 +71,38 @@ describe.each(['cancel', 'resume'] as const)('subscription %s', (action) => {
 		expect(unknown.stripeCall).not.toHaveBeenCalled();
 	});
 });
+
+describe('subscription list', () => {
+	const call = async (paymentProviderId: string | undefined) => {
+		jest.spyOn(stripeService, 'syncCustomer').mockResolvedValue(undefined);
+		const list = jest.fn(async (_params?: unknown) => ({ data: [], lastResponse: { statusCode: 200 } }));
+		const response = {
+			locals: { customer: { customerId: 'customer-1', paymentProviderId }, stripe: { subscriptions: { list } } },
+			statusCode: 200,
+			body: undefined as unknown,
+			status(code: number) {
+				this.statusCode = code;
+				return this;
+			},
+			json(body: unknown) {
+				this.body = body;
+				return this;
+			},
+		};
+		const request = { query: {} } as unknown as Request;
+		await new SubscriptionController().list(request, response as unknown as Response);
+		return { response, list };
+	};
+
+	it("lists only the caller's own Stripe customer's subscriptions", async () => {
+		const { response, list } = await call('cus_own');
+		expect(response.statusCode).toBe(200);
+		expect(list).toHaveBeenCalledWith({ customer: 'cus_own' });
+	});
+
+	it('never lists without a customer filter when the caller has no Stripe customer', async () => {
+		const { response, list } = await call(undefined);
+		expect(response.statusCode).toBe(404);
+		expect(list).not.toHaveBeenCalled();
+	});
+});

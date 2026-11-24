@@ -405,14 +405,18 @@ export class SubscriptionController {
 	@syncCustomer
 	public async list(request: Request, response: Response) {
 		const stripe = response.locals.stripe as Stripe;
-		const paymentProviderId = response.locals.customer.paymentProviderId;
+		const paymentProviderId = response.locals.customer?.paymentProviderId;
+		// Always scoped to the caller's own Stripe customer: without one there is nothing to list
+		if (!paymentProviderId) {
+			return response.status(StatusCodes.NOT_FOUND).json({
+				error: `Subscriptions were not found`,
+			} satisfies SubscriptionListUnsuccessfulResponseBody);
+		}
 		try {
 			// Get the subscriptions
-			const subscriptions = paymentProviderId
-				? await stripe.subscriptions.list({
-						customer: paymentProviderId as string,
-					})
-				: await stripe.subscriptions.list();
+			const subscriptions = await stripe.subscriptions.list({
+				customer: paymentProviderId as string,
+			});
 
 			if (subscriptions.lastResponse?.statusCode !== StatusCodes.OK) {
 				return response.status(StatusCodes.NOT_FOUND).json({
