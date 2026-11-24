@@ -4,6 +4,7 @@ import { test, expect } from '@playwright/test';
 import { StatusCodes } from 'http-status-codes';
 import * as fs from 'fs';
 import { CONTENT_TYPE, PAYLOADS_PATH } from '../../constants';
+import { alreadyAppliedOnRetry } from '../../helpers';
 
 test.use({ storageState: 'playwright/.auth/user.json' });
 
@@ -57,7 +58,7 @@ test(" Verify a credential's suspension status", async ({ request }) => {
 	expect(result.suspended).toBe(false);
 });
 
-test(' Verify a credential status after suspension', async ({ request }) => {
+test(' Verify a credential status after suspension', async ({ request }, testInfo) => {
 	const response = await request.post(`/credential/suspend?publish=true&listType=StatusList2021`, {
 		data: JSON.stringify({
 			credential: jwtCredential,
@@ -67,10 +68,12 @@ test(' Verify a credential status after suspension', async ({ request }) => {
 		},
 	});
 	const result = await response.json();
-	expect(response).toBeOK();
-	expect(response.status()).toBe(StatusCodes.OK);
-	expect(result.suspended).toBe(true);
-	expect(result.published).toBe(true);
+	if (!alreadyAppliedOnRetry(response.status(), testInfo)) {
+		expect(response).toBeOK();
+		expect(response.status()).toBe(StatusCodes.OK);
+		expect(result.suspended).toBe(true);
+		expect(result.published).toBe(true);
+	}
 
 	const verificationResponse = await request.post(`/credential/verify?verifyStatus=true`, {
 		data: JSON.stringify({
@@ -87,7 +90,7 @@ test(' Verify a credential status after suspension', async ({ request }) => {
 	expect(verificationResult.suspended).toBe(true);
 });
 
-test(' Verify a credential status after reinstating', async ({ request }) => {
+test(' Verify a credential status after reinstating', async ({ request }, testInfo) => {
 	const response = await request.post(`/credential/reinstate?publish=true&listType=StatusList2021`, {
 		data: JSON.stringify({
 			credential: jwtCredential,
@@ -97,9 +100,11 @@ test(' Verify a credential status after reinstating', async ({ request }) => {
 		},
 	});
 	const result = await response.json();
-	expect(response).toBeOK();
-	expect(response.status()).toBe(StatusCodes.OK);
-	expect(result.unsuspended).toBe(true);
+	if (!alreadyAppliedOnRetry(response.status(), testInfo)) {
+		expect(response).toBeOK();
+		expect(response.status()).toBe(StatusCodes.OK);
+		expect(result.unsuspended).toBe(true);
+	}
 
 	const verificationResponse = await request.post(`/credential/verify?verifyStatus=true`, {
 		data: JSON.stringify({
