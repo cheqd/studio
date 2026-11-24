@@ -84,7 +84,10 @@ describe('AdminAnalyticsService.faucetToLedger', () => {
 		const { service, calls } = serviceWith(() => [row]);
 		await service.faucetToLedger(90, 'people');
 		const [{ sql, parameters }] = calls;
-		expect(parameters[0]).toBe(90);
+		// the window: [start, stop) of 90 whole UTC days ending today
+		const [start, stop] = parameters[0] as [string, string];
+		expect((Date.parse(stop) - Date.parse(start)) / 86_400_000).toBe(90);
+		expect(sql).toContain('f.funded_at >= win.start AND f.funded_at < win.stop');
 		expect(parameters[1]).toBe('people');
 		expect(parameters[2]).toEqual(expect.arrayContaining(['did-create', 'resource-create', 'credential-revoke']));
 		expect(parameters[2]).not.toContain('credential-verify');

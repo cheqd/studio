@@ -6,11 +6,31 @@
  *     AnalyticsRange:
  *       in: query
  *       name: range
- *       description: Days to look back, counting today as whole UTC days.
+ *       description: >-
+ *         Days to look back, counting today as whole UTC days, or `all` (from the UTC day of the first sign-up to
+ *         today). Do not combine with `from` and `to`.
  *       schema:
- *         type: integer
- *         enum: [7, 30, 90]
- *         default: 30
+ *         type: string
+ *         enum: ['7', '30', '90', all]
+ *         default: '30'
+ *     AnalyticsFrom:
+ *       in: query
+ *       name: from
+ *       description: >-
+ *         First UTC day of a custom window (YYYY-MM-DD), with `to`. The window spans at most 400 days, both ends
+ *         included. Not with `range`.
+ *       schema:
+ *         type: string
+ *         format: date
+ *         example: '2026-10-01'
+ *     AnalyticsTo:
+ *       in: query
+ *       name: to
+ *       description: Last UTC day of a custom window (YYYY-MM-DD), included, with `from`.
+ *       schema:
+ *         type: string
+ *         format: date
+ *         example: '2026-10-31'
  *     AnalyticsSegment:
  *       in: query
  *       name: segment
@@ -85,6 +105,13 @@
  *           format: date-time
  *           nullable: true
  *           description: First tracked operation of any kind.
+ *     AdminFunnelStep:
+ *       type: object
+ *       properties:
+ *         key: { type: string, example: first-api-key }
+ *         label: { type: string, example: First API key }
+ *         accounts: { type: integer }
+ *         medianSecondsFromPrevious: { type: integer, nullable: true }
  *     AdminStalledAccounts:
  *       type: object
  *       properties:
@@ -93,7 +120,9 @@
  *         stepLabel: { type: string, example: First DID created }
  *         previousStep: { type: string, example: funded }
  *         previousStepLabel: { type: string, example: Funded address }
- *         range: { type: integer, enum: [7, 30, 90] }
+ *         range: { description: 'The days of a preset window (7, 30 or 90, a number), or all, or custom.', example: 30 }
+ *         from: { type: string, format: date, nullable: true, description: 'Null for range=all.' }
+ *         to: { type: string, format: date }
  *         segment: { type: string, enum: [agents, people, unclassified, all] }
  *         page: { type: integer }
  *         limit: { type: integer }

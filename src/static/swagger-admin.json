@@ -40,15 +40,36 @@
       "AnalyticsRange": {
         "in": "query",
         "name": "range",
-        "description": "Days to look back, counting today as whole UTC days.",
+        "description": "Days to look back, counting today as whole UTC days, or `all` (from the UTC day of the first sign-up to today). Do not combine with `from` and `to`.",
         "schema": {
-          "type": "integer",
+          "type": "string",
           "enum": [
-            7,
-            30,
-            90
+            "7",
+            "30",
+            "90",
+            "all"
           ],
-          "default": 30
+          "default": "30"
+        }
+      },
+      "AnalyticsFrom": {
+        "in": "query",
+        "name": "from",
+        "description": "First UTC day of a custom window (YYYY-MM-DD), with `to`. The window spans at most 400 days, both ends included. Not with `range`.",
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2026-10-01"
+        }
+      },
+      "AnalyticsTo": {
+        "in": "query",
+        "name": "to",
+        "description": "Last UTC day of a custom window (YYYY-MM-DD), included, with `from`.",
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2026-10-31"
         }
       },
       "AnalyticsSegment": {
@@ -225,6 +246,26 @@
           }
         }
       },
+      "AdminFunnelStep": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "first-api-key"
+          },
+          "label": {
+            "type": "string",
+            "example": "First API key"
+          },
+          "accounts": {
+            "type": "integer"
+          },
+          "medianSecondsFromPrevious": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
       "AdminStalledAccounts": {
         "type": "object",
         "properties": {
@@ -252,12 +293,18 @@
             "example": "Funded address"
           },
           "range": {
-            "type": "integer",
-            "enum": [
-              7,
-              30,
-              90
-            ]
+            "description": "The days of a preset window (7, 30 or 90, a number), or all, or custom.",
+            "example": 30
+          },
+          "from": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Null for range=all."
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
           },
           "segment": {
             "type": "string",
@@ -827,6 +874,12 @@
             "$ref": "#/components/parameters/AnalyticsRange"
           },
           {
+            "$ref": "#/components/parameters/AnalyticsFrom"
+          },
+          {
+            "$ref": "#/components/parameters/AnalyticsTo"
+          },
+          {
             "$ref": "#/components/parameters/AnalyticsSegment"
           }
         ],
@@ -910,6 +963,12 @@
             "$ref": "#/components/parameters/AnalyticsRange"
           },
           {
+            "$ref": "#/components/parameters/AnalyticsFrom"
+          },
+          {
+            "$ref": "#/components/parameters/AnalyticsTo"
+          },
+          {
             "$ref": "#/components/parameters/AnalyticsSegment"
           }
         ],
@@ -971,6 +1030,12 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/AnalyticsRange"
+          },
+          {
+            "$ref": "#/components/parameters/AnalyticsFrom"
+          },
+          {
+            "$ref": "#/components/parameters/AnalyticsTo"
           },
           {
             "$ref": "#/components/parameters/AnalyticsSegment"
@@ -1083,7 +1148,7 @@
     "/admin/analytics/funnels": {
       "get": {
         "summary": "Journey funnel (staff only).",
-        "description": "Steps for the customers who signed up in the range. A customer counts at a step only if it reached all the steps before it. `first-credential`: signed up, first API key (any API key, revoked or not, including the portal session key), first API call (first tracked operation), funded address (completed faucet request), first DID, first credential issued. `first-agent`: signed up, first API key, first API call, funded address, first DID, registered an agent, agent card signed. `medianSecondsFromPrevious` is null for the first step or when nobody reached the step. Percent and drop are for the client to work out from `accounts`. Needs the `admin:analytics:read` scope.",
+        "description": "Steps for the customers who signed up in the window (`range`, or `from` and `to`). A customer counts at a step only if it reached all the steps before it. `first-credential`: signed up, first API key (any API key, revoked or not, including the portal session key), first API call (first tracked operation), funded address (completed faucet request), first DID, first credential issued. `first-agent`: signed up, first API key, first API call, funded address, first DID, registered an agent, agent card signed. `medianSecondsFromPrevious` is null for the first step or when nobody reached the step. Percent and drop are for the client to work out from `accounts`. Needs the `admin:analytics:read` scope.",
         "tags": [
           "Analytics"
         ],
@@ -1104,7 +1169,24 @@
             "$ref": "#/components/parameters/AnalyticsRange"
           },
           {
+            "$ref": "#/components/parameters/AnalyticsFrom"
+          },
+          {
+            "$ref": "#/components/parameters/AnalyticsTo"
+          },
+          {
             "$ref": "#/components/parameters/AnalyticsSegment"
+          },
+          {
+            "in": "query",
+            "name": "cohort",
+            "description": "`week` adds `cohorts`: the same steps per calendar week of sign-up (UTC, weeks start on Monday), oldest first, for weeks with at least one sign-up in the window.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "week"
+              ]
+            }
           }
         ],
         "responses": {
@@ -1118,23 +1200,49 @@
                     "journey": {
                       "type": "string"
                     },
+                    "range": {
+                      "description": "The days of a preset window (7, 30 or 90, a number), or all, or custom.",
+                      "example": 30
+                    },
+                    "from": {
+                      "type": "string",
+                      "format": "date",
+                      "nullable": true,
+                      "description": "Null for range=all."
+                    },
+                    "to": {
+                      "type": "string",
+                      "format": "date"
+                    },
                     "steps": {
                       "type": "array",
                       "items": {
+                        "$ref": "#/components/schemas/AdminFunnelStep"
+                      }
+                    },
+                    "cohort": {
+                      "type": "string",
+                      "enum": [
+                        "week"
+                      ],
+                      "description": "Only with cohort=week."
+                    },
+                    "cohorts": {
+                      "type": "array",
+                      "description": "Only with cohort=week.",
+                      "items": {
                         "type": "object",
                         "properties": {
-                          "key": {
-                            "type": "string"
+                          "weekStart": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-11-16"
                           },
-                          "label": {
-                            "type": "string"
-                          },
-                          "accounts": {
-                            "type": "integer"
-                          },
-                          "medianSecondsFromPrevious": {
-                            "type": "integer",
-                            "nullable": true
+                          "steps": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/AdminFunnelStep"
+                            }
                           }
                         }
                       }
@@ -1201,6 +1309,12 @@
             "$ref": "#/components/parameters/AnalyticsRange"
           },
           {
+            "$ref": "#/components/parameters/AnalyticsFrom"
+          },
+          {
+            "$ref": "#/components/parameters/AnalyticsTo"
+          },
+          {
             "$ref": "#/components/parameters/AnalyticsSegment"
           },
           {
@@ -1261,6 +1375,12 @@
             "$ref": "#/components/parameters/AnalyticsRange"
           },
           {
+            "$ref": "#/components/parameters/AnalyticsFrom"
+          },
+          {
+            "$ref": "#/components/parameters/AnalyticsTo"
+          },
+          {
             "$ref": "#/components/parameters/AnalyticsSegment"
           }
         ],
@@ -1273,19 +1393,17 @@
                   "type": "object",
                   "properties": {
                     "range": {
-                      "type": "integer",
-                      "enum": [
-                        7,
-                        30,
-                        90
-                      ]
+                      "description": "The days of a preset window (7, 30 or 90, a number), or all, or custom.",
+                      "example": 30
                     },
                     "segment": {
                       "type": "string"
                     },
                     "from": {
                       "type": "string",
-                      "example": "2026-10-17"
+                      "nullable": true,
+                      "example": "2026-10-17",
+                      "description": "Null for range=all."
                     },
                     "to": {
                       "type": "string",

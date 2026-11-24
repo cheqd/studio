@@ -37,6 +37,8 @@ describe('AdminAnalyticsService.stalledAccounts (U-40)', () => {
 			previousStep: 'funded',
 			previousStepLabel: 'Funded address',
 			range: 30,
+			from: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+			to: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
 			segment: 'all',
 			page: 2,
 			limit: 2,
@@ -72,9 +74,9 @@ describe('AdminAnalyticsService.stalledAccounts (U-40)', () => {
 		const stalled =
 			'j.signed IS NOT NULL AND j.apikey IS NOT NULL AND j.apicall IS NOT NULL AND j.funded IS NOT NULL AND j.did IS NOT NULL AND j.agent IS NULL';
 		expect(page.sql).toContain(`WHERE ${stalled} ORDER BY j.signed DESC, j."customerId" LIMIT $3 OFFSET $4`);
-		expect(page.parameters).toEqual([90, 'people', 10, 20]);
+		expect(page.parameters).toEqual([expect.any(Array), 'people', 10, 20]);
 		expect(total.sql).toContain(`SELECT COUNT(*) AS total FROM j WHERE ${stalled}`);
-		expect(total.parameters).toEqual([90, 'people']);
+		expect(total.parameters).toEqual([page.parameters[0], 'people']);
 		// the name and email columns are never selected
 		for (const { sql } of calls) expect(sql).not.toMatch(/c\."(name|email)"/);
 	});
