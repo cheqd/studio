@@ -55,6 +55,7 @@ describe('staff auth rules', () => {
 		['/admin/analytics/top-accounts', 'admin:analytics:read'],
 		['/admin/analytics/plan-mix', 'admin:analytics:read'],
 		['/admin/analytics/funnels', 'admin:analytics:read'],
+		['/admin/analytics/funnels/stalled', 'admin:analytics:read'],
 		['/admin/analytics/faucet-to-ledger', 'admin:analytics:read'],
 		['/admin/audit-log', 'admin:audit:read'],
 	])('GET %s needs exactly %s and is not open to anonymous callers', (path, scope) => {
@@ -94,6 +95,10 @@ describe('staff auth rules', () => {
 			['GET', '/admin/analytics/'],
 			['GET', '/admin/analytics/overview/extra'],
 			['GET', '/admin/analytics/overviews'],
+			['GET', '/admin/analytics/funnels/stalled/'],
+			['GET', '/admin/analytics/funnels/stalledx'],
+			['GET', '/admin/analytics/funnels/other'],
+			['POST', '/admin/analytics/funnels/stalled'],
 			['GET', '/x/admin/analytics/overview'],
 			['POST', '/admin/analytics/overview'],
 			['GET', '/admin/audit-log/'],
@@ -163,6 +168,7 @@ function fakeService() {
 		topAccounts: jest.fn(async () => []),
 		planMix: jest.fn(async () => ({ plans: [], paidPercent: 0 })),
 		funnel: jest.fn(async () => ({ journey: 'first-agent', steps: [] })),
+		stalledAccounts: jest.fn(async () => ({ accounts: [], total: 0 })),
 		auditLog: jest.fn(async () => ({ entries: [], total: 0 })),
 	};
 	return service;
@@ -283,6 +289,42 @@ describe('staff endpoints: validation, defaults and staff-only enforcement', () 
 		expect(service.funnel).toHaveBeenCalledWith('first-agent', 90, 'people');
 	});
 
+	it('funnels/stalled passes journey, step, range, segment and page through with defaults', async () => {
+		const ok = await call(analytics, 'stalled', AnalyticsAdminController.stalledValidator, {
+			query: { journey: 'first-credential', step: 'first-did' },
+		});
+		expect(ok.status).toBe(200);
+		expect(service.stalledAccounts).toHaveBeenCalledWith('first-credential', 'first-did', 30, 'all', 1, 25);
+		await call(analytics, 'stalled', AnalyticsAdminController.stalledValidator, {
+			query: {
+				journey: 'first-agent',
+				step: 'card-signed',
+				range: '7',
+				segment: 'agents',
+				page: '3',
+				limit: '100',
+			},
+		});
+		expect(service.stalledAccounts).toHaveBeenLastCalledWith('first-agent', 'card-signed', 7, 'agents', 3, 100);
+	});
+
+	it.each([
+		['no step', { journey: 'first-agent' }],
+		['no journey', { step: 'funded' }],
+		['an unknown step', { journey: 'first-agent', step: 'paid' }],
+		['the first step (nothing before it)', { journey: 'first-agent', step: 'signed-up' }],
+		['a step of the other journey', { journey: 'first-credential', step: 'card-signed' }],
+		['a step of the other journey (agent)', { journey: 'first-agent', step: 'first-credential' }],
+		['a bad range', { journey: 'first-agent', step: 'funded', range: '14' }],
+		['a bad segment', { journey: 'first-agent', step: 'funded', segment: 'everyone' }],
+		['limit above 100', { journey: 'first-agent', step: 'funded', limit: '101' }],
+		['page 0', { journey: 'first-agent', step: 'funded', page: '0' }],
+	])('funnels/stalled rejects %s with 400 and does not query', async (_name, query) => {
+		const result = await call(analytics, 'stalled', AnalyticsAdminController.stalledValidator, { query });
+		expect(result.status).toBe(400);
+		expect(service.stalledAccounts).not.toHaveBeenCalled();
+	});
+
 	it('GET /admin/audit-log paginates with defaults 25 and a maximum of 100', async () => {
 		await call(audit, 'list', AuditLogAdminController.listValidator);
 		expect(service.auditLog).toHaveBeenCalledWith(1, 25);
@@ -317,6 +359,13 @@ describe('staff endpoints: validation, defaults and staff-only enforcement', () 
 				AnalyticsAdminController.funnelsValidator,
 				{ journey: 'first-agent' },
 				['admin:customers:read'],
+			],
+			[
+				analytics,
+				'stalled',
+				AnalyticsAdminController.stalledValidator,
+				{ journey: 'first-agent', step: 'funded' },
+				['admin:customers:read', 'admin:audit:read'],
 			],
 			[
 				audit,
@@ -524,6 +573,7 @@ describe('AdminAnalyticsService shaping and privacy', () => {
 		await service.planMix();
 		await service.funnel('first-credential', 30, 'all');
 		await service.funnel('first-agent', 30, 'all');
+		await service.stalledAccounts('first-agent', 'first-did', 30, 'all', 1, 25);
 		await service.auditLog(1, 25);
 		expect(statements.length).toBeGreaterThan(10);
 		const forbidden = [

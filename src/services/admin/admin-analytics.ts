@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Connection } from '../../database/connection/connection.js';
 import type { Table, Tile, Unsupported } from '../analytics/customer-analytics.js';
 import { ledgerIndexerConfig } from '../ledger/ledger-indexer.js';
@@ -155,6 +156,101 @@ const STATUS_LIST_WRITES = [
 ];
 const RESOURCE_WRITES = ['resource-create'];
 const FAUCET_WRITE_OPERATIONS = [...DID_WRITES, ...STATUS_LIST_WRITES, ...RESOURCE_WRITES];
+
+interface JourneyStep {
+	key: string;
+	label: string;
+	/** Column of the `j` row (see JOURNEY_CTES) holding the time the step was reached. */
+	column: string;
+}
+
+/** The steps of each journey, in order. Step keys are part of the API (`step` of the stalled-accounts route). */
+export const JOURNEY_STEPS: Record<Journey, readonly JourneyStep[]> = {
+	'first-credential': [
+		{ key: 'signed-up', label: 'Signed up', column: 'j.signed' },
+		{ key: 'funded', label: 'Funded address', column: 'j.funded' },
+		{ key: 'first-did', label: 'First DID created', column: 'j.did' },
+		{ key: 'first-credential', label: 'First credential issued', column: 'j.credential' },
+	],
+	'first-agent': [
+		{ key: 'signed-up', label: 'Signed up', column: 'j.signed' },
+		{ key: 'funded', label: 'Funded address', column: 'j.funded' },
+		{ key: 'first-did', label: 'First DID created', column: 'j.did' },
+		{ key: 'registered-agent', label: 'Registered an agent', column: 'j.agent' },
+		{ key: 'card-signed', label: 'Agent card signed', column: 'j.card' },
+	],
+};
+
+const journeySteps = (journey: Journey): readonly JourneyStep[] => JOURNEY_STEPS[journey];
+
+/** Every step key that can be asked for as a stalled step (any journey, not the first step). */
+export const STALLED_STEP_KEYS = [
+	...new Set(Object.values(JOURNEY_STEPS).flatMap((steps) => steps.slice(1).map((s) => s.key))),
+];
+
+/** SQL condition: steps 0..i all reached. */
+const reachedCondition = (steps: readonly JourneyStep[], i: number): string =>
+	steps
+		.slice(0, i + 1)
+		.map((s) => `${s.column} IS NOT NULL`)
+		.join(' AND ');
+
+/**
+ * One row `j` per customer of the funnel cohort (signed up in the range `$1`, in the segment `$2`) with the time it
+ * reached each step, or null.
+ */
+const JOURNEY_CTES = `${WINDOW_CTE}, ${SEGMENT_CTE},
+	cohort AS (
+		SELECT c."customerId", c."createdAt" AS signed FROM "customer" c, win
+		WHERE c."createdAt" >= win.start AND ${segmentFilter('c."customerId"')}
+	),
+	funded AS (
+		SELECT fr."customerId", MIN(fr."createdAt") AS at FROM "faucetRequest" fr
+		WHERE fr."status" = 'completed' AND fr."customerId" IN (SELECT "customerId" FROM cohort) GROUP BY fr."customerId"
+	),
+	cards AS (
+		SELECT ac."customerId", MIN(ac."createdAt") AS at FROM "agentCard" ac
+		WHERE ac."jws" IS NOT NULL AND ac."customerId" IN (SELECT "customerId" FROM cohort) GROUP BY ac."customerId"
+	),
+	j AS (
+		SELECT cohort."customerId", cohort.signed, funded.at AS funded, ca."firstDidCreatedAt" AS did,
+			ca."firstCredentialIssuedAt" AS credential, ca."firstAgentRegisteredAt" AS agent, cards.at AS card
+		FROM cohort
+		LEFT JOIN funded ON funded."customerId" = cohort."customerId"
+		LEFT JOIN "customerActivation" ca ON ca."customerId" = cohort."customerId"
+		LEFT JOIN cards ON cards."customerId" = cohort."customerId"
+	)`;
+
+/**
+ * A short reference for an account in an anonymised list: the first 12 hex characters of a SHA-256 of the customer
+ * id under a fixed label. Stable, so the same account has the same reference on every page and call. It does not
+ * contain the id and cannot be turned back into it; only someone who already holds the id can match the two.
+ */
+export function opaqueAccountRef(customerId: string): string {
+	return `acct_${createHash('sha256').update(`studio:stalled-account:${customerId}`).digest('hex').slice(0, 12)}`;
+}
+
+export interface StalledAccount {
+	/** Opaque, stable reference; not the customer id. */
+	ref: string;
+	signedUpAt: string;
+	/** Last tracked operation, or null if none. */
+	lastActiveAt: string | null;
+}
+export interface StalledAccounts {
+	journey: Journey;
+	step: string;
+	stepLabel: string;
+	previousStep: string;
+	previousStepLabel: string;
+	range: Range;
+	segment: Segment;
+	page: number;
+	limit: number;
+	/** Stalled accounts across all pages. */
+	total: number;
+	accounts: StalledAccount[];
+}
 
 export function routeForOperation(operationName: string): { route: string; method: string } {
 	const known = OPERATION_ROUTES[operationName];
@@ -421,58 +517,17 @@ export class AdminAnalyticsService {
 	 * very old customers; the ranges here are at most 90 days.
 	 */
 	async funnel(journey: Journey, range: Range, segment: Segment) {
-		const steps =
-			journey === 'first-credential'
-				? [
-						{ key: 'signed-up', label: 'Signed up', column: 'j.signed' },
-						{ key: 'funded', label: 'Funded address', column: 'j.funded' },
-						{ key: 'first-did', label: 'First DID created', column: 'j.did' },
-						{ key: 'first-credential', label: 'First credential issued', column: 'j.credential' },
-					]
-				: [
-						{ key: 'signed-up', label: 'Signed up', column: 'j.signed' },
-						{ key: 'funded', label: 'Funded address', column: 'j.funded' },
-						{ key: 'first-did', label: 'First DID created', column: 'j.did' },
-						{ key: 'registered-agent', label: 'Registered an agent', column: 'j.agent' },
-						{ key: 'card-signed', label: 'Agent card signed', column: 'j.card' },
-					];
+		const steps = journeySteps(journey);
 		// Step i is reached when columns 0..i are all set; its gap is column i minus column i-1
 		const selects = steps.map((step, i) => {
-			const reached = steps
-				.slice(0, i + 1)
-				.map((s) => `${s.column} IS NOT NULL`)
-				.join(' AND ');
+			const reached = reachedCondition(steps, i);
 			const gap =
 				i === 0
 					? 'NULL::float'
 					: `percentile_cont(0.5) WITHIN GROUP (ORDER BY GREATEST(0, EXTRACT(EPOCH FROM (${step.column} - ${steps[i - 1].column})))) FILTER (WHERE ${reached})`;
 			return `COUNT(*) FILTER (WHERE ${reached}) AS "accounts${i}", ${gap} AS "gap${i}"`;
 		});
-		const rows = await this.rows(
-			`WITH ${WINDOW_CTE}, ${SEGMENT_CTE},
-			cohort AS (
-				SELECT c."customerId", c."createdAt" AS signed FROM "customer" c, win
-				WHERE c."createdAt" >= win.start AND ${segmentFilter('c."customerId"')}
-			),
-			funded AS (
-				SELECT fr."customerId", MIN(fr."createdAt") AS at FROM "faucetRequest" fr
-				WHERE fr."status" = 'completed' AND fr."customerId" IN (SELECT "customerId" FROM cohort) GROUP BY fr."customerId"
-			),
-			cards AS (
-				SELECT ac."customerId", MIN(ac."createdAt") AS at FROM "agentCard" ac
-				WHERE ac."jws" IS NOT NULL AND ac."customerId" IN (SELECT "customerId" FROM cohort) GROUP BY ac."customerId"
-			),
-			j AS (
-				SELECT cohort.signed, funded.at AS funded, ca."firstDidCreatedAt" AS did, ca."firstCredentialIssuedAt" AS credential,
-					ca."firstAgentRegisteredAt" AS agent, cards.at AS card
-				FROM cohort
-				LEFT JOIN funded ON funded."customerId" = cohort."customerId"
-				LEFT JOIN "customerActivation" ca ON ca."customerId" = cohort."customerId"
-				LEFT JOIN cards ON cards."customerId" = cohort."customerId"
-			)
-			SELECT ${selects.join(', ')} FROM j`,
-			[range, segment]
-		);
+		const rows = await this.rows(`WITH ${JOURNEY_CTES} SELECT ${selects.join(', ')} FROM j`, [range, segment]);
 		const row = rows[0] ?? {};
 		return {
 			journey,
@@ -484,6 +539,60 @@ export class AdminAnalyticsService {
 					i === 0 || row[`gap${i}`] === null || row[`gap${i}`] === undefined
 						? null
 						: Math.round(num(row[`gap${i}`])),
+			})),
+		};
+	}
+
+	/**
+	 * The accounts that stalled before a funnel step (U-40): in the same cohort as `funnel` (signed up in the range,
+	 * in the segment), they reached every step before `step` but not `step` itself. So for each step but the first,
+	 * `total` here equals the previous step's `accounts` minus this step's `accounts` in `funnel`.
+	 *
+	 * Anonymised: each account is a short opaque reference (a hash of the customer id, stable across calls and pages),
+	 * its sign-up time and its last tracked operation. No id, name or email leaves this
+	 * method. Newest sign-ups first. Returns null when `step` is not a step of the journey after the first.
+	 */
+	async stalledAccounts(
+		journey: Journey,
+		step: string,
+		range: Range,
+		segment: Segment,
+		page: number,
+		limit: number
+	): Promise<StalledAccounts | null> {
+		const steps = journeySteps(journey);
+		const index = steps.findIndex((s) => s.key === step);
+		if (index < 1) return null;
+		const stalled = `${reachedCondition(steps, index - 1)} AND ${steps[index].column} IS NULL`;
+		const [pageRows, totalRows] = await Promise.all([
+			this.rows(
+				`WITH ${JOURNEY_CTES},
+				page AS (SELECT j."customerId", j.signed FROM j WHERE ${stalled} ORDER BY j.signed DESC, j."customerId" LIMIT $3 OFFSET $4)
+				SELECT page."customerId", page.signed AS "signedUpAt",
+					(SELECT MAX(o."createdAt") FROM "operation" o WHERE o."customerId" = page."customerId") AS "lastActiveAt"
+				FROM page ORDER BY page.signed DESC, page."customerId"`,
+				[range, segment, limit, (page - 1) * limit]
+			),
+			this.rows<{ total: string }>(`WITH ${JOURNEY_CTES} SELECT COUNT(*) AS total FROM j WHERE ${stalled}`, [
+				range,
+				segment,
+			]),
+		]);
+		return {
+			journey,
+			step: steps[index].key,
+			stepLabel: steps[index].label,
+			previousStep: steps[index - 1].key,
+			previousStepLabel: steps[index - 1].label,
+			range,
+			segment,
+			page,
+			limit,
+			total: num(totalRows[0]?.total),
+			accounts: pageRows.map((r) => ({
+				ref: opaqueAccountRef(r.customerId as string),
+				signedUpAt: iso(r.signedUpAt) as string,
+				lastActiveAt: iso(r.lastActiveAt),
 			})),
 		};
 	}

@@ -85,6 +85,34 @@
  *           format: date-time
  *           nullable: true
  *           description: First tracked operation of any kind.
+ *     AdminStalledAccounts:
+ *       type: object
+ *       properties:
+ *         journey: { type: string, enum: [first-credential, first-agent] }
+ *         step: { type: string, example: first-did }
+ *         stepLabel: { type: string, example: First DID created }
+ *         previousStep: { type: string, example: funded }
+ *         previousStepLabel: { type: string, example: Funded address }
+ *         range: { type: integer, enum: [7, 30, 90] }
+ *         segment: { type: string, enum: [agents, people, unclassified, all] }
+ *         page: { type: integer }
+ *         limit: { type: integer }
+ *         total: { type: integer, description: 'Stalled accounts across all pages.' }
+ *         accounts:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               ref:
+ *                 type: string
+ *                 description: Short opaque reference, stable across pages and calls. Not the customer id.
+ *                 example: acct_3f9a1c07b2d4
+ *               signedUpAt: { type: string, format: date-time }
+ *               lastActiveAt:
+ *                 type: string
+ *                 format: date-time
+ *                 nullable: true
+ *                 description: Last tracked operation, or null if none.
  *     PriceListResponseBody:
  *       description: A list of active prcies from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/prices/list)
  *       type: object

@@ -11,12 +11,16 @@ import {
 	MAX_PAGE_LIMIT,
 	RANGES,
 	SEGMENTS,
+	DEFAULT_PAGE_LIMIT,
+	JOURNEY_STEPS,
+	STALLED_STEP_KEYS,
 	type Journey,
 	type Range,
 	type Segment,
 } from '../../services/admin/admin-analytics.js';
 import { AdminLedgerWritesService } from '../../services/admin/admin-ledger-writes.js';
 import { requireStaffScope, STAFF_SCOPES } from './staff-guard.js';
+import { paginationValidators } from './customers.js';
 
 const rangeValidator = query('range')
 	.optional()
@@ -66,6 +70,24 @@ export class AnalyticsAdminController {
 			.bail(),
 		rangeValidator,
 		segmentValidator,
+	];
+
+	public static stalledValidator = [
+		...AnalyticsAdminController.funnelsValidator,
+		query('step')
+			.exists()
+			.withMessage('step is required')
+			.bail()
+			.isIn(STALLED_STEP_KEYS)
+			.withMessage(`step must be one of: ${STALLED_STEP_KEYS.join(', ')}`)
+			.bail()
+			.custom((step, { req }) => {
+				const steps = JOURNEY_STEPS[req.query?.journey as Journey] ?? [];
+				return steps.slice(1).some((s) => s.key === step);
+			})
+			.withMessage('step is not a step of this journey after the first')
+			.bail(),
+		...paginationValidators,
 	];
 
 	private async run(response: Response, work: () => Promise<unknown>) {
@@ -318,6 +340,83 @@ export class AnalyticsAdminController {
 	public async funnels(request: Request, response: Response) {
 		const journey = request.query.journey as Journey;
 		return this.run(response, () => this.service().funnel(journey, rangeOf(request), segmentOf(request)));
+	}
+
+	/**
+	 * @openapi
+	 *
+	 * /admin/analytics/funnels/stalled:
+	 *   get:
+	 *     summary: Accounts that stalled before a funnel step (staff only).
+	 *     description: >-
+	 *       The accounts of the funnel cohort (signed up in the range, in the segment) that reached the step before
+	 *       `step` but not `step` itself, newest sign-up first. For any step, `total` is the previous step's `accounts`
+	 *       minus this step's `accounts` in `/admin/analytics/funnels` for the same journey, range and segment.
+	 *       Anonymised: each account is `ref` (a short opaque reference, stable across pages and calls, that is not the
+	 *       customer id), `signedUpAt` and `lastActiveAt` (last tracked operation, or null). No id, name or email.
+	 *       Needs the `admin:analytics:read` scope.
+	 *     tags: [Analytics]
+	 *     parameters:
+	 *       - in: query
+	 *         name: journey
+	 *         required: true
+	 *         schema:
+	 *           type: string
+	 *           enum: [first-credential, first-agent]
+	 *       - in: query
+	 *         name: step
+	 *         required: true
+	 *         description: >-
+	 *           A step key of the journey other than the first. `first-credential`: funded, first-did,
+	 *           first-credential. `first-agent`: funded, first-did, registered-agent, card-signed.
+	 *         schema:
+	 *           type: string
+	 *           enum: [funded, first-did, first-credential, registered-agent, card-signed]
+	 *       - $ref: '#/components/parameters/AnalyticsRange'
+	 *       - $ref: '#/components/parameters/AnalyticsSegment'
+	 *       - in: query
+	 *         name: page
+	 *         schema:
+	 *           type: integer
+	 *           minimum: 1
+	 *           default: 1
+	 *       - in: query
+	 *         name: limit
+	 *         schema:
+	 *           type: integer
+	 *           minimum: 1
+	 *           maximum: 100
+	 *           default: 25
+	 *     responses:
+	 *       200:
+	 *         description: The request was successful.
+	 *         content:
+	 *           application/json:
+	 *             schema:
+	 *               $ref: '#/components/schemas/AdminStalledAccounts'
+	 *       400:
+	 *         $ref: '#/components/schemas/InvalidRequest'
+	 *       401:
+	 *         $ref: '#/components/schemas/UnauthorizedError'
+	 *       403:
+	 *         description: The caller is not staff.
+	 *       500:
+	 *         $ref: '#/components/schemas/InternalError'
+	 */
+	@validate
+	public async stalled(request: Request, response: Response) {
+		const journey = request.query.journey as Journey;
+		const step = request.query.step as string;
+		return this.run(response, () =>
+			this.service().stalledAccounts(
+				journey,
+				step,
+				rangeOf(request),
+				segmentOf(request),
+				Number(request.query.page ?? 1),
+				Number(request.query.limit ?? DEFAULT_PAGE_LIMIT)
+			)
+		);
 	}
 
 	/**

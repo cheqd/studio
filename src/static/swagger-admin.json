@@ -225,6 +225,84 @@
           }
         }
       },
+      "AdminStalledAccounts": {
+        "type": "object",
+        "properties": {
+          "journey": {
+            "type": "string",
+            "enum": [
+              "first-credential",
+              "first-agent"
+            ]
+          },
+          "step": {
+            "type": "string",
+            "example": "first-did"
+          },
+          "stepLabel": {
+            "type": "string",
+            "example": "First DID created"
+          },
+          "previousStep": {
+            "type": "string",
+            "example": "funded"
+          },
+          "previousStepLabel": {
+            "type": "string",
+            "example": "Funded address"
+          },
+          "range": {
+            "type": "integer",
+            "enum": [
+              7,
+              30,
+              90
+            ]
+          },
+          "segment": {
+            "type": "string",
+            "enum": [
+              "agents",
+              "people",
+              "unclassified",
+              "all"
+            ]
+          },
+          "page": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer",
+            "description": "Stalled accounts across all pages."
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ref": {
+                  "type": "string",
+                  "description": "Short opaque reference, stable across pages and calls. Not the customer id.",
+                  "example": "acct_3f9a1c07b2d4"
+                },
+                "signedUpAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "lastActiveAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true,
+                  "description": "Last tracked operation, or null if none."
+                }
+              }
+            }
+          }
+        }
+      },
       "PriceListResponseBody": {
         "description": "A list of active prcies from Stripe. For more information see the [Stripe API documentation](https://docs.stripe.com/api/prices/list)",
         "type": "object",
@@ -1062,6 +1140,94 @@
                       }
                     }
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/schemas/UnauthorizedError"
+          },
+          "403": {
+            "description": "The caller is not staff."
+          },
+          "500": {
+            "$ref": "#/components/schemas/InternalError"
+          }
+        }
+      }
+    },
+    "/admin/analytics/funnels/stalled": {
+      "get": {
+        "summary": "Accounts that stalled before a funnel step (staff only).",
+        "description": "The accounts of the funnel cohort (signed up in the range, in the segment) that reached the step before `step` but not `step` itself, newest sign-up first. For any step, `total` is the previous step's `accounts` minus this step's `accounts` in `/admin/analytics/funnels` for the same journey, range and segment. Anonymised: each account is `ref` (a short opaque reference, stable across pages and calls, that is not the customer id), `signedUpAt` and `lastActiveAt` (last tracked operation, or null). No id, name or email. Needs the `admin:analytics:read` scope.",
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "journey",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "first-credential",
+                "first-agent"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "step",
+            "required": true,
+            "description": "A step key of the journey other than the first. `first-credential`: funded, first-did, first-credential. `first-agent`: funded, first-did, registered-agent, card-signed.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "funded",
+                "first-did",
+                "first-credential",
+                "registered-agent",
+                "card-signed"
+              ]
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AnalyticsRange"
+          },
+          {
+            "$ref": "#/components/parameters/AnalyticsSegment"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStalledAccounts"
                 }
               }
             }
