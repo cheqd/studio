@@ -4,6 +4,7 @@ import { UserInfoHelper, type IUserInfoFetcher } from './base.js';
 import type { IOAuthProvider } from '../oauth/abstract.js';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import * as dotenv from 'dotenv';
+import { authoriseM2MRequest } from '../m2m-client-policy.js';
 import type { UnsuccessfulResponseBody } from '../../../types/shared.js';
 dotenv.config();
 
@@ -45,6 +46,13 @@ export class M2MCredsTokenUserInfoFetcher extends UserInfoHelper implements IUse
 			if (!payload.sub) {
 				return response.status(StatusCodes.UNAUTHORIZED).json({
 					error: `Unauthorized error: No sub found in the token.`,
+				} satisfies UnsuccessfulResponseBody);
+			}
+			// The token must be for this API, from an allowed M2M client, acting for a customer bound to that client
+			const decision = authoriseM2MRequest(payload, customerId);
+			if (!decision.allowed) {
+				return response.status(decision.status).json({
+					error: decision.error,
 				} satisfies UnsuccessfulResponseBody);
 			}
 			// Set global context

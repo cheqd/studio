@@ -30,6 +30,7 @@ declare global {
 			PORTAL_APP_IDS?: string;
 			SHUTDOWN_GRACE_SECONDS?: string;
 			LOGTO_DEFAULT_RESOURCE_URL: string;
+			M2M_CLIENT_CUSTOMER_MAP?: string;
 			LOGTO_M2M_APP_ID: string;
 			LOGTO_M2M_APP_SECRET: string;
 			LOGTO_MANAGEMENT_API: string;
