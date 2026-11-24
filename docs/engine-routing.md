@@ -192,6 +192,28 @@ A genuine failure is not 409:
 
 A bulk call that updated at least one entry stays 200 and carries the per-entry results.
 
+## Extra signers and cross-account offers on Credo DIDs
+
+- **Extra signers.** `publicKeyHexs` on `POST /did/update`, `POST /did/deactivate/:did` and
+  `POST /resource/create/:did` names extra keys to sign with (for a DID controlled by several DIDs). The Credo engine
+  signs with the DID's own authentication keys only, so a key in `publicKeyHexs` that is not one of them is refused
+  with **400** `extra_signers_not_supported` ("Extra signers (publicKeyHexs) are not supported for this identifier
+  yet") before anything is written. Keys that are the DID's own authentication keys, and an empty list, are accepted.
+  Veramo DIDs are unchanged.
+- **Offers to another account's Credo DID.** Issuing to a DID that Studio holds makes an offer. The subject check
+  (`didExists`) on Credo only sees the issuer's own DIDs, so an offer to a Credo DID of another account used to be
+  dropped and the credential recorded as `issued`. `POST /credential/issue` now refuses that case with **501**
+  `NotSupported` before a status index is reserved or anything is signed (`assertSubjectCanBeOffered` in
+  `src/services/api/credentials.ts`). The issuer's own Credo DIDs, Veramo DIDs, DIDs Studio has no record of and
+  non-cheqd DIDs behave as before.
+
+**Follow-up (not built yet):** pass extra signers through to the Credo registrar. For each key in `publicKeyHexs`
+that is not the DID's own, find the key in the customer's Credo tenant (the same lookup `assertPublicKeysOwned`
+does), add it to the `keys` links handed to `session.updateDid`, `session.deactivateDid` and
+`session.createResource` with the verification method id of the controller DID it signs for, and drop the 400. Then
+decide how a cross-account offer to a Credo DID is stored (the holder's Credo wallet, not Veramo's data store) and
+drop the 501.
+
 ## Correcting rows recorded wrongly (migration 1791702000000)
 
 A Credo list or credential is signed inside the customer's Credo tenant, so it can only sit under a DID whose

@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { bases } from 'multiformats/basics';
 import { CredoEngine } from '../../../../src/services/identity/engine/credo/credo-engine.js';
-import { CredoTenantMissingError } from '../../../../src/services/identity/engine/credo/errors.js';
+import {
+	CredoExtraSignersNotSupportedError,
+	CredoTenantMissingError,
+} from '../../../../src/services/identity/engine/credo/errors.js';
+import { mapEngineError } from '../../../../src/helpers/engine-errors.js';
 import type { EngineDidDocument } from '../../../../src/services/identity/engine/types.js';
 import { customer, FakeRuntime, FakeStore } from './fakes.js';
 
@@ -382,6 +386,57 @@ describe('ownership: a second customer cannot use the first customer’s key or 
 		expect(ledgerCalls(h)).toHaveLength(0);
 	});
 
+	it('refuses extra signers (publicKeyHexs) on update, deactivate and resource create with a 400 error (U-59)', async () => {
+		const bobKey = await h.engine.createKey('Ed25519', bob);
+		const extraKey = await h.engine.createKey('Ed25519', bob);
+		const bobDid = `${DID_NS}bob-signers`;
+		const bobDocument = documentFor(bobDid, bobKey.publicKeyHex, 'Ed25519VerificationKey2018');
+		await h.engine.createDid('testnet', bobDocument, bob);
+		h.runtime.resolution = {
+			didDocument: bobDocument,
+			didDocumentMetadata: {},
+			didResolutionMetadata: {},
+		} as never;
+		h.runtime.calls.length = 0;
+		const refused = async (work: Promise<unknown>) => {
+			const error = await work.then(
+				() => undefined,
+				(e: unknown) => e
+			);
+			expect(error).toBeInstanceOf(CredoExtraSignersNotSupportedError);
+			expect(mapEngineError(error)).toEqual({
+				status: 400,
+				code: 'extra_signers_not_supported',
+				error: expect.stringContaining(
+					'Extra signers (publicKeyHexs) are not supported for this identifier yet'
+				),
+			});
+		};
+		// A key of this account that is not an authentication key of the DID would have to sign as an extra signer
+		await refused(h.engine.updateDid(bobDocument, bob, [extraKey.publicKeyHex]));
+		await refused(h.engine.deactivateDid(bobDid, bob, [bobKey.publicKeyHex, extraKey.publicKeyHex]));
+		await refused(
+			h.engine.createResource(
+				'testnet',
+				{ collectionId: 'bob-signers', name: 'n', resourceType: 't', data: 'x' },
+				bob,
+				[extraKey.publicKeyHex]
+			)
+		);
+		expect(ledgerCalls(h).filter((c) => c.method !== 'resolveDid')).toHaveLength(0);
+		// The DID's own key, or an empty list, is not an extra signer: the write goes ahead
+		await h.engine.createResource(
+			'testnet',
+			{ collectionId: 'bob-signers', name: 'n', resourceType: 't', data: 'x' },
+			bob,
+			[bobKey.publicKeyHex]
+		);
+		await h.engine.deactivateDid(bobDid, bob, []);
+		expect(ledgerCalls(h).map((c) => c.method)).toEqual(
+			expect.arrayContaining(['createResource', 'deactivateDid'])
+		);
+	});
+
 	it('bob cannot deactivate alice’s DID or write a resource to it', async () => {
 		await expect(h.engine.deactivateDid(aliceDid, bob)).rejects.toThrow('not found in wallet');
 		await expect(
@@ -646,6 +701,7 @@ describe('methods another agent will build', () => {
 					'notImplemented',
 					'payerFor',
 					'assertPublicKeysOwned',
+					'assertNoExtraSigners',
 					'linkSigningKeys',
 					'assertRecordedKeysOwned',
 				].includes(name)

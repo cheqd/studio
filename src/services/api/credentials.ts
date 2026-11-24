@@ -12,6 +12,8 @@ import {
 import { IdentityServiceStrategySetup } from '../identity/index.js';
 import type { RoutedService } from '../identity/index.js';
 import { credentialArtifact, didArtifact } from '../identity/engine/artifact-refs.js';
+import { DbArtifactEngineLookup } from '../identity/engine/db-lookups.js';
+import { CredoNotSupportedError } from '../identity/engine/credo/errors.js';
 import { v4 } from 'uuid';
 import * as dotenv from 'dotenv';
 import type { CustomerEntity } from '../../database/entities/customer.entity.js';
@@ -106,6 +108,11 @@ export class Credentials {
 		}
 
 		const statusOptions = credentialStatus || null;
+
+		// Refused before anything is reserved or signed: an offer to another account's Credo DID would be silently
+		// dropped (see assertSubjectCanBeOffered)
+		if ((providerId || connector) !== CredentialConnectors.Dock)
+			await this.assertSubjectCanBeOffered(subjectDid, customer);
 
 		// Phase 1: Atomic Index Reservation with CAS
 		let reservedIndex: number | undefined;
@@ -366,6 +373,28 @@ export class Credentials {
 			throw error;
 		}
 	}
+	/**
+	 * A credential issued to a DID that Studio holds becomes an offer the holder accepts. The check uses the subject
+	 * DID's engine scoped to the issuing account: Veramo finds a DID of any account, so an offer to another account's
+	 * Veramo DID is created, but Credo only sees the issuer's own DIDs, so an offer to another account's Credo DID
+	 * was skipped and the credential silently recorded as `issued`. Until cross-account offers are built for Credo,
+	 * that case is refused with 501 before an index is reserved or anything is signed (U-59). A DID outside Studio,
+	 * the issuer's own DID and every Veramo DID behave as before.
+	 */
+	private async assertSubjectCanBeOffered(subjectDid: string | undefined, customer: CustomerEntity): Promise<void> {
+		if (!subjectDid?.startsWith('did:cheqd:')) return;
+		// Only a DID recorded as Credo's counts: routing alone may pick Credo for a DID Studio has never seen
+		if ((await new DbArtifactEngineLookup().recordedEngine({ kind: 'did', id: subjectDid })) !== 'credo') return;
+		const subjectService = await new IdentityServiceStrategySetup(customer.customerId).routed('did', {
+			kind: 'did',
+			id: subjectDid,
+		});
+		if (await subjectService.didExists(subjectDid, customer)) return;
+		throw new CredoNotSupportedError(
+			'offering a credential to a DID held by another Studio account yet. Nothing was issued. Issue the credential to a DID of this account or to a DID outside Studio'
+		);
+	}
+
 	/**
 	 * Phase 1: Atomic Index Reservation with CAS
 	 * Reserves a unique index using Compare-And-Swap pattern

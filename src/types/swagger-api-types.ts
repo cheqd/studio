@@ -1930,7 +1930,7 @@
  *           items:
  *             type: string
  *         publicKeyHexs:
- *           description: List of key references (publicKeys) which will be used for signing the message. The should be in hexadecimal format and placed in the wallet of current user.
+ *           description: "List of key references (publicKeys) which will be used for signing the message. They should be in hexadecimal format and placed in the wallet of current user. On a DID created by the Credo engine, extra signers are not supported yet: a key that is not one of the DID's own authentication keys is refused with 400 (`code: extra_signers_not_supported`)."
  *           type: array
  *           items:
  *            type: string
@@ -1940,7 +1940,7 @@
  *       type: object
  *       properties:
  *         publicKeyHexs:
- *           description: List of key references (publicKeys) which will be used for signing the message. The should be in hexadecimal format and placed in the wallet of current user.
+ *           description: "List of key references (publicKeys) which will be used for signing the message. They should be in hexadecimal format and placed in the wallet of current user. On a DID created by the Credo engine, extra signers are not supported yet: a key that is not one of the DID's own authentication keys is refused with 400 (`code: extra_signers_not_supported`)."
  *           type: array
  *           items:
  *            type: string
@@ -1984,7 +1984,7 @@
  *           description: Optional field to assign a human-readable version in the DID-Linked Resource.
  *           type: string
  *         publicKeyHexs:
- *           description: List of key references (publicKeys) which will be used for signing the message. The should be in hexadecimal format and placed in the wallet of current user.
+ *           description: "List of key references (publicKeys) which will be used for signing the message. They should be in hexadecimal format and placed in the wallet of current user. On a DID created by the Credo engine, extra signers are not supported yet: a key that is not one of the DID's own authentication keys is refused with 400 (`code: extra_signers_not_supported`)."
  *           type: array
  *           items:
  *            type: string

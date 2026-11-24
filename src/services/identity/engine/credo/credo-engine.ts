@@ -33,7 +33,12 @@ import type {
 } from '../types.js';
 import { CredoAccreditations } from './accreditation.js';
 import { CredoCredentials } from './credentials.js';
-import { CredoOwnershipError, NotImplementedByEngineError, asTenantMissing } from './errors.js';
+import {
+	CredoExtraSignersNotSupportedError,
+	CredoOwnershipError,
+	NotImplementedByEngineError,
+	asTenantMissing,
+} from './errors.js';
 import {
 	authenticationMethods,
 	buildDefaultDidDocument,
@@ -222,6 +227,28 @@ export class CredoEngine implements IdentityEngine {
 		}
 	}
 
+	/**
+	 * Extra signers are not passed to the Credo registrar yet: the write is signed with the DID's own authentication
+	 * keys only. A key in `publicKeyHexs` that is one of those already signs, so it is accepted; any other key (for
+	 * example a key of another controller DID) is refused rather than silently left out (U-59).
+	 */
+	private assertNoExtraSigners(
+		publicKeyHexs: string[] | undefined,
+		...documents: (EngineDidDocument | null | undefined)[]
+	): void {
+		if (!publicKeyHexs?.length) return;
+		const own = new Set(
+			documents.flatMap((document) =>
+				document
+					? authenticationMethods(document)
+							.map((method) => method.publicKeyHex?.toLowerCase())
+							.filter((hex): hex is string => !!hex)
+					: []
+			)
+		);
+		if (publicKeyHexs.some((hex) => !own.has(hex.toLowerCase()))) throw new CredoExtraSignersNotSupportedError();
+	}
+
 	/** Maps each `authentication` entry of the document to a key this customer owns, or refuses. */
 	private async linkSigningKeys(customerId: string, didDocument: EngineDidDocument): Promise<DidKeyLink[]> {
 		const methods = authenticationMethods(didDocument);
@@ -349,6 +376,8 @@ export class CredoEngine implements IdentityEngine {
 			}
 		}
 
+		this.assertNoExtraSigners(publicKeyHexs, didDocument, previous.didDocument);
+
 		const result = await this.withPayerLock(payerAddress, () =>
 			this.runtime.withTenant(tenantId, (session) => session.updateDid({ did, didDocument, keys: links }))
 		);
@@ -377,6 +406,7 @@ export class CredoEngine implements IdentityEngine {
 		if (!resolved.didDocument) throw new Error('DID document not found');
 		// Already deactivated: nothing to do, same answer as the Veramo engine
 		if (resolved.didDocumentMetadata?.deactivated) return true;
+		this.assertNoExtraSigners(publicKeyHexs, resolved.didDocument);
 
 		const payerAddress = await this.payerFor(customerId, network);
 		const result = await this.withPayerLock(payerAddress, () =>
@@ -430,6 +460,9 @@ export class CredoEngine implements IdentityEngine {
 		const tenantId = await this.ensureTenant(customerId);
 		await this.assertRecordedKeysOwned(customerId, tenantId, did);
 		const payerAddress = await this.payerFor(customerId, network);
+
+		if (publicKeyHexs?.length)
+			this.assertNoExtraSigners(publicKeyHexs, (await this.runtime.resolveDid(did)).didDocument);
 
 		const result = await this.withPayerLock(payerAddress, () =>
 			this.runtime.withTenant(tenantId, (session) =>

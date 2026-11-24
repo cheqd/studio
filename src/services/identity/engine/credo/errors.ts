@@ -28,6 +28,23 @@ export class CredoNotSupportedError extends Error {
 	}
 }
 
+/**
+ * Extra signers (`publicKeyHexs` on DID update, DID deactivate and resource create) are not passed through the Credo
+ * registrar yet, so a Credo DID refuses them instead of ignoring them: ignored, a multi-controller update would be
+ * sent with too few signatures and fail at the ledger, or succeed without the signer the caller asked for.
+ */
+export class CredoExtraSignersNotSupportedError extends Error {
+	readonly code = 'extra_signers_not_supported';
+	readonly status = 400;
+
+	constructor() {
+		super(
+			'Extra signers (publicKeyHexs) are not supported for this identifier yet: every key in publicKeyHexs must be an authentication key of the DID itself. Send the request without the other keys.'
+		);
+		this.name = 'CredoExtraSignersNotSupported';
+	}
+}
+
 /** The caller asked for something that is not theirs, or that does not exist. Deliberately the same message for both. */
 export class CredoOwnershipError extends Error {
 	constructor(what: string) {
