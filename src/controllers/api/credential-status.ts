@@ -1112,7 +1112,9 @@ export class CredentialStatusController {
 	 * /credential-status/search:
 	 *   get:
 	 *     tags: [ Status Lists ]
+	 *     security: []
 	 *     summary: Fetch StatusList2021 or BitstringStatusList DID-Linked Resource based on search criteria.
+	 *     description: Public. Needs no API key, as it reads public ledger data; limited per IP address like every route.
 	 *     parameters:
 	 *       - in: query
 	 *         name: did

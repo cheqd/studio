@@ -15,7 +15,7 @@ export class DidAuthRuleProvider extends AuthRuleProvider {
 		this.registerRule('^/did/import$', 'POST', 'import:did:mainnet');
 		this.registerRule('^/did/export/[^/]+$', 'POST', 'export:did:testnet');
 		this.registerRule('^/did/export/[^/]+$', 'POST', 'export:did:mainnet');
-		// Unauthorized routes
+		// Public by decision (F-12): a lookup of public ledger data. No API key; the per-IP rate limit applies.
 		this.registerRule('^/did/search/[^/]+$', 'GET', '', { allowUnauthorized: true, skipNamespace: true });
 	}
 }

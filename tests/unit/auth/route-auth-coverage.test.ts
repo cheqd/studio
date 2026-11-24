@@ -21,15 +21,13 @@ const PUBLIC_ROUTES: Record<string, string> = {
 	'GET /static/custom-button.js': 'static file',
 	'POST /account/bootstrap': 'LogTo webhook, verified by its signature',
 	'POST /admin/webhook': 'Stripe webhook, verified by its signature',
-	// Behind the guard with an allowUnauthorized rule
-	// F-12: pending owner confirmation
+	// Behind the guard with an allowUnauthorized rule. Public by owner decision (F-12): lookups of public ledger data,
+	// limited per IP address like every route.
 	'GET /did/search/:did': 'public DID resolver',
-	// F-12: pending owner confirmation
 	'GET /resource/search/:did': 'public resource resolver',
-	// F-12: pending owner confirmation
 	'GET /credential-status/search': 'public status list lookup',
-	// F-12: pending owner confirmation
-	'GET /auth/user-info': 'returns the caller’s own session, empty when signed out',
+	// Public by owner decision (F-12): the Swagger UI calls it before sign-in; it says only isAuthenticated: false then
+	'GET /auth/user-info': 'the caller’s own session, or only isAuthenticated: false without one',
 };
 
 const ROUTE_RE = /app\.(get|post|put|delete|patch)\(\s*([`'"])([^`'"]+)\2/g;

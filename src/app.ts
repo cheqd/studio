@@ -23,6 +23,7 @@ import { Middleware } from './middleware/middleware.js';
 import { jsonBodyParsers } from './middleware/body-parsers.js';
 import { customerRateLimiter, ipRateLimiter, rateLimitConfig, trustProxySetting } from './middleware/rate-limit.js';
 import { requireFreshSignIn } from './middleware/fresh-signin.js';
+import { userInfo } from './middleware/auth/user-info-route.js';
 import * as dotenv from 'dotenv';
 // Define Swagger file
 import swaggerAPIDocument from './static/swagger-api.json' with { type: 'json' };
@@ -453,9 +454,7 @@ class App {
 		app.get('/admin/audit-log', AuditLogAdminController.listValidator, auditAdmin.list.bind(auditAdmin));
 
 		// LogTo user info
-		app.get('/auth/user-info', async (req, res) => {
-			return res.json(req.user);
-		});
+		app.get('/auth/user-info', userInfo);
 
 		// static files
 		app.get(

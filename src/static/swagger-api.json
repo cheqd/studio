@@ -6909,7 +6909,9 @@
         "tags": [
           "Status Lists"
         ],
+        "security": [],
         "summary": "Fetch StatusList2021 or BitstringStatusList DID-Linked Resource based on search criteria.",
+        "description": "Public. Needs no API key, as it reads public ledger data; limited per IP address like every route.",
         "parameters": [
           {
             "in": "query",
@@ -8336,8 +8338,9 @@
         "tags": [
           "Decentralized Identifiers (DIDs)"
         ],
+        "security": [],
         "summary": "Resolve a DID Document.",
-        "description": "Resolve a DID Document by DID identifier. Also supports DID Resolution Queries as defined in the <a href=\"https://w3c-ccg.github.io/did-resolution/\">W3C DID Resolution specification</a>.",
+        "description": "Resolve a DID Document by DID identifier. Also supports DID Resolution Queries as defined in the <a href=\"https://w3c-ccg.github.io/did-resolution/\">W3C DID Resolution specification</a>. Public. Needs no API key, as it reads public ledger data; limited per IP address like every route.",
         "parameters": [
           {
             "in": "path",
@@ -10028,8 +10031,9 @@
         "tags": [
           "DID-Linked Resources (DLRs)"
         ],
+        "security": [],
         "summary": "Get a DID-Linked Resource.",
-        "description": "This endpoint returns the DID-Linked Resource for a given DID identifier and resource identifier.",
+        "description": "This endpoint returns the DID-Linked Resource for a given DID identifier and resource identifier. Public. Needs no API key, as it reads public ledger data; limited per IP address like every route.",
         "parameters": [
           {
             "in": "path",

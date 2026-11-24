@@ -834,8 +834,9 @@ export class DIDController {
 	 * /did/search/{did}:
 	 *   get:
 	 *     tags: [ Decentralized Identifiers (DIDs) ]
+	 *     security: []
 	 *     summary: Resolve a DID Document.
-	 *     description: Resolve a DID Document by DID identifier. Also supports DID Resolution Queries as defined in the <a href="https://w3c-ccg.github.io/did-resolution/">W3C DID Resolution specification</a>.
+	 *     description: Resolve a DID Document by DID identifier. Also supports DID Resolution Queries as defined in the <a href="https://w3c-ccg.github.io/did-resolution/">W3C DID Resolution specification</a>. Public. Needs no API key, as it reads public ledger data; limited per IP address like every route.
 	 *     parameters:
 	 *       - in: path
 	 *         name: did

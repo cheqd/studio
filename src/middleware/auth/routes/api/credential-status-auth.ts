@@ -58,7 +58,7 @@ export class CredentialStatusAuthRuleProvider extends AuthRuleProvider {
 			skipNamespace: true,
 		});
 
-		// Unauthorized routes
+		// Public by decision (F-12): a lookup of public ledger data. No API key; the per-IP rate limit applies.
 		this.registerRule('^/credential-status/search$', 'GET', '', { allowUnauthorized: true, skipNamespace: true });
 		this.registerRule('^/credential-status/check$', 'POST', 'check:credential-status', { skipNamespace: true });
 	}

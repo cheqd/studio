@@ -267,8 +267,9 @@ export class ResourceController {
 	 * /resource/search/{did}:
 	 *   get:
 	 *     tags: [ DID-Linked Resources (DLRs) ]
+	 *     security: []
 	 *     summary: Get a DID-Linked Resource.
-	 *     description: This endpoint returns the DID-Linked Resource for a given DID identifier and resource identifier.
+	 *     description: This endpoint returns the DID-Linked Resource for a given DID identifier and resource identifier. Public. Needs no API key, as it reads public ledger data; limited per IP address like every route.
 	 *     parameters:
 	 *       - in: path
 	 *         name: did
