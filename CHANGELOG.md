@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.21.0-develop.7](https://github.com/cheqd/studio/compare/3.21.0-develop.6...3.21.0-develop.7) (2026-11-24)
+
+### Features
+
+* **admin:** let staff read the flags that apply to one customer ([97a8e9f](https://github.com/cheqd/studio/commit/97a8e9f19073cc1c7f2778a44d49105da05c67ee))
+* Credo release integration of the open release PRs ([#922](https://github.com/cheqd/studio/issues/922)) ([410fd1b](https://github.com/cheqd/studio/commit/410fd1b95444d374e91fa0eaee652510e4353b2b)), closes [#908](https://github.com/cheqd/studio/issues/908) [#909](https://github.com/cheqd/studio/issues/909) [#910](https://github.com/cheqd/studio/issues/910) [#911](https://github.com/cheqd/studio/issues/911) [#912](https://github.com/cheqd/studio/issues/912) [#914](https://github.com/cheqd/studio/issues/914) [#915](https://github.com/cheqd/studio/issues/915) [#888](https://github.com/cheqd/studio/issues/888) [#889](https://github.com/cheqd/studio/issues/889) [#896](https://github.com/cheqd/studio/issues/896) [#890](https://github.com/cheqd/studio/issues/890) [#917](https://github.com/cheqd/studio/issues/917) [#918](https://github.com/cheqd/studio/issues/918) [#919](https://github.com/cheqd/studio/issues/919) [#920](https://github.com/cheqd/studio/issues/920) [#921](https://github.com/cheqd/studio/issues/921) [#917](https://github.com/cheqd/studio/issues/917) [#918](https://github.com/cheqd/studio/issues/918) [#919](https://github.com/cheqd/studio/issues/919) [#920](https://github.com/cheqd/studio/issues/920) [#910](https://github.com/cheqd/studio/issues/910) [#921](https://github.com/cheqd/studio/issues/921) [#910](https://github.com/cheqd/studio/issues/910) [#920](https://github.com/cheqd/studio/issues/920)
+* **flags:** decide who sees the portal's credential screens ([cee4735](https://github.com/cheqd/studio/commit/cee4735ad82924dea83fae911cf4113e30b081de))
+* **operations:** record how each operation's caller authenticated ([66f3d9a](https://github.com/cheqd/studio/commit/66f3d9ad77944c91d934e9aed7c8380f6d33b8fd))
+
+### Bug Fixes
+
+* **auth:** bind M2M clients to audience and allowed customers ([63208f1](https://github.com/cheqd/studio/commit/63208f1db02e91968adeb823a0b50a47f284da0b))
+* **credential:** default issue format to JWT and put VC context first ([be1f85a](https://github.com/cheqd/studio/commit/be1f85a7c0d5f3f59efc9dd4e7f4c110ba4cc952))
+* **credo:** make Bitstring lists pass Veramo's status-list proof check ([ccdae96](https://github.com/cheqd/studio/commit/ccdae96c5a9942918766e9456cf6215a62929e6b))
+* presentation challenge and trust-registry error codes ([#913](https://github.com/cheqd/studio/issues/913)) ([1d312b7](https://github.com/cheqd/studio/commit/1d312b7c1d5675caa52f5df396a687557a508ed6)), closes [#905](https://github.com/cheqd/studio/issues/905) [#904](https://github.com/cheqd/studio/issues/904)
+* route new status lists by DID engine and fix issue defaults ([#907](https://github.com/cheqd/studio/issues/907)) ([d6d2797](https://github.com/cheqd/studio/commit/d6d2797f0510278a007031af8b4de4065cc8cee0))
+* **status-list:** create new lists on the engine that holds their DID ([0a70ce8](https://github.com/cheqd/studio/commit/0a70ce8fc24e2dc19eced12eee05d3116c0dc5cc))
+
 ## [3.21.0-develop.6](https://github.com/cheqd/studio/compare/3.21.0-develop.5...3.21.0-develop.6) (2026-11-16)
 
 ### Bug Fixes
